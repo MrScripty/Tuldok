@@ -18,10 +18,11 @@ TIMEOUT = float(os.environ.get('TULDOK_AI_TIMEOUT', '180'))
 ROOT = Path(__file__).resolve().parent
 SCHEMA = {
     'type': 'object', 'additionalProperties': False,
-    'required': ['book_present', 'crop_suitable', 'corner_reference', 'corners'],
+    'required': ['book_present', 'crop_suitable', 'corner_reference', 'book_top_left', 'corners'],
     'properties': {
         'book_present': {'type': 'boolean'}, 'crop_suitable': {'type': 'boolean'},
-        'corner_reference': {'type': 'string', 'enum': ['book']},
+        'corner_reference': {'type': 'string', 'enum': ['image']},
+        'book_top_left': {'type': ['string', 'null'], 'enum': ['top_left', 'top_right', 'bottom_right', 'bottom_left', None]},
         'corners': {'type': 'array', 'maxItems': 4, 'items': {
             'type': 'object', 'additionalProperties': False,
             'required': ['name', 'visibility', 'x', 'y'],
@@ -106,9 +107,32 @@ def suggest(image_path, body):
         else:
             result = ai_http.run(path, model, prompt, SCHEMA, server_url, 'llamacpp', callback,
                                 timeout=TIMEOUT, progress_timeout=60)
-    if not isinstance(result, dict) or result.get('corner_reference') != 'book':
-        raise ValueError('The model did not return book-relative corner labels. Try another vision model.')
+    result = book_relative_result(result)
     return result, {'provider': provider, 'model': model, 'suggested_at': datetime.now(timezone.utc).isoformat()}
+
+
+def book_relative_result(result):
+    """Rotate screen-ordered detections into book-relative handle identities."""
+    if not isinstance(result, dict) or not set(SCHEMA['required']).issubset(result):
+        raise ValueError('The model returned an incomplete corner label.')
+    if result['corner_reference'] != 'image':
+        raise ValueError('The model returned an unexpected coordinate convention.')
+    names = ['top_left', 'top_right', 'bottom_right', 'bottom_left']
+    corners = result['corners']
+    if result['book_present'] is False:
+        if corners != [] or result['book_top_left'] is not None:
+            raise ValueError('The model returned corners for a no-book image.')
+        ordered = []
+    else:
+        if result['book_top_left'] not in names:
+            raise ValueError('The model could not determine the book orientation. Place the corners manually.')
+        if not isinstance(corners, list) or len(corners) != 4 or any(
+                not isinstance(c, dict) or c.get('name') != name for c, name in zip(corners, names)):
+            raise ValueError('The model returned invalid screen corner identities.')
+        start = names.index(result['book_top_left'])
+        ordered = [dict(corner, name=name) for name, corner in zip(names, corners[start:] + corners[:start])]
+    return dict(book_present=result['book_present'], crop_suitable=result['crop_suitable'],
+                corner_reference='book', corners=ordered)
 
 
 def safe_error(error, body):

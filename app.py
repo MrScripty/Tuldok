@@ -228,7 +228,7 @@ class Dataset:
             raise Conflict('Another AI suggestion is running. Wait for it to finish.')
         try:
             result, source = ai.suggest(self.path / 'images' / sample_id / 'image.png', body)
-            if not set(ai.SCHEMA['required']).issubset(result):
+            if not {'book_present', 'crop_suitable', 'corner_reference', 'corners'}.issubset(result):
                 raise ValueError('The model returned an incomplete corner label.')
             annotation = validate_annotation(result)
             annotation['suggested_by'] = source

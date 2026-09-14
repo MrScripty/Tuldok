@@ -21,9 +21,15 @@ def start():
         def do_POST(self):
             body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             requests.append((self.path,body,dict(self.headers)))
+            if body['model']=='missing-projector':
+                encoded=json.dumps({'error':{'message':'image input is not supported - provide the mmproj'}}).encode()
+                self.send_response(500);self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded);return
             value=json.loads(json.dumps(RESULT))
+            value.update(corner_reference='image',book_top_left='top_left')
+            if body['model'].startswith('rotation-'):value['book_top_left']=['top_left','top_right','bottom_right','bottom_left'][int(body['model'][-1])]
+            if body['model']=='unknown-orientation':value['book_top_left']=None
             if body['model']=='invalid-corners':value['corners'][0]['x']=1.5
-            if body['model']=='no-book':value.update(book_present=False,crop_suitable=False,corners=[])
+            if body['model']=='no-book':value.update(book_present=False,crop_suitable=False,corners=[],book_top_left=None)
             reason='length' if body['model']=='truncated' else 'stop'
             raw=json.dumps(value)
             self.send_response(200);self.send_header('Content-Type','text/event-stream');self.end_headers()

@@ -37,6 +37,27 @@ class AITests(unittest.TestCase):
         saved=self.data.save(self.sample['id'],dict(book_id='b',session_id='s',revision=1,annotation=response['annotation']))
         self.assertEqual(saved['annotation']['suggested_by']['provider'],'llamacpp')
 
+    def test_ai_corner_identity_follows_book_rotation(self):
+        for start in range(4):
+            with self.subTest(start=start):
+                response=self.data.suggest(dict(self.body,model='rotation-'+str(start)))
+                corners=response['annotation']['corners']
+                self.assertEqual([c['name'] for c in corners],[c['name'] for c in RESULT['corners']])
+                expected=RESULT['corners'][start:]+RESULT['corners'][:start]
+                self.assertEqual([(c['x'],c['y']) for c in corners],[(c['x'],c['y']) for c in expected])
+                self.assertEqual(response['annotation']['corner_reference'],'book')
+        self.assertIsNone(self.data.sample(self.sample['id'])['annotation'])
+
+    def test_ambiguous_book_orientation_does_not_replace_label(self):
+        with self.assertRaisesRegex(ValueError,'orientation'):
+            self.data.suggest(dict(self.body,model='unknown-orientation'))
+        self.assertIsNone(self.data.sample(self.sample['id'])['annotation'])
+
+    def test_server_error_explains_missing_projector(self):
+        with self.assertRaisesRegex(ai_codex.CodexError, 'HTTP 500.*mmproj'):
+            self.data.suggest(dict(self.body,model='missing-projector'))
+        self.assertIsNone(self.data.sample(self.sample['id'])['annotation'])
+
     def test_openrouter_catalog_and_auth(self):
         with patch.object(ai_openrouter,'BASE_URL',self.url):
             catalog=ai.models(dict(provider='openrouter',api_key='test-key'))

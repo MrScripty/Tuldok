@@ -1,0 +1,61 @@
+// Explicit real-model acceptance: PUMAS_GATEWAY, PUMAS_MODEL, TULDOK_IMAGE and TULDOK_EVIDENCE_DIR are required.
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
+const {spawn}=require('node:child_process');
+const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-images-')),children=[];
+const evidence=process.env.TULDOK_EVIDENCE_DIR; if(evidence)fs.mkdirSync(evidence,{recursive:true});
+const gateway=process.env.PUMAS_GATEWAY,model=process.env.PUMAS_MODEL;
+assert(gateway&&model&&evidence,'Set PUMAS_GATEWAY, PUMAS_MODEL and TULDOK_EVIDENCE_DIR');
+let ws;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function until(fn,attempts=200){for(let i=0;i<attempts;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+(async()=>{
+  const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
+  const port=await until(()=>output.match(/Tuldok: http:\/\/127\.0\.0\.1:(\d+)/)?.[1]);
+  launch(process.env.BROWSER||'/opt/brave.com/brave/brave',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:'ignore'});
+  const active=path.join(temporary,'browser','DevToolsActivePort');
+  const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
+  ws=new WebSocket(tabs[0].webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map(),errors=[];
+  ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await send('Page.enable');await send('Runtime.enable');
+  const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);
+  await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
+  assert(process.env.TULDOK_IMAGE,'Set TULDOK_IMAGE to a local book photo');
+  const source=fs.readFileSync(process.env.TULDOK_IMAGE);
+  const imported=await fetch('http://127.0.0.1:'+port+'/api/samples',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:source.toString('base64'),filename:'book-regression.png',session_id:'release-acceptance',book_id:'regression-book',split:'unassigned'})});
+  assert.equal(imported.status,201);const sample=await imported.json();
+  await send('Page.navigate',{url:'http://127.0.0.1:'+port});
+  await until(()=>evaluate('!!document.querySelector("#samples .sample")'));
+  await evaluate('document.querySelector("#samples .sample").click()');
+  await until(()=>evaluate('!document.getElementById("label-form").hidden'));
+  await evaluate('document.getElementById("ai-settings").open=true');
+  await fill('ai-provider','llamacpp');await fill('ai-url',gateway);await click('ai-refresh');
+  await until(()=>evaluate('!document.getElementById("ai-refresh").disabled&&document.getElementById("ai-model").options.length>0'));
+  await fill('ai-model',model);assert.equal(await evaluate('document.getElementById("ai-model").value'),model);
+  const started=Date.now();await click('suggest');
+  await until(async()=>{
+    const status=await evaluate('({status:document.getElementById("save-status").textContent,busy:document.getElementById("suggest").disabled,notice:document.getElementById("notice").textContent})');
+    if(!status.busy&&status.status!=='AI suggestion · unsaved')throw Error(JSON.stringify(status));
+    return status.status==='AI suggestion · unsaved'&&!status.busy;
+  },1900);
+  const before=await(await fetch('http://127.0.0.1:'+port+'/api/samples')).json();
+  assert.equal(before[0].annotation,null,'Suggestion remains unsaved');
+  const durationSeconds=(Date.now()-started)/1000;
+  fs.writeFileSync(path.join(evidence,'suggested-corners.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  await click('save');await until(()=>evaluate('document.getElementById("save-status").textContent==="Saved"'));
+  const rows=await(await fetch('http://127.0.0.1:'+port+'/api/samples')).json();
+  assert.equal(rows[0].annotation.suggested_by.provider,'llamacpp');
+  assert.equal(rows[0].annotation.book_present,true,'Real VLM identifies the book');
+  assert.equal(rows[0].annotation.corners.length,4);
+  assert.deepEqual(errors,[]);
+  const result={fixture:false,gateway,model,duration_seconds:durationSeconds,source_sha256:crypto.createHash('sha256').update(source).digest('hex'),annotation:rows[0].annotation};
+  fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
+})().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{if(ws)ws.close();for(const child of children.reverse())child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),300);});

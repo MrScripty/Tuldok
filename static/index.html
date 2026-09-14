@@ -17,7 +17,7 @@
 <div class="workspace-bar"><div><h1 id="view-title">Camera</h1></div><div class="spacer"></div><span id="dimensions"></span></div>
 <div class="viewer" id="viewer">
 <div id="camera-stage" class="stage"><video id="video" autoplay playsinline muted></video><div id="camera-empty" class="empty"><div class="target-icon">⌜ ⌝<br>⌞ ⌟</div></div><div id="countdown" hidden></div></div>
-<div id="image-stage" class="stage" hidden><img id="source" alt="Image to label" draggable="false"><svg id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Corner labels"></svg></div>
+<div id="image-stage" class="stage" hidden><img id="source" alt="Image to label" draggable="false"><svg id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Corner labels"></svg><canvas id="corner-zoom" hidden aria-hidden="true"></canvas></div>
 <div id="generation-stage" class="stage" hidden><img id="generated-image" alt="Generated image" hidden><p id="generation-empty" class="empty">Enter a prompt to generate an image.</p></div>
 </div>
 <div id="generation-actions" class="action-bar" hidden><button id="generate" class="primary" disabled>Generate image</button><button id="generation-cancel" hidden>Cancel</button><span id="generation-status" role="status"></span><div class="spacer"></div><button id="generation-download" disabled>Save PNG</button><button id="generation-add" disabled>Add to collection</button></div>
@@ -40,8 +40,7 @@
 <label>Provider<select id="ai-provider"><option value="codex">Codex</option><option value="openrouter">OpenRouter</option><option value="llamacpp">llama.cpp</option></select></label>
 <label id="ai-url-row" hidden>Server URL<input id="ai-url" value="http://127.0.0.1:8080" autocomplete="off"></label>
 <label id="ai-key-row" hidden>OpenRouter API key<input id="ai-key" type="password" autocomplete="off" placeholder="OPENROUTER_API_KEY on server"></label>
-<label>Model<input id="ai-model" list="ai-models" autocomplete="off" placeholder="Choose or enter a vision model"></label>
-<datalist id="ai-models"></datalist>
+<label>Model<select id="ai-model"><option value="">Refresh models to choose a model</option></select></label>
 <label id="ai-effort-row">Thinking level<select id="ai-effort"><option>low</option><option>medium</option><option>high</option><option>xhigh</option></select></label>
 <button id="ai-refresh" type="button">Refresh models</button>
 </details>

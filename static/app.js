@@ -34,6 +34,7 @@ function controls(){
   $('import').disabled=busy;
   $('suggest').disabled=busy||!selected||!$('ai-model').value.trim();
   document.querySelectorAll('#ai-settings input, #ai-settings select, #ai-settings button').forEach(element=>element.disabled=busy);
+  $('ai-model').disabled=busy||!aiCatalog.length;
   document.querySelectorAll('#label-form input, #label-form select, #label-form button').forEach(element=>element.disabled=busy);
   if(annotation)$('suitable').disabled=busy||!annotation.book_present;
 }
@@ -137,16 +138,49 @@ function renderOverlay(){
   const svg=$('overlay'),svgHeight=1000*dimensions[1]/dimensions[0];
   svg.setAttribute('viewBox','0 0 1000 '+svgHeight);
   const radius=Math.max(16,12000/($('image-stage').getBoundingClientRect().width||500));
-  svg.replaceChildren();if(!annotation?.book_present)return;
+  renderZoom();if(!annotation?.book_present){svg.replaceChildren();return;}
+  // Keep pointer targets mounted so a drag cannot lose capture during redraw.
+  for(const node of [...svg.children])if(node.tagName!=='circle')node.remove();
+  for(const node of svg.querySelectorAll('circle'))if(annotation.corners[Number(node.dataset.corner)].visibility!=='visible')node.remove();
   if(annotation.corners.every(c=>c.visibility==='visible'&&c.x!==null)){
-    svg.append(svgElement('polygon',{points:annotation.corners.map(c=>c.x*1000+','+c.y*svgHeight).join(' ')}));
+    svg.prepend(svgElement('polygon',{points:annotation.corners.map(c=>c.x*1000+','+c.y*svgHeight).join(' ')}));
   }
   annotation.corners.forEach((corner,i)=>{
     if(corner.visibility!=='visible')return;
     const x=(corner.x??defaults[i][0])*1000,y=(corner.y??defaults[i][1])*svgHeight;
-    svg.append(svgElement('circle',{cx:x,cy:y,r:radius,tabindex:0,role:'button','aria-label':titles[i]+' corner','data-corner':i,class:(active===i?'selected ':'')+(corner.x===null?'unplaced':'')}));
-    const text=svgElement('text',{x,y});text.style.fontSize=radius*1.2+'px';text.textContent=i+1;svg.append(text);
+    let target=svg.querySelector('[data-corner="'+i+'"]');
+    if(!target){target=svgElement('circle',{});svg.append(target);}
+    const attributes={cx:x,cy:y,r:radius,tabindex:0,role:'button','aria-label':titles[i]+' corner','data-corner':i,class:(active===i?'selected ':'')+(corner.x===null?'unplaced':'')};
+    for(const [name,value] of Object.entries(attributes))target.setAttribute(name,value);
+    const arm=radius*.75,gap=radius*.15;
+    const cross=svgElement('path',{d:`M ${x-arm} ${y} H ${x-gap} M ${x+gap} ${y} H ${x+arm} M ${x} ${y-arm} V ${y-gap} M ${x} ${y+gap} V ${y+arm}`,class:'crosshair'+(active===i?' selected':'')+(corner.x===null?' unplaced':'')});
+    svg.append(cross.cloneNode(),cross);cross.classList.add('ink');
+    const text=svgElement('text',{x:x+radius,y:y-radius});text.style.fontSize=radius*1.2+'px';text.textContent=i+1;svg.append(text);
   });
+}
+// Magnify original pixels, never the scaled image or its annotation overlay.
+function renderZoom(){
+  const canvas=$('corner-zoom'),source=$('source'),corner=annotation?.corners[drag];
+  if(drag===null||!annotation?.book_present||!corner||!source.complete||!source.naturalWidth){canvas.hidden=true;return;}
+  const {width,height}=$('image-stage').getBoundingClientRect();
+  const x=corner.x??defaults[drag][0],y=corner.y??defaults[drag][1];
+  const distances={left:x*width,right:(1-x)*width,top:y*height,bottom:(1-y)*height};
+  // Keep the panel stable unless the marker enters its third of the image.
+  let side=canvas.dataset.side;
+  if(canvas.hidden||!side||({left:x<1/3,right:x>2/3,top:y<1/3,bottom:y>2/3})[side]){
+    side=Object.keys(distances).reduce((a,b)=>distances[a]>distances[b]?a:b);
+  }
+  canvas.dataset.side=side;canvas.hidden=false;
+  const vertical=side==='left'||side==='right',w=vertical?width/3:width,h=vertical?height:height/3;
+  const ratio=window.devicePixelRatio||1;
+  canvas.width=Math.max(1,Math.round(w*ratio));canvas.height=Math.max(1,Math.round(h*ratio));
+  const ctx=canvas.getContext('2d');ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.fillStyle='#303b35';ctx.fillRect(0,0,w,h);ctx.imageSmoothingEnabled=false;
+  const scale=6;
+  ctx.drawImage(source,w/2-(x*(source.naturalWidth-1)+.5)*scale,h/2-(y*(source.naturalHeight-1)+.5)*scale,source.naturalWidth*scale,source.naturalHeight*scale);
+  ctx.beginPath();ctx.moveTo(w/2-18,h/2);ctx.lineTo(w/2-3,h/2);ctx.moveTo(w/2+3,h/2);ctx.lineTo(w/2+18,h/2);
+  ctx.moveTo(w/2,h/2-18);ctx.lineTo(w/2,h/2-3);ctx.moveTo(w/2,h/2+3);ctx.lineTo(w/2,h/2+18);
+  ctx.strokeStyle='#302a20';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle='#ffe4a0';ctx.lineWidth=2;ctx.stroke();
 }
 function place(i,x,y){
   const corner=annotation.corners[i];if(corner.visibility!=='visible')return;
@@ -169,18 +203,21 @@ $('overlay').onpointerdown=event=>{
   drag=active;$('overlay').setPointerCapture(event.pointerId);place(active,...pointerPosition(event));
 };
 $('overlay').onpointermove=event=>{
-  if(event.buttons===0){drag=null;return;}
+  if(event.buttons===0){endDrag();return;}
   if(drag!==null)place(drag,...pointerPosition(event));
 };
-$('overlay').onpointerup=()=>{drag=null;};
-$('overlay').onpointercancel=()=>{drag=null;};
-$('overlay').onlostpointercapture=()=>{drag=null;};
+function endDrag(){drag=null;$('corner-zoom').hidden=true;}
+$('overlay').onpointerup=endDrag;
+$('overlay').onpointercancel=endDrag;
+$('overlay').onlostpointercapture=endDrag;
+window.addEventListener('blur',endDrag);
+window.addEventListener('keydown',event=>{if(event.key==='Escape')endDrag();});
 $('overlay').onkeydown=event=>{
   const i=Number(event.target.dataset.corner),delta={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];
   if(busy||!delta||!Number.isInteger(i))return;
   event.preventDefault();active=i;
-  const c=annotation.corners[i],step=event.shiftKey?.01:.001;
-  place(i,(c.x??defaults[i][0])+delta[0]*step,(c.y??defaults[i][1])+delta[1]*step);
+  const c=annotation.corners[i],step=event.shiftKey?10:1;
+  place(i,(c.x??defaults[i][0])+delta[0]*step/Math.max(1,dimensions[0]-1),(c.y??defaults[i][1])+delta[1]*step/Math.max(1,dimensions[1]-1));
   $('overlay').querySelector('[data-corner="'+i+'"]')?.focus();
 };
 $('present-yes').onclick=()=>{annotation.book_present=true;changed();renderAnnotation();};
@@ -296,7 +333,7 @@ function aiBody(){
 }
 function rememberAI(){
   const body=aiBody();
-  aiPreferences[body.provider]={model:body.model,effort:body.effort,server_url:body.server_url};
+  aiPreferences[body.provider]={model:body.model||aiPreferences[body.provider]?.model||'',effort:body.effort,server_url:body.server_url};
   localStorage.setItem('tuldok-ai',JSON.stringify({provider:body.provider,providers:aiPreferences}));
   controls();
 }
@@ -306,16 +343,19 @@ function renderEfforts(){
   $('ai-effort').replaceChildren(...levels.map(level=>{const option=document.createElement('option');option.value=level;option.textContent=level;return option;}));
   $('ai-effort').value=levels.includes(old)?old:levels[0];
 }
-function renderModels(items){
-  aiCatalog=items;$('ai-models').replaceChildren(...items.map(item=>{const option=document.createElement('option');option.value=item.id;option.label=item.name||item.id;return option;}));
+function renderModels(items,preferred=$('ai-model').value||aiPreferences[$('ai-provider').value]?.model){
+  aiCatalog=items;
+  const options=items.map(item=>{const option=document.createElement('option');option.value=item.id;option.textContent=item.name||item.id;return option;});
+  if(!options.length){const option=document.createElement('option');option.value='';option.textContent='Refresh models to choose a model';options.push(option);}
+  $('ai-model').replaceChildren(...options);
+  $('ai-model').value=items.some(item=>item.id===preferred)?preferred:items[0]?.id||'';
   renderEfforts();
 }
 function chooseProvider(){
   const provider=$('ai-provider').value,prefs=aiPreferences[provider]||{};
   $('ai-url-row').hidden=provider!=='llamacpp';$('ai-key-row').hidden=provider!=='openrouter';$('ai-effort-row').hidden=provider!=='codex';
-  $('ai-model').value=prefs.model||(provider==='codex'?aiConfig.default||'':'');
   $('ai-url').value=prefs.server_url||'http://127.0.0.1:8080';
-  renderModels(provider==='codex'?aiConfig.models||[]:[]);
+  renderModels(provider==='codex'?aiConfig.models||[]:[],prefs.model||(provider==='codex'?aiConfig.default:''));
   if(prefs.effort&&[...$('ai-effort').options].some(option=>option.value===prefs.effort))$('ai-effort').value=prefs.effort;
   rememberAI();
 }
@@ -330,14 +370,13 @@ async function initializeAI(){
   chooseProvider();
 }
 $('ai-provider').onchange=chooseProvider;
-$('ai-model').oninput=()=>{renderEfforts();rememberAI();};
-$('ai-effort').onchange=rememberAI;$('ai-url').onchange=rememberAI;
+$('ai-model').onchange=()=>{renderEfforts();rememberAI();};
+$('ai-effort').onchange=rememberAI;$('ai-url').onchange=()=>{renderModels([]);rememberAI();};
 $('ai-refresh').onclick=()=>run(async()=>{
   const result=await api('/api/ai/models',aiBody());
   renderModels(result.models);
-  if(!$('ai-model').value&&result.models.length)$('ai-model').value=result.models[0].id;
   renderEfforts();rememberAI();
-  if(!result.models.length)notice('No compatible models found. Enter a vision model ID directly.');
+  if(!result.models.length)notice('No compatible models found. Check the provider and server URL, then refresh models.');
 });
 $('suggest').onclick=()=>run(async()=>{
   const imageId=selected.id,revision=selected.revision,previousStatus=$('save-status').textContent;

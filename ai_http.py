@@ -167,12 +167,12 @@ def request(base, path, payload=None, timeout=900, headers=None, label='Local mo
                         403: 'Check account permissions and provider restrictions.',
                         429: 'Rate limit reached; wait before trying again.'}.get(response.status,
                         'Check the selected model and structured-output support.')
-                if response.status == 400:
+                if response.status == 400 or response.status >= 500:
                     try:
                         transport.settimeout(max(.001, min(2, deadline - time.monotonic())))
                         error_data = response.read(MAX_ERROR_BODY + 1)
                         specific = request_error_hint(error_data) if len(error_data) <= MAX_ERROR_BODY else ''
-                        if label == 'OpenRouter':
+                        if label == 'OpenRouter' or response.status >= 500:
                             hint = provider_error_detail(error_data, payload, headers)
                         elif specific:
                             hint = specific

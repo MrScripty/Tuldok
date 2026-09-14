@@ -15,13 +15,13 @@ for line in sys.stdin:
         model=params['model']
         send({'id':request['id'],'result':{'thread':{'id':'test-thread'}}})
     elif method=='turn/start':
-        assert params['outputSchema']['properties']['corner_reference']['enum']==['book']
+        assert params['outputSchema']['properties']['corner_reference']['enum']==['image']
         assert params['input'][1]['type']=='localImage'
         assert Path(params['input'][1]['path']).read_bytes().startswith(b'\xff\xd8')
         send({'id':request['id'],'result':{}})
         if model=='tools':
             send({'id':500,'method':'item/commandExecution/requestApproval','params':{}})
             continue
-        text=json.dumps(RESULT)
+        text=json.dumps(dict(RESULT,corner_reference='image',book_top_left='top_left'))
         send({'method':'item/agentMessage/delta','params':{'threadId':'test-thread','itemId':'answer','delta':text}})
         send({'method':'turn/completed','params':{'threadId':'test-thread','turn':{'status':'completed','items':[{'type':'agentMessage','text':text}]}}})
