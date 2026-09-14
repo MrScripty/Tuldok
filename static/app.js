@@ -6,7 +6,7 @@ let samples=[],selected=null,annotation=null,active=0,dirty=false,busy=false,str
 let placementArmed=false;
 let dimensions=[4,3],mode='camera',noticeTimer;
 let generationCatalog=[],generationPreferred='',generationState={jobs:[],entries:[]};
-let promptCatalog=[],promptPreferred='',pollingGeneration=false;
+let promptCatalog=[],promptPreferred='',pollingGeneration=false,generationEpoch=0;
 const clone=value=>JSON.parse(JSON.stringify(value));
 function notice(message){clearTimeout(noticeTimer);$('notice').textContent=message;$('notice').hidden=!message;if(message)noticeTimer=setTimeout(()=>notice(''),12000);}
 $('notice').onclick=()=>notice('');
@@ -22,7 +22,7 @@ function controls(){
   $('capture').disabled=!stream||busy||remaining>0;
   $('timer').disabled=!stream||busy;
   $('start-camera').disabled=busy;
-  for(const id of ['save','save-next'])$(id).disabled=!selected||busy;
+  for(const id of ['save','save-next','delete-image'])$(id).disabled=!selected||busy;
   $('export').disabled=busy||!samples.some(s=>s.annotation);
   $('camera-view').disabled=busy;
   $('generation-view').disabled=busy;
@@ -55,7 +55,7 @@ function renderList(){
   const queuedSamples=new Set(generationState.entries.map(entry=>entry.sample_id).filter(Boolean));
   const samplesById=new Map(samples.map(sample=>[sample.id,sample]));
   const entriesBySample=new Map(generationState.entries.map(entry=>[entry.sample_id,entry]));
-  const gallery=[...samples.filter(sample=>!queuedSamples.has(sample.id)),...generationState.entries.map(entry=>samplesById.get(entry.sample_id)||entry)];
+  const gallery=[...samples.filter(sample=>!queuedSamples.has(sample.id)),...generationState.entries.filter(entry=>entry.status!=='deleted').map(entry=>samplesById.get(entry.sample_id)||entry)];
   for(const sample of gallery.filter(s=>filter==='all'||(filter==='labeled')===!!s.annotation)){
     if(!sample.filename){renderPromptEntry(sample);continue;}
     const button=document.createElement('button');button.className='sample'+(sample.annotation?' labeled':'')+(selected?.id===sample.id?' active':'');
@@ -257,6 +257,17 @@ async function save(next=false){
 }
 $('save').onclick=()=>run(()=>save());
 $('save-next').onclick=()=>run(()=>save(true));
+$('delete-image').onclick=()=>run(async()=>{
+  if(!selected)return;
+  const deleting=selected,index=samples.findIndex(sample=>sample.id===deleting.id);
+  if(!confirm('Permanently delete "'+deleting.filename+'" from the dataset? Its original image, thumbnail, saved label, and any unsaved edits will be removed.'))return;
+  const result=await api('/api/samples/delete/'+deleting.id,{revision:deleting.revision});
+  generationEpoch++;samples=result.samples;generationState={jobs:result.jobs,entries:result.entries};
+  selected=null;annotation=null;dirty=false;drag=null;$('source').removeAttribute('src');$('corner-zoom').hidden=true;
+  const next=samples[Math.min(index,samples.length-1)];
+  if(next)await select(next);else if(deleting.generation)showGeneration();else showCamera();
+  renderList();renderJobs();notice(result.warning||'Image deleted from the dataset.');
+});
 function navigate(direction){const index=samples.findIndex(s=>s.id===selected?.id),sample=samples[index+direction];if(sample)run(()=>select(sample));}
 $('previous').onclick=()=>navigate(-1);$('next').onclick=()=>navigate(1);
 async function startCamera(){
@@ -447,13 +458,15 @@ function renderJobs(){
 }
 function jobText(job){
   const prepared=generationState.entries.filter(entry=>entry.job_id===job.id).length;
-  return job.completed+' / '+job.config.count+' images · '+(job.status==='preparing'?prepared+' prompts prepared':job.status);
+  const deleted=generationState.entries.filter(entry=>entry.job_id===job.id&&entry.status==='deleted').length;
+  return job.completed+' / '+job.config.count+' images'+(deleted?' ('+deleted+' deleted)':'')+' · '+(job.status==='preparing'?prepared+' prompts prepared':job.status);
 }
 async function refreshGeneration(){
   if(pollingGeneration)return;
-  pollingGeneration=true;
+  pollingGeneration=true;const epoch=generationEpoch;
   try{
     const {samples:updatedSamples,...state}=await api('/api/generation/jobs');
+    if(epoch!==generationEpoch)return;
     // Queue entries and saved images come from one consistent server snapshot.
     if(JSON.stringify(state)!==JSON.stringify(generationState)){
       samples=updatedSamples;generationState=state;renderList();renderJobs();controls();

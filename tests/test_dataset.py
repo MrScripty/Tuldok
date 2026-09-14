@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import tempfile
+import sqlite3
 import unittest
 import zipfile
 from pathlib import Path
@@ -115,6 +116,55 @@ class DatasetTests(unittest.TestCase):
         with self.assertRaises(Conflict):self.add()
         with self.assertRaises(ValueError):self.data.add(dict(image='bad',session_id='s'))
         self.assertEqual(len(self.data.rows()),1)
+
+    def test_delete_removes_files_labels_export_and_allows_reimport(self):
+        deleted = self.save(self.add())
+        kept = self.save(self.add('blue'))
+        result = self.data.delete(deleted['id'], {'revision': deleted['revision']})
+        self.assertEqual(result['deleted'], deleted['id'])
+        self.assertEqual([row['id'] for row in result['samples']], [kept['id']])
+        self.assertFalse((self.data.path / 'images' / deleted['id']).exists())
+        self.assertFalse(list((self.data.path / '.deleting-images').iterdir()))
+        with self.data.export() as target, zipfile.ZipFile(target) as archive:
+            self.assertEqual(json.loads(archive.read('labels.jsonl'))['id'], kept['id'])
+            self.assertNotIn('images/' + deleted['id'] + '.png', archive.namelist())
+        self.assertNotEqual(self.add()['id'], deleted['id'])
+
+    def test_stale_delete_preserves_latest_image_and_label(self):
+        before = self.add()
+        saved = self.save(before)
+        for revision in (before['revision'], True, None):
+            with self.assertRaises(Conflict):
+                self.data.delete(before['id'], {'revision': revision})
+        self.assertEqual(self.data.sample(saved['id']), saved)
+        self.assertTrue((self.data.path / 'images' / saved['id'] / 'source').is_file())
+        with self.assertRaises(ValueError):
+            self.data.delete('../outside', {'revision': 1})
+
+    def test_delete_database_failure_restores_files(self):
+        sample = self.add()
+        self.data.db.execute("CREATE TRIGGER refuse_delete BEFORE DELETE ON samples BEGIN SELECT RAISE(ABORT, 'fixture'); END")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.data.delete(sample['id'], {'revision': sample['revision']})
+        self.assertIsNotNone(self.data.sample(sample['id']))
+        self.assertTrue((self.data.path / 'images' / sample['id'] / 'source').is_file())
+
+    def test_interrupted_deletion_recovers_from_database_commit_state(self):
+        restore = self.add()
+        remove = self.add('blue')
+        staging = self.data.path / '.deleting-images'
+        staging.mkdir()
+        for sample in (restore, remove):
+            (self.data.path / 'images' / sample['id']).rename(staging / sample['id'])
+        with self.data.db:
+            self.data.db.execute('DELETE FROM samples WHERE id=?', (remove['id'],))
+        reopened = Dataset(self.tmp.name)
+        try:
+            self.assertTrue((reopened.path / 'images' / restore['id'] / 'source').is_file())
+            self.assertFalse((reopened.path / 'images' / remove['id']).exists())
+            self.assertFalse(list(staging.iterdir()))
+        finally:
+            reopened.close()
 
     def test_negative_sessions_group_and_persistence(self):
         a=self.add(book='')

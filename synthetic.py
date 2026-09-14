@@ -206,7 +206,7 @@ class Jobs:
                     with self.lock, self.db:
                         self._entry(entry)
                 entry = entries[ordinal]
-                if entry.get('sample_id'):
+                if entry.get('sample_id') or entry['status'] == 'deleted':
                     continue
                 entry.update(status='generating', error='')
                 with self.lock, self.db:

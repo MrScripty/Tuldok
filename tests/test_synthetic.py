@@ -141,6 +141,29 @@ class SyntheticTests(unittest.TestCase):
         self.assertEqual([e['status'] for e in state['entries']], ['completed', 'failed'])
         self.assertEqual(len(list((self.dataset.path / 'images').iterdir())), 1)
 
+    def test_deleted_generated_image_is_not_recreated_on_resume(self):
+        calls = []
+        def render(body, **kwargs):
+            calls.append(body['seed'])
+            if body['seed'] == 21:
+                raise ValueError('fixture stop')
+            return self.image(body)
+        with patch.object(self.dataset.image_requests, 'generate', side_effect=render):
+            job = self.jobs.start(self.config(seed=20))
+            self.wait()
+        sample = self.dataset.rows()[0]
+        result = self.dataset.delete(sample['id'], {'revision': sample['revision']})
+        self.assertEqual(result['entries'][0]['status'], 'deleted')
+        self.assertIsNone(result['entries'][0]['sample_id'])
+        with patch.object(self.dataset.image_requests, 'generate', side_effect=self.image) as resumed:
+            self.jobs.resume(job['id'])
+            state = self.wait()
+            self.assertEqual([call.args[0]['seed'] for call in resumed.call_args_list], [21, 22])
+        self.assertEqual(state['jobs'][0]['status'], 'completed')
+        self.assertEqual(len(self.dataset.rows()), 2)
+        self.assertEqual(state['entries'][0]['status'], 'deleted')
+        self.assertFalse((self.dataset.path / 'images' / sample['id']).exists())
+
     def test_invalid_request_creates_no_job(self):
         for changes in ({'count': True}, {'count': 0}, {'count': 10001}, {'strategy': 'unknown'}, {'session_id': ''}, {'strategy': 'varied'}, {'seed': -1}):
             with self.subTest(changes=changes), self.assertRaises(ValueError):

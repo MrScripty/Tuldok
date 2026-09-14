@@ -130,6 +130,7 @@ class Dataset:
             revision INTEGER NOT NULL DEFAULT 1, annotation TEXT)""")
         self.db.commit()
         self.generation_jobs = synthetic.Jobs(self)
+        self._recover_deletions()
 
     def close(self):
         self.generation_jobs.close()
@@ -216,6 +217,50 @@ class Dataset:
                 raise
         return self.sample(sample_id)
 
+    def _recover_deletions(self):
+        staging = self.path / '.deleting-images'
+        if not staging.exists():
+            return
+        for folder in staging.iterdir():
+            if not folder.is_dir() or len(folder.name) != 32 or any(c not in '0123456789abcdef' for c in folder.name):
+                continue
+            if self.db.execute('SELECT 1 FROM samples WHERE id=?', (folder.name,)).fetchone():
+                folder.rename(self.path / 'images' / folder.name)
+            else:
+                shutil.rmtree(folder)
+
+    def delete(self, sample_id, body):
+        with self.lock:
+            row = self.db.execute('SELECT revision FROM samples WHERE id=?', (sample_id,)).fetchone()
+            if not row:
+                raise ValueError('Image not found. It may already have been deleted.')
+            if type(body.get('revision')) is not int or body['revision'] != row['revision']:
+                raise Conflict('This image changed in another tab. Reload it before deleting.')
+            folder = self.path / 'images' / sample_id
+            staging = self.path / '.deleting-images'
+            staging.mkdir(exist_ok=True)
+            staged = staging / sample_id
+            # Rename first, then commit the row deletion. Startup restores staged
+            # files if a crash occurred before commit, or removes them afterwards.
+            folder.rename(staged)
+            try:
+                with self.db:
+                    for record in self.db.execute('SELECT data FROM generation_entries').fetchall():
+                        entry = json.loads(record[0])
+                        if entry.get('sample_id') == sample_id:
+                            entry.update(status='deleted', sample_id=None, deleted_at=now())
+                            self.generation_jobs._entry(entry)
+                    self.db.execute('DELETE FROM samples WHERE id=?', (sample_id,))
+            except Exception:
+                staged.rename(folder)
+                raise
+            warning = ''
+            try:
+                shutil.rmtree(staged)
+            except OSError:
+                warning = 'Image removed from the dataset. Remaining file cleanup will be retried when Tuldok restarts.'
+            return dict(self.generation_jobs.snapshot(), samples=self.rows(), deleted=sample_id, warning=warning)
+
     def save(self, sample_id, body):
         annotation = validate_annotation(body.get('annotation', {}))
         meta = metadata(body)
@@ -255,6 +300,10 @@ class Dataset:
             self.ai_lock.release()
 
     def export(self):
+        with self.lock:
+            return self._export()
+
+    def _export(self):
         rows = [row for row in self.rows() if row['annotation']]
         if not rows:
             raise ValueError('Label at least one image before exporting.')
@@ -312,11 +361,13 @@ def make_handler(dataset):
                 if path == '/api/samples':
                     return self.reply(dataset.rows())
                 if path.startswith(('/api/image/', '/api/thumb/')):
-                    sample = dataset.sample(path.rsplit('/', 1)[-1])
-                    if not sample:
-                        return self.reply({'error': 'Image not found.'}, 404)
-                    thumb = path.startswith('/api/thumb/')
-                    return self.reply((dataset.path / 'images' / sample['id'] / ('thumb.jpg' if thumb else 'image.png')).read_bytes(), content_type='image/jpeg' if thumb else 'image/png')
+                    with dataset.lock:
+                        sample = dataset.sample(path.rsplit('/', 1)[-1])
+                        if not sample:
+                            return self.reply({'error': 'Image not found.'}, 404)
+                        thumb = path.startswith('/api/thumb/')
+                        data = (dataset.path / 'images' / sample['id'] / ('thumb.jpg' if thumb else 'image.png')).read_bytes()
+                    return self.reply(data, content_type='image/jpeg' if thumb else 'image/png')
                 if path == '/api/export':
                     with dataset.export() as archive:
                         self.send_response(200)
@@ -374,6 +425,8 @@ def make_handler(dataset):
                     return self.reply(dataset.suggest(body))
                 if path == '/api/samples':
                     return self.reply(dataset.add(body), 201)
+                if path.startswith('/api/samples/delete/'):
+                    return self.reply(dataset.delete(path.rsplit('/', 1)[-1], body))
                 if path.startswith('/api/labels/'):
                     return self.reply(dataset.save(path.rsplit('/', 1)[-1], body))
                 return self.reply({'error': 'Not found.'}, 404)

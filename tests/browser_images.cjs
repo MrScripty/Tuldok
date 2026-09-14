@@ -67,9 +67,28 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await until(()=>evaluate('document.getElementById("generation-status").textContent.includes("cancelled")'));
   assert.equal(await evaluate('document.querySelectorAll(".prompt-entry").length'),1,'Repeat mode does not pre-create 500 entries');
   await until(async()=>{const requests=await(await fetch(gateway+'/requests')).json();return requests.some(item=>item.body.prompt==='slow'&&item.cancelled);});
+  // Deletion is tested only against this temporary fixture dataset.
+  await evaluate('document.querySelector(".sample:not(.prompt-entry)").click()');
+  await until(()=>evaluate('!document.getElementById("delete-image").disabled'));
+  const deletedId=await evaluate('document.querySelector(".sample.active").dataset.sampleId');
+  await evaluate('window.confirm=()=>false');await click('delete-image');
+  assert.equal((await(await fetch('http://127.0.0.1:'+port+'/api/samples')).json()).length,12,'Cancelling deletion preserves the dataset');
+  await evaluate('window.confirm=()=>true');await click('delete-image');
+  await until(()=>evaluate('document.querySelectorAll(".sample:not(.prompt-entry)").length===11&&!document.getElementById("delete-image").disabled'));
+  assert.equal(fs.existsSync(path.join(temporary,'data','images',deletedId)),false,'Deletion removes source, normalized image and thumbnail');
+  assert.equal(await evaluate('document.getElementById("export").disabled'),true,'Deleted label no longer enables export');
+  for(let count=10;count>=0;count--){
+    await click('delete-image');
+    await until(()=>evaluate('document.querySelectorAll(".sample:not(.prompt-entry)").length==='+count+'&&!document.getElementById("generation-view").disabled'));
+  }
+  assert.equal(await evaluate('document.getElementById("generation-stage").hidden'),false,'Deleting the last generated image returns to generation');
+  assert.equal(await evaluate('document.querySelectorAll(".prompt-entry").length'),1,'Deleted images do not return as pending prompts');
+  const beforeDeleteReload=loads;await send('Page.reload');await until(()=>loads>beforeDeleteReload);
+  await until(()=>evaluate('document.querySelectorAll(".prompt-entry").length===1'));
+  assert.equal(await evaluate('document.querySelectorAll(".sample:not(.prompt-entry)").length'),0,'Deletion persists after reload');
   if(evidence)fs.writeFileSync(path.join(evidence,'fixture-display.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
   assert.deepEqual(errors,[],'No browser runtime exceptions');
-  const result={fixture:true,generated_images:12,unique_prompts:12,ai_label_saved:true,queue_survives_reload:true,repeat_pending_entries:1,cancelled_backend_request:true};
+  const result={fixture:true,generated_images:12,unique_prompts:12,ai_label_saved:true,queue_survives_reload:true,repeat_pending_entries:1,cancelled_backend_request:true,deletion_verified:true};
   if(evidence)fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result));
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{if(ws)ws.close();for(const child of children.reverse())child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),300);});

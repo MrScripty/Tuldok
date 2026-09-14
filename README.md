@@ -21,6 +21,13 @@ Open http://127.0.0.1:8091. Change the port or data location with --port and --d
 5. Save, or Save & next to advance to the next unlabeled image. Returning to Camera keeps the live camera available.
 6. Export labeled images as a ZIP containing images/, labels.jsonl, and schema.json. Unlabeled samples are excluded. Unassigned splits remain explicitly unassigned.
 
+Select an image in the collection and click **Delete image** to permanently remove
+its original file, thumbnail, normalized image, and saved label. The confirmation
+also covers unsaved edits. The next image opens automatically. Deleted images are
+excluded from future exports; previously downloaded exports are unchanged. Generated
+images stay deleted when their job resumes, and job progress shows the deleted count.
+If another tab has edited an image, reload before deleting it.
+
 ## AI corner suggestions
 
 Open **AI model**, choose Codex, OpenRouter, or llama.cpp, and select or enter a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.

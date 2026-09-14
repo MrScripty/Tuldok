@@ -29,3 +29,5 @@
 #generation-entry-prompt{padding:16px;border:1px solid var(--line);white-space:pre-wrap;line-height:1.6}
 .prompt-entry{min-height:64px;border-style:dashed}.prompt-entry strong{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 .workspace-bar{flex-wrap:wrap}
+
+button.danger{color:#9b352b;border-color:#d6b3ac}button.danger:hover:not(:disabled){background:#fae8e4}
