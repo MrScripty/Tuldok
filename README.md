@@ -115,4 +115,4 @@ The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the 
 
 ## Repository
 
-This is a local standalone repository. No remote host or public repository is configured. A distribution license has not yet been selected; add one before publishing.
+Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
