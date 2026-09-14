@@ -2,6 +2,7 @@
 import argparse
 import ai
 import ai_codex
+import image_generation
 import base64
 import hashlib
 import io
@@ -114,6 +115,7 @@ class Dataset:
         (self.path / 'images').mkdir(exist_ok=True)
         self.lock = threading.RLock()
         self.ai_lock = threading.Lock()
+        self.image_requests = image_generation.ImageRequests()
         self.db = sqlite3.connect(self.path / 'dataset.sqlite3', check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.execute('PRAGMA journal_mode=WAL')
@@ -278,7 +280,10 @@ def make_handler(dataset):
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
-            self.wfile.write(data)
+            try:
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
         def do_GET(self):
             path = urlsplit(self.path).path
@@ -326,6 +331,12 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/generation/models':
+                    return self.reply(image_generation.models(body))
+                if path == '/api/generation/cancel':
+                    return self.reply(dataset.image_requests.cancel(body.get('request_id')))
+                if path == '/api/generation/generate':
+                    return self.reply(dataset.image_requests.generate(body, self.connection))
                 if path == '/api/ai/models':
                     return self.reply(ai.models(body))
                 if path == '/api/ai/suggest':

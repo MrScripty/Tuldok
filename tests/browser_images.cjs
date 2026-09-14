@@ -1,0 +1,61 @@
+// Real browser and Tuldok HTTP workflow against a controlled image gateway.
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
+const {spawn}=require('node:child_process');
+const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-images-')),children=[];
+const evidence=process.env.TULDOK_EVIDENCE_DIR; if(evidence)fs.mkdirSync(evidence,{recursive:true});
+let ws;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function until(fn){for(let i=0;i<200;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+(async()=>{
+  const server=launch('python3',['-u','tests/browser_images_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
+  const port=await until(()=>output.match(/Tuldok: http:\/\/127\.0\.0\.1:(\d+)/)?.[1]);
+  const gateway=await until(()=>output.match(/FIXTURE_IMAGE_URL=(\S+)/)?.[1]);
+  launch(process.env.BROWSER||'/opt/brave.com/brave/brave',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:'ignore'});
+  const active=path.join(temporary,'browser','DevToolsActivePort');
+  const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
+  ws=new WebSocket(tabs[0].webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map(),errors=[];
+  ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await send('Page.enable');await send('Runtime.enable');
+  const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);
+  await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
+  await send('Page.navigate',{url:'http://127.0.0.1:'+port});
+  await until(()=>evaluate('!!document.getElementById("capture-session")?.value&&!document.getElementById("generation-view").disabled'));
+  await click('generation-view');
+  await fill('generation-url',gateway+'/v1');await click('generation-refresh');
+  await until(()=>evaluate('document.getElementById("generation-model").value==="image-test"'));
+  assert.equal(await evaluate('document.getElementById("generation-model").options.length'),1,'Text/VLM model excluded from image selector');
+  await fill('generation-size','512x512');await fill('generation-prompt','bird');await click('generate');
+  await until(()=>evaluate('document.getElementById("generation-status").textContent==="Image ready"&&!document.getElementById("generation-download").disabled'));
+  const png=Buffer.from((await evaluate('document.getElementById("generated-image").src')).split(',')[1],'base64');
+  assert.equal(await evaluate('document.getElementById("generated-image").naturalWidth'),512);
+  await click('generation-download');await until(()=>fs.existsSync(path.join(downloads,'pumas-7.png')));
+  assert.deepEqual(fs.readFileSync(path.join(downloads,'pumas-7.png')),png,'Saved PNG equals displayed response');
+  if(evidence){fs.writeFileSync(path.join(evidence,'fixture-display.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));fs.writeFileSync(path.join(evidence,'fixture-saved.png'),png);}
+  await click('generation-add');await until(()=>evaluate('!document.getElementById("label-form").hidden&&!document.getElementById("save").disabled'));
+  const rows=await(await fetch('http://127.0.0.1:'+port+'/api/samples')).json();
+  assert.equal(rows.length,1);assert.deepEqual(fs.readFileSync(path.join(temporary,'data','images',rows[0].id,'source')),png,'Collection preserves exact generated source bytes');
+  assert.equal(await evaluate('document.getElementById("ai-settings").hidden'),false,'VLM controls remain available for generated sample');
+  await click('generation-view');await fill('generation-prompt','invalid');await click('generate');
+  await until(()=>evaluate('document.getElementById("generation-status").textContent.includes("invalid PNG")&&!document.getElementById("generate").disabled'));
+  assert.deepEqual(Buffer.from((await evaluate('document.getElementById("generated-image").src')).split(',')[1],'base64'),png,'Invalid response preserves prior image');
+  await fill('generation-prompt','slow');await click('generate');
+  await until(async()=>{const requests=await(await fetch(gateway+'/requests')).json();return requests.some(item=>item.body.prompt==='slow');});
+  await click('generation-cancel');await until(()=>evaluate('document.getElementById("generation-cancel").hidden&&!document.getElementById("generate").disabled'));
+  await until(async()=>{const requests=await(await fetch(gateway+'/requests')).json();return requests.some(item=>item.body.prompt==='slow'&&item.cancelled);});
+  await fill('generation-prompt','bird');await fill('generation-seed','11');await click('generate');
+  await until(()=>evaluate('document.getElementById("generation-status").textContent==="Image ready"&&!document.getElementById("generate").disabled'));
+  const requests=await(await fetch(gateway+'/requests')).json();assert.equal(requests.length,4,'No generation request was retried');
+  assert.deepEqual(errors,[],'No browser runtime exceptions');
+  const result={fixture:true,displayed_width:512,saved_sha256:crypto.createHash('sha256').update(png).digest('hex'),requests:requests.length,collection_source_matches:true,cancelled_backend_request:true};
+  if(evidence)fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');
+  console.log(JSON.stringify(result));
+})().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{if(ws)ws.close();for(const child of children.reverse())child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),300);});

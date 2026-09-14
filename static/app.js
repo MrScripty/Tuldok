@@ -5,6 +5,7 @@ const defaults=[[.15,.15],[.85,.15],[.85,.85],[.15,.85]];
 let samples=[],selected=null,annotation=null,active=0,dirty=false,busy=false,stream=null,timer=null,remaining=0,drag=null;
 let placementArmed=false;
 let dimensions=[4,3],mode='camera',noticeTimer;
+let generated=null,generationRequest=null,generationCatalog=[],generationPreferred='';
 const clone=value=>JSON.parse(JSON.stringify(value));
 function notice(message){clearTimeout(noticeTimer);$('notice').textContent=message;$('notice').hidden=!message;if(message)noticeTimer=setTimeout(()=>notice(''),12000);}
 $('notice').onclick=()=>notice('');
@@ -23,6 +24,13 @@ function controls(){
   for(const id of ['save','save-next'])$(id).disabled=!selected||busy;
   $('export').disabled=busy||!samples.some(s=>s.annotation);
   $('camera-view').disabled=busy;
+  $('generation-view').disabled=busy;
+  $('generate').disabled=busy||!generationCatalog.some(item=>item.id===$('generation-model').value)||!$('generation-prompt').value.trim();
+  $('generation-cancel').hidden=!generationRequest;
+  $('generation-download').disabled=busy||!generated;
+  $('generation-add').disabled=busy||!generated;
+  document.querySelectorAll('#generation-settings input, #generation-settings select, #generation-settings textarea, #generation-settings button').forEach(element=>element.disabled=busy);
+  $('generation-model').disabled=busy||!generationCatalog.length;
   $('import').disabled=busy;
   $('suggest').disabled=busy||!selected||!$('ai-model').value.trim();
   document.querySelectorAll('#ai-settings input, #ai-settings select, #ai-settings button').forEach(element=>element.disabled=busy);
@@ -55,7 +63,7 @@ function canLeave(){return !dirty||confirm('Discard the unsaved changes to this 
 function fit(){
   const viewer=$('viewer'),style=getComputedStyle(viewer),width=viewer.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=viewer.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
   const scale=Math.min(width/dimensions[0],height/dimensions[1]);
-  const stage=$(mode==='camera'?'camera-stage':'image-stage');
+  const stage=$(mode==='camera'?'camera-stage':mode==='generation'?'generation-stage':'image-stage');
   stage.style.width=Math.max(1,dimensions[0]*scale)+'px';stage.style.height=Math.max(1,dimensions[1]*scale)+'px';
   if(mode==='label'&&annotation)renderOverlay();
 }
@@ -65,6 +73,8 @@ function setMode(next){
   $('camera-stage').hidden=next!=='camera';$('image-stage').hidden=next!=='label';
   $('capture-actions').hidden=next!=='camera';$('label-actions').hidden=next!=='label';
   $('label-form').hidden=next!=='label';
+  $('generation-stage').hidden=next!=='generation';$('generation-actions').hidden=next!=='generation';
+  $('generation-settings').hidden=next!=='generation';$('ai-settings').hidden=next==='generation';$('labels-heading').hidden=next==='generation';
   fit();controls();
 }
 function showCamera(){
@@ -340,6 +350,74 @@ $('suggest').onclick=()=>run(async()=>{
     active=0;changed();renderAnnotation();$('save-status').textContent='AI suggestion · unsaved';
   }catch(error){$('save-status').textContent=previousStatus;throw error;}
   finally{$('suggest').textContent='Suggest corners';}
+});
+
+// Image generation has its own model catalog and settings; corner detection keeps its provider.
+function rememberGeneration(){
+  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,size:$('generation-size').value,seed:$('generation-seed').value}));
+}
+try{
+  const settings=JSON.parse(localStorage.getItem('tuldok-generation')||'{}');
+  $('generation-url').value=settings.server_url||'';generationPreferred=settings.model||'';
+  if([...$('generation-size').options].some(option=>option.value===settings.size))$('generation-size').value=settings.size;
+  $('generation-seed').value=settings.seed||'';
+}catch{}
+$('generation-view').onclick=()=>{
+  if(!canLeave())return;
+  selected=null;dirty=false;dimensions=generated?[generated.width,generated.height]:[4,3];
+  $('view-title').textContent='Generate images';$('dimensions').textContent=generated?generated.width+' × '+generated.height:'';
+  setMode('generation');renderList();
+};
+$('generation-url').onchange=()=>{
+  generationCatalog=[];$('generation-model').replaceChildren(new Option('Refresh models to choose',''));rememberGeneration();controls();
+};
+for(const id of ['generation-size','generation-seed','generation-model'])$(id).onchange=()=>{rememberGeneration();controls();};
+$('generation-prompt').oninput=controls;
+$('generation-refresh').onclick=()=>run(async()=>{
+  const result=await api('/api/generation/models',{server_url:$('generation-url').value.trim()});
+  generationCatalog=result.models;
+  $('generation-model').replaceChildren(...result.models.map(item=>new Option(item.name,item.id)));
+  if(result.models.some(item=>item.id===generationPreferred))$('generation-model').value=generationPreferred;
+  if(!result.models.length)$('generation-model').append(new Option('No ready image models',''));
+  $('generation-status').textContent=result.message||result.models.length+' image model'+(result.models.length===1?'':'s')+' ready';
+  rememberGeneration();
+});
+$('generate').onclick=()=>run(async()=>{
+  const requestId=crypto.randomUUID(),seed=$('generation-seed').value;
+  const body={request_id:requestId,server_url:$('generation-url').value.trim(),model:$('generation-model').value,prompt:$('generation-prompt').value,size:$('generation-size').value,...(seed===''?{}:{seed:Number(seed)})};
+  generationRequest={id:requestId,cancelled:false};$('generation-cancel').disabled=false;controls();
+  $('generation-status').textContent='Generating image…';rememberGeneration();
+  try{
+    const result=await api('/api/generation/generate',body);
+    if(generationRequest?.id!==requestId||generationRequest.cancelled)return;
+    const image=new Image();image.src='data:image/png;base64,'+result.image;await image.decode();
+    if(image.naturalWidth!==result.width||image.naturalHeight!==result.height)throw Error('The generated image dimensions did not match.');
+    if(generationRequest?.id!==requestId||generationRequest.cancelled)return;
+    generated=result;$('generated-image').src=image.src;$('generated-image').hidden=false;$('generation-empty').hidden=true;
+    dimensions=[result.width,result.height];$('dimensions').textContent=result.width+' × '+result.height;
+    $('generation-details').textContent='Seed '+(result.metadata.seed??'unknown')+' · '+(result.metadata.duration_seconds??'?')+' seconds'+(result.metadata.memory_policy?' · CPU offload':'');
+    $('generation-status').textContent='Image ready';fit();
+  }catch(error){
+    $('generation-status').textContent=generationRequest?.cancelled?'Cancellation requested; wait for the runtime to stop.':error.message;
+    if(!generationRequest?.cancelled)throw error;
+  }finally{if(generationRequest?.id===requestId)generationRequest=null;controls();}
+});
+$('generation-cancel').onclick=async()=>{
+  if(!generationRequest)return;
+  generationRequest.cancelled=true;$('generation-cancel').disabled=true;$('generation-status').textContent='Stopping image generation…';
+  try{await api('/api/generation/cancel',{request_id:generationRequest.id});}catch(error){notice(error.message);$('generation-cancel').disabled=false;}
+};
+$('generation-download').onclick=()=>{
+  if(!generated)return;
+  const link=document.createElement('a');link.href='data:image/png;base64,'+generated.image;link.download='pumas-'+(generated.metadata.seed??'image')+'.png';link.click();
+};
+$('generation-add').onclick=()=>run(async()=>{
+  if(!generated)return;
+  const sample=await api('/api/samples',{...captureMeta(),filename:'pumas-'+(generated.metadata.seed??'image')+'.png',image:generated.image});
+  remember();await reload();await select(sample);notice('Generated image added to the collection.');
+});
+window.addEventListener('pagehide',()=>{
+  if(generationRequest)navigator.sendBeacon('/api/generation/cancel',new Blob([JSON.stringify({request_id:generationRequest.id})],{type:'application/json'}));
 });
 
 await run(async()=>{await reload();await initializeAI();});fit();

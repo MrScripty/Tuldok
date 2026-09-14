@@ -33,6 +33,26 @@ The adapters follow Book-Be-Gone's provider interfaces without depending on that
 
 Requests time out after 180 seconds (`TULDOK_AI_TIMEOUT` overrides this), with a 60-second response-progress limit. Requests are not automatically retried. Model settings are remembered locally; API keys are excluded.
 
+## Generate images with Pumas
+
+In Pumas, install and activate a compatible Torch runtime, create a Torch runtime
+profile, and serve the supported image model. Copy the **Pumas gateway URL** into
+Tuldok’s **Generate images** settings, then refresh the model list. The image list
+includes only ready models advertising image generation. A llama.cpp router URL
+will not provide this image workflow.
+
+Choose a model, enter a prompt, select a size, and optionally supply a seed. Click
+**Generate**, then **Save PNG** to download the returned image or **Add to collection**
+to label it using the existing dataset tools. Adding an image preserves its original
+PNG bytes; it does not assign corner labels automatically. VLM corner detection
+has its own unchanged provider settings.
+
+Generation has a 630-second client deadline and is never automatically retried.
+**Cancel** requests cancellation in Pumas; GPU work may need to reach its next
+cancellation checkpoint before the runtime accepts another prompt. Invalid output
+leaves the previous image available. A seed records the requested sampling seed;
+GPU output is not guaranteed to be identical across runs.
+
 ## Dataset conventions
 
 Coordinates are normalized against the oriented image: x/(width-1), y/(height-1). Each annotation has book_present, crop_suitable, and corners in the order top_left, top_right, bottom_right, bottom_left. A corner has visibility visible, occluded, or out_of_frame. Invisible corner coordinates are null. A no-book sample has crop_suitable=false and an empty corner list. Crop-suitable labels require four visible, placed corners. Visible quadrilaterals must be clockwise and convex. New labels use corner_reference=book: identities follow the book through rotation, so an upside-down book’s top-left corner is at the image bottom-right. Coordinate values always remain in image space. Existing labels without this field are interpreted and exported as corner_reference=image; untouched labels retain that convention. Placing, moving, or clearing corner positions switches the edited label to book orientation. The Corner reference control can explicitly retain image orientation when needed. Export schema version 2 records this distinction per annotation; training should select or explicitly convert conventions rather than mix them.
@@ -51,6 +71,7 @@ This first version supports still capture and image import, including frames ext
 
     python3 -m unittest discover -s tests
     node tests/browser.cjs
+    node tests/browser_images.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all three AI providers. Tests do not contact paid models.
 
