@@ -37,7 +37,16 @@ Requests time out after 180 seconds (`TULDOK_AI_TIMEOUT` overrides this), with a
 
 In Pumas, install and activate a compatible Torch runtime, create a Torch runtime
 profile, and serve the supported image model. Copy the **Pumas gateway URL** into
-Tuldok’s **Generation** settings, then refresh the model list. The image list
+Tuldok’s **Generation** settings, then refresh the model list. Alternatively, click
+**Scan local ports** to find Pumas on the Tuldok computer, including automatically
+assigned high ports. The only gateway with ready image models is selected automatically, even when
+other idle Pumas instances are running. An already selected gateway with ready image
+models is retained; if several usable gateways remain, choose from the results. Selection fills the URL and refreshes image
+and prompt models (unless a separate prompt server is configured). Discovery checks
+Pumas model ownership or its read-only launcher RPC, including gateways with no
+loaded models. The scan uses Linux listening-port information and probes loopback
+HTTP services with a ten-second scan budget. Remote or HTTPS gateways can still be
+entered manually. The image list
 includes only ready models advertising image generation. A llama.cpp router URL
 will not provide this image workflow.
 

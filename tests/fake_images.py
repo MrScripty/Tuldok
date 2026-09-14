@@ -31,7 +31,7 @@ def start():
         def do_GET(self):
             if self.path == '/requests':
                 return self.reply(requests)
-            self.reply({'data': [{'id': 'image-test', 'capabilities': ['image_generation']}, {'id': 'vision-only'}]})
+            self.reply({'data': [{'id': 'image-test', 'owned_by': 'pumas', 'capabilities': ['image_generation']}, {'id': 'vision-only'}]})
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             observed = {'path': self.path, 'body': body, 'cancelled': False}

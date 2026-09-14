@@ -37,6 +37,9 @@
 <section id="generation-settings" hidden>
 <h2>Generation models</h2>
 <label>Pumas gateway URL<input id="generation-url" type="url" placeholder="Pumas gateway address" autocomplete="off"></label>
+<button id="generation-scan" type="button">Scan local ports</button>
+<p id="gateway-scan-status" class="hint" role="status" aria-live="polite">Find Pumas running on the Tuldok computer.</p>
+<label id="gateway-results-row" hidden>Discovered gateways<select id="gateway-results"><option value="">Choose a gateway</option></select></label>
 <label>Image model<select id="generation-model"><option value="">Refresh models to choose</option></select></label>
 <button id="generation-refresh" type="button">Refresh image models</button>
 <div id="prompt-model-settings">

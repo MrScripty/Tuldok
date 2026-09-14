@@ -5,6 +5,7 @@ import ai_codex
 import ai_http
 import image_generation
 import synthetic
+import gateway_discovery
 import base64
 import hashlib
 import io
@@ -359,6 +360,8 @@ def make_handler(dataset):
                     result = ai_http.models('llamacpp', body.get('server_url'))
                     image_ids = {m['id'] for m in image_generation.models(body)['models']}
                     return self.reply({'models': [m for m in result['models'] if m['id'] not in image_ids]})
+                if path == '/api/generation/scan':
+                    return self.reply(gateway_discovery.scan())
                 if path == '/api/generation/models':
                     return self.reply(image_generation.models(body))
                 if path == '/api/generation/cancel':

@@ -468,6 +468,30 @@ $('prompt-url').onchange=()=>{clearPromptCatalog();rememberGeneration();controls
 for(const id of ['generation-size','generation-seed','generation-model','generation-count','generation-strategy','prompt-model'])$(id).onchange=()=>{rememberGeneration();controls();};
 $('generation-count').oninput=controls;
 $('generation-prompt').oninput=()=>{rememberGeneration();controls();};
+$('generation-scan').onclick=()=>run(async()=>{
+  $('gateway-scan-status').textContent='Scanning local ports…';$('gateway-results-row').hidden=true;
+  try{
+    const result=await api('/api/generation/scan',{});
+    $('gateway-results').replaceChildren(new Option('Choose a gateway',''),...result.gateways.map(gateway=>new Option(gateway.server_url+' · '+gateway.image_models+' image models · '+gateway.models+' models total',gateway.server_url)));
+    $('gateway-results-row').hidden=!result.gateways.length;
+    const ready=result.gateways.filter(gateway=>gateway.image_models>0);
+    const current=ready.find(gateway=>gateway.server_url===$('generation-url').value.trim().replace(/\/v1\/?$|\/$/g,''));
+    const chosen=current||(ready.length===1?ready[0]:result.gateways.length===1?result.gateways[0]:null);
+    const found=result.gateways.length+' Pumas gateway'+(result.gateways.length===1?' found':'s found');
+    $('gateway-scan-status').textContent=result.message||found+(chosen?' — selecting '+chosen.server_url:'. Choose a gateway below.');
+    if(chosen){
+      $('gateway-results').value=chosen.server_url;await useDiscoveredGateway();
+      $('gateway-scan-status').textContent=found+' — selected '+chosen.server_url+(chosen.image_models?' ('+chosen.image_models+' image models ready).':'. Load an image model in Pumas, then refresh models.');
+    }
+  }catch(error){$('gateway-scan-status').textContent=error.message;throw error;}
+});
+async function useDiscoveredGateway(){
+  if(!$('gateway-results').value)return;
+  $('generation-url').value=$('gateway-results').value;$('generation-url').onchange();
+  await refreshImageModels();
+  if(!$('prompt-url').value.trim())await refreshPromptModels();
+}
+$('gateway-results').onchange=()=>run(useDiscoveredGateway);
 async function refreshImageModels(){
   const result=await api('/api/generation/models',{server_url:$('generation-url').value.trim()});generationCatalog=result.models;
   $('generation-model').replaceChildren(...result.models.map(item=>new Option(item.name,item.id)));

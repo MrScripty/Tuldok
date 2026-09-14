@@ -30,7 +30,16 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await send('Page.navigate',{url:'http://127.0.0.1:'+port});
   await until(()=>evaluate('!!document.getElementById("capture-session")?.value&&!document.getElementById("generation-view").disabled'));
   await click('generation-view');
-  await fill('generation-url',gateway+'/v1');await click('generation-refresh');
+  // Keep real backend discovery, then present a deterministic extra idle instance.
+  // The only gateway with image models should be selected without a second click.
+  await evaluate('window.originalFetch=window.fetch;window.fetch=async (...args)=>{const response=await window.originalFetch(...args);if(args[0]!=="/api/generation/scan")return response;const result=await response.json();const gateway=result.gateways.find(item=>item.server_url==='+JSON.stringify(gateway)+');if(!gateway)throw Error("Fixture gateway was not discovered");return new Response(JSON.stringify({gateways:[{server_url:"http://127.0.0.1:1",models:0,image_models:0},gateway],message:""}),{status:200,headers:{"Content-Type":"application/json"}});}');
+  await click('generation-scan');
+  await until(()=>evaluate('[...document.getElementById("gateway-results").options].some(option=>option.value==='+JSON.stringify(gateway)+')&&!document.getElementById("generation-scan").disabled'));
+  assert.equal(await evaluate('document.getElementById("generation-url").value'),gateway,'An idle instance must not prevent selecting the only image gateway');
+  assert.equal(await evaluate('document.getElementById("gateway-results").value'),gateway);
+  await evaluate('window.fetch=window.originalFetch');
+  await until(()=>evaluate('document.getElementById("generation-url").value==='+JSON.stringify(gateway)+'&&!document.getElementById("generation-scan").disabled'));
+
   await until(()=>evaluate('document.getElementById("generation-model").value==="image-test"'));
   assert.equal(await evaluate('document.getElementById("generation-model").options.length'),1,'Text/VLM model excluded from image selector');
   await fill('generation-size','512x512');await fill('generation-seed','20');await fill('generation-count','12');

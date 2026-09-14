@@ -19,6 +19,8 @@ def start():
                           {'id':'text-only','architecture':{'input_modalities':['text'],'output_modalities':['text']},'supported_parameters':['structured_outputs']}]}
             encoded=json.dumps(data).encode();self.send_response(200);self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded)
         def do_POST(self):
+            if self.path not in ('/v1/chat/completions', '/api/v1/chat/completions'):
+                self.send_response(404);self.send_header('Content-Length','0');self.end_headers();return
             body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             requests.append((self.path,body,dict(self.headers)))
             if body['model']=='missing-projector':
