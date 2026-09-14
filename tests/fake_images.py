@@ -9,8 +9,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from PIL import Image
 
 
-def png(size=(512, 512)):
-    image = Image.new('RGB', size, '#467e9a')
+def png(size=(512, 512), color='#467e9a'):
+    image = Image.new('RGB', size, color)
     output = io.BytesIO()
     image.save(output, 'PNG')
     return output.getvalue()
@@ -36,6 +36,11 @@ def start():
             body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             observed = {'path': self.path, 'body': body, 'cancelled': False}
             requests.append(observed)
+            if self.path == '/v1/chat/completions':
+                brief = json.loads(body['messages'][1]['content'])
+                prompts = ['Photorealistic open book scene ' + str(i) for i in range(
+                    brief['first_image_number'], brief['first_image_number'] + brief['number_of_prompts'])]
+                return self.reply({'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'prompts': prompts})}}]})
             if body['prompt'] == 'slow':
                 end = time.monotonic() + 15
                 while time.monotonic() < end:
@@ -45,7 +50,7 @@ def start():
                         return
             if body['prompt'] == 'busy':
                 return self.reply({'error': {'code': 'runtime_busy'}}, 409)
-            raw = b'invalid PNG' if body['prompt'] == 'invalid' else png(tuple(map(int, body['size'].split('x'))))
+            raw = b'invalid PNG' if body['prompt'] == 'invalid' else png(tuple(map(int, body['size'].split('x'))), '#467e9a' if body.get('seed', 7) == 7 else '#%06x' % (body['seed'] % 16777216))
             self.reply({'created': 1, 'data': [{'b64_json': base64.b64encode(raw).decode()}],
                         'metadata': {'seed': body.get('seed', 7), 'steps': 8, 'guidance': 0,
                                      'memory_policy': 'sequential_cpu_offload', 'duration_seconds': .01}})

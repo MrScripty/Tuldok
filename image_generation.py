@@ -128,13 +128,24 @@ class ImageRequests:
             operation.cancel()
         return {'cancelled': operation is not None}
 
-    def generate(self, body, client=None):
+    def generate(self, body, client=None, cancel_event=None):
         base, request_id, payload = validate(body)
         operation = Operation()
         with self.lock:
             if self.active:
                 raise ValueError('Another image request is running. Cancel it or wait for it to finish.')
             self.active[request_id] = operation
+        def watch_cancel():
+            while not operation.done.wait(.05):
+                if cancel_event.is_set():
+                    operation.cancel()
+                    return
+        cancel_watcher = None
+        if cancel_event is not None:
+            if cancel_event.is_set():
+                operation.cancel()
+            cancel_watcher = threading.Thread(target=watch_cancel, daemon=True)
+            cancel_watcher.start()
         watcher = None
         if client is not None:
             watcher = threading.Thread(target=operation.watch_client, args=(client,), daemon=True)
@@ -188,6 +199,8 @@ class ImageRequests:
         finally:
             connection.close()
             operation.done.set()
+            if cancel_watcher:
+                cancel_watcher.join()
             if watcher:
                 watcher.join(timeout=1)
             with self.lock:

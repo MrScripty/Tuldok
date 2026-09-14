@@ -5,7 +5,8 @@ const defaults=[[.15,.15],[.85,.15],[.85,.85],[.15,.85]];
 let samples=[],selected=null,annotation=null,active=0,dirty=false,busy=false,stream=null,timer=null,remaining=0,drag=null;
 let placementArmed=false;
 let dimensions=[4,3],mode='camera',noticeTimer;
-let generated=null,generationRequest=null,generationCatalog=[],generationPreferred='';
+let generationCatalog=[],generationPreferred='',generationState={jobs:[],entries:[]};
+let promptCatalog=[],promptPreferred='',pollingGeneration=false;
 const clone=value=>JSON.parse(JSON.stringify(value));
 function notice(message){clearTimeout(noticeTimer);$('notice').textContent=message;$('notice').hidden=!message;if(message)noticeTimer=setTimeout(()=>notice(''),12000);}
 $('notice').onclick=()=>notice('');
@@ -25,12 +26,15 @@ function controls(){
   $('export').disabled=busy||!samples.some(s=>s.annotation);
   $('camera-view').disabled=busy;
   $('generation-view').disabled=busy;
-  $('generate').disabled=busy||!generationCatalog.some(item=>item.id===$('generation-model').value)||!$('generation-prompt').value.trim();
-  $('generation-cancel').hidden=!generationRequest;
-  $('generation-download').disabled=busy||!generated;
-  $('generation-add').disabled=busy||!generated;
-  document.querySelectorAll('#generation-settings input, #generation-settings select, #generation-settings textarea, #generation-settings button').forEach(element=>element.disabled=busy);
-  $('generation-model').disabled=busy||!generationCatalog.length;
+  const generating=generationState.jobs.some(job=>['preparing','generating','stopping'].includes(job.status));
+  $('generate').disabled=busy||generating||!generationCatalog.some(item=>item.id===$('generation-model').value)||!$('generation-prompt').value.trim()||!$('generation-count').checkValidity()||($('generation-strategy').value==='varied'&&!$('prompt-model').value);
+  document.querySelectorAll('#generation-jobs button').forEach(button=>button.disabled=busy||generating);
+  $('generation-cancel').hidden=!generating;
+  $('generation-cancel').disabled=busy||generationState.jobs.some(job=>job.status==='stopping');
+  document.querySelectorAll('#generation-settings input, #generation-settings select, #generation-settings button, #generation-stage input, #generation-stage select, #generation-stage textarea').forEach(element=>element.disabled=busy||generating);
+  $('generation-model').disabled=busy||generating||!generationCatalog.length;
+  $('prompt-model').disabled=busy||generating||!promptCatalog.length;
+  $('prompt-model-settings').hidden=$('generation-strategy').value!=='varied';
   $('import').disabled=busy;
   $('suggest').disabled=busy||!selected||!$('ai-model').value.trim();
   document.querySelectorAll('#ai-settings input, #ai-settings select, #ai-settings button').forEach(element=>element.disabled=busy);
@@ -48,9 +52,15 @@ function renderList(){
   $('counts').textContent=labeled+' labeled · '+(samples.length-labeled)+' remaining';
   $('samples').replaceChildren();
   const filter=$('filter').value;
-  for(const sample of samples.filter(s=>filter==='all'||(filter==='labeled')===!!s.annotation)){
+  const queuedSamples=new Set(generationState.entries.map(entry=>entry.sample_id).filter(Boolean));
+  const samplesById=new Map(samples.map(sample=>[sample.id,sample]));
+  const entriesBySample=new Map(generationState.entries.map(entry=>[entry.sample_id,entry]));
+  const gallery=[...samples.filter(sample=>!queuedSamples.has(sample.id)),...generationState.entries.map(entry=>samplesById.get(entry.sample_id)||entry)];
+  for(const sample of gallery.filter(s=>filter==='all'||(filter==='labeled')===!!s.annotation)){
+    if(!sample.filename){renderPromptEntry(sample);continue;}
     const button=document.createElement('button');button.className='sample'+(sample.annotation?' labeled':'')+(selected?.id===sample.id?' active':'');
-    button.dataset.id=sample.id;button.title=sample.filename;
+    const entry=entriesBySample.get(sample.id);
+    button.dataset.id=entry?.id||sample.id;button.dataset.sampleId=sample.id;button.title=entry?.prompt||sample.filename;
     const image=document.createElement('img');image.src='/api/thumb/'+sample.id;image.alt='';image.loading='lazy';
     const copy=document.createElement('span');copy.className='sample-copy';
     const strong=document.createElement('strong');strong.textContent=sample.book_id||'No book ID';
@@ -63,6 +73,7 @@ $('filter').onchange=renderList;
 function canLeave(){return !dirty||confirm('Discard the unsaved changes to this label?');}
 function fit(){
   const viewer=$('viewer'),style=getComputedStyle(viewer),width=viewer.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),height=viewer.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
+  if(mode==='generation')return;
   const scale=Math.min(width/dimensions[0],height/dimensions[1]);
   const stage=$(mode==='camera'?'camera-stage':mode==='generation'?'generation-stage':'image-stage');
   stage.style.width=Math.max(1,dimensions[0]*scale)+'px';stage.style.height=Math.max(1,dimensions[1]*scale)+'px';
@@ -71,6 +82,8 @@ function fit(){
 new ResizeObserver(fit).observe($('viewer'));
 function setMode(next){
   mode=next;cancelTimer();
+  $('camera-view').setAttribute('aria-pressed',String(next==='camera'));
+  $('generation-view').setAttribute('aria-pressed',String(next==='generation'));
   $('camera-stage').hidden=next!=='camera';$('image-stage').hidden=next!=='label';
   $('capture-actions').hidden=next!=='camera';$('label-actions').hidden=next!=='label';
   $('label-form').hidden=next!=='label';
@@ -391,72 +404,96 @@ $('suggest').onclick=()=>run(async()=>{
   finally{$('suggest').textContent='Suggest corners';}
 });
 
-// Image generation has its own model catalog and settings; corner detection keeps its provider.
+// Jobs live on the server, so labeling and page reloads do not interrupt a dataset.
 function rememberGeneration(){
-  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,size:$('generation-size').value,seed:$('generation-seed').value}));
+  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,size:$('generation-size').value,seed:$('generation-seed').value,prompt_url:$('prompt-url').value,prompt_model:$('prompt-model').value||promptPreferred,prompt:$('generation-prompt').value,count:$('generation-count').value,strategy:$('generation-strategy').value}));
 }
 try{
   const settings=JSON.parse(localStorage.getItem('tuldok-generation')||'{}');
   $('generation-url').value=settings.server_url||'';generationPreferred=settings.model||'';
   if([...$('generation-size').options].some(option=>option.value===settings.size))$('generation-size').value=settings.size;
-  $('generation-seed').value=settings.seed||'';
+  $('generation-seed').value=settings.seed??'';$('prompt-url').value=settings.prompt_url||'';promptPreferred=settings.prompt_model||'';
+  $('generation-prompt').value=settings.prompt||'';$('generation-count').value=settings.count||500;$('generation-strategy').value=settings.strategy||'varied';
 }catch{}
-$('generation-view').onclick=()=>{
-  if(!canLeave())return;
-  selected=null;dirty=false;dimensions=generated?[generated.width,generated.height]:[4,3];
-  $('view-title').textContent='Generate images';$('dimensions').textContent=generated?generated.width+' × '+generated.height:'';
-  setMode('generation');renderList();
-};
+function showGeneration(){
+  if(!canLeave())return false;
+  selected=null;dirty=false;stopCamera();
+  $('view-title').textContent='';$('dimensions').textContent='';
+  setMode('generation');renderList();return true;
+}
+$('generation-view').onclick=()=>{if(showGeneration())$('generation-entry-prompt').hidden=true;};
+function renderPromptEntry(entry){
+  const button=document.createElement('button');button.className='sample prompt-entry';button.dataset.id=entry.id;button.title=entry.prompt;
+  const copy=document.createElement('span');copy.className='sample-copy';
+  const strong=document.createElement('strong');strong.textContent=entry.prompt;
+  const small=document.createElement('small');small.textContent='Image '+(entry.ordinal+1)+' · '+entry.status+(entry.error?' · '+entry.error:'');
+  copy.append(strong,small);button.append(copy);
+  button.onclick=()=>{if(!busy&&showGeneration()){$('generation-entry-prompt').textContent=entry.prompt;$('generation-entry-prompt').hidden=false;}};
+  $('samples').append(button);
+}
+function renderJobs(){
+  $('generation-jobs').replaceChildren();
+  const active=generationState.jobs.find(job=>['preparing','generating','stopping'].includes(job.status));
+  $('generation-status').textContent=active?jobText(active):(generationState.jobs.length?jobText(generationState.jobs.at(-1)):'');
+  for(const job of generationState.jobs){
+    const row=document.createElement('div');row.className='generation-job';
+    const text=document.createElement('p');text.textContent=jobText(job)+(job.error?' · '+job.error:'');row.append(text);
+    if(['failed','cancelled','interrupted'].includes(job.status)){
+      const resume=document.createElement('button');resume.textContent='Resume remaining images';resume.disabled=!!active||busy;
+      resume.onclick=()=>run(async()=>{await api('/api/generation/jobs/resume',{job_id:job.id});await refreshGeneration();});row.append(resume);
+    }
+    $('generation-jobs').append(row);
+  }
+}
+function jobText(job){
+  const prepared=generationState.entries.filter(entry=>entry.job_id===job.id).length;
+  return job.completed+' / '+job.config.count+' images · '+(job.status==='preparing'?prepared+' prompts prepared':job.status);
+}
+async function refreshGeneration(){
+  if(pollingGeneration)return;
+  pollingGeneration=true;
+  try{
+    const {samples:updatedSamples,...state}=await api('/api/generation/jobs');
+    // Queue entries and saved images come from one consistent server snapshot.
+    if(JSON.stringify(state)!==JSON.stringify(generationState)){
+      samples=updatedSamples;generationState=state;renderList();renderJobs();controls();
+    }
+  }finally{pollingGeneration=false;}
+}
+function clearPromptCatalog(){promptCatalog=[];$('prompt-model').replaceChildren(new Option('Refresh models to choose',''));}
 $('generation-url').onchange=()=>{
-  generationCatalog=[];$('generation-model').replaceChildren(new Option('Refresh models to choose',''));rememberGeneration();controls();
+  generationCatalog=[];$('generation-model').replaceChildren(new Option('Refresh models to choose',''));if(!$('prompt-url').value.trim())clearPromptCatalog();rememberGeneration();controls();
 };
-for(const id of ['generation-size','generation-seed','generation-model'])$(id).onchange=()=>{rememberGeneration();controls();};
-$('generation-prompt').oninput=controls;
-$('generation-refresh').onclick=()=>run(async()=>{
-  const result=await api('/api/generation/models',{server_url:$('generation-url').value.trim()});
-  generationCatalog=result.models;
+$('prompt-url').onchange=()=>{clearPromptCatalog();rememberGeneration();controls();};
+for(const id of ['generation-size','generation-seed','generation-model','generation-count','generation-strategy','prompt-model'])$(id).onchange=()=>{rememberGeneration();controls();};
+$('generation-count').oninput=controls;
+$('generation-prompt').oninput=()=>{rememberGeneration();controls();};
+async function refreshImageModels(){
+  const result=await api('/api/generation/models',{server_url:$('generation-url').value.trim()});generationCatalog=result.models;
   $('generation-model').replaceChildren(...result.models.map(item=>new Option(item.name,item.id)));
   if(result.models.some(item=>item.id===generationPreferred))$('generation-model').value=generationPreferred;
   if(!result.models.length)$('generation-model').append(new Option('No ready image models',''));
-  $('generation-status').textContent=result.message||result.models.length+' image model'+(result.models.length===1?'':'s')+' ready';
+  $('generation-status').textContent=result.message||result.models.length+' image models ready';rememberGeneration();
+}
+$('generation-refresh').onclick=()=>run(refreshImageModels);
+async function refreshPromptModels(){
+  const result=await api('/api/generation/prompt-models',{server_url:$('prompt-url').value.trim()||$('generation-url').value.trim()});promptCatalog=result.models;
+  $('prompt-model').replaceChildren(...result.models.map(item=>new Option(item.name,item.id)));
+  if(result.models.some(item=>item.id===promptPreferred))$('prompt-model').value=promptPreferred;
+  if(!result.models.length)$('prompt-model').append(new Option('No text models available',''));
   rememberGeneration();
-});
+}
+$('prompt-refresh').onclick=()=>run(refreshPromptModels);
 $('generate').onclick=()=>run(async()=>{
-  const requestId=crypto.randomUUID(),seed=$('generation-seed').value;
-  const body={request_id:requestId,server_url:$('generation-url').value.trim(),model:$('generation-model').value,prompt:$('generation-prompt').value,size:$('generation-size').value,...(seed===''?{}:{seed:Number(seed)})};
-  generationRequest={id:requestId,cancelled:false};$('generation-cancel').disabled=false;controls();
-  $('generation-status').textContent='Generating image…';rememberGeneration();
-  try{
-    const result=await api('/api/generation/generate',body);
-    if(generationRequest?.id!==requestId||generationRequest.cancelled)return;
-    const image=new Image();image.src='data:image/png;base64,'+result.image;await image.decode();
-    if(image.naturalWidth!==result.width||image.naturalHeight!==result.height)throw Error('The generated image dimensions did not match.');
-    if(generationRequest?.id!==requestId||generationRequest.cancelled)return;
-    generated=result;$('generated-image').src=image.src;$('generated-image').hidden=false;$('generation-empty').hidden=true;
-    dimensions=[result.width,result.height];$('dimensions').textContent=result.width+' × '+result.height;
-    $('generation-details').textContent='Seed '+(result.metadata.seed??'unknown')+' · '+(result.metadata.duration_seconds??'?')+' seconds'+(result.metadata.memory_policy?' · CPU offload':'');
-    $('generation-status').textContent='Image ready';fit();
-  }catch(error){
-    $('generation-status').textContent=generationRequest?.cancelled?'Cancellation requested; wait for the runtime to stop.':error.message;
-    if(!generationRequest?.cancelled)throw error;
-  }finally{if(generationRequest?.id===requestId)generationRequest=null;controls();}
+  const seed=$('generation-seed').value;
+  await api('/api/generation/jobs',{...captureMeta(),server_url:$('generation-url').value.trim(),model:$('generation-model').value,
+    prompt:$('generation-prompt').value,count:Number($('generation-count').value),strategy:$('generation-strategy').value,
+    prompt_url:$('prompt-url').value.trim(),prompt_model:$('prompt-model').value,size:$('generation-size').value,...(seed===''?{}:{seed:Number(seed)})});
+  rememberGeneration();await refreshGeneration();
 });
-$('generation-cancel').onclick=async()=>{
-  if(!generationRequest)return;
-  generationRequest.cancelled=true;$('generation-cancel').disabled=true;$('generation-status').textContent='Stopping image generation…';
-  try{await api('/api/generation/cancel',{request_id:generationRequest.id});}catch(error){notice(error.message);$('generation-cancel').disabled=false;}
-};
-$('generation-download').onclick=()=>{
-  if(!generated)return;
-  const link=document.createElement('a');link.href='data:image/png;base64,'+generated.image;link.download='pumas-'+(generated.metadata.seed??'image')+'.png';link.click();
-};
-$('generation-add').onclick=()=>run(async()=>{
-  if(!generated)return;
-  const sample=await api('/api/samples',{...captureMeta(),filename:'pumas-'+(generated.metadata.seed??'image')+'.png',image:generated.image});
-  remember();await reload();await select(sample);notice('Generated image added to the collection.');
+$('generation-cancel').onclick=()=>run(async()=>{
+  const job=generationState.jobs.find(job=>['preparing','generating','stopping'].includes(job.status));
+  if(job)await api('/api/generation/jobs/cancel',{job_id:job.id});await refreshGeneration();
 });
-window.addEventListener('pagehide',()=>{
-  if(generationRequest)navigator.sendBeacon('/api/generation/cancel',new Blob([JSON.stringify({request_id:generationRequest.id})],{type:'application/json'}));
-});
-
-await run(async()=>{await reload();await initializeAI();});fit();
+await run(async()=>{await reload();await initializeAI();await refreshGeneration();});fit();
+setInterval(()=>refreshGeneration().catch(error=>{$('generation-status').textContent='Could not refresh generation: '+error.message;}),1000);

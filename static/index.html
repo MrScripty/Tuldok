@@ -9,30 +9,44 @@
 <label>Book ID<input id="capture-book" placeholder="e.g. blue-atlas"></label>
 <label>Session ID<input id="capture-session" placeholder="e.g. desk-daylight-01"></label>
 </div>
-<div class="filter-row"><select id="filter" aria-label="Filter images"><option value="all">All images</option><option value="pending">Needs labels</option><option value="labeled">Labeled</option></select><button id="camera-view">Camera</button></div>
-<button id="generation-view" type="button">Generate images</button>
+<div class="filter-row"><select id="filter" aria-label="Filter images"><option value="all">All images</option><option value="pending">Needs labels</option><option value="labeled">Labeled</option></select></div>
 <div id="samples" class="sample-list"></div>
 </aside>
 <section class="workspace">
-<div class="workspace-bar"><div><h1 id="view-title">Camera</h1></div><div class="spacer"></div><span id="dimensions"></span></div>
+<div class="workspace-bar"><div class="segmented" aria-label="Image source"><button id="camera-view" aria-pressed="true">Camera capture</button><button id="generation-view" aria-pressed="false">Generation</button></div><div><h1 id="view-title">Camera</h1></div><div class="spacer"></div><span id="dimensions"></span></div>
 <div class="viewer" id="viewer">
 <div id="camera-stage" class="stage"><video id="video" autoplay playsinline muted></video><div id="camera-empty" class="empty"><div class="target-icon">⌜ ⌝<br>⌞ ⌟</div></div><div id="countdown" hidden></div></div>
 <div id="image-stage" class="stage" hidden><img id="source" alt="Image to label" draggable="false"><svg id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Corner labels"></svg><canvas id="corner-zoom" hidden aria-hidden="true"></canvas></div>
-<div id="generation-stage" class="stage" hidden><img id="generated-image" alt="Generated image" hidden><p id="generation-empty" class="empty">Enter a prompt to generate an image.</p></div>
+<div id="generation-stage" class="stage" hidden>
+<h2>Generate a synthetic dataset</h2>
+<label>Dataset description<textarea id="generation-prompt" rows="6" maxlength="4000" placeholder="Describe the subjects, photographic style, lighting, backgrounds and variations your dataset needs."></textarea></label>
+<div class="generation-options">
+<label>Number of images<input id="generation-count" type="number" min="1" max="10000" step="1" value="500"></label>
+<label>Prompt strategy<select id="generation-strategy"><option value="varied">Create unique prompts with an LLM</option><option value="repeat">Use the same prompt for every image</option></select></label>
 </div>
-<div id="generation-actions" class="action-bar" hidden><button id="generate" class="primary" disabled>Generate image</button><button id="generation-cancel" hidden>Cancel</button><span id="generation-status" role="status"></span><div class="spacer"></div><button id="generation-download" disabled>Save PNG</button><button id="generation-add" disabled>Add to collection</button></div>
+<p class="hint">Unique prompts are prepared in batches of 10, then rendered one by one. In repeat mode, only the next pending prompt appears. Completed images are added to the collection for manual labels or AI corner suggestions.</p>
+<p id="generation-entry-prompt" hidden></p>
+<div id="generation-jobs" aria-label="Generation jobs"></div>
+</div>
+</div>
+<div id="generation-actions" class="action-bar" hidden><button id="generate" class="primary" disabled>Generate dataset</button><button id="generation-cancel" hidden>Stop generation</button><span id="generation-status" role="status" aria-live="polite"></span></div>
 <div id="capture-actions" class="action-bar"><button id="start-camera">Start camera</button><select id="devices" aria-label="Camera" hidden></select><div class="spacer"></div><button id="capture" class="primary" disabled>Capture image <kbd>Space</kbd></button><button id="timer" disabled>7s timer</button></div>
 <div id="label-actions" class="action-bar" hidden><button id="previous">← Previous</button><button id="next">Next →</button><div class="spacer"></div><span id="save-status" role="status"></span><button id="suggest">Suggest corners</button><button id="save">Save label</button><button id="save-next" class="primary">Save & next</button></div>
 </section>
 <aside class="inspector">
 <section id="generation-settings" hidden>
-<h2>Image generation</h2>
+<h2>Generation models</h2>
 <label>Pumas gateway URL<input id="generation-url" type="url" placeholder="Pumas gateway address" autocomplete="off"></label>
 <label>Image model<select id="generation-model"><option value="">Refresh models to choose</option></select></label>
 <button id="generation-refresh" type="button">Refresh image models</button>
-<label>Prompt<textarea id="generation-prompt" rows="6" maxlength="4000" placeholder="Describe the image you want"></textarea></label>
+<div id="prompt-model-settings">
+<label>Prompt model server URL<input id="prompt-url" type="url" placeholder="Same Pumas gateway if blank"></label>
+<label>Prompt LLM<select id="prompt-model"><option value="">Refresh models to choose</option></select></label>
+<button id="prompt-refresh" type="button">Refresh prompt models</button>
+</div>
 <label>Size<select id="generation-size"><option>512x512</option><option>768x768</option><option selected>1024x1024</option><option>768x1024</option><option>1024x768</option></select></label>
-<label>Seed (optional)<input id="generation-seed" type="number" min="0" max="4294967295" step="1" placeholder="Random"></label>
+<label>Starting seed (optional)<input id="generation-seed" type="number" min="0" max="4294967295" step="1" placeholder="Random"></label>
+<p class="hint">A starting seed increments for each image. Leave blank for random seeds.</p>
 <p id="generation-details" class="hint"></p>
 </section>
 <details id="ai-settings">

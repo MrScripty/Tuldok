@@ -37,21 +37,43 @@ Requests time out after 180 seconds (`TULDOK_AI_TIMEOUT` overrides this), with a
 
 In Pumas, install and activate a compatible Torch runtime, create a Torch runtime
 profile, and serve the supported image model. Copy the **Pumas gateway URL** into
-Tuldok’s **Generate images** settings, then refresh the model list. The image list
+Tuldok’s **Generation** settings, then refresh the model list. The image list
 includes only ready models advertising image generation. A llama.cpp router URL
 will not provide this image workflow.
 
-Choose a model, enter a prompt, select a size, and optionally supply a seed. Click
-**Generate**, then **Save PNG** to download the returned image or **Add to collection**
-to label it using the existing dataset tools. Adding an image preserves its original
-PNG bytes; it does not assign corner labels automatically. VLM corner detection
-has its own unchanged provider settings.
+Use the **Camera capture / Generation** toggle above the workspace. Set the collection
+book/session metadata, describe the dataset, and choose an image count (1–10,000).
+Select one of two strategies:
 
-Generation has a 630-second client deadline and is never automatically retried.
-**Cancel** requests cancellation in Pumas; GPU work may need to reach its next
-cancellation checkpoint before the runtime accepts another prompt. Invalid output
-leaves the previous image available. A seed records the requested sampling seed;
-GPU output is not guaranteed to be identical across runs.
+- **Create unique prompts with an LLM:** select a Pumas prompt LLM (and optionally a
+  separate server URL). Tuldok prepares prompts in batches of 10 before rendering.
+  Each batch receives the brief, its position in the dataset, and at most 10 recent
+  prompts. Exact duplicates, ignoring whitespace and case, are removed across the
+  whole job. Repeated duplicate output stops preparation with a resumable error.
+  Semantic variety and adherence to the brief still depend on the selected models.
+- **Use the same prompt for every image:** Tuldok renders the description repeatedly,
+  creating only the next pending gallery entry as it proceeds.
+
+Choose the image size and an optional starting seed. The seed increments for each
+image; leaving it blank lets Pumas sample randomly. Click **Generate dataset**.
+Prompt entries appear in the collection and become images as generation completes.
+Click a pending entry to inspect its prompt. Completed images immediately support
+manual labeling or **Suggest corners**, with the same review-and-save process as
+camera captures. Original PNG bytes and generation provenance are retained; labeled
+exports include the individual prompt and returned generation metadata.
+
+Jobs and prompt entries are saved in SQLite. Generation continues while you label
+images or reload the browser. **Stop generation** cancels the image request, or waits
+for the current prompt batch to return (up to 180 seconds), then stops scheduling
+work. **Resume remaining images** continues cancelled, failed, or server-interrupted
+jobs without redoing saved images. One job runs at a time. A rendering failure stops
+the queue for inspection; images are not automatically retried. Exact duplicate
+images remain rejected by the dataset, including repeated deterministic output.
+
+Image requests have a 630-second deadline. GPU cancellation may need to reach the
+runtime’s next cancellation checkpoint. After a server restart, explicitly resume
+unfinished jobs. Keep the dataset backed up and review synthetic images and labels
+before using them for training.
 
 ## Dataset conventions
 

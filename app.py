@@ -2,7 +2,9 @@
 import argparse
 import ai
 import ai_codex
+import ai_http
 import image_generation
+import synthetic
 import base64
 import hashlib
 import io
@@ -126,14 +128,24 @@ class Dataset:
             created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
             revision INTEGER NOT NULL DEFAULT 1, annotation TEXT)""")
         self.db.commit()
+        self.generation_jobs = synthetic.Jobs(self)
 
     def close(self):
+        self.generation_jobs.close()
         self.db.close()
 
     def rows(self):
         with self.lock:
             rows = [dict(r) for r in self.db.execute('SELECT * FROM samples ORDER BY created_at, id')]
+            provenance = {}
+            for record in self.db.execute('SELECT data FROM generation_entries'):
+                entry = json.loads(record[0])
+                if entry.get('sample_id'):
+                    provenance[entry['sample_id']] = entry
             for row in rows:
+                if row['id'] in provenance:
+                    entry = provenance[row['id']]
+                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if key in entry}
                 row['annotation'] = json.loads(row['annotation']) if row['annotation'] else None
                 if row['annotation'] is not None:
                     row['annotation'].setdefault('corner_reference', 'image')
@@ -158,7 +170,7 @@ class Dataset:
                             " AND id<>? AND split='unassigned'", (chosen, *args))
         return chosen
 
-    def add(self, body):
+    def add(self, body, generation=None):
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -196,6 +208,8 @@ class Dataset:
                     self.db.execute('INSERT INTO samples VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
                                     (sample_id, digest, name, image.width, image.height, meta['book_id'],
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
+                    if generation is not None:
+                        self.generation_jobs.record_output(sample_id, *generation)
             except Exception:
                 shutil.rmtree(folder)
                 raise
@@ -290,6 +304,10 @@ def make_handler(dataset):
             try:
                 if path == '/api/ai/config':
                     return self.reply(ai.codex_models())
+                if path == '/api/generation/jobs':
+                    with dataset.lock:
+                        snapshot = dict(dataset.generation_jobs.snapshot(), samples=dataset.rows())
+                    return self.reply(snapshot)
                 if path == '/api/samples':
                     return self.reply(dataset.rows())
                 if path.startswith(('/api/image/', '/api/thumb/')):
@@ -331,6 +349,16 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/generation/jobs':
+                    return self.reply(dataset.generation_jobs.start(body), 201)
+                if path == '/api/generation/jobs/cancel':
+                    return self.reply(dataset.generation_jobs.cancel(body.get('job_id')))
+                if path == '/api/generation/jobs/resume':
+                    return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
+                if path == '/api/generation/prompt-models':
+                    result = ai_http.models('llamacpp', body.get('server_url'))
+                    image_ids = {m['id'] for m in image_generation.models(body)['models']}
+                    return self.reply({'models': [m for m in result['models'] if m['id'] not in image_ids]})
                 if path == '/api/generation/models':
                     return self.reply(image_generation.models(body))
                 if path == '/api/generation/cancel':
