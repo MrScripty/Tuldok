@@ -52,6 +52,10 @@ class ImageGenerationTests(unittest.TestCase):
         self.assertEqual((sent['width'], sent['height']), (1280, 720))
         self.assertIs(type(sent['width']), int)
         self.assertEqual((result['width'], result['height']), (1280, 720))
+    def test_unprocessable_fields_name_a_contract_mismatch(self):
+        with self.assertRaisesRegex(ValueError, 'contract'):
+            self.manager.generate({**self.body(), 'prompt': 'unprocessable', 'width': 33, 'height': 33})
+        self.assertEqual(len(self.requests), 1)
     def test_cancel_closes_transport_and_allows_next_request_without_retry(self):
         errors = []
         def generate():

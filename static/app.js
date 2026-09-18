@@ -445,7 +445,8 @@ function renderPromptEntry(entry){
 function renderJobs(){
   $('generation-jobs').replaceChildren();
   const active=generationState.jobs.find(job=>['preparing','generating','stopping'].includes(job.status));
-  $('generation-status').textContent=active?jobText(active):(generationState.jobs.length?jobText(generationState.jobs.at(-1)):'');
+  const shown=active??(generationState.jobs.length?generationState.jobs.at(-1):null);
+  $('generation-status').textContent=shown?jobText(shown)+(shown.error?' · '+shown.error:''):'';
   for(const job of generationState.jobs){
     const row=document.createElement('div');row.className='generation-job';
     const text=document.createElement('p');text.textContent=jobText(job)+(job.error?' · '+job.error:'');row.append(text);

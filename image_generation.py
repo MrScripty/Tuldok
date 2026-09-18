@@ -171,6 +171,7 @@ class ImageRequests:
             with connection.getresponse() as response:
                 if response.status != 200:
                     messages = {400: 'Pumas rejected the image request. Check the model, prompt, width and height.',
+                                422: 'Pumas rejected the image request fields. The gateway contract may have changed; check width, height, prompt and model.',
                                 404: 'Use the Pumas gateway URL and a ready image model. A llama.cpp router cannot generate images.',
                                 409: 'The image runtime is busy. Wait for it to finish stopping before another request.',
                                 499: 'Image generation cancelled.',
