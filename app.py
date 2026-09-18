@@ -147,7 +147,7 @@ class Dataset:
             for row in rows:
                 if row['id'] in provenance:
                     entry = provenance[row['id']]
-                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if key in entry}
+                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'width', 'height', 'requested_seed') if key in entry}
                 row['annotation'] = json.loads(row['annotation']) if row['annotation'] else None
                 if row['annotation'] is not None:
                     row['annotation'].setdefault('corner_reference', 'image')

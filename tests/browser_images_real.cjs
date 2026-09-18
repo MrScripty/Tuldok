@@ -36,7 +36,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('generation-model',model);
   assert.equal(await evaluate('document.getElementById("generation-model").value'),model,'Selected real served image model');
   const prompt=process.env.PUMAS_PROMPT||'A red ceramic teapot beside a yellow lemon on a blue table, soft daylight, detailed still life photograph';
-  await fill('generation-size','512x512');await fill('generation-seed','42');await fill('generation-prompt',prompt);
+  await fill('generation-width','512');await fill('generation-height','512');await fill('generation-seed','42');await fill('generation-prompt',prompt);
   await fill('generation-strategy','repeat');await fill('generation-count','1');
   const started=Date.now();await click('generate');
   await until(async()=>{
@@ -54,7 +54,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   fs.writeFileSync(path.join(evidence,'saved.png'),png);
   assert.equal(await evaluate('document.getElementById("ai-settings").hidden'),false);
   assert.deepEqual(errors,[],'No browser runtime exceptions');
-  const result={fixture:false,gateway,model,prompt,seed:42,size:'512x512',duration_seconds:durationSeconds,metadata:rows[0].generation.metadata,displayed_width:512,saved_sha256:crypto.createHash('sha256').update(png).digest('hex'),automatically_added:true};
+  const result={fixture:false,gateway,model,prompt,seed:42,width:512,height:512,duration_seconds:durationSeconds,metadata:rows[0].generation.metadata,displayed_width:512,saved_sha256:crypto.createHash('sha256').update(png).digest('hex'),automatically_added:true};
   if(evidence)fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result));
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{if(ws)ws.close();for(const child of children.reverse())child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),300);});

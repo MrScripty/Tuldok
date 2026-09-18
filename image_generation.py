@@ -16,7 +16,8 @@ import ai_http
 MAX_PNG = 8 * 1024 * 1024
 MAX_JSON = 12 * 1024 * 1024
 TIMEOUT = 630
-SIZES = {f'{width}x{height}' for width in (512, 768, 1024) for height in (512, 768, 1024)}
+DEFAULT_WIDTH = 1280
+DEFAULT_HEIGHT = 720
 
 
 def models(body):
@@ -36,7 +37,7 @@ def models(body):
 
 
 def validate(body):
-    if set(body) - {'server_url', 'request_id', 'model', 'prompt', 'size', 'seed'}:
+    if set(body) - {'server_url', 'request_id', 'model', 'prompt', 'width', 'height', 'seed'}:
         raise ValueError('Unsupported image-generation fields.')
     base = ai_http.validate_url('llamacpp', body.get('server_url'))
     request_id = body.get('request_id')
@@ -45,20 +46,23 @@ def validate(body):
     for name, limit in [('model', 256), ('prompt', 4000)]:
         if not isinstance(body.get(name), str) or not body[name].strip() or len(body[name]) > limit:
             raise ValueError(f'{name} must contain 1 to {limit} characters.')
-    size = body.get('size', '1024x1024')
-    if size not in SIZES:
-        raise ValueError('Width and height must each be 512, 768, or 1024.')
+    dimensions = {}
+    for name, default in (('width', DEFAULT_WIDTH), ('height', DEFAULT_HEIGHT)):
+        value = body.get(name, default)
+        if type(value) is not int or value <= 0:
+            raise ValueError(f'{name} must be a positive integer.')
+        dimensions[name] = value
     seed = body.get('seed')
     if seed is not None and (type(seed) is not int or not 0 <= seed <= 4294967295):
         raise ValueError('Seed must be an integer from 0 through 4294967295.')
     payload = {name: body[name] for name in ('model', 'prompt')}
-    payload.update(n=1, size=size, response_format='b64_json')
+    payload.update(n=1, response_format='b64_json', **dimensions)
     if seed is not None:
         payload['seed'] = seed
     return base, request_id, payload
 
 
-def decode_image(data, size):
+def decode_image(data, width, height):
     try:
         value = json.loads(data)
         if not isinstance(value, dict) or not isinstance(value.get('data'), list) or len(value['data']) != 1:
@@ -69,7 +73,7 @@ def decode_image(data, size):
         raw = base64.b64decode(encoded, validate=True)
         if not raw or len(raw) > MAX_PNG:
             raise ValueError()
-        dimensions = tuple(map(int, size.split('x')))
+        dimensions = (width, height)
         with Image.open(io.BytesIO(raw)) as image:
             if image.format != 'PNG' or image.size != dimensions:
                 raise ValueError()
@@ -166,7 +170,7 @@ class ImageRequests:
                                {'Content-Type': 'application/json', 'Accept': 'application/json'})
             with connection.getresponse() as response:
                 if response.status != 200:
-                    messages = {400: 'Pumas rejected the image request. Check the model, prompt and size.',
+                    messages = {400: 'Pumas rejected the image request. Check the model, prompt, width and height.',
                                 404: 'Use the Pumas gateway URL and a ready image model. A llama.cpp router cannot generate images.',
                                 409: 'The image runtime is busy. Wait for it to finish stopping before another request.',
                                 499: 'Image generation cancelled.',
@@ -186,7 +190,7 @@ class ImageRequests:
                     data.extend(chunk)
                     if len(data) > MAX_JSON:
                         raise ValueError('Pumas returned an oversized image response.')
-                result = decode_image(data, payload['size'])
+                result = decode_image(data, payload['width'], payload['height'])
                 if operation.cancelled.is_set():
                     raise ValueError('Image generation cancelled.')
                 return result

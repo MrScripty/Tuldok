@@ -47,7 +47,7 @@
 <label>Prompt LLM<select id="prompt-model"><option value="">Refresh models to choose</option></select></label>
 <button id="prompt-refresh" type="button">Refresh prompt models</button>
 </div>
-<label>Size<select id="generation-size"><option>512x512</option><option>768x768</option><option selected>1024x1024</option><option>768x1024</option><option>1024x768</option></select></label>
+<label>Width<input id="generation-width" type="number" min="1" step="1" value="1280"></label><label>Height<input id="generation-height" type="number" min="1" step="1" value="720"></label>
 <label>Starting seed (optional)<input id="generation-seed" type="number" min="0" max="4294967295" step="1" placeholder="Random"></label>
 <p class="hint">A starting seed increments for each image. Leave blank for random seeds.</p>
 <p id="generation-details" class="hint"></p>

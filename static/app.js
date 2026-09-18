@@ -417,12 +417,12 @@ $('suggest').onclick=()=>run(async()=>{
 
 // Jobs live on the server, so labeling and page reloads do not interrupt a dataset.
 function rememberGeneration(){
-  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,size:$('generation-size').value,seed:$('generation-seed').value,prompt_url:$('prompt-url').value,prompt_model:$('prompt-model').value||promptPreferred,prompt:$('generation-prompt').value,count:$('generation-count').value,strategy:$('generation-strategy').value}));
+  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,width:$('generation-width').value,height:$('generation-height').value,seed:$('generation-seed').value,prompt_url:$('prompt-url').value,prompt_model:$('prompt-model').value||promptPreferred,prompt:$('generation-prompt').value,count:$('generation-count').value,strategy:$('generation-strategy').value}));
 }
 try{
   const settings=JSON.parse(localStorage.getItem('tuldok-generation')||'{}');
   $('generation-url').value=settings.server_url||'';generationPreferred=settings.model||'';
-  if([...$('generation-size').options].some(option=>option.value===settings.size))$('generation-size').value=settings.size;
+  $('generation-width').value=settings.width??1280;$('generation-height').value=settings.height??720;
   $('generation-seed').value=settings.seed??'';$('prompt-url').value=settings.prompt_url||'';promptPreferred=settings.prompt_model||'';
   $('generation-prompt').value=settings.prompt||'';$('generation-count').value=settings.count||500;$('generation-strategy').value=settings.strategy||'varied';
 }catch{}
@@ -478,7 +478,7 @@ $('generation-url').onchange=()=>{
   generationCatalog=[];$('generation-model').replaceChildren(new Option('Refresh models to choose',''));if(!$('prompt-url').value.trim())clearPromptCatalog();rememberGeneration();controls();
 };
 $('prompt-url').onchange=()=>{clearPromptCatalog();rememberGeneration();controls();};
-for(const id of ['generation-size','generation-seed','generation-model','generation-count','generation-strategy','prompt-model'])$(id).onchange=()=>{rememberGeneration();controls();};
+for(const id of ['generation-width','generation-height','generation-seed','generation-model','generation-count','generation-strategy','prompt-model'])$(id).onchange=()=>{rememberGeneration();controls();};
 $('generation-count').oninput=controls;
 $('generation-prompt').oninput=()=>{rememberGeneration();controls();};
 $('generation-scan').onclick=()=>run(async()=>{
@@ -525,7 +525,7 @@ $('generate').onclick=()=>run(async()=>{
   const seed=$('generation-seed').value;
   await api('/api/generation/jobs',{...captureMeta(),server_url:$('generation-url').value.trim(),model:$('generation-model').value,
     prompt:$('generation-prompt').value,count:Number($('generation-count').value),strategy:$('generation-strategy').value,
-    prompt_url:$('prompt-url').value.trim(),prompt_model:$('prompt-model').value,size:$('generation-size').value,...(seed===''?{}:{seed:Number(seed)})});
+    prompt_url:$('prompt-url').value.trim(),prompt_model:$('prompt-model').value,width:Number($('generation-width').value),height:Number($('generation-height').value),...(seed===''?{}:{seed:Number(seed)})});
   rememberGeneration();await refreshGeneration();
 });
 $('generation-cancel').onclick=()=>run(async()=>{

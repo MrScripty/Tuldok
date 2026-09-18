@@ -64,9 +64,9 @@ def validate(body):
     strategy = body.get('strategy')
     if strategy not in ('varied', 'repeat'):
         raise ValueError('Choose varied prompts or repeat the same prompt.')
-    image = {key: body[key] for key in ('server_url', 'model', 'prompt', 'size', 'seed') if key in body}
+    image = {key: body[key] for key in ('server_url', 'model', 'prompt', 'width', 'height', 'seed') if key in body}
     base, _, payload = image_generation.validate(dict(image, request_id=uuid.uuid4().hex))
-    config = dict(image, server_url=base, size=payload['size'], count=count, strategy=strategy)
+    config = dict(image, server_url=base, width=payload['width'], height=payload['height'], count=count, strategy=strategy)
     if strategy == 'varied':
         config['prompt_url'] = ai_http.validate_url('llamacpp', body.get('prompt_url') or base)
         config['prompt_model'] = ai_http.validate_model(body.get('prompt_model'))
@@ -212,7 +212,7 @@ class Jobs:
                 with self.lock, self.db:
                     self._entry(entry)
                     self.request_id = uuid.uuid4().hex
-                body = {key: config[key] for key in ('server_url', 'model', 'size')}
+                body = {key: config[key] for key in ('server_url', 'model', 'width', 'height')}
                 body.update(prompt=entry['prompt'], request_id=self.request_id)
                 if config.get('seed') is not None:
                     body['seed'] = (config['seed'] + ordinal) % 4294967296
@@ -241,5 +241,5 @@ class Jobs:
     def _new_entry(job, ordinal, prompt):
         return dict(id=uuid.uuid4().hex, job_id=job['id'], ordinal=ordinal, prompt=prompt,
                     status='pending', sample_id=None, error='', model=job['config']['model'],
-                    size=job['config']['size'], requested_seed=(job['config']['seed'] + ordinal) % 4294967296
+                    width=job['config']['width'], height=job['config']['height'], requested_seed=(job['config']['seed'] + ordinal) % 4294967296
                     if job['config'].get('seed') is not None else None)

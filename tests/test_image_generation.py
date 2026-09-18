@@ -18,7 +18,7 @@ class ImageGenerationTests(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
     def body(self, prompt='bird'):
-        return {'request_id': 'a'*32, 'server_url': self.url+'/v1', 'model': 'image-test', 'prompt': prompt, 'size': '512x512'}
+        return {'request_id': 'a'*32, 'server_url': self.url+'/v1', 'model': 'image-test', 'prompt': prompt, 'width': 512, 'height': 512}
     def test_discovery_excludes_vision_only_models(self):
         self.assertEqual(image_generation.models({'server_url': self.url})['models'], [{'id':'image-test','name':'image-test'}])
     def test_generation_decodes_and_preserves_the_returned_png(self):
@@ -30,12 +30,28 @@ class ImageGenerationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'invalid PNG'):
             self.manager.generate(self.body('invalid'))
         with self.assertRaisesRegex(ValueError, 'invalid PNG'):
-            image_generation.decode_image(json.dumps({'data':[{'b64_json':base64.b64encode(png((768,768))).decode()}]}), '512x512')
+            image_generation.decode_image(json.dumps({'data':[{'b64_json':base64.b64encode(png((768,768))).decode()}]}), 512, 512)
     def test_invalid_options_never_reach_the_gateway(self):
-        for changes in ({'seed': True}, {'seed': -1}, {'size':'4096x4096'}, {'prompt':'   '}, {'n':2}):
+        for changes in ({'seed': True}, {'seed': -1}, {'width': 0}, {'height': -1}, {'width': '512'}, {'size': '512x512'}, {'prompt':'   '}, {'n':2}):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 self.manager.generate({**self.body(), **changes})
         self.assertFalse(self.requests)
+    def test_omitted_dimensions_default_to_1280_by_720(self):
+        body = self.body()
+        del body['width']
+        del body['height']
+        result = self.manager.generate(body)
+        sent = self.requests[0]['body']
+        self.assertEqual((sent['width'], sent['height']), (1280, 720))
+        self.assertNotIn('size', sent)
+        self.assertEqual((result['width'], result['height']), (1280, 720))
+    def test_explicit_dimensions_reach_pumas_unchanged(self):
+        body = {**self.body(), 'width': 1280, 'height': 720}
+        result = self.manager.generate(body)
+        sent = self.requests[0]['body']
+        self.assertEqual((sent['width'], sent['height']), (1280, 720))
+        self.assertIs(type(sent['width']), int)
+        self.assertEqual((result['width'], result['height']), (1280, 720))
     def test_cancel_closes_transport_and_allows_next_request_without_retry(self):
         errors = []
         def generate():

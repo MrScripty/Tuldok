@@ -42,7 +42,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
 
   await until(()=>evaluate('document.getElementById("generation-model").value==="image-test"'));
   assert.equal(await evaluate('document.getElementById("generation-model").options.length'),1,'Text/VLM model excluded from image selector');
-  await fill('generation-size','512x512');await fill('generation-seed','20');await fill('generation-count','12');
+  await fill('generation-width','512');await fill('generation-height','512');await fill('generation-seed','20');await fill('generation-count','12');
   await click('prompt-refresh');await until(()=>evaluate('document.getElementById("prompt-model").value==="vision-only"&&!document.getElementById("prompt-refresh").disabled'));
   await fill('generation-prompt','photorealistic open books');await click('generate');
   await until(()=>evaluate('document.getElementById("generation-status").textContent.includes("12 / 12 images · completed")'));

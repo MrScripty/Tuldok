@@ -70,7 +70,7 @@ Select one of two strategies:
 - **Use the same prompt for every image:** Tuldok renders the description repeatedly,
   creating only the next pending gallery entry as it proceeds.
 
-Choose the image size and an optional starting seed. The seed increments for each
+Choose the image width and height (default 1280 by 720) and an optional starting seed. The seed increments for each
 image; leaving it blank lets Pumas sample randomly. Click **Generate dataset**.
 Prompt entries appear in the collection and become images as generation completes.
 Click a pending entry to inspect its prompt. Completed images immediately support
