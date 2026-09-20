@@ -86,10 +86,15 @@ jobs without redoing saved images. One job runs at a time. A rendering failure s
 the queue for inspection; images are not automatically retried. Exact duplicate
 images remain rejected by the dataset, including repeated deterministic output.
 
-Image requests have a 630-second deadline. GPU cancellation may need to reach the
-runtime’s next cancellation checkpoint. After a server restart, explicitly resume
-unfinished jobs. Keep the dataset backed up and review synthetic images and labels
-before using them for training.
+Image requests have no duration deadline: generation runs until it completes,
+fails, or you explicitly cancel it. Only connection establishment stays bounded;
+once admitted there is no total, read, idle, or elapsed timeout. GPU cancellation
+may need to reach the runtime’s next cancellation checkpoint. If the response is
+lost before completion, the outcome is uncertain — provider work may have
+continued — and the request is not automatically retried. After a server restart,
+explicitly resume unfinished jobs. Returned generation metadata may gain
+additional public fields over time. Keep the dataset backed up and review
+synthetic images and labels before using them for training.
 
 ## Dataset conventions
 
