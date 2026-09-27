@@ -54,8 +54,9 @@
 </section>
 <details id="ai-settings">
 <summary>AI model</summary>
-<label>Provider<select id="ai-provider"><option value="codex">Codex</option><option value="openrouter">OpenRouter</option><option value="llamacpp">llama.cpp</option></select></label>
+<label>Provider<select id="ai-provider"><option value="codex">Codex</option><option value="openrouter">OpenRouter</option><option value="llamacpp">llama.cpp</option><option value="pumas">Pumas</option></select></label>
 <label id="ai-url-row" hidden>Server URL<input id="ai-url" value="http://127.0.0.1:8080" autocomplete="off"></label>
+<div id="ai-pumas-row" hidden><button id="ai-scan" type="button">Scan local ports</button><label id="ai-gateway-row" hidden>Discovered vision endpoints<select id="ai-gateways"></select></label><p id="ai-scan-status" class="hint" role="status" aria-live="polite">Find a Pumas gateway or managed model server with a ready vision model.</p></div>
 <label id="ai-key-row" hidden>OpenRouter API key<input id="ai-key" type="password" autocomplete="off" placeholder="OPENROUTER_API_KEY on server"></label>
 <label>Model<select id="ai-model"><option value="">Refresh models to choose a model</option></select></label>
 <label id="ai-effort-row">Thinking level<select id="ai-effort"><option>low</option><option>medium</option><option>high</option><option>xhigh</option></select></label>

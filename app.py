@@ -413,6 +413,8 @@ def make_handler(dataset):
                     return self.reply({'models': [m for m in result['models'] if m['id'] not in image_ids]})
                 if path == '/api/generation/scan':
                     return self.reply(gateway_discovery.scan())
+                if path == '/api/ai/scan':
+                    return self.reply(gateway_discovery.scan_labeling())
                 if path == '/api/generation/models':
                     return self.reply(image_generation.models(body))
                 if path == '/api/generation/cancel':

@@ -113,6 +113,14 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("suggest").disabled'),true);
   await fill('ai-model','corners-test');await suggest();await saveAI();
   assert.equal((await savedRecords())[0].annotation.suggested_by.provider,'llamacpp');
+  await fill('ai-provider','pumas');await click('ai-scan');
+  const fixtureURL='http://127.0.0.1:'+output.match(/FIXTURE_LLM_PORT=(\d+)/)[1];
+  await until(()=>evaluate('[...document.getElementById("ai-gateways").options].some(option=>option.value==='+JSON.stringify(fixtureURL)+')&&!document.getElementById("ai-scan").disabled'));
+  await fill('ai-gateways',fixtureURL);
+  await until(()=>evaluate('document.getElementById("ai-model").value==="corners-test"&&!document.getElementById("ai-gateways").disabled'));
+  assert.equal(await evaluate('document.getElementById("ai-url").value'),fixtureURL);
+  await suggest();await saveAI();
+  assert.equal((await savedRecords())[0].annotation.suggested_by.provider,'pumas');
   await evaluate('document.getElementById("ai-settings").open=false');
   const screenshot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/tmp/tuldok-desktop.png',Buffer.from(screenshot.data,'base64'));
   await click('camera-view');await evaluate('paint("#d5b2a1")');await pause(200);
@@ -131,5 +139,5 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await pause(200);
   assert.ok(await evaluate('(()=>{const v=document.getElementById("image-stage").getBoundingClientRect(),r=document.getElementById("viewer").getBoundingClientRect();return v.width>0&&v.left>=r.left&&v.right<=r.right+1&&v.height<=r.height;})()'),'The image fits a narrow display');
   assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(stderr,'',stderr);
-  console.log('PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all three AI providers and unsaved suggestions');
+  console.log('PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all four AI providers and unsaved suggestions');
 })().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children)child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),500);});

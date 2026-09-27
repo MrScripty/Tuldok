@@ -30,11 +30,12 @@ If another tab has edited an image, reload before deleting it.
 
 ## AI corner suggestions
 
-Open **AI model**, choose Codex, OpenRouter, or llama.cpp, and select or enter a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.
+Open **AI model**, choose Codex, OpenRouter, llama.cpp, or Pumas, and select a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.
 
 - **Codex:** install and sign in to the Codex CLI on the Tuldok computer. Uses its app-server interface, cached model catalog, and selected thinking level. `TULDOK_CODEX_MODEL` overrides the default model.
 - **OpenRouter:** enter an API key or set `OPENROUTER_API_KEY` on the server. Refresh models lists image-capable models advertising structured outputs. The entered key stays in the current page; it is not written to browser storage, labels, or exports.
 - **llama.cpp:** run a vision model with its required image projector and supply the server URL (default `http://127.0.0.1:8080`). Refresh models reads its model list. The server must be reachable from the Tuldok computer and support image input and JSON schema output.
+- **Pumas:** serve a vision model and click **Scan local ports**. Tuldok lists ready Pumas gateways and local llama.cpp model endpoints, including a separate endpoint when Pumas manages the model there. Select the endpoint that lists your VLM, or enter its URL manually, then refresh models. The model must support image input and JSON output.
 
 The adapters follow Book-Be-Gone's provider interfaces without depending on that repository. Each request sends a JPEG copy of the selected image, at most 1600 pixels on its longest side, preserving orientation and aspect ratio. Original dataset images remain intact. The prompt in `prompts/corners.md` asks for screen-relative corner positions plus an explicit identification of the book’s upright top-left from its text or artwork. Tuldok rotates the handle identities into book order while preserving image coordinates and visibility. Ambiguous orientation requires manual labeling; no-book scenes remain supported. Saved suggestions include provider/model provenance in `suggested_by`; they still need human review before use as training labels.
 
@@ -116,7 +117,7 @@ This first version supports still capture and image import, including frames ext
     node tests/browser.cjs
     node tests/browser_images.cjs
 
-The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all three AI providers. Tests do not contact paid models.
+The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 
 ## Repository
 

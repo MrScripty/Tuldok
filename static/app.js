@@ -352,7 +352,7 @@ function aiBody(){
   const provider=$('ai-provider').value;
   return {provider,model:$('ai-model').value.trim(),
     ...(provider==='codex'?{effort:$('ai-effort').value}:{}),
-    ...(provider==='llamacpp'?{server_url:$('ai-url').value.trim()}:{}),
+    ...(['llamacpp','pumas'].includes(provider)?{server_url:$('ai-url').value.trim()}:{}),
     ...(provider==='openrouter'?{api_key:$('ai-key').value}:{})};
 }
 function rememberAI(){
@@ -377,8 +377,9 @@ function renderModels(items,preferred=$('ai-model').value||aiPreferences[$('ai-p
 }
 function chooseProvider(){
   const provider=$('ai-provider').value,prefs=aiPreferences[provider]||{};
-  $('ai-url-row').hidden=provider!=='llamacpp';$('ai-key-row').hidden=provider!=='openrouter';$('ai-effort-row').hidden=provider!=='codex';
-  $('ai-url').value=prefs.server_url||'http://127.0.0.1:8080';
+  $('ai-url-row').hidden=!['llamacpp','pumas'].includes(provider);$('ai-pumas-row').hidden=provider!=='pumas';$('ai-key-row').hidden=provider!=='openrouter';$('ai-effort-row').hidden=provider!=='codex';
+  $('ai-url-row').firstChild.textContent=provider==='pumas'?'Vision endpoint URL':'Server URL';
+  $('ai-url').value=prefs.server_url||(provider==='pumas'?'':'http://127.0.0.1:8080');
   renderModels(provider==='codex'?aiConfig.models||[]:[],prefs.model||(provider==='codex'?aiConfig.default:''));
   if(prefs.effort&&[...$('ai-effort').options].some(option=>option.value===prefs.effort))$('ai-effort').value=prefs.effort;
   rememberAI();
@@ -388,7 +389,7 @@ async function initializeAI(){
   try{
     const stored=JSON.parse(localStorage.getItem('tuldok-ai')||'{}');
     aiPreferences=stored.providers||{};
-    if(['codex','openrouter','llamacpp'].includes(stored.provider))$('ai-provider').value=stored.provider;
+    if(['codex','openrouter','llamacpp','pumas'].includes(stored.provider))$('ai-provider').value=stored.provider;
   }catch{}
   $('ai-key').placeholder=aiConfig.openrouter_key_configured?'Configured on server':'API key or OPENROUTER_API_KEY on server';
   chooseProvider();
@@ -396,12 +397,32 @@ async function initializeAI(){
 $('ai-provider').onchange=chooseProvider;
 $('ai-model').onchange=()=>{renderEfforts();rememberAI();};
 $('ai-effort').onchange=rememberAI;$('ai-url').onchange=()=>{renderModels([]);rememberAI();};
-$('ai-refresh').onclick=()=>run(async()=>{
+async function refreshAIModels(){
   const result=await api('/api/ai/models',aiBody());
   renderModels(result.models);
   renderEfforts();rememberAI();
   if(!result.models.length)notice('No compatible models found. Check the provider and server URL, then refresh models.');
+}
+$('ai-refresh').onclick=()=>run(refreshAIModels);
+$('ai-scan').onclick=()=>run(async()=>{
+  $('ai-scan-status').textContent='Scanning local ports…';$('ai-gateway-row').hidden=true;
+  try{
+    const result=await api('/api/ai/scan',{});
+    $('ai-gateways').replaceChildren(new Option('Choose an endpoint',''),...result.endpoints.map(endpoint=>new Option(endpoint.server_url+' · '+endpoint.kind+' · '+endpoint.models+' models',endpoint.server_url)));
+    $('ai-gateway-row').hidden=!result.endpoints.length;
+    const current=result.endpoints.find(endpoint=>endpoint.server_url===$('ai-url').value.trim().replace(/\/v1\/?$|\/$/g,''));
+    const focused=result.endpoints.filter(endpoint=>endpoint.kind==='model server'&&endpoint.models===1);
+    const chosen=current||(focused.length===1?focused[0]:result.endpoints.length===1?result.endpoints[0]:null);
+    $('ai-scan-status').textContent=result.message||(result.endpoints.length+' vision endpoint'+(result.endpoints.length===1?' found':'s found')+(chosen?' — selecting '+chosen.server_url:'. Choose an endpoint below.'));
+    if(chosen){$('ai-gateways').value=chosen.server_url;await useAIGateway();}
+  }catch(error){$('ai-scan-status').textContent=error.message;throw error;}
 });
+async function useAIGateway(){
+  if(!$('ai-gateways').value)return;
+  $('ai-url').value=$('ai-gateways').value;$('ai-url').onchange();
+  await refreshAIModels();
+}
+$('ai-gateways').onchange=()=>run(useAIGateway);
 $('suggest').onclick=()=>run(async()=>{
   const imageId=selected.id,revision=selected.revision,previousStatus=$('save-status').textContent;
   $('suggest').textContent='Suggesting…';$('save-status').textContent='Finding corners…';
