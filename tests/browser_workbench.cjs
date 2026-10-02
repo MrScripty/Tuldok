@@ -24,7 +24,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
-  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,body:document.body?.innerText.slice(0,1500)})');
+  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,body:document.body?.innerText.slice(0,1500),viewport:innerWidth,overflow:[...document.querySelectorAll("body *")].filter(e=>e.getBoundingClientRect().right>innerWidth).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).slice(0,30)})');
   const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await send('Page.enable');await send('Runtime.enable');
@@ -60,9 +60,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const release=await evaluate('document.querySelector("#release-result a").href');
   const archive=await fetch(release);assert.equal(archive.status,200);assert.equal((await archive.arrayBuffer()).byteLength>1000,true);
+  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+  fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-desktop.png'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Narrow layout must not overflow');
   const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-narrow.png'),Buffer.from(shot.data,'base64'));
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Narrow layout must not overflow');
   assert.deepEqual(errors,[]);console.log('Workbench Chromium lifecycle, stale conflicts, frozen download and narrow layout passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
