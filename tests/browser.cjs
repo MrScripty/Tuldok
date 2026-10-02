@@ -3,7 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-test-')),children=[];
-let ws;
+let ws, inspect;
+const errors=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
@@ -19,10 +20,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.ok(target,'Expected the explicitly launched blank page target');
   ws=new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
-  let id=0;const pending=new Map(),errors=[];
+  let id=0;const pending=new Map();
   ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  inspect=()=>evaluate('JSON.stringify({url:location.href,notice:document.getElementById("notice")?.textContent,camera:document.getElementById("start-camera")?.textContent,captureDisabled:document.getElementById("capture")?.disabled,video:{ready:document.getElementById("video")?.readyState,width:document.getElementById("video")?.videoWidth,height:document.getElementById("video")?.videoHeight,paused:document.getElementById("video")?.paused},tracks:document.getElementById("video")?.srcObject?.getTracks().map(t=>({ready:t.readyState,muted:t.muted,enabled:t.enabled}))})');
   const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await send('Page.enable');await send('Runtime.enable');
@@ -134,4 +136,4 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.ok(await evaluate('(()=>{const v=document.getElementById("image-stage").getBoundingClientRect(),r=document.getElementById("viewer").getBoundingClientRect();return v.width>0&&v.left>=r.left&&v.right<=r.right+1&&v.height<=r.height;})()'),'The image fits a narrow display');
   assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(stderr,'',stderr);
   console.log('PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all three AI providers and unsaved suggestions');
-})().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children)child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),500);});
+})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Camera diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children)child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),500);});
