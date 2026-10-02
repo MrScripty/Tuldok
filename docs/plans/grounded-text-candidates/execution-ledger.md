@@ -28,3 +28,7 @@ This repair rejects a response with outstanding Content-Length before candidate 
 Three actual-worker HTTP regressions exercise a complete candidate JSON body declared ten bytes too long, valid UTF-16 and UTF-8 response hashes across reopening, and cancellation while the model catalog stalls before headers. The catalog test also verifies that a fresh job can complete afterward. Narrow independent rereview and exact repair-head CI remain pending. Real model quality remains unqualified.
 
 Repair local evidence: all 66 Python tests pass, including all 53 M1 regressions; controller deferred-response tests, JavaScript syntax and whitespace checks pass.
+
+## 2026-10-02 — bounded real Pumas smoke
+
+The transport repair tree was independently accepted and exact-head hosted CI `37077038526` passed. The existing installed local Pumas/llama.cpp runtime and tiny Qwen smoke model then exercised production discovery and proposals with fictional text only. The model copied schema placeholders and changed the source class; production validation correctly rejected the output. Exact failed-response byte/hash provenance, reopening and active-request cancellation passed. No real candidate was admitted, so real draft admission and model quality remain unqualified. The owned runtime was shut down and no Pumas or llama-server process remained. See `reports/real-pumas-smoke.md` and opt-in `scripts/qualify_grounded_local.py` for scope, reproduction and evidence. No new feature work or model downloads were performed.
