@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import json
 import tempfile
 import threading
@@ -69,6 +71,41 @@ class GroundedTests(unittest.TestCase):
                 job=self.generate(mode);self.assertEqual(job['status'],'failed');self.assertEqual(job['candidates'],[])
                 self.assertEqual(self.data.workbench.query({})['total'],1)
                 self.assertTrue(job['error'])
+
+    def test_short_http_body_with_valid_json_fails_before_candidates(self):
+        job=self.generate('short_http_body')
+        self.assertEqual(job['status'],'failed')
+        self.assertIn('Content-Length',job['error'])
+        self.assertEqual(job['candidates'],[])
+        self.assertEqual(self.data.workbench.query({})['total'],1)
+        self.data.close();self.data=Dataset(self.tmp.name)
+        self.assertEqual(self.data.grounded.get(job['id'])['status'],'failed')
+
+    def test_utf16_response_keeps_exact_bytes_and_hash_after_reopen(self):
+        for mode in ('utf16','Rewrite clearly'):
+            job=self.generate(mode)
+            self.assertEqual(job['status'],'completed')
+            raw=base64.b64decode(job['raw_response_base64'],validate=True)
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),job['response_sha256'])
+            self.assertEqual(json.loads(raw)['model'],'grounded-text-test')
+            if mode=='utf16':self.assertIsNone(job['raw_response'])
+            else:self.assertEqual(job['raw_response'].encode('utf-8'),raw)
+            self.assertNotIn('raw_response_base64',self.data.grounded.snapshot()['jobs'][0])
+            self.data.close();self.data=Dataset(self.tmp.name)
+            self.assertEqual(self.data.grounded.get(job['id'])['raw_response_base64'],job['raw_response_base64'])
+
+    def test_cancel_stalled_catalog_releases_worker_without_chat(self):
+        entered=threading.Event()
+        server,url,requests=start(catalog_entered=entered)
+        self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
+        config=self.config();config['server_url']=url
+        job=self.data.grounded.start(config);self.assertTrue(entered.wait(3))
+        self.data.grounded.cancel(job['id'])
+        self.data.grounded.worker.join(3)
+        self.assertFalse(self.data.grounded.worker.is_alive())
+        self.assertEqual(self.data.grounded.get(job['id'])['status'],'cancelled')
+        self.assertEqual(requests,[])
+        self.assertEqual(self.generate()['status'],'completed')
 
     def test_unavailable_or_image_model_rejected_before_inference(self):
         for model in ('image-only','missing'):

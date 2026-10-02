@@ -215,8 +215,8 @@ def request(base, path, payload=None, timeout=900, headers=None, label='Local mo
             watcher.join()
 
 
-def get_json(base, path, headers=None, label='Local model server', max_size=MAX_RESPONSE):
-    with request(base, path, timeout=15, headers=headers, label=label) as (response, transport, deadline):
+def get_json(base, path, headers=None, label='Local model server', max_size=MAX_RESPONSE, cancel_event=None):
+    with request(base, path, timeout=15, headers=headers, label=label, cancel_event=cancel_event) as (response, transport, deadline):
         data = bytearray()
         while not response.isclosed():
             remaining = deadline - time.monotonic()
@@ -249,10 +249,10 @@ def models(provider, server_url):
     return {'models': [{'id': name, 'name': name} for name in dict.fromkeys(names)]}
 
 
-def text_models(server_url):
+def text_models(server_url, cancel_event=None):
     """Pumas-compatible served catalog; absence of image capability is not JSON proof."""
     base = validate_url('llamacpp', server_url)
-    value = get_json(base, '/v1/models', label='Pumas gateway')
+    value = get_json(base, '/v1/models', label='Pumas gateway', cancel_event=cancel_event)
     entries = value.get('data') if isinstance(value, dict) else None
     if not isinstance(entries, list):
         raise CodexError('Pumas returned an invalid served-model list.')

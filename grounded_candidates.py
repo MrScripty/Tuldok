@@ -3,6 +3,7 @@
 Exact quotes/schema are mechanical checks, never semantic or human review.
 Existing ai_http owns HTTP; Workbench owns all admitted assets and annotations.
 """
+import base64
 import hashlib
 import json
 import threading
@@ -29,8 +30,8 @@ SYSTEM_PROMPT = (
 )
 
 
-def catalog(base):
-    return [model['id'] for model in ai_http.text_models(base)['models']]
+def catalog(base, cancel_event=None):
+    return [model['id'] for model in ai_http.text_models(base, cancel_event=cancel_event)['models']]
 
 
 def request_payload(job):
@@ -58,6 +59,8 @@ def complete(job, stop):
             data.extend(chunk)
             if len(data) > MAX_OUTPUT:
                 raise WorkbenchError('Model response exceeds the bounded output limit.', 'invalid')
+        if response.length not in (None, 0):
+            raise WorkbenchError('Model response ended before its declared Content-Length.', 'unavailable')
     return bytes(data)
 
 
@@ -143,6 +146,7 @@ class Proposals:
             # Raw bounded responses remain available on the exact job GET, not every poll.
             for job in jobs:
                 job.pop('raw_response', None)
+                job.pop('raw_response_base64', None)
             return {'jobs': jobs}
 
     def _source(self, body):
@@ -175,7 +179,7 @@ class Proposals:
             job = {'schema_version': 1, 'id': uuid.uuid4().hex, 'revision': 0, 'status': 'preparing', 'error': '', 'created_at': timestamp(),
                    'source': source, 'config': {'server_url': base, 'model': model, 'instruction': instruction, 'count': count, 'seed': seed},
                    'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION, 'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
-                   'candidates': [], 'response_sha256': None, 'raw_response': None,
+                   'candidates': [], 'response_sha256': None, 'raw_response': None, 'raw_response_base64': None,
                    'verification': 'Schema and exact source quotes only; class/factual preservation requires human review.'}
             job['canonical_request_sha256'] = hashlib.sha256(encode(request_payload(job)).encode()).hexdigest()
             self._save(job)
@@ -187,7 +191,7 @@ class Proposals:
     def _run(self, job_id):
         job = self.get(job_id)
         try:
-            available = catalog(job['config']['server_url'])
+            available = catalog(job['config']['server_url'], cancel_event=self.stop)
             if self.stop.is_set():
                 raise WorkbenchError('Generation cancelled.', 'cancelled')
             if job['config']['model'] not in available:
@@ -199,7 +203,12 @@ class Proposals:
                 self._save(job)
             data = complete(job, self.stop)
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
-            job['raw_response'] = data.decode('utf-8', errors='replace')
+            job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
+            # Exact bytes are authoritative; the optional UTF-8 view is never lossy.
+            try:
+                job['raw_response'] = data.decode('utf-8')
+            except UnicodeDecodeError:
+                job['raw_response'] = None
             candidates = decode(data, job['source'], job['config']['count'])
             reported = json.loads(data).get('model')
             job['reported_model'] = text_value(reported, 'Reported model', 200) if reported is not None else None

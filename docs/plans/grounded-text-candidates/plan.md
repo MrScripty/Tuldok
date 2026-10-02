@@ -31,8 +31,8 @@ Write set: `grounded_candidates.py`, `ai_http.py`, `workbench.py`, `app.py`, `st
 1. Controlled served catalog and chat HTTP flow use actual existing paths, reject unavailable/image models, and decode proposals: passed local contract/HTTP tests.
 2. Exact evidence and provenance, draft-only atomic/idempotent admission, human-reviewed release and preserved lineage: passed local persistence/archive tests.
 3. Stale source, malformed/truncated/oversized response, cancellation, rejection and reopen/interruption are safe: passed local controlled-provider tests.
-4. Existing 53 Python regressions plus 10 new tests pass (63 total); controller tests and JS syntax pass. New UI flow through permitted hosted Chrome: pending after review/publication. Local browser restriction remains untouched.
-5. Independent review, exact-head CI and dependent draft PR: pending.
+4. Initial checkpoint: 63 Python tests plus controller checks and permitted hosted Chrome flow passed. Transport review adds three actual-worker HTTP regressions; repair-head checks and CI are recorded in the ledger. Local browser restriction remains untouched.
+5. Dependent draft PR #2 is published. Independent review found three transport/provenance gaps; repairs require narrow rereview and fresh exact-head CI.
 6. Real Pumas/model qualification: unavailable until an approved runtime and inference authority exist; do not infer from fixtures.
 
-Exactly one next slice: publish this coherent dependent-branch checkpoint as a draft, inspect exact-head hosted CI, then independently review and repair findings before accepting M2a.
+Exactly one next slice: publish and independently rereview the bounded transport repairs, inspect their exact-head CI, then qualify the remaining M2a gates.

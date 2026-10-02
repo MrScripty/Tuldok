@@ -18,3 +18,13 @@ Local evidence: `python3 -m unittest discover -s tests` passes 63 tests (53 M1 +
 ## 2026-10-02 — publish coherent checkpoint for review
 
 The milestone-publication instruction now permits preserving this coherent M2a checkpoint on its dependent branch before final review. The verified implementation tree `29df084ab81b14315819eb429f728d1118d198fe` has 63 passing local Python tests plus controller and syntax checks. Independent review, exact-head hosted browser/CI evidence and real-model qualification are still pending. Publish only `feature/grounded-text-candidates` with a draft PR targeting `develop/dataset-workflows`; neither main nor the green M1 branch is changed. Presentation proposals remain excluded.
+
+## 2026-10-02 — independent review transport repairs
+
+Hosted CI passed the initial checkpoint `d849da21ffb1db192e585428f5b60c1eea1d7a91`, including the controlled-provider Chrome workflow. Independent review then exposed three gaps that green fixtures had missed: valid JSON delivered before declared HTTP body completion; lossy UTF-8 replacement decoding of a valid UTF-16 response; and cancellation not reaching stalled model discovery.
+
+This repair rejects a response with outstanding Content-Length before candidate decoding, stores the exact bounded received bytes as `raw_response_base64` (the SHA-256 hashes those decoded bytes), and retains `raw_response` only as a strict, lossless UTF-8 view. Both raw representations are omitted from polling and retained on exact job retrieval. Existing persisted jobs remain readable; prior lossy bytes cannot be reconstructed. Model discovery now receives the same cancellation event and socket ownership as chat, retaining the existing 15-second discovery deadline.
+
+Three actual-worker HTTP regressions exercise a complete candidate JSON body declared ten bytes too long, valid UTF-16 and UTF-8 response hashes across reopening, and cancellation while the model catalog stalls before headers. The catalog test also verifies that a fresh job can complete afterward. Narrow independent rereview and exact repair-head CI remain pending. Real model quality remains unqualified.
+
+Repair local evidence: all 66 Python tests pass, including all 53 M1 regressions; controller deferred-response tests, JavaScript syntax and whitespace checks pass.
