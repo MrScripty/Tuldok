@@ -3,7 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-test-')),children=[];
-let ws;
+let ws, inspect;
+const errors=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
@@ -17,10 +18,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
   ws=new WebSocket(tabs[0].webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
-  let id=0;const pending=new Map(),errors=[];
+  let id=0;const pending=new Map();
   ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,body:document.body?.innerText.slice(0,1500)})');
   const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await send('Page.enable');await send('Runtime.enable');
@@ -61,4 +63,4 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
   fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-narrow.png'),Buffer.from(shot.data,'base64'));
   assert.deepEqual(errors,[]);console.log('Workbench Chromium lifecycle, stale conflicts, frozen download and narrow layout passed.');
-})().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
+})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
