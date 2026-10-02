@@ -19,10 +19,10 @@ const element=id=>{if(!elements.has(id)) elements.set(id,new Element(id));return
 const requests=[];
 const response=data=>({ok:true,json:async()=>data});
 const page={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
-const context=vm.createContext({console,URLSearchParams,structuredClone,confirm:()=>true,
-  document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
+const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>true,
+  document:{querySelectorAll:()=>[],getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
   window:{addEventListener(){}},
-  fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(page)):new Promise(resolve=>requests.push({url,options,resolve}))
+  fetch:(url,options)=>url.endsWith('/grounded/jobs')&&!options?.method?Promise.resolve(response({jobs:[]})):url.includes('/records?')?Promise.resolve(response(page)):new Promise(resolve=>requests.push({url,options,resolve}))
 });
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../static/workbench.js'),'utf8'),context);
 const run=code=>vm.runInContext(code,context);
