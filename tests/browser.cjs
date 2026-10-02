@@ -36,7 +36,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     window.confirm=()=>true;
   `});
   await send('Page.navigate',{url:'http://127.0.0.1:'+port});
-  await until(()=>evaluate('!!document.getElementById("capture-session")?.value'));
+  await until(()=>evaluate('!!document.getElementById("capture-session")?.value && !document.getElementById("start-camera").disabled'));
   await fill('capture-book','atlas-01');await fill('capture-session','desk-daylight');
   await click('start-camera');await until(()=>evaluate('!document.getElementById("capture").disabled'));
   assert.ok(await evaluate('(()=>{const v=document.getElementById("video").getBoundingClientRect(),r=document.getElementById("viewer").getBoundingClientRect();return v.width>0&&v.top>=r.top&&v.bottom<=r.bottom+1&&document.documentElement.scrollHeight<=innerHeight+1;})()'));

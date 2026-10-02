@@ -2,7 +2,7 @@
 
 ## Status and authority
 
-Status: Active. Current phase: M1 verification and independent review. Acceptance: pending browser/CI evidence.
+Status: Active. Current phase: M1 verification and independent review. Acceptance: hosted automated evidence obtained; broader UI qualification and M2 remain open.
 Canonical selection: `docs/plans/dataset-workflows/plan.md`, operation `start` for the user's authorized Tuldok development-branch expansion. This plan is scoped implementation authority, not authority to merge main or deploy.
 
 The user prioritizes image/text annotation, dataset management/search/sort/analysis, and real or fully synthetic usable datasets. The UI is provisional. The dataset-production book's interactive examples are explicitly not the UI specification.
@@ -60,19 +60,19 @@ Owner: Tuldok maintainer. Revisit with actual mask, instruction-tuning, caption/
 | A3 | Seeded generators create actual decodable pixels/text with independently checked targets and recipe provenance | contract / deterministic / automated | passed: local Python contract suite |
 | A4 | Connected protected groups and parents never cross splits, including unselected bridges; impossible ratios are reported | focused / deterministic / automated | passed: local Python contract suite |
 | A5 | Frozen releases survive later edits and reopening; loader verifies bytes, bounds, vocabulary, Unicode spans and split membership | release-artifact / real filesystem / automated | passed: local Python contract suite |
-| A6 | Import/generate/edit/filter/select/analyze/release works in desktop and narrow Chromium with keyboard controls, repeated actions and error recovery | user-workflow / representative Chromium / automated and visual inspection | blocked: Chromium socket restriction and cloud localhost policy |
-| A7 | New source passes CI and independent review; actionable Greptile/CodeRabbit findings addressed if present | integration / GitHub / automated and review | pending |
+| A6 | Import/generate/edit/filter/select/analyze/release works in desktop and narrow Chromium with keyboard controls, repeated actions and error recovery | user-workflow / representative Chromium / automated and visual inspection | hosted automated lifecycle/narrow layout passed; local browser blocked; broader keyboard/manual coverage pending |
+| A7 | New source passes CI and independent review; actionable Greptile/CodeRabbit findings addressed if present | integration / GitHub / automated and review | independent code review passed; hosted CI passed; draft PR retained |
 | A8 | Capability-checked model-assisted image/text candidate workflow and source-grounded transformations satisfy their admitted consumer semantics | system / controlled providers plus separately authorized real capability / automated | pending, M2 |
 
 First-slice acceptance is A1–A7 only; overall objective remains open until A8. Training throughput, final-model quality, generic COCO segmentation, perceptual deduplication, and semantic benchmark decontamination are not claims.
 
 ## Next slice
 
-Exactly one: independently review the M1 diff and obtain browser/CI evidence on a supported runner before accepting the slice. M2 remains a follow-on rather than a disguised claim that toy recipes fulfill all synthetic-data needs.
+Exactly one: review the provisional UI and remaining interaction coverage against actual user needs before admitting M2 implementation. M2 remains a follow-on rather than a disguised claim that toy recipes fulfill all synthetic-data needs.
 
 ## Blockers and re-plan triggers
 
-Local browser evidence is blocked by Chromium socket restrictions and cloud-browser localhost policy. Parent review/publication gate and exact-head CI are pending. Real inference requires available local capability and explicit authorization. Replan if bounded streaming is inadequate for observed dataset sizes, a consumer demands different coordinates/label roles, retained-source guarantees conflict, or a discovered invariant requires changing old corner behavior.
+Local browser evidence remains blocked by Chromium socket restrictions and cloud-browser localhost policy. The permitted GitHub-hosted runner executed both browser regressions successfully; broader manual/keyboard coverage remains open. Draft PR #1 is published; main is unchanged. Real inference requires available local capability and explicit authorization. Replan if bounded streaming is inadequate for observed dataset sizes, a consumer demands different coordinates/label roles, retained-source guarantees conflict, or a discovered invariant requires changing old corner behavior.
 
 ## Records
 

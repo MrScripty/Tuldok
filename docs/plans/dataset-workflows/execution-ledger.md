@@ -32,3 +32,14 @@ Repair evidence: 53 Python tests pass; Node controller regressions pass; JavaScr
 ## 2026-10-02 — bounded independent acceptance
 
 Independent rereview accepted staged tree `87f98505118b0ab797936ff40a2aa422d0b186bc` for the two reported correctness repairs and independently reproduced 53 passing Python tests, passing deferred-response controller tests, JavaScript syntax checks and clean whitespace. This is bounded code/contract acceptance only. Browser A6 remains blocked and exact-head CI remains pending; M2 remains planned. Authorized next step: publish the focused development branch as a draft pull request, without merging or altering main. Presentation README/banner/social/PDF changes are excluded.
+
+
+## 2026-10-02 — draft publication and permitted hosted-browser evidence
+
+Published draft PR https://github.com/MrScripty/Tuldok/pull/1 on `develop/dataset-workflows`; main remains `2fc4a46f12d73a0fa467d5482f68edb83d6df6af`. Shell Git had no credentials, so authenticated GitHub object/ref APIs published the same verified tree: local commit `b227422d44c2a63340b3ffb313e5cde876e32af9` maps to remote `7ee59bec50ecf5bcffbcbd2b7a54df63fae4dd73`, both tree `6b450496ce8a4f62a0dd4a7ffa0fed9c8b33dc09`. Subsequent API publications also verify exact local/remote tree equality; commit IDs differ due to API commit metadata, not content replacement.
+
+Hosted CI discovered an inherited runner bug: choosing the first debugging target selected a Chrome extension background page. Both runners now select the explicitly launched blank page. The actual workbench flow then exposed long provenance JSON overflowing narrow screens; wrapping metadata repaired it. Screenshots from the permitted hosted runner were downloaded and visually inspected, and no local browser restriction was bypassed.
+
+Run https://github.com/MrScripty/Tuldok/actions/runs/37069783033 at remote head `c84432b44b28cb40446f42fbe4c46d03e87b4596` passed all executed stages: 53 Python tests, controller concurrency tests, JavaScript syntax, workbench browser lifecycle/conflicts/download/narrow layout, and the legacy camera/corner/import/export/provider smoke. A preceding legacy startup timeout revealed that the test waited for a populated input before async initialization completed; its readiness check now also requires the camera-start control to be enabled. Final-head CI is rechecked after this bounded test/documentation update.
+
+Hosted automated browser evidence is distinct from the still-blocked local browser surface. It does not establish every manual, keyboard, assistive-technology or platform path. CodeRabbit skipped automatic review because the PR is draft; its success status is not review approval. M2 model-assisted/source-grounded generation and final UI adoption remain open. No presentation drafts, real inference, merge, or deployment are included.
