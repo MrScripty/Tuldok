@@ -15,7 +15,9 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
-  ws=new WebSocket(tabs[0].webSocketDebuggerUrl);
+  const target=tabs.find(tab=>tab.type==='page' && tab.url==='about:blank');
+  assert.ok(target,'Expected the explicitly launched blank page target');
+  ws=new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   let id=0;const pending=new Map(),errors=[];
   ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
