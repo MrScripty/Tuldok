@@ -6,6 +6,9 @@ import ai_http
 import image_generation
 import synthetic
 import gateway_discovery
+import workbench
+import dataset_recipes
+import dataset_releases
 import base64
 import hashlib
 import io
@@ -20,7 +23,7 @@ import zipfile
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 
 from PIL import Image, ImageOps
 
@@ -131,6 +134,8 @@ class Dataset:
         self.db.commit()
         self.generation_jobs = synthetic.Jobs(self)
         self._recover_deletions()
+        self.workbench = workbench.Workbench(self)
+        self.releases = dataset_releases.Releases(self.workbench)
 
     def close(self):
         self.generation_jobs.close()
@@ -236,6 +241,9 @@ class Dataset:
                 raise ValueError('Image not found. It may already have been deleted.')
             if type(body.get('revision')) is not int or body['revision'] != row['revision']:
                 raise Conflict('This image changed in another tab. Reload it before deleting.')
+            # Enrol before moving bytes; retain lineage in the deletion transaction.
+            with self.db:
+                self.workbench._sync_images()
             folder = self.path / 'images' / sample_id
             staging = self.path / '.deleting-images'
             staging.mkdir(exist_ok=True)
@@ -250,6 +258,7 @@ class Dataset:
                         if entry.get('sample_id') == sample_id:
                             entry.update(status='deleted', sample_id=None, deleted_at=now())
                             self.generation_jobs._entry(entry)
+                    self.workbench.preserve_deleted_source(sample_id)
                     self.db.execute('DELETE FROM samples WHERE id=?', (sample_id,))
             except Exception:
                 staged.rename(folder)
@@ -352,6 +361,33 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workbench/records':
+                    options = {key: value[-1] for key, value in parse_qs(urlsplit(self.path).query).items()}
+                    return self.reply(dataset.workbench.query(options))
+                if path == '/api/workbench/recipes':
+                    return self.reply(dataset_recipes.RECIPES)
+                if path.startswith('/api/workbench/records/'):
+                    return self.reply(dataset.workbench.get(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/history/'):
+                    return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/asset/'):
+                    with dataset.lock:
+                        record_id = path.rsplit('/', 1)[-1]
+                        dataset.workbench.get(record_id)
+                        asset, kind = dataset.workbench.asset(record_id)
+                        return self.reply(asset.read_bytes() if isinstance(asset, Path) else asset, content_type=kind)
+                if path.startswith('/api/workbench/releases/'):
+                    release_id = path.rsplit('/', 1)[-1].removesuffix('.zip')
+                    archive = dataset.releases.locate(release_id)
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/zip')
+                    self.send_header('Content-Length', str(archive.stat().st_size))
+                    self.send_header('Content-Disposition', 'attachment; filename="tuldok-' + release_id[:12] + '.zip"')
+                    self.send_header('X-Content-Type-Options', 'nosniff')
+                    self.end_headers()
+                    with archive.open('rb') as source:
+                        shutil.copyfileobj(source, self.wfile)
+                    return
                 if path == '/api/ai/config':
                     return self.reply(ai.codex_models())
                 if path == '/api/generation/jobs':
@@ -377,12 +413,14 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
                 return self.reply({'error': 'Not found.'}, 404)
-            except ValueError as error:
+            except workbench.WorkbenchError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
+            except (ValueError, OSError) as error:
                 return self.reply({'error': str(error)}, 400)
 
         def do_POST(self):
@@ -401,6 +439,14 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/workbench/import':
+                    return self.reply(dataset.workbench.import_asset(body), 201)
+                if path.startswith('/api/workbench/records/'):
+                    return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/generate':
+                    return self.reply(dataset_recipes.generate(dataset.workbench, body), 201)
+                if path == '/api/workbench/releases':
+                    return self.reply(dataset.releases.create(body), 201)
                 if path == '/api/generation/jobs':
                     return self.reply(dataset.generation_jobs.start(body), 201)
                 if path == '/api/generation/jobs/cancel':
@@ -430,6 +476,8 @@ def make_handler(dataset):
                 if path.startswith('/api/labels/'):
                     return self.reply(dataset.save(path.rsplit('/', 1)[-1], body))
                 return self.reply({'error': 'Not found.'}, 404)
+            except workbench.WorkbenchError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except Conflict as error:
                 return self.reply({'error': str(error)}, 409)
             except FileNotFoundError:
