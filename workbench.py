@@ -259,21 +259,29 @@ class Workbench:
                 return record
             if kind != 'text':
                 raise WorkbenchError('Asset kind must be image or text.')
-            source = body.get('text')
-            text_value(source, 'Text', MAX_TEXT)
-            text = unicodedata.normalize('NFC', source.replace('\r\n', '\n').replace('\r', '\n'))
-            name = text_value(body.get('name', 'Text record'), 'Name')
-            digest = hashlib.sha256(text.encode()).hexdigest()
-            if self.db.execute("SELECT 1 FROM workbench_records WHERE kind='text' AND content_hash=?", (digest,)).fetchone():
-                raise WorkbenchError('This canonical text already exists.', 'conflict', 409)
-            record_id, created = uuid.uuid4().hex, timestamp()
-            self.db.execute('INSERT INTO workbench_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                            (record_id, kind, name, text, source, digest, None, encode(groups), encode(parents),
-                             encode({'method': 'import', 'rights': rights, 'normalization': 'NFC; LF newlines'}),
-                             'text_classification', None, 'draft', 1, created, created))
-            record = self._get(record_id)
-            self._history(record)
-            return record
+            return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights)
+
+    def _insert_text(self, source, name, groups, parents, rights, *, provenance=None, annotation=None):
+        """Insert inside the caller's lock/transaction, including candidate admission."""
+        text_value(source, 'Text', MAX_TEXT)
+        text = unicodedata.normalize('NFC', source.replace('\r\n', '\n').replace('\r', '\n'))
+        name = text_value(name, 'Name')
+        digest = hashlib.sha256(text.encode()).hexdigest()
+        if self.db.execute("SELECT 1 FROM workbench_records WHERE kind='text' AND content_hash=?", (digest,)).fetchone():
+            raise WorkbenchError('This canonical text already exists.', 'conflict', 409)
+        if annotation is not None:
+            annotation = validate_annotation('text_classification', annotation, {'kind': 'text', 'text': text})
+        origin = {'method': 'import', 'rights': rights, 'normalization': 'NFC; LF newlines'}
+        if provenance is not None:
+            origin.update(provenance)
+        record_id, created = uuid.uuid4().hex, timestamp()
+        self.db.execute('INSERT INTO workbench_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                        (record_id, 'text', name, text, source, digest, None, encode(groups), encode(parents),
+                         encode(origin), 'text_classification', encode(annotation) if annotation is not None else None,
+                         'draft', 1, created, created))
+        record = self._get(record_id)
+        self._history(record)
+        return record
 
     def save(self, record_id, body, *, verified_provenance=None):
         with self.lock, self.db:

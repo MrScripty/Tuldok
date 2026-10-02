@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates]
   pull_request:
 permissions:
   contents: read
@@ -21,6 +21,9 @@ jobs:
       - run: node --check static/workbench.js
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/browser_workbench.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_grounded.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4

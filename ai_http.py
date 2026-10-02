@@ -6,6 +6,7 @@ import json
 import re
 import socket
 import time
+import threading
 from urllib.parse import urlsplit, urlunsplit
 
 from ai_codex import CodexError, OCRTimeout, OCRContentFilterError
@@ -141,20 +142,36 @@ def validate_url(provider, value):
 
 
 def validate_model(value):
-    if not isinstance(value, str) or not value.strip() or len(value) > 200 or any(ord(c) < 32 for c in value):
+    if not isinstance(value, str) or not value.strip() or len(value) > 200 or any(ord(c) < 32 or 0xD800 <= ord(c) <= 0xDFFF for c in value):
         raise ValueError('Enter the model name served by your local server')
     return value.strip()
 
 
 @contextmanager
-def request(base, path, payload=None, timeout=900, headers=None, label='Local model server'):
+def request(base, path, payload=None, timeout=900, headers=None, label='Local model server', cancel_event=None):
     url = urlsplit(base)
     deadline = time.monotonic() + timeout
     connection_type = http.client.HTTPSConnection if url.scheme == 'https' else http.client.HTTPConnection
     connection = connection_type(url.hostname, url.port, timeout=min(10, timeout))
+    finished, watcher = threading.Event(), None
     try:
+        if cancel_event is not None and cancel_event.is_set():
+            raise CodexError(f'{label} request cancelled.')
         connection.connect()
         transport = connection.sock
+        if cancel_event is not None:
+            if cancel_event.is_set():
+                raise CodexError(f'{label} request cancelled.')
+            def watch_cancel():
+                while not finished.wait(.05):
+                    if cancel_event.is_set():
+                        try:
+                            transport.shutdown(socket.SHUT_RDWR)
+                        except OSError:
+                            pass
+                        return
+            watcher = threading.Thread(target=watch_cancel, daemon=True)
+            watcher.start()
         transport.settimeout(max(.001, deadline - time.monotonic()))
         body = json.dumps(payload).encode() if payload is not None else None
         connection.request('POST' if body is not None else 'GET', url.path + path, body,
@@ -183,12 +200,19 @@ def request(base, path, payload=None, timeout=900, headers=None, label='Local mo
                                  retryable=response.status in (502, 503, 504))
             yield response, transport, deadline
     except (socket.timeout, TimeoutError):
-        raise OCRTimeout(f'{label} exceeded the time limit for this capture.') from None
+        if cancel_event is not None and cancel_event.is_set():
+            raise CodexError(f'{label} request cancelled.') from None
+        raise OCRTimeout(f'{label} exceeded the time limit for this request.') from None
     except (OSError, http.client.HTTPException):
+        if cancel_event is not None and cancel_event.is_set():
+            raise CodexError(f'{label} request cancelled.') from None
         raise CodexError(f'Could not communicate with {label}. '
                          'Check that it is reachable from the Tuldok computer.', retryable=True) from None
     finally:
+        finished.set()
         connection.close()
+        if watcher is not None:
+            watcher.join()
 
 
 def get_json(base, path, headers=None, label='Local model server', max_size=MAX_RESPONSE):
@@ -225,6 +249,30 @@ def models(provider, server_url):
     return {'models': [{'id': name, 'name': name} for name in dict.fromkeys(names)]}
 
 
+def text_models(server_url):
+    """Pumas-compatible served catalog; absence of image capability is not JSON proof."""
+    base = validate_url('llamacpp', server_url)
+    value = get_json(base, '/v1/models', label='Pumas gateway')
+    entries = value.get('data') if isinstance(value, dict) else None
+    if not isinstance(entries, list):
+        raise CodexError('Pumas returned an invalid served-model list.')
+    names, seen = [], set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise CodexError('Pumas returned an invalid served-model entry.')
+        name = validate_model(entry.get('id'))
+        if name in seen:
+            raise CodexError('Pumas returned ambiguous duplicate served-model IDs.')
+        seen.add(name)
+        capabilities = entry.get('capabilities', [])
+        if not isinstance(capabilities, list) or any(not isinstance(c, str) for c in capabilities):
+            raise CodexError('Pumas returned invalid capability metadata.')
+        if 'image_generation' not in capabilities:
+            names.append(name)
+    return {'models': [{'id': name, 'name': name} for name in sorted(set(names))],
+            'qualification': 'Listed non-image models only; structured chat compatibility is checked by each completed request.'}
+
+
 def run(image, model, prompt, schema, server_url, provider, on_update, timeout=900, progress_timeout=120):
     base = validate_url(provider, server_url)
     model = validate_model(model)
@@ -258,7 +306,7 @@ def stream(base, path, payload, on_update, timeout=900, progress_timeout=120,
         while not finished:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                raise OCRTimeout(f'{label} exceeded the time limit for this capture.')
+                raise OCRTimeout(f'{label} exceeded the time limit for this request.')
             if last_progress is not None:
                 remaining = min(remaining, progress_timeout - (time.monotonic() - last_progress))
                 if remaining <= 0:

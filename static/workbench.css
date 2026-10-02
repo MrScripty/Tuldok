@@ -3,3 +3,5 @@
 #image-frame{position:relative;width:fit-content;max-width:100%}#asset-image{display:block}#box-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}#box-overlay rect{fill:#e3992622;stroke:#ffae2b;stroke-width:2;vector-effect:non-scaling-stroke}
 /* Provenance and analysis contain unbroken user/source identifiers and JSON keys. */
 #record-provenance,#analysis,#release-result{overflow-wrap:anywhere}
+
+#grounded-jobs{overflow-wrap:anywhere}.proposal-job{border-top:1px solid #d9dfd6;padding-top:12px;margin-top:12px}.proposal-candidate{background:#f4f5ef;padding:10px;margin-top:10px}.proposal-candidate pre{max-height:240px;overflow:auto}.proposal-candidate textarea{background:white}
