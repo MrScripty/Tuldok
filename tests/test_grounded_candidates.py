@@ -158,6 +158,29 @@ class GroundedTests(unittest.TestCase):
         self.assertEqual(restored['candidates'][1]['status'],'pending_review')
         self.assertEqual(self.data.grounded.review(job['id'],self.decision(job))['record']['id'],record['id'])
 
+    def test_admitted_rejected_and_cancelled_request_survive_same_reopen(self):
+        job=self.generate()
+        admitted=self.data.grounded.review(job['id'],self.decision(job))
+        record=self.review(admitted['record'])
+        rejected=self.data.grounded.review(job['id'],self.decision(admitted['job'],index=1,decision='reject'))['job']
+        config=self.config();config.update(source_id=record['id'],revision=record['revision'],source_revision=record['source_revision'],instruction='slow')
+        slow=self.data.grounded.start(config)
+        deadline=time.monotonic()+3
+        while len(self.requests)<2 and time.monotonic()<deadline:time.sleep(.01)
+        self.assertEqual(len(self.requests),2)
+        self.data.grounded.cancel(slow['id'])
+        self.data.grounded.worker.join(3)
+        self.assertFalse(self.data.grounded.worker.is_alive())
+        before=self.data.grounded.snapshot()
+        self.assertEqual([candidate['status'] for candidate in rejected['candidates']],['admitted','rejected'])
+        self.assertEqual(self.data.grounded.get(slow['id'])['status'],'cancelled')
+        self.data.close();self.data=Dataset(self.tmp.name)
+        self.assertEqual(self.data.grounded.snapshot(),before)
+        restored=self.data.grounded.get(job['id'])
+        self.assertEqual(restored['candidates'][0]['record_id'],record['id'])
+        self.assertEqual(restored['candidates'],rejected['candidates'])
+        self.assertEqual(self.data.workbench.get(record['id'])['review'],'human_reviewed')
+
     def test_source_changes_while_provider_runs_are_not_published(self):
         entered,release=threading.Event(),threading.Event()
         source=self.source

@@ -1,6 +1,6 @@
 # Image-caption authoring and frozen export
 
-Status: Verifying. Bounded caption slice authorized by the user's request to continue Tuldok. Local contract evidence and independent source review passed; representative browser evidence and coordinator publication remain pending.
+Status: Verifying. Bounded caption slice authorized by the user's request to continue Tuldok. Local contract evidence and independent source review passed. Published PR #3 has one all-browser passing push run and a failing PR run at the grounded reopen fixture; its bounded correction is being verified.
 
 ## Outcome and authority
 
@@ -8,7 +8,7 @@ Use imported or existing Pumas-generated images, author and review a caption, se
 
 Branch `feature/image-caption-exports` starts at `f2c37005af8ac043bd89276b5485cb169693f0cd` (grounded-text stack). Existing draft PRs, main `2fc4a46`, and the separate Torch-provider integration branch are unchanged. The coordinator owns publication, PR targeting, independent acceptance and eventual integration; this task creates local commits only. Retain this branch for review until the coordinator records its disposition.
 
-Write set: `workbench.py`, `dataset_releases.py`, `static/workbench.html`, `static/workbench.js`, `tests/test_caption_exports.py`, `tests/fixtures/diffusion_check_image_data.py`, `tests/browser_captions.cjs`, `.github/workflows/tests.yml`, `README.md`, and this plan directory. No model, training, generation-provider, dependency or framework changes.
+Write set: `workbench.py`, `dataset_releases.py`, `static/workbench.html`, `static/workbench.js`, `tests/test_caption_exports.py`, `tests/fixtures/diffusion_check_image_data.py`, `tests/browser_captions.cjs`, `tests/browser_grounded.cjs`, `tests/browser_page_load.cjs`, `tests/test_browser_page_load.cjs`, `tests/test_grounded_candidates.py`, `.github/workflows/tests.yml`, `README.md`, and this plan directory. No model, training, generation-provider, dependency or framework changes.
 
 The existing Dataset/Workbench/Releases ownership and [decision](../../decisions/dataset-workbench.md) remain. Standards are MrScripty/Coding-Standards `dcc56f26e884ade260770beceba2501d3746200d`, following the core/router and affected implementation, verification/oracles/GUI, commit, documentation/tooling, frontend/accessibility, persistence/contracts/evolution/protocol, architecture/replay/code-design, security, concurrency and filesystem contracts. No Python/JavaScript language-specific profile is selected.
 
@@ -38,6 +38,6 @@ No claim covers real caption quality, rights, sensitive metadata removal, percep
 
 ## Exactly one next slice
 
-Publish the reviewed candidate through the coordinator, run exact-head hosted CI, inspect caption screenshots, and resolve concrete failures before the coordinator accepts or integrates this slice.
+Publish the reviewed grounded-reopen fixture correction through the coordinator, run exact-head push/PR CI, and inspect workflow/screenshots before accepting or integrating this slice.
 
 [Execution ledger](execution-ledger.md).
