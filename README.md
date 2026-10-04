@@ -91,6 +91,22 @@ runtime’s next cancellation checkpoint. After a server restart, explicitly res
 unfinished jobs. Keep the dataset backed up and review synthetic images and labels
 before using them for training.
 
+## Workbench image captions
+
+Open **Dataset workbench** from the corner studio. Existing imported and Pumas-generated images share the original Dataset source ID and bytes. Select **image caption**, write a caption describing the visible result, save as a draft, then explicitly review it. Editing a target resets the editor's review choice to draft. Generation prompts remain source provenance; they are never used as automatic captions. Each record has one current workbench task, with previous targets retained in revision history. Corner labels remain a separate annotation.
+
+Filter by task, review state or caption text. Select human-reviewed caption records and choose **Image captions · train/val/test** when freezing a release. The `/api/workbench/releases` request adds `format: "image_caption_v1"`; omission retains the canonical mixed-task release. Captions use exactly `{"caption": "..."}` and are bounded to 4,000 Unicode code points. Unknown formats and invalid caption fields are rejected.
+
+Caption ZIPs contain PNGs beside `train/metadata.jsonl`, `val/metadata.jsonl` and `test/metadata.jsonl`. Every row has exactly `file_name`, `text` (the accepted caption), and `group`. The existing `validation` assignment is explicitly projected to `val`. All three splits must be nonempty. Connected protected groups, parents, duplicate identities, book/session assignments and retained deleted ancestry share a component ID; the export never chooses an arbitrary first group. Existing source splits are preserved. Conflicts, insufficient independent families, missing lineage, draft targets, stale revisions, missing/tampered bytes, unnormalized PNGs and exact decoded-pixel duplicates fail before publication. Images below 512 pixels are exported with warnings.
+
+`manifest.json` freezes canonical annotations, source/target revisions, byte/pixel hashes, provenance, split mapping and complete relevant protected-component lineage snapshots. ZIP identity is the SHA-256 of its frozen bytes. Later edits or source deletion cannot change an existing release. Back up the full data directory, including releases. Human review does not establish rights, remove sensitive image metadata, detect near-duplicates or prove training quality.
+
+The consumer is the training companion's `examples/diffusion/check_image_data.py`, pinned to SHA-256 `6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94`. Extract the ZIP and run:
+
+    python3 /path/to/check_image_data.py /path/to/extracted-release
+
+The unchanged pinned snapshot in `tests/fixtures/diffusion_check_image_data.py` is used for producer/consumer contract tests. An alternate checkout may be supplied through `TULDOK_CAPTION_CONSUMER`; tests reject a different hash. This milestone runs no model training or paid inference. [Scope and verification](docs/plans/image-caption-exports/plan.md).
+
 ## Dataset conventions
 
 Coordinates are normalized against the oriented image: x/(width-1), y/(height-1). Each annotation has book_present, crop_suitable, and corners in the order top_left, top_right, bottom_right, bottom_left. A corner has visibility visible, occluded, or out_of_frame. Invisible corner coordinates are null. A no-book sample has crop_suitable=false and an empty corner list. Crop-suitable labels require four visible, placed corners. Visible quadrilaterals must be clockwise and convex. New labels use corner_reference=book: identities follow the book through rotation, so an upside-down book’s top-left corner is at the image bottom-right. Coordinate values always remain in image space. Existing labels without this field are interpreted and exported as corner_reference=image; untouched labels retain that convention. Placing, moving, or clearing corner positions switches the edited label to book orientation. The Corner reference control can explicitly retain image orientation when needed. Export schema version 2 records this distinction per annotation; training should select or explicitly convert conventions rather than mix them.
@@ -110,6 +126,10 @@ This first version supports still capture and image import, including frames ext
     python3 -m unittest discover -s tests
     node tests/browser.cjs
     node tests/browser_images.cjs
+    node tests/test_workbench_controller.cjs
+    node tests/browser_workbench.cjs
+    node tests/browser_grounded.cjs
+    node tests/browser_captions.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all three AI providers. Tests do not contact paid models.
 

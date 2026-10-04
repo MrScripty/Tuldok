@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports]
   pull_request:
 permissions:
   contents: read
@@ -26,11 +26,16 @@ jobs:
       - run: node tests/browser_grounded.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_captions.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: workbench-browser-screenshots
-          path: docs/plans/dataset-workflows/reports/workbench-*.png
+          path: |
+            docs/plans/dataset-workflows/reports/workbench-*.png
+            docs/plans/image-caption-exports/reports/captions-*.png
           if-no-files-found: ignore
       - run: node tests/browser.cjs
         env:

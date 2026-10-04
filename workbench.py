@@ -10,9 +10,10 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'text_classification', 'text_entities')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
+MAX_CAPTION = 4_000  # Human-authored target, separate from generation provenance.
 MAX_TARGETS = 500  # Bound annotation decoding and editor work per record.
 PAGE_SIZE = 40
 IDENTIFIER = re.compile(r'^[a-f0-9]{32}$')
@@ -55,6 +56,10 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Choose a task matching the asset type.')
     if not isinstance(value, dict):
         raise WorkbenchError('Annotation must be an object.')
+    if task == 'image_caption':
+        if set(value) != {'caption'}:
+            raise WorkbenchError('Image caption requires exactly one caption field.')
+        return {'caption': text_value(value['caption'], 'Caption', MAX_CAPTION)}
     if task.endswith('_classification'):
         if set(value) != {'label'}:
             raise WorkbenchError('Classification requires exactly one label.')
@@ -207,9 +212,11 @@ class Workbench:
     def query(self, options):
         """Page metadata and excerpts. Asset bytes are never loaded for browsing."""
         query = text_value(options.get('q', ''), 'Search', 200, empty=True).casefold()
-        kind, review, sort = (options.get(k, '') for k in ('kind', 'review', 'sort'))
+        kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
         if kind not in ('', 'image', 'text') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
             raise WorkbenchError('Invalid filter or sort.')
+        if task not in ('', *TASKS):
+            raise WorkbenchError('Invalid task filter.')
         try:
             offset, limit = int(options.get('offset', 0)), int(options.get('limit', PAGE_SIZE))
         except (ValueError, TypeError):
@@ -219,7 +226,9 @@ class Workbench:
         with self.lock, self.db:
             rows = self._all()
             filtered = [r for r in rows if (not kind or r['kind'] == kind) and (not review or r['review'] == review)
-                        and (not query or query in ' '.join([r['name'], r.get('text') or '', *r['groups'], *labels(r)]).casefold())]
+                        and (not task or r['task'] == task)
+                        and (not query or query in ' '.join([r['name'], r.get('text') or '',
+                            (r['annotation'] or {}).get('caption', ''), *r['groups'], *labels(r)]).casefold())]
             key = {'name': lambda r: (r['name'].casefold(), r['id']),
                    'review': lambda r: (r['review'], r['created_at'], r['id'])}.get(sort, lambda r: (r['created_at'], r['id']))
             filtered.sort(key=key, reverse=sort in ('', 'newest'))

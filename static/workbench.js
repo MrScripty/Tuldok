@@ -23,7 +23,7 @@ function selection() { $('selection').textContent = selected.size + ' selected';
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
 async function refresh() {
   const epoch = ++queryEpoch;
-  const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, offset, limit:40});
+  const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value, offset, limit:40});
   const result = await api('records?' + params);
   if (epoch !== queryEpoch) return;
   page = result;
@@ -33,7 +33,7 @@ async function refresh() {
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(record.id); checkbox.setAttribute('aria-label','Select ' + record.name);
     checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(); };
     const button = document.createElement('button'); button.textContent = record.name;
-    const detail = document.createElement('small'); detail.textContent = `${record.kind} · ${record.review.replaceAll('_',' ')} · revision ${record.revision}`; button.append(detail);
+    const detail = document.createElement('small'); detail.textContent = `${record.task.replaceAll('_',' ')} · ${record.review.replaceAll('_',' ')} · revision ${record.revision}`; button.append(detail);
     button.onclick = () => openRecord(record.id).catch(error => notice(error.message, true));
     row.append(checkbox, button); $('records').append(row);
   }
@@ -42,7 +42,7 @@ async function refresh() {
   $('page').textContent = page.total ? `${offset + 1}–${Math.min(offset + 40,page.total)} of ${page.total}` : 'No records';
   pagination(); selection();
 }
-function markDirty() { dirty = true; ++editorEpoch; }
+function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
 function mayDiscard() { return !dirty || confirm('Discard unsaved annotation edits?'); }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
@@ -58,10 +58,10 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification'] : ['text_classification','text_entities']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : ['text_classification','text_entities']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
-  $('task').value = record.task; $('label').value = record.annotation?.label || 'object';
+  $('task').value = record.task; $('caption').value = record.annotation?.caption || ''; $('label').value = record.annotation?.label || 'object';
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
@@ -69,6 +69,7 @@ function showRecord(record) {
 }
 function renderTargets() {
   const task = $('task').value;
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'image_caption';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -76,7 +77,7 @@ function renderTargets() {
     $('box-overlay').setAttribute('viewBox',`0 0 ${current.width} ${current.height}`);
     for(const box of targets){const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');for(const key of ['x','y','width','height'])rect.setAttribute(key,box[key]);$('box-overlay').append(rect);}
   }
-  if(task.endsWith('_classification')) return;
+  if(task.endsWith('_classification') || task === 'image_caption') return;
   targets.forEach((target,index)=>{
     const li = document.createElement('li'); li.textContent = JSON.stringify(target);
     const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove'; remove.setAttribute('aria-label','Remove target ' + (index+1));
@@ -84,7 +85,7 @@ function renderTargets() {
     li.append(remove); $('targets').append(li);
   });
 }
-$('editor').addEventListener('input',()=>markDirty());
+$('editor').addEventListener('input',event=>markDirty(event.target?.id !== 'record-review'));
 $('task').addEventListener('change',()=>{targets=[];markDirty();renderTargets();});
 action('filters',async()=>{offset=0;await refresh();notice('Collection updated.');},'submit');
 action('previous',async()=>{offset=Math.max(0,offset-40);await refresh();});
@@ -120,7 +121,7 @@ $('asset-image').addEventListener('pointerup',event=>{
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
   const record=current, task=$('task').value, epoch=++editorEpoch;
-  const annotation=task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   if(selected.has(saved.id))selected.set(saved.id,saved);
   if(epoch===editorEpoch)showRecord(saved);
@@ -141,10 +142,11 @@ action('generate-form',async()=>{
   const result=await api('generate',{recipe:$('recipe').value,seed:Number($('seed').value),count:Number($('count').value)});
   await refresh();notice(`${result.created.length} candidates created; ${result.rejected.length} rejected. Programmatic verification is not human review.`);
 },'submit');
+$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';});
 action('release-form',async()=>{
-  const result=await api('releases',{items:[...selected.values()].map(({id,revision,source_revision})=>({id,revision,source_revision})),ratios:{train:Number($('train').value),validation:Number($('validation').value),test:Number($('test').value)},seed:Number($('split-seed').value)});
+  const result=await api('releases',{format:$('release-format').value || 'canonical_v1',items:[...selected.values()].map(({id,revision,source_revision})=>({id,revision,source_revision})),ratios:{train:Number($('train').value),validation:Number($('validation').value),test:Number($('test').value)},seed:Number($('split-seed').value)});
   const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-  notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts));
+  notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' small-image warnings; inspect manifest.json.' : ''));
 },'submit');
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 refresh().then(()=>notice('Collection ready.')).catch(error=>notice(error.message,true));

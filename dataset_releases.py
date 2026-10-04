@@ -7,20 +7,20 @@ import tempfile
 import zipfile
 from collections import Counter
 from pathlib import Path
+from PIL import Image
 
 from workbench import WorkbenchError, encode, file_hash, validate_annotation
 
 SPLITS = ('train', 'validation', 'test')
 RELEASE_ID = re.compile(r'^[a-f0-9]{64}$')
+CAPTION_FORMAT = 'image_caption_v1'
+CAPTION_CONSUMER = {'path': 'examples/diffusion/check_image_data.py',
+                    'sha256': '6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94'}
+CAPTION_SPLITS = {'train': 'train', 'validation': 'val', 'test': 'test'}
 
 
-def allocate(selected, universe, ratios, seed):
-    if not isinstance(ratios, dict) or set(ratios) != set(SPLITS):
-        raise WorkbenchError('Supply train, validation and test percentages.')
-    if any(type(n) is not int or not 0 <= n <= 100 for n in ratios.values()) or sum(ratios.values()) != 100:
-        raise WorkbenchError('Split percentages must be integers totaling 100.')
-    if type(seed) is not int or not 0 <= seed <= 2**32 - 1:
-        raise WorkbenchError('Split seed must be a nonnegative 32-bit integer.')
+def connected_components(universe):
+    """One relationship graph owns allocation and exported family identities."""
     parent = {}
     def root(key):
         parent.setdefault(key, key)
@@ -43,16 +43,27 @@ def allocate(selected, universe, ratios, seed):
             links.append('legacy:' + ('book:' + row['book_id'] if row['book_id'] else 'session:' + row['session_id']))
         for link in links:
             join(key, link)
+    return {row['id']: root('id:' + row['id']) for row in universe}
+
+
+def allocate(selected, universe, ratios, seed):
+    if not isinstance(ratios, dict) or set(ratios) != set(SPLITS):
+        raise WorkbenchError('Supply train, validation and test percentages.')
+    if any(type(n) is not int or not 0 <= n <= 100 for n in ratios.values()) or sum(ratios.values()) != 100:
+        raise WorkbenchError('Split percentages must be integers totaling 100.')
+    if type(seed) is not int or not 0 <= seed <= 2**32 - 1:
+        raise WorkbenchError('Split seed must be a nonnegative 32-bit integer.')
+    roots = connected_components(universe)
     components = {}
     for row in selected:
-        components.setdefault(root('id:' + row['id']), []).append(row['id'])
+        components.setdefault(roots[row['id']], []).append(row['id'])
     active = [s for s in SPLITS if ratios[s]]
     if len(components) < len(active):
         raise WorkbenchError('Too few independent source groups for the requested nonempty splits. Select more independent groups or set unused splits to zero.')
     fixed = {}
     for row in universe:
         split = row.get('source_split', 'unassigned')
-        component = root('id:' + row['id'])
+        component = roots[row['id']]
         if component in components and not row.get('source_lineage_known', True):
             raise WorkbenchError('A related deleted source has no retained source lineage. Its split independence cannot be established.')
         if split in SPLITS and component in components:
@@ -84,6 +95,23 @@ def allocate(selected, universe, ratios, seed):
                       'note': 'Whole connected groups are indivisible; existing source splits are preserved. Requested percentages are targets, not exact quotas.'}
 
 
+def archive_asset(archive, asset, filename, expected_hash):
+    """Hash the bytes actually archived, not a preceding filesystem read."""
+    if isinstance(asset, Path):
+        hasher = hashlib.sha256()
+        with asset.open('rb') as source, archive.open(zipfile.ZipInfo(filename), 'w') as dest:
+            for chunk in iter(lambda: source.read(1024 * 1024), b''):
+                hasher.update(chunk)
+                dest.write(chunk)
+        digest = hasher.hexdigest()
+    else:
+        digest = hashlib.sha256(asset).hexdigest()
+        archive.writestr(zipfile.ZipInfo(filename), asset)
+    if digest != expected_hash:
+        raise WorkbenchError('Source bytes changed outside Tuldok. Restore the original asset before release.', 'conflict', 409)
+    return digest
+
+
 class Releases:
     def __init__(self, workbench):
         self.workbench = workbench
@@ -99,6 +127,11 @@ class Releases:
         return path
 
     def create(self, body):
+        format_name = body.get('format', 'canonical_v1')
+        if format_name not in ('canonical_v1', CAPTION_FORMAT):
+            raise WorkbenchError('Unknown release format.')
+        if format_name == CAPTION_FORMAT:
+            return self._create_captions(body)
         workbench = self.workbench
         with workbench.lock, workbench.db:
             rows = workbench.selection(body.get('items'))
@@ -123,19 +156,7 @@ class Releases:
                             split = assignments[row['id']]
                             asset, _ = workbench.asset(row['id'])
                             filename = 'assets/' + row['id'] + ('.png' if row['kind'] == 'image' else '.txt')
-                            if isinstance(asset, Path):
-                                # Hash the bytes actually archived, not a preceding read.
-                                hasher = hashlib.sha256()
-                                with asset.open('rb') as source, archive.open(zipfile.ZipInfo(filename), 'w') as dest:
-                                    for chunk in iter(lambda: source.read(1024 * 1024), b''):
-                                        hasher.update(chunk)
-                                        dest.write(chunk)
-                                digest = hasher.hexdigest()
-                            else:
-                                digest = hashlib.sha256(asset).hexdigest()
-                                archive.writestr(zipfile.ZipInfo(filename), asset)
-                            if digest != row['content_hash']:
-                                raise WorkbenchError('Source bytes changed outside Tuldok. Restore the original asset before release.', 'conflict', 409)
+                            digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
                             manifest['records'].append(record)
                             if row['task'] == 'image_detection':
@@ -160,3 +181,87 @@ class Releases:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip', 'records': len(rows), 'split_report': report}
+
+    def _create_captions(self, body):
+        """Freeze only reviewed captions into the pinned imagefolder contract."""
+        workbench = self.workbench
+        with workbench.lock, workbench.db:
+            rows = workbench.selection(body.get('items'))
+            for row in rows:
+                if row['task'] != 'image_caption' or row['review'] != 'human_reviewed' or not row['source_available']:
+                    raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
+                validate_annotation(row['task'], row['annotation'], row)
+            universe = workbench._all()
+            assignments, report = allocate(rows, universe, body.get('ratios'), body.get('seed'))
+            if any(not report['actual_counts'].get(split) for split in SPLITS):
+                raise WorkbenchError('Image-caption export requires nonempty train, validation and test splits.')
+            roots = connected_components(universe)
+            active_roots = {roots[row['id']] for row in rows}
+            families = {}
+            for row in universe:
+                if roots[row['id']] in active_roots:
+                    families.setdefault(roots[row['id']], []).append(row)
+            # All related records participate, not an arbitrary first protected group.
+            groups = {component: 'component:' + hashlib.sha256(encode(sorted(r['id'] for r in family)).encode()).hexdigest()
+                      for component, family in families.items()}
+            manifest = {'schema_version': 1, 'format': CAPTION_FORMAT, 'consumer': CAPTION_CONSUMER,
+                        'seed': body['seed'], 'split_mapping': CAPTION_SPLITS, 'split_report': report,
+                        'records': [], 'protected_components': {}, 'warnings': [],
+                        'limitations': ['Human review is evidence, not a quality guarantee.',
+                                       'Rights, sensitive metadata, near duplicates and semantic independence require manual inspection.']}
+            for component, family in families.items():
+                manifest['protected_components'][groups[component]] = [
+                    {key: row[key] for key in ('id', 'kind', 'revision', 'source_revision', 'content_hash', 'pixel_hash',
+                                              'groups', 'parents', 'source_available', 'source_lineage_known',
+                                              'source_split', 'source_sha256', 'book_id', 'session_id')}
+                    for row in sorted(family, key=lambda r: r['id'])]
+            metadata = {split: [] for split in CAPTION_SPLITS.values()}
+            pixels = set()
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        for row in rows:
+                            canonical_split = assignments[row['id']]
+                            split = CAPTION_SPLITS[canonical_split]
+                            filename = row['id'] + '.png'
+                            asset, _ = workbench.asset(row['id'])
+                            try:
+                                with Image.open(asset) as image:
+                                    if image.format != 'PNG' or image.getexif().get(274, 1) != 1:
+                                        raise WorkbenchError('Caption assets must be normalized PNGs with EXIF orientation 1.')
+                                    image = image.convert('RGB'); image.load()
+                                    pixel_hash = hashlib.sha256(str(image.size).encode() + image.tobytes()).hexdigest()
+                                    if image.size != (row['width'], row['height']) or pixel_hash != row['pixel_hash']:
+                                        raise WorkbenchError('Source pixels changed outside Tuldok.', 'conflict', 409)
+                                    if min(image.size) < 512:
+                                        manifest['warnings'].append(f'Small image: {filename} ({image.width}x{image.height}); consumer warns below 512 pixels.')
+                            except (OSError, ValueError) as error:
+                                if isinstance(error, WorkbenchError):
+                                    raise
+                                raise WorkbenchError('Caption source image is unreadable.', 'unavailable', 409) from error
+                            if pixel_hash in pixels:
+                                raise WorkbenchError('Caption export forbids exact decoded-pixel duplicates, including within a split.')
+                            pixels.add(pixel_hash)
+                            digest = archive_asset(archive, asset, split + '/' + filename, row['content_hash'])
+                            group = groups[roots[row['id']]]
+                            metadata[split].append({'file_name': filename, 'text': row['annotation']['caption'], 'group': group})
+                            manifest['records'].append(dict(row, split=canonical_split, export_split=split,
+                                export_group=group, asset=split + '/' + filename, asset_sha256=digest,
+                                exported_pixel_sha256=pixel_hash))
+                        for split, records in metadata.items():
+                            archive.writestr(zipfile.ZipInfo(split + '/metadata.jsonl'), ''.join(encode(row) + '\n' for row in records))
+                        archive.writestr(zipfile.ZipInfo('manifest.json'), encode(manifest))
+                        archive.writestr(zipfile.ZipInfo('README.txt'),
+                            'Tuldok image-caption v1. Extract and run the pinned consumer validator.\n'
+                            'train/val/test contain normalized PNGs and metadata.jsonl (file_name, text, group).\n'
+                            'validation maps explicitly to val. text is a reviewed caption, never a generation prompt.\n'
+                            'manifest.json freezes canonical revisions, hashes, provenance and connected protected lineage.\n')
+                    target.flush(); os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': CAPTION_FORMAT, 'records': len(rows), 'split_report': report, 'warnings': manifest['warnings']}
