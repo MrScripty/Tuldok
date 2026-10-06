@@ -180,7 +180,7 @@ class Dataset:
                             " AND id<>? AND split='unassigned'", (chosen, *args))
         return chosen
 
-    def add(self, body, generation=None):
+    def add(self, body, generation=None, *, enrollment=None):
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -220,6 +220,10 @@ class Dataset:
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
                         self.generation_jobs.record_output(sample_id, *generation)
+                    if enrollment is not None:
+                        # Imported Workbench source metadata shares acquisition's
+                        # commit and original-file cleanup on admission failure.
+                        self.workbench._enroll_import(sample_id, *enrollment)
             except Exception:
                 shutil.rmtree(folder)
                 raise

@@ -1,0 +1,9 @@
+# Open choices and dispositions
+
+- B-D1 — design-changing: native unannotated JSONL plus selected image files versus an actual existing annotated corpus. Parent/user selects; parser/API/UI implementation waits for the actual row/reference contract.
+- B-D2 — provenance: retain derived source evidence separately from user-declared file/row/source claims; the chosen contract must define which raw row/source identity is retained and who computes each hash.
+- B-D3 — cancellation/retry: partial success is intentional; stopping scheduling cannot promise rollback of an already admitted row. Choose reconciliation behavior for a lost response before advertising safe replay.
+- B-D4 — isolation: PR4 is under independent/CodeRabbit review. This worktree pins its current head; parent owns any later base synchronization. Do not edit or amend PR4.
+- B-D5 — evidence: original research books are absent; checked-in research synthesis/ADRs are inspected authority. No unseen external format is asserted. All bulk acceptance remains pending.
+- B-D6 — concrete persistence defect: injected SQLite failure at Workbench image metadata enrollment leaves a committed sample/original files on the prior boundary. Fixed locally by enrolling inside Dataset.add's existing transaction/cleanup owner; metadata and initial-history failure regressions must pass. This prerequisite is independent of a manifest format.
+- B-D7 — remote access: last GitHub reads returned `HTTP 401: Bad credentials (https://api.github.com/graphql)` and REST `Bad credentials (HTTP 401)` from `api.github.com`. No credential repair, denied-call retry, network-setting change or publication attempt is authorized in this resumed local slice. Full hosted qualification/publication waits for the existing connection to be restored by its owner.

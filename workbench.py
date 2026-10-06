@@ -255,20 +255,23 @@ class Workbench:
             if kind == 'image':
                 # Reuse the existing normalizer, original storage and dedup contract.
                 row = self.dataset.add({'image': body.get('image'), 'filename': body.get('name', 'image.png'),
-                                        'session_id': groups[0], 'book_id': '', 'split': 'unassigned'})
-                self._sync_images()
-                record = self._get(row['id'])
-                origin = dict(record['provenance'], rights=rights)
-                self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
-                                (encode(groups), encode(parents), encode(origin), row['id']))
-                # Initial enrolment is internal, not a second user-visible revision.
-                self.db.execute('DELETE FROM workbench_history WHERE id=?', (row['id'],))
-                record = self._get(row['id'])
-                self._history(record)
-                return record
+                                        'session_id': groups[0], 'book_id': '', 'split': 'unassigned'},
+                                       enrollment=(groups, parents, rights))
+                return self._get(row['id'])
             if kind != 'text':
                 raise WorkbenchError('Asset kind must be image or text.')
             return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights)
+
+    def _enroll_import(self, sample_id, groups, parents, rights):
+        """Called only inside Dataset.add's acquisition transaction and lock."""
+        self._sync_images()
+        record = self._get(sample_id)
+        origin = dict(record['provenance'], rights=rights)
+        self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
+                        (encode(groups), encode(parents), encode(origin), sample_id))
+        # Initial enrollment is internal, not a second user-visible revision.
+        self.db.execute('DELETE FROM workbench_history WHERE id=?', (sample_id,))
+        self._history(self._get(sample_id))
 
     def _insert_text(self, source, name, groups, parents, rights, *, provenance=None, annotation=None):
         """Insert inside the caller's lock/transaction, including candidate admission."""
