@@ -35,6 +35,7 @@ async function openSavedSelection(id = $('saved-selection').value, navigate = tr
   try {
     const result=await api('selections/'+id);
     if(epoch!==savedLoadEpoch || intent!==selectionEpoch || key!==JSON.stringify(releaseBody().items)) return;
+    if(typeof rightsValidateSavedResult === 'function') rightsValidateSavedResult(result);
     savedLoadBusy=false;$('cancel-selection-load').hidden=true;
     selected.clear();for(const item of result.selection.items) selected.set(item.id,item);
     savedMembershipKey=JSON.stringify(releaseBody().items);
