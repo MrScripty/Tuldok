@@ -108,9 +108,22 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const freshToken=await evaluate('releasePreview.preview_token');assert.notEqual(freshToken,token);
   // Unselected related-source correction changes lineage-bound preview; old token cannot export.
   const changedSibling=await request('rights/'+sibling.id,{revision:sibling.revision,source_revision:sibling.source_revision,note:'Related owner note'});assert.equal(changedSibling.changed,true);
-  await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!document.getElementById("release-form").dataset.busy'));
+  // Hold the actual stale HTTP response to reproduce the hosted timing race deterministically.
+  await evaluate(`window.staleBaseFetch=window.fetch;window.staleExportRelease=null;window.staleHoldOnce=true;window.staleStatus=null;window.staleError=null;window.freshPreviewRequests=0;window.freshPreviewTokens=[];window.fetch=async(...args)=>{const route=String(args[0]);if(route.endsWith('/releases/preview'))++freshPreviewRequests;const response=await staleBaseFetch(...args);if(route.endsWith('/releases')&&staleHoldOnce){staleHoldOnce=false;staleStatus=response.status;staleError=(await response.clone().json()).error;await new Promise(resolve=>staleExportRelease=resolve);}if(route.endsWith('/releases/preview')&&response.ok)freshPreviewTokens.push((await response.clone().json()).preview_token);return response;};`);
+  await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!staleExportRelease'));
+  assert.equal(await evaluate('staleStatus'),409);assert.match(await evaluate('staleError'),/Release preview changed/);
+  assert.equal(await evaluate('releaseBusy'),true);assert.equal(await evaluate('releasePreview.preview_token'),freshToken);
+  assert.equal(await evaluate('!!document.getElementById("release-form").dataset.busy'),false,'The former form-dataset wait can pass while the export is still pending');
+  assert.equal(await evaluate('document.getElementById("preview-release").disabled'),true);
+  await click('preview-release');assert.equal(await evaluate('freshPreviewRequests'),0,'Clicking disabled Preview cannot schedule a new request');
+  await evaluate('staleExportRelease();staleExportRelease=null');
+  await until(()=>evaluate('!releaseBusy && releasePreview===null && document.getElementById("release-preview-status").textContent.includes("Release preview changed")'));
   assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
-  await click('preview-release');await until(()=>evaluate('releasePreview?.eligible'));
+  assert.equal(await evaluate('document.getElementById("preview-release").disabled'),false);
+  await click('preview-release');
+  await until(()=>evaluate('!releaseBusy && freshPreviewRequests===1 && freshPreviewTokens.length===1 && releasePreview?.eligible && releasePreview.preview_token===freshPreviewTokens[0]'));
+  const refreshedToken=await evaluate('releasePreview.preview_token');assert.match(refreshedToken,/^[a-f0-9]{64}$/);assert.notEqual(refreshedToken,freshToken,'A newly returned lineage-bound proof replaces the stale token');
+  await evaluate('window.fetch=staleBaseFetch');
   await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const zip=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(zip.status,200);assert.ok((await zip.arrayBuffer()).byteLength>500);
   await evaluate('openRecord('+JSON.stringify(row.id)+')');await click('history');await until(()=>evaluate('!document.getElementById("history-output").hidden'));
@@ -119,5 +132,5 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('document.getElementById("rights-note-panel").scrollIntoView()');let shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'rights-desktop.png'),Buffer.from(shot.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("rights-note-panel").scrollIntoView()');shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'rights-narrow.png'),Buffer.from(shot.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'390px note form stays within viewport');assert.deepEqual(errors,[]);
-  console.log('Actual Chromium beforeunload rights-only/unchanged/saved/canceled/annotation states, rights-note cancel/no-op, JSON CR/LF/Unicode, repeated and delayed edits, concurrent stale conflict, annotation separation, fixed saved sets/issues, review preservation, lineage freshness, explicit reselection, ZIP/history and desktop/narrow passed.');
+  console.log('Actual Chromium beforeunload rights-only/unchanged/saved/canceled/annotation states, rights-note cancel/no-op, JSON CR/LF/Unicode, repeated and delayed edits, concurrent stale conflict, annotation separation, fixed saved sets/issues, review preservation, lineage freshness with held stale response/releaseBusy completion/new preview token, explicit reselection, ZIP/history and desktop/narrow passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
