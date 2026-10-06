@@ -5,3 +5,7 @@
 #record-provenance,#analysis,#release-result{overflow-wrap:anywhere}
 
 #grounded-jobs{overflow-wrap:anywhere}.proposal-job{border-top:1px solid #d9dfd6;padding-top:12px;margin-top:12px}.proposal-candidate{background:#f4f5ef;padding:10px;margin-top:10px}.proposal-candidate pre{max-height:240px;overflow:auto}.proposal-candidate textarea{background:white}
+
+#release-preview { overflow-wrap: anywhere; }
+#release-preview p { margin: .5rem 0; }
+#release-preview details { margin-block: .75rem; }

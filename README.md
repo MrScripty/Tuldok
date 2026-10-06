@@ -97,11 +97,21 @@ explicitly resume unfinished jobs. Returned generation metadata may gain
 additional public fields over time. Keep the dataset backed up and review
 synthetic images and labels before using them for training.
 
+## Selected-release preview
+
+Select records, choose an export format and split targets, then click **Preview selected release**. This summary describes exactly the saved selected revisions, independently of the current collection filter. It shows task/review/class-target counts, eligibility blockers, connected source families (including unselected and deleted relatives), requested versus achievable splits, and format/rights warnings. Whole source families remain indivisible; ratios are targets, not guarantees of exact quotas.
+
+Preview creates no ZIP and persists no record, annotation, review, split, or lazy image enrollment. **Freeze & export ZIP** becomes available only for an eligible current preview. Selection or release-control changes invalidate it, and late responses cannot restore an old preview. Unsaved editor changes are not part of a release.
+
+`POST /api/workbench/releases/preview` accepts the same `items`, `ratios`, `seed`, and optional `format` as the release endpoint. It returns `eligible`, `analysis`, `blockers`, `warnings`, `lineage`, `split_report`, `assignments`, and a `preview_token` for eligible selections. Invalid/stale selections are blocked without a token; their analysis is unavailable. Lineage uses stable complete-family IDs, not a count of the visible filter's group labels.
+
+The UI includes `preview_token` in the final release request. Export revalidates source bytes, selected revisions, relevant transitive lineage and controls under the source lock, then hashes the bytes actually archived. A stale token requires a fresh preview. Existing API clients may omit the token and still receive full final validation; an explicitly supplied invalid token is rejected. A preview is a point-in-time check, not a frozen release or a claim about rights, semantic independence, or model quality.
+
 ## Workbench image captions
 
 Open **Dataset workbench** from the corner studio. Existing imported and Pumas-generated images share the original Dataset source ID and bytes. Select **image caption**, write a caption describing the visible result, save as a draft, then explicitly review it. Editing a target resets the editor's review choice to draft. Generation prompts remain source provenance; they are never used as automatic captions. Each record has one current workbench task, with previous targets retained in revision history. Corner labels remain a separate annotation.
 
-Filter by task, review state or caption text. Select human-reviewed caption records and choose **Image captions · train/val/test** when freezing a release. The `/api/workbench/releases` request adds `format: "image_caption_v1"`; omission retains the canonical mixed-task release. Captions use exactly `{"caption": "..."}` and are bounded to 4,000 Unicode code points. Unknown formats and invalid caption fields are rejected.
+Filter by task, review state or caption text. Select human-reviewed caption records and choose **Image captions · train/val/test** when previewing a release, then freeze the eligible selection. The `/api/workbench/releases` request adds `format: "image_caption_v1"`; omission retains the canonical mixed-task release. Captions use exactly `{"caption": "..."}` and are bounded to 4,000 Unicode code points. Unknown formats and invalid caption fields are rejected.
 
 Caption ZIPs contain PNGs beside `train/metadata.jsonl`, `val/metadata.jsonl` and `test/metadata.jsonl`. Every row has exactly `file_name`, `text` (the accepted caption), and `group`. The existing `validation` assignment is explicitly projected to `val`. All three splits must be nonempty. Connected protected groups, parents, duplicate identities, book/session assignments and retained deleted ancestry share a component ID; the export never chooses an arbitrary first group. Existing source splits are preserved. Conflicts, insufficient independent families, missing lineage, draft targets, stale revisions, missing/tampered bytes, unnormalized PNGs and exact decoded-pixel duplicates fail before publication. Images below 512 pixels are exported with warnings.
 
@@ -136,6 +146,7 @@ This first version supports still capture and image import, including frames ext
     node tests/browser_workbench.cjs
     node tests/browser_grounded.cjs
     node tests/browser_captions.cjs
+    node tests/browser_release_preview.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 

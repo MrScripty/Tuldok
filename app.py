@@ -458,6 +458,8 @@ def make_handler(dataset):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/generate':
                     return self.reply(dataset_recipes.generate(dataset.workbench, body), 201)
+                if path == '/api/workbench/releases/preview':
+                    return self.reply(dataset.releases.preview(body))
                 if path == '/api/workbench/releases':
                     return self.reply(dataset.releases.create(body), 201)
                 if path == '/api/generation/jobs':

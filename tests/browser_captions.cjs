@@ -79,6 +79,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('document.getElementById("filters").requestSubmit()');await until(()=>evaluate('!document.getElementById("filters").dataset.busy && document.querySelectorAll(".record").length===4'));
   await click('select-page');await until(()=>evaluate('document.getElementById("selection").textContent === "4 selected"'));
   await fill('release-format','image_caption_v1');
+  await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
   await evaluate('document.getElementById("release-form").requestSubmit()');
   await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const release=await evaluate('document.querySelector("#release-result a").href');

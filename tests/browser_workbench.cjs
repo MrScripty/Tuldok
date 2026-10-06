@@ -56,6 +56,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');
   await until(()=>evaluate('document.getElementById("notice").textContent === "Annotation saved."'));
   await click('select-page');await until(()=>evaluate('document.getElementById("selection").textContent === "8 selected"'));
+  await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
   await evaluate('document.getElementById("release-form").requestSubmit()');
   await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const release=await evaluate('document.querySelector("#release-result a").href');
