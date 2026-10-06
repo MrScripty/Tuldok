@@ -81,6 +81,8 @@ def prompt_batch(config, offset, count, previous):
 
 
 def validate(body):
+    if 'size' in body:
+        raise ValueError('size is no longer supported for new jobs; use numeric width and height.')
     count = body.get('count')
     if type(count) is not int or not 1 <= count <= 10000:
         raise ValueError('Choose 1 to 10,000 images.')
