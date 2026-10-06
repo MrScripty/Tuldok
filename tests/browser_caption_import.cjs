@@ -87,5 +87,29 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   console.log(python("import json,sys,zipfile,subprocess,hashlib; from pathlib import Path; p=Path(sys.argv[1]); d=Path(sys.argv[2]); d.mkdir(); z=zipfile.ZipFile(p); z.extractall(d); actual=json.loads((d/'manifest.json').read_text()); source=json.loads(Path(sys.argv[3]).read_text()); project=lambda rows:sorted((r['exported_pixel_sha256'],r['annotation']['caption'],r['split']) for r in rows); assert project(actual['records'])==project(source['records']); checker=Path('tests/fixtures/diffusion_check_image_data.py'); assert hashlib.sha256(checker.read_bytes()).hexdigest()=='6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94'; result=subprocess.run([sys.executable,str(checker),str(d)],capture_output=True,text=True); assert result.returncode==0,result.stderr; print(result.stdout)",path.join(downloads,downloaded),path.join(temporary,'downloaded-consumer'),path.join(fixture,'manifest.json')));
   const frame=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload',{ignoreCache:true});await until(()=>tracker.reloaded(frame));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   assert.equal((await api('records')).total,5);assert.equal(await evaluate('captionPending'),null);assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Ready to import/);assert.deepEqual(errors,[]);
+  // A fresh document can be open before the corner studio adds an image. Its
+  // derived pixel row is still absent when native caption admission begins.
+  const legacyData=path.join(temporary,'later-corner-data');
+  const legacyServer=launch('python3',['-u','app.py','--port','0','--data',legacyData],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let legacyOutput='';legacyServer.stdout.on('data',data=>legacyOutput+=data);
+  const legacyPort=await until(()=>legacyOutput.match(/127\.0\.0\.1:(\d+)/)?.[1]),legacyBase='http://127.0.0.1:'+legacyPort;
+  const priorFrame=(await send('Page.getFrameTree')).frameTree.frame;
+  await send('Page.navigate',{url:legacyBase+'/workbench'});await until(()=>tracker.reloaded(priorFrame));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  const alternate=python("import base64,io,sys; from PIL import Image,PngImagePlugin; out=io.BytesIO(); info=PngImagePlugin.PngInfo(); info.add_text('fixture','corner import after workbench opened'); image=Image.open(sys.argv[1]); image.save(out,'PNG',pnginfo=info); print(base64.b64encode(out.getvalue()).decode())",path.join(fixture,assets[0])).trim();
+  const legacyResponse=await fetch(legacyBase+'/api/samples',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:alternate,filename:'later-corner.png',session_id:'later-corner',book_id:'',split:'unassigned'})});
+  assert.equal(legacyResponse.status,201);const legacySample=await legacyResponse.json();
+  const legacyDb=path.join(legacyData,'dataset.sqlite3');
+  const legacySnapshot=()=>JSON.parse(python("import sqlite3,json,sys; db=sqlite3.connect(sys.argv[1]); print(json.dumps({table:db.execute('SELECT count(*) FROM '+table).fetchone()[0] for table in ('samples','workbench_records','workbench_history')}))",legacyDb));
+  assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:0,workbench_history:0});
+  await evaluate(`(()=>{const original=window.fetch;window.releaseLegacyCaption=null;window.legacyCaptionStatus=null;window.fetch=async(...args)=>{const response=await original(...args);if(String(args[0]).endsWith('/caption-import/row')){window.legacyCaptionStatus=response.status;await new Promise(resolve=>window.releaseLegacyCaption=resolve);}return response;};})()`);
+  await choose(sourceFiles);await start();await until(()=>evaluate('!!window.releaseLegacyCaption'));
+  assert.equal(await evaluate('window.legacyCaptionStatus'),409,'Unenrolled corner pixels must reject native duplicate');
+  assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:0,workbench_history:0},'Duplicate admission rolls lazy metadata/history back');
+  assert.deepEqual(fs.readdirSync(path.join(legacyData,'images')),[legacySample.id],'No second source directory');
+  await click('caption-stop');await evaluate('window.releaseLegacyCaption()');await idle();
+  assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Stopped: 0 created, 1 rejected.*3 not attempted/);
+  assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:1,workbench_history:1},'Later ordinary collection refresh can enroll the retained original');
+  assert.deepEqual(errors,[]);
   console.log('Native caption browser passed: actual files/HTTP/SQL, partial/missing/ambiguous/damaged rows, draft origin/splits, rollback, stop/read/preparation/in-flight/repeated controls, lost receipt lookup, duplicate immutability, editor/selection, human acceptance, actual ZIP download/pinned consumer, reload and narrow layout.');
+  console.log('Later corner-studio HTTP import after the workbench opened: alternate PNG bytes, identical pixels, native HTTP409, lazy metadata/history rollback and no duplicate source directory passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error(diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

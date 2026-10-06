@@ -69,4 +69,4 @@ Current phase: M1 locally verified, awaiting M2 hosted qualification/review. Exa
 
 Re-plan for a requested non-native/other-task format, component evidence over existing bounds, actual consumer-contract change, unsupported coordinates, source-identity ambiguity requiring authenticated namespace, a stack-base change or material shared-owner review findings. No unresolved product choice currently blocks this selected native contract.
 
-[Ledger](execution-ledger.md) · [Issues](issues.md) · [Fixture preparation](reports/prepare_fixtures.py) · [Verification](reports/verification.md)
+[Ledger](execution-ledger.md) · [Issues](issues.md) · [Fixture preparation](reports/prepare_fixtures.py) · [Verification](reports/verification.md) · [Admission review repair](reports/duplicate-pixel-review.md)

@@ -9,3 +9,5 @@
 
 - Dataset legacy session split propagation could otherwise move older unassigned assets during caption acquisition. Fixed using separate acquisition sessions while retaining protected groups; an actual persistence test proves old source/revision state remains unchanged.
 - Non-ASCII integrity signatures raised a comparison TypeError during review. Fixed with strict signature shape before constant-time comparison; malformed HTTP input returns 400 without admission.
+
+- Independent review: unenrolled legacy/corner sources bypassed pixel duplicate lookup; actual original-head HTTP repro returned201 with two identical-pixel records. Related split rejection also left lazy metadata/history uncommitted with db.in_transaction true, later committed by an ordinary query. Fixed narrowly by enrolling before duplicate checks inside the shared lock/database context. Actual before/after durable-state, rollback/files and later corner-browser regressions are in reports/duplicate-pixel-review.md. Caption head update is authorized on the existing branch/PR9; no new repair branch or legacy UI removal.

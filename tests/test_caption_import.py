@@ -6,6 +6,7 @@ import hashlib
 from http.server import ThreadingHTTPServer
 import io
 import json
+import sqlite3
 from pathlib import Path
 import subprocess
 import sys
@@ -18,7 +19,7 @@ import uuid
 from unittest.mock import patch
 import zipfile
 
-from PIL import Image
+from PIL import Image, PngImagePlugin
 from app import Dataset, make_handler
 from caption_import import MAX_SOURCE, origin_groups
 from dataset_releases import CAPTION_CONSUMER
@@ -312,6 +313,106 @@ class CaptionImportTests(unittest.TestCase):
             else: manifest['records'][0]['provenance']['declared_large_source_note']='x'*(256*1024)
             status,result=self.request('/api/workbench/caption-import/prepare',self.source_for(manifest))
             self.assertEqual(status,400,result); self.empty_storage()
+
+    def assert_unenrolled_pixel_duplicate_rejected(self, later):
+        origin=self.manifest['records'][0]
+        original=(FIXTURE/origin['asset']).read_bytes()
+        alternate=io.BytesIO(); info=PngImagePlugin.PngInfo(); info.add_text('fixture','different bytes, identical pixels')
+        with Image.open(io.BytesIO(original)) as image: image.save(alternate,'PNG',pnginfo=info)
+        alternate=alternate.getvalue()
+        self.assertNotEqual(hashlib.sha256(original).digest(),hashlib.sha256(alternate).digest())
+        if later:
+            self.dataset.workbench.import_asset(dict(kind='text',text='Workbench already open.',groups=['initial-page']))
+            self.dataset.workbench.query({})
+        existing=self.dataset.add(dict(image=base64.b64encode(alternate).decode(),filename='corner-import.png',
+            session_id='legacy-session',book_id='',split='unassigned'))
+        # Inspect SQL directly; get/query/_all here would hide the regression.
+        self.assertEqual(self.dataset.db.execute("SELECT count(*) FROM workbench_records WHERE kind='image'").fetchone()[0],0)
+        table_snapshot=lambda: {table:[tuple(row) for row in self.dataset.db.execute('SELECT * FROM '+table)]
+            for table in ('samples','workbench_records','workbench_history','workbench_deleted_sources')}
+        before=table_snapshot()
+        files_before={str(path.relative_to(self.dataset.path)):path.read_bytes()
+            for path in (self.dataset.path/'images').rglob('*') if path.is_file()}
+        row=next(row for row in self.prepare() if row['asset']==origin['asset'])
+        self.assertEqual(table_snapshot(),before,'Preparation must not enroll the legacy source')
+        body=self.payload(row)
+        status,result=self.request('/api/workbench/caption-import/row',body)
+        self.assertEqual(status,409,result)
+        self.assertIn('exact image pixels',result['error'])
+        self.assertEqual(table_snapshot(),before,'Duplicate rejection rolls lazy enrollment/history back')
+        self.assertEqual({str(path.relative_to(self.dataset.path)):path.read_bytes()
+            for path in (self.dataset.path/'images').rglob('*') if path.is_file()},files_before)
+        self.assertEqual(self.request('/api/workbench/import-result/'+body['request_id']), (200,{'found':False}))
+        self.assertEqual(self.dataset.sample(existing['id']),existing)
+
+    def test_unenrolled_legacy_reencoding_cannot_bypass_pixel_duplicate_admission(self):
+        self.assert_unenrolled_pixel_duplicate_rejected(False)
+
+    def test_later_corner_import_after_workbench_open_cannot_bypass_pixel_duplicate_admission(self):
+        self.assert_unenrolled_pixel_duplicate_rejected(True)
+
+    def test_failed_caption_history_rolls_back_lazy_enrollment_and_new_source_files(self):
+        raw=io.BytesIO(); Image.new('RGB',(23,17),'yellow').save(raw,'PNG')
+        prior=self.dataset.add(dict(image=base64.b64encode(raw.getvalue()).decode(),filename='older.png',
+            session_id='older-unenrolled',book_id='',split='unassigned'))
+        self.assertEqual(self.count(),0)
+        files_before={str(path.relative_to(self.dataset.path)):path.read_bytes()
+            for path in (self.dataset.path/'images').rglob('*') if path.is_file()}
+        row=self.prepare()[0]
+        with self.dataset.db:
+            self.dataset.db.execute("CREATE TRIGGER fail_final_caption BEFORE INSERT ON workbench_history WHEN json_extract(NEW.snapshot,'$.task')='image_caption' BEGIN SELECT RAISE(ABORT,'caption history failed'); END")
+        body=self.payload(row)
+        status,result=self.request('/api/workbench/caption-import/row',body)
+        self.assertEqual(status,500,result)
+        self.assertEqual(self.count(),0)
+        self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workbench_history').fetchone()[0],0)
+        self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM samples').fetchone()[0],1)
+        self.assertEqual(self.dataset.sample(prior['id']),prior)
+        self.assertEqual({str(path.relative_to(self.dataset.path)):path.read_bytes()
+            for path in (self.dataset.path/'images').rglob('*') if path.is_file()},files_before)
+        self.assertEqual(self.request('/api/workbench/import-result/'+body['request_id']), (200,{'found':False}))
+        with self.dataset.db: self.dataset.db.execute('DROP TRIGGER fail_final_caption')
+        self.assertEqual(self.request('/api/workbench/caption-import/row',body)[0],201)
+
+    def test_split_rejection_rolls_back_lazy_enrollment_without_pending_or_durable_writes(self):
+        row=self.prepare()[0]; payload=self.dataset.caption_imports._open(row['token'])
+        groups=payload['groups']; split=payload['context']['declared']['origin_record']['split']
+        def picture(color):
+            buffer=io.BytesIO(); Image.new('RGB',(23,17),color).save(buffer,'PNG')
+            return base64.b64encode(buffer.getvalue()).decode()
+        prior=self.dataset.add(dict(image=picture('yellow'),filename='related.png',session_id=groups[0],
+            book_id='',split=next(value for value in ('train','validation','test') if value!=split)),
+            enrollment=(groups,[],'unknown'))
+        legacy=self.dataset.add(dict(image=picture('purple'),filename='unenrolled.png',session_id='unrelated-unenrolled',
+            book_id='',split='unassigned'))
+        tables=('samples','workbench_records','workbench_history','workbench_deleted_sources')
+        def snapshot(connection):
+            return {table:[tuple(record) for record in connection.execute('SELECT * FROM '+table)] for table in tables}
+        before=snapshot(self.dataset.db)
+        self.assertFalse(self.dataset.db.in_transaction)
+        self.assertEqual(len(before['workbench_records']),1)
+        files_before={str(path.relative_to(self.dataset.path)):path.read_bytes()
+            for path in (self.dataset.path/'images').rglob('*') if path.is_file()}
+        with sqlite3.connect(self.dataset.path/'dataset.sqlite3') as reader:
+            self.assertEqual(snapshot(reader),before)
+            body=self.payload(row)
+            status,result=self.request('/api/workbench/caption-import/row',body)
+            self.assertEqual(status,409,result)
+            self.assertIn('conflicting source split',result['error'])
+            self.assertFalse(self.dataset.db.in_transaction,'A rejection must leave no pending lazy-enrollment transaction')
+            self.assertEqual(snapshot(self.dataset.db),before)
+            self.assertEqual(snapshot(reader),before,'Durable source/record/history state is unchanged')
+            self.assertEqual({str(path.relative_to(self.dataset.path)):path.read_bytes()
+                for path in (self.dataset.path/'images').rglob('*') if path.is_file()},files_before)
+            self.assertEqual(self.request('/api/workbench/import-result/'+body['request_id']), (200,{'found':False}))
+            self.assertEqual(self.dataset.sample(prior['id']),prior)
+            self.assertEqual(self.dataset.sample(legacy['id']),legacy)
+            # Ordinary browsing can later enroll that retained original in its
+            # own transaction; it does not commit leftovers from the rejection.
+            self.dataset.workbench.query({})
+            self.assertFalse(self.dataset.db.in_transaction)
+            self.assertEqual(len(snapshot(reader)['workbench_records']),2)
+            self.assertEqual(len(snapshot(reader)['workbench_history']),2)
 
 
 if __name__ == '__main__': unittest.main()

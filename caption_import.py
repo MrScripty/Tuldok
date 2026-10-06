@@ -282,12 +282,15 @@ class CaptionImports:
         context['observed']['asset_sha256'] = digest(raw)
         context['observed']['pixel_sha256'] = pixel_hash
         try:
-            with self.workbench.lock:
+            with self.workbench.lock, self.workbench.db:
                 if find_result(self.workbench, body['request_id'])['found']:
                     raise WorkbenchError('This import marker was already admitted; inspect its saved result.', 'conflict', 409)
+                # Corner-studio acquisitions can arrive after the workbench was
+                # opened. Enroll them before checking derived pixel identity;
+                # a rejection rolls this lazy metadata/history back as well.
+                universe = self.workbench._all()
                 if self.workbench.db.execute('SELECT 1 FROM workbench_records WHERE id=? OR pixel_hash=?', (origin['id'], pixel_hash)).fetchone():
                     raise WorkbenchError('This source identity or exact image pixels already exist; existing records are unchanged.', 'conflict', 409)
-                universe = self.workbench._all()
                 # A new acquisition session prevents Dataset's existing session
                 # split propagation from updating older unassigned assets.
                 session = 'caption-import:' + body['request_id']

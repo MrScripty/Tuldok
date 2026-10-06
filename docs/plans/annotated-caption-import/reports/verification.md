@@ -4,9 +4,9 @@ Base: exact published bulk `7c43e9b8fe6ff23d3e75d356361fe616c8365d9c` / tree `b3
 
 ## Actual registered qualification
 
-- `python -m unittest discover -s tests`: **156 tests passed in 47.070 seconds**, including **11 native-import HTTP/SQLite/filesystem tests**. Full stdout/stderr: `/workspace/scratch/tuldok-retry/annotated-full-python-qualified.log`.
-- Four JavaScript gates passed: page-load tracker, workbench controller, raw bulk controller and native caption controller. Logs: `annotated-final-test_*.cjs.log` in the same scratch directory.
-- **Eight real Chromium suites passed**: workbench, grounded, captions, exact release preview, raw bulk import, native caption import, corner studio and image providers/queued jobs. Existing suites use controlled providers, with no real model/dataset/ONNX download. Logs `annotated-final-browser-*.log`; final malformed-envelope hardening was qualified by `annotated-qualified-browser-caption-import.log` and the complete Python run.
+- `python -m unittest discover -s tests`: **160 tests passed in 48.679 seconds**, including **15 native-import HTTP/SQLite/filesystem tests**. Full stdout/stderr: `/workspace/scratch/tuldok-retry/caption-pixel-transaction-repair-python.log`.
+- Four JavaScript gates passed: page-load tracker, workbench controller, raw bulk controller and native caption controller. Log: `caption-pixel-repair-static-and-controller.log` in the same scratch directory.
+- **Eight real Chromium suites passed**: workbench, grounded, captions, exact release preview, raw bulk import, native caption import, corner studio and image providers/queued jobs. Existing suites use controlled providers, with no real model/dataset/ONNX download. Logs `caption-pixel-repair-browser-*.log`; includes actual later corner acquisition, native duplicate HTTP409 and rolled-back lazy enrollment/history.
 - All `static/*.js` and `tests/*.cjs` passed Node syntax checking; affected Python modules/tests/design fixture script compiled; `git diff --check` passed.
 
 Runtime: Linux x86_64, Python 3.12.14, Node 24.19.0, Pillow 12.3.0, headless Chromium **151.0.7922.173**. Fixtures attach the launched `page/about:blank`; the new fixture logs exact Chrome version/targets, retains HOME and isolates its profile/XDG paths. Two old legacy fixtures default to a missing Brave binary; initial launch returned `ENOENT`. They passed with `BROWSER=/usr/bin/chromium`, without changing gates or fixture source.
@@ -29,11 +29,13 @@ Local screenshots inspected at desktop **1400 × 807** and narrow **390 × 844**
 
 | Screenshot | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `caption-import-desktop.png` | 98,432 | `732006867a4678a42afc02b9c563d2566782d9208f0fc10b59ab3f5e1867361f` |
-| `caption-import-narrow.png` | 78,487 | `50bd120a6b4b39d4178ce7cbf571a43861b3ba67d2e4483a9986b45b843fb0a8` |
+| `caption-import-desktop.png` | 99,058 | `a04d404a4c2e4dde79a762d85dc627b7258523aa1ce1bd95fdd339e8fbc2f19a` |
+| `caption-import-narrow.png` | 78,619 | `ce348b7ef04b5dd25c4395c9260e25535c15172977bd56b40ec9513fc607d570` |
 
 Workflow registers the new branch/controller/browser and screenshot paths. Hosted screenshots were not retrieved or inspected for this head. No denied gh inspection call, credential/grant or network setting was retried/changed.
 
 ## Limits and disposition
 
 Exactly native image-caption v1 expanded trees are supported. Foreign declarations are unauthenticated; conservative grouping cannot prove semantic independence/rights/quality. Native source annotations require fresh human acceptance. Whole metadata mismatch fails preparation before admission; missing/damaged assets produce per-row partial outcomes. Components/evidence over stated bounds fail closed. Expanded trees cannot recover original ZIP bytes/hash. Process restart expires preparation; known pending markers can be looked up, but batch state has no restart-safe recovery promise. Parent-coordinated exact-head hosted qualification and independent review remain required before integration. No merge or manual CodeRabbit request was performed by this worker.
+
+Independent-review follow-up repaired actual original-head legacy pixel bypass and pending lazy-enrollment transaction after split-conflict rejection. Exact original/repair connection-local versus durable observations and four new regressions are recorded in [admission review repair](duplicate-pixel-review.md). Original a481c3d qualification had 156 tests; current qualification above includes the review regressions and replaces that source acceptance.
