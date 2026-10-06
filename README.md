@@ -97,6 +97,41 @@ explicitly resume unfinished jobs. Returned generation metadata may gain
 additional public fields over time. Keep the dataset backed up and review
 synthetic images and labels before using them for training.
 
+## Saved fixed selections
+
+In **Dataset workbench**, choose records with the checkboxes, enter a selection
+name, then **Save selected records as a new set**. A set contains fixed record IDs,
+annotation/source revisions, and source hashes. Filters and searches remain live
+collection controls; new matching records never join a saved set automatically.
+There is no dynamic saved-search feature in this slice. Names may repeat; each set
+has its own ID. Saving creates a separate set rather than replacing membership.
+
+Choose a saved set and **Open fixed selection** to replace the current selection,
+including records outside the current filter. The current filter, release settings
+and unsaved annotation edits stay intact. Opening always clears previous export
+proof and requires a fresh release preview. **Cancel opening** keeps the current
+selection and ignores a delayed response. The `#selection=ID` URL reopens the set
+on reload and Back/Forward navigation. Saving or opening never changes annotations
+or grants human review; draft records remain ineligible for release.
+
+Reopen reports stale revisions, missing records, deleted images, unavailable bytes,
+and changed source identity while retaining every original saved reference. It
+never substitutes newer revisions or replacement images. These are references,
+not historical source/annotation copies: to release updated records, explicitly
+select their current revisions and save a new set. Frozen ZIPs remain separate.
+Rename and delete use saved-set revision checks; deleting a set retains records,
+the current selection, and existing exports. Back up the whole data directory.
+
+`GET /api/workbench/selections` lists metadata. `POST` on that route accepts exactly
+`name` (1–120 characters) and `items` (1–5,000 distinct `{id, revision,
+source_revision}` objects). `GET /api/workbench/selections/ID` returns `selection`
+(`mode: "fixed"`, `schema_version: 1`, immutable `items` with source identity),
+per-member `status`/`message`/current revision pairs, and `current`, which describes
+currency rather than review or release eligibility. POST `.../ID/rename` accepts
+`name` and saved-set `revision`; POST `.../ID/delete` accepts only `revision`.
+Stale mutations return HTTP 409 / `conflict`; a deleted set returns 404 / `unavailable`.
+For release preview, project saved items to `{id, revision, source_revision}`.
+
 ## Selected-release preview
 
 Select records, choose an export format and split targets, then click **Preview selected release**. This summary describes exactly the saved selected revisions, independently of the current collection filter. It shows task/review/class-target counts, eligibility blockers, connected source families (including unselected and deleted relatives), requested versus achievable splits, and format/rights warnings. Whole source families remain indivisible; ratios are targets, not guarantees of exact quotas.
@@ -143,10 +178,12 @@ This first version supports still capture and image import, including frames ext
     node tests/browser.cjs
     node tests/browser_images.cjs
     node tests/test_workbench_controller.cjs
+    node tests/test_saved_selections_controller.cjs
     node tests/browser_workbench.cjs
     node tests/browser_grounded.cjs
     node tests/browser_captions.cjs
     node tests/browser_release_preview.cjs
+    node tests/browser_saved_selections.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 

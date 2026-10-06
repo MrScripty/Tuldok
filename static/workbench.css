@@ -9,3 +9,7 @@
 #release-preview { overflow-wrap: anywhere; }
 #release-preview p { margin: .5rem 0; }
 #release-preview details { margin-block: .75rem; }
+
+#saved-selection-panel { margin-top: 12px; }
+#saved-selection-status, #saved-selection-issues { overflow-wrap: anywhere; }
+#saved-selection-issues { padding-left: 20px; font-size: 13px; }

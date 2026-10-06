@@ -20,7 +20,7 @@ function action(id, fn, event = 'click') {
     finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(page) pagination(); }
   });
 }
-function selection() { $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); }
+function selection() { $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(); }
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
 async function refresh() {
   const epoch = ++queryEpoch;
@@ -150,8 +150,9 @@ function releaseBody() {
     seed:Number($('split-seed').value)};
 }
 function releaseButtons() {
-  $('preview-release').disabled = releaseBusy || !selected.size;
-  $('freeze-release').disabled = releaseBusy || !releasePreview?.eligible;
+  const opening = typeof savedLoadBusy !== 'undefined' && savedLoadBusy;
+  $('preview-release').disabled = releaseBusy || opening || !selected.size;
+  $('freeze-release').disabled = releaseBusy || opening || !releasePreview?.eligible;
 }
 function invalidateRelease() {
   ++releaseEpoch; releasePreview = null;

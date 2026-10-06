@@ -9,6 +9,7 @@ import gateway_discovery
 import workbench
 import dataset_recipes
 import dataset_releases
+import saved_selections
 import grounded_candidates
 import base64
 import hashlib
@@ -137,6 +138,7 @@ class Dataset:
         self._recover_deletions()
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
+        self.selections = saved_selections.SavedSelections(self.workbench)
         self.grounded = grounded_candidates.Proposals(self.workbench)
 
     def close(self):
@@ -364,6 +366,10 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.list())
+                if path.startswith('/api/workbench/selections/'):
+                    return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
@@ -420,7 +426,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -446,6 +452,13 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.create(body), 201)
+                if path.startswith('/api/workbench/selections/'):
+                    parts = path.removeprefix('/api/workbench/selections/').split('/')
+                    if len(parts) != 2:
+                        raise workbench.WorkbenchError('Invalid saved selection route.')
+                    return self.reply(dataset.selections.mutate(parts[0], parts[1], body))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.start(body), 202)
                 if path == '/api/workbench/grounded/cancel':
