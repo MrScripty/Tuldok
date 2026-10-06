@@ -58,6 +58,9 @@ jobs:
       - run: node tests/browser_caption_import.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_caption_dataset_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,6 +75,8 @@ jobs:
             docs/plans/bulk-real-import/reports/bulk-*.png
             docs/plans/dataset-integration/reports/integration-*.png
             docs/plans/annotated-caption-import/reports/caption-import-*.png
+            docs/plans/dataset-caption-integration/reports/caption-combined-*.png
+            docs/plans/dataset-caption-integration/reports/caption-combined-session.json
           if-no-files-found: ignore
       - run: node tests/browser.cjs
         env:
