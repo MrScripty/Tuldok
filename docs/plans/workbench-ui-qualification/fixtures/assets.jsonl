@@ -1,0 +1,4 @@
+{"kind": "image", "name": "Blue book — local fixture", "file": "blue-book-qa.png", "groups": ["qa-shoot"]}
+{"kind": "text", "name": "Source note", "text": "A blue book rests on a plain desk.\nAuthored local QA fixture.", "groups": ["qa-note"], "rights": "Authored local QA fixture"}
+{"kind": "text", "name": "Unresolved rights note", "text": "A separate local note with no supplied rights metadata.", "groups": ["qa-unknown"]}
+{"kind": "text", "name": "Rejected review claim", "text": "This row must never be admitted.", "groups": ["qa-rejected"], "review": "human_reviewed"}

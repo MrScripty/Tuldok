@@ -23,7 +23,7 @@ class SyntheticTests(unittest.TestCase):
 
     def config(self, **extra):
         return dict(server_url='http://localhost:1234', model='image-test', prompt='open books',
-                    size='512x512', count=3, strategy='repeat', session_id='synthetic', **extra)
+                    width=512, height=512, count=3, strategy='repeat', session_id='synthetic', **extra)
 
     def wait(self):
         self.jobs.worker.join(10)

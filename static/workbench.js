@@ -1,6 +1,8 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const selected = new Map();
+let releasePreview = null, releaseKey = '', releaseEpoch = 0, releaseBusy = false;
+let selectionEpoch = 0;
 let page = null, offset = 0, current = null, targets = [], dirty = false, queryEpoch = 0, editorEpoch = 0;
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error', error); }
 async function api(path, body) {
@@ -19,11 +21,39 @@ function action(id, fn, event = 'click') {
     finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(page) pagination(); }
   });
 }
-function selection() { $('selection').textContent = selected.size + ' selected'; }
+function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); }
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
+const exactFilters = [['label','Target label',80], ['group','Protected source/group',120], ['rights','Rights note',1000]];
+let exactFilterFormat = 'text';
+function exactFilterValue(key, name, format = $('exact-filter-format').value) {
+  const value = $(key + '-filter').value;
+  let decoded = value;
+  if (format === 'json' && value.trim() !== '') {
+    try { decoded = JSON.parse(value); } catch { decoded = null; }
+    if(typeof decoded !== 'string') throw Error(`${name}: enter a JSON string in double quotes, or leave blank for any.`);
+  }
+  // Unicode-mode matching sees valid pairs as one codepoint, leaving only lone surrogates.
+  if(/[\uD800-\uDFFF]/u.test(decoded)) throw Error(`${name}: unpaired surrogate characters are invalid Unicode.`);
+  return decoded;
+}
+$('exact-filter-format').addEventListener('change', () => {
+  const format = $('exact-filter-format').value;
+  try {
+    const values = exactFilters.map(([key,name]) => exactFilterValue(key,name,exactFilterFormat));
+    if(format === 'text' && values.some(value => /[\r\n]/.test(value)))
+      throw Error('Keep JSON string entry for values containing line breaks; plain inputs would lose them.');
+    exactFilters.forEach(([key,,limit],i) => {
+      const input = $(key + '-filter');
+      input.maxLength = format === 'json' ? limit * 12 + 2 : limit * 2;
+      input.value = format === 'json' && values[i] !== '' ? JSON.stringify(values[i]) : values[i];
+    });
+    exactFilterFormat = format;
+  } catch(error) { $('exact-filter-format').value = exactFilterFormat; notice(error.message,true); }
+});
 async function refresh() {
   const epoch = ++queryEpoch;
-  const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value, offset, limit:40});
+  const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
+    ...Object.fromEntries(exactFilters.map(([key,name]) => [key,exactFilterValue(key,name)])), offset, limit:40});
   const result = await api('records?' + params);
   if (epoch !== queryEpoch) return;
   page = result;
@@ -31,9 +61,10 @@ async function refresh() {
   for (const record of page.items) {
     const row = document.createElement('div'); row.className = 'record';
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(record.id); checkbox.setAttribute('aria-label','Select ' + record.name);
-    checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(); };
+    checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(true); };
     const button = document.createElement('button'); button.textContent = record.name;
     const detail = document.createElement('small'); detail.textContent = `${record.task.replaceAll('_',' ')} · ${record.review.replaceAll('_',' ')} · revision ${record.revision}`; button.append(detail);
+    const metadata = document.createElement('small'); metadata.textContent = `Groups: ${record.groups.join(', ')} · Rights note: ${record.rights_note ?? 'unknown'}`; button.append(metadata);
     button.onclick = () => openRecord(record.id).catch(error => notice(error.message, true));
     row.append(checkbox, button); $('records').append(row);
   }
@@ -90,8 +121,8 @@ $('task').addEventListener('change',()=>{targets=[];markDirty();renderTargets();
 action('filters',async()=>{offset=0;await refresh();notice('Collection updated.');},'submit');
 action('previous',async()=>{offset=Math.max(0,offset-40);await refresh();});
 action('next',async()=>{offset+=40;await refresh();});
-action('select-page',()=>{for(const row of page.items) selected.set(row.id,row); return refresh();});
-action('clear-selection',()=>{selected.clear();return refresh();});
+action('select-page',()=>{for(const row of page.items) selected.set(row.id,row); selection(true); return refresh();});
+action('clear-selection',()=>{selected.clear();selection(true);return refresh();});
 action('reload',async()=>{if(current && mayDiscard()) await openRecord(current.id,true);});
 action('history',async()=>{const epoch=editorEpoch;const history=await api('history/'+current.id);if(epoch!==editorEpoch)return;$('history-output').textContent=JSON.stringify(history,null,2);$('history-output').hidden=false;});
 action('add-box',()=>{targets.push({label:$('label').value,x:Number($('box-x').value),y:Number($('box-y').value),width:Number($('box-width').value),height:Number($('box-height').value)});markDirty();renderTargets();});
@@ -121,19 +152,36 @@ $('asset-image').addEventListener('pointerup',event=>{
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
   const record=current, task=$('task').value, epoch=++editorEpoch;
+  const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
-  if(selected.has(saved.id))selected.set(saved.id,saved);
+  // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
+  if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
+     pairAtSave.revision===record.revision && pairAtSave.source_revision===record.source_revision) {
+    selected.set(saved.id,saved);selection();
+  }
+  // A successful older save can prove retained fixed pairs stale without owning them.
+  const selectedPair=selected.get(saved.id);
+  if(selectedPair && (selectedPair.revision<saved.revision || selectedPair.source_revision<saved.source_revision)) invalidateRelease();
   if(epoch===editorEpoch)showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');
+async function readImportImage(file) {
+  if(file.size>25*1024*1024)throw Error('Choose an image at most 25 MiB.');
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result.split(',')[1]);
+    reader.onerror=()=>reject(Error('Image could not be read.'));
+    reader.readAsDataURL(file);
+  });
+}
 action('import-form',async()=>{
   if(!mayDiscard())return;
   const epoch=++editorEpoch;
   const file=$('import-image').files[0], text=$('import-text').value;
   if(file && text.trim())throw Error('Import an image or text, one at a time.');
   const body={kind:file?'image':'text',name:file?file.name:$('import-name').value,groups:[$('import-group').value],rights:$('rights').value,text};
-  if(file){if(file.size>25*1024*1024)throw Error('Choose an image smaller than 25 MB.');body.image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=()=>reject(Error('Image could not be read.'));reader.readAsDataURL(file);});}
+  if(file)body.image=await readImportImage(file);
   const record=await api('import',body);await refresh();
   if(epoch===editorEpoch)showRecord(record);
   notice('Record imported.');
@@ -142,12 +190,93 @@ action('generate-form',async()=>{
   const result=await api('generate',{recipe:$('recipe').value,seed:Number($('seed').value),count:Number($('count').value)});
   await refresh();notice(`${result.created.length} candidates created; ${result.rejected.length} rejected. Programmatic verification is not human review.`);
 },'submit');
+function releaseBody() {
+  return {format:$('release-format').value || 'canonical_v1',
+    items:[...selected.values()].map(({id,revision,source_revision})=>({id,revision,source_revision})).sort((a,b)=>a.id.localeCompare(b.id)),
+    ratios:{train:Number($('train').value),validation:Number($('validation').value),test:Number($('test').value)},
+    seed:Number($('split-seed').value)};
+}
+function releaseButtons() {
+  const opening = typeof savedLoadBusy !== 'undefined' && savedLoadBusy;
+  $('preview-release').disabled = releaseBusy || opening || !selected.size;
+  $('freeze-release').disabled = releaseBusy || opening || !releasePreview?.eligible;
+}
+function invalidateRelease() {
+  ++releaseEpoch; releasePreview = null;
+  $('release-preview').replaceChildren();
+  $('release-preview-status').textContent = selected.size ? 'Preview the saved selected revisions before exporting.' : 'Select records to preview a release.';
+  $('release-result').replaceChildren(); releaseButtons();
+}
+function syncReleaseSelection() {
+  const key = JSON.stringify(releaseBody());
+  if(key !== releaseKey) { releaseKey = key; invalidateRelease(); }
+  else releaseButtons();
+}
+function previewLine(parent, text) { const p=document.createElement('p');p.textContent=text;parent.append(p); }
+function renderReleasePreview(result) {
+  const root=$('release-preview');root.replaceChildren();
+  $('release-preview-status').textContent = result.eligible ? `${result.selected_count} selected records are eligible for this format.` : 'Release blocked. Resolve the issues below, then preview again.';
+  if(result.analysis) {
+    const a=result.analysis, counts=(values,pretty=false)=>Object.entries(values).map(([key,value])=>`${pretty ? key.replaceAll('_',' ') : key}: ${value}`).join(' · ') || 'none';
+    previewLine(root, 'Selected tasks: '+counts(a.tasks,true));
+    previewLine(root, 'Selected review states: '+counts(a.reviews,true));
+    previewLine(root, 'Selected class / target label counts: '+counts(a.labels));
+    previewLine(root, `${a.unlabeled} unlabeled · ${a.empty_targets} empty targets · ${a.duplicate_content_records} exact duplicate records · ${a.unknown_rights} unknown rights`);
+  }
+  for(const item of result.blockers) previewLine(root, (item.record_id ? item.record_id+': ' : '')+item.message);
+  const report=result.split_report;
+  if(report) {
+    for(const split of ['train','validation','test']) {
+      const count=report.actual_counts[split] || 0, percent=result.selected_count ? (100*count/result.selected_count).toFixed(1) : '0.0';
+      previewLine(root, `${split}: requested ${report.requested_percentages[split]}%; achievable ${count} records (${percent}%).`);
+    }
+    previewLine(root, report.note);
+  } else previewLine(root, 'No valid split allocation is available for these settings.');
+  const families=document.createElement('details'), summary=document.createElement('summary');
+  summary.textContent=`${result.lineage.length} connected lineage groups in this selection`;families.append(summary);
+  for(const family of result.lineage) {
+    previewLine(families, `${family.selected_ids.length} selected / ${family.member_ids.length} related records · ${family.deleted_ids.length} deleted sources · fixed splits: ${family.fixed_splits.join(', ') || 'none'}`);
+    previewLine(families, 'Family '+family.id+' · members: '+family.member_ids.join(', '));
+  }
+  root.append(families);
+  for(const warning of result.warnings) previewLine(root, 'Warning: '+warning);
+  releaseButtons();
+}
+for(const id of ['release-format','train','validation','test','split-seed']) {
+  for(const event of ['input','change']) $(id).addEventListener(event, syncReleaseSelection);
+}
 $('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';});
-action('release-form',async()=>{
-  const result=await api('releases',{format:$('release-format').value || 'canonical_v1',items:[...selected.values()].map(({id,revision,source_revision})=>({id,revision,source_revision})),ratios:{train:Number($('train').value),validation:Number($('validation').value),test:Number($('test').value)},seed:Number($('split-seed').value)});
-  const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-  notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' small-image warnings; inspect manifest.json.' : ''));
-},'submit');
+$('preview-release').addEventListener('click', async event=>{
+  event.preventDefault(); if(releaseBusy) return;
+  syncReleaseSelection();
+  const body=releaseBody(), key=releaseKey, epoch=++releaseEpoch;
+  releasePreview=null; releaseBusy=true; releaseButtons();
+  $('release-preview').replaceChildren();$('release-result').replaceChildren();
+  $('release-preview-status').textContent='Checking saved selection, source bytes and connected lineage…';
+  try {
+    const result=await api('releases/preview',body);
+    if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
+    if(result.eligible && (typeof result.preview_token !== 'string' || !/^[a-f0-9]{64}$/.test(result.preview_token))) throw Error('Release preview proof is unavailable. Preview again.');
+    renderReleasePreview(result);releasePreview=result;
+  } catch(error) {
+    if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) $('release-preview-status').textContent=error.message;
+  } finally { releaseBusy=false;syncReleaseSelection(); }
+});
+$('release-form').addEventListener('submit',async event=>{
+  event.preventDefault();if(releaseBusy)return;
+  syncReleaseSelection();
+  if(!releasePreview?.eligible) { $('release-preview-status').textContent='Preview an eligible selection before exporting.';return; }
+  const body={...releaseBody(),preview_token:releasePreview.preview_token ?? null}, key=releaseKey, epoch=releaseEpoch;
+  releaseBusy=true;releaseButtons();$('release-result').replaceChildren();
+  try {
+    const result=await api('releases',body);
+    if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
+    const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
+    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' small-image warnings; inspect manifest.json.' : ''));
+  } catch(error) {
+    if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
+  } finally { releaseBusy=false;syncReleaseSelection(); }
+});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 refresh().then(()=>notice('Collection ready.')).catch(error=>notice(error.message,true));
 

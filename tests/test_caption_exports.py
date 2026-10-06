@@ -520,17 +520,21 @@ class CaptionReleaseTests(unittest.TestCase):
     def test_generation_prompt_remains_provenance_not_caption(self):
         prompt = 'Generate a dramatic blue panel; this is not its caption.'
         result = {'image': base64.b64encode(image_bytes('blue')).decode('ascii'), 'metadata': {'seed': 7}}
-        with patch.object(self.dataset.image_requests, 'generate', return_value=result):
+        with patch.object(self.dataset.image_requests, 'generate', return_value=result) as generate:
             self.dataset.generation_jobs.start(dict(server_url='http://localhost:1234', model='fixture-image-model',
-                prompt=prompt, size='512x512', count=1, strategy='repeat', session_id='generated-panel', seed=7))
+                prompt=prompt, width=512, height=512, count=1, strategy='repeat', session_id='generated-panel', seed=7))
             self.dataset.generation_jobs.worker.join(10)
             self.assertFalse(self.dataset.generation_jobs.worker.is_alive())
+        sent = generate.call_args.args[0]
+        self.assertEqual((sent['width'], sent['height']), (512, 512))
+        self.assertNotIn('size', sent)
         state = self.dataset.generation_jobs.snapshot()
         self.assertEqual(state['jobs'][0]['status'], 'completed')
         generated = self.workbench.get(state['entries'][0]['sample_id'])
         self.assertIsNone(generated['annotation'])
         self.assertEqual(generated['review'], 'draft')
         self.assertEqual(generated['provenance']['generation']['prompt'], prompt)
+        self.assertEqual((generated['provenance']['generation']['width'], generated['provenance']['generation']['height']), (512, 512))
         caption = 'A plain blue square.'
         generated = self.caption(generated, caption)
         _, manifest, metadata = self.extract(self.release([generated, self.image('red'), self.image('green')]))

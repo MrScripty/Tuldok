@@ -9,7 +9,10 @@ import gateway_discovery
 import workbench
 import dataset_recipes
 import dataset_releases
+import saved_selections
 import grounded_candidates
+import bulk_import
+import caption_import
 import base64
 import hashlib
 import io
@@ -137,6 +140,8 @@ class Dataset:
         self._recover_deletions()
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
+        self.selections = saved_selections.SavedSelections(self.workbench)
+        self.caption_imports = caption_import.CaptionImports(self.workbench)
         self.grounded = grounded_candidates.Proposals(self.workbench)
 
     def close(self):
@@ -155,7 +160,7 @@ class Dataset:
             for row in rows:
                 if row['id'] in provenance:
                     entry = provenance[row['id']]
-                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if key in entry}
+                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'width', 'height', 'requested_seed') if key in entry}
                 row['annotation'] = json.loads(row['annotation']) if row['annotation'] else None
                 if row['annotation'] is not None:
                     row['annotation'].setdefault('corner_reference', 'image')
@@ -180,7 +185,7 @@ class Dataset:
                             " AND id<>? AND split='unassigned'", (chosen, *args))
         return chosen
 
-    def add(self, body, generation=None):
+    def add(self, body, generation=None, *, enrollment=None):
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -220,6 +225,10 @@ class Dataset:
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
                         self.generation_jobs.record_output(sample_id, *generation)
+                    if enrollment is not None:
+                        # Imported Workbench source metadata shares acquisition's
+                        # commit and original-file cleanup on admission failure.
+                        self.workbench._enroll_import(sample_id, *enrollment)
             except Exception:
                 shutil.rmtree(folder)
                 raise
@@ -364,6 +373,12 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.list())
+                if path.startswith('/api/workbench/selections/'):
+                    return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
+                if path.startswith('/api/workbench/import-result/'):
+                    return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
@@ -420,7 +435,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -446,6 +461,13 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.create(body), 201)
+                if path.startswith('/api/workbench/selections/'):
+                    parts = path.removeprefix('/api/workbench/selections/').split('/')
+                    if len(parts) != 2:
+                        raise workbench.WorkbenchError('Invalid saved selection route.')
+                    return self.reply(dataset.selections.mutate(parts[0], parts[1], body))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.start(body), 202)
                 if path == '/api/workbench/grounded/cancel':
@@ -454,10 +476,18 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/import-row':
+                    return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
+                if path == '/api/workbench/caption-import/prepare':
+                    return self.reply(dataset.caption_imports.prepare(body))
+                if path == '/api/workbench/caption-import/row':
+                    return self.reply(dataset.caption_imports.admit(body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/generate':
                     return self.reply(dataset_recipes.generate(dataset.workbench, body), 201)
+                if path == '/api/workbench/releases/preview':
+                    return self.reply(dataset.releases.preview(body))
                 if path == '/api/workbench/releases':
                     return self.reply(dataset.releases.create(body), 201)
                 if path == '/api/generation/jobs':
@@ -468,6 +498,8 @@ def make_handler(dataset):
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
                     return self.reply(ai_http.text_models(body.get('server_url')))
+                if path == '/api/ai/scan':
+                    return self.reply(gateway_discovery.scan_labeling())
                 if path == '/api/generation/scan':
                     return self.reply(gateway_discovery.scan())
                 if path == '/api/generation/models':

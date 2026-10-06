@@ -1,4 +1,10 @@
-"""Pumas image transport, bounded PNG decoding, and owned request cancellation."""
+"""Pumas image transport, bounded PNG decoding, and owned request cancellation.
+
+Image requests have no duration limit: once admitted, generation runs until
+it completes, fails, or is explicitly cancelled. Only connection establishment
+stays bounded. A response lost before completion is uncertain and never proves
+provider work stopped; lost requests are not retried.
+"""
 import base64
 import hashlib
 import http.client
@@ -7,7 +13,6 @@ import json
 import select
 import socket
 import threading
-import time
 from urllib.parse import urlsplit
 
 from PIL import Image
@@ -15,8 +20,9 @@ import ai_http
 
 MAX_PNG = 8 * 1024 * 1024
 MAX_JSON = 12 * 1024 * 1024
-TIMEOUT = 630
-SIZES = {f'{width}x{height}' for width in (512, 768, 1024) for height in (512, 768, 1024)}
+CONNECT_TIMEOUT = 10
+DEFAULT_WIDTH = 1280
+DEFAULT_HEIGHT = 720
 
 
 def models(body):
@@ -35,8 +41,16 @@ def models(body):
     return {'models': result, 'message': '' if result else 'No ready image models. Load an image model in Pumas and use its gateway URL; a llama.cpp router cannot generate images.'}
 
 
+def validate_dimensions(width, height):
+    dimensions = {'width': width, 'height': height}
+    for name, value in dimensions.items():
+        if type(value) is not int or value <= 0:
+            raise ValueError(f'{name} must be a positive integer.')
+    return dimensions
+
+
 def validate(body):
-    if set(body) - {'server_url', 'request_id', 'model', 'prompt', 'size', 'seed'}:
+    if set(body) - {'server_url', 'request_id', 'model', 'prompt', 'width', 'height', 'seed'}:
         raise ValueError('Unsupported image-generation fields.')
     base = ai_http.validate_url('llamacpp', body.get('server_url'))
     request_id = body.get('request_id')
@@ -45,20 +59,18 @@ def validate(body):
     for name, limit in [('model', 256), ('prompt', 4000)]:
         if not isinstance(body.get(name), str) or not body[name].strip() or len(body[name]) > limit:
             raise ValueError(f'{name} must contain 1 to {limit} characters.')
-    size = body.get('size', '1024x1024')
-    if size not in SIZES:
-        raise ValueError('Width and height must each be 512, 768, or 1024.')
+    dimensions = validate_dimensions(body.get('width', DEFAULT_WIDTH), body.get('height', DEFAULT_HEIGHT))
     seed = body.get('seed')
     if seed is not None and (type(seed) is not int or not 0 <= seed <= 4294967295):
         raise ValueError('Seed must be an integer from 0 through 4294967295.')
     payload = {name: body[name] for name in ('model', 'prompt')}
-    payload.update(n=1, size=size, response_format='b64_json')
+    payload.update(n=1, response_format='b64_json', **dimensions)
     if seed is not None:
         payload['seed'] = seed
     return base, request_id, payload
 
 
-def decode_image(data, size):
+def decode_image(data, width, height):
     try:
         value = json.loads(data)
         if not isinstance(value, dict) or not isinstance(value.get('data'), list) or len(value['data']) != 1:
@@ -69,7 +81,7 @@ def decode_image(data, size):
         raw = base64.b64decode(encoded, validate=True)
         if not raw or len(raw) > MAX_PNG:
             raise ValueError()
-        dimensions = tuple(map(int, size.split('x')))
+        dimensions = (width, height)
         with Image.open(io.BytesIO(raw)) as image:
             if image.format != 'PNG' or image.size != dimensions:
                 raise ValueError()
@@ -152,50 +164,47 @@ class ImageRequests:
             watcher.start()
         url = urlsplit(base)
         connection_type = http.client.HTTPSConnection if url.scheme == 'https' else http.client.HTTPConnection
-        connection = connection_type(url.hostname, url.port, timeout=10)
-        deadline = time.monotonic() + TIMEOUT
+        connection = connection_type(url.hostname, url.port, timeout=CONNECT_TIMEOUT)
+        connected = False
         try:
             connection.connect()
+            connected = True
             with operation.lock:
                 operation.transport = connection.sock
             if operation.cancelled.is_set():
                 raise ValueError('Image generation cancelled.')
             transport = connection.sock
-            transport.settimeout(max(.001, deadline - time.monotonic()))
+            transport.settimeout(None)
             connection.request('POST', url.path + '/v1/images/generations', json.dumps(payload),
                                {'Content-Type': 'application/json', 'Accept': 'application/json'})
             with connection.getresponse() as response:
                 if response.status != 200:
-                    messages = {400: 'Pumas rejected the image request. Check the model, prompt and size.',
+                    messages = {400: 'Pumas rejected the image request. Check the model, prompt, width and height.',
+                                422: 'Pumas rejected the image request fields. The gateway contract may have changed; check width, height, prompt and model.',
                                 404: 'Use the Pumas gateway URL and a ready image model. A llama.cpp router cannot generate images.',
                                 409: 'The image runtime is busy. Wait for it to finish stopping before another request.',
                                 499: 'Image generation cancelled.',
                                 503: 'The image model is unavailable. Load it in Pumas and refresh models.',
-                                504: 'Image generation exceeded its deadline. It was not retried.',
                                 507: 'Pumas reported insufficient GPU memory. Free memory before trying again.'}
                     raise ValueError(messages.get(response.status, 'Pumas image generation failed. Check its runtime status. The request was not retried.'))
                 data = bytearray()
                 while not response.isclosed():
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        raise TimeoutError()
-                    transport.settimeout(remaining)
                     chunk = response.read1(65536)
                     if not chunk:
                         break
                     data.extend(chunk)
                     if len(data) > MAX_JSON:
                         raise ValueError('Pumas returned an oversized image response.')
-                result = decode_image(data, payload['size'])
+                result = decode_image(data, payload['width'], payload['height'])
                 if operation.cancelled.is_set():
                     raise ValueError('Image generation cancelled.')
                 return result
-        except (OSError, http.client.HTTPException) as error:
+        except (OSError, http.client.HTTPException):
             if operation.cancelled.is_set():
                 raise ValueError('Image generation cancelled.') from None
-            if isinstance(error, (TimeoutError, socket.timeout)):
-                raise ValueError('Image generation exceeded its time limit. It was not retried.') from None
-            raise ValueError('Could not reach the Pumas gateway. Check its URL and runtime status. The request was not retried.') from None
+            if not connected:
+                raise ValueError('Could not reach the Pumas gateway. Check its URL and runtime status. The request was not retried.') from None
+            raise ValueError('Lost the Pumas image response before it completed. Provider work may have continued. The request was not retried.') from None
         finally:
             connection.close()
             operation.done.set()

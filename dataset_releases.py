@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from PIL import Image
 
-from workbench import WorkbenchError, encode, file_hash, validate_annotation
+from workbench import WorkbenchError, analyze, encode, file_hash, validate_annotation
 
 SPLITS = ('train', 'validation', 'test')
 RELEASE_ID = re.compile(r'^[a-f0-9]{64}$')
@@ -126,6 +126,134 @@ class Releases:
             raise WorkbenchError('Release not found.', 'unavailable', 404)
         return path
 
+    def preview(self, body):
+        """Inspect the exact selection without persisting even lazy image enrollment."""
+        workbench = self.workbench
+        with workbench.lock:
+            workbench.db.execute('SAVEPOINT release_preview')
+            try:
+                return self._prepare(body)['preview']
+            finally:
+                workbench.db.execute('ROLLBACK TO release_preview')
+                workbench.db.execute('RELEASE release_preview')
+
+    def _prepare(self, body):
+        """Shared validation/allocation authority for preview and final export.
+
+        Caller owns the source lock. A preview token is a freshness fingerprint,
+        not a permission grant. No archive or persistent split is created here.
+        """
+        workbench = self.workbench
+        format_name = body.get('format', 'canonical_v1')
+        preview = {'eligible': False, 'format': format_name, 'selected_count': 0,
+                   'analysis': None, 'blockers': [], 'warnings': [], 'lineage': [],
+                   'split_report': None, 'assignments': {}, 'preview_token': None}
+        def block(error, record_id=None):
+            item = {'code': error.code, 'message': str(error), 'status': error.status}
+            if record_id is not None:
+                item['record_id'] = record_id
+            preview['blockers'].append(item)
+        if format_name not in ('canonical_v1', CAPTION_FORMAT):
+            block(WorkbenchError('Unknown release format.'))
+        try:
+            rows = workbench.selection(body.get('items'))
+        except WorkbenchError as error:
+            block(error)
+            return {'preview': preview}
+        preview['selected_count'] = len(rows)
+        preview['analysis'] = analyze(rows)
+        universe = workbench._all()
+        roots = connected_components(universe)
+        active_roots = {roots[row['id']] for row in rows}
+        families = {}
+        for row in universe:
+            if roots[row['id']] in active_roots:
+                families.setdefault(roots[row['id']], []).append(row)
+        groups = {component: 'component:' + hashlib.sha256(encode(sorted(r['id'] for r in family)).encode()).hexdigest()
+                  for component, family in families.items()}
+        selected_ids = {row['id'] for row in rows}
+        snapshots = {}
+        for component, family in families.items():
+            family = sorted(family, key=lambda row: row['id'])
+            snapshots[groups[component]] = [
+                {key: row[key] for key in ('id', 'kind', 'revision', 'source_revision', 'content_hash', 'pixel_hash',
+                                          'groups', 'parents', 'source_available', 'source_lineage_known',
+                                          'source_split', 'source_sha256', 'book_id', 'session_id')}
+                for row in family]
+            preview['lineage'].append({'id': groups[component],
+                'selected_ids': [row['id'] for row in family if row['id'] in selected_ids],
+                'member_ids': [row['id'] for row in family],
+                'deleted_ids': [row['id'] for row in family if not row['source_available']],
+                'fixed_splits': sorted({row['source_split'] for row in family if row['source_split'] in SPLITS})})
+        preview['lineage'].sort(key=lambda family: family['id'])
+        pixels, pixel_hashes = set(), {}
+        for row in rows:
+            try:
+                if format_name == CAPTION_FORMAT:
+                    if row['task'] != 'image_caption' or row['review'] != 'human_reviewed' or not row['source_available']:
+                        raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
+                elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
+                    raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
+                validate_annotation(row['task'], row['annotation'], row)
+            except WorkbenchError as error:
+                block(error, row['id'])
+            try:
+                asset, _ = workbench.asset(row['id'])
+                digest = file_hash(asset) if isinstance(asset, Path) else hashlib.sha256(asset).hexdigest()
+                if digest != row['content_hash']:
+                    raise WorkbenchError('Source bytes changed outside Tuldok. Restore the original asset before release.', 'conflict', 409)
+                if row['kind'] == 'image':
+                    with Image.open(asset) as image:
+                        if image.format != 'PNG' or image.getexif().get(274, 1) != 1:
+                            raise WorkbenchError('Image assets must be normalized PNGs with EXIF orientation 1.')
+                        image = image.convert('RGB'); image.load()
+                        pixel_hash = hashlib.sha256(str(image.size).encode() + image.tobytes()).hexdigest()
+                        if image.size != (row['width'], row['height']) or pixel_hash != row['pixel_hash']:
+                            raise WorkbenchError('Source pixels changed outside Tuldok.', 'conflict', 409)
+                        if format_name == CAPTION_FORMAT:
+                            if min(image.size) < 512:
+                                preview['warnings'].append(f"Small image: {row['id']}.png ({image.width}x{image.height}); consumer warns below 512 pixels.")
+                            if pixel_hash in pixels:
+                                raise WorkbenchError('Caption export forbids exact decoded-pixel duplicates, including within a split.')
+                        pixels.add(pixel_hash)
+                        pixel_hashes[row['id']] = pixel_hash
+            except WorkbenchError as error:
+                block(error, row['id'])
+            except (OSError, ValueError):
+                block(WorkbenchError('Source asset is unreadable.', 'unavailable', 409), row['id'])
+        try:
+            assignments, report = allocate(rows, universe, body.get('ratios'), body.get('seed'))
+            preview['assignments'], preview['split_report'] = assignments, report
+            if format_name == CAPTION_FORMAT and any(not report['actual_counts'].get(split) for split in SPLITS):
+                raise WorkbenchError('Image-caption export requires nonempty train, validation and test splits.')
+        except WorkbenchError as error:
+            block(error)
+        if format_name == 'canonical_v1':
+            preview['warnings'].append('Canonical export projects detection to COCO; other tasks remain typed JSONL records, not one interchangeable training format.')
+            if any(row['task'] == 'image_caption' for row in rows):
+                preview['warnings'].append('Canonical captions remain manifest/JSONL records. Choose image-caption format for the pinned train/val/test imagefolder consumer.')
+        if preview['analysis']['unknown_rights']:
+            preview['warnings'].append('Some selected records have unknown rights. Review permission before training or sharing.')
+        preview['warnings'].append('Exact matches and protected lineage do not establish semantic independence or training quality.')
+        preview['eligible'] = not preview['blockers']
+        if preview['eligible']:
+            preview['preview_token'] = hashlib.sha256(encode({
+                'preview_schema': 1, 'format': format_name, 'ratios': body['ratios'], 'seed': body['seed'],
+                'records': rows, 'protected_components': snapshots,
+                'assignments': preview['assignments']}).encode()).hexdigest()
+        return {'preview': preview, 'rows': rows, 'pixel_hashes': pixel_hashes,
+                'roots': roots, 'groups': groups, 'snapshots': snapshots}
+
+    def _checked(self, body):
+        prepared = self._prepare(body)
+        preview = prepared['preview']
+        if preview['blockers']:
+            first = preview['blockers'][0]
+            raise WorkbenchError(first['message'], first['code'], first['status'])
+        if 'preview_token' in body and body['preview_token'] != preview['preview_token']:
+            raise WorkbenchError('Release preview changed. Preview the current selection and settings again.', 'conflict', 409)
+        return prepared
+
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
         if format_name not in ('canonical_v1', CAPTION_FORMAT):
@@ -134,12 +262,10 @@ class Releases:
             return self._create_captions(body)
         workbench = self.workbench
         with workbench.lock, workbench.db:
-            rows = workbench.selection(body.get('items'))
-            for row in rows:
-                if not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
-                    raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
-                validate_annotation(row['task'], row['annotation'], row)
-            assignments, report = allocate(rows, workbench._all(), body.get('ratios'), body.get('seed'))
+            prepared = self._checked(body)
+            rows = prepared['rows']
+            assignments = prepared['preview']['assignments']
+            report = prepared['preview']['split_report']
             manifest = {'schema_version': 1, 'seed': body['seed'], 'split_report': report,
                         'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end).',
                         'limitations': ['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],
@@ -186,37 +312,19 @@ class Releases:
         """Freeze only reviewed captions into the pinned imagefolder contract."""
         workbench = self.workbench
         with workbench.lock, workbench.db:
-            rows = workbench.selection(body.get('items'))
-            for row in rows:
-                if row['task'] != 'image_caption' or row['review'] != 'human_reviewed' or not row['source_available']:
-                    raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
-                validate_annotation(row['task'], row['annotation'], row)
-            universe = workbench._all()
-            assignments, report = allocate(rows, universe, body.get('ratios'), body.get('seed'))
-            if any(not report['actual_counts'].get(split) for split in SPLITS):
-                raise WorkbenchError('Image-caption export requires nonempty train, validation and test splits.')
-            roots = connected_components(universe)
-            active_roots = {roots[row['id']] for row in rows}
-            families = {}
-            for row in universe:
-                if roots[row['id']] in active_roots:
-                    families.setdefault(roots[row['id']], []).append(row)
-            # All related records participate, not an arbitrary first protected group.
-            groups = {component: 'component:' + hashlib.sha256(encode(sorted(r['id'] for r in family)).encode()).hexdigest()
-                      for component, family in families.items()}
+            prepared = self._checked(body)
+            rows = prepared['rows']
+            assignments = prepared['preview']['assignments']
+            report = prepared['preview']['split_report']
+            roots, groups = prepared['roots'], prepared['groups']
             manifest = {'schema_version': 1, 'format': CAPTION_FORMAT, 'consumer': CAPTION_CONSUMER,
                         'seed': body['seed'], 'split_mapping': CAPTION_SPLITS, 'split_report': report,
                         'records': [], 'protected_components': {}, 'warnings': [],
                         'limitations': ['Human review is evidence, not a quality guarantee.',
                                        'Rights, sensitive metadata, near duplicates and semantic independence require manual inspection.']}
-            for component, family in families.items():
-                manifest['protected_components'][groups[component]] = [
-                    {key: row[key] for key in ('id', 'kind', 'revision', 'source_revision', 'content_hash', 'pixel_hash',
-                                              'groups', 'parents', 'source_available', 'source_lineage_known',
-                                              'source_split', 'source_sha256', 'book_id', 'session_id')}
-                    for row in sorted(family, key=lambda r: r['id'])]
+            manifest['protected_components'] = prepared['snapshots']
+            manifest['warnings'] = [warning for warning in prepared['preview']['warnings'] if warning.startswith('Small image:')]
             metadata = {split: [] for split in CAPTION_SPLITS.values()}
-            pixels = set()
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:
                 with os.fdopen(fd, 'w+b') as target:
@@ -226,23 +334,7 @@ class Releases:
                             split = CAPTION_SPLITS[canonical_split]
                             filename = row['id'] + '.png'
                             asset, _ = workbench.asset(row['id'])
-                            try:
-                                with Image.open(asset) as image:
-                                    if image.format != 'PNG' or image.getexif().get(274, 1) != 1:
-                                        raise WorkbenchError('Caption assets must be normalized PNGs with EXIF orientation 1.')
-                                    image = image.convert('RGB'); image.load()
-                                    pixel_hash = hashlib.sha256(str(image.size).encode() + image.tobytes()).hexdigest()
-                                    if image.size != (row['width'], row['height']) or pixel_hash != row['pixel_hash']:
-                                        raise WorkbenchError('Source pixels changed outside Tuldok.', 'conflict', 409)
-                                    if min(image.size) < 512:
-                                        manifest['warnings'].append(f'Small image: {filename} ({image.width}x{image.height}); consumer warns below 512 pixels.')
-                            except (OSError, ValueError) as error:
-                                if isinstance(error, WorkbenchError):
-                                    raise
-                                raise WorkbenchError('Caption source image is unreadable.', 'unavailable', 409) from error
-                            if pixel_hash in pixels:
-                                raise WorkbenchError('Caption export forbids exact decoded-pixel duplicates, including within a split.')
-                            pixels.add(pixel_hash)
+                            pixel_hash = prepared['pixel_hashes'][row['id']]
                             digest = archive_asset(archive, asset, split + '/' + filename, row['content_hash'])
                             group = groups[roots[row['id']]]
                             metadata[split].append({'file_name': filename, 'text': row['annotation']['caption'], 'group': group})

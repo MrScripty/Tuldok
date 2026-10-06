@@ -50,7 +50,9 @@ def start():
                         return
             if body['prompt'] == 'busy':
                 return self.reply({'error': {'code': 'runtime_busy'}}, 409)
-            raw = b'invalid PNG' if body['prompt'] == 'invalid' else png(tuple(map(int, body['size'].split('x'))), '#467e9a' if body.get('seed', 7) == 7 else '#%06x' % (body['seed'] % 16777216))
+            if body['prompt'] == 'unprocessable':
+                return self.reply({'detail': 'fixture contract mismatch'}, 422)
+            raw = b'invalid PNG' if body['prompt'] == 'invalid' else png((body['width'], body['height']), '#467e9a' if body.get('seed', 7) == 7 else '#%06x' % (body['seed'] % 16777216))
             self.reply({'created': 1, 'data': [{'b64_json': base64.b64encode(raw).decode()}],
                         'metadata': {'seed': body.get('seed', 7), 'steps': 8, 'guidance': 0,
                                      'memory_policy': 'sequential_cpu_offload', 'duration_seconds': .01}})

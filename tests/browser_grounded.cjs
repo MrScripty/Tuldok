@@ -49,15 +49,18 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.ok((await evaluate('document.querySelector(".proposal-job").textContent')).includes('Cancel the café meeting 😀.'));
   await evaluate('document.querySelector(".proposal-candidate textarea").value="Check facts separately in annotation review";document.querySelector(".proposal-candidate textarea").dispatchEvent(new Event("input"))');
   await evaluate('[...document.querySelectorAll(".proposal-candidate button")].find(b=>b.textContent==="Admit as draft").click()');
-  await until(()=>evaluate('!![...document.querySelectorAll(".proposal-candidate button")].find(b=>b.textContent==="Open admitted draft")'));
+  // Admission renders its action before the collection refresh finishes.
+  await until(()=>evaluate('document.getElementById("notice").textContent === "Candidate admitted as a draft. Open it and review the annotation before release." && document.querySelectorAll(".record").length === 2 && !![...document.querySelectorAll(".proposal-candidate button")].find(b=>b.textContent==="Open admitted draft")'));
   await evaluate('document.querySelector(".proposal-job").open=true;[...document.querySelectorAll(".proposal-candidate button")].find(b=>b.textContent==="Open admitted draft").click()');
   await until(()=>evaluate('document.getElementById("record-name").textContent.startsWith("Rewrite:")'));
   assert.equal(await evaluate('document.getElementById("record-review").value'),'draft');
-  await click('select-page');await fill('train',100);await fill('validation',0);await fill('test',0);await evaluate('document.getElementById("release-form").requestSubmit()');
-  await until(()=>evaluate('document.getElementById("notice").textContent.includes("reviewed or programmatically verified")'));
+  await click('select-page');await fill('train',100);await fill('validation',0);await fill('test',0);await click('preview-release');
+  await until(()=>evaluate('document.getElementById("release-preview").textContent.includes("reviewed or programmatically verified")'));
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
   assert.equal(await evaluate('document.querySelector("#release-result a")===null'),true);
   await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');
   await until(()=>evaluate('!document.getElementById("editor").dataset.busy && document.getElementById("notice").textContent === "Annotation saved."'));
+  await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
   await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const archive=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(archive.status,200);assert.ok((await archive.arrayBuffer()).byteLength>1000);
   await evaluate('document.querySelector(".proposal-job").open=true;document.querySelector(".proposal-candidate textarea").value="Reject this variant after inspection"');
