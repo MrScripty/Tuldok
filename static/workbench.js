@@ -160,6 +160,9 @@ action('editor',async()=>{
      pairAtSave.revision===record.revision && pairAtSave.source_revision===record.source_revision) {
     selected.set(saved.id,saved);selection();
   }
+  // A successful older save can prove retained fixed pairs stale without owning them.
+  const selectedPair=selected.get(saved.id);
+  if(selectedPair && (selectedPair.revision<saved.revision || selectedPair.source_revision<saved.source_revision)) invalidateRelease();
   if(epoch===editorEpoch)showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');

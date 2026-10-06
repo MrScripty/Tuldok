@@ -43,3 +43,26 @@ historical; they do not qualify the corrected candidate. No new PR, force push,
 main merge, credential/settings change, provider/model/dataset download or denied
 log-endpoint retry. Parent owns independent review/thread disposition and the
 preserved provisional integration candidate.
+
+## Final local qualification with corrected PR6
+
+Surrogate repair commit `dd18514` follows preserved PR7 `3ce5b18`. Corrected PR6
+`bfbebbb1ef70ab30d8a5ba5f776b7babf27a4c01` merges cleanly into that descendant;
+the normal merge retains both component ancestors and their before/after evidence.
+No conflict choice drops either fix.
+
+Full exact-source local qualification: **150 Python tests passed in 34.571s**;
+page-load, workbench/saved-set controllers and all eight PR6 intent cases pass;
+all **nine real Chromium suites** pass. Browser evidence preserves LF/CR/CRLF and
+checks all 15 malformed JSON cases plus all three plain-field rejection cases,
+maximum valid escaped surrogate pairs, intentional U+FFFD, fixed membership and
+preview tokens. The merged PR6 real browser case reports retained old selection,
+newer editor revision, null cached eligibility and disabled Freeze; stale server
+export still rejects. No runtime exceptions or narrow-layout overflow.
+
+Logs: `/tmp/tuldok-surrogate-python.log`, `/tmp/tuldok-surrogate-*.cjs.log`.
+Production source remained unchanged throughout full qualification. Documentation
+is appended afterward. Generated inherited screenshots are retained under
+`/tmp/tuldok-surrogate-inherited-screenshots`; base PNG bytes were restored to keep
+the source patch focused. JS syntax and whitespace checks pass. Final published
+merge/head/tree and hosted receipts are recorded in PR7, not inferred from older CI.
