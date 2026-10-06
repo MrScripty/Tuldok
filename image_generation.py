@@ -41,6 +41,14 @@ def models(body):
     return {'models': result, 'message': '' if result else 'No ready image models. Load an image model in Pumas and use its gateway URL; a llama.cpp router cannot generate images.'}
 
 
+def validate_dimensions(width, height):
+    dimensions = {'width': width, 'height': height}
+    for name, value in dimensions.items():
+        if type(value) is not int or value <= 0:
+            raise ValueError(f'{name} must be a positive integer.')
+    return dimensions
+
+
 def validate(body):
     if set(body) - {'server_url', 'request_id', 'model', 'prompt', 'width', 'height', 'seed'}:
         raise ValueError('Unsupported image-generation fields.')
@@ -51,12 +59,7 @@ def validate(body):
     for name, limit in [('model', 256), ('prompt', 4000)]:
         if not isinstance(body.get(name), str) or not body[name].strip() or len(body[name]) > limit:
             raise ValueError(f'{name} must contain 1 to {limit} characters.')
-    dimensions = {}
-    for name, default in (('width', DEFAULT_WIDTH), ('height', DEFAULT_HEIGHT)):
-        value = body.get(name, default)
-        if type(value) is not int or value <= 0:
-            raise ValueError(f'{name} must be a positive integer.')
-        dimensions[name] = value
+    dimensions = validate_dimensions(body.get('width', DEFAULT_WIDTH), body.get('height', DEFAULT_HEIGHT))
     seed = body.get('seed')
     if seed is not None and (type(seed) is not int or not 0 <= seed <= 4294967295):
         raise ValueError('Seed must be an integer from 0 through 4294967295.')

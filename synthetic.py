@@ -9,6 +9,29 @@ import image_generation
 
 BATCH_SIZE = 10
 ACTIVE = ('preparing', 'generating', 'stopping')
+# PR3 persisted only these exact size strings; they are not a current API field.
+LEGACY_SIZES = {f'{width}x{height}' for width in (512, 768, 1024) for height in (512, 768, 1024)}
+
+
+def saved_dimensions(value):
+    """Decode retained dimensions without the new-request defaults or lost evidence."""
+    if not isinstance(value, dict):
+        raise ValueError('Saved image dimensions must be an object.')
+    legacy = None
+    if 'size' in value:
+        size = value['size']
+        if not isinstance(size, str) or size not in LEGACY_SIZES:
+            raise ValueError('Unsupported saved image size: width and height must each be 512, 768, or 1024.')
+        legacy = dict(zip(('width', 'height'), map(int, size.split('x'))))
+    if 'width' in value or 'height' in value:
+        dimensions = image_generation.validate_dimensions(value.get('width'), value.get('height'))
+        if legacy is not None and dimensions != legacy:
+            raise ValueError('Saved numeric dimensions conflict with the retained image size.')
+    elif legacy is not None:
+        dimensions = legacy
+    else:
+        raise ValueError('Saved image dimensions are missing; refusing to choose new-request defaults.')
+    return dict(value, **dimensions)
 
 
 def prompt_batch(config, offset, count, previous):
@@ -85,6 +108,15 @@ class Jobs:
             self.db.execute('CREATE TABLE IF NOT EXISTS generation_jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL)')
             self.db.execute('CREATE TABLE IF NOT EXISTS generation_entries (id TEXT PRIMARY KEY, job_id TEXT NOT NULL, ordinal INTEGER NOT NULL, data TEXT NOT NULL, UNIQUE(job_id, ordinal))')
             for job in self._jobs():
+                try:
+                    job = self._normalize_saved(job)
+                except ValueError as error:
+                    # An invalid retained queue must stay inspectable without
+                    # stopping startup of independent datasets/jobs.
+                    if job['status'] != 'completed':
+                        job.update(status='failed', error=str(error))
+                        self._save(job)
+                    continue
                 if job['status'] in ACTIVE:
                     job.update(status='interrupted', error='Server stopped. Resume to continue the saved queue.')
                     self._save(job)
@@ -101,6 +133,22 @@ class Jobs:
     def _entry(self, entry):
         self.db.execute('INSERT INTO generation_entries VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
                         (entry['id'], entry['job_id'], entry['ordinal'], json.dumps(entry)))
+
+    def _normalize_saved(self, job):
+        config = saved_dimensions(job['config'])
+        entries = self._entries(job['id'])
+        normalized = [saved_dimensions(entry) for entry in entries]
+        if any((entry['width'], entry['height']) != (config['width'], config['height']) for entry in normalized):
+            raise ValueError('Saved queue-entry dimensions conflict with the job configuration.')
+        # Decode the whole queue before writing, keeping migration atomic under
+        # the caller's lock/transaction. Retain size and all original provenance.
+        if config != job['config']:
+            job = dict(job, config=config)
+            self._save(job)
+        for before, entry in zip(entries, normalized):
+            if before != entry:
+                self._entry(entry)
+        return job
 
     def record_output(self, sample_id, entry, job, metadata):
         """Called only inside Dataset.add's sample-insert transaction and lock."""
@@ -136,6 +184,7 @@ class Jobs:
             job = next((j for j in self._jobs() if j['id'] == job_id), None)
             if not job or job['status'] == 'completed':
                 raise ValueError('Choose an unfinished generation job.')
+            job = self._normalize_saved(job)
             job.update(status='preparing', error='')
             self._save(job)
             self._launch(job)
