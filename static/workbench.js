@@ -21,7 +21,7 @@ function action(id, fn, event = 'click') {
     finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(page) pagination(); }
   });
 }
-function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); }
+function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); if(typeof curationChanged === 'function') curationChanged(); }
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
 const exactFilters = [['label','Target label',80], ['group','Protected source/group',120], ['rights','Rights note',1000]];
 let exactFilterFormat = 'text';
@@ -51,10 +51,13 @@ $('exact-filter-format').addEventListener('change', () => {
   } catch(error) { $('exact-filter-format').value = exactFilterFormat; notice(error.message,true); }
 });
 async function refresh() {
-  const epoch = ++queryEpoch;
   const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
     ...Object.fromEntries(exactFilters.map(([key,name]) => [key,exactFilterValue(key,name)])), offset, limit:40});
-  const result = await api('records?' + params);
+  const epoch = ++queryEpoch;
+  if(typeof curationInvalidate === 'function') curationInvalidate('Collection query pending. Refresh diagnostics after it completes.', true);
+  let result;
+  try { result = await api('records?' + params); }
+  finally { if(epoch === queryEpoch && typeof curationQueryFinished === 'function') curationQueryFinished(); }
   if (epoch !== queryEpoch) return;
   page = result;
   $('records').replaceChildren();

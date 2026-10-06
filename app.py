@@ -12,6 +12,7 @@ import dataset_releases
 import saved_selections
 import grounded_candidates
 import bulk_import
+import curation
 import base64
 import hashlib
 import io
@@ -433,7 +434,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/curation.js': ('curation.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -474,6 +475,8 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/curation':
+                    return self.reply(curation.inspect(dataset.workbench, body))
                 if path == '/api/workbench/import-row':
                     return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
                 if path.startswith('/api/workbench/records/'):

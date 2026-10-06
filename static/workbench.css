@@ -19,3 +19,4 @@
 #bulk-status,#bulk-results { overflow-wrap: anywhere; }
 #bulk-results { padding-left: 22px; max-height: 320px; overflow: auto; font-size: 12px; }
 #bulk-results li { margin-block: .5rem; }
+#curation-results {padding-left:1.4rem} #curation-results li {margin-bottom:1rem;overflow-wrap:anywhere} #curation-status,#curation-counts {overflow-wrap:anywhere}

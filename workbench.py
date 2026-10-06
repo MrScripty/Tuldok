@@ -215,8 +215,8 @@ class Workbench:
         self._sync_images()
         return [self._get(row[0]) for row in self.db.execute('SELECT id FROM workbench_records').fetchall()]
 
-    def query(self, options):
-        """Page metadata and excerpts. Asset bytes are never loaded for browsing."""
+    def _filtered(self, options):
+        """Shared current metadata criteria; caller owns lock and transaction."""
         query = text_value(options.get('q', ''), 'Search', 200, empty=True).casefold()
         kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
         if kind not in ('', 'image', 'text') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
@@ -226,6 +226,23 @@ class Workbench:
         label = text_value(options.get('label', ''), 'Label filter', 80, empty=True)
         group = text_value(options.get('group', ''), 'Protected source/group filter', 120, empty=True)
         rights = text_value(options.get('rights', ''), 'Rights-note filter', 1000, empty=True)
+        rows = self._all()
+        filtered = [r for r in rows if (not kind or r['kind'] == kind) and (not review or r['review'] == review)
+                    and (not task or r['task'] == task)
+                    and (not label or label in labels(r))
+                    and (not group or group in r['groups'])
+                    and (not rights or rights_note(r) == rights)
+                    and (not query or query in ' '.join([r['name'], r.get('text') or '',
+                        (r['annotation'] or {}).get('caption', ''), *r['groups'], *labels(r)]).casefold())]
+        key = {'name': lambda r: (r['name'].casefold(), r['id']),
+               'review': lambda r: (r['review'], r['created_at'], r['id'])}.get(sort, lambda r: (r['created_at'], r['id']))
+        filtered.sort(key=key, reverse=sort in ('', 'newest'))
+        criteria = dict(q=query, kind=kind, review=review, sort=sort, task=task,
+                        label=label, group=group, rights=rights)
+        return filtered, criteria
+
+    def query(self, options):
+        """Page metadata and excerpts. Asset bytes are never loaded for browsing."""
         try:
             offset, limit = int(options.get('offset', 0)), int(options.get('limit', PAGE_SIZE))
         except (ValueError, TypeError):
@@ -233,17 +250,7 @@ class Workbench:
         if offset < 0 or not 1 <= limit <= 100:
             raise WorkbenchError('Page size must be 1–100 and offset nonnegative.')
         with self.lock, self.db:
-            rows = self._all()
-            filtered = [r for r in rows if (not kind or r['kind'] == kind) and (not review or r['review'] == review)
-                        and (not task or r['task'] == task)
-                        and (not label or label in labels(r))
-                        and (not group or group in r['groups'])
-                        and (not rights or rights_note(r) == rights)
-                        and (not query or query in ' '.join([r['name'], r.get('text') or '',
-                            (r['annotation'] or {}).get('caption', ''), *r['groups'], *labels(r)]).casefold())]
-            key = {'name': lambda r: (r['name'].casefold(), r['id']),
-                   'review': lambda r: (r['review'], r['created_at'], r['id'])}.get(sort, lambda r: (r['created_at'], r['id']))
-            filtered.sort(key=key, reverse=sort in ('', 'newest'))
+            filtered, criteria = self._filtered(options)
             summary = analyze(filtered)
             page = []
             for record in filtered[offset:offset + limit]:
@@ -252,7 +259,8 @@ class Workbench:
                 record.pop('corner_annotation')
                 record['rights_note'] = rights_note(record)
                 page.append(record)
-            return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit, 'analysis': summary}
+            return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit,
+                    'analysis': summary, 'criteria': criteria}
 
     def import_asset(self, body, *, acquisition=None):
         kind = body.get('kind')
@@ -373,17 +381,26 @@ def file_hash(path):
     return digest.hexdigest()
 
 
+def diagnostic_members(rows):
+    """Contributors to existing quality counts; exact matching stays owner-defined."""
+    hashes = Counter(r['pixel_hash'] or r['content_hash'] for r in rows if r['pixel_hash'] or r['content_hash'])
+    return {'duplicates': [r for r in rows if hashes[r['pixel_hash'] or r['content_hash']] > 1],
+            'unlabeled': [r for r in rows if r['annotation'] is None],
+            'missing_sources': [r for r in rows if not r['source_available']],
+            'unknown_rights': [r for r in rows if rights_note(r) == 'unknown']}, hashes
+
+
 def analyze(rows):
     counts = lambda values: dict(sorted(Counter(values).items()))
-    hashes = Counter(r['pixel_hash'] or r['content_hash'] for r in rows if r['pixel_hash'] or r['content_hash'])
+    members, _ = diagnostic_members(rows)
     return {'records': len(rows), 'kinds': counts(r['kind'] for r in rows),
             'reviews': counts(r['review'] for r in rows), 'tasks': counts(r['task'] for r in rows),
             'labels': counts(label for r in rows for label in labels(r)),
             'protected_groups': len({group for r in rows for group in r['groups']}),
-            'duplicate_content_records': sum(n for n in hashes.values() if n > 1),
-            'unlabeled': sum(r['annotation'] is None for r in rows),
-            'missing_sources': sum(not r['source_available'] for r in rows),
-            'unknown_rights': sum(rights_note(r) == 'unknown' for r in rows),
+            'duplicate_content_records': len(members['duplicates']),
+            'unlabeled': len(members['unlabeled']),
+            'missing_sources': len(members['missing_sources']),
+            'unknown_rights': len(members['unknown_rights']),
             'empty_targets': sum(r['annotation'] in ({'boxes': []}, {'spans': []}) for r in rows),
             'image_size': {'min_width': min((r['width'] for r in rows if r['width']), default=None),
                            'min_height': min((r['height'] for r in rows if r['height']), default=None)},
