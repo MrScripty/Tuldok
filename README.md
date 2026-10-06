@@ -288,3 +288,35 @@ The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the 
 ## Repository
 
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
+
+### Import an annotated caption corpus
+
+The workbench imports one existing annotated format: an **expanded Tuldok
+`image_caption_v1` release**, including `manifest.json`, the three
+`train/val/test/metadata.jsonl` files and their normalized PNGs. Choose its folder
+in “Import a frozen caption corpus.” Metadata rows use exactly:
+
+```json
+{"file_name":"0123456789abcdef0123456789abcdef.png","text":"A reviewed source caption.","group":"component:<complete-family-hash>"}
+```
+
+The native manifest must agree with every caption, group, image path, split and
+asset/pixel hash. Original train/validation/test assignments remain active source
+splits; foreign IDs, original acquisition hashes, review and provenance are
+retained as declared origin evidence. Received PNGs get new local IDs and actual
+source hashes. Imported captions are **drafts**, requiring your explicit human
+review before export. Existing records are never overwritten. No archive
+extraction, URL fetching, arbitrary imagefolder columns, coordinate conversion
+or other annotation format is supported by this slice.
+
+At most 1,000 combined physical metadata lines and 8 MiB source JSON are supported,
+with existing image/caption/group limits and bounded prepared evidence. Choose
+files again after a server restart. Successful rows remain when another row
+fails; Stop prevents the next admission while an in-flight row may complete.
+A lost response pauses for a read-only saved-result check without replay. Batch
+progress is kept only in the current page; reload is not batch recovery.
+
+Authored examples and an existing-owner design rehearsal are under
+`docs/plans/annotated-caption-import/reports/fixtures/`. Native-import HTTP and
+Chromium tests independently check admission, fresh review and actual downloaded
+release consumption by the unchanged pinned chapter-26 validator.

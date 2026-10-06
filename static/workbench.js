@@ -74,7 +74,8 @@ async function refresh() {
   pagination(); selection();
 }
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
-function mayDiscard() { return (!dirty && !(typeof rightsDirty !== 'undefined' && rightsDirty)) || confirm('Discard unsaved annotation or rights-note edits?'); }
+function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty); }
+function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation or rights-note edits?'); }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
   const epoch = ++editorEpoch;
@@ -278,7 +279,7 @@ $('release-form').addEventListener('submit',async event=>{
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }
 });
-window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(hasUnsavedEdits()){event.preventDefault();event.returnValue='';}});
 refresh().then(()=>notice('Collection ready.')).catch(error=>notice(error.message,true));
 
 // Proposal requests own their refresh timer; polling ends at terminal state/page exit.

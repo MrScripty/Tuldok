@@ -150,3 +150,54 @@ class RightsNoteTests(unittest.TestCase):
         status,result=self.request(row,'Changed declared note')
         self.assertEqual(status,200);self.assertEqual(result['record']['review'],'programmatically_verified')
         self.assertEqual({k:v for k,v in result['record']['provenance'].items() if k!='rights_note_correction'},row['provenance'])
+
+    def test_native_caption_import_note_correction_review_and_roundtrip_preserve_owners(self):
+        from pathlib import Path
+        import uuid
+        import zipfile
+        fixture=Path(__file__).resolve().parents[1]/'docs/plans/annotated-caption-import/reports/fixtures/native-caption-release'
+        source=dict(manifest=(fixture/'manifest.json').read_text(),metadata={split:(fixture/split/'metadata.jsonl').read_text() for split in ('train','val','test')})
+        prepared=self.dataset.caption_imports.prepare(source)['rows'];rows=[]
+        for item in prepared:
+            row=self.dataset.caption_imports.admit(dict(token=item['token'],asset=item['asset'],request_id=uuid.uuid4().hex,image=base64.b64encode((fixture/item['asset']).read_bytes()).decode()))
+            rows.append(self.w.get(row['record_id']))
+        original=rows[0];saved=self.dataset.selections.create(dict(name='Caption fixed',items=[self.ref(original)]))
+        raw_origin=self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(original['id'],)).fetchone()[0]
+        status,result=self.request(original,'Caption operator note\nNo legal determination');self.assertEqual(status,200)
+        updated=result['record'];self.assertEqual(updated['review'],'draft');self.assertEqual(updated['annotation'],original['annotation'])
+        for key in ('content_hash','pixel_hash','source_sha256','source_revision','groups','parents','source_split'):
+            self.assertEqual(updated[key],original[key],key)
+        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(original['id'],)).fetchone()[0],raw_origin)
+        self.assertEqual(self.dataset.selections.load(saved['id'])['members'][0]['status'],'stale')
+        rows[0]=updated
+        reviewed=[self.w.save(row['id'],dict(row,review='human_reviewed')) for row in rows]
+        body=dict(format='image_caption_v1',items=[self.ref(row) for row in reviewed],ratios={'train':50,'validation':25,'test':25},seed=42)
+        preview=self.dataset.releases.preview(body);self.assertTrue(preview['eligible'],preview)
+        release=self.dataset.releases.create(dict(body,preview_token=preview['preview_token']));archive=self.dataset.releases.locate(release['id']);frozen=archive.read_bytes()
+        self.assertEqual(self.request(reviewed[0],'A later caption note')[0],200)
+        self.assertFalse(self.dataset.releases.preview(body)['eligible']);self.assertEqual(archive.read_bytes(),frozen)
+        # Existing strict native caption parser accepts the unchanged record shape and nested origin evidence.
+        target=Dataset(Path(self.tmp.name)/'roundtrip')
+        try:
+            with zipfile.ZipFile(archive) as zip:
+                origin=dict(manifest=zip.read('manifest.json').decode(),metadata={split:zip.read(split+'/metadata.jsonl').decode() for split in ('train','val','test')})
+                for item in target.caption_imports.prepare(origin)['rows']:
+                    admitted=target.caption_imports.admit(dict(token=item['token'],asset=item['asset'],request_id=uuid.uuid4().hex,image=base64.b64encode(zip.read(item['asset'])).decode()))
+                    admitted=target.workbench.get(admitted['record_id'])
+                    self.assertEqual(admitted['review'],'draft');self.assertEqual(rights_note(admitted),'unknown')
+                self.assertEqual(target.workbench.query({'task':'image_caption'})['total'],4)
+        finally:target.close()
+
+
+    def test_feff_and_python_only_whitespace_untouched_noops_preserve_exact_origin(self):
+        feff=self.row('feff',rights='\ufeffowner\ufeff');before=self.state()
+        status,result=self.request(feff,'\ufeffowner\ufeff')
+        self.assertEqual(status,200);self.assertFalse(result['changed']);self.assertEqual(result['record'],feff)
+        self.assertEqual(rights_note(result['record']),'\ufeffowner\ufeff');self.assertEqual(self.state(),before)
+        legacy=self.row('python whitespace',rights='owner');origin=dict(legacy['provenance'],rights='\u0085owner\u001c\u001f')
+        with self.w.db:self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?',(encode(origin),legacy['id']))
+        legacy=self.w.get(legacy['id']);before=self.state()
+        self.assertEqual(rights_note(legacy),'owner')
+        for note in ['owner','\u0085owner\u001c\u001f']:
+            status,result=self.request(legacy,note);self.assertEqual(status,200);self.assertFalse(result['changed'])
+            self.assertEqual(result['record']['provenance'],origin);self.assertEqual(self.state(),before)

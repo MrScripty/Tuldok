@@ -1,18 +1,22 @@
 'use strict';
 let rightsDirty = false, rightsBusy = false, rightsEpoch = 0, rightsFormat = 'text', rightsSetEpoch = 0;
 const rightsKnownRevisions = new Map();
-function currentRights(record) { const correction = record.provenance.rights_note_correction; const note = typeof correction?.note === 'string' ? correction.note : record.provenance.rights; return typeof note === 'string' && note.trim() ? note.trim() : 'unknown'; }
+// Match Python str.strip() in the pinned Python3.12 server, including C0/0085 and excluding FEFF.
+function rightsStrip(value) {
+  return value.replace(/^[\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+|[\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+$/gu, '');
+}
+function currentRights(record) { const correction = record.provenance.rights_note_correction; const note = typeof correction?.note === 'string' ? correction.note : record.provenance.rights; return typeof note === 'string' && rightsStrip(note) ? rightsStrip(note) : 'unknown'; }
 function rightsValue(format = $('rights-note-format').value) {
   let note = $('rights-note-value').value;
   if(format === 'json') { try { note = JSON.parse(note); } catch { note = null; } }
   if(typeof note !== 'string') throw Error('Enter a rights note as text or a JSON string.');
   if(/[\uD800-\uDFFF]/u.test(note)) throw Error('Rights note contains invalid Unicode.');
   if(Array.from(note).length > 1000) throw Error('Rights note must be at most 1,000 Unicode code points.');
-  return note.trim() || 'unknown';
+  return rightsStrip(note) || 'unknown';
 }
 function rightsRecordShown(record) {
   ++rightsEpoch; rightsDirty = false;
-  let note = currentRights(record); note = typeof note === 'string' && note.trim() ? note.trim() : 'unknown';
+  let note = currentRights(record); note = typeof note === 'string' && rightsStrip(note) ? rightsStrip(note) : 'unknown';
   rightsFormat = /\r/.test(note) ? 'json' : 'text'; $('rights-note-format').value = rightsFormat;
   $('rights-note-value').maxLength = rightsFormat === 'json' ? 12002 : 2000;
   $('rights-note-value').value = rightsFormat === 'json' ? JSON.stringify(note) : note;
@@ -45,7 +49,7 @@ async function rightsRefreshSavedIssues() {
 }
 $('rights-note-value').addEventListener('input',()=>{
   ++rightsEpoch; ++editorEpoch;
-  try { rightsDirty = rightsValue() !== (String(currentRights(current) ?? '').trim() || 'unknown'); }
+  try { rightsDirty = rightsValue() !== (rightsStrip(String(currentRights(current) ?? '')) || 'unknown'); }
   catch { rightsDirty = true; }
 });
 $('rights-note-format').addEventListener('change',()=>{
