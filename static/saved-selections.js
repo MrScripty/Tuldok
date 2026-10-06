@@ -3,13 +3,13 @@ let savedLoadBusy = false, savedLoadEpoch = 0, savedListEpoch = 0;
 let savedSets = new Map(), savedMembershipKey = JSON.stringify(releaseBody().items);
 function savedStatus(message) { $('saved-selection-status').textContent = message; }
 function cancelSavedLoad(message = 'Opening cancelled. Current selection retained.') {
-  ++savedLoadEpoch; savedLoadBusy = false;
+  ++savedLoadEpoch; ++selectionEpoch; savedLoadBusy = false;
   $('cancel-selection-load').hidden = true; releaseButtons();
   if(message) savedStatus(message);
 }
-function savedSelectionChanged() {
+function savedSelectionChanged(intent = false) {
   const key = JSON.stringify(releaseBody().items);
-  if(key === savedMembershipKey) return;
+  if(key === savedMembershipKey && !intent) return;
   savedMembershipKey = key;
   cancelSavedLoad('Current selection changed. Saved sets retain their original membership and revisions.');
   $('saved-selection-issues').replaceChildren();
@@ -29,12 +29,12 @@ async function refreshSavedSets(preferred = $('saved-selection').value) {
 async function openSavedSelection(id = $('saved-selection').value, navigate = true) {
   if(!id) throw Error('Choose a saved selection.');
   if(savedLoadBusy) return;
-  const epoch=++savedLoadEpoch, key=JSON.stringify(releaseBody().items);
+  const epoch=++savedLoadEpoch, intent=++selectionEpoch, key=JSON.stringify(releaseBody().items);
   savedLoadBusy=true;invalidateRelease();$('cancel-selection-load').hidden=false;
   savedStatus('Opening fixed membership and checking saved revisions and source bytes…');
   try {
     const result=await api('selections/'+id);
-    if(epoch!==savedLoadEpoch || key!==JSON.stringify(releaseBody().items)) return;
+    if(epoch!==savedLoadEpoch || intent!==selectionEpoch || key!==JSON.stringify(releaseBody().items)) return;
     savedLoadBusy=false;$('cancel-selection-load').hidden=true;
     selected.clear();for(const item of result.selection.items) selected.set(item.id,item);
     savedMembershipKey=JSON.stringify(releaseBody().items);
@@ -90,6 +90,8 @@ window.addEventListener('pageshow',event=>{
   if(new URLSearchParams(location.hash.slice(1)).has('selection')) navigateSavedSelection().catch(error=>savedStatus(error.message));
   else {invalidateRelease();refresh().catch(error=>savedStatus(error.message));}
 });
+const initialSelectionEpoch=selectionEpoch, initialListEpoch=savedListEpoch+1, initialHash=location.hash;
 refreshSavedSets().then(()=>{
-  if(new URLSearchParams(location.hash.slice(1)).has('selection')) return navigateSavedSelection();
+  if(selectionEpoch!==initialSelectionEpoch || savedListEpoch!==initialListEpoch || location.hash!==initialHash) return;
+  if(new URLSearchParams(initialHash.slice(1)).has('selection')) return navigateSavedSelection();
 }).catch(error=>savedStatus(error.message));

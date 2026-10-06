@@ -114,6 +114,14 @@ selection and ignores a delayed response. The `#selection=ID` URL reopens the se
 on reload and Back/Forward navigation. Saving or opening never changes annotations
 or grants human review; draft records remain ineligible for release.
 
+Initial URL opening stops if a newer selection action or navigation occurs while
+the saved-set list is loading. Opening a fixed set also revokes an earlier editor
+save's ability to advance its selected revisions. That annotation save may still
+persist successfully; the older selected pair stays stale and release-blocked.
+Explicitly select the current records to adopt their newer revisions. Ordinary
+editor saves can advance the selected pair they observed only while that exact
+pair and selection intent remain current.
+
 Reopen reports stale revisions, missing records, deleted images, unavailable bytes,
 and changed source identity while retaining every original saved reference. It
 never substitutes newer revisions or replacement images. These are references,
@@ -179,11 +187,13 @@ This first version supports still capture and image import, including frames ext
     node tests/browser_images.cjs
     node tests/test_workbench_controller.cjs
     node tests/test_saved_selections_controller.cjs
+    node tests/test_saved_selection_intent.cjs
     node tests/browser_workbench.cjs
     node tests/browser_grounded.cjs
     node tests/browser_captions.cjs
     node tests/browser_release_preview.cjs
     node tests/browser_saved_selections.cjs
+    node tests/browser_saved_selection_intent.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 

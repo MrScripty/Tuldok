@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 const selected = new Map();
 let releasePreview = null, releaseKey = '', releaseEpoch = 0, releaseBusy = false;
+let selectionEpoch = 0;
 let page = null, offset = 0, current = null, targets = [], dirty = false, queryEpoch = 0, editorEpoch = 0;
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error', error); }
 async function api(path, body) {
@@ -20,7 +21,7 @@ function action(id, fn, event = 'click') {
     finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(page) pagination(); }
   });
 }
-function selection() { $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(); }
+function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); }
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
 async function refresh() {
   const epoch = ++queryEpoch;
@@ -32,7 +33,7 @@ async function refresh() {
   for (const record of page.items) {
     const row = document.createElement('div'); row.className = 'record';
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(record.id); checkbox.setAttribute('aria-label','Select ' + record.name);
-    checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(); };
+    checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(true); };
     const button = document.createElement('button'); button.textContent = record.name;
     const detail = document.createElement('small'); detail.textContent = `${record.task.replaceAll('_',' ')} · ${record.review.replaceAll('_',' ')} · revision ${record.revision}`; button.append(detail);
     button.onclick = () => openRecord(record.id).catch(error => notice(error.message, true));
@@ -91,8 +92,8 @@ $('task').addEventListener('change',()=>{targets=[];markDirty();renderTargets();
 action('filters',async()=>{offset=0;await refresh();notice('Collection updated.');},'submit');
 action('previous',async()=>{offset=Math.max(0,offset-40);await refresh();});
 action('next',async()=>{offset+=40;await refresh();});
-action('select-page',()=>{for(const row of page.items) selected.set(row.id,row); selection(); return refresh();});
-action('clear-selection',()=>{selected.clear();selection();return refresh();});
+action('select-page',()=>{for(const row of page.items) selected.set(row.id,row); selection(true); return refresh();});
+action('clear-selection',()=>{selected.clear();selection(true);return refresh();});
 action('reload',async()=>{if(current && mayDiscard()) await openRecord(current.id,true);});
 action('history',async()=>{const epoch=editorEpoch;const history=await api('history/'+current.id);if(epoch!==editorEpoch)return;$('history-output').textContent=JSON.stringify(history,null,2);$('history-output').hidden=false;});
 action('add-box',()=>{targets.push({label:$('label').value,x:Number($('box-x').value),y:Number($('box-y').value),width:Number($('box-width').value),height:Number($('box-height').value)});markDirty();renderTargets();});
@@ -122,9 +123,14 @@ $('asset-image').addEventListener('pointerup',event=>{
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
   const record=current, task=$('task').value, epoch=++editorEpoch;
+  const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
-  if(selected.has(saved.id)){selected.set(saved.id,saved);selection();}
+  // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
+  if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
+     pairAtSave.revision===record.revision && pairAtSave.source_revision===record.source_revision) {
+    selected.set(saved.id,saved);selection();
+  }
   if(epoch===editorEpoch)showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');
