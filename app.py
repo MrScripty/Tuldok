@@ -10,6 +10,7 @@ import workbench
 import dataset_recipes
 import dataset_releases
 import grounded_candidates
+import bulk_import
 import base64
 import hashlib
 import io
@@ -368,6 +369,8 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path.startswith('/api/workbench/import-result/'):
+                    return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
@@ -424,7 +427,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -458,6 +461,8 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/import-row':
+                    return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/generate':

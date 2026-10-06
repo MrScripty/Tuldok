@@ -10,4 +10,6 @@ Inspected the current workflow/workbench plans and issues, discovery research sy
 
 The material design question is the source contract, not whether Tuldok can normalize images or store text. A native JSONL raw-asset manifest is the smallest candidate consistent with existing operations. An existing annotated corpus needs its real fields and coordinate/normalization contract before admission. No source-file decoder or target conversion is inferred from the book demonstrations.
 
-The focused tests exercise existing single-row admission only: supplied review/verification provenance cannot upgrade import, and repeated asset admission cannot overwrite an already reviewed record's groups/source metadata. They do not prove a bulk workflow, cancellation, missing-file binding, external-format compatibility or corpus-scale performance.
+The original focused tests exercised existing single-row admission only: supplied review/verification provenance cannot upgrade import, and repeated asset admission cannot overwrite an already reviewed record's groups/source metadata. They did not prove a bulk workflow, cancellation, missing-file binding, external-format compatibility or corpus-scale performance.
+
+Later owner disposition: proceed with the recommended native raw-asset manifest first, then map a concrete annotated corpus separately. No existing plan contradicts it. The implemented local slice and actual bulk HTTP/browser evidence are recorded in verification.md. Scale beyond bounded manifest/row/file limits and existing annotated formats remain unqualified.

@@ -9,3 +9,6 @@
 #release-preview { overflow-wrap: anywhere; }
 #release-preview p { margin: .5rem 0; }
 #release-preview details { margin-block: .75rem; }
+#bulk-status,#bulk-results { overflow-wrap: anywhere; }
+#bulk-results { padding-left: 22px; max-height: 320px; overflow: auto; font-size: 12px; }
+#bulk-results li { margin-block: .5rem; }

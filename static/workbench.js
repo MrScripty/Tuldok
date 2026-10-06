@@ -128,13 +128,22 @@ action('editor',async()=>{
   if(epoch===editorEpoch)showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');
+async function readImportImage(file) {
+  if(file.size>25*1024*1024)throw Error('Choose an image at most 25 MiB.');
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result.split(',')[1]);
+    reader.onerror=()=>reject(Error('Image could not be read.'));
+    reader.readAsDataURL(file);
+  });
+}
 action('import-form',async()=>{
   if(!mayDiscard())return;
   const epoch=++editorEpoch;
   const file=$('import-image').files[0], text=$('import-text').value;
   if(file && text.trim())throw Error('Import an image or text, one at a time.');
   const body={kind:file?'image':'text',name:file?file.name:$('import-name').value,groups:[$('import-group').value],rights:$('rights').value,text};
-  if(file){if(file.size>25*1024*1024)throw Error('Choose an image smaller than 25 MB.');body.image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=()=>reject(Error('Image could not be read.'));reader.readAsDataURL(file);});}
+  if(file)body.image=await readImportImage(file);
   const record=await api('import',body);await refresh();
   if(epoch===editorEpoch)showRecord(record);
   notice('Record imported.');

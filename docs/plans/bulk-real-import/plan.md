@@ -1,6 +1,6 @@
 # Structured bulk import of real assets
 
-Status: Local admission foundation verified; parser/API/UI remains pending the source-file contract choice. Approved feature objective, candidate encoding is provisional. Acceptance: pending; no bulk capability is advertised or published.
+Status: Native raw-asset bulk import locally verified; hosted qualification/review/publication pending. Owner selected raw text/images plus the plan's recommended structured manifest; annotated corpus ingestion is a later feature. UI remains provisional.
 
 ## Objective and binding scope
 
@@ -10,13 +10,17 @@ The existing research synthesis and [canonical dataset workflow plan](../dataset
 
 Dataset owns image originals, EXIF-oriented RGB PNGs, image IDs and exact-original-byte deduplication. Workbench owns canonical NFC/LF text, original text, generic annotation/review/history, protected groups/parents and canonical-text deduplication. Reuse `Workbench.import_asset` → `Dataset.add`, including the current browser image-batch acquisition boundary; do not create another normalizer, image store or generic job queue. Imports remain drafts. Caller-supplied review/verification/source-hash claims cannot establish approval or overwrite derived source facts.
 
-## Material choice to resolve
+## Admitted first source contract
 
-Recommended candidate: **native JSONL asset rows plus explicitly selected local image files; annotate afterward**. One row carries the existing `kind`, `name`, `groups`, `parents`, `rights` and either `text` or an image-file reference. A matched file supplies bytes through the existing image acquisition owner. No arbitrary server path, URL fetch, archive extraction, column-mapping framework or universal dataset format.
+Owner explicitly selected **native JSONL asset rows plus explicitly selected local image files; annotate afterward** on resumption. This matches the earlier recommendation and existing owner/review decisions; no contradictory repository plan was found. `kind`, nonempty `groups` and matching `text` or `file` are required. Optional `name`, `parents` and `rights` retain existing validation/defaults. Image `file` is an exact flat filename matching one selected file, with no directory/URL/server lookup. Duplicate JSON fields, supplied annotations/task/review/provenance and other unknown fields are rejected. Blank lines keep physical numbering but are skipped. LF/CRLF and strict UTF-8 are supported.
 
-Alternative: a **specific existing annotated corpus format**. This needs actual row fields, asset-reference convention, annotation tasks/coordinates and normalization basis. In particular, text-entity offsets before NFC/LF normalization and image boxes before EXIF orientation cannot be silently interpreted against canonical assets. Imported targets would still be drafts; an input field cannot grant human or programmatic review.
+Subsequent feature: a **specific existing annotated corpus format**, requiring actual row fields, asset references, annotation tasks/coordinates and normalization basis. Pre-normalization text offsets and pre-EXIF image boxes cannot be silently interpreted against canonical assets. Input fields cannot grant review. This useful later stage does not block the chosen raw-asset slice.
 
-This choice changes the parser, asset binding, pre-admission validation, target-normalization contract and user error recovery. Resolve it before adding a file decoder, persistence schema, bulk API or UI. The proposed native format is not implementation authority merely because it is written here.
+Bounds: 8 MiB per manifest, 1,000 physical lines, 3 MiB per UTF-8 JSON row, existing text/image limits. `bulk_import.py` owns strict row decoding, request-marker lookup and minimal outcomes. Workbench receives a trusted internal acquisition context: row SHA-256 computed from consumed UTF-8 row text, format and request marker; manifest filename/physical row/image label remain explicitly declared context. Original source text/bytes and derived hashes remain with their owners. The full manifest is not stored or independently authenticated.
+
+`POST /api/workbench/import-row` admits one bounded row through the atomic source owner and returns a minimal receipt. `GET /api/workbench/import-result/<request_id>` is read-only and can confirm a committed row after response loss. Markers are stored in existing provenance, not a new job/idempotency table; repeated markers/content never overwrite records. Missing lookup is not proof of stopped work. Storage errors are HTTP 500 and halt the client; invalid/duplicate rows are HTTP 400/409 and permit later rows.
+
+The separate bulk controller schedules rows sequentially, snapshots the chosen manifest/file set, fences repeated controls, does not abort in-flight work on Stop and pauses on an uncertain response without replay. A matching saved result can reconcile creation; dismissal makes no rollback claim. Results remain visible with IDs and physical row numbers. It refreshes the collection without opening/discarding editor state or changing selection.
 
 ## Candidate behavior independent of a universal format
 
@@ -28,7 +32,9 @@ This choice changes the parser, asset binding, pre-admission validation, target-
 
 ## Isolation and ownership
 
-Task branch `feature/bulk-real-import-20261006`, isolated worktree `/workspace/Tuldok-bulk-import`. On resumed authorization it fast-forwarded locally from PR4 `c88c3819207333b620e0cd8f391d11843d393757` to local compatibility follow-on `801d598a1400afdc2360128a1657896b89da10c4`, retaining all history and existing bulk discovery/tests. Published PR4 remains `a3f3cbead4137110dfa8af81c94178e6d53aa036`; the new queued-API rejection commit is local pending restored publication access. Main and PR1–3 are unchanged. Parent owns integration, review and eventual UI adoption. Retain this local branch/worktree; do not delete it or publish an incomplete feature draft.
+Task branch `feature/bulk-real-import-20261006`, isolated worktree `/workspace/Tuldok-bulk-import`, inherits the separate local queued-API repair `801d598a1400afdc2360128a1657896b89da10c4` and admission foundation `a16bba4b6473fdde88f97ab295f8563e0793cf5a`. PR4's branch stays at 801d598 locally; its last published head is a3f3cbe. No queued/provider or saved-selections implementation is duplicated here. Main/PR1–3 are unchanged by this worker. Parent owns integration/review/publication and provisional UI acceptance.
+
+Exact retained authentication failures were `gh pr view 4 --json headRefOid,headRefName,baseRefName,isDraft,url --jq .` against `https://api.github.com/graphql`, and `gh api repos/MrScripty/Tuldok/actions/runs/37531676070/artifacts ...` against that REST endpoint; both HTTP 401 `Bad credentials`. These were inspection reads. Ordinary authenticated Git push succeeded earlier at a3f3cbe; no post-error push was attempted. Publication is held locally by instruction, not proven denied through every route. No denied call, credential repair or network change is retried.
 
 ## Composed-design review: applicable
 
@@ -43,9 +49,9 @@ Task branch `feature/bulk-real-import-20261006`, isolated worktree `/workspace/T
 
 ## One bounded implementation slice, after contract resolution
 
-Goal: chosen local manifest/file set → row-level validation/admission → visible partial results → draft records → separate manual annotation/review. State: active format-independent admission repair; parser/API/UI remains pending the actual row contract. A real SQLite enrollment failure revealed that image bytes/sample insertion could commit before Workbench metadata/history. Move initial enrollment into Dataset's existing acquisition transaction/file-cleanup owner before any bulk loop depends on row atomicity.
+Goal: native local manifest/file set → strict row decoding/file binding → atomic admission → visible partial results → draft records → separate annotation/review. Implemented and locally verified. Initial image enrollment already moved into Dataset's transaction/file-cleanup owner in its own foundation commit; bulk context shares that boundary.
 
-Expected write set: `workbench.py`, `app.py` (composition/routes and only an evidenced acquisition-boundary adjustment), `static/workbench.html`, `static/workbench.js`, `static/workbench.css`, focused `tests/test_bulk_import.py`, `tests/test_real_import_foundation.py`, `tests/test_workbench_controller.cjs`, `tests/browser_bulk_import.cjs`, `.github/workflows/tests.yml`, `README.md`, and this plan directory. Add a separate importer module only if admitted decoding/scheduling needs a distinct owner; no unrelated provider/release edits.
+Feature write set: `bulk_import.py`, `workbench.py`, `app.py` (composition/routes), `static/bulk_import.js`, `static/workbench.html`, `static/workbench.js` (shared original-image read helper only), `static/workbench.css`, `tests/test_bulk_import.py`, `tests/test_bulk_import_controller.cjs`, `tests/browser_bulk_import.cjs`, `.github/workflows/tests.yml`, `README.md`, this plan directory. Foundation's four tests/source remain in the prior commit. No existing selection/release/controller validator is changed; no unrelated provider work.
 
 Gate: focused row/source tests, complete registered Python/controller/browser suites, syntax/compile/diff checks, real desktop/narrow browser import/cancel/retry/error results, exact new-head push/PR CI and parent-coordinated review. Publish a separate draft only after its own complete verification; never merge.
 
@@ -53,16 +59,16 @@ Gate: focused row/source tests, complete registered Python/controller/browser su
 
 | ID | Observable criterion | Evidence / environment / mode | Status |
 | --- | --- | --- | --- |
-| B1 | Mixed real text/images admitted through existing owners; originals/canonical forms and source metadata survive reopen | contract / real SQLite/filesystem / automated | pending; existing-boundary checks started |
-| B2 | Isolated malformed/partial invalid rows yield correctly attributed errors while valid rows succeed, without orphan files/partial record metadata | integration / real HTTP/SQLite/filesystem / automated | blocked on row contract |
-| B3 | Duplicate/repeated submissions create no duplicate assets or implicit provenance/review changes; ambiguous response is reconciled honestly | contract / real persistence/HTTP / automated | pending; repeated single-asset owner checks started |
-| B4 | Missing/ambiguous assets cannot bind unrelated bytes; unknown/forged fields cannot grant human review or verification | contract / real file/row binding / automated | blocked on binding; existing draft/provenance checks started |
-| B5 | Cancel before admission and between rows stops future scheduling; in-flight completion and retry remain visible and correct | user-workflow + integration / representative browser/HTTP / automated | blocked on chosen scheduling contract |
-| B6 | Actual bulk import, per-row recovery, repeated controls, editor fencing, progress/cancellation and narrow layout work through real Chromium | user-workflow / representative Chromium / automated and local screenshot inspection | pending |
-| B7 | Full registered regression suites and exact new-head hosted CI pass; separate draft and bounded review preserve main/PR1–4 | integration / local and GitHub / automated/review | pending; no feature draft created |
+| B1 | Mixed real text/images admitted through existing owners; originals/canonical forms and source metadata survive reopen | contract / real SQLite/filesystem / automated | passed locally: HTTP restart/originals and Chromium reload |
+| B2 | Isolated malformed/partial invalid rows yield correctly attributed errors while valid rows succeed, without orphan files/partial record metadata | integration / real HTTP/SQLite/filesystem / automated | passed locally: invalid/partial rows and injected metadata/history/storage rollback |
+| B3 | Duplicate/repeated submissions create no duplicate assets or implicit provenance/review changes; ambiguous response is reconciled honestly | contract / real persistence/HTTP / automated | passed locally: marker/content repeats, unchanged reviewed records, lost actual response + lookup without replay |
+| B4 | Missing/ambiguous assets cannot bind unrelated bytes; unknown/forged fields cannot grant human review or verification | contract / real file/row binding / automated | passed locally: exact selected files, ambiguity/missing/damage, strict fields and draft state |
+| B5 | Cancel before admission and between rows stops future scheduling; in-flight completion and retry remain visible and correct | user-workflow + integration / representative browser/HTTP / automated | passed locally: manifest/file-read barriers and actual in-flight acknowledgement |
+| B6 | Actual bulk import, per-row recovery, repeated controls, editor fencing, progress/cancellation and narrow layout work through real Chromium | user-workflow / representative Chromium / automated and local screenshot inspection | passed locally: actual browser suite, desktop/390px screenshots inspected |
+| B7 | Full registered regression suites and exact new-head hosted CI pass; separate draft and bounded review preserve main/PR1–4 | integration / local and GitHub / automated/review | local passed: 145 Python tests, three JS gates, seven browsers; hosted/review/draft pending |
 
 ## Exactly one next slice and re-plan triggers
 
-The format-independent image enrollment repair is locally verified: 136 Python tests and all six registered browser suites passed, including source/review/duplicate and injected metadata/history rollback checks. Exactly one next slice: resolve the pending raw-assets-versus-annotated-corpus source contract, then admit precise fields, asset binding, normalization/provenance and cancellation/result bounds and implement the vertical slice. Do not convert unresolved annotations or invent a universal format. Replan for measured scale beyond sequential bounded imports, required annotation coordinates, restart-safe receipts or a stack-base change. Remote writes and new hosted qualification are blocked by the last observed HTTP 401; do not retry denied authentication, change credentials or settings.
+The selected raw-asset slice is locally verified. Exactly one next slice: parent-coordinate review/integration/publication and exact new-head hosted qualification while preserving the separate queued repair and saved-selection work. Do not claim all publication routes were denied; only gh inspection returned 401. No denied authentication call or settings change is retried. Annotated corpus ingestion remains a later separately mapped feature. Replan for measured scale beyond bounded sequential imports, new annotation/coordinate contracts, durable restart-safe batch receipts or a stack-base change.
 
 [Discovery](reports/discovery.md) · [Admission evidence](reports/admission-boundary.md) · [Ledger](execution-ledger.md) · [Issues](issues.md) · [Existing architecture decision](../../decisions/dataset-workbench.md)

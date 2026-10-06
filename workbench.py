@@ -241,7 +241,7 @@ class Workbench:
                 page.append(record)
             return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit, 'analysis': summary}
 
-    def import_asset(self, body):
+    def import_asset(self, body, *, acquisition=None):
         kind = body.get('kind')
         groups = strings(body.get('groups', []), 'Protected groups')
         if not groups:
@@ -256,17 +256,20 @@ class Workbench:
                 # Reuse the existing normalizer, original storage and dedup contract.
                 row = self.dataset.add({'image': body.get('image'), 'filename': body.get('name', 'image.png'),
                                         'session_id': groups[0], 'book_id': '', 'split': 'unassigned'},
-                                       enrollment=(groups, parents, rights))
+                                       enrollment=(groups, parents, rights, acquisition))
                 return self._get(row['id'])
             if kind != 'text':
                 raise WorkbenchError('Asset kind must be image or text.')
-            return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights)
+            return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights,
+                                     provenance={'acquisition': acquisition} if acquisition is not None else None)
 
-    def _enroll_import(self, sample_id, groups, parents, rights):
+    def _enroll_import(self, sample_id, groups, parents, rights, acquisition=None):
         """Called only inside Dataset.add's acquisition transaction and lock."""
         self._sync_images()
         record = self._get(sample_id)
         origin = dict(record['provenance'], rights=rights)
+        if acquisition is not None:
+            origin['acquisition'] = acquisition
         self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
                         (encode(groups), encode(parents), encode(origin), sample_id))
         # Initial enrollment is internal, not a second user-visible revision.
