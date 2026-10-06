@@ -241,13 +241,17 @@ class Workbench:
                 page.append(record)
             return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit, 'analysis': summary}
 
-    def import_asset(self, body, *, acquisition=None):
+    def import_asset(self, body, *, acquisition=None, annotation=None, source_split='unassigned', source_session=None):
         kind = body.get('kind')
         groups = strings(body.get('groups', []), 'Protected groups')
         if not groups:
             raise WorkbenchError('Supply at least one protected source/group ID.')
         rights = text_value(body.get('rights', 'unknown'), 'Rights / permission note', 1000)
         parents = strings(body.get('parents', []), 'Parent IDs')
+        if annotation is not None:
+            annotation = validate_annotation('image_caption', annotation, {'kind': kind})
+        if kind != 'image' and source_split != 'unassigned':
+            raise WorkbenchError('Only image acquisition owns source splits.')
         with self.lock, self.db:
             self._sync_images()
             for parent in parents:
@@ -255,15 +259,16 @@ class Workbench:
             if kind == 'image':
                 # Reuse the existing normalizer, original storage and dedup contract.
                 row = self.dataset.add({'image': body.get('image'), 'filename': body.get('name', 'image.png'),
-                                        'session_id': groups[0], 'book_id': '', 'split': 'unassigned'},
-                                       enrollment=(groups, parents, rights, acquisition))
+                                        'session_id': groups[0] if source_session is None else source_session,
+                                        'book_id': '', 'split': source_split},
+                                       enrollment=(groups, parents, rights, acquisition, annotation))
                 return self._get(row['id'])
             if kind != 'text':
                 raise WorkbenchError('Asset kind must be image or text.')
             return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights,
                                      provenance={'acquisition': acquisition} if acquisition is not None else None)
 
-    def _enroll_import(self, sample_id, groups, parents, rights, acquisition=None):
+    def _enroll_import(self, sample_id, groups, parents, rights, acquisition=None, annotation=None):
         """Called only inside Dataset.add's acquisition transaction and lock."""
         self._sync_images()
         record = self._get(sample_id)
@@ -272,6 +277,10 @@ class Workbench:
             origin['acquisition'] = acquisition
         self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
                         (encode(groups), encode(parents), encode(origin), sample_id))
+        if annotation is not None:
+            annotation = validate_annotation('image_caption', annotation, record)
+            self.db.execute("UPDATE workbench_records SET task='image_caption',annotation_json=?,review='draft' WHERE id=?",
+                            (encode(annotation), sample_id))
         # Initial enrollment is internal, not a second user-visible revision.
         self.db.execute('DELETE FROM workbench_history WHERE id=?', (sample_id,))
         self._history(self._get(sample_id))

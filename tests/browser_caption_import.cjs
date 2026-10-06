@@ -1,0 +1,91 @@
+// Authored native folder files -> actual HTTP/SQLite -> draft/review -> browser ZIP download.
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {spawn,spawnSync}=require('node:child_process');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-caption-import-browser-')),children=[];
+const tracker=pageLoadTracker(),errors=[],pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+let ws,inspect;
+async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+function python(code,...args){const result=spawnSync('python3',['-c',code,...args],{cwd:root,encoding:'utf8'});assert.equal(result.status,0,result.stderr);return result.stdout;}
+(async()=>{
+  const fixture=path.join(root,'docs/plans/annotated-caption-import/reports/fixtures/native-caption-release');
+  const manifest=JSON.parse(fs.readFileSync(path.join(fixture,'manifest.json'),'utf8'));
+  const assets=['train','val','test'].flatMap(split=>fs.readFileSync(path.join(fixture,split,'metadata.jsonl'),'utf8').trim().split('\n').map(line=>split+'/'+JSON.parse(line).file_name));
+  const sourceFiles=['manifest.json','train/metadata.jsonl','val/metadata.jsonl','test/metadata.jsonl',...assets].map(relative=>({relative,data:fs.readFileSync(path.join(fixture,relative)).toString('base64')}));
+  const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>{if(process.env.CAPTION_IMPORT_DEBUG)process.stderr.write(data);});
+  const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
+  const seed=await api('import',{kind:'text',text:'Keep this draft editor intact.',name:'Existing editor',groups:['existing-source'],rights:'Authored'});
+  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const active=path.join(temporary,'browser','DevToolsActivePort'),debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');
+  assert.ok(target,'Expected explicitly launched page');ws=new WebSocket(target.webSocketDebuggerUrl);
+  await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map();
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  inspect=()=>evaluate('JSON.stringify({url:location.href,notice:document.getElementById("notice")?.textContent,status:document.getElementById("caption-status")?.textContent,results:document.getElementById("caption-results")?.textContent})');
+  const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  const fill=(id,value)=>evaluate(`(()=>{const element=document.getElementById(${JSON.stringify(id)});element.value=${JSON.stringify(value)};element.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  const choose=files=>evaluate(`(()=>{const selected=new DataTransfer();for(const entry of ${JSON.stringify(files)}){const file=new File([Uint8Array.from(atob(entry.data),c=>c.charCodeAt(0))],entry.relative.split('/').at(-1));Object.defineProperty(file,'webkitRelativePath',{value:'corpus/'+entry.relative});selected.items.add(file);}document.getElementById('caption-folder').files=selected.files;})()`);
+  const start=()=>evaluate('document.getElementById("caption-form").requestSubmit()'),idle=()=>until(()=>evaluate('!document.getElementById("caption-start").disabled'));
+  await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  console.log('Caption import browser targets:',JSON.stringify(tabs.map(tab=>({type:tab.type,url:tab.url}))));
+  console.log('Caption import browser version:',JSON.stringify(await send('Browser.getVersion')));
+  assert.ok(!(await send('Page.navigate',{url:base+'/workbench'})).errorText);
+  await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  await evaluate('openRecord('+JSON.stringify(seed.id)+')');
+  await evaluate('document.getElementById("label").value="unsaved label";document.getElementById("label").dispatchEvent(new Event("input",{bubbles:true}));document.querySelector(".record input").click()');
+  await evaluate(`(()=>{const original=window.fetch;window.captionPosts=[];window.captionPrepares=0;window.holdPreparation=false;window.holdCaption=false;window.loseCaption=false;window.releaseCaption=null;window.fetch=async(...args)=>{const url=String(args[0]);if(url.endsWith('/caption-import/prepare')){window.captionPrepares++;const response=await original(...args);if(window.holdPreparation){window.holdPreparation=false;await new Promise(resolve=>window.releaseCaption=resolve);}return response;}if(url.endsWith('/caption-import/row')){window.captionPosts.push(JSON.parse(args[1].body));const response=await original(...args);if(window.loseCaption&&response.ok){window.loseCaption=false;throw Error('controlled loss after real caption commit');}if(window.holdCaption&&response.ok){window.holdCaption=false;await new Promise(resolve=>window.releaseCaption=resolve);}return response;}return original(...args);};})()`);
+  await choose(sourceFiles.map(file=>file.relative==='manifest.json'?{...file,data:Buffer.from('{"schema_version":1,"schema_version":1}').toString('base64')}:file));
+  await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Duplicate JSON/);assert.equal((await api('records')).total,1);
+  await choose(sourceFiles);
+  await evaluate(`(()=>{const original=File.prototype.arrayBuffer;window.releaseSource=null;window.holdSource=true;File.prototype.arrayBuffer=function(){if(window.holdSource){window.holdSource=false;return new Promise(resolve=>window.releaseSource=()=>original.call(this).then(resolve));}return original.call(this);};})()`);
+  const beforeSource=await evaluate('window.captionPrepares');await start();await until(()=>evaluate('!!window.releaseSource'));await click('caption-stop');await evaluate('window.releaseSource()');await idle();assert.equal(await evaluate('window.captionPrepares'),beforeSource);
+  await choose(sourceFiles);await evaluate('window.holdPreparation=true;window.releaseCaption=null');await start();await until(()=>evaluate('!!window.releaseCaption'));await click('caption-stop');await evaluate('window.releaseCaption()');await idle();assert.equal(await evaluate('window.captionPosts.length'),0);
+  const partial=sourceFiles.filter(file=>file.relative!==assets[0]).map(file=>file.relative===assets[2]?{...file,data:Buffer.from('damaged PNG').toString('base64')}:file);
+  partial.push(sourceFiles.find(file=>file.relative===assets[1]));await choose(partial);await start();await idle();
+  assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Complete: 1 created, 3 rejected/);assert.equal((await api('records')).total,2);
+  const db=path.join(temporary,'data/dataset.sqlite3');
+  python("import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute(\"CREATE TRIGGER reject_caption BEFORE UPDATE OF annotation_json ON workbench_records BEGIN SELECT RAISE(ABORT,'controlled caption storage failure'); END\"); db.commit()",db);
+  await choose(sourceFiles);await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Paused.*1 uncertain.*3 not attempted/);assert.equal((await api('records')).total,2);assert.equal(fs.readdirSync(path.join(temporary,'data/images')).length,1);
+  await click('caption-check');await until(()=>evaluate('document.getElementById("caption-status").textContent.includes("does not prove")'));await click('caption-dismiss');
+  python("import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute('DROP TRIGGER reject_caption'); db.commit()",db);
+  await choose(sourceFiles);await evaluate('window.holdCaption=true;window.releaseCaption=null');await start();await until(()=>evaluate('!!window.releaseCaption'));
+  await evaluate('document.getElementById("caption-form").dispatchEvent(new Event("submit",{cancelable:true}));document.getElementById("caption-stop").click()');await evaluate('window.releaseCaption()');await idle();
+  assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Stopped: 1 created.*3 not attempted/);assert.equal((await api('records')).total,3);
+  await choose(sourceFiles);await evaluate('window.loseCaption=true');await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Paused.*1 rejected, 1 uncertain.*2 not attempted/);
+  const beforeCheck=await evaluate('window.captionPosts.length');await evaluate('document.getElementById("caption-check").click();document.getElementById("caption-check").dispatchEvent(new MouseEvent("click"))');
+  await until(()=>evaluate('document.getElementById("caption-status").textContent.includes("saved result confirmed")'));assert.equal(await evaluate('window.captionPosts.length'),beforeCheck);assert.equal((await api('records')).total,4);
+  await choose(sourceFiles);await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Complete: 1 created, 3 rejected/);
+  const imported=(await api('records?task=image_caption')).items;assert.equal(imported.length,4);
+  for(const record of imported){const origin=record.provenance.acquisition.declared.origin_record;assert.equal(record.review,'draft');assert.deepEqual(record.annotation,origin.annotation);assert.equal(record.source_split,origin.split);assert.notEqual(record.id,origin.id);assert.equal(record.provenance.rights,'unknown');assert.deepEqual(record.parents,[]);}
+  assert.equal(await evaluate('current.id'),seed.id);assert.equal(await evaluate('dirty'),true);assert.equal(await evaluate('selected.size'),1);assert.equal(await evaluate('document.getElementById("label").value'),'unsaved label');
+  const reports=path.join(root,'docs/plans/annotated-caption-import/reports');fs.mkdirSync(reports,{recursive:true});
+  await evaluate('document.getElementById("caption-import-panel").scrollIntoView()');
+  fs.writeFileSync(path.join(reports,'caption-import-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("caption-import-panel").scrollIntoView()');
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'No narrow overflow');
+  fs.writeFileSync(path.join(reports,'caption-import-narrow.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
+  await send('Emulation.clearDeviceMetricsOverride');
+  await choose(sourceFiles);await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Complete: 0 created, 4 rejected/);assert.deepEqual((await api('records?task=image_caption')).items,imported);
+  await click('clear-selection');await fill('task-filter','image_caption');await evaluate('document.getElementById("filters").requestSubmit()');await until(()=>evaluate('!document.getElementById("filters").dataset.busy&&document.querySelectorAll(".record").length===4'));await click('select-page');await fill('release-format','image_caption_v1');await click('preview-release');
+  await until(()=>evaluate('document.getElementById("release-preview-status").textContent.includes("blocked")'));assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
+  const discard=click('reload');await pause(100);await send('Page.handleJavaScriptDialog',{accept:true});await discard;
+  await until(()=>evaluate('!dirty'));
+  for(const record of imported){
+    await evaluate('openRecord('+JSON.stringify(record.id)+')');assert.equal(await evaluate('document.getElementById("caption").value'),record.annotation.caption);assert.equal(await evaluate('document.getElementById("record-review").value'),'draft');
+    await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');await until(()=>evaluate('!document.getElementById("editor").dataset.busy&&document.getElementById("notice").textContent==="Annotation saved."'));
+  }
+  await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
+  const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads,eventsEnabled:true});await evaluate('document.querySelector("#release-result a").click()');
+  const downloaded=await until(()=>fs.readdirSync(downloads).find(name=>name.endsWith('.zip')));
+  console.log(python("import json,sys,zipfile,subprocess,hashlib; from pathlib import Path; p=Path(sys.argv[1]); d=Path(sys.argv[2]); d.mkdir(); z=zipfile.ZipFile(p); z.extractall(d); actual=json.loads((d/'manifest.json').read_text()); source=json.loads(Path(sys.argv[3]).read_text()); project=lambda rows:sorted((r['exported_pixel_sha256'],r['annotation']['caption'],r['split']) for r in rows); assert project(actual['records'])==project(source['records']); checker=Path('tests/fixtures/diffusion_check_image_data.py'); assert hashlib.sha256(checker.read_bytes()).hexdigest()=='6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94'; result=subprocess.run([sys.executable,str(checker),str(d)],capture_output=True,text=True); assert result.returncode==0,result.stderr; print(result.stdout)",path.join(downloads,downloaded),path.join(temporary,'downloaded-consumer'),path.join(fixture,'manifest.json')));
+  const frame=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload',{ignoreCache:true});await until(()=>tracker.reloaded(frame));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  assert.equal((await api('records')).total,5);assert.equal(await evaluate('captionPending'),null);assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Ready to import/);assert.deepEqual(errors,[]);
+  console.log('Native caption browser passed: actual files/HTTP/SQL, partial/missing/ambiguous/damaged rows, draft origin/splits, rollback, stop/read/preparation/in-flight/repeated controls, lost receipt lookup, duplicate immutability, editor/selection, human acceptance, actual ZIP download/pinned consumer, reload and narrow layout.');
+})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error(diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
