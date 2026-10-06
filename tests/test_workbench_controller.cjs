@@ -102,5 +102,21 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
   assert.equal(element('release-result').children[0].href,'/current.zip');
   run('selected.clear();selection()');assert.equal(element('preview-release').disabled,true);assert.equal(element('release-result').children.length,0);
   assert.equal(requests.length,0);
-  console.log('Controller navigation/edit fencing and release preview/export freshness, changed controls and repeated actions passed.');
+  // Explicit metadata criteria travel independently of exact selected pairs and proof.
+  const queries=[];context.fetch=(url,options)=>new Promise(resolve=>queries.push({url,options,resolve}));
+  element('label-filter').value='cat & café +😀';element('group-filter').value='source &😀';element('rights-filter').value='unknown';
+  context.fixture=record('fixed');context.proof=eligible;
+  run('selected.set(fixture.id,fixture);selection();releasePreview=proof;releaseKey=JSON.stringify(releaseBody())');
+  const olderFilter=run('refresh()');
+  const criteria=new URL(queries[0].url,'http://localhost').searchParams;
+  assert.equal(criteria.get('label'),'cat & café +😀');assert.equal(criteria.get('group'),'source &😀');assert.equal(criteria.get('rights'),'unknown');
+  element('label-filter').value='new criterion';const newerFilter=run('refresh()');
+  queries[1].resolve(response({...page,total:1,items:[{...record('visible-new'),rights_note:'unknown'}]}));await newerFilter;
+  queries[0].resolve(response({...page,total:99,items:[{...record('obsolete-row'),rights_note:'old note'}]}));await olderFilter;
+  assert.equal(run('page.total'),1,'Delayed obsolete criteria cannot replace newer results');
+  assert.equal(element('label-filter').value,'new criterion');
+  assert.equal(run('[...selected.keys()].join()'),'fixed');assert.equal(run('selected.get("fixed").revision'),1);
+  assert.equal(run('releasePreview===proof'),true,'Filtering grants no proof and preserves an existing exact proof');
+  assert.ok(element('records').children[0].children[1].children[1].textContent.includes('Rights note: unknown'));
+  console.log('Controller navigation, exact-release fencing and explicit metadata filter transport/ordering passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

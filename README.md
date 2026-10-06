@@ -97,6 +97,35 @@ explicitly resume unfinished jobs. Returned generation metadata may gain
 additional public fields over time. Keep the dataset backed up and review
 synthetic images and labels before using them for training.
 
+## Explicit collection filters
+
+In **Dataset workbench**, combine the existing search/type/task/review/sort controls
+with **Target label (exact)**, **Protected source/group (exact)** and **Rights note
+(exact)**. All criteria must match. Leave a criterion blank for any value; nonempty
+values are trimmed and compared case-sensitively. A label matches a current class,
+box or entity-span label, not words in a caption or source. A group matches an ID
+stored directly in the record's protected `groups`, not all ancestors or connected
+release-family members.
+
+Rights notes remain arbitrary recorded text, not license categories or permission
+decisions. Missing, null, blank and literal `unknown` notes display/filter as
+`unknown`; other notes retain their text, including uppercase `UNKNOWN`. The
+collection shows each record's group IDs and rights note so exact criteria can be
+chosen. No metadata, annotation, revision or review changes during filtering.
+
+`GET /api/workbench/records` accepts optional `label` (up to 80 Unicode code points),
+`group` (120) and `rights` (1,000) alongside its existing parameters. Invalid values
+return HTTP 400 / `invalid`. Returned page items include a read-only `rights_note`
+projection; original `provenance.rights` is preserved. Analysis and total counts
+describe the complete filtered result before pagination. Browser controls allow
+the full valid Unicode lengths; the API remains the validation authority.
+
+Filtered results are dynamic: later matching records can appear after searching
+again. They do not join fixed saved membership or replace chosen revision pairs.
+Opening a fixed set preserves the current filter; filtering never grants review,
+creates release proof, or changes an existing exact-selection preview's membership.
+Release export still rechecks source/revision/lineage freshness independently.
+
 ## Saved fixed selections
 
 In **Dataset workbench**, choose records with the checkboxes, enter a selection
@@ -194,6 +223,7 @@ This first version supports still capture and image import, including frames ext
     node tests/browser_release_preview.cjs
     node tests/browser_saved_selections.cjs
     node tests/browser_saved_selection_intent.cjs
+    node tests/browser_metadata_filters.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 

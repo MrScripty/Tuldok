@@ -13,3 +13,5 @@
 #saved-selection-panel { margin-top: 12px; }
 #saved-selection-status, #saved-selection-issues { overflow-wrap: anywhere; }
 #saved-selection-issues { padding-left: 20px; font-size: 13px; }
+
+#metadata-filter-help { font-size: 12px; overflow-wrap: anywhere; }

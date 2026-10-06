@@ -99,6 +99,12 @@ def labels(record):
     return [item['label'] for item in annotation.get('boxes', annotation.get('spans', []))]
 
 
+def rights_note(record):
+    """Display/query metadata only; a present note is not evidence of permission."""
+    note = record['provenance'].get('rights')
+    return note.strip() if isinstance(note, str) and note.strip() else 'unknown'
+
+
 class Workbench:
     """Own generic targets/text; Dataset retains original images and corners.
 
@@ -217,6 +223,9 @@ class Workbench:
             raise WorkbenchError('Invalid filter or sort.')
         if task not in ('', *TASKS):
             raise WorkbenchError('Invalid task filter.')
+        label = text_value(options.get('label', ''), 'Label filter', 80, empty=True)
+        group = text_value(options.get('group', ''), 'Protected source/group filter', 120, empty=True)
+        rights = text_value(options.get('rights', ''), 'Rights-note filter', 1000, empty=True)
         try:
             offset, limit = int(options.get('offset', 0)), int(options.get('limit', PAGE_SIZE))
         except (ValueError, TypeError):
@@ -227,6 +236,9 @@ class Workbench:
             rows = self._all()
             filtered = [r for r in rows if (not kind or r['kind'] == kind) and (not review or r['review'] == review)
                         and (not task or r['task'] == task)
+                        and (not label or label in labels(r))
+                        and (not group or group in r['groups'])
+                        and (not rights or rights_note(r) == rights)
                         and (not query or query in ' '.join([r['name'], r.get('text') or '',
                             (r['annotation'] or {}).get('caption', ''), *r['groups'], *labels(r)]).casefold())]
             key = {'name': lambda r: (r['name'].casefold(), r['id']),
@@ -238,6 +250,7 @@ class Workbench:
                 record = dict(record)
                 record['excerpt'] = (record.pop('text') or '')[:180]
                 record.pop('corner_annotation')
+                record['rights_note'] = rights_note(record)
                 page.append(record)
             return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit, 'analysis': summary}
 
@@ -364,7 +377,7 @@ def analyze(rows):
             'duplicate_content_records': sum(n for n in hashes.values() if n > 1),
             'unlabeled': sum(r['annotation'] is None for r in rows),
             'missing_sources': sum(not r['source_available'] for r in rows),
-            'unknown_rights': sum(r['provenance'].get('rights', 'unknown') == 'unknown' for r in rows),
+            'unknown_rights': sum(rights_note(r) == 'unknown' for r in rows),
             'empty_targets': sum(r['annotation'] in ({'boxes': []}, {'spans': []}) for r in rows),
             'image_size': {'min_width': min((r['width'] for r in rows if r['width']), default=None),
                            'min_height': min((r['height'] for r in rows if r['height']), default=None)},

@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006]
   pull_request:
 permissions:
   contents: read
@@ -42,6 +42,9 @@ jobs:
       - run: node tests/browser_saved_selection_intent.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_metadata_filters.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -52,6 +55,7 @@ jobs:
             docs/plans/selected-release-preview/reports/preview-*.png
             docs/plans/saved-dataset-selections/reports/saved-*.png
             docs/plans/saved-selection-intent/reports/intent-*.png
+            docs/plans/explicit-metadata-filters/reports/filters-*.png
           if-no-files-found: ignore
       - run: node tests/browser.cjs
         env:

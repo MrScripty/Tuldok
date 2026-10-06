@@ -25,7 +25,8 @@ function selection(intent = false) { if(intent) ++selectionEpoch; $('selection')
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
 async function refresh() {
   const epoch = ++queryEpoch;
-  const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value, offset, limit:40});
+  const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
+    label:$('label-filter').value, group:$('group-filter').value, rights:$('rights-filter').value, offset, limit:40});
   const result = await api('records?' + params);
   if (epoch !== queryEpoch) return;
   page = result;
@@ -36,6 +37,7 @@ async function refresh() {
     checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(true); };
     const button = document.createElement('button'); button.textContent = record.name;
     const detail = document.createElement('small'); detail.textContent = `${record.task.replaceAll('_',' ')} · ${record.review.replaceAll('_',' ')} · revision ${record.revision}`; button.append(detail);
+    const metadata = document.createElement('small'); metadata.textContent = `Groups: ${record.groups.join(', ')} · Rights note: ${record.rights_note ?? 'unknown'}`; button.append(metadata);
     button.onclick = () => openRecord(record.id).catch(error => notice(error.message, true));
     row.append(checkbox, button); $('records').append(row);
   }
