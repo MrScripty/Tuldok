@@ -78,6 +78,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('group-filter','SOURCE-A-EXTRA');await submit();assert.equal(await evaluate('page.total'),0);
   await fill('group-filter','');
   const unicode=await text('Unicode maximum','😀'.repeat(80),['😀'.repeat(120)],'😀'.repeat(1000));
+  const replacement=await text('Literal replacement character','\ufffd',['\ufffd'],'\ufffd');
   await fill('label-filter','😀'.repeat(80));await fill('group-filter','😀'.repeat(120));await fill('rights-filter','😀'.repeat(1000));await submit();
   assert.deepEqual(await ids(),[unicode.id],'All valid Unicode code-point lengths can be filtered');
   // Exact criteria are applied before pagination and full-result analysis.
@@ -126,6 +127,30 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await submit();assert.deepEqual(await ids(),[unicode.id]);
   assert.deepEqual(await evaluate('exactQueries.at(-1)'),{label:'😀'.repeat(80),group:'😀'.repeat(120),rights:'😀'.repeat(1000)});
   assert.deepEqual(await chosen(),fixedPairs);assert.equal(await evaluate('releasePreview.preview_token'),token);
+  // Valid U+FFFD metadata must never be matched by silently replacing malformed UTF-16.
+  for(const field of ['label','group','rights']) {
+    for(const key of ['label','group','rights'])await fill(key+'-filter','');
+    for(const value of ['\ud800','\udfff','a\ud800b','\ud800\ud800','\udc00\ud800']) {
+      const beforeQueries=await evaluate('exactQueries.length');
+      await fill(field+'-filter',JSON.stringify(value));await submit();
+      const submitted=await evaluate('exactQueries.slice('+beforeQueries+')');
+      console.log('Surrogate entry:',JSON.stringify({field,codeUnits:Array.from({length:value.length},(_,i)=>value.charCodeAt(i)),submitted,total:await evaluate('page.total')}));
+      assert.equal(submitted.length,0,'Reject unpaired surrogate before URL encoding; no replacement-character alias query');
+      assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('unpaired surrogate'));
+      assert.deepEqual(await chosen(),fixedPairs);assert.equal(await evaluate('releasePreview.preview_token'),token);
+    }
+  }
+  for(const field of ['label','group','rights'])await fill(field+'-filter',JSON.stringify('\ufffd'));
+  await submit();assert.deepEqual(await ids(),[replacement.id],'A deliberately entered replacement character remains valid');
+  for(const field of ['label','group','rights'])await fill(field+'-filter','');
+  await fill('exact-filter-format','text');
+  for(const field of ['label','group','rights']) {
+    for(const key of ['label','group','rights'])await fill(key+'-filter','');
+    const beforeQueries=await evaluate('exactQueries.length');await fill(field+'-filter','\ud800');await submit();
+    assert.equal(await evaluate('exactQueries.length'),beforeQueries,'Plain lone surrogates are also rejected');
+  }
+  for(const field of ['label','group','rights'])await fill(field+'-filter','');
+  await fill('exact-filter-format','json');
   // A switch to plain entry cannot silently drop internal CR/LF.
   for(const field of ['label','group','rights'])await fill(field+'-filter',JSON.stringify(exactValues[3]));
   await fill('exact-filter-format','text');
