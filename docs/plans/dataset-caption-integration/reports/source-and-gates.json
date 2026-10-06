@@ -1,0 +1,211 @@
+{
+  "source_head": "22d895056a89f053bdc64a862a1701a411c630d5",
+  "source_tree": "0973519c1451a91eccc990e5928123ca89bdc81c",
+  "python": {
+    "command": "python3 -m unittest discover -s tests",
+    "tests": 180,
+    "seconds": 50.242,
+    "result": "PASS",
+    "log": "/tmp/tuldok-caption-stage-python.log"
+  },
+  "javascript_gates": [
+    {
+      "command": "node --check static/workbench.js",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-workbench.log"
+    },
+    {
+      "command": "node --check static/saved-selections.js",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-saved-selections.log"
+    },
+    {
+      "command": "node --check static/bulk_import.js",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-bulk_import.log"
+    },
+    {
+      "command": "node --check static/caption_import.js",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-caption_import.log"
+    },
+    {
+      "command": "node tests/test_browser_page_load.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-test_browser_page_load.log"
+    },
+    {
+      "command": "node tests/test_workbench_controller.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-test_workbench_controller.log"
+    },
+    {
+      "command": "node tests/test_saved_selections_controller.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-test_saved_selections_controller.log"
+    },
+    {
+      "command": "node tests/test_saved_selection_intent.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-test_saved_selection_intent.log"
+    },
+    {
+      "command": "node tests/test_bulk_import_controller.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-test_bulk_import_controller.log"
+    },
+    {
+      "command": "node tests/test_caption_import_controller.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-test_caption_import_controller.log"
+    },
+    {
+      "command": "node tests/browser_workbench.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_workbench.log"
+    },
+    {
+      "command": "node tests/browser_grounded.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_grounded.log"
+    },
+    {
+      "command": "node tests/browser_captions.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_captions.log"
+    },
+    {
+      "command": "node tests/browser_release_preview.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_release_preview.log"
+    },
+    {
+      "command": "node tests/browser_saved_selections.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_saved_selections.log"
+    },
+    {
+      "command": "node tests/browser_saved_selection_intent.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_saved_selection_intent.log"
+    },
+    {
+      "command": "node tests/browser_metadata_filters.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_metadata_filters.log"
+    },
+    {
+      "command": "node tests/browser_bulk_import.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_bulk_import.log"
+    },
+    {
+      "command": "node tests/browser_dataset_integration.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_dataset_integration.log"
+    },
+    {
+      "command": "node tests/browser_caption_import.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_caption_import.log"
+    },
+    {
+      "command": "node tests/browser_caption_dataset_integration.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_caption_dataset_integration.log"
+    },
+    {
+      "command": "node tests/browser.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser.log"
+    },
+    {
+      "command": "node tests/browser_images.cjs",
+      "exit_code": 0,
+      "log": "/tmp/tuldok-caption-stage-browser_images.log"
+    }
+  ],
+  "qualification_file_sha256": {
+    ".github/workflows/tests.yml": "2ad2c4dc5d85b4cf6c037f99caaf9d2459fc2925d0e467a48287098f025a1efa",
+    "ai.py": "a3b04a3015496ff3c66c3eb450ccf887bd5726229669ac0515d95a2761ad3a9a",
+    "ai_codex.py": "debd26342e73a87635d772e3ee59d30bb822877008d667b47997f52e22f94f16",
+    "ai_http.py": "73ca648fe00e8f5a4022b14b72c80dd695228706a0f2b79aee605a524b8f2585",
+    "ai_openrouter.py": "70930124fac7ef08941f571c1d4492f72b29aa94807cfd5d66bc32555432b160",
+    "app.py": "c58f2d2fe6221e0d2e4ff43c4bf2f922f9bbf5062b03fa7313186f1b91d79140",
+    "bulk_import.py": "1fc08a4140d261de94fd8ba9e88c359e6f22446d931f1d96bf848cc41281aebf",
+    "caption_import.py": "70219893be1279f248cebec4694e5825e018d85e07e90ccbeb70261b281e5cf2",
+    "dataset_recipes.py": "68ba888d046d3ae1edf604165ced3886e0e8e9efc7162cf20cac85d95fb517cb",
+    "dataset_releases.py": "99dd746d7aabeb3ae8a42c35f407a2dcaa22d8f2ae7bad528d3917cb925746df",
+    "docs/plans/annotated-caption-import/reports/prepare_fixtures.py": "0a4d94f683664a0c74b49e04d7f7d22fcc4db323d22bfbb084126857cfd14958",
+    "gateway_discovery.py": "4f7044b72d699f6fc8ebb314da0794f0c0be50d7ed1565f862125a5bd59589a1",
+    "grounded_candidates.py": "e26d42dc3b84647f4f5a4d5009dd6f645d834f2fb1d7af91e256f367b41656fe",
+    "image_generation.py": "b9beca0431600a240e84d744bb7968e8a8f970d6e4e4dac9ab4fe5ea18e01528",
+    "saved_selections.py": "61522f037ed36b3c1122c361689b44487dfd7963250b14001ba6ff0415456e9e",
+    "scripts/qualify_grounded_local.py": "9262b217dcd907f7503adfb2432c464c8c43434433267684146e5895c61b96d2",
+    "static/app.js": "18404b69074e5381c9b65687a560fbaae558784bbe80ddd20d620dd5055a38a8",
+    "static/bulk_import.js": "0a8d31360370658f741c5b2045a244d6ac08f6cdac4cb8e20157b51337033c8a",
+    "static/caption_import.js": "415824e3c719829a1f4d6f65aee0a775cf8f308a4c229cc629e360e1b808cf93",
+    "static/index.html": "af525d812ee263c9cff8b36a3063e47e4139f5d7e3289cb096338bd8573094b9",
+    "static/saved-selections.js": "23dd9fed69ebec674712fc46265809f85a422a4e52c02fc70c87d2a9e8cdde5c",
+    "static/style.css": "88b6bfa8e909d77666ce3c5c25d5bfef8b9bf28520fbe4898a730d9fe7981c05",
+    "static/workbench.css": "a3aec2f169b7f49695111587937ea461f74f2d919e6947c0620192aa699ede3b",
+    "static/workbench.html": "7b895c949542ac23d70209cfe7664aec3ded2c61414a03e7d350498ca424f3e1",
+    "static/workbench.js": "884ff736649132b684d51b0acf1f6fbb79003052f8b55b3e0d5a4ac3155726c9",
+    "synthetic.py": "c3a5b48393df0eb0b50f64ebb6c997cbffcdc1be3ed16bc89199fbf789efa191",
+    "tests/browser.cjs": "27c3d238d27f9b342f4b767f081f299804a8d93aa1e998293d74dd699230ce5e",
+    "tests/browser_bulk_import.cjs": "202704677596b54756608ec9f1e7c70c4477f804cca17f7a6b37d694464864dc",
+    "tests/browser_caption_dataset_integration.cjs": "2f7f42a912329d344859e38e05cb05d44b5aca2d07de6551d51e50d219a27b6b",
+    "tests/browser_caption_import.cjs": "8363501a087f8ae819ded9da25909b321b0d65acbc03f744a286ed2860c6f6cb",
+    "tests/browser_captions.cjs": "62d06c63da0de23ce89917760aa3f10a0a0194d1b35c6093db2fff068287e6c4",
+    "tests/browser_dataset_integration.cjs": "74c66893af255670762fec5ac10c3a5ad651f3984e55059c3bd66eb18671a2db",
+    "tests/browser_grounded.cjs": "4a940b7263f8b8cc372b0871f422e58ada2c94fe8cf1639942daa34b75d905dc",
+    "tests/browser_grounded_server.py": "afa77db2d8d4ce01e8257c5d3b5a35cd2dc78bf3199cc306b307341748b170ea",
+    "tests/browser_images.cjs": "ce19d98201c3419d2634d06234737fa3854db102bf09623fb1c0ee94535c2997",
+    "tests/browser_images_real.cjs": "2602d09fd3ada2f0ded265e86326d2d5f7e778b98a80cd55a720ecca48be6abf",
+    "tests/browser_images_server.py": "1375a6a1d9e2727949254de9286fe0da51b69cf5cc55709ef5a9430c7cd0eb55",
+    "tests/browser_metadata_filters.cjs": "bddb2a307ab5cb55ee961c86db04337deadc0f493c8521c591a3b7fbbba4c47c",
+    "tests/browser_metadata_server.py": "104bfc5dec6565766948fca5a18f68b5ad3e6a6bd24fae508c9a7fb5a5fdc872",
+    "tests/browser_page_load.cjs": "bb74bd6ad97e0ff7c4545c747df698d0466d143764b0ccb52ed26b2051a13318",
+    "tests/browser_release_preview.cjs": "2d825542637aa15f17fda757e6a8ea8360a0e55f22babed466e10c014f417889",
+    "tests/browser_saved_selection_intent.cjs": "480e29f345a0b89675f11a245db509dfa19f2b252cfe73a64bb98b748eea67b1",
+    "tests/browser_saved_selections.cjs": "4713cdb84b415f2d9959b7f7461bfd1bad788ba4673e12b33eaad6aaf47db495",
+    "tests/browser_server.py": "6c3d57a4e5b5fe75ab866fcf35dc5450a98ed0170d0fbcc03d10f40761dc8d89",
+    "tests/browser_vlm_real.cjs": "0af1a4ff8321f7724cc1121dc4a9ebce5b00f03955d8ab7d6d37eaad1464e635",
+    "tests/browser_workbench.cjs": "ff6f6ad114c71bf55bd451bfd1895a29f2b63d30541e1e1b3dc801deffcc59ac",
+    "tests/fake_ai.py": "2eece3243b9c1594b7ed0f0a0dd9f20a453838d2e6b73ad058e217f688631a72",
+    "tests/fake_ai_codex.py": "31ec8bebf169703cae1db8936c84ae983e57ba7d7dfa937e57bad4e575e41b88",
+    "tests/fake_grounded.py": "1edf38662b953dfbb6b3ff0460320b820d7bd6b6bbc6c07157835f3aa5a4afb2",
+    "tests/fake_images.py": "c4a532a749211c6e67a5f7444eee698c8ac51f28cb3f636ddfcc6a9f1f5e4816",
+    "tests/fixtures/diffusion_check_image_data.py": "6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94",
+    "tests/test_ai.py": "283d62e758b2e5eae2f64fd1501ebe76e0f0b9a20c20be797f2a9cab46c49d07",
+    "tests/test_browser_page_load.cjs": "d062d47a7e7e608a2e97eda018a70ea8edb30e12a5afad2ea951f81ad9d8119d",
+    "tests/test_bulk_import.py": "a9cc1307b0710138651086a487729fdb2196eece72e8092d62ee0493950e4b87",
+    "tests/test_bulk_import_controller.cjs": "ce193a2f3c6f257d8a3466ae3c8505b3e49b366d4d2ff448899ccbfa4f1b9d52",
+    "tests/test_caption_exports.py": "fee4ed4c5ed67eae98c72064892446d210668370e73df7b5c3ad5a7c0d83b87a",
+    "tests/test_caption_import.py": "3036c9c7cda56f8daa57b47d1f8d55251d8d15ec1b69a313e5abb2865421ff18",
+    "tests/test_caption_import_controller.cjs": "1a5b7ce0beb56c05b68d33c2b65354d24b8de74bdee44e09a3d749a835a0db3a",
+    "tests/test_dataset.py": "5bddc031ef96af666348b5da0d84362f196a6f8548880c44fa6e16a8add6bc0d",
+    "tests/test_dataset_releases.py": "32ee71ced83f17717980c1eb4375611b2483dbef9937c3e9b43a80817168e550",
+    "tests/test_gateway_discovery.py": "f67eaab50db54e1abac9bfadb51b1bfc807f43c8286dd8ebc4e1126f8f84edc9",
+    "tests/test_generation_job_api.py": "4793ff9fc82c864694d00082aec2d31dd7e2c3ba66fd5a47f28f18d6288fb737",
+    "tests/test_grounded_candidates.py": "3e2c001f4d8535f75268ca12a64dd8b055cf41933b1f7a6329f688b3d994c938",
+    "tests/test_image_generation.py": "82cf026b56322f5950b9754272da57b2f0372c421412d1d5afa3a164bd13ef5c",
+    "tests/test_metadata_filters.py": "09d92036913d7c44040695d853108e7d87a03da1552dfa7f16b3b587c4fbe703",
+    "tests/test_real_import_foundation.py": "364d4c967c751615e11663e9600dc2d38f56a56db258243407cadfdceb24da54",
+    "tests/test_release_preview.py": "b667fb847356975300b7e0796c196393e36607736d4ae9a3a6269dabc3591c8f",
+    "tests/test_saved_generation.py": "22653f978b7b63a794e0bab989a93abdd88e4b4561cade58f747a35249efd704",
+    "tests/test_saved_selection_intent.cjs": "4b6f197892112f88603d4efe7f3ade57c77b260efddb5d0a902e71586c68c7c1",
+    "tests/test_saved_selections.py": "04647a1f1d29963ba30361e2a1d47bb92e35d2a6ffb82545d48133cb30f752d4",
+    "tests/test_saved_selections_controller.cjs": "c58e8a19b963e40f8c369215d19a6d68a22fad797f60d132960f19cf6e9fd4fa",
+    "tests/test_synthetic.py": "a04114d1c6c66c19dcca024471a235a277fb3cc5557518e084a8291ddcb9909d",
+    "tests/test_workbench.py": "206e7e6a958394c85d60ea2a1546da428ab19a21c158782eff5fdcd52a71ef63",
+    "tests/test_workbench_controller.cjs": "8b81847c2a06b463d9491deecd017229675640dd7c915a7982645b0ef0d1f5d4",
+    "workbench.py": "b197a3980fc35005e68274eff3f9b91c014aee607ab5f4bf712075ce7346b6a4"
+  },
+  "component_owner_blobs": "PASS",
+  "accepted_base_tests_unchanged": 44,
+  "retained_ui_artifacts_unchanged": 42,
+  "inherited_workflow_commands_env_and_artifact_paths": "PASS",
+  "actual_coderabbit_repository_file_cap": null,
+  "published_pr10_head_preserved": "e33144a389e611dfb9e95a83f248e7bf87d7a3aa"
+}
