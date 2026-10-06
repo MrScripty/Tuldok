@@ -36,8 +36,8 @@ Standards: MrScripty/Coding-Standards `dcc56f26e884ade260770beceba2501d3746200d`
 
 ## Current limits and next slice
 
-Local Python/controller evidence passes and independent contract/source review found no remaining correctness blocker. Chromium cannot create its required socket in this cloud workspace, including a reviewed elevated launch. Hosted browser qualification is pending. Authenticated ordinary Git push is unavailable here; the connector's default author is Puma, so it is not used to bypass the required MrScripty author identity. Correctly attributed local commits are preserved for an approved Tuldok task environment.
+The fresh approved environment imported and published original head `2867b3846616752a226fc74d82278d8034a867f3` on draft PR #4 against PR3. All registered local Python, controller and real Chromium suites pass. Both original hosted runs failed the image fixture's initial-readiness wait. The follow-on fixture correction selects the launched blank page rather than the first CDP target and adds direct startup diagnostics, retaining every workflow assertion and deadline. Hosted confirmation remains required. Hosted screenshot transfer alone is blocked by `Forbidden` at redirected blob storage; it does not block supported GitHub job-log diagnosis.
 
-Exactly one next slice: publish the preserved branch as a draft through an authenticated supported route, run exact-head push/PR CI and inspect browser screenshots. Do not merge or change main. UI acceptance and broader corpus/model workflows remain separate.
+Exactly one next slice: publish the follow-on fixture correction on PR #4 and check exact new-head push/PR CI to terminal. Keep the original failed runs as evidence and retain screenshot transfer as a separate unresolved limit. Parent-coordinated independent review and UI acceptance remain pending. Do not merge or change main or PR1–3.
 
 [Execution ledger](execution-ledger.md) · [Verification](reports/verification.md)
