@@ -86,9 +86,36 @@ async function explicitClearCancelsPendingEmptyOpen() {
   assert.equal(f.run('savedLoadBusy'),false,'Explicit clear cancels an open even when the map stays empty');
   f.resolve('/fixed-set',loaded(fixed(record('stored'))));await opening;assert.equal(f.run('selected.size'),0);
 }
+async function samePairReselectionInvalidatesKnownStalePreview() {
+  const f=setup(),original=record('member');f.context.original=original;
+  f.resolve('/selections',{selections:[]});await flush();
+  f.run('selected.set(original.id,original);selection();showRecord(original);releasePreview={eligible:true,preview_token:"a".repeat(64)};releaseKey=JSON.stringify(releaseBody());releaseButtons()');
+  assert.equal(f.element('freeze-release').disabled,false);
+  f.element('label').value='new target';f.element('record-review').value='human_reviewed';
+  const saving=f.element('editor').dispatch('submit');
+  f.run('page.items=[original]');await f.element('select-page').dispatch('click');
+  assert.equal(f.run('selected.get("member").revision'),1);
+  assert.equal(f.run('releasePreview.eligible'),true,'Same pair stays cached until newer revision is known');
+  f.resolve('/records/member',{...original,revision:2,annotation:{label:'new target'}});await saving;
+  assert.equal(f.run('current.revision'),2);
+  assert.equal(f.run('releaseBody().items[0].revision'),1,'Earlier save does not substitute the reselected fixed pair');
+  assert.equal(f.run('releasePreview'),null,'Known stale selected pair invalidates cached proof');
+  assert.equal(f.element('freeze-release').disabled,true,'Known staleness disables Freeze immediately');
+}
+async function olderSaveCannotInvalidateNewerSelectedProof() {
+  const f=setup(),original=record('member');f.context.original=original;f.context.newer=record('member',3);
+  f.resolve('/selections',{selections:[]});await flush();
+  f.run('selected.set(original.id,original);selection();showRecord(original)');
+  const saving=f.element('editor').dispatch('submit');
+  f.run('selected.set(newer.id,newer);selection(true);releasePreview={eligible:true,preview_token:"b".repeat(64)};releaseKey=JSON.stringify(releaseBody());releaseButtons()');
+  f.resolve('/records/member',record('member',2));await saving;
+  assert.equal(f.run('releaseBody().items[0].revision'),3);
+  assert.equal(f.run('releasePreview.eligible'),true,'An older completion does not prove a newer selected pair stale');
+  assert.equal(f.element('freeze-release').disabled,false);
+}
 (async()=>{
   let failed=false;
-  for(const test of [delayedInitialListing,delayedInitialListingAfterClear,pendingEditorSaveAfterFixedOpen,ordinaryEditorSaveKeepsCurrentIntent,laterSaveCannotAdoptAlreadyStalePair,explicitClearCancelsPendingEmptyOpen]) {
+  for(const test of [delayedInitialListing,delayedInitialListingAfterClear,pendingEditorSaveAfterFixedOpen,ordinaryEditorSaveKeepsCurrentIntent,laterSaveCannotAdoptAlreadyStalePair,explicitClearCancelsPendingEmptyOpen,samePairReselectionInvalidatesKnownStalePreview,olderSaveCannotInvalidateNewerSelectedProof]) {
     try{await test();console.log('PASS',test.name);}catch(error){failed=true;console.error('FAIL',test.name,error.message);}
   }
   if(failed)process.exitCode=1;
