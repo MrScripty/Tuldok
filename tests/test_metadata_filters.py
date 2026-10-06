@@ -166,5 +166,28 @@ class MetadataFilterTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 400)
         self.assertEqual(json.load(caught.exception)['code'], 'invalid')
 
+    def test_internal_line_endings_are_distinct_exact_values_through_storage_and_http(self):
+        values = ['ordinary', 'left\nright', 'left\rright', 'left\r\nright', r'left\nright']
+        rows = [self.text('ending '+str(i), value, [value], value) for i, value in enumerate(values)]
+        before = list(self.w.db.iterdump())
+        server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
+        thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+        self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
+        url = f'http://127.0.0.1:{server.server_port}/api/workbench/records?'
+        for row, value in zip(rows, values):
+            with self.subTest(codepoints=[ord(c) for c in value]):
+                criteria = dict(label=value, group=value, rights=value)
+                self.assertEqual(self.ids(**criteria), {row['id']})
+                with urllib.request.urlopen(url+urllib.parse.urlencode(criteria)) as response:
+                    result = json.load(response)
+                self.assertEqual([r['id'] for r in result['items']], [row['id']])
+                self.assertEqual(result['items'][0]['rights_note'], value)
+                stored = self.w.get(row['id'])
+                self.assertEqual(stored['annotation']['label'], value)
+                self.assertEqual(stored['groups'], [value])
+                self.assertEqual(stored['provenance']['rights'], value)
+        self.assertEqual(self.ids(label='leftright', group='leftright', rights='leftright'), set())
+        self.assertEqual(list(self.w.db.iterdump()), before)
+
 
 if __name__ == '__main__': unittest.main()

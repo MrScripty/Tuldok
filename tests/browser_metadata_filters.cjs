@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
-const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-filters-browser-')),children=[];
+const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-filters-browser-')),children=[];
 let ws, inspect;
 const errors=[];
 const {pageLoadTracker}=require('./browser_page_load.cjs');const pageLoads=pageLoadTracker();
@@ -44,6 +44,9 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const beta=await text('Beta source',label,['source-b'],'unknown','text_entities');
   await text('Label substring','vehicle & cafés',['source-a'],'unknown');
   const saved=await request('selections',{name:'Fixed target set',items:[ref(alpha),ref(beta)]});
+  const exactValues=['ordinary note', 'left\nright', 'left\rright', 'left\r\nright', 'literal\\n and "quotes"'];
+  const endingRows=[];
+  for(let i=0;i<exactValues.length;i++)endingRows.push(await text('Exact ending '+i,exactValues[i],[exactValues[i]],exactValues[i]));
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   const detection=await image('Detection source','red','image_detection',{boxes:[{label,x:0,y:0,width:4,height:4}]},['source-a-extra'],'UNKNOWN');
@@ -90,6 +93,54 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const fixedPairs=await chosen();assert.deepEqual(fixedPairs,[ref(alpha),ref(beta)].sort((a,b)=>a.id.localeCompare(b.id)));
   await fill('train',100);await fill('validation',0);await fill('test',0);await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
   const token=await evaluate('releasePreview.preview_token');
+  // Real single-line inputs sanitize CR/LF; backend values and exact queries retain them.
+  const probe=[];
+  for(let i=1;i<=3;i++) {
+    const value=exactValues[i];await fill('rights-filter',value);
+    const entered=await evaluate('document.getElementById("rights-filter").value');
+    assert.equal(entered,'leftright');
+    const exact=await request('records?'+new URLSearchParams({label:value,group:value,rights:value}));
+    const sanitized=await request('records?'+new URLSearchParams({label:value,group:value,rights:entered}));
+    assert.deepEqual(exact.items.map(r=>r.id),[endingRows[i].id]);assert.equal(sanitized.total,0);
+    probe.push({stored:[...value].map(c=>c.codePointAt(0)),input:[...entered].map(c=>c.codePointAt(0)),exact:exact.total,sanitized:sanitized.total});
+  }
+  console.log('Original single-line defect, API positive controls:',JSON.stringify(probe));
+  assert.equal(await evaluate('!!document.getElementById("exact-filter-format")'),true,'Lossless criterion entry is available');
+  // Capture actual production fetch URLs to assert submitted codepoints, not only visible values.
+  await evaluate('window.exactQueries=[];window.originalFetch=window.fetch;window.fetch=(url,options)=>{if(String(url).startsWith("/api/workbench/records?")){const q=new URL(url,location.href).searchParams;exactQueries.push(Object.fromEntries(["label","group","rights"].map(k=>[k,q.get(k)])));}return originalFetch(url,options);}');
+  await fill('exact-filter-format','json');
+  assert.equal(await evaluate('document.getElementById("rights-filter").value'),JSON.stringify('leftright'),'Format conversion preserves ordinary entry');
+  for(let i=0;i<exactValues.length;i++) {
+    const value=exactValues[i];
+    for(const field of ['label','group','rights'])await fill(field+'-filter',JSON.stringify(value));
+    await submit();assert.deepEqual(await ids(),[endingRows[i].id]);
+    assert.deepEqual(await evaluate('exactQueries.at(-1)'),{label:value,group:value,rights:value},'Actual submitted values preserve exact codepoints');
+    assert.deepEqual(await chosen(),fixedPairs);assert.equal(await evaluate('releasePreview.preview_token'),token);
+    const row=await request('records/'+endingRows[i].id);
+    assert.equal(row.annotation.label,value);assert.deepEqual(row.groups,[value]);assert.equal(row.provenance.rights,value);
+    assert.deepEqual(row,endingRows[i],'Exact filtering never rewrites stored metadata or revisions');
+  }
+  // The longest legal values also fit when every supplementary codepoint is escaped.
+  for(const [field,length] of [['label',80],['group',120],['rights',1000]])
+    await fill(field+'-filter','"'+'\\ud83d\\ude00'.repeat(length)+'"');
+  await submit();assert.deepEqual(await ids(),[unicode.id]);
+  assert.deepEqual(await evaluate('exactQueries.at(-1)'),{label:'😀'.repeat(80),group:'😀'.repeat(120),rights:'😀'.repeat(1000)});
+  assert.deepEqual(await chosen(),fixedPairs);assert.equal(await evaluate('releasePreview.preview_token'),token);
+  // A switch to plain entry cannot silently drop internal CR/LF.
+  for(const field of ['label','group','rights'])await fill(field+'-filter',JSON.stringify(exactValues[3]));
+  await fill('exact-filter-format','text');
+  assert.equal(await evaluate('document.getElementById("exact-filter-format").value'),'json');
+  assert.equal(await evaluate('document.getElementById("rights-filter").value'),JSON.stringify(exactValues[3]));
+  assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('line breaks'));
+  const queryCount=await evaluate('exactQueries.length');
+  await fill('rights-filter','null');await submit();
+  assert.equal(await evaluate('exactQueries.length'),queryCount,'Non-string JSON never reaches the API');
+  assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('JSON string'));
+  assert.deepEqual(await chosen(),fixedPairs);assert.equal(await evaluate('releasePreview.preview_token'),token);
+  for(const [field,value] of [['label','paged'],['group','paged-source'],['rights','Unverified fixture note']])await fill(field+'-filter',JSON.stringify(value));
+  await fill('exact-filter-format','text');
+  assert.equal(await evaluate('document.getElementById("rights-filter").value'),'Unverified fixture note');
+  assert.equal(await evaluate('document.getElementById("exact-filter-format").value'),'text');
   await text('Page 41','paged',['paged-source'],'Unverified fixture note');await submit();
   assert.equal(await evaluate('page.total'),42);assert.deepEqual(await chosen(),fixedPairs);
   assert.equal(await evaluate('releasePreview.preview_token'),token,'Unrelated filter-result changes cannot replace exact proof');
@@ -103,12 +154,12 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('label-filter','paged');await submit();assert.equal(await evaluate('page.total'),42);
   await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const zip=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(zip.status,200);assert.ok((await zip.arrayBuffer()).byteLength>1000);
-  const reports=path.join(root,'docs/plans/explicit-metadata-filters/reports');fs.mkdirSync(reports,{recursive:true});
+  const reports=path.join(__dirname,'../docs/plans/explicit-metadata-filters/reports');fs.mkdirSync(reports,{recursive:true});
   await evaluate('document.getElementById("filters").scrollIntoView()');const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'filters-desktop.png'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("filters").scrollIntoView()');const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'filters-narrow.png'),Buffer.from(narrow.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Exact filter controls and metadata do not overflow at 390px');
   assert.deepEqual(await request('records/'+alpha.id),before,'Filtering never changes target/review metadata');
   assert.deepEqual(errors,[]);
-  console.log('Exact label/group/rights filters, unknown retained notes, keyboard search, combined criteria, pagination, dynamic results/fixed pairs, preview/export, error recovery and narrow layout passed.');
+  console.log('Exact label/group/rights filters, lossless LF/CR/CRLF JSON entry and submitted codepoints, unknown retained notes, keyboard search, combined criteria, pagination, dynamic results/fixed pairs, preview/export, error recovery and narrow layout passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

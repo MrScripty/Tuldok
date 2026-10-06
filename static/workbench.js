@@ -23,10 +23,32 @@ function action(id, fn, event = 'click') {
 }
 function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); }
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
+const exactFilters = [['label','Target label',80], ['group','Protected source/group',120], ['rights','Rights note',1000]];
+let exactFilterFormat = 'text';
+function exactFilterValue(key, name, format = $('exact-filter-format').value) {
+  const value = $(key + '-filter').value;
+  if (format !== 'json' || value.trim() === '') return value;
+  try { const decoded = JSON.parse(value); if(typeof decoded === 'string') return decoded; } catch {}
+  throw Error(`${name}: enter a JSON string in double quotes, or leave blank for any.`);
+}
+$('exact-filter-format').addEventListener('change', () => {
+  const format = $('exact-filter-format').value;
+  try {
+    const values = exactFilters.map(([key,name]) => exactFilterValue(key,name,exactFilterFormat));
+    if(format === 'text' && values.some(value => /[\r\n]/.test(value)))
+      throw Error('Keep JSON string entry for values containing line breaks; plain inputs would lose them.');
+    exactFilters.forEach(([key,,limit],i) => {
+      const input = $(key + '-filter');
+      input.maxLength = format === 'json' ? limit * 12 + 2 : limit * 2;
+      input.value = format === 'json' && values[i] !== '' ? JSON.stringify(values[i]) : values[i];
+    });
+    exactFilterFormat = format;
+  } catch(error) { $('exact-filter-format').value = exactFilterFormat; notice(error.message,true); }
+});
 async function refresh() {
   const epoch = ++queryEpoch;
   const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
-    label:$('label-filter').value, group:$('group-filter').value, rights:$('rights-filter').value, offset, limit:40});
+    ...Object.fromEntries(exactFilters.map(([key,name]) => [key,exactFilterValue(key,name)])), offset, limit:40});
   const result = await api('records?' + params);
   if (epoch !== queryEpoch) return;
   page = result;

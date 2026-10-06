@@ -120,6 +120,17 @@ projection; original `provenance.rights` is preserved. Analysis and total counts
 describe the complete filtered result before pagination. Browser controls allow
 the full valid Unicode lengths; the API remains the validation authority.
 
+Use **Exact filter entry → JSON strings** for values containing internal line
+breaks. Enter double-quoted strings: `"first\nsecond"` preserves LF,
+`"first\rsecond"` preserves CR and `"first\r\nsecond"` preserves CRLF.
+Escape a literal backslash as `\\` and a quote as `\"`. Blank fields still mean
+any value. All three exact criteria use the selected entry format; ordinary
+criteria convert without changing their meaning when switching formats. Invalid
+or non-string JSON produces an error without issuing a query. Switching back to
+plain text is blocked while any criterion contains a line break. This keeps
+exact codepoints intact rather than relying on single-line or textarea line-ending
+normalization; stored metadata and API matching semantics remain unchanged.
+
 Filtered results are dynamic: later matching records can appear after searching
 again. They do not join fixed saved membership or replace chosen revision pairs.
 Opening a fixed set preserves the current filter; filtering never grants review,

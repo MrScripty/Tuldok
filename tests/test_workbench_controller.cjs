@@ -24,7 +24,7 @@ const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeo
   window:{addEventListener(){}},
   fetch:(url,options)=>url.endsWith('/grounded/jobs')&&!options?.method?Promise.resolve(response({jobs:[]})):url.includes('/records?')?Promise.resolve(response(page)):new Promise(resolve=>requests.push({url,options,resolve}))
 });
-vm.runInContext(fs.readFileSync(path.join(__dirname,'../static/workbench.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..'),'static/workbench.js'),'utf8'),context);
 const run=code=>vm.runInContext(code,context);
 const record=id=>({id,name:id,kind:'text',text:'Source '+id,task:'text_classification',annotation:{label:'original'},groups:[id],review:'draft',revision:1,source_revision:1,provenance:{method:'import'}});
 const resolve=(suffix,data,ok=true)=>{const index=requests.findIndex(request=>request.url.endsWith(suffix));assert.notEqual(index,-1,'Expected pending '+suffix);requests.splice(index,1)[0].resolve({...response(data),ok});};
@@ -118,5 +118,21 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
   assert.equal(run('[...selected.keys()].join()'),'fixed');assert.equal(run('selected.get("fixed").revision'),1);
   assert.equal(run('releasePreview===proof'),true,'Filtering grants no proof and preserves an existing exact proof');
   assert.ok(element('records').children[0].children[1].children[1].textContent.includes('Rights note: unknown'));
+  element('exact-filter-format').value='json';
+  for(const value of ['ordinary', 'left\nright', 'left\rright', 'left\r\nright', 'literal\\n and "quotes"']) {
+    for(const key of ['label','group','rights']) element(key+'-filter').value=JSON.stringify(value);
+    const filtering=run('refresh()'), query=queries.at(-1);
+    const sent=new URL(query.url,'http://localhost').searchParams;
+    for(const key of ['label','group','rights'])assert.equal(sent.get(key),value,'Exact '+key+' codepoints survive JSON entry');
+    query.resolve(response(page));await filtering;
+    assert.equal(run('[...selected.keys()].join()'),'fixed');assert.equal(run('releasePreview===proof'),true);
+  }
+  const count=queries.length;
+  for(const invalid of ['not JSON', 'null', '5', '[]', '"raw\nnewline"', '"unterminated']) {
+    element('rights-filter').value=invalid;
+    await assert.rejects(run('refresh()'),/Rights note.*JSON string/);
+    assert.equal(queries.length,count,'Invalid JSON never dispatches a query');
+    assert.equal(run('releasePreview===proof'),true);
+  }
   console.log('Controller navigation, exact-release fencing and explicit metadata filter transport/ordering passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

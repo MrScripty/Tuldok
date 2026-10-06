@@ -43,8 +43,10 @@ PR6 `2311f7cd0eaaf6c6a89e259ddf5c340f3a9ca887`, branch
 `fix/saved-selection-intent-20261006`. The unpublished feature ref fast-forwarded
 to that descendant and the preserved patch replayed cleanly. Paused patch SHA256:
 `c78128c010ad6a238c2207977e6fa7b251711486106494543d9e9ed388119c6c`.
-The feature's single commit must have that exact PR6 commit as its parent. Draft
-targets PR6; parent owns reviewed integration and any retargeting. PR6 stays stable.
+The original feature commit `e925514671743883b6ff9fe34c851cf36560f036` has that
+exact PR6 commit as its parent and remains preserved. Review repairs append commits
+on the same PR7 branch. Draft targets PR6; parent owns reviewed integration and any
+retargeting. PR6 stays stable.
 
 Shared touchpoints, reported early: `Workbench.query`, the collection HTML/JS/CSS,
 README and CI. Existing API route is unchanged. `app.py`, `saved_selections.py`,
@@ -68,3 +70,24 @@ and inspect exact-head hosted run/job metadata. Parent owns independent review,
 PR6 integration, UI decisions and retirement of retained worktrees and guidance
 checkouts. Worktree remains retained-protected for that review. See
 [verification](reports/verification.md) for evidence and limits.
+
+## PR7 line-ending review repair
+
+Parent review identified valid internal CR/LF being stripped by single-line exact
+filter inputs. Real Chromium against preserved e925514 confirms LF, CR and CRLF
+each match one record via the API but zero after input sanitation. Backend/storage
+semantics already preserve those distinctions; do not change them.
+
+Add explicit JSON-string entry for all three exact criteria while retaining plain
+entry. Decode before building the query; accept only JSON strings, or blank for
+unrestricted. Ordinary values convert between formats. Conversion to plain is
+atomic and rejects values with CR/LF, preserving previous fields/format. Input
+length allows a maximum legal value even with every supplementary character encoded
+as a JSON surrogate pair. API code-point limits and existing trimmed exact matching
+remain authoritative. No textarea line-ending normalization or stored-value rewrite.
+
+Regression evidence must inspect actual submitted codepoints for LF, CR, CRLF,
+ordinary text, literal backslashes/quotes and maximum escaped Unicode, including
+dynamic results, fixed pairs and preview-token preservation. Repair only PR7's
+existing branch, with preserved before/after evidence; main/PR5/6 and generation
+modules remain unchanged. See [repair evidence](reports/line-endings.md).
