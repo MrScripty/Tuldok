@@ -119,7 +119,7 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
   assert.equal(run('releasePreview===proof'),true,'Filtering grants no proof and preserves an existing exact proof');
   assert.ok(element('records').children[0].children[1].children[1].textContent.includes('Rights note: unknown'));
   element('exact-filter-format').value='json';
-  for(const value of ['ordinary', 'left\nright', 'left\rright', 'left\r\nright', 'literal\\n and "quotes"']) {
+  for(const value of ['ordinary', 'left\nright', 'left\rright', 'left\r\nright', 'literal\\n and "quotes"', 'valid 😀 pair']) {
     for(const key of ['label','group','rights']) element(key+'-filter').value=JSON.stringify(value);
     const filtering=run('refresh()'), query=queries.at(-1);
     const sent=new URL(query.url,'http://localhost').searchParams;
@@ -133,6 +133,23 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
     await assert.rejects(run('refresh()'),/Rights note.*JSON string/);
     assert.equal(queries.length,count,'Invalid JSON never dispatches a query');
     assert.equal(run('releasePreview===proof'),true);
+  }
+  for(const key of ['label','group','rights']) {
+    for(const field of ['label','group','rights'])element(field+'-filter').value='';
+    for(const invalid of ['\ud800','\udfff','a\ud800b','\ud800\ud800','\udc00\ud800']) {
+      element(key+'-filter').value=JSON.stringify(invalid);
+      const filtering=run('refresh()');
+      if(queries.length!==count)queries.at(-1).resolve(response(page));
+      await assert.rejects(filtering,/unpaired surrogate/);
+      assert.equal(queries.length,count,'Malformed Unicode is rejected before URLSearchParams can replace it');
+      assert.equal(run('[...selected.keys()].join()'),'fixed');assert.equal(run('releasePreview===proof'),true);
+    }
+  }
+  element('exact-filter-format').value='text';
+  for(const key of ['label','group','rights']) {
+    for(const field of ['label','group','rights'])element(field+'-filter').value='';
+    element(key+'-filter').value='\ud800';await assert.rejects(run('refresh()'),/unpaired surrogate/);
+    assert.equal(queries.length,count,'Plain malformed Unicode is rejected too');
   }
   console.log('Controller navigation, exact-release fencing and explicit metadata filter transport/ordering passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

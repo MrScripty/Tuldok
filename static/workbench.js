@@ -27,9 +27,14 @@ const exactFilters = [['label','Target label',80], ['group','Protected source/gr
 let exactFilterFormat = 'text';
 function exactFilterValue(key, name, format = $('exact-filter-format').value) {
   const value = $(key + '-filter').value;
-  if (format !== 'json' || value.trim() === '') return value;
-  try { const decoded = JSON.parse(value); if(typeof decoded === 'string') return decoded; } catch {}
-  throw Error(`${name}: enter a JSON string in double quotes, or leave blank for any.`);
+  let decoded = value;
+  if (format === 'json' && value.trim() !== '') {
+    try { decoded = JSON.parse(value); } catch { decoded = null; }
+    if(typeof decoded !== 'string') throw Error(`${name}: enter a JSON string in double quotes, or leave blank for any.`);
+  }
+  // Unicode-mode matching sees valid pairs as one codepoint, leaving only lone surrogates.
+  if(/[\uD800-\uDFFF]/u.test(decoded)) throw Error(`${name}: unpaired surrogate characters are invalid Unicode.`);
+  return decoded;
 }
 $('exact-filter-format').addEventListener('change', () => {
   const format = $('exact-filter-format').value;
@@ -155,6 +160,9 @@ action('editor',async()=>{
      pairAtSave.revision===record.revision && pairAtSave.source_revision===record.source_revision) {
     selected.set(saved.id,saved);selection();
   }
+  // A successful older save can prove retained fixed pairs stale without owning them.
+  const selectedPair=selected.get(saved.id);
+  if(selectedPair && (selectedPair.revision<saved.revision || selectedPair.source_revision<saved.source_revision)) invalidateRelease();
   if(epoch===editorEpoch)showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');

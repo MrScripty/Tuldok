@@ -135,7 +135,7 @@ class MetadataFilterTests(unittest.TestCase):
         emoji = self.text('Unicode maximum', '😀'*80, ['😀'*120], '😀'*1000)
         self.assertEqual(self.ids(label='😀'*80, group='😀'*120, rights='😀'*1000), {emoji['id']})
         for key, maximum in (('label', 80), ('group', 120), ('rights', 1000)):
-            for value in (None, [], 3, 'x'*(maximum+1), '\ud800'):
+            for value in (None, [], 3, 'x'*(maximum+1), '\ud800', '\udfff', 'a\ud800b'):
                 with self.subTest(key=key, value=repr(value)), self.assertRaises(WorkbenchError):
                     self.w.query({key: value})
         self.assertEqual(self.w.query({'label': '', 'group': '', 'rights': ''})['total'], 2)
