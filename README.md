@@ -280,6 +280,8 @@ This first version supports still capture and image import, including frames ext
     node tests/browser_saved_selections.cjs
     node tests/browser_saved_selection_intent.cjs
     node tests/browser_metadata_filters.cjs
+    node tests/browser_bulk_import.cjs
+    node tests/browser_dataset_integration.cjs
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 
