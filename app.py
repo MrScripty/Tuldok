@@ -13,6 +13,7 @@ import saved_selections
 import grounded_candidates
 import bulk_import
 import curation
+import caption_import
 import base64
 import hashlib
 import io
@@ -141,6 +142,7 @@ class Dataset:
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
         self.selections = saved_selections.SavedSelections(self.workbench)
+        self.caption_imports = caption_import.CaptionImports(self.workbench)
         self.grounded = grounded_candidates.Proposals(self.workbench)
 
     def close(self):
@@ -434,7 +436,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/curation.js': ('curation.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -479,6 +481,10 @@ def make_handler(dataset):
                     return self.reply(curation.inspect(dataset.workbench, body))
                 if path == '/api/workbench/import-row':
                     return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
+                if path == '/api/workbench/caption-import/prepare':
+                    return self.reply(dataset.caption_imports.prepare(body))
+                if path == '/api/workbench/caption-import/row':
+                    return self.reply(dataset.caption_imports.admit(body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/generate':
