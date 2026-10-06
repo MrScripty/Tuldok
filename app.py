@@ -155,7 +155,7 @@ class Dataset:
             for row in rows:
                 if row['id'] in provenance:
                     entry = provenance[row['id']]
-                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if key in entry}
+                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'width', 'height', 'requested_seed') if key in entry}
                 row['annotation'] = json.loads(row['annotation']) if row['annotation'] else None
                 if row['annotation'] is not None:
                     row['annotation'].setdefault('corner_reference', 'image')
@@ -468,6 +468,8 @@ def make_handler(dataset):
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
                     return self.reply(ai_http.text_models(body.get('server_url')))
+                if path == '/api/ai/scan':
+                    return self.reply(gateway_discovery.scan_labeling())
                 if path == '/api/generation/scan':
                     return self.reply(gateway_discovery.scan())
                 if path == '/api/generation/models':

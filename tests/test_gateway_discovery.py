@@ -12,7 +12,7 @@ import gateway_discovery as discovery
 
 
 class DiscoveryTests(unittest.TestCase):
-    def server(self, models, rpc=None):
+    def server(self, models, rpc=None, props=None):
         observed = []
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *_):
@@ -25,7 +25,7 @@ class DiscoveryTests(unittest.TestCase):
                 self.wfile.write(data)
             def do_GET(self):
                 observed.append(self.path)
-                self.reply(models)
+                self.reply(props if self.path == '/props' else models)
             def do_POST(self):
                 observed.append(json.loads(self.rfile.read(int(self.headers['Content-Length']))))
                 self.reply(rpc)
@@ -50,6 +50,17 @@ class DiscoveryTests(unittest.TestCase):
         self.assertEqual(result['image_models'], 0)
         self.assertEqual(requests[1]['method'], 'get_launcher_version')
         self.assertEqual(requests[1]['params'], {})
+
+    def test_labeling_finds_served_vlm_outside_empty_pumas_gateway(self):
+        idle, _ = self.server({'data': []}, {'result': {
+            'success': True, 'version': '1.0', 'currentCommit': 'abc', 'branch': 'main', 'isGitRepo': True}})
+        vision, requests = self.server({'data': [{'id': 'vlm/example'}]}, props={
+            'build_info': 'llama.cpp', 'modalities': {'vision': True}})
+        with patch.object(discovery, 'listening_endpoints', return_value=[idle, vision]):
+            result = discovery.scan_labeling()
+        self.assertEqual(result['endpoints'], [{'server_url': f'http://127.0.0.1:{vision[1]}',
+                                               'models': 1, 'kind': 'model server'}])
+        self.assertEqual(requests, ['/v1/models', '/props'])
 
     def test_non_gateway_and_malformed_models_are_ignored(self):
         for response in ({'status': 'ok'}, {'data': 'invalid'}, {'data': [None]}, {'data': []}):

@@ -145,7 +145,7 @@ class Workbench:
                 entry = json.loads(item[0])
                 if entry.get('sample_id') == row['id']:
                     origin = {'method': 'model_generated', 'source_sha256': row['sha256'], 'rights': 'unknown',
-                              'generation': {k: entry[k] for k in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if k in entry}}
+                              'generation': {k: entry[k] for k in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'width', 'height', 'requested_seed') if k in entry}}
             self.db.execute('INSERT INTO workbench_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                             (row['id'], 'image', None, None, None, content_hash, pixel_hash,
                              encode([group]), '[]', encode(origin), 'image_detection', None,

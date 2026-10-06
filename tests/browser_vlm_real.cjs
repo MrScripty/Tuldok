@@ -37,7 +37,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('document.querySelector("#samples .sample").click()');
   await until(()=>evaluate('!document.getElementById("label-form").hidden'));
   await evaluate('document.getElementById("ai-settings").open=true');
-  await fill('ai-provider','llamacpp');await fill('ai-url',gateway);await click('ai-refresh');
+  await fill('ai-provider','pumas');await fill('ai-url',gateway);await click('ai-refresh');
   await until(()=>evaluate('!document.getElementById("ai-refresh").disabled&&document.getElementById("ai-model").options.length>0'));
   await fill('ai-model',model);assert.equal(await evaluate('document.getElementById("ai-model").value'),model);
   const started=Date.now();await click('suggest');
@@ -52,7 +52,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   fs.writeFileSync(path.join(evidence,'suggested-corners.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
   await click('save');await until(()=>evaluate('document.getElementById("save-status").textContent==="Saved"'));
   const rows=await(await fetch('http://127.0.0.1:'+port+'/api/samples')).json();
-  assert.equal(rows[0].annotation.suggested_by.provider,'llamacpp');
+  assert.equal(rows[0].annotation.suggested_by.provider,'pumas');
   assert.equal(rows[0].annotation.book_present,true,'Real VLM identifies the book');
   assert.equal(rows[0].annotation.corners.length,4);
   assert.deepEqual(errors,[]);

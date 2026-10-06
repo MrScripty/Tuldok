@@ -30,11 +30,12 @@ If another tab has edited an image, reload before deleting it.
 
 ## AI corner suggestions
 
-Open **AI model**, choose Codex, OpenRouter, or llama.cpp, and select or enter a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.
+Open **AI model**, choose Codex, OpenRouter, llama.cpp, or Pumas, and select a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.
 
 - **Codex:** install and sign in to the Codex CLI on the Tuldok computer. Uses its app-server interface, cached model catalog, and selected thinking level. `TULDOK_CODEX_MODEL` overrides the default model.
 - **OpenRouter:** enter an API key or set `OPENROUTER_API_KEY` on the server. Refresh models lists image-capable models advertising structured outputs. The entered key stays in the current page; it is not written to browser storage, labels, or exports.
 - **llama.cpp:** run a vision model with its required image projector and supply the server URL (default `http://127.0.0.1:8080`). Refresh models reads its model list. The server must be reachable from the Tuldok computer and support image input and JSON schema output.
+- **Pumas:** serve a vision model and click **Scan local ports**. Tuldok lists ready Pumas gateways and local llama.cpp model endpoints, including a separate endpoint when Pumas manages the model there. Select the endpoint that lists your VLM, or enter its URL manually, then refresh models. The model must support image input and JSON output.
 
 The adapters follow Book-Be-Gone's provider interfaces without depending on that repository. Each request sends a JPEG copy of the selected image, at most 1600 pixels on its longest side, preserving orientation and aspect ratio. Original dataset images remain intact. The prompt in `prompts/corners.md` asks for screen-relative corner positions plus an explicit identification of the book’s upright top-left from its text or artwork. Tuldok rotates the handle identities into book order while preserving image coordinates and visibility. Ambiguous orientation requires manual labeling; no-book scenes remain supported. Saved suggestions include provider/model provenance in `suggested_by`; they still need human review before use as training labels.
 
@@ -70,7 +71,7 @@ Select one of two strategies:
 - **Use the same prompt for every image:** Tuldok renders the description repeatedly,
   creating only the next pending gallery entry as it proceeds.
 
-Choose the image size and an optional starting seed. The seed increments for each
+Choose the image width and height (default 1280 by 720) and an optional starting seed. The seed increments for each
 image; leaving it blank lets Pumas sample randomly. Click **Generate dataset**.
 Prompt entries appear in the collection and become images as generation completes.
 Click a pending entry to inspect its prompt. Completed images immediately support
@@ -86,10 +87,15 @@ jobs without redoing saved images. One job runs at a time. A rendering failure s
 the queue for inspection; images are not automatically retried. Exact duplicate
 images remain rejected by the dataset, including repeated deterministic output.
 
-Image requests have a 630-second deadline. GPU cancellation may need to reach the
-runtime’s next cancellation checkpoint. After a server restart, explicitly resume
-unfinished jobs. Keep the dataset backed up and review synthetic images and labels
-before using them for training.
+Image requests have no duration deadline: generation runs until it completes,
+fails, or you explicitly cancel it. Only connection establishment stays bounded;
+once admitted there is no total, read, idle, or elapsed timeout. GPU cancellation
+may need to reach the runtime’s next cancellation checkpoint. If the response is
+lost before completion, the outcome is uncertain — provider work may have
+continued — and the request is not automatically retried. After a server restart,
+explicitly resume unfinished jobs. Returned generation metadata may gain
+additional public fields over time. Keep the dataset backed up and review
+synthetic images and labels before using them for training.
 
 ## Workbench image captions
 
@@ -131,7 +137,7 @@ This first version supports still capture and image import, including frames ext
     node tests/browser_grounded.cjs
     node tests/browser_captions.cjs
 
-The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all three AI providers. Tests do not contact paid models.
+The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 
 ## Repository
 

@@ -86,6 +86,50 @@ def probe(endpoint, deadline):
         return None
 
 
+def probe_labeling(endpoint, deadline):
+    """Find ready VLM endpoints, including Pumas-managed llama.cpp servers."""
+    host, port = endpoint
+    try:
+        value = get_json(host, port, '/v1/models', deadline)
+        entries = value.get('data') if isinstance(value, dict) else None
+        if not isinstance(entries, list) or not entries or any(not isinstance(item, dict) for item in entries):
+            return None
+        address = '[' + host + ']' if ':' in host else host
+        server_url = f'http://{address}:{port}'
+        if any(item.get('owned_by') == 'pumas' for item in entries):
+            candidates = [item for item in entries if 'image_generation' not in (item.get('capabilities') or [])]
+            return {'server_url': server_url, 'models': len(candidates), 'kind': 'Pumas gateway'} if candidates else None
+        props = get_json(host, port, '/props', deadline)
+        if not isinstance(props, dict) or not isinstance(props.get('build_info'), str):
+            return None
+        modalities = props.get('modalities')
+        if not ((isinstance(modalities, dict) and modalities.get('vision') is True) or
+                any(isinstance(item.get('id'), str) and item['id'].startswith('vlm/') for item in entries)):
+            return None
+        return {'server_url': server_url, 'models': len(entries), 'kind': 'model server'}
+    except (OSError, ValueError, TypeError, http.client.HTTPException):
+        return None
+
+
+def scan_labeling():
+    if not SCAN_LOCK.acquire(blocking=False):
+        raise ValueError('A gateway scan is already running. Wait for it to finish.')
+    try:
+        endpoints = listening_endpoints()
+        deadline = time.monotonic() + 10
+        with ThreadPoolExecutor(max_workers=32) as pool:
+            results = list(pool.map(lambda endpoint: probe_labeling(endpoint, deadline), endpoints))
+        found = {}
+        for endpoint, result in zip(endpoints, results):
+            if result and endpoint[1] not in found:
+                found[endpoint[1]] = result
+        choices = list(found.values())
+        return {'endpoints': choices, 'message': '' if choices else
+                'No ready local vision endpoint found. Serve a VLM in Pumas or enter its model server URL manually.'}
+    finally:
+        SCAN_LOCK.release()
+
+
 def scan():
     if not SCAN_LOCK.acquire(blocking=False):
         raise ValueError('A gateway scan is already running. Wait for it to finish.')
