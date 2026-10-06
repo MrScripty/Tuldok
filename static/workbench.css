@@ -15,3 +15,7 @@
 #saved-selection-issues { padding-left: 20px; font-size: 13px; }
 
 #metadata-filter-help { font-size: 12px; overflow-wrap: anywhere; }
+
+#bulk-status,#bulk-results { overflow-wrap: anywhere; }
+#bulk-results { padding-left: 22px; max-height: 320px; overflow: auto; font-size: 12px; }
+#bulk-results li { margin-block: .5rem; }

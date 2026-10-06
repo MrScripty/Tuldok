@@ -28,6 +28,51 @@ excluded from future exports; previously downloaded exports are unchanged. Gener
 images stay deleted when their job resumes, and job progress shows the deleted count.
 If another tab has edited an image, reload before deleting it.
 
+## Import a real corpus
+
+In the dataset workbench, **Import a real corpus** accepts a local UTF-8 JSONL
+manifest with one raw asset per physical line and explicitly selected image
+files. Start with raw assets; annotate and review them afterward. For example:
+
+```jsonl
+{"kind":"text","name":"Note","text":"A real source note","groups":["document-01"],"rights":"Authored"}
+{"kind":"image","file":"photo.png","groups":["shoot-01"],"rights":"Permission granted"}
+```
+
+`kind`, a nonempty `groups` list and the matching `text` or `file` field are
+required. `name`, `parents` (existing record IDs) and `rights` are optional;
+omitted rights remain `unknown`. Each image reference must be a flat filename
+matching exactly one selected file, with exact spelling and case. Missing or
+ambiguous matches are row errors. No server paths, URL fetches or archives are
+used. Supplied annotations, tasks, review states, provenance, duplicate JSON
+keys and other unknown fields are rejected. Existing annotated corpus formats
+require a separate field/coordinate contract.
+
+Limits: 8 MiB per manifest, 1,000 physical lines (blank lines keep their source
+number but are skipped), 3 MiB per UTF-8 JSON row, existing 200,000-code-point
+text and 25 MiB / 40-megapixel image limits. LF and CRLF are supported; source
+text remains original while its canonical form uses NFC and LF. Image originals
+remain intact while the existing owner normalizes EXIF orientation/RGB pixels.
+All imported records are unlabeled drafts, independent of supplied source claims.
+
+Imports run sequentially and show per-row outcomes and record IDs. Valid rows
+remain when another row fails. Repeated canonical text or exact original image
+bytes are rejected without modifying existing records, review or provenance.
+Storage failures stop scheduling. **Stop after current row** prevents the next
+admission; an in-flight row may complete and remains in the collection.
+
+Lost or malformed responses pause the batch without automatic retry. **Check
+pending row** reads a saved acquisition marker and verifies the row proof before
+crediting creation. No visible result does not prove the request stopped.
+**Dismiss pending check** does not roll back an import; inspect the collection
+before retrying. These controls retain existing editor edits and selection.
+
+Provenance records the server-computed source-row SHA-256 and the existing
+source-byte/pixel hashes. Manifest filename, physical row number and image-file
+label are caller-declared context, stored separately from those derived facts.
+The manifest itself is not copied or independently authenticated. Result lookup
+is read-only; the request marker does not grant annotation review or source rights.
+
 ## AI corner suggestions
 
 Open **AI model**, choose Codex, OpenRouter, llama.cpp, or Pumas, and select a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.

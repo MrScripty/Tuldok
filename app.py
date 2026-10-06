@@ -11,6 +11,7 @@ import dataset_recipes
 import dataset_releases
 import saved_selections
 import grounded_candidates
+import bulk_import
 import base64
 import hashlib
 import io
@@ -182,7 +183,7 @@ class Dataset:
                             " AND id<>? AND split='unassigned'", (chosen, *args))
         return chosen
 
-    def add(self, body, generation=None):
+    def add(self, body, generation=None, *, enrollment=None):
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -222,6 +223,10 @@ class Dataset:
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
                         self.generation_jobs.record_output(sample_id, *generation)
+                    if enrollment is not None:
+                        # Imported Workbench source metadata shares acquisition's
+                        # commit and original-file cleanup on admission failure.
+                        self.workbench._enroll_import(sample_id, *enrollment)
             except Exception:
                 shutil.rmtree(folder)
                 raise
@@ -370,6 +375,8 @@ def make_handler(dataset):
                     return self.reply(dataset.selections.list())
                 if path.startswith('/api/workbench/selections/'):
                     return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
+                if path.startswith('/api/workbench/import-result/'):
+                    return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
@@ -426,7 +433,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -467,6 +474,8 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/import-row':
+                    return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/generate':

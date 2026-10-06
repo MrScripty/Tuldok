@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006]
   pull_request:
 permissions:
   contents: read
@@ -24,6 +24,7 @@ jobs:
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
+      - run: node tests/test_bulk_import_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -45,6 +46,9 @@ jobs:
       - run: node tests/browser_metadata_filters.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_bulk_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -56,6 +60,7 @@ jobs:
             docs/plans/saved-dataset-selections/reports/saved-*.png
             docs/plans/saved-selection-intent/reports/intent-*.png
             docs/plans/explicit-metadata-filters/reports/filters-*.png
+            docs/plans/bulk-real-import/reports/bulk-*.png
           if-no-files-found: ignore
       - run: node tests/browser.cjs
         env:
