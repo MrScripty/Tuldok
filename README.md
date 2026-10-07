@@ -320,3 +320,27 @@ Authored examples and an existing-owner design rehearsal are under
 `docs/plans/annotated-caption-import/reports/fixtures/`. Native-import HTTP and
 Chromium tests independently check admission, fresh review and actual downloaded
 release consumption by the unchanged pinned chapter-26 validator.
+
+### Native text-classification releases
+
+The workbench can import a locally selected frozen `canonical_v1` ZIP (manifest
+`schema_version: 1`) through **Import native text-classification release**. It
+checks exact manifest/JSONL row/text-asset bindings and hashes the consumed ZIP.
+Only `text_classification` rows are admitted; per-row rejections leave other valid
+rows available. Every imported label starts as a new draft, with rights unknown
+and no inherited approval or source split. Existing canonical text and request
+markers are rejected without overwriting annotations, review or provenance.
+
+Exported text is the new import input, preserved exactly before the existing
+NFC/LF normalization. Native releases omit upstream original text, so recovering
+those bytes is unsupported. The new input hash is measured independently;
+upstream record/hash/review/rights fields remain declared historical provenance
+with `original_status: unavailable`. Measured acquisition evidence binds archive,
+manifest, metadata, physical row and text asset. Native groups are retained, with
+stable foreign identity links; upstream IDs are not restored as local parents.
+
+Stop prevents later admissions; an in-flight record may finish. An uncertain
+response pauses the batch and offers read-only saved-result reconciliation, never
+automatic replay. Restart requires choosing the archive again for preparation;
+committed records and receipts persist. Limits and qualification are recorded in
+[the import plan](docs/plans/native-text-classification-import/plan.md).

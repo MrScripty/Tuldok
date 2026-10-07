@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/labeled-text-import-20261007]
   pull_request:
 permissions:
   contents: read
@@ -22,12 +22,14 @@ jobs:
       - run: node --check static/saved-selections.js
       - run: node --check static/bulk_import.js
       - run: node --check static/caption_import.js
+      - run: node --check static/native_text_import.js
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
       - run: node tests/test_bulk_import_controller.cjs
       - run: node tests/test_caption_import_controller.cjs
+      - run: node tests/test_native_text_import_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -61,11 +63,15 @@ jobs:
       - run: node tests/browser_caption_dataset_integration.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_native_text_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: workbench-browser-screenshots
           path: |
+            docs/plans/native-text-classification-import/reports/native-text-*.png
             docs/plans/dataset-workflows/reports/workbench-*.png
             docs/plans/image-caption-exports/reports/captions-*.png
             docs/plans/selected-release-preview/reports/preview-*.png
