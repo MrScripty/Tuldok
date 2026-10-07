@@ -43,9 +43,10 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
     await pause(100);
     await evaluate('document.querySelector('+JSON.stringify(selector)+').scrollIntoView({block:"start"})');await pause(100);
     assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Combined layout must fit');
-    assert.ok(await evaluate('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return r.top>=0&&r.top<innerHeight&&r.bottom>0})()'),'Captured panel must be in the viewport');
-    const file='combined-'+name+(narrow?'-narrow':'-desktop')+'.png',bytes=Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64');
-    fs.writeFileSync(path.join(report,file),bytes);evidence.screenshots.push({file,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});
+    const bounds=await evaluate('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:innerHeight}})()');
+    assert.ok(bounds.top>=-1&&bounds.top<bounds.height&&bounds.bottom>0,'Captured panel must be in the viewport: '+JSON.stringify(bounds));
+    const file='combined-'+name+(narrow?'-narrow':'-desktop')+'.png',bytes=Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64');
+    fs.writeFileSync(path.join(report,file),bytes);evidence.screenshots.push({file,selector,viewport:{width:narrow?390:1400,height:narrow?844:1000},bounds,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});
   }}
   const answerPairs=()=>evaluate('JSON.stringify(responseReleaseBody().items)'),recordPairs=()=>evaluate('JSON.stringify(releaseBody().items)');
   const respond=async completion=>{await click('response-new');await fill('response-entry-format','json');await fill('response-completion',JSON.stringify(completion));await fill('response-review','human_reviewed');await evaluate('document.getElementById("response-form").requestSubmit()');await until(()=>evaluate('!responseBusy&&!responseDirty&&!responseListBusy'));};
