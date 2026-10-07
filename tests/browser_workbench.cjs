@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
+const {STARTUP_BUDGET_MS,waitForDebugger}=require('./browser_startup.cjs');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-test-')),children=[];
 let ws, inspect;
 const errors=[];
@@ -15,7 +16,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const browserCommand=process.env.BROWSER||'/usr/bin/chromium';
   const browser=launch(browserCommand,['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','pipe','pipe'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   // Chrome wrappers can report startup failure on stdout. Retain bounded tails
-  // and process state while leaving the existing readiness deadline unchanged.
+  // and process state; only debugger startup gets the 60-second allowance.
   let browserStdout='',browserStderr='',browserSpawnError;
   browser.stdout.on('data',data=>browserStdout=(browserStdout+data).slice(-8192));
   browser.stderr.on('data',data=>{browserStderr=(browserStderr+data).slice(-8192);process.stderr.write(data);});
@@ -23,12 +24,9 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const active=path.join(temporary,'browser','DevToolsActivePort');
   let debugPort;
   try{
-    debugPort=await until(()=>{
-      if(browserSpawnError || browser.exitCode!==null || browser.signalCode!==null)throw Error('Browser exited before debugger readiness');
-      return fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0];
-    });
+    debugPort=await waitForDebugger(browser,active);
   }catch(error){
-    console.error('Browser startup diagnostics:',JSON.stringify({command:browserCommand,pid:browser.pid,exitCode:browser.exitCode,signal:browser.signalCode,spawnError:browserSpawnError,activePortFile:active,activePortFileExists:fs.existsSync(active),stdout:browserStdout,stderr:browserStderr}));
+    console.error('Browser startup diagnostics:',JSON.stringify({command:browserCommand,pid:browser.pid,exitCode:browser.exitCode,signal:browser.signalCode,spawnError:browserSpawnError,startupBudgetMs:STARTUP_BUDGET_MS,activePortFile:active,activePortFileExists:fs.existsSync(active),stdout:browserStdout,stderr:browserStderr}));
     throw error;
   }
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();

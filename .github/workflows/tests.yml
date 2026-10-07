@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007]
   pull_request:
 permissions:
   contents: read
@@ -25,6 +25,7 @@ jobs:
       - run: node --check static/caption_import.js
       - run: node --check static/rights-note.js
       - run: node --check static/instruction-responses.js
+      - run: node --check static/native_text_import.js
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
@@ -34,6 +35,8 @@ jobs:
       - run: node tests/test_caption_import_controller.cjs
       - run: node tests/test_rights_note_controller.cjs
       - run: node tests/test_instruction_responses_controller.cjs
+      - run: node tests/test_browser_startup.cjs
+      - run: node tests/test_native_text_import_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -85,6 +88,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_native_text_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -106,4 +112,5 @@ jobs:
             docs/plans/instruction-responses/reports/instruction-*.png
             docs/plans/instruction-responses/reports/instruction-session.json
             docs/plans/instruction-responses/reports/instruction-downloaded.zip
+            docs/plans/native-text-classification-import/reports/native-text-*.png
           if-no-files-found: ignore
