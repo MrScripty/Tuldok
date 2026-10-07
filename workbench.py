@@ -101,7 +101,8 @@ def labels(record):
 
 def rights_note(record):
     """Display/query metadata only; a present note is not evidence of permission."""
-    note = record['provenance'].get('rights')
+    correction = record['provenance'].get('rights_note_correction')
+    note = correction['note'] if isinstance(correction, dict) and isinstance(correction.get('note'), str) else record['provenance'].get('rights')
     return note.strip() if isinstance(note, str) and note.strip() else 'unknown'
 
 
@@ -126,6 +127,8 @@ class Workbench:
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_history (
                 id TEXT NOT NULL, revision INTEGER NOT NULL, snapshot TEXT NOT NULL,
                 PRIMARY KEY(id, revision))''')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_rights_notes (
+                id TEXT PRIMARY KEY, note TEXT NOT NULL, revision INTEGER NOT NULL)''')
             self.db.execute('CREATE INDEX IF NOT EXISTS workbench_content ON workbench_records(content_hash)')
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_deleted_sources (
                 id TEXT PRIMARY KEY, book_id TEXT NOT NULL, session_id TEXT NOT NULL,
@@ -192,6 +195,9 @@ class Workbench:
         for field in ('groups', 'parents', 'provenance', 'annotation'):
             raw = result.pop(field + '_json')
             result[field] = json.loads(raw) if raw is not None else None
+        correction = self.db.execute('SELECT note,revision FROM workbench_rights_notes WHERE id=?', (record_id,)).fetchone()
+        if correction is not None:
+            result['provenance']['rights_note_correction'] = dict(correction)
         result.pop('original_text')
         if result['corner_annotation']:
             result['corner_annotation'] = json.loads(result['corner_annotation'])
@@ -348,13 +354,41 @@ class Workbench:
             review = body.get('review')
             if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
                 raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
-            provenance = verified_provenance or before['provenance']
+            # The read projection includes owned rights corrections; preserve stored origin separately.
+            provenance = verified_provenance or json.loads(self.db.execute(
+                'SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
             self.db.execute('''UPDATE workbench_records SET task=?,annotation_json=?,review=?,groups_json=?,
                 provenance_json=?,revision=revision+1,updated_at=? WHERE id=?''',
                             (task, encode(annotation), review, encode(groups), encode(provenance), timestamp(), record_id))
             record = self._get(record_id)
             self._history(record)
             return record
+
+    def correct_rights_note(self, record_id, body):
+        """One note correction, CAS-bound to record/source revisions; no annotation grant."""
+        if not isinstance(record_id, str) or not IDENTIFIER.fullmatch(record_id):
+            raise WorkbenchError('Invalid record ID.')
+        if not isinstance(body, dict) or set(body) != {'revision', 'source_revision', 'note'}:
+            raise WorkbenchError('Supply only current record/source revisions and a rights note.')
+        note = text_value(body['note'], 'Rights note', 1000, empty=True) or 'unknown'
+        with self.lock, self.db:
+            before = self._get(record_id)
+            for key in ('revision', 'source_revision'):
+                if type(body[key]) is not int or body[key] != before[key]:
+                    raise WorkbenchError('This record or source changed. Reload before correcting the note.', 'conflict', 409)
+            if not before['source_available']:
+                raise WorkbenchError('The source image was deleted.', 'unavailable', 409)
+            if note == rights_note(before):
+                return {'record': before, 'changed': False}
+            origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
+            if 'rights_note_correction' in origin:
+                raise WorkbenchError('Stored origin uses the reserved correction field; cannot replace origin evidence.', 'conflict', 409)
+            self.db.execute('INSERT INTO workbench_rights_notes VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET note=excluded.note,revision=excluded.revision',
+                            (record_id, note, before['revision'] + 1))
+            self.db.execute('UPDATE workbench_records SET revision=revision+1,updated_at=? WHERE id=?', (timestamp(), record_id))
+            record = self._get(record_id)
+            self._history(record)
+            return {'record': record, 'changed': True}
 
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""

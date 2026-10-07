@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006]
   pull_request:
 permissions:
   contents: read
@@ -21,15 +21,17 @@ jobs:
       - run: node --check static/workbench.js
       - run: node --check static/saved-selections.js
       - run: node --check static/curation.js
-      - run: node tests/test_curation_controller.cjs
       - run: node --check static/bulk_import.js
       - run: node --check static/caption_import.js
+      - run: node --check static/rights-note.js
+      - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
       - run: node tests/test_bulk_import_controller.cjs
       - run: node tests/test_caption_import_controller.cjs
+      - run: node tests/test_rights_note_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -66,6 +68,15 @@ jobs:
       - run: node tests/browser_caption_dataset_integration.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_images.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_rights_note.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -83,10 +94,5 @@ jobs:
             docs/plans/annotated-caption-import/reports/caption-import-*.png
             docs/plans/dataset-caption-integration/reports/caption-combined-*.png
             docs/plans/dataset-caption-integration/reports/caption-combined-session.json
+            docs/plans/rights-note-correction/reports/rights-*.png
           if-no-files-found: ignore
-      - run: node tests/browser.cjs
-        env:
-          BROWSER: /usr/bin/google-chrome
-      - run: node tests/browser_images.cjs
-        env:
-          BROWSER: /usr/bin/google-chrome

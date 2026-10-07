@@ -77,7 +77,8 @@ async function refresh() {
   pagination(); selection();
 }
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
-function mayDiscard() { return !dirty || confirm('Discard unsaved annotation edits?'); }
+function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty); }
+function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation or rights-note edits?'); }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
   const epoch = ++editorEpoch;
@@ -99,7 +100,7 @@ function showRecord(record) {
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
-  $('history-output').hidden = true; renderTargets(); notice('Record loaded.');
+  $('history-output').hidden = true; renderTargets(); if(typeof rightsRecordShown === 'function') rightsRecordShown(record); notice('Record loaded.');
 }
 function renderTargets() {
   const task = $('task').value;
@@ -154,6 +155,7 @@ $('asset-image').addEventListener('pointerup',event=>{
 });
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
+  if(typeof rightsDirty !== 'undefined' && rightsDirty) throw Error('Save or cancel the rights-note edit before saving an annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch;
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
@@ -280,7 +282,7 @@ $('release-form').addEventListener('submit',async event=>{
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }
 });
-window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(hasUnsavedEdits()){event.preventDefault();event.returnValue='';}});
 refresh().then(()=>notice('Collection ready.')).catch(error=>notice(error.message,true));
 
 // Proposal requests own their refresh timer; polling ends at terminal state/page exit.
