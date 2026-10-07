@@ -1,0 +1,210 @@
+{
+  "base": "e33144a389e611dfb9e95a83f248e7bf87d7a3aa",
+  "python": {
+    "tests": 171,
+    "seconds": 44.194,
+    "result": "PASS"
+  },
+  "javascript": {
+    "registered_suites": 6,
+    "result": "PASS"
+  },
+  "browser_suites": [
+    {
+      "suite": "browser_workbench",
+      "status": 0,
+      "seconds": 2.46,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_workbench.log"
+    },
+    {
+      "suite": "browser_grounded",
+      "status": 0,
+      "seconds": 3.618,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_grounded.log"
+    },
+    {
+      "suite": "browser_captions",
+      "status": 0,
+      "seconds": 3.751,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_captions.log"
+    },
+    {
+      "suite": "browser_release_preview",
+      "status": 0,
+      "seconds": 2.482,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_release_preview.log"
+    },
+    {
+      "suite": "browser_saved_selections",
+      "status": 0,
+      "seconds": 4.058,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_saved_selections.log"
+    },
+    {
+      "suite": "browser_saved_selection_intent",
+      "status": 0,
+      "seconds": 2.494,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_saved_selection_intent.log"
+    },
+    {
+      "suite": "browser_metadata_filters",
+      "status": 0,
+      "seconds": 4.514,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_metadata_filters.log"
+    },
+    {
+      "suite": "browser_bulk_import",
+      "status": 0,
+      "seconds": 2.427,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_bulk_import.log"
+    },
+    {
+      "suite": "browser_dataset_integration",
+      "status": 0,
+      "seconds": 3.986,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_dataset_integration.log"
+    },
+    {
+      "suite": "browser_curation",
+      "status": 0,
+      "seconds": 4.323,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_curation.log"
+    },
+    {
+      "suite": "browser",
+      "status": 0,
+      "seconds": 11.536,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser.log"
+    },
+    {
+      "suite": "browser_images",
+      "status": 0,
+      "seconds": 4.253,
+      "log": "/workspace/scratch/tuldok-retry/curation-final-browser_images.log"
+    }
+  ],
+  "runtime": {
+    "python": "3.12.14",
+    "node": "24.19.0",
+    "pillow": "12.3.0",
+    "chromium": "151.0.7922.173",
+    "browser": "/usr/bin/chromium",
+    "platform": "Linux x86_64 / Debian13 / kernel6.18.44",
+    "mode": "headless CDP, isolated profiles, no-sandbox and disable-gpu verification flags"
+  },
+  "screenshots": [
+    {
+      "path": "docs/plans/curation-diagnostics/reports/curation-desktop.png",
+      "dimensions": [
+        1400,
+        807
+      ],
+      "bytes": 150007,
+      "sha256": "5b147dfeb5a6b28ef9ae646f05e893eb17253fa5a5e66a3a8bf67ec694d7c348",
+      "provenance": "Actual final registered Chromium CDP capture; visually inspected layout"
+    },
+    {
+      "path": "docs/plans/curation-diagnostics/reports/curation-members-desktop.png",
+      "dimensions": [
+        1400,
+        807
+      ],
+      "bytes": 106967,
+      "sha256": "c7e05b3b3b31c2c5312fc8cc7084e53c6e4c03feff69eedf16842dc53fdb6a5e",
+      "provenance": "Actual final registered Chromium CDP capture; visually inspected layout"
+    },
+    {
+      "path": "docs/plans/curation-diagnostics/reports/curation-members-narrow.png",
+      "dimensions": [
+        390,
+        844
+      ],
+      "bytes": 59542,
+      "sha256": "fbb2935a937430ae865ba8d8901d8c62ff8d3f1b81188df3f0b32d5d30550e56",
+      "provenance": "Actual final registered Chromium CDP capture; visually inspected layout"
+    },
+    {
+      "path": "docs/plans/curation-diagnostics/reports/curation-narrow.png",
+      "dimensions": [
+        390,
+        844
+      ],
+      "bytes": 71698,
+      "sha256": "b34ea721d1301fe8e782460453e7e62a7458dda4126699ba18073ea9032eda28",
+      "provenance": "Actual final registered Chromium CDP capture; visually inspected layout"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-python.log",
+      "bytes": 272,
+      "sha256": "c5240f3f582ebd652d2d71e97e66764f3c032457dcf82339e9e61f0cc7407a79"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-static-controller.log",
+      "bytes": 1486,
+      "sha256": "3f25740fd2fc04edefbdd5dd69642d29a51371d33955910765d00d7158bac36a"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_workbench.log",
+      "bytes": 5478,
+      "sha256": "1c0dd32c9a927b6f2bbd15f0117dcee630f6877971260ce31dab351b888358b4"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_grounded.log",
+      "bytes": 5546,
+      "sha256": "a1a02cece2e0e69c7855bbb587300f4a2f5ac5f958b4e6347efdbdead40442ee"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_captions.log",
+      "bytes": 5520,
+      "sha256": "1a2f9dda89a16e6e72c3efc484721a4724cbd83698deab1e81a0af36742e8128"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_release_preview.log",
+      "bytes": 5546,
+      "sha256": "8c7891e387c96e4ef948d21a0e3194acfbf9a710774eabfe6a10ac0700d9cef3"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_saved_selections.log",
+      "bytes": 5567,
+      "sha256": "df1114fa19b1f6ff4e5f69151353081801ecdd88cf60d280c681c2fa9f88d4c5"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_saved_selection_intent.log",
+      "bytes": 5914,
+      "sha256": "32383a3c4c05aaf069c4e74e2b3d93a76c4ec62d771f9a1cc2b10954b5e281dc"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_metadata_filters.log",
+      "bytes": 7320,
+      "sha256": "8b05013380cdef62c882dcacf51b548ccbbc6c9af89fe04dab9746fe403a6df6"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_bulk_import.log",
+      "bytes": 6103,
+      "sha256": "3778d7aaeefb337fd7a1fff3e4c3edb78e7eeebc15552d7264cbaef9c75a387e"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_dataset_integration.log",
+      "bytes": 6121,
+      "sha256": "b8990e830b58ac935e39a7ffbb93730ba2870e406f338c56e8990ea1dbb16ab0"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_curation.log",
+      "bytes": 5654,
+      "sha256": "d6173393615d8d7a974bf6a48c70af26d72a3918de7a154efc3bcc96cc7db9e7"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser.log",
+      "bytes": 166,
+      "sha256": "615b5552d1b73240413cbefea02234b116681926a604642da16f6403f73682a6"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/curation-final-browser_images.log",
+      "bytes": 684,
+      "sha256": "cccf73dddb0bea3094a9c20bc491689ccdb11eefaa3f5e9ec4047974f27fc0fc"
+    }
+  ],
+  "hosted_ci": "Pending parent exact-head inspection; denied worker GitHub API reads remain paused"
+}
