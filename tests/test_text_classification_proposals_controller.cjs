@@ -10,7 +10,8 @@ const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,new E
 const listeners={},requests=[],timers=new Map();let timerId=0;
 const response=(data,ok=true,status=200)=>({ok,status,json:async()=>data});
 const empty={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
-const context=vm.createContext({console,URLSearchParams,structuredClone,crypto,confirm:()=>false,location:{hash:''},history:{pushState(){}},
+const admissionStorage=new Map(),localStorage={getItem:key=>admissionStorage.get(key)??null,setItem:(key,value)=>admissionStorage.set(key,String(value)),removeItem:key=>admissionStorage.delete(key)};
+const context=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage,navigator:{locks:{request:async(key,options,fn)=>fn()}},confirm:()=>false,location:{hash:''},history:{pushState(){}},
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
   document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
   window:{addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
@@ -28,6 +29,68 @@ let job={id:'c'.repeat(32),revision:3,status:'completed',source:row,annotation:{
 delete (job.source={...row}).text;
 context.row=row;context.other=other;context.after=after;
 const button=label=>element('text-classification-proposal-jobs').children.flatMap(section=>section.children).find(child=>child.textContent===label);
+const admitted=(body,extra={})=>({...job,id:body.request_id,source:{...job.source,id:body.source_id,revision:body.revision,source_revision:body.source_revision},config:{...job.config,requested_server_url:body.server_url,requested_model:body.model,instruction:body.instruction,seed:body.seed,labels:body.labels},...extra});
+
+function serializedLocks() {
+  let tail=Promise.resolve();
+  return {request(key,options,fn){const result=tail.then(fn);tail=result.catch(()=>{});return result;}};
+}
+function recoveryHarness(storage,locks=serializedLocks(),extra={}) {
+  const dom=new Map(),queued=[],events={},get=id=>{if(!dom.has(id))dom.set(id,new Element(id));return dom.get(id);};
+  const sandbox=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage:storage,navigator:locks?{locks}:{},location:{hash:''},history:{pushState(){}},confirm:()=>false,
+    setTimeout:()=>1,clearTimeout(){},document:{getElementById:get,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(name,fn){(events[name]||=[]).push(fn);}},
+    fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(empty)):url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise((resolve,reject)=>queued.push({url,options,resolve,reject})),...extra});
+  for(const file of ['workbench.js','text-classification-proposals.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),sandbox);
+  const execute=code=>vm.runInContext(code,sandbox);
+  return {sandbox,get,queued,run:execute,posts:()=>queued.filter(r=>r.options?.method==='POST'),take(suffix,method){const index=queued.findIndex(r=>r.url.endsWith(suffix)&&(!method||r.options?.method===method));assert.notEqual(index,-1,suffix);return queued.splice(index,1)[0];},
+    configure(body){sandbox.fixture=row;execute('showRecord(fixture)');for(const [key,id] of [['server_url','url'],['model','model'],['instruction','guidance'],['seed','seed'],['labels','labels']])get('text-classification-proposal-'+id).value=key==='labels'?JSON.stringify(body.labels):String(body[key]);},
+    resolveLists(jobs=[]){for(const request of [...queued])if(request.url.endsWith('/text-classification-proposals')&&!request.options?.method){queued.splice(queued.indexOf(request),1);request.resolve(response({jobs}));}}};
+}
+function faultStorage(initial) {
+  const data=new Map(initial?[['tuldok.text-classification-proposals.admission.v1',initial]]:[]),fault={get:false,set:false,remove:false};
+  return {data,fault,getItem(key){if(fault.get)throw Error('Synthetic get failure');return data.get(key)??null;},setItem(key,value){if(fault.set)throw Error('Synthetic set failure');data.set(key,String(value));},removeItem(key){if(fault.remove)throw Error('Synthetic remove failure');data.delete(key);}};
+}
+async function durableRecoveryCases() {
+  const key='tuldok.text-classification-proposals.admission.v1',frozen={source_id:row.id,revision:row.revision,source_revision:row.source_revision,server_url:'http://127.0.0.1:2000/v1/',model:'fixture',instruction:'Exact\r\n guidance 👩‍💻',seed:42,labels:['schedule','cancel'],request_id:'d'.repeat(32)};
+  const frame=JSON.stringify({schema_version:1,body:frozen});
+  // A fresh VM models full reload: restore is synchronous despite held startup GETs.
+  const storage=faultStorage(frame),reload=recoveryHarness(storage);assert.deepEqual(JSON.parse(reload.run('JSON.stringify(textClassificationProposalPendingRequest)')),frozen);
+  reload.configure({...frozen,instruction:'Changed during startup'});const changed=reload.get('text-classification-proposal-form').dispatch('submit');await changed;assert.equal(reload.posts().length,0);assert.equal(storage.getItem(key),frame);
+  assert.equal(reload.get('text-classification-proposal-pending-evidence').hidden,false);assert.deepEqual(JSON.parse(reload.get('text-classification-proposal-pending-evidence').textContent),frozen);
+  await reload.get('text-classification-proposal-restore').dispatch('click');assert.equal(reload.posts().length,0);assert.equal(reload.get('text-classification-proposal-url').value,frozen.server_url);assert.equal(reload.get('text-classification-proposal-guidance').value,frozen.instruction);assert.equal(reload.get('text-classification-proposal-model').value,frozen.model);
+  const retry=reload.get('text-classification-proposal-form').dispatch('submit');await flush();const repeat=reload.take('/text-classification-proposals','POST');
+  assert.deepEqual(JSON.parse(repeat.options.body),frozen,'Full reload permits only an explicit exact same-ID/body repeat');
+  repeat.resolve(response(admitted(frozen,{status:'cancelled'})));await flush();reload.resolveLists([admitted(frozen,{status:'cancelled'})]);await retry;
+  assert.equal(reload.run('textClassificationProposalPendingRequest'),null);assert.equal(storage.getItem(key),null);
+  reload.get('text-classification-proposal-guidance').value='Fresh after receipt';const fresh=reload.get('text-classification-proposal-form').dispatch('submit');await flush();const freshPost=reload.take('/text-classification-proposals','POST'),freshBody=JSON.parse(freshPost.options.body);assert.notEqual(freshBody.request_id,frozen.request_id);
+  freshPost.resolve(response(admitted(freshBody)));await flush();reload.resolveLists();await fresh;
+  // Terminal persisted recovery without a retry clears only after the matching GET.
+  const terminalStore=faultStorage(frame),terminal=recoveryHarness(terminalStore);terminal.configure(frozen);terminal.resolveLists([admitted(frozen,{status:'cancelled'})]);await flush();assert.equal(terminal.run('textClassificationProposalPendingRequest'),null);assert.equal(terminalStore.getItem(key),null);
+  // Read failure hides a real pending identity; no new POST is allowed.
+  const unreadable=faultStorage(frame);unreadable.fault.get=true;const readFailure=recoveryHarness(unreadable);readFailure.configure({...frozen,instruction:'Unsafe read-failure intent'});await readFailure.get('text-classification-proposal-form').dispatch('submit');assert.equal(readFailure.posts().length,0);assert.ok(readFailure.run('textClassificationProposalStorageBlocked'));
+  unreadable.fault.get=false;await readFailure.get('text-classification-proposal-form').dispatch('submit');assert.equal(readFailure.posts().length,0);assert.equal(readFailure.run('textClassificationProposalPendingRequest.request_id'),frozen.request_id);
+  // Write failure prevents transport, keeps the exact in-memory intent, then an
+  // explicit unchanged repeat may proceed only once persistence succeeds.
+  const unwritable=faultStorage(),writeFailure=recoveryHarness(unwritable);writeFailure.configure(frozen);writeFailure.resolveLists();await flush();unwritable.fault.set=true;
+  await writeFailure.get('text-classification-proposal-form').dispatch('submit');assert.equal(writeFailure.posts().length,0);assert.equal(unwritable.getItem(key),null);const held=JSON.parse(writeFailure.run('JSON.stringify(textClassificationProposalPendingRequest)'));
+  unwritable.fault.set=false;const savedRetry=writeFailure.get('text-classification-proposal-form').dispatch('submit');await flush();const savedPost=writeFailure.take('/text-classification-proposals','POST');assert.deepEqual(JSON.parse(savedPost.options.body),held);savedPost.reject(Error('Synthetic lost admission acknowledgement'));await savedRetry;assert.deepEqual(JSON.parse(unwritable.getItem(key)).body,held);
+  // Removal failure retains the durable admission through another full reload.
+  const unremovable=faultStorage(),removeFailure=recoveryHarness(unremovable);removeFailure.configure(frozen);removeFailure.resolveLists();await flush();const removeStart=removeFailure.get('text-classification-proposal-form').dispatch('submit');await flush();const removePost=removeFailure.take('/text-classification-proposals','POST'),removeBody=JSON.parse(removePost.options.body);unremovable.fault.remove=true;removePost.resolve(response(admitted(removeBody)));await removeStart;assert.equal(removeFailure.run('textClassificationProposalPendingRequest.request_id'),removeBody.request_id);assert.ok(unremovable.getItem(key));
+  const afterRemoveReload=recoveryHarness(unremovable);afterRemoveReload.configure({...removeBody,instruction:'Blocked until remove succeeds'});await afterRemoveReload.get('text-classification-proposal-form').dispatch('submit');assert.equal(afterRemoveReload.posts().length,0);unremovable.fault.remove=false;afterRemoveReload.resolveLists([admitted(removeBody)]);await flush();assert.equal(unremovable.getItem(key),null);
+  // Malformed and oversized records are never discarded based on absence/age.
+  const invalid=faultStorage('{corrupt'),corrupt=recoveryHarness(invalid);corrupt.configure(frozen);corrupt.resolveLists();await flush();await corrupt.get('text-classification-proposal-form').dispatch('submit');assert.equal(corrupt.posts().length,0);assert.equal(invalid.getItem(key),'{corrupt');
+  let parseCalls=0;const oversized=faultStorage(' '.repeat(64001)),oversizedPage=recoveryHarness(oversized,serializedLocks(),{JSON:{stringify:JSON.stringify,parse(value){++parseCalls;return JSON.parse(value);}}});assert.equal(parseCalls,0,'Oversized frames must fail before JSON decoding');assert.ok(oversizedPage.run('textClassificationProposalStorageBlocked'));
+  const duplicateRaw=frame.replace('"request_id":"'+frozen.request_id+'"','"request_id":"'+'e'.repeat(32)+'","request_id":"'+frozen.request_id+'"'),duplicateStore=faultStorage(duplicateRaw),duplicatePage=recoveryHarness(duplicateStore);assert.equal(duplicatePage.run('textClassificationProposalPendingRequest'),null);assert.equal(duplicatePage.run('textClassificationProposalRecoveryId'),null);duplicatePage.configure(frozen);duplicatePage.resolveLists([admitted(frozen)]);await flush();await duplicatePage.get('text-classification-proposal-form').dispatch('submit');assert.equal(duplicatePage.posts().length,0);assert.equal(duplicateStore.getItem(key),duplicateRaw,'Ambiguous duplicate IDs cannot be arbitrarily salvaged or discarded');
+  const partial=faultStorage(JSON.stringify({schema_version:0,body:{request_id:frozen.request_id}})),salvage=recoveryHarness(partial);salvage.resolveLists([admitted(frozen)]);await flush();const exact=salvage.take('/text-classification-proposals/'+frozen.request_id);exact.resolve(response(admitted(frozen)));await flush();assert.equal(partial.getItem(key),null,'Malformed salvage requires an authoritative exact-ID GET');
+  // Unsupported locking cannot admit inference or overwrite a pending record.
+  const noLocksStore=faultStorage(),noLocks=recoveryHarness(noLocksStore,null);noLocks.configure(frozen);await noLocks.get('text-classification-proposal-form').dispatch('submit');assert.equal(noLocks.posts().length,0);assert.equal(noLocksStore.getItem(key),null);assert.ok(noLocks.run('textClassificationProposalStorageBlocked.includes("Web Locks")'));
+  // Two same-origin pages loaded while storage was empty must serialize the
+  // pre-POST read/write, and a late receipt cannot remove a different identity.
+  const shared=faultStorage(),locks=serializedLocks(),left=recoveryHarness(shared,locks),right=recoveryHarness(shared,locks);left.configure(frozen);right.configure({...frozen,instruction:'Other page intent'});left.resolveLists();right.resolveLists();await flush();const leftSubmit=left.get('text-classification-proposal-form').dispatch('submit'),rightSubmit=right.get('text-classification-proposal-form').dispatch('submit');await flush();await rightSubmit;assert.equal(left.posts().length,1);assert.equal(right.posts().length,0);
+  const original=left.take('/text-classification-proposals','POST'),originalBody=JSON.parse(original.options.body),successor={...frozen,request_id:'e'.repeat(32),instruction:'Successor persisted elsewhere'};shared.setItem(key,JSON.stringify({schema_version:1,body:successor}));original.resolve(response(admitted(originalBody)));await leftSubmit;assert.deepEqual(JSON.parse(shared.getItem(key)).body,successor,'A stale authoritative receipt must not erase another admission');
+  console.log('Durable classification recovery full reload/delayed reconciliation/exact-ID repeat, authoritative terminal recovery, get/set/remove failures, corrupt/oversized records, missing locks, and two-page admission/CAS passed.');
+}
+
 (async()=>{
   await flush();run('showRecord(row);selected.set(row.id,row);selection(true)');resolve('/text-classification-proposals',{jobs:[job]});await flush();
   assert.equal(button('Apply as draft').type,'button');const pairs=run('JSON.stringify(releaseBody().items)');
@@ -39,7 +102,7 @@ const button=label=>element('text-classification-proposal-jobs').children.flatMa
   if(process.env.CLASSIFICATION_RECOVERY_CASE!=='reject') {
     // A list and exact-ID 404 can precede admission of a held start POST.
     element('text-classification-proposal-model').value='fixture';element('text-classification-proposal-guidance').value='Held admission';element('text-classification-proposal-seed').value='42';
-    const heldStart=element('text-classification-proposal-form').dispatch('submit'),heldPost=take('/text-classification-proposals'),heldBody=JSON.parse(heldPost.options.body);
+    const heldStart=element('text-classification-proposal-form').dispatch('submit');await flush();const heldPost=take('/text-classification-proposals'),heldBody=JSON.parse(heldPost.options.body);
     assert.deepEqual(heldBody.labels,job.config.labels,'Admission freezes the exact authored label array');
     const early=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[job]});await flush();
     take('/text-classification-proposals/'+heldBody.request_id).resolve(response({error:'Not persisted yet'},false,404));await early;
@@ -51,39 +114,39 @@ const button=label=>element('text-classification-proposal-jobs').children.flatMa
     element('text-classification-proposal-guidance').value='Changed intent';await element('text-classification-proposal-form').dispatch('submit');assert.equal(requests.length,0);
     assert.ok(element('text-classification-proposal-status').textContent.includes('unknown acknowledgement'));
     // A refusal of a repeat does not establish what happened to its earlier admission.
-    element('text-classification-proposal-guidance').value='Held admission';const refusedRepeat=element('text-classification-proposal-form').dispatch('submit'),refusedPost=take('/text-classification-proposals');
+    element('text-classification-proposal-guidance').value='Held admission';const refusedRepeat=element('text-classification-proposal-form').dispatch('submit');await flush();const refusedPost=take('/text-classification-proposals');
     assert.deepEqual(JSON.parse(refusedPost.options.body),heldBody);
     refusedPost.resolve(response({error:'Busy; earlier admission still unresolved'},false,409));await refusedRepeat;
     assert.equal(run('textClassificationProposalPendingRequest?.request_id'),heldBody.request_id,'A repeated-request 409 must retain the original ambiguous admission identity');
     element('text-classification-proposal-guidance').value='Changed after repeat refusal';await element('text-classification-proposal-form').dispatch('submit');assert.equal(requests.length,0);
-    element('text-classification-proposal-guidance').value='Held admission';const retry=element('text-classification-proposal-form').dispatch('submit'),retryPost=take('/text-classification-proposals');
+    element('text-classification-proposal-guidance').value='Held admission';const retry=element('text-classification-proposal-form').dispatch('submit');await flush();const retryPost=take('/text-classification-proposals');
     assert.deepEqual(JSON.parse(retryPost.options.body),heldBody,'Explicit unchanged repeat must reuse the exact admission ID/body');
-    const persistedWhilePosting=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[{...job,id:heldBody.request_id}]});await persistedWhilePosting;
+    const persistedWhilePosting=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[admitted(heldBody)]});await persistedWhilePosting;
     assert.equal(run('textClassificationProposalPendingRequest?.request_id'),heldBody.request_id,'Even a persisted GET cannot revoke an in-flight POST identity');
-    retryPost.resolve(response({...job,id:heldBody.request_id}));await flush();resolve('/text-classification-proposals',{jobs:[{...job,id:heldBody.request_id}]});await retry;
-    assert.equal(run('textClassificationProposalPendingRequest'),null);
+    retryPost.resolve(response(admitted(heldBody)));await flush();resolve('/text-classification-proposals',{jobs:[admitted(heldBody)]});await retry;
+    assert.equal(run('textClassificationProposalPendingRequest'),null);assert.equal(admissionStorage.size,0);
     // A recovered explicitly cancelled attempt releases the old intent for a fresh request.
-    const cancelledStart=element('text-classification-proposal-form').dispatch('submit'),cancelledPost=take('/text-classification-proposals'),cancelledBody=JSON.parse(cancelledPost.options.body);
+    const cancelledStart=element('text-classification-proposal-form').dispatch('submit');await flush();const cancelledPost=take('/text-classification-proposals'),cancelledBody=JSON.parse(cancelledPost.options.body);
     assert.notEqual(cancelledBody.request_id,heldBody.request_id);cancelledPost.reject(Error('Lost start acknowledgement'));await cancelledStart;
-    const cancelledLookup=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[{...job,id:cancelledBody.request_id,status:'cancelled'}]});await cancelledLookup;
+    const cancelledLookup=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[admitted(cancelledBody,{status:'cancelled'})]});await cancelledLookup;
     assert.equal(run('textClassificationProposalPendingRequest'),null);
-    element('text-classification-proposal-guidance').value='New intent after cancellation';const fresh=element('text-classification-proposal-form').dispatch('submit'),freshPost=take('/text-classification-proposals'),freshBody=JSON.parse(freshPost.options.body);
+    element('text-classification-proposal-guidance').value='New intent after cancellation';const fresh=element('text-classification-proposal-form').dispatch('submit');await flush();const freshPost=take('/text-classification-proposals'),freshBody=JSON.parse(freshPost.options.body);
     assert.notEqual(freshBody.request_id,cancelledBody.request_id);assert.equal(freshBody.instruction,'New intent after cancellation');
-    freshPost.resolve(response({...job,id:freshBody.request_id}));await flush();resolve('/text-classification-proposals',{jobs:[job]});await fresh;
+    freshPost.resolve(response(admitted(freshBody)));await flush();resolve('/text-classification-proposals',{jobs:[job]});await fresh;
   }
   if(process.env.CLASSIFICATION_RECOVERY_CASE!=='reject') {
     // A first-attempt definite refusal has no older unknown admission to preserve.
-    const refusedStart=element('text-classification-proposal-form').dispatch('submit'),refusedPost=take('/text-classification-proposals'),refusedBody=JSON.parse(refusedPost.options.body);
+    const refusedStart=element('text-classification-proposal-form').dispatch('submit');await flush();const refusedPost=take('/text-classification-proposals'),refusedBody=JSON.parse(refusedPost.options.body);
     refusedPost.resolve(response({error:'Busy before admission'},false,409));await refusedStart;assert.equal(run('textClassificationProposalPendingRequest'),null);
-    element('text-classification-proposal-guidance').value='New intent after definite refusal';const accepted=element('text-classification-proposal-form').dispatch('submit'),acceptedPost=take('/text-classification-proposals'),acceptedBody=JSON.parse(acceptedPost.options.body);
-    assert.notEqual(acceptedBody.request_id,refusedBody.request_id);acceptedPost.resolve(response({...job,id:acceptedBody.request_id}));await flush();resolve('/text-classification-proposals',{jobs:[job]});await accepted;
+    element('text-classification-proposal-guidance').value='New intent after definite refusal';const accepted=element('text-classification-proposal-form').dispatch('submit');await flush();const acceptedPost=take('/text-classification-proposals'),acceptedBody=JSON.parse(acceptedPost.options.body);
+    assert.notEqual(acceptedBody.request_id,refusedBody.request_id);acceptedPost.resolve(response(admitted(acceptedBody)));await flush();resolve('/text-classification-proposals',{jobs:[job]});await accepted;
   }
   // Two starts share one pending action; a lost start is reconciled by GET only.
   element('text-classification-proposal-model').value='fixture';element('text-classification-proposal-guidance').value='Visible text';element('text-classification-proposal-seed').value='42';
   const start=element('text-classification-proposal-form').dispatch('submit');await element('text-classification-proposal-form').dispatch('submit');
   assert.equal(requests.length,1);const request=take('/text-classification-proposals'),body=JSON.parse(request.options.body);request.reject(Error('Lost start acknowledgement'));await start;
   assert.equal(run('textClassificationProposalPendingRequest.request_id'),body.request_id);
-  const reconcile=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[{...job,id:body.request_id,status:'generating'}]});await reconcile;
+  const reconcile=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[admitted(body,{status:'generating'})]});await reconcile;
   assert.equal(run('textClassificationProposalPendingRequest'),null);assert.equal(requests.length,0);assert.equal(timers.size,1);
   const completed=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[job]});await completed;assert.equal(timers.size,0);
   // Local labels are exact, never repaired or guessed, and altered choices block Apply.
@@ -175,5 +238,6 @@ const button=label=>element('text-classification-proposal-jobs').children.flatMa
   assert.equal(timers.size,0);assert.equal(run('textClassificationProposalJobs[0].status'),'applied');
   for(const fn of listeners.pageshow||[])fn();resolve('/text-classification-proposals',{jobs:[{...job,status:'generating'}]});await flush();assert.equal(timers.size,1);
   for(const fn of listeners.pagehide||[])fn();assert.equal(timers.size,0);assert.equal(requests.length,0);
+  await durableRecoveryCases();
   console.log('Text classification controller projected summaries, exact labels/config/source fences, abstention, held admission/early 404/lost acknowledgement/exact-ID repeat, cancelled/new intent, annotation-save/reject ownership, later-input/form/apply ownership and polling lifecycle passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
