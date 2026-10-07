@@ -1,0 +1,169 @@
+{
+  "searched_roots": [
+    "/workspace",
+    "/tmp",
+    "/opt"
+  ],
+  "inaccessible_paths_not_retried": [
+    "/root/.cache/huggingface",
+    "/root/.local/share/pumas"
+  ],
+  "model_file_candidates": [],
+  "read_errors": [
+    "rg: /tmp/codex-daemon-1000: Permission denied (os error 13)",
+    "rg: /opt/containerd: Permission denied (os error 13)"
+  ],
+  "observed_listener_model_probes": [
+    {
+      "port": 38323,
+      "http": 404
+    },
+    {
+      "port": 34341,
+      "http": 200,
+      "models": {
+        "data": [
+          {
+            "id": "image-test",
+            "owned_by": "pumas",
+            "capabilities": [
+              "image_generation"
+            ]
+          },
+          {
+            "id": "vision-only"
+          }
+        ]
+      }
+    },
+    {
+      "port": 34845,
+      "http": 200,
+      "models": {
+        "data": [
+          {
+            "id": "corners-test",
+            "name": "Corner test",
+            "architecture": {
+              "input_modalities": [
+                "image"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "supported_parameters": [
+              "structured_outputs"
+            ]
+          },
+          {
+            "id": "text-only",
+            "architecture": {
+              "input_modalities": [
+                "text"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "supported_parameters": [
+              "structured_outputs"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "port": 34961,
+      "http": 200,
+      "models": {
+        "data": [
+          {
+            "id": "corners-test",
+            "name": "Corner test",
+            "architecture": {
+              "input_modalities": [
+                "image"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "supported_parameters": [
+              "structured_outputs"
+            ]
+          },
+          {
+            "id": "text-only",
+            "architecture": {
+              "input_modalities": [
+                "text"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "supported_parameters": [
+              "structured_outputs"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "port": 1040,
+      "error": "BadStatusLine"
+    },
+    {
+      "port": 42031,
+      "http": 200,
+      "models": {
+        "data": [
+          {
+            "id": "corners-test",
+            "name": "Corner test",
+            "architecture": {
+              "input_modalities": [
+                "image"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "supported_parameters": [
+              "structured_outputs"
+            ]
+          },
+          {
+            "id": "text-only",
+            "architecture": {
+              "input_modalities": [
+                "text"
+              ],
+              "output_modalities": [
+                "text"
+              ]
+            },
+            "supported_parameters": [
+              "structured_outputs"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "port": 41631,
+      "http": 404
+    },
+    {
+      "port": 44965,
+      "http": 404
+    }
+  ],
+  "process_inventory": "No pumas/llama/ollama/vllm/torch process names observed",
+  "disposition": "No ready Pumas/model pair found in bounded environment inventory; positive real-model qualification blocked. No setup/download/auth changes.",
+  "fixture_catalog_matches": {
+    "corners-test": "tests/fake_ai.py:21",
+    "image-test": "tests/fake_images.py:34"
+  }
+}

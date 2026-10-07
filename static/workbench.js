@@ -21,7 +21,7 @@ function action(id, fn, event = 'click') {
     finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(page) pagination(); }
   });
 }
-function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); }
+function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); if(typeof curationChanged === 'function') curationChanged(); }
 function pagination() { $('previous').disabled = offset === 0; $('next').disabled = offset + page.items.length >= page.total; }
 const exactFilters = [['label','Target label',80], ['group','Protected source/group',120], ['rights','Rights note',1000]];
 let exactFilterFormat = 'text';
@@ -51,10 +51,13 @@ $('exact-filter-format').addEventListener('change', () => {
   } catch(error) { $('exact-filter-format').value = exactFilterFormat; notice(error.message,true); }
 });
 async function refresh() {
-  const epoch = ++queryEpoch;
   const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
     ...Object.fromEntries(exactFilters.map(([key,name]) => [key,exactFilterValue(key,name)])), offset, limit:40});
-  const result = await api('records?' + params);
+  const epoch = ++queryEpoch;
+  if(typeof curationInvalidate === 'function') curationInvalidate('Collection query pending. Refresh diagnostics after it completes.', true);
+  let result;
+  try { result = await api('records?' + params); }
+  finally { if(epoch === queryEpoch && typeof curationQueryFinished === 'function') curationQueryFinished(); }
   if (epoch !== queryEpoch) return;
   page = result;
   $('records').replaceChildren();
@@ -74,12 +77,15 @@ async function refresh() {
   pagination(); selection();
 }
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
-function mayDiscard() { return !dirty || confirm('Discard unsaved annotation edits?'); }
+function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty) || (typeof responseDirty !== 'undefined' && responseDirty); }
+function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation, rights-note or response edits?'); }
+function responseIntentEpoch() { return typeof responseEditEpoch === 'undefined' ? null : responseEditEpoch; }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
-  const epoch = ++editorEpoch;
+  const epoch = ++editorEpoch, responseEpoch = responseIntentEpoch();
   const record = await api('records/' + id);
-  if (epoch !== editorEpoch) return;
+  // Parent replacement discards both editors; each owner must still match the request.
+  if (epoch !== editorEpoch || responseEpoch !== responseIntentEpoch()) return;
   showRecord(record);
 }
 function showRecord(record) {
@@ -96,7 +102,10 @@ function showRecord(record) {
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
-  $('history-output').hidden = true; renderTargets(); notice('Record loaded.');
+  $('history-output').hidden = true; renderTargets();
+  if(typeof rightsRecordShown === 'function') rightsRecordShown(record);
+  if(typeof showResponses === 'function') showResponses(record);
+  notice('Record loaded.');
 }
 function renderTargets() {
   const task = $('task').value;
@@ -151,7 +160,9 @@ $('asset-image').addEventListener('pointerup',event=>{
 });
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
-  const record=current, task=$('task').value, epoch=++editorEpoch;
+  if(typeof rightsDirty !== 'undefined' && rightsDirty) throw Error('Save or cancel the rights-note edit before saving an annotation.');
+  if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) throw Error('Save or cancel the response edit before saving the annotation.');
+  const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
@@ -163,7 +174,7 @@ action('editor',async()=>{
   // A successful older save can prove retained fixed pairs stale without owning them.
   const selectedPair=selected.get(saved.id);
   if(selectedPair && (selectedPair.revision<saved.revision || selectedPair.source_revision<saved.source_revision)) invalidateRelease();
-  if(epoch===editorEpoch)showRecord(saved);
+  if(epoch===editorEpoch && responseEpoch===responseIntentEpoch())showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');
 async function readImportImage(file) {
@@ -177,13 +188,13 @@ async function readImportImage(file) {
 }
 action('import-form',async()=>{
   if(!mayDiscard())return;
-  const epoch=++editorEpoch;
+  const epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const file=$('import-image').files[0], text=$('import-text').value;
   if(file && text.trim())throw Error('Import an image or text, one at a time.');
   const body={kind:file?'image':'text',name:file?file.name:$('import-name').value,groups:[$('import-group').value],rights:$('rights').value,text};
   if(file)body.image=await readImportImage(file);
   const record=await api('import',body);await refresh();
-  if(epoch===editorEpoch)showRecord(record);
+  if(epoch===editorEpoch && responseEpoch===responseIntentEpoch())showRecord(record);
   notice('Record imported.');
 },'submit');
 action('generate-form',async()=>{
@@ -277,7 +288,7 @@ $('release-form').addEventListener('submit',async event=>{
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }
 });
-window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(hasUnsavedEdits()){event.preventDefault();event.returnValue='';}});
 refresh().then(()=>notice('Collection ready.')).catch(error=>notice(error.message,true));
 
 // Proposal requests own their refresh timer; polling ends at terminal state/page exit.

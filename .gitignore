@@ -4,3 +4,4 @@ __pycache__/
 data/
 *.zip
 .pytest_cache/
+/test-results/rights-note/

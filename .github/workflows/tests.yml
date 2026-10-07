@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007]
   pull_request:
 permissions:
   contents: read
@@ -20,14 +20,24 @@ jobs:
       - run: python -m unittest discover -s tests
       - run: node --check static/workbench.js
       - run: node --check static/saved-selections.js
+      - run: node --check static/curation.js
       - run: node --check static/bulk_import.js
       - run: node --check static/caption_import.js
+      - run: node --check static/rights-note.js
+      - run: node --check static/instruction-responses.js
+      - run: node --check static/native_text_import.js
+      - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
       - run: node tests/test_bulk_import_controller.cjs
       - run: node tests/test_caption_import_controller.cjs
+      - run: node tests/test_rights_note_controller.cjs
+      - run: node tests/test_instruction_responses_controller.cjs
+      - run: node tests/test_browser_startup.cjs
+      - run: node tests/test_native_text_import_controller.cjs
+      - run: node tests/test_combined_workbench_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -55,12 +65,40 @@ jobs:
       - run: node tests/browser_dataset_integration.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_curation.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_caption_import.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_caption_dataset_integration.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_images.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_rights_note.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/test_rights_note_artifacts.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install -r tests/instruction-consumer-requirements.txt
+      - run: node tests/browser_instruction_responses.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_native_text_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_combined_workbench.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -74,13 +112,17 @@ jobs:
             docs/plans/explicit-metadata-filters/reports/filters-*.png
             docs/plans/bulk-real-import/reports/bulk-*.png
             docs/plans/dataset-integration/reports/integration-*.png
+            docs/plans/curation-diagnostics/reports/curation-*.png
             docs/plans/annotated-caption-import/reports/caption-import-*.png
             docs/plans/dataset-caption-integration/reports/caption-combined-*.png
             docs/plans/dataset-caption-integration/reports/caption-combined-session.json
+            docs/plans/rights-note-correction/reports/rights-*.png
+            test-results/rights-note/**
+            docs/plans/instruction-responses/reports/instruction-*.png
+            docs/plans/instruction-responses/reports/instruction-session.json
+            docs/plans/instruction-responses/reports/instruction-downloaded.zip
+            docs/plans/native-text-classification-import/reports/native-text-*.png
+            docs/plans/combined-workbench-local/reports/**
+            docs/plans/workbench-parent-owner-fix/reports/**
+            docs/plans/workbench-projection-warnings-fix/reports/**
           if-no-files-found: ignore
-      - run: node tests/browser.cjs
-        env:
-          BROWSER: /usr/bin/google-chrome
-      - run: node tests/browser_images.cjs
-        env:
-          BROWSER: /usr/bin/google-chrome

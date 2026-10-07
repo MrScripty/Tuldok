@@ -1,0 +1,189 @@
+{
+  "base": "e33144a389e611dfb9e95a83f248e7bf87d7a3aa",
+  "python": {
+    "tests": 175,
+    "seconds": 46.096,
+    "result": "PASS"
+  },
+  "javascript": {
+    "registered_suites": 6,
+    "result": "PASS"
+  },
+  "browsers": [
+    {
+      "suite": "browser_workbench",
+      "status": 0,
+      "seconds": 2.423,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_workbench.log"
+    },
+    {
+      "suite": "browser_grounded",
+      "status": 0,
+      "seconds": 4.491,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_grounded.log"
+    },
+    {
+      "suite": "browser_captions",
+      "status": 0,
+      "seconds": 3.71,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_captions.log"
+    },
+    {
+      "suite": "browser_release_preview",
+      "status": 0,
+      "seconds": 2.615,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_release_preview.log"
+    },
+    {
+      "suite": "browser_saved_selections",
+      "status": 0,
+      "seconds": 4.019,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_saved_selections.log"
+    },
+    {
+      "suite": "browser_saved_selection_intent",
+      "status": 0,
+      "seconds": 2.493,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_saved_selection_intent.log"
+    },
+    {
+      "suite": "browser_metadata_filters",
+      "status": 0,
+      "seconds": 4.212,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_metadata_filters.log"
+    },
+    {
+      "suite": "browser_bulk_import",
+      "status": 0,
+      "seconds": 2.494,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_bulk_import.log"
+    },
+    {
+      "suite": "browser_dataset_integration",
+      "status": 0,
+      "seconds": 4.096,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_dataset_integration.log"
+    },
+    {
+      "suite": "browser_rights_note",
+      "status": 0,
+      "seconds": 3.383,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_rights_note.log"
+    },
+    {
+      "suite": "browser",
+      "status": 0,
+      "seconds": 11.648,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser.log"
+    },
+    {
+      "suite": "browser_images",
+      "status": 0,
+      "seconds": 4.262,
+      "log": "/workspace/scratch/tuldok-retry/rights-final-browser_images.log"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "docs/plans/rights-note-correction/reports/rights-desktop.png",
+      "dimensions": [
+        1400,
+        807
+      ],
+      "bytes": 81920,
+      "sha256": "05b42beef3020d95d510ef62b9f50df4151cc56525bfa66dc9701abab027f503",
+      "provenance": "Actual final registered Chromium CDP capture, visually inspected"
+    },
+    {
+      "path": "docs/plans/rights-note-correction/reports/rights-narrow.png",
+      "dimensions": [
+        390,
+        844
+      ],
+      "bytes": 55118,
+      "sha256": "d446356de33a05a6ded5dc5543c8bdfc078e3a0a36f21e4c481a3f5505739dd4",
+      "provenance": "Actual final registered Chromium CDP capture, visually inspected"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-full-python.log",
+      "bytes": 276,
+      "sha256": "88e369f7e609ecc4e748f0d63b7fe0acffda23a1be216992109755a2a712549e"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-static-controller.log",
+      "bytes": 1491,
+      "sha256": "0826aeb0f1beb5a171e10682b4295a4fab52aafe4741649cecd0c7625462d219"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_workbench.log",
+      "bytes": 5478,
+      "sha256": "8a52d9e3d4ed4df5907a46ec15b2ed914cff44b119fe1ffa2e74d1d65306c57c"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_grounded.log",
+      "bytes": 5546,
+      "sha256": "29c7071c2d8846edba2731b2a5d96e8f099efea60be83aed2109b83e30ea3aeb"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_captions.log",
+      "bytes": 5520,
+      "sha256": "7930fdaa08fbf4d40167c71eeafc846423296a945fce7da11d90fa3bd58cc3d5"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_release_preview.log",
+      "bytes": 5546,
+      "sha256": "cde128c3e70fbe2fcddb2378f314861d138237488e8ad2a37ccf60e564f4f918"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_saved_selections.log",
+      "bytes": 5567,
+      "sha256": "876b3291f90ee91787cd168d18f345ca3ecfbefaa95fc3727a87ce731b99b3ce"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_saved_selection_intent.log",
+      "bytes": 5914,
+      "sha256": "77cac4ec87da8a6732154dcbe6ded8497cd6725152abbdcfaba2901aaeabc243"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_metadata_filters.log",
+      "bytes": 7320,
+      "sha256": "4ad76f319ff9869c268ff24780846dcc3e9a4ae09373b44c771595e00750fda4"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_bulk_import.log",
+      "bytes": 6103,
+      "sha256": "2a1abf7b0cc0ef6dc78a860437bd44425ba9c0e40ac08413b0dc852e12b689be"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_dataset_integration.log",
+      "bytes": 6121,
+      "sha256": "69203160ce2c7bdd655d5515598eb1e3c1ed1344b8fd87abcf88c15dcfcf6276"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_rights_note.log",
+      "bytes": 5655,
+      "sha256": "8299e9ab60401031f102d8b9d5a2ade561de99828d0a51b79674b622b9a2537e"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser.log",
+      "bytes": 166,
+      "sha256": "615b5552d1b73240413cbefea02234b116681926a604642da16f6403f73682a6"
+    },
+    {
+      "path": "/workspace/scratch/tuldok-retry/rights-final-browser_images.log",
+      "bytes": 684,
+      "sha256": "cccf73dddb0bea3094a9c20bc491689ccdb11eefaa3f5e9ec4047974f27fc0fc"
+    }
+  ],
+  "runtime": {
+    "python": "3.12.14",
+    "node": "24.19.0",
+    "pillow": "12.3.0",
+    "chromium": "151.0.7922.173",
+    "mode": "headless CDP, isolated temporary state, existing no-sandbox/disable-gpu verification flags",
+    "platform": "Linux x86_64 / Debian13 / kernel6.18.44"
+  },
+  "hosted_ci": "Pending parent exact-head inspection, worker denied API reads remain paused"
+}
