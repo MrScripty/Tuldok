@@ -1,9 +1,0 @@
-{
-  "fresh_invalid_cases": 12,
-  "same_document_corrections": 12,
-  "old_whitespace_guidance_finding_repaired": true,
-  "no_POST_or_recovery_storage_before_correction": true,
-  "no_storage_error_latch": true,
-  "exact_2000_astral_guidance_preserved": true,
-  "legacy_invalid_stored_guidance_remains_fail_closed": true
-}

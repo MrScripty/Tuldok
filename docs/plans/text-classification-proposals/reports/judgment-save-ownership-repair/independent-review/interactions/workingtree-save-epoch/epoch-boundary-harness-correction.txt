@@ -1,1 +1,0 @@
-Initial no-op assertion compared objects across VM realms using deepStrictEqual, which rejects different prototypes despite identical fields. JSON-roundtrip the VM body for a data comparison. Initial exact source/log retained; no runtime defect.

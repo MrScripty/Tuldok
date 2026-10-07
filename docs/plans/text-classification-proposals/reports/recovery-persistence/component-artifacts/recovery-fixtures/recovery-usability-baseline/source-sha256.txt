@@ -1,2 +1,0 @@
-0735bef9d7e0a11b322f2c55a0172986055eb6007cb4590718d13898be629d2a  tests/browser_text_classification_proposals.cjs
-d584548e8e932686aa0a7ac019e5c3c70137bfaf2eee091e4fa254aa541970db  static/text-classification-proposals.js

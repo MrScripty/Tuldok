@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaRoot,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -11,7 +12,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 (async()=>{
-  const outputRoot=process.env.TULDOK_CLASSIFICATION_REPORT_ROOT||path.join(root,'test-results/text-classification-proposals');fs.mkdirSync(outputRoot,{recursive:true});
+  const outputRoot=path.join(qaRoot(root,process.env.TULDOK_CLASSIFICATION_REPORT_ROOT),'text-classification-proposals');fs.mkdirSync(outputRoot,{recursive:true});
   const report=fs.mkdtempSync(path.join(outputRoot,'run-'));
   console.log('Text classification proposal evidence: '+report);
   const server=launch('python3',['-u','tests/browser_text_classification_proposals_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
@@ -187,9 +188,9 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal((await evaluate('validationPostedBodies')).length,2);assert.equal(await count(),beforeValidationInference+2);assert.equal((await evaluate('validationPostedBodies'))[1].instruction,exactGuidance,'Valid 2000-character guidance is preserved exactly');
   fs.writeFileSync(path.join(report,'native-validation-observation.json'),JSON.stringify({url_code_points:2072,rejected_url:rejectedLongURL,rejected_guidance:rejectedLongGuidance,accepted_url:shortValidationURL,accepted_guidance_code_points:2000,accepted_guidance_sha256:digest(Buffer.from(exactGuidance)),explicit_posts:await evaluate('validationPostedBodies'),before_inference:beforeValidationInference,after_inference:await count()},null,2));
   await evaluate('document.getElementById('+JSON.stringify(prefix+'panel')+').open=true;document.getElementById('+JSON.stringify(prefix+'panel')+').scrollIntoView()');
-  let shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(report,'classification-desktop.png'),Buffer.from(shot.data,'base64'));
+  let shot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'classification-desktop.jpg'),Buffer.from(shot.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow classification layout must not overflow');
-  await evaluate('document.getElementById('+JSON.stringify(prefix+'panel')+').scrollIntoView()');shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(report,'classification-narrow.png'),Buffer.from(shot.data,'base64'));
+  await evaluate('document.getElementById('+JSON.stringify(prefix+'panel')+').scrollIntoView()');shot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'classification-narrow.jpg'),Buffer.from(shot.data,'base64'));
   await evaluate('document.getElementById('+JSON.stringify(prefix+'labels')+').focus();document.getElementById('+JSON.stringify(prefix+'labels')+').select()');await send('Input.insertText',{text:JSON.stringify(labels)});assert.equal(await evaluate('document.getElementById('+JSON.stringify(prefix+'labels')+').value'),JSON.stringify(labels));assert.deepEqual(errors,[]);
   // Shared-origin, real-IDB dispatch races. All ordering comes from fetch
   // barriers and completed handlers, rather than a sleep chosen to win a race.

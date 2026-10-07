@@ -24,7 +24,7 @@ from app import Dataset, make_handler
 from caption_import import MAX_SOURCE, origin_groups
 from dataset_releases import CAPTION_CONSUMER
 
-FIXTURE = Path(__file__).resolve().parents[1] / 'docs/plans/annotated-caption-import/reports/fixtures/native-caption-release'
+FIXTURE = Path(__file__).resolve().parents[1] / 'tests/fixtures/native-caption-release'
 CONSUMER = Path(__file__).parent / 'fixtures/diffusion_check_image_data.py'
 
 

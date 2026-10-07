@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/scratch/tuldok-classification-preference-integration/review-backend/classification_preference_probe.py", line 23, in <module>
-    release=r.create(dict(request,preview_token=preview['preview_token']));archive=r.get(release['id']);frozen_bytes=archive.read_bytes();frozen_hash=hashlib.sha256(frozen_bytes).hexdigest()
-                                                                                   ^^^^^
-AttributeError: 'Releases' object has no attribute 'get'

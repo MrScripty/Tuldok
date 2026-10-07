@@ -1,0 +1,635 @@
+{
+  "archive_commit": "309a87d753f97b245385f8d6db20353ab536a836",
+  "archive_docs_plans_tree": "d8480c55bcde971ce26022512422f61565eac2f8",
+  "archive_method": "reachable immutable Git ancestor; all original bytes remain retrievable with git show COMMIT:PATH",
+  "original_report_count": 3834,
+  "original_report_bytes": 195517431,
+  "relocated_lossless_inputs": [
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/README.txt",
+      "path": "tests/fixtures/native-caption-release/README.txt",
+      "bytes": 341,
+      "sha256": "b97560878d310a6e8b484c6039b1899635b5cf73c161a6179d6c831842b8b92b"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/manifest.json",
+      "path": "tests/fixtures/native-caption-release/manifest.json",
+      "bytes": 9323,
+      "sha256": "e902b6543b45ac9fb4a24b477b6c975c93746a629e1b0e35989638f038d21e69"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/test/a40feb1904df49d2b764f2ab81f7200a.png",
+      "path": "tests/fixtures/native-caption-release/test/a40feb1904df49d2b764f2ab81f7200a.png",
+      "bytes": 1877,
+      "sha256": "9bf55c62f708aa788190c5b3a2884cda8cb6b7d79a3a96aaef16cf1d43f087f6"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/test/metadata.jsonl",
+      "path": "tests/fixtures/native-caption-release/test/metadata.jsonl",
+      "bytes": 162,
+      "sha256": "705c217f119cb0cc2aa13f6a007fc550e1b4bdb68a47d8b5e42de514e6c6d407"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/train/462f94bd7b9647c2b117d38d88411337.png",
+      "path": "tests/fixtures/native-caption-release/train/462f94bd7b9647c2b117d38d88411337.png",
+      "bytes": 2325,
+      "sha256": "a51380fc72c7466971aa16130c183bb8e88b4faa96da4d43118c3212e7b3cd9c"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/train/5ea1b8890660416bb49764e3da1fea0c.png",
+      "path": "tests/fixtures/native-caption-release/train/5ea1b8890660416bb49764e3da1fea0c.png",
+      "bytes": 1879,
+      "sha256": "5436de6d3b1e1f5fd1740b30ba19825b88bb99314b823a2bda220df77a33473e"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/train/metadata.jsonl",
+      "path": "tests/fixtures/native-caption-release/train/metadata.jsonl",
+      "bytes": 337,
+      "sha256": "26c4b8403f9389a67a9983126b906683d79e587499e9f69cffe17792d69ac224"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/val/ef96ad86e2de487fb4e035c7d4557e30.png",
+      "path": "tests/fixtures/native-caption-release/val/ef96ad86e2de487fb4e035c7d4557e30.png",
+      "bytes": 1878,
+      "sha256": "9541e6514d2f1a429ac95af125254c46a619283a94695e3b02757b0235da3807"
+    },
+    {
+      "original_path": "docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/val/metadata.jsonl",
+      "path": "tests/fixtures/native-caption-release/val/metadata.jsonl",
+      "bytes": 161,
+      "sha256": "ed65422fec554cebd4e98a96baf8a427e1e13510e81fb0275167f5edf8a82d9e"
+    },
+    {
+      "original_path": "docs/plans/workbench-ui-qualification/fixtures/assets.jsonl",
+      "path": "tests/fixtures/workbench-ui/assets.jsonl",
+      "bytes": 578,
+      "sha256": "60134ffdfd4b3856647f56c3fed4369794526cddf5784b5a0898334e1c77da8c"
+    },
+    {
+      "original_path": "docs/plans/workbench-ui-qualification/fixtures/blue-book-qa.png",
+      "path": "tests/fixtures/workbench-ui/blue-book-qa.png",
+      "bytes": 7122,
+      "sha256": "a07156aea11a417f0cfbbf7d0ed458f2aa29d488a8ac81483f27858ea3f1525b"
+    }
+  ],
+  "historical_oracle_inputs": [
+    {
+      "path": "docs/plans/caption-proposal-validation/reports/review-composition/cases.json.gz",
+      "bytes": 84241,
+      "sha256": "ad2dfc6a4d57fe0ddde9baeefaf73970e17ff110e014576ef65bedf39aff61f3"
+    },
+    {
+      "path": "docs/plans/caption-proposal-validation/reports/review-composition/successor/cases.json.gz",
+      "bytes": 84241,
+      "sha256": "ad2dfc6a4d57fe0ddde9baeefaf73970e17ff110e014576ef65bedf39aff61f3"
+    },
+    {
+      "path": "docs/plans/caption-proposal-validation/reports/review-composition/successor/envelope-cases.json.gz",
+      "bytes": 11809,
+      "sha256": "33999503e07038669ae218e93e9e84f588cc01c5af25098687a37867c6e3f6dd"
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/independent-review/backend/classification_parity_cases.json.gz",
+      "bytes": 89078,
+      "sha256": "69464a126472190ce00e2079fd76b9b0f4583ec596e63dd12ca9bd3ffdc98c7c"
+    }
+  ],
+  "historical_outcomes": [
+    {
+      "path": "docs/plans/caption-proposal-input/reports/gates/results.json",
+      "sha256": "b3d6edd9a61920f2c2c4b61ec2aae9fd23983aaa1bf4aac674cc908685a2fe99",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-recovery/reports/gates/results.json",
+      "sha256": "7f15018ba52b736312ac2545103d78fa02bdafa2b3f5ad01f4cd761d07d19368",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-recovery/reports/previous-checkpoint/gates/results.json",
+      "sha256": "278e855f250b41c70b58c10633fd80f91429d79eba7dacb375fa564b1e305352",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-reload/reports/first-checkpoint/gates/results.json",
+      "sha256": "306edd8e4fb4061672b54d34374788bfd7db3cf3220c43d3d3c04b46d63f7def",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-reload/reports/gates/results.json",
+      "sha256": "bc2b4641a4605667843db7c1b920d134dae17f0b96a6bd4a1fd168bc29a30a26",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-summary/reports/gates/results.json",
+      "sha256": "2b56a11c3448d4e183060795aec3f777e50ff256c92306587f1d0e0f92f2f224",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-validation/reports/checkpoints/e89cf76/gates/results.json",
+      "sha256": "249d0b08433f32bfabeb990fa6f7cc5ccfc7059a30c4126bf3627a1143a3f340",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposal-validation/reports/gates/results.json",
+      "sha256": "ba782424b1c88f268bf37ecc048689a7cc92f4ca497388ebc60dcd5f43a9fe86",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposals/reports/gates/results.json",
+      "sha256": "aa51bdcc597098480a63022febdb6cf91c8e0f09416a983797bc072311091739",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/caption-proposals/reports/initial-checkpoint/gates/results.json",
+      "sha256": "3faf9be17bac05adf927a29f77f656c73d00b9f073eb11d22e1a2283a0366efb",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 43
+        }
+      }
+    },
+    {
+      "path": "docs/plans/combined-workbench-local/reports/gates/results.json",
+      "sha256": "ee03ffec0365f75d10380f12f5685d7e41af8131642a6330f280f5db71b3e0ec",
+      "outcome": {
+        "gate_count": 39,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 39
+        }
+      }
+    },
+    {
+      "path": "docs/plans/preference-pairs/reports/aggregate/results.json",
+      "sha256": "8d4558a0dd534d4be1808e9a1029c9c4180279fac49dd31f45616dff31ab387a",
+      "outcome": {
+        "gate_count": 45,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 45
+        }
+      }
+    },
+    {
+      "path": "docs/plans/preference-pairs/reports/resource-correction/aggregate/results.json",
+      "sha256": "75b16e78bba469e7feba36bb2e3a7bb91367ef6d98b034e33ee2f5309abe1b8e",
+      "outcome": {
+        "gate_count": 45,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 45
+        }
+      }
+    },
+    {
+      "path": "docs/plans/rights-browser-evidence-preservation/reports/gates/results.json",
+      "sha256": "3fcd11f7a5ee2ac1d9dfe088a61fb6baabddc207c25358157b995ecc8d8b987b",
+      "outcome": {
+        "gate_count": 40,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 40
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/f95-failed-checkpoint/gates/results.json",
+      "sha256": "244aaef7cd31f5cbeaa6e1b8abd101e6fc3ebcb982645db00697f6c6c1848221",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 45,
+          "failed": 1
+        },
+        "nonpassing": [
+          {
+            "command": "node tests/browser_text_classification_proposals.cjs",
+            "status": "failed",
+            "exit_code": 1
+          }
+        ]
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/f95-failed-checkpoint/gates/summary.json",
+      "sha256": "235bc8b32cdf99c3294fb5e2b1ac88e9f6c4683a889800303a6c8a8fbfb84ada",
+      "outcome": {
+        "source_head": "f95cd5c95189165534d21c204a227f4dd8145c92",
+        "source_tree": "6e12a1578a0027e5f4e384bea240ba8bbc158032",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 45,
+        "failed": 1,
+        "blocked": 0,
+        "qualified_passing_gates": 45
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/final-qualification/gates/results.json",
+      "sha256": "42919081d68d20cd46b1d0c2db9951d93fdc9e99339d150e7e5027633682ecc4",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 46
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/final-qualification/gates/summary.json",
+      "sha256": "4dab078bd66080a845ebd350307e4bf6784d36805fd445d4b0ba12099198b049",
+      "outcome": {
+        "source_head": "97144cb85b274cf68e20e0952907787b28b3026a",
+        "source_tree": "04226dcdf5cf11c0683cad6f28e4af20dfce978f",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 46,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 46
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/gates/results.json",
+      "sha256": "244aaef7cd31f5cbeaa6e1b8abd101e6fc3ebcb982645db00697f6c6c1848221",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 45,
+          "failed": 1
+        },
+        "nonpassing": [
+          {
+            "command": "node tests/browser_text_classification_proposals.cjs",
+            "status": "failed",
+            "exit_code": 1
+          }
+        ]
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/admission-authority-repair/gates/summary.json",
+      "sha256": "235bc8b32cdf99c3294fb5e2b1ac88e9f6c4683a889800303a6c8a8fbfb84ada",
+      "outcome": {
+        "source_head": "f95cd5c95189165534d21c204a227f4dd8145c92",
+        "source_tree": "6e12a1578a0027e5f4e384bea240ba8bbc158032",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 45,
+        "failed": 1,
+        "blocked": 0,
+        "qualified_passing_gates": 45
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/dispatch-ownership-repair/qualification/gates/results.json",
+      "sha256": "68a0ecf8ce0c092ce76e1f36aa6dae09b494f1b4ee114457c02cbcb179c0cdd7",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 46
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/dispatch-ownership-repair/qualification/gates/summary.json",
+      "sha256": "c508c51727a6225dbbb15e0a15b0bd37bfab97122b4100f88965749d5d6e22fb",
+      "outcome": {
+        "source_head": "824e3ee1181184e2284875e5a08ebd1406318bfc",
+        "source_tree": "45bbb665da96a719d5e9ae900ce6439bcd2e1f70",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 46,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 46
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/gates/results.json",
+      "sha256": "09228684492b4399f3ca564e6c058df77c26b730cd26959685dace6d649b63e7",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 44,
+          "blocked": 2
+        },
+        "nonpassing": [
+          {
+            "command": "node tests/browser_instruction_responses.cjs",
+            "status": "blocked",
+            "exit_code": null
+          },
+          {
+            "command": "node tests/browser_combined_workbench.cjs",
+            "status": "blocked",
+            "exit_code": null
+          }
+        ]
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/gates/summary.json",
+      "sha256": "988fa4ca3f67c256e743d790f51043963bc78dcb1ffd0ecb7dd3e07dbe63c784",
+      "outcome": {
+        "source_head": "7b1938e3ef9b7ba499bafde1fa02e44fb90e8dc7",
+        "source_tree": "a3b21243a9a990c0709f2f524085ee71cc4a9636",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 44,
+        "failed": 0,
+        "blocked": 2,
+        "qualified_passing_gates": 44
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/initial-checkpoint/gates/results.json",
+      "sha256": "9f685c3479fb5dbd0fe951cbd8cd569ba2cc3dadbcdca34ca4fe527f6ae19d34",
+      "outcome": {
+        "gate_count": 43,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "failed": 1,
+          "passed": 40,
+          "blocked": 2
+        },
+        "nonpassing": [
+          {
+            "command": "python -m unittest discover -s tests",
+            "status": "failed",
+            "exit_code": 1
+          },
+          {
+            "command": "node tests/browser_instruction_responses.cjs",
+            "status": "blocked",
+            "exit_code": null
+          },
+          {
+            "command": "node tests/browser_combined_workbench.cjs",
+            "status": "blocked",
+            "exit_code": null
+          }
+        ]
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/initial-checkpoint/gates/summary.json",
+      "sha256": "40d33862703336d15fcaf66e86a32595072301eccf35de9b4cfa7c3519c60955",
+      "outcome": {
+        "source_head": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+        "source_tree": "b8d127ee1130744fb63b02a40c810c6e10675459",
+        "gate_count": 43,
+        "recorded_gates": 43,
+        "passed": 40,
+        "failed": 1,
+        "blocked": 2
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/judgment-save-ownership-repair/qualification/gates/results.json",
+      "sha256": "cbe2cf472ba6dfb43976c23085ec914ed7ef2da8bd2a7628d9f2f15f79b544ea",
+      "outcome": {
+        "gate_count": 50,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 50
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/judgment-save-ownership-repair/qualification/gates/summary.json",
+      "sha256": "d683cd08a7a77a2c26f5922c87d6ce33488e4255f191e1d696f6f52fe973b388",
+      "outcome": {
+        "source_head": "f2b61ce3ebcae8380dcbea9c384c124e803083be",
+        "source_tree": "39491c6e3b8ff1582c5dfe870f199f4304605e35",
+        "gate_count": 50,
+        "recorded_gates": 50,
+        "passed": 50,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 50
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/preference-integration/qualification/gates/results.json",
+      "sha256": "aba090516bdb9572f13b1efab873bde14ca739b2ff8d793a31a9e3acd29e5639",
+      "outcome": {
+        "gate_count": 50,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 50
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/preference-integration/qualification/gates/summary.json",
+      "sha256": "ae9c6ec10d6384f1a26f8a34a1fcdad34160f479424c93084b593b8ac045d090",
+      "outcome": {
+        "source_head": "c0de883159025491d5283c52514c7c762f53c4cc",
+        "source_tree": "ab990b09085cc26d057cbe8d13746f1ea3913086",
+        "gate_count": 50,
+        "recorded_gates": 50,
+        "passed": 50,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 50
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/publication-qualification/final-aggregate/gates/results.json",
+      "sha256": "ebbe3700f53f0adfbfd3ee099e5828a58a60e9f7168c0a93d413bcbb8139dbb1",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 46
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/publication-qualification/final-aggregate/gates/summary.json",
+      "sha256": "df980264a4fb91f071c011a263fb5807a3cae6b6673f69b8e849f9a403302019",
+      "outcome": {
+        "source_head": "e32b407c6164f5650e1944c356ec0d00d7536667",
+        "source_tree": "f04a94227eb4faee2d4e6701d199726750570aa5",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 46,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 46
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/publication-qualification/focused-gates/gates/results.json",
+      "sha256": "0fed82fc5dcc22be89e1d92fdbdbeca7983a90094c97721d722b7fc039be5119",
+      "outcome": {
+        "gate_count": 2,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 2
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/publication-qualification/focused-gates/gates/summary.json",
+      "sha256": "6a733cef1c6fd2658a6f7f10ec5b1ca1b8497ddf38e387f70a7c7367108f1990",
+      "outcome": {
+        "source_head": "e32b407c6164f5650e1944c356ec0d00d7536667",
+        "source_tree": "f04a94227eb4faee2d4e6701d199726750570aa5",
+        "gate_count": 46,
+        "recorded_gates": 2,
+        "passed": 2,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 2
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/publication-qualification/previous-candidate/gates/results.json",
+      "sha256": "09228684492b4399f3ca564e6c058df77c26b730cd26959685dace6d649b63e7",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 44,
+          "blocked": 2
+        },
+        "nonpassing": [
+          {
+            "command": "node tests/browser_instruction_responses.cjs",
+            "status": "blocked",
+            "exit_code": null
+          },
+          {
+            "command": "node tests/browser_combined_workbench.cjs",
+            "status": "blocked",
+            "exit_code": null
+          }
+        ]
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/publication-qualification/previous-candidate/gates/summary.json",
+      "sha256": "988fa4ca3f67c256e743d790f51043963bc78dcb1ffd0ecb7dd3e07dbe63c784",
+      "outcome": {
+        "source_head": "7b1938e3ef9b7ba499bafde1fa02e44fb90e8dc7",
+        "source_tree": "a3b21243a9a990c0709f2f524085ee71cc4a9636",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 44,
+        "failed": 0,
+        "blocked": 2,
+        "qualified_passing_gates": 44
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/recovery-persistence/gates/results.json",
+      "sha256": "163688e441be341927ac56e935fdb37da24c76a64309f27f4c8141cb8dac1ca7",
+      "outcome": {
+        "gate_count": 46,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "passed": 46
+        }
+      }
+    },
+    {
+      "path": "docs/plans/text-classification-proposals/reports/recovery-persistence/gates/summary.json",
+      "sha256": "259ecf45b470f7c1781f37f98d161afb9b969820f09baa63a35644d9d6beb81d",
+      "outcome": {
+        "source_head": "c5500cba5021949bccf45d2124ee5e2910dc5c92",
+        "source_tree": "be60326b4950fdd68a8fdfd35ca13a62a2e51113",
+        "gate_count": 46,
+        "recorded_gates": 46,
+        "passed": 46,
+        "failed": 0,
+        "blocked": 0,
+        "qualified_passing_gates": 46
+      }
+    },
+    {
+      "path": "docs/plans/workbench-parent-owner-fix/reports/gates/results.json",
+      "sha256": "5430e07515f78df5a7e989dcf17f9fe209a68312e495ef45172a48a57447b74f",
+      "outcome": {
+        "gate_count": 39,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 39
+        }
+      }
+    },
+    {
+      "path": "docs/plans/workbench-projection-warnings-fix/reports/gates/results.json",
+      "sha256": "1d6e79c6a0cfe4bbac2d770a3d57790bee0f6f14b7d738944811f2c00d6657dd",
+      "outcome": {
+        "gate_count": 39,
+        "evidence_basis": "historical recorded statuses/exit codes; source stability is not inferred",
+        "status_counts": {
+          "exit_zero": 39
+        }
+      }
+    }
+  ]
+}

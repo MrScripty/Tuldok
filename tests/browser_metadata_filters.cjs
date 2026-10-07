@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -179,10 +180,10 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('label-filter','paged');await submit();assert.equal(await evaluate('page.total'),42);
   await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const zip=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(zip.status,200);assert.ok((await zip.arrayBuffer()).byteLength>1000);
-  const reports=path.join(__dirname,'../docs/plans/explicit-metadata-filters/reports');fs.mkdirSync(reports,{recursive:true});
-  await evaluate('document.getElementById("filters").scrollIntoView()');const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'filters-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const reports=qaDirectory(path.resolve(__dirname,'..'),'explicit-metadata-filters');fs.mkdirSync(reports,{recursive:true});
+  await evaluate('document.getElementById("filters").scrollIntoView()');const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'filters-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-  await evaluate('document.getElementById("filters").scrollIntoView()');const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'filters-narrow.png'),Buffer.from(narrow.data,'base64'));
+  await evaluate('document.getElementById("filters").scrollIntoView()');const narrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'filters-narrow.jpg'),Buffer.from(narrow.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Exact filter controls and metadata do not overflow at 390px');
   assert.deepEqual(await request('records/'+alpha.id),before,'Filtering never changes target/review metadata');
   assert.deepEqual(errors,[]);

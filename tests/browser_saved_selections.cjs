@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -114,11 +115,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await click('load-selection');await until(()=>evaluate('document.getElementById("saved-selection-issues").textContent.includes("deleted source")'));
   assert.deepEqual(await chosen(),[imageId]);assert.equal(await evaluate('dirty'),true);
   await evaluate('document.getElementById("saved-selection-panel").scrollIntoView()');
-  const reports=path.join(root,'docs/plans/saved-dataset-selections/reports');fs.mkdirSync(reports,{recursive:true});
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'saved-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const reports=qaDirectory(root,'saved-dataset-selections');fs.mkdirSync(reports,{recursive:true});
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'saved-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("saved-selection-status").scrollIntoView()');
-  const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'saved-narrow.png'),Buffer.from(narrow.data,'base64'));
+  const narrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'saved-narrow.jpg'),Buffer.from(narrow.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow saved-selection controls do not overflow');
   await evaluate('window.confirm=()=>false');await click('delete-selection');await pause(100);
   assert.equal(await evaluate('savedSets.size'),2,'Delete cancellation preserves both saved sets');

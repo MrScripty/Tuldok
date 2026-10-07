@@ -1,5 +1,6 @@
 // Real composed controls, delayed actual HTTP, fixed pairs and both downloaded formats.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -33,7 +34,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const submit=()=>evaluate('document.getElementById("native-text-form").requestSubmit()');
   const idle=()=>until(()=>evaluate('!document.getElementById("native-text-start").disabled'));
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
-  const report=path.join(root,'docs/plans/workbench-projection-warnings-fix/reports');fs.mkdirSync(report,{recursive:true});
+  const report=qaDirectory(root,'workbench-projection-warnings-fix');fs.mkdirSync(report,{recursive:true});
   const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
   const sourceIdentity=spawnSync('git',['rev-parse','HEAD','HEAD^{tree}'],{cwd:root,encoding:'utf8'}).stdout.trim().split('\n');
   const sourceDiff=spawnSync('git',['diff','HEAD','--','app.py','workbench.py','curation.py','dataset_releases.py','native_text_import.py','static','tests'],{cwd:root,encoding:'utf8'}).stdout;
@@ -45,7 +46,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
     assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Combined layout must fit');
     const bounds=await evaluate('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:innerHeight}})()');
     assert.ok(bounds.top>=-1&&bounds.top<bounds.height&&bounds.bottom>0,'Captured panel must be in the viewport: '+JSON.stringify(bounds));
-    const file='combined-'+name+(narrow?'-narrow':'-desktop')+'.png',bytes=Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64');
+    const file='combined-'+name+(narrow?'-narrow':'-desktop')+'.jpg',bytes=Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64');
     fs.writeFileSync(path.join(report,file),bytes);evidence.screenshots.push({file,selector,viewport:{width:narrow?390:1400,height:narrow?844:1000},bounds,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});
   }}
   const answerPairs=()=>evaluate('JSON.stringify(responseReleaseBody().items)'),recordPairs=()=>evaluate('JSON.stringify(releaseBody().items)');

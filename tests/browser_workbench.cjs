@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -75,11 +76,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const release=await evaluate('document.querySelector("#release-result a").href');
   const archive=await fetch(release);assert.equal(archive.status,200);assert.equal((await archive.arrayBuffer()).byteLength>1000,true);
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'dataset-workflows'),'workbench-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-narrow.png'),Buffer.from(shot.data,'base64'));
+  const shot=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'dataset-workflows'),'workbench-narrow.jpg'),Buffer.from(shot.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Narrow layout must not overflow');
   assert.deepEqual(errors,[]);console.log('Workbench Chromium lifecycle, stale conflicts, frozen download and narrow layout passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

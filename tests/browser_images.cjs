@@ -1,9 +1,10 @@
 // Real browser and Tuldok HTTP workflow against a controlled image gateway.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-images-')),children=[];
-const evidence=process.env.TULDOK_EVIDENCE_DIR; if(evidence)fs.mkdirSync(evidence,{recursive:true});
+const evidence=process.env.TULDOK_EVIDENCE_DIR?qaDirectory(root,'browser-images',process.env.TULDOK_EVIDENCE_DIR):null; if(evidence)fs.mkdirSync(evidence,{recursive:true});
 let ws, inspect;
 const errors=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -93,7 +94,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const beforeDeleteReload=loads;await send('Page.reload');await until(()=>loads>beforeDeleteReload);
   await until(()=>evaluate('document.querySelectorAll(".prompt-entry").length===1'));
   assert.equal(await evaluate('document.querySelectorAll(".sample:not(.prompt-entry)").length'),0,'Deletion persists after reload');
-  if(evidence)fs.writeFileSync(path.join(evidence,'fixture-display.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  if(evidence)fs.writeFileSync(path.join(evidence,'fixture-display.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   assert.deepEqual(errors,[],'No browser runtime exceptions');
   const result={fixture:true,generated_images:12,unique_prompts:12,ai_label_saved:true,queue_survives_reload:true,repeat_pending_entries:1,cancelled_backend_request:true,deletion_verified:true};
   if(evidence)fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');

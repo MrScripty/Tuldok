@@ -1,3 +1,0 @@
-PASS refused409 clean stale Save settles before delayed Apply ACK
-PASS successful clean stale Save settles before delayed Apply ACK
-ALL2 SAVE-EPOCH CASES PASS

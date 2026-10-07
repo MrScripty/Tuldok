@@ -1,6 +1,0 @@
-PASS raw import: three drafts, one forged-review row rejected
-PASS unknown-rights exact filter: two records, one still draft
-PASS fixed reopen/navigation/filter isolation and stale release blocking
-PASS explicit current selection, preview, frozen ZIP and exact manifest pairs
-PASS retained legacy import, four manual corners, labeled ZIP
-Isolated fixture databases retained: /tmp/tuldok-ui-walkthrough-guM6pP

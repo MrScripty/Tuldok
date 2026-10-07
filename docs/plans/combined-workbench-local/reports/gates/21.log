@@ -1,6 +1,0 @@
-curationLaterEdit passed
-rightsLaterEdit passed
-rightsRejectsExistingDraft passed
-rightsInvalidatesResponseProofBeforeRefresh passed
-answerSaveRejectsRightsEdit passed
-Combined controller ownership: delayed inspection/rights acknowledgement, discard refusal, response draft guard and fixed proof invalidation passed.

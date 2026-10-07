@@ -1,5 +1,6 @@
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -34,7 +35,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   const submit=async id=>{await evaluate('document.getElementById('+JSON.stringify(id)+').requestSubmit()');await until(()=>evaluate('!document.getElementById('+JSON.stringify(id)+').dataset.busy'));};
   const filter=()=>submit('filters');
-  const reports=path.join(root,'docs/plans/preference-pairs/reports');fs.mkdirSync(reports,{recursive:true});
+  const reports=qaDirectory(root,'preference-pairs');fs.mkdirSync(reports,{recursive:true});
   const identity=spawnSync('git',['rev-parse','HEAD','HEAD^{tree}'],{cwd:root,encoding:'utf8'}).stdout.trim().split('\n');
   const diff=spawnSync('git',['diff','HEAD','--','workbench.py','dataset_releases.py','app.py','static','tests'],{cwd:root,encoding:'utf8'}).stdout;
   const evidence={source_head:identity[0],source_tree:identity[1],source_state:diff?'working_tree':'committed',source_diff_sha256:crypto.createHash('sha256').update(diff).digest('hex'),browser:await send('Browser.getVersion'),screenshots:[],steps:[]};
@@ -46,7 +47,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   async function preview(){await click('preference-preview');await until(()=>evaluate('!preferenceReleaseBusy&&!!preferencePreview'));return evaluate('preferencePreview');}
   async function capture(name,selector){for(const narrow of [false,true]){
     const viewport={width:narrow?390:1400,height:narrow?844:1000};await send('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1,mobile:false});await evaluate('document.querySelector('+JSON.stringify(selector)+').scrollIntoView({block:"start"})');await pause(100);assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Horizontal overflow');
-    const shot=Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'),file='preference-'+name+(narrow?'-narrow':'-desktop')+'.png';fs.writeFileSync(path.join(reports,file),shot);evidence.screenshots.push({file,viewport,selector,sha256:crypto.createHash('sha256').update(shot).digest('hex')});
+    const shot=Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'),file='preference-'+name+(narrow?'-narrow':'-desktop')+'.jpg';fs.writeFileSync(path.join(reports,file),shot);evidence.screenshots.push({file,viewport,selector,sha256:crypto.createHash('sha256').update(shot).digest('hex')});
   }await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});}
   const parents=[];for(const name of ['primary','second','third'])parents.push(await api('import',{kind:'text',name,text:' prompt '+name+'\r\ne\u0301 😀 '+(name==='primary'?'p'.repeat(1100):''),groups:['preference-'+name],rights:'Authored QA fixture'}));
   const parent=parents[0];await open(parent);

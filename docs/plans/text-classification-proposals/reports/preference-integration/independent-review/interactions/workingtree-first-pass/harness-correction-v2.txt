@@ -1,1 +1,0 @@
-Initial reject helper searched the wrong button caption Reject. The actual control text is Reject classification proposal. Resolve its exact production text. Failed prior script/log retained; no production issue.

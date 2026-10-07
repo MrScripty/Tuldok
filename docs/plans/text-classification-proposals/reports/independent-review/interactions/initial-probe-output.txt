@@ -1,6 +1,0 @@
-summaryProjectionAllowsApply passed
-lateResponseDraftFencesApply passed
-rejectCannotAcquireEitherEditor passed
-answerSaveDuringApplyKeepsExactParent passed
-navigationAndLateEvidence passed
-terminalAbstentionNeverOffersApply passed

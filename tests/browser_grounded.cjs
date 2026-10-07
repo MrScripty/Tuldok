@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -83,7 +84,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await until(()=>evaluate(`(()=>{const completed=document.querySelector('[data-job-id="${completedJob}"]');const cancelled=document.querySelector('[data-job-id="${cancelledJob}"]');return completed?.textContent.includes('State: admitted') && completed.textContent.includes('State: rejected') && cancelled?.querySelector('summary').textContent.includes('cancelled');})()`));
   const afterReload=await evaluate(`(async()=>{const data=await(await fetch('/api/workbench/grounded/jobs')).json();return data.jobs.map(job=>({id:job.id,status:job.status,candidates:job.candidates.map(({id,status,record_id,review_note})=>({id,status,record_id,review_note}))}));})()`);
   assert.deepEqual(afterReload,beforeReload,'Reopening must preserve exact proposal decisions, notes and admitted identity');
-  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-grounded.png'),Buffer.from(shot.data,'base64'));
+  const shot=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'dataset-workflows'),'workbench-grounded.jpg'),Buffer.from(shot.data,'base64'));
   assert.deepEqual(errors,[]);console.log('Grounded browser source, served catalog, proposals, draft gate, human review, release, rejection, cancellation and reopen passed with a controlled provider.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

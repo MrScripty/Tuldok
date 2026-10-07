@@ -182,7 +182,7 @@ class RightsNoteTests(unittest.TestCase):
         from pathlib import Path
         import uuid
         import zipfile
-        fixture=Path(__file__).resolve().parents[1]/'docs/plans/annotated-caption-import/reports/fixtures/native-caption-release'
+        fixture=Path(__file__).resolve().parents[1]/'tests/fixtures/native-caption-release'
         source=dict(manifest=(fixture/'manifest.json').read_text(),metadata={split:(fixture/split/'metadata.jsonl').read_text() for split in ('train','val','test')})
         prepared=self.dataset.caption_imports.prepare(source)['rows'];rows=[]
         for item in prepared:

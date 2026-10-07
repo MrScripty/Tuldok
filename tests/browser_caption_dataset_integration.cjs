@@ -1,5 +1,6 @@
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -41,17 +42,17 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const ref=r=>({id:r.id,revision:r.revision,source_revision:r.source_revision});
   const pairs=()=>evaluate('releaseBody().items');
 
-  const reports=path.join(root,'docs/plans/dataset-caption-integration/reports');fs.mkdirSync(reports,{recursive:true});
+  const reports=qaDirectory(root,'dataset-caption-integration');fs.mkdirSync(reports,{recursive:true});
   const identity=spawnSync('git',['rev-parse','HEAD','HEAD^{tree}'],{cwd:root,encoding:'utf8'}).stdout.trim().split('\n');
   const evidence={source_head:identity[0],source_tree:identity[1],accepted_base:'e33144a389e611dfb9e95a83f248e7bf87d7a3aa',caption_component:'8c6e5fb5f5c2620a05ccb2707e94e10cd7fe4d1b',fixture_files:[],screenshots:[],steps:[],browser:await send('Browser.getVersion')};
-  const fixture=path.join(root,'docs/plans/annotated-caption-import/reports/fixtures/native-caption-release');
+  const fixture=path.join(root,'tests/fixtures/native-caption-release');
   const manifest=JSON.parse(fs.readFileSync(path.join(fixture,'manifest.json'),'utf8'));
   const sourceFiles=['manifest.json','train/metadata.jsonl','val/metadata.jsonl','test/metadata.jsonl',...manifest.records.map(r=>r.asset)].map(relative=>{const bytes=fs.readFileSync(path.join(fixture,relative));evidence.fixture_files.push({relative,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});return {relative,data:bytes.toString('base64')};});
   const chooseCaption=()=>evaluate(`(()=>{const selected=new DataTransfer();for(const entry of ${JSON.stringify(sourceFiles)}){const file=new File([Uint8Array.from(atob(entry.data),c=>c.charCodeAt(0))],entry.relative.split('/').at(-1));Object.defineProperty(file,'webkitRelativePath',{value:'native-caption-release/'+entry.relative});selected.items.add(file);}document.getElementById('caption-folder').files=selected.files;})()`);
   async function captures(name,selector){for(const narrow of [false,true]){
     const viewport={width:narrow?390:1400,height:narrow?844:1000};await send('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1,mobile:false});await pause(150);await evaluate('document.querySelector('+JSON.stringify(selector)+').scrollIntoView({block:"start"})');await pause(100);
     assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Horizontal overflow');
-    const screenshot=Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'),file='caption-combined-'+name+(narrow?'-narrow':'-desktop')+'.png';fs.writeFileSync(path.join(reports,file),screenshot);evidence.screenshots.push({file,viewport,selector,scrollY:await evaluate('scrollY'),sha256:crypto.createHash('sha256').update(screenshot).digest('hex')});
+    const screenshot=Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'),file='caption-combined-'+name+(narrow?'-narrow':'-desktop')+'.jpg';fs.writeFileSync(path.join(reports,file),screenshot);evidence.screenshots.push({file,viewport,selector,scrollY:await evaluate('scrollY'),sha256:crypto.createHash('sha256').update(screenshot).digest('hex')});
   }await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});}
   // Exercise the original raw-import panel before the added folder decoder.
   await choose(JSON.stringify({kind:'text',name:'Retained raw note',text:'Local integration note.',groups:['caption-stage-raw'],rights:'QA authored note'}));await importNow();await idle();await until(()=>evaluate('page.total===1'));

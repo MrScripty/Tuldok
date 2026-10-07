@@ -1,5 +1,6 @@
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -112,13 +113,13 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.equal((await api('records')).total,6,'Reload must not replay imports');
   await evaluate('history.back()');await until(()=>evaluate('selected.size===0'));
   await evaluate('history.forward()');await until(()=>evaluate('selected.size===3 && !savedLoadBusy'));
-  const report=path.join(root,'docs/plans/native-text-classification-import/reports');fs.mkdirSync(report,{recursive:true});
+  const report=qaDirectory(root,'native-text-classification-import');fs.mkdirSync(report,{recursive:true});
   await evaluate('document.getElementById("native-text-import-panel").open=true;document.getElementById("native-text-import-panel").scrollIntoView()');
-  fs.writeFileSync(path.join(report,'native-text-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  fs.writeFileSync(path.join(report,'native-text-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("native-text-import-panel").scrollIntoView({block:"start"})');
   await until(()=>evaluate('document.getElementById("native-text-import-panel").getBoundingClientRect().top<innerHeight && document.getElementById("native-text-import-panel").getBoundingClientRect().bottom>0'));
-  fs.writeFileSync(path.join(report,'native-text-narrow.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  fs.writeFileSync(path.join(report,'native-text-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Native import panel must fit narrow layout');
   assert.deepEqual(errors,[]);
   console.log('Native classification Chromium: actual ZIP imports, review/export roundtrip, duplicate preservation, Stop, delayed refresh, lost-response lookup, dirty editor/filter/selection preservation, reload/back and narrow layout passed.');

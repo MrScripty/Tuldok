@@ -1,8 +1,0 @@
-PASS save-before-Apply clean stale judgment exact draft retained
-PASS explicit author Apply retry after failure; no deferred automatic parent adoption
-PASS Apply-before-save clean stale judgment exact draft retained
-PASS explicit author reload after failure; no deferred automatic parent adoption
-PASS successful save Busy/list owner gates Apply until explicit retry
-PASS no-op save Busy/list owner gates Apply until explicit retry
-PASS Reject remains independent of clean stale judgment save owner
-ALL5 REPAIR CASES PASS
