@@ -18,12 +18,11 @@ function renderMeshInspection(value) {
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('viewBox','0 0 240 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',`${caption.textContent} wireframe projection of ${value.sample_count} triangles`);
     const low=value.bounds.min,high=value.bounds.max,span=Math.max(high[horizontal]-low[horizontal],high[vertical]-low[vertical]);
-    const offset=(coordinate,center)=>span>0?(coordinate-center)/span*190:0;
+    const offset=(coordinate,axis)=>span>0?((coordinate-low[axis])/span-(high[axis]-low[axis])/span/2)*190:0;
     // One common scale preserves projection aspect; points are display-only.
-    const centerX=low[horizontal]/2+high[horizontal]/2,centerY=low[vertical]/2+high[vertical]/2;
     for(const triangle of value.triangles) {
       const polygon=document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      polygon.setAttribute('points',triangle.map(vertex=>`${120+offset(vertex[horizontal],centerX)},${110-offset(vertex[vertical],centerY)}`).join(' '));
+      polygon.setAttribute('points',triangle.map(vertex=>`${120+offset(vertex[horizontal],horizontal)},${110-offset(vertex[vertical],vertical)}`).join(' '));
       svg.append(polygon);
     }
     figure.append(caption,svg);holder.append(figure);

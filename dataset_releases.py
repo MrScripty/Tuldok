@@ -216,7 +216,7 @@ class Releases:
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
                 if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
-                    raise WorkbenchError('Immutable asset export requires human-reviewed whole records.')
+                    raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
                 validate_annotation(row['task'], row['annotation'], row)
             except WorkbenchError as error:
                 block(error, row['id'])

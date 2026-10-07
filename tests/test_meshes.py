@@ -1,6 +1,7 @@
 """Actual authored ASCII PLY inputs; analytic oracles, no Rheon execution."""
 import base64
 import copy
+from decimal import Decimal, localcontext
 import hashlib
 import io
 import json
@@ -107,6 +108,25 @@ class Meshes(unittest.TestCase):
         raw = fixture()[0].replace(b'\n', b'\r\n')
         fourth = meshes.admit(self.w, body(*fixture(raw=raw)))
         self.assertEqual(first['groups'][1], fourth['groups'][1])
+
+    def test_direct_decimal_ieee_float32_midpoint_neighbors_ties_and_underflow(self):
+        # Independent nearest-even bit identities, confirmed by reviewer's C strtof.
+        cases=[('1.0000000596046448',0x3f800001),('1.0000001788139343',0x3f800001),
+            ('1.000000059604644775390625',0x3f800000),('1.000000178813934326171875',0x3f800002),
+            ('-1.0000000596046448',0xbf800001)]
+        for token,bits in cases:
+            with self.subTest(token=token):
+                self.assertEqual(struct.unpack('<I',struct.pack('<f',meshes.native(token,'float')))[0],bits)
+        # Smallest f32 subnormal is exactly 2^-149; halfway rounds to even zero.
+        with localcontext() as context:
+            context.prec=250
+            midpoint=Decimal.from_float(2.0**-150);epsilon=Decimal('1e-190')
+            self.assertEqual(meshes.native(str(midpoint+epsilon),'float'),2.0**-149)
+            for token in (str(midpoint),str(midpoint-epsilon)):
+                with self.assertRaisesRegex(WorkbenchError,'nonzero underflow'):meshes.native(token,'float')
+        raw=fixture()[0].replace(b'1 0 0\n',b'1.0000000596046448 0 0\n')
+        prepared=meshes.prepare(*fixture(raw=raw))
+        self.assertEqual(prepared['metadata']['bounds']['max'][0],1.0000001192092896)
 
     def test_malformed_geometry_targeted_rejections_publish_nothing(self):
         original, _ = fixture(); before = self.state()

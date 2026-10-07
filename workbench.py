@@ -59,8 +59,8 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Annotation must be an object.')
     if task in ('sequence_transport', 'mesh_geometry'):
         if set(value) != {'note'}:
-            raise WorkbenchError('Immutable asset review requires exactly one note; fields stay immutable.')
-        return {'note': text_value(value['note'], 'Human review note', 4000, empty=True)}
+            raise WorkbenchError(record['kind'].title() + ' review requires exactly one note; fields stay immutable.')
+        return {'note': text_value(value['note'], record['kind'].title() + ' review note', 4000, empty=True)}
     if task == 'image_caption':
         if set(value) != {'caption'}:
             raise WorkbenchError('Image caption requires exactly one caption field.')
@@ -400,9 +400,9 @@ class Workbench:
         review = body.get('review')
         if before['kind'] in ('sequence', 'mesh'):
             if not set(before[before['kind']]['protected_groups']) <= set(groups):
-                raise WorkbenchError('Keep the immutable source and family protected groups.')
+                raise WorkbenchError('Keep the whole trajectory and initial-family protected groups.' if before['kind'] == 'sequence' else 'Keep the immutable mesh source and family protected groups.')
             if review not in ('draft', 'human_reviewed') or verified_provenance:
-                raise WorkbenchError('Immutable asset data requires a human review decision.')
+                raise WorkbenchError(before['kind'].title() + ' data requires a human review decision.')
         if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
             raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
         # A trusted verifier may replace origin, but never persist or alter the note owner's projection.

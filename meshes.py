@@ -1,6 +1,7 @@
 """Tuldok-owned strict ASCII triangle PLY profile; raw bytes remain authoritative."""
 import base64
 from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 import hashlib
 import io
 import json
@@ -97,7 +98,21 @@ def native(token, dtype):
         if value == 0 and Decimal(token) != 0:
             invalid('vertex scalar has nonzero underflow.')
         if dtype == 'float':
-            rounded = struct.unpack('<f', struct.pack('<f', value))[0]
+            # float64 -> float32 can double-round near decimal midpoint neighbors.
+            # Compare exact decimal against adjacent IEEE values; ties select even bits.
+            bits = struct.unpack('<I', struct.pack('<f', abs(value)))[0]
+            exact_value = Fraction(Decimal(token).copy_abs())
+            def binary(word):
+                return struct.unpack('<f', struct.pack('<I', word))[0]
+            center = Fraction.from_float(binary(bits))
+            if bits > 0:
+                midpoint = (Fraction.from_float(binary(bits - 1)) + center) / 2
+                if exact_value < midpoint or (exact_value == midpoint and bits % 2):
+                    bits -= 1
+            upper = (Fraction.from_float(binary(bits + 1)) + Fraction.from_float(binary(bits))) / 2
+            if exact_value > upper or (exact_value == upper and bits % 2):
+                bits += 1
+            rounded = math.copysign(binary(bits), value)
             if value != 0 and rounded == 0:
                 invalid('float vertex scalar has nonzero underflow.')
             value = rounded
