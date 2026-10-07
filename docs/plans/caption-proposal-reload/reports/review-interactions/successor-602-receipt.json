@@ -1,0 +1,69 @@
+{
+  "reviewed_head": "602d25f5d4dd7a904a6d1aaae23824838d0790aa",
+  "reviewed_tree": "0563406e0db0d12ae60e284cba2bb054edffb560",
+  "previous_reviewed_head": "e73c688a1334652da0552baaafb4b308090a78ba",
+  "base": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+  "recorded_at": "2026-10-07T09:11:29.446512+00:00",
+  "findings": [],
+  "previous_receipt_preserved": "/workspace/tuldok-owner-review/caption-reload-local/review-interactions/receipt.json",
+  "previous_P2_disposition": "Resolved in examined source and independent probes: pageshow synchronously validates/adopts live entry and restores exact form; submit and async list/exact GET boundaries resynchronize; Store compares live entry against caller ownership before writes/removals, including late first409 cleanup.",
+  "execution": [
+    {
+      "command": "TULDOK_SOURCE_ROOT=source-602 node source-602/tests/test_caption_proposals_controller.cjs",
+      "exit_code": 0,
+      "log": "successor-602-controller.log",
+      "includes": "Registered existing editor/admission controller plus nested reload/storage/two-document/history-clear/history-repeat/late-refusal/late-success/held-get/pageshow-error cases."
+    },
+    {
+      "command": "TULDOK_SOURCE_ROOT=source-602 node successor-602-independent-storage-probe.cjs",
+      "exit_code": 0,
+      "log": "successor-602-independent-storage-probe.log",
+      "result": {
+        "result": "PASS",
+        "trace": [
+          {
+            "case": "stale_remove_fixed",
+            "pageshow_adopts_ID2_and_exact_form": true,
+            "newer_entry_preserved": true,
+            "full_reload_changed_POSTs": 0
+          },
+          {
+            "case": "stale_overwrite_fixed",
+            "stale_ID1_POSTs": 0,
+            "newer_entry_preserved": true
+          },
+          {
+            "case": "late_first_refusal_fixed",
+            "newer_entry_preserved": true,
+            "old_document_adopts_live_ID": true
+          },
+          {
+            "case": "replacement_during_live_GET",
+            "latest_pending_ID": "11111111111111111111111111111111",
+            "entry_preserved": true
+          }
+        ]
+      }
+    }
+  ],
+  "inherited_negative_controls": "Original immutable e73 probes reproduce stale removal, overwrite, changed-ID after lost recovery and late-first409 removal; base07 held-reload changed-intent negative retained. No original receipt/probe modified.",
+  "editor_ownership_unchanged_from_e73": true,
+  "Workbench_backend_CI_export_consumer_unchanged": true,
+  "source_sha256": {
+    "static/caption-proposals.js": "7d00c81874441c8741bf15dc402c1ee9d7cd668c629f15f5a392d51ff79b53fc",
+    "static/workbench.js": "b4987e27f353a35866d23e7d34e6e3b2e572d4dcf44911da8444c5bf80597e96",
+    "tests/test_caption_proposals_controller.cjs": "8ddb81df6fa51aa97a05c9b17e7a79aadd818becadc62dfc30ac30f5f6f7a197",
+    "tests/test_caption_reload_controller.cjs": "9b0822635d7098291d94334cd442cd4f39110dc89f4678435aafa2e2aa6c88b4",
+    "tests/browser_caption_proposals.cjs": "9dcc46c326edf5f018637b938120a071f7bc031f631b411bab9f7a4bb6f37925"
+  },
+  "candidate_edits_by_reviewer": [],
+  "browser_or_aggregate_runs": [],
+  "remote_actions": [],
+  "models_or_downloads": [],
+  "limits": [
+    "Independent execution uses immutable602 Git-object extracts, controlled separate VM documents/shared storage and controlled API responses. It does not claim independently executed real Chromium/HTTP BFCache behavior.",
+    "Parent owns current exact-source aggregate and browser qualification.",
+    "No saved-selection/classification scope, publication, merge or bot requests.",
+    "Only external extracts/probe/log/successor receipt/review files were written."
+  ]
+}

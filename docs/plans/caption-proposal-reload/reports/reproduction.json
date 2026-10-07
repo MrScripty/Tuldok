@@ -1,0 +1,25 @@
+{
+  "head": "e73c688a1334652da0552baaafb4b308090a78ba",
+  "tree": "6e5430329f47ac05b966516916e2ee422074fa95",
+  "base": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+  "review": 5439832323,
+  "files": {
+    "static/caption-proposals.js": "6173852efbbbd449888a1fbcdc6b1f501590d42cf46af318f04c278dac4389f0",
+    "static/workbench.html": "202f1f56e88d88417be7b5531dab0b97a7e7fbddd7bc8f86174aef266abe594b",
+    "tests/test_caption_proposals_controller.cjs": "8ddb81df6fa51aa97a05c9b17e7a79aadd818becadc62dfc30ac30f5f6f7a197",
+    "tests/test_caption_reload_controller.cjs": "c545b182ae4d81950a95c31bd6d9eb482f17c44333e2118b269049be152e7475",
+    "tests/browser_caption_proposals.cjs": "9dcc46c326edf5f018637b938120a071f7bc031f631b411bab9f7a4bb6f37925"
+  },
+  "negative": {
+    "source": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+    "command": "CAPTION_RELOAD_CASE=restore TULDOK_SOURCE_ROOT=/workspace/Tuldok-caption-summary-local node tests/test_caption_reload_controller.cjs",
+    "expected_exit": 1,
+    "observed": "changed POST count 1; required 0"
+  },
+  "positive": [
+    "node tests/test_caption_reload_controller.cjs",
+    "node tests/test_caption_proposals_controller.cjs",
+    "CAPTION_RELOAD_CASE=restore node tests/test_caption_reload_controller.cjs",
+    "BROWSER=/usr/bin/chromium node tests/browser_caption_proposals.cjs"
+  ]
+}

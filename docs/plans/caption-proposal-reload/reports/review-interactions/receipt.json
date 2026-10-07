@@ -1,0 +1,153 @@
+{
+  "reviewed_head": "e73c688a1334652da0552baaafb4b308090a78ba",
+  "reviewed_tree": "6e5430329f47ac05b966516916e2ee422074fa95",
+  "base": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+  "recorded_at": "2026-10-07T09:08:23.930732+00:00",
+  "review_scope": "Only caption reload admission recovery, storage ownership and related editor/poll lifecycle",
+  "findings": [
+    {
+      "severity": "P2",
+      "title": "Preserve newer tab recovery ownership across BFCache and stale callbacks",
+      "locations": [
+        "static/caption-proposals.js:24-33",
+        "static/caption-proposals.js:117-120",
+        "static/caption-proposals.js:172",
+        "static/caption-proposals.js:178"
+      ],
+      "issue": "sessionStorage is shared by documents in a tab. Cached documents retain stale captionProposalPendingRequest; pageshow does not reread live storage, and Store writes/removes without checking live-entry ownership.",
+      "reproduction": {
+        "result": "REPRODUCED",
+        "trace": [
+          {
+            "case": "stale_remove",
+            "old_memory_id": "00000000000000000000000000000001",
+            "newer_pending_id": "11111111111111111111111111111111",
+            "entry_after_old_GET": null
+          },
+          {
+            "case": "changed_after_corrupted_recovery",
+            "changed_POST_id": "22222222222222222222222222222222",
+            "lost_ID2": "11111111111111111111111111111111"
+          },
+          {
+            "case": "stale_overwrite",
+            "newer_pending_id": "11111111111111111111111111111111",
+            "entry_after_old_explicit_repeat": "00000000000000000000000000000001"
+          }
+        ]
+      },
+      "late_callback_reproduction": {
+        "result": "REPRODUCED",
+        "case": "late_old_first_409_removes_newer_entry",
+        "old_id": "11111111111111111111111111111111",
+        "newer_unknown_id": "22222222222222222222222222222222",
+        "entry_after_old_409": null
+      },
+      "consequence": "A stale document erases or overwrites newer unresolved ID2/body. A subsequent full reload then permits changed ID3, losing the same-ID recovery guarantee.",
+      "recommended_repair": "Synchronously reload/validate live storage and recovered form/intent on pageshow; fence old GETs and compare expected live entry ownership before every write/removal, including first-attempt 4xx catch. Divergence or storage failure must retain newer entry and fail closed/reconcile explicitly.",
+      "successor_tests": [
+        "A caches ID1; B reconciles ID1 and persists unknown ID2; A pageshow plus old GET must not delete ID2.",
+        "Held pageshow GET plus stale explicit ID1 repeat must neither overwrite ID2 nor POST with stale ownership.",
+        "A first POST held/paused; B stores unknown ID2; late A first 409 cannot remove ID2.",
+        "Pageshow storage read/corruption failures block submissions; old completion cannot erase fresh recovery ownership."
+      ]
+    }
+  ],
+  "execution": [
+    {
+      "command": "node source-e73/tests/test_caption_proposals_controller.cjs",
+      "exit_code": 0,
+      "log": "registered-controller-exact-e73.log",
+      "includes": "Existing editor/admission fences and registered nested reload controller."
+    },
+    {
+      "command": "TULDOK_SOURCE_ROOT=source-e73 node independent-reload-lifecycle-probe.cjs",
+      "exit_code": 0,
+      "result": {
+        "result": "PASS",
+        "trace": [
+          {
+            "phase": "held_GET_with_explicit_repeat",
+            "same_body_and_id": true,
+            "inflight_GET_keeps_storage": true,
+            "refused_repeat_keeps_storage": true
+          },
+          {
+            "phase": "page_lifecycle",
+            "pagehide_GET_retains_identity": true,
+            "pageshow_cancelled_reconciliation_releases": true,
+            "automatic_POSTs": 0
+          },
+          {
+            "phase": "storage_readback",
+            "silent_write_blocks_POST": true,
+            "silent_remove_retains_ID_and_blocks_POST": true,
+            "read_after_write_failure_blocks_POST": true
+          }
+        ]
+      },
+      "log": "independent-lifecycle-exact-e73.log"
+    },
+    {
+      "command": "CAPTION_RELOAD_CASE=restore TULDOK_SOURCE_ROOT=<extracted base> node tests/test_caption_reload_controller.cjs",
+      "exit_code": 1,
+      "expected_failure": "A full reload must refuse a changed POST while initial reconciliation is held",
+      "log": "old-source-held-reload.log"
+    },
+    {
+      "command": "TULDOK_SOURCE_ROOT=source-e73 node independent-shared-storage-probe.cjs",
+      "exit_code": 0,
+      "result": {
+        "result": "REPRODUCED",
+        "trace": [
+          {
+            "case": "stale_remove",
+            "old_memory_id": "00000000000000000000000000000001",
+            "newer_pending_id": "11111111111111111111111111111111",
+            "entry_after_old_GET": null
+          },
+          {
+            "case": "changed_after_corrupted_recovery",
+            "changed_POST_id": "22222222222222222222222222222222",
+            "lost_ID2": "11111111111111111111111111111111"
+          },
+          {
+            "case": "stale_overwrite",
+            "newer_pending_id": "11111111111111111111111111111111",
+            "entry_after_old_explicit_repeat": "00000000000000000000000000000001"
+          }
+        ]
+      },
+      "log": "independent-shared-storage-exact-e73.log"
+    },
+    {
+      "command": "TULDOK_SOURCE_ROOT=source-e73 node independent-late-first-refusal-probe.cjs",
+      "exit_code": 0,
+      "result": {
+        "result": "REPRODUCED",
+        "case": "late_old_first_409_removes_newer_entry",
+        "old_id": "11111111111111111111111111111111",
+        "newer_unknown_id": "22222222222222222222222222222222",
+        "entry_after_old_409": null
+      },
+      "log": "independent-late-refusal-exact-e73.log"
+    }
+  ],
+  "source_sha256": {
+    "static/caption-proposals.js": "6173852efbbbd449888a1fbcdc6b1f501590d42cf46af318f04c278dac4389f0",
+    "static/workbench.html": "202f1f56e88d88417be7b5531dab0b97a7e7fbddd7bc8f86174aef266abe594b",
+    "tests/test_caption_proposals_controller.cjs": "8ddb81df6fa51aa97a05c9b17e7a79aadd818becadc62dfc30ac30f5f6f7a197",
+    "tests/test_caption_reload_controller.cjs": "c545b182ae4d81950a95c31bd6d9eb482f17c44333e2118b269049be152e7475",
+    "tests/browser_caption_proposals.cjs": "9dcc46c326edf5f018637b938120a071f7bc031f631b411bab9f7a4bb6f37925"
+  },
+  "candidate_edits_by_reviewer": [],
+  "browser_or_aggregate_runs": [],
+  "remote_actions": [],
+  "models_or_downloads": [],
+  "limits": [
+    "VM probes model same-tab documents with separate contexts/shared storage; no independent actual Chromium/HTTP BFCache claim.",
+    "Owner began successor source edits while this receipt was prepared; final bounded reproductions therefore ran immutable files extracted directly from e73 Git objects, not the evolving worktree.",
+    "Parent owns aggregate/browser qualification and successor implementation; findings sent promptly.",
+    "No saved-selection/classification work, publication, merge or review-bot actions; only external extracts/probes/logs/receipt written."
+  ]
+}
