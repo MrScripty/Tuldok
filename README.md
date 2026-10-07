@@ -320,3 +320,13 @@ Authored examples and an existing-owner design rehearsal are under
 `docs/plans/annotated-caption-import/reports/fixtures/`. Native-import HTTP and
 Chromium tests independently check admission, fresh review and actual downloaded
 release consumption by the unchanged pinned chapter-26 validator.
+
+### Independent instruction answers
+
+Open an existing text record and use **Instruction answers** to add, edit and explicitly review separate completions. Each answer has its own stable ID, revision, review and history. The prompt and its classification/entity target remain unchanged; multiple answers coexist. Plain entry uses browser LF newlines; JSON-string entry preserves CR/CRLF. Completion whitespace and Unicode are stored exactly, with the existing 200,000-code-point bounded-text policy.
+
+Select individual answers and use **Freeze selected answers**. Selection captures response and parent/source revisions and never expands to later answers. Download/open a fixed selection JSON file to retain those exact pairs across page reloads. Filters and record saved sets remain separate. Stale or draft answers require explicit current reselection/review.
+
+The dedicated `text_instruction_v1` ZIP preserves canonical prompt/response snapshots, provenance, hashes and full related family evidence in manifest.json; prompt assets are under prompts/. Consumer rows have only prompt/completion in train/validation/test data.jsonl. rows.jsonl maps deterministic zero-based rows to exact revisions and family IDs. Splits weight selected examples and never divide a source family; reports also count unique prompts. Up to 5,000 responses and 40 MiB total uncompressed archive data are permitted, using existing synchronous resource contracts. Empty unused splits are declared but omitted from the consumer's loading map. Final export requires a fresh eligible proof.
+
+Consumer verification uses unchanged hash-pinned TRL0.23.1 and Datasets4.1.1, isolated verification dependencies, a locally constructed tokenizer and tiny random CPU model. It checks actual browser-downloaded strings, row mapping, completion masks, EOS, padding and explicitly disabled truncation, with no pretrained download or training-quality claim. Dependencies belong to tests/instruction-consumer-requirements.txt, not app runtime. [Scope/contracts](docs/plans/instruction-responses/plan.md).

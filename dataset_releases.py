@@ -9,11 +9,15 @@ from collections import Counter
 from pathlib import Path
 from PIL import Image
 
-from workbench import WorkbenchError, analyze, encode, file_hash, validate_annotation
+from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, validate_annotation
 
 SPLITS = ('train', 'validation', 'test')
 RELEASE_ID = re.compile(r'^[a-f0-9]{64}$')
 CAPTION_FORMAT = 'image_caption_v1'
+INSTRUCTION_FORMAT = 'text_instruction_v1'
+INSTRUCTION_CONSUMER = {'trl': '0.23.1', 'trl_commit': '4529a1c8b1813480a85b02c9c8e7f75a29085d65',
+                        'datasets': '4.1.1', 'datasets_commit': '9be15a723b460586999b6aa1f346e284342fcc1f',
+                        'type': 'standard prompt-completion'}
 CAPTION_CONSUMER = {'path': 'examples/diffusion/check_image_data.py',
                     'sha256': '6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94'}
 CAPTION_SPLITS = {'train': 'train', 'validation': 'val', 'test': 'test'}
@@ -46,7 +50,33 @@ def connected_components(universe):
     return {row['id']: root('id:' + row['id']) for row in universe}
 
 
-def allocate(selected, universe, ratios, seed):
+def family_context(selected, universe):
+    roots = connected_components(universe)
+    active = {roots[row['id']] for row in selected}
+    families = {}
+    for row in universe:
+        if roots[row['id']] in active:
+            families.setdefault(roots[row['id']], []).append(row)
+    groups = {component: 'component:' + hashlib.sha256(encode(sorted(r['id'] for r in family)).encode()).hexdigest()
+              for component, family in families.items()}
+    selected_ids = {row['id'] for row in selected}
+    snapshots, lineage = {}, []
+    for component, family in families.items():
+        family = sorted(family, key=lambda row: row['id'])
+        snapshots[groups[component]] = [
+            {key: row[key] for key in ('id', 'kind', 'revision', 'source_revision', 'content_hash', 'pixel_hash',
+                                      'groups', 'parents', 'source_available', 'source_lineage_known',
+                                      'source_split', 'source_sha256', 'book_id', 'session_id')}
+            for row in family]
+        lineage.append({'id': groups[component],
+                        'selected_ids': [row['id'] for row in family if row['id'] in selected_ids],
+                        'member_ids': [row['id'] for row in family],
+                        'deleted_ids': [row['id'] for row in family if not row['source_available']],
+                        'fixed_splits': sorted({row['source_split'] for row in family if row['source_split'] in SPLITS})})
+    return roots, groups, snapshots, sorted(lineage, key=lambda family: family['id'])
+
+
+def allocate(selected, universe, ratios, seed, weights=None):
     if not isinstance(ratios, dict) or set(ratios) != set(SPLITS):
         raise WorkbenchError('Supply train, validation and test percentages.')
     if any(type(n) is not int or not 0 <= n <= 100 for n in ratios.values()) or sum(ratios.values()) != 100:
@@ -54,6 +84,9 @@ def allocate(selected, universe, ratios, seed):
     if type(seed) is not int or not 0 <= seed <= 2**32 - 1:
         raise WorkbenchError('Split seed must be a nonnegative 32-bit integer.')
     roots = connected_components(universe)
+    weights = weights or {row['id']: 1 for row in selected}
+    total = sum(weights[row['id']] for row in selected)
+    weight = lambda ids: sum(weights[record_id] for record_id in ids)
     components = {}
     for row in selected:
         components.setdefault(roots[row['id']], []).append(row['id'])
@@ -78,19 +111,19 @@ def allocate(selected, universe, ratios, seed):
         if component in fixed:
             for record_id in ids:
                 assigned[record_id] = fixed[component]
-            counts[fixed[component]] += len(ids)
+            counts[fixed[component]] += weight(ids)
         else:
             pending.append(ids)
     if len(pending) < sum(not counts[split] for split in active):
         raise WorkbenchError('Existing source splits leave too few independent groups to populate all requested splits.')
-    groups = sorted(pending, key=lambda ids: (-len(ids), hashlib.sha256((str(seed) + ':' + ','.join(sorted(ids))).encode()).hexdigest()))
+    groups = sorted(pending, key=lambda ids: (-weight(ids), hashlib.sha256((str(seed) + ':' + ','.join(sorted(ids))).encode()).hexdigest()))
     for index, ids in enumerate(groups):
         empty = [s for s in active if not counts[s]]
         choices = empty if len(groups) - index == len(empty) else active
-        split = max(choices, key=lambda s: (ratios[s] * len(selected) / 100 - counts[s], -SPLITS.index(s)))
+        split = max(choices, key=lambda s: (ratios[s] * total / 100 - counts[s], -SPLITS.index(s)))
         for record_id in ids:
             assigned[record_id] = split
-        counts[split] += len(ids)
+        counts[split] += weight(ids)
     return assigned, {'requested_percentages': ratios, 'actual_counts': dict(counts), 'independent_components': len(components),
                       'note': 'Whole connected groups are indivisible; existing source splits are preserved. Requested percentages are targets, not exact quotas.'}
 
@@ -145,6 +178,8 @@ class Releases:
         """
         workbench = self.workbench
         format_name = body.get('format', 'canonical_v1')
+        if format_name == INSTRUCTION_FORMAT:
+            return self._prepare_responses(body)
         preview = {'eligible': False, 'format': format_name, 'selected_count': 0,
                    'analysis': None, 'blockers': [], 'warnings': [], 'lineage': [],
                    'split_report': None, 'assignments': {}, 'preview_token': None}
@@ -163,29 +198,7 @@ class Releases:
         preview['selected_count'] = len(rows)
         preview['analysis'] = analyze(rows)
         universe = workbench._all()
-        roots = connected_components(universe)
-        active_roots = {roots[row['id']] for row in rows}
-        families = {}
-        for row in universe:
-            if roots[row['id']] in active_roots:
-                families.setdefault(roots[row['id']], []).append(row)
-        groups = {component: 'component:' + hashlib.sha256(encode(sorted(r['id'] for r in family)).encode()).hexdigest()
-                  for component, family in families.items()}
-        selected_ids = {row['id'] for row in rows}
-        snapshots = {}
-        for component, family in families.items():
-            family = sorted(family, key=lambda row: row['id'])
-            snapshots[groups[component]] = [
-                {key: row[key] for key in ('id', 'kind', 'revision', 'source_revision', 'content_hash', 'pixel_hash',
-                                          'groups', 'parents', 'source_available', 'source_lineage_known',
-                                          'source_split', 'source_sha256', 'book_id', 'session_id')}
-                for row in family]
-            preview['lineage'].append({'id': groups[component],
-                'selected_ids': [row['id'] for row in family if row['id'] in selected_ids],
-                'member_ids': [row['id'] for row in family],
-                'deleted_ids': [row['id'] for row in family if not row['source_available']],
-                'fixed_splits': sorted({row['source_split'] for row in family if row['source_split'] in SPLITS})})
-        preview['lineage'].sort(key=lambda family: family['id'])
+        roots, groups, snapshots, preview['lineage'] = family_context(rows, universe)
         pixels, pixel_hashes = set(), {}
         for row in rows:
             try:
@@ -254,8 +267,127 @@ class Releases:
             raise WorkbenchError('Release preview changed. Preview the current selection and settings again.', 'conflict', 409)
         return prepared
 
+    def _prepare_responses(self, body):
+        preview = {'format': INSTRUCTION_FORMAT, 'eligible': False, 'selected_count': 0,
+                   'example_count': 0, 'unique_prompt_count': 0, 'blockers': [], 'warnings': [],
+                   'lineage': [], 'assignments': {}, 'split_report': None, 'preview_token': None}
+        try:
+            if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
+                raise WorkbenchError('Unknown instruction release fields.')
+            responses, parents = self.workbench.response_selection(body.get('items'))
+            preview.update(selected_count=len(responses), example_count=len(responses), unique_prompt_count=len(parents))
+            universe = self.workbench._all()
+            roots, groups, snapshots, preview['lineage'] = family_context(parents, universe)
+            weights = Counter(response['prompt_id'] for response in responses)
+            assignments, report = allocate(parents, universe, body.get('ratios'), body.get('seed'), weights)
+            preview['assignments'] = {response['id']: assignments[response['prompt_id']] for response in responses}
+            report.update(example_count=len(responses), unique_prompt_count=len(parents),
+                          actual_unique_prompt_counts=dict(Counter(assignments.values())))
+            preview['split_report'] = report
+            for parent in parents:
+                asset, _ = self.workbench.asset(parent['id'])
+                if hashlib.sha256(asset).hexdigest() != parent['content_hash']:
+                    raise WorkbenchError('Prompt bytes changed outside Tuldok.', 'conflict', 409)
+            prepared = {'preview': preview, 'rows': responses, 'parents': parents, 'roots': roots,
+                        'groups': groups, 'snapshots': snapshots}
+            # The exact logical artifact, including duplicate consumer projection, is bounded.
+            total = 0
+            for _, value, expected in self._instruction_entries(prepared, body):
+                total += len(value)
+                if total > MAX_SELECTED_TEXT_BYTES:
+                    raise WorkbenchError('Instruction archive exceeds the 40 MiB synchronous resource bound.')
+                if expected and hashlib.sha256(value).hexdigest() != expected:
+                    raise WorkbenchError('Prompt bytes changed outside Tuldok.', 'conflict', 409)
+            preview['artifact_bytes'] = total
+            preview['preview_token'] = hashlib.sha256(encode({
+                'format': INSTRUCTION_FORMAT, 'schema': 1, 'ratios': body['ratios'], 'seed': body['seed'],
+                'responses': responses, 'parents': parents, 'protected_components': snapshots,
+                'assignments': preview['assignments']}).encode()).hexdigest()
+            preview['eligible'] = True
+            preview['warnings'].append('Human review and protected families do not establish semantic quality or permission.')
+            return prepared
+        except WorkbenchError as error:
+            preview['blockers'].append({'message': str(error), 'code': error.code, 'status': error.status})
+            return {'preview': preview}
+
+    def _instruction_entries(self, prepared, body):
+        """One deterministic projection owns preview sizing and archive publication."""
+        preview = prepared['preview']
+        responses, parents = prepared['rows'], prepared['parents']
+        prompts = {parent['id']: parent for parent in parents}
+        mapping = []
+        for split in SPLITS:
+            filename = split + '/data.jsonl'
+            for index, response in enumerate(r for r in responses if preview['assignments'][r['id']] == split):
+                parent = prompts[response['prompt_id']]
+                pair = {'id': response['id'], 'revision': response['revision'], 'prompt_id': parent['id'],
+                        'parent_revision': parent['revision'], 'source_revision': parent['source_revision']}
+                mapping.append(dict(pair, split=split, file=filename, row=index,
+                                    family=prepared['groups'][prepared['roots'][parent['id']]]))
+        manifest = {'schema_version': 1, 'format': INSTRUCTION_FORMAT, 'consumer': INSTRUCTION_CONSUMER,
+                    'seed': body['seed'], 'split_report': preview['split_report'], 'prompts': parents,
+                    'responses': responses, 'protected_components': prepared['snapshots'],
+                    'text_contract': 'Prompt: existing NFC/LF. Completion: exact Unicode and whitespace.',
+                    'limits': {'response_code_points': MAX_TEXT, 'selected_responses': 5000,
+                               'archive_uncompressed_bytes': MAX_SELECTED_TEXT_BYTES}}
+        yield 'manifest.json', encode(manifest).encode('utf-8'), None
+        yield 'rows.jsonl', ''.join(encode(row) + '\n' for row in mapping).encode('utf-8'), None
+        for parent in parents:
+            yield 'prompts/' + parent['id'] + '.txt', parent['text'].encode('utf-8'), parent['content_hash']
+        for split in SPLITS:
+            # Emit bounded rows individually; an empty split has a declared empty file.
+            yield split + '/data.jsonl', b'', None
+            for response in responses:
+                if preview['assignments'][response['id']] == split:
+                    value = {'prompt': prompts[response['prompt_id']]['text'], 'completion': response['completion']}
+                    yield None, (encode(value) + '\n').encode('utf-8'), None
+        yield 'README.txt', (b'Tuldok text_instruction_v1. Consumer rows have only prompt/completion.\n'
+                            b'Load the nonempty train/validation/test data.jsonl files with explicit split mappings.\n'
+                            b'rows.jsonl maps zero-based rows to fixed response/parent/source revisions and family IDs.\n'
+                            b'manifest.json preserves canonical evidence. Completion text is never trimmed or normalized.\n'
+                            b'Consumer token limits/EOS/loss configuration are explicit training choices.\n'), None
+
+    def _create_responses(self, body):
+        workbench = self.workbench
+        with workbench.lock, workbench.db:
+            prepared = self._checked(body)
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        stream = None
+                        try:
+                            for filename, value, expected in self._instruction_entries(prepared, body):
+                                if filename is not None:
+                                    if stream is not None:
+                                        stream.close(); stream = None
+                                    if filename.endswith('/data.jsonl'):
+                                        stream = archive.open(zipfile.ZipInfo(filename), 'w')
+                                    else:
+                                        archive_asset(archive, value, filename, expected or hashlib.sha256(value).hexdigest())
+                                else:
+                                    stream.write(value)
+                        finally:
+                            if stream is not None:
+                                stream.close()
+                    target.flush(); os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            preview = prepared['preview']
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': INSTRUCTION_FORMAT, 'records': len(prepared['rows']),
+                    'example_count': preview['example_count'], 'unique_prompt_count': preview['unique_prompt_count'],
+                    'split_report': preview['split_report']}
+
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
+        if format_name == INSTRUCTION_FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact responses before exporting.', 'conflict', 409)
+            return self._create_responses(body)
         if format_name not in ('canonical_v1', CAPTION_FORMAT):
             raise WorkbenchError('Unknown release format.')
         if format_name == CAPTION_FORMAT:
