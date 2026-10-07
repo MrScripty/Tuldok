@@ -8,7 +8,7 @@ function notice(message, error = false) { $('notice').textContent = message; $('
 async function api(path, body) {
   const response = await fetch(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   const result = await response.json();
-  if (!response.ok) throw Error(result.error || 'Request failed.');
+  if (!response.ok) { const error=Error(result.error || 'Request failed.');error.status=response.status;throw error; }
   return result;
 }
 function action(id, fn, event = 'click') {
@@ -104,6 +104,7 @@ function showRecord(record) {
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
   $('history-output').hidden = true; renderTargets();
   if(typeof rightsRecordShown === 'function') rightsRecordShown(record);
+  if(typeof captionProposalsShown === 'function') captionProposalsShown(record);
   if(typeof showResponses === 'function') showResponses(record);
   notice('Record loaded.');
 }
@@ -162,6 +163,7 @@ $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
   if(typeof rightsDirty !== 'undefined' && rightsDirty) throw Error('Save or cancel the rights-note edit before saving an annotation.');
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) throw Error('Save or cancel the response edit before saving the annotation.');
+  if(typeof captionProposalBusy !== 'undefined' && captionProposalBusy) throw Error('Wait for the caption action to finish before saving an annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};

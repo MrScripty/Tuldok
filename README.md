@@ -354,3 +354,34 @@ response pauses the batch and offers read-only saved-result reconciliation, neve
 automatic replay. Restart requires choosing the archive again for preparation;
 committed records and receipts persist. Limits and qualification are recorded in
 [the import plan](docs/plans/native-text-classification-import/plan.md).
+
+### Propose a caption from an existing image
+
+Select one image in the workbench and open **Propose a caption for this image**.
+List the served models at your Pumas-compatible gateway, choose a model, and
+explicitly request a caption. A catalog entry does not prove vision or JSON
+support. Unsupported image input, unavailable models and invalid responses fail
+without fallback or automatic retries. The request sends an oriented JPEG copy
+at most 1600 pixels on its longest side; original source bytes stay unchanged.
+Only one caption request runs at a time, independently of existing generation jobs.
+
+Inspect the proposal, reject it, or explicitly **Apply as draft**. Applying checks
+both captured revisions and original/canonical image hashes; it updates the
+existing image's target and proposal receipt atomically. It never grants review.
+Explicitly review the draft and select its new revision before freezing a caption
+release. Fixed selections retain their old revisions. Source acquisition evidence,
+rights, parent relationships and protected groups are preserved. Target-associated
+model evidence survives explicit review and frozen export; changing the caption
+or task removes that evidence from the current target while retaining history.
+
+Attempts retain the exact bounded submitted JPEG, prompt, requested provider/model,
+seed, revisions, hashes, complete bounded response bytes and application receipt.
+Seeds are requests, not reproduction guarantees. Stop cancels Tuldok's transport
+and fences late output; it does not prove when backend inference stops. Interrupted
+attempts remain inspectable after restart and never auto-resume. Refresh requests
+and inspect the record after a lost acknowledgement; repeating the same request ID
+or application reconciles existing state without another inference/target write.
+
+This single-image slice is tested with local synthetic HTTP providers and real
+Chromium. It asserts no real-model caption quality and adds no models, credentials,
+provider registry or dependencies. [Contract and acceptance](docs/plans/caption-proposals/plan.md).

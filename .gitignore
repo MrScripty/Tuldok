@@ -5,3 +5,4 @@ data/
 *.zip
 .pytest_cache/
 /test-results/rights-note/
+/test-results/caption-proposals/
