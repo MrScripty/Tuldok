@@ -1,7 +1,8 @@
 """Ephemeral current metadata diagnostics; no saved membership or review writes."""
 import hashlib
+import json
 
-from workbench import IDENTIFIER, WorkbenchError, analyze, diagnostic_members, encode, rights_note
+from workbench import IDENTIFIER, WorkbenchError, analyze, diagnostic_members, rights_note
 
 CATEGORIES = ('duplicates', 'unlabeled', 'missing_sources', 'unknown_rights', 'references')
 FILTERS = ('q', 'kind', 'review', 'sort', 'task', 'label', 'group', 'rights')
@@ -46,23 +47,35 @@ def inspect(workbench, body):
                 rows, filters = workbench._filtered(filters)
                 references = []
             else:
-                universe = {row['id']: row for row in workbench._all()}
-                rows = [universe[item['id']] for item in items if item['id'] in universe]
+                rows = []
                 references = []
                 for item in items:
-                    row = universe.get(item['id'])
+                    workbench._sync_images(item['id'])
+                    try:
+                        row = workbench._get(item['id'])
+                    except WorkbenchError as error:
+                        if error.status != 404 or error.code != 'unavailable':
+                            raise
+                        row = None
                     issues = []
                     if row is None:
                         issues.append('missing_record')
                     else:
+                        rows.append(row)
                         if any(item[key] != row[key] for key in ('revision', 'source_revision')):
                             issues.append('stale')
                         if not row['source_available']:
                             issues.append('source_deleted')
                     references.append(dict(requested=item, current={key: row[key] for key in item} if row else None,
                                            issues=issues, id=item['id']))
-            fingerprint = hashlib.sha256(encode(dict(scope=scope, filters=filters, items=items,
-                rows=sorted(rows, key=lambda row: row['id']), references=references)).encode()).hexdigest()
+            facts = dict(scope=scope, filters=filters, items=items,
+                         rows=sorted(rows, key=lambda row: row['id']), references=references)
+            fingerprint = hashlib.sha256()
+            # Emit the existing canonical JSON bytes without a collection-sized string.
+            encoder = json.JSONEncoder(ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False)
+            for chunk in encoder.iterencode(facts):
+                fingerprint.update(chunk.encode())
+            fingerprint = fingerprint.hexdigest()
             if token is not None and token != fingerprint:
                 raise WorkbenchError('Diagnostic facts changed. Refresh diagnostics before paging.', 'conflict', 409)
             members, hashes = diagnostic_members(rows)

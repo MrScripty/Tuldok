@@ -1,6 +1,7 @@
 """Actual HTTP and SQL facts, including rollback-only legacy enrollment."""
 import base64
 import io
+import hashlib
 import json
 import sqlite3
 import tempfile
@@ -128,3 +129,66 @@ class CurationTests(unittest.TestCase):
         with patch.object(curation,'analyze',side_effect=ValueError('fixture failure')):
             with self.assertRaisesRegex(ValueError,'fixture failure'): curation.inspect(self.w,dict(scope='filtered',category='unlabeled'))
         self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+
+    def test_selected_scope_decodes_only_requested_records_and_enrolls_only_selected_legacy(self):
+        rows=[self.text(str(i)) for i in range(36)]
+        selected_legacy=self.image('selected-legacy',legacy=True)
+        self.image('unrelated-legacy',legacy=True)
+        refs=[self.ref(rows[0]),dict(id=selected_legacy['id'],revision=1,source_revision=selected_legacy['revision']),
+              dict(id='f'*32,revision=1,source_revision=1)]
+        before=self.state()
+        with patch.object(self.w,'_get',wraps=self.w._get) as get, patch.object(self.w,'_history',wraps=self.w._history) as history:
+            result=self.report('references',scope='selected',items=refs)
+        requested={ref['id'] for ref in refs}
+        self.assertLessEqual({call.args[0] for call in get.call_args_list},requested,
+                             'Selected scope must not decode unrelated records')
+        self.assertEqual([call.args[0]['id'] for call in history.call_args_list],[selected_legacy['id']],
+                         'Only the requested legacy image may be temporarily enrolled')
+        self.assertEqual(result['analysis']['records'],2)
+        self.assertEqual(result['reference_counts'],dict(stale=0,source_deleted=0,missing_record=1))
+        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        import curation
+        with patch.object(curation,'analyze',side_effect=ValueError('selected fixture failure')):
+            with self.assertRaisesRegex(ValueError,'selected fixture failure'):
+                curation.inspect(self.w,dict(scope='selected',items=refs,category='references'))
+        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+
+    def test_freshness_streams_canonical_filtered_facts_without_full_json_encoding(self):
+        for i in range(36):
+            self.w.import_asset(dict(kind='text',name=str(i),text='x'*99_990+f'\n{i}é🧪',groups=['shared']))
+        with self.w.lock:
+            rows,filters=self.w._filtered({})
+        facts=dict(scope='filtered',filters=filters,items=[],rows=sorted(rows,key=lambda row:row['id']),references=[])
+        canonical=encode(facts).encode(); expected=hashlib.sha256(canonical).hexdigest()
+        largest_row=max(len(encode(row).encode()) for row in rows)
+        whole_encodes=[]; writes=[]; original_encode=json.JSONEncoder.encode
+        def observe_encode(encoder,value):
+            if isinstance(value,dict) and 'rows' in value: whole_encodes.append(len(value['rows']))
+            return original_encode(encoder,value)
+        class ObservedHash:
+            def __init__(self,data=b''):
+                self.hash=hashlib.sha256(data); writes.append(len(data))
+            def update(self,data): self.hash.update(data); writes.append(len(data))
+            def hexdigest(self): return self.hash.hexdigest()
+        import curation
+        with patch.object(curation,'hashlib') as hashes, patch.object(json.JSONEncoder,'encode',observe_encode):
+            hashes.sha256.side_effect=ObservedHash
+            result=self.report(limit=1)
+        self.assertEqual(result['view_token'],expected)
+        self.assertEqual(result['total'],36); self.assertEqual(len(result['items']),1)
+        self.assertEqual(whole_encodes,[],'Do not materialize the complete freshness JSON')
+        self.assertEqual(sum(writes),len(canonical))
+        self.assertLessEqual(max(writes),largest_row,'Hash writes must be bounded by a record, not collection size')
+        status,page=self.request(dict(scope='filtered',category='unknown_rights',limit=1,offset=1,view_token=expected))
+        self.assertEqual(status,200); self.assertEqual(page['view_token'],expected)
+
+    def test_selected_freshness_matches_canonical_stale_and_missing_reference_facts(self):
+        row=self.text('unicode-é🧪')
+        refs=[dict(self.ref(row),revision=row['revision']+1),dict(id='f'*32,revision=1,source_revision=1)]
+        result=self.report('references',scope='selected',items=refs)
+        references=sorted([item['reference'] for item in result['items']],key=lambda ref:ref['id'])
+        facts=dict(scope='selected',filters={},items=sorted(refs,key=lambda ref:ref['id']),
+                   rows=[self.w.get(row['id'])],references=references)
+        self.assertEqual(result['view_token'],hashlib.sha256(encode(facts).encode()).hexdigest())
+        reordered=self.report('references',scope='selected',items=list(reversed(refs)),view_token=result['view_token'])
+        self.assertEqual(reordered['view_token'],result['view_token'])

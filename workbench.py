@@ -131,10 +131,13 @@ class Workbench:
                 id TEXT PRIMARY KEY, book_id TEXT NOT NULL, session_id TEXT NOT NULL,
                 split TEXT NOT NULL)''')
 
-    def _sync_images(self):
+    def _sync_images(self, record_id=None):
         # Enrol only new images. Hashing is streaming and never rewrites originals.
-        rows = self.db.execute('''SELECT s.* FROM samples s LEFT JOIN workbench_records w
-            ON w.id=s.id WHERE w.id IS NULL''').fetchall()
+        query = '''SELECT s.* FROM samples s LEFT JOIN workbench_records w
+            ON w.id=s.id WHERE w.id IS NULL'''
+        if record_id is not None:
+            query += ' AND s.id=?'
+        rows = self.db.execute(query, () if record_id is None else (record_id,)).fetchall()
         for row in rows:
             path = self.dataset.path / 'images' / row['id'] / 'image.png'
             try:

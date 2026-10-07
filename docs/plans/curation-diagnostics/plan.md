@@ -8,4 +8,6 @@ Read boundaries: shared lock and rollback-only savepoint include existing lazy e
 
 Gates: real HTTP + SQLite persistence checks; contributing membership and exact AND filters before pagination; stale/deleted/missing references; rollback on failures; deterministic delayed controller checks; actual Chromium controls with fixed selections and dirty inspection, downloaded release, desktop/narrow screenshots; complete registered Python/JS/browser suite. Do not weaken existing gates.
 
-Positive real-model check: blocked in this environment. Bounded local inventory found no model files/process; reachable model catalogs match controlled repository fixtures. No setup/download/auth changes. Evidence: /workspace/scratch/tuldok-retry/curation-runtime-inventory.json.
+Positive real-model check: blocked in this environment. Bounded local inventory found no model files/process; reachable model catalogs match controlled repository fixtures. No setup/download/auth changes. Evidence: [committed runtime inventory](reports/runtime-inventory.json).
+
+Validated review repair: selected diagnostics retrieve only requested IDs, including scoped rollback-only legacy enrollment. Freshness hashes stream the exact existing canonical facts and preserve token bytes. Contributor predicates, full filtered-scope analysis, read-only savepoints and human-review separation are unchanged. See [scaling repair evidence](reports/review-scaling-repair.md).
