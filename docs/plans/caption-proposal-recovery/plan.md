@@ -21,8 +21,9 @@ Parent independent review reproduced two P2 controller gaps after PR17 qualifica
 
 The controller retains unresolved identity across early and ambiguous absence.
 An in-flight start keeps that identity even when a concurrent GET finds persistence.
-Only a definite POST outcome or an explicit later persisted-state reconciliation
-releases it. Unknown outcomes block changed intent; unchanged explicit repeat keeps
+A successful POST, a definite refusal of the first attempt, or an explicit later
+persisted-state reconciliation releases it. A failed repeat, including a transient
+409, cannot establish whether an older unknown admission persisted and retains its ID. Unknown outcomes block changed intent; unchanged explicit repeat keeps
 the original ID. A recovered explicitly cancelled attempt permits a fresh request
 with a new ID. There is no automatic inference replay. No new abandonment action
 guesses that an unresolved request was cancelled.
@@ -38,7 +39,8 @@ read-only request counter in the synthetic HTTP fixture, this plan and fresh rep
 reports. CI commands, dependencies and all Python production modules stay unchanged.
 
 Validation: independently failing old-source controller cases; held admission →
-early 404 → lost acknowledgement → exact-ID repeat; changed intent while unknown;
+early 404 → lost acknowledgement → exact-ID repeat; changed intent while unknown; refused repeat retains an ambiguous ID while a
+first-attempt definite refusal permits a fresh ID;
 persisted lookup during in-flight start; explicit cancelled/new intent; held annotation
 save → Reject → successful acknowledgement → next save; later-input/Apply fences.
 Real Chromium/HTTP reproduces both races, verifies only one image-backend invocation

@@ -46,6 +46,12 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
     assert.equal(run('captionProposalPendingRequest?.request_id'),heldBody.request_id,'Ambiguous absence cannot authorize a new ID');
     element('caption-proposal-guidance').value='Changed intent';await element('caption-proposal-form').dispatch('submit');assert.equal(requests.length,0);
     assert.ok(element('caption-proposal-status').textContent.includes('unknown acknowledgement'));
+    // A refusal of a repeat does not establish what happened to its earlier admission.
+    element('caption-proposal-guidance').value='Held admission';const refusedRepeat=element('caption-proposal-form').dispatch('submit'),refusedPost=take('/caption-proposals');
+    assert.deepEqual(JSON.parse(refusedPost.options.body),heldBody);
+    refusedPost.resolve(response({error:'Busy; earlier admission still unresolved'},false,409));await refusedRepeat;
+    assert.equal(run('captionProposalPendingRequest?.request_id'),heldBody.request_id,'A repeated-request 409 must retain the original ambiguous admission identity');
+    element('caption-proposal-guidance').value='Changed after repeat refusal';await element('caption-proposal-form').dispatch('submit');assert.equal(requests.length,0);
     element('caption-proposal-guidance').value='Held admission';const retry=element('caption-proposal-form').dispatch('submit'),retryPost=take('/caption-proposals');
     assert.deepEqual(JSON.parse(retryPost.options.body),heldBody,'Explicit unchanged repeat must reuse the exact admission ID/body');
     const persistedWhilePosting=element('caption-proposal-refresh').dispatch('click');resolve('/caption-proposals',{jobs:[{...job,id:heldBody.request_id}]});await persistedWhilePosting;
@@ -60,6 +66,13 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
     element('caption-proposal-guidance').value='New intent after cancellation';const fresh=element('caption-proposal-form').dispatch('submit'),freshPost=take('/caption-proposals'),freshBody=JSON.parse(freshPost.options.body);
     assert.notEqual(freshBody.request_id,cancelledBody.request_id);assert.equal(freshBody.instruction,'New intent after cancellation');
     freshPost.resolve(response({...job,id:freshBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[job]});await fresh;
+  }
+  if(process.env.CAPTION_RECOVERY_CASE!=='reject') {
+    // A first-attempt definite refusal has no older unknown admission to preserve.
+    const refusedStart=element('caption-proposal-form').dispatch('submit'),refusedPost=take('/caption-proposals'),refusedBody=JSON.parse(refusedPost.options.body);
+    refusedPost.resolve(response({error:'Busy before admission'},false,409));await refusedStart;assert.equal(run('captionProposalPendingRequest'),null);
+    element('caption-proposal-guidance').value='New intent after definite refusal';const accepted=element('caption-proposal-form').dispatch('submit'),acceptedPost=take('/caption-proposals'),acceptedBody=JSON.parse(acceptedPost.options.body);
+    assert.notEqual(acceptedBody.request_id,refusedBody.request_id);acceptedPost.resolve(response({...job,id:acceptedBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[job]});await accepted;
   }
   // Two starts share one pending action; a lost start is reconciled by GET only.
   element('caption-proposal-model').value='fixture';element('caption-proposal-guidance').value='Visible pixels';element('caption-proposal-seed').value='42';

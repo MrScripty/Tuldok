@@ -110,7 +110,7 @@ $('caption-proposal-form').addEventListener('submit',async event=>{
   const body=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};captionProposalPendingRequest=body;
   captionProposalAdmissionRequest=body;captionProposalBusy=true;$('caption-proposal-submit').disabled=true;
   try { await api('caption-proposals',body);if(captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus('Caption requested. Current annotations remain unchanged.');await refreshCaptionProposals(); }
-  catch(error) {if(error.status>=400 && error.status<500 && captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus(error.message+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');}
+  catch(error) {if(!previous && error.status>=400 && error.status<500 && captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus(error.message+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');}
   finally {if(captionProposalAdmissionRequest===body)captionProposalAdmissionRequest=null;captionProposalBusy=false;$('caption-proposal-submit').disabled=false;}
 });
 action('caption-proposal-refresh',refreshCaptionProposals);
