@@ -2,6 +2,10 @@
 
 ## Clean stale-judgment save ownership repair
 
+Exact repair source `f2b61ce3ebcae8380dcbea9c384c124e803083be` passed all
+50 checks and 285 Python tests with 127 stable source hashes. All 3,559 prior
+report files retain their bytes and external backups. [Repair evidence](reports/judgment-save-ownership-repair/verification.md).
+
 Parent review of published `6aba384a90246aa2c9d344997561154710178586`
 confirmed an ownership state missing from the earlier combined qualification:
 opening a stale judgment resets its review to draft while `preferenceDirty`

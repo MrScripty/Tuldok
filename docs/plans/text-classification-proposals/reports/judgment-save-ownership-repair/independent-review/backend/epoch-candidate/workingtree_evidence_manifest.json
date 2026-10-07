@@ -1,0 +1,15 @@
+{
+  "scope": "Working-tree two-site repair reviewed/probed, exact commit qualification pending",
+  "files": {
+    "composed_busy.log": "cae8264e1c2e6c78c4a3cb423fd93b92d818f9e0b1abd481aaaab7d0c745c038",
+    "composed_busy_probe.cjs": "d05e2017b19b36af54952d7c5c7537cb254a846351a998bbc493c4dbd7e68c44",
+    "composed_busy_receipt.json": "238f958241f30abe727053dbe0658708b135cfc3e454950aed29bde9bde463bc",
+    "settled200_before_applyACK.log": "d26fb547495ceda39e188f3c3ec3cbcad6038490db07542473876ea0ab8db061",
+    "settled200_before_applyACK_probe.cjs": "03d028ac900bc7486b802029e4158b1cc7eba5b59a19f9ad3494c9739deae3fd",
+    "settled200_before_applyACK_receipt.json": "1270e06f2803c5edf4aa2f69901483eace5a77accbf68c630502877194f7e71a",
+    "settled409_before_applyACK.log": "2fa1b2788e79e4e7f1cc0050070a4ef5c3114f1e10f9c2bd5d2d6e876d3657fe",
+    "settled409_before_applyACK_probe.cjs": "2b1c7fd05f9610743019973ccf2df6c66d8cef6bb60546aed20f06aecfc27354",
+    "settled409_before_applyACK_receipt.json": "0072c6a05eea7535b5c2b0306891ca188786b0c3e3071c77e8746d7501280cec",
+    "workingtree_review_receipt.json": "cf582d4ad63cd890367c9d1ac4fceaa13787ede5ebb893ca3a169acf97b9b348"
+  }
+}

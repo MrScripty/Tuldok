@@ -1,0 +1,5 @@
+PASS validated Save/Delete each advance one epoch; invalid/refused/cancelled/repeated-busy operations do not advance
+PASS new Save epoch retains later input and Reject leaves independent preference/editor epochs untouched
+PASS successful true no-op Save settled before Apply ACK still permanently owns clean editor
+PASS refused Delete settled before Apply ACK still fences older parent adoption
+ALL4 EPOCH BOUNDARY CASES PASS

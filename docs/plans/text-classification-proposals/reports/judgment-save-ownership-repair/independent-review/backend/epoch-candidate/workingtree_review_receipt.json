@@ -1,0 +1,20 @@
+{
+  "scope": "Working-tree two-site repair reviewed/probed, exact commit qualification pending",
+  "parent_head": "6aba384a90246aa2c9d344997561154710178586",
+  "source_hashes": {
+    "static/preferences.js": "fb22c04b6856d33b7e298aa1989d073c937ab40020025f39b86daaff62b948f7",
+    "static/text-classification-proposals.js": "b097b17e815623153ee33ba770098b6c1eee903d62215652772633f6322711cb",
+    "preferences.py": "0739e47d88737c980b07dc0c21f1e55dd38ed7142a87931cea7f95884f2eb296",
+    "workbench.py": "818d8c19742dc18e93f6677e475c1ff69f55c631a6145567c7978bf1936d2635",
+    "text_classification_proposals.py": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
+    "dataset_releases.py": "65ed9ca531fd8ec5bd4a78ed788a54127b68e2bb5707944c383310e2f6d966ff",
+    "app.py": "205e537128f3b892b0e1efd163b88a63cf3d8760df3f43dae0439991bfb3ae86"
+  },
+  "positive_composed_checks": 7,
+  "failing_busy_only_counterexample_preserved": true,
+  "ownership_contract": "Validated explicit judgment Save/Delete increments preferenceEditEpoch; classification preflight blocks current preferenceBusy; existing shared responseIntentEpoch fences late Apply adoption even after save settles200/409",
+  "backend_runtime_unchanged": true,
+  "findings": [],
+  "earlier6aba_qualification": "Historical source evidence; clean-busy and settled-save counterexamples supersede its complete ownership coverage",
+  "intentional_behavior": "Committed Apply invalidates preference proof, but newer judgment ownership retains old current/editor; backend exact-parent CAS prevents stale preference rebinding until explicit reload/rejudge"
+}

@@ -1,0 +1,99 @@
+{
+  "sourceMode": "published6aba",
+  "ordering": "Apply-before-save",
+  "before": {
+    "currentId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "currentRevision": 1,
+    "annotation": null,
+    "editor": {
+      "id": "dddddddddddddddddddddddddddddddd",
+      "revision": 1,
+      "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "parent_revision": 1,
+      "source_revision": 1,
+      "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "left_revision": 1,
+      "right_id": "cccccccccccccccccccccccccccccccc",
+      "right_revision": 1,
+      "outcome": "left",
+      "rationale": "Exact judged preference",
+      "review": "human_reviewed",
+      "stale_warning": "Answer revision changed. Deliberately rejudge the displayed current answers."
+    },
+    "dirty": false,
+    "busy": false,
+    "formHidden": false,
+    "left": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "right": "cccccccccccccccccccccccccccccccc",
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft",
+    "status": "Answer revision changed. Deliberately rejudge the displayed current answers.",
+    "body": {
+      "id": "dddddddddddddddddddddddddddddddd",
+      "revision": 1,
+      "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "parent_revision": 1,
+      "source_revision": 1,
+      "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "left_revision": 2,
+      "right_id": "cccccccccccccccccccccccccccccccc",
+      "right_revision": 1,
+      "outcome": "left",
+      "rationale": "Exact judged preference",
+      "review": "draft"
+    }
+  },
+  "sent": {
+    "id": "dddddddddddddddddddddddddddddddd",
+    "revision": 1,
+    "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "parent_revision": 1,
+    "source_revision": 1,
+    "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "left_revision": 2,
+    "right_id": "cccccccccccccccccccccccccccccccc",
+    "right_revision": 1,
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft"
+  },
+  "afterApply": {
+    "currentId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "currentRevision": 2,
+    "annotation": {
+      "label": "schedule"
+    },
+    "editor": null,
+    "dirty": false,
+    "busy": true,
+    "formHidden": true,
+    "left": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "right": "cccccccccccccccccccccccccccccccc",
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft",
+    "status": "Answer revision changed. Deliberately rejudge the displayed current answers.",
+    "body": null
+  },
+  "afterRefusal": {
+    "currentId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "currentRevision": 2,
+    "annotation": {
+      "label": "schedule"
+    },
+    "editor": null,
+    "dirty": false,
+    "busy": false,
+    "formHidden": true,
+    "left": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "right": "cccccccccccccccccccccccccccccccc",
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft",
+    "status": "Controlled judgment parent changed409; draft was never saved Draft retained. Refresh judgments to inspect an uncertain result; IDs are never replayed automatically.",
+    "body": null
+  },
+  "automaticAdoptionAfterBusyRelease": true,
+  "providerCallsPerformed": 0
+}

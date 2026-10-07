@@ -1,0 +1,34 @@
+{
+  "exactIntent": {
+    "id": "dddddddddddddddddddddddddddddddd",
+    "revision": 1,
+    "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "parent_revision": 1,
+    "source_revision": 1,
+    "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "left_revision": 2,
+    "right_id": "cccccccccccccccccccccccccccccccc",
+    "right_revision": 1,
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft"
+  },
+  "acknowledgedJudgment": {
+    "id": "dddddddddddddddddddddddddddddddd",
+    "revision": 2,
+    "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "parent_revision": 1,
+    "source_revision": 1,
+    "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "left_revision": 2,
+    "right_id": "cccccccccccccccccccccccccccccccc",
+    "right_revision": 1,
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft",
+    "stale_warning": null
+  },
+  "automaticAdoptionAfterBusyRelease": false,
+  "explicitAuthorReloadAdoptsDraft": true,
+  "providerCallsPerformed": 0
+}

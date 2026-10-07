@@ -1,0 +1,11 @@
+{
+  "candidate": "f2b61ce3ebcae8380dcbea9c384c124e803083be",
+  "verdict": "PASS",
+  "gate_count": 50,
+  "source_files_verified": 127,
+  "component_artifact_hashes_verified": 92,
+  "historical_summary_hashes_verified": 3551,
+  "preexisting_all_report_hashes_verified": 3559,
+  "native_combined_step_count": 10,
+  "native_combined_screenshot_count": 2
+}

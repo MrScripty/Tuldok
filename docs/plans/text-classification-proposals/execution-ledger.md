@@ -1,5 +1,17 @@
 # Execution ledger
 
+Exact clean stale-judgment repair source
+`f2b61ce3ebcae8380dcbea9c384c124e803083be`, tree
+`39491c6e3b8ff1582c5dfe870f199f4304605e35`, passed all 50 aggregate gates
+and 285 Python tests in 442.975 seconds. Every 127-file snapshot stayed stable;
+all 3,559 old reports and backup bytes remain unchanged. Native ten-case actual
+HTTP coverage and independently reviewed seven/thirteen focused cases now include
+Save settling with 200/409 before the older Apply reply. The minimal production
+change is Apply's busy preflight plus validated Save/Delete intent-epoch advance.
+The evidence-only successor preserves all published/intermediate counterexamples
+and qualifies a normal PR18 branch push, without changing parent review state,
+protected refs or making a merge/CodeRabbit request.
+
 2026-10-07, owner-confirmed clean stale-judgment ownership repair on published
 `6aba384a90246aa2c9d344997561154710178586`. The previous composed clean-save
 case used a current no-op judgment and missed stale editing's review reset and
