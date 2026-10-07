@@ -1,0 +1,12 @@
+{
+  "head": "f95cd5c95189165534d21c204a227f4dd8145c92",
+  "pending": null,
+  "retained_mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"revision\":2,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:2000/v1/\",\"model\":\"fixture\",\"instruction\":\"Exact\\r\\n guidance 👩‍💻\",\"seed\":42,\"labels\":[\"schedule\",\"cancel\"],\"request_id\":\"047fc05a7abe438eb748cf51f56c3255\"}}",
+  "authority_pending": null,
+  "initialized": {
+    "schema_version": 1,
+    "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"revision\":2,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:2000/v1/\",\"model\":\"fixture\",\"instruction\":\"Exact\\r\\n guidance 👩‍💻\",\"seed\":42,\"labels\":[\"schedule\",\"cancel\"],\"request_id\":\"047fc05a7abe438eb748cf51f56c3255\"}}"
+  },
+  "blocked": "Classification recovery storage could not clear a retired admission. Requests remain blocked.",
+  "new_posts": 0
+}

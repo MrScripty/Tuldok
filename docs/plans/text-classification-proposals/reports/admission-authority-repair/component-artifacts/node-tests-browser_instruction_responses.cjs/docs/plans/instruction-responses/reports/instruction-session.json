@@ -1,0 +1,321 @@
+{
+  "source_head": "f95cd5c95189165534d21c204a227f4dd8145c92",
+  "source_tree": "6e12a1578a0027e5f4e384bea240ba8bbc158032",
+  "source_state": "committed",
+  "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/151.0.7922.173",
+    "revision": "@a96602f30358e9b5d256a0464e7e4d4bec223004",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+    "jsVersion": "15.1.206.23"
+  },
+  "screenshots": [
+    {
+      "file": "instruction-01-independent-answers-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 1000
+      },
+      "selector": "#responses-panel",
+      "sha256": "752ce03c83c47e5bc6d5111d452738730d27339574953f5c00984df6feb64e59"
+    },
+    {
+      "file": "instruction-01-independent-answers-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "selector": "#responses-panel",
+      "sha256": "7d2c0240965de0325fc061b2d7d6319f1483dfca62a84ccc18d00f58b99fc0db"
+    },
+    {
+      "file": "instruction-02-stale-fixed-selection-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 1000
+      },
+      "selector": "#response-release-panel",
+      "sha256": "22d6afe1d8d76209be7f4660cfc187ecf3f19ead532f58ba01af30ade4f32025"
+    },
+    {
+      "file": "instruction-02-stale-fixed-selection-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "selector": "#response-release-panel",
+      "sha256": "ee8549ea538cbb655840fb07e38f321ef258881087d6b5b5f059e14478d56d1a"
+    },
+    {
+      "file": "instruction-03-weighted-preview-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 1000
+      },
+      "selector": "#response-release-panel",
+      "sha256": "ab41071814e804cc93c6749a55bac555a065a5fe4b43abb343c9f66383276c3a"
+    },
+    {
+      "file": "instruction-03-weighted-preview-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "selector": "#response-release-panel",
+      "sha256": "64ac98ce012613280bcb326d556018fc5d3246fbb2c2ed40896bb5cf3a3a7756"
+    },
+    {
+      "file": "instruction-04-download-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 1000
+      },
+      "selector": "#response-release-panel",
+      "sha256": "17e977d70de461ee0766dd48a0c69f9d8575e0d9ad7de35ea42361d4cf960083"
+    },
+    {
+      "file": "instruction-04-download-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "selector": "#response-release-panel",
+      "sha256": "e038b24cec341eaaaa7d69e30b4d67709fa01d7c4889cebefe9e3ef63c306755"
+    }
+  ],
+  "steps": [
+    {
+      "stage": "held-parent-record-loads",
+      "cases": [
+        {
+          "operation": "navigation",
+          "intent": "completion",
+          "newer_draft_retained": true
+        },
+        {
+          "operation": "navigation",
+          "intent": "review",
+          "newer_draft_retained": true
+        },
+        {
+          "operation": "reload",
+          "intent": "completion",
+          "newer_draft_retained": true
+        },
+        {
+          "operation": "reload",
+          "intent": "review",
+          "newer_draft_retained": true
+        }
+      ]
+    },
+    {
+      "stage": "held-real-create-acknowledgment",
+      "single_request": true,
+      "later_editor_intent_retained": true,
+      "parent_annotation_preserved": true
+    },
+    {
+      "stage": "exact-selection-staleness",
+      "original_pairs": [
+        {
+          "id": "6067a6be426d4760ba0b10f465981a7a",
+          "revision": 1,
+          "prompt_id": "a06cf870eb0349198188cf5ffe2df9b6",
+          "parent_revision": 2,
+          "source_revision": 1
+        },
+        {
+          "id": "c2c226cf9d3f4812b7f68d4ca8758955",
+          "revision": 1,
+          "prompt_id": "a06cf870eb0349198188cf5ffe2df9b6",
+          "parent_revision": 2,
+          "source_revision": 1
+        }
+      ],
+      "final_pairs": [
+        {
+          "id": "5ef0570329a94a82a28d7df5fad38af0",
+          "revision": 1,
+          "prompt_id": "63567f378e7b4d88a5a3e5f1faca1f93",
+          "parent_revision": 1,
+          "source_revision": 1
+        },
+        {
+          "id": "6067a6be426d4760ba0b10f465981a7a",
+          "revision": 1,
+          "prompt_id": "a06cf870eb0349198188cf5ffe2df9b6",
+          "parent_revision": 3,
+          "source_revision": 1
+        },
+        {
+          "id": "772d6770ffc846108607c287b88db17c",
+          "revision": 1,
+          "prompt_id": "e25f2b820fa54300a6aaadf9d8530204",
+          "parent_revision": 1,
+          "source_revision": 1
+        },
+        {
+          "id": "c2c226cf9d3f4812b7f68d4ca8758955",
+          "revision": 3,
+          "prompt_id": "a06cf870eb0349198188cf5ffe2df9b6",
+          "parent_revision": 3,
+          "source_revision": 1
+        }
+      ],
+      "selected_response_and_parent_and_unselected_lineage_rejected": true,
+      "unselected_sibling_does_not_expand_selection": true
+    },
+    {
+      "stage": "actual-download-and-consumer",
+      "selection": {
+        "schema_version": 1,
+        "format": "text_instruction_selection_v1",
+        "items": [
+          {
+            "id": "5ef0570329a94a82a28d7df5fad38af0",
+            "revision": 1,
+            "prompt_id": "63567f378e7b4d88a5a3e5f1faca1f93",
+            "parent_revision": 1,
+            "source_revision": 1
+          },
+          {
+            "id": "6067a6be426d4760ba0b10f465981a7a",
+            "revision": 1,
+            "prompt_id": "a06cf870eb0349198188cf5ffe2df9b6",
+            "parent_revision": 3,
+            "source_revision": 1
+          },
+          {
+            "id": "772d6770ffc846108607c287b88db17c",
+            "revision": 1,
+            "prompt_id": "e25f2b820fa54300a6aaadf9d8530204",
+            "parent_revision": 1,
+            "source_revision": 1
+          },
+          {
+            "id": "c2c226cf9d3f4812b7f68d4ca8758955",
+            "revision": 3,
+            "prompt_id": "a06cf870eb0349198188cf5ffe2df9b6",
+            "parent_revision": 3,
+            "source_revision": 1
+          }
+        ]
+      },
+      "preview": {
+        "format": "text_instruction_v1",
+        "eligible": true,
+        "selected_count": 4,
+        "example_count": 4,
+        "unique_prompt_count": 3,
+        "blockers": [],
+        "warnings": [
+          "Human review and protected families do not establish semantic quality or permission."
+        ],
+        "lineage": [
+          {
+            "id": "component:05928e23d9b0ac2459e53d591cf435da61b34e9ae4508b92478b158dff804086",
+            "selected_ids": [
+              "63567f378e7b4d88a5a3e5f1faca1f93"
+            ],
+            "member_ids": [
+              "63567f378e7b4d88a5a3e5f1faca1f93"
+            ],
+            "deleted_ids": [],
+            "fixed_splits": []
+          },
+          {
+            "id": "component:5265c8982b7bcf0027a475fe8420961062a86a25157e718655fc46c6fe2cb4af",
+            "selected_ids": [
+              "e25f2b820fa54300a6aaadf9d8530204"
+            ],
+            "member_ids": [
+              "e25f2b820fa54300a6aaadf9d8530204"
+            ],
+            "deleted_ids": [],
+            "fixed_splits": []
+          },
+          {
+            "id": "component:fcc20a036a472d472b083f490e9812354d25e76e46d497bc35bad550cce3859e",
+            "selected_ids": [
+              "a06cf870eb0349198188cf5ffe2df9b6"
+            ],
+            "member_ids": [
+              "a06cf870eb0349198188cf5ffe2df9b6",
+              "d78f5744cded443b82dae9bf6e0d403e"
+            ],
+            "deleted_ids": [],
+            "fixed_splits": []
+          }
+        ],
+        "assignments": {
+          "5ef0570329a94a82a28d7df5fad38af0": "validation",
+          "6067a6be426d4760ba0b10f465981a7a": "train",
+          "772d6770ffc846108607c287b88db17c": "test",
+          "c2c226cf9d3f4812b7f68d4ca8758955": "train"
+        },
+        "split_report": {
+          "requested_percentages": {
+            "train": 50,
+            "validation": 25,
+            "test": 25
+          },
+          "actual_counts": {
+            "train": 2,
+            "validation": 1,
+            "test": 1
+          },
+          "independent_components": 3,
+          "note": "Whole connected groups are indivisible; existing source splits are preserved. Requested percentages are targets, not exact quotas.",
+          "example_count": 4,
+          "unique_prompt_count": 3,
+          "actual_unique_prompt_counts": {
+            "train": 1,
+            "validation": 1,
+            "test": 1
+          }
+        },
+        "preview_token": "33c90ee5cd0ddd4ad3cfb12aefd22bb365b67ad7b9560c439b4784c471428fac",
+        "artifact_bytes": 11518
+      },
+      "consumer": {
+        "result": "PASS",
+        "zip_sha256": "647b992efa4621c829ded7edc89c5125399502711032f0af9bbda25cb274c221",
+        "versions": {
+          "trl": "0.23.1",
+          "datasets": "4.1.1",
+          "transformers": "4.56.2",
+          "torch": "2.8.0+cpu",
+          "accelerate": "1.10.1",
+          "tokenizers": "0.22.1"
+        },
+        "source_hashes": {
+          "trl/trainer/sft_trainer.py": "c2378bd182751cdfca788037920876456cc7702290f9e0eaf4cf2521450a7d5d",
+          "trl/trainer/sft_config.py": "df29c9e6a275dce7fb595a8c3c74b88567e3519684302447b0f650e51c6401a5",
+          "trl/data_utils.py": "a66cb8fb91cb5f50ef2fc631662284cb9e2f5841a785cd9ea48cdfab2c7fa29d",
+          "datasets/packaged_modules/json/json.py": "c467154ba0254134ec8eac950b96c5ff22a3d35d9ea8d9f3b9d3984d7c76231c",
+          "datasets/load.py": "0b2357d00215aaf22ca1dc0e91f7745042b8850a5136f6cea7b620c7f60ff836"
+        },
+        "examples": 4,
+        "unique_prompts": 3,
+        "split_counts": {
+          "train": 2,
+          "validation": 1,
+          "test": 1
+        },
+        "completion_mask_and_padding_labels": "PASS",
+        "eos": "Consumer appends EOS exactly once when absent; canonical archive unchanged",
+        "truncation": "max_length=None, packing=False; token sequences match full input",
+        "max_tokens_observed": 1149,
+        "over_default_1024_tokens": true,
+        "model": "Locally constructed random GPT2, 1 layer/16 hidden; no pretrained download or training",
+        "tokenizer": "Locally constructed complete byte BPE with no merges; exact prefix boundary",
+        "offline": true
+      },
+      "zip_bytes": 12658
+    }
+  ],
+  "errors": [],
+  "result": "PASS"
+}

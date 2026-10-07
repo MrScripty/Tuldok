@@ -1,39 +1,35 @@
 # Text classification proposals
 
-Draft PR #18 is published at `12b174f7a7b2fd6aa36d71da450ad657a5443114`;
-its 46 hosted gates passed. Local normal merge
-`71752fadd68efd092f53ee356ffb64061fa064da` integrates caption successor
-`10de10b6710976570ace33b033ffb2349995edec`, preserving both panels. Local repair
-`8235672a8482e10e95df7a6d5b05540325f66816` aligns fresh classification URLs
-with backend validation and passes focused controller/backend/native checks.
-It has not been published. [Focused evidence and blockers](reports/final-caption-integration/verification.md).
+Exact integrated source `97144cb85b274cf68e20e0952907787b28b3026a` passed
+all 46 aggregate gates and 273 Python tests. IndexedDB admission recovery,
+source/label fences, explicit abstention, atomic draft Apply and both proposal
+ownership contracts passed independent backend, interaction and native artifact
+review. [Current qualification](reports/admission-authority-repair/verification.md).
 
-Full integrated qualification and publication are paused: the caption author is
-repairing additional fresh validation gaps, and native review reproduced a
-classification cross-page recovery overwrite despite Web Locks. A transactional
-origin authority is being developed locally. Keep all prior reports immutable;
-receive the next final caption SHA from the parent before integrating again.
+The final caption head `12690a58d9b2a781efd081f1a3e796313d5235c1` and landed
+development merge `2f1d68ee29ec98a524bdf0f14d20b6024a25364c` are retained through
+normal merges. Both panels remain intact; caption source/tests match development.
+This branch began at requested PR #17 head
+`07ec464ba050cd532a2508ce86570a1ce9bcd394`. Main remains
+`2fc4a46f12d73a0fa467d5482f68edb83d6df6af`. Development was independently
+advanced by the parent; this feature writes only its own branch and PR #18.
+Repository-local attribution is MrScripty, with no global Git changes.
 
-Implemented and qualified at
-`c5500cba5021949bccf45d2124ee5e2910dc5c92`: all 46 aggregate gates and 271
-Python tests passed with exact stable source evidence. Independent backend and
-interaction reviews cover durable admission recovery across reloads and pages.
-[Current qualification](reports/recovery-persistence/verification.md).
-The [initial qualification](reports/verification.md) remains immutable historical
-evidence; its two dependency blockers were subsequently resolved in an isolated
-pinned consumer environment.
+Draft PR #18 was previously published at
+`12b174f7a7b2fd6aa36d71da450ad657a5443114`. Authorized publication updates
+only this classification branch, retargets the draft to development and verifies
+exact hosted CI. No merge or CodeRabbit request is authorized here.
 
-This new development slice starts at published PR #17 head
-`07ec464ba050cd532a2508ce86570a1ce9bcd394` on local branch
-`feature/text-classification-proposals`. Main remains frozen at
-`2fc4a46f12d73a0fa467d5482f68edb83d6df6af`; image-caption development remains
-`c43a110c4b6ee1a85c932fa206b43091c0db7f3a`. This slice does not write those
-branches or PR #17. Its author independently advanced PR #17 to
-`4ed5466fd764e938999cca1d535e9a33379271a0`; integration with that successor is
-pending and currently conflicts in `static/workbench.html`. Pinned test-only
-dependencies were provisioned with subsequent authorization. No real inference,
-model downloads or credential changes are included. Repository-local attribution
-is MrScripty.
+All earlier qualification, negative race proofs, caption integration evidence and
+the initial 45/46 retirement-fixture run remain immutable. All 2,801 pre-final
+report files were preserved byte-for-byte. [Initial evidence](reports/verification.md),
+[earlier recovery qualification](reports/recovery-persistence/verification.md) and
+[preserved integration blockers](reports/final-caption-integration/verification.md)
+are historical checkpoints. The former cross-tab Web Locks finding is repaired by
+transactional origin authority; the stale memory assertion now checks actual
+committed retirement evidence. Pinned test-only dependencies were provisioned in
+an isolated environment with later authorization. No real inference, model weights
+downloads or credential changes are included.
 
 An author selects one existing unannotated text record, defines an exact bounded
 list of label choices, selects a served model and explicitly requests a proposal.
@@ -49,9 +45,9 @@ request hash. Complete bounded response bytes and hashes remain inspectable.
 Polling projects summaries before Python decoding; exact evidence uses individual
 attempt reads. One classification request runs at a time. Client admission IDs
 reconcile lost acknowledgements and early 404s; explicit unchanged repeats reuse
-that ID without another inference. Before POST, the client durably stores its
-bounded exact ID/body under a per-origin Web Lock and restores it synchronously
-on full reload. Changed intent is refused until an authoritative matching outcome;
+that ID without another inference. Before POST, the client commits its bounded exact ID/body in an origin-wide
+IndexedDB transaction, then writes the recovery mirror. Submission waits for
+loaded authority after reload; Web Locks provide additional coordination. Changed intent is refused until an authoritative matching outcome;
 summary absence and ambiguous 404s never release it. Visible author controls
 restore the pending source/settings, followed by explicit same-ID retry. Storage
 or lock failures and unrecoverable corrupt records fail closed. Cancellation fences late output, and restart
@@ -82,7 +78,8 @@ check backend/composition and interactions against the exact local commit.
 
 Subsequent authorization permits publishing this separate branch and a new draft
 PR, without merging or requesting CodeRabbit. Its review base is PR #17's branch.
-The independently advanced caption successor must be integrated and qualified
-before the draft can merge; the current qualification applies to the exact
-classification candidate from the requested original base. Real-provider
-compatibility and model quality require a separately authorized stage.
+The final caption successor and its landed development merge are integrated
+normally. PR #18 is authorized to target feature/image-caption-exports after
+qualification and remains a draft awaiting review. No merge or CodeRabbit request
+is authorized here. Real-provider compatibility and model quality require a
+separately authorized stage.

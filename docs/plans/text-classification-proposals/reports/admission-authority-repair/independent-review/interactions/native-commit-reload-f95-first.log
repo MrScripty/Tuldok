@@ -1,0 +1,10 @@
+{
+  "native_indexeddb_write_committed": true,
+  "commit_acknowledgement_held_before_transport": true,
+  "pre_reload_POSTs": 0,
+  "full_reload_restores_original_id": "2baa98c7c5ae4580a8e514519475a4d3",
+  "changed_intent_POSTs": 0,
+  "later_exact_id_explicit_POSTs": 1,
+  "classification_provider_requests": 1,
+  "caption_provider_requests": 0
+}

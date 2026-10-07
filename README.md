@@ -418,11 +418,14 @@ before export; fixed selections keep their old revisions.
 
 Lost request acknowledgements reconcile through the same admission ID. An early
 404 keeps that ID pending, and explicit unchanged repeats do not infer twice.
-The exact pending ID and request are stored before submission and restored before
-submission is enabled after reload. Visible recovery controls open the captured
-source and restore its settings; retry still requires explicit submission. Web
-Locks coordinate pages sharing the origin. Missing locking support, unavailable
-storage or invalid recovery evidence blocks new requests rather than losing the ID.
+The exact pending ID and request commit to IndexedDB before their recovery mirror
+and POST. Submission waits for origin authority after reload. Visible recovery
+controls open the captured source and restore its settings; retry still requires
+explicit submission. Transactions coordinate stale storage views across tabs,
+with Web Locks providing additional coordination. Unavailable IndexedDB, origin
+storage or locking support and invalid recovery evidence block new requests. An
+exact admitted receipt retires the request; failed mirror cleanup retains its
+retirement evidence and blocks new POSTs until cleanup succeeds.
 Apply receipts likewise reconcile lost replies without another target write.
 Cancellation fences late output; interrupted requests never resume automatically
 after restart. Polling uses bounded summaries; individual request reads retain

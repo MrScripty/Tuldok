@@ -50,3 +50,27 @@ Publication remains pending. A later authorized step can push this new feature
 branch and open a stacked PR against `feature/caption-proposals-local-20261007`.
 PR #17, main and image-caption development remain frozen until separately
 authorized integration.
+
+Subsequent authorization allowed pinned synthetic-consumer dependencies, draft
+publication and continued parallel repair. PR #18 was published at
+`12b174f7a7b2fd6aa36d71da450ad657a5443114`. Additional preserved native proofs
+found fresh URL/backend admission mismatch and a two-page storage race. Local
+repairs `8235672a8482e10e95df7a6d5b05540325f66816` and
+`620a97a1494e228c5fcb4fc0407f5f371e89217e` address validation and transactional
+origin admission authority. Final caption head
+`12690a58d9b2a781efd081f1a3e796313d5235c1` was normally integrated; the parent
+then landed PR #17 on development as
+`2f1d68ee29ec98a524bdf0f14d20b6024a25364c`, also retained in normal ancestry.
+
+The first integrated aggregate passed 45/46, with a stale browser memory assertion
+after an authoritative receipt retired the request before mirror cleanup failed.
+Independent native inspection proved exact retirement evidence remained and new
+POSTs stayed blocked. Fixture-only commit
+`11e3d3d66bec2b2c167b65c6a5bc172baa4e0d9a` strengthens the assertion. Exact
+successor `97144cb85b274cf68e20e0952907787b28b3026a` passed all 46 gates and
+273 Python tests; every gate source remained stable and all 2,801 prior reports
+remained byte-identical. Final independent audits found no remaining blocker.
+[Current evidence](reports/admission-authority-repair/verification.md) records exact
+commits, source hashes, artifacts and limits. The authorized next publication
+updates only PR #18's branch and base to development, checks exact hosted CI,
+and leaves the PR draft; no merge or CodeRabbit request.

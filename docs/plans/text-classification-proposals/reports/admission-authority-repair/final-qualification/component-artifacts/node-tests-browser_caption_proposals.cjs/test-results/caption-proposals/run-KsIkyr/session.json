@@ -1,0 +1,51 @@
+{
+  "source_head": "97144cb85b274cf68e20e0952907787b28b3026a",
+  "model": "controlled local HTTP fixture",
+  "fixed": [
+    {
+      "id": "7c498b7cf3b2494b84de463a3a5485e8",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "e6bd181fa88449e19daebf954f044cbc",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "ebd230142c3240f6a4a550c12278e0b3",
+      "revision": 2,
+      "source_revision": 1
+    }
+  ],
+  "job_id": "ef01081321b948ee925ce185a88c1a46",
+  "application_revision": 3,
+  "recovery_id": "ef01081321b948ee925ce185a88c1a46",
+  "recovery_post_ids": [
+    "ef01081321b948ee925ce185a88c1a46",
+    "ef01081321b948ee925ce185a88c1a46"
+  ],
+  "recovery_backend_requests": 1,
+  "reload_changed_intent_posts": 0,
+  "storage_failure_posts": 0,
+  "fresh_guidance_2001_latched_storage_error": false,
+  "fresh_whitespace_surrogate_posts": 0,
+  "oversized_exact_url_posts": 0,
+  "oversized_exact_url_corrected_without_reload": true,
+  "loss_hook_armed_for_fresh_invalid": true,
+  "lost_validation_error_http_status": 400,
+  "lost_error_id": "d95e01f4162d47bfb4b54474c1f10ce6",
+  "lost_error_reload_changed_posts": 0,
+  "lost_error_explicit_retry_requests": 1,
+  "corrected_non_bmp_guidance_codepoints": 2000,
+  "corrected_non_bmp_guidance_utf16_units": 4000,
+  "corrected_without_reload": true,
+  "reject_save_revision": 5,
+  "subsequent_save_revision": 6,
+  "cancelled_id": "b0b6a0bc784f4deb97435ad9289b216e",
+  "fresh_intent_id": "f07ddf0c063d458aafeb9c54396d1409",
+  "downloaded_zip_sha256": "201dd4f04076fe9e70560844078d0e4b6cd53af9de705021bb6e585f44a702a8",
+  "consumer": "unchanged pinned diffusion_check_image_data.py",
+  "real_model_quality": false,
+  "tests": "fresh whitespace/Python Unicode whitespace/surrogates prevented before storage with lost400 hook armed; real transport-injected backend400/lost reply/404/fresh document/changed intent refusal/exact explicit repeat; fresh guidance2001 recoverable error then2000 non-BMP correction without reload; held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout"
+}
