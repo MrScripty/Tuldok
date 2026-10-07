@@ -54,7 +54,7 @@ def consumer_blocker(python):
     missing = [f'{name}=={expected} (installed: {actual[name] or "missing"})'
                for name, expected in pins['versions'].items() if actual[name] != expected]
     return ('Pinned instruction-consumer dependencies unavailable: ' + ', '.join(missing)
-            + '. Dependency/model downloads and installations are outside this authorized stage.') if missing else None
+            + '. This runner never installs dependencies; provision an authorized isolated consumer environment separately.') if missing else None
 
 
 def report_paths():
@@ -81,13 +81,19 @@ def transient_paths(command):
 
 
 def main():
+    global REPORT
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inherited-only', action='store_true')
     parser.add_argument('--only', help='Run commands matching this regular expression.')
     parser.add_argument('--resume', action='store_true', help='Keep passing commands qualified against this exact unchanged source; rerun others.')
     parser.add_argument('--python', default=sys.executable)
+    parser.add_argument('--report-root', type=Path, default=REPORT,
+                        help='Fresh repository-local report directory; prior qualification artifacts remain unchanged.')
     parser.add_argument('--timeout', type=int, default=180, help='Maximum seconds per command (1..300).')
     args = parser.parse_args()
+    REPORT = args.report_root.resolve()
+    if ROOT not in REPORT.parents:
+        parser.error('--report-root must be inside this repository')
     if not 1 <= args.timeout <= 300:
         parser.error('--timeout must be between 1 and 300 seconds')
     commands = [row['command'] for row in json.loads(INHERITED.read_text())]
