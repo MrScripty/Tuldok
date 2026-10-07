@@ -1,0 +1,75 @@
+[
+  {
+    "name": "ordinary_url",
+    "utf16_length": 22,
+    "code_points": 22,
+    "accepted": true
+  },
+  {
+    "name": "ascii_2048",
+    "utf16_length": 2048,
+    "code_points": 2048,
+    "accepted": true
+  },
+  {
+    "name": "ascii_2049",
+    "utf16_length": 2049,
+    "code_points": 2049,
+    "accepted": false,
+    "error": "Classification gateway URL must have 1–2048 Unicode code points and no unpaired surrogates."
+  },
+  {
+    "name": "astral_2048",
+    "utf16_length": 4074,
+    "code_points": 2048,
+    "accepted": true
+  },
+  {
+    "name": "lone_surrogate",
+    "utf16_length": 23,
+    "code_points": 23,
+    "accepted": false,
+    "error": "Classification gateway URL must have 1–2048 Unicode code points and no unpaired surrogates."
+  },
+  {
+    "name": "bom_prefix",
+    "utf16_length": 23,
+    "code_points": 23,
+    "accepted": false,
+    "error": "Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace."
+  },
+  {
+    "name": "internal_nel",
+    "utf16_length": 34,
+    "code_points": 34,
+    "accepted": false,
+    "error": "Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace."
+  },
+  {
+    "name": "nel_edges",
+    "utf16_length": 24,
+    "code_points": 24,
+    "accepted": true
+  },
+  {
+    "name": "missing_authority_slashes",
+    "utf16_length": 19,
+    "code_points": 19,
+    "accepted": false,
+    "error": "Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace."
+  },
+  {
+    "name": "single_authority_slash",
+    "utf16_length": 20,
+    "code_points": 20,
+    "accepted": false,
+    "error": "Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace."
+  },
+  {
+    "name": "backslash_authority",
+    "utf16_length": 21,
+    "code_points": 21,
+    "accepted": false,
+    "error": "Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace."
+  }
+]

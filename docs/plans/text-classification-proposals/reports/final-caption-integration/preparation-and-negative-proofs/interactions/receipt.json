@@ -1,0 +1,57 @@
+{
+  "head": "12b174f7a7b2fd6aa36d71da450ad657a5443114",
+  "runtime": "c5500cba5021949bccf45d2124ee5e2910dc5c92",
+  "published_head_verified": true,
+  "finding": {
+    "status": "confirmed",
+    "target": "static/text-classification-proposals.js:37",
+    "boundary": "Frontend4096UTF16 vs backend2048 Unicode code points; lost initial preadmission400 traps persisted intent after reload and exact404",
+    "real_backend_statuses": [
+      400,
+      404,
+      400
+    ],
+    "admitted_jobs": 0,
+    "worker_started": false,
+    "provider_calls": 0,
+    "corrected_url_posts": 0,
+    "annotation_or_provenance_mutation": false
+  },
+  "passed_scenarios": {
+    "independent_http_boundary": 4,
+    "composed_ownership": 11,
+    "storage_locking": 6
+  },
+  "source_sha256": {
+    "static/text-classification-proposals.js": "b807a96b82bd3f7ce98260b3c712b3f762988e5b0ed4af96980f0a88cff08666",
+    "text_classification_proposals.py": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
+    "static/workbench.html": "33c5f296c7cbb4af92a4deb6d257ba4d1ee7f81c12a74badb332d9f7be65429a",
+    "static/workbench.js": "c810e63c3060683b4f3ec03a5184ab6abe96c5a3bcff93f84309329eb90ffd63",
+    "app.py": "00ce4e44dbb9b80f073ceb19a456ad31392a6f5fee19d043e1ee6674d2f398f0",
+    "workbench.py": "9dec957dcb7f1dd172f3cdb6a4f058a6f07f422071651132637b2bafa9fa7a23",
+    "ai_http.py": "73ca648fe00e8f5a4022b14b72c80dd695228706a0f2b79aee605a524b8f2585",
+    "static/instruction-responses.js": "93b647fa0bc0fc064207d7c6170ac7c5788629727c4edf7b3353a2e6e5391c61",
+    "static/saved-selections.js": "2c2feecca798217644247f98aab8e7a00d707a25d4af75e02f9d906ccbd905a3"
+  },
+  "artifact_sha256": {
+    "boundary-probe.py": "adebe5e7a4d70e76d55d8adb6a4a4a58976203238fb659c07005a084c7877e0f",
+    "boundary.log": "beeea61a7255bc425332f28b56439e205b3dd8044d96519e6959f4d25a668024",
+    "composed-recovery-ownership-probe.cjs": "97eb751819981ef8826d51139b47676baece98ce39b92c75d601fce494bee11c",
+    "composed.log": "03fa2860aebc7418bd08f57c481eece5061c22a82eab5a4f1e69c86842ada238",
+    "published-source-metadata.json": "22a0d0022523ea9d042d1ef0c3b0cf64d941390578947cbcdea676c3fcd1b8db",
+    "review.md": "b55b8d22f13d04dea9160d1ef5dc477399d5949b89c162a4e8c75296cb07f427",
+    "storage-matrix-probe.cjs": "ac137bf0c0078886fa0976d681ce1187c47eb18de52cd3b0654b774890f0dd4c",
+    "storage.log": "6a2cede149099f9e7ae60ef13670be91804b750d3ebae6cb38f7273059524219",
+    "tuldok-recovery-review-storage-harness.cjs": "e386083c813d22379232665106ddf18607c524e0db36f4cf928d4d5595e1a507",
+    "url-captured-body.json": "e219e15353043748524287cdc687a8ad9d4dc89fbcb1a948d2f624b4be4b294c",
+    "url-lost-refusal-probe.cjs": "6d4ae2704bea2f0bad8489a1488ea383c68f44ea708f5cc2cfe397ff0e0d5648",
+    "url-lost-refusal.log": "b43d8795b3d3e83bc1fc564b8ef3e795f2564f0da3649548ffe89ff3cede473c",
+    "url-real-refusal.json": "59cf4e23410038b5b0918745011f3fd29c86f1d3bd2a207ac64402e440b4c863",
+    "url-refusal-http.py": "9ae629836a28aefb28fd410ecd1e6b5430baf90d8c5ad33050eb55c72cedb17f"
+  },
+  "local_status": "",
+  "integration_reviewed": false,
+  "caption_final_sha_received": false,
+  "implementation_edits": false,
+  "public_writes": false
+}

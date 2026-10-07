@@ -1,0 +1,10 @@
+{
+  "observed_at_utc": "2026-10-07T09:35:28.344941+00:00",
+  "classification_head": "12b174f7a7b2fd6aa36d71da450ad657a5443114",
+  "prepared_html_sha256": "12fd0ae34a32ba43d90c84bb048f52f4cdd5530b107288a969facf3e7af513af",
+  "prepared_against_intermediate_caption_sha": "4ed5466fd764e938999cca1d535e9a33379271a0",
+  "caption_remote_newer_observation": "10de10b6710976570ace33b033ffb2349995edec",
+  "final_parent_caption_sha_received": false,
+  "prepared_only_no_git_mutations": true,
+  "next_step": "Receive exact final caption repair SHA from parent; fetch read-only, regenerate HTML preparation with that SHA, integrate only on classification branch, then full aggregate and independent exact-candidate requalification."
+}

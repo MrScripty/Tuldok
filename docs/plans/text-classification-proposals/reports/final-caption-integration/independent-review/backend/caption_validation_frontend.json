@@ -1,0 +1,171 @@
+[
+  {
+    "name": "ordinary",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "http_missing_slashes",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http:127.0.0.1:8000",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "http_single_slash",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http:/127.0.0.1:8000",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "http_backslashes",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http:\\\\127.0.0.1:8000",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "internal_NEL",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/ab",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "port0",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:0/",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "bom_prefix",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "﻿http://127.0.0.1:8000/",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": false,
+    "frontend_error": "Invalid URL"
+  },
+  {
+    "name": "url_surrogate",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/\ud800",
+      "model": "fixture",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "empty_model",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/",
+      "model": "",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "model_surrogate",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/",
+      "model": "a\ud800",
+      "instruction": "guide",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "empty_instruction",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/",
+      "model": "fixture",
+      "instruction": "",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  },
+  {
+    "name": "instruction_surrogate",
+    "body": {
+      "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "request_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:8000/",
+      "model": "fixture",
+      "instruction": "a\ud800",
+      "seed": 42
+    },
+    "frontend_accepted": true
+  }
+]

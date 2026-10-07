@@ -1,0 +1,56 @@
+Error: Bounded probe timed out
+    at until (/workspace/Tuldok/docs/plans/text-classification-proposals/reports/final-caption-integration/independent-review/interactions/native-two-pages-probe.cjs:6:118)
+    at async /workspace/Tuldok/docs/plans/text-classification-proposals/reports/final-caption-integration/independent-review/interactions/native-two-pages-probe.cjs:33:2
+{
+  "first": {
+    "url": "http://127.0.0.1:42489/workbench",
+    "posted": [
+      {
+        "source_id": "13c466c116e4409ea0e61335b2184270",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:39799/v1/",
+        "model": "classification-fixture",
+        "instruction": "Original exact guidance",
+        "seed": 42,
+        "labels": [
+          "keep",
+          "cancel"
+        ],
+        "request_id": "7f414a0cc8ed43be9b316aacc7406083"
+      }
+    ],
+    "storage": "{\"schema_version\":1,\"body\":{\"source_id\":\"13c466c116e4409ea0e61335b2184270\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:39799/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Different second-page author intent\",\"seed\":42,\"labels\":[\"keep\",\"cancel\"],\"request_id\":\"770186d989f049158eadc6d0a64e7dee\"}}",
+    "status": "Listed served text models. Listing does not establish classification or JSON compatibility; incompatible requests fail without fallback.",
+    "busy": true,
+    "paused": false,
+    "model": "classification-fixture",
+    "guidance": "Original exact guidance"
+  },
+  "second": {
+    "url": "http://127.0.0.1:42489/workbench",
+    "posted": [
+      {
+        "source_id": "13c466c116e4409ea0e61335b2184270",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:39799/v1/",
+        "model": "classification-fixture",
+        "instruction": "Different second-page author intent",
+        "seed": 42,
+        "labels": [
+          "keep",
+          "cancel"
+        ],
+        "request_id": "770186d989f049158eadc6d0a64e7dee"
+      }
+    ],
+    "storage": "{\"schema_version\":1,\"body\":{\"source_id\":\"13c466c116e4409ea0e61335b2184270\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:39799/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Different second-page author intent\",\"seed\":42,\"labels\":[\"keep\",\"cancel\"],\"request_id\":\"770186d989f049158eadc6d0a64e7dee\"}}",
+    "status": "Listed served text models. Listing does not establish classification or JSON compatibility; incompatible requests fail without fallback.",
+    "busy": true,
+    "paused": false,
+    "model": "classification-fixture",
+    "guidance": "Different second-page author intent"
+  }
+}
+[]

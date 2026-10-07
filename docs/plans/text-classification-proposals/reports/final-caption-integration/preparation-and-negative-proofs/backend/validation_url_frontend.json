@@ -1,0 +1,27 @@
+[
+  {
+    "name": "lone_surrogate",
+    "accepted": true,
+    "utf16_length": 23,
+    "code_points": 23
+  },
+  {
+    "name": "bom_prefix",
+    "accepted": true,
+    "utf16_length": 22,
+    "code_points": 22
+  },
+  {
+    "name": "nel_edge",
+    "accepted": false,
+    "error": "Enter a valid classification gateway URL.",
+    "utf16_length": 23,
+    "code_points": 23
+  },
+  {
+    "name": "astral_path_at_backend_bound",
+    "accepted": true,
+    "utf16_length": 4074,
+    "code_points": 2048
+  }
+]

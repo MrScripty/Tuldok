@@ -1,0 +1,24 @@
+[
+  {
+    "name": "lone_surrogate",
+    "accepted": false,
+    "error": "Requested server URL contains an invalid Unicode surrogate.",
+    "code_points": 23
+  },
+  {
+    "name": "bom_prefix",
+    "accepted": false,
+    "error": "Use an HTTP or HTTPS server URL without credentials, query, or fragment",
+    "code_points": 22
+  },
+  {
+    "name": "nel_edge",
+    "accepted": true,
+    "code_points": 23
+  },
+  {
+    "name": "astral_path_at_backend_bound",
+    "accepted": true,
+    "code_points": 2048
+  }
+]

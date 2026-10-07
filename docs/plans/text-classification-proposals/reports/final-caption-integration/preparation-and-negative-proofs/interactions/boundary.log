@@ -1,0 +1,5 @@
+deleted_source_apply_no_mutation_and_reject_independent PASS
+proposal_revision_label_cas_and_existing_target_fence PASS
+draft_provenance_fixed_text_and_answer_selection_compatibility PASS
+abstention_never_guesses_or_grants_review PASS
+{"synthetic_provider_requests": 4, "real_inference": false, "cases": 4}

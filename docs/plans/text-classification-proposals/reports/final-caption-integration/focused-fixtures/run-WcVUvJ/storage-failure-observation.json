@@ -1,0 +1,69 @@
+{
+  "get_failure_posts": 0,
+  "set_failure_posts": 0,
+  "remove_failure_blocked_posts": 2,
+  "removal_body": {
+    "source_id": "ccdc6f6d5ccb4472a89bdc28844026b8",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:38251/v1/",
+    "model": "classification-fixture",
+    "instruction": "Admitted removal failure",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "261fb1f33cc942de8d79354d83ba9c6a"
+  },
+  "final_posts": [
+    {
+      "source_id": "ccdc6f6d5ccb4472a89bdc28844026b8",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:38251/v1/",
+      "model": "classification-fixture",
+      "instruction": "Must block setItem failure",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "f18074b3e8214182a4b04df4ded48f2e"
+    },
+    {
+      "source_id": "ccdc6f6d5ccb4472a89bdc28844026b8",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:38251/v1/",
+      "model": "classification-fixture",
+      "instruction": "Admitted removal failure",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "261fb1f33cc942de8d79354d83ba9c6a"
+    },
+    {
+      "source_id": "ccdc6f6d5ccb4472a89bdc28844026b8",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:38251/v1/",
+      "model": "classification-fixture",
+      "instruction": "Fresh intent after storage recovers",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "5763b69fa96c43cab95dd89dfac8d14a"
+    }
+  ],
+  "baseline_inference": 7,
+  "final_inference": 10
+}

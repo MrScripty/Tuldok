@@ -1,0 +1,19 @@
+{
+  "classification_sha": "12b174f7a7b2fd6aa36d71da450ad657a5443114",
+  "original_base": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+  "caption_sha": "4ed5466fd764e938999cca1d535e9a33379271a0",
+  "status": "prepared-only, not integrated or published",
+  "minimal_change": "Replace only the caption-proposal-panel with exact caption successor panel",
+  "both_feature_panels_preserved": true,
+  "unique_ids": 202,
+  "forms_non_nested_and_closed": true,
+  "script_order_unchanged": true,
+  "ids_added_by_caption": [],
+  "artifacts_sha256": {
+    "workbench.resolved.html": "12fd0ae34a32ba43d90c84bb048f52f4cdd5530b107288a969facf3e7af513af",
+    "caption.before.html": "c4dfe34fb23f6f926d8ebec7b0750a1dbda11623a5b8a85ae4deccb037a941e7",
+    "caption.after.html": "2008ec942932ba60b7f7e54757875481f3e40bac690b8146720555200e2c41ab",
+    "classification.preserved.html": "d2d4d1619c35ac7ef43237a5ee234cfcda34c251bdc999e2d6665f1a3cabb2e5"
+  },
+  "repo_html_unchanged": true
+}

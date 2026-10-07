@@ -1,0 +1,52 @@
+{
+  "source_head": "71752fadd68efd092f53ee356ffb64061fa064da",
+  "model": "bounded synthetic HTTP fixture",
+  "job_id": "388e6d54f7844b3b928606da52262488",
+  "labels": [
+    "cancel",
+    "keep",
+    "café 😀"
+  ],
+  "early404_reload_id": "bc1e8689d1e441f787d45958f5d9254d",
+  "persistent_recovery_id": "dc1e522381844c799d12ed96880ab135",
+  "persistent_recovery_body": {
+    "source_id": "f858ecce66024d5bb688d70aeb2f01b3",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:38251/v1/",
+    "model": "classification-fixture",
+    "instruction": "Frozen reload recovery",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "dc1e522381844c799d12ed96880ab135"
+  },
+  "recovery_id": "388e6d54f7844b3b928606da52262488",
+  "recovery_post_ids": [
+    "388e6d54f7844b3b928606da52262488",
+    "388e6d54f7844b3b928606da52262488"
+  ],
+  "recovery_backend_requests": 1,
+  "application_revision": 2,
+  "downloaded_zip_sha256": "3ff3e9e50674a5f80c8b25c6e54511672196d88b809d8bfd7696cc03584fdfe8",
+  "fixed": [
+    {
+      "id": "303458d2af2c48b683205f2a593f5ae8",
+      "revision": 1,
+      "source_revision": 1
+    },
+    {
+      "id": "72c8cc397fcf4299b135432f3c117d34",
+      "revision": 1,
+      "source_revision": 1
+    }
+  ],
+  "reject_save_revision": 2,
+  "cancelled_id": "afc2d15b53b84c358b28bab8feffd40e",
+  "fresh_intent_id": "6a78adabf1a24778be2c98ea82823578",
+  "real_model_quality": false,
+  "tests": "native URL2072 and guidance2001 reject before POST/storage/pending/error latch, same-page validURL and exactguidance2000 explicit correction each once, visible pending evidence/open-source/restore-settings buttons recover form without developer tools or automatic POST, fullreload lostACK restored before delayed reconciliation unchanged exact-ID repeat and fresh intent, storage get/set/remove failures closed, early404 lost admission exact-ID recovery, frozen source/prompt/provider/labels evidence, malformed UI changes and dirty editor fences, lost Apply draft/idempotency/provenance, stale fixed selection, draft export blocked separate human review, abstention unappliable, reject during held unrelated save and subsequent save, cancellation navigation fresh intent, reload no inference, keyboard/narrow layout"
+}
