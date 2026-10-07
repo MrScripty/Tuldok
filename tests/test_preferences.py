@@ -181,6 +181,41 @@ class PreferenceTests(unittest.TestCase):
         rejudged = self.p.save(self.body(changed, left, right, row))['judgment']
         self.assertTrue(self.r.preview(self.release(rejudged))['eligible'])
 
+    def test_archive_resource_bound_stops_projection_at_first_over_budget_entry(self):
+        # Shared long text passes admission; repeated explicit pairs expand only in JSONL projection.
+        from workbench import MAX_TEXT, MAX_SELECTED_TEXT_BYTES
+        parent = self.w.import_asset(dict(kind='text', name='Bounded large prompt', text='€' * MAX_TEXT,
+                                         groups=['large-projection']))
+        left, right = self.answer(parent, '€' * MAX_TEXT), self.answer(parent, 'Short alternative')
+        judgments = [self.p.save(self.body(parent, left, right))['judgment'] for _ in range(100)]
+        frozen = self.export(self.release(judgments[0])); before = self.r.locate(frozen['id']).read_bytes()
+        self.assertEqual(self.export(self.release(judgments[0]))['id'], frozen['id'])
+        request = self.release(*judgments); original = self.r._preference_entries
+        generated = []
+
+        def observed_entries(prepared, body):
+            for name, value, expected in original(prepared, body):
+                generated.append((name, len(value)))
+                yield name, value, expected
+
+        def assert_stopped_at_crossing():
+            self.assertGreater(sum(size for _, size in generated), MAX_SELECTED_TEXT_BYTES)
+            self.assertLessEqual(sum(size for _, size in generated[:-1]), MAX_SELECTED_TEXT_BYTES,
+                                 'No entry may be generated after the first crossing of the archive bound')
+            self.assertLess(sum(name is None for name, _ in generated), len(judgments))
+            self.assertEqual(generated[-1][0], None, 'The bounded fixture crosses while emitting consumer rows')
+            self.assertEqual(self.r.locate(frozen['id']).read_bytes(), before)
+            self.assertEqual([path.name for path in self.r.path.iterdir()], [frozen['id'] + '.zip'])
+
+        with patch.object(self.r, '_preference_entries', side_effect=observed_entries):
+            preview = self.r.preview(request)
+            self.assertFalse(preview['eligible']); self.assertIn('archive exceeds the 40 MiB', preview['blockers'][0]['message'])
+            assert_stopped_at_crossing()
+            generated.clear()
+            with self.assertRaisesRegex(WorkbenchError, 'archive exceeds the 40 MiB'):
+                self.r.create(dict(request, preview_token='0' * 64))
+            assert_stopped_at_crossing()
+
     def test_identical_strings_warning_resource_bound_and_atomic_failure(self):
         parent, left, right, body, row = self.fixture(); right = self.answer(parent, left['completion'], right)
         row = self.p.save(self.body(parent, left, right, row))['judgment']; request = self.release(row)

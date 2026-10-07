@@ -23,12 +23,12 @@ async function parentLoadRaces(){
  const pending=[],record={...parent,name:'Prompt',text:'Prompt text',task:'text_classification',annotation:{label:'class'},groups:['family'],review:'human_reviewed',provenance:{method:'import'}};
  const other={...record,id:'2'.repeat(32),name:'Other prompt',revision:4};
  const page={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
- let confirms=0;
+ let confirms=0,answers=[a,b],judgments=[{...judgment,parent_revision:record.revision,stale_warning:null}];
  const response=data=>({ok:true,json:async()=>data});
  const env=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,Blob,URL,crypto:{randomUUID:()=> 'e'.repeat(32)},
   confirm:()=>{++confirms;return true;},fixture:{record,other,a,b,judgment:{...judgment,parent_revision:record.revision,stale_warning:null}},window:{addEventListener(){}},
   document:{getElementById:element,querySelectorAll:()=>[],createElement:()=>new Element(),createElementNS:()=>new Element()},
-  fetch:(url,options)=>url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):url.includes('/records?')?Promise.resolve(response(page)):url.endsWith('/responses')?Promise.resolve(response({parent:record,responses:[a,b]})):url.endsWith('/preferences')?Promise.resolve(response({parent:record,responses:[a,b],judgments:[{...judgment,parent_revision:3,stale_warning:null}]})):new Promise(resolve=>pending.push({url,options,resolve}))});
+  fetch:(url,options)=>url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):url.includes('/records?')?Promise.resolve(response(page)):url.endsWith('/responses')&&!options?.method?Promise.resolve(response({parent:record,responses:answers})):url.endsWith('/preferences')&&!options?.method?Promise.resolve(response({parent:record,responses:answers,judgments})):new Promise(resolve=>pending.push({url,options,resolve}))});
  const evaluate=code=>vm.runInContext(code,env);
  for(const script of ['workbench','instruction-responses','preferences','rights-note'])vm.runInContext(fs.readFileSync('static/'+script+'.js','utf8'),env);
  await flush();
@@ -48,6 +48,34 @@ async function parentLoadRaces(){
   assert.equal(evaluate('preferenceEditor'),editor);assert.equal(evaluate('preferenceDirty'),true);assert.equal(element('preference-rationale').value,text);assert.equal(element('preference-review').value,review);assert.equal(confirms,0);assert.equal(pending.length,0);
  }
  const held=evaluate('preferenceEditor');element('rights-note-value').value='Changed note';await element('rights-note-form').dispatch('submit');assert.equal(pending.length,0,'Rights save cannot discard an existing dirty judgment');assert.equal(evaluate('preferenceEditor'),held);assert.equal(evaluate('preferenceDirty'),true);assert.match(element('rights-note-status').textContent,/judgment edit/);
+ // Actual save owners invalidate proof for relevant local mutations, retaining later intent.
+ evaluate('showRecord(fixture.record)');await flush();
+ evaluate('preferenceSelected.set(fixture.judgment.id,preferencePair(fixture.judgment));preferencePreview={eligible:true};preferenceButtons()');
+ const fixed=JSON.stringify(evaluate('preferenceReleaseBody().items'));
+ const peer={...env.fixture.judgment,id:'f'.repeat(32),left_id:b.id,right_id:a.id,outcome:'right',review:'draft'};env.fixture.peer=peer;
+ evaluate('editPreference(fixture.peer)');element('preference-review').value='human_reviewed';await element('preference-review').dispatch('change');
+ const saving=evaluate('mutatePreference()');assert.equal(pending.length,1);
+ element('preference-rationale').value='Later comparative draft';await element('preference-rationale').dispatch('input');
+ const reviewed={...peer,revision:2,review:'human_reviewed'};judgments=[env.fixture.judgment,reviewed];pending.shift().resolve(response({changed:true,judgment:reviewed}));await saving;await flush();
+ assert.equal(evaluate('preferencePreview'),null,'Unselected opposing review invalidates proof');assert.equal(element('preference-freeze').disabled,true);
+ assert.equal(evaluate('preferenceDirty'),true);assert.equal(element('preference-rationale').value,'Later comparative draft');assert.equal(element('preference-review').value,'draft');
+ assert.equal(JSON.stringify(evaluate('preferenceReleaseBody().items')),fixed);
+ evaluate('showRecord(fixture.record)');await flush();evaluate('preferencePreview={eligible:true};preferenceButtons();editResponse(fixture.a)');
+ element('response-completion').value=JSON.stringify(a.completion+' changed');await element('response-completion').dispatch('input');
+ const answerSaving=element('response-form').dispatch('submit');assert.equal(pending.length,1);
+ evaluate('editPreference(fixture.judgment)');element('preference-rationale').value='Draft during answer acknowledgment';await element('preference-rationale').dispatch('input');
+ const updated={...a,revision:2,completion:a.completion+' changed',review:'draft'};answers=[updated,b];pending.shift().resolve(response({changed:true,response:updated,parent:record}));await answerSaving;await flush();
+ assert.equal(evaluate('preferencePreview'),null,'Actual bound-answer save invalidates proof');assert.equal(element('preference-freeze').disabled,true);
+ assert.equal(evaluate('preferenceDirty'),true);assert.equal(element('preference-rationale').value,'Draft during answer acknowledgment');assert.equal(evaluate('preferenceBody().left_revision'),1,'Later draft retains its opened answer revision');
+ assert.equal(JSON.stringify(evaluate('preferenceReleaseBody().items')),fixed);
+ evaluate('preferencePreview={eligible:true};preferenceResponseSaved({id:"unrelated"})');assert.equal(evaluate('preferencePreview.eligible'),true);
+ for(const field of ['prompt_id','parent_revision','source_revision','left_revision','right_revision']){
+  env.fixture.unrelated={...peer,[field]:field==='prompt_id'?'9'.repeat(32):2};assert.equal(evaluate('preferenceJudgmentAffectsSelection(fixture.unrelated)'),false,'Different '+field+' preserves proof');
+ }
+ // A no-op answer acknowledgment cannot revoke a proof.
+ await element('preference-cancel').dispatch('click');const noOp=element('response-form').dispatch('submit');assert.equal(pending.length,1);
+ pending.shift().resolve(response({changed:false,response:updated,parent:record}));await noOp;assert.equal(evaluate('preferencePreview.eligible'),true);
+
 }
 (async()=>{
  await load();run('editPreference(fixture.judgment)');assert.equal(get('preference-review').value,'draft','Stale judgment requires fresh review');
@@ -65,5 +93,5 @@ async function parentLoadRaces(){
  assert.equal(requests.length,0);
  run('preferenceRows=[{...fixture.judgment,deleted:true}];renderPreferences()');const deletedHistory=get('preference-list').children[0].children[1].onclick();
  run('showPreferences(fixture.parent)');resolve('records/'+parent.id+'/preferences',{parent,judgments:[],responses:[a,b]});await flush();resolve('preference-history/'+judgment.id,{history:[judgment]});await deletedHistory;assert.equal(get('preference-history-output').hidden,true,'Late deleted history cannot paint a replaced editor');
- await parentLoadRaces();console.log('PASS judgment controller stored binding, review reset, repeated saves, later intent, list/preview races and every parent-adopter ownership interleaving.');
+ await parentLoadRaces();console.log('PASS judgment controller stored binding, review reset, repeated saves, later intent, list/preview races and every parent-adopter ownership interleaving, relevant local saves/no-op and dirty-draft preservation.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

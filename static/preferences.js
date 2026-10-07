@@ -17,6 +17,15 @@ function invalidatePreferencePreview(){
   ++preferenceReleaseEpoch;preferencePreview=null;$('preference-release-result').replaceChildren();
   $('preference-preview-output').textContent='Preview the fixed judgment revisions.';preferenceButtons();
 }
+function preferenceJudgmentAffectsSelection(judgment){
+  if(preferenceSelected.has(judgment.id))return true;
+  const sameAnswer=(pair,side,other)=>pair[side+'_id']===judgment[other+'_id']&&pair[side+'_revision']===judgment[other+'_revision'];
+  return [...preferenceSelected.values()].some(pair=>pair.prompt_id===judgment.prompt_id&&pair.parent_revision===judgment.parent_revision&&pair.source_revision===judgment.source_revision&&
+    ((sameAnswer(pair,'left','left')&&sameAnswer(pair,'right','right'))||(sameAnswer(pair,'left','right')&&sameAnswer(pair,'right','left'))));
+}
+function preferenceResponseSaved(answer){
+  if([...preferenceSelected.values()].some(pair=>pair.left_id===answer.id||pair.right_id===answer.id))invalidatePreferencePreview();
+}
 function preferenceSelectionChanged(){
   invalidatePreferencePreview();$('preference-selected-list').replaceChildren();
   for(const pair of preferenceSelected.values()){
@@ -111,7 +120,7 @@ async function mutatePreference(deleting=false){
   const epoch=preferenceEditEpoch,parent=preferenceParent,editor=preferenceEditor;preferenceBusy=true;preferenceButtons();
   try{
     const result=await api(deleting?'preferences/delete':'preferences',body);
-    if(preferenceSelected.has(editor.id))invalidatePreferencePreview();
+    if(result.changed&&(preferenceJudgmentAffectsSelection(editor)||preferenceJudgmentAffectsSelection(result.judgment)))invalidatePreferencePreview();
     if(preferenceEditor?.id===editor.id&&preferenceParent?.id===parent.id){
       preferenceEditor=result.judgment;
       if(epoch===preferenceEditEpoch){preferenceDirty=false;$('preference-editor-status').textContent=deleting?'Judgment deleted.':'Saved judgment revision '+result.judgment.revision;if(deleting)$('preference-form').hidden=true;}

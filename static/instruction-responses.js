@@ -113,6 +113,7 @@ $('response-form').addEventListener('submit',async event=>{
   try{
     const saved=await api('responses',{id:editor.id,prompt_id:editor.prompt_id,revision:editor.revision,parent_revision:parent.revision,source_revision:parent.source_revision,completion,review:$('response-review').value});
     if(saved.changed&&responseSelected.has(editor.id))invalidateResponsePreview();
+    if(saved.changed&&typeof preferenceResponseSaved==='function')preferenceResponseSaved(saved.response);
     if(responseEditor?.id===editor.id&&responseParent?.id===parent.id){
       responseEditor=saved.response;
       if(epoch===responseEditEpoch){responseDirty=false;$('response-editor-status').textContent='Saved answer revision '+saved.response.revision;}

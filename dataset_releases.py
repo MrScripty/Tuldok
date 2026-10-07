@@ -379,9 +379,11 @@ class Releases:
             competing = self.workbench.preferences.competing(judgments)
             prepared = {'preview': preview, 'rows': judgments, 'parents': parents, 'answers': answers,
                         'roots': roots, 'groups': groups, 'snapshots': snapshots, 'competing': competing}
-            total = sum(len(value) for _, value, _ in self._preference_entries(prepared, body))
-            if total > MAX_SELECTED_TEXT_BYTES:
-                raise WorkbenchError('Preference archive exceeds the 40 MiB synchronous resource bound.')
+            total = 0
+            for _, value, _ in self._preference_entries(prepared, body):
+                total += len(value)
+                if total > MAX_SELECTED_TEXT_BYTES:
+                    raise WorkbenchError('Preference archive exceeds the 40 MiB synchronous resource bound.')
             preview['artifact_bytes'] = total
             preview['preview_token'] = hashlib.sha256(encode({
                 'format': PREFERENCE_FORMAT, 'schema': 1, 'ratios': body['ratios'], 'seed': body['seed'],
