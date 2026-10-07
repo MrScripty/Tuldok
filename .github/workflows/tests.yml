@@ -119,4 +119,5 @@ jobs:
             docs/plans/instruction-responses/reports/instruction-downloaded.zip
             docs/plans/native-text-classification-import/reports/native-text-*.png
             docs/plans/combined-workbench-local/reports/**
+            docs/plans/workbench-parent-owner-fix/reports/**
           if-no-files-found: ignore

@@ -33,7 +33,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const submit=()=>evaluate('document.getElementById("native-text-form").requestSubmit()');
   const idle=()=>until(()=>evaluate('!document.getElementById("native-text-start").disabled'));
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
-  const report=path.join(root,'docs/plans/combined-workbench-local/reports');fs.mkdirSync(report,{recursive:true});
+  const report=path.join(root,'docs/plans/workbench-parent-owner-fix/reports');fs.mkdirSync(report,{recursive:true});
   const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
   const sourceIdentity=spawnSync('git',['rev-parse','HEAD','HEAD^{tree}'],{cwd:root,encoding:'utf8'}).stdout.trim().split('\n');
   const sourceDiff=spawnSync('git',['diff','HEAD','--','app.py','workbench.py','curation.py','dataset_releases.py','native_text_import.py','static','tests'],{cwd:root,encoding:'utf8'}).stdout;
@@ -55,10 +55,12 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await respond(' exact answer\r\ne\u0301 😀\ufeff '+'x'.repeat(1100));await respond('Independent reviewed answer');
   await evaluate('document.querySelectorAll("#response-list input").forEach(box=>box.click());document.querySelector("#records .record input").click()');
   const initialAnswers=await answerPairs(),initialRecords=await recordPairs();
-  await evaluate(`(()=>{const original=window.fetch;window.recordReads=0;window.nativePosts=0;window.resultReads=0;window.answerPosts=0;window.fetch=async(...args)=>{
-    const url=String(args[0]);if(url.endsWith('/records/${seed.id}')){window.recordReads++;if(window.holdInspection){window.holdInspection=false;const response=await original(...args);await new Promise(resolve=>window.releaseInspection=resolve);window.inspectionDelivered=true;return response;}}
+  await evaluate(`(()=>{const original=window.fetch;window.recordReads=0;window.nativePosts=0;window.resultReads=0;window.answerPosts=0;window.answerBodies=[];window.answerStatuses=[];window.fetch=async(...args)=>{
+    const url=String(args[0]);
+    if(url.endsWith('/records/${seed.id}/responses')&&window.holdAnswerList){window.holdAnswerList=false;await new Promise(resolve=>window.releaseAnswerList=resolve);const response=await original(...args);window.answerListDelivered=true;return response;}
+    if(url.endsWith('/records/${seed.id}')){window.recordReads++;if(window.holdInspection){window.holdInspection=false;const response=await original(...args);await new Promise(resolve=>window.releaseInspection=resolve);window.inspectionDelivered=true;return response;}}
     if(url.endsWith('/rights/${seed.id}')&&window.holdRights){window.holdRights=false;const response=await original(...args);await new Promise(resolve=>window.releaseRights=resolve);return response;}
-    if(url.endsWith('/api/workbench/responses'))window.answerPosts++;
+    if(url.endsWith('/api/workbench/responses')){window.answerPosts++;window.answerBodies.push(JSON.parse(args[1].body));const response=await original(...args);window.answerStatuses.push(response.status);return response;}
     if(url.endsWith('/native-text-import/prepare')&&window.holdPreparation){window.holdPreparation=false;const response=await original(...args);await new Promise(resolve=>window.releasePreparation=resolve);return response;}
     if(url.endsWith('/native-text-import/row')){window.nativePosts++;const response=await original(...args);if(window.holdNative){window.holdNative=false;await new Promise(resolve=>window.releaseNative=resolve);}if(window.loseNative){window.loseNative=false;throw Error('Held committed native response lost');}return response;}
     if(url.includes('/import-result/'))window.resultReads++;return original(...args);
@@ -72,7 +74,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.equal(await evaluate('responseDirty'),true);assert.deepEqual(await evaluate('({id:responseEditor.id,value:document.getElementById("response-completion").value,review:document.getElementById("response-review").value,epoch:responseEditEpoch})'),inspectionDraft);
   const reads=await evaluate('window.recordReads');await evaluate('document.querySelector("#curation-results button").click()');await pause(100);assert.equal(await evaluate('window.recordReads'),reads,'Discard refusal must not send another inspection');
   evidence.steps.push({stage:'curation-held-get',exact_draft:inspectionDraft,discard_refusal:true});await capture('01-curation-draft','#responses-panel');
-  await click('response-cancel');await click('response-new');
+  await click('response-cancel');await evaluate('window.holdAnswerList=true;void loadResponses(current)');await until(()=>evaluate('!!window.releaseAnswerList'));await click('response-new');
   console.log('Combined browser: rights later response intent');
   await fill('rights-note-value','Local current note');await evaluate('window.holdRights=true;document.getElementById("rights-note-form").requestSubmit()');await until(()=>evaluate('!!window.releaseRights'));
   await fill('response-entry-format','json');await fill('response-completion',JSON.stringify('Later rights draft\r\n😀'));await fill('response-review','human_reviewed');
@@ -84,6 +86,18 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.equal(await answerPairs(),initialAnswers);assert.equal(await recordPairs(),initialRecords);
   const changedSeed=await api('records/'+seed.id);assert.equal(changedSeed.revision,seed.revision+1);assert.equal(changedSeed.review,'draft');
   evidence.steps.push({stage:'rights-held-ack',exact_draft:rightsDraft,pairs_retained:true,record_not_adopted:true});
+  await evaluate('window.releaseAnswerList();window.releaseAnswerList=null');await until(()=>evaluate('window.answerListDelivered&&!responseListBusy'));
+  assert.equal(await evaluate('responseParent.revision'),seed.revision,'Held answer-list cannot advance the retained draft parent');
+  assert.equal(await evaluate('responseParent.source_revision'),seed.source_revision);assert.equal(await evaluate('current.revision'),seed.revision);
+  assert.match(await evaluate('document.getElementById("response-status").textContent'),/Reload/);
+  await click('rights-note-cancel');await evaluate('document.getElementById("response-form").requestSubmit()');await until(()=>evaluate('!responseBusy&&window.answerStatuses.length===1'));
+  assert.deepEqual(await evaluate('window.answerStatuses'),[409]);assert.equal(await evaluate('window.answerBodies[0].parent_revision'),seed.revision);
+  assert.equal(await evaluate('window.answerBodies[0].source_revision'),seed.source_revision);assert.equal(await evaluate('responseDirty'),true);
+  assert.equal((await api('records/'+seed.id+'/responses')).responses.length,2,'A refused stale creation adds no answer');
+  assert.deepEqual(await evaluate('({id:responseEditor.id,value:document.getElementById("response-completion").value,review:document.getElementById("response-review").value,epoch:responseEditEpoch})'),rightsDraft);
+  const reloadReads=await evaluate('window.recordReads');await click('reload');await pause(100);assert.equal(await evaluate('window.recordReads'),reloadReads,'Refusing discard sends no reload');
+  assert.equal(await answerPairs(),initialAnswers);assert.equal(await recordPairs(),initialRecords);
+  evidence.steps.push({stage:'held-answer-list-stale-refusal',displayed_revision:seed.revision,answer_parent_revision:await evaluate('responseParent.revision'),post:await evaluate('window.answerBodies[0]'),http_status:409,exact_draft_retained:true,pairs_retained:true});
   console.log('Combined browser: native Stop/lost acknowledgement with response draft');
   await choose('source.zip');await evaluate('window.holdPreparation=true');await submit();await until(()=>evaluate('!!window.releasePreparation'));
   await click('native-text-stop');await evaluate('window.releasePreparation();window.releasePreparation=null');await idle();
@@ -100,6 +114,13 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const drafts=(await api('records')).items.filter(row=>row.id!==seed.id);assert.equal(drafts.length,2);assert.ok(drafts.every(row=>row.review==='draft'&&row.rights_note==='unknown'));
   evidence.steps.push({stage:'native-stop-and-loss',created:2,lost_lookup_without_replay:true,exact_response_draft_retained:true});await capture('02-native-draft','#native-text-import-panel');
   await click('response-cancel');await click('rights-note-cancel');await click('reload');await until(()=>evaluate('current.revision===2&&!responseListBusy&&!rightsDirty'));
+  await click('response-new');assert.equal(await evaluate('document.getElementById("response-review").value'),'draft','Explicit reload/new answer grants no review');
+  await fill('response-entry-format','json');await fill('response-completion',rightsDraft.value);await fill('response-review','human_reviewed');
+  await evaluate('document.getElementById("response-form").requestSubmit()');await until(()=>evaluate('!responseBusy&&!responseDirty&&!responseListBusy'));
+  assert.deepEqual(await evaluate('window.answerStatuses'),[409,200]);assert.equal(await evaluate('window.answerBodies[1].parent_revision'),changedSeed.revision);
+  assert.equal(await evaluate('window.answerBodies[1].completion'),JSON.parse(rightsDraft.value));assert.equal(await recordPairs(),initialRecords);assert.equal(await answerPairs(),initialAnswers);
+  assert.equal((await api('records/'+seed.id+'/responses')).responses.length,3);assert.equal((await api('records/'+seed.id)).review,'draft','Answer retry cannot approve the parent');
+  evidence.steps.push({stage:'explicit-parent-reload-answer-retry',post:await evaluate('window.answerBodies[1]'),http_status:200,parent_review:'draft',pairs_retained:true,answer_review_explicit:true});
   await fill('response-train','100');await fill('response-validation','0');await fill('response-test','0');await click('response-preview');await until(()=>evaluate('!responseReleaseBusy&&!!responsePreview'));
   assert.equal(await evaluate('responsePreview.eligible'),false,'Original parent pairs remain stale');assert.equal(await answerPairs(),initialAnswers);
   await click('response-clear');await evaluate('document.querySelectorAll("#response-list input").forEach(box=>box.click())');await click('response-preview');await until(()=>evaluate('!responseReleaseBusy&&responsePreview?.eligible'));
@@ -107,7 +128,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await evaluate('document.querySelector("#response-release-result a").click()');await until(()=>fs.readdirSync(downloads).filter(n=>n.endsWith('.zip')).length===1);
   const instruction=path.join(downloads,fs.readdirSync(downloads).find(n=>n.endsWith('.zip')));
   const consumerRun=spawnSync(process.env.INSTRUCTION_CONSUMER_PYTHON||'python3',['tests/check_instruction_consumer.py',instruction],{cwd:root,encoding:'utf8',timeout:120000});assert.equal(consumerRun.status,0,consumerRun.stdout+'\n'+consumerRun.stderr);
-  const consumer=JSON.parse(consumerRun.stdout.trim().split('\n').at(-1));assert.equal(consumer.result,'PASS');assert.equal(consumer.examples,2);assert.equal(consumer.over_default_1024_tokens,true);
+  const consumer=JSON.parse(consumerRun.stdout.trim().split('\n').at(-1));assert.equal(consumer.result,'PASS');assert.equal(consumer.examples,3);assert.equal(consumer.over_default_1024_tokens,true);
   fs.writeFileSync(path.join(report,'combined-instruction-downloaded.zip'),fs.readFileSync(instruction));
   console.log('Combined browser: explicit imported-label review, note, canonical download');
   await fill('query','');await evaluate('document.getElementById("filters").requestSubmit()');await until(()=>evaluate('page.total===3'));assert.equal(await answerPairs(),freshAnswers);

@@ -42,6 +42,27 @@ class CombinedWorkbenchTests(unittest.TestCase):
         return dict(id=answer['id'], revision=answer['revision'], prompt_id=parent['id'],
                     parent_revision=parent['revision'], source_revision=parent['source_revision'])
 
+    def test_answer_list_does_not_authorize_stale_creation_then_explicit_reload_retry(self):
+        parent = self.call('import', dict(kind='text', text='Authored prompt', name='CAS prompt', rights='Local', groups=['cas-source']))
+        body = dict(id=uuid.uuid4().hex, prompt_id=parent['id'], revision=0,
+                    parent_revision=parent['revision'], source_revision=parent['source_revision'],
+                    completion='Retained exact\r\ne\u0301 😀\ufeff', review='draft')
+        corrected = self.call('rights/'+parent['id'], dict(revision=parent['revision'],
+                              source_revision=parent['source_revision'], note='Updated local note'))['record']
+        latest_list = self.call('records/'+parent['id']+'/responses')
+        self.assertEqual(latest_list['parent']['revision'], corrected['revision'])
+        self.assertEqual(latest_list['responses'], [])
+        before = self.state()
+        self.assertEqual(self.request('responses', body)[0], 409)
+        self.assertEqual(self.state(), before, 'A latest list read cannot authorize a stale create or write history')
+        reloaded = self.call('records/'+parent['id'])
+        retry = dict(body, parent_revision=reloaded['revision'], source_revision=reloaded['source_revision'])
+        saved = self.call('responses', retry)['response']
+        self.assertEqual(saved['completion'], body['completion'])
+        self.assertEqual(saved['review'], 'draft')
+        self.assertEqual(self.call('records/'+parent['id'])['review'], 'draft')
+        self.assertEqual(self.call('records/'+parent['id']+'/responses')['responses'], [saved])
+
     def release_body(self, items, format_name):
         return dict(format=format_name, items=items, ratios=dict(train=100, validation=0, test=0), seed=7)
 

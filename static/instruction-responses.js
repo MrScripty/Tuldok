@@ -63,11 +63,16 @@ function renderResponses(){
 }
 async function loadResponses(parent){
   const epoch=++responseLoadEpoch;responseListBusy=true;$('response-status').textContent='Loading answers…';
+  const owner={id:parent.id,revision:parent.revision,source_revision:parent.source_revision};
+  const matchesOwner=record=>record?.id===owner.id&&record.revision===owner.revision&&record.source_revision===owner.source_revision;
   try{
     const result=await api('records/'+parent.id+'/responses');
-    if(epoch!==responseLoadEpoch||responseParent?.id!==parent.id||current?.id!==parent.id)return;
-    if(result.parent.revision<responseParent.revision)return;
-    responseParent=result.parent;responseRows=result.responses;
+    if(epoch!==responseLoadEpoch||!matchesOwner(responseParent)||!matchesOwner(current))return;
+    if(!matchesOwner(result.parent)){
+      invalidateResponsePreview();$('response-status').textContent='Parent revisions changed. Reload the record before using current answers; your draft and fixed selections are retained.';return;
+    }
+    // Only explicit record adoption owns the answer parent; a list read cannot rebase a draft.
+    responseRows=result.responses;
     for(const pair of responseSelected.values())if(pair.prompt_id===parent.id){
       const answer=responseRows.find(row=>row.id===pair.id);
       if(!answer||JSON.stringify(responsePair(answer,responseParent))!==JSON.stringify(pair))invalidateResponsePreview();
