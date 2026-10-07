@@ -21,8 +21,37 @@ function captionProposalRecoveryBody(body) {
     throw Error('Use a server URL without credentials, query or fragment.');
   return {...captionProposalIntent(body),request_id:body.request_id};
 }
+function captionProposalStoredRequest() {
+  const data=sessionStorage.getItem(captionProposalRecoveryKey);
+  if(data===null)return null;
+  if(data.length>32768)throw Error('Recovery intent exceeds its bound.');
+  return captionProposalRecoveryBody(JSON.parse(data));
+}
+function captionProposalSameRequest(a,b) {return JSON.stringify(a)===JSON.stringify(b);}
+function captionProposalSyncRecovery(restoreForm=false) {
+  try {
+    const stored=captionProposalStoredRequest();
+    if(!captionProposalSameRequest(stored,captionProposalPendingRequest))captionProposalPendingRequest=stored;
+    if(restoreForm && stored) {
+      $('caption-proposal-url').value=stored.server_url;
+      $('caption-proposal-guidance').value=stored.instruction;
+      $('caption-proposal-seed').value=stored.seed;
+      const option=document.createElement('option');option.value=stored.model;option.textContent=option.value+' (recovered request)';
+      $('caption-proposal-model').replaceChildren(option);$('caption-proposal-model').value=option.value;
+    }
+    return true;
+  } catch {
+    captionProposalStorageError='Caption recovery storage is unavailable or invalid. Restore this tab’s storage and reload before submitting.';
+    $('caption-proposal-submit').disabled=true;captionProposalStatus(captionProposalStorageError);return false;
+  }
+}
 function captionProposalStore(body) {
   try {
+    // A history-restored document may no longer own this tab's current entry.
+    const stored=captionProposalStoredRequest();
+    if(!captionProposalSameRequest(stored,captionProposalPendingRequest)) {
+      captionProposalPendingRequest=stored;throw Error('Recovery ownership changed.');
+    }
     if(body) {
       const data=JSON.stringify(captionProposalRecoveryBody(body));
       if(data.length>32768)throw Error('Recovery intent exceeds its bound.');
@@ -39,18 +68,7 @@ function captionProposalStore(body) {
   }
 }
 // Read before registering submission: a held initial GET must not open a new intent.
-try {
-  const data=sessionStorage.getItem(captionProposalRecoveryKey);
-  if(data!==null) {
-    if(data.length>32768)throw Error('Recovery intent exceeds its bound.');
-    captionProposalPendingRequest=captionProposalRecoveryBody(JSON.parse(data));
-    $('caption-proposal-url').value=captionProposalPendingRequest.server_url;
-    $('caption-proposal-guidance').value=captionProposalPendingRequest.instruction;
-    $('caption-proposal-seed').value=captionProposalPendingRequest.seed;
-    const option=document.createElement('option');option.value=captionProposalPendingRequest.model;option.textContent=option.value+' (recovered request)';
-    $('caption-proposal-model').append(option);$('caption-proposal-model').value=option.value;
-  }
-} catch { captionProposalStorageError='Caption recovery storage is unavailable or invalid. Restore this tab’s storage and reload before submitting.'; }
+captionProposalSyncRecovery(true);
 $('caption-proposal-submit').disabled=!!captionProposalStorageError;
 if(captionProposalStorageError) $('caption-proposal-status').textContent=captionProposalStorageError;
 else if(captionProposalPendingRequest) $('caption-proposal-status').textContent='Unresolved caption request restored. Refresh to inspect its outcome, or explicitly repeat the unchanged intent with the same ID. No inference was replayed.';
@@ -98,17 +116,21 @@ function renderCaptionProposals() {
 }
 async function refreshCaptionProposals() {
   if(captionProposalPaused)return;
+  if(!captionProposalSyncRecovery())return;
   clearTimeout(captionProposalTimer);const epoch=++captionProposalEpoch;
   const result=await api('caption-proposals');if(epoch!==captionProposalEpoch||captionProposalPaused)return;
+  if(!captionProposalSyncRecovery())return;
   captionProposalJobs=result.jobs;
   if(captionProposalPendingRequest && !captionProposalJobs.some(job=>job.id===captionProposalPendingRequest.request_id)) {
     const pending=captionProposalPendingRequest;
     try {
       const exact=await api('caption-proposals/'+pending.request_id);
       if(epoch!==captionProposalEpoch||captionProposalPaused)return;
+      if(!captionProposalSyncRecovery())return;
       captionProposalJobs.unshift(exact);
     } catch(error) {
       if(epoch!==captionProposalEpoch||captionProposalPaused)return;
+      if(!captionProposalSyncRecovery())return;
       if(error.status===404 && captionProposalPendingRequest===pending) {
         captionProposalStatus('The request ID is not visible yet. Its admission or acknowledgement may still arrive; an explicit unchanged repeat keeps this ID.');
       } else throw error;
@@ -154,6 +176,7 @@ action('caption-proposal-models',async()=>{
 });
 $('caption-proposal-form').addEventListener('submit',async event=>{
   event.preventDefault();if(captionProposalBusy)return;
+  if(!captionProposalSyncRecovery())return;
   if(captionProposalStorageError) {captionProposalStatus(captionProposalStorageError);return;}
   if(current?.kind!=='image'||hasUnsavedEdits()||$('editor').dataset.busy) {captionProposalStatus('Select an image and save or discard edits before requesting a caption.');return;}
   const intent={source_id:current.id,revision:current.revision,source_revision:current.source_revision,
@@ -174,4 +197,4 @@ $('caption-proposal-form').addEventListener('submit',async event=>{
 });
 action('caption-proposal-refresh',refreshCaptionProposals);
 window.addEventListener('pagehide',()=>{captionProposalPaused=true;++captionProposalEpoch;++captionProposalModelEpoch;clearTimeout(captionProposalTimer);});
-window.addEventListener('pageshow',()=>{if(captionProposalPaused){captionProposalPaused=false;refreshCaptionProposals().catch(error=>captionProposalStatus(error.message));}});
+window.addEventListener('pageshow',()=>{if(captionProposalPaused){captionProposalPaused=false;if(captionProposalSyncRecovery(true))refreshCaptionProposals().catch(error=>captionProposalStatus(error.message));}});

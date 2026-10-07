@@ -72,5 +72,42 @@ const persisted=(id,status='completed')=>({id,status,source:row,config:{model:'f
     const bad=storage();bad.data.set(key,value);p=page(bad);p.intent();await p.submit();assert.equal(p.requests.length,0);assert.equal(bad.data.get(key),value,'Invalid recovery evidence must not be silently discarded');
   }
   const privateStore=storage();p=page(privateStore);p.intent({...body,server_url:'http://secret:token@localhost:8765'});await p.submit();assert.equal(p.requests.length,0);assert.equal(privateStore.data.size,0);
+  // Shared tab storage belongs to the current intent, including history-restored documents.
+  for(const mode of ['history-clear','history-repeat','late-refusal','late-success','held-get']) {
+    const shared=storage(),older=page(shared);older.intent();
+    const originalStart=older.submit(),oldPost=older.take('caption-proposals',true),oldBody=JSON.parse(JSON.stringify(oldPost.body));
+    if(mode!=='late-refusal' && mode!=='late-success'){oldPost.reject(Error('Lost old acknowledgement'));await originalStart;}
+    const heldOldLookup=mode==='held-get'?older.refresh():null;
+    const heldOldList=heldOldLookup?older.take('caption-proposals'):null;
+    older.listeners.pagehide();const newer=page(shared),knownOld=newer.refresh();
+    newer.take('caption-proposals').resolve({jobs:[persisted(oldBody.request_id)]});await knownOld;
+    newer.run('crypto.randomUUID=()=>"2".repeat(32)');newer.intent({...body,instruction:'Newer unresolved admission'});
+    const nextStart=newer.submit(),nextPost=newer.take('caption-proposals',true),nextBody=JSON.parse(JSON.stringify(nextPost.body));nextPost.reject(Error('Lost newer acknowledgement'));await nextStart;
+    if(mode==='late-refusal') {
+      oldPost.reject(Object.assign(Error('Late first-attempt refusal'),{status:409}));await originalStart;
+    } else {
+      if(mode==='held-get') {
+        heldOldList.resolve({jobs:[persisted(oldBody.request_id)]});await heldOldLookup;
+      }
+      newer.listeners.pagehide();older.listeners.pageshow();
+      assert.equal(older.run('captionProposalPendingRequest.request_id'),nextBody.request_id,'pageshow must synchronously adopt live storage');
+      const oldSummary=older.take('caption-proposals');
+      if(mode==='history-repeat') {
+        older.intent(oldBody);await older.submit();assert.equal(older.requests.length,0,'Stale original repeat cannot overwrite a newer identity');
+      }
+      if(mode==='late-success') {
+        oldPost.resolve(persisted(oldBody.request_id));await flush();
+        const afterOldAck=older.take('caption-proposals');
+        oldSummary.resolve({jobs:[persisted(oldBody.request_id)]});await flush();
+        afterOldAck.resolve({jobs:[persisted(oldBody.request_id)]});await flush();
+      } else {oldSummary.resolve({jobs:[persisted(oldBody.request_id)]});await flush();}
+      older.take('caption-proposals/'+nextBody.request_id).reject(Object.assign(Error('New admission not visible'),{status:404}));await flush();
+      if(mode==='late-success')await originalStart;
+    }
+    assert.deepEqual(JSON.parse(shared.data.get(key)),nextBody,mode+' must preserve newer exact evidence');
+    const fullReload=page(shared);fullReload.intent({...body,instruction:'Changed again'});await fullReload.submit();assert.equal(fullReload.requests.length,0,mode+' must continue blocking changed intent across another reload');
+  }
+  const pageshowStore=storage();pageshowStore.data.set(key,JSON.stringify(body));p=page(pageshowStore);p.listeners.pagehide();pageshowStore.fail='read';p.listeners.pageshow();await p.submit();assert.equal(p.requests.length,0);assert.equal(p.$('caption-proposal-submit').disabled,true);
   console.log('Caption reload: durable before POST, synchronous restore/held GET, changed-intent refusal, 404/refused repeat retention, exact retry, terminal/active reconciliation, storage read/write/remove/corruption bounds and credential exclusion passed.');
+  console.log('Shared tab recovery: history restore/held lookup, stale repeat overwrite, late first-refusal and success ownership, and pageshow storage failure passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -51,3 +51,13 @@ synchronously, compare exact intent, retain ambiguous identities, release only a
 authoritative reconciliation with no in-flight admission, fail closed on storage
 errors, and never automatically replay inference. Classification code is not part
 of this repair.
+
+Independent review of first checkpoint `e73c688` found a valid same-tab history
+ownership gap despite all 43 gates passing: a cached old document could delete
+or overwrite a newer document’s unresolved entry. The successor synchronizes live
+recovery before submit, before/after asynchronous lookups and synchronously on
+pageshow. Storage writes/removals compare the current entry with owned memory;
+late first-refusal and successful old POST/GET completions cannot erase a newer
+identity. Two-document regressions cover removal, stale repeat overwrite, held
+GET, old ACK/refusal and pageshow read failure. Original review/probes and the
+first aggregate checkpoint remain preserved separately.
