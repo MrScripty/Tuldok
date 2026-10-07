@@ -2,6 +2,58 @@
 let captionProposalJobs = [], captionProposalEpoch = 0, captionProposalModelEpoch = 0;
 let captionProposalTimer = null, captionProposalPaused = false, captionProposalBusy = false;
 let captionProposalPendingRequest = null, captionProposalAdmissionRequest = null, captionProposalRendered = '';
+const captionProposalRecoveryKey = 'tuldok.caption-proposal-recovery.v1';
+let captionProposalStorageError = '';
+function captionProposalIntent(body) {
+  return {source_id:body.source_id,revision:body.revision,source_revision:body.source_revision,
+    server_url:body.server_url,model:body.model,instruction:body.instruction,seed:body.seed};
+}
+function captionProposalRecoveryBody(body) {
+  const fields=['source_id','revision','source_revision','server_url','model','instruction','seed','request_id'];
+  if(!body || typeof body!=='object' || Object.keys(body).length!==fields.length || fields.some(field=>!Object.hasOwn(body,field)) ||
+     typeof body.request_id!=='string' || typeof body.source_id!=='string' || !/^[a-f0-9]{32}$/.test(body.request_id) || !/^[a-f0-9]{32}$/.test(body.source_id) ||
+     !Number.isSafeInteger(body.revision) || body.revision<1 || !Number.isSafeInteger(body.source_revision) || body.source_revision<1 ||
+     !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295 ||
+     typeof body.server_url!=='string' || body.server_url.length>2048 || typeof body.model!=='string' || [...body.model].length>200 ||
+     typeof body.instruction!=='string' || [...body.instruction].length>2000) throw Error('Invalid recovery intent.');
+  const url=new URL(body.server_url);
+  if(!['http:','https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash)
+    throw Error('Use a server URL without credentials, query or fragment.');
+  return {...captionProposalIntent(body),request_id:body.request_id};
+}
+function captionProposalStore(body) {
+  try {
+    if(body) {
+      const data=JSON.stringify(captionProposalRecoveryBody(body));
+      if(data.length>32768)throw Error('Recovery intent exceeds its bound.');
+      sessionStorage.setItem(captionProposalRecoveryKey,data);
+      if(sessionStorage.getItem(captionProposalRecoveryKey)!==data)throw Error('Recovery storage did not retain the request.');
+    } else {
+      sessionStorage.removeItem(captionProposalRecoveryKey);
+      if(sessionStorage.getItem(captionProposalRecoveryKey)!==null)throw Error('Recovery storage did not clear the request.');
+    }
+    captionProposalStorageError='';return true;
+  } catch {
+    captionProposalStorageError='Caption recovery storage is unavailable or invalid. New submissions are blocked. Restore this tab’s storage and reload before submitting.';
+    return false;
+  }
+}
+// Read before registering submission: a held initial GET must not open a new intent.
+try {
+  const data=sessionStorage.getItem(captionProposalRecoveryKey);
+  if(data!==null) {
+    if(data.length>32768)throw Error('Recovery intent exceeds its bound.');
+    captionProposalPendingRequest=captionProposalRecoveryBody(JSON.parse(data));
+    $('caption-proposal-url').value=captionProposalPendingRequest.server_url;
+    $('caption-proposal-guidance').value=captionProposalPendingRequest.instruction;
+    $('caption-proposal-seed').value=captionProposalPendingRequest.seed;
+    const option=document.createElement('option');option.value=captionProposalPendingRequest.model;option.textContent=option.value+' (recovered request)';
+    $('caption-proposal-model').append(option);$('caption-proposal-model').value=option.value;
+  }
+} catch { captionProposalStorageError='Caption recovery storage is unavailable or invalid. Restore this tab’s storage and reload before submitting.'; }
+$('caption-proposal-submit').disabled=!!captionProposalStorageError;
+if(captionProposalStorageError) $('caption-proposal-status').textContent=captionProposalStorageError;
+else if(captionProposalPendingRequest) $('caption-proposal-status').textContent='Unresolved caption request restored. Refresh to inspect its outcome, or explicitly repeat the unchanged intent with the same ID. No inference was replayed.';
 const captionProposalActive = job => ['preparing','generating','stopping'].includes(job.status);
 function captionProposalStatus(message) { $('caption-proposal-status').textContent = message; }
 function captionProposalsShown(record) {
@@ -63,7 +115,10 @@ async function refreshCaptionProposals() {
     }
   }
   if(captionProposalPendingRequest && captionProposalAdmissionRequest!==captionProposalPendingRequest && captionProposalJobs.some(job=>job.id===captionProposalPendingRequest.request_id)) {
-    captionProposalPendingRequest=null;captionProposalStatus('Persisted request recovered. Inspect its status; no inference was retried.');
+    if(captionProposalStore(null)) {
+      captionProposalPendingRequest=null;$('caption-proposal-submit').disabled=false;
+      captionProposalStatus('Persisted request recovered. Inspect its status; no inference was retried.');
+    } else { $('caption-proposal-submit').disabled=true;captionProposalStatus(captionProposalStorageError); }
   }
   renderCaptionProposals();
   if(captionProposalJobs.some(captionProposalActive))captionProposalTimer=setTimeout(()=>refreshCaptionProposals().catch(error=>captionProposalStatus(error.message)),1000);
@@ -99,19 +154,23 @@ action('caption-proposal-models',async()=>{
 });
 $('caption-proposal-form').addEventListener('submit',async event=>{
   event.preventDefault();if(captionProposalBusy)return;
+  if(captionProposalStorageError) {captionProposalStatus(captionProposalStorageError);return;}
   if(current?.kind!=='image'||hasUnsavedEdits()||$('editor').dataset.busy) {captionProposalStatus('Select an image and save or discard edits before requesting a caption.');return;}
   const intent={source_id:current.id,revision:current.revision,source_revision:current.source_revision,
     server_url:$('caption-proposal-url').value,model:$('caption-proposal-model').value,
     instruction:$('caption-proposal-guidance').value,seed:Number($('caption-proposal-seed').value)};
   const previous=captionProposalPendingRequest;
-  if(previous && JSON.stringify({...previous,request_id:undefined})!==JSON.stringify(intent)) {
+  if(previous && JSON.stringify(captionProposalIntent(previous))!==JSON.stringify(intent)) {
     captionProposalStatus('An earlier request has an unknown acknowledgement. Refresh requests before changing its intent.');return;
   }
-  const body=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};captionProposalPendingRequest=body;
+  const body=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};
+  if(!captionProposalStore(body)) {captionProposalStatus(captionProposalStorageError);$('caption-proposal-submit').disabled=true;return;}
+  captionProposalPendingRequest=body;
   captionProposalAdmissionRequest=body;captionProposalBusy=true;$('caption-proposal-submit').disabled=true;
-  try { await api('caption-proposals',body);if(captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus('Caption requested. Current annotations remain unchanged.');await refreshCaptionProposals(); }
-  catch(error) {if(!previous && error.status>=400 && error.status<500 && captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus(error.message+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');}
-  finally {if(captionProposalAdmissionRequest===body)captionProposalAdmissionRequest=null;captionProposalBusy=false;$('caption-proposal-submit').disabled=false;}
+  let acknowledged=false;
+  try { await api('caption-proposals',body);acknowledged=true;if(captionProposalAdmissionRequest===body)captionProposalAdmissionRequest=null;captionProposalStatus('Caption requested. Current annotations remain unchanged.');await refreshCaptionProposals(); }
+  catch(error) {if(!acknowledged && !previous && error.status>=400 && error.status<500 && captionProposalPendingRequest===body && captionProposalStore(null))captionProposalPendingRequest=null;captionProposalStatus(captionProposalStorageError || error.message+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');}
+  finally {if(captionProposalAdmissionRequest===body)captionProposalAdmissionRequest=null;captionProposalBusy=false;$('caption-proposal-submit').disabled=!!captionProposalStorageError;}
 });
 action('caption-proposal-refresh',refreshCaptionProposals);
 window.addEventListener('pagehide',()=>{captionProposalPaused=true;++captionProposalEpoch;++captionProposalModelEpoch;clearTimeout(captionProposalTimer);});

@@ -382,6 +382,16 @@ attempts remain inspectable after restart and never auto-resume. Refresh request
 and inspect the record after a lost acknowledgement; repeating the same request ID
 or application reconciles existing state without another inference/target write.
 
+Before submission, one bounded recovery intent is stored in this tab’s
+`sessionStorage` and restored synchronously on reload. It contains the request ID,
+source ID/revisions, credential-free gateway URL, model, guidance and seed, without
+image/response bytes. Changed intent stays blocked until a persisted GET outcome
+is reconciled; ambiguous 404 and refused repeats retain the original ID. An
+explicit unchanged retry uses the same body/ID. No inference replays on reload.
+Storage read/write/removal failures block new submissions; restore storage and
+reload rather than abandoning an unknown request. Closing the tab ends this local
+recovery scope; it is not cross-tab/device recovery.
+
 This single-image slice is tested with local synthetic HTTP providers and real
 Chromium. It asserts no real-model caption quality and adds no models, credentials,
 provider registry or dependencies. [Contract and acceptance](docs/plans/caption-proposals/plan.md).

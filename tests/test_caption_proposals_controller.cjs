@@ -11,6 +11,7 @@ const listeners={},requests=[],timers=new Map();let timerId=0;
 const response=(data,ok=true,status=200)=>({ok,status,json:async()=>data});
 const empty={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
 const context=vm.createContext({console,URLSearchParams,structuredClone,crypto,confirm:()=>false,location:{hash:''},history:{pushState(){}},
+  URL,sessionStorage:{data:new Map(),getItem(key){return this.data.get(key)??null;},setItem(key,value){this.data.set(key,value);},removeItem(key){this.data.delete(key);}},
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
   document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
   window:{addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
@@ -65,14 +66,14 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
     assert.equal(run('captionProposalPendingRequest'),null);
     element('caption-proposal-guidance').value='New intent after cancellation';const fresh=element('caption-proposal-form').dispatch('submit'),freshPost=take('/caption-proposals'),freshBody=JSON.parse(freshPost.options.body);
     assert.notEqual(freshBody.request_id,cancelledBody.request_id);assert.equal(freshBody.instruction,'New intent after cancellation');
-    freshPost.resolve(response({...job,id:freshBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[job]});await fresh;
+    freshPost.resolve(response({...job,id:freshBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[{...job,id:freshBody.request_id}]});await fresh;
   }
   if(process.env.CAPTION_RECOVERY_CASE!=='reject') {
     // A first-attempt definite refusal has no older unknown admission to preserve.
     const refusedStart=element('caption-proposal-form').dispatch('submit'),refusedPost=take('/caption-proposals'),refusedBody=JSON.parse(refusedPost.options.body);
     refusedPost.resolve(response({error:'Busy before admission'},false,409));await refusedStart;assert.equal(run('captionProposalPendingRequest'),null);
     element('caption-proposal-guidance').value='New intent after definite refusal';const accepted=element('caption-proposal-form').dispatch('submit'),acceptedPost=take('/caption-proposals'),acceptedBody=JSON.parse(acceptedPost.options.body);
-    assert.notEqual(acceptedBody.request_id,refusedBody.request_id);acceptedPost.resolve(response({...job,id:acceptedBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[job]});await accepted;
+    assert.notEqual(acceptedBody.request_id,refusedBody.request_id);acceptedPost.resolve(response({...job,id:acceptedBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[{...job,id:acceptedBody.request_id}]});await accepted;
   }
   // Two starts share one pending action; a lost start is reconciled by GET only.
   element('caption-proposal-model').value='fixture';element('caption-proposal-guidance').value='Visible pixels';element('caption-proposal-seed').value='42';
@@ -124,4 +125,5 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
   for(const fn of listeners.pageshow||[])fn();resolve('/caption-proposals',{jobs:[{...job,status:'generating'}]});await flush();assert.equal(timers.size,1);
   for(const fn of listeners.pagehide||[])fn();assert.equal(timers.size,0);assert.equal(requests.length,0);
   console.log('Caption controller held admission/early 404/lost acknowledgement/exact-ID repeat, cancelled/new intent, held annotation-save/reject/subsequent save, later-input/apply ownership and polling lifecycle passed.');
+  require('node:child_process').execFileSync(process.execPath,[path.join(__dirname,'test_caption_reload_controller.cjs')],{stdio:'inherit'});
 })().catch(error=>{console.error(error);process.exitCode=1;});
