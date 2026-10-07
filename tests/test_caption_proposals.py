@@ -5,6 +5,7 @@ import json
 import urllib.error
 import urllib.request
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -91,6 +92,128 @@ class CaptionProposalTests(unittest.TestCase):
         self.assertEqual(again['id'],job['id']);self.assertEqual(len(self.requests),count)
         with self.assertRaisesRegex(WorkbenchError,'different request'):
             self.data.caption_proposals.start(dict(body,instruction='changed'))
+
+    def test_status_summary_parity_order_bound_and_retained_evidence(self):
+        owner = self.data.caption_proposals
+        original = self.generate()
+        statuses = ('preparing', 'generating', 'stopping', 'completed', 'failed',
+                    'cancelled', 'interrupted', 'applied', 'rejected')
+        with owner.lock, owner.db:
+            for index in range(51):
+                job = dict(original, id=uuid.uuid4().hex, status=statuses[index % len(statuses)],
+                           extension={'unicode': 'é\n雪', 'input_image_base64': 'nested metadata'},
+                           application={'record_id': self.row['id'], 'revision': 3} if index % 3 == 0 else None)
+                if index % 3 == 0:
+                    job.pop('input_image_base64')
+                elif index % 3 == 1:
+                    job['raw_response_base64'] = None
+                owner._save(job)
+        before = self.state()
+        full = [json.loads(row[0]) for row in owner.db.execute(
+            'SELECT data FROM caption_proposals ORDER BY rowid DESC LIMIT 50')]
+        expected = [{key: value for key, value in job.items()
+                     if key not in ('input_image_base64', 'raw_response_base64')} for job in full]
+        self.assertEqual(len(expected), 50)
+        self.assertEqual(owner.snapshot(), {'jobs': expected})
+        self.assertEqual(owner.snapshot(), {'jobs': expected})
+        self.assertEqual(self.state(), before)
+        for job in full:
+            self.assertEqual(owner.get(job['id']), job)
+        self.assertEqual(len(self.requests), 1)
+
+    def test_poll_decodes_only_projected_rows_with_large_retained_payloads(self):
+        from caption_proposals import MAX_IMAGE, MAX_OUTPUT
+        owner = self.data.caption_proposals
+        image = base64.b64encode(bytes(MAX_IMAGE)).decode('ascii')
+        response = base64.b64encode(b'R' * MAX_OUTPUT).decode('ascii')
+        ids = []
+        with owner.lock, owner.db:
+            for index in range(51):
+                job = dict(id=uuid.uuid4().hex, status='completed', source=self.row,
+                           annotation={'caption': 'Controlled large evidence'},
+                           input_image_base64=image, raw_response_base64=response,
+                           input_image={'bytes': MAX_IMAGE, 'sha256': hashlib.sha256(bytes(MAX_IMAGE)).hexdigest()},
+                           response_sha256=hashlib.sha256(b'R' * MAX_OUTPUT).hexdigest())
+                owner._save(job)
+                ids.append(job['id'])
+        def retained_hashes():
+            return [(row[0], hashlib.sha256(row[1].encode()).hexdigest()) for row in
+                    owner.db.execute('SELECT id, data FROM caption_proposals ORDER BY rowid')]
+        before = retained_hashes()
+        decode = json.loads
+        decoded_sizes = []
+        def projected_only(data, *args, **kwargs):
+            self.assertNotIn('"input_image_base64"', data,
+                             'Polling must not materialize retained image payloads in Python')
+            self.assertNotIn('"raw_response_base64"', data,
+                             'Polling must not materialize retained response payloads in Python')
+            decoded_sizes.append(len(data))
+            return decode(data, *args, **kwargs)
+        with patch('caption_proposals.json.loads', side_effect=projected_only):
+            result = owner.snapshot()
+        self.assertEqual([job['id'] for job in result['jobs']], list(reversed(ids[-50:])))
+        self.assertEqual(len(decoded_sizes), 50)
+        self.assertLess(max(decoded_sizes), len(image) // 100)
+        self.assertEqual(retained_hashes(), before)
+        full = owner.get(ids[-1])
+        self.assertEqual((full['input_image_base64'], full['raw_response_base64']), (image, response))
+        self.assertEqual(self.requests, [])
+
+    def test_poll_capture_is_atomic_and_decoding_releases_shared_lock(self):
+        owner = self.data.caption_proposals
+        first = self.generate()
+        with owner.lock, owner.db:
+            second = dict(first, id=uuid.uuid4().hex)
+            owner._save(second)
+        captured = [second, first]
+        changed = [dict(job, revision=job['revision'] + 1, status='rejected',
+                        error='Controlled later transaction') for job in captured]
+        rows = [(json.dumps(job), job['id']) for job in changed]
+        shared_lock = owner.lock
+        class ObservedLock:
+            held = False
+            def __enter__(self):
+                shared_lock.acquire()
+                self.held = True
+            def __exit__(self, *args):
+                self.held = False
+                shared_lock.release()
+        observed = ObservedLock()
+        owner.lock = observed
+        decode = json.loads
+        errors = []
+        started = False
+        def update():
+            try:
+                with shared_lock, owner.db:
+                    owner.db.executemany('UPDATE caption_proposals SET data=? WHERE id=?', rows)
+            except Exception as error:
+                errors.append(error)
+        def outside_lock(data, *args, **kwargs):
+            nonlocal started
+            self.assertFalse(observed.held, 'Status JSON decoding must occur after releasing the shared lock')
+            if not started:
+                started = True
+                writer = threading.Thread(target=update)
+                writer.start()
+                writer.join(3)
+                self.assertFalse(writer.is_alive(), 'Shared-lock writer must progress during status decoding')
+                self.assertEqual(errors, [])
+            return decode(data, *args, **kwargs)
+        try:
+            with patch('caption_proposals.json.loads', side_effect=outside_lock):
+                result = owner.snapshot()
+        finally:
+            owner.lock = shared_lock
+        summary = lambda job: {key: value for key, value in job.items()
+                               if key not in ('input_image_base64', 'raw_response_base64')}
+        self.assertEqual(result['jobs'], [summary(job) for job in captured])
+        self.assertEqual(owner.snapshot()['jobs'], [summary(job) for job in changed])
+        for job in changed:
+            full = owner.get(job['id'])
+            self.assertEqual(full, job)
+            self.assertEqual(full['input_image_base64'], first['input_image_base64'])
+            self.assertEqual(full['raw_response_base64'], first['raw_response_base64'])
 
     def test_failures_preserve_targets_and_do_not_fallback(self):
         target=self.data.workbench.get(self.row['id']);history=self.data.db.execute('SELECT COUNT(*) FROM workbench_history').fetchone()[0]
@@ -206,7 +329,7 @@ class CaptionProposalTests(unittest.TestCase):
             archive.extractall(folder);manifest=json.loads(archive.read('manifest.json'))
         frozen=next(r for r in manifest['records'] if r['id']==applied['id'])
         self.assertEqual(frozen['target_proposal']['job_id'],job['id'])
-        result=subprocess.run(['python3',str(Path(__file__).parent/'fixtures/diffusion_check_image_data.py'),str(folder)],capture_output=True,text=True)
+        result=subprocess.run([sys.executable,str(Path(__file__).parent/'fixtures/diffusion_check_image_data.py'),str(folder)],capture_output=True,text=True)
         self.assertEqual(result.returncode,0,result.stderr);self.assertIn('PASS: 3 records',result.stdout)
         edited=self.data.workbench.save(rows[0]['id'],dict(rows[0],annotation={'caption':'Changed by a person'},review='draft'))
         self.assertNotIn('target_proposal',edited)

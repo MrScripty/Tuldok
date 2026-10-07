@@ -128,12 +128,11 @@ class CaptionProposals:
 
     def snapshot(self):
         with self.lock:
-            jobs = [json.loads(row[0]) for row in self.db.execute('SELECT data FROM caption_proposals ORDER BY rowid DESC LIMIT 50')]
-        # Exact bytes are retained on job GET, never sent with every status poll.
-        for job in jobs:
-            job.pop('input_image_base64', None)
-            job.pop('raw_response_base64', None)
-        return {'jobs': jobs}
+            # Project before crossing into Python; retain exact evidence on job GET.
+            rows = self.db.execute("SELECT json_remove(data, '$.input_image_base64', '$.raw_response_base64') "
+                                   'FROM caption_proposals ORDER BY rowid DESC LIMIT 50').fetchall()
+        # Capture every row under the shared lock, then decode only those summaries.
+        return {'jobs': [json.loads(row[0]) for row in rows]}
 
     def _source(self, body, *, capture_image=False):
         record_id = body['source_id']
