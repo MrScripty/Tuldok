@@ -1,6 +1,7 @@
 """Bounded immutable asset storage; Dataset transaction owns record publication."""
 import hashlib
 import json
+import re
 import uuid
 
 from workbench import WorkbenchError, encode, strings, text_value, timestamp
@@ -21,10 +22,27 @@ def migrate_records(db):
     constraints = ("CHECK(kind IN ('image','text'))", "CHECK(kind IN ('image','text','sequence'))",
                    "CHECK(kind IN ('image','text','sequence','mesh'))")
     found = [value for value in constraints if value in sql]
-    expected = ['id', 'kind', 'name', 'text', 'original_text', 'content_hash', 'pixel_hash', 'groups_json',
-                'parents_json', 'provenance_json', 'task', 'annotation_json', 'review', 'revision', 'created_at', 'updated_at']
-    if len(found) != 1 or [row[1] for row in db.execute('PRAGMA table_info(workbench_records)')] != expected:
+    columns = [('id', 'TEXT', 0, None, 1), ('kind', 'TEXT', 1, None, 0),
+        ('name', 'TEXT', 0, None, 0), ('text', 'TEXT', 0, None, 0), ('original_text', 'TEXT', 0, None, 0),
+        ('content_hash', 'TEXT', 1, None, 0), ('pixel_hash', 'TEXT', 0, None, 0),
+        ('groups_json', 'TEXT', 1, None, 0), ('parents_json', 'TEXT', 1, None, 0),
+        ('provenance_json', 'TEXT', 1, None, 0), ('task', 'TEXT', 1, None, 0),
+        ('annotation_json', 'TEXT', 0, None, 0), ('review', 'TEXT', 1, None, 0),
+        ('revision', 'INTEGER', 1, None, 0), ('created_at', 'TEXT', 1, None, 0), ('updated_at', 'TEXT', 1, None, 0)]
+    actual = [tuple(row[1:]) for row in db.execute('PRAGMA table_info(workbench_records)')]
+    if len(found) != 1 or actual != columns:
         raise WorkbenchError('Unsupported Workbench schema or columns for immutable asset migration.')
+    definitions = []
+    for name, dtype, required, default, primary in columns:
+        definition = name + ' ' + dtype + (' PRIMARY KEY' if primary else '') + (' NOT NULL' if required else '')
+        if name == 'kind':
+            definition += ' ' + found[0]
+        definitions.append(definition)
+    expected = 'CREATE TABLE workbench_records (' + ','.join(definitions) + ')'
+    # SQLite quotes the table after ALTER RENAME. These are the only known source forms.
+    normalized = re.sub(r'\s+', '', sql.replace('"workbench_records"', 'workbench_records', 1))
+    if normalized != re.sub(r'\s+', '', expected):
+        raise WorkbenchError('Unsupported Workbench table constraints for immutable asset migration.')
     if db.execute("SELECT 1 FROM sqlite_master WHERE type='trigger' AND tbl_name='workbench_records'").fetchone():
         raise WorkbenchError('Unsupported Workbench triggers for immutable asset migration.')
     if found[0] == constraints[-1]:
@@ -53,9 +71,19 @@ class ImmutableAssets:
         self.workbench, self.kind, self.task = workbench, kind, task
         self.maximum, self.default_name = maximum, default_name
         self.table = 'workbench_' + kind + '_assets'
-        workbench.db.execute(f'''CREATE TABLE IF NOT EXISTS {self.table} (
+        statement = f'''CREATE TABLE {self.table} (
             id TEXT PRIMARY KEY, bundle BLOB NOT NULL, metadata_json TEXT NOT NULL,
-            bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))''')
+            bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))'''
+        workbench.db.execute(statement.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS', 1))
+        sql = workbench.db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (self.table,)).fetchone()[0]
+        columns = [tuple(row[1:]) for row in workbench.db.execute(f'PRAGMA table_info({self.table})')]
+        expected = [('id', 'TEXT', 0, None, 1), ('bundle', 'BLOB', 1, None, 0),
+                    ('metadata_json', 'TEXT', 1, None, 0), ('bundle_bytes', 'INTEGER', 1, None, 0)]
+        normalized = re.sub(r'\s+', '', sql.replace('"' + self.table + '"', self.table, 1))
+        if columns != expected or normalized != re.sub(r'\s+', '', statement):
+            raise WorkbenchError(f'Unsupported {self.kind} asset table schema.')
+        if workbench.db.execute("SELECT 1 FROM sqlite_master WHERE type='trigger' AND tbl_name=?", (self.table,)).fetchone():
+            raise WorkbenchError(f'Unsupported {self.kind} asset table triggers.')
 
     def admit(self, prepared, body, origin):
         w = self.workbench

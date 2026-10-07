@@ -164,7 +164,7 @@ class Meshes(unittest.TestCase):
                 self.assertEqual(self.state(), before)
         raw, sidecar = fixture()
         for malformed, diagnostic in [(sidecar.replace(b'"format":',b'"format":"tuldok_mesh_v1","format":',1),'duplicate'),
-            (sidecar.replace(b'"geometry_bytes":',b'"geometry_bytes":NaN,"x":',1),'nonfinite'),(b'\xff','UTF-8'),(b'['*1500,'UTF-8')]:
+            (sidecar.replace(b'"geometry_bytes":',b'"geometry_bytes":NaN,"x":',1),'nonfinite'),(b'\xff','UTF-8'),(b'['*1500,'UTF-8'),(b'{"unexpected":1e-99999999999999999999999999999}', 'malformed UTF-8 JSON')]:
             with self.assertRaisesRegex(WorkbenchError, diagnostic): meshes.prepare(raw, malformed)
         with self.assertRaisesRegex(WorkbenchError, 'SHA256 mismatch'): meshes.prepare(raw.replace(b'0 0 0',b'bad!!'),sidecar)
         with self.assertRaisesRegex(WorkbenchError, 'PLY byte cap'): meshes.prepare(b'x'*(meshes.PLY_LIMIT+1),sidecar)
@@ -271,6 +271,10 @@ class Meshes(unittest.TestCase):
         request=urllib.request.Request(base+'mesh-import',b'{"files":{},"files":{}}',{'Content-Type':'application/json'})
         with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
         self.assertEqual(error.exception.code,400);self.assertIn('duplicate',error.exception.read().decode())
+        before=self.state()
+        request=urllib.request.Request(base+'mesh-import',b'{"unexpected":1e-99999999999999999999999999999}',{'Content-Type':'application/json'})
+        with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
+        self.assertEqual(error.exception.code,400);self.assertEqual(json.loads(error.exception.read())['code'],'invalid');self.assertEqual(self.state(),before)
         request=urllib.request.Request(base+'mesh-import',b'{}',{'Content-Type':'application/json','Content-Length':str(meshes.MAX_REQUEST+1)})
         with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
         self.assertEqual(error.exception.code,400);self.assertEqual(self.w.query({})['total'],1)
@@ -299,6 +303,23 @@ class MeshMigration(unittest.TestCase):
                 db.set_authorizer(None);self.assertEqual(db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),schema)
                 migrate_records(db);migrate_records(db);self.assertEqual(db.execute('SELECT * FROM workbench_records').fetchall(),before)
                 self.assertTrue(db.execute("SELECT 1 FROM sqlite_master WHERE name='custom_name'").fetchone())
+        for target in (False,True):
+            for change in (('revision INTEGER NOT NULL','revision TEXT NOT NULL'),('name TEXT','name TEXT NOT NULL'),('name TEXT','name TEXT DEFAULT \'surprise\''),('name TEXT','name TEXT UNIQUE'),('revision INTEGER NOT NULL','revision INTEGER NOT NULL CHECK(revision > 0)')):
+                with self.subTest(target=target,change=change):
+                    changed=sqlite3.connect(':memory:');self.addCleanup(changed.close);test_sequences.SchemaMigration().legacy(changed)
+                    if target:migrate_records(changed)
+                    sql=changed.execute("SELECT sql FROM sqlite_master WHERE name='workbench_records'").fetchone()[0]
+                    changed.execute('DROP TABLE workbench_records');changed.execute(sql.replace(*change));changed.commit()
+                    before=changed.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
+                    with self.assertRaisesRegex(WorkbenchError,'Unsupported Workbench'):migrate_records(changed)
+                    self.assertEqual(changed.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),before)
+        for table in ('workbench_mesh_assets','workbench_sequence_assets'):
+            db=sqlite3.connect(':memory:');self.addCleanup(db.close);test_sequences.SchemaMigration().legacy(db)
+            db.execute('CREATE TABLE '+table+' (id TEXT PRIMARY KEY,bundle BLOB)');db.commit()
+            before=db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
+            with self.assertRaisesRegex(WorkbenchError,'asset table schema'):
+                Workbench(SimpleNamespace(db=db,lock=threading.RLock()))
+            self.assertEqual(db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),before)
         # Existing target schema still verifies columns and migration-time triggers.
         db=sqlite3.connect(':memory:');self.addCleanup(db.close);test_sequences.SchemaMigration().legacy(db);migrate_records(db)
         db.execute('ALTER TABLE workbench_records ADD COLUMN surprise TEXT')

@@ -47,7 +47,7 @@ def parse_json(raw):
         return result
     try:
         return json.loads(raw.decode('utf-8'), object_pairs_hook=pairs, parse_constant=constant, parse_float=number)
-    except (UnicodeError, ValueError, RecursionError) as error:
+    except (UnicodeError, ValueError, RecursionError, InvalidOperation) as error:
         if isinstance(error, WorkbenchError):
             raise
         invalid('malformed UTF-8 JSON.')
