@@ -1,0 +1,35 @@
+{
+  "source_head": "78b5b2f22bcdc1b5c36481b29f4a60d8a017fb42",
+  "source_tree": "24203ce68c0868905769503d123dd729cf5c2f65",
+  "source_state": "workingtree",
+  "browser_script_sha256": "bc46635d0c818907dcc802cf51b0c3e66a6e23c61e740652f8bef9d9b2a7ce79",
+  "regression_script_sha256": "f492f408b4c7e94754d7bffd69dd8c22811478fefe56cae400a9ff6311db3e84",
+  "browser_runs": 2,
+  "tracked_evidence_files": 420,
+  "tracked_evidence_before_sha256": "d01c3a2f9371fc409418b48ba90d9f5577f2f5bed907b7c1f46f65cb5b4f5722",
+  "tracked_evidence_unchanged_after_each_run": true,
+  "earlier_captures_retained": true,
+  "captures": [
+    {
+      "file": "test-results/rights-note/run-fIfKOn/rights-desktop.png",
+      "sha256": "820b6f0fa1352615a82e1a3e141a225f02adad37ac26b419f48bd5da5d04ae20",
+      "bytes": 136998
+    },
+    {
+      "file": "test-results/rights-note/run-fIfKOn/rights-narrow.png",
+      "sha256": "637fb091467c3a6083219918683640c18a1340d53f1e27feecc6e34ca1683382",
+      "bytes": 59191
+    },
+    {
+      "file": "test-results/rights-note/run-aZk9RK/rights-desktop.png",
+      "sha256": "820b6f0fa1352615a82e1a3e141a225f02adad37ac26b419f48bd5da5d04ae20",
+      "bytes": 136998
+    },
+    {
+      "file": "test-results/rights-note/run-aZk9RK/rights-narrow.png",
+      "sha256": "637fb091467c3a6083219918683640c18a1340d53f1e27feecc6e34ca1683382",
+      "bytes": 59191
+    }
+  ],
+  "result": "PASS"
+}
