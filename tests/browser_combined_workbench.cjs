@@ -40,8 +40,10 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const evidence={source_head:sourceIdentity[0],source_tree:sourceIdentity[1],source_state:sourceDiff?'working_tree':'committed',source_diff_sha256:crypto.createHash('sha256').update(sourceDiff).digest('hex'),steps:[],screenshots:[]};
   async function capture(name,selector){for(const narrow of [false,true]){
     await send('Emulation.setDeviceMetricsOverride',{width:narrow?390:1400,height:narrow?844:1000,deviceScaleFactor:1,mobile:false});
+    await pause(100);
     await evaluate('document.querySelector('+JSON.stringify(selector)+').scrollIntoView({block:"start"})');await pause(100);
     assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Combined layout must fit');
+    assert.ok(await evaluate('(()=>{const r=document.querySelector('+JSON.stringify(selector)+').getBoundingClientRect();return r.top>=0&&r.top<innerHeight&&r.bottom>0})()'),'Captured panel must be in the viewport');
     const file='combined-'+name+(narrow?'-narrow':'-desktop')+'.png',bytes=Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64');
     fs.writeFileSync(path.join(report,file),bytes);evidence.screenshots.push({file,sha256:crypto.createHash('sha256').update(bytes).digest('hex')});
   }}
