@@ -62,7 +62,7 @@ def snapshot(row):
         invalid('Invalid protected source snapshot fields.')
     if not isinstance(row['id'], str) or not IDENTIFIER.fullmatch(row['id']):
         invalid('Invalid origin source ID.')
-    if row['kind'] not in ('image', 'text', 'sequence') or type(row['revision']) is not int or row['revision'] < 1:
+    if row['kind'] not in ('image', 'text', 'sequence', 'mesh') or type(row['revision']) is not int or row['revision'] < 1:
         invalid('Invalid origin kind or revision.')
     if type(row['source_available']) is not bool or row['source_lineage_known'] is not True:
         invalid('Protected source lineage must be known, including deleted members.')
@@ -89,11 +89,11 @@ def snapshot(row):
         invalid('Invalid retained book/session links.')
     if row['kind'] == 'text' and (row['book_id'] is not None or row['session_id'] is not None or not is_hash(row['content_hash']) or not is_hash(row['source_sha256']) or row['pixel_hash'] is not None):
         invalid('Invalid protected text source snapshot.')
-    if row['kind'] == 'sequence' and (row['book_id'] is not None or row['session_id'] is not None
+    if row['kind'] in ('sequence', 'mesh') and (row['book_id'] is not None or row['session_id'] is not None
             or not is_hash(row['content_hash']) or row['source_sha256'] != row['content_hash']
             or row['pixel_hash'] is not None or type(row['source_revision']) is not int
             or row['source_revision'] != 1 or row['source_split'] != 'unassigned'):
-        invalid('Invalid protected sequence source snapshot.')
+        invalid('Invalid protected ' + row['kind'] + ' source snapshot.')
 
 
 def origin_groups(family):

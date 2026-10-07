@@ -29,6 +29,8 @@ jobs:
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
       - run: node --check static/text-classification-proposals.js
+      - run: node --check static/meshes.js
+      - run: node tests/test_meshes_controller.cjs
       - run: node --check static/sequences.js
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
@@ -117,6 +119,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_classification_preferences_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_meshes.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences.cjs

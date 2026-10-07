@@ -1,0 +1,18 @@
+{
+  "format": "tuldok_mesh_v1",
+  "geometry_file": "mesh.ply",
+  "geometry_bytes": 265,
+  "geometry_sha256": "a7df6c8e0488ee2c689a54b5ebcc6ac73771ab4837cf0777c2b34bd5e67f4bd0",
+  "units": "m",
+  "coordinate_system": {
+    "frame": "fixture-world",
+    "handedness": "right",
+    "up_axis": "z"
+  },
+  "provenance": {
+    "source": "Tuldok authored analytic test fixture tetrahedron.ply",
+    "revision": "1",
+    "license": "Project-authored test data; same terms as Tuldok",
+    "description": "Unit-axis tetrahedron"
+  }
+}

@@ -1,0 +1,19 @@
+ply
+format ascii 1.0
+comment Tuldok authored analytic open square with provided normals
+element vertex 4
+property double x
+property double y
+property double z
+property float nx
+property float ny
+property float nz
+element face 2
+property list uchar int vertex_indices
+end_header
+0 0 0 0 0 2
+2 0 0 0 0 2
+2 2 0 0 0 2
+0 2 0 0 0 2
+3 0 1 2
+3 0 2 3

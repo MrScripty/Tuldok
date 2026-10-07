@@ -524,3 +524,5 @@ training-quality claim is involved. Reuse the isolated official dependencies
 in `tests/instruction-consumer-requirements.txt`. Run `node
 tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
 that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).
+
+Static mesh import: [bounded ASCII PLY/sidecar contract](docs/contracts/static-mesh.md), with native units/frame/provenance inspection and human review before export.
