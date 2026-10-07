@@ -285,6 +285,10 @@ This first version supports still capture and image import, including frames ext
 
 The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 
+Generated QA outputs use fresh ignored `build/qa/` directories. Ordinary screenshots
+use JPEG quality 85; authored fixture images remain lossless. See [QA commands,
+retained inputs and historical evidence retrieval](docs/qa/README.md).
+
 ## Repository
 
 The development workbench can import a complete bounded Rheon simulation sequence
@@ -369,7 +373,7 @@ A lost response pauses for a read-only saved-result check without replay. Batch
 progress is kept only in the current page; reload is not batch recovery.
 
 Authored examples and an existing-owner design rehearsal are under
-`docs/plans/annotated-caption-import/reports/fixtures/`. Native-import HTTP and
+`tests/fixtures/native-caption-release/`. Native-import HTTP and
 Chromium tests independently check admission, fresh review and actual downloaded
 release consumption by the unchanged pinned chapter-26 validator.
 

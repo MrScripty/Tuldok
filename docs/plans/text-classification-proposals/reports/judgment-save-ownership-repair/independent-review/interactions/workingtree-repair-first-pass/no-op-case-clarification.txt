@@ -1,1 +1,0 @@
-First five-case script marked a stale rejudgment response changed:false even though body differed from stored binding/review. Busy/list guard still passed, but authentic no-op coverage requires current clean nonstale judgment with unchanged body. Version2 exercises that actual no-op state. Original first-pass script/log/JSON retained unchanged.

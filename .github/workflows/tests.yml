@@ -34,6 +34,7 @@ jobs:
       - run: node --check static/sequences.js
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
+      - run: node tests/test_qa_artifacts.cjs
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
@@ -133,32 +134,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: workbench-browser-screenshots
-          path: |
-            build/qa/static-mesh/**
-            docs/plans/dataset-workflows/reports/workbench-*.png
-            docs/plans/image-caption-exports/reports/captions-*.png
-            docs/plans/selected-release-preview/reports/preview-*.png
-            docs/plans/saved-dataset-selections/reports/saved-*.png
-            docs/plans/saved-selection-intent/reports/intent-*.png
-            docs/plans/explicit-metadata-filters/reports/filters-*.png
-            docs/plans/bulk-real-import/reports/bulk-*.png
-            docs/plans/dataset-integration/reports/integration-*.png
-            docs/plans/curation-diagnostics/reports/curation-*.png
-            docs/plans/annotated-caption-import/reports/caption-import-*.png
-            docs/plans/dataset-caption-integration/reports/caption-combined-*.png
-            docs/plans/dataset-caption-integration/reports/caption-combined-session.json
-            docs/plans/rights-note-correction/reports/rights-*.png
-            test-results/rights-note/**
-            test-results/caption-proposals/**
-            test-results/text-classification-proposals/**
-            test-results/classification-preferences/**
-            docs/plans/preference-pairs/reports/**
-            docs/plans/instruction-responses/reports/instruction-*.png
-            docs/plans/instruction-responses/reports/instruction-session.json
-            docs/plans/instruction-responses/reports/instruction-downloaded.zip
-            docs/plans/native-text-classification-import/reports/native-text-*.png
-            docs/plans/combined-workbench-local/reports/**
-            docs/plans/workbench-parent-owner-fix/reports/**
-            docs/plans/workbench-projection-warnings-fix/reports/**
+          name: workbench-qa-artifacts
+          path: build/qa/**
           if-no-files-found: ignore

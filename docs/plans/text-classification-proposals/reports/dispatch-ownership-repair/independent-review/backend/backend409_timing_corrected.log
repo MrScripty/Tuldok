@@ -1,7 +1,0 @@
-{
-  "model_chat_requests": 1,
-  "source_head_start": "b1d0a453ea24653fa40f08c08f41e56375663521",
-  "source_head_end": "b1d0a453ea24653fa40f08c08f41e56375663521",
-  "backend_sha256": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
-  "conclusion": "A pre-admission409 followed by exactGET404 does not prove that a concurrently or subsequently dispatched same-ID request cannot be admitted; matching POST202/GET200 proves one durable idempotent admission and late replay cannot repeat inference."
-}

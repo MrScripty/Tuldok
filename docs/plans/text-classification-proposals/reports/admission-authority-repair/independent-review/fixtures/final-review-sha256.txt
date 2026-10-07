@@ -1,3 +1,0 @@
-78e754314b650a4521980575205e1c1a21371c84c2f778639372ef0ca2c94fb6  docs/plans/text-classification-proposals/reports/admission-authority-repair/independent-review/fixtures/final-review.md
-78bca6b309b704c41e4c297cdfdcdaec32a15f8f9c41abe53bc64283d4dc7b38  docs/plans/text-classification-proposals/reports/admission-authority-repair/independent-review/fixtures/final-artifact-audit.json
-443262ff846db4845edfdc9d72cd8c9e658ea5bb8b62515ab7f5e771886f7f45  docs/plans/text-classification-proposals/reports/admission-authority-repair/independent-review/fixtures/final-retirement-and-source-audit.json

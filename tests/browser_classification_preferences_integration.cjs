@@ -1,5 +1,6 @@
 // Combined native ownership checks; bounded synthetic HTTP, no real inference.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn,execFileSync}=require('node:child_process');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -10,7 +11,7 @@ async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 (async()=>{
-  const outputRoot=process.env.TULDOK_CLASSIFICATION_PREFERENCES_REPORT_ROOT||path.join(root,'test-results/classification-preferences');fs.mkdirSync(outputRoot,{recursive:true});report=fs.mkdtempSync(path.join(outputRoot,'run-'));console.log('Classification/preferences integration evidence: '+report);
+  report=qaDirectory(root,'classification-preferences',process.env.TULDOK_CLASSIFICATION_PREFERENCES_REPORT_ROOT);console.log('Classification/preferences integration evidence: '+report);
   const classScriptOverride=process.env.TULDOK_CLASSIFICATION_SCRIPT_OVERRIDE?fs.readFileSync(process.env.TULDOK_CLASSIFICATION_SCRIPT_OVERRIDE):null;
   const evidence={source_head:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),synthetic_only:true,negative_apply_hook:process.env.CLASSIFICATION_PREFERENCE_DISABLE_APPLY_HOOK==='1',classification_script_override_sha256:classScriptOverride?crypto.createHash('sha256').update(classScriptOverride).digest('hex'):null,steps:[]};
   const snapshot=()=>Object.fromEntries(['static/workbench.js','static/preferences.js','static/instruction-responses.js','static/text-classification-proposals.js','static/workbench.html','tests/browser_classification_preferences_integration.cjs','tests/browser_text_classification_proposals_server.py'].map(file=>[file,hash(path.join(root,file))]));evidence.source_sha256=snapshot();
@@ -104,7 +105,7 @@ const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).diges
   for(const viewport of [{width:1400,height:807},{width:390,height:844}]){
     await send('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1,mobile:false});await run('document.getElementById("text-classification-proposal-jobs").scrollIntoView({block:"start"})');assert.ok(await run('document.documentElement.scrollWidth<=innerWidth'),'Combined classification/preference panels must not overflow');
     assert.ok(await run('["text-classification-proposal-jobs","preferences-panel"].every(id=>{const box=document.getElementById(id).getBoundingClientRect();return box.top<innerHeight&&box.bottom>0;})'),'Both classification and preference panels must appear in the screenshot');
-    const filename=viewport.width===1400?'combined-desktop.png':'combined-narrow.png',image=Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64');fs.writeFileSync(path.join(report,filename),image);evidence.screenshots.push({filename,viewport,sha256:crypto.createHash('sha256').update(image).digest('hex')});
+    const filename=viewport.width===1400?'combined-desktop.jpg':'combined-narrow.jpg',image=Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64');fs.writeFileSync(path.join(report,filename),image);evidence.screenshots.push({filename,viewport,sha256:crypto.createHash('sha256').update(image).digest('hex')});
   }
   assert.deepEqual(errors,[]);assert.deepEqual(snapshot(),evidence.source_sha256,'Combined fixture source must remain stable during native qualification');evidence.result='PASS';fs.writeFileSync(path.join(report,'session.json'),JSON.stringify(evidence,null,2));console.log('Classification/preferences native combined proof, ownership, dirty gates and recovery passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Integration diagnostics:',JSON.stringify(await inspect()));}catch{}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

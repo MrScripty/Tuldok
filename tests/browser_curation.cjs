@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -113,16 +114,16 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const release=await request('releases',{...releaseBody,preview_token:preview.preview_token});
   const zip=await fetch(base+release.url);assert.equal(zip.status,200);assert.ok((await zip.arrayBuffer()).byteLength>500);
   assert.deepEqual(await evaluate('releaseBody().items'),pairs);
-  const reports=path.join(root,'docs/plans/curation-diagnostics/reports');fs.mkdirSync(reports,{recursive:true});
+  const reports=qaDirectory(root,'curation-diagnostics');fs.mkdirSync(reports,{recursive:true});
   await evaluate('document.getElementById("curation-panel").scrollIntoView()');
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'curation-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'curation-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-  await evaluate('document.getElementById("curation-panel").scrollIntoView()');const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'curation-narrow.png'),Buffer.from(narrow.data,'base64'));
+  await evaluate('document.getElementById("curation-panel").scrollIntoView()');const narrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'curation-narrow.jpg'),Buffer.from(narrow.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'390px diagnostic controls and IDs do not overflow');
   await evaluate('document.getElementById("curation-results").scrollIntoView()');
-  const membersNarrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'curation-members-narrow.png'),Buffer.from(membersNarrow.data,'base64'));
+  const membersNarrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'curation-members-narrow.jpg'),Buffer.from(membersNarrow.data,'base64'));
   await send('Emulation.clearDeviceMetricsOverride');await evaluate('document.getElementById("curation-results").scrollIntoView()');
-  const membersDesktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'curation-members-desktop.png'),Buffer.from(membersDesktop.data,'base64'));
+  const membersDesktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'curation-members-desktop.jpg'),Buffer.from(membersDesktop.data,'base64'));
   assert.deepEqual(errors,[]);
   console.log('Actual Chromium: full filtered contributors/paging, exact scoped duplicates, deleted sources, unknown notes, unchanged SQL/fixed pairs, dirty inspection, stale/missing IDs, delayed/repeated controls, freshness409, release ZIP and desktop/narrow screenshots passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

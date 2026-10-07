@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('nod
 const {spawn,spawnSync}=require('node:child_process');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
-const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'static-mesh'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-mesh-')),children=[];
+const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..')),report=qaDirectory(root,'static-mesh'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-mesh-')),children=[];
 const errors=[],tracker=pageLoadTracker(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws;
 async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}

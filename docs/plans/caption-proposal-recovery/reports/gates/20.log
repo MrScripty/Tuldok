@@ -1,1 +1,0 @@
-Browser startup policy: 20571 ms late readiness within 60s, held-event-loop deadline, budget exhaustion, dead process, spawn failure and listener cleanup passed. Real browser health requires the actual suites.

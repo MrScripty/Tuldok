@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -9,7 +10,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 (async()=>{
-  fs.mkdirSync(path.join(root,'docs/plans/image-caption-exports/reports'),{recursive:true});
+  fs.mkdirSync(qaDirectory(root,'image-caption-exports'),{recursive:true});
   const server=launch('python3',['-u','tests/browser_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
@@ -88,11 +89,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const {execFileSync}=require('node:child_process');
   execFileSync('python3',['-c',`import json,zipfile;z=zipfile.ZipFile(${JSON.stringify(zipPath)});m=json.loads(z.read('manifest.json'));assert m['format']=='image_caption_v1';assert len(m['records'])==4;assert set(m['split_mapping'].values())=={'train','val','test'};[(lambda rows: (len(rows)>0 or (_ for _ in ()).throw(AssertionError('Empty split'))))([json.loads(x) for x in z.read(s+'/metadata.jsonl').splitlines()]) for s in ('train','val','test')]`]);
   assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('small-image warnings'));
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/image-caption-exports/reports/captions-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'image-caption-exports'),'captions-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/image-caption-exports/reports/captions-narrow.png'),Buffer.from(shot.data,'base64'));
+  const shot=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'image-caption-exports'),'captions-narrow.jpg'),Buffer.from(shot.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Narrow caption layout must not overflow');
   assert.deepEqual(errors,[]);console.log('Caption Chromium edit/draft/review/reopen/filter/export, keyboard review reset, discard, repeated-submit and narrow layout passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

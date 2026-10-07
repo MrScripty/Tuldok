@@ -1,1 +1,0 @@
-{"result":"FAIL","trace":[{"phase":"save_pending","parent":2,"current":2,"dirty":true},{"phase":"save_ack_after_reject","current":2,"dirty":true,"caption":"Independent saved caption"}],"error":"Successful annotation save ACK must adopt committed revision after Reject\n\n2 !== 3\n"}

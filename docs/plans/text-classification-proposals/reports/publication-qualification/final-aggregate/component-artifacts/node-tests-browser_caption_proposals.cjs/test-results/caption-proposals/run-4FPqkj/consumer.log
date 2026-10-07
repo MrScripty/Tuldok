@@ -1,8 +1,0 @@
-WARNING small image /tmp/tuldok-caption-proposals-browser-jYplaJ/expanded/train/ea39c30b81794ad98dd2ebe432270aee.png: (200, 100)
-train: 1 readable RGB-convertible images, captions present
-WARNING small image /tmp/tuldok-caption-proposals-browser-jYplaJ/expanded/val/b8987c506d894ae8aecae51435f21fdf.png: (200, 100)
-val: 1 readable RGB-convertible images, captions present
-WARNING small image /tmp/tuldok-caption-proposals-browser-jYplaJ/expanded/test/21f0c6c28c224b509814df114d9cd666.png: (200, 100)
-test: 1 readable RGB-convertible images, captions present
-PASS: 3 records; no exact pixel duplicates or cross-split group leakage
-Still inspect crops, near-duplicates, captions, rights and sensitive metadata manually

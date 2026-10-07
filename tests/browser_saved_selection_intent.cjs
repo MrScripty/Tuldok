@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -92,8 +93,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true,'The actual selected preview remains blocked');
     const reopened=await request('selections/'+saved.id);assert.deepEqual(reopened.selection.items,saved.items);
     await evaluate('document.getElementById("release-preview-status").scrollIntoView()');
-    if(!process.env.TULDOK_SOURCE_ROOT){const reports=path.join(root,'docs/plans/saved-selection-intent/reports');fs.mkdirSync(reports,{recursive:true});
-      const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'intent-blocked.png'),Buffer.from(shot.data,'base64'));}
+    if(!process.env.TULDOK_SOURCE_ROOT){const reports=qaDirectory(root,'saved-selection-intent');fs.mkdirSync(reports,{recursive:true});
+      const shot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'intent-blocked.jpg'),Buffer.from(shot.data,'base64'));}
     // Adoption is still possible through an explicit current-record selection action.
     await fill('query','Fixed member');await evaluate('document.getElementById("filters").requestSubmit()');
     await until(()=>evaluate('page.total===1 && !document.getElementById("filters").dataset.busy'));

@@ -1,8 +1,0 @@
-test_status_summary_parity_order_bound_and_retained_evidence (test_caption_proposals.CaptionProposalTests.test_status_summary_parity_order_bound_and_retained_evidence) ... ok
-test_poll_decodes_only_projected_rows_with_large_retained_payloads (test_caption_proposals.CaptionProposalTests.test_poll_decodes_only_projected_rows_with_large_retained_payloads) ... ok
-test_poll_capture_is_atomic_and_decoding_releases_shared_lock (test_caption_proposals.CaptionProposalTests.test_poll_capture_is_atomic_and_decoding_releases_shared_lock) ... ok
-
-----------------------------------------------------------------------
-Ran 3 tests in 2.538s
-
-OK

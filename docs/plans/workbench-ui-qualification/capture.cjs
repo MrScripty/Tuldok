@@ -2,10 +2,14 @@
 // QA-only replay against unmodified production sources and isolated local databases.
 const assert=require('node:assert/strict'), fs=require('node:fs'), path=require('node:path'), os=require('node:os');
 const {spawn,spawnSync}=require('node:child_process'), crypto=require('node:crypto');
-const report=__dirname, root=path.resolve(report,'../../..'), legacy=process.env.TULDOK_LEGACY_ROOT||'/workspace/Tuldok';
+const {qaDirectory,screenshotOptions}=require('../../../tests/qa_artifacts.cjs');
+const root=path.resolve(__dirname,'../../..'), report=qaDirectory(root,'workbench-ui'), fixture=path.join(root,'tests/fixtures/workbench-ui'), legacy=process.env.TULDOK_LEGACY_ROOT;
+assert.ok(legacy,'Set TULDOK_LEGACY_ROOT to a checkout of the frozen main commit.');
+fs.mkdirSync(path.join(report,'fixtures'),{recursive:true});
+fs.mkdirSync(path.join(report,'screenshots'),{recursive:true});
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-ui-walkthrough-')), children=[], errors=[], requests=[];
 const session={candidate:{},legacy:{},fixtures:{},screenshots:[],steps:[],runtime:{temporary:temp}};
-const source='e33144a389e611dfb9e95a83f248e7bf87d7a3aa';
+const source='309a87d753f97b245385f8d6db20353ab536a836';
 const pause=ms=>new Promise(r=>setTimeout(r,ms)), hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 let ws,evaluate,send;
 function git(cwd,arg){const r=spawnSync('git',['rev-parse',arg],{cwd,encoding:'utf8'});assert.equal(r.status,0,r.stderr);return r.stdout.trim();}
@@ -22,7 +26,7 @@ async function shot(name,selector=null,narrow=false){
   assert.ok(layout.scrollWidth<=layout.width,'Horizontal overflow: '+name);
   // Use ordinary viewport captures. Offscreen CDP clips can move form content
   // during capture, so the report retains the actual surrounding page and scroll.
-  const image=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false}),file=name+(narrow?'-narrow':'-desktop')+'.png',output=path.join(report,'screenshots',file);fs.writeFileSync(output,Buffer.from(image.data,'base64'));
+  const image=await send('Page.captureScreenshot',screenshotOptions),file=name+(narrow?'-narrow':'-desktop')+'.jpg',output=path.join(report,'screenshots',file);fs.writeFileSync(output,Buffer.from(image.data,'base64'));
   session.screenshots.push({file,selector,viewport:{width:layout.width,height:layout.height},layout,method:'native viewport capture',sha256:hash(fs.readFileSync(output))});
 }
 async function both(name,selector=null){await shot(name,selector);await shot(name,selector,true);await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});}
@@ -33,10 +37,12 @@ async function inputFile(id,files){const {root:dom}=await send('DOM.getDocument'
 async function record(id){await evaluate('openRecord('+JSON.stringify(id)+')');}
 async function preview(){await click('preview-release');await until(()=>evaluate('!releaseBusy && !!releasePreview'),'preview');return evaluate('releasePreview');}
 (async()=>{
-  const audit=spawnSync('git',['diff','--quiet',source,'--','.',':(exclude)docs/plans/workbench-ui-qualification'],{cwd:root,encoding:'utf8'});assert.equal(audit.status,0,'Production sources must match reviewed candidate');
+  const production=fs.readdirSync(root).filter(name=>name.endsWith('.py')).concat(['static','requirements.txt']);
+  const audit=spawnSync('git',['diff','--quiet',source,'--',...production],{cwd:root,encoding:'utf8'});assert.equal(audit.status,0,'Production sources must match reviewed development candidate');
   session.qa={head:git(root,'HEAD'),root};session.candidate={head:source,tree:git(root,source+'^{tree}'),root};session.legacy={head:git(legacy,'HEAD'),tree:git(legacy,'HEAD^{tree}'),root:legacy};
   assert.equal(session.legacy.head,'2fc4a46f12d73a0fa467d5482f68edb83d6df6af');
-  for(const filename of ['blue-book-qa.png','assets.jsonl']){const b=fs.readFileSync(path.join(report,'fixtures',filename));session.fixtures[filename]={bytes:b.length,sha256:hash(b)};}
+  const legacyAudit=spawnSync('git',['diff','--quiet',session.legacy.head,'--',...production],{cwd:legacy,encoding:'utf8'});assert.equal(legacyAudit.status,0,'Legacy production sources must match frozen main');
+  for(const filename of ['blue-book-qa.png','assets.jsonl']){const b=fs.readFileSync(path.join(fixture,filename));session.fixtures[filename]={bytes:b.length,sha256:hash(b)};}
   const candidate=await app(root,'candidate-data'), frozen=await app(legacy,'legacy-data');session.runtime.candidate=candidate;session.runtime.legacy=frozen;
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,1000','--user-data-dir='+path.join(temp,'browser'),'about:blank'],{stdio:['ignore','ignore','pipe'],env:{...process.env,XDG_CONFIG_HOME:temp,XDG_CACHE_HOME:temp}});
   const active=path.join(temp,'browser','DevToolsActivePort');await until(()=>fs.existsSync(active),'CDP');const port=fs.readFileSync(active,'utf8').split('\n')[0];
@@ -46,7 +52,7 @@ async function preview(){await click('preview-release');await until(()=>evaluate
   evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
   await send('Page.enable');await send('Runtime.enable');await send('Network.enable');session.browser=await send('Browser.getVersion');
   await send('Page.navigate',{url:candidate+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'),'workbench ready');
-  await inputFile('bulk-manifest',[path.join(report,'fixtures/assets.jsonl')]);await inputFile('bulk-images',[path.join(report,'fixtures/blue-book-qa.png')]);await submit('bulk-form');await until(()=>evaluate('document.getElementById("bulk-status").textContent.startsWith("Complete:") && page.total===3'),'bulk complete');
+  await inputFile('bulk-manifest',[path.join(fixture,'assets.jsonl')]);await inputFile('bulk-images',[path.join(fixture,'blue-book-qa.png')]);await submit('bulk-form');await until(()=>evaluate('document.getElementById("bulk-status").textContent.startsWith("Complete:") && page.total===3'),'bulk complete');
   const raw=(await api(candidate,'/api/workbench/records')).items;assert.equal(raw.length,3);assert.ok(raw.every(r=>r.review==='draft'&&r.annotation===null));const image=raw.find(r=>r.kind==='image'),note=raw.find(r=>r.name==='Source note');
   session.steps.push({stage:'raw-import',status:await evaluate('document.getElementById("bulk-status").textContent'),records:raw});console.log('PASS raw import: three drafts, one forged-review row rejected');
   await both('01-import-overview');await both('01-import-panel','#bulk-panel');
@@ -69,7 +75,7 @@ async function preview(){await click('preview-release');await until(()=>evaluate
   const extracted=spawnSync('python3',['-c','import json,zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps(json.loads(z.read("manifest.json"))))',path.join(report,'fixtures/candidate-release.zip')],{encoding:'utf8'});assert.equal(extracted.status,0,extracted.stderr);const manifest=JSON.parse(extracted.stdout);
   assert.deepEqual(manifest.records.map(({id,revision,source_revision})=>({id,revision,source_revision})),current);assert.ok(manifest.records.every(r=>r.review==='human_reviewed'));assert.equal(manifest.records.length,2);
   session.steps.push({stage:'current-explicit-release',pairs:current,preview:eligible,url:link,manifest,zip:{bytes:zip.length,sha256:hash(zip)}});await both('08-frozen-release','#release-form');await both('08-download','#release-result');await both('08-final-overview');console.log('PASS explicit current selection, preview, frozen ZIP and exact manifest pairs');
-  await send('Page.navigate',{url:frozen+'/'});await until(()=>evaluate('document.getElementById("counts")?.textContent.includes("0")'),'legacy ready');await fill('capture-book','local-blue-book');await fill('capture-session','qa-session');await inputFile('import',[path.join(report,'fixtures/blue-book-qa.png')]);await evaluate('document.getElementById("import").dispatchEvent(new Event("change",{bubbles:true}))');
+  await send('Page.navigate',{url:frozen+'/'});await until(()=>evaluate('document.getElementById("counts")?.textContent.includes("0")'),'legacy ready');await fill('capture-book','local-blue-book');await fill('capture-session','qa-session');await inputFile('import',[path.join(fixture,'blue-book-qa.png')]);await evaluate('document.getElementById("import").dispatchEvent(new Event("change",{bubbles:true}))');
   await until(()=>evaluate('document.getElementById("view-title").textContent==="blue-book-qa.png" && document.getElementById("source").complete && !document.getElementById("save").disabled'),'legacy image');
   await both('09-legacy-import');await send('Emulation.setDeviceMetricsOverride',{width:1400,height:1000,deviceScaleFactor:1,mobile:false});await pause(200);
   for(const [i,xy] of [[.25,.2],[.75,.2],[.75,5/6],[.25,5/6]].entries()){

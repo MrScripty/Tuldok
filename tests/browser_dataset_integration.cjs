@@ -1,5 +1,6 @@
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -118,12 +119,12 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.equal(await evaluate('releasePreview.eligible'),true,'Explicit reselection adopts current reviewed revisions');
   assert.notEqual(await evaluate('releasePreview.preview_token'),token);
   await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!releaseBusy && !!document.querySelector("#release-result a")'));const newer=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(newer.status,200);
-  const reports=path.join(root,'docs/plans/dataset-integration/reports');fs.mkdirSync(reports,{recursive:true});
+  const reports=qaDirectory(root,'dataset-integration');fs.mkdirSync(reports,{recursive:true});
   await evaluate('document.getElementById("filters").scrollIntoView()');
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'integration-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'integration-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("filters").scrollIntoView()');
-  const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'integration-narrow.png'),Buffer.from(narrow.data,'base64'));
+  const narrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'integration-narrow.jpg'),Buffer.from(narrow.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'));assert.deepEqual(errors,[]);
   console.log('Combined real JSONL text/image import, draft gate, lossless CRLF filter, explicit review, fixed set, exact preview/export, dynamic rows, late query/import/editor responses, stop and stale-pair blocking/adoption passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

@@ -3,7 +3,9 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
-const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-sequence-browser-')),children=[];
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..')),report=qaDirectory(root,'simulation-sequence');
+const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-sequence-browser-')),children=[];
 const errors=[],tracker=pageLoadTracker(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let ws;
 async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
@@ -74,13 +76,12 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await send('Page.reload');await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   assert.equal((await api('records?kind=sequence')).total,1);
   await evaluate('openRecord('+JSON.stringify(row.id)+')');assert.equal(await evaluate('current.review'),'human_reviewed');
-  const report=path.join(root,'docs/plans/simulation-sequence-import/reports');fs.mkdirSync(report,{recursive:true});
   await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');
-  fs.writeFileSync(path.join(report,'sequence-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  fs.writeFileSync(path.join(report,'sequence-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Sequence metadata fits narrow viewport');
-  fs.writeFileSync(path.join(report,'sequence-narrow.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  fs.writeFileSync(path.join(report,'sequence-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   assert.deepEqual(errors,[]);
   console.log('Sequence Chromium: source-derived exact bundle import/download, bounded malformed controls, duplicate-submit gate, dirty editor/selection preservation, metadata/frame index, human review/history, whole-trajectory release, reload and narrow layout passed.');
 })().catch(error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

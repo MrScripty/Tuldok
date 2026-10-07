@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -86,13 +87,13 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const download=await fetch(await evaluate('document.querySelector("#release-result a").href'));
   assert.equal(download.status,200);assert.ok((await download.arrayBuffer()).byteLength>1000);
   await evaluate('document.getElementById("release-form").scrollIntoView()');
-  fs.mkdirSync(path.join(root,'docs/plans/selected-release-preview/reports'),{recursive:true});
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/selected-release-preview/reports/preview-desktop.png'),Buffer.from(desktop.data,'base64'));
+  fs.mkdirSync(qaDirectory(root,'selected-release-preview'),{recursive:true});
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'selected-release-preview'),'preview-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("release-preview-status").scrollIntoView()');
-  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/selected-release-preview/reports/preview-narrow.png'),Buffer.from(shot.data,'base64'));
+  const shot=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'selected-release-preview'),'preview-narrow.jpg'),Buffer.from(shot.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow preview does not overflow');
   assert.deepEqual(errors,[]);console.log('Exact selection preview, read-only preflight, split/format/stale blockers, changed controls, delayed responses, repeated actions and frozen download passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

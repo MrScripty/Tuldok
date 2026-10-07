@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/scratch/tuldok-classification-dispatch-repair/review-backend/backend409_timing.py", line 33, in <module>
-    owner.closed=False;second=call(payload=body);assert second[0]==200 and second[1]['id']==body['request_id']
-                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

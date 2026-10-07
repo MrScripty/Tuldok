@@ -1,5 +1,6 @@
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -97,14 +98,14 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.equal(await evaluate('window.bulkChecks'),2);assert.equal(await evaluate('window.bulkPosts.length'),beforeLoss+1);
   assert.equal((await api('records?q=not%20scheduled')).total,0);
   assert.equal(await evaluate('current.id'),seed.id);assert.equal(await evaluate('dirty'),true);assert.equal(await evaluate('selected.size'),1);
-  fs.mkdirSync(path.join(root,'docs/plans/bulk-real-import/reports'),{recursive:true});
+  fs.mkdirSync(qaDirectory(root,'bulk-real-import'),{recursive:true});
   await evaluate('document.getElementById("bulk-panel").scrollIntoView()');
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/bulk-real-import/reports/bulk-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'bulk-real-import'),'bulk-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   await evaluate('document.getElementById("bulk-panel").scrollIntoView()');
-  const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/bulk-real-import/reports/bulk-narrow.png'),Buffer.from(narrow.data,'base64'));
+  const narrow=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'bulk-real-import'),'bulk-narrow.jpg'),Buffer.from(narrow.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow bulk panel has no horizontal overflow');
   const previous=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload',{ignoreCache:true});await until(()=>tracker.reloaded(previous));
   await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));

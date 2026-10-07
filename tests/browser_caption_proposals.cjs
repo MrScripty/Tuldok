@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -10,8 +11,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 (async()=>{
-  const outputRoot=path.join(root,'test-results/caption-proposals');fs.mkdirSync(outputRoot,{recursive:true});
-  const report=fs.mkdtempSync(path.join(outputRoot,'run-'));
+  const report=qaDirectory(root,'caption-proposals');
   console.log('Caption proposal evidence: '+report);
   const server=launch('python3',['-u','tests/browser_caption_proposals_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
@@ -186,11 +186,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await send('Page.reload');await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));await open(rows[0].id);await refresh();
   assert.equal((await request('caption-proposals')).jobs.length,count);assert.equal(await evaluate('current.target_proposal.job_id'),job.id);
   await evaluate('document.getElementById("caption-proposal-panel").open=true;document.getElementById("caption-proposal-panel").scrollIntoView();');
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(report,'caption-proposals-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'caption-proposals-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow proposal layout must not overflow');
   await evaluate('document.getElementById("caption-proposal-panel").scrollIntoView();');
-  const narrow=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(report,'caption-proposals-narrow.png'),Buffer.from(narrow.data,'base64'));
+  const narrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'caption-proposals-narrow.jpg'),Buffer.from(narrow.data,'base64'));
   // Keyboard controls remain real native form controls.
   await evaluate('document.getElementById("caption-proposal-guidance").focus();document.getElementById("caption-proposal-guidance").select()');await send('Input.insertText',{text:'Describe the actual visible image.'});
   assert.equal(await evaluate('document.getElementById("caption-proposal-guidance").value'),'Describe the actual visible image.');

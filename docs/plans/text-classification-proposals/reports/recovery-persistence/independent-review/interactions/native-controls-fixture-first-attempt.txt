@@ -1,3 +1,0 @@
-Error: Bounded probe timed out
-    at until (/tmp/tuldok-recovery-review-native-controls.cjs:6:118)
-    at async /tmp/tuldok-recovery-review-native-controls.cjs:27:2

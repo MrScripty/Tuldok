@@ -1,9 +1,0 @@
-{
-  "cases": 14058,
-  "accepted_front": 1254,
-  "accepted_both": 1254,
-  "preserved_exact_intent": 1254,
-  "accepted_front_rejected_back": 0,
-  "conservative_front_rejections": 542,
-  "source_sha256": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16"
-}

@@ -1,5 +1,6 @@
 // Authored native folder files -> actual HTTP/SQLite -> draft/review -> browser ZIP download.
 'use strict';
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -10,7 +11,7 @@ async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 function python(code,...args){const result=spawnSync('python3',['-c',code,...args],{cwd:root,encoding:'utf8'});assert.equal(result.status,0,result.stderr);return result.stdout;}
 (async()=>{
-  const fixture=path.join(root,'docs/plans/annotated-caption-import/reports/fixtures/native-caption-release');
+  const fixture=path.join(root,'tests/fixtures/native-caption-release');
   const manifest=JSON.parse(fs.readFileSync(path.join(fixture,'manifest.json'),'utf8'));
   const assets=['train','val','test'].flatMap(split=>fs.readFileSync(path.join(fixture,split,'metadata.jsonl'),'utf8').trim().split('\n').map(line=>split+'/'+JSON.parse(line).file_name));
   const sourceFiles=['manifest.json','train/metadata.jsonl','val/metadata.jsonl','test/metadata.jsonl',...assets].map(relative=>({relative,data:fs.readFileSync(path.join(fixture,relative)).toString('base64')}));
@@ -65,12 +66,12 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const imported=(await api('records?task=image_caption')).items;assert.equal(imported.length,4);
   for(const record of imported){const origin=record.provenance.acquisition.declared.origin_record;assert.equal(record.review,'draft');assert.deepEqual(record.annotation,origin.annotation);assert.equal(record.source_split,origin.split);assert.notEqual(record.id,origin.id);assert.equal(record.provenance.rights,'unknown');assert.deepEqual(record.parents,[]);}
   assert.equal(await evaluate('current.id'),seed.id);assert.equal(await evaluate('dirty'),true);assert.equal(await evaluate('selected.size'),1);assert.equal(await evaluate('document.getElementById("label").value'),'unsaved label');
-  const reports=path.join(root,'docs/plans/annotated-caption-import/reports');fs.mkdirSync(reports,{recursive:true});
+  const reports=qaDirectory(root,'annotated-caption-import');fs.mkdirSync(reports,{recursive:true});
   await evaluate('document.getElementById("caption-import-panel").scrollIntoView()');
-  fs.writeFileSync(path.join(reports,'caption-import-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
+  fs.writeFileSync(path.join(reports,'caption-import-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("caption-import-panel").scrollIntoView()');
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'No narrow overflow');
-  fs.writeFileSync(path.join(reports,'caption-import-narrow.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
+  fs.writeFileSync(path.join(reports,'caption-import-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.clearDeviceMetricsOverride');
   await choose(sourceFiles);await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Complete: 0 created, 4 rejected/);assert.deepEqual((await api('records?task=image_caption')).items,imported);
   await click('clear-selection');await fill('task-filter','image_caption');await evaluate('document.getElementById("filters").requestSubmit()');await until(()=>evaluate('!document.getElementById("filters").dataset.busy&&document.querySelectorAll(".record").length===4'));await click('select-page');await fill('release-format','image_caption_v1');await click('preview-release');

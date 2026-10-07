@@ -3,16 +3,16 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn,spawnSync}=require('node:child_process');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
-const root=path.resolve(__dirname,'..'),source=path.join(root,'tests/fixtures/rheon_actual_fee7b4a');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..')),source=path.join(root,'tests/fixtures/rheon_actual_fee7b4a');
+const report=qaDirectory(root,'simulation-sequence-actual',process.env.TULDOK_SEQUENCE_ACTUAL_REPORT_ROOT||process.env.TULDOK_QA_OUTPUT_ROOT);
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-actual-sequence-browser-')),children=[],errors=[],tracker=pageLoadTracker();
-const report=process.env.TULDOK_SEQUENCE_ACTUAL_REPORT_ROOT||path.join(root,'docs/plans/simulation-sequence-import/reports/actual-boundary');
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms)),sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');
 let ws,inspect;
 async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 function python(code,...args){const result=spawnSync('python3',['-c',code,...args],{cwd:root,encoding:'utf8',timeout:30000});assert.equal(result.status,0,result.stderr);return result.stdout;}
 (async()=>{
-  fs.mkdirSync(report,{recursive:true});
   const run=fs.readFileSync(path.join(source,'run.json')),frames=fs.readFileSync(path.join(source,'frames.jsonl'));
   const manifest=JSON.parse(run),receipt=JSON.parse(fs.readFileSync(path.join(source,'producer-receipt.json')));
   assert.equal(sha(run),receipt.run_sha256);assert.equal(sha(frames),receipt.frames_sha256);
@@ -89,9 +89,9 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   evidence.frozen_check=checked;assert.equal(checked.result,'PASS');evidence.checks.push('normal selected-record UI freeze/download: one whole trajectory, byte-exact nested run+frames, all native field bits, full metadata/index, source hashes and split report preserved');
   const previous=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload');await until(()=>tracker.reloaded(previous));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   assert.equal((await api('records?kind=sequence')).total,2);await evaluate('openRecord('+JSON.stringify(actual.id)+')');assert.equal(await evaluate('current.review'),'human_reviewed');
-  await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');fs.writeFileSync(path.join(report,'actual-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');fs.writeFileSync(path.join(report,'actual-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'));
-  fs.writeFileSync(path.join(report,'actual-narrow.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));assert.deepEqual(errors,[]);evidence.checks.push('review survives reload; no replay; no Runtime exceptions; desktop/narrow metadata inspection');
+  fs.writeFileSync(path.join(report,'actual-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));assert.deepEqual(errors,[]);evidence.checks.push('review survives reload; no replay; no Runtime exceptions; desktop/narrow metadata inspection');
   evidence.errors=errors;evidence.result='PASS';fs.writeFileSync(path.join(report,'session.json'),JSON.stringify(evidence,null,2)+'\n');
   console.log('Actual Rheon fee7b4a Chromium boundary PASS: selected raw files, draft/unknown, accepted fields/hashes/provenance, explicit review/history, synthetic family split protection, byte-exact native fields in frozen whole-trajectory release, reload/narrow. No exporter or simulation invoked.');
 })().catch(async error=>{console.error(error);if(inspect)try{console.error(await inspect());}catch{}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
