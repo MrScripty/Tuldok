@@ -395,3 +395,39 @@ recovery scope; it is not cross-tab/device recovery.
 This single-image slice is tested with local synthetic HTTP providers and real
 Chromium. It asserts no real-model caption quality and adds no models, credentials,
 provider registry or dependencies. [Contract and acceptance](docs/plans/caption-proposals/plan.md).
+
+### Explicit preference pairs
+
+Use **Comparative judgments** on a text prompt with two existing independent
+answers. Choose each answer and explicitly prefer left/right, tie or abstain,
+then independently review that exact comparison. Answer order, answer review
+and model scores never grant preference. Judgment history retains exact prompt,
+source and answer revisions; editing any bound evidence requires deliberate
+rejudgment and fresh review. Deleting a judgment preserves history and frozen
+exports. Stale judgments can be deleted without re-reviewing them.
+
+Select fixed judgment revisions and use **Freeze selected preference pairs**.
+The `text_preference_v1` ZIP emits only explicit `prompt/chosen/rejected` strings.
+Reviewed ties/abstentions remain in the manifest and are excluded with reasons;
+an all-excluded selection cannot export. Current opposing reviewed judgments
+for the same exact pair block even when unselected. Current tie/abstention
+judgments warn without vetoing a direction. Distinct answer IDs with identical
+strings remain explicit degenerate pairs with a warning. Answer review is
+retained as separate evidence; it is not required to grant comparative review.
+
+The existing protected family graph and weighted allocator keep all related
+pairs in one split. Manifest and row sidecar freeze both answers, judgments,
+source/rights provenance, complete lineage, exact revisions and exclusions.
+Stale selections and changed competing review invalidate proof. Selections are
+held in the current page; reload requires deliberate reselection. Releases use
+the existing 5,000-unit and 40 MiB synchronous bounds and immutable publication.
+
+Qualification invokes unchanged hash-pinned TRL 0.23.1 DPO dataset preparation
+and preference collator against actual browser-downloaded strings. A local byte
+tokenizer tests prompt left padding, completion right padding, attention masks,
+EOS and disabled truncation. DPO appends EOS unconditionally, including after
+an existing EOS. No model is constructed or run; no pretrained download or
+training-quality claim is involved. Reuse the isolated official dependencies
+in `tests/instruction-consumer-requirements.txt`. Run `node
+tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
+that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).

@@ -15,6 +15,7 @@ SPLITS = ('train', 'validation', 'test')
 RELEASE_ID = re.compile(r'^[a-f0-9]{64}$')
 CAPTION_FORMAT = 'image_caption_v1'
 INSTRUCTION_FORMAT = 'text_instruction_v1'
+PREFERENCE_FORMAT = 'text_preference_v1'
 INSTRUCTION_CONSUMER = {'trl': '0.23.1', 'trl_commit': '4529a1c8b1813480a85b02c9c8e7f75a29085d65',
                         'datasets': '4.1.1', 'datasets_commit': '9be15a723b460586999b6aa1f346e284342fcc1f',
                         'type': 'standard prompt-completion'}
@@ -178,6 +179,8 @@ class Releases:
         """
         workbench = self.workbench
         format_name = body.get('format', 'canonical_v1')
+        if format_name == PREFERENCE_FORMAT:
+            return self._prepare_preferences(body)
         if format_name == INSTRUCTION_FORMAT:
             return self._prepare_responses(body)
         preview = {'eligible': False, 'format': format_name, 'selected_count': 0,
@@ -349,6 +352,102 @@ class Releases:
                             b'manifest.json preserves canonical evidence. Completion text is never trimmed or normalized.\n'
                             b'Consumer token limits/EOS/loss configuration are explicit training choices.\n'), None
 
+    def _prepare_preferences(self, body):
+        preview = {'format': PREFERENCE_FORMAT, 'eligible': False, 'selected_count': 0,
+                   'example_count': 0, 'unique_prompt_count': 0, 'blockers': [], 'warnings': [],
+                   'lineage': [], 'assignments': {}, 'split_report': None, 'preview_token': None, 'excluded': []}
+        try:
+            if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
+                raise WorkbenchError('Unknown preference release fields.')
+            judgments, parents, answers, excluded = self.workbench.preferences.selection(body.get('items'))
+            rows = [row for row in judgments if row['outcome'] in ('left', 'right')]
+            preview.update(selected_count=len(judgments), example_count=len(rows), excluded=excluded,
+                           unique_prompt_count=len({row['prompt_id'] for row in rows}))
+            universe = self.workbench._all()
+            roots, groups, snapshots, preview['lineage'] = family_context(parents, universe)
+            weights = Counter(row['prompt_id'] for row in rows)
+            export_parents = [parent for parent in parents if parent['id'] in weights]
+            assignments, report = allocate(export_parents, universe, body.get('ratios'), body.get('seed'), weights)
+            preview['assignments'] = {row['id']: assignments[row['prompt_id']] for row in rows}
+            report.update(example_count=len(rows), unique_prompt_count=preview['unique_prompt_count'],
+                          actual_unique_prompt_counts=dict(Counter(assignments.values())))
+            preview['split_report'] = report
+            for parent in parents:
+                asset, _ = self.workbench.asset(parent['id'])
+                if hashlib.sha256(asset).hexdigest() != parent['content_hash']:
+                    raise WorkbenchError('Prompt bytes changed outside Tuldok.', 'conflict', 409)
+            competing = self.workbench.preferences.competing(judgments)
+            prepared = {'preview': preview, 'rows': judgments, 'parents': parents, 'answers': answers,
+                        'roots': roots, 'groups': groups, 'snapshots': snapshots, 'competing': competing}
+            total = sum(len(value) for _, value, _ in self._preference_entries(prepared, body))
+            if total > MAX_SELECTED_TEXT_BYTES:
+                raise WorkbenchError('Preference archive exceeds the 40 MiB synchronous resource bound.')
+            preview['artifact_bytes'] = total
+            preview['preview_token'] = hashlib.sha256(encode({
+                'format': PREFERENCE_FORMAT, 'schema': 1, 'ratios': body['ratios'], 'seed': body['seed'],
+                'judgments': judgments, 'parents': parents, 'answers': answers, 'competing': competing,
+                'protected_components': snapshots, 'assignments': preview['assignments']}).encode()).hexdigest()
+            if any(rights_note(parent) == 'unknown' for parent in parents):
+                preview['warnings'].append('Some selected prompts have unknown rights. Review permission before training or sharing.')
+            preview['warnings'].extend('Excluded judgment ' + row['id'] + ': ' + row['reason'] for row in excluded)
+            answer_map = {row['id']: row for row in answers}
+            if any(answer_map[row['left_id']]['completion'] == answer_map[row['right_id']]['completion'] for row in rows):
+                preview['warnings'].append('Distinct answer identities contain identical strings: degenerate DPO pairs retained explicitly.')
+            if any(row['outcome'] in ('tie', 'abstain') for row in competing):
+                preview['warnings'].append('Current reviewed tie/abstain judgments also exist for selected evidence; they do not veto directional judgments.')
+            preview['warnings'].append('Judgment review is independent of answer/target review; it does not establish rights or training quality.')
+            preview['eligible'] = True
+            return prepared
+        except WorkbenchError as error:
+            preview['blockers'].append({'message': str(error), 'code': error.code, 'status': error.status})
+            return {'preview': preview}
+
+    def _text_entries(self, prepared, body):
+        return (self._preference_entries(prepared, body) if body['format'] == PREFERENCE_FORMAT
+                else self._instruction_entries(prepared, body))
+
+    def _preference_entries(self, prepared, body):
+        preview = prepared['preview']
+        parents = {row['id']: row for row in prepared['parents']}
+        answers = {row['id']: row for row in prepared['answers']}
+        rows = [row for row in prepared['rows'] if row['outcome'] in ('left', 'right')]
+        mapping = []
+        for split in SPLITS:
+            for index, row in enumerate(r for r in rows if preview['assignments'][r['id']] == split):
+                parent = parents[row['prompt_id']]
+                binding = {key: row[key] for key in ('id', 'revision', 'prompt_id', 'parent_revision', 'source_revision',
+                                                   'left_id', 'left_revision', 'right_id', 'right_revision')}
+                binding.update(chosen_id=row[row['outcome'] + '_id'],
+                               rejected_id=row['right_id'] if row['outcome'] == 'left' else row['left_id'])
+                mapping.append(dict(binding, split=split, file=split + '/data.jsonl', row=index,
+                                    family=prepared['groups'][prepared['roots'][parent['id']]]))
+        manifest = {'schema_version': 1, 'format': PREFERENCE_FORMAT,
+                    'consumer': {'trl': '0.23.1', 'datasets': '4.1.1', 'type': 'explicit prompt/chosen/rejected'},
+                    'seed': body['seed'], 'split_report': preview['split_report'], 'prompts': prepared['parents'],
+                    'responses': prepared['answers'], 'judgments': prepared['rows'], 'excluded': preview['excluded'],
+                    'competing_reviewed_judgments': prepared['competing'], 'protected_components': prepared['snapshots'],
+                    'text_contract': 'Prompt: existing NFC/LF. Answers: exact Unicode and whitespace.',
+                    'limits': {'answer_code_points': MAX_TEXT, 'selected_judgments': 5000,
+                               'archive_uncompressed_bytes': MAX_SELECTED_TEXT_BYTES}}
+        yield 'manifest.json', encode(manifest).encode('utf-8'), None
+        yield 'rows.jsonl', ''.join(encode(row) + '\n' for row in mapping).encode('utf-8'), None
+        for parent in prepared['parents']:
+            yield 'prompts/' + parent['id'] + '.txt', parent['text'].encode('utf-8'), parent['content_hash']
+        for split in SPLITS:
+            yield split + '/data.jsonl', b'', None
+            for row in rows:
+                if preview['assignments'][row['id']] == split:
+                    chosen = row[row['outcome'] + '_id']
+                    rejected = row['right_id'] if row['outcome'] == 'left' else row['left_id']
+                    value = {'prompt': parents[row['prompt_id']]['text'], 'chosen': answers[chosen]['completion'],
+                             'rejected': answers[rejected]['completion']}
+                    yield None, (encode(value) + '\n').encode('utf-8'), None
+        yield 'README.txt', (b'Tuldok text_preference_v1. Explicit prompt/chosen/rejected strings.\n'
+                            b'Only independently human-reviewed directional judgments yield rows.\n'
+                            b'Ties/abstentions are excluded with reasons in manifest.json.\n'
+                            b'rows.jsonl binds exact judgment/prompt/answer revisions and whole source family.\n'
+                            b'Answer review is evidence, not a preference. EOS/padding/truncation are consumer settings.\n'), None
+
     def _create_responses(self, body):
         workbench = self.workbench
         with workbench.lock, workbench.db:
@@ -359,7 +458,7 @@ class Releases:
                     with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
                         stream = None
                         try:
-                            for filename, value, expected in self._instruction_entries(prepared, body):
+                            for filename, value, expected in self._text_entries(prepared, body):
                                 if filename is not None:
                                     if stream is not None:
                                         stream.close(); stream = None
@@ -380,13 +479,13 @@ class Releases:
                     os.unlink(temporary)
             preview = prepared['preview']
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
-                    'format': INSTRUCTION_FORMAT, 'records': len(prepared['rows']),
+                    'format': body['format'], 'records': preview['example_count'],
                     'example_count': preview['example_count'], 'unique_prompt_count': preview['unique_prompt_count'],
                     'split_report': preview['split_report']}
 
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
-        if format_name == INSTRUCTION_FORMAT:
+        if format_name in (INSTRUCTION_FORMAT, PREFERENCE_FORMAT):
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact responses before exporting.', 'conflict', 409)
             return self._create_responses(body)
