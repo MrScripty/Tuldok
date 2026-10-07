@@ -47,6 +47,21 @@ class InstructionResponsesTests(unittest.TestCase):
         preview = self.r.preview(body); self.assertTrue(preview['eligible'], preview)
         return self.r.create(dict(body, preview_token=preview['preview_token']))
 
+    def test_instruction_unknown_rights_warning_uses_selected_prompt_projection(self):
+        parent = self.prompt();parent = self.w.correct_rights_note(parent['id'],
+            dict(revision=parent['revision'], source_revision=parent['source_revision'], note='unknown'))['record']
+        a = self.answer(parent);b = self.answer(parent, completion='Other answer')
+        preview = self.r.preview(self.body([(parent,a),(parent,b)]))
+        self.assertTrue(preview['eligible']);self.assertEqual(preview['unique_prompt_count'],1)
+        self.assertEqual(sum('unknown rights' in warning for warning in preview['warnings']),1)
+        self.assertEqual(parent['review'],'draft')
+        raw = self.w.import_asset(dict(kind='text', name='Raw unknown', text='Raw unknown prompt', groups=['raw-unknown'], rights='unknown'))
+        raw_answer = self.answer(raw)
+        self.assertTrue(any('unknown rights' in warning for warning in self.r.preview(self.body([(raw,raw_answer)]))['warnings']))
+        known = self.prompt(name='Known selection');known_answer = self.answer(known)
+        self.assertFalse(any('unknown rights' in warning for warning in self.r.preview(self.body([(known,known_answer)]))['warnings']),
+                         'An unselected unknown-rights prompt cannot become selected permission evidence')
+
     def test_two_responses_preserve_existing_target_siblings_and_original_source(self):
         parent = self.prompt()
         parent = self.w.save(parent['id'], dict(parent, task='text_entities', annotation={'spans': [{'label': 'word', 'start': 0, 'end': 6}]}, review='human_reviewed'))

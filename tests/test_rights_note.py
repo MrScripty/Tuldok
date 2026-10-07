@@ -151,6 +151,33 @@ class RightsNoteTests(unittest.TestCase):
         self.assertEqual(status,200);self.assertEqual(result['record']['review'],'programmatically_verified')
         self.assertEqual({k:v for k,v in result['record']['provenance'].items() if k!='rights_note_correction'},row['provenance'])
 
+    def test_verifier_cannot_forge_projection_or_remove_reserved_origin_evidence(self):
+        from workbench import WorkbenchError
+        row = self.row(); _, corrected = self.request(row, 'Owned note'); row = corrected['record']
+        for value in ({'note':'Forged', 'revision':row['revision']}, None):
+            provenance = dict(row['provenance'], rights_note_correction=value)
+            before = self.state()
+            with self.assertRaises(WorkbenchError):
+                self.w.save(row['id'], dict(row, annotation={'label':'fixture'}, review='programmatically_verified'), verified_provenance=provenance)
+            self.assertEqual(self.state(), before)
+        plain = self.row(name='no owned correction')
+        before = self.state()
+        with self.assertRaises(WorkbenchError):
+            self.w.save(plain['id'], dict(plain, annotation={'label':'fixture'}, review='programmatically_verified'),
+                        verified_provenance=dict(plain['provenance'], rights_note_correction={'note':'Unowned', 'revision':1}))
+        self.assertEqual(self.state(), before)
+        foreign = {'declared':'Reserved foreign origin'}
+        with self.w.db:
+            self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?',
+                              (encode(dict(plain['provenance'], rights_note_correction=foreign)), plain['id']))
+        before = self.state()
+        with self.assertRaises(WorkbenchError):
+            self.w.save(plain['id'], dict(plain, annotation={'label':'fixture'}, review='programmatically_verified'), verified_provenance={'method':'fresh verifier'})
+        self.assertEqual(self.state(), before)
+        projected = dict(row['provenance'], verification='Owned fixture');original = json.loads(encode(projected))
+        self.w.save(row['id'], dict(row, annotation={'label':'fixture'}, review='programmatically_verified'), verified_provenance=projected)
+        self.assertEqual(projected, original, 'Verifier caller input is not mutated when the owned projection is omitted from storage')
+
     def test_native_caption_import_note_correction_review_and_roundtrip_preserve_owners(self):
         from pathlib import Path
         import uuid

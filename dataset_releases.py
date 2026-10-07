@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 from PIL import Image
 
-from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, validate_annotation
+from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
 
 SPLITS = ('train', 'validation', 'test')
 RELEASE_ID = re.compile(r'^[a-f0-9]{64}$')
@@ -304,6 +304,8 @@ class Releases:
                 'responses': responses, 'parents': parents, 'protected_components': snapshots,
                 'assignments': preview['assignments']}).encode()).hexdigest()
             preview['eligible'] = True
+            if any(rights_note(parent) == 'unknown' for parent in parents):
+                preview['warnings'].append('Some selected prompts have unknown rights. Review permission before training or sharing.')
             preview['warnings'].append('Human review and protected families do not establish semantic quality or permission.')
             return prepared
         except WorkbenchError as error:

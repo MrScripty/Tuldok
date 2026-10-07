@@ -33,7 +33,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const submit=()=>evaluate('document.getElementById("native-text-form").requestSubmit()');
   const idle=()=>until(()=>evaluate('!document.getElementById("native-text-start").disabled'));
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
-  const report=path.join(root,'docs/plans/workbench-parent-owner-fix/reports');fs.mkdirSync(report,{recursive:true});
+  const report=path.join(root,'docs/plans/workbench-projection-warnings-fix/reports');fs.mkdirSync(report,{recursive:true});
   const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
   const sourceIdentity=spawnSync('git',['rev-parse','HEAD','HEAD^{tree}'],{cwd:root,encoding:'utf8'}).stdout.trim().split('\n');
   const sourceDiff=spawnSync('git',['diff','HEAD','--','app.py','workbench.py','curation.py','dataset_releases.py','native_text_import.py','static','tests'],{cwd:root,encoding:'utf8'}).stdout;
@@ -76,7 +76,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   evidence.steps.push({stage:'curation-held-get',exact_draft:inspectionDraft,discard_refusal:true});await capture('01-curation-draft','#responses-panel');
   await click('response-cancel');await evaluate('window.holdAnswerList=true;void loadResponses(current)');await until(()=>evaluate('!!window.releaseAnswerList'));await click('response-new');
   console.log('Combined browser: rights later response intent');
-  await fill('rights-note-value','Local current note');await evaluate('window.holdRights=true;document.getElementById("rights-note-form").requestSubmit()');await until(()=>evaluate('!!window.releaseRights'));
+  await fill('rights-note-value','unknown');await evaluate('window.holdRights=true;document.getElementById("rights-note-form").requestSubmit()');await until(()=>evaluate('!!window.releaseRights'));
   await fill('response-entry-format','json');await fill('response-completion',JSON.stringify('Later rights draft\r\n😀'));await fill('response-review','human_reviewed');
   await evaluate('document.getElementById("response-form").requestSubmit()');assert.equal(await evaluate('window.answerPosts'),0,'Rights ownership blocks answer persistence while retaining its draft');
   const rightsDraft=await evaluate('({id:responseEditor.id,value:document.getElementById("response-completion").value,review:document.getElementById("response-review").value,epoch:responseEditEpoch})');
@@ -124,6 +124,8 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await fill('response-train','100');await fill('response-validation','0');await fill('response-test','0');await click('response-preview');await until(()=>evaluate('!responseReleaseBusy&&!!responsePreview'));
   assert.equal(await evaluate('responsePreview.eligible'),false,'Original parent pairs remain stale');assert.equal(await answerPairs(),initialAnswers);
   await click('response-clear');await evaluate('document.querySelectorAll("#response-list input").forEach(box=>box.click())');await click('response-preview');await until(()=>evaluate('!responseReleaseBusy&&responsePreview?.eligible'));
+  assert.ok(await evaluate('responsePreview.warnings.some(warning=>warning.includes("unknown rights"))'),'Eligible instruction preview identifies unknown prompt rights');
+  assert.match(await evaluate('document.getElementById("response-preview-output").textContent'),/unknown rights/,'The actual preview displays the permission warning');
   const freshAnswers=await answerPairs();await evaluate('document.getElementById("response-release-form").requestSubmit()');await until(()=>evaluate('!responseReleaseBusy&&!!document.querySelector("#response-release-result a")'));
   await evaluate('document.querySelector("#response-release-result a").click()');await until(()=>fs.readdirSync(downloads).filter(n=>n.endsWith('.zip')).length===1);
   const instruction=path.join(downloads,fs.readdirSync(downloads).find(n=>n.endsWith('.zip')));
@@ -152,7 +154,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await until(()=>evaluate(`document.getElementById('saved-selection')?.value===${JSON.stringify(savedId)}&&selected.size===1&&!savedLoadBusy`));assert.equal(await recordPairs(),savedPairs);
   await evaluate('history.back()');await until(()=>evaluate('selected.size===0'));await evaluate('history.forward()');await until(()=>evaluate('selected.size===1&&!savedLoadBusy'));assert.equal(await recordPairs(),savedPairs);
   assert.equal((await api('records')).total,3,'Navigation does not replay admissions');
-  evidence.steps.push({stage:'both-real-downloads',consumer,canonical_revision:3,annotation_review_explicit:true,saved_pairs:savedPairs,reload_back_forward:true});await capture('03-frozen-selection','#saved-selection-panel');
+  evidence.steps.push({stage:'both-real-downloads',consumer,instruction_unknown_rights_warning:true,canonical_revision:3,annotation_review_explicit:true,saved_pairs:savedPairs,reload_back_forward:true});await capture('03-frozen-selection','#saved-selection-panel');
   assert.deepEqual(errors,[]);evidence.result='PASS';fs.writeFileSync(path.join(report,'combined-session.json'),JSON.stringify(evidence,null,2)+'\n');
   console.log('Combined actual Chromium: held curation/rights results retain exact later answers; native Stop/lost-result lookup retains draft and fixed pairs; explicit reselection/review, both real downloads + unchanged pinned consumer, saved reload/back/forward and desktop/narrow passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

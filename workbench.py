@@ -363,9 +363,18 @@ class Workbench:
             review = body.get('review')
             if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
                 raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
-            # The read projection includes owned rights corrections; preserve stored origin separately.
-            provenance = verified_provenance or json.loads(self.db.execute(
-                'SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
+            # A trusted verifier may replace origin, but never persist or alter the note owner's projection.
+            origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
+            provenance = dict(verified_provenance) if verified_provenance else origin
+            if verified_provenance:
+                reserved = 'rights_note_correction'
+                if reserved in origin:
+                    if reserved not in provenance or provenance[reserved] != origin[reserved]:
+                        raise WorkbenchError('Cannot replace reserved origin evidence through verifier provenance.', 'conflict', 409)
+                elif reserved in provenance:
+                    if reserved not in before['provenance'] or provenance[reserved] != before['provenance'][reserved]:
+                        raise WorkbenchError('Verifier provenance cannot change the owned rights correction. Reload before saving.', 'conflict', 409)
+                    provenance.pop(reserved)
             self.db.execute('''UPDATE workbench_records SET task=?,annotation_json=?,review=?,groups_json=?,
                 provenance_json=?,revision=revision+1,updated_at=? WHERE id=?''',
                             (task, encode(annotation), review, encode(groups), encode(provenance), timestamp(), record_id))

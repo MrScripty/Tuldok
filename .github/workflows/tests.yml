@@ -120,4 +120,5 @@ jobs:
             docs/plans/native-text-classification-import/reports/native-text-*.png
             docs/plans/combined-workbench-local/reports/**
             docs/plans/workbench-parent-owner-fix/reports/**
+            docs/plans/workbench-projection-warnings-fix/reports/**
           if-no-files-found: ignore

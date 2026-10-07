@@ -42,6 +42,32 @@ class CombinedWorkbenchTests(unittest.TestCase):
         return dict(id=answer['id'], revision=answer['revision'], prompt_id=parent['id'],
                     parent_revision=parent['revision'], source_revision=parent['source_revision'])
 
+    def test_owned_verifier_projection_then_later_note_and_instruction_warning(self):
+        parent = self.call('import', dict(kind='text', text='Authored verifier prompt', name='Verifier prompt',
+                          rights='Original local declaration', groups=['verifier-source']))
+        origin = json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0])
+        corrected = self.call('rights/'+parent['id'], dict(revision=parent['revision'], source_revision=parent['source_revision'], note='First note'))['record']
+        projected = dict(corrected['provenance'], verification='Owned fixture verifier')
+        verified = self.w.save(parent['id'], dict(corrected, task='text_classification', annotation={'label':'fixture'},
+                               review='programmatically_verified'), verified_provenance=projected)
+        stored = json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0])
+        self.assertNotIn('rights_note_correction', stored, 'Verifier projection must never enter origin')
+        self.assertEqual(stored, dict(origin, verification='Owned fixture verifier'))
+        self.assertEqual(verified['provenance']['rights_note_correction'], corrected['provenance']['rights_note_correction'])
+        later = self.call('rights/'+parent['id'], dict(revision=verified['revision'], source_revision=verified['source_revision'], note='unknown'))['record']
+        self.assertEqual(later['review'], 'programmatically_verified')
+        self.assertEqual(later['provenance']['verification'], 'Owned fixture verifier')
+        self.assertEqual(json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0]), stored)
+        answer = self.answer(later, 'Exact independent answer\r\ne\u0301 😀')
+        body = self.release_body([self.answer_pair(later, answer)], 'text_instruction_v1')
+        before = self.state(); preview = self.call('releases/preview', body)
+        self.assertTrue(preview['eligible']);self.assertTrue(any('unknown rights' in warning for warning in preview['warnings']), preview)
+        self.assertEqual(self.state(), before, 'Preview warnings cannot grant review or write any owner')
+        explicit = self.call('rights/'+parent['id'], dict(revision=later['revision'], source_revision=later['source_revision'], note='Reviewed local declaration'))['record']
+        fresh = self.release_body([self.answer_pair(explicit, answer)], 'text_instruction_v1')
+        known = self.call('releases/preview', fresh);self.assertTrue(known['eligible']);self.assertFalse(any('unknown rights' in warning for warning in known['warnings']))
+        self.assertFalse(self.call('releases/preview', body)['eligible'], 'Old fixed pairs remain stale')
+
     def test_answer_list_does_not_authorize_stale_creation_then_explicit_reload_retry(self):
         parent = self.call('import', dict(kind='text', text='Authored prompt', name='CAS prompt', rights='Local', groups=['cas-source']))
         body = dict(id=uuid.uuid4().hex, prompt_id=parent['id'], revision=0,
