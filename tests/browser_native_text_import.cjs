@@ -106,7 +106,9 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.equal(release.status,200);fs.writeFileSync(path.join(temporary,'frozen.zip'),Buffer.from(await release.arrayBuffer()));
   python("import json,sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); m=json.loads(z.read('manifest.json')); assert len(m['records'])==3; assert all(r['task']=='text_classification' and r['review']=='human_reviewed' and r['annotation']['label'].startswith('class-') and z.read(r['asset'])==r['text'].encode() and r['provenance']['acquisition']['declared']['upstream']['original_status']=='unavailable' for r in m['records'])",path.join(temporary,'frozen.zip'));
   console.log('Native browser stage: reload/back');
-  await send('Page.reload');await until(()=>evaluate(`document.getElementById('saved-selection').value===${JSON.stringify(savedId)} && selected.size===3`));
+  const previousFrame=(await send('Page.getFrameTree')).frameTree.frame;
+  await send('Page.reload');await until(()=>tracker.reloaded(previousFrame));
+  await until(()=>evaluate(`document.getElementById('saved-selection').value===${JSON.stringify(savedId)} && selected.size===3 && !savedLoadBusy`));
   assert.equal((await api('records')).total,6,'Reload must not replay imports');
   await evaluate('history.back()');await until(()=>evaluate('selected.size===0'));
   await evaluate('history.forward()');await until(()=>evaluate('selected.size===3 && !savedLoadBusy'));
