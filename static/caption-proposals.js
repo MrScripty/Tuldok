@@ -15,7 +15,8 @@ function captionProposalRecoveryBody(body) {
      !Number.isSafeInteger(body.revision) || body.revision<1 || !Number.isSafeInteger(body.source_revision) || body.source_revision<1 ||
      !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295 ||
      typeof body.server_url!=='string' || body.server_url.length>2048 || typeof body.model!=='string' || [...body.model].length>200 ||
-     typeof body.instruction!=='string' || [...body.instruction].length>2000) throw Error('Invalid recovery intent.');
+     typeof body.instruction!=='string') throw Error('Invalid recovery intent.');
+  if([...body.instruction].length>2000)throw Error('Caption guidance must be at most 2,000 Unicode code points.');
   const url=new URL(body.server_url);
   if(!['http:','https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash)
     throw Error('Use a server URL without credentials, query or fragment.');
@@ -187,6 +188,9 @@ $('caption-proposal-form').addEventListener('submit',async event=>{
     captionProposalStatus('An earlier request has an unknown acknowledgement. Refresh requests before changing its intent.');return;
   }
   const body=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};
+  // Invalid fresh settings are correctable form errors, not lost recovery storage.
+  try { captionProposalRecoveryBody(body); }
+  catch(error) {captionProposalStatus(error.message+' Correct the request settings and submit again.');return;}
   if(!captionProposalStore(body)) {captionProposalStatus(captionProposalStorageError);$('caption-proposal-submit').disabled=true;return;}
   captionProposalPendingRequest=body;
   captionProposalAdmissionRequest=body;captionProposalBusy=true;$('caption-proposal-submit').disabled=true;

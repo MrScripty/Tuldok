@@ -63,6 +63,18 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     await evaluate('(()=>{const button=[...document.querySelectorAll("#caption-proposal-jobs button")].find(b=>b.textContent==='+JSON.stringify(label)+');if(!button)throw Error("Missing caption action");button.click();button.click();})()');
     await until(()=>evaluate('!captionProposalBusy'));
   };
+  // Textarea's 4,000 UTF-16 units also allow 2,001 ASCII characters. Validation
+  // must remain correctable in this document, without a storage-failure latch.
+  const inputBoundaryCount=(await request('caption-proposals')).jobs.length;
+  await start('a'.repeat(2001));
+  assert.equal(await evaluate('captionProposalStorageError'),'');assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),false);
+  assert.equal(await evaluate('sessionStorage.getItem(captionProposalRecoveryKey)'),null);
+  assert.equal((await request('caption-proposals')).jobs.length,inputBoundaryCount);
+  await refresh();await start('\u{1f600}'.repeat(2000));
+  await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed")'));
+  const boundaryJob=(await request('caption-proposals')).jobs.find(j=>j.config.instruction==='\u{1f600}'.repeat(2000));
+  assert.ok(boundaryJob,'Corrected 2,000 non-BMP code points must submit without reload');
+  assert.equal(boundaryJob.config.instruction.length,4000);
   // A served text-only entry is not promoted to a vision capability.
   await fill('caption-proposal-model','text-only');await start('Describe visible pixels');
   await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="failed")'));assert.equal((await request('records/'+rows[0].id)).revision,rows[0].revision);
@@ -174,6 +186,6 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),true);
   await evaluate('Storage.prototype.setItem=captionStorageSet');
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reload_changed_intent_posts:0,storage_failure_posts:0,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
+  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reload_changed_intent_posts:0,storage_failure_posts:0,fresh_guidance_2001_latched_storage_error:false,corrected_non_bmp_guidance_codepoints:2000,corrected_non_bmp_guidance_utf16_units:4000,corrected_without_reload:true,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'fresh guidance2001 recoverable error then2000 non-BMP correction without reload; held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
   console.log('Caption proposal real HTTP/Chromium controlled lifecycle, lost-response recovery, draft review separation, navigation and pinned consumer passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

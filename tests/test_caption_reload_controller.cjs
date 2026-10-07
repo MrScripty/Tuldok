@@ -26,6 +26,26 @@ function page(store) {
 }
 const persisted=(id,status='completed')=>({id,status,source:row,config:{model:'fixture'},annotation:{caption:'Fixture'},error:''});
 (async()=>{
+  for(const instruction of ['a'.repeat(2001),'\u{1f600}'.repeat(2001),'a'.repeat(2000)+'\u{1f600}']) {
+    const freshStore=storage(),form=page(freshStore);form.intent({...body,instruction});await form.submit();
+    assert.equal(form.requests.length,0);assert.equal(freshStore.data.size,0,'Invalid fresh guidance must not create recovery evidence');
+    assert.equal(form.run('captionProposalStorageError'),'','Invalid form input must not latch a durable-storage failure');
+    assert.equal(form.$('caption-proposal-submit').disabled,false);assert.ok(form.$('caption-proposal-status').textContent.includes('2,000 Unicode code points'));
+    form.intent({...body,instruction:'Corrected guidance'});const refresh=form.refresh();form.take('caption-proposals').resolve({jobs:[]});await refresh;
+    const corrected=form.submit(),post=form.take('caption-proposals',true);assert.equal(post.body.instruction,'Corrected guidance');
+    post.reject(Object.assign(Error('Fixture first-attempt refusal'),{status:409}));await corrected;assert.equal(freshStore.data.size,0);
+  }
+  for(const instruction of ['a'.repeat(2000),'\u{1f600}'.repeat(2000),'a'.repeat(1999)+'\u{1f600}']) {
+    const validStore=storage(),form=page(validStore);form.intent({...body,instruction});const started=form.submit(),post=form.take('caption-proposals',true);
+    assert.equal(post.body.instruction,instruction,'Guidance counts code points and preserves exact non-BMP text');
+    assert.equal(JSON.parse(validStore.data.get(key)).instruction,instruction);post.reject(Object.assign(Error('Fixture first-attempt refusal'),{status:409}));await started;
+  }
+  for(const instruction of ['a'.repeat(2001),'\u{1f600}'.repeat(2001)]) {
+    const corrupt=storage(),data=JSON.stringify({...body,instruction});corrupt.data.set(key,data);const blocked=page(corrupt);blocked.intent();await blocked.submit();
+    assert.equal(blocked.requests.length,0);assert.equal(corrupt.data.get(key),data);assert.ok(blocked.run('captionProposalStorageError'));assert.equal(blocked.$('caption-proposal-submit').disabled,true);
+  }
+  console.log('Fresh guidance ASCII/non-BMP 2000/2001 boundaries and correction/refresh without reload passed; invalid stored evidence remains fail-closed.');
+  if(process.env.CAPTION_RELOAD_CASE==='input')return;
   if(process.env.CAPTION_RELOAD_CASE==='restore') {
     const prior=storage();prior.data.set(key,JSON.stringify(body));const restored=page(prior);
     const reconciliation=restored.refresh(),held=restored.take('caption-proposals');
