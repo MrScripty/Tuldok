@@ -15,6 +15,8 @@ import ai_http
 from workbench import IDENTIFIER, WorkbenchError, encode, file_hash, text_value, timestamp, validate_annotation
 
 MAX_IMAGE = 2 * 1024 * 1024
+# Dataset normalizes at most 40M RGB pixels to PNG; 128 MiB bounds preparation.
+MAX_CANONICAL_IMAGE = 128 * 1024 * 1024
 MAX_OUTPUT = 256 * 1024
 ACTIVE = ('preparing', 'generating', 'stopping')
 PROMPT_VERSION = 'visible-image-caption-v1'
@@ -133,7 +135,7 @@ class CaptionProposals:
             job.pop('raw_response_base64', None)
         return {'jobs': jobs}
 
-    def _source(self, body):
+    def _source(self, body, *, capture_image=False):
         record_id = body['source_id']
         if not isinstance(record_id, str) or not IDENTIFIER.fullmatch(record_id):
             raise WorkbenchError('Select one existing image.')
@@ -145,12 +147,21 @@ class CaptionProposals:
             if type(body.get(field)) is not int or body[field] != record[field]:
                 raise WorkbenchError('Image or target changed. Reload before requesting or applying a caption.', 'conflict', 409)
         folder = self.workbench.dataset.path / 'images' / record_id
+        image_bytes = None
         try:
-            if file_hash(folder / 'image.png') != record['content_hash'] or file_hash(folder / 'source') != record['source_sha256']:
+            if capture_image:
+                with (folder / 'image.png').open('rb') as asset:
+                    image_bytes = asset.read(MAX_CANONICAL_IMAGE + 1)
+                if len(image_bytes) > MAX_CANONICAL_IMAGE:
+                    raise WorkbenchError('Canonical image exceeds the 128 MiB preparation bound.')
+                canonical_hash = hashlib.sha256(image_bytes).hexdigest()
+            else:
+                canonical_hash = file_hash(folder / 'image.png')
+            if canonical_hash != record['content_hash'] or file_hash(folder / 'source') != record['source_sha256']:
                 raise WorkbenchError('Source image bytes changed outside Tuldok; restore them before proposing a caption.', 'conflict', 409)
         except OSError:
             raise WorkbenchError('Source image bytes are missing.', 'unavailable', 409) from None
-        return record, folder / 'image.png'
+        return record, image_bytes
 
     def start(self, body):
         fields = {'request_id', 'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'seed'}
@@ -176,9 +187,10 @@ class CaptionProposals:
                     return job
                 if self.closed or (self.worker is not None and self.worker.is_alive()):
                     raise WorkbenchError('A caption request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
-                source, path = self._source(body)
+                source, image_bytes = self._source(body, capture_image=True)
                 output = io.BytesIO()
-                with Image.open(path) as image:
+                # Decode the exact buffer whose hash established source identity.
+                with Image.open(io.BytesIO(image_bytes)) as image:
                     image = image.convert('RGB')
                     image.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
                     size = list(image.size)
@@ -202,7 +214,13 @@ class CaptionProposals:
             self.stop.clear()
             self.active_id = job['id']
             self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
-            self.worker.start()
+            try:
+                self.worker.start()
+            except RuntimeError:
+                self.worker, self.active_id = None, None
+                with self.db:
+                    job.update(status='failed', error='Could not start the caption worker; no inference ran. Start a new request explicitly.')
+                    self._save(job)
             return job
 
     def _run(self, job_id):

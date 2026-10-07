@@ -262,3 +262,31 @@ class CaptionProposalTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'persistence'):self.data.caption_proposals.start(self.config())
         self.assertIsNone(self.data.caption_proposals.worker);self.assertEqual(self.requests,[])
         self.assertEqual(self.data.db.execute('SELECT COUNT(*) FROM caption_proposals').fetchone()[0],0)
+
+    def test_preparation_uses_verified_buffer_when_path_is_replaced(self):
+        path=Path(self.tmp.name)/'images'/self.row['id']/'image.png'
+        original=path.read_bytes();replacement=io.BytesIO();Image.new('RGB',(200,100),'red').save(replacement,'PNG')
+        opened=Image.open;backup=path.with_name('race-original')
+        def swap(argument,*args,**kwargs):
+            path.rename(backup);path.write_bytes(replacement.getvalue())
+            try:return opened(argument,*args,**kwargs)
+            finally:path.unlink();backup.rename(path)
+        with patch('caption_proposals.Image.open',side_effect=swap):
+            job=self.data.caption_proposals.start(self.config())
+        self.data.caption_proposals.worker.join(3);job=self.data.caption_proposals.get(job['id'])
+        self.assertEqual(job['status'],'completed',job['error'])
+        with Image.open(io.BytesIO(base64.b64decode(job['input_image_base64']))) as submitted:
+            self.assertGreater(submitted.getpixel((100,50))[2],240)
+            self.assertLess(submitted.getpixel((100,50))[0],10)
+        self.assertEqual(path.read_bytes(),original)
+        self.assertEqual(self.decide(job)['record']['target_proposal']['canonical_image_sha256'],hashlib.sha256(original).hexdigest())
+
+    def test_thread_launch_failure_terminalizes_attempt_and_keeps_shutdown_safe(self):
+        with patch('caption_proposals.threading.Thread.start',side_effect=RuntimeError('cannot start thread')):
+            job=self.data.caption_proposals.start(self.config())
+        self.assertEqual(job['status'],'failed');self.assertIn('no inference ran',job['error'])
+        self.assertIsNone(self.data.caption_proposals.worker);self.assertIsNone(self.data.caption_proposals.active_id)
+        self.assertEqual(self.requests,[])
+        self.data.close();self.data=Dataset(self.tmp.name)
+        self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'failed')
+        self.assertEqual(self.generate()['status'],'completed')

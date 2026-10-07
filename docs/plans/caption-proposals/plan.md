@@ -46,9 +46,12 @@ retain fresh outputs separately and preserve historical report bytes. Independen
 review examines the exact committed local candidate. Real-model valid output and
 semantic quality are explicitly unqualified; final UI choices remain pending.
 
-Focused qualification: 15 Python tests, controller ownership checks and the real
-controlled-provider Chromium workflow passed. Aggregate exact-source qualification
-and independent review remain pending.
+Focused qualification: 15 initial Python tests, controller ownership checks and the real
+controlled-provider Chromium workflow passed. The initial committed checkpoint passed all 43 aggregate gates. Independent review
+found a source-path reopen race and a stranded worker-launch failure; both are being
+repaired with focused regressions before fresh exact-source qualification. The UI
+review found no actionable issues. Canonical preparation reads one bounded verified
+byte buffer (128 MiB), and launch failure becomes a persisted failed attempt.
 
 Next slice: finish aggregate qualification and review, then return the tested
 local commit to the parent for publication review.
