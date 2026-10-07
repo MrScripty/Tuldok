@@ -41,6 +41,7 @@ async function preview(){await click('preview-release');await until(()=>evaluate
   const audit=spawnSync('git',['diff','--quiet',source,'--',...production],{cwd:root,encoding:'utf8'});assert.equal(audit.status,0,'Production sources must match reviewed development candidate');
   session.qa={head:git(root,'HEAD'),root};session.candidate={head:source,tree:git(root,source+'^{tree}'),root};session.legacy={head:git(legacy,'HEAD'),tree:git(legacy,'HEAD^{tree}'),root:legacy};
   assert.equal(session.legacy.head,'2fc4a46f12d73a0fa467d5482f68edb83d6df6af');
+  const legacyAudit=spawnSync('git',['diff','--quiet',session.legacy.head,'--',...production],{cwd:legacy,encoding:'utf8'});assert.equal(legacyAudit.status,0,'Legacy production sources must match frozen main');
   for(const filename of ['blue-book-qa.png','assets.jsonl']){const b=fs.readFileSync(path.join(fixture,filename));session.fixtures[filename]={bytes:b.length,sha256:hash(b)};}
   const candidate=await app(root,'candidate-data'), frozen=await app(legacy,'legacy-data');session.runtime.candidate=candidate;session.runtime.legacy=frozen;
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,1000','--user-data-dir='+path.join(temp,'browser'),'about:blank'],{stdio:['ignore','ignore','pipe'],env:{...process.env,XDG_CONFIG_HOME:temp,XDG_CACHE_HOME:temp}});

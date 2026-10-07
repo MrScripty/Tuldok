@@ -13,7 +13,7 @@ try{
   fs.mkdirSync(path.join(fake,'build/qa'),{recursive:true});
   fs.mkdirSync(path.join(fake,'docs/fixtures'),{recursive:true});
   fs.symlinkSync(path.join(fake,'docs/fixtures'),path.join(fake,'build/qa/aliased-suite'));
-  assert.throws(()=>qaDirectory(fake,'aliased-suite'),/ignored build\/output/);
+  assert.throws(()=>qaDirectory(fake,'aliased-suite',path.join(fake,'build/qa')),/ignored build\/output/);
   assert.deepEqual(fs.readdirSync(path.join(fake,'docs/fixtures')),[]);
 }finally{fs.rmSync(fake,{recursive:true,force:true});}
 const dir=qaDirectory(root,suite);assert.equal(qaDirectory(root,suite),dir);
