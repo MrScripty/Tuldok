@@ -70,6 +70,24 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('captionProposalStorageError'),'');assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),false);
   assert.equal(await evaluate('sessionStorage.getItem(captionProposalRecoveryKey)'),null);
   assert.equal((await request('caption-proposals')).jobs.length,inputBoundaryCount);
+  // Arm a lost-400 hook. Correctable invalid input must not reach it or storage.
+  await evaluate('window.captionValidationFetch=window.fetch;window.captionValidationPosts=0;window.captionValidationLostErrors=0;window.fetch=async(...args)=>{const post=args[0]==="/api/workbench/caption-proposals" && args[1]?.method==="POST";if(post)captionValidationPosts++;const response=await captionValidationFetch(...args);if(post && response.status===400){captionValidationLostErrors++;throw Error("Controlled lost 400 acknowledgement");}return response;};');
+  for(const guidance of ['   ','\u0085\u001c\u00a0\u3000','\ud800','visible\udffftext']) {
+    await start(guidance);
+    assert.equal(await evaluate('captionProposalStorageError'),'');assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),false);
+    assert.equal(await evaluate('sessionStorage.getItem(captionProposalRecoveryKey)'),null);
+    assert.equal((await request('caption-proposals')).jobs.length,inputBoundaryCount);
+  }
+  await fill('caption-proposal-url','http://127.0.0.1:'+modelPort+'/'.repeat(33000));await click('caption-proposal-models');
+  await until(()=>evaluate('document.getElementById(\"caption-proposal-model\").options.length===2'));await fill('caption-proposal-model','caption-fixture');
+  await start('Valid guidance with oversized exact URL');
+  assert.equal(await evaluate('captionProposalStorageError'),'');assert.equal(await evaluate('document.getElementById(\"caption-proposal-submit\").disabled'),false);
+  assert.equal(await evaluate('sessionStorage.getItem(captionProposalRecoveryKey)'),null);
+  assert.ok((await evaluate('document.getElementById(\"caption-proposal-status\").textContent')).includes('recovery bound'));
+  await fill('caption-proposal-url','http://127.0.0.1:'+modelPort);await click('caption-proposal-models');
+  await until(()=>evaluate('document.getElementById(\"caption-proposal-model\").options.length===2'));await fill('caption-proposal-model','caption-fixture');
+  assert.equal(await evaluate('captionValidationPosts'),0);assert.equal(await evaluate('captionValidationLostErrors'),0);
+  await evaluate('window.fetch=captionValidationFetch');
   await refresh();await start('\u{1f600}'.repeat(2000));
   await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed")'));
   const boundaryJob=(await request('caption-proposals')).jobs.find(j=>j.config.instruction==='\u{1f600}'.repeat(2000));
@@ -179,6 +197,21 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   // A storage write failure refuses admission before any network/model side effect.
   await fill('caption-proposal-url','http://127.0.0.1:'+modelPort);await click('caption-proposal-models');
   await until(()=>evaluate('document.getElementById("caption-proposal-model").options.length===2'));await fill('caption-proposal-model','caption-fixture');
+  const beforeLostErrorJobs=(await request('caption-proposals')).jobs.length,beforeLostErrorInference=await requestCount();
+  await evaluate('window.captionErrorNativeFetch=window.fetch;window.captionErrorResponses=[];window.fetch=async(...args)=>{const post=args[0]==="/api/workbench/caption-proposals" && args[1]?.method==="POST";if(post){const body=JSON.parse(args[1].body);body.instruction=" ";args[1]={...args[1],body:JSON.stringify(body)};}const response=await captionErrorNativeFetch(...args);if(post){captionErrorResponses.push(response.status);throw Error("Controlled lost backend validation error acknowledgement");}return response;};');
+  await start('Valid exact intent with unknown error response');
+  assert.deepEqual(await evaluate('captionErrorResponses'),[400]);const lostErrorBody=await evaluate('JSON.parse(sessionStorage.getItem(captionProposalRecoveryKey))');
+  assert.equal((await request('caption-proposals')).jobs.length,beforeLostErrorJobs);assert.equal(await requestCount(),beforeLostErrorInference);
+  await refresh();assert.equal(await evaluate('captionProposalPendingRequest.request_id'),lostErrorBody.request_id);
+  const errorFrame=(await send('Page.getFrameTree')).frameTree.frame;
+  await send('Page.reload');await until(()=>pageLoads.reloaded(errorFrame));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));await open(rows[0].id);await refresh();
+  assert.deepEqual(await evaluate('captionProposalPendingRequest'),lostErrorBody);
+  await start('Changed intent after lost error reply');assert.deepEqual(await evaluate('captionProposalPendingRequest'),lostErrorBody);
+  assert.equal((await request('caption-proposals')).jobs.length,beforeLostErrorJobs);assert.equal(await requestCount(),beforeLostErrorInference);
+  // No automatic replay; the user explicitly repeats the unchanged exact intent.
+  await start(lostErrorBody.instruction);await until(async()=> (await request('caption-proposals/'+lostErrorBody.request_id)).status==='completed');await refresh();
+  assert.equal(await requestCount(),beforeLostErrorInference+1);assert.equal(await evaluate('captionProposalPendingRequest'),null);
+  assert.deepEqual(await request('records/'+rows[0].id),reviewed,'Recovery and proposal creation never grant review or change targets');
   const beforeStorageFailure=await requestCount(),jobsBeforeStorageFailure=(await request('caption-proposals')).jobs.length;
   await evaluate('window.captionStorageSet=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key===captionProposalRecoveryKey)throw Error("Controlled storage quota failure");return captionStorageSet.call(this,key,value);};');
   await start('Storage unavailable');
@@ -186,6 +219,6 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),true);
   await evaluate('Storage.prototype.setItem=captionStorageSet');
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reload_changed_intent_posts:0,storage_failure_posts:0,fresh_guidance_2001_latched_storage_error:false,corrected_non_bmp_guidance_codepoints:2000,corrected_non_bmp_guidance_utf16_units:4000,corrected_without_reload:true,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'fresh guidance2001 recoverable error then2000 non-BMP correction without reload; held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
+  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reload_changed_intent_posts:0,storage_failure_posts:0,fresh_guidance_2001_latched_storage_error:false,fresh_whitespace_surrogate_posts:0,oversized_exact_url_posts:0,oversized_exact_url_corrected_without_reload:true,loss_hook_armed_for_fresh_invalid:true,lost_validation_error_http_status:400,lost_error_id:lostErrorBody.request_id,lost_error_reload_changed_posts:0,lost_error_explicit_retry_requests:1,corrected_non_bmp_guidance_codepoints:2000,corrected_non_bmp_guidance_utf16_units:4000,corrected_without_reload:true,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'fresh whitespace/Python Unicode whitespace/surrogates prevented before storage with lost400 hook armed; real transport-injected backend400/lost reply/404/fresh document/changed intent refusal/exact explicit repeat; fresh guidance2001 recoverable error then2000 non-BMP correction without reload; held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
   console.log('Caption proposal real HTTP/Chromium controlled lifecycle, lost-response recovery, draft review separation, navigation and pinned consumer passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

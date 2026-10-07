@@ -1,0 +1,39 @@
+{
+  "source_head": "9483d4a2f5c1391b3f882e107cee6846aeb36a39",
+  "source_tree": "0fe33807c03e582c3a5ce9f4403be37e570e8f59",
+  "all_passed": true,
+  "results": [
+    {
+      "url_length": 33021,
+      "fresh_correctable": true,
+      "legacy_evidence_retained": true
+    },
+    {
+      "url_length": 33024,
+      "fresh_correctable": true,
+      "legacy_evidence_retained": true
+    },
+    {
+      "url_length": 33021,
+      "fresh_correctable": true,
+      "legacy_evidence_retained": true
+    },
+    {
+      "url_length": 33021,
+      "fresh_correctable": true,
+      "legacy_evidence_retained": true
+    },
+    {
+      "json_utf16_units": 32767,
+      "expected": "exact persistence, lost response, reload 404, changed intent refusal and repeated 400 evidence retained"
+    },
+    {
+      "json_utf16_units": 32768,
+      "expected": "exact persistence, lost response, reload 404, changed intent refusal and repeated 400 evidence retained"
+    },
+    {
+      "json_utf16_units": 32769,
+      "expected": "fresh correctable refusal"
+    }
+  ]
+}

@@ -8,19 +8,54 @@ function captionProposalIntent(body) {
   return {source_id:body.source_id,revision:body.revision,source_revision:body.source_revision,
     server_url:body.server_url,model:body.model,instruction:body.instruction,seed:body.seed};
 }
+// Match Python's strip/isspace set; JS trim differs for U+0085, U+001C–1F and FEFF.
+const captionProposalWhitespace = /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/u;
+function captionProposalStrip(value) {
+  return value.replace(/^[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu,'');
+}
+function captionProposalText(value,name,maximum,controls=false) {
+  if(typeof value!=='string' || [...value].length>maximum || !captionProposalStrip(value) ||
+     [...value].some(c=>c.codePointAt(0)>=0xd800 && c.codePointAt(0)<=0xdfff) ||
+     (controls && /[\u0000-\u001f]/u.test(value)))
+    throw Error(`${name} must be nonempty valid Unicode text, at most ${maximum.toLocaleString('en-US')} Unicode code points${controls?', without control characters':''}.`);
+}
+function captionProposalServerURL(value) {
+  if(typeof value!=='string')throw Error('Enter the local model server URL.');
+  const stripped=captionProposalStrip(value);
+  if(!stripped || [...stripped].some(c=>captionProposalWhitespace.test(c) || c.codePointAt(0)<32 ||
+     (c.codePointAt(0)>=0xd800 && c.codePointAt(0)<=0xdfff)))
+    throw Error('Enter a server URL without internal whitespace, control characters or invalid Unicode.');
+  // Check the original authority before WHATWG URL can repair missing slashes/hosts.
+  const parts=/^(https?):\/\/([^/?#]+)([^?#]*)(?:\?([^#]*))?(?:#(.*))?$/iu.exec(stripped);
+  if(!parts || parts[2].includes('@') || parts[4] || parts[5])
+    throw Error('Use an HTTP or HTTPS server URL with a hostname, without credentials, query or fragment.');
+  const authority=parts[2];
+  const normalizedAuthority=authority.replace(/[@:#?]/gu,'').normalize('NFKC');
+  if(/[/?#@:]/u.test(normalizedAuthority))throw Error('Use a hostname without characters that normalize to URL delimiters.');
+  // Backslashes can be reinterpreted by WHATWG as path separators; urlsplit does not.
+  if(authority.includes('\\'))throw Error('Use a server hostname without backslashes.');
+  let url;try {url=new URL(stripped);}catch {throw Error('Enter a valid HTTP or HTTPS server URL.');}
+  const port=authority.startsWith('[')?authority.slice(authority.indexOf(']')+1):authority.slice(authority.indexOf(':')<0?authority.length:authority.indexOf(':'));
+  if(!url.hostname || (port && !/^:(?:[0-9]*)$/u.test(port)) || (port.length>1 && (Number(port.slice(1))===0 || Number(port.slice(1))>65535)))
+    throw Error('Use a valid server hostname and port from 1 to 65535.');
+  // The backend bounds its normalized URL, before any percent encoding by WHATWG.
+  let path=parts[3].replace(/\/+$/u,'');if(path.endsWith('/v1'))path=path.slice(0,-3);
+  captionProposalText(parts[1].toLowerCase()+'://'+authority+path,'Server URL',2048);
+}
 function captionProposalRecoveryBody(body) {
   const fields=['source_id','revision','source_revision','server_url','model','instruction','seed','request_id'];
   if(!body || typeof body!=='object' || Object.keys(body).length!==fields.length || fields.some(field=>!Object.hasOwn(body,field)) ||
-     typeof body.request_id!=='string' || typeof body.source_id!=='string' || !/^[a-f0-9]{32}$/.test(body.request_id) || !/^[a-f0-9]{32}$/.test(body.source_id) ||
+     typeof body.request_id!=='string' || typeof body.source_id!=='string' || body.request_id.length!==32 || body.source_id.length!==32 || !/^[a-f0-9]{32}$/.test(body.request_id) || !/^[a-f0-9]{32}$/.test(body.source_id) ||
      !Number.isSafeInteger(body.revision) || body.revision<1 || !Number.isSafeInteger(body.source_revision) || body.source_revision<1 ||
-     !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295 ||
-     typeof body.server_url!=='string' || body.server_url.length>2048 || typeof body.model!=='string' || [...body.model].length>200 ||
-     typeof body.instruction!=='string') throw Error('Invalid recovery intent.');
-  if([...body.instruction].length>2000)throw Error('Caption guidance must be at most 2,000 Unicode code points.');
-  const url=new URL(body.server_url);
-  if(!['http:','https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash)
-    throw Error('Use a server URL without credentials, query or fragment.');
-  return {...captionProposalIntent(body),request_id:body.request_id};
+     !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295)
+    throw Error('Invalid request identifiers, revisions or seed.');
+  captionProposalServerURL(body.server_url);
+  captionProposalText(body.model,'Model ID',200,true);
+  captionProposalText(body.instruction,'Caption guidance',2000);
+  // Validate without rewriting the exact body used for the backend intent hash.
+  const intent={...captionProposalIntent(body),request_id:body.request_id};
+  if(JSON.stringify(intent).length>32768)throw Error('Exact request exceeds this tab’s recovery bound. Shorten the server URL and submit again.');
+  return intent;
 }
 function captionProposalStoredRequest() {
   const data=sessionStorage.getItem(captionProposalRecoveryKey);

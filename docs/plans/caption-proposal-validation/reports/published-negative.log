@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: Invalid fresh settings must never reach admission: {"instruction":" "}
+
+1 !== 0
+
+    at /workspace/Tuldok-caption-validation-local/tests/test_caption_reload_controller.cjs:62:12 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

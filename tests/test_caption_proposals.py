@@ -85,6 +85,39 @@ class CaptionProposalTests(unittest.TestCase):
         self.assertEqual(self.data.caption_proposals.get(job['id'])['application']['revision'],row['revision'])
         self.assertEqual(self.data.workbench.get(row['id'])['target_proposal'],row['target_proposal'])
 
+    def test_invalid_static_intent_never_persists_or_invokes_model(self):
+        before = self.state()
+        changes = ([{'instruction': value} for value in ('', ' ', '\u0085\u001c\u3000', '\ud800', '\udfff', 'a'*2001, '\U0001f600'*2001)] +
+                   [{'model': value} for value in ('', ' ', '\u0085', '\x00fixture', 'fixture\n', '\ud800', 'a'*201, '\U0001f600'*201)] +
+                   [{'server_url': value} for value in ('http:///v1', 'http:/host', 'http:/\\host', 'file://host', 'http://@host',
+                       'http://host:0', 'http://host:65536', 'http://host/a b', 'http://host/a\u0085b', 'http://host/\ud800',
+                       'http://host?q=1', 'http://host#fragment', 'http://host/'+'a'*2048, 'http://host/'+'\U0001f600'*2048)] +
+                   [{'request_id': 'a'*32+'\n'}, {'source_id': 'a'*32+'\n'}, {'revision': True}, {'source_revision': 0},
+                    {'seed': True}, {'seed': -1}, {'seed': 2**32}, {'seed': 1.5}, {'extra': 'unrequested'}])
+        for change in changes:
+            with self.subTest(change=repr(change)):
+                with self.assertRaises((WorkbenchError, ValueError)):
+                    self.data.caption_proposals.start(self.config(**change))
+                self.assertEqual(self.state(), before)
+                self.assertEqual(self.requests, [])
+
+    def test_normalized_config_preserves_raw_exact_replay_identity(self):
+        from workbench import encode
+        body = self.config(server_url=' \u0085'+self.url+'/v1///\u3000 ',
+                           model='\u0085caption-fixture\u00a0', instruction='\u001c  Visible pixels \u0085')
+        job = self.data.caption_proposals.start(body)
+        self.data.caption_proposals.worker.join(3)
+        job = self.data.caption_proposals.get(job['id'])
+        self.assertEqual(job['status'], 'completed', job['error'])
+        self.assertEqual(job['config']['server_url'], self.url)
+        self.assertEqual(job['config']['model'], 'caption-fixture')
+        self.assertEqual(job['config']['instruction'], 'Visible pixels')
+        self.assertEqual(job['intent_sha256'], hashlib.sha256(encode(body).encode()).hexdigest())
+        self.assertEqual(self.data.caption_proposals.start(body)['id'], job['id'])
+        with self.assertRaisesRegex(WorkbenchError, 'different request'):
+            self.data.caption_proposals.start(dict(body, instruction=job['config']['instruction']))
+        self.assertEqual(len(self.requests), 1)
+
     def test_request_id_reconciles_lost_start_without_more_inference(self):
         body=self.config();job=self.data.caption_proposals.start(body);self.data.caption_proposals.worker.join(3)
         count=len(self.requests)
