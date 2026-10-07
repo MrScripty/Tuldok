@@ -1,0 +1,10 @@
+{
+  "source_head": "c0de883159025491d5283c52514c7c762f53c4cc",
+  "preliminary_manifest_sha256": "dbef09002867e45d7ccb067d92e882c045158600f97e59316de7b1152d683dce",
+  "prior11_unchanged": true,
+  "files": {
+    "freeze_merge_review.py": "236821df9579e86342e53d3f779f5bf52d10fde868e81bd7449654a39f02554f",
+    "receipt_c0de883.json": "dc42f39db37df7dd1aa4cc74ef0879dda355d8e0b507d82fbf0510bffc56fd6f",
+    "review_c0de883.md": "7409dccbaa2e51e3e0fe1c3c30ff4f11a2851311ccd3ff491c0508e4897c5941"
+  }
+}

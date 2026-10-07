@@ -1,0 +1,11 @@
+{
+  "composed-preference-classification.cjs": "e194807f26bd0b5e1409e1344913747f92d576cd29688db415f814f66da340e8",
+  "final-16cases.log": "7716c755076b3a8c3115cf5c68293aed412b3256c16725ba0006b4948aa38a8f",
+  "qualified-atomic-helpers.cjs": "bc0455896fbeee5f2689401a273ca34ed6d56e9567540463b8f7efa9f2d7ad99",
+  "receipt-c0de.json": "31586d0a84a1ebfe45ad757a53fb2176251a4db4dc6e8394b2c7e38df15f2b95",
+  "review-c0de.md": "9e2f7b56193115ec4c7fd57cb657c7c9bc41cd45e579c1d0ab08e28b802e0dc8",
+  "source-after.json": "a8586955a53a82849e2f4ff938546d15423e94756adabc26ea9b51aa5227c7e6",
+  "source-audit-assumption-diagnostic.txt": "c518634dbe1625db3322d4e89644b18e660d74ca8c0ff3bb74844df85d1e208f",
+  "source-audit-workbench-hooks.diff": "98859aa2116efd9a43aa741f4bcbce794bf6b0181ad94b030e15e9846c87ef15",
+  "source-before.json": "fad73ad3990e30556fa5d5fa05e3c1724086a698cc0507c6721e590a1b23af93"
+}

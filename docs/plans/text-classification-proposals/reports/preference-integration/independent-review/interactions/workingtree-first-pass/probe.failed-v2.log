@@ -1,0 +1,11 @@
+PASS preference dirty blocks classification submit and apply
+PASS response dirty blocks classification submit and apply
+PASS late class Apply retains preference intent and invalidates judgment proof
+PASS late class Apply retains response intent and invalidates judgment proof
+PASS late class Apply retains annotation intent and invalidates judgment proof
+PASS uncertain Apply invalidates preference proof without parent adoption
+PASS clean Apply adopts draft and retains fixed judgments/answers/record pairs
+TypeError: Cannot read properties of undefined (reading 'dispatch')
+    at Object.reject (/workspace/scratch/tuldok-classification-preference-integration/review-interactions/workingtree-first-pass/composed-preference-classification.cjs:35:88)
+    at heldPreferenceMutation (/workspace/scratch/tuldok-classification-preference-integration/review-interactions/workingtree-first-pass/composed-preference-classification.cjs:46:445)
+    at async /workspace/scratch/tuldok-classification-preference-integration/review-interactions/workingtree-first-pass/composed-preference-classification.cjs:51:201

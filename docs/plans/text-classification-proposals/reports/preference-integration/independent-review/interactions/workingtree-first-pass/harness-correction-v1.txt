@@ -1,0 +1,1 @@
+Initial annotation-late-intent case dispatched directly at a synthetic label element whose DOM did not implement event bubbling. Production listens for input on editor. Route the synthetic input through the editor listener to model actual native bubbled input. Initial failure/script retained verbatim. No production defect identified by the initial harness failure.

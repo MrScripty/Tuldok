@@ -1,0 +1,63 @@
+{
+  "result": "PASS",
+  "fixture": "tests/browser_classification_preferences_integration.cjs",
+  "fixture_sha256": "a5bdb8c35a3740377361f110d747812fb4c623cfa12c669ed04636793542fbd2",
+  "gate": "node tests/browser_classification_preferences_integration.cjs",
+  "focused_run": "/workspace/scratch/tuldok-classification-preferences-integration/run-rLl1aW",
+  "source_head": "7ec7e47a090467fa37b68d33a7e81438828eea9d",
+  "qualification_scope": "Focused source-stable working-tree merge candidate; final aggregate must rerun frozen commit.",
+  "source_sha256": {
+    "static/workbench.js": "fec1095ecbe83516f0eb40ee17772fdfbfea3a1c75244c531fbc41acf2d451f4",
+    "static/preferences.js": "9d2af15422ee81bf79c35af7c87beaebe870b4acb1ee2b4c1fd229be9f5f2606",
+    "static/instruction-responses.js": "3fb4fb8d78154bedb37ef90afbcc269fdab0938c4ac50236f38a7f26f54ac940",
+    "static/text-classification-proposals.js": "8adc70abde59a65f584a038d777e48182b85bf5abf288dc2c5369f2fefe23cd5",
+    "static/workbench.html": "f539de40dd657ec6ac2dcb72e3dde0c83333933045cfa2fb8dde5740a695b180",
+    "tests/browser_classification_preferences_integration.cjs": "a5bdb8c35a3740377361f110d747812fb4c623cfa12c669ed04636793542fbd2",
+    "tests/browser_text_classification_proposals_server.py": "41e1163104d30621e660e00ff2f6aeee7d7f43dda895d5cbbf1cc1229abe1068"
+  },
+  "artifacts_sha256": {
+    "combined-desktop.png": "3f1c1775d7be8c5d4fbe3c5636b64a3747fcd48f178a2daca093f195e9a986f2",
+    "combined-narrow.png": "e64cdbd0689a837ea9dab1d57376057fe10a532afbcd2b1dc165fd0acfa6762c",
+    "session.json": "b6d2070f5aed5dede8d9c1608dbc921cd2d946c0fb5eb0b35bbf685d4ceedf7b"
+  },
+  "focused_log_sha256": "5abc5f35461b77a4679fe7638eaa44997678212f9ac7eebd0eb3a7b0275eddd5",
+  "scenarios": [
+    "Immediate preference proof invalidation success",
+    "Immediate preference proof invalidation uncertain",
+    "Held classification Apply retains later judgment draft",
+    "Classification Reject preserves unrelated judgment save owner",
+    "Recovery unchanged across actual answer and judgment saves"
+  ],
+  "negative_sensitivity": {
+    "result": "EXPECTED_FAIL",
+    "run": "/workspace/scratch/tuldok-classification-preferences-integration/run-Ib3nUQ",
+    "log_sha256": "1506291b836d2d47d95ed8feb54a48ea32be880b44adc016f20eaf03576ae3e5",
+    "session_sha256": "e8b547211ea654e92e6d12a71f16522f7624f9e83fed11dddecbbf9b73b78939",
+    "failure": "Classification success must immediately invalidate preference proof before list reconciliation",
+    "actual_unsafe_proof": "eligible=true and freeze enabled with canonical parent revision2 and preference GET held",
+    "method": "Browser realm skips invalidatePreferencePreview only for calls from decideTextClassificationProposal; production files untouched.",
+    "source_hash_note": "Production classification JS identical across negative and final pass; fixture negative preceded screenshot-only details-collapse/intersection refinement."
+  },
+  "screenshots": [
+    {
+      "filename": "combined-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 807
+      },
+      "sha256": "3f1c1775d7be8c5d4fbe3c5636b64a3747fcd48f178a2daca093f195e9a986f2"
+    },
+    {
+      "filename": "combined-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "e64cdbd0689a837ea9dab1d57376057fe10a532afbcd2b1dc165fd0acfa6762c"
+    }
+  ],
+  "visual_inspection": "PASS: actual classification proposal actions and comparative judgment panel visible at1400x807 and390x844; controls wrap, no horizontal overflow.",
+  "unchanged_evidence": "Earlier runs/logs/source snapshots retained; no old report overwritten.",
+  "edits": "Only new tests/browser_classification_preferences_integration.cjs; parent owns production and gate registration.",
+  "limitations": "Bounded synthetic HTTP validates ownership/recovery/export proof, not real inference or training quality."
+}

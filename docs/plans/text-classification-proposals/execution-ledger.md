@@ -1,5 +1,17 @@
 # Execution ledger
 
+Frozen normal merge `c0de883159025491d5283c52514c7c762f53c4cc`, tree
+`ab990b09085cc26d057cbe8d13746f1ea3913086`, passed 50/50 aggregate gates and
+285 Python tests in 395.697 seconds. Independent backend nine-check byte-bound
+review and interaction sixteen-case exact-commit rerun found no scoped issues.
+All 127 source hashes and 3,339 prior reports were preserved, including eight
+preexisting ignored/untracked files backed up outside the checkout. The bounded
+new native fixture also fails at the intended cached-preview assertion when only
+the new invalidation hooks are disabled in memory. Raw positive/negative focus
+runs and reviewer harness setup faults remain preserved alongside final receipts.
+An evidence-only successor publishes these results before a normal PR18 branch
+push; no protected branch writes, PR merge or CodeRabbit request are authorized.
+
 2026-10-07, preference development integration authorized by the owner after
 PR19 landed at development `321f710a9b185bf6e9eac518579c083079a6d751`.
 PR18 remains unmerged and awaits its owner review exception. Normal merge of

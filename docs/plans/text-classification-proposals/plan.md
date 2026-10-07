@@ -2,6 +2,11 @@
 
 ## Preference development integration
 
+Exact integration source `c0de883159025491d5283c52514c7c762f53c4cc` passed all
+50 registered checks and 285 Python tests. Every 127-file source snapshot stayed
+stable and all 3,339 prior reports retained their exact bytes. Both independent
+reviews found no scoped issues. [Integration evidence](reports/preference-integration/verification.md).
+
 Owner-authorized integration merges development
 `321f710a9b185bf6e9eac518579c083079a6d751` into the existing PR18 branch from
 `7ec7e47a090467fa37b68d33a7e81438828eea9d`. Five shared-file conflicts retain
