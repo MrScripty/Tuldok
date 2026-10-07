@@ -24,6 +24,7 @@ jobs:
       - run: node --check static/caption_import.js
       - run: node --check static/native_text_import.js
       - run: node tests/test_browser_page_load.cjs
+      - run: node tests/test_browser_startup.cjs
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
