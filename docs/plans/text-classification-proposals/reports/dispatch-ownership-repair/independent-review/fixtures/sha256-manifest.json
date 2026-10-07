@@ -1,0 +1,19 @@
+{
+  "review_sha256": {
+    "final-native-audit.json": "4d61158e2cd5abb049ed24261c55adfc317ffab4347bfb459f5b86fa3a2cbd5d",
+    "final-native-review.md": "e6d29d32561e25db2fefff632e539a4feb302080c6270517816fc27182418a7d"
+  },
+  "native_artifact_sha256": {
+    "classification-desktop.png": "2f85c8500f25c3cbd2ff431c5fbad7ac0558c7a3da937e81c1f7c5dc43742782",
+    "classification-narrow.png": "9918a470da1e42ace04245e384143ab6be63ba1ea99644ffd266faf96b770498",
+    "classification-reviewed.zip": "4774a8308709b576718cbdaa3474543fd7425a1b4a217c6fbb259181bb729d73",
+    "cross-tab-dispatch-observation.json": "f5cbf506920e45fd66224993ad92e95930c0a07354e4165eccf1758f3b454d84",
+    "early404-reload-observation.json": "d51fc266022c7bfbc1985950ecad4ce9cefc524970eff75fe70678d83cab50cb",
+    "native-validation-observation.json": "0e88de9138e203f1f743f8ab4fd695e85298ffa245fe57d78a56799b2773c2ce",
+    "reload-recovery-observation.json": "50636f6ad44252ad5b1cd19d8d1f0462d6912a04e2f2e781dea55d9c6988e75c",
+    "session.json": "f0f7d8af5dc65b61044b4cf88abcdd01663f3ef68b97136210834ddc2e119215",
+    "storage-failure-observation.json": "88a1878c20d35b813bc259c770ca958e938b6a4361f4ab7a7728e1ea0121c7cc"
+  },
+  "qualification_receipt_sha256": "6d4b42aa69d33e28a8523430ae4134fcc4718f83c3183993380e4eb29088cd84",
+  "qualification_baseline_sha256": "64174b60573243f48aa0afedf096a669e42b130e607a0822a375699f88c4ad23"
+}

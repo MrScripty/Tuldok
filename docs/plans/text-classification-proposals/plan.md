@@ -1,6 +1,12 @@
 # Text classification proposals
 
-## Active review successor: cross-tab dispatch ownership
+## Qualified review successor: cross-tab dispatch ownership
+
+Exact repair source `824e3ee1181184e2284875e5a08ebd1406318bfc` passed all
+46 aggregate gates and 273 Python tests. All 119 runtime/test source hashes stayed
+stable. Independent native backend, interaction and final artifact audits found
+no remaining scoped findings. [Repair evidence](reports/dispatch-ownership-repair/verification.md)
+supersedes the older cross-tab cleanup claim; parent acceptance of PR18 remains open.
 
 Parent review of published PR #18 head
 `b1d0a453ea24653fa40f08c08f41e56375663521` reproduced a delayed initial

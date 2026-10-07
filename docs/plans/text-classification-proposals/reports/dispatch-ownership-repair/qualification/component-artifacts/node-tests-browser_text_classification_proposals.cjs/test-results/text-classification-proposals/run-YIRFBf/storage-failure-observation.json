@@ -1,0 +1,77 @@
+{
+  "get_failure_posts": 0,
+  "set_failure_posts": 0,
+  "remove_failure_blocked_posts": 2,
+  "removal_body": {
+    "source_id": "89f4f0d4149144e5b93315b76f67e014",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:34203/v1/",
+    "model": "classification-fixture",
+    "instruction": "Admitted removal failure",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "198974c627724d408eebebccb06f33ff"
+  },
+  "retired_authority": {
+    "has_pending": false,
+    "initialized": {
+      "schema_version": 1,
+      "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"89f4f0d4149144e5b93315b76f67e014\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:34203/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Admitted removal failure\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"198974c627724d408eebebccb06f33ff\"}}"
+    }
+  },
+  "canonical_retired_mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"89f4f0d4149144e5b93315b76f67e014\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:34203/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Admitted removal failure\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"198974c627724d408eebebccb06f33ff\"}}",
+  "final_posts": [
+    {
+      "source_id": "89f4f0d4149144e5b93315b76f67e014",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:34203/v1/",
+      "model": "classification-fixture",
+      "instruction": "Must block setItem failure",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "c1450c37906448e9a5b5bf4440939822"
+    },
+    {
+      "source_id": "89f4f0d4149144e5b93315b76f67e014",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:34203/v1/",
+      "model": "classification-fixture",
+      "instruction": "Admitted removal failure",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "198974c627724d408eebebccb06f33ff"
+    },
+    {
+      "source_id": "89f4f0d4149144e5b93315b76f67e014",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:34203/v1/",
+      "model": "classification-fixture",
+      "instruction": "Fresh intent after storage recovers",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "a06529bae74a46f1aff4e7977d5eda22"
+    }
+  ],
+  "baseline_inference": 7,
+  "final_inference": 10
+}

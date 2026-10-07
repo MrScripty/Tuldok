@@ -98,3 +98,18 @@ and exact published source are snapshotted under
 `/workspace/scratch/tuldok-classification-dispatch-repair/baseline/`;
 new focused and aggregate evidence must remain separate. Parent owns PR18
 acceptance; only its branch push is authorized, with no merge or CodeRabbit request.
+
+Exact repair commit `824e3ee1181184e2284875e5a08ebd1406318bfc`, tree
+`45bbb665da96a719d5e9ae900ce6439bcd2e1f70`, passed all 46 aggregate gates
+and 273 Python tests in 311.037 seconds. Every gate retained the same 119 source
+hashes (`e720c4d86a085c051f4bc65ffe46265189747c54ea49adb5eb274e3ca6fc80f7`)
+and an empty source diff. All 2,993 pre-run report files, including 2,990 tracked
+files and the original 2,939 published report files, remain byte-identical.
+Independent backend review passed 16 native IndexedDB cases and actual busy409 /
+GET404 / later same-ID202 admission with one synthetic provider request; interaction
+review passed 11 exact-commit cases. The final native run `run-YIRFBf` retains nine
+artifacts, actual overlapping same-ID dispatches, lost-acknowledgement reload,
+terminal cleanup ownership and explicit crash recovery. Known matching receipts
+can retire recognizable same-raw corrupt counters; foreign, opaque, unknown-version
+and orphan evidence stays blocked. The evidence-only successor must preserve all
+119 qualified source hashes before updating PR18. No merge or CodeRabbit request.

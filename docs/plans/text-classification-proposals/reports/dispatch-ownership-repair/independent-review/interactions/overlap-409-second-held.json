@@ -1,0 +1,48 @@
+{
+  "status": 409,
+  "secondAckLost": false,
+  "original": {
+    "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:2000/",
+    "model": "fixture",
+    "instruction": "Exact cross-tab shared intent",
+    "seed": 42,
+    "labels": [
+      "schedule",
+      "cancel"
+    ],
+    "request_id": "14555f235b9b450d895ba320a4396ba8"
+  },
+  "retainedAfterRefusal": {
+    "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"revision\":2,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:2000/\",\"model\":\"fixture\",\"instruction\":\"Exact cross-tab shared intent\",\"seed\":42,\"labels\":[\"schedule\",\"cancel\"],\"request_id\":\"14555f235b9b450d895ba320a4396ba8\"}}",
+    "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"revision\":2,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:2000/\",\"model\":\"fixture\",\"instruction\":\"Exact cross-tab shared intent\",\"seed\":42,\"labels\":[\"schedule\",\"cancel\"],\"request_id\":\"14555f235b9b450d895ba320a4396ba8\"}}",
+    "attempt": {
+      "schema_version": 1,
+      "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"revision\":2,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:2000/\",\"model\":\"fixture\",\"instruction\":\"Exact cross-tab shared intent\",\"seed\":42,\"labels\":[\"schedule\",\"cancel\"],\"request_id\":\"14555f235b9b450d895ba320a4396ba8\"}}",
+      "generation": 2
+    },
+    "leftRecoveryId": "14555f235b9b450d895ba320a4396ba8",
+    "secondUnresolved": true
+  },
+  "changedIntentPostCount": 0,
+  "exactRetryGeneration": 3,
+  "knownCanonicalReceiptRetiredWholeId": true,
+  "successor": {
+    "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:2000/",
+    "model": "fixture",
+    "instruction": "Fresh explicit intent after canonical receipt",
+    "seed": 42,
+    "labels": [
+      "schedule",
+      "cancel"
+    ],
+    "request_id": "dad8d9d1055b4cef9313b590bf863509"
+  },
+  "staleReceiptPreservedSuccessor": true,
+  "providerCallsPerformed": 0
+}
