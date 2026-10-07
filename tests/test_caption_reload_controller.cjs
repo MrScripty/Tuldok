@@ -44,6 +44,90 @@ const persisted=(id,status='completed')=>({id,status,source:row,config:{model:'f
     const corrupt=storage(),data=JSON.stringify({...body,instruction});corrupt.data.set(key,data);const blocked=page(corrupt);blocked.intent();await blocked.submit();
     assert.equal(blocked.requests.length,0);assert.equal(corrupt.data.get(key),data);assert.ok(blocked.run('captionProposalStorageError'));assert.equal(blocked.$('caption-proposal-submit').disabled,true);
   }
+  const whitespace=['',' ','\t\r\n','\u0085','\u001c\u001f','\u00a0\u1680\u2000\u200a\u2028\u2029\u202f\u205f\u3000'];
+  const invalidSettings=[
+    ...whitespace.map(instruction=>({instruction})),...whitespace.map(model=>({model})),
+    ...['\u0000','\u001f','\ud800','\udfff','fixture\n'].map(model=>({model})),
+    ...['\ud800','\udfff','visible\ud800text'].map(instruction=>({instruction})),
+    ...['http:///v1','http:/host','http:host','https://','file://host','ftp://host','//host',
+      'http:/\\host','http://host:0','http://host:00000','http://host:65536','http://host:-1',
+      'http://host:abc','http://host/a b','http://host/a\tb','http://host/a\u0085b','http://host/\u0000',
+      'http://@host','http://user@host','http://:pass@host','http://host?q=1','http://host#frag',
+      'http://host/\ud800','http://host/\udfff','http://ho\uff1ast',
+      'http://host/'+'a'.repeat(2048), 'http://host/'+'\u{1f600}'.repeat(2048)].map(server_url=>({server_url})),
+    {model:'a'.repeat(201)},{model:'\u{1f600}'.repeat(201)},{model:' '+'a'.repeat(200)}
+  ];
+  for(const changes of invalidSettings) {
+    const freshStore=storage(),form=page(freshStore);form.intent({...body,...changes});await form.submit();
+    assert.equal(form.requests.length,0,'Invalid fresh settings must never reach admission: '+JSON.stringify(changes));
+    assert.equal(freshStore.data.size,0);assert.equal(form.run('captionProposalStorageError'),'');assert.equal(form.$('caption-proposal-submit').disabled,false);
+    form.intent();const corrected=form.submit(),post=form.take('caption-proposals',true);
+    assert.deepEqual(JSON.parse(JSON.stringify(post.body)),{...body,request_id:'1'.repeat(32)});
+    post.reject(Object.assign(Error('Definite first-attempt refusal'),{status:400}));await corrected;assert.equal(freshStore.data.size,0);
+    // Preexisting invalid evidence has an unknown history; retain it instead of granting a new intent.
+    const stored=storage(),raw=JSON.stringify({...body,...changes});stored.data.set(key,raw);const blocked=page(stored);blocked.intent();await blocked.submit();
+    assert.equal(blocked.requests.length,0);assert.equal(stored.data.get(key),raw);assert.ok(blocked.run('captionProposalStorageError'));
+  }
+  const urlPrefix='http://host/';
+  const acceptedSettings=[
+    {instruction:'\ufeff'},{instruction:'\u180e'},{instruction:'\u0000Visible\u0000'},
+    {instruction:'\u0085 Visible \u001c'}, {instruction:'\u{1f600}'.repeat(2000)},
+    {model:'m'.repeat(200)},{model:'\u{1f600}'.repeat(200)},{model:'\u0085fixture\u00a0'},
+    {server_url:' \u0085HTTP://host:80/base/v1///\u00a0 '},
+    {server_url:'http://[::1]:8765/v1'}, {server_url:'http://host:'}, {server_url:'http://host:65535'},
+    {server_url:urlPrefix+'a'.repeat(2048-urlPrefix.length)},
+    {server_url:urlPrefix+'\u{1f600}'.repeat(2048-urlPrefix.length)},
+    {server_url:urlPrefix+'a'.repeat(2048-urlPrefix.length)+'/v1///'},
+    {seed:0},{seed:4294967295}
+  ];
+  for(const changes of acceptedSettings) {
+    const validStore=storage(),form=page(validStore);form.intent({...body,...changes});const started=form.submit(),post=form.take('caption-proposals',true);
+    assert.deepEqual(JSON.parse(JSON.stringify(post.body)),{...body,...changes,request_id:'1'.repeat(32)},'Validation must preserve exact raw intent');
+    assert.deepEqual(JSON.parse(validStore.data.get(key)),JSON.parse(JSON.stringify(post.body)));
+    post.reject(Object.assign(Error('Definite first-attempt refusal'),{status:400}));await started;
+  }
+  const shapeCases=[{request_id:'a'.repeat(32)+'\n'},{source_id:'a'.repeat(32)+'\n'},{request_id:'A'.repeat(32)},
+    {source_id:''},{revision:true},{revision:0},{revision:1.5},{source_revision:'1'},{source_revision:0},
+    {seed:true},{seed:-1},{seed:4294967296},{seed:1.5},{seed:'42'},
+    {server_url:null},{model:null},{instruction:null},{extra:'unrequested'}];
+  const validator=page(storage());
+  for(const changes of shapeCases){validator.run('globalThis.probe='+JSON.stringify({...body,...changes}));assert.throws(()=>validator.run('captionProposalRecoveryBody(probe)'),JSON.stringify(changes));}
+  // Use the real Python validators as an independent oracle for the entire static contract.
+  const candidates=[body,...invalidSettings.map(change=>({...body,...change})),...acceptedSettings.map(change=>({...body,...change})),...shapeCases.map(change=>({...body,...change}))];
+  const oracle=require('node:child_process').spawnSync(process.env.PYTHON||'python',['-c',`
+import json,sys,ai_http
+from workbench import IDENTIFIER,text_value
+out=[]
+for body in json.load(sys.stdin):
+ try:
+  assert set(body)=={'source_id','revision','source_revision','server_url','model','instruction','seed','request_id'}
+  for key in ('request_id','source_id'): assert isinstance(body[key],str) and IDENTIFIER.fullmatch(body[key])
+  for key in ('revision','source_revision'): assert type(body[key]) is int and body[key]>=1
+  assert type(body['seed']) is int and 0<=body['seed']<=2**32-1
+  text_value(ai_http.validate_url('llamacpp',body['server_url']),'Server URL',2048)
+  text_value(ai_http.validate_model(body['model']),'Model ID',200)
+  text_value(body['instruction'],'Caption guidance',2000)
+  out.append(True)
+ except (AssertionError,ValueError,TypeError): out.append(False)
+json.dump(out,sys.stdout)
+`],{cwd:process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..'),input:JSON.stringify(candidates),encoding:'utf8'});
+  assert.equal(oracle.status,0,oracle.stderr);const verdicts=JSON.parse(oracle.stdout);
+  for(const [index,candidate] of candidates.entries()) {
+    validator.run('globalThis.probe='+JSON.stringify(candidate));let accepted=true;
+    try{validator.run('captionProposalRecoveryBody(probe)');}catch{accepted=false;}
+    assert.equal(accepted,verdicts[index],'Backend admission parity: '+JSON.stringify(candidate));
+  }
+  // A lost error reply after a valid POST still cannot prove no admission occurred.
+  const lostStore=storage(),lostPage=page(lostStore);lostPage.intent();const lost=lostPage.submit(),lostPost=lostPage.take('caption-proposals',true);
+  const lostBody=JSON.parse(JSON.stringify(lostPost.body));lostPost.reject(Error('Lost 400 error response'));await lost;
+  const reloaded=page(lostStore);const lostLookup=reloaded.refresh();reloaded.take('caption-proposals').resolve({jobs:[]});await flush();
+  reloaded.take('caption-proposals/'+lostBody.request_id).reject(Object.assign(Error('Not visible'),{status:404}));await lostLookup;
+  reloaded.intent({...body,instruction:'Corrected after unknown error'});await reloaded.submit();assert.equal(reloaded.requests.length,0);
+  assert.deepEqual(JSON.parse(lostStore.data.get(key)),lostBody,'Unknown error response and 404 retain exact identity');
+  reloaded.intent(lostBody);const repeated=reloaded.submit(),repeatPost=reloaded.take('caption-proposals',true);
+  assert.deepEqual(JSON.parse(JSON.stringify(repeatPost.body)),lostBody);repeatPost.reject(Object.assign(Error('Repeat refused'),{status:400}));await repeated;
+  assert.deepEqual(JSON.parse(lostStore.data.get(key)),lostBody,'A refused repeat cannot disprove an earlier unknown outcome');
+  console.log('Static admission parity: '+candidates.length+' cases across every field; exact normalization/Unicode boundaries, fresh correction, legacy invalid evidence and lost-error/404/reload fencing passed.');
   console.log('Fresh guidance ASCII/non-BMP 2000/2001 boundaries and correction/refresh without reload passed; invalid stored evidence remains fail-closed.');
   if(process.env.CAPTION_RELOAD_CASE==='input')return;
   if(process.env.CAPTION_RELOAD_CASE==='restore') {
