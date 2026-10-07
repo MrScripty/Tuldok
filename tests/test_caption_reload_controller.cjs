@@ -44,7 +44,7 @@ const persisted=(id,status='completed')=>({id,status,source:row,config:{model:'f
     const corrupt=storage(),data=JSON.stringify({...body,instruction});corrupt.data.set(key,data);const blocked=page(corrupt);blocked.intent();await blocked.submit();
     assert.equal(blocked.requests.length,0);assert.equal(corrupt.data.get(key),data);assert.ok(blocked.run('captionProposalStorageError'));assert.equal(blocked.$('caption-proposal-submit').disabled,true);
   }
-  const whitespace=['',' ','\t\r\n','\u0085','\u001c\u001f','\u00a0\u1680\u2000\u200a\u2028\u2029\u202f\u205f\u3000'];
+  const whitespace=[' ','','\t\r\n','\u0085','\u001c\u001f','\u00a0\u1680\u2000\u200a\u2028\u2029\u202f\u205f\u3000'];
   const invalidSettings=[
     ...whitespace.map(instruction=>({instruction})),...whitespace.map(model=>({model})),
     ...['\u0000','\u001f','\ud800','\udfff','fixture\n'].map(model=>({model})),
@@ -58,9 +58,9 @@ const persisted=(id,status='completed')=>({id,status,source:row,config:{model:'f
     {model:'a'.repeat(201)},{model:'\u{1f600}'.repeat(201)},{model:' '+'a'.repeat(200)}
   ];
   for(const changes of invalidSettings) {
-    const freshStore=storage(),form=page(freshStore);form.intent({...body,...changes});await form.submit();
+    const freshStore=storage(),form=page(freshStore);form.intent({...body,...changes});const invalid=form.submit();
     assert.equal(form.requests.length,0,'Invalid fresh settings must never reach admission: '+JSON.stringify(changes));
-    assert.equal(freshStore.data.size,0);assert.equal(form.run('captionProposalStorageError'),'');assert.equal(form.$('caption-proposal-submit').disabled,false);
+    await invalid;assert.equal(freshStore.data.size,0);assert.equal(form.run('captionProposalStorageError'),'');assert.equal(form.$('caption-proposal-submit').disabled,false);
     form.intent();const corrected=form.submit(),post=form.take('caption-proposals',true);
     assert.deepEqual(JSON.parse(JSON.stringify(post.body)),{...body,request_id:'1'.repeat(32)});
     post.reject(Object.assign(Error('Definite first-attempt refusal'),{status:400}));await corrected;assert.equal(freshStore.data.size,0);
@@ -86,6 +86,19 @@ const persisted=(id,status='completed')=>({id,status,source:row,config:{model:'f
     assert.deepEqual(JSON.parse(validStore.data.get(key)),JSON.parse(JSON.stringify(post.body)));
     post.reject(Object.assign(Error('Definite first-attempt refusal'),{status:400}));await started;
   }
+  // Normalized URLs can fit 2,048 points while their exact recovery envelope exceeds 32,768 units.
+  const envelopeBody={...body,request_id:'1'.repeat(32)},padding=32768-JSON.stringify(envelopeBody).length;
+  for(const server_url of ['http://host'+'/'.repeat(32768),'http://host/v1'+'/'.repeat(32768),
+    '\u0085'.repeat(32768)+'http://host','http://host'+'\u0085'.repeat(32768),body.server_url+'/'.repeat(padding+1)]) {
+    const boundedStore=storage(),form=page(boundedStore);form.intent({...body,server_url});const invalid=form.submit();
+    assert.equal(form.requests.length,0);await invalid;assert.equal(boundedStore.data.size,0);
+    assert.equal(form.run('captionProposalStorageError'),'');assert.equal(form.$('caption-proposal-submit').disabled,false);
+    assert.ok(form.$('caption-proposal-status').textContent.includes('recovery bound'));
+    form.intent();const corrected=form.submit(),post=form.take('caption-proposals',true);post.reject(Object.assign(Error('Definite refusal'),{status:400}));await corrected;
+  }
+  const envelopeStore=storage(),envelopePage=page(envelopeStore);envelopePage.intent({...body,server_url:body.server_url+'/'.repeat(padding)});
+  const envelopeStart=envelopePage.submit(),envelopePost=envelopePage.take('caption-proposals',true);
+  assert.equal(envelopeStore.data.get(key).length,32768);envelopePost.reject(Object.assign(Error('Definite refusal'),{status:400}));await envelopeStart;
   const shapeCases=[{request_id:'a'.repeat(32)+'\n'},{source_id:'a'.repeat(32)+'\n'},{request_id:'A'.repeat(32)},
     {source_id:''},{revision:true},{revision:0},{revision:1.5},{source_revision:'1'},{source_revision:0},
     {seed:true},{seed:-1},{seed:4294967296},{seed:1.5},{seed:'42'},

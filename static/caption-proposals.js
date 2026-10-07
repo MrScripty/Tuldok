@@ -53,7 +53,9 @@ function captionProposalRecoveryBody(body) {
   captionProposalText(body.model,'Model ID',200,true);
   captionProposalText(body.instruction,'Caption guidance',2000);
   // Validate without rewriting the exact body used for the backend intent hash.
-  return {...captionProposalIntent(body),request_id:body.request_id};
+  const intent={...captionProposalIntent(body),request_id:body.request_id};
+  if(JSON.stringify(intent).length>32768)throw Error('Exact request exceeds this tab’s recovery bound. Shorten the server URL and submit again.');
+  return intent;
 }
 function captionProposalStoredRequest() {
   const data=sessionStorage.getItem(captionProposalRecoveryKey);
