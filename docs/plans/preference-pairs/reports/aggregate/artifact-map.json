@@ -1,0 +1,287 @@
+[
+  {
+    "original": "docs/plans/annotated-caption-import/reports/caption-import-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/annotated-caption-import/reports/caption-import-desktop.png",
+    "sha256": "f855eaec520e491f43f043549122a94395806bc1a3252bb38fb628bb19d1b65e"
+  },
+  {
+    "original": "docs/plans/annotated-caption-import/reports/caption-import-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/annotated-caption-import/reports/caption-import-narrow.png",
+    "sha256": "f18d8c8d68047564f5d7b5bdcb62fcdb4bc59ff0e57cd6e6e9797c21ae85e044"
+  },
+  {
+    "original": "docs/plans/bulk-real-import/reports/bulk-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/bulk-real-import/reports/bulk-desktop.png",
+    "sha256": "b6553a60d9c867eabd31ced47bcb1cb06dcae6d2b2235b2c332b87545da9b1e3"
+  },
+  {
+    "original": "docs/plans/bulk-real-import/reports/bulk-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/bulk-real-import/reports/bulk-narrow.png",
+    "sha256": "278b59256b12c3d548c26b112bf77168416600210be2bb59fa136350a5f21d6a"
+  },
+  {
+    "original": "docs/plans/curation-diagnostics/reports/curation-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/curation-diagnostics/reports/curation-desktop.png",
+    "sha256": "1476b2a3708cc2ae556d0ff5fec97b80fb067754e7b3373ad116c5fe05fdf79c"
+  },
+  {
+    "original": "docs/plans/curation-diagnostics/reports/curation-members-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/curation-diagnostics/reports/curation-members-desktop.png",
+    "sha256": "f7439a01ac70d3da87439d7aeda5eb9a79f1122e511f717e1af117b9736ba583"
+  },
+  {
+    "original": "docs/plans/curation-diagnostics/reports/curation-members-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/curation-diagnostics/reports/curation-members-narrow.png",
+    "sha256": "baf46dac6b0632e3d6fe0986c31d3d19a3a93287a478fae685bfaa2cf9afe048"
+  },
+  {
+    "original": "docs/plans/curation-diagnostics/reports/curation-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/curation-diagnostics/reports/curation-narrow.png",
+    "sha256": "eaba1cbb8754215624dfb0d78e33b1e83ecd6c15beacc42c2040a94ed872af43"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-desktop.png",
+    "sha256": "6c29459d3f29418fb8741540b1ad6126b760bc7c18a17a5a9d688da94989d6e0"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-narrow.png",
+    "sha256": "23d0b09dd2f25dc38b090e9b925e4c0f0f2748063fb23c64d270846a9b43c6df"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-desktop.png",
+    "sha256": "e44908bd6a2bd6ca2eb634f493883093673a2c2d3b43e4e98024823545703eb0"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-narrow.png",
+    "sha256": "c5896ccba37e4a0af7cbbee3625eb2b0440e4228ca7a779d4fb13a5adad75ae5"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-desktop.png",
+    "sha256": "e9bae84d5c6ddf29326468e85a421ef07df66b1e04e89b8ab6701d143179eb61"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-narrow.png",
+    "sha256": "dc30a1d97020d393a6767c182956f551b14b1874974b5de6ac790f803e723dfc"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-desktop.png",
+    "sha256": "a625ba2a89e9a786408d4817a20104c6dd8f48199f27650b043137d433d3bb22"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-narrow.png",
+    "sha256": "e25959d2af77f7fab391be2d6ba233e1a9eafae728bb63fc6b5febb9b04a9905"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-desktop.png",
+    "sha256": "fbe23800940b254e003269817f33c7df362f946cf900066b04a5a573f68eb227"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-narrow.png",
+    "sha256": "be1751d76e50b61b8224e9037889c0ffe161f1cf422453ef8c18b809da9de06a"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-desktop.png",
+    "sha256": "39a25b6f09a01daea72f83cb580f2a1addf680f64dbc595a8700b36401133a50"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-narrow.png",
+    "sha256": "0cdd5df54c93f043a8c8134b48287f9020fe497c675558f793151d32790d797e"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-07-download-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-07-download-desktop.png",
+    "sha256": "a48573c8815f2cbe21181741e2cf0efab174f364461fa5c7208a64e7b1786231"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-07-download-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-07-download-narrow.png",
+    "sha256": "47c1dc90c61082658175913034527eb92256cae188d1b0625bd0a81995df532b"
+  },
+  {
+    "original": "docs/plans/dataset-caption-integration/reports/caption-combined-session.json",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-caption-integration/reports/caption-combined-session.json",
+    "sha256": "1dc250f3426deec8dde2291ce24ba18c7893443823b642e1d6a5d3a3b6f689a7"
+  },
+  {
+    "original": "docs/plans/dataset-integration/reports/integration-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-integration/reports/integration-desktop.png",
+    "sha256": "1a18329cc95412fcbb208ed1dd9d1726a25bec1075bc63653ee595d5b286e2d7"
+  },
+  {
+    "original": "docs/plans/dataset-integration/reports/integration-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-integration/reports/integration-narrow.png",
+    "sha256": "6abc37353bc994e12345ea994986ccbe4d623537bf9ea6ca05f37e36696b4ef8"
+  },
+  {
+    "original": "docs/plans/dataset-workflows/reports/workbench-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-workflows/reports/workbench-desktop.png",
+    "sha256": "6e6ecdfb28eefb3587e3866020d2cd8ed58eba199b7de8f36323eaa08d994c14"
+  },
+  {
+    "original": "docs/plans/dataset-workflows/reports/workbench-grounded.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-workflows/reports/workbench-grounded.png",
+    "sha256": "a17c70e92d10f74d2edabe5f363dc7240eafa5211fb8d0fb93630921653a1e0b"
+  },
+  {
+    "original": "docs/plans/dataset-workflows/reports/workbench-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/dataset-workflows/reports/workbench-narrow.png",
+    "sha256": "ce9d0f99de0125cb5a46da55d4ab1b9bdd40aa34c2032bd9c63beb5bc52087d7"
+  },
+  {
+    "original": "docs/plans/explicit-metadata-filters/reports/filters-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/explicit-metadata-filters/reports/filters-desktop.png",
+    "sha256": "f0d857548cc5d66ae2ede09be2d7da174f85bc6888233acabf653334ddc582a0"
+  },
+  {
+    "original": "docs/plans/explicit-metadata-filters/reports/filters-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/explicit-metadata-filters/reports/filters-narrow.png",
+    "sha256": "894c4f9ccefeddc6c492f35229226ea91f3b30bd4f3a7b1a665fb3011fea0ee2"
+  },
+  {
+    "original": "docs/plans/image-caption-exports/reports/captions-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/image-caption-exports/reports/captions-desktop.png",
+    "sha256": "b3f54be40409097d5f69e57f2def87e9733efd6193d6f56bc0b6b5af9c2919ae"
+  },
+  {
+    "original": "docs/plans/image-caption-exports/reports/captions-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/image-caption-exports/reports/captions-narrow.png",
+    "sha256": "6bb98f1c91dafa93f39b0c6a90e0fde6293c32b2ee365b5925e91e35ad048d95"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-01-independent-answers-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-01-independent-answers-desktop.png",
+    "sha256": "2c9c967b21a28f4e62328f5529dd16454284c94f680e84d47346634b0d2b713f"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-01-independent-answers-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-01-independent-answers-narrow.png",
+    "sha256": "eaf3154320b55d064879cc97850e2f22d0ec2382744fb480aba3d3c6f8924d53"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-desktop.png",
+    "sha256": "0dd7de0c6bbb930860c58ef0714552dec068070e542fe5b3f52dea8c6c68d7ff"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-narrow.png",
+    "sha256": "8e0f3fe9fcf8e159e47e68d64b8779bf2510f29c1ad4bbe5d9c9fbfc5d04ba75"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-03-weighted-preview-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-03-weighted-preview-desktop.png",
+    "sha256": "a5de359d3e2d34257cb2356ebb0fcb69f226c5b40f67dc25a16bd9a7971ce665"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-03-weighted-preview-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-03-weighted-preview-narrow.png",
+    "sha256": "7d3ccd539794d2f56f1dd429220c2f322ecadaf269398ba26362813ea3008d6f"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-04-download-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-04-download-desktop.png",
+    "sha256": "4a1b47b7490cf120e1051393d990b63d232971e69755fac356a30eb0c159e217"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-04-download-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-04-download-narrow.png",
+    "sha256": "7ec84304ca5a93ef55619ed5c3096aa6316e2f5ef6a2ebd9843d8bb38b1e36b6"
+  },
+  {
+    "original": "docs/plans/instruction-responses/reports/instruction-session.json",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/instruction-responses/reports/instruction-session.json",
+    "sha256": "9d3eefca6ea210daa6872648a25cd8bdd970c39793fde233c4e15eb22f291ffd"
+  },
+  {
+    "original": "docs/plans/native-text-classification-import/reports/native-text-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/native-text-classification-import/reports/native-text-desktop.png",
+    "sha256": "9cb280136228036ae17a00e4a704dd96bd97e977e0fe65d5b864d0a93f79d6da"
+  },
+  {
+    "original": "docs/plans/native-text-classification-import/reports/native-text-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/native-text-classification-import/reports/native-text-narrow.png",
+    "sha256": "67ad8ffc9ec5024b45a5fa2993b2628ec1ed32732356c4b7f45447994d9d2da5"
+  },
+  {
+    "original": "docs/plans/saved-dataset-selections/reports/saved-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/saved-dataset-selections/reports/saved-desktop.png",
+    "sha256": "6b214aab5ab3b0b41ea4c901e77648b36a0960193d2b2b992384fe7d9bcbacd2"
+  },
+  {
+    "original": "docs/plans/saved-dataset-selections/reports/saved-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/saved-dataset-selections/reports/saved-narrow.png",
+    "sha256": "8c9d9f067017e99ceee54944512220e500aefefeef97dffa586525a4c0f73776"
+  },
+  {
+    "original": "docs/plans/saved-selection-intent/reports/intent-blocked.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/saved-selection-intent/reports/intent-blocked.png",
+    "sha256": "18b8a2dea2ab7ebd8bc4628476403d94950bc2a6c84625d8053e3f29c31853e4"
+  },
+  {
+    "original": "docs/plans/selected-release-preview/reports/preview-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/selected-release-preview/reports/preview-desktop.png",
+    "sha256": "2a7051897a4a3e3bff6c166e545138f625915238be2296e7b4e16a1ce30fec39"
+  },
+  {
+    "original": "docs/plans/selected-release-preview/reports/preview-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/selected-release-preview/reports/preview-narrow.png",
+    "sha256": "a0abe3b0a0ce2128f888cead4c90ffba6790c943d7406cea49ebc6d5d17b91b6"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-01-curation-draft-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-01-curation-draft-desktop.png",
+    "sha256": "8b8dd5c086d35546be6bcd5288184075c71961db834c07d4432101b9ca7a9542"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-01-curation-draft-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-01-curation-draft-narrow.png",
+    "sha256": "06ac3b7497dcf8bb61225faa4fac13c3a90349781de8d405f23fd24470c111d7"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-02-native-draft-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-02-native-draft-desktop.png",
+    "sha256": "ee6e89624c3b982f9e0096d0de7716c4406b796dc5dfc3e9acf5a9ddb9c1cb98"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-02-native-draft-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-02-native-draft-narrow.png",
+    "sha256": "964aad8fa12a7ec0b29ff54daf915f032b2025768898956d4e15b5f0fa396e65"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-03-frozen-selection-desktop.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-03-frozen-selection-desktop.png",
+    "sha256": "565c757357edd67340214f1edd80c5dbc1bb3790f025d33813639ada56308f5b"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-03-frozen-selection-narrow.png",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-03-frozen-selection-narrow.png",
+    "sha256": "75d51d0c91a6c669341518bdcb57795dce480cf2538fd2528d6f02215462a685"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-canonical-downloaded.zip",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-canonical-downloaded.zip",
+    "sha256": "cc13b311156ae43ceb30c5df7a904a68d248dbeaa8622d2f89334b7a976805f2"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-instruction-downloaded.zip",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-instruction-downloaded.zip",
+    "sha256": "161623d8ffb00ee95b493c7505871c5fa4fe9bddfad2ecd7459923bca2cb9e33"
+  },
+  {
+    "original": "docs/plans/workbench-projection-warnings-fix/reports/combined-session.json",
+    "evidence": "docs/plans/preference-pairs/reports/aggregate/artifacts/docs/plans/workbench-projection-warnings-fix/reports/combined-session.json",
+    "sha256": "7a97d987152ebf662e1e31f1f0e928d28e7c101b50ff8ef2447db598600c9fbf"
+  }
+]

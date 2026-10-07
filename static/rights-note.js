@@ -68,6 +68,7 @@ $('rights-note-form').addEventListener('submit',async event=>{
   if(dirty || $('editor').dataset.busy) { $('rights-note-status').textContent = 'Save or discard annotation edits before correcting the rights note.'; return; }
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) { $('rights-note-status').textContent = 'Save or cancel the response edit before correcting the rights note.'; return; }
   let note;try { note = rightsValue(); } catch(error) { $('rights-note-status').textContent = error.message; return; }
+  if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) { $('rights-note-status').textContent = 'Save or cancel the judgment edit before saving a rights note.'; return; }
   const record = current, epoch = ++editorEpoch, noteEpoch = rightsEpoch, responseEpoch = responseIntentEpoch();
   rightsBusy = true;const controls=[...$('rights-note-form').querySelectorAll('button,select,textarea')];controls.forEach(control=>control.disabled=true);
   try {
@@ -77,6 +78,7 @@ $('rights-note-form').addEventListener('submit',async event=>{
       // Unselected lineage can also bind a preview; conservatively discard every cached proof.
       invalidateRelease();$('release-preview-status').textContent = 'Rights note changed. Saved revision pairs remain fixed; reselect current records and preview again.';
       if(typeof invalidateResponsePreview === 'function') invalidateResponsePreview();
+      if(typeof invalidatePreferencePreview === 'function') invalidatePreferencePreview();
       await rightsRefreshSavedIssues();
     }
     if(epoch === editorEpoch && noteEpoch === rightsEpoch && responseEpoch === responseIntentEpoch() && current?.id === record.id) {
@@ -85,6 +87,11 @@ $('rights-note-form').addEventListener('submit',async event=>{
       $('rights-note-status').textContent = 'Earlier note saved; later edits are retained. Reload before using current record revisions.';
     }
     await refresh();
-  } catch(error) { invalidateRelease(); if(typeof invalidateResponsePreview === 'function') invalidateResponsePreview(); if(current?.id === record.id && noteEpoch === rightsEpoch) $('rights-note-status').textContent = error.message+' Your note edit is retained; reload the record to use current revisions.'; }
+  } catch(error) {
+    invalidateRelease();
+    if(typeof invalidateResponsePreview === 'function') invalidateResponsePreview();
+    if(typeof invalidatePreferencePreview === 'function') invalidatePreferencePreview();
+    if(current?.id === record.id && noteEpoch === rightsEpoch) $('rights-note-status').textContent = error.message+' Your note edit is retained; reload the record to use current revisions.';
+  }
   finally { rightsBusy = false;controls.forEach(control=>control.disabled=false); }
 });
