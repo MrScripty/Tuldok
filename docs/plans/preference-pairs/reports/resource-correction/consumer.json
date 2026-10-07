@@ -1,0 +1,38 @@
+{
+  "result": "PASS",
+  "zip_sha256": "386e1430fd9e24d4fb4dc779286ac5e5107d3b585e2cf1b109be2aaf2a8dbb6e",
+  "versions": {
+    "trl": "0.23.1",
+    "datasets": "4.1.1",
+    "transformers": "4.56.2",
+    "torch": "2.8.0+cpu",
+    "accelerate": "1.10.1",
+    "tokenizers": "0.22.1"
+  },
+  "source_hashes": {
+    "trl/data_utils.py": "a66cb8fb91cb5f50ef2fc631662284cb9e2f5841a785cd9ea48cdfab2c7fa29d",
+    "datasets/packaged_modules/json/json.py": "c467154ba0254134ec8eac950b96c5ff22a3d35d9ea8d9f3b9d3984d7c76231c",
+    "datasets/load.py": "0b2357d00215aaf22ca1dc0e91f7745042b8850a5136f6cea7b620c7f60ff836",
+    "trl/trainer/dpo_trainer.py": "b44f4308d6a080e1284c9a4d3752f397b2334f6a3782b5c4fd469e90b7a412ea",
+    "trl/trainer/dpo_config.py": "a12f941bc0801ede8b4f54f47c894ec895d94fc7c563f66fc32ca00ee739e59d"
+  },
+  "examples": 4,
+  "unique_prompts": 3,
+  "split_counts": {
+    "train": 2,
+    "validation": 1,
+    "test": 1
+  },
+  "excluded": {
+    "266fe7da76dc4062b2378b580e460c5b": "tie",
+    "559f1ef88dd645b8b0e4ff5fbd663a40": "abstain"
+  },
+  "preprocessing": "Unchanged DPOTrainer._prepare_dataset (prompt extraction, chat dispatch, tokenize_row)",
+  "collator": "Unchanged DataCollatorForPreference; prompt left padding, completions right padding, exact masks",
+  "eos": "Appends EOS unconditionally; an existing terminal EOS becomes two; frozen strings unchanged",
+  "truncation": "max_length/max_prompt_length/max_completion_length=None; all IDs match full strings",
+  "max_tokens_observed": 2249,
+  "padding_positions": 6669,
+  "model": "No model constructed, no forward/inference/training/pretrained download",
+  "offline": true
+}

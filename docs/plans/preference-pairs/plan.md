@@ -1,6 +1,6 @@
 # Explicit preference pairs
 
-Status: Draft PR19 published after separate authorization; bounded resource and local preview corrections under verification. Main and PR18 remain protected.
+Status: Draft PR19 correction independently reviewed and locally verified; normal push and exact-head CI verification next. Main and PR18 remain protected.
 
 Authorized local development; base 2f1d68ee29ec98a524bdf0f14d20b6024a25364c, protected main/origin/main 2fc4a46f12d73a0fa467d5482f68edb83d6df6af. Initial local stage prohibited public writes. Subsequent authorization published draft PR19; current authorization permits normal correction pushes to that same draft and CI verification. No merge, CodeRabbit request, inference, pretrained downloads, PR18 changes or new representation. Repo-local MrScripty attribution. No AGENTS.md or .agents/skills files are present in this environment/repository.
 
@@ -18,4 +18,4 @@ Independent review corrections: rights-note save checks dirty/busy judgment befo
 
 Root review corrections: accumulate archive entry bytes incrementally and refuse immediately at the first entry over 40 MiB, preserving atomic refusal and deterministic frozen bytes. Successful local saves of a bound answer or a judgment affecting selected exact unordered evidence invalidate cached preference preview using existing owners; later dirty drafts and fixed references remain intact. Regressions exercise early generator termination, prior archive preservation, actual local save acknowledgments, unrelated/no-op mutations and reversed-side review. Correction evidence lives separately in reports/resource-correction; all prior receipts remain unchanged.
 
-Exactly one next slice: finish independent review and aggregate/actual TRL/browser verification for these bounded corrections, normally push the same draft PR19 and verify exact-head CI. Parent continues review before merge. [Original verification](reports/verification.md).
+Exactly one next slice: normally push the independently reviewed, verified corrections to the same draft PR19 and verify exact-head CI. Parent continues review before merge. [Correction verification](reports/resource-correction/verification.md). [Original verification](reports/verification.md).
