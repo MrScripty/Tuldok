@@ -1,0 +1,55 @@
+{
+  "candidate_commit": "e32b407c6164f5650e1944c356ec0d00d7536667",
+  "candidate_tree": "f04a94227eb4faee2d4e6701d199726750570aa5",
+  "scope": "Independent runner isolation/backend source and aggregate integrity review; no browser reload durable-admission qualification",
+  "runner_tests": {
+    "passed": 3,
+    "seconds": 0.075
+  },
+  "backend_runtime_probes": {
+    "passed": 12,
+    "seconds": 6.693
+  },
+  "installed_consumer_pins": {
+    "requirements_verified": 44,
+    "source_hashes_verified": 5
+  },
+  "aggregate": {
+    "candidate_commit": "e32b407c6164f5650e1944c356ec0d00d7536667",
+    "candidate_tree": "f04a94227eb4faee2d4e6701d199726750570aa5",
+    "aggregate_gates": 46,
+    "passed": 46,
+    "failed": 0,
+    "blocked": 0,
+    "stale_passed": 0,
+    "all_gates_same_source_sha256": "330af82ae06a0d6038efa753308e5a0cffa0eab467cf3ff2d830f3bacef2acb4",
+    "all_logs_and_component_hashes_valid": true,
+    "historical_reports_unchanged": 1185,
+    "only_source_difference_from_implementation": [
+      "scripts/qualify_text_classification_local.py"
+    ],
+    "classification_runtime_unchanged": true,
+    "protected_refs_unchanged": {
+      "origin/main": "2fc4a46f12d73a0fa467d5482f68edb83d6df6af",
+      "origin/feature/image-caption-exports": "c43a110c4b6ee1a85c932fa206b43091c0db7f3a",
+      "origin/pr17": "07ec464ba050cd532a2508ce86570a1ce9bcd394"
+    },
+    "summary_sha256": "df980264a4fb91f071c011a263fb5807a3cae6b6673f69b8e849f9a403302019",
+    "results_sha256": "ebbe3700f53f0adfbfd3ee099e5828a58a60e9f7168c0a93d413bcbb8139dbb1",
+    "findings": [],
+    "blockers": []
+  },
+  "publication_state": "Blocked by parent after finding browser pending admission ID/intent was memory-only across reload; successor durable persistence repair required despite 46 passed gates.",
+  "evidence_sha256": {
+    "backend_runner_probe_corrected.py": "73fceee727bb0e8a6e7590c60e1dd09456538cf2a4a116aaad86f376d2e4af5e",
+    "backend_runner_e32b407_corrected.log": "c822173299720d5fd600beec86a669571006a3405436bccbabbe57ae7f5dfc77",
+    "backend_runtime_e32b407.log": "d9a4add3f9516a4ab18fca5f614d8d991c69b63d3ec351603976569acb8c8c63",
+    "backend_environment_e32b407.json": "f615b2e2817d27350b5797a8d5a00816ed24ddba773c9cd25fb820b3be583ca0",
+    "backend_final_aggregate_e32b407.json": "1319a552a1ffa0a0b0127615f27302cce1fc014318f2a32958666ca78aa5c386",
+    "backend_runner_probe_initial.py": "dabd4ed9449b5fee3e6a458f7746cb8e666002ba4a4cabba7116a1d19f728cc3",
+    "backend_runner_e32b407_initial.log": "8bcc552d7861fb9ab9203f88fb109875ebf33e0e806b54fe3cb3b56f5e0977f2",
+    "backend_baseline.json": "719d284e60872d667733338ff780c262700a4a103a2c2a3ad0037d66a11ad02d"
+  },
+  "reviewer_public_writes": false,
+  "initial_probe_error": "The initial independent runner fixture used a command string longer than a filesystem filename bound; short fixture command corrected the harness. Initial source/log bytes preserved."
+}

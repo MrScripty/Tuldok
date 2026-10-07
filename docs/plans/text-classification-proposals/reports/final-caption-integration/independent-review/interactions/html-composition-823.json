@@ -1,0 +1,18 @@
+{
+  "unique_ids": 202,
+  "duplicate_ids": [],
+  "scripts": [
+    "/workbench.js",
+    "/saved-selections.js",
+    "/bulk-import.js",
+    "/caption-import.js",
+    "/curation.js",
+    "/rights-note.js",
+    "/instruction-responses.js",
+    "/native-text-import.js",
+    "/caption-proposals.js",
+    "/text-classification-proposals.js"
+  ],
+  "caption_and_classification_forms_present": true,
+  "caption_js_unchanged_from_10de": true
+}

@@ -1,0 +1,18 @@
+{
+  "source_head": "e32b407c6164f5650e1944c356ec0d00d7536667",
+  "source_tree": "f04a94227eb4faee2d4e6701d199726750570aa5",
+  "runtime_source_sha256": "330af82ae06a0d6038efa753308e5a0cffa0eab467cf3ff2d830f3bacef2acb4",
+  "all46_exact_source_gates_passed": true,
+  "prior_tracked_reports_preserved": 1185,
+  "prior_stage_files_preserved": 140,
+  "restored_exact_sibling_review_files": [
+    "independent-review/backend_runner_probe.py",
+    "independent-review/backend_runner_e32b407.log",
+    "independent-review/interactions/receipt.json",
+    "independent-review/interactions/review.md",
+    "independent-review/interactions/runner-isolation-probe.log"
+  ],
+  "snapshot_manifest_sha256": "f5f4593892011de1db5add9a144c3e4bdf736902acaf33c942dfea95a8c27f2a",
+  "final_gate_seconds": 282.691,
+  "original959_historical_reports_preserved": true
+}

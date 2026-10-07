@@ -1,0 +1,12 @@
+{
+  "candidate_commit": "7b1938e3ef9b7ba499bafde1fa02e44fb90e8dc7",
+  "historical_report_count": 959,
+  "historical_reports_byte_identical": true,
+  "protected_refs": {
+    "origin/main": "2fc4a46f12d73a0fa467d5482f68edb83d6df6af",
+    "origin/feature/image-caption-exports": "c43a110c4b6ee1a85c932fa206b43091c0db7f3a",
+    "origin/pr17": "07ec464ba050cd532a2508ce86570a1ce9bcd394"
+  },
+  "runtime_test_ci_runner_hashes_match_qualified_candidate": true,
+  "following_commit_scope": "Documentation/reports only, including README panel title correction."
+}

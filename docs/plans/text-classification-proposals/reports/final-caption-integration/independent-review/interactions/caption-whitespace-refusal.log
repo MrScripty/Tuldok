@@ -1,0 +1,34 @@
+{
+  "finding": "confirmed",
+  "guidance_codepoints": 3,
+  "frontend_persisted": true,
+  "backend": {
+    "first": {
+      "status": 400,
+      "body": {
+        "error": "Caption guidance must be text, 1–2000 characters.",
+        "code": "invalid"
+      }
+    },
+    "exact": {
+      "status": 404,
+      "body": {
+        "error": "Caption request not found.",
+        "code": "unavailable"
+      }
+    },
+    "repeat": {
+      "status": 400,
+      "body": {
+        "error": "Caption guidance must be text, 1–2000 characters.",
+        "code": "invalid"
+      }
+    },
+    "jobs": 0,
+    "worker_started": false
+  },
+  "reload_restores_invalid_guidance": true,
+  "corrected_guidance_posts": 0,
+  "exact_retry_retains_body": true,
+  "status": "An earlier request has an unknown acknowledgement. Refresh requests before changing its intent."
+}

@@ -1,0 +1,3 @@
+Browser targets: [{"type":"page","url":"about:blank"},{"type":"browser_ui","url":"chrome://omnibox-popup.top-chrome/"},{"type":"browser_ui","url":"chrome://omnibox-popup.top-chrome/omnibox_popup_aim.html"}]
+Browser version: {"protocolVersion":"1.3","product":"Chrome/151.0.7922.173","revision":"@a96602f30358e9b5d256a0464e7e4d4bec223004","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36","jsVersion":"15.1.206.23"}
+{"fixture":true,"generated_images":12,"unique_prompts":12,"ai_label_saved":true,"queue_survives_reload":true,"repeat_pending_entries":1,"cancelled_backend_request":true,"deletion_verified":true}

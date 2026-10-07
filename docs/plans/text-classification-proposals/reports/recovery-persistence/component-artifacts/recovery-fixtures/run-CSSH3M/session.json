@@ -1,0 +1,51 @@
+{
+  "source_head": "e32b407c6164f5650e1944c356ec0d00d7536667",
+  "model": "bounded synthetic HTTP fixture",
+  "job_id": "15d4f7edd6264062b2791f0ffd20a8c8",
+  "labels": [
+    "cancel",
+    "keep",
+    "café 😀"
+  ],
+  "persistent_recovery_id": "0dc6325f0f47442c8d817ea727be8a33",
+  "persistent_recovery_body": {
+    "source_id": "9ca22183917547fe8235bfdacb2122e9",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:39227/v1/",
+    "model": "classification-fixture",
+    "instruction": "Frozen reload recovery",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "0dc6325f0f47442c8d817ea727be8a33"
+  },
+  "recovery_id": "15d4f7edd6264062b2791f0ffd20a8c8",
+  "recovery_post_ids": [
+    "15d4f7edd6264062b2791f0ffd20a8c8",
+    "15d4f7edd6264062b2791f0ffd20a8c8"
+  ],
+  "recovery_backend_requests": 1,
+  "application_revision": 2,
+  "downloaded_zip_sha256": "8559ede86ba6763c67cac88b2b1092fe01afadd23863e97878d8400c227c667f",
+  "fixed": [
+    {
+      "id": "374006f1ba09457b99493a4a1da6e601",
+      "revision": 1,
+      "source_revision": 1
+    },
+    {
+      "id": "f141caa1b5a24b8c8c5ada1e11dccef5",
+      "revision": 1,
+      "source_revision": 1
+    }
+  ],
+  "reject_save_revision": 2,
+  "cancelled_id": "d9c1838131cc49c9958f1b31f8decd09",
+  "fresh_intent_id": "2d138b6f6ef044b9854ea663e328e046",
+  "real_model_quality": false,
+  "tests": "fullreload lostACK restored before delayed reconciliation unchanged exact-ID repeat and fresh intent, storage get/set/remove failures closed, early404 lost admission exact-ID recovery, frozen source/prompt/provider/labels evidence, malformed UI changes and dirty editor fences, lost Apply draft/idempotency/provenance, stale fixed selection, draft export blocked separate human review, abstention unappliable, reject during held unrelated save and subsequent save, cancellation navigation fresh intent, reload no inference, keyboard/narrow layout"
+}

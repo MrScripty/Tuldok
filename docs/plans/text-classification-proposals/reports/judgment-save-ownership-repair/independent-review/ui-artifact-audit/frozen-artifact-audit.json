@@ -1,0 +1,87 @@
+{
+  "role": "Read-only frozen UI/artifact audit; separate from code reviewers; no source ownership or edits in this repair",
+  "status": "PASS",
+  "source_head": "f2b61ce3ebcae8380dcbea9c384c124e803083be",
+  "source_tree": "39491c6e3b8ff1582c5dfe870f199f4304605e35",
+  "source_snapshot_sha256": "352aa0c4a5379d28249ec2c35e1250022177b629fd0b881245124c70e2308d73",
+  "source_file_count_verified": 127,
+  "registered_gates_verified": 50,
+  "frozen_component_artifact_hashes_verified": 92,
+  "historical_report_hashes_verified": 3559,
+  "external_backup_hashes_verified": 3559,
+  "native_case_count": 10,
+  "new_ownership_cases_verified": [
+    {
+      "case": "Clean stale judgment save first refusal",
+      "held_before_actual_preference_HTTP": true,
+      "initial_dirty": false,
+      "initial_review": "draft",
+      "apply_posts_while_busy": 0,
+      "save_status": 409,
+      "current_source_and_visible_form_retained": true
+    },
+    {
+      "case": "Clean stale judgment save first success",
+      "held_before_actual_preference_HTTP": true,
+      "initial_dirty": false,
+      "initial_review": "draft",
+      "apply_posts_while_busy": 0,
+      "save_status": 200,
+      "current_source_and_visible_form_retained": true
+    },
+    {
+      "case": "Held Apply acknowledgment retains later clean judgment save",
+      "later_clean_judgment_busy_during_older_Apply_ack": true,
+      "owner_fields_retained": true,
+      "backend_commit_revision": 3,
+      "retained_current_revision": 2,
+      "save_status": 409
+    },
+    {
+      "case": "Clean judgment refusal settles before older Apply acknowledgment",
+      "judgment_epoch_before": 38,
+      "judgment_epoch_dispatched": 39,
+      "epoch_increment": 1,
+      "save_status": 409,
+      "settled_owner_fields_retained_after_older_Apply": true,
+      "backend_commit_revision": 3,
+      "retained_current_revision": 2,
+      "form_open_and_review_draft": true
+    },
+    {
+      "case": "Clean judgment success settles before older Apply acknowledgment",
+      "judgment_epoch_before": 42,
+      "judgment_epoch_dispatched": 43,
+      "epoch_increment": 1,
+      "save_status": 200,
+      "settled_owner_fields_retained_after_older_Apply": true,
+      "backend_commit_revision": 3,
+      "retained_current_revision": 2,
+      "form_open_and_review_draft": true
+    }
+  ],
+  "session": "docs/plans/text-classification-proposals/reports/judgment-save-ownership-repair/qualification/component-artifacts/node-tests-browser_classification_preferences_integration.cjs/test-results/classification-preferences/run-NnNsjB/session.json",
+  "session_sha256": "8011e8e02d9b9c0f6c18416c7311ffc9bb64097c0e7b205b26aff10b32d3b3fb",
+  "screenshots": [
+    {
+      "file": "docs/plans/text-classification-proposals/reports/judgment-save-ownership-repair/qualification/component-artifacts/node-tests-browser_classification_preferences_integration.cjs/test-results/classification-preferences/run-NnNsjB/combined-desktop.png",
+      "width": 1400,
+      "height": 807,
+      "sha256": "57bbb65301be4eabd2a21cec79fcc867337f945bb00277894b55bf433d6a1748",
+      "physically_viewed": true,
+      "observation": "Applied classification and comparative judgments both visible; narrow text/buttons wrap within panel width; no horizontal clipping observed. Vertical viewport scrolling is expected."
+    },
+    {
+      "file": "docs/plans/text-classification-proposals/reports/judgment-save-ownership-repair/qualification/component-artifacts/node-tests-browser_classification_preferences_integration.cjs/test-results/classification-preferences/run-NnNsjB/combined-narrow.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "02ff74f3690d033fe78a60624421e0be9ce77e52b21b6586322d9198e3d7a978",
+      "physically_viewed": true,
+      "observation": "Applied classification and comparative judgments both visible; narrow text/buttons wrap within panel width; no horizontal clipping observed. Vertical viewport scrolling is expected."
+    }
+  ],
+  "runtime_layout_evidence": "Passing frozen native fixture explicitly asserts errors=[], no horizontal overflow, and both panels intersect both viewports. Session does not serialize those diagnostic fields. Visual inspection corroborates layout. Native pre-HTTP holds are implemented and asserted by the hashed fixture, not production-script overrides.",
+  "no_production_script_override": true,
+  "all_recorded_hashes_match": true,
+  "limitations": "Synthetic fixture and recorded viewport audit; no model-quality evaluation or independent code review."
+}

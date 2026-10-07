@@ -1,0 +1,35 @@
+{
+  "source_head": "7b1938e3ef9b7ba499bafde1fa02e44fb90e8dc7",
+  "model": "bounded synthetic HTTP fixture",
+  "job_id": "aa715611a45e49ab8cbddfc829a27f15",
+  "labels": [
+    "cancel",
+    "keep",
+    "café 😀"
+  ],
+  "recovery_id": "aa715611a45e49ab8cbddfc829a27f15",
+  "recovery_post_ids": [
+    "aa715611a45e49ab8cbddfc829a27f15",
+    "aa715611a45e49ab8cbddfc829a27f15"
+  ],
+  "recovery_backend_requests": 1,
+  "application_revision": 2,
+  "downloaded_zip_sha256": "97c5814c1278bb166a294ab49c4ee6e8086fb2006268888292e42642d5efad85",
+  "fixed": [
+    {
+      "id": "35040768bf834a2cbe3c252a03f4bdb7",
+      "revision": 1,
+      "source_revision": 1
+    },
+    {
+      "id": "556c94d6c6374471bbf8262e7a3bc432",
+      "revision": 1,
+      "source_revision": 1
+    }
+  ],
+  "reject_save_revision": 2,
+  "cancelled_id": "9d75fa90acac4293a3f4783269d5f24b",
+  "fresh_intent_id": "31d3899821bf4411838bcfc31abcf26f",
+  "real_model_quality": false,
+  "tests": "early404 lost admission exact-ID recovery, frozen source/prompt/provider/labels evidence, malformed UI changes and dirty editor fences, lost Apply draft/idempotency/provenance, stale fixed selection, draft export blocked separate human review, abstention unappliable, reject during held unrelated save and subsequent save, cancellation navigation fresh intent, reload no inference, keyboard/narrow layout"
+}

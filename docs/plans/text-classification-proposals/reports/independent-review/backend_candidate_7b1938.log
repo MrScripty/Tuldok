@@ -1,0 +1,17 @@
+test_abstention_never_applies (__main__.BackendReview.test_abstention_never_applies) ... ok
+test_apply_atomic_rollback (__main__.BackendReview.test_apply_atomic_rollback) ... ok
+test_apply_stales_frozen_selection_and_draft_export_remains_blocked (__main__.BackendReview.test_apply_stales_frozen_selection_and_draft_export_remains_blocked) ... ok
+test_cancel_release_then_restart_without_automatic_inference (__main__.BackendReview.test_cancel_release_then_restart_without_automatic_inference) ... ok
+test_completion_detects_source_change_even_with_recomputed_hash (__main__.BackendReview.test_completion_detects_source_change_even_with_recomputed_hash) ... ok
+test_decode_exact_membership_and_exclusive_abstention (__main__.BackendReview.test_decode_exact_membership_and_exclusive_abstention) ... ok
+test_exact_requested_provider_and_model_survive_transport_normalization (__main__.BackendReview.test_exact_requested_provider_and_model_survive_transport_normalization) ... ok
+test_http_admission_recovery_freeze_apply_and_replay (__main__.BackendReview.test_http_admission_recovery_freeze_apply_and_replay) ... ok
+test_labels_change_rejection_and_frozen_request_identity (__main__.BackendReview.test_labels_change_rejection_and_frozen_request_identity) ... ok
+test_persisted_active_restart_marks_interrupted_without_retry (__main__.BackendReview.test_persisted_active_restart_marks_interrupted_without_retry) ... ok
+test_source_bytes_hash_origin_and_deletion_conflicts (__main__.BackendReview.test_source_bytes_hash_origin_and_deletion_conflicts) ... ok
+test_summary_projects_before_decode_and_retains_bounded_order (__main__.BackendReview.test_summary_projects_before_decode_and_retains_bounded_order) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 7.216s
+
+OK

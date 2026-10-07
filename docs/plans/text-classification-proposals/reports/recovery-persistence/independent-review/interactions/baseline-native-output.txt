@@ -1,0 +1,28 @@
+{
+  "original_id": "acdcb511f36f404ca6b5c93efa55b5a6",
+  "pending_id": null,
+  "held_initial_summary": true,
+  "new_bodies": [
+    {
+      "source_id": "c8c48efe30e549ea91eebdf3b8365caf",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:37517/v1/",
+      "model": "classification-fixture",
+      "instruction": "Changed intent after reload",
+      "seed": 42,
+      "labels": [
+        "keep",
+        "cancel"
+      ],
+      "request_id": "689a149bcee34f09aef47d006ec7c2f0"
+    }
+  ],
+  "status": "Classification requested. Current annotations remain unchanged.",
+  "local_storage_entries": 0
+}
+AssertionError [ERR_ASSERTION]: Changed intent after reload cannot receive a new admission ID while initial reconciliation is held
+
+1 !== 0
+
+    at /tmp/tuldok-recovery-review-native.cjs:30:53

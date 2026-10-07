@@ -1,0 +1,94 @@
+{
+  "sourceStart": {
+    "head": "6aba384a90246aa2c9d344997561154710178586",
+    "sha256": "34e01972a82aece705b282878d6bbb2304ae526cc3a221c897cb79edf212fc93"
+  },
+  "original": {
+    "id": "dddddddddddddddddddddddddddddddd",
+    "revision": 1,
+    "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "parent_revision": 1,
+    "source_revision": 1,
+    "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "left_revision": 1,
+    "right_id": "cccccccccccccccccccccccccccccccc",
+    "right_revision": 1,
+    "outcome": "left",
+    "rationale": "Exact judged preference",
+    "review": "draft",
+    "stale_warning": null
+  },
+  "beforeACK": {
+    "current": {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "name": "Prompt",
+      "kind": "text",
+      "task": "text_classification",
+      "text": "Exact fictional prompt.",
+      "content_hash": "text-hash",
+      "source_sha256": "original-source-hash",
+      "annotation": null,
+      "review": "human_reviewed",
+      "revision": 1,
+      "source_revision": 1,
+      "groups": [
+        "g"
+      ],
+      "provenance": {
+        "rights": "Authored"
+      }
+    },
+    "editor": {
+      "id": "dddddddddddddddddddddddddddddddd",
+      "revision": 1,
+      "prompt_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "parent_revision": 1,
+      "source_revision": 1,
+      "left_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "left_revision": 1,
+      "right_id": "cccccccccccccccccccccccccccccccc",
+      "right_revision": 1,
+      "outcome": "left",
+      "rationale": "Exact judged preference",
+      "review": "draft",
+      "stale_warning": null
+    },
+    "busy": false,
+    "dirty": false,
+    "epoch": 2,
+    "status": "Backend applied classification first; exact old parent revision is stale. Draft retained. Refresh judgments to inspect an uncertain result; IDs are never replayed automatically."
+  },
+  "afterACK": {
+    "current": {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "name": "Prompt",
+      "kind": "text",
+      "task": "text_classification",
+      "text": "Exact fictional prompt.",
+      "content_hash": "text-hash",
+      "source_sha256": "original-source-hash",
+      "annotation": {
+        "label": "schedule"
+      },
+      "review": "draft",
+      "revision": 2,
+      "source_revision": 1,
+      "groups": [
+        "g"
+      ],
+      "provenance": {
+        "rights": "Authored"
+      }
+    },
+    "editor": null,
+    "busy": false,
+    "dirty": false,
+    "epoch": 3,
+    "status": "Backend applied classification first; exact old parent revision is stale. Draft retained. Refresh judgments to inspect an uncertain result; IDs are never replayed automatically."
+  },
+  "failedEditorRetained": false,
+  "fixAdvice": "Advance preferenceEditEpoch at every explicit validated save/delete dispatch; Apply already captures shared responseIntentEpoch. Keep preflight busy guard.",
+  "findings": [
+    "Late Apply acknowledgement clears failed clean judgment editor after its409 settles busyfalse"
+  ]
+}

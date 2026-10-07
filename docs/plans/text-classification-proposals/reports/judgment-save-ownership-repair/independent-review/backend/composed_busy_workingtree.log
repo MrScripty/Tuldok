@@ -1,0 +1,13 @@
+{
+  "passed": 5,
+  "sourceStart": {
+    "head": "6aba384a90246aa2c9d344997561154710178586",
+    "module_sha256": "34e01972a82aece705b282878d6bbb2304ae526cc3a221c897cb79edf212fc93"
+  },
+  "sourceEnd": {
+    "head": "6aba384a90246aa2c9d344997561154710178586",
+    "module_sha256": "34e01972a82aece705b282878d6bbb2304ae526cc3a221c897cb79edf212fc93"
+  },
+  "sourceUnchanged": true,
+  "findings": []
+}

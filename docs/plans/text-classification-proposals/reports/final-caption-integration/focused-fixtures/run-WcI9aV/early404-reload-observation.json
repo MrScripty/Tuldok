@@ -1,0 +1,21 @@
+{
+  "body": {
+    "source_id": "e4cb40c747dd4458ba7f02951465754f",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:40817/v1/",
+    "model": "classification-fixture",
+    "instruction": "Reload recovery after real early 404",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "2dff01df71b842e5b7057b19697e9c57"
+  },
+  "before_inference": 2,
+  "after_inference": 3,
+  "real_exact_get_status": 404,
+  "restored_via_visible_buttons": true
+}

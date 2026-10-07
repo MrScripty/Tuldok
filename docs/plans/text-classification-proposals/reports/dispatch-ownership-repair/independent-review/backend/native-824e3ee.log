@@ -1,0 +1,17 @@
+PASS same raw invalid counter 0 exact admitted GET recovers without POST
+PASS same raw invalid counter -1 exact admitted GET recovers without POST
+PASS same raw invalid counter 1.25 exact admitted GET recovers without POST
+PASS same raw invalid counter "2" exact admitted GET recovers without POST
+PASS same raw invalid counter null exact admitted GET recovers without POST
+PASS same raw invalid counter 9007199254740992 exact admitted GET recovers without POST
+PASS foreign-raw attempt remains failclosed despite known pending receipt
+PASS foreign-schema attempt remains failclosed despite known pending receipt
+PASS opaque attempt remains failclosed despite known pending receipt
+PASS array attempt remains failclosed despite known pending receipt
+PASS extra attempt remains failclosed despite known pending receipt
+PASS older refusal generation CAS preserves exact body memory mirror and durable next attempt
+PASS matching admission proof retires whole ID but stale proof preserves successor attempt
+PASS real asynchronous attempt put ConstraintError blocks retry before HTTP and preserves generation
+PASS attempt put success then transaction abort cannot send or advance durable generation
+PASS attempt generation exhaustion blocks POST and exact positive receipt remains live
+{"passed":16}

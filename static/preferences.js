@@ -117,7 +117,7 @@ async function mutatePreference(deleting=false){
   if(dirty||responseDirty||responseBusy||(typeof rightsDirty!=='undefined'&&(rightsDirty||rightsBusy))){notice('Save or cancel annotation, answer and rights-note edits before saving a judgment.',true);return;}
   if(deleting&&!confirm('Delete this judgment? Its independent history and frozen exports remain.'))return;
   let body;try{body=deleting?preferencePair(preferenceEditor):preferenceBody();}catch(error){notice(error.message,true);return;}
-  const epoch=preferenceEditEpoch,parent=preferenceParent,editor=preferenceEditor;preferenceBusy=true;preferenceButtons();
+  const epoch=++preferenceEditEpoch,parent=preferenceParent,editor=preferenceEditor;preferenceBusy=true;preferenceButtons();
   try{
     const result=await api(deleting?'preferences/delete':'preferences',body);
     if(result.changed&&(preferenceJudgmentAffectsSelection(editor)||preferenceJudgmentAffectsSelection(result.judgment)))invalidatePreferencePreview();

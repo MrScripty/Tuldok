@@ -1,0 +1,548 @@
+{
+  "source_head": "b1d0a453ea24653fa40f08c08f41e56375663521",
+  "runtime_sha256": "13e1c6a688a526cf3888bdf1b67c83cd8ee78fa97a0da4f5fcdc1021202738bf",
+  "cases": [
+    {
+      "outcome": "success",
+      "body": {
+        "source_id": "199980558ec64756a5249985744ccb17",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:35599/v1/",
+        "model": "classification-fixture",
+        "instruction": "dispatch-refusal-success",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep",
+          "café 😀"
+        ],
+        "request_id": "2e4f97edcd5948128efe76f9041815f0"
+      },
+      "first": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}",
+            "generation": 1
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"27d6c09c9ff44be8a2f2efbccf8a654f\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"337de9ed4ac64dc4b63cd8de37558e50\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}",
+        "memory": {
+          "source_id": "199980558ec64756a5249985744ccb17",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-success",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "2e4f97edcd5948128efe76f9041815f0"
+        },
+        "blocked": ""
+      },
+      "second": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}",
+            "generation": 2
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"27d6c09c9ff44be8a2f2efbccf8a654f\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"337de9ed4ac64dc4b63cd8de37558e50\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}",
+        "memory": {
+          "source_id": "199980558ec64756a5249985744ccb17",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-success",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "2e4f97edcd5948128efe76f9041815f0"
+        },
+        "blocked": ""
+      },
+      "after_old_refusal": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}",
+            "generation": 2
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"27d6c09c9ff44be8a2f2efbccf8a654f\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"337de9ed4ac64dc4b63cd8de37558e50\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}",
+        "memory": {
+          "source_id": "199980558ec64756a5249985744ccb17",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-success",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "2e4f97edcd5948128efe76f9041815f0"
+        },
+        "blocked": "A later classification attempt retains this admission. The earlier refusal did not clear its request ID or exact intent."
+      },
+      "before_inference": 12,
+      "backend_before_release": [
+        {
+          "body": {
+            "source_id": "199980558ec64756a5249985744ccb17",
+            "revision": 1,
+            "source_revision": 1,
+            "server_url": "http://127.0.0.1:35599/v1/",
+            "model": "classification-fixture",
+            "instruction": "dispatch-refusal-success",
+            "seed": 42,
+            "labels": [
+              "cancel",
+              "keep",
+              "café 😀"
+            ],
+            "request_id": "2e4f97edcd5948128efe76f9041815f0"
+          },
+          "status": 409
+        }
+      ],
+      "early_exact_get_status": 404,
+      "changed_intent_posts": 0,
+      "after_second_transport": {
+        "entries": {
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+          }
+        },
+        "mirror": null,
+        "memory": null,
+        "blocked": ""
+      },
+      "backend_after_release": [
+        {
+          "body": {
+            "source_id": "199980558ec64756a5249985744ccb17",
+            "revision": 1,
+            "source_revision": 1,
+            "server_url": "http://127.0.0.1:35599/v1/",
+            "model": "classification-fixture",
+            "instruction": "dispatch-refusal-success",
+            "seed": 42,
+            "labels": [
+              "cancel",
+              "keep",
+              "café 😀"
+            ],
+            "request_id": "2e4f97edcd5948128efe76f9041815f0"
+          },
+          "status": 409
+        },
+        {
+          "body": {
+            "source_id": "199980558ec64756a5249985744ccb17",
+            "revision": 1,
+            "source_revision": 1,
+            "server_url": "http://127.0.0.1:35599/v1/",
+            "model": "classification-fixture",
+            "instruction": "dispatch-refusal-success",
+            "seed": 42,
+            "labels": [
+              "cancel",
+              "keep",
+              "café 😀"
+            ],
+            "request_id": "2e4f97edcd5948128efe76f9041815f0"
+          },
+          "status": 202
+        }
+      ],
+      "canonical_retirement": {
+        "entries": {
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+          }
+        },
+        "mirror": null,
+        "memory": null,
+        "blocked": ""
+      },
+      "after_inference": 13
+    },
+    {
+      "outcome": "lost-ack",
+      "body": {
+        "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:35599/v1/",
+        "model": "classification-fixture",
+        "instruction": "dispatch-refusal-lost-ack",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep",
+          "café 😀"
+        ],
+        "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+      },
+      "first": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+            "generation": 1
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+        "memory": {
+          "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-lost-ack",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+        },
+        "blocked": ""
+      },
+      "second": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+            "generation": 2
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+        "memory": {
+          "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-lost-ack",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+        },
+        "blocked": ""
+      },
+      "after_old_refusal": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+            "generation": 2
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+        "memory": {
+          "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-lost-ack",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+        },
+        "blocked": "A later classification attempt retains this admission. The earlier refusal did not clear its request ID or exact intent."
+      },
+      "before_inference": 13,
+      "backend_before_release": [
+        {
+          "body": {
+            "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+            "revision": 1,
+            "source_revision": 1,
+            "server_url": "http://127.0.0.1:35599/v1/",
+            "model": "classification-fixture",
+            "instruction": "dispatch-refusal-lost-ack",
+            "seed": 42,
+            "labels": [
+              "cancel",
+              "keep",
+              "café 😀"
+            ],
+            "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+          },
+          "status": 409
+        }
+      ],
+      "early_exact_get_status": 404,
+      "changed_intent_posts": 0,
+      "after_second_transport": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+            "generation": 2
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"199980558ec64756a5249985744ccb17\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-success\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"2e4f97edcd5948128efe76f9041815f0\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}",
+        "memory": {
+          "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-lost-ack",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+        },
+        "blocked": ""
+      },
+      "backend_after_release": [
+        {
+          "body": {
+            "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+            "revision": 1,
+            "source_revision": 1,
+            "server_url": "http://127.0.0.1:35599/v1/",
+            "model": "classification-fixture",
+            "instruction": "dispatch-refusal-lost-ack",
+            "seed": 42,
+            "labels": [
+              "cancel",
+              "keep",
+              "café 😀"
+            ],
+            "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+          },
+          "status": 409
+        },
+        {
+          "body": {
+            "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+            "revision": 1,
+            "source_revision": 1,
+            "server_url": "http://127.0.0.1:35599/v1/",
+            "model": "classification-fixture",
+            "instruction": "dispatch-refusal-lost-ack",
+            "seed": 42,
+            "labels": [
+              "cancel",
+              "keep",
+              "café 😀"
+            ],
+            "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+          },
+          "status": 202
+        }
+      ],
+      "reload_explicit_posts": [
+        {
+          "source_id": "e6890f56e3f6448c99572bc2d4daa41c",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "dispatch-refusal-lost-ack",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "ba0a08dacdfc4889b8cfe9e3b894c5b8"
+        }
+      ],
+      "canonical_retirement": {
+        "entries": {
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"e6890f56e3f6448c99572bc2d4daa41c\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"dispatch-refusal-lost-ack\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"ba0a08dacdfc4889b8cfe9e3b894c5b8\"}}"
+          }
+        },
+        "mirror": null,
+        "memory": null,
+        "blocked": ""
+      },
+      "after_inference": 14
+    },
+    {
+      "outcome": "terminal-receipt-CAS",
+      "terminal_body": {
+        "source_id": "2fafa2a0f32f4572abdb81eae795c869",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:35599/v1/",
+        "model": "classification-fixture",
+        "instruction": "Terminal canonical receipt",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep",
+          "café 😀"
+        ],
+        "request_id": "c6fa253a98924328a0e725bd582af5f0"
+      },
+      "fresh_body": {
+        "source_id": "c75783fb751d49c1adade677171eb0cf",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:35599/v1/",
+        "model": "classification-fixture",
+        "instruction": "Fresh after terminal receipt",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep",
+          "café 😀"
+        ],
+        "request_id": "a447fb1354a64d80986d0a03941906ca"
+      },
+      "after_old_canonical": {
+        "entries": {
+          "attempt": {
+            "schema_version": 1,
+            "raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"c75783fb751d49c1adade677171eb0cf\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Fresh after terminal receipt\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"a447fb1354a64d80986d0a03941906ca\"}}",
+            "generation": 1
+          },
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"2fafa2a0f32f4572abdb81eae795c869\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Terminal canonical receipt\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"c6fa253a98924328a0e725bd582af5f0\"}}"
+          },
+          "pending": "{\"schema_version\":1,\"body\":{\"source_id\":\"c75783fb751d49c1adade677171eb0cf\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Fresh after terminal receipt\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"a447fb1354a64d80986d0a03941906ca\"}}"
+        },
+        "mirror": "{\"schema_version\":1,\"body\":{\"source_id\":\"c75783fb751d49c1adade677171eb0cf\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Fresh after terminal receipt\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"a447fb1354a64d80986d0a03941906ca\"}}",
+        "memory": {
+          "source_id": "2fafa2a0f32f4572abdb81eae795c869",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "Terminal canonical receipt",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "c6fa253a98924328a0e725bd582af5f0"
+        },
+        "blocked": "Classification recovery mirror changed. This receipt cannot erase another admission."
+      },
+      "before_inference": 14,
+      "after_inference": 16
+    },
+    {
+      "outcome": "crash-before-delivery",
+      "body": {
+        "source_id": "26081274dd9141ce930655298f1a3168",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:35599/v1/",
+        "model": "classification-fixture",
+        "instruction": "Crash before delivery",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep",
+          "café 😀"
+        ],
+        "request_id": "46576e7ac0cc4e9a8e2e647a7eb273f9"
+      },
+      "early_exact_get_status": 404,
+      "explicit_recovered_posts": [
+        {
+          "source_id": "26081274dd9141ce930655298f1a3168",
+          "revision": 1,
+          "source_revision": 1,
+          "server_url": "http://127.0.0.1:35599/v1/",
+          "model": "classification-fixture",
+          "instruction": "Crash before delivery",
+          "seed": 42,
+          "labels": [
+            "cancel",
+            "keep",
+            "café 😀"
+          ],
+          "request_id": "46576e7ac0cc4e9a8e2e647a7eb273f9"
+        }
+      ],
+      "retired": {
+        "entries": {
+          "initialized": {
+            "schema_version": 1,
+            "resolved_raw": "{\"schema_version\":1,\"body\":{\"source_id\":\"26081274dd9141ce930655298f1a3168\",\"revision\":1,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:35599/v1/\",\"model\":\"classification-fixture\",\"instruction\":\"Crash before delivery\",\"seed\":42,\"labels\":[\"cancel\",\"keep\",\"café 😀\"],\"request_id\":\"46576e7ac0cc4e9a8e2e647a7eb273f9\"}}"
+          }
+        },
+        "mirror": null,
+        "memory": null,
+        "blocked": ""
+      },
+      "before_inference": 16,
+      "after_inference": 17
+    }
+  ]
+}

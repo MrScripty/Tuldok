@@ -1,0 +1,22 @@
+test_fresh_root_restores_prior_reports_and_retains_current_artifacts (__main__.ReportIsolationReview.test_fresh_root_restores_prior_reports_and_retains_current_artifacts) ... [1/1] python independent-gate-marker.py
+  passed (0.067s)
+ok
+test_output_root_outside_repository_is_rejected_without_writes (__main__.ReportIsolationReview.test_output_root_outside_repository_is_rejected_without_writes) ... usage: review [-h] [--inherited-only] [--only ONLY] [--resume]
+              [--python PYTHON] [--report-root REPORT_ROOT]
+              [--timeout TIMEOUT]
+review: error: --report-root must be inside this repository
+ok
+test_report_projection_excludes_only_fresh_output_root (__main__.ReportIsolationReview.test_report_projection_excludes_only_fresh_output_root) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.075s
+
+OK
+{
+  "recorded_gates": 1,
+  "passed": 1,
+  "failed": 0,
+  "blocked": 0,
+  "historical_report_files_preserved": 2,
+  "historical_report_hashes_preserved": true
+}

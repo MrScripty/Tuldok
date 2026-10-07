@@ -1,0 +1,11 @@
+[1/1] node --check static/text-classification-proposals.js
+  passed (0.009s)
+{
+  "recorded_gates": 1,
+  "passed": 1,
+  "failed": 0,
+  "blocked": 0,
+  "historical_report_files_preserved": 4,
+  "historical_report_hashes_preserved": true
+}
+{"independent_runner_isolation": "passed", "isolated_artifacts": 4, "new_output_root": "docs/plans/text-classification-proposals/reports/publication-qualification", "preserved_old_files": 4, "subset_correctly_incomplete": true}

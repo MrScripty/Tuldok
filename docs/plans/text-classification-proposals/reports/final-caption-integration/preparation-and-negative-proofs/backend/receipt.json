@@ -1,0 +1,115 @@
+{
+  "reviewed_head": "12b174f7a7b2fd6aa36d71da450ad657a5443114",
+  "reviewed_tree": "931c34e0d5123b6eb4d33456b428026c72be7105",
+  "runtime_baseline": "c5500cba5021949bccf45d2124ee5e2910dc5c92",
+  "runtime_scope_unchanged": true,
+  "working_tree_clean": true,
+  "published_pr": {
+    "number": 18,
+    "url": "https://github.com/MrScripty/Tuldok/pull/18",
+    "state": "open",
+    "head_sha": "12b174f7a7b2fd6aa36d71da450ad657a5443114",
+    "head_ref": "feature/text-classification-proposals",
+    "base_ref": "feature/caption-proposals-local-20261007",
+    "base_sha": "4ed5466fd764e938999cca1d535e9a33379271a0"
+  },
+  "remote_refs_read_only": [
+    "12b174f7a7b2fd6aa36d71da450ad657a5443114\trefs/heads/feature/text-classification-proposals",
+    "12b174f7a7b2fd6aa36d71da450ad657a5443114\trefs/pull/18/head"
+  ],
+  "source_sha256": {
+    "app.py": "00ce4e44dbb9b80f073ceb19a456ad31392a6f5fee19d043e1ee6674d2f398f0",
+    "workbench.py": "9dec957dcb7f1dd172f3cdb6a4f058a6f07f422071651132637b2bafa9fa7a23",
+    "text_classification_proposals.py": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
+    "ai_http.py": "73ca648fe00e8f5a4022b14b72c80dd695228706a0f2b79aee605a524b8f2585",
+    "caption_proposals.py": "f7d428a2da504bd64ed69e63f20b6b40c9070127d710ce6ce0e4f5ef926bf587",
+    "static/text-classification-proposals.js": "b807a96b82bd3f7ce98260b3c712b3f762988e5b0ed4af96980f0a88cff08666"
+  },
+  "grouped_url_cases": [
+    {
+      "name": "ordinary_url",
+      "frontend_accepted": true,
+      "code_points": 22,
+      "backend_accepted": true
+    },
+    {
+      "name": "ascii_2048",
+      "frontend_accepted": true,
+      "code_points": 2048,
+      "backend_accepted": true
+    },
+    {
+      "name": "ascii_2049",
+      "frontend_accepted": true,
+      "code_points": 2049,
+      "backend_accepted": false,
+      "backend_error": "Requested server URL must be text, 1\u20132048 characters."
+    },
+    {
+      "name": "astral_2048",
+      "frontend_accepted": true,
+      "code_points": 2048,
+      "backend_accepted": true
+    },
+    {
+      "name": "lone_surrogate",
+      "frontend_accepted": true,
+      "code_points": 23,
+      "backend_accepted": false,
+      "backend_error": "Requested server URL contains an invalid Unicode surrogate."
+    },
+    {
+      "name": "bom_prefix",
+      "frontend_accepted": true,
+      "code_points": 23,
+      "backend_accepted": false,
+      "backend_error": "Use an HTTP or HTTPS server URL without credentials, query, or fragment"
+    },
+    {
+      "name": "internal_nel",
+      "frontend_accepted": true,
+      "code_points": 34,
+      "backend_accepted": false,
+      "backend_error": "Server URL cannot contain whitespace"
+    },
+    {
+      "name": "nel_edges",
+      "frontend_accepted": false,
+      "code_points": 24,
+      "backend_accepted": true
+    },
+    {
+      "name": "missing_authority_slashes",
+      "frontend_accepted": true,
+      "code_points": 19,
+      "backend_accepted": false,
+      "backend_error": "Use an HTTP or HTTPS server URL without credentials, query, or fragment"
+    },
+    {
+      "name": "single_authority_slash",
+      "frontend_accepted": true,
+      "code_points": 20,
+      "backend_accepted": false,
+      "backend_error": "Use an HTTP or HTTPS server URL without credentials, query, or fragment"
+    },
+    {
+      "name": "backslash_authority",
+      "frontend_accepted": true,
+      "code_points": 21,
+      "backend_accepted": false,
+      "backend_error": "Use an HTTP or HTTPS server URL without credentials, query, or fragment"
+    }
+  ],
+  "finding": {
+    "id": "P1-fresh-url-validation-parity",
+    "severity": "P1",
+    "status": "confirmed-blocker",
+    "fresh_frontend_accepts_backend_refuses_cases": 7,
+    "full_lost_refusal_reload_reproduction": "../interactions/url-lost-refusal.log",
+    "actual_backend_400_no_admission": "../interactions/url-real-refusal.json",
+    "impact": "A lost pre-admission 400 followed by reload retains an unknown admission indefinitely: exact GET returns404; changed settings cannot submit; retrying exact invalid body returns400 and retains prior pending intent."
+  },
+  "scope": "Read-only exact published source verification, source contract review and bounded synthetic URL validation probes. Prior c550 backend18 and aggregate46 evidence retained unchanged; not rerun in this narrow review. No inference, model downloads, credentials, implementation changes or public writes.",
+  "integration_blocked": true,
+  "next_requirement": "Resolve frontend/backend fresh-validation parity and requalify recovery; obtain final caption repair SHA before integration."
+}

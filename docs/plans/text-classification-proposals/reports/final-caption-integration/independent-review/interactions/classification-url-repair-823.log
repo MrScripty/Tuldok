@@ -1,0 +1,10 @@
+{
+  "fresh_invalid_url_cases": 13,
+  "same_document_valid_corrections": 13,
+  "rejected_before_pending_storage_or_POST": true,
+  "no_storage_error_latch": true,
+  "exact_raw_valid_URL_preserved": true,
+  "valid_2048_astral_codepoint_URL": true,
+  "old_invalid_persisted_intent_remains_fail_closed": true,
+  "automatic_inference": false
+}

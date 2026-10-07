@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {harness,storage,row,flush}=require('./caption-storage-harness.cjs');
+const key='tuldok.caption-proposal-recovery.v1';
+const valid={url:'http://127.0.0.1:9999',model:'caption-fixture',guidance:'Exact visible pixels 😀',seed:'42'};
+function configure(h){h.context.image={...row,kind:'image',task:'image_caption'};h.run('current=image');for(const [key,value] of Object.entries(valid))h.element('caption-proposal-'+key).value=value;}
+(async()=>{
+ const cases=[['guidance','   ',valid.guidance],['guidance','\u0085\u001c',valid.guidance],['guidance','bad\ud800',valid.guidance],['guidance','😀'.repeat(2001),'😀'.repeat(2000)],['model','   ',valid.model],['model','bad\nmodel',valid.model],['model','bad\ud800',valid.model],['url','http:127.0.0.1:9999',valid.url],['url','http://@127.0.0.1:9999',valid.url],['url',valid.url+'/'+'x'.repeat(2050),valid.url],['url',valid.url+'/bad\ud800',valid.url],['seed','4294967296','4294967295']];
+ for(const [field,bad,good] of cases){
+  const persistence=storage(),h=harness(persistence);configure(h);h.element('caption-proposal-'+field).value=bad;await h.element('caption-proposal-form').dispatch('submit');assert.equal(h.requests.filter(r=>r.body).length,0,field);assert.equal(persistence.values.size,0);assert.equal(h.run('captionProposalPendingRequest'),null);assert.equal(h.run('captionProposalStorageError'),'');assert.equal(h.element('caption-proposal-submit').disabled,false);
+  h.element('caption-proposal-'+field).value=good;const starting=h.element('caption-proposal-form').dispatch('submit');const request=h.take('caption-proposals','POST'),body=structuredClone(request.body);assert.equal(body.instruction,field==='guidance'?good:valid.guidance);assert.deepEqual(JSON.parse(persistence.values.get(key)),body);request.resolve({id:body.request_id});await flush();h.take('caption-proposals','GET').resolve({jobs:[{id:body.request_id,revision:3,status:'completed',source:{...row,kind:'image'},config:{model:body.model},annotation:{caption:'Synthetic draft'}}]});await starting;assert.equal(h.run('captionProposalPendingRequest'),null);assert.equal(h.run('captionProposalStorageError'),'');assert.equal(persistence.values.size,0);
+ }
+ const legacy=storage(),body={source_id:row.id,revision:1,source_revision:1,server_url:valid.url,model:valid.model,instruction:'   ',seed:42,request_id:'c'.repeat(32)},raw=JSON.stringify(body);legacy.values.set(key,raw);const old=harness(legacy);configure(old);await old.element('caption-proposal-form').dispatch('submit');assert.equal(old.requests.filter(r=>r.body).length,0);assert.equal(legacy.values.get(key),raw);assert.ok(old.run('captionProposalStorageError'));
+ console.log(JSON.stringify({fresh_invalid_cases:cases.length,same_document_corrections:cases.length,old_whitespace_guidance_finding_repaired:true,no_POST_or_recovery_storage_before_correction:true,no_storage_error_latch:true,exact_2000_astral_guidance_preserved:true,legacy_invalid_stored_guidance_remains_fail_closed:true},null,2));
+})().catch(error=>{console.error(error.stack);process.exitCode=1});

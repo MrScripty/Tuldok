@@ -1,0 +1,1498 @@
+{
+  "source_head": "6aba384a90246aa2c9d344997561154710178586",
+  "synthetic_only": true,
+  "negative_apply_hook": false,
+  "classification_script_override_sha256": null,
+  "steps": [
+    {
+      "name": "Immediate preference proof invalidation success",
+      "job_id": "08ed7b2bb1734144ba981f4f906728c4",
+      "fixed": [
+        {
+          "id": "874fc00bd32c40dc999b9f7b3f3d996a",
+          "revision": 1,
+          "prompt_id": "878ea4a59d0047ba941eb30125eac654",
+          "parent_revision": 1,
+          "source_revision": 1,
+          "left_id": "f067e12da12e4a5e82ae42c5fa9e4790",
+          "left_revision": 1,
+          "right_id": "52aa3a4fcddf481ba8949c0ad37792bc",
+          "right_revision": 1
+        }
+      ],
+      "state": {
+        "preview": null,
+        "freeze_disabled": true,
+        "items": [
+          {
+            "id": "874fc00bd32c40dc999b9f7b3f3d996a",
+            "revision": 1,
+            "prompt_id": "878ea4a59d0047ba941eb30125eac654",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "f067e12da12e4a5e82ae42c5fa9e4790",
+            "left_revision": 1,
+            "right_id": "52aa3a4fcddf481ba8949c0ad37792bc",
+            "right_revision": 1
+          }
+        ],
+        "held_lists": 1
+      }
+    },
+    {
+      "name": "Immediate preference proof invalidation uncertain",
+      "job_id": "1d62859f1b6542a5bd698c5d1a00dcc1",
+      "fixed": [
+        {
+          "id": "add3e957dd4c40d0b7eebaf34a74ece4",
+          "revision": 1,
+          "prompt_id": "db198cc4d20545de9d12210cf8c9448e",
+          "parent_revision": 1,
+          "source_revision": 1,
+          "left_id": "44e5d0246e6d45fc9d2833d12f40bc7b",
+          "left_revision": 1,
+          "right_id": "f2d3e2b961334bf1a68e4713d673a551",
+          "right_revision": 1
+        }
+      ],
+      "state": {
+        "preview": null,
+        "freeze_disabled": true,
+        "items": [
+          {
+            "id": "add3e957dd4c40d0b7eebaf34a74ece4",
+            "revision": 1,
+            "prompt_id": "db198cc4d20545de9d12210cf8c9448e",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "44e5d0246e6d45fc9d2833d12f40bc7b",
+            "left_revision": 1,
+            "right_id": "f2d3e2b961334bf1a68e4713d673a551",
+            "right_revision": 1
+          }
+        ],
+        "held_lists": 0
+      }
+    },
+    {
+      "name": "Held classification Apply retains later judgment draft",
+      "opened": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:12.204264+00:00",
+          "deleted": false,
+          "id": "b7567c24cbff455fa1ae68f421575663",
+          "left_id": "581a9ade1b094ddcb47999bd51fb94ba",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "ed848db29cb74ad3bd0a670daefcfc44",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "1d740d562f734faa8e7a35d3a5ed355c",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:12.204264+00:00",
+          "stale_warning": null
+        },
+        "epoch": 12,
+        "current": "ed848db29cb74ad3bd0a670daefcfc44",
+        "revision": 1
+      },
+      "retained": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:12.204264+00:00",
+          "deleted": false,
+          "id": "b7567c24cbff455fa1ae68f421575663",
+          "left_id": "581a9ade1b094ddcb47999bd51fb94ba",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "ed848db29cb74ad3bd0a670daefcfc44",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "1d740d562f734faa8e7a35d3a5ed355c",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:12.204264+00:00",
+          "stale_warning": null
+        },
+        "epoch": 12,
+        "current": "ed848db29cb74ad3bd0a670daefcfc44",
+        "revision": 1,
+        "dirty": true,
+        "rationale": "Later exact unsaved comparative rationale 😀.",
+        "review": "draft"
+      }
+    },
+    {
+      "name": "Classification Reject preserves unrelated judgment save owner",
+      "job_id": "fd57e291672b424e95341343f7fc8d9b",
+      "state": {
+        "dirty": true,
+        "rationale": "Later draft during judgment acknowledgment.",
+        "review": "draft",
+        "editor": {
+          "id": "ef640e65263b427d98fe663b45a71a5c",
+          "revision": 2,
+          "prompt_id": "c7f313d49b9045f4b87f75144504c092",
+          "parent_revision": 1,
+          "source_revision": 1,
+          "left_id": "e5d8c9a31fe24b72846aa0d96c3b15e5",
+          "left_revision": 1,
+          "right_id": "842c2512068d482ba61acec306fcde37",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit saved comparative rationale.",
+          "review": "draft",
+          "deleted": false,
+          "created_at": "2026-10-07T14:10:12.848974+00:00",
+          "updated_at": "2026-10-07T14:10:13.242833+00:00",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          }
+        }
+      }
+    },
+    {
+      "name": "Recovery unchanged across actual answer and judgment saves",
+      "body": {
+        "source_id": "1c88919c28b2455d928e2d30b6845097",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:38125/v1/",
+        "model": "classification-fixture",
+        "instruction": "Recovery with independent saves",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep"
+        ],
+        "request_id": "c744cca1b6ce4ba48fe9468859f57ab5"
+      },
+      "early_exact_get_status": 404,
+      "before_inference": 4,
+      "after_inference": 5,
+      "answer_revision": 2,
+      "judgment_revision": 2
+    },
+    {
+      "name": "Clean stale judgment save first refusal",
+      "source_revision": 2,
+      "before": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:14.577356+00:00",
+          "deleted": false,
+          "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+          "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "dd54a9b44461461bb07e08c150d98535",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:14.577356+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "0693fdf4c8c344e8b940e96bdb1b1110",
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save refusal",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:14.572472+00:00",
+            "updated_at": "2026-10-07T14:10:14.572472+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+              "prompt_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+              "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b"
+            }
+          },
+          {
+            "id": "dd54a9b44461461bb07e08c150d98535",
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save refusal",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:14.574646+00:00",
+            "updated_at": "2026-10-07T14:10:14.574646+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+              "prompt_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+              "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b"
+            }
+          }
+        ],
+        "body": {
+          "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+          "revision": 1,
+          "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+          "left_revision": 1,
+          "right_id": "dd54a9b44461461bb07e08c150d98535",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "kind": "text",
+          "name": "Clean busy save refusal",
+          "text": "Exact combined prompt Clean busy save refusal café 😀.",
+          "content_hash": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:14.570127+00:00",
+          "updated_at": "2026-10-07T14:10:14.579423+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save refusal"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save refusal",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 11,
+        "judgment_epoch": 24,
+        "dirty": false,
+        "busy": true,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+        "items": [
+          {
+            "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+            "revision": 1,
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+            "left_revision": 1,
+            "right_id": "dd54a9b44461461bb07e08c150d98535",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "during": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:14.577356+00:00",
+          "deleted": false,
+          "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+          "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "dd54a9b44461461bb07e08c150d98535",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:14.577356+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "0693fdf4c8c344e8b940e96bdb1b1110",
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save refusal",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:14.572472+00:00",
+            "updated_at": "2026-10-07T14:10:14.572472+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+              "prompt_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+              "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b"
+            }
+          },
+          {
+            "id": "dd54a9b44461461bb07e08c150d98535",
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save refusal",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:14.574646+00:00",
+            "updated_at": "2026-10-07T14:10:14.574646+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+              "prompt_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+              "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b"
+            }
+          }
+        ],
+        "body": {
+          "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+          "revision": 1,
+          "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+          "left_revision": 1,
+          "right_id": "dd54a9b44461461bb07e08c150d98535",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "kind": "text",
+          "name": "Clean busy save refusal",
+          "text": "Exact combined prompt Clean busy save refusal café 😀.",
+          "content_hash": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:14.570127+00:00",
+          "updated_at": "2026-10-07T14:10:14.579423+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save refusal"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save refusal",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 11,
+        "judgment_epoch": 24,
+        "dirty": false,
+        "busy": true,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+        "items": [
+          {
+            "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+            "revision": 1,
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+            "left_revision": 1,
+            "right_id": "dd54a9b44461461bb07e08c150d98535",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "after": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:14.577356+00:00",
+          "deleted": false,
+          "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+          "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "dd54a9b44461461bb07e08c150d98535",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:14.577356+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "0693fdf4c8c344e8b940e96bdb1b1110",
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save refusal",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:14.572472+00:00",
+            "updated_at": "2026-10-07T14:10:14.572472+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+              "prompt_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+              "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b"
+            }
+          },
+          {
+            "id": "dd54a9b44461461bb07e08c150d98535",
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save refusal",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:14.574646+00:00",
+            "updated_at": "2026-10-07T14:10:14.574646+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+              "prompt_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+              "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b"
+            }
+          }
+        ],
+        "body": {
+          "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+          "revision": 1,
+          "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+          "left_revision": 1,
+          "right_id": "dd54a9b44461461bb07e08c150d98535",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "29843f3d393f475e9ff6f4ee3af3b53f",
+          "kind": "text",
+          "name": "Clean busy save refusal",
+          "text": "Exact combined prompt Clean busy save refusal café 😀.",
+          "content_hash": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:14.570127+00:00",
+          "updated_at": "2026-10-07T14:10:14.579423+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "4bf9716d0eec88db9840ebb53b098d8766fcee2fd6b4fb13947148979c3b676b",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save refusal"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save refusal",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 11,
+        "judgment_epoch": 24,
+        "dirty": false,
+        "busy": false,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions. Draft retained. Refresh judgments to inspect an uncertain result; IDs are never replayed automatically.",
+        "items": [
+          {
+            "id": "fd95ebdb6bfc4399a94dcc1d150b2dfe",
+            "revision": 1,
+            "prompt_id": "29843f3d393f475e9ff6f4ee3af3b53f",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "0693fdf4c8c344e8b940e96bdb1b1110",
+            "left_revision": 1,
+            "right_id": "dd54a9b44461461bb07e08c150d98535",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "apply_posts_while_busy": 0,
+      "save_response": {
+        "route": "/api/workbench/preferences",
+        "status": 409,
+        "body": {
+          "error": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+          "code": "conflict"
+        }
+      }
+    },
+    {
+      "name": "Clean stale judgment save first success",
+      "source_revision": 2,
+      "before": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:15.096215+00:00",
+          "deleted": false,
+          "id": "307bdfa340e34de2ac70b9e005e5e74e",
+          "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:15.096215+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save success",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.091519+00:00",
+            "updated_at": "2026-10-07T14:10:15.091519+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+              "prompt_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+              "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b"
+            }
+          },
+          {
+            "id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save success",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.094363+00:00",
+            "updated_at": "2026-10-07T14:10:15.094363+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+              "prompt_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+              "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b"
+            }
+          }
+        ],
+        "body": {
+          "id": "307bdfa340e34de2ac70b9e005e5e74e",
+          "revision": 1,
+          "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+          "left_revision": 1,
+          "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "000a1d557e9440d38bed36dc72ea9f84",
+          "kind": "text",
+          "name": "Clean busy save success",
+          "text": "Exact combined prompt Clean busy save success café 😀.",
+          "content_hash": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:15.088287+00:00",
+          "updated_at": "2026-10-07T14:10:15.097897+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save success"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save success",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 12,
+        "judgment_epoch": 27,
+        "dirty": false,
+        "busy": true,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+        "items": [
+          {
+            "id": "307bdfa340e34de2ac70b9e005e5e74e",
+            "revision": 1,
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "left_revision": 1,
+            "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "during": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:15.096215+00:00",
+          "deleted": false,
+          "id": "307bdfa340e34de2ac70b9e005e5e74e",
+          "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:15.096215+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save success",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.091519+00:00",
+            "updated_at": "2026-10-07T14:10:15.091519+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+              "prompt_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+              "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b"
+            }
+          },
+          {
+            "id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save success",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.094363+00:00",
+            "updated_at": "2026-10-07T14:10:15.094363+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+              "prompt_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+              "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b"
+            }
+          }
+        ],
+        "body": {
+          "id": "307bdfa340e34de2ac70b9e005e5e74e",
+          "revision": 1,
+          "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+          "left_revision": 1,
+          "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "000a1d557e9440d38bed36dc72ea9f84",
+          "kind": "text",
+          "name": "Clean busy save success",
+          "text": "Exact combined prompt Clean busy save success café 😀.",
+          "content_hash": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:15.088287+00:00",
+          "updated_at": "2026-10-07T14:10:15.097897+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save success"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save success",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 12,
+        "judgment_epoch": 27,
+        "dirty": false,
+        "busy": true,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+        "items": [
+          {
+            "id": "307bdfa340e34de2ac70b9e005e5e74e",
+            "revision": 1,
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "left_revision": 1,
+            "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "after": {
+        "editor": {
+          "id": "307bdfa340e34de2ac70b9e005e5e74e",
+          "revision": 2,
+          "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+          "left_revision": 1,
+          "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft",
+          "deleted": false,
+          "created_at": "2026-10-07T14:10:15.096215+00:00",
+          "updated_at": "2026-10-07T14:10:15.478383+00:00",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          }
+        },
+        "answers": [
+          {
+            "id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save success",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.091519+00:00",
+            "updated_at": "2026-10-07T14:10:15.091519+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+              "prompt_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+              "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b"
+            }
+          },
+          {
+            "id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save success",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.094363+00:00",
+            "updated_at": "2026-10-07T14:10:15.094363+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+              "prompt_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+              "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b"
+            }
+          }
+        ],
+        "body": {
+          "id": "307bdfa340e34de2ac70b9e005e5e74e",
+          "revision": 2,
+          "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+          "left_revision": 1,
+          "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "000a1d557e9440d38bed36dc72ea9f84",
+          "kind": "text",
+          "name": "Clean busy save success",
+          "text": "Exact combined prompt Clean busy save success café 😀.",
+          "content_hash": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:15.088287+00:00",
+          "updated_at": "2026-10-07T14:10:15.097897+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "68b100cfc0ba21f36ce53139ff4e524b539fa297a802008d3619cc20ef196b3b",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save success"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save success",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 12,
+        "judgment_epoch": 27,
+        "dirty": false,
+        "busy": false,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Saved judgment revision 2",
+        "items": [
+          {
+            "id": "307bdfa340e34de2ac70b9e005e5e74e",
+            "revision": 1,
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "left_revision": 1,
+            "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "apply_posts_while_busy": 0,
+      "save_response": {
+        "route": "/api/workbench/preferences",
+        "status": 200,
+        "body": {
+          "judgment": {
+            "id": "307bdfa340e34de2ac70b9e005e5e74e",
+            "revision": 2,
+            "prompt_id": "000a1d557e9440d38bed36dc72ea9f84",
+            "parent_revision": 2,
+            "source_revision": 1,
+            "left_id": "dcf96b313ed94943b15e1b2be897a8ef",
+            "left_revision": 1,
+            "right_id": "ccb8dcb65b3d450ca98ba002eb1f6a17",
+            "right_revision": 1,
+            "outcome": "left",
+            "rationale": "Explicit original comparison.",
+            "review": "draft",
+            "deleted": false,
+            "created_at": "2026-10-07T14:10:15.096215+00:00",
+            "updated_at": "2026-10-07T14:10:15.478383+00:00",
+            "provenance": {
+              "method": "human_comparative_judgment"
+            }
+          },
+          "changed": true
+        }
+      }
+    },
+    {
+      "name": "Held Apply acknowledgment retains later clean judgment save",
+      "before": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:15.703782+00:00",
+          "deleted": false,
+          "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+          "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "098db57a17ca4b04ac960690acee9665",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:15.703782+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "e4d0a9bda27741b0b96edb1a47de6a58",
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save after Apply",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.700158+00:00",
+            "updated_at": "2026-10-07T14:10:15.700158+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+              "prompt_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+              "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129"
+            }
+          },
+          {
+            "id": "098db57a17ca4b04ac960690acee9665",
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save after Apply",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.702014+00:00",
+            "updated_at": "2026-10-07T14:10:15.702014+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+              "prompt_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+              "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129"
+            }
+          }
+        ],
+        "body": {
+          "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+          "revision": 1,
+          "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+          "left_revision": 1,
+          "right_id": "098db57a17ca4b04ac960690acee9665",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "kind": "text",
+          "name": "Clean busy save after Apply",
+          "text": "Exact combined prompt Clean busy save after Apply café 😀.",
+          "content_hash": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:15.696778+00:00",
+          "updated_at": "2026-10-07T14:10:15.706122+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save after Apply"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save after Apply",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 15,
+        "judgment_epoch": 30,
+        "dirty": false,
+        "busy": true,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+        "items": [
+          {
+            "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+            "revision": 1,
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+            "left_revision": 1,
+            "right_id": "098db57a17ca4b04ac960690acee9665",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "during": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:15.703782+00:00",
+          "deleted": false,
+          "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+          "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "098db57a17ca4b04ac960690acee9665",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:15.703782+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "e4d0a9bda27741b0b96edb1a47de6a58",
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save after Apply",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.700158+00:00",
+            "updated_at": "2026-10-07T14:10:15.700158+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+              "prompt_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+              "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129"
+            }
+          },
+          {
+            "id": "098db57a17ca4b04ac960690acee9665",
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save after Apply",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.702014+00:00",
+            "updated_at": "2026-10-07T14:10:15.702014+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+              "prompt_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+              "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129"
+            }
+          }
+        ],
+        "body": {
+          "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+          "revision": 1,
+          "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+          "left_revision": 1,
+          "right_id": "098db57a17ca4b04ac960690acee9665",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "kind": "text",
+          "name": "Clean busy save after Apply",
+          "text": "Exact combined prompt Clean busy save after Apply café 😀.",
+          "content_hash": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:15.696778+00:00",
+          "updated_at": "2026-10-07T14:10:15.706122+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save after Apply"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save after Apply",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 15,
+        "judgment_epoch": 30,
+        "dirty": false,
+        "busy": true,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+        "items": [
+          {
+            "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+            "revision": 1,
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+            "left_revision": 1,
+            "right_id": "098db57a17ca4b04ac960690acee9665",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "after": {
+        "editor": {
+          "created_at": "2026-10-07T14:10:15.703782+00:00",
+          "deleted": false,
+          "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+          "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "098db57a17ca4b04ac960690acee9665",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T14:10:15.703782+00:00",
+          "stale_warning": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions."
+        },
+        "answers": [
+          {
+            "id": "e4d0a9bda27741b0b96edb1a47de6a58",
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "revision": 1,
+            "completion": "Exact first answer Clean busy save after Apply",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.700158+00:00",
+            "updated_at": "2026-10-07T14:10:15.700158+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+              "prompt_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+              "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129"
+            }
+          },
+          {
+            "id": "098db57a17ca4b04ac960690acee9665",
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "revision": 1,
+            "completion": "Exact second answer Clean busy save after Apply",
+            "review": "draft",
+            "created_at": "2026-10-07T14:10:15.702014+00:00",
+            "updated_at": "2026-10-07T14:10:15.702014+00:00",
+            "provenance": {
+              "method": "human_authored",
+              "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+              "prompt_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+              "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129"
+            }
+          }
+        ],
+        "body": {
+          "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+          "revision": 1,
+          "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "parent_revision": 2,
+          "source_revision": 1,
+          "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+          "left_revision": 1,
+          "right_id": "098db57a17ca4b04ac960690acee9665",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit original comparison.",
+          "review": "draft"
+        },
+        "current": {
+          "id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+          "kind": "text",
+          "name": "Clean busy save after Apply",
+          "text": "Exact combined prompt Clean busy save after Apply café 😀.",
+          "content_hash": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "pixel_hash": null,
+          "task": "text_classification",
+          "review": "draft",
+          "revision": 2,
+          "created_at": "2026-10-07T14:10:15.696778+00:00",
+          "updated_at": "2026-10-07T14:10:15.706122+00:00",
+          "width": null,
+          "height": null,
+          "source_revision": 1,
+          "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "book_id": null,
+          "session_id": null,
+          "source_split": "unassigned",
+          "corner_annotation": null,
+          "source_available": true,
+          "source_lineage_known": true,
+          "groups": [
+            "Clean busy save after Apply"
+          ],
+          "parents": [],
+          "provenance": {
+            "method": "import",
+            "normalization": "NFC; LF newlines",
+            "rights": "Authored combined synthetic fixture",
+            "rights_note_correction": {
+              "note": "Explicit corrected rights note Clean busy save after Apply",
+              "revision": 2
+            }
+          },
+          "annotation": null
+        },
+        "editor_epoch": 15,
+        "judgment_epoch": 30,
+        "dirty": false,
+        "busy": false,
+        "form_hidden": false,
+        "rationale": "Explicit original comparison.",
+        "review": "draft",
+        "status": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions. Draft retained. Refresh judgments to inspect an uncertain result; IDs are never replayed automatically.",
+        "items": [
+          {
+            "id": "1ba22ecce1144a02a89d3c8ce16c6eed",
+            "revision": 1,
+            "prompt_id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "e4d0a9bda27741b0b96edb1a47de6a58",
+            "left_revision": 1,
+            "right_id": "098db57a17ca4b04ac960690acee9665",
+            "right_revision": 1
+          }
+        ],
+        "pending": null,
+        "mirror": null
+      },
+      "save_response": {
+        "route": "/api/workbench/preferences",
+        "status": 409,
+        "body": {
+          "error": "Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.",
+          "code": "conflict"
+        }
+      },
+      "backend_parent": {
+        "id": "d0e3012ad6ee4374b39feadcaf5e5e24",
+        "kind": "text",
+        "name": "Clean busy save after Apply",
+        "text": "Exact combined prompt Clean busy save after Apply café 😀.",
+        "content_hash": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+        "pixel_hash": null,
+        "task": "text_classification",
+        "review": "draft",
+        "revision": 3,
+        "created_at": "2026-10-07T14:10:15.696778+00:00",
+        "updated_at": "2026-10-07T14:10:16.084545+00:00",
+        "width": null,
+        "height": null,
+        "source_revision": 1,
+        "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+        "book_id": null,
+        "session_id": null,
+        "source_split": "unassigned",
+        "corner_annotation": null,
+        "source_available": true,
+        "source_lineage_known": true,
+        "groups": [
+          "Clean busy save after Apply"
+        ],
+        "parents": [],
+        "provenance": {
+          "method": "import",
+          "normalization": "NFC; LF newlines",
+          "rights": "Authored combined synthetic fixture",
+          "rights_note_correction": {
+            "note": "Explicit corrected rights note Clean busy save after Apply",
+            "revision": 2
+          }
+        },
+        "annotation": {
+          "label": "cancel"
+        },
+        "target_proposal": {
+          "applied_revision": 3,
+          "canonical_request_sha256": "aceff127d66029a1f11f9045703802f67c3203bba4b70729d21f598d8bac4d53",
+          "captured_revision": 2,
+          "config": {
+            "instruction": "Combined explicit classification",
+            "labels": [
+              "cancel",
+              "keep"
+            ],
+            "model": "classification-fixture",
+            "provider": "pumas_chat_compatible",
+            "requested_model": "classification-fixture",
+            "requested_server_url": "http://127.0.0.1:38125/v1/",
+            "seed": 42,
+            "server_url": "http://127.0.0.1:38125"
+          },
+          "job_id": "5b03700a81fc42d8b81a464cebcfd246",
+          "labels_sha256": "5b9fbb37749355fcb9756e5b1c8f4567cdcdb87fac995bb47e00d879543aa80c",
+          "prompt_sha256": "341249dfd1c4fa3303e18d044e2a478fe1a2dcb98380a26d89fe8c2896f66479",
+          "prompt_version": "frozen-label-text-classification-v1",
+          "reported_model": "classification-fixture",
+          "response_sha256": "d912f67ed5e315c60c1e5185a9e71c8e63fbe40fae81162e96cca7e3ff85be9d",
+          "source_revision": 1,
+          "source_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "source_text_sha256": "1d560254c4fb120cbb06c94aee76251d64b0ec605b8b941b9b45cac2c4a78129",
+          "verification": "Exact label shape only; applied as draft, never approved."
+        }
+      }
+    }
+  ],
+  "source_sha256": {
+    "static/workbench.js": "fec1095ecbe83516f0eb40ee17772fdfbfea3a1c75244c531fbc41acf2d451f4",
+    "static/preferences.js": "9d2af15422ee81bf79c35af7c87beaebe870b4acb1ee2b4c1fd229be9f5f2606",
+    "static/instruction-responses.js": "3fb4fb8d78154bedb37ef90afbcc269fdab0938c4ac50236f38a7f26f54ac940",
+    "static/text-classification-proposals.js": "34e01972a82aece705b282878d6bbb2304ae526cc3a221c897cb79edf212fc93",
+    "static/workbench.html": "f539de40dd657ec6ac2dcb72e3dde0c83333933045cfa2fb8dde5740a695b180",
+    "tests/browser_classification_preferences_integration.cjs": "c33d8ab635f28d07fc94e226532d724db38d334ea18974dccd2d12e8cad2940c",
+    "tests/browser_text_classification_proposals_server.py": "41e1163104d30621e660e00ff2f6aeee7d7f43dda895d5cbbf1cc1229abe1068"
+  },
+  "screenshots": [
+    {
+      "filename": "combined-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 807
+      },
+      "sha256": "39bdbbb9b70ff74fdf1c06f81f40d474c19bb1e59af6e343118982caa709ceb8"
+    },
+    {
+      "filename": "combined-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "0bfc1adeba0a105b031c06b61e6eec94ccf69a91068ee9ad0f04b9f22a00ea4d"
+    }
+  ],
+  "result": "PASS"
+}

@@ -1,0 +1,23 @@
+{
+  "head": "97144cb85b274cf68e20e0952907787b28b3026a",
+  "tree": "04226dcdf5cf11c0683cad6f28e4af20dfce978f",
+  "gate_count": 46,
+  "all_gates_passed_and_source_stable": true,
+  "native_artifact_count": 8,
+  "native_artifact_hashes_verified": true,
+  "runtime_and_composed_html_bytes_unchanged_from_composition_probe": true,
+  "source_hashes": {
+    "app.py": "00ce4e44dbb9b80f073ceb19a456ad31392a6f5fee19d043e1ee6674d2f398f0",
+    "static/workbench.html": "12fd0ae34a32ba43d90c84bb048f52f4cdd5530b107288a969facf3e7af513af",
+    "static/workbench.js": "c810e63c3060683b4f3ec03a5184ab6abe96c5a3bcff93f84309329eb90ffd63",
+    "static/caption-proposals.js": "a359fbc0cec9d7d99f724830efafb5c2cfbf35e28aac3e099264ddecab601610",
+    "static/text-classification-proposals.js": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16",
+    "tests/test_text_classification_proposals_controller.cjs": "8591e0fa1b8ded04172e06280df0870b838f00cb8a3aed5e97f41c7e32dd15b3"
+  },
+  "corrected_browser_sha256": "be0772ed87cb20c01336667945bd1f1afb3f3641bf03d3766f63345077a77bb8",
+  "real_indexeddb_retirement_proof_verified": true,
+  "exact_retired_mirror_frame_verified": true,
+  "get_set_remove_failclosed_post_and_inference_bounds_verified": true,
+  "fresh_explicit_request_id_differs_from_retired_id": true,
+  "new_inference_calls": 0
+}

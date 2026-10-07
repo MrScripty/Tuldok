@@ -1,0 +1,15 @@
+{
+  "composed-preference-classification-v4.cjs": "5ccc19042e0c3ca217e1b650436ba8e79921fa8e8cde65691f33b05b2a691dd6",
+  "composed-preference-classification.cjs": "91957bb640b0eb7f2abf5424084a08682e1f6615e2ea6e9c0efce60813eb5888",
+  "composed-preference-classification.failed-v1.cjs": "0576a90a0c46aad483d65822b5103c0a5331a642682a30c891cf44120916e14d",
+  "composed-preference-classification.failed-v2.cjs": "53b539ffabcf4d33023644d9ebd126fa52cfd69c767664892fda124934977734",
+  "harness-correction-v1.txt": "0ac5a496e397d66ab271986e0dc8d1f5c7393bf5001b71f24f46209ea7161019",
+  "harness-correction-v2.txt": "1bb8648ec887395ebe1b0f20eef83b5ab2cee68a16422596e954182b105c81a2",
+  "probe-corrected-v3.log": "9630d9e377ee890540b430509a6d1ea4307d8aa7173c8cb84583a33bbf164268",
+  "probe-corrected.log": "0670fb0536d69b8f98d58a1cfa396fa97651714a3f9f629c2c13f6bf09e64f3d",
+  "probe-v4.log": "7716c755076b3a8c3115cf5c68293aed412b3256c16725ba0006b4948aa38a8f",
+  "probe.failed-v1.log": "dd1ba7e21a626eceff964f9cf739b01aef986a69ea85d9738fd32a7abff319f8",
+  "probe.failed-v2.log": "0670fb0536d69b8f98d58a1cfa396fa97651714a3f9f629c2c13f6bf09e64f3d",
+  "probe.log": "dd1ba7e21a626eceff964f9cf739b01aef986a69ea85d9738fd32a7abff319f8",
+  "source-after-16case-workingtree.json": "cf0132b561ffadcf6731cd991f80246501a124a60dfaa2fca7fa321a6d6e4794"
+}

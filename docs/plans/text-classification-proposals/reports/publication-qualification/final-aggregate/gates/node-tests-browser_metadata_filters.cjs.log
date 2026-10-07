@@ -1,0 +1,48 @@
+[24668:24695:1007/085203.537665:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[24668:24695:1007/085203.542619:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24695:1007/085203.542796:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[24668:24695:1007/085203.542821:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[24668:24695:1007/085203.542832:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24709:1007/085203.550531:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 24711: Read-only file system (30)
+[24668:24695:1007/085204.025942:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24709:1007/085204.064013:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 24727: Read-only file system (30)
+[24668:24695:1007/085204.067989:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24668:1007/085204.087742:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24668:1007/085204.088407:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24695:1007/085204.088411:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24695:1007/085204.088449:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+
+DevTools listening on ws://127.0.0.1:34253/devtools/browser/59c189d2-e0e9-469b-8083-a1fb02f1c2f3
+[24668:24668:1007/085204.094582:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24668:1007/085204.099663:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24668:1007/085204.107209:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24695:1007/085204.107249:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[24668:24695:1007/085204.107269:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[24668:24668:1007/085204.109882:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24695:1007/085204.110680:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24709:1007/085204.158485:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 24757: Read-only file system (30)
+[24668:24709:1007/085204.217851:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 24766: Read-only file system (30)
+[24668:24709:1007/085204.219540:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 24767: Read-only file system (30)
+[24668:24668:1007/085204.245081:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: 
+[24668:24668:1007/085204.245539:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24695:1007/085204.245842:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24668:1007/085204.277812:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[24668:24695:1007/085204.278438:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[24668:24668:1007/085204.311826:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+Original single-line defect, API positive controls: [{"stored":[108,101,102,116,10,114,105,103,104,116],"input":[108,101,102,116,114,105,103,104,116],"exact":1,"sanitized":0},{"stored":[108,101,102,116,13,114,105,103,104,116],"input":[108,101,102,116,114,105,103,104,116],"exact":1,"sanitized":0},{"stored":[108,101,102,116,13,10,114,105,103,104,116],"input":[108,101,102,116,114,105,103,104,116],"exact":1,"sanitized":0}]
+Surrogate entry: {"field":"label","codeUnits":[55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"label","codeUnits":[57343],"submitted":[],"total":1}
+Surrogate entry: {"field":"label","codeUnits":[97,55296,98],"submitted":[],"total":1}
+Surrogate entry: {"field":"label","codeUnits":[55296,55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"label","codeUnits":[56320,55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"group","codeUnits":[55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"group","codeUnits":[57343],"submitted":[],"total":1}
+Surrogate entry: {"field":"group","codeUnits":[97,55296,98],"submitted":[],"total":1}
+Surrogate entry: {"field":"group","codeUnits":[55296,55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"group","codeUnits":[56320,55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"rights","codeUnits":[55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"rights","codeUnits":[57343],"submitted":[],"total":1}
+Surrogate entry: {"field":"rights","codeUnits":[97,55296,98],"submitted":[],"total":1}
+Surrogate entry: {"field":"rights","codeUnits":[55296,55296],"submitted":[],"total":1}
+Surrogate entry: {"field":"rights","codeUnits":[56320,55296],"submitted":[],"total":1}
+Exact label/group/rights filters, lossless LF/CR/CRLF JSON entry and submitted codepoints, unknown retained notes, keyboard search, combined criteria, pagination, dynamic results/fixed pairs, preview/export, error recovery and narrow layout passed.

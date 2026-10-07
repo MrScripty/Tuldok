@@ -1,0 +1,55 @@
+{
+  "status": "all_required_gates_passed_exact_candidate",
+  "source_head": "824e3ee1181184e2284875e5a08ebd1406318bfc",
+  "source_tree": "45bbb665da96a719d5e9ae900ce6439bcd2e1f70",
+  "required_gates": 46,
+  "qualified_passing_gates": 46,
+  "failed": 0,
+  "blocked": 0,
+  "seconds": 311.037,
+  "python_discovery_tests": 273,
+  "source_file_count": 119,
+  "all_gate_heads_and_source_hashes_exact": true,
+  "source_snapshot_sha256": "e720c4d86a085c051f4bc65ffe46265189747c54ea49adb5eb274e3ca6fc80f7",
+  "source_diff_empty": true,
+  "historical_tracked_report_count": 2990,
+  "all_prior_report_file_count": 2993,
+  "all_prior_report_hashes_unchanged": true,
+  "original2939_report_hashes_unchanged": true,
+  "preservation_backup": "/tmp/tuldok-dispatch-final-history-5dbsvdze",
+  "native_artifact_count": 9,
+  "native_copied_run": "docs/plans/text-classification-proposals/reports/dispatch-ownership-repair/qualification/component-artifacts/node-tests-browser_text_classification_proposals.cjs/test-results/text-classification-proposals/run-YIRFBf",
+  "cross_tab_dispatch_cases": [
+    {
+      "outcome": "success",
+      "before_provider_calls": 12,
+      "after_provider_calls": 13,
+      "provider_call_delta": 1,
+      "raw_evidence_checked": true
+    },
+    {
+      "outcome": "lost-ack",
+      "before_provider_calls": 13,
+      "after_provider_calls": 14,
+      "provider_call_delta": 1,
+      "raw_evidence_checked": true
+    },
+    {
+      "outcome": "terminal-receipt-CAS",
+      "before_provider_calls": 14,
+      "after_provider_calls": 16,
+      "provider_call_delta": 2,
+      "raw_evidence_checked": true
+    },
+    {
+      "outcome": "crash-before-delivery",
+      "before_provider_calls": 16,
+      "after_provider_calls": 17,
+      "provider_call_delta": 1,
+      "raw_evidence_checked": true
+    }
+  ],
+  "all_component_artifact_hashes_verified": true,
+  "scope": "Bounded synthetic HTTP/browser fixtures; previously authorized pinned isolated dependencies unchanged. No model downloads, real inference, credential changes, source edits, commits or public writes by qualification.",
+  "next_step": "Independent final artifact review and parent evidence/publication actions."
+}

@@ -1,0 +1,4 @@
+PASS concurrent cross-page unchanged submissions reuse one exact durable admission
+PASS concurrent cross-page changed intent is blocked before POST
+PASS old cross-page POST acknowledgement cannot clear newer durable identity
+{"passed":3,"failed":0}

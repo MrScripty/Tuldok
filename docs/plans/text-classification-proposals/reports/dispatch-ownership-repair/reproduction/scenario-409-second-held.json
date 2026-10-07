@@ -1,0 +1,208 @@
+{
+  "status": 409,
+  "losesSecondAck": false,
+  "original": {
+    "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:2000/",
+    "model": "fixture",
+    "instruction": "Exact cross-tab shared intent",
+    "seed": 42,
+    "labels": [
+      "schedule",
+      "cancel"
+    ],
+    "request_id": "a3be166568ba49c883d1c84e732efcb2"
+  },
+  "duplicate": {
+    "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:2000/",
+    "model": "fixture",
+    "instruction": "Exact cross-tab shared intent",
+    "seed": 42,
+    "labels": [
+      "schedule",
+      "cancel"
+    ],
+    "request_id": "a3be166568ba49c883d1c84e732efcb2"
+  },
+  "afterRefusal": {
+    "pending": null,
+    "mirror": null,
+    "retired": "{\"schema_version\":1,\"body\":{\"source_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"revision\":2,\"source_revision\":1,\"server_url\":\"http://127.0.0.1:2000/\",\"model\":\"fixture\",\"instruction\":\"Exact cross-tab shared intent\",\"seed\":42,\"labels\":[\"schedule\",\"cancel\"],\"request_id\":\"a3be166568ba49c883d1c84e732efcb2\"}}",
+    "secondBusy": true,
+    "secondInFlight": "a3be166568ba49c883d1c84e732efcb2"
+  },
+  "newAdmission": {
+    "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 2,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:2000/",
+    "model": "fixture",
+    "instruction": "Changed intent after other tab refusal",
+    "seed": 42,
+    "labels": [
+      "schedule",
+      "cancel"
+    ],
+    "request_id": "6c55cf38a8c34e7a93312f45c8ee5fba"
+  },
+  "sharedStrictSerializableTransactionHistory": [
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get",
+        "put"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get",
+        "put"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get",
+        "delete",
+        "put"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get"
+      ],
+      "committed": true,
+      "aborted": false
+    },
+    {
+      "mode": "readwrite",
+      "durability": "strict",
+      "requests": [
+        "get",
+        "get",
+        "get",
+        "put"
+      ],
+      "committed": true,
+      "aborted": false
+    }
+  ],
+  "distinctPotentialAdmissions": [
+    "a3be166568ba49c883d1c84e732efcb2",
+    "6c55cf38a8c34e7a93312f45c8ee5fba"
+  ],
+  "providerCallsPerformed": 0
+}

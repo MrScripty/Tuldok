@@ -1,0 +1,4 @@
+PASS known retirement survives LS remove failure without authorizing new POST
+PASS same ID changed body survives stale receipt CAS
+PASS retired stale legacy hint cannot reseed empty authority on new document
+{"passed":3}

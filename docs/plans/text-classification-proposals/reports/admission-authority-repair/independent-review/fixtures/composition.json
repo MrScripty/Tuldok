@@ -1,0 +1,76 @@
+{
+  "head": "f95cd5c95189165534d21c204a227f4dd8145c92",
+  "ids": 202,
+  "forms": [
+    "filters",
+    "save-selection-form",
+    "rename-selection-form",
+    "editor",
+    "caption-proposal-form",
+    "text-classification-proposal-form",
+    "rights-note-form",
+    "response-form",
+    "import-form",
+    "bulk-form",
+    "native-text-form",
+    "caption-form",
+    "generate-form",
+    "grounded-form",
+    "release-form",
+    "response-release-form"
+  ],
+  "duplicate_ids": [],
+  "nested_forms": [],
+  "panel_form_ancestors": {
+    "caption-proposal-panel": [],
+    "text-classification-proposal-panel": []
+  },
+  "scripts": [
+    "/workbench.js",
+    "/saved-selections.js",
+    "/bulk-import.js",
+    "/caption-import.js",
+    "/curation.js",
+    "/rights-note.js",
+    "/instruction-responses.js",
+    "/native-text-import.js",
+    "/caption-proposals.js",
+    "/text-classification-proposals.js"
+  ],
+  "http": [
+    {
+      "path": "/workbench",
+      "status": 200,
+      "bytes": 25087,
+      "sha256": "12fd0ae34a32ba43d90c84bb048f52f4cdd5530b107288a969facf3e7af513af"
+    },
+    {
+      "path": "/workbench.js",
+      "status": 200,
+      "bytes": 28660,
+      "sha256": "c810e63c3060683b4f3ec03a5184ab6abe96c5a3bcff93f84309329eb90ffd63"
+    },
+    {
+      "path": "/caption-proposals.js",
+      "status": 200,
+      "bytes": 17935,
+      "sha256": "a359fbc0cec9d7d99f724830efafb5c2cfbf35e28aac3e099264ddecab601610"
+    },
+    {
+      "path": "/text-classification-proposals.js",
+      "status": 200,
+      "bytes": 40457,
+      "sha256": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16"
+    }
+  ],
+  "files": {
+    "app.py": "00ce4e44dbb9b80f073ceb19a456ad31392a6f5fee19d043e1ee6674d2f398f0",
+    "static/workbench.html": "12fd0ae34a32ba43d90c84bb048f52f4cdd5530b107288a969facf3e7af513af",
+    "static/workbench.js": "c810e63c3060683b4f3ec03a5184ab6abe96c5a3bcff93f84309329eb90ffd63",
+    "static/caption-proposals.js": "a359fbc0cec9d7d99f724830efafb5c2cfbf35e28aac3e099264ddecab601610",
+    "static/text-classification-proposals.js": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16",
+    "tests/browser_text_classification_proposals.cjs": "299550776729787559033790e85aeaa8f386ae0a85a943c860b403034127ef59",
+    "tests/test_text_classification_proposals_controller.cjs": "8591e0fa1b8ded04172e06280df0870b838f00cb8a3aed5e97f41c7e32dd15b3"
+  },
+  "real_model_calls": 0
+}

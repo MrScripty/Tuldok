@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
   pull_request:
 permissions:
   contents: read
@@ -28,6 +28,7 @@ jobs:
       - run: node --check static/instruction-responses.js
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
+      - run: node --check static/text-classification-proposals.js
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
@@ -42,6 +43,7 @@ jobs:
       - run: node tests/test_native_text_import_controller.cjs
       - run: node tests/test_combined_workbench_controller.cjs
       - run: node tests/test_caption_proposals_controller.cjs
+      - run: node tests/test_text_classification_proposals_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -110,6 +112,12 @@ jobs:
       - run: node tests/browser_caption_proposals.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_text_classification_proposals.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_classification_preferences_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -130,6 +138,8 @@ jobs:
             docs/plans/rights-note-correction/reports/rights-*.png
             test-results/rights-note/**
             test-results/caption-proposals/**
+            test-results/text-classification-proposals/**
+            test-results/classification-preferences/**
             docs/plans/preference-pairs/reports/**
             docs/plans/instruction-responses/reports/instruction-*.png
             docs/plans/instruction-responses/reports/instruction-session.json
