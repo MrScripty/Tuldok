@@ -147,7 +147,7 @@ def main():
         env.pop(name, None)
     env.update(PATH=str(Path(args.python).absolute().parent) + os.pathsep + env.get('PATH', ''),
                BROWSER=env.get('BROWSER', shutil.which('chromium') or '/usr/bin/chromium'),
-               INSTRUCTION_CONSUMER_PYTHON=args.python,
+               INSTRUCTION_CONSUMER_PYTHON=args.python, TULDOK_SOURCE_ROOT=str(ROOT),
                HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', HF_DATASETS_OFFLINE='1')
     started = time.time()
     for number, command in enumerate(selected, 1):

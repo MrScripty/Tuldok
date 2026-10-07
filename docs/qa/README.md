@@ -15,6 +15,8 @@ only ignored `build/` or `output/` containers. `--resume` requires an explicit
 existing run directory and reuses passing results only for unchanged source and
 complete, hash-matching artifacts within that gate's original output subtree.
 `--only` records the chosen scope; it does not certify the entire registered set.
+The aggregate pins `TULDOK_SOURCE_ROOT` to its own checkout, so ambient standalone
+browser overrides cannot select a different source than the recorded hashes.
 
 Standalone browser tests use fresh `build/qa/SUITE/run-*` directories. Set
 `TULDOK_QA_OUTPUT_ROOT` to another ignored build/output directory or an external
@@ -22,11 +24,16 @@ output directory. Authored source/fixture/report paths are rejected as destinati
 including paths aliased through existing symlinks. CI uploads `build/qa/**` as
 temporary artifacts. These are optional downloads, never repository inputs.
 
-The UI replay also uses relocated inputs and ignored outputs. To compare with
-the frozen legacy application, supply a checkout of its exact main commit:
+The retained manual UI replay is a historical cleanup replay. It checks the
+production sources of development `309a87d7` and must run from exact cleanup
+PR21 `2026d716ea88fc303ed3e298031b3314f30d4ea7`, whose product source is unchanged.
+It intentionally rejects the integrated mesh/sequence checkout. To compare that
+historical application with frozen main, use separate exact checkouts:
 
 ```sh
+git worktree add --detach /tmp/tuldok-qa-replay 2026d716ea88fc303ed3e298031b3314f30d4ea7
 git worktree add --detach /tmp/tuldok-frozen-main 2fc4a46f12d73a0fa467d5482f68edb83d6df6af
+cd /tmp/tuldok-qa-replay
 TULDOK_LEGACY_ROOT=/tmp/tuldok-frozen-main node docs/plans/workbench-ui-qualification/capture.cjs
 ```
 

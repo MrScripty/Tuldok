@@ -40,7 +40,7 @@ class QaQualification(unittest.TestCase):
             workflow.parent.mkdir(parents=True)
             workflow.write_text('\n'.join('      - run: ' + c for c in inherited + list(qa.NEW_COMMANDS) + [command]))
             (root / 'requirements.txt').write_text('')
-            (root / 'tests/output-fixture.cjs').write_text("const fs=require('node:fs'),path=require('node:path');fs.writeFileSync(path.join(process.env.TULDOK_QA_OUTPUT_ROOT,'fresh.txt'),'new gate bytes');")
+            (root / 'tests/output-fixture.cjs').write_text("const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');assert.equal(process.env.TULDOK_SOURCE_ROOT,path.resolve(__dirname,'..'));fs.writeFileSync(path.join(process.env.TULDOK_QA_OUTPUT_ROOT,'fresh.txt'),'new gate bytes');")
             historical = root / 'docs/plans/old/reports/component-artifacts/prior.txt'
             historical.parent.mkdir(parents=True)
             historical.write_text('old report bytes')
@@ -51,7 +51,7 @@ class QaQualification(unittest.TestCase):
             subprocess.run(['git', 'add', 'tests', '.github', 'requirements.txt'], cwd=root, check=True)
             subprocess.run(['git', '-c', 'user.name=QA fixture', '-c', 'user.email=qa@example.invalid', 'commit', '-qm', 'fixture'], cwd=root, check=True)
             args = ['qualify', '--only', 'output-fixture', '--report-root', str(root / 'build/qa/qualification'), '--python', sys.executable]
-            with patch.object(qa, 'ROOT', root), patch.object(qa, 'consumer_blocker', return_value=None):
+            with patch.object(qa, 'ROOT', root), patch.object(qa, 'consumer_blocker', return_value=None), patch.dict('os.environ', {'TULDOK_SOURCE_ROOT': str(root / 'wrong-checkout')}):
                 for _ in range(2):
                     with patch.object(sys, 'argv', args), contextlib.redirect_stdout(io.StringIO()):
                         self.assertEqual(qa.main(), 0)
