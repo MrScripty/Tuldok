@@ -26,6 +26,20 @@ function textClassificationProposalLabels() {
   try { labels=JSON.parse($('text-classification-proposal-labels').value); } catch { throw Error('Enter label choices as a JSON array of exact strings.'); }
   return validateTextClassificationProposalLabels(labels);
 }
+function validateTextClassificationProposalGateway(value) {
+  if(typeof value!=='string' || Array.from(value).length>2048 || /[\uD800-\uDFFF]/u.test(value))
+    throw Error('Classification gateway URL must have 1–2048 Unicode code points and no unpaired surrogates.');
+  // Python str.strip includes NEL and information separators, but not a BOM.
+  // Inspect a stripped copy; the original spelling stays in admission evidence.
+  const inspected=value.replace(/^[\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+|[\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+$/gu,'');
+  const authority=/^https?:\/\/([^/?#]+)/i.exec(inspected)?.[1];
+  if(!authority || /[@\\]/u.test(authority) || /[\u0000-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u.test(inspected))
+    throw Error('Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace.');
+  let url;
+  try { url=new URL(inspected); } catch { throw Error('Enter a valid classification gateway URL.'); }
+  if(!['http:','https:'].includes(url.protocol) || !url.hostname || url.username || url.password || url.search || url.hash || url.port==='0')
+    throw Error('Use a classification gateway URL without credentials, query or fragment.');
+}
 function validateTextClassificationProposalBody(body) {
   const keys=['request_id','source_id','revision','source_revision','server_url','model','instruction','seed','labels'];
   if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).length!==keys.length || keys.some(key=>!Object.hasOwn(body,key)) ||
@@ -34,12 +48,9 @@ function validateTextClassificationProposalBody(body) {
      !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295)
     throw Error('Invalid classification recovery identity or revision evidence.');
   const validText=(value,max)=>typeof value==='string' && /[^\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u.test(value) && Array.from(value).length<=max && !/[\uD800-\uDFFF]/u.test(value);
-  if(!validText(body.instruction,2000) || !validText(body.model,200) || /[\u0000-\u001F]/u.test(body.model) || typeof body.server_url!=='string' || body.server_url.length>4096)
+  if(!validText(body.instruction,2000) || !validText(body.model,200) || /[\u0000-\u001F]/u.test(body.model))
     throw Error('Invalid bounded classification recovery settings.');
-  let url;
-  try { url=new URL(body.server_url.trim()); } catch { throw Error('Enter a valid classification gateway URL.'); }
-  if(!['http:','https:'].includes(url.protocol) || !url.hostname || url.username || url.password || url.search || url.hash || url.port==='0' || /\s|[\u0000-\u001F]/u.test(body.server_url.trim()))
-    throw Error('Use a classification gateway URL without credentials, query or fragment.');
+  validateTextClassificationProposalGateway(body.server_url);
   validateTextClassificationProposalLabels(body.labels);
   if(JSON.stringify(body).length>textClassificationProposalStorageLimit-100)
     throw Error('Classification recovery settings exceed the bounded storage limit.');

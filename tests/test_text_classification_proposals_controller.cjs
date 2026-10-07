@@ -50,6 +50,46 @@ function faultStorage(initial) {
   const data=new Map(initial?[['tuldok.text-classification-proposals.admission.v1',initial]]:[]),fault={get:false,set:false,remove:false};
   return {data,fault,getItem(key){if(fault.get)throw Error('Synthetic get failure');return data.get(key)??null;},setItem(key,value){if(fault.set)throw Error('Synthetic set failure');data.set(key,String(value));},removeItem(key){if(fault.remove)throw Error('Synthetic remove failure');data.delete(key);}};
 }
+async function freshClassificationValidationCases() {
+  const key='tuldok.text-classification-proposals.admission.v1',gateway='http://127.0.0.1:2000/',valid={source_id:row.id,revision:row.revision,source_revision:row.source_revision,server_url:gateway,model:'fixture',instruction:'🧪'.repeat(2000),seed:42,labels:['offered']};
+  const ascii2048=gateway+'a'.repeat(2048-Array.from(gateway).length),astral2048=gateway+'🧪'.repeat(2048-Array.from(gateway).length);
+  async function corrected(name,field,bad,good) {
+    const storage=faultStorage(),page=recoveryHarness(storage);page.configure(valid);page.resolveLists();await flush();page.get('text-classification-proposal-'+field).value=bad;
+    await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0,name);assert.equal(storage.data.size,0,name);assert.equal(page.run('textClassificationProposalPendingRequest'),null,name);assert.equal(page.run('textClassificationProposalAdmissionRequest'),null,name);assert.equal(page.run('textClassificationProposalRecoveryId'),null,name);assert.equal(page.run('textClassificationProposalStorageBlocked'),'',name);assert.equal(page.run('textClassificationProposalStorageMalformed'),false,name);assert.equal(page.run('textClassificationProposalBusy'),false,name);
+    page.get('text-classification-proposal-'+field).value=good;const start=page.get('text-classification-proposal-form').dispatch('submit');await flush();assert.equal(page.posts().length,1,name+' corrected explicit submission');
+    const post=page.take('/text-classification-proposals','POST'),body=JSON.parse(post.options.body);assert.deepEqual(JSON.parse(storage.getItem(key)),{schema_version:1,body});assert.equal(body.server_url,field==='url'?good:valid.server_url,name+' exact raw gateway preservation');assert.equal(Array.from(body.instruction).length,2000,name+' exact Unicode guidance boundary');
+    post.resolve(response(admitted(body,{annotation:{label:body.labels[0]}})));await flush();page.resolveLists();await start;assert.equal(storage.data.size,0,name+' matching receipt clears admission');assert.equal(page.run('textClassificationProposalPendingRequest'),null,name);assert.equal(page.run('textClassificationProposalStorageBlocked'),'',name);
+  }
+  const baseline=[
+    ['guidance 2001 Unicode code points','guidance','🧪'.repeat(2001),valid.instruction],['blank guidance','guidance','',valid.instruction],['Unicode whitespace-only guidance','guidance','\u0085\u2003',valid.instruction],['surrogate guidance','guidance','bad\ud800',valid.instruction],
+    ['blank model','model','',valid.model],['201-codepoint model','model','漢'.repeat(201),valid.model],['surrogate model','model','bad\ud800',valid.model],['control-character model','model','bad\nmodel',valid.model],
+    ['blank gateway','url','',gateway],['malformed gateway','url','not a URL',gateway],['non-HTTP gateway','url','file:///tmp/synthetic',gateway],['gateway credentials','url','http://synthetic:fixture@127.0.0.1:2000',gateway],['gateway query','url',gateway+'?synthetic=1',gateway],['gateway fragment','url',gateway+'#synthetic',gateway],['gateway port zero','url','http://127.0.0.1:0',gateway],
+    ['negative seed','seed','-1','42'],['fractional seed','seed','42.5','42'],['seed overflow','seed','4294967296','42'],['nonnumeric seed','seed','NaN','42'],
+    ['blank labels','labels','','["offered"]'],['empty labels','labels','[]','["offered"]'],['surrogate labels','labels','["\\ud800"]','["offered"]'],['duplicate labels','labels','["offered","offered"]','["offered"]']
+  ];
+  for(const test of baseline)await corrected(...test);
+  const invalidGateways=[
+    ['ASCII gateway 2049→2048',ascii2048+'a',ascii2048],['astral gateway 2049→2048',astral2048+'🧪',astral2048],['surrogate gateway',gateway+'\ud800',gateway],['leading BOM gateway','\ufeff'+gateway,gateway],['internal NEL gateway',gateway+'inside\u0085space',gateway],
+    ['missing authority slashes','http:127.0.0.1:2000',gateway],['single authority slash','http:/127.0.0.1:2000',gateway],['backslash authority','http:\\\\127.0.0.1:2000',gateway],['backslash inside authority','http://127.0.0.1:2000\\other',gateway],['empty userinfo','http://@127.0.0.1:2000/',gateway],['empty password userinfo','http://:@127.0.0.1:2000/',gateway],['empty authority repaired by JS URL','http:///127.0.0.1:2000/',gateway]
+  ];
+  for(const [name,bad,good] of invalidGateways)await corrected(name,'url',bad,good);
+  // Python edge stripping accepts NEL and information separators, and a BOM
+  // inside a path remains a literal non-whitespace character. Do not mutate raw.
+  for(const spelling of ['\u0085'+gateway+'\u0085','\u001c'+gateway+'\u001f',gateway+'inside\ufeffpath',gateway+'path\\segment',ascii2048,astral2048]) {
+    const storage=faultStorage(),page=recoveryHarness(storage);page.configure({...valid,server_url:spelling});page.resolveLists();await flush();const start=page.get('text-classification-proposal-form').dispatch('submit');await flush();assert.equal(page.posts().length,1,'Accepted backend spelling must reach explicit transport');const post=page.take('/text-classification-proposals','POST'),body=JSON.parse(post.options.body);assert.equal(body.server_url,spelling);assert.equal(JSON.parse(storage.getItem(key)).body.server_url,spelling);post.resolve(response(admitted(body,{annotation:{label:body.labels[0]}})));await flush();page.resolveLists();await start;
+  }
+  // A newly stricter URL validator cannot discard a previously stored unknown
+  // admission. Correcting the visible controls is never authoritative recovery.
+  for(const [name,bad] of invalidGateways) {
+    const pending={...valid,server_url:bad,request_id:'f'.repeat(32)},frame=JSON.stringify({schema_version:1,body:pending}),storage=faultStorage(frame),page=recoveryHarness(storage);page.configure(valid);page.resolveLists();await flush();await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0,name+' stored unknown cannot be repaired by a new intent');assert.equal(storage.getItem(key),frame);assert.ok(page.run('textClassificationProposalStorageBlocked'));const lookup=page.take('/text-classification-proposals/'+pending.request_id);lookup.resolve(response({error:'Admission acknowledgement remains unknown'},false,404));await flush();assert.equal(storage.getItem(key),frame,name+' early 404 retains stored bytes');
+  }
+  // Accepted long raw spelling remains exact after a lost acknowledgement and
+  // an explicit same-ID/body retry; no fallback or normalization creates intent.
+  const storage=faultStorage(),page=recoveryHarness(storage);page.configure({...valid,server_url:astral2048});page.resolveLists();await flush();const lost=page.get('text-classification-proposal-form').dispatch('submit');await flush();const lostPost=page.take('/text-classification-proposals','POST'),original=JSON.parse(lostPost.options.body);lostPost.reject(Error('Synthetic lost admission acknowledgement'));await lost;assert.equal(JSON.parse(storage.getItem(key)).body.server_url,astral2048);
+  page.get('text-classification-proposal-url').value=gateway;await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);assert.equal(page.run('textClassificationProposalPendingRequest.request_id'),original.request_id);await page.get('text-classification-proposal-restore').dispatch('click');assert.equal(page.get('text-classification-proposal-url').value,astral2048);
+  const retry=page.get('text-classification-proposal-form').dispatch('submit');await flush();const retryPost=page.take('/text-classification-proposals','POST');assert.deepEqual(JSON.parse(retryPost.options.body),original);retryPost.resolve(response(admitted(original,{annotation:{label:original.labels[0]}})));await flush();page.resolveLists();await retry;
+  console.log('Classification fresh correction: 23 baseline cases, 12 gateway rejection/correction cases, six exact accepted spellings, 12 stored-unknown URL cases, and long raw same-ID recovery passed.');
+}
 async function durableRecoveryCases() {
   const key='tuldok.text-classification-proposals.admission.v1',frozen={source_id:row.id,revision:row.revision,source_revision:row.source_revision,server_url:'http://127.0.0.1:2000/v1/',model:'fixture',instruction:'Exact\r\n guidance 👩‍💻',seed:42,labels:['schedule','cancel'],request_id:'d'.repeat(32)};
   const frame=JSON.stringify({schema_version:1,body:frozen});
@@ -238,6 +278,7 @@ async function durableRecoveryCases() {
   assert.equal(timers.size,0);assert.equal(run('textClassificationProposalJobs[0].status'),'applied');
   for(const fn of listeners.pageshow||[])fn();resolve('/text-classification-proposals',{jobs:[{...job,status:'generating'}]});await flush();assert.equal(timers.size,1);
   for(const fn of listeners.pagehide||[])fn();assert.equal(timers.size,0);assert.equal(requests.length,0);
+  await freshClassificationValidationCases();
   await durableRecoveryCases();
   console.log('Text classification controller projected summaries, exact labels/config/source fences, abstention, held admission/early 404/lost acknowledgement/exact-ID repeat, cancelled/new intent, annotation-save/reject ownership, later-input/form/apply ownership and polling lifecycle passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
