@@ -404,6 +404,8 @@ async function decideTextClassificationProposal(job, decision) {
   const record=current;
   let labels;
   if(decision==='apply_draft') {
+    if(typeof preferenceBusy!=='undefined' && preferenceBusy)
+      throw Error('Wait for the judgment save to finish before applying a classification draft.');
     if(record?.id!==job.source.id || record.kind!=='text' || record.annotation!=null || record.revision!==job.source.revision || record.source_revision!==job.source.source_revision || record.content_hash!==job.source.content_hash || record.source_sha256!==job.source.source_sha256 || hasUnsavedEdits() || $('editor').dataset.busy)
       throw Error('Open the exact captured unannotated text and save or discard edits before applying a draft. A changed source requires a new request.');
     const config=textClassificationProposalConfig();labels=config.labels;

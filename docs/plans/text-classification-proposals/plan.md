@@ -1,5 +1,34 @@
 # Text classification proposals
 
+## Clean stale-judgment save ownership repair
+
+Parent review of published `6aba384a90246aa2c9d344997561154710178586`
+confirmed an ownership state missing from the earlier combined qualification:
+opening a stale judgment resets its review to draft while `preferenceDirty`
+remains false. Explicit Save still owns a meaningful rejudgment request. Apply
+could replace the parent and clear that editor while the request was held, and
+the later 409 incorrectly claimed its draft was retained. The reverse ordering,
+Apply first and Save before its acknowledgement, has the same loss.
+
+The minimal classification repair refuses Apply dispatch while `preferenceBusy`.
+Validated judgment Save/Delete dispatch advances its existing intent epoch, so
+the existing shared adoption fence protects a later save even after it settles. An
+already committed classification remains a draft; preference proof is revoked
+while the exact pending judgment editor and old parent binding remain available
+for inspection after a conflict. No automatic operation is discarded or replayed.
+Busy release permits a fresh explicit author action. Preference persistence,
+review rules and classification admission recovery are unchanged. Repeated or
+invalid save attempts do not acquire a new operation epoch.
+
+Actual stale-judgment native fixtures cover both orderings and successful/failed
+save release, including Save settling before the earlier Apply acknowledgement.
+New qualification belongs in `reports/judgment-save-ownership-repair`;
+all 3,559 current prior report files remain immutable. Run all 50 registered
+checks and independent exact-source review before a normal PR18 branch push.
+PR18 remains draft/unmerged; main/development and the owner's review state remain
+untouched. No CodeRabbit request is authorized. Earlier combined reports below
+remain historical evidence, superseded only for this missing ownership state.
+
 ## Preference development integration
 
 Exact integration source `c0de883159025491d5283c52514c7c762f53c4cc` passed all

@@ -1,5 +1,25 @@
 # Execution ledger
 
+2026-10-07, owner-confirmed clean stale-judgment ownership repair on published
+`6aba384a90246aa2c9d344997561154710178586`. The previous composed clean-save
+case used a current no-op judgment and missed stale editing's review reset and
+new answer bindings with `preferenceDirty=false`. Independently reproduced both
+Save-first and Apply-first loss states from the exact published scripts; preserve
+all previous review claims and raw evidence unchanged as historical checkpoints.
+An initial classification-only preflight and live-busy adoption fence passed
+eight focused native cases, but independent review reproduced loss when Save
+settled before the held Apply acknowledgement. Preserve those working-tree
+snapshots, passing focus evidence and new negative probes. The final minimal
+repair keeps the Apply dispatch busy guard and advances the existing preference
+intent epoch at validated Save/Delete dispatch. Its shared parent-adoption fence
+protects explicit save intent both while busy and after success/409, without
+silently rebasing an editor after a backend-committed Apply. New regressions and
+aggregate evidence use a fresh report tree; the
+3,559 existing reports are preservation-hashed and backed up outside the checkout.
+No backend/admission persistence code, protected refs or review state is changed.
+Normal push to PR18 is authorized after qualification; merge and
+CodeRabbit requests remain excluded.
+
 Frozen normal merge `c0de883159025491d5283c52514c7c762f53c4cc`, tree
 `ab990b09085cc26d057cbe8d13746f1ea3913086`, passed 50/50 aggregate gates and
 285 Python tests in 395.697 seconds. Independent backend nine-check byte-bound
