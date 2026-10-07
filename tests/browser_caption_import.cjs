@@ -101,13 +101,19 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const legacyDb=path.join(legacyData,'dataset.sqlite3');
   const legacySnapshot=()=>JSON.parse(python("import sqlite3,json,sys; db=sqlite3.connect(sys.argv[1]); print(json.dumps({table:db.execute('SELECT count(*) FROM '+table).fetchone()[0] for table in ('samples','workbench_records','workbench_history')}))",legacyDb));
   assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:0,workbench_history:0});
-  await evaluate(`(()=>{const original=window.fetch;window.releaseLegacyCaption=null;window.legacyCaptionStatus=null;window.fetch=async(...args)=>{const response=await original(...args);if(String(args[0]).endsWith('/caption-import/row')){window.legacyCaptionStatus=response.status;await new Promise(resolve=>window.releaseLegacyCaption=resolve);}return response;};})()`);
+  await evaluate(`(()=>{const original=window.fetch;window.releaseLegacyCaption=null;window.legacyCaptionStatus=null;window.releaseLegacyRefresh=null;window.fetch=async(...args)=>{const url=String(args[0]);if(url.startsWith('/api/workbench/records?'))await new Promise(resolve=>window.releaseLegacyRefresh=resolve);const response=await original(...args);if(url.endsWith('/caption-import/row')){window.legacyCaptionStatus=response.status;await new Promise(resolve=>window.releaseLegacyCaption=resolve);}return response;};})()`);
   await choose(sourceFiles);await start();await until(()=>evaluate('!!window.releaseLegacyCaption'));
   assert.equal(await evaluate('window.legacyCaptionStatus'),409,'Unenrolled corner pixels must reject native duplicate');
   assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:0,workbench_history:0},'Duplicate admission rolls lazy metadata/history back');
   assert.deepEqual(fs.readdirSync(path.join(legacyData,'images')),[legacySample.id],'No second source directory');
   await click('caption-stop');await evaluate('window.releaseLegacyCaption()');await idle();
   assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Stopped: 0 created, 1 rejected.*3 not attempted/);
+  // Admission controls become idle before the independent collection refresh.
+  // Hold that request before dispatch, then wait for its actual rendered record.
+  await until(()=>evaluate('!!window.releaseLegacyRefresh'));
+  assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:0,workbench_history:0},'Idle caption controls do not prove the collection refresh completed');
+  await evaluate('window.releaseLegacyRefresh()');
+  await until(()=>evaluate('page.items.some(record=>record.id==='+JSON.stringify(legacySample.id)+') && document.querySelectorAll(".record").length===1'));
   assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:1,workbench_history:1},'Later ordinary collection refresh can enroll the retained original');
   assert.deepEqual(errors,[]);
   console.log('Native caption browser passed: actual files/HTTP/SQL, partial/missing/ambiguous/damaged rows, draft origin/splits, rollback, stop/read/preparation/in-flight/repeated controls, lost receipt lookup, duplicate immutability, editor/selection, human acceptance, actual ZIP download/pinned consumer, reload and narrow layout.');
