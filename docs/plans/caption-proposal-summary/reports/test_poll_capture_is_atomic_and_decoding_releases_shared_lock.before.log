@@ -1,0 +1,28 @@
+F
+======================================================================
+FAIL: test_poll_capture_is_atomic_and_decoding_releases_shared_lock (test_caption_proposals.CaptionProposalTests.test_poll_capture_is_atomic_and_decoding_releases_shared_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-caption-summary-local/tests/test_caption_proposals.py", line 205, in test_poll_capture_is_atomic_and_decoding_releases_shared_lock
+    result = owner.snapshot()
+             ^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-caption-summary-local/caption_proposals.py", line 131, in snapshot
+    jobs = [json.loads(row[0]) for row in self.db.execute('SELECT data FROM caption_proposals ORDER BY rowid DESC LIMIT 50')]
+            ^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 1204, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-caption-summary-local/tests/test_caption_proposals.py", line 194, in outside_lock
+    self.assertFalse(observed.held, 'Status JSON decoding must occur after releasing the shared lock')
+AssertionError: True is not false : Status JSON decoding must occur after releasing the shared lock
+
+----------------------------------------------------------------------
+Ran 1 test in 0.518s
+
+FAILED (failures=1)

@@ -1,0 +1,26 @@
+{
+  "source_head": "bf8614b6e4eacd927ce9ef615cd3eb674f15e762",
+  "source_tree": "b67adaa8703a087ca4e359732da646e3a7b2d59a",
+  "tests": [
+    {
+      "case": "test_poll_decodes_only_projected_rows_with_large_retained_payloads",
+      "exit_code": 1,
+      "test_sha256": "9a3b4d538e4d33c9c954d16eba8dcc0ae1be69144d2fbe15b4f6d4bcbc89b3b9",
+      "log": "test_poll_decodes_only_projected_rows_with_large_retained_payloads.before.log"
+    },
+    {
+      "case": "test_poll_capture_is_atomic_and_decoding_releases_shared_lock",
+      "exit_code": 1,
+      "test_sha256": "9a3b4d538e4d33c9c954d16eba8dcc0ae1be69144d2fbe15b4f6d4bcbc89b3b9",
+      "log": "test_poll_capture_is_atomic_and_decoding_releases_shared_lock.before.log"
+    },
+    {
+      "case": "consumer-interpreter",
+      "exit_code": 1,
+      "test_source": "exact bf8614b tests/test_caption_proposals.py",
+      "log": "consumer-interpreter.before.log",
+      "test_sha256": "37c4fae0385c855ab98f9c93c0e5c18b3bede1440c404377f340f237c27e4025"
+    }
+  ],
+  "production_sha256_before": "f188ee011f894383c3fa05534f85c54111801f8cc136c97cf220a2b52827da87"
+}

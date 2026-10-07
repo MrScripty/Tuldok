@@ -1,6 +1,10 @@
 # Caption status projection and consumer interpreter repair
 
-Status: local implementation; immutable-source qualification and independent review pending.
+Status: locally qualified and independently reviewed on executable/test source
+`e8cde950e597da2f290e8ebcdefdacb47725220a`, tree
+`2e1afe1b31c02aef41b4f74d3814b8ccc59fcb9a`: all 43 inherited gates passed,
+255 Python tests (20 caption tests), 21 Chromium invocations and two focused
+independent reviews with no findings. See `reports/verification.md` and exact hashes.
 No public update, bot-thread mutation or review request is authorized for this successor.
 Parent coordinates the next external review slot, no earlier than 08:27 UTC on 2026-10-07,
 after checking fresh activity. Publication requires a separate parent instruction.

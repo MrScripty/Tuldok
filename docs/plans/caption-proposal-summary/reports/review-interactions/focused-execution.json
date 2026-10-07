@@ -1,0 +1,9 @@
+{
+  "interpreter": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+  "PATH_python3_first": "/workspace/tuldok-owner-review/caption-summary-local/path-trap/python3",
+  "cases": [
+    "test_caption_proposals.CaptionProposalTests.test_poll_capture_is_atomic_and_decoding_releases_shared_lock",
+    "test_caption_proposals.CaptionProposalTests.test_review_export_consumer_evidence_history_and_fixed_selection"
+  ],
+  "exit_code": 0
+}

@@ -1,0 +1,1 @@
+{"result": "PASS", "trace": {"writer_completed_before_first_decode_return": true, "captured_statuses": ["completed", "completed"], "following_statuses": ["rejected", "rejected"], "capture_rows": 2, "exact_GET_payload_retained": true, "nested_metadata_preserved": true}}
