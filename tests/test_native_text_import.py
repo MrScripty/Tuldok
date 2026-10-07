@@ -245,6 +245,86 @@ class NativeTextImportTests(unittest.TestCase):
         missing = [row for row in prepared['rows'] if 'error' in row]
         self.assertEqual(len(missing), 1); self.assertIn('no matching metadata row', missing[0]['error'])
 
+    def invalid_declared_provenance_row(self, literal, message):
+        """Keep real exporter bindings, altering one nested historical value only."""
+        marker = 'invalid-declared-provenance-fixture'
+        def corrupt(entries):
+            manifest = json.loads(entries['manifest.json'])
+            lines = entries['train/records.jsonl'].splitlines()
+            row = json.loads(lines[0])
+            row['provenance']['fixture'] = {'declared_value': marker}
+            manifest['records'] = [row if r['id'] == row['id'] else r for r in manifest['records']]
+            # Deliberately inject JSON lexical fixtures. Strict owner encoding
+            # would reject these before they could reach the actual HTTP parser.
+            entries['manifest.json'] = json.dumps(manifest, ensure_ascii=True).replace(json.dumps(marker), literal).encode()
+            lines[0] = json.dumps(row, ensure_ascii=True).replace(json.dumps(marker), literal).encode()
+            entries['train/records.jsonl'] = b'\n'.join(lines)+b'\n'
+        raw = rewrite(self.raw, corrupt)
+        before = list(self.dataset.db.iterdump())
+        prepared = self.prepare(raw)
+        self.assertEqual(len(prepared['rows']), 3)
+        rejected, *valid = prepared['rows']
+        self.assertIn(message, rejected['error'])
+        self.assertNotIn('token', rejected)
+        self.assertEqual([row['row_number'] for row in valid], [2, 3])
+        self.assertTrue(all('token' in row and 'error' not in row for row in valid))
+        self.assertEqual(list(self.dataset.db.iterdump()), before, 'Preparation rejects one row without writes')
+        for row in valid:
+            _, receipt = self.admit(row)
+            record = self.dataset.workbench.get(receipt['record_id'])
+            self.assertEqual((record['revision'], record['review']), (1, 'draft'))
+            self.assertEqual(self.dataset.workbench.history(record['id']), [record])
+            context = record['provenance']['acquisition']
+            self.assertEqual(context['archive_sha256'], hashlib.sha256(raw).hexdigest())
+            self.assertEqual(context['row_sha256'], row['row_sha256'])
+            self.assertEqual(context['declared']['row_number'], row['row_number'])
+            self.assertNotIn('fixture', context['declared']['upstream']['record']['provenance'])
+        self.assertEqual(self.dataset.workbench.query({})['total'], 2)
+        self.assertEqual(self.dataset.db.execute('SELECT COUNT(*) FROM workbench_history').fetchone()[0], 2)
+
+    def test_lone_surrogate_in_bound_provenance_rejects_only_that_row(self):
+        self.invalid_declared_provenance_row('"\\ud800"', 'valid Unicode')
+
+    def test_overflow_number_in_bound_provenance_rejects_only_that_row(self):
+        self.invalid_declared_provenance_row('1e999', 'finite JSON')
+
+    def test_integer_decoder_limit_rejects_metadata_row_and_retains_later_rows(self):
+        def corrupt(entries):
+            lines = entries['train/records.jsonl'].splitlines()
+            lines[0] = b'{"id":' + b'9' * 5000 + b'}'
+            entries['train/records.jsonl'] = b'\n'.join(lines)+b'\n'
+        raw = rewrite(self.raw, corrupt)
+        with zipfile.ZipFile(io.BytesIO(self.raw)) as original, zipfile.ZipFile(io.BytesIO(raw)) as altered:
+            self.assertEqual(original.namelist(), altered.namelist())
+            for path in original.namelist():
+                if path != 'train/records.jsonl':
+                    self.assertEqual(original.read(path), altered.read(path))
+        before = list(self.dataset.db.iterdump())
+        prepared = self.prepare(raw)
+        self.assertIn('bounded numbers', prepared['rows'][0]['error'])
+        self.assertNotIn('token', prepared['rows'][0])
+        valid = [row for row in prepared['rows'] if 'token' in row]
+        self.assertEqual([row['row_number'] for row in valid], [2, 3])
+        self.assertEqual(len(prepared['rows']), 4, 'Absent origin is also reported without replacement')
+        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        for row in valid: self.admit(row)
+        self.assertEqual(self.dataset.workbench.query({})['total'], 2)
+        self.assertEqual(self.dataset.db.execute('SELECT COUNT(*) FROM workbench_history').fetchone()[0], 2)
+
+    def test_integer_decoder_limit_in_manifest_remains_archive_fatal(self):
+        def corrupt(entries):
+            manifest = json.loads(entries['manifest.json'])
+            manifest['seed'] = 'oversized-integer-fixture'
+            entries['manifest.json'] = json.dumps(manifest).replace('"oversized-integer-fixture"', '9' * 5000).encode()
+        raw = rewrite(self.raw, corrupt)
+        before = list(self.dataset.db.iterdump())
+        status, error = self.request('native-text-import/prepare',
+            {'source_name': 'native.zip', 'archive': base64.b64encode(raw).decode()})
+        self.assertEqual(status, 400)
+        self.assertIn('bounded numbers', error['error'])
+        self.assertNotIn('rows', error)
+        self.assertEqual(list(self.dataset.db.iterdump()), before)
+
     def test_declared_parent_relationships_preserve_groups_without_local_parent_or_split_authority(self):
         def parents(entries):
             manifest = json.loads(entries['manifest.json']); rows = manifest['records']

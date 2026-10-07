@@ -33,8 +33,12 @@ def digest(raw):
 def decode(raw):
     try:
         return json.loads(raw.decode('utf-8'), object_pairs_hook=unique_object, parse_constant=invalid_constant)
-    except (UnicodeError, json.JSONDecodeError, RecursionError):
-        raise WorkbenchError('Native JSON must be complete UTF-8 with unique fields and finite values.') from None
+    except WorkbenchError:
+        raise
+    except (ValueError, RecursionError):
+        # Includes UTF-8/JSON syntax and the runtime's integer conversion limit;
+        # callers retain their archive-level or individual-row failure boundary.
+        raise WorkbenchError('Native JSON must be complete UTF-8 with unique fields, finite values and bounded numbers.') from None
 
 
 def valid_hash(value):
@@ -47,7 +51,12 @@ class NativeTextImports:
         self._key = secrets.token_bytes(32)
 
     def _seal(self, payload):
-        raw = encode(payload).encode('utf-8')
+        try:
+            raw = encode(payload).encode('utf-8')
+        except UnicodeError:
+            raise WorkbenchError('Declared row metadata must contain valid Unicode without lone surrogates.') from None
+        except ValueError:
+            raise WorkbenchError('Declared row metadata must contain finite JSON values.') from None
         if len(raw) > MAX_ROW_BYTES:
             raise WorkbenchError('Prepared row exceeds the 3 MiB bound.')
         return base64.urlsafe_b64encode(raw).decode() + '.' + hmac.new(self._key, raw, 'sha256').hexdigest()
