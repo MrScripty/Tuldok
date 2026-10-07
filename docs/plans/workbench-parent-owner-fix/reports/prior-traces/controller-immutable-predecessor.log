@@ -1,0 +1,44 @@
+curationLaterEdit passed
+rightsLaterEdit passed
+rightsRejectsExistingDraft passed
+rightsInvalidatesResponseProofBeforeRefresh passed
+answerSaveRejectsRightsEdit passed
+heldAnswerListRetainsParentUntilExplicitReload: A late answer-list result must not silently rebase the draft parent
+
+2 !== 1
+
+answerListRequiresExactSourceOwner: A source-only mismatch cannot rebase the draft
+
+2 !== 1
+
+AggregateError: Combined ownership failures
+    at /workspace/Tuldok-workbench-owner-fix-local/tests/test_combined_workbench_controller.cjs:120:27 {
+  [errors]: [
+    AssertionError [ERR_ASSERTION]: A late answer-list result must not silently rebase the draft parent
+    
+    2 !== 1
+    
+        at heldAnswerListRetainsParentUntilExplicitReload (/workspace/Tuldok-workbench-owner-fix-local/tests/test_combined_workbench_controller.cjs:87:51)
+        at async /workspace/Tuldok-workbench-owner-fix-local/tests/test_combined_workbench_controller.cjs:118:7 {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 2,
+      expected: 1,
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: A source-only mismatch cannot rebase the draft
+    
+    2 !== 1
+    
+        at answerListRequiresExactSourceOwner (/workspace/Tuldok-workbench-owner-fix-local/tests/test_combined_workbench_controller.cjs:110:9)
+        at async /workspace/Tuldok-workbench-owner-fix-local/tests/test_combined_workbench_controller.cjs:118:7 {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 2,
+      expected: 1,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ]
+}
