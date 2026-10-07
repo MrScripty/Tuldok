@@ -1,0 +1,14 @@
+AssertionError [ERR_ASSERTION]: pageshow must synchronously adopt live storage
++ actual - expected
+
++ '11111111111111111111111111111111'
+- '22222222222222222222222222222222'
+
+    at /workspace/Tuldok-caption-reload-local/tests/test_caption_reload_controller.cjs:93:14 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '11111111111111111111111111111111',
+  expected: '22222222222222222222222222222222',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

@@ -63,6 +63,18 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     await evaluate('(()=>{const button=[...document.querySelectorAll("#caption-proposal-jobs button")].find(b=>b.textContent==='+JSON.stringify(label)+');if(!button)throw Error("Missing caption action");button.click();button.click();})()');
     await until(()=>evaluate('!captionProposalBusy'));
   };
+  // Textarea's 4,000 UTF-16 units also allow 2,001 ASCII characters. Validation
+  // must remain correctable in this document, without a storage-failure latch.
+  const inputBoundaryCount=(await request('caption-proposals')).jobs.length;
+  await start('a'.repeat(2001));
+  assert.equal(await evaluate('captionProposalStorageError'),'');assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),false);
+  assert.equal(await evaluate('sessionStorage.getItem(captionProposalRecoveryKey)'),null);
+  assert.equal((await request('caption-proposals')).jobs.length,inputBoundaryCount);
+  await refresh();await start('\u{1f600}'.repeat(2000));
+  await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed")'));
+  const boundaryJob=(await request('caption-proposals')).jobs.find(j=>j.config.instruction==='\u{1f600}'.repeat(2000));
+  assert.ok(boundaryJob,'Corrected 2,000 non-BMP code points must submit without reload');
+  assert.equal(boundaryJob.config.instruction.length,4000);
   // A served text-only entry is not promoted to a vision capability.
   await fill('caption-proposal-model','text-only');await start('Describe visible pixels');
   await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="failed")'));assert.equal((await request('records/'+rows[0].id)).revision,rows[0].revision);
@@ -77,7 +89,21 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('captionProposalPendingRequest?.request_id'),recoveryId,'Early real 404 must retain admission identity');
   assert.equal(await requestCount(),beforeInference,'Held admission must not start inference');
   await evaluate('captionStartRelease()');await until(()=>evaluate('!captionProposalBusy'));assert.equal(await evaluate('captionProposalPendingRequest?.request_id'),recoveryId);
-  await start('Describe the visible rectangle');const recoveryPostedIds=await evaluate('captionPostedIds');assert.deepEqual(recoveryPostedIds,[recoveryId,recoveryId],'Explicit repeat must reuse the exact admission ID');
+  const beforeReloadPostedIds=await evaluate('captionPostedIds');
+  await until(async()=> (await request('caption-proposals/'+recoveryId)).status==='completed');
+  // A full new document restores sessionStorage before its first held reconciliation.
+  const reloadHook=await send('Page.addScriptToEvaluateOnNewDocument',{source:'window.captionNativeFetch=window.fetch;window.captionHoldReconcile=true;window.captionReconcileHeld=false;window.captionPostedIds=[];window.fetch=async(...args)=>{if(args[0]==="/api/workbench/caption-proposals" && args[1]?.method!=="POST" && captionHoldReconcile){captionHoldReconcile=false;captionReconcileHeld=true;await new Promise(resolve=>window.captionReconcileRelease=resolve);}if(args[0]==="/api/workbench/caption-proposals" && args[1]?.method==="POST")captionPostedIds.push(JSON.parse(args[1].body).request_id);return captionNativeFetch(...args);};'});
+  const previousFrame=(await send('Page.getFrameTree')).frameTree.frame;
+  await send('Page.reload');await until(()=>pageLoads.reloaded(previousFrame));
+  await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));await open(rows[0].id);
+  await until(()=>evaluate('captionReconcileHeld'));
+  assert.equal(await evaluate('captionProposalPendingRequest?.request_id'),recoveryId,'A full reload must synchronously restore the unresolved ID');
+  assert.equal(await evaluate('document.getElementById("caption-proposal-guidance").value'),'Describe the visible rectangle','Exact original retry guidance must restore');
+  await start('Changed guidance during held reload reconciliation');
+  assert.deepEqual(await evaluate('captionPostedIds'),[],'Changed intent must never reach POST before reconciliation');
+  assert.equal(await requestCount(),beforeInference+1);
+  await start('Describe the visible rectangle');const recoveryPostedIds=[...beforeReloadPostedIds,...await evaluate('captionPostedIds')];assert.deepEqual(recoveryPostedIds,[recoveryId,recoveryId],'Explicit repeat after reload must reuse the exact admission ID');
+  await evaluate('captionReconcileRelease()');await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:reloadHook.identifier});
   await refresh();await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed")'));
   assert.equal((await request('caption-proposals')).jobs.length,beforeStart+1);assert.equal(await evaluate('captionProposalPendingRequest'),null);
   assert.equal(await requestCount(),beforeInference+1,'Lost-start recovery must run the image backend exactly once');
@@ -150,7 +176,16 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   // Keyboard controls remain real native form controls.
   await evaluate('document.getElementById("caption-proposal-guidance").focus();document.getElementById("caption-proposal-guidance").select()');await send('Input.insertText',{text:'Describe the actual visible image.'});
   assert.equal(await evaluate('document.getElementById("caption-proposal-guidance").value'),'Describe the actual visible image.');
+  // A storage write failure refuses admission before any network/model side effect.
+  await fill('caption-proposal-url','http://127.0.0.1:'+modelPort);await click('caption-proposal-models');
+  await until(()=>evaluate('document.getElementById("caption-proposal-model").options.length===2'));await fill('caption-proposal-model','caption-fixture');
+  const beforeStorageFailure=await requestCount(),jobsBeforeStorageFailure=(await request('caption-proposals')).jobs.length;
+  await evaluate('window.captionStorageSet=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key===captionProposalRecoveryKey)throw Error("Controlled storage quota failure");return captionStorageSet.call(this,key,value);};');
+  await start('Storage unavailable');
+  assert.equal(await requestCount(),beforeStorageFailure);assert.equal((await request('caption-proposals')).jobs.length,jobsBeforeStorageFailure);
+  assert.equal(await evaluate('document.getElementById("caption-proposal-submit").disabled'),true);
+  await evaluate('Storage.prototype.setItem=captionStorageSet');
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'held admission/early real 404/lost start acknowledgement/exact-ID repeat runs backend once, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
+  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reload_changed_intent_posts:0,storage_failure_posts:0,fresh_guidance_2001_latched_storage_error:false,corrected_non_bmp_guidance_codepoints:2000,corrected_non_bmp_guidance_utf16_units:4000,corrected_without_reload:true,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'fresh guidance2001 recoverable error then2000 non-BMP correction without reload; held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
   console.log('Caption proposal real HTTP/Chromium controlled lifecycle, lost-response recovery, draft review separation, navigation and pinned consumer passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
