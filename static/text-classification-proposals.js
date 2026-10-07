@@ -123,7 +123,7 @@ async function textClassificationProposalOpenDatabase() {
 async function textClassificationProposalAuthorityTransaction(fn) {
   const database=await textClassificationProposalOpenDatabase();
   return new Promise((resolve,reject)=>{
-    let transaction,result,failure,remaining=3;const values={};
+    let transaction,result,failure,remaining=4;const values={};
     const failed=()=>reject(failure||Error('Classification IndexedDB authority transaction failed. Requests are blocked; refresh before an explicit unchanged repeat.'));
     try {
       transaction=database.transaction(textClassificationProposalStoreName,'readwrite',{durability:'strict'});
@@ -132,7 +132,7 @@ async function textClassificationProposalAuthorityTransaction(fn) {
         try {transaction.abort();} catch {failed();}
       };
       const store=transaction.objectStore(textClassificationProposalStoreName);
-      for(const key of ['pending','initialized','legacy_blocker']) {
+      for(const key of ['pending','initialized','legacy_blocker','attempt']) {
         const request=store.get(key);
         request.onerror=event=>{event.preventDefault();failure=Error('Classification IndexedDB authority cannot be read. Requests remain blocked.');transaction.abort();};
         request.onsuccess=()=>{
@@ -143,7 +143,7 @@ async function textClassificationProposalAuthorityTransaction(fn) {
     } catch(error) {failure=error;if(transaction)try {transaction.abort();} catch {failed();} else failed();}
   });
 }
-function textClassificationProposalObserveAuthority(values,store,mirror) {
+function textClassificationProposalObserveAuthority(values,store,mirror,knownReceiptRaw) {
   const initialized=values.initialized;
   if(initialized!==undefined && (!initialized || Array.isArray(initialized) || initialized.schema_version!==1 || Object.keys(initialized).length!==2 || !(initialized.resolved_raw===null || (typeof initialized.resolved_raw==='string' && initialized.resolved_raw.length<=textClassificationProposalStorageLimit && textClassificationProposalStoredId(initialized.resolved_raw)!==null))))
     throw Error('Classification IndexedDB initialization evidence is malformed. Requests remain blocked.');
@@ -159,7 +159,14 @@ function textClassificationProposalObserveAuthority(values,store,mirror) {
   if(mirror.raw!==null && mirror.raw!==values.pending && !retired && (values.pending!==undefined || initialized!==undefined))textClassificationProposalAddBlocker(values,store,mirror.raw);
   let body=null;
   if(values.pending!==undefined)try {body=textClassificationProposalStored(values.pending);} catch {throw Error('Classification IndexedDB pending evidence is malformed. Requests remain blocked; it was not discarded.');}
-  return {raw:values.pending??null,body,blockers:values.legacy_blocker||[],retired,resolvedRaw:initialized?.resolved_raw??null};
+  // This generation is durable evidence of every explicitly requested attempt,
+  // including retries in other pages. Legacy pending frames have unknown history.
+  const attempt=values.attempt;
+  if(attempt!==undefined && (!attempt || Array.isArray(attempt) || Object.keys(attempt).length!==3 || !['schema_version','raw','generation'].every(key=>Object.hasOwn(attempt,key)) || attempt.schema_version!==1 ||
+     typeof attempt.raw!=='string' || attempt.raw!==values.pending || !body ||
+     ((!Number.isSafeInteger(attempt.generation) || attempt.generation<1) && knownReceiptRaw!==values.pending)))
+    throw Error('Classification admission attempt evidence is malformed or does not match its pending request. Requests remain blocked.');
+  return {raw:values.pending??null,body,blockers:values.legacy_blocker||[],retired,resolvedRaw:initialized?.resolved_raw??null,attemptGeneration:attempt?.generation??null};
 }
 function textClassificationProposalUseAuthority(state,mirror) {
   textClassificationProposalAuthorityReady=true;
@@ -227,17 +234,28 @@ async function textClassificationProposalStorageLock(fn) {
   }
   return navigator.locks.request(textClassificationProposalStorageKey,{mode:'exclusive'},fn);
 }
-async function textClassificationProposalClearStorage(id, body) {
+async function textClassificationProposalClearStorage(id, body, refusalGeneration) {
   return textClassificationProposalStorageLock(async()=>{
     try {
       const mirror=textClassificationProposalMirror();
       const state=await textClassificationProposalAuthorityTransaction((values,store)=>{
-        textClassificationProposalObserveAuthority(values,store,mirror);
+        // A matching admission receipt can retire its own corrupted counter.
+        // This exception never supplies a generation for POST or refusal CAS.
+        let knownReceiptRaw;
+        if(refusalGeneration===undefined && body && values.pending===JSON.stringify({schema_version:1,body})) {
+          try {if(textClassificationProposalStored(values.pending).request_id===id)knownReceiptRaw=values.pending;} catch {}
+        }
+        const observed=textClassificationProposalObserveAuthority(values,store,mirror,knownReceiptRaw);
         const raw=values.pending,blockers=values.legacy_blocker||[];
         const matchesPending=raw!==undefined && textClassificationProposalStoredId(raw)===id && (!body || raw===JSON.stringify({schema_version:1,body}));
+        // A refusal only settles the captured attempt. Another page's committed
+        // retry makes it stale even when the admission ID/body is identical.
+        if(refusalGeneration!==undefined && (!Number.isSafeInteger(refusalGeneration) || refusalGeneration<1 || !body || !matchesPending || values.attempt?.generation!==refusalGeneration))
+          return {...observed,retirementDenied:true};
         const matchesBlocker=entry=>entry.recovery_id===id && (!body || entry.raw===JSON.stringify({schema_version:1,body}));
         if(matchesPending) {
           store.delete('pending');values.pending=undefined;
+          store.delete('attempt');values.attempt=undefined;
           values.initialized={schema_version:1,resolved_raw:raw};store.put(values.initialized,'initialized');
         }
         if(blockers.some(matchesBlocker)) {
@@ -247,6 +265,7 @@ async function textClassificationProposalClearStorage(id, body) {
         }
         return textClassificationProposalObserveAuthority(values,store,{raw:null,body:null});
       });
+      if(state.retirementDenied)throw Error('A later classification attempt retains this admission. The earlier refusal did not clear its request ID or exact intent.');
       if(mirror.raw!==null) {
         const mirrorId=textClassificationProposalStoredId(mirror.raw);
         if(mirrorId!==id || (body && mirror.raw!==JSON.stringify({schema_version:1,body}))) {
@@ -279,8 +298,11 @@ async function textClassificationProposalClaim(intent) {
       const body=state.body?(previous && JSON.stringify(previous)===JSON.stringify(state.body)?previous:state.body):captured;
       const raw=JSON.stringify({schema_version:1,body});
       textClassificationProposalPendingRequest=body;textClassificationProposalRecoveryId=body.request_id;
+      const generation=(state.attemptGeneration??0)+1;
+      if(!Number.isSafeInteger(generation))throw Error('Classification admission attempt generation is exhausted. Requests remain blocked; the evidence was retained.');
       if(state.raw!==raw)store.put(raw,'pending');
-      return {state:{...state,raw,body},previous:state.body||previous,body};
+      store.put({schema_version:1,raw,generation},'attempt');
+      return {state:{...state,raw,body,attemptGeneration:generation},previous:state.body||previous,body,generation};
     });} catch(error) {textClassificationProposalStorageBlocked=error.message;throw error;}
     // A request-success event is not a commit. Mirror only committed authority,
     // so a transaction abort cannot leave an unresolvable fresh legacy hint.
@@ -427,10 +449,10 @@ $('text-classification-proposal-form').addEventListener('submit',async event=>{
   try { config=textClassificationProposalConfig(); } catch(error) {textClassificationProposalStatus(error.message);return;}
   const intent={source_id:current.id,revision:current.revision,source_revision:current.source_revision,
     ...config};
-  let previous,body,posted=false;
+  let previous,body,generation,posted=false;
   textClassificationProposalBusy=true;textClassificationProposalAdmissionPreparing=true;$('text-classification-proposal-submit').disabled=true;
   try {
-    const claimed=await textClassificationProposalClaim(intent);body=claimed.body;previous=claimed.previous;
+    const claimed=await textClassificationProposalClaim(intent);body=claimed.body;previous=claimed.previous;generation=claimed.generation;
     textClassificationProposalAdmissionRequest=body;
     if(textClassificationProposalPaused)throw Error('The page was hidden before transport. The stored request ID is retained for an explicit unchanged repeat; no request was sent.');
     posted=true;
@@ -440,7 +462,7 @@ $('text-classification-proposal-form').addEventListener('submit',async event=>{
     textClassificationProposalStatus('Classification requested. Current annotations remain unchanged.');await refreshTextClassificationProposals();
   }
   catch(error) {
-    if(posted && !previous && error.status>=400 && error.status<500 && textClassificationProposalPendingRequest===body)await textClassificationProposalClearStorage(body.request_id,body);
+    if(posted && !previous && error.status>=400 && error.status<500 && textClassificationProposalPendingRequest===body)await textClassificationProposalClearStorage(body.request_id,body,generation);
     textClassificationProposalStatus((textClassificationProposalStorageBlocked||error.message)+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');
   }
   finally {textClassificationProposalAdmissionRequest=null;textClassificationProposalAdmissionPreparing=false;textClassificationProposalBusy=false;$('text-classification-proposal-submit').disabled=!textClassificationProposalAuthorityReady;}

@@ -198,7 +198,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const dispatchHook=String.raw`
     window.dispatchNativeFetch=window.fetch;
     window.dispatchPosts=[];window.dispatchResponses=[];window.dispatchGetHeld=[];
-    window.dispatchHoldMode='';window.dispatchHoldGets=false;window.dispatchDropAck=false;window.dispatchBarrier='';
+    window.dispatchHoldMode='';window.dispatchHoldGets=false;window.dispatchDropAck=false;
     window.fetch=async(...args)=>{
       const url=String(args[0]),isPost=url==='/api/workbench/text-classification-proposals'&&args[1]?.method==='POST';
       const isGet=url.startsWith('/api/workbench/text-classification-proposals')&&!args[1]?.method;
@@ -268,7 +268,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     assert.equal((await b.run('dispatchPosts')).length,1);
     const early=await fetch(base+'/api/workbench/text-classification-proposals/'+body.request_id);assert.equal(early.status,404,'The second transport is held before actual admission');
     observation.early_exact_get_status=early.status;observation.changed_intent_posts=0;
-    await a.run('dispatchHoldGets=true');await b.run('dispatchHoldGets='+JSON.stringify(outcome==='lost-ack')+';dispatchHoldMode="";dispatchDropAck='+JSON.stringify(outcome==='lost-ack')+';dispatchRelease()');await b.idle();
+    await a.run('dispatchHoldGets=true');await b.run('dispatchHoldGets=true;dispatchHoldMode="";dispatchDropAck='+JSON.stringify(outcome==='lost-ack')+';dispatchRelease()');await b.idle();
     await until(async()=> (await request('text-classification-proposals/'+body.request_id)).status==='completed');
     assert.equal(await count(),baseline+1);
     observation.after_second_transport=await b.snapshot();observation.backend_after_release=(await ledger()).filter(entry=>entry.body.request_id===body.request_id);
@@ -278,7 +278,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
       await until(()=>b.run('dispatchGetHeld.length>0'));
       assert.deepEqual(await b.run('textClassificationProposalPendingRequest'),body,'Reload restores exact recovery body before held canonical GET');
       assert.equal((await b.run('dispatchPosts')).length,0,'Reload does not automatically retry inference');
-      await b.restore();await b.submit();await until(async()=> (await b.snapshot()).entries.pending===undefined);assert.deepEqual(await b.run('dispatchPosts'),[body]);assert.equal(await count(),baseline+1,'Explicit same-ID retry after lostACK/reload is idempotent');await b.run('dispatchReleaseGets()');await b.idle();
+      await b.restore();await b.submit();await b.idle();assert.deepEqual(await b.run('dispatchPosts'),[body]);assert.equal(await count(),baseline+1,'Explicit same-ID retry after lostACK/reload is idempotent');
       observation.reload_explicit_posts=await b.run('dispatchPosts');
     }
     const retired=await b.snapshot();assert.equal(retired.entries.pending,undefined);assert.equal(retired.entries.attempt,undefined);assert.equal(retired.mirror,null);

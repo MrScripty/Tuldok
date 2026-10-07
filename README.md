@@ -426,6 +426,11 @@ with Web Locks providing additional coordination. Unavailable IndexedDB, origin
 storage or locking support and invalid recovery evidence block new requests. An
 exact admitted receipt retires the request; failed mirror cleanup retains its
 retirement evidence and blocks new POSTs until cleanup succeeds.
+Every explicit POST also commits an attempt generation bound to that exact
+request. An initial rejection can release recovery only if its captured generation
+is still current; a retry in another tab prevents the older rejection from
+discarding its unresolved admission. Legacy or crash-restored evidence remains
+unknown until an exact receipt reconciles it. No inference automatically retries.
 Apply receipts likewise reconcile lost replies without another target write.
 Cancellation fences late output; interrupted requests never resume automatically
 after restart. Polling uses bounded summaries; individual request reads retain

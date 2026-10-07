@@ -1,0 +1,8 @@
+{
+  "head": "b1d0a453ea24653fa40f08c08f41e56375663521",
+  "hashes": {
+    "static/text-classification-proposals.js": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16",
+    "static/workbench.js": "c810e63c3060683b4f3ec03a5184ab6abe96c5a3bcff93f84309329eb90ffd63",
+    "tests/test_text_classification_proposals_controller.cjs": "8591e0fa1b8ded04172e06280df0870b838f00cb8a3aed5e97f41c7e32dd15b3"
+  }
+}

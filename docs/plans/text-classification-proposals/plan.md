@@ -1,5 +1,38 @@
 # Text classification proposals
 
+## Active review successor: cross-tab dispatch ownership
+
+Parent review of published PR #18 head
+`b1d0a453ea24653fa40f08c08f41e56375663521` reproduced a delayed initial
+4xx clearing the shared recovery reservation while another explicit same-ID
+POST was unresolved. The earlier qualification below does not qualify this
+interleaving. Preserve its source, reports and failed probes unchanged.
+
+The bounded repair commits a positive, safe-integer attempt generation with
+the exact pending envelope in the existing IndexedDB transaction before every
+explicit POST. An initial refusal may retire only the exact ID/body and its
+unchanged captured generation. A later explicit retry advances that generation;
+the older refusal leaves pending authority, mirror and local recovery intact.
+Legacy or crash-restored pending evidence is never assumed to be a sole attempt.
+Matching durable admission receipts may reconcile the whole ID. Failed commits,
+malformed generation evidence, overflow and ambiguous 404s block inference rather
+than discard evidence. No timer expiry, automatic retry or queued inference is added.
+A known matching receipt may retire a malformed counter only when its recognizable
+versioned attempt frame names that exact pending body. Foreign, opaque, orphaned
+or unknown-version attempt evidence remains blocked; it cannot be discarded using
+another request's receipt. This exception never supplies a dispatch generation.
+
+Write set: the classification controller, its controller/native browser fixtures,
+the synthetic fixture server, README and this plan/ledger. Backend admission and
+other feature sources remain unchanged. Verify delayed 400/409/422, success,
+lost acknowledgement, crash/reload, generation commit failure and terminal cleanup
+ownership; then run all 46 aggregate gates and independent exact-source reviews.
+Only PR #18's branch may be committed/pushed after qualification. No merge or
+CodeRabbit request. New evidence belongs in a fresh dispatch-ownership-repair
+directory; all 2,939 existing report files are protected by an immutable baseline.
+
+## Prior qualification
+
 Exact integrated source `97144cb85b274cf68e20e0952907787b28b3026a` passed
 all 46 aggregate gates and 273 Python tests. IndexedDB admission recovery,
 source/label fences, explicit abstention, atomic draft Apply and both proposal

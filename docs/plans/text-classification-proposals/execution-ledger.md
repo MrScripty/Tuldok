@@ -74,3 +74,27 @@ remained byte-identical. Final independent audits found no remaining blocker.
 commits, source hashes, artifacts and limits. The authorized next publication
 updates only PR #18's branch and base to development, checks exact hosted CI,
 and leaves the PR draft; no merge or CodeRabbit request.
+
+2026-10-07 PR18 independent review successor: publication
+`b1d0a453ea24653fa40f08c08f41e56375663521` passed both exact-head hosted
+runs (46/46 each); push attempt 1's unchanged caption CDP navigation failure and
+the successful bounded retry remain outside the frozen repository. Parent review
+then reproduced a distinct P2 cross-tab dispatch race. Two tabs can explicitly
+POST the same reserved ID/body; a delayed initial refusal clears shared recovery
+while the later POST is unresolved, permitting a fresh changed-intent ID.
+Independent controller reproduction confirmed delayed 400, 409 and 422 plus a
+lost second acknowledgement. Prior passing evidence does not qualify this case.
+
+Planning is paused. The parent selected durable attempt generations in the
+existing IndexedDB authority. Every explicit dispatch commits a raw-bound positive
+safe-integer generation; initial-refusal retirement additionally CAS-checks the
+captured generation. Legacy/unknown pending evidence cannot become a sole-attempt
+claim. Matching durable admission receipts reconcile the whole ID; lost replies,
+crash and 404 alone do not. The alternative live dispatch mutex was considered
+but superseded before publication. No backend/provider or other-feature changes
+are admitted. The strict generation transaction and unchanged explicit retry
+path preserve recovery without automatic inference. Existing 2,939 report files
+and exact published source are snapshotted under
+`/workspace/scratch/tuldok-classification-dispatch-repair/baseline/`;
+new focused and aggregate evidence must remain separate. Parent owns PR18
+acceptance; only its branch push is authorized, with no merge or CodeRabbit request.
