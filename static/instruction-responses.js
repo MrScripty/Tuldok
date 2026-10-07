@@ -100,6 +100,7 @@ $('response-entry-format').addEventListener('change',()=>{
 $('response-form').addEventListener('submit',async event=>{
   event.preventDefault();if(responseBusy||!responseEditor)return;
   if(dirty){notice('Save or discard the annotation edit before saving an answer.',true);return;}
+  if(typeof rightsDirty !== 'undefined' && (rightsDirty || rightsBusy)){notice('Save or cancel the rights-note edit before saving an answer.',true);return;}
   const epoch=responseEditEpoch,editor=structuredClone(responseEditor),parent=responseParent;
   let completion;try{completion=responseCompletion();}catch(error){notice(error.message,true);return;}
   responseBusy=true;responseButtons();

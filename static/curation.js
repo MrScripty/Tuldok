@@ -24,10 +24,10 @@ function curationChanged() {
 }
 async function curationInspect(record, epoch) {
   if(epoch !== curationEpoch || $('editor').dataset.busy || !mayDiscard()) return;
-  const editorRequest = ++editorEpoch;
+  const editorRequest = ++editorEpoch, responseEpoch = responseIntentEpoch();
   try {
     const latest = await api('records/' + record.id);
-    if(epoch !== curationEpoch || editorRequest !== editorEpoch) return;
+    if(epoch !== curationEpoch || editorRequest !== editorEpoch || responseEpoch !== responseIntentEpoch()) return;
     if(latest.revision !== record.revision || latest.source_revision !== record.source_revision) {
       curationInvalidate('Record changed since this report. Refresh diagnostics.'); return;
     }

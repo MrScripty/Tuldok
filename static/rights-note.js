@@ -66,8 +66,9 @@ $('rights-note-cancel').addEventListener('click',()=>{
 $('rights-note-form').addEventListener('submit',async event=>{
   event.preventDefault();if(rightsBusy || !current) return;
   if(dirty || $('editor').dataset.busy) { $('rights-note-status').textContent = 'Save or discard annotation edits before correcting the rights note.'; return; }
+  if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) { $('rights-note-status').textContent = 'Save or cancel the response edit before correcting the rights note.'; return; }
   let note;try { note = rightsValue(); } catch(error) { $('rights-note-status').textContent = error.message; return; }
-  const record = current, epoch = ++editorEpoch, noteEpoch = rightsEpoch;
+  const record = current, epoch = ++editorEpoch, noteEpoch = rightsEpoch, responseEpoch = responseIntentEpoch();
   rightsBusy = true;const controls=[...$('rights-note-form').querySelectorAll('button,select,textarea')];controls.forEach(control=>control.disabled=true);
   try {
     const result = await api('rights/'+record.id,{revision:record.revision,source_revision:record.source_revision,note});
@@ -75,12 +76,15 @@ $('rights-note-form').addEventListener('submit',async event=>{
       rightsKnownRevisions.set(record.id,result.record.revision);
       // Unselected lineage can also bind a preview; conservatively discard every cached proof.
       invalidateRelease();$('release-preview-status').textContent = 'Rights note changed. Saved revision pairs remain fixed; reselect current records and preview again.';
+      if(typeof invalidateResponsePreview === 'function') invalidateResponsePreview();
       await rightsRefreshSavedIssues();
     }
-    if(epoch === editorEpoch && noteEpoch === rightsEpoch && current?.id === record.id) {
+    if(epoch === editorEpoch && noteEpoch === rightsEpoch && responseEpoch === responseIntentEpoch() && current?.id === record.id) {
       showRecord(result.record);$('rights-note-status').textContent = result.changed ? 'Rights note saved. Record revision changed; annotation review and source evidence are unchanged.' : 'Note unchanged. No revision or history changed.';
+    } else if(current?.id === record.id) {
+      $('rights-note-status').textContent = 'Earlier note saved; later edits are retained. Reload before using current record revisions.';
     }
     await refresh();
-  } catch(error) { invalidateRelease(); if(current?.id === record.id && noteEpoch === rightsEpoch) $('rights-note-status').textContent = error.message+' Your note edit is retained; reload the record to use current revisions.'; }
+  } catch(error) { invalidateRelease(); if(typeof invalidateResponsePreview === 'function') invalidateResponsePreview(); if(current?.id === record.id && noteEpoch === rightsEpoch) $('rights-note-status').textContent = error.message+' Your note edit is retained; reload the record to use current revisions.'; }
   finally { rightsBusy = false;controls.forEach(control=>control.disabled=false); }
 });

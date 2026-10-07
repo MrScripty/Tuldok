@@ -37,6 +37,7 @@ jobs:
       - run: node tests/test_instruction_responses_controller.cjs
       - run: node tests/test_browser_startup.cjs
       - run: node tests/test_native_text_import_controller.cjs
+      - run: node tests/test_combined_workbench_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -91,6 +92,10 @@ jobs:
       - run: node tests/browser_native_text_import.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_combined_workbench.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -113,4 +118,5 @@ jobs:
             docs/plans/instruction-responses/reports/instruction-session.json
             docs/plans/instruction-responses/reports/instruction-downloaded.zip
             docs/plans/native-text-classification-import/reports/native-text-*.png
+            docs/plans/combined-workbench-local/reports/**
           if-no-files-found: ignore
