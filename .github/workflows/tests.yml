@@ -135,6 +135,7 @@ jobs:
         with:
           name: workbench-browser-screenshots
           path: |
+            build/qa/static-mesh/**
             docs/plans/dataset-workflows/reports/workbench-*.png
             docs/plans/image-caption-exports/reports/captions-*.png
             docs/plans/selected-release-preview/reports/preview-*.png

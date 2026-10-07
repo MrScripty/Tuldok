@@ -40,7 +40,7 @@ Only `element vertex N` with scalar `property float|double x`, y, z in that
 order, optionally complete nx,ny,nz in that order; then `element face M` with
 `property list uchar int vertex_indices`, `end_header`. Each vertex consumes
 one line of the declared property count, each face one line `3 i j k`.
-Native float is IEEE float32, double float64. All values must be finite,
+Native float is IEEE float32, double float64; decimal-to-native rounding selects nearest, ties to even. Float32 uses exact decimal comparisons against neighboring binary midpoints to avoid float64 double rounding. All values must be finite,
 representable without nonzero underflow and have magnitude ≤ 1e12. Face
 indices are zero-based, distinct and within vertex count; duplicate unordered
 faces and triangles with zero representable cross product are rejected.
