@@ -1,0 +1,38 @@
+{
+  "exact_regression_test_sha256": "3e53484e8a2e0eee14795eb09e2ca83d8edcc2b1598b16405f6483865ba75f37",
+  "cases": [
+    {
+      "case": "start",
+      "source_head": "4dc9c71f7e758bece5115361e57fa4e4ed866275",
+      "source_tree": "6bf88609588dbbfe51c0afc3aff1809db4120370",
+      "exit_code": 1,
+      "stderr": "before-start.stderr.log",
+      "source_files": {
+        "workbench.js": "b4987e27f353a35866d23e7d34e6e3b2e572d4dcf44911da8444c5bf80597e96",
+        "caption-proposals.js": "7ffaa962e63a7eae31583b83a8496ded08f275eafa9d68ac2a1e3ed350b2c035"
+      }
+    },
+    {
+      "case": "reject",
+      "source_head": "4dc9c71f7e758bece5115361e57fa4e4ed866275",
+      "source_tree": "6bf88609588dbbfe51c0afc3aff1809db4120370",
+      "exit_code": 1,
+      "stderr": "before-reject.stderr.log",
+      "source_files": {
+        "workbench.js": "b4987e27f353a35866d23e7d34e6e3b2e572d4dcf44911da8444c5bf80597e96",
+        "caption-proposals.js": "7ffaa962e63a7eae31583b83a8496ded08f275eafa9d68ac2a1e3ed350b2c035"
+      }
+    },
+    {
+      "case": "repeat409",
+      "source_head": "300d1ebf84e53c739f856fb7115671cfaac057b9",
+      "source_tree": "3b512dfac2fe6a5ce2f5014ad04a02688a1f21e1",
+      "exit_code": 1,
+      "stderr": "before-repeat409.stderr.log",
+      "source_files": {
+        "workbench.js": "b4987e27f353a35866d23e7d34e6e3b2e572d4dcf44911da8444c5bf80597e96",
+        "caption-proposals.js": "63c0cefd93e25c38c45c463dcc3747dac63cda2995148f49e68b58e516385463"
+      }
+    }
+  ]
+}

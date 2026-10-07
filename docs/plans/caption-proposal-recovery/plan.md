@@ -1,7 +1,10 @@
 # Caption proposal recovery and rejection ownership repair
 
-Status: local successor implementation; exact committed-source aggregate qualification
-and independent review pending. Publication is held for the parent.
+Status: locally qualified and independently reviewed; all 43 inherited gates passed
+on source `ff91d0d920a57df6585ee84bcbfa204910b13438`, tree
+`01741c7c219d64c0490e264252dc9dca5a0aedc8`. Both focused successor reviews report
+no remaining findings. Publication is held for the parent. See `reports/verification.md`
+and the hash manifest for exact source/tests, negative regressions and retained outputs.
 
 Base: published PR17 `4dc9c71f7e758bece5115361e57fa4e4ed866275`, tree
 `6bf88609588dbbfe51c0afc3aff1809db4120370`, retaining PR16 `ae094770` ancestry.

@@ -1,0 +1,70 @@
+{
+  "reviewed_head": "ff91d0d920a57df6585ee84bcbfa204910b13438",
+  "reviewed_tree": "01741c7c219d64c0490e264252dc9dca5a0aedc8",
+  "previous_reviewed_head": "300d1ebf84e53c739f856fb7115671cfaac057b9",
+  "base": "4dc9c71f7e758bece5115361e57fa4e4ed866275",
+  "recorded_at": "2026-10-07T06:53:35.768300+00:00",
+  "findings": [],
+  "previous_receipt_preserved": "/workspace/tuldok-owner-review/caption-recovery-local/review-editor/receipt.json",
+  "editor_repair_byte_identical": true,
+  "browser_Workbench_backend_CI_export_consumer_unchanged": true,
+  "admission_delta_assessment": "The catch now clears ambiguous identity for a definite first-attempt 4xx only. A refused repeat retains the original ID because that refusal cannot establish the older unknown admission outcome. The new regression verifies 409 repeat retention and changed-intent blocking, while first-attempt 409 permits a fresh ID. This changes no annotation editor ownership.",
+  "execution": [
+    {
+      "command": "node tests/test_caption_proposals_controller.cjs",
+      "exit_code": 0,
+      "log": "final-ff91-controller.log",
+      "claims": "Full final controller including repeated-409 retention/first-refusal reset, held annotation-save/Reject/ACK/subsequent save, later-input, Apply/navigation and lifecycle fences."
+    },
+    {
+      "command": "TULDOK_SOURCE_ROOT=<exact ff91 successor> node independent-save-reject-probe.cjs",
+      "exit_code": 0,
+      "log": "final-ff91-independent-probe.log",
+      "result": {
+        "result": "PASS",
+        "trace": [
+          {
+            "phase": "save_pending",
+            "parent": 2,
+            "current": 2,
+            "dirty": true
+          },
+          {
+            "phase": "save_ack_after_reject",
+            "current": 3,
+            "dirty": false,
+            "caption": "Independent saved caption"
+          },
+          {
+            "phase": "next_save_parent",
+            "revision": 3,
+            "caption": "Independent subsequent save"
+          },
+          {
+            "phase": "save_ack_before_reject",
+            "current": 3,
+            "dirty": false,
+            "reject_pending": true
+          }
+        ]
+      }
+    }
+  ],
+  "inherited_red_execution": "Previously independently observed PR17 base reject-ownership and save-adoption failures remain in original receipt/logs; the repaired decideCaptionProposal function and Workbench controller are byte-identical from prior reviewed300 to finalff91.",
+  "source_sha256": {
+    "static/caption-proposals.js": "f3c0ee4cc948bc183c33200d9b63b0c8e6fce4206833089c35c82e15a19e8c8b",
+    "static/workbench.js": "b4987e27f353a35866d23e7d34e6e3b2e572d4dcf44911da8444c5bf80597e96",
+    "tests/test_caption_proposals_controller.cjs": "3e53484e8a2e0eee14795eb09e2ca83d8edcc2b1598b16405f6483865ba75f37",
+    "tests/browser_caption_proposals.cjs": "4d4557ec0ecb8541c78e67f74afaf828649d86eded5e8b6fc72221b129838ba9"
+  },
+  "editor_function_sha256": "17a56644ad3d102e0e00a499bb5bb7defa336863e5bcf8bd53af1b59826ed5bc",
+  "source_modifications": [],
+  "browser_or_aggregate_runs": [],
+  "remote_actions": [],
+  "models_or_downloads": [],
+  "limits": [
+    "Controller/probe use VM and controlled promise responses; parent owns frozen-source aggregate and actual Chromium/HTTP qualification.",
+    "No compatibility, real-model or semantic-quality conclusion.",
+    "Only external logs and this successor receipt were written; original receipt and candidate source/reports preserved."
+  ]
+}
