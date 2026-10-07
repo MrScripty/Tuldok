@@ -1,0 +1,10 @@
+{
+  "original_id": "5ee36d993dee4a52a64fbd11d3704c06",
+  "repeat_409_retained_identity": true,
+  "changed_intent_refused": true,
+  "successful_repeat_same_body": true,
+  "successful_repeat_released_identity": true,
+  "fresh_409_released_identity": true,
+  "fresh_changed_intent_accepted": true,
+  "fresh_new_id_differs": true
+}

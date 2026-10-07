@@ -1,0 +1,27 @@
+{
+  "source_head": "4267819af784f5094a5e5ac48d82f71eafbd0564",
+  "model": "controlled local HTTP fixture",
+  "fixed": [
+    {
+      "id": "514843de46454a12bbe953233bef305b",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "8a70a1b6da3a4371bbe2548ea2897d98",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "96d96288071a43eb8aea89406113db4d",
+      "revision": 2,
+      "source_revision": 1
+    }
+  ],
+  "job_id": "891f6f7443e543d8b7e8e1461658fedc",
+  "application_revision": 3,
+  "downloaded_zip_sha256": "5e1aee537df9bb6318c6b1edce3d78cba2121c7dfa7693f83363c7631a833e98",
+  "consumer": "unchanged pinned diffusion_check_image_data.py",
+  "real_model_quality": false,
+  "tests": "request/apply double clicks, exact image evidence, unsupported vision, lost start/apply acknowledgements, idempotency, fixed stale selection, draft block, human review, ZIP consumption, reject/cancel, navigation/reload, keyboard and narrow layout"
+}

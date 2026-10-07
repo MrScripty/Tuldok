@@ -1,0 +1,36 @@
+{
+  "source_head": "e89cf7636e3b6790179a0de3f4aeb9c433217bed",
+  "source_tree": "ea56fd0702b8b65a8ca2c60288fffce88c512a5d",
+  "base_head": "10de10b6710976570ace33b033ffb2349995edec",
+  "findings": [
+    {
+      "priority": "P2",
+      "title": "Preflight preserved recovery JSON bound before entering storage-failure path",
+      "location": "static/caption-proposals.js:90",
+      "reproduction": "Use URL http://127.0.0.1:8765 plus 33000 trailing ASCII slashes, list a served model, and submit valid guidance. Backend and frontend URL validators accept because normalized URL is only local endpoint. Preserved exact JSON length is 33234 UTF-16 units. Store rejects its 32768 limit and latches StorageError without POST or storing an entry. Correct settings in the same document; submit stays disabled/blocked.",
+      "bounded_probe": "recovery-envelope-probe.cjs",
+      "recommendation": "Preflight JSON.stringify(canonical exact request).length <= 32768 in shared RecoveryBody before persistence, returning a correctable form error for fresh input. Keep invalid preexisting evidence retained/fenced.",
+      "reachability": "Ordinary HTML URL input has no maxlength; repeated ASCII slashes form a valid URL path. Controller and actual backend validator reproduction confirmed; no separate Chromium run was performed."
+    }
+  ],
+  "checks": {
+    "reload_controller": "passed, includes 86 shared actual Python oracle cases and ownership/recovery regressions",
+    "caption_controller": "passed",
+    "independent_url_matrix": "1209 cases; 0 frontend accepted/backend rejected; 182 conservative frontend rejections, principally existing WHATWG parsing differences or deliberate backslash refusal",
+    "source_clean": true
+  },
+  "interpretation": "Browser lost400 test mutates transported guidance after validating a valid raw body. It verifies unknown-response recovery preservation but does not prove ordinary invalid fresh input reached backend. Separate armed hook asserts fresh whitespace/surrogate cases issue no POST.",
+  "limits": [
+    "No shared source edits, aggregate gates, Chromium run, or remote actions.",
+    "URL matrix is bounded, not exhaustive.",
+    "Conservative frontend URL rejection cases include IPvFuture, IPv6 zone identifiers and percent hosts; those generally reflect existing WHATWG limitations or intended backslash avoidance."
+  ],
+  "artifact_sha256": {
+    "caption-controller.log": "602504e3944e619be7bf9a0a7c0d4af57840234d0b6da7ccc5971bc9f5334f62",
+    "recovery-envelope-probe.cjs": "2e1aaa96879c641ebe9402705cac950fe4f1983888d24842fae2a4d2f4af05c4",
+    "recovery-envelope-result.json": "b01abe99dd1e31b76119ed49b15c3137e5abb120dc145491d607fdaabf89a5de",
+    "reload-controller.log": "5fdf437917aee12bb6ff403509811b2ff3a46f65c613ed45eafa54a97503a95b",
+    "url-parity-probe.cjs": "6e0441b015fc9585faf9edc067c5f08928a26a7359cfa084e9e0c668b0f840b2",
+    "url-parity-result.json": "c376a3a7b9544528dbf0f5b43c62f84457fe938aee30ff9db0be82bfc7a8e3e5"
+  }
+}

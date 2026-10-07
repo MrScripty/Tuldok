@@ -1,0 +1,53 @@
+{
+  "review": "Caption proposal successor interaction inheritance and Python repair delta review",
+  "recorded_at": "2026-10-07T06:11:37.583501+00:00",
+  "base": "ae094770cfebc68b73d91bc163a0043a4ab117dc",
+  "head": "4267819af784f5094a5e5ac48d82f71eafbd0564",
+  "tree": "676726e711d7c980ba3a8135e076b45b5fda47b2",
+  "prior_reviewed_head": "be8c1b77c2b1743f4e68fa48cdd168249eca8a13",
+  "inherited_receipt": "/workspace/tuldok-owner-review/caption-proposals-local/review-interactions/receipt.json",
+  "findings": [],
+  "delta_paths": [
+    "caption_proposals.py",
+    "docs/plans/caption-proposals/plan.md",
+    "tests/test_caption_proposals.py"
+  ],
+  "delta_review": [
+    "Preparation decodes the same bounded in-memory canonical image bytes whose SHA established source identity; no mutable image path reopen occurs.",
+    "Thread.start RuntimeError resets worker/active ownership and persists a failed attempt that UI status refresh can expose; no fallback/retry is introduced.",
+    "New Python regression assertions exercise image path replacement, retained canonical identity, launch failure persistence, safe close/reopen and fresh explicit request recovery."
+  ],
+  "unchanged_reviewed_files": [
+    "static/caption-proposals.js",
+    "static/workbench.js",
+    "static/workbench.html",
+    "tests/test_caption_proposals_controller.cjs",
+    "tests/browser_caption_proposals.cjs",
+    "workbench.py",
+    ".github/workflows/tests.yml",
+    "tests/fixtures/diffusion_check_image_data.py"
+  ],
+  "inherited_controller_execution": [
+    {
+      "command": "node tests/test_caption_proposals_controller.cjs",
+      "exit_code": 0,
+      "result": "Caption controller duplicate actions, exact request recovery, editor/selection/navigation ownership and polling lifecycle passed."
+    }
+  ],
+  "new_test_execution": [],
+  "inherited_interaction_conclusions": [
+    "Single busy action prevents request/application double-click replay.",
+    "Request IDs and persisted GET reconciliation recover unknown start acknowledgement without automatic inference retries.",
+    "Apply fences later editor input, rights/response intent changes and record navigation; selections retain their captured revisions and cached release proofs are invalidated.",
+    "Pagehide fences pending polling/model results and clears timers; pageshow explicitly refreshes persisted jobs.",
+    "Draft application is separate from manual review, and atomic record/history/proposal receipt updates are revision/source-hash checked.",
+    "Browser scenario uses real local HTTP and actual downloaded ZIP consumption by unchanged pinned imagefolder validator; frozen manifest retains target proposal linkage.",
+    "Existing CI command sequence is preserved; new syntax/controller/browser gates and unique ignored browser output collection are registered."
+  ],
+  "worktree_status_at_receipt": "",
+  "limits": [
+    "No duplicate controller execution: the controller/UI/CI/consumer source is byte-identical to the earlier independently tested candidate.",
+    "Did not rerun browser, Python or aggregate gates; parent owns active successor qualification and Python reviewer owns focused repair requalification.",
+    "Read-only source/delta review; no remote calls, downloads, models, repository/report writes or publication."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "reviewed_head": "602d25f5d4dd7a904a6d1aaae23824838d0790aa",
+  "reviewed_tree": "0563406e0db0d12ae60e284cba2bb054edffb560",
+  "base": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+  "previous_reviewed_head": "e73c688a1334652da0552baaafb4b308090a78ba",
+  "scope": "Reload admission storage ownership repair and narrow rereview only",
+  "findings": [],
+  "previous_finding_disposition": "Resolved: live-entry adoption and checked store/remove prevent stale history documents from deleting/overwriting newer unresolved identity",
+  "controller_checks": [
+    {
+      "case": "reload plus five two-document modes/pageshow storage failure",
+      "exit_code": 0
+    },
+    {
+      "case": "combined caption controller (includes reload)",
+      "exit_code": 0
+    },
+    {
+      "case": "exact predecessor e73 negative",
+      "exit_code": 1,
+      "assertion": "pageshow must synchronously adopt live storage"
+    }
+  ],
+  "independent_probe": {
+    "older_id": "11111111111111111111111111111111",
+    "newer_unknown_id": "22222222222222222222222222222222",
+    "pageshow_synchronously_adopted_newer": true,
+    "stale_original_repeat_refused": true,
+    "known_older_get_did_not_clear_newer": true,
+    "newer_exact404_retained": true,
+    "full_reload_blocks_changed_intent": true
+  },
+  "source_hashes": {
+    "static/caption-proposals.js": "7d00c81874441c8741bf15dc402c1ee9d7cd668c629f15f5a392d51ff79b53fc",
+    "tests/test_caption_reload_controller.cjs": "9b0822635d7098291d94334cd442cd4f39110dc89f4678435aafa2e2aa6c88b4",
+    "tests/test_caption_proposals_controller.cjs": "8ddb81df6fa51aa97a05c9b17e7a79aadd818becadc62dfc30ac30f5f6f7a197",
+    "docs/plans/caption-proposal-reload/plan.md": "65a75fff886b21bf4386f9ea12d9f811757f2036db4e021c9c4f02322270c38e"
+  },
+  "probe_command": "TULDOK_SOURCE_ROOT=/workspace/Tuldok-caption-reload-local node /workspace/tuldok-owner-review/caption-reload-local/review-composition/602-history-ownership-probe.cjs",
+  "original_e73_review_probe_and_receipt_preserved": true,
+  "worktree_clean_after_review": true,
+  "diff_check_and_js_syntax_passed": true,
+  "source_modifications": [],
+  "browser_aggregate_real_inference_runs": [],
+  "remote_actions": [],
+  "limitations": [
+    "Controlled VM/document/storage schedules; no actual browser BFCache qualification by this reviewer",
+    "Aggregate/browser qualification separately owned by parent",
+    "Closing tab/explicit storage clearing/cross-tab-device recovery expressly outside guarantee",
+    "No real-model capability/quality or performance claims"
+  ]
+}

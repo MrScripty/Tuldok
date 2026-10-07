@@ -1,0 +1,73 @@
+{
+  "reviewed_head": "10bc3f35d7a4b875eceaebb82c8d5b2085a81285",
+  "reviewed_tree": "4b3c03ea133854066d968d347f04f33cab6d7e69",
+  "base": "4ed5466fd764e938999cca1d535e9a33379271a0",
+  "scope": "Fresh input validation vs recovery-storage failure latch; narrow delta only",
+  "findings": [],
+  "accepted_P2_disposition": "Resolved: fresh invalid body is checked before Store and reported without storage latch; corrupt persisted recovery remains fail-closed",
+  "controller_checks": [
+    {
+      "case": "input-only ASCII/non-BMP/mixed2000/2001 correction boundaries",
+      "exit_code": 0
+    },
+    {
+      "case": "combined controller including complete reload/storage/shared-document cases",
+      "exit_code": 0
+    },
+    {
+      "case": "published-base input negative",
+      "exit_code": 1,
+      "assertion": "Invalid form input must not latch a durable-storage failure"
+    }
+  ],
+  "independent_probe": {
+    "fresh_cases": [
+      {
+        "name": "ASCII",
+        "invalid_prevented_post_and_write": true,
+        "no_storage_latch": true,
+        "correction_after_refresh_without_reload": true,
+        "exact_2000_non_bmp_preserved": true
+      },
+      {
+        "name": "non-BMP",
+        "invalid_prevented_post_and_write": true,
+        "no_storage_latch": true,
+        "correction_after_refresh_without_reload": true,
+        "exact_2000_non_bmp_preserved": true
+      },
+      {
+        "name": "mixed",
+        "invalid_prevented_post_and_write": true,
+        "no_storage_latch": true,
+        "correction_after_refresh_without_reload": true,
+        "exact_2000_non_bmp_preserved": true
+      },
+      {
+        "name": "credential URL",
+        "invalid_prevented_post_and_write": true,
+        "no_storage_latch": true,
+        "correction_after_refresh_without_reload": true,
+        "exact_2000_non_bmp_preserved": true
+      }
+    ],
+    "invalid_stored_evidence_retained": true,
+    "invalid_stored_guidance_failclosed": true
+  },
+  "source_hashes": {
+    "static/caption-proposals.js": "26b712fb096a195e7ce55cdf9af3ace0699127841a6dde5715e635b77d60cc13",
+    "tests/test_caption_reload_controller.cjs": "b3b881d7ad49487b5853aed33d53da0dd844ccba042d59d9857d58db37611ba8",
+    "tests/browser_caption_proposals.cjs": "359ea7250af4f50041b67a0eb9c674c20e0586e7c8fe033d7d6f8ecb3f3da783",
+    "docs/plans/caption-proposal-input/plan.md": "ac6e642966b0df4922e58d85774ce4deb9a24f1bf84db80e4c0aa63fad04e694"
+  },
+  "worktree_clean_after_review": true,
+  "diff_check_and_js_syntax_passed": true,
+  "source_modifications": [],
+  "browser_aggregate_real_inference_runs": [],
+  "remote_actions": [],
+  "limitations": [
+    "VM controller/form probe only; native browser maxlength/validity and real-browser workflow separately qualified by parent",
+    "Aggregate and browser qualification not rerun by reviewer",
+    "No real-model capability/quality or performance claims"
+  ]
+}

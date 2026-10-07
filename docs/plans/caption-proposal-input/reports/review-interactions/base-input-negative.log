@@ -1,0 +1,14 @@
+AssertionError [ERR_ASSERTION]: Invalid form input must not latch a durable-storage failure
++ actual - expected
+
++ 'Caption recovery storage is unavailable or invalid. New submissions are blocked. Restore this tab’s storage and reload before submitting.'
+- ''
+
+    at /workspace/tuldok-owner-review/caption-input-local/review-interactions/source-10bc/tests/test_caption_reload_controller.cjs:32:12 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'Caption recovery storage is unavailable or invalid. New submissions are blocked. Restore this tab’s storage and reload before submitting.',
+  expected: '',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

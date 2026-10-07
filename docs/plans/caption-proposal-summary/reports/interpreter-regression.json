@@ -1,0 +1,9 @@
+{
+  "head": "e8cde950e597da2f290e8ebcdefdacb47725220a",
+  "test_sha256": "9a3b4d538e4d33c9c954d16eba8dcc0ae1be69144d2fbe15b4f6d4bcbc89b3b9",
+  "active_test_interpreter": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "PATH": "/workspace/tuldok-owner-review/caption-summary-local/path-trap",
+  "trap_exit_code": 87,
+  "actual_export_consumer_test_exit_code": 0,
+  "log": "consumer-interpreter.after.log"
+}

@@ -1,0 +1,20 @@
+test_actual_image_http_exact_evidence_draft_and_idempotent_apply (test_caption_proposals.CaptionProposalTests.test_actual_image_http_exact_evidence_draft_and_idempotent_apply) ... ok
+test_atomic_linkage_failure_rolls_back_every_target_write (test_caption_proposals.CaptionProposalTests.test_atomic_linkage_failure_rolls_back_every_target_write) ... ok
+test_cancel_body_and_catalog_then_fresh_request (test_caption_proposals.CaptionProposalTests.test_cancel_body_and_catalog_then_fresh_request) ... ok
+test_cancel_fences_late_valid_response_and_shutdown_interrupts (test_caption_proposals.CaptionProposalTests.test_cancel_fences_late_valid_response_and_shutdown_interrupts) ... ok
+test_concurrent_apply_produces_one_revision (test_caption_proposals.CaptionProposalTests.test_concurrent_apply_produces_one_revision) ... ok
+test_failed_start_persistence_never_launches_inference (test_caption_proposals.CaptionProposalTests.test_failed_start_persistence_never_launches_inference) ... ok
+test_failures_preserve_targets_and_do_not_fallback (test_caption_proposals.CaptionProposalTests.test_failures_preserve_targets_and_do_not_fallback) ... ok
+test_http_routes_reject_approval_and_return_persisted_receipt (test_caption_proposals.CaptionProposalTests.test_http_routes_reject_approval_and_return_persisted_receipt) ... ok
+test_inflight_target_change_never_publishes_completed_proposal (test_caption_proposals.CaptionProposalTests.test_inflight_target_change_never_publishes_completed_proposal) ... ok
+test_missing_tampered_and_deleted_source_block_request_and_apply (test_caption_proposals.CaptionProposalTests.test_missing_tampered_and_deleted_source_block_request_and_apply) ... ok
+test_oriented_thumbnail_preserves_original_bytes_and_input_identity (test_caption_proposals.CaptionProposalTests.test_oriented_thumbnail_preserves_original_bytes_and_input_identity) ... ok
+test_reject_is_terminal_and_idempotent_without_target_mutation (test_caption_proposals.CaptionProposalTests.test_reject_is_terminal_and_idempotent_without_target_mutation) ... ok
+test_request_id_reconciles_lost_start_without_more_inference (test_caption_proposals.CaptionProposalTests.test_request_id_reconciles_lost_start_without_more_inference) ... ok
+test_review_export_consumer_evidence_history_and_fixed_selection (test_caption_proposals.CaptionProposalTests.test_review_export_consumer_evidence_history_and_fixed_selection) ... ok
+test_stale_record_and_source_revisions_block_application (test_caption_proposals.CaptionProposalTests.test_stale_record_and_source_revisions_block_application) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 8.923s
+
+OK

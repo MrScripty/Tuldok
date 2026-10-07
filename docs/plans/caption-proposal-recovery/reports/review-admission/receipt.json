@@ -1,0 +1,58 @@
+{
+  "reviewed_head": "300d1ebf84e53c739f856fb7115671cfaac057b9",
+  "reviewed_tree": "3b512dfac2fe6a5ce2f5014ad04a02688a1f21e1",
+  "base": "4dc9c71f7e758bece5115361e57fa4e4ed866275",
+  "focus": "Request admission and ambiguous acknowledgement; narrow delta side effects",
+  "findings": [
+    {
+      "priority": "P2",
+      "path": "static/caption-proposals.js",
+      "line": 113,
+      "issue": "Transient 4xx rejection of an explicit repeat clears an earlier unresolved admission identity",
+      "reproduction": "Original POST acknowledgement lost; same-ID explicit repeat returns transient409; controller clears recovery identity and admits changed intent with a new ID while original delayed POST may still arrive.",
+      "repair_direction": "Do not treat rejection of an ambiguous repeat as a definitive disposition of every earlier POST. Retain the original ID until persisted reconciliation or another explicit terminal protocol fact."
+    }
+  ],
+  "controller_checks": [
+    {
+      "case": "start",
+      "exit_code": 0
+    },
+    {
+      "case": "reject",
+      "exit_code": 0
+    },
+    {
+      "case": "combined",
+      "exit_code": 0
+    },
+    {
+      "case": "published-base start negative",
+      "exit_code": 1,
+      "assertion": "Early absence must retain the in-flight admission identity"
+    }
+  ],
+  "additional_probe": {
+    "original_id": "48751a593a37431b870e743537cf75d2",
+    "repeat_409_cleared_identity": true,
+    "changed_intent_accepted": true,
+    "new_id": "ff9df976da09415dbc3e7bd82dabb122",
+    "new_id_differs": true
+  },
+  "source_hashes": {
+    "static/caption-proposals.js": "63c0cefd93e25c38c45c463dcc3747dac63cda2995148f49e68b58e516385463",
+    "tests/test_caption_proposals_controller.cjs": "3464204d1b38f4ed3109f4678d5e3545b48803bb8d0f53731b57bfd0bb00e3e1",
+    "tests/browser_caption_proposals.cjs": "4d4557ec0ecb8541c78e67f74afaf828649d86eded5e8b6fc72221b129838ba9",
+    "tests/fake_caption_model.py": "61a34f2584ce3f3de64075478103422fd04e562649875de97f4e029dbceae7b1"
+  },
+  "worktree_clean_after_review": true,
+  "diff_check_passed": true,
+  "source_modifications": [],
+  "browser_full_suite_or_inference_runs": [],
+  "remote_actions": [],
+  "limitations": [
+    "Controlled VM/fetch interleaving does not execute delayed real HTTP admission",
+    "No browser/full suite rerun; concurrent aggregate/interaction qualification owns them",
+    "No real model capability or quality qualification"
+  ]
+}

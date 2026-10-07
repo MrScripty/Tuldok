@@ -26,6 +26,7 @@ jobs:
       - run: node --check static/rights-note.js
       - run: node --check static/instruction-responses.js
       - run: node --check static/native_text_import.js
+      - run: node --check static/caption-proposals.js
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
@@ -38,6 +39,7 @@ jobs:
       - run: node tests/test_browser_startup.cjs
       - run: node tests/test_native_text_import_controller.cjs
       - run: node tests/test_combined_workbench_controller.cjs
+      - run: node tests/test_caption_proposals_controller.cjs
       - run: node tests/browser_workbench.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -99,6 +101,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_caption_proposals.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -118,6 +123,7 @@ jobs:
             docs/plans/dataset-caption-integration/reports/caption-combined-session.json
             docs/plans/rights-note-correction/reports/rights-*.png
             test-results/rights-note/**
+            test-results/caption-proposals/**
             docs/plans/instruction-responses/reports/instruction-*.png
             docs/plans/instruction-responses/reports/instruction-session.json
             docs/plans/instruction-responses/reports/instruction-downloaded.zip

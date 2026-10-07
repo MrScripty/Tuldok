@@ -130,6 +130,7 @@ class Workbench:
                 PRIMARY KEY(id, revision))''')
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_rights_notes (
                 id TEXT PRIMARY KEY, note TEXT NOT NULL, revision INTEGER NOT NULL)''')
+            self.db.execute('CREATE TABLE IF NOT EXISTS workbench_target_proposals (id TEXT PRIMARY KEY, evidence TEXT NOT NULL)')
             self.db.execute('CREATE INDEX IF NOT EXISTS workbench_content ON workbench_records(content_hash)')
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_responses (
                 id TEXT PRIMARY KEY, prompt_id TEXT NOT NULL, revision INTEGER NOT NULL,
@@ -207,6 +208,9 @@ class Workbench:
         correction = self.db.execute('SELECT note,revision FROM workbench_rights_notes WHERE id=?', (record_id,)).fetchone()
         if correction is not None:
             result['provenance']['rights_note_correction'] = dict(correction)
+        proposal = self.db.execute('SELECT evidence FROM workbench_target_proposals WHERE id=?', (record_id,)).fetchone()
+        if proposal is not None:
+            result['target_proposal'] = json.loads(proposal[0])
         result.pop('original_text')
         if result['corner_annotation']:
             result['corner_annotation'] = json.loads(result['corner_annotation'])
@@ -348,39 +352,49 @@ class Workbench:
 
     def save(self, record_id, body, *, verified_provenance=None):
         with self.lock, self.db:
-            self._sync_images()
-            before = self._get(record_id)
-            for key in ('revision', 'source_revision'):
-                if type(body.get(key)) is not int or body[key] != before[key]:
-                    raise WorkbenchError('This record or source changed. Reload before saving.', 'conflict', 409)
-            if not before['source_available']:
-                raise WorkbenchError('The source image was deleted.', 'unavailable', 409)
-            task = body.get('task')
-            annotation = validate_annotation(task, body.get('annotation'), before)
-            groups = strings(body.get('groups'), 'Protected groups')
-            if not groups:
-                raise WorkbenchError('Keep at least one protected group.')
-            review = body.get('review')
-            if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
-                raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
-            # A trusted verifier may replace origin, but never persist or alter the note owner's projection.
-            origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
-            provenance = dict(verified_provenance) if verified_provenance else origin
-            if verified_provenance:
-                reserved = 'rights_note_correction'
-                if reserved in origin:
-                    if reserved not in provenance or provenance[reserved] != origin[reserved]:
-                        raise WorkbenchError('Cannot replace reserved origin evidence through verifier provenance.', 'conflict', 409)
-                elif reserved in provenance:
-                    if reserved not in before['provenance'] or provenance[reserved] != before['provenance'][reserved]:
-                        raise WorkbenchError('Verifier provenance cannot change the owned rights correction. Reload before saving.', 'conflict', 409)
-                    provenance.pop(reserved)
-            self.db.execute('''UPDATE workbench_records SET task=?,annotation_json=?,review=?,groups_json=?,
-                provenance_json=?,revision=revision+1,updated_at=? WHERE id=?''',
-                            (task, encode(annotation), review, encode(groups), encode(provenance), timestamp(), record_id))
-            record = self._get(record_id)
-            self._history(record)
-            return record
+            return self._save_annotation(record_id, body, verified_provenance=verified_provenance)
+
+    def _save_annotation(self, record_id, body, *, verified_provenance=None, proposal_evidence=None):
+        """Trusted caller owns the lock/transaction, including proposal linkage."""
+        self._sync_images()
+        before = self._get(record_id)
+        for key in ('revision', 'source_revision'):
+            if type(body.get(key)) is not int or body[key] != before[key]:
+                raise WorkbenchError('This record or source changed. Reload before saving.', 'conflict', 409)
+        if not before['source_available']:
+            raise WorkbenchError('The source image was deleted.', 'unavailable', 409)
+        task = body.get('task')
+        annotation = validate_annotation(task, body.get('annotation'), before)
+        groups = strings(body.get('groups'), 'Protected groups')
+        if not groups:
+            raise WorkbenchError('Keep at least one protected group.')
+        review = body.get('review')
+        if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
+            raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
+        # A trusted verifier may replace origin, but never persist or alter the note owner's projection.
+        origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
+        provenance = dict(verified_provenance) if verified_provenance else origin
+        if verified_provenance:
+            reserved = 'rights_note_correction'
+            if reserved in origin:
+                if reserved not in provenance or provenance[reserved] != origin[reserved]:
+                    raise WorkbenchError('Cannot replace reserved origin evidence through verifier provenance.', 'conflict', 409)
+            elif reserved in provenance:
+                if reserved not in before['provenance'] or provenance[reserved] != before['provenance'][reserved]:
+                    raise WorkbenchError('Verifier provenance cannot change the owned rights correction. Reload before saving.', 'conflict', 409)
+                provenance.pop(reserved)
+        self.db.execute('''UPDATE workbench_records SET task=?,annotation_json=?,review=?,groups_json=?,
+            provenance_json=?,revision=revision+1,updated_at=? WHERE id=?''',
+                        (task, encode(annotation), review, encode(groups), encode(provenance), timestamp(), record_id))
+        if proposal_evidence is not None:
+            self.db.execute('INSERT INTO workbench_target_proposals VALUES (?,?) ON CONFLICT(id) DO UPDATE SET evidence=excluded.evidence',
+                            (record_id, encode(proposal_evidence)))
+        elif before['task'] != task or before['annotation'] != annotation:
+            self.db.execute('DELETE FROM workbench_target_proposals WHERE id=?', (record_id,))
+        record = self._get(record_id)
+        self._history(record)
+        return record
+
 
     def correct_rights_note(self, record_id, body):
         """One note correction, CAS-bound to record/source revisions; no annotation grant."""

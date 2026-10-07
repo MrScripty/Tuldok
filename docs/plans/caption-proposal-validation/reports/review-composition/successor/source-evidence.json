@@ -1,0 +1,24 @@
+{
+  "commit": "9483d4a2f5c1391b3f882e107cee6846aeb36a39",
+  "tree": "0fe33807c03e582c3a5ce9f4403be37e570e8f59",
+  "python": "3.12.14",
+  "node": "v24.19.0",
+  "files": {
+    "static/caption-proposals.js": "a359fbc0cec9d7d99f724830efafb5c2cfbf35e28aac3e099264ddecab601610",
+    "ai_http.py": "73ca648fe00e8f5a4022b14b72c80dd695228706a0f2b79aee605a524b8f2585",
+    "workbench.py": "9dec957dcb7f1dd172f3cdb6a4f058a6f07f422071651132637b2bafa9fa7a23",
+    "caption_proposals.py": "f7d428a2da504bd64ed69e63f20b6b40c9070127d710ce6ce0e4f5ef926bf587",
+    "tests/test_caption_reload_controller.cjs": "a6c21de93424eece37e5a47d38a5f3c49328d965c48954cc0da6f65f3916eaa8"
+  },
+  "evidence": {
+    "cases.json": "d0a669877c785dae12cd59dbb6dbd909b282f9c101310aea1a5627045a21b4a2",
+    "envelope-result.json": "ae5ab742d32143d99bc9533cac1f55fa690022695c32baefda474f629026e1fa",
+    "envelope-cases.json": "9e8557d038b13f1adebf978791d9a6cbdfd0b937c8584464951c37b2ed3abd94",
+    "mismatches.json": "6155721929cbb83a56c0b17456938bc5f203a3e7e8a5b730313d2b09e68b0b27",
+    "envelope-probe.cjs": "2ab126af409d387a40896cb8d3bf9766497490f21c54dbd9b4dc8bde61b11a49",
+    "review.md": "4198dbb0885727b44676cf6a61b65ba1c5b4aba452aaf498da3a48a392e4ba17",
+    "registered-input.log": "e1f32f6b4585adf9a673a14fdfff50161e4b9964b2ff8ad902e89aabf63e3a3e",
+    "result.json": "57c4fb7a2662b716c9f67b991aabba9b6c6f7ec5b80215d1ee1f4667a305e8cd",
+    "probe.cjs": "78a0035027374263e41d80e881e69a85c5452a720c2593ee1e2497f9e0e4e9c2"
+  }
+}

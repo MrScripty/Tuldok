@@ -11,6 +11,7 @@ import dataset_recipes
 import dataset_releases
 import saved_selections
 import grounded_candidates
+import caption_proposals
 import bulk_import
 import curation
 import caption_import
@@ -146,8 +147,10 @@ class Dataset:
         self.caption_imports = caption_import.CaptionImports(self.workbench)
         self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
         self.grounded = grounded_candidates.Proposals(self.workbench)
+        self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
 
     def close(self):
+        self.caption_proposals.close()
         self.grounded.close()
         self.generation_jobs.close()
         self.db.close()
@@ -382,6 +385,10 @@ def make_handler(dataset):
                     return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
                 if path.startswith('/api/workbench/import-result/'):
                     return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
+                if path == '/api/workbench/caption-proposals':
+                    return self.reply(dataset.caption_proposals.snapshot())
+                if path.startswith('/api/workbench/caption-proposals/'):
+                    return self.reply(dataset.caption_proposals.get(path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
@@ -442,7 +449,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                assets = {'/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -475,6 +482,12 @@ def make_handler(dataset):
                     if len(parts) != 2:
                         raise workbench.WorkbenchError('Invalid saved selection route.')
                     return self.reply(dataset.selections.mutate(parts[0], parts[1], body))
+                if path == '/api/workbench/caption-proposals':
+                    return self.reply(dataset.caption_proposals.start(body), 202)
+                if path == '/api/workbench/caption-proposals/cancel':
+                    return self.reply(dataset.caption_proposals.cancel(body))
+                if path.startswith('/api/workbench/caption-proposals/decide/'):
+                    return self.reply(dataset.caption_proposals.decide(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.start(body), 202)
                 if path == '/api/workbench/grounded/cancel':
