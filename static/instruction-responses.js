@@ -104,6 +104,7 @@ $('response-entry-format').addEventListener('change',()=>{
 });
 $('response-form').addEventListener('submit',async event=>{
   event.preventDefault();if(responseBusy||!responseEditor)return;
+  if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)){notice('Save or cancel the judgment edit before saving an answer.',true);return;}
   if(dirty){notice('Save or discard the annotation edit before saving an answer.',true);return;}
   if(typeof rightsDirty !== 'undefined' && (rightsDirty || rightsBusy)){notice('Save or cancel the rights-note edit before saving an answer.',true);return;}
   const epoch=responseEditEpoch,editor=structuredClone(responseEditor),parent=responseParent;
@@ -112,6 +113,7 @@ $('response-form').addEventListener('submit',async event=>{
   try{
     const saved=await api('responses',{id:editor.id,prompt_id:editor.prompt_id,revision:editor.revision,parent_revision:parent.revision,source_revision:parent.source_revision,completion,review:$('response-review').value});
     if(saved.changed&&responseSelected.has(editor.id))invalidateResponsePreview();
+    if(saved.changed&&typeof preferenceResponseSaved==='function')preferenceResponseSaved(saved.response);
     if(responseEditor?.id===editor.id&&responseParent?.id===parent.id){
       responseEditor=saved.response;
       if(epoch===responseEditEpoch){responseDirty=false;$('response-editor-status').textContent='Saved answer revision '+saved.response.revision;}

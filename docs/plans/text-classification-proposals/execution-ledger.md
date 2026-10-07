@@ -1,5 +1,21 @@
 # Execution ledger
 
+2026-10-07, preference development integration authorized by the owner after
+PR19 landed at development `321f710a9b185bf6e9eac518579c083079a6d751`.
+PR18 remains unmerged and awaits its owner review exception. Normal merge of
+development into the classification branch found five shared conflicts; both
+sides are retained. The frontend merge helper first rejected its own regex
+assertion before edits, then accidentally staged the original conflicts; that
+local staging was corrected from exact HEAD/MERGE_HEAD sources before checks or
+commit. Final staged sources contain no conflict markers.
+
+The combined ownership hooks preserve both independent editors. A discovered
+classification Apply gap now revokes cached preference proof synchronously on
+success and uncertain acknowledgement. No acquisition provenance or human review
+is granted by Apply. A new combined native fixture and full registered aggregate
+qualify the integration. All earlier report evidence is preserved; no credentials,
+real inference, model downloads, protected-branch writes or review requests occur.
+
 2026-10-07, local synthetic implementation stage. Authorization permits separate
 local feature development and parallel cloud work, with no public writes, real
 inference, model downloads or credential changes. No repository AGENTS.md or checkout

@@ -406,9 +406,13 @@ def make_handler(dataset):
                 if path == '/api/workbench/recipes':
                     return self.reply(dataset_recipes.RECIPES)
                 if path.startswith('/api/workbench/records/'):
+                    if path.endswith('/preferences'):
+                        return self.reply(dataset.workbench.preferences.list(path.split('/')[-2]))
                     if path.endswith('/responses'):
                         return self.reply(dataset.workbench.responses(path.split('/')[-2]))
                     return self.reply(dataset.workbench.get(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/preference-history/'):
+                    return self.reply(dataset.workbench.preferences.history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/response-history/'):
                     return self.reply(dataset.workbench.response_history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/history/'):
@@ -456,7 +460,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                assets = {'/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -525,6 +529,10 @@ def make_handler(dataset):
                     return self.reply(dataset.caption_imports.admit(body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/preferences':
+                    return self.reply(dataset.workbench.preferences.save(body))
+                if path == '/api/workbench/preferences/delete':
+                    return self.reply(dataset.workbench.preferences.delete(body))
                 if path == '/api/workbench/responses':
                     return self.reply(dataset.workbench.save_response(body))
                 if path == '/api/workbench/generate':

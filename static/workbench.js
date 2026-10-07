@@ -77,9 +77,9 @@ async function refresh() {
   pagination(); selection();
 }
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
-function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty) || (typeof responseDirty !== 'undefined' && responseDirty); }
-function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation, rights-note or response edits?'); }
-function responseIntentEpoch() { return typeof responseEditEpoch === 'undefined' ? null : responseEditEpoch; }
+function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty) || (typeof responseDirty !== 'undefined' && responseDirty) || (typeof preferenceDirty !== 'undefined' && preferenceDirty); }
+function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation, rights-note, response or judgment edits?'); }
+function responseIntentEpoch() { return `${typeof responseEditEpoch === 'undefined' ? '' : responseEditEpoch}/${typeof preferenceEditEpoch === 'undefined' ? '' : preferenceEditEpoch}`; }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
   const epoch = ++editorEpoch, responseEpoch = responseIntentEpoch();
@@ -107,6 +107,7 @@ function showRecord(record) {
   if(typeof captionProposalsShown === 'function') captionProposalsShown(record);
   if(typeof textClassificationProposalsShown === 'function') textClassificationProposalsShown(record);
   if(typeof showResponses === 'function') showResponses(record);
+  if(typeof showPreferences === 'function') showPreferences(record);
   notice('Record loaded.');
 }
 function renderTargets() {
@@ -166,6 +167,7 @@ action('editor',async()=>{
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) throw Error('Save or cancel the response edit before saving the annotation.');
   if(typeof captionProposalBusy !== 'undefined' && captionProposalBusy) throw Error('Wait for the caption action to finish before saving an annotation.');
   if(typeof textClassificationProposalBusy !== 'undefined' && textClassificationProposalBusy) throw Error('Wait for the classification action to finish before saving an annotation.');
+  if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};

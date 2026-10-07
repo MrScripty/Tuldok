@@ -416,11 +416,11 @@ async function decideTextClassificationProposal(job, decision) {
   let result;
   try { result=await api('text-classification-proposals/decide/'+job.id,{revision:job.revision,decision,...(labels?{labels}:{})}); }
   catch(error) {
-    if(decision==='apply_draft') { invalidateRelease();if(typeof invalidateResponsePreview==='function')invalidateResponsePreview(); }
+    if(decision==='apply_draft') { invalidateRelease();if(typeof invalidateResponsePreview==='function')invalidateResponsePreview();if(typeof invalidatePreferencePreview==='function')invalidatePreferencePreview(); }
     throw Error(error.message+' Refresh requests and inspect the record before retrying; an application acknowledgement may have been lost.');
   }
   if(result.record) {
-    invalidateRelease();if(typeof invalidateResponsePreview==='function')invalidateResponsePreview();
+    invalidateRelease();if(typeof invalidateResponsePreview==='function')invalidateResponsePreview();if(typeof invalidatePreferencePreview==='function')invalidatePreferencePreview();
     if(!textClassificationProposalPaused && epoch===editorEpoch && responseEpoch===responseIntentEpoch() && formEpoch===textClassificationProposalFormEpoch && current?.id===record.id && !hasUnsavedEdits())showRecord(result.record);
     textClassificationProposalStatus('Classification applied as draft. Fixed selections retain their old revisions; explicitly review and reselect before export. Later edits are retained if the editor changed.');
     if(!textClassificationProposalPaused)await refresh();

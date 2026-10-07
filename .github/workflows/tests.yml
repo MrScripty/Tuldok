@@ -24,6 +24,7 @@ jobs:
       - run: node --check static/bulk_import.js
       - run: node --check static/caption_import.js
       - run: node --check static/rights-note.js
+      - run: node --check static/preferences.js
       - run: node --check static/instruction-responses.js
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
@@ -36,6 +37,7 @@ jobs:
       - run: node tests/test_bulk_import_controller.cjs
       - run: node tests/test_caption_import_controller.cjs
       - run: node tests/test_rights_note_controller.cjs
+      - run: node tests/test_preferences_controller.cjs
       - run: node tests/test_instruction_responses_controller.cjs
       - run: node tests/test_browser_startup.cjs
       - run: node tests/test_native_text_import_controller.cjs
@@ -92,6 +94,10 @@ jobs:
           BROWSER: /usr/bin/google-chrome
       - run: python -m pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
       - run: python -m pip install -r tests/instruction-consumer-requirements.txt
+      - run: node tests/browser_preferences.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
       - run: node tests/browser_instruction_responses.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -107,6 +113,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_text_classification_proposals.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_classification_preferences_integration.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
@@ -130,6 +139,8 @@ jobs:
             test-results/rights-note/**
             test-results/caption-proposals/**
             test-results/text-classification-proposals/**
+            test-results/classification-preferences/**
+            docs/plans/preference-pairs/reports/**
             docs/plans/instruction-responses/reports/instruction-*.png
             docs/plans/instruction-responses/reports/instruction-session.json
             docs/plans/instruction-responses/reports/instruction-downloaded.zip

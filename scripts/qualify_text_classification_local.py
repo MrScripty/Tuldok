@@ -27,6 +27,7 @@ NEW_COMMANDS = (
     'node tests/browser_text_classification_proposals.cjs',
 )
 CONSUMER_COMMANDS = {
+    'node tests/browser_preferences.cjs',
     'node tests/browser_instruction_responses.cjs',
     'node tests/browser_combined_workbench.cjs',
 }
@@ -74,7 +75,8 @@ def source_snapshot():
 
 
 def transient_paths(command):
-    category = ('text-classification-proposals' if 'text_classification_proposals' in command else
+    category = ('classification-preferences' if 'classification_preferences_integration' in command else
+                'text-classification-proposals' if 'text_classification_proposals' in command else
                 'caption-proposals' if 'caption_proposals' in command else
                 'rights-note' if 'rights_note' in command else None)
     return {path for path in (ROOT / 'test-results' / category).rglob('*') if path.is_file()} if category else set()
@@ -96,11 +98,17 @@ def main():
         parser.error('--report-root must be inside this repository')
     if not 1 <= args.timeout <= 300:
         parser.error('--timeout must be between 1 and 300 seconds')
-    commands = [row['command'] for row in json.loads(INHERITED.read_text())]
-    if len(commands) != 43 or len(set(commands)) != 43:
+    inherited_commands = [row['command'] for row in json.loads(INHERITED.read_text())]
+    if len(inherited_commands) != 43 or len(set(inherited_commands)) != 43:
         raise RuntimeError('Expected all 43 unique PR17 inherited gates.')
-    if not args.inherited_only:
-        commands.extend(NEW_COMMANDS)
+    # Qualify the combined branch's registered checks, including later features.
+    # Installation steps are deliberately excluded: this runner stays offline.
+    workflow = (ROOT / '.github/workflows/tests.yml').read_text()
+    registered = re.findall(r'^\s+- run: ((?:node |python -m unittest )[^\n]+)$', workflow, re.M)
+    required = inherited_commands + list(NEW_COMMANDS)
+    if len(registered) != len(set(registered)) or not set(required).issubset(registered):
+        raise RuntimeError('Workflow must retain every inherited and classification gate exactly once.')
+    commands = inherited_commands if args.inherited_only else registered
     selected = [command for command in commands if not args.only or re.search(args.only, command)]
     gates = REPORT / 'gates'
     gates.mkdir(parents=True, exist_ok=True)
@@ -210,6 +218,7 @@ def main():
         'failed': sum(row['status'] == 'failed' for row in ordered),
         'blocked': sum(row['status'] == 'blocked' for row in ordered),
         'inherited_gate_count': 43,
+        'registered_workflow_gate_count': len(registered),
         'historical_report_files_preserved': len(preserved),
         'historical_reports': {str(path.relative_to(ROOT)): sha(content) for path, content in preserved.items()},
         'historical_report_hashes_preserved': all(path.read_bytes() == content for path, content in preserved.items()),

@@ -144,6 +144,9 @@ class Workbench:
                 id TEXT PRIMARY KEY, book_id TEXT NOT NULL, session_id TEXT NOT NULL,
                 split TEXT NOT NULL)''')
 
+        from preferences import Preferences
+        self.preferences = Preferences(self)
+
     def _sync_images(self, record_id=None):
         # Enrol only new images. Hashing is streaming and never rewrites originals.
         query = '''SELECT s.* FROM samples s LEFT JOIN workbench_records w

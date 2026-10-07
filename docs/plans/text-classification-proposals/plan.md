@@ -1,5 +1,26 @@
 # Text classification proposals
 
+## Preference development integration
+
+Owner-authorized integration merges development
+`321f710a9b185bf6e9eac518579c083079a6d751` into the existing PR18 branch from
+`7ec7e47a090467fa37b68d33a7e81438828eea9d`. Five shared-file conflicts retain
+both feature panels, script routes, editor guards, documentation and CI evidence.
+Classification Apply synchronously revokes preference preview proof on success
+or uncertain acknowledgement, while fixed judgment selections retain their
+captured revisions. Combined answer/judgment intent epochs fence late adoption.
+
+A new bounded Chromium fixture checks the actual combined controllers with
+synthetic HTTP, including late judgment edits, rejection during judgment save,
+preview invalidation and unresolved classification admission. The aggregate runner
+now discovers all registered executable workflow checks without installing
+dependencies; every original PR17 and classification gate remains required.
+Qualification and independent review belong in a fresh
+`reports/preference-integration` directory. The 3,339 prior local report files
+are preservation-hashed before qualification. Only a normal push to the same PR18
+branch is authorized after passing checks; PR18 still requires owner review.
+Protected main/development writes, PR merge and CodeRabbit requests are excluded.
+
 ## Qualified review successor: cross-tab dispatch ownership
 
 Exact repair source `824e3ee1181184e2284875e5a08ebd1406318bfc` passed all
