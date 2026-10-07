@@ -1,0 +1,97 @@
+// Recorded actual producer bytes. Never invokes an exporter or a simulation.
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
+const {spawn,spawnSync}=require('node:child_process');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const root=path.resolve(__dirname,'..'),source=path.join(root,'tests/fixtures/rheon_actual_fee7b4a');
+const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-actual-sequence-browser-')),children=[],errors=[],tracker=pageLoadTracker();
+const report=process.env.TULDOK_SEQUENCE_ACTUAL_REPORT_ROOT||path.join(root,'docs/plans/simulation-sequence-import/reports/actual-boundary');
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms)),sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');
+let ws,inspect;
+async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+function python(code,...args){const result=spawnSync('python3',['-c',code,...args],{cwd:root,encoding:'utf8',timeout:30000});assert.equal(result.status,0,result.stderr);return result.stdout;}
+(async()=>{
+  fs.mkdirSync(report,{recursive:true});
+  const run=fs.readFileSync(path.join(source,'run.json')),frames=fs.readFileSync(path.join(source,'frames.jsonl'));
+  const manifest=JSON.parse(run),receipt=JSON.parse(fs.readFileSync(path.join(source,'producer-receipt.json')));
+  assert.equal(sha(run),receipt.run_sha256);assert.equal(sha(frames),receipt.frames_sha256);
+  assert.equal(manifest.provenance.source_commit,'fee7b4a139574f87b259796b1ba8698a41d31ac1');assert.equal(manifest.provenance.source_dirty,false);
+  assert.equal(manifest.provenance.base_commit,'9cd4587a54befa61bdfddc8e35014bd3c34f02fb');
+  assert.deepEqual(manifest.provenance.build_command,['cargo','build','--locked','--no-default-features','--example','dense3d_sequence']);
+  assert.equal(manifest.frames_bytes,frames.length);assert.equal(manifest.frames_sha256,sha(frames));
+  assert.equal(manifest.frame_count,9);assert.match(receipt.basis,/actual producer execution/);
+  const evidence={basis:'recorded actual one-shot capped producer output; no exporter/simulation invoked by browser test',producer_receipt:receipt,manifest,run_sha256:sha(run),frames_sha256:sha(frames),checks:[]};
+  // Source-derived comparison remains explicitly synthetic, with its placeholders.
+  python("import sys,json; from pathlib import Path; sys.path.insert(0,'tests'); from test_sequences import fixture; p=Path(sys.argv[1]); run,frames=fixture(); (p/'synthetic-run.json').write_bytes(run); (p/'synthetic-frames.jsonl').write_bytes(frames)",temporary);
+  const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='';server.stdout.on('data',chunk=>output+=chunk);
+  const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  const request=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:response.status,result:await response.json()};};
+  const api=async(route,body)=>{const response=await request(route,body);assert.ok(response.status<300,JSON.stringify(response));return response.result;};
+  const seed=await api('import',{kind:'text',text:'Independent dirty editor is preserved during actual import.',name:'Existing editor',groups:['existing-source']});
+  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const active=path.join(temporary,'browser','DevToolsActivePort'),debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');assert.ok(target);
+  ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map();const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Page.javascriptDialogOpening')send('Page.handleJavaScriptDialog',{accept:true}).catch(error=>errors.push(error));};
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  inspect=()=>evaluate('JSON.stringify({notice:document.getElementById("notice")?.textContent,status:document.getElementById("sequence-import-status")?.textContent,current:current?.id,dirty,selected:selected.size,preview:releasePreview})');
+  const fill=(id,value)=>evaluate(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  const choose=(id,name,contents)=>evaluate(`(()=>{const raw=Uint8Array.from(atob(${JSON.stringify(contents.toString('base64'))}),c=>c.charCodeAt(0)),dt=new DataTransfer();dt.items.add(new File([raw],${JSON.stringify(name)}));document.getElementById(${JSON.stringify(id)}).files=dt.files;})()`);
+  await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  await evaluate('openRecord('+JSON.stringify(seed.id)+')');await fill('label','Retain unrelated unsaved target');
+  await evaluate('document.querySelector(".record input").click();document.getElementById("sequence-import-panel").open=true');
+  await choose('sequence-run','run.json',run);await choose('sequence-frames','frames.jsonl',frames);await fill('sequence-name','Actual Rheon fee7b4a capped pilot');
+  await evaluate('document.getElementById("sequence-import-form").requestSubmit()');await until(()=>evaluate('!sequenceImportBusy'));
+  assert.match(await evaluate('document.getElementById("sequence-import-status").textContent'),/9 frames, unreviewed/);
+  assert.equal(await evaluate('current.id'),seed.id);assert.equal(await evaluate('dirty'),true);assert.equal(await evaluate('selected.size'),1);
+  const rows=await api('records?kind=sequence');assert.equal(rows.total,1);const actual=(await api('records/'+rows.items[0].id));
+  assert.equal(actual.review,'draft');assert.equal(actual.annotation,null);assert.equal(actual.provenance.rights,'unknown');assert.deepEqual(actual.sequence.manifest,manifest);
+  assert.equal(actual.sequence.frame_index.length,9);assert.equal(actual.sequence.run_sha256,sha(run));
+  const decoded=frames.toString('utf8').trimEnd().split('\n').map(JSON.parse);let offset=0;
+  for(let index=0;index<9;index++){
+    const frame=decoded[index],entry=actual.sequence.frame_index[index];
+    assert.equal(frame.frame,index);assert.equal(entry.frame,index);assert.equal(entry.time_s,index*0.0625);assert.equal(entry.dt_s,index?0.0625:0);
+    assert.deepEqual(entry.carrier_stamp,{id:'43',version:String(index)});assert.deepEqual(entry.liquid_stamp,{id:'41',version:String(index)});
+    assert.deepEqual(entry.diagnostics,frame.diagnostics);assert.equal(entry.byte_offset,offset);
+    assert.equal(entry.sha256,sha(frames.subarray(offset,offset+entry.byte_length)));offset+=entry.byte_length;
+    for(const [name,shape] of Object.entries(manifest.geometry.field_shapes))assert.equal(frame.fields[name].length,shape.reduce((a,b)=>a*b,1));
+    assert.equal(Object.hasOwn(entry,'fields'),false);
+  }
+  assert.equal(offset,frames.length);evidence.checks.push('actual selected-file UI admission draft/unknown; complete metadata, native named shapes/types/units, nine accepted indices/time/dt/stamps/diagnostics and raw hashes');
+  const items=record=>[{id:record.id,revision:record.revision,source_revision:record.source_revision}],ratios={train:100,validation:0,test:0};
+  const pre=await api('releases/preview',{items:items(actual),ratios,seed:42});assert.equal(pre.eligible,false);evidence.pre_review_preview=pre;
+  await evaluate('document.getElementById("reload").click()');await until(()=>evaluate('!dirty'));
+  await evaluate('openRecord('+JSON.stringify(actual.id)+')');assert.equal(await evaluate('document.getElementById("sequence-inspection").hidden'),false);
+  assert.match(await evaluate('document.getElementById("sequence-metadata").textContent'),/rustc 1\.92\.0/);
+  await fill('sequence-note','Test exercises an explicit human-review control for actual transport-only pilot compatibility; no training/scientific qualification claimed.');await fill('record-review','human_reviewed');
+  await evaluate('document.getElementById("editor").requestSubmit()');await until(()=>evaluate('current.review==="human_reviewed"&&!dirty&&current.revision===2'));
+  const reviewed=await api('records/'+actual.id);assert.equal(reviewed.review,'human_reviewed');assert.deepEqual(reviewed.sequence,actual.sequence);assert.equal((await api('history/'+actual.id)).length,2);
+  const removal=await request('records/'+actual.id,{revision:2,source_revision:1,task:'sequence_transport',annotation:{note:'Attempted removal'},groups:['other-group'],review:'human_reviewed'});assert.equal(removal.status,400);assert.match(removal.result.error,/trajectory and initial-family/);
+  const asset=await fetch(base+'/api/workbench/asset/'+actual.id);assert.equal(asset.status,200);const bundle=Buffer.from(await asset.arrayBuffer());fs.writeFileSync(path.join(report,'actual-bundle.zip'),bundle);
+  const synthetic=await api('sequence-import',{files:{'run.json':fs.readFileSync(path.join(temporary,'synthetic-run.json')).toString('base64'),'frames.jsonl':fs.readFileSync(path.join(temporary,'synthetic-frames.jsonl')).toString('base64')},name:'Synthetic source-derived comparison'});
+  assert.equal(synthetic.review,'draft');assert.match(synthetic.sequence.manifest.provenance.toolchain.rustc,/synthetic/);
+  assert.equal(actual.groups[1],synthetic.groups[1]);assert.notEqual(actual.groups[0],synthetic.groups[0]);
+  const syntheticReviewed=await api('records/'+synthetic.id,{revision:synthetic.revision,source_revision:1,task:'sequence_transport',annotation:{note:'Synthetic comparison compatibility control only.'},groups:synthetic.groups,review:'human_reviewed'});
+  const split=await api('releases/preview',{items:[...items(reviewed),...items(syntheticReviewed)],ratios:{train:50,validation:50,test:0},seed:42});assert.equal(split.eligible,false);assert.ok(split.blockers.some(row=>/Too few independent/.test(row.message)));
+  evidence.checks.push('pre-review release blocked; deliberate review/history; derived groups immutable; actual and clearly synthetic constructor family cannot leak across splits');
+  evidence.actual_record=reviewed;evidence.synthetic_comparison_record=syntheticReviewed;evidence.family_split_preview=split;
+  await evaluate('refresh();document.getElementById("clear-selection").click()');await until(()=>evaluate('page.total===3'));
+  await evaluate('document.querySelector('+JSON.stringify('input[aria-label="Select '+actual.name+'"]')+').click()');await fill('train',100);await fill('validation',0);await fill('test',0);
+  await evaluate('document.getElementById("preview-release").click()');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
+  await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
+  const releaseUrl=await evaluate('document.querySelector("#release-result a").href'),frozen=await fetch(releaseUrl);assert.equal(frozen.status,200);
+  const release=Buffer.from(await frozen.arrayBuffer());fs.writeFileSync(path.join(report,'actual-frozen-release.zip'),release);evidence.bundle_sha256=sha(bundle);evidence.release_sha256=sha(release);
+  const checked=JSON.parse(python("import sys,json,hashlib,zipfile,struct; from pathlib import Path; p=Path(sys.argv[1]); source=Path(sys.argv[2]); import rheon_sequence_contract as c; import rheon_sequences as a; run=(source/'run.json').read_bytes(); raw=(source/'frames.jsonl').read_bytes(); z=zipfile.ZipFile(p/'actual-frozen-release.zip'); m=json.loads(z.read('manifest.json')); assert len(m['records'])==1; row=m['records'][0]; assert row['kind']=='sequence' and row['split']=='train' and row['review']=='human_reviewed'; records=[json.loads(line) for line in z.read('train/records.jsonl').splitlines()]; assert records==[row]; assert not z.read('validation/records.jsonl') and not z.read('test/records.jsonl'); bundle=z.read(row['asset']); assert bundle==(p/'actual-bundle.zip').read_bytes(); assert hashlib.sha256(bundle).hexdigest()==row['asset_sha256']==row['content_hash']; b=zipfile.ZipFile(__import__('io').BytesIO(bundle)); assert b.namelist()==['run.json','frames.jsonl']; assert b.read('run.json')==run and b.read('frames.jsonl')==raw; prepared=a.prepare(run,raw); assert row['sequence']['manifest']==json.loads(run) and row['sequence']['frame_index']==prepared['metadata']['frame_index']; inputs=[c._fields(c.parse(line)) for line in raw.split(b'\\n')[:-1]]; outputs=[c._fields(c.parse(line)) for line in b.read('frames.jsonl').split(b'\\n')[:-1]]; assert all(struct.pack('<'+('f' if c.FIELD_TYPES[name]=='f32' else 'd'),x)==struct.pack('<'+('f' if c.FIELD_TYPES[name]=='f32' else 'd'),y) for i in range(9) for name in c.FIELD_TYPES for x,y in zip(inputs[i][name],outputs[i][name])); print(json.dumps({'result':'PASS','records':1,'split':'train','frame_count':9,'all_native_field_bits_preserved':True,'raw_files_byte_exact':True,'metadata_frame_index_equal':True,'bundle_sha256':hashlib.sha256(bundle).hexdigest(),'frames_sha256':hashlib.sha256(raw).hexdigest(),'split_report':m['split_report']}))",report,source));
+  evidence.frozen_check=checked;assert.equal(checked.result,'PASS');evidence.checks.push('normal selected-record UI freeze/download: one whole trajectory, byte-exact nested run+frames, all native field bits, full metadata/index, source hashes and split report preserved');
+  const previous=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload');await until(()=>tracker.reloaded(previous));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  assert.equal((await api('records?kind=sequence')).total,2);await evaluate('openRecord('+JSON.stringify(actual.id)+')');assert.equal(await evaluate('current.review'),'human_reviewed');
+  await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');fs.writeFileSync(path.join(report,'actual-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("sequence-inspection").scrollIntoView()');assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'));
+  fs.writeFileSync(path.join(report,'actual-narrow.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));assert.deepEqual(errors,[]);evidence.checks.push('review survives reload; no replay; no Runtime exceptions; desktop/narrow metadata inspection');
+  evidence.errors=errors;evidence.result='PASS';fs.writeFileSync(path.join(report,'session.json'),JSON.stringify(evidence,null,2)+'\n');
+  console.log('Actual Rheon fee7b4a Chromium boundary PASS: selected raw files, draft/unknown, accepted fields/hashes/provenance, explicit review/history, synthetic family split protection, byte-exact native fields in frozen whole-trajectory release, reload/narrow. No exporter or simulation invoked.');
+})().catch(async error=>{console.error(error);if(inspect)try{console.error(await inspect());}catch{}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

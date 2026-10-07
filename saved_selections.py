@@ -47,6 +47,7 @@ class SavedSelections:
                 if not isinstance(item['id'], str) or not IDENTIFIER.fullmatch(item['id']):
                     raise WorkbenchError('Invalid record ID.')
             rows = self.workbench.selection(items)
+            self.workbench.sequences.check_selection(rows)
             members = []
             for row in rows:
                 asset, _ = self.workbench.asset(row['id'])
@@ -68,6 +69,14 @@ class SavedSelections:
         with self.lock, self.db:
             saved = self._get(selection_id)
             self.workbench._sync_images()
+            rows = []
+            for item in saved['items']:
+                try:
+                    rows.append(self.workbench._get(item['id']))
+                except WorkbenchError as error:
+                    if error.status != 404:
+                        raise
+            self.workbench.sequences.check_selection(rows)
             members = []
             for item in saved['items']:
                 status, message, current = 'ok', 'Saved revisions and source are current.', None

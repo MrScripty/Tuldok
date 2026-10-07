@@ -200,6 +200,11 @@ class Releases:
             return {'preview': preview}
         preview['selected_count'] = len(rows)
         preview['analysis'] = analyze(rows)
+        try:
+            workbench.sequences.check_selection(rows)
+        except WorkbenchError as error:
+            block(error)
+            return {'preview': preview}
         universe = workbench._all()
         roots, groups, snapshots, preview['lineage'] = family_context(rows, universe)
         pixels, pixel_hashes = set(), {}
@@ -210,6 +215,8 @@ class Releases:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
+                if row['kind'] == 'sequence' and row['review'] != 'human_reviewed':
+                    raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.')
                 validate_annotation(row['task'], row['annotation'], row)
             except WorkbenchError as error:
                 block(error, row['id'])
@@ -245,6 +252,8 @@ class Releases:
         except WorkbenchError as error:
             block(error)
         if format_name == 'canonical_v1':
+            if any(row['kind'] == 'sequence' for row in rows):
+                preview['warnings'].append('Sequence assets are complete raw run.json/frames.jsonl ZIPs. MAC fields and accepted intervals stay intact; transport-only data has no qualified training consumer.')
             preview['warnings'].append('Canonical export projects detection to COCO; other tasks remain typed JSONL records, not one interchangeable training format.')
             if any(row['task'] == 'image_caption' for row in rows):
                 preview['warnings'].append('Canonical captions remain manifest/JSONL records. Choose image-caption format for the pinned train/val/test imagefolder consumer.')
@@ -502,7 +511,7 @@ class Releases:
             assignments = prepared['preview']['assignments']
             report = prepared['preview']['split_report']
             manifest = {'schema_version': 1, 'seed': body['seed'], 'split_report': report,
-                        'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end).',
+                        'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end). Sequence bundles preserve original named staggered fields and accepted intervals; each whole trajectory is indivisible.',
                         'limitations': ['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],
                         'records': []}
             vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
@@ -516,7 +525,7 @@ class Releases:
                         for index, row in enumerate(rows, 1):
                             split = assignments[row['id']]
                             asset, _ = workbench.asset(row['id'])
-                            filename = 'assets/' + row['id'] + ('.png' if row['kind'] == 'image' else '.txt')
+                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip'}[row['kind']]
                             digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
                             manifest['records'].append(record)

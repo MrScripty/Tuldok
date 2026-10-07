@@ -94,7 +94,7 @@ class NativeTextImports:
                 required = {'manifest.json', 'README.txt'} | {f'{split}/{name}' for split in SPLITS for name in ('records.jsonl', 'coco.json')}
                 if len(entries) > 1010 or len(names) != len(set(names)) or not required <= set(names):
                     raise WorkbenchError('Native ZIP entries are missing, ambiguous or exceed the bound.')
-                if any(name not in required and not re.fullmatch(r'assets/[a-f0-9]{32}\.(txt|png)', name) for name in names):
+                if any(name not in required and not re.fullmatch(r'assets/[a-f0-9]{32}\.(txt|png|zip)', name) for name in names):
                     raise WorkbenchError('ZIP contains unsupported native paths.')
                 if any(entry.compress_type != zipfile.ZIP_STORED or entry.flag_bits & 1 for entry in entries):
                     raise WorkbenchError('Only unencrypted stored entries from the native exporter are supported.')

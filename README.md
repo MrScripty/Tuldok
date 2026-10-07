@@ -287,6 +287,58 @@ The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the 
 
 ## Repository
 
+The development workbench can import a complete bounded Rheon simulation sequence
+from **Import Rheon simulation sequence**. Select exactly `run.json` and
+`frames.jsonl`, give it a name and a rights note, then open the imported collection
+record to inspect its original metadata and nine-entry frame index. Imports remain
+**draft** until a person inspects the data and explicitly saves **Human reviewed**
+with a review note. Contract checks do not grant human review or establish permission.
+
+This adapter is pinned to [Rheon draft PR 20](https://github.com/MrScripty/Rheon/pull/20)
+at `fee7b4a139574f87b259796b1ba8698a41d31ac1`; it does not assume that PR is merged.
+The unchanged stdlib validator is retained in `rheon_sequence_contract.py`, derived
+from the exact producer `tools/import_dense3d_sequence.py`. Producer provenance is
+preserved as declared evidence; hashes detect byte changes, not source authenticity.
+The producer's base commit and each run's declared source commit remain distinct
+from the adapter's pinned contract commit. Contract changes need coordinated review.
+
+Consumer limits are 64 KiB for `run.json`, 2 MiB for `frames.jsonl`, 256 KiB per
+JSONL line, exactly nine frames (constructor plus eight accepted steps), and exactly
+16×8×4 cells. The HTTP import envelope is capped at 3 MiB. Completion, SHA256,
+byte counts, exact geometry/axes/shapes/types/units/configuration, finite native
+numbers, canonical decimal u64 stamps, accepted time/dt and diagnostic associations
+are validated before any asset, record or initial history is published. Publication
+shares one SQLite transaction with the existing Dataset owner.
+
+Velocity X/Y/Z retain their named MAC staggering, separate shapes and f32 types;
+tracer stays f32 appearance data, fraction/pressure stay f64. Pressure is the last
+accepted interval projection, not independently evolved endpoint pressure. Download
+the original bundle to inspect every dense field. No images, cell-centered vectors
+or flattened-time records are synthesized. The fixed fixture supports represented
+fraction donor transport with an all-fluid constant-density carrier. It does not
+qualify free surfaces, two-phase inertia, material calibration, multidirectional
+accuracy, performance or training quality. This is an import facility, not a
+qualified training model or training consumer.
+
+Each trajectory is one indivisible record. Automatically protected trajectory and
+initial-condition family groups cannot be removed; related initial families and
+parent/source groups stay together in the existing connected split allocator.
+Canonical releases require human-reviewed sequences and package each exact original
+two-file bundle as an `assets/ID.zip` with typed metadata in split `records.jsonl`.
+Selected sequence bundles have a synchronous aggregate limit of 40 MiB, including
+saved-selection source checks. Rights-note corrections, optimistic revisions and
+append-only review history use the existing workbench controls.
+
+The malformed-input Python suite and `tests/browser_sequences.cjs` use explicitly
+source-derived synthetic data from the pinned producer tests, with synthetic
+provenance placeholders. Separately, `tests/fixtures/rheon_actual_fee7b4a` retains
+the unchanged output of one clean, exact-commit producer run: 16×8×4 cells and
+eight accepted steps. `node tests/browser_sequences_actual.cjs` imports those
+recorded bytes through the normal UI and checks review, family split protection,
+and a byte-exact frozen release. It never runs the exporter or simulation.
+No models, downloads or training are needed for these sequence checks.
+Focused Python check: `python3 -m unittest discover -s tests -p test_sequences.py`.
+
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
 
 ### Import an annotated caption corpus

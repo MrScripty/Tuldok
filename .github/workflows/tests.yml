@@ -29,6 +29,7 @@ jobs:
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
       - run: node --check static/text-classification-proposals.js
+      - run: node --check static/sequences.js
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_workbench_controller.cjs
@@ -116,6 +117,12 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_classification_preferences_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequences.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequences_actual.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4

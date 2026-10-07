@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'sequence_transport')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -57,6 +57,10 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Choose a task matching the asset type.')
     if not isinstance(value, dict):
         raise WorkbenchError('Annotation must be an object.')
+    if task == 'sequence_transport':
+        if set(value) != {'note'}:
+            raise WorkbenchError('Sequence review requires exactly one note; fields stay immutable.')
+        return {'note': text_value(value['note'], 'Sequence review note', 4000, empty=True)}
     if task == 'image_caption':
         if set(value) != {'caption'}:
             raise WorkbenchError('Image caption requires exactly one caption field.')
@@ -125,6 +129,9 @@ class Workbench:
                 provenance_json TEXT NOT NULL, task TEXT NOT NULL,
                 annotation_json TEXT, review TEXT NOT NULL,
                 revision INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
+            from sequence_assets import SequenceAssets, migrate_records
+            migrate_records(self.db)
+            self.sequences = SequenceAssets(self)
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_history (
                 id TEXT NOT NULL, revision INTEGER NOT NULL, snapshot TEXT NOT NULL,
                 PRIMARY KEY(id, revision))''')
@@ -200,6 +207,14 @@ class Workbench:
                     result.update(dict(retained))
                     result['source_lineage_known'] = True
             result['name'] = result.pop('image_name') or '(source image deleted)'
+        elif result['kind'] == 'sequence':
+            result.pop('image_name')
+            result['sequence'] = self.sequences.metadata(record_id)
+            result['source_available'] = result['sequence'] is not None
+            result['source_lineage_known'] = True
+            result['source_revision'] = 1
+            result['source_split'] = 'unassigned'
+            result['source_sha256'] = result['content_hash']
         else:
             result.pop('image_name')
             result['source_revision'] = 1
@@ -244,7 +259,7 @@ class Workbench:
         """Shared current metadata criteria; caller owns lock and transaction."""
         query = text_value(options.get('q', ''), 'Search', 200, empty=True).casefold()
         kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
-        if kind not in ('', 'image', 'text') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
+        if kind not in ('', 'image', 'text', 'sequence') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
             raise WorkbenchError('Invalid filter or sort.')
         if task not in ('', *TASKS):
             raise WorkbenchError('Invalid task filter.')
@@ -372,6 +387,11 @@ class Workbench:
         if not groups:
             raise WorkbenchError('Keep at least one protected group.')
         review = body.get('review')
+        if before['kind'] == 'sequence':
+            if not set(before['sequence']['protected_groups']) <= set(groups):
+                raise WorkbenchError('Keep the whole trajectory and initial-family protected groups.')
+            if review not in ('draft', 'human_reviewed') or verified_provenance:
+                raise WorkbenchError('Sequence data requires a human review decision.')
         if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
             raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
         # A trusted verifier may replace origin, but never persist or alter the note owner's projection.
@@ -525,6 +545,8 @@ class Workbench:
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""
         record = self._get(record_id)
+        if record['kind'] == 'sequence':
+            return self.sequences.asset(record)
         if record['kind'] == 'text':
             return record['text'].encode(), 'text/plain; charset=utf-8'
         if not record['source_available']:

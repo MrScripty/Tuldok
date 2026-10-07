@@ -1,0 +1,233 @@
+{
+  "schema": "rheon.dense3d.accepted-sequence",
+  "version": 1,
+  "complete": true,
+  "frame_count": 9,
+  "frames_file": "frames.jsonl",
+  "frames_sha256": "1f0cb462f6d145cdaca62a11d180c1bbcb0da6f8a7dae5369faf0be8f2dcdd28",
+  "frames_bytes": 518951,
+  "geometry": {
+    "counts": [
+      16,
+      8,
+      4
+    ],
+    "origin_m": [
+      0,
+      0,
+      0
+    ],
+    "spacing_m": [
+      0.0625,
+      0.125,
+      0.25
+    ],
+    "axis_order": [
+      "x",
+      "y",
+      "z"
+    ],
+    "flattening": "i+nx*(j+ny*k)",
+    "cell_offset": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "face_offsets": {
+      "x": [
+        0,
+        0.5,
+        0.5
+      ],
+      "y": [
+        0.5,
+        0,
+        0.5
+      ],
+      "z": [
+        0.5,
+        0.5,
+        0
+      ]
+    },
+    "field_shapes": {
+      "velocity_x": [
+        17,
+        8,
+        4
+      ],
+      "velocity_y": [
+        16,
+        9,
+        4
+      ],
+      "velocity_z": [
+        16,
+        8,
+        5
+      ],
+      "tracer": [
+        16,
+        8,
+        4
+      ],
+      "fraction": [
+        16,
+        8,
+        4
+      ],
+      "pressure": [
+        16,
+        8,
+        4
+      ]
+    }
+  },
+  "field_types": {
+    "velocity_x": "f32",
+    "velocity_y": "f32",
+    "velocity_z": "f32",
+    "tracer": "f32",
+    "fraction": "f64",
+    "pressure": "f64"
+  },
+  "units": {
+    "velocity": "m/s",
+    "tracer": "dimensionless appearance",
+    "fraction": "dimensionless",
+    "pressure": "Pa",
+    "time": "s",
+    "divergence": "1/s",
+    "pressure_residual": "m^3/s^2",
+    "volume": "m^3",
+    "mass": "kg"
+  },
+  "config": {
+    "carrier_density_kg_m3": 1000,
+    "represented_density_kg_m3": 800,
+    "requested_dt_s": 0.0625,
+    "steps": 8,
+    "pressure_implementation": "jacobi-pcg-v1",
+    "initial_fraction": 0.5,
+    "initial_slab_i": [
+      4,
+      8
+    ],
+    "initial_velocity_m_s": [
+      0,
+      0,
+      0
+    ],
+    "outward_speed_m_s": [
+      [
+        -0.25,
+        0.25
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "inlet_fraction": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "carrier_id": "43",
+    "liquid_id": "41",
+    "initial_liquid_version": "0",
+    "boundary_id": "47",
+    "boundary_version": "0",
+    "inlet_id": "53",
+    "inlet_version": "0",
+    "memory_limit_bytes": 16777216,
+    "workspace_memory_limit_bytes": 16777216,
+    "pressure_relative_residual": 1e-12,
+    "pressure_absolute_residual": 1e-12,
+    "pressure_divergence_limit": 1e-09,
+    "pressure_max_iterations": 10000,
+    "actual_divergence_limit": 1e-05,
+    "max_courant": 1,
+    "max_outward_courant": 1
+  },
+  "pressure_semantics": "last accepted interval projection; constructor zero; not independently evolved endpoint",
+  "limitations": [
+    "fixed all-fluid constant-density carrier",
+    "represented fraction donor transport",
+    "no free-surface pressure/reconstruction/two-phase inertia/material calibration",
+    "no multidirectional accuracy/performance/training qualification",
+    "tracer appearance only"
+  ],
+  "provenance": {
+    "base_commit": "9cd4587a54befa61bdfddc8e35014bd3c34f02fb",
+    "source_commit": "fee7b4a139574f87b259796b1ba8698a41d31ac1",
+    "source_dirty": false,
+    "source_sha256": {
+      "Cargo.lock": "ab9d9456171dacd0dab4cc7e46b42602b678383eed2d92d6a76db3a23a25b127",
+      "Cargo.toml": "8f71e6affa03b378cbe96f0f2d6ada00fdc223c269fad165b41989d1bc9b08aa",
+      "examples/dense3d_sequence.rs": "c90e4ea9e4d8392dc663fdf9493789b8639b9f4c802612b1033acb6103359199",
+      "rust-toolchain.toml": "09ff66fa19e0cb8bbad00b6032e28f1cf77b0a37a73013648177b35297f98800",
+      "src/advection.rs": "8be2da05d421be409760366f6fb4b06b3a5efca776aee7489703280f2cb505ba",
+      "src/bin/rheon-desktop.rs": "21681bd444ab4e8e81a5f4d0a01077d03e21725fc0bb62e971301587492afc78",
+      "src/bin/rheon.rs": "6a63ccb347a1296156fac4366ea507e4d0a13065d807b20a8e7f77b2f72f1f23",
+      "src/box_flux.rs": "554b3cdc916e7527bbfdbd6a54b8cf7e27549c3c661015b259c8b2d18784bbb0",
+      "src/box_flux_step.rs": "e2ef3afcd8adffe0f79c0030eb56e5bb55943775e474a1dab2a7fe78ac38441b",
+      "src/collision.rs": "101c91ced5efc250f3a12bc47d5bbf04b812096caf8580c0229362e959839115",
+      "src/column_mac.rs": "40b86c5bab2d458c8b31b1f8def21c5f715acecb37813fb57417f7fe363aca84",
+      "src/column_momentum.rs": "373f63ac001fe8e9f8017a912033b3cc431169c6e4c86c2e6b514ee945f1f9b0",
+      "src/column_shear.rs": "9713d9e290fa796b0255a589e335dbe5e65439fe7738cd74254ec5537b2b60ad",
+      "src/column_surface.rs": "cd58d4d7d1c3d94092374ebd65fd191e3cf58f7ae68caeaf30ca15d36df666e0",
+      "src/coupled_discrete.rs": "b296021b8dd2f763b6eeab1e49e78bf06ec2ec801ac9595441e9e3920235d8e7",
+      "src/dense3d_sequence.rs": "adc5d4812b4803d386807ab784552347492619b1444c4e6147d9ccf4afefac6e",
+      "src/export.rs": "afe2b79d11f1b8c0ccd16dcaae51a22c8d35ba2e7a23c362729fe907b208f0d3",
+      "src/fitted_height.rs": "0181db7ffbad932b7e3492ce1a8e260736389e4ded3472c81fe2697861f6777a",
+      "src/fixed_bottom_ale.rs": "3cc724d376d115fccd8b6c658d7f26b6436f4d13d105a5ae8416fd9c04b17a47",
+      "src/forces.rs": "c5585940330096890016ff68f25645aa12cdaec2b796a8b234c138e88dd892bb",
+      "src/free_surface.rs": "f43fd9a71da6aac985dfcfb6cc471318227c1727d6e0dad8e2a5feb5b3728a8e",
+      "src/geometry.rs": "cae38a55436112a49d340b82b2252a7395b14b580686a83d582e5042c46255d3",
+      "src/lib.rs": "0ef8c69ad78ac5da28fc99eb245be031ceae137d49ba2696f61275fae7a98864",
+      "src/liquid_step.rs": "00f190f64f58ee40eddb2a85f9b8e01e74a7137ba6b0842b5f2de9abc458183c",
+      "src/liquid_volume.rs": "24623038f62261ce6a17b034e9b6d82c5f0aba02dd0df7aad174c885ed2a8c96",
+      "src/motion.rs": "8ab9f26199f36d76cb2f5e4cb58d40905205f0d6fc90988549f7e389c489a3ea",
+      "src/operator.rs": "68b06fba56f0b4f746f04f789d5e84277c34f416fb8cede14996f76156fe28ee",
+      "src/pressure.rs": "8522c99cfb0d89dc97549dd7d565446b57acdd3b2f1d1f5476444808dfb0269b",
+      "src/sampling.rs": "6bf158f71f795078b5a88a5662ec2169693508e555f0f98d539657873aaabbcf",
+      "src/simulation.rs": "6a00b58b07fd16f9559a2c53fae005b260550954587f24c2b1f8548a13563bc9",
+      "src/tracer_barrier.rs": "1007f35400b5e1b3206653b9f9ccaafbc169617ad896aec54f94fc792eba2fae",
+      "src/translated_viscous.rs": "6fa240053738411bb93b3e365def39fdc8a93597cd0c0523dcd1af39cbc68163",
+      "src/viscosity.rs": "3cb7643d321fa94957fafdc101abf0ee9ef273f99c9a512938124e72f32178aa",
+      "tools/export_dense3d_sequence.py": "5d95eba7b880ff174135ce8a9e48969bf538a099bf829a36134a2381d455f391",
+      "tools/import_dense3d_sequence.py": "063d17a3bbc92a27c26c0f5dd4588a9478091ebbf53ce0ccb818cee6a9393b98"
+    },
+    "executable_sha256": "e00e1bc6027fb309aca164a22933bd631eeda13c91e9a1e03d6e1562d0313734",
+    "toolchain": {
+      "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
+      "cargo": "cargo 1.92.0 (344c4567c 2025-10-21)"
+    },
+    "command": [
+      "/workspace/Rheon-sequence-qualification/target/debug/examples/dense3d_sequence",
+      "/workspace/sequence-qualification/actual-pilot-fee7b4a"
+    ],
+    "build_command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--no-default-features",
+      "--example",
+      "dense3d_sequence"
+    ]
+  }
+}

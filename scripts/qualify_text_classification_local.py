@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Run bounded, synthetic local gates and preserve inherited report evidence.
+"""Run bounded local fixture gates and preserve inherited report evidence.
 
 No dependencies, credentials, model weights, real gateway, or public service are
 installed or contacted. Browser fixtures launch their own loopback HTTP servers.
 Pinned consumer gates are recorded as blocked when their dependencies are absent.
+The recorded actual sequence fixture is read without invoking its producer.
 """
 import argparse
 import hashlib
@@ -208,7 +209,7 @@ def main():
                          or row.get('source_head_end') != final_source['head']
                          or row.get('source_sha256_end') != final_source['sha256'])]
     evidence = {
-        'scope': 'Bounded synthetic HTTP/browser fixtures; no real inference, dependency/model downloads, credentials, or public writes.',
+        'scope': 'Bounded local HTTP/browser fixtures, including recorded actual sequence bytes; no producer execution, inference, dependency/model downloads, credentials, or public writes by this runner.',
         'source_head': git('rev-parse', 'HEAD').decode().strip(),
         'source_tree': git('rev-parse', 'HEAD^{tree}').decode().strip(),
         'source_diff_sha256': sha(git('diff', 'HEAD', '--', '.', ':!docs/plans/**/reports/**')),

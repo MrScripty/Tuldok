@@ -95,10 +95,11 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : ['text_classification','text_entities']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : ['text_classification','text_entities']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
   $('task').value = record.task; $('caption').value = record.annotation?.caption || ''; $('label').value = record.annotation?.label || 'object';
+  if(typeof sequenceShown === 'function') sequenceShown(record);
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
@@ -112,7 +113,7 @@ function showRecord(record) {
 }
 function renderTargets() {
   const task = $('task').value;
-  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'image_caption';
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'image_caption' || task === 'sequence_transport';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -170,7 +171,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
