@@ -13,6 +13,7 @@ from PIL import Image
 TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
+MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
 MAX_CAPTION = 4_000  # Human-authored target, separate from generation provenance.
 MAX_TARGETS = 500  # Bound annotation decoding and editor work per record.
 PAGE_SIZE = 40
@@ -130,6 +131,14 @@ class Workbench:
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_rights_notes (
                 id TEXT PRIMARY KEY, note TEXT NOT NULL, revision INTEGER NOT NULL)''')
             self.db.execute('CREATE INDEX IF NOT EXISTS workbench_content ON workbench_records(content_hash)')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_responses (
+                id TEXT PRIMARY KEY, prompt_id TEXT NOT NULL, revision INTEGER NOT NULL,
+                completion TEXT NOT NULL, review TEXT NOT NULL, provenance_json TEXT NOT NULL,
+                created_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
+            self.db.execute('CREATE INDEX IF NOT EXISTS workbench_response_prompt ON workbench_responses(prompt_id)')
+            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_response_history (
+                id TEXT NOT NULL, revision INTEGER NOT NULL, snapshot TEXT NOT NULL,
+                PRIMARY KEY(id,revision))''')
             self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_deleted_sources (
                 id TEXT PRIMARY KEY, book_id TEXT NOT NULL, session_id TEXT NOT NULL,
                 split TEXT NOT NULL)''')
@@ -389,6 +398,103 @@ class Workbench:
             record = self._get(record_id)
             self._history(record)
             return {'record': record, 'changed': True}
+    def _response(self, response_id):
+        row = self.db.execute('SELECT * FROM workbench_responses WHERE id=?', (response_id,)).fetchone()
+        if row is None:
+            raise WorkbenchError('Response not found.', 'unavailable', 404)
+        response = dict(row)
+        response['provenance'] = json.loads(response.pop('provenance_json'))
+        return response
+
+    def responses(self, prompt_id):
+        with self.lock:
+            parent = self._get(prompt_id)
+            if parent['kind'] != 'text':
+                raise WorkbenchError('Instruction responses require a text prompt.')
+            ids = self.db.execute('SELECT id FROM workbench_responses WHERE prompt_id=? ORDER BY created_at,id', (prompt_id,))
+            return {'parent': parent, 'responses': [self._response(row['id']) for row in ids]}
+
+    def response_history(self, response_id):
+        with self.lock:
+            self._response(response_id)
+            return {'history': [json.loads(row[0]) for row in self.db.execute(
+                'SELECT snapshot FROM workbench_response_history WHERE id=? ORDER BY revision', (response_id,))]}
+
+    def save_response(self, body):
+        """An independent target with immutable prompt identity and explicit CAS."""
+        fields = {'id', 'prompt_id', 'revision', 'parent_revision', 'source_revision', 'completion', 'review'}
+        if not isinstance(body, dict) or set(body) != fields:
+            raise WorkbenchError('Supply only response identity, exact revisions, completion and review.')
+        if any(not isinstance(body[key], str) or not IDENTIFIER.fullmatch(body[key]) for key in ('id', 'prompt_id')):
+            raise WorkbenchError('Invalid response or prompt ID.')
+        if type(body['revision']) is not int or body['revision'] < 0:
+            raise WorkbenchError('Response revision must be a nonnegative integer.')
+        completion = body['completion']
+        # Check using the shared bounded text policy, but never return its stripped value.
+        text_value(completion, 'Completion', MAX_TEXT)
+        if body['review'] not in ('draft', 'human_reviewed'):
+            raise WorkbenchError('Explicitly choose draft or review this exact completion.')
+        with self.lock, self.db:
+            parent = self._get(body['prompt_id'])
+            if parent['kind'] != 'text' or not parent['source_available']:
+                raise WorkbenchError('Instruction responses require an available text prompt.')
+            for request_key, parent_key in (('parent_revision', 'revision'), ('source_revision', 'source_revision')):
+                if type(body[request_key]) is not int or body[request_key] != parent[parent_key]:
+                    raise WorkbenchError('The prompt changed. Reload before saving the response.', 'conflict', 409)
+            existing = self.db.execute('SELECT id FROM workbench_responses WHERE id=?', (body['id'],)).fetchone()
+            created = timestamp()
+            if existing:
+                before = self._response(body['id'])
+                if before['prompt_id'] != body['prompt_id'] or body['revision'] != before['revision']:
+                    raise WorkbenchError('The response changed or belongs to another prompt. Reload before saving.', 'conflict', 409)
+                if before['completion'] == completion and before['review'] == body['review']:
+                    return {'response': before, 'parent': parent, 'changed': False}
+                self.db.execute('''UPDATE workbench_responses SET completion=?,review=?,revision=revision+1,
+                    updated_at=? WHERE id=?''', (completion, body['review'], created, body['id']))
+            else:
+                if body['revision'] != 0:
+                    raise WorkbenchError('Response no longer exists.', 'unavailable', 409)
+                origin = {'method': 'human_authored', 'prompt_id': parent['id'],
+                          'prompt_sha256': parent['content_hash'], 'source_sha256': parent['source_sha256']}
+                self.db.execute('INSERT INTO workbench_responses VALUES (?,?,?,?,?,?,?,?)',
+                                (body['id'], parent['id'], 1, completion, body['review'], encode(origin), created, created))
+            response = self._response(body['id'])
+            self.db.execute('INSERT INTO workbench_response_history VALUES (?,?,?)',
+                            (response['id'], response['revision'], encode({'response': response, 'parent': parent})))
+            return {'response': response, 'parent': parent, 'changed': True}
+
+    def response_selection(self, items):
+        if not isinstance(items, list) or not 1 <= len(items) <= 5000:
+            raise WorkbenchError('Select 1–5,000 explicit response revisions per synchronous release.')
+        fields = {'id', 'revision', 'prompt_id', 'parent_revision', 'source_revision'}
+        responses, parents, seen, size = [], {}, set(), 0
+        for item in items:
+            if not isinstance(item, dict) or set(item) != fields or any(
+                    not isinstance(item[key], str) or not IDENTIFIER.fullmatch(item[key]) for key in ('id', 'prompt_id')):
+                raise WorkbenchError('Select exact response IDs, revisions and parent/source pairs.')
+            if item['id'] in seen:
+                raise WorkbenchError('Repeated response selection.')
+            seen.add(item['id'])
+            response = self._response(item['id'])
+            parent = parents.get(response['prompt_id']) or self._get(response['prompt_id'])
+            if response['prompt_id'] != item['prompt_id'] or type(item['revision']) is not int or item['revision'] != response['revision']:
+                raise WorkbenchError('Selected response changed. Explicitly reselect its current revision.', 'conflict', 409)
+            for request_key, parent_key in (('parent_revision', 'revision'), ('source_revision', 'source_revision')):
+                if type(item[request_key]) is not int or item[request_key] != parent[parent_key]:
+                    raise WorkbenchError('Selected prompt changed. Explicitly reselect current parent revisions.', 'conflict', 409)
+            if parent['kind'] != 'text' or not parent['source_available']:
+                raise WorkbenchError('Selected response requires an available text prompt.')
+            if response['review'] != 'human_reviewed':
+                raise WorkbenchError('Every selected response needs explicit human review.')
+            text_value(response['completion'], 'Completion', MAX_TEXT)
+            size += len(response['completion'].encode('utf-8'))
+            if parent['id'] not in parents:
+                size += len(parent['text'].encode('utf-8'))
+                parents[parent['id']] = parent
+            if size > MAX_SELECTED_TEXT_BYTES:
+                raise WorkbenchError('Selected prompt/response text exceeds the 40 MiB synchronous resource bound.')
+            responses.append(response)
+        return sorted(responses, key=lambda row: row['id']), sorted(parents.values(), key=lambda row: row['id'])
 
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""
