@@ -1,6 +1,6 @@
 # Single-image caption proposals
 
-Status: Verifying, local only. Parent selected this M2 image slice on 2026-10-07.
+Status: Locally qualified and independently reviewed; parent acceptance/publication pending. Parent selected this M2 image slice on 2026-10-07.
 Base `ae094770cfebc68b73d91bc163a0043a4ab117dc`; isolated branch
 `feature/caption-proposals-local-20261007`, worktree `/workspace/Tuldok-caption-proposals-local`.
 Parent owns review/publication/integration. Main and PR16 remain frozen. Retain this
@@ -46,12 +46,17 @@ retain fresh outputs separately and preserve historical report bytes. Independen
 review examines the exact committed local candidate. Real-model valid output and
 semantic quality are explicitly unqualified; final UI choices remain pending.
 
-Focused qualification: 15 initial Python tests, controller ownership checks and the real
-controlled-provider Chromium workflow passed. The initial committed checkpoint passed all 43 aggregate gates. Independent review
-found a source-path reopen race and a stranded worker-launch failure; both are being
-repaired with focused regressions before fresh exact-source qualification. The UI
-review found no actionable issues. Canonical preparation reads one bounded verified
-byte buffer (128 MiB), and launch failure becomes a persisted failed attempt.
+Qualified source `4267819af784f5094a5e5ac48d82f71eafbd0564`, tree
+`676726e711d7c980ba3a8135e076b45b5fda47b2`: all 43 aggregate gates passed,
+including 252 Python tests (17 caption tests) and 21 real Chromium invocations.
+All 40 inherited commands are retained. Independent reviewers reproduced and
+accepted both fixes for the initial source-path reopen/worker-launch findings;
+no remaining findings on the qualified successor. Canonical preparation reads
+one bounded verified byte buffer (128 MiB), and launch failure is a persisted
+failed attempt. All 540 historical report files are byte-identical. See
+[qualification](reports/verification.md), [exact source and preservation](reports/source-and-preservation.json)
+and [artifact hashes](reports/artifact-manifest.json). Controlled providers establish
+these lifecycle contracts; real model success/quality remain unqualified.
 
-Next slice: finish aggregate qualification and review, then return the tested
-local commit to the parent for publication review.
+Next slice: parent reviews this local candidate and chooses publication disposition.
+No public writes, final UI decision or main/PR16 changes are authorized here.
