@@ -1,5 +1,5 @@
 // Native browser smoke test. No npm dependencies.
-const {qaRoot,screenshotOptions}=require('./qa_artifacts.cjs');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -11,8 +11,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 (async()=>{
-  const outputRoot=path.join(qaRoot(root),'caption-proposals');fs.mkdirSync(outputRoot,{recursive:true});
-  const report=fs.mkdtempSync(path.join(outputRoot,'run-'));
+  const report=qaDirectory(root,'caption-proposals');
   console.log('Caption proposal evidence: '+report);
   const server=launch('python3',['-u','tests/browser_caption_proposals_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);

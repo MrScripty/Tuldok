@@ -2,9 +2,10 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {spawnSync}=require('node:child_process');
-const {qaRoot}=require('./qa_artifacts.cjs');
+const {qaRoot,qaDirectory}=require('./qa_artifacts.cjs');
 const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..');
-const reportRoot=path.join(qaRoot(root),'rights-note');
+const reportRoot=qaRoot(root,path.join(qaRoot(root),'rights-note'));
+const receiptFolder=qaDirectory(root,'rights-note-preservation');
 const git=(...args)=>{const r=spawnSync('git',args,{cwd:root,encoding:'utf8'});assert.equal(r.status,0,r.stderr);return r.stdout;};
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const tracked=git('ls-files','-z','--','tests/fixtures').split('\0').filter(Boolean);
@@ -38,6 +39,5 @@ const receipt={source_head:identity[0],source_tree:identity[1],
   regression_script_sha256:hash(__filename),browser_runs:2,tracked_evidence_files:tracked.length,
   tracked_evidence_before_sha256:crypto.createHash('sha256').update(JSON.stringify(before)).digest('hex'),
   tracked_evidence_unchanged_after_each_run:true,earlier_captures_retained:true,captures,result:'PASS'};
-const receiptFolder=fs.mkdtempSync(path.join(reportRoot,'preservation-'));
 fs.writeFileSync(path.join(receiptFolder,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
 console.log(`Rights-note artifact preservation: ${tracked.length} authored fixture files unchanged after each of two real browser runs; four JPEG85 captures retained in distinct ignored directories. Receipt: ${path.relative(root,receiptFolder)}/receipt.json`);

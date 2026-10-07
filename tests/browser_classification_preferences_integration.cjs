@@ -1,6 +1,6 @@
 // Combined native ownership checks; bounded synthetic HTTP, no real inference.
 'use strict';
-const {qaRoot,screenshotOptions}=require('./qa_artifacts.cjs');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn,execFileSync}=require('node:child_process');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
@@ -11,7 +11,7 @@ async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
 const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 (async()=>{
-  const outputRoot=path.join(qaRoot(root,process.env.TULDOK_CLASSIFICATION_PREFERENCES_REPORT_ROOT),'classification-preferences');fs.mkdirSync(outputRoot,{recursive:true});report=fs.mkdtempSync(path.join(outputRoot,'run-'));console.log('Classification/preferences integration evidence: '+report);
+  report=qaDirectory(root,'classification-preferences',process.env.TULDOK_CLASSIFICATION_PREFERENCES_REPORT_ROOT);console.log('Classification/preferences integration evidence: '+report);
   const classScriptOverride=process.env.TULDOK_CLASSIFICATION_SCRIPT_OVERRIDE?fs.readFileSync(process.env.TULDOK_CLASSIFICATION_SCRIPT_OVERRIDE):null;
   const evidence={source_head:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),synthetic_only:true,negative_apply_hook:process.env.CLASSIFICATION_PREFERENCE_DISABLE_APPLY_HOOK==='1',classification_script_override_sha256:classScriptOverride?crypto.createHash('sha256').update(classScriptOverride).digest('hex'):null,steps:[]};
   const snapshot=()=>Object.fromEntries(['static/workbench.js','static/preferences.js','static/instruction-responses.js','static/text-classification-proposals.js','static/workbench.html','tests/browser_classification_preferences_integration.cjs','tests/browser_text_classification_proposals_server.py'].map(file=>[file,hash(path.join(root,file))]));evidence.source_sha256=snapshot();
