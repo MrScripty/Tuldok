@@ -388,7 +388,7 @@ provider registry or dependencies. [Contract and acceptance](docs/plans/caption-
 
 ### Propose a label for existing text
 
-Open one unannotated text record and **Propose a classification for this text**.
+Open one unannotated text record and **Propose a class for this unannotated text**.
 Enter the author's exact label choices as a JSON array, list served models at the
 Pumas-compatible gateway, choose a model and explicitly request a proposal. Labels
 are unique, case-sensitive strings (1–30 choices, up to 80 Unicode code points

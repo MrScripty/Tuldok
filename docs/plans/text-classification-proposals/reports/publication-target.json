@@ -1,0 +1,12 @@
+{
+  "checked_read_only_on": "2026-10-07",
+  "pr17": {
+    "url": "https://github.com/MrScripty/Tuldok/pull/17",
+    "state": "open",
+    "head_ref": "feature/caption-proposals-local-20261007",
+    "head_sha": "07ec464ba050cd532a2508ce86570a1ce9bcd394",
+    "base_ref": "feature/image-caption-exports",
+    "base_sha": "c43a110c4b6ee1a85c932fa206b43091c0db7f3a"
+  },
+  "next_step": "Parent approves publication, push only feature/text-classification-proposals and create new stacked PR targeting feature/caption-proposals-local-20261007. Do not modify PR17 or main."
+}

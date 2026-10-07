@@ -1,5 +1,11 @@
 # Text classification proposals
 
+Locally implemented and independently reviewed at
+`7b1938e3ef9b7ba499bafde1fa02e44fb90e8dc7`: 44 aggregate gates passed, zero
+failed, two inherited instruction-consumer browsers dependency-blocked. All 271
+Python tests passed. [Exact qualification and limitations](reports/verification.md).
+Publication remains pending.
+
 This new development slice starts at published PR #17 head
 `07ec464ba050cd532a2508ce86570a1ce9bcd394` on local branch
 `feature/text-classification-proposals`. Main remains frozen at
