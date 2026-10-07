@@ -6,6 +6,11 @@ let textClassificationProposalFormEpoch = 0;
 const textClassificationProposalStorageKey = 'tuldok.text-classification-proposals.admission.v1';
 const textClassificationProposalStorageLimit = 64000;
 let textClassificationProposalStorageBlocked = '', textClassificationProposalRecoveryId = null, textClassificationProposalStorageMalformed = false;
+const textClassificationProposalDatabaseName='tuldok.text-classification-proposals.admission.v1';
+const textClassificationProposalStoreName='recovery';
+let textClassificationProposalDatabase=null,textClassificationProposalDatabaseOpening=null,textClassificationProposalAuthorityReady=false;
+let textClassificationProposalAdmissionPreparing=false;
+let textClassificationProposalRecoveryBody=null;
 const textClassificationProposalActive = job => ['preparing','generating','stopping'].includes(job.status);
 function textClassificationProposalStatus(message) { $('text-classification-proposal-status').textContent = message;syncTextClassificationProposalRecovery(); }
 function syncTextClassificationProposalRecovery() {
@@ -35,6 +40,9 @@ function validateTextClassificationProposalGateway(value) {
   const authority=/^https?:\/\/([^/?#]+)/i.exec(inspected)?.[1];
   if(!authority || /[@\\]/u.test(authority) || /[\u0000-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u.test(inspected))
     throw Error('Use an HTTP or HTTPS classification gateway with an explicit authority and no credentials or internal whitespace.');
+  // Match urlsplit's NFKC authority guard before WHATWG host repair.
+  if(/[/?#@:]/u.test(authority.replace(/[@:#?]/gu,'').normalize('NFKC')))
+    throw Error('Use a classification hostname without characters that normalize to URL delimiters.');
   let url;
   try { url=new URL(inspected); } catch { throw Error('Enter a valid classification gateway URL.'); }
   if(!['http:','https:'].includes(url.protocol) || !url.hostname || url.username || url.password || url.search || url.hash || url.port==='0')
@@ -43,7 +51,7 @@ function validateTextClassificationProposalGateway(value) {
 function validateTextClassificationProposalBody(body) {
   const keys=['request_id','source_id','revision','source_revision','server_url','model','instruction','seed','labels'];
   if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).length!==keys.length || keys.some(key=>!Object.hasOwn(body,key)) ||
-     typeof body.request_id!=='string' || !/^[a-f0-9]{32}$/.test(body.request_id) || typeof body.source_id!=='string' || !/^[a-f0-9]{32}$/.test(body.source_id) ||
+     typeof body.request_id!=='string' || body.request_id.length!==32 || !/^[a-f0-9]{32}$/.test(body.request_id) || typeof body.source_id!=='string' || body.source_id.length!==32 || !/^[a-f0-9]{32}$/.test(body.source_id) ||
      !['revision','source_revision'].every(key=>Number.isSafeInteger(body[key]) && body[key]>0) ||
      !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295)
     throw Error('Invalid classification recovery identity or revision evidence.');
@@ -65,7 +73,125 @@ function textClassificationProposalStored(raw) {
 }
 function textClassificationProposalStoredId(raw) {
   if(typeof raw!=='string' || raw.length>textClassificationProposalStorageLimit)return null;
-  try { const parsed=JSON.parse(raw),id=parsed?.body?.request_id;return JSON.stringify(parsed)===raw && typeof id==='string' && /^[a-f0-9]{32}$/.test(id)?id:null; } catch { return null; }
+  try { const parsed=JSON.parse(raw),id=parsed?.body?.request_id;return JSON.stringify(parsed)===raw && typeof id==='string' && id.length===32 && /^[a-f0-9]{32}$/.test(id)?id:null; } catch { return null; }
+}
+function textClassificationProposalMirror() {
+  let raw;
+  try {raw=localStorage.getItem(textClassificationProposalStorageKey);} catch {throw Error('Classification recovery storage cannot be read. Requests are blocked; restore storage access and refresh requests.');}
+  if(raw===null)return {raw,body:null};
+  try {return {raw,body:textClassificationProposalStored(raw)};} catch {return {raw,body:null};}
+}
+function textClassificationProposalBlocker(raw) {
+  return {schema_version:1,raw:raw.length<=textClassificationProposalStorageLimit?raw:null,length:raw.length,recovery_id:textClassificationProposalStoredId(raw)};
+}
+function textClassificationProposalValidBlocker(value) {
+  return value && !Array.isArray(value) && value.schema_version===1 && Object.keys(value).length===4 && Number.isSafeInteger(value.length) && value.length>=0 &&
+    (value.raw===null?value.length>textClassificationProposalStorageLimit:typeof value.raw==='string' && value.raw.length===value.length && value.length<=textClassificationProposalStorageLimit) &&
+    (value.raw===null?value.recovery_id===null:value.recovery_id===textClassificationProposalStoredId(value.raw));
+}
+function textClassificationProposalAddBlocker(values,store,raw) {
+  const candidate=textClassificationProposalBlocker(raw),entries=values.legacy_blocker||[];
+  if(!entries.some(entry=>JSON.stringify(entry)===JSON.stringify(candidate))) {
+    // Bound retained conflicting frames. Overflow is an opaque, non-clearable
+    // blocker; the originating mirror bytes are left intact.
+    if(entries.length<16)entries.push(candidate);
+    else if(entries.length===16)entries.push(textClassificationProposalBlocker(' '.repeat(textClassificationProposalStorageLimit+1)));
+    values.legacy_blocker=entries;store.put(entries,'legacy_blocker');
+  }
+}
+async function textClassificationProposalOpenDatabase() {
+  if(textClassificationProposalDatabase)return textClassificationProposalDatabase;
+  if(textClassificationProposalDatabaseOpening)return textClassificationProposalDatabaseOpening;
+  textClassificationProposalDatabaseOpening=new Promise((resolve,reject)=>{
+    let request,settled=false;
+    const failed=()=>{if(!settled){settled=true;reject(Error('Classification IndexedDB authority cannot be opened. Requests are blocked; restore access and refresh requests.'));}};
+    try {
+      if(typeof indexedDB==='undefined')throw Error('IndexedDB unavailable');
+      request=indexedDB.open(textClassificationProposalDatabaseName,1);
+      request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(textClassificationProposalStoreName))request.result.createObjectStore(textClassificationProposalStoreName);};
+      request.onerror=failed;request.onblocked=failed;
+      request.onsuccess=()=>{
+        if(settled){request.result.close();return;}
+        settled=true;textClassificationProposalDatabase=request.result;
+        textClassificationProposalDatabase.onversionchange=()=>{textClassificationProposalDatabase.close();textClassificationProposalDatabase=null;textClassificationProposalAuthorityReady=false;};
+        resolve(textClassificationProposalDatabase);
+      };
+    } catch {failed();}
+  });
+  try {return await textClassificationProposalDatabaseOpening;} finally {textClassificationProposalDatabaseOpening=null;}
+}
+async function textClassificationProposalAuthorityTransaction(fn) {
+  const database=await textClassificationProposalOpenDatabase();
+  return new Promise((resolve,reject)=>{
+    let transaction,result,failure,remaining=3;const values={};
+    const failed=()=>reject(failure||Error('Classification IndexedDB authority transaction failed. Requests are blocked; refresh before an explicit unchanged repeat.'));
+    try {
+      transaction=database.transaction(textClassificationProposalStoreName,'readwrite',{durability:'strict'});
+      transaction.oncomplete=()=>failure?failed():resolve(result);transaction.onabort=failed;transaction.onerror=event=>{
+        event.preventDefault();failure=failure||Error('Classification IndexedDB authority mutation failed. Requests remain blocked.');
+        try {transaction.abort();} catch {failed();}
+      };
+      const store=transaction.objectStore(textClassificationProposalStoreName);
+      for(const key of ['pending','initialized','legacy_blocker']) {
+        const request=store.get(key);
+        request.onerror=event=>{event.preventDefault();failure=Error('Classification IndexedDB authority cannot be read. Requests remain blocked.');transaction.abort();};
+        request.onsuccess=()=>{
+          values[key]=request.result;
+          if(--remaining===0)try {result=fn(values,store);} catch(error) {failure=error;transaction.abort();}
+        };
+      }
+    } catch(error) {failure=error;if(transaction)try {transaction.abort();} catch {failed();} else failed();}
+  });
+}
+function textClassificationProposalObserveAuthority(values,store,mirror) {
+  const initialized=values.initialized;
+  if(initialized!==undefined && (!initialized || Array.isArray(initialized) || initialized.schema_version!==1 || Object.keys(initialized).length!==2 || !(initialized.resolved_raw===null || (typeof initialized.resolved_raw==='string' && initialized.resolved_raw.length<=textClassificationProposalStorageLimit && textClassificationProposalStoredId(initialized.resolved_raw)!==null))))
+    throw Error('Classification IndexedDB initialization evidence is malformed. Requests remain blocked.');
+  if(values.legacy_blocker!==undefined && (!Array.isArray(values.legacy_blocker) || !values.legacy_blocker.length || values.legacy_blocker.length>17 || values.legacy_blocker.some(entry=>!textClassificationProposalValidBlocker(entry))))throw Error('Classification IndexedDB blocker evidence is malformed. Requests remain blocked.');
+  if(initialized===undefined) {
+    store.put({schema_version:1,resolved_raw:null},'initialized');
+    if(values.pending===undefined && values.legacy_blocker===undefined && mirror.raw!==null) {
+      if(mirror.body){store.put(mirror.raw,'pending');values.pending=mirror.raw;}
+      else textClassificationProposalAddBlocker(values,store,mirror.raw);
+    }
+  }
+  const retired=mirror.raw!==null && initialized?.resolved_raw===mirror.raw;
+  if(mirror.raw!==null && mirror.raw!==values.pending && !retired && (values.pending!==undefined || initialized!==undefined))textClassificationProposalAddBlocker(values,store,mirror.raw);
+  let body=null;
+  if(values.pending!==undefined)try {body=textClassificationProposalStored(values.pending);} catch {throw Error('Classification IndexedDB pending evidence is malformed. Requests remain blocked; it was not discarded.');}
+  return {raw:values.pending??null,body,blockers:values.legacy_blocker||[],retired,resolvedRaw:initialized?.resolved_raw??null};
+}
+function textClassificationProposalUseAuthority(state,mirror) {
+  textClassificationProposalAuthorityReady=true;
+  if(state.blockers.length) {
+    textClassificationProposalStorageMalformed=true;
+    if(!textClassificationProposalPendingRequest && state.body)textClassificationProposalPendingRequest=state.body;
+    const blocker=state.blockers.find(entry=>entry.recovery_id);
+    textClassificationProposalRecoveryId=blocker?.recovery_id||textClassificationProposalPendingRequest?.request_id||null;
+    textClassificationProposalRecoveryBody=null;
+    if(blocker?.raw)try {textClassificationProposalRecoveryBody=textClassificationProposalStored(blocker.raw);} catch {}
+    textClassificationProposalStorageBlocked='Classification IndexedDB authority retains unresolved legacy recovery evidence. Requests remain blocked until an exact admission receipt reconciles it; it was not discarded.';
+    throw Error(textClassificationProposalStorageBlocked);
+  }
+  if(textClassificationProposalPendingRequest && JSON.stringify({schema_version:1,body:textClassificationProposalPendingRequest})===state.resolvedRaw)textClassificationProposalPendingRequest=null;
+  if(state.body) {
+    if(textClassificationProposalPendingRequest && JSON.stringify(textClassificationProposalPendingRequest)!==JSON.stringify(state.body))throw Error('Another classification admission occupies IndexedDB authority. The earlier local intent is retained; requests remain blocked.');
+    if(!textClassificationProposalPendingRequest)textClassificationProposalPendingRequest=state.body;
+    textClassificationProposalRecoveryId=state.body.request_id;
+    try {if(mirror.raw!==state.raw)localStorage.setItem(textClassificationProposalStorageKey,state.raw);} catch {throw Error('Classification recovery storage cannot mirror IndexedDB authority. Requests remain blocked.');}
+  } else if(state.retired) {
+    try {localStorage.removeItem(textClassificationProposalStorageKey);} catch {throw Error('Classification recovery storage could not clear a retired admission. Requests remain blocked.');}
+  }
+  textClassificationProposalStorageMalformed=false;textClassificationProposalStorageBlocked='';
+  return state;
+}
+async function textClassificationProposalLoadAuthority() {
+  try {
+    const mirror=textClassificationProposalMirror();
+    const state=await textClassificationProposalAuthorityTransaction((values,store)=>textClassificationProposalObserveAuthority(values,store,mirror));
+    return textClassificationProposalUseAuthority(state,mirror);
+  } catch(error) {textClassificationProposalStorageBlocked=error.message;throw error;}
+  finally {syncTextClassificationProposalRecovery();$('text-classification-proposal-submit').disabled=textClassificationProposalBusy||!textClassificationProposalAuthorityReady;}
 }
 function textClassificationProposalRestoreStorage() {
   let raw;
@@ -102,30 +228,77 @@ async function textClassificationProposalStorageLock(fn) {
   return navigator.locks.request(textClassificationProposalStorageKey,{mode:'exclusive'},fn);
 }
 async function textClassificationProposalClearStorage(id, body) {
-  return textClassificationProposalStorageLock(()=>{
-    let raw;
-    try { raw=localStorage.getItem(textClassificationProposalStorageKey); }
-    catch { textClassificationProposalStorageBlocked='Classification recovery storage cannot be read. Requests remain blocked.';return false; }
-    if(raw!==null) {
-      let stored,storedId;
-      try { stored=textClassificationProposalStored(raw);storedId=stored.request_id; }
-      catch { storedId=textClassificationProposalStoredId(raw); }
-      if(storedId!==id || (stored && body && JSON.stringify(stored)!==JSON.stringify(body))) {
-        textClassificationProposalStorageBlocked='Classification recovery storage changed. Requests remain blocked; this receipt cannot erase another admission.';return false;
+  return textClassificationProposalStorageLock(async()=>{
+    try {
+      const mirror=textClassificationProposalMirror();
+      const state=await textClassificationProposalAuthorityTransaction((values,store)=>{
+        textClassificationProposalObserveAuthority(values,store,mirror);
+        const raw=values.pending,blockers=values.legacy_blocker||[];
+        const matchesPending=raw!==undefined && textClassificationProposalStoredId(raw)===id && (!body || raw===JSON.stringify({schema_version:1,body}));
+        const matchesBlocker=entry=>entry.recovery_id===id && (!body || entry.raw===JSON.stringify({schema_version:1,body}));
+        if(matchesPending) {
+          store.delete('pending');values.pending=undefined;
+          values.initialized={schema_version:1,resolved_raw:raw};store.put(values.initialized,'initialized');
+        }
+        if(blockers.some(matchesBlocker)) {
+          const resolved=blockers.find(matchesBlocker);values.legacy_blocker=blockers.filter(entry=>!matchesBlocker(entry));
+          if(values.legacy_blocker.length)store.put(values.legacy_blocker,'legacy_blocker');else {store.delete('legacy_blocker');values.legacy_blocker=undefined;}
+          values.initialized={schema_version:1,resolved_raw:resolved.raw};store.put(values.initialized,'initialized');
+        }
+        return textClassificationProposalObserveAuthority(values,store,{raw:null,body:null});
+      });
+      if(mirror.raw!==null) {
+        const mirrorId=textClassificationProposalStoredId(mirror.raw);
+        if(mirrorId!==id || (body && mirror.raw!==JSON.stringify({schema_version:1,body}))) {
+          textClassificationProposalStorageBlocked='Classification recovery mirror changed. This receipt cannot erase another admission.';return false;
+        }
+        try {localStorage.removeItem(textClassificationProposalStorageKey);} catch {throw Error('Classification recovery storage could not be cleared after an authoritative receipt. Requests remain blocked; refresh to reconcile it again.');}
       }
-      try { localStorage.removeItem(textClassificationProposalStorageKey); }
-      catch { textClassificationProposalStorageBlocked='Classification recovery storage could not be cleared after an authoritative receipt. Requests remain blocked; refresh to reconcile it again.';return false; }
+      if(textClassificationProposalPendingRequest?.request_id===id)textClassificationProposalPendingRequest=null;
+      textClassificationProposalRecoveryId=null;textClassificationProposalStorageMalformed=false;
+      textClassificationProposalUseAuthority(state,{raw:null,body:null});
+      if(state.body){textClassificationProposalStorageBlocked='Another classification admission remains in IndexedDB authority. This older receipt did not erase it.';return false;}
+      return true;
+    } catch(error) {textClassificationProposalStorageBlocked=error.message;return false;}
+  });
+}
+async function textClassificationProposalClaim(intent) {
+  return textClassificationProposalStorageLock(async()=>{
+    if(textClassificationProposalPaused)throw Error('The page was hidden before admission. No request was sent.');
+    await textClassificationProposalLoadAuthority();
+    const previous=textClassificationProposalPendingRequest;
+    if(previous && JSON.stringify({...previous,request_id:undefined})!==JSON.stringify(intent))throw Error('An earlier request has an unknown acknowledgement. Refresh requests before changing its intent.');
+    const captured=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};
+    validateTextClassificationProposalBody(captured);
+    const mirror=textClassificationProposalMirror();
+    let result;
+    try {result=await textClassificationProposalAuthorityTransaction((values,store)=>{
+      const state=textClassificationProposalObserveAuthority(values,store,mirror);
+      if(state.blockers.length)return {state,previous:state.body||previous,body:null};
+      if(state.body && JSON.stringify({...state.body,request_id:undefined})!==JSON.stringify(intent))return {state,previous:state.body,body:null};
+      const body=state.body?(previous && JSON.stringify(previous)===JSON.stringify(state.body)?previous:state.body):captured;
+      const raw=JSON.stringify({schema_version:1,body});
+      textClassificationProposalPendingRequest=body;textClassificationProposalRecoveryId=body.request_id;
+      if(state.raw!==raw)store.put(raw,'pending');
+      return {state:{...state,raw,body},previous:state.body||previous,body};
+    });} catch(error) {textClassificationProposalStorageBlocked=error.message;throw error;}
+    // A request-success event is not a commit. Mirror only committed authority,
+    // so a transaction abort cannot leave an unresolvable fresh legacy hint.
+    if(result.body)try {localStorage.setItem(textClassificationProposalStorageKey,result.state.raw);} catch {
+      textClassificationProposalStorageBlocked='Classification recovery storage could not mirror the committed exact request. Inference is blocked; restore storage and explicitly repeat this unchanged request.';
+      throw Error(textClassificationProposalStorageBlocked);
     }
-    if(!body || textClassificationProposalPendingRequest===body)textClassificationProposalPendingRequest=null;
-    textClassificationProposalRecoveryId=null;textClassificationProposalStorageMalformed=false;textClassificationProposalStorageBlocked='';return true;
+    textClassificationProposalUseAuthority(result.state,result.body?{raw:result.state.raw,body:result.state.body}:mirror);
+    if(!result.body)throw Error('An earlier request has an unknown acknowledgement in IndexedDB authority. Refresh requests before changing its intent.');
+    return result;
   });
 }
 // Storage is already scoped to the page's origin. Restore before submit listeners
 // or any asynchronous list fetch can authorize a new admission identity.
 $('text-classification-proposal-submit').disabled=true;
 textClassificationProposalRestoreStorage();
-$('text-classification-proposal-submit').disabled=false;
 syncTextClassificationProposalRecovery();
+textClassificationProposalLoadAuthority().catch(error=>textClassificationProposalStatus(error.message));
 if(textClassificationProposalStorageBlocked)textClassificationProposalStatus(textClassificationProposalStorageBlocked);
 function textClassificationProposalConfig() {
   return {server_url:$('text-classification-proposal-url').value,model:$('text-classification-proposal-model').value,
@@ -172,10 +345,12 @@ function renderTextClassificationProposals() {
 }
 async function refreshTextClassificationProposals() {
   if(textClassificationProposalPaused)return;
-  textClassificationProposalRestoreStorage();
   clearTimeout(textClassificationProposalTimer);const epoch=++textClassificationProposalEpoch;
-  const pending=textClassificationProposalPendingRequest,recoveryId=pending?.request_id||textClassificationProposalRecoveryId;
-  const result=await api('text-classification-proposals');if(epoch!==textClassificationProposalEpoch||textClassificationProposalPaused)return;
+  const summary=api('text-classification-proposals');
+  await textClassificationProposalLoadAuthority().catch(error=>textClassificationProposalStatus(error.message));
+  const recoveryId=(textClassificationProposalStorageMalformed?textClassificationProposalRecoveryId:null)||textClassificationProposalPendingRequest?.request_id||textClassificationProposalRecoveryId;
+  const pending=textClassificationProposalPendingRequest?.request_id===recoveryId?textClassificationProposalPendingRequest:textClassificationProposalRecoveryBody?.request_id===recoveryId?textClassificationProposalRecoveryBody:null;
+  const result=await summary;if(epoch!==textClassificationProposalEpoch||textClassificationProposalPaused)return;
   textClassificationProposalJobs=result.jobs;
   if(recoveryId && (!pending || !textClassificationProposalJobs.some(job=>job.id===recoveryId))) {
     try {
@@ -191,7 +366,7 @@ async function refreshTextClassificationProposals() {
     }
   }
   const recovered=textClassificationProposalJobs.find(job=>job.id===recoveryId);
-  if(recovered && (!pending || (pending===textClassificationProposalPendingRequest && textClassificationProposalAdmissionRequest!==pending))) {
+  if(recovered && (!pending || ((pending===textClassificationProposalPendingRequest || pending===textClassificationProposalRecoveryBody) && textClassificationProposalAdmissionRequest!==pending && !textClassificationProposalAdmissionPreparing))) {
     if(pending && !textClassificationProposalJobMatches(recovered,pending)) {
       textClassificationProposalStorageMalformed=true;textClassificationProposalStorageBlocked='The persisted classification receipt does not match the exact stored intent. Requests remain blocked; no identity was discarded.';
     } else if(await textClassificationProposalClearStorage(recoveryId,pending)) {
@@ -253,21 +428,10 @@ $('text-classification-proposal-form').addEventListener('submit',async event=>{
   const intent={source_id:current.id,revision:current.revision,source_revision:current.source_revision,
     ...config};
   let previous,body,posted=false;
-  textClassificationProposalBusy=true;$('text-classification-proposal-submit').disabled=true;
+  textClassificationProposalBusy=true;textClassificationProposalAdmissionPreparing=true;$('text-classification-proposal-submit').disabled=true;
   try {
-    body=await textClassificationProposalStorageLock(()=>{
-      if(textClassificationProposalPaused)throw Error('The page was hidden before admission. No request was sent.');
-      if(!textClassificationProposalRestoreStorage())throw Error(textClassificationProposalStorageBlocked);
-      previous=textClassificationProposalPendingRequest;
-      if(previous && JSON.stringify({...previous,request_id:undefined})!==JSON.stringify(intent))
-        throw Error('An earlier request has an unknown acknowledgement. Refresh requests before changing its intent.');
-      const captured=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};
-      validateTextClassificationProposalBody(captured);
-      textClassificationProposalPendingRequest=captured;textClassificationProposalRecoveryId=captured.request_id;
-      try { localStorage.setItem(textClassificationProposalStorageKey,JSON.stringify({schema_version:1,body:captured})); }
-      catch {textClassificationProposalStorageBlocked='Classification recovery storage could not persist the exact request. Inference is blocked; refresh storage and explicitly repeat this unchanged request.';throw Error(textClassificationProposalStorageBlocked);}
-      textClassificationProposalAdmissionRequest=captured;return captured;
-    });
+    const claimed=await textClassificationProposalClaim(intent);body=claimed.body;previous=claimed.previous;
+    textClassificationProposalAdmissionRequest=body;
     if(textClassificationProposalPaused)throw Error('The page was hidden before transport. The stored request ID is retained for an explicit unchanged repeat; no request was sent.');
     posted=true;
     const receipt=await api('text-classification-proposals',body);
@@ -279,7 +443,7 @@ $('text-classification-proposal-form').addEventListener('submit',async event=>{
     if(posted && !previous && error.status>=400 && error.status<500 && textClassificationProposalPendingRequest===body)await textClassificationProposalClearStorage(body.request_id,body);
     textClassificationProposalStatus((textClassificationProposalStorageBlocked||error.message)+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');
   }
-  finally {if(textClassificationProposalAdmissionRequest===body)textClassificationProposalAdmissionRequest=null;textClassificationProposalBusy=false;$('text-classification-proposal-submit').disabled=false;}
+  finally {textClassificationProposalAdmissionRequest=null;textClassificationProposalAdmissionPreparing=false;textClassificationProposalBusy=false;$('text-classification-proposal-submit').disabled=!textClassificationProposalAuthorityReady;}
 });
 action('text-classification-proposal-refresh',refreshTextClassificationProposals);
 action('text-classification-proposal-restore',()=>{

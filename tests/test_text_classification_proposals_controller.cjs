@@ -6,12 +6,57 @@ class Element {
   matches(selector){return selector==='form'&&['editor','filters'].includes(this.id);}querySelectorAll(){return [];}
   async dispatch(event){for(const fn of this.listeners[event]||[])await fn({preventDefault(){},currentTarget:this});}
 }
+// Model a single origin's serial readwrite transactions, isolated snapshots,
+// queued asynchronous requests and commit/abort. A put success is not a commit.
+function atomicIndexedDB() {
+  const data=new Map(),stores=new Set(),fault={open:false,get:false,put:false,delete:false,commit:false,transaction:false},history=[],heldCommits=[];
+  let transactionTail=Promise.resolve(),holdCommit=false;
+  const factory={data,fault,history,heldCommits,set holdCommit(value){holdCommit=value;},get holdCommit(){return holdCommit;},open(name,version){
+    const request={};queueMicrotask(()=>{
+      if(fault.open){request.onerror?.({preventDefault(){}});return;}
+      let closed=false;
+      const database={objectStoreNames:{contains:key=>stores.has(key)},createObjectStore:key=>{stores.add(key);},close(){closed=true;},transaction(storeName,mode,options){
+        assert.equal(mode,'readwrite');assert.equal(options?.durability,'strict');if(closed||fault.transaction)throw Error('Synthetic transaction failure');
+        const operations=[],transaction={oncomplete:null,onabort:null,onerror:null,error:null};let active=false,finished=false,working,release;
+        const entry={mode,durability:options.durability,requests:[],committed:false,aborted:false};history.push(entry);
+        const ready=transactionTail;transactionTail=new Promise(resolve=>release=resolve);
+        function abort(){if(finished)return;finished=true;entry.aborted=true;queueMicrotask(()=>{transaction.onabort?.({preventDefault(){}});release();});}
+        transaction.abort=abort;
+        const store={};
+        for(const operation of ['get','put','delete'])store[operation]=(...args)=>{
+          if(finished)throw Error('Inactive transaction');const req={};operations.push({operation,args,req});entry.requests.push(operation);if(active)queueMicrotask(pump);return req;
+        };
+        transaction.objectStore=key=>{assert.equal(key,storeName);return store;};
+        let pumping=false,commitQueued=false;
+        function commit(){if(finished)return;if(fault.commit){abort();return;}finished=true;data.clear();for(const [key,value] of working)data.set(key,structuredClone(value));entry.committed=true;transaction.oncomplete?.({preventDefault(){}});release();}
+        function pump(){
+          if(!active||finished||pumping)return;pumping=true;
+          const next=operations.shift();
+          if(!next){pumping=false;if(!commitQueued){commitQueued=true;if(holdCommit)heldCommits.push(commit);else queueMicrotask(commit);}return;}
+          const {operation,args,req}=next;
+          if(fault[operation]){req.error=Error('Synthetic '+operation+' failure');const event={defaultPrevented:false,preventDefault(){this.defaultPrevented=true;}};req.onerror?.(event);transaction.onerror?.(event);if(!event.defaultPrevented)abort();pumping=false;if(!finished)queueMicrotask(pump);return;}
+          if(operation==='get')req.result=structuredClone(working.get(args[0]));
+          else if(operation==='put')working.set(args[1],structuredClone(args[0]));
+          else working.delete(args[0]);
+          try {req.onsuccess?.({preventDefault(){}});} catch(error){transaction.error=error;abort();}
+          pumping=false;queueMicrotask(pump);
+        }
+        ready.then(()=>{if(finished)return;active=true;working=new Map([...data].map(([key,value])=>[key,structuredClone(value)]));pump();});
+        return transaction;
+      }};
+      request.result=database;if(!stores.has('recovery'))request.onupgradeneeded?.({});request.onsuccess?.({});
+    });return request;
+  }};
+  return factory;
+}
+const authorityStores=new WeakMap();
+function authorityFor(storage){if(!authorityStores.has(storage))authorityStores.set(storage,atomicIndexedDB());return authorityStores.get(storage);}
 const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,new Element(id));return elements.get(id);};
 const listeners={},requests=[],timers=new Map();let timerId=0;
 const response=(data,ok=true,status=200)=>({ok,status,json:async()=>data});
 const empty={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
 const admissionStorage=new Map(),localStorage={getItem:key=>admissionStorage.get(key)??null,setItem:(key,value)=>admissionStorage.set(key,String(value)),removeItem:key=>admissionStorage.delete(key)};
-const context=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage,navigator:{locks:{request:async(key,options,fn)=>fn()}},confirm:()=>false,location:{hash:''},history:{pushState(){}},
+const context=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage,indexedDB:authorityFor(localStorage),navigator:{locks:{request:async(key,options,fn)=>fn()}},confirm:()=>false,location:{hash:''},history:{pushState(){}},
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
   document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
   window:{addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
@@ -37,12 +82,12 @@ function serializedLocks() {
 }
 function recoveryHarness(storage,locks=serializedLocks(),extra={}) {
   const dom=new Map(),queued=[],events={},get=id=>{if(!dom.has(id))dom.set(id,new Element(id));return dom.get(id);};
-  const sandbox=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage:storage,navigator:locks?{locks}:{},location:{hash:''},history:{pushState(){}},confirm:()=>false,
+  const sandbox=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage:storage,indexedDB:authorityFor(storage),navigator:locks?{locks}:{},location:{hash:''},history:{pushState(){}},confirm:()=>false,
     setTimeout:()=>1,clearTimeout(){},document:{getElementById:get,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(name,fn){(events[name]||=[]).push(fn);}},
     fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(empty)):url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise((resolve,reject)=>queued.push({url,options,resolve,reject})),...extra});
   for(const file of ['workbench.js','text-classification-proposals.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),sandbox);
   const execute=code=>vm.runInContext(code,sandbox);
-  return {sandbox,get,queued,run:execute,posts:()=>queued.filter(r=>r.options?.method==='POST'),take(suffix,method){const index=queued.findIndex(r=>r.url.endsWith(suffix)&&(!method||r.options?.method===method));assert.notEqual(index,-1,suffix);return queued.splice(index,1)[0];},
+  return {sandbox,get,queued,events,indexedDB:sandbox.indexedDB,run:execute,posts:()=>queued.filter(r=>r.options?.method==='POST'),take(suffix,method){const index=queued.findIndex(r=>r.url.endsWith(suffix)&&(!method||r.options?.method===method));assert.notEqual(index,-1,suffix);return queued.splice(index,1)[0];},
     configure(body){sandbox.fixture=row;execute('showRecord(fixture)');for(const [key,id] of [['server_url','url'],['model','model'],['instruction','guidance'],['seed','seed'],['labels','labels']])get('text-classification-proposal-'+id).value=key==='labels'?JSON.stringify(body.labels):String(body[key]);},
     resolveLists(jobs=[]){for(const request of [...queued])if(request.url.endsWith('/text-classification-proposals')&&!request.options?.method){queued.splice(queued.indexOf(request),1);request.resolve(response({jobs}));}}};
 }
@@ -131,6 +176,107 @@ async function durableRecoveryCases() {
   console.log('Durable classification recovery full reload/delayed reconciliation/exact-ID repeat, authoritative terminal recovery, get/set/remove failures, corrupt/oversized records, missing locks, and two-page admission/CAS passed.');
 }
 
+async function authoritativeAdmissionCases() {
+  const key='tuldok.text-classification-proposals.admission.v1',intent={source_id:row.id,revision:row.revision,source_revision:row.source_revision,server_url:'http://127.0.0.1:2000/v1/',model:'fixture',instruction:'Authoritative exact guidance',seed:42,labels:['schedule','cancel']};
+  const envelope=body=>JSON.stringify({schema_version:1,body});
+  async function initialized(storage=faultStorage(),database=atomicIndexedDB(),locks=serializedLocks()) {
+    const page=recoveryHarness(storage,locks,{indexedDB:database});page.configure(intent);page.resolveLists();await flush();assert.equal(page.run('textClassificationProposalAuthorityReady'),true);return page;
+  }
+  async function explicitLost(page) {
+    const submit=page.get('text-classification-proposal-form').dispatch('submit');await flush();const post=page.take('/text-classification-proposals','POST'),body=JSON.parse(post.options.body);post.reject(Error('Synthetic unknown acknowledgement'));await submit;return body;
+  }
+  // Separate pages deliberately keep their original localStorage read cache,
+  // even while writes share an origin. Authority comes from serialized IDB.
+  for(const same of [false,true]) {
+    const shared=faultStorage(),database=atomicIndexedDB(),locks=serializedLocks();
+    const stale=()=>({getItem:()=>null,setItem:(k,v)=>shared.setItem(k,v),removeItem:k=>shared.removeItem(k)});
+    const left=await initialized(stale(),database,locks),right=await initialized(stale(),database,locks);
+    if(!same)right.get('text-classification-proposal-guidance').value='Different cached-page intent';
+    const a=left.get('text-classification-proposal-form').dispatch('submit'),b=right.get('text-classification-proposal-form').dispatch('submit');await flush();
+    assert.equal(left.posts().length,1);assert.equal(right.posts().length,same?1:0,'Stale-null mirror must not create a second admission');
+    const first=left.take('/text-classification-proposals','POST'),body=JSON.parse(first.options.body);assert.equal(database.data.get('pending'),envelope(body));assert.equal(shared.getItem(key),envelope(body));
+    if(same){const second=right.take('/text-classification-proposals','POST');assert.deepEqual(JSON.parse(second.options.body),body,'Identical explicit attempts share ID/body');second.reject(Error('Unknown acknowledgement'));}first.reject(Error('Unknown acknowledgement'));await Promise.all([a,b]);
+  }
+  // Neither put success nor an outstanding strict commit can authorize POST or
+  // write a new bootstrap mirror. Pagehide retains committed intent, not replay.
+  for(const hide of [false,true]) {
+    const storage=faultStorage(),database=atomicIndexedDB(),page=await initialized(storage,database);
+    database.holdCommit=true;const submit=page.get('text-classification-proposal-form').dispatch('submit');await flush();
+    // The first held transaction is the authority reload; let only it complete.
+    database.heldCommits.shift()();await flush();assert.ok(database.heldCommits.length);assert.equal(page.posts().length,0);assert.equal(storage.getItem(key),null);assert.equal(database.data.get('pending'),undefined);const captured=JSON.parse(page.run('JSON.stringify(textClassificationProposalPendingRequest)'));
+    if(hide)for(const callback of page.events.pagehide||[])callback();
+    database.holdCommit=false;database.heldCommits.shift()();await flush();assert.equal(database.data.get('pending'),envelope(captured));assert.equal(storage.getItem(key),envelope(captured));
+    if(hide){await submit;assert.equal(page.posts().length,0);page.run('textClassificationProposalPaused=false');const retry=await explicitLost(page);assert.deepEqual(retry,captured);}else {const post=page.take('/text-classification-proposals','POST');assert.deepEqual(JSON.parse(post.options.body),captured);post.reject(Error('Unknown acknowledgement'));await submit;}
+  }
+  // Abort after put success rolls back authority and leaves no fresh LS frame.
+  // The same in-memory ID can be claimed and posted by an explicit correction.
+  {
+    const storage=faultStorage(),database=atomicIndexedDB(),page=await initialized(storage,database);database.holdCommit=true;
+    const submit=page.get('text-classification-proposal-form').dispatch('submit');await flush();database.heldCommits.shift()();await flush();const captured=JSON.parse(page.run('JSON.stringify(textClassificationProposalPendingRequest)'));
+    database.fault.commit=true;database.holdCommit=false;database.heldCommits.shift()();await submit;assert.equal(page.posts().length,0);assert.equal(storage.getItem(key),null);assert.equal(database.data.get('pending'),undefined);assert.ok(database.history.at(-1).aborted);assert.ok(page.run('textClassificationProposalStorageBlocked'));
+    database.fault.commit=false;assert.deepEqual(await explicitLost(page),captured);assert.equal(database.data.get('pending'),envelope(captured));
+  }
+  // A failed IDB write must abort even if its bubbling error was prevented.
+  for(const fault of ['get','put','transaction']) {
+    const storage=faultStorage(),database=atomicIndexedDB(),page=await initialized(storage,database);database.fault[fault]=true;
+    await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0,fault);assert.equal(storage.getItem(key),null,fault);assert.equal(database.data.get('pending'),undefined,fault);assert.ok(page.run('textClassificationProposalStorageBlocked'),fault);
+    const captured=page.run('textClassificationProposalPendingRequest && JSON.stringify(textClassificationProposalPendingRequest)');database.fault[fault]=false;const body=await explicitLost(page);if(captured)assert.deepEqual(body,JSON.parse(captured));
+  }
+  for(const missing of [false,true]) {
+    const storage=faultStorage(),database=atomicIndexedDB();if(!missing)database.fault.open=true;
+    const page=recoveryHarness(storage,serializedLocks(),{indexedDB:missing?undefined:database});page.configure(intent);page.resolveLists();await flush();assert.equal(page.run('textClassificationProposalAuthorityReady'),false);assert.equal(page.get('text-classification-proposal-submit').disabled,true);await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);assert.equal(storage.getItem(key),null);assert.ok(page.run('textClassificationProposalStorageBlocked'));
+    database.fault.open=false;page.sandbox.indexedDB=database;await explicitLost(page);
+  }
+  // Mirror failure is after DB commit, so reload cannot forget the exact ID.
+  {
+    const storage=faultStorage(),database=atomicIndexedDB(),page=await initialized(storage,database);storage.fault.set=true;await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);const body=JSON.parse(page.run('JSON.stringify(textClassificationProposalPendingRequest)'));assert.equal(database.data.get('pending'),envelope(body));assert.equal(storage.getItem(key),null);
+    storage.fault.set=false;const reloaded=await initialized(storage,database);assert.deepEqual(JSON.parse(reloaded.run('JSON.stringify(textClassificationProposalPendingRequest)')),body);assert.deepEqual(await explicitLost(reloaded),body);
+  }
+  // Delete failure cannot claim a successful clear, and stale receipts cannot
+  // delete a later authority even when their per-page mirror is stale-null.
+  {
+    const storage=faultStorage(),database=atomicIndexedDB(),page=await initialized(storage,database),body=await explicitLost(page);database.fault.delete=true;page.sandbox.receiptBody=body;
+    assert.equal(await page.run('textClassificationProposalClearStorage(receiptBody.request_id,receiptBody)'),false);assert.equal(database.data.get('pending'),envelope(body));assert.equal(storage.getItem(key),envelope(body));database.fault.delete=false;
+    assert.equal(await page.run('textClassificationProposalClearStorage(receiptBody.request_id,receiptBody)'),true);assert.equal(database.data.get('pending'),undefined);assert.equal(storage.getItem(key),null);
+    const staleStore={getItem:()=>envelope(body),setItem:(k,v)=>storage.setItem(k,v),removeItem:k=>storage.removeItem(k)},stalePage=await initialized(staleStore,database);assert.equal(stalePage.run('textClassificationProposalPendingRequest'),null,'Retired bootstrap cannot reseed old authority');assert.equal(database.data.get('pending'),undefined);
+    const newer=await explicitLost(page);assert.notEqual(newer.request_id,body.request_id);assert.equal(await page.run('textClassificationProposalClearStorage(receiptBody.request_id,receiptBody)'),false);assert.equal(database.data.get('pending'),envelope(newer));assert.equal(storage.getItem(key),envelope(newer));
+  }
+  // A corrupt legacy mirror creates a bounded durable global blocker. A second
+  // stale-null renderer cannot bypass it; oversized bytes are never decoded.
+  for(const raw of ['{corrupt',' '.repeat(64001)]) {
+    const database=atomicIndexedDB(),storage=faultStorage(raw),locks=serializedLocks(),corrupt=recoveryHarness(storage,locks,{indexedDB:database});corrupt.configure(intent);corrupt.resolveLists();await flush();assert.ok(database.data.get('legacy_blocker')?.length);const metadata=database.data.get('legacy_blocker')[0];assert.ok(metadata.raw===null||metadata.raw.length<=64000);
+    const staleNull=await initialized({getItem:()=>null,setItem(){},removeItem(){}},database,locks);await staleNull.get('text-classification-proposal-form').dispatch('submit');assert.equal(staleNull.posts().length,0);assert.equal(storage.getItem(key),raw);assert.ok(staleNull.run('textClassificationProposalStorageBlocked'));assert.equal(database.data.get('pending'),undefined);
+  }
+  // Conflicting canonical legacy hints are preserved, rather than selecting one
+  // arbitrarily. Only exact matching receipt CAS removes its matching evidence.
+  {
+    const database=atomicIndexedDB(),first={...intent,request_id:'1'.repeat(32)},second={...intent,instruction:'Other legacy hint',request_id:'2'.repeat(32)},a=faultStorage(envelope(first)),b=faultStorage(envelope(second)),locks=serializedLocks();
+    const left=await initialized(a,database,locks),right=await initialized(b,database,locks);assert.equal(database.data.get('pending'),envelope(first));assert.equal(database.data.get('legacy_blocker')[0].raw,envelope(second));await right.get('text-classification-proposal-form').dispatch('submit');assert.equal(right.posts().length,0);assert.equal(a.getItem(key),envelope(first));assert.equal(b.getItem(key),envelope(second));
+    right.sandbox.receiptBody=second;assert.equal(await right.run('textClassificationProposalClearStorage(receiptBody.request_id,receiptBody)'),false);assert.equal(database.data.get('pending'),envelope(first));assert.equal(database.data.get('legacy_blocker'),undefined);assert.equal(a.getItem(key),envelope(first));
+    left.sandbox.receiptBody=first;assert.equal(await left.run('textClassificationProposalClearStorage(receiptBody.request_id,receiptBody)'),true);assert.equal(database.data.get('pending'),undefined);
+  }
+  for(const field of ['request_id','source_id']) {
+    const malformed={...intent,request_id:'6'.repeat(32),[field]:'6'.repeat(32)+'\n'},raw=envelope(malformed),storage=faultStorage(raw),database=atomicIndexedDB(),page=recoveryHarness(storage,serializedLocks(),{indexedDB:database});page.configure(intent);page.resolveLists();await flush();await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);assert.equal(storage.getItem(key),raw);page.sandbox.badBody=malformed;assert.throws(()=>page.run('validateTextClassificationProposalBody(badBody)'));if(field==='request_id')assert.equal(page.run('textClassificationProposalStoredId(JSON.stringify({schema_version:1,body:badBody}))'),null);
+  }
+  for(const authority of ['host：2000','host／other','host＠other','host？other','host＃other']) {
+    const storage=faultStorage(),database=atomicIndexedDB(),page=await initialized(storage,database);page.get('text-classification-proposal-url').value='http://'+authority;await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);assert.equal(storage.getItem(key),null);assert.equal(page.run('textClassificationProposalPendingRequest'),null);assert.equal(page.run('textClassificationProposalStorageBlocked'),'');page.get('text-classification-proposal-url').value=intent.server_url;await explicitLost(page);
+  }
+  // Damaged DB metadata cannot nominate an unrelated receipt or retire mirror
+  // bytes without a unique recoverable exact ID.
+  for(const blocker of [
+    {schema_version:1,raw:envelope({...intent,request_id:'3'.repeat(32)}),length:envelope({...intent,request_id:'3'.repeat(32)}).length,recovery_id:'4'.repeat(32)},
+    {schema_version:1,raw:null,length:64001,recovery_id:'4'.repeat(32)},
+    Object.assign([], {schema_version:1,raw:null,length:64001,recovery_id:null})
+  ]) {
+    const database=atomicIndexedDB();database.data.set('initialized',{schema_version:1,resolved_raw:null});database.data.set('legacy_blocker',[blocker]);const storage=faultStorage(),page=recoveryHarness(storage,serializedLocks(),{indexedDB:database});page.configure(intent);page.resolveLists();await flush();await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);assert.equal(page.run('textClassificationProposalAuthorityReady'),false);assert.ok(page.run('textClassificationProposalStorageBlocked'));assert.equal(page.queued.some(request=>request.url.endsWith('/text-classification-proposals/'+'4'.repeat(32))),false);page.sandbox.receiptBody={...intent,request_id:'4'.repeat(32)};assert.equal(await page.run('textClassificationProposalClearStorage(receiptBody.request_id,receiptBody)'),false);assert.deepEqual(database.data.get('legacy_blocker'),[blocker]);
+  }
+  for(const raw of ['{corrupt',JSON.stringify({schema_version:1,body:{instruction:'no ID'}}),' '+envelope({...intent,request_id:'5'.repeat(32)})]) {
+    const database=atomicIndexedDB(),storage=faultStorage(raw);database.data.set('initialized',{schema_version:1,resolved_raw:raw});const page=recoveryHarness(storage,serializedLocks(),{indexedDB:database});page.configure(intent);page.resolveLists();await flush();await page.get('text-classification-proposal-form').dispatch('submit');assert.equal(page.posts().length,0);assert.equal(storage.getItem(key),raw);assert.equal(database.data.get('initialized').resolved_raw,raw);assert.ok(page.run('textClassificationProposalStorageBlocked'));
+  }
+  assert.ok(authorityFor(localStorage).history.every(entry=>entry.mode==='readwrite'&&entry.durability==='strict'));
+  console.log('Classification IndexedDB authority: stale per-page mirrors, same-ID repeats, strict commit/pagehide fences, post-put abort/retry, open/read/write/delete/transaction failures, committed mirror failure/reload, retired hints, stale receipt CAS, bounded legacy blockers and conflicting migration passed.');
+}
+
 (async()=>{
   await flush();run('showRecord(row);selected.set(row.id,row);selection(true)');resolve('/text-classification-proposals',{jobs:[job]});await flush();
   assert.equal(button('Apply as draft').type,'button');const pairs=run('JSON.stringify(releaseBody().items)');
@@ -183,7 +329,7 @@ async function durableRecoveryCases() {
   }
   // Two starts share one pending action; a lost start is reconciled by GET only.
   element('text-classification-proposal-model').value='fixture';element('text-classification-proposal-guidance').value='Visible text';element('text-classification-proposal-seed').value='42';
-  const start=element('text-classification-proposal-form').dispatch('submit');await element('text-classification-proposal-form').dispatch('submit');
+  const start=element('text-classification-proposal-form').dispatch('submit');await element('text-classification-proposal-form').dispatch('submit');await flush();
   assert.equal(requests.length,1);const request=take('/text-classification-proposals'),body=JSON.parse(request.options.body);request.reject(Error('Lost start acknowledgement'));await start;
   assert.equal(run('textClassificationProposalPendingRequest.request_id'),body.request_id);
   const reconcile=element('text-classification-proposal-refresh').dispatch('click');resolve('/text-classification-proposals',{jobs:[admitted(body,{status:'generating'})]});await reconcile;
@@ -280,5 +426,6 @@ async function durableRecoveryCases() {
   for(const fn of listeners.pagehide||[])fn();assert.equal(timers.size,0);assert.equal(requests.length,0);
   await freshClassificationValidationCases();
   await durableRecoveryCases();
+  await authoritativeAdmissionCases();
   console.log('Text classification controller projected summaries, exact labels/config/source fences, abstention, held admission/early 404/lost acknowledgement/exact-ID repeat, cancelled/new intent, annotation-save/reject ownership, later-input/form/apply ownership and polling lifecycle passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
