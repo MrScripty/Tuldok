@@ -75,11 +75,13 @@ async function refresh() {
 }
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
 function mayDiscard() { return !(dirty || (typeof responseDirty !== 'undefined' && responseDirty)) || confirm('Discard unsaved annotation or response edits?'); }
+function responseIntentEpoch() { return typeof responseEditEpoch === 'undefined' ? null : responseEditEpoch; }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
-  const epoch = ++editorEpoch;
+  const epoch = ++editorEpoch, responseEpoch = responseIntentEpoch();
   const record = await api('records/' + id);
-  if (epoch !== editorEpoch) return;
+  // Parent replacement discards both editors; each owner must still match the request.
+  if (epoch !== editorEpoch || responseEpoch !== responseIntentEpoch()) return;
   showRecord(record);
 }
 function showRecord(record) {
@@ -153,7 +155,7 @@ $('asset-image').addEventListener('pointerup',event=>{
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) throw Error('Save or cancel the response edit before saving the annotation.');
-  const record=current, task=$('task').value, epoch=++editorEpoch;
+  const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
@@ -165,7 +167,7 @@ action('editor',async()=>{
   // A successful older save can prove retained fixed pairs stale without owning them.
   const selectedPair=selected.get(saved.id);
   if(selectedPair && (selectedPair.revision<saved.revision || selectedPair.source_revision<saved.source_revision)) invalidateRelease();
-  if(epoch===editorEpoch)showRecord(saved);
+  if(epoch===editorEpoch && responseEpoch===responseIntentEpoch())showRecord(saved);
   await refresh();notice('Annotation saved.');
 },'submit');
 async function readImportImage(file) {
@@ -179,13 +181,13 @@ async function readImportImage(file) {
 }
 action('import-form',async()=>{
   if(!mayDiscard())return;
-  const epoch=++editorEpoch;
+  const epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const file=$('import-image').files[0], text=$('import-text').value;
   if(file && text.trim())throw Error('Import an image or text, one at a time.');
   const body={kind:file?'image':'text',name:file?file.name:$('import-name').value,groups:[$('import-group').value],rights:$('rights').value,text};
   if(file)body.image=await readImportImage(file);
   const record=await api('import',body);await refresh();
-  if(epoch===editorEpoch)showRecord(record);
+  if(epoch===editorEpoch && responseEpoch===responseIntentEpoch())showRecord(record);
   notice('Record imported.');
 },'submit');
 action('generate-form',async()=>{

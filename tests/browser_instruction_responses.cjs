@@ -59,6 +59,29 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await evaluate('answerRelease();answerRelease=null');await until(()=>evaluate('!responseBusy && !responseListBusy'));assert.equal(await evaluate('responseDirty'),true);assert.equal(await evaluate('responseCompletion()'),'Later unsaved answer 😀 ');assert.equal(await evaluate('document.getElementById("response-review").value'),'draft');
   await click('response-cancel');await evaluate('window.fetch=answerBaseFetch;window.confirm=()=>true');await saveAnswer(' another accepted answer \ufeff ');
   let rows=(await api('records/'+primary.id+'/responses')).responses;assert.equal(rows.length,2);const first=rows.find(row=>row.completion===exact),second=rows.find(row=>row.id!==first.id);assert.ok(first);assert.deepEqual(await api('records/'+primary.id),primary);
+  // Hold actual parent GET acknowledgments after navigation/reload begins, then edit the still-visible answer.
+  await evaluate('refresh()');const heldParentLoads=[];
+  for(const operation of ['navigation','reload'])for(const intent of ['completion','review']){
+    await evaluate('document.querySelector('+JSON.stringify('#response-list button[data-response-id="'+first.id+'"]')+').click()');
+    const targetID=operation==='reload'?primary.id:imported[1].id;
+    await evaluate(`window.parentRaceFetch=window.fetch;window.parentRaceRelease=null;window.parentRaceDone=false;window.parentRaceConfirms=0;window.confirm=()=>{++parentRaceConfirms;return true;};window.fetch=async(...args)=>{const response=await parentRaceFetch(...args);if(String(args[0])==='/api/workbench/records/${targetID}'&&!args[1]?.method)await new Promise(resolve=>parentRaceRelease=resolve);return response;};`);
+    if(operation==='reload')await click('reload');
+    else await evaluate(`window.parentRaceTask=[...document.querySelectorAll('#records button')].find(button=>button.textContent.startsWith('second')).onclick();parentRaceTask.then(()=>parentRaceDone=true);void 0;`);
+    await until(()=>evaluate('!!parentRaceRelease'));
+    if(intent==='completion')await fill('response-completion',JSON.stringify('Later held parent-load edit\r\n😀 '));
+    else await fill('response-review','draft');
+    const draft=await evaluate('JSON.stringify({completion:responseCompletion(),review:document.getElementById("response-review").value,editor:responseEditor})');
+    assert.equal(await evaluate('responseDirty'),true);assert.equal(await evaluate('dirty'),false);
+    await evaluate('parentRaceRelease();parentRaceRelease=null');
+    await until(()=>evaluate(operation==='reload'?'!document.getElementById("reload").dataset.busy':'parentRaceDone'));
+    assert.equal(await evaluate('current.id'),primary.id,operation+' cannot adopt a parent over newer answer '+intent);
+    assert.equal(await evaluate('responseParent.id'),primary.id);assert.equal(await evaluate('responseDirty'),true);
+    assert.equal(await evaluate('document.getElementById("response-form").hidden'),false);
+    assert.equal(await evaluate('JSON.stringify({completion:responseCompletion(),review:document.getElementById("response-review").value,editor:responseEditor})'),draft);
+    assert.equal(await evaluate('parentRaceConfirms'),0,'Starting a clean load grants no discard of later edits');
+    await evaluate('window.fetch=parentRaceFetch');await click('response-cancel');heldParentLoads.push({operation,intent,newer_draft_retained:true});
+  }
+  evidence.steps.push({stage:'held-parent-record-loads',cases:heldParentLoads});
   await evaluate('document.querySelectorAll("#response-list input[type=checkbox]").forEach(e=>e.click())');assert.equal(await evaluate('responseSelected.size'),2);assert.equal(await evaluate('selected.size'),0);
   await evaluate('document.querySelector('+JSON.stringify('#response-list button[data-response-id="'+first.id+'"]')+').click()');assert.equal(await evaluate('responseCompletion()'),exact);assert.equal(await evaluate('document.getElementById("response-entry-format").value'),'json');await fill('response-entry-format','text');assert.equal(await evaluate('document.getElementById("response-entry-format").value'),'json');assert.equal(await evaluate('responseDirty'),false);
   await capture('01-independent-answers','#responses-panel');const fixed=await pairs();let proof=await preview();assert.equal(proof.eligible,true);assert.equal(proof.example_count,2);assert.equal(proof.unique_prompt_count,1);
@@ -87,5 +110,5 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const consumerRun=spawnSync(process.env.INSTRUCTION_CONSUMER_PYTHON||'python3',['tests/check_instruction_consumer.py',archive],{cwd:root,encoding:'utf8',timeout:120000});assert.equal(consumerRun.status,0,consumerRun.stdout+'\n'+consumerRun.stderr);const consumer=JSON.parse(consumerRun.stdout.trim().split('\n').at(-1));assert.equal(consumer.result,'PASS');assert.equal(consumer.examples,4);assert.equal(consumer.over_default_1024_tokens,true);
   const bytes=fs.readFileSync(archive);assert.equal(consumer.zip_sha256,crypto.createHash('sha256').update(bytes).digest('hex'));fs.writeFileSync(path.join(reports,'instruction-downloaded.zip'),bytes);
   evidence.steps.push({stage:'held-real-create-acknowledgment',single_request:true,later_editor_intent_retained:true,parent_annotation_preserved:true},{stage:'exact-selection-staleness',original_pairs:fixed,final_pairs:finalPairs,selected_response_and_parent_and_unselected_lineage_rejected:true,unselected_sibling_does_not_expand_selection:true},{stage:'actual-download-and-consumer',selection,preview:reopened,consumer,zip_bytes:bytes.length});await capture('04-download','#response-release-panel');
-  assert.deepEqual(errors,[]);evidence.errors=errors;evidence.result='PASS';fs.writeFileSync(path.join(reports,'instruction-session.json'),JSON.stringify(evidence,null,2)+'\n');console.log('PASS actual Chromium two independent answers + retained entity annotation, held create/repeated controls/later edits, exact Unicode/review, response/parent/bridge freshness, fixed file reopen/filter separation, weighted families, actual ZIP download and unchanged pinned consumer; desktop/narrow.');
+  assert.deepEqual(errors,[]);evidence.errors=errors;evidence.result='PASS';fs.writeFileSync(path.join(reports,'instruction-session.json'),JSON.stringify(evidence,null,2)+'\n');console.log('PASS actual Chromium two independent answers + retained entity annotation, held create and parent navigation/reload/repeated controls/later edits, exact Unicode/review, response/parent/bridge freshness, fixed file reopen/filter separation, weighted families, actual ZIP download and unchanged pinned consumer; desktop/narrow.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
