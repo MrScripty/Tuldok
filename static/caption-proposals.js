@@ -1,7 +1,7 @@
 'use strict';
 let captionProposalJobs = [], captionProposalEpoch = 0, captionProposalModelEpoch = 0;
 let captionProposalTimer = null, captionProposalPaused = false, captionProposalBusy = false;
-let captionProposalPendingRequest = null, captionProposalRendered = '';
+let captionProposalPendingRequest = null, captionProposalAdmissionRequest = null, captionProposalRendered = '';
 const captionProposalActive = job => ['preparing','generating','stopping'].includes(job.status);
 function captionProposalStatus(message) { $('caption-proposal-status').textContent = message; }
 function captionProposalsShown(record) {
@@ -58,11 +58,11 @@ async function refreshCaptionProposals() {
     } catch(error) {
       if(epoch!==captionProposalEpoch||captionProposalPaused)return;
       if(error.status===404 && captionProposalPendingRequest===pending) {
-        captionProposalPendingRequest=null;captionProposalStatus('No attempt exists for the last request ID. You may explicitly start a new request.');
+        captionProposalStatus('The request ID is not visible yet. Its admission or acknowledgement may still arrive; an explicit unchanged repeat keeps this ID.');
       } else throw error;
     }
   }
-  if(captionProposalPendingRequest && captionProposalJobs.some(job=>job.id===captionProposalPendingRequest.request_id)) {
+  if(captionProposalPendingRequest && captionProposalAdmissionRequest!==captionProposalPendingRequest && captionProposalJobs.some(job=>job.id===captionProposalPendingRequest.request_id)) {
     captionProposalPendingRequest=null;captionProposalStatus('Persisted request recovered. Inspect its status; no inference was retried.');
   }
   renderCaptionProposals();
@@ -72,7 +72,7 @@ async function decideCaptionProposal(job, decision) {
   const record=current;
   if(decision==='apply_draft' && (record?.id!==job.source.id || hasUnsavedEdits() || $('editor').dataset.busy))
     throw Error('Save or discard edits and open the captured image before applying a draft.');
-  const epoch=++editorEpoch,responseEpoch=responseIntentEpoch();
+  const epoch=decision==='apply_draft'?++editorEpoch:editorEpoch,responseEpoch=responseIntentEpoch();
   let result;
   try { result=await api('caption-proposals/decide/'+job.id,{revision:job.revision,decision}); }
   catch(error) {
@@ -108,10 +108,10 @@ $('caption-proposal-form').addEventListener('submit',async event=>{
     captionProposalStatus('An earlier request has an unknown acknowledgement. Refresh requests before changing its intent.');return;
   }
   const body=previous || {...intent,request_id:crypto.randomUUID().replaceAll('-','')};captionProposalPendingRequest=body;
-  captionProposalBusy=true;$('caption-proposal-submit').disabled=true;
-  try { await api('caption-proposals',body);captionProposalPendingRequest=null;captionProposalStatus('Caption requested. Current annotations remain unchanged.');await refreshCaptionProposals(); }
-  catch(error) {if(error.status>=400 && error.status<500)captionProposalPendingRequest=null;captionProposalStatus(error.message+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');}
-  finally {captionProposalBusy=false;$('caption-proposal-submit').disabled=false;}
+  captionProposalAdmissionRequest=body;captionProposalBusy=true;$('caption-proposal-submit').disabled=true;
+  try { await api('caption-proposals',body);if(captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus('Caption requested. Current annotations remain unchanged.');await refreshCaptionProposals(); }
+  catch(error) {if(error.status>=400 && error.status<500 && captionProposalPendingRequest===body)captionProposalPendingRequest=null;captionProposalStatus(error.message+' Refresh requests to reconcile. An explicit repeat of this unchanged request uses the same ID; no automatic retry.');}
+  finally {if(captionProposalAdmissionRequest===body)captionProposalAdmissionRequest=null;captionProposalBusy=false;$('caption-proposal-submit').disabled=false;}
 });
 action('caption-proposal-refresh',refreshCaptionProposals);
 window.addEventListener('pagehide',()=>{captionProposalPaused=true;++captionProposalEpoch;++captionProposalModelEpoch;clearTimeout(captionProposalTimer);});

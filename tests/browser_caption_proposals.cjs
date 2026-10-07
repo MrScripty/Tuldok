@@ -67,12 +67,20 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('caption-proposal-model','text-only');await start('Describe visible pixels');
   await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="failed")'));assert.equal((await request('records/'+rows[0].id)).revision,rows[0].revision);
   await fill('caption-proposal-model','caption-fixture');
-  // Lose a real start acknowledgement after persistence, then recover without POST replay.
-  await evaluate('window.captionNativeFetch=window.fetch;window.captionLostStart=true;window.fetch=async(...args)=>{const r=await captionNativeFetch(...args);if(captionLostStart && args[0]==="/api/workbench/caption-proposals" && args[1]?.method==="POST"){captionLostStart=false;throw Error("Controlled lost start acknowledgement");}return r;};');
+  // Hold admission, refresh through a real exact-ID 404, then lose the persisted acknowledgement.
+  await evaluate('window.captionNativeFetch=window.fetch;window.captionLostStart=true;window.captionHoldStart=true;window.captionStartHeld=false;window.captionPostedIds=[];window.fetch=async(...args)=>{const start=args[0]==="/api/workbench/caption-proposals" && args[1]?.method==="POST";if(start){captionPostedIds.push(JSON.parse(args[1].body).request_id);if(captionHoldStart){captionHoldStart=false;captionStartHeld=true;await new Promise(resolve=>window.captionStartRelease=resolve);}}const r=await captionNativeFetch(...args);if(captionLostStart && start){captionLostStart=false;throw Error("Controlled lost start acknowledgement");}return r;};');
   const beforeStart=(await request('caption-proposals')).jobs.length;
-  await start('Describe the visible rectangle');assert.ok(await evaluate('!!captionProposalPendingRequest'));
+  const requestCount=async()=> (await(await fetch('http://127.0.0.1:'+modelPort+'/test/request-count')).json()).requests;
+  const beforeInference=await requestCount();await fill('caption-proposal-guidance','Describe the visible rectangle');
+  await evaluate('document.getElementById("caption-proposal-form").requestSubmit();document.getElementById("caption-proposal-form").requestSubmit()');await until(()=>evaluate('captionStartHeld'));
+  const recoveryId=await evaluate('captionProposalPendingRequest.request_id');await refresh();
+  assert.equal(await evaluate('captionProposalPendingRequest?.request_id'),recoveryId,'Early real 404 must retain admission identity');
+  assert.equal(await requestCount(),beforeInference,'Held admission must not start inference');
+  await evaluate('captionStartRelease()');await until(()=>evaluate('!captionProposalBusy'));assert.equal(await evaluate('captionProposalPendingRequest?.request_id'),recoveryId);
+  await start('Describe the visible rectangle');const recoveryPostedIds=await evaluate('captionPostedIds');assert.deepEqual(recoveryPostedIds,[recoveryId,recoveryId],'Explicit repeat must reuse the exact admission ID');
   await refresh();await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed")'));
   assert.equal((await request('caption-proposals')).jobs.length,beforeStart+1);assert.equal(await evaluate('captionProposalPendingRequest'),null);
+  assert.equal(await requestCount(),beforeInference+1,'Lost-start recovery must run the image backend exactly once');
   const job=(await request('caption-proposals')).jobs.find(j=>j.status==='completed');
   const evidence=await request('caption-proposals/'+job.id);
   const crypto=require('node:crypto'),digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
@@ -108,12 +116,24 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   fs.writeFileSync(path.join(report,'consumer.log'),consumer);
   // Rejection has no target effect. An active request survives editor navigation until explicit cancel.
   await start('Describe visible pixels');await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed")'));
-  const reviewed=await request('records/'+rows[0].id);await jobButton('Reject caption proposal');assert.deepEqual(await request('records/'+rows[0].id),reviewed);
+  let reviewed=await request('records/'+rows[0].id);
+  // Hold a real committed annotation-save acknowledgement; Reject cannot revoke its editor ownership.
+  await evaluate('window.captionHoldSave=true;window.captionSaveHeld=false;window.fetch=async(...args)=>{const r=await captionNativeFetch(...args);if(captionHoldSave && args[0]==='+JSON.stringify('/api/workbench/records/'+rows[0].id)+' && args[1]?.method==="POST"){captionHoldSave=false;captionSaveHeld=true;await new Promise(resolve=>window.captionSaveRelease=resolve);}return r;};');
+  await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');await until(()=>evaluate('captionSaveHeld'));
+  const committedSave=await request('records/'+rows[0].id);assert.equal(committedSave.revision,reviewed.revision+1);
+  await jobButton('Reject caption proposal');assert.deepEqual(await request('records/'+rows[0].id),committedSave,'Reject cannot change the saved annotation');
+  await evaluate('captionSaveRelease()');await until(()=>evaluate('!document.getElementById("editor").dataset.busy'));
+  assert.equal(await evaluate('current.revision'),committedSave.revision,'Held save acknowledgement must retain editor ownership');assert.equal(await evaluate('dirty'),false);
+  await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');await until(()=>evaluate('!document.getElementById("editor").dataset.busy'));
+  reviewed=await request('records/'+rows[0].id);assert.equal(reviewed.revision,committedSave.revision+1,'Subsequent real annotation save must use the accepted revision');assert.equal(await evaluate('current.revision'),reviewed.revision);assert.equal(await evaluate('dirty'),false);
   await start('slow');await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="generating")'));
   await open(rows[1].id);assert.equal(await evaluate('document.getElementById("caption-proposal-jobs").textContent'),'');
   await open(rows[0].id);await until(()=>evaluate('document.getElementById("caption-proposal-jobs").textContent.includes("generating")'));
   await jobButton('Cancel caption request');await until(async()=>{await refresh();return evaluate('captionProposalJobs.some(j=>j.status==="cancelled")');});
   assert.deepEqual(await request('records/'+rows[0].id),reviewed);
+  const cancelled=(await request('caption-proposals')).jobs.find(j=>j.status==='cancelled');
+  await start('Fresh intent after explicit cancellation');await until(()=>evaluate('captionProposalJobs.some(j=>j.status==="completed" && j.config.instruction==="Fresh intent after explicit cancellation")'));
+  const fresh=(await request('caption-proposals')).jobs.find(j=>j.config.instruction==='Fresh intent after explicit cancellation');assert.notEqual(fresh.id,cancelled.id);assert.deepEqual(await request('records/'+rows[0].id),reviewed);
   const count=(await request('caption-proposals')).jobs.length;
   await send('Page.navigate',{url:base+'/'});await until(()=>evaluate('location.pathname==="/" && document.readyState==="complete"'));
   const history=await send('Page.getNavigationHistory');await send('Page.navigateToHistoryEntry',{entryId:history.entries[history.currentIndex-1].id});
@@ -131,6 +151,6 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('document.getElementById("caption-proposal-guidance").focus();document.getElementById("caption-proposal-guidance").select()');await send('Input.insertText',{text:'Describe the actual visible image.'});
   assert.equal(await evaluate('document.getElementById("caption-proposal-guidance").value'),'Describe the actual visible image.');
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'request/apply double clicks, exact image evidence, unsupported vision, lost start/apply acknowledgements, idempotency, fixed stale selection, draft block, human review, ZIP consumption, reject/cancel, navigation/reload, keyboard and narrow layout'},null,2));
+  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),model:'controlled local HTTP fixture',fixed,job_id:job.id,application_revision:applied.revision,recovery_id:recoveryId,recovery_post_ids:recoveryPostedIds,recovery_backend_requests:1,reject_save_revision:committedSave.revision,subsequent_save_revision:reviewed.revision,cancelled_id:cancelled.id,fresh_intent_id:fresh.id,downloaded_zip_sha256:digest(fs.readFileSync(zipPath)),consumer:'unchanged pinned diffusion_check_image_data.py',real_model_quality:false,tests:'held admission/early real 404/lost start acknowledgement/exact-ID repeat runs backend once, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout'},null,2));
   console.log('Caption proposal real HTTP/Chromium controlled lifecycle, lost-response recovery, draft review separation, navigation and pinned consumer passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

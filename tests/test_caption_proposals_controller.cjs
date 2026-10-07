@@ -33,6 +33,34 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
   element('caption-proposal-url').value='http://127.0.0.1:1000';const models=element('caption-proposal-models').dispatch('click');
   element('caption-proposal-url').value='http://127.0.0.1:2000';await element('caption-proposal-url').dispatch('input');resolve('/api/generation/prompt-models',{models:[{id:'old',name:'Old'}]});await models;
   assert.equal(element('caption-proposal-model').children.length,0);
+  if(process.env.CAPTION_RECOVERY_CASE!=='reject') {
+    // A list and exact-ID 404 can precede admission of a held start POST.
+    element('caption-proposal-model').value='fixture';element('caption-proposal-guidance').value='Held admission';element('caption-proposal-seed').value='42';
+    const heldStart=element('caption-proposal-form').dispatch('submit'),heldPost=take('/caption-proposals'),heldBody=JSON.parse(heldPost.options.body);
+    const early=element('caption-proposal-refresh').dispatch('click');resolve('/caption-proposals',{jobs:[job]});await flush();
+    take('/caption-proposals/'+heldBody.request_id).resolve(response({error:'Not persisted yet'},false,404));await early;
+    assert.equal(run('captionProposalPendingRequest?.request_id'),heldBody.request_id,'Early absence must retain the in-flight admission identity');
+    heldPost.reject(Error('Lost acknowledgement after held admission'));await heldStart;
+    const absentAgain=element('caption-proposal-refresh').dispatch('click');resolve('/caption-proposals',{jobs:[job]});await flush();
+    take('/caption-proposals/'+heldBody.request_id).resolve(response({error:'Admission may still arrive'},false,404));await absentAgain;
+    assert.equal(run('captionProposalPendingRequest?.request_id'),heldBody.request_id,'Ambiguous absence cannot authorize a new ID');
+    element('caption-proposal-guidance').value='Changed intent';await element('caption-proposal-form').dispatch('submit');assert.equal(requests.length,0);
+    assert.ok(element('caption-proposal-status').textContent.includes('unknown acknowledgement'));
+    element('caption-proposal-guidance').value='Held admission';const retry=element('caption-proposal-form').dispatch('submit'),retryPost=take('/caption-proposals');
+    assert.deepEqual(JSON.parse(retryPost.options.body),heldBody,'Explicit unchanged repeat must reuse the exact admission ID/body');
+    const persistedWhilePosting=element('caption-proposal-refresh').dispatch('click');resolve('/caption-proposals',{jobs:[{...job,id:heldBody.request_id}]});await persistedWhilePosting;
+    assert.equal(run('captionProposalPendingRequest?.request_id'),heldBody.request_id,'Even a persisted GET cannot revoke an in-flight POST identity');
+    retryPost.resolve(response({...job,id:heldBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[{...job,id:heldBody.request_id}]});await retry;
+    assert.equal(run('captionProposalPendingRequest'),null);
+    // A recovered explicitly cancelled attempt releases the old intent for a fresh request.
+    const cancelledStart=element('caption-proposal-form').dispatch('submit'),cancelledPost=take('/caption-proposals'),cancelledBody=JSON.parse(cancelledPost.options.body);
+    assert.notEqual(cancelledBody.request_id,heldBody.request_id);cancelledPost.reject(Error('Lost start acknowledgement'));await cancelledStart;
+    const cancelledLookup=element('caption-proposal-refresh').dispatch('click');resolve('/caption-proposals',{jobs:[{...job,id:cancelledBody.request_id,status:'cancelled'}]});await cancelledLookup;
+    assert.equal(run('captionProposalPendingRequest'),null);
+    element('caption-proposal-guidance').value='New intent after cancellation';const fresh=element('caption-proposal-form').dispatch('submit'),freshPost=take('/caption-proposals'),freshBody=JSON.parse(freshPost.options.body);
+    assert.notEqual(freshBody.request_id,cancelledBody.request_id);assert.equal(freshBody.instruction,'New intent after cancellation');
+    freshPost.resolve(response({...job,id:freshBody.request_id}));await flush();resolve('/caption-proposals',{jobs:[job]});await fresh;
+  }
   // Two starts share one pending action; a lost start is reconciled by GET only.
   element('caption-proposal-model').value='fixture';element('caption-proposal-guidance').value='Visible pixels';element('caption-proposal-seed').value='42';
   const start=element('caption-proposal-form').dispatch('submit');await element('caption-proposal-form').dispatch('submit');
@@ -56,10 +84,31 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
   run('showRecord(row)');resolve('/caption-proposals',{jobs:[job]});await flush();const lost=button('Apply as draft').dispatch('click');take('/caption-proposals/decide/'+job.id).reject(Error('Lost application acknowledgement'));await lost;
   assert.equal(requests.length,0);assert.ok(element('caption-proposal-status').textContent.includes('acknowledgement'));
   const receipt=element('caption-proposal-refresh').dispatch('click');resolve('/caption-proposals',{jobs:[{...job,status:'applied',application:{revision:3}}]});await receipt;assert.equal(button('Apply as draft'),undefined);assert.ok(button('Open applied caption'));
+  if(process.env.CAPTION_RECOVERY_CASE!=='start') {
+    // Reject changes no record and cannot revoke an already submitted annotation save.
+    run('showRecord(row)');resolve('/caption-proposals',{jobs:[job]});await flush();
+    element('caption').value='Human caption saved during reject';await element('editor').dispatch('input');
+    const save=element('editor').dispatch('submit'),savePost=take('/records/'+row.id),saveEpoch=run('editorEpoch');
+    const reject=button('Reject caption proposal').dispatch('click');resolve('/caption-proposals/decide/'+job.id,{job:{...job,status:'rejected'}});await flush();resolve('/caption-proposals',{jobs:[{...job,status:'rejected'}]});await reject;
+    assert.equal(run('editorEpoch'),saveEpoch,'Reject must not acquire annotation editor ownership');
+    const humanSaved={...row,revision:3,annotation:{caption:'Human caption saved during reject'},review:'draft'};savePost.resolve(response(humanSaved));await flush();resolve('/caption-proposals',{jobs:[{...job,status:'rejected'}]});await save;
+    assert.equal(run('current.revision'),3);assert.equal(run('dirty'),false);assert.equal(element('caption').value,humanSaved.annotation.caption);
+    element('caption').value='Next human save';await element('editor').dispatch('input');const nextSave=element('editor').dispatch('submit'),nextPost=take('/records/'+row.id);
+    assert.equal(JSON.parse(nextPost.options.body).revision,3,'Next save must use the accepted parent revision');
+    nextPost.resolve(response({...humanSaved,revision:4,annotation:{caption:'Next human save'}}));await flush();resolve('/caption-proposals',{jobs:[{...job,status:'rejected'}]});await nextSave;
+    assert.equal(run('current.revision'),4);assert.equal(run('dirty'),false);
+    // Later actual editor input still fences an earlier annotation acknowledgement.
+    run('showRecord(row)');resolve('/caption-proposals',{jobs:[job]});await flush();
+    element('caption').value='Submitted caption';await element('editor').dispatch('input');const olderSave=element('editor').dispatch('submit'),olderPost=take('/records/'+row.id);
+    element('caption').value='Later unsaved caption';await element('editor').dispatch('input');
+    const laterReject=button('Reject caption proposal').dispatch('click');resolve('/caption-proposals/decide/'+job.id,{job:{...job,status:'rejected'}});await flush();resolve('/caption-proposals',{jobs:[{...job,status:'rejected'}]});await laterReject;
+    olderPost.resolve(response(humanSaved));await olderSave;assert.equal(element('caption').value,'Later unsaved caption');assert.equal(run('dirty'),true);assert.equal(run('current.revision'),2);
+    run('dirty=false;showRecord(row)');resolve('/caption-proposals',{jobs:[{...job,status:'applied'}]});await flush();
+  }
   // Page exit fences late polling and model responses, and removes the poll timer.
   const pendingPoll=element('caption-proposal-refresh').dispatch('click');for(const fn of listeners.pagehide||[])fn();resolve('/caption-proposals',{jobs:[{...job,status:'generating'}]});await pendingPoll;
   assert.equal(timers.size,0);assert.equal(run('captionProposalJobs[0].status'),'applied');
   for(const fn of listeners.pageshow||[])fn();resolve('/caption-proposals',{jobs:[{...job,status:'generating'}]});await flush();assert.equal(timers.size,1);
   for(const fn of listeners.pagehide||[])fn();assert.equal(timers.size,0);assert.equal(requests.length,0);
-  console.log('Caption controller duplicate actions, exact request recovery, editor/selection/navigation ownership and polling lifecycle passed.');
+  console.log('Caption controller held admission/early 404/lost acknowledgement/exact-ID repeat, cancelled/new intent, held annotation-save/reject/subsequent save, later-input/apply ownership and polling lifecycle passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

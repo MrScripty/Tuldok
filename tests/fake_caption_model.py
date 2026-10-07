@@ -24,6 +24,8 @@ def start(catalog_entered=None):
                 pass
 
         def do_GET(self):
+            if self.path == '/test/request-count':
+                return self.reply({'requests': len(requests)})
             if self.path != '/v1/models':
                 return self.reply({}, 404)
             if catalog_entered is not None:
