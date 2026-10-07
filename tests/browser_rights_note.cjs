@@ -128,9 +128,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const zip=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(zip.status,200);assert.ok((await zip.arrayBuffer()).byteLength>500);
   await evaluate('openRecord('+JSON.stringify(row.id)+')');await click('history');await until(()=>evaluate('!document.getElementById("history-output").hidden'));
   assert.ok((await evaluate('document.getElementById("history-output").textContent')).includes('rights_note_correction'));
-  const reports=path.join(root,'docs/plans/rights-note-correction/reports');fs.mkdirSync(reports,{recursive:true});
+  const reportRoot=path.join(root,'test-results','rights-note');fs.mkdirSync(reportRoot,{recursive:true});
+  const reports=fs.mkdtempSync(path.join(reportRoot,'run-'));
   await evaluate('document.getElementById("rights-note-panel").scrollIntoView()');let shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'rights-desktop.png'),Buffer.from(shot.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("rights-note-panel").scrollIntoView()');shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(reports,'rights-narrow.png'),Buffer.from(shot.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'390px note form stays within viewport');assert.deepEqual(errors,[]);
+  console.log('Rights-note screenshots:',reports);
   console.log('Actual Chromium beforeunload rights-only/unchanged/saved/canceled/annotation states, rights-note cancel/no-op, JSON CR/LF/Unicode, repeated and delayed edits, concurrent stale conflict, annotation separation, fixed saved sets/issues, review preservation, lineage freshness with held stale response/releaseBusy completion/new preview token, explicit reselection, ZIP/history and desktop/narrow passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
