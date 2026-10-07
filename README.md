@@ -385,3 +385,32 @@ or application reconciles existing state without another inference/target write.
 This single-image slice is tested with local synthetic HTTP providers and real
 Chromium. It asserts no real-model caption quality and adds no models, credentials,
 provider registry or dependencies. [Contract and acceptance](docs/plans/caption-proposals/plan.md).
+
+### Propose a label for existing text
+
+Open one unannotated text record and **Propose a classification for this text**.
+Enter the author's exact label choices as a JSON array, list served models at the
+Pumas-compatible gateway, choose a model and explicitly request a proposal. Labels
+are unique, case-sensitive strings (1–30 choices, up to 80 Unicode code points
+each); leading/trailing whitespace is rejected rather than trimmed. The selected
+source text, labels, guidance, provider/model, seed and revision evidence are
+frozen for this attempt. Source text is sent exactly as stored; it is not rewritten.
+
+The model may return exactly one offered label or explicitly abstain. Unknown or
+malformed labels, partial output and incompatible models fail without fallback.
+Abstention saves no target and offers no Apply action. Listing a model and passing
+shape checks do not establish semantic correctness. Inspect the evidence, reject
+the proposal, or explicitly **Apply as draft** after checking the label. Apply
+requires the captured source revisions and unchanged label choices, preserves
+acquisition provenance and atomically records one draft annotation with its
+receipt. Explicit human review and reselecting the new revision are required
+before export; fixed selections keep their old revisions.
+
+Lost request acknowledgements reconcile through the same admission ID. An early
+404 keeps that ID pending, and explicit unchanged repeats do not infer twice.
+Apply receipts likewise reconcile lost replies without another target write.
+Cancellation fences late output; interrupted requests never resume automatically
+after restart. Polling uses bounded summaries; individual request reads retain
+the exact source, prompts and bounded complete response evidence. This first stage
+uses synthetic local HTTP and Chromium fixtures, with no real-model qualification.
+[Contract and verification](docs/plans/text-classification-proposals/plan.md).

@@ -105,6 +105,7 @@ function showRecord(record) {
   $('history-output').hidden = true; renderTargets();
   if(typeof rightsRecordShown === 'function') rightsRecordShown(record);
   if(typeof captionProposalsShown === 'function') captionProposalsShown(record);
+  if(typeof textClassificationProposalsShown === 'function') textClassificationProposalsShown(record);
   if(typeof showResponses === 'function') showResponses(record);
   notice('Record loaded.');
 }
@@ -164,6 +165,7 @@ action('editor',async()=>{
   if(typeof rightsDirty !== 'undefined' && rightsDirty) throw Error('Save or cancel the rights-note edit before saving an annotation.');
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) throw Error('Save or cancel the response edit before saving the annotation.');
   if(typeof captionProposalBusy !== 'undefined' && captionProposalBusy) throw Error('Wait for the caption action to finish before saving an annotation.');
+  if(typeof textClassificationProposalBusy !== 'undefined' && textClassificationProposalBusy) throw Error('Wait for the classification action to finish before saving an annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
   const annotation=task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
