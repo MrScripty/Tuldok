@@ -1,0 +1,46 @@
+Text classification proposal evidence: /workspace/Tuldok/test-results/text-classification-proposals/run-liWxlo
+[29283:29311:1007/085705.970543:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[29283:29311:1007/085705.975166:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29311:1007/085705.975278:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[29283:29311:1007/085705.975695:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[29283:29311:1007/085705.975708:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29322:1007/085705.979455:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 29324: Read-only file system (30)
+[29283:29311:1007/085706.435074:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29311:1007/085706.473955:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29322:1007/085706.475486:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 29340: Read-only file system (30)
+[29283:29283:1007/085706.494177:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29283:1007/085706.494255:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29311:1007/085706.494284:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29311:1007/085706.494302:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+
+DevTools listening on ws://127.0.0.1:40805/devtools/browser/b7635fa3-52db-4bc4-ad06-120cd59c579d
+[29283:29283:1007/085706.501629:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29283:1007/085706.510484:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29283:1007/085706.513390:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29311:1007/085706.513567:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[29283:29311:1007/085706.513599:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[29283:29283:1007/085706.513822:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29311:1007/085706.513928:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29322:1007/085706.560762:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 29382: Read-only file system (30)
+[29283:29322:1007/085706.598943:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 29394: Read-only file system (30)
+[29283:29322:1007/085706.613169:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 29401: Read-only file system (30)
+[29283:29283:1007/085706.634708:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: 
+[29283:29283:1007/085706.634739:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29311:1007/085706.634832:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29283:1007/085706.647183:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[29283:29311:1007/085706.647300:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[29283:29283:1007/085706.660447:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+AssertionError [ERR_ASSERTION]: Full reload must restore pending admission synchronously and block changed intent before delayed reconciliation
+
+1 !== 0
+
+    at /workspace/Tuldok/tests/browser_text_classification_proposals.cjs:65:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+Runtime errors: []
+Page diagnostics: {"url":"http://127.0.0.1:43439/workbench#selection=9ff01dd7387b479caca368ad0463bcae","ready":"complete","notice":"Record loaded.","classificationStatus":"Classification requested. Current annotations remain unchanged.","classificationModels":1,"scriptType":"function","body":"← Corner studio\nDataset workbench\n\nReal assets, explicit targets, reproducible releases.\n\nDevelopment workspace\n\nRecord loaded.\n\nCollection\nSearch\nType\nAll assets\nText\nTask\nAll tasks\nImage detection\nImage classification\nImage caption\nText classification\nText entities\nReview\nAll states\nDraft\nHuman reviewed\nProgrammatically verified\nSort\nNewest\nOldest\nName\nReview\nExact filter entry\nPlain text\nJSON strings · preserves line breaks\nTarget label (exact)\nProtected source/group (exact)\nRights note (exact)\n\nExact, case-sensitive values; leave blank for any. For values with line breaks, choose JSON strings and enter double-quoted values: \"first\\nsecond\" for LF, \\r for CR and \\r\\n for CRLF. Escape literal backslashes as \\\\ and quotes as \\\". Groups match IDs stored on the record, not all related sources. Rights notes are metadata, not permission decisions. Missing notes appear as unknown. Filtered results are dynamic; saved fixed membership and release selection stay separate.\n\nSearch collection\n\n3 records · 3 unlabeled · 3 protected groups · 0 exact duplicates · 0 unknown rights. Labels: none. Exact matching only; balance is not coverage.\n\nSelect page\nClear selection\nSaved fixed selections\n\nSave the chosen records at their exact revisions. Searches and filters stay separate; saving or opening never approves annotations.\n\nSelection name\nSave selected records as a new set\nSaved set\nChoose a saved selection\nFixed text set · 2 fixed records\nOpen fixed selection\nRefresh saved sets\nNew name\nR","viewport":1400,"documentWidth":1385,"overflow":[]}

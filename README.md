@@ -408,6 +408,11 @@ before export; fixed selections keep their old revisions.
 
 Lost request acknowledgements reconcile through the same admission ID. An early
 404 keeps that ID pending, and explicit unchanged repeats do not infer twice.
+The exact pending ID and request are stored before submission and restored before
+submission is enabled after reload. Visible recovery controls open the captured
+source and restore its settings; retry still requires explicit submission. Web
+Locks coordinate pages sharing the origin. Missing locking support, unavailable
+storage or invalid recovery evidence blocks new requests rather than losing the ID.
 Apply receipts likewise reconcile lost replies without another target write.
 Cancellation fences late output; interrupted requests never resume automatically
 after restart. Polling uses bounded summaries; individual request reads retain

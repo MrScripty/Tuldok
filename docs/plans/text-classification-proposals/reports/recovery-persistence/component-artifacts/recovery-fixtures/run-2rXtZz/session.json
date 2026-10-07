@@ -1,0 +1,52 @@
+{
+  "source_head": "c5500cba5021949bccf45d2124ee5e2910dc5c92",
+  "model": "bounded synthetic HTTP fixture",
+  "job_id": "a32eb033d9284201a16eb54ac431ed60",
+  "labels": [
+    "cancel",
+    "keep",
+    "café 😀"
+  ],
+  "early404_reload_id": "94553bbcddf24620b198c3dd456942a0",
+  "persistent_recovery_id": "82d2dfaf4de04048a3c74207b7c53fb8",
+  "persistent_recovery_body": {
+    "source_id": "7b3fa667d83443b38091e4b4571fea86",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:33383/v1/",
+    "model": "classification-fixture",
+    "instruction": "Frozen reload recovery",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "82d2dfaf4de04048a3c74207b7c53fb8"
+  },
+  "recovery_id": "a32eb033d9284201a16eb54ac431ed60",
+  "recovery_post_ids": [
+    "a32eb033d9284201a16eb54ac431ed60",
+    "a32eb033d9284201a16eb54ac431ed60"
+  ],
+  "recovery_backend_requests": 1,
+  "application_revision": 2,
+  "downloaded_zip_sha256": "75501a35238306755db7f5d7dbb75c6165c3163d3547a4845ad4ce8ed816ce6b",
+  "fixed": [
+    {
+      "id": "0acce73964ec4c2d8632262853413dcf",
+      "revision": 1,
+      "source_revision": 1
+    },
+    {
+      "id": "750c3679d9644da68a359e0baa888fd9",
+      "revision": 1,
+      "source_revision": 1
+    }
+  ],
+  "reject_save_revision": 2,
+  "cancelled_id": "9b9086edd0f647a3bd98a3ec4ff7fc64",
+  "fresh_intent_id": "8fbb66e88fb34f8983d25bd755867be8",
+  "real_model_quality": false,
+  "tests": "visible pending evidence/open-source/restore-settings buttons recover form without developer tools or automatic POST, fullreload lostACK restored before delayed reconciliation unchanged exact-ID repeat and fresh intent, storage get/set/remove failures closed, early404 lost admission exact-ID recovery, frozen source/prompt/provider/labels evidence, malformed UI changes and dirty editor fences, lost Apply draft/idempotency/provenance, stale fixed selection, draft export blocked separate human review, abstention unappliable, reject during held unrelated save and subsequent save, cancellation navigation fresh intent, reload no inference, keyboard/narrow layout"
+}

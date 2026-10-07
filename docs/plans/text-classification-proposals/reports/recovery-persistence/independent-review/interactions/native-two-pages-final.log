@@ -1,0 +1,10 @@
+{
+  "simultaneous_native_pages": 2,
+  "origin_lock_held_before_submits": true,
+  "post_bodies": 1,
+  "request_id": "9075b4b58c664782b8485b11d00216f3",
+  "stored_body_matches_winner": true,
+  "loser_new_posts": 0,
+  "backend_requests": 1
+}
+Independent native two-page Web Lock admission race passed.

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tuldok · Dataset studio</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<a href="/workbench" style="position:fixed;right:16px;bottom:12px;z-index:100;background:#fff;color:#173f39;padding:8px;border-radius:6px">Dataset workbench ↗</a>
+<header><a class="brand" href="/">tuldok<span>●</span></a><div class="spacer"></div><span id="counts"></span><button id="export">Export labeled</button></header>
+<div id="notice" role="alert" hidden></div>
+<main>
+<aside class="library"><div class="section-heading"><h2>Collection</h2><label class="import-button">Import images<input id="import" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label></div>
+<div class="collection-meta">
+<label>Book ID<input id="capture-book" placeholder="e.g. blue-atlas"></label>
+<label>Session ID<input id="capture-session" placeholder="e.g. desk-daylight-01"></label>
+</div>
+<div class="filter-row"><select id="filter" aria-label="Filter images"><option value="all">All images</option><option value="pending">Needs labels</option><option value="labeled">Labeled</option></select></div>
+<div id="samples" class="sample-list"></div>
+</aside>
+<section class="workspace">
+<div class="workspace-bar"><div class="segmented" aria-label="Image source"><button id="camera-view" aria-pressed="true">Camera capture</button><button id="generation-view" aria-pressed="false">Generation</button></div><div><h1 id="view-title">Camera</h1></div><div class="spacer"></div><span id="dimensions"></span></div>
+<div class="viewer" id="viewer">
+<div id="camera-stage" class="stage"><video id="video" autoplay playsinline muted></video><div id="camera-empty" class="empty"><div class="target-icon">⌜ ⌝<br>⌞ ⌟</div></div><div id="countdown" hidden></div></div>
+<div id="image-stage" class="stage" hidden><img id="source" alt="Image to label" draggable="false"><svg id="overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-label="Corner labels"></svg><canvas id="corner-zoom" hidden aria-hidden="true"></canvas></div>
+<div id="generation-stage" class="stage" hidden>
+<h2>Generate a synthetic dataset</h2>
+<label>Dataset description<textarea id="generation-prompt" rows="6" maxlength="4000" placeholder="Describe the subjects, photographic style, lighting, backgrounds and variations your dataset needs."></textarea></label>
+<div class="generation-options">
+<label>Number of images<input id="generation-count" type="number" min="1" max="10000" step="1" value="500"></label>
+<label>Prompt strategy<select id="generation-strategy"><option value="varied">Create unique prompts with an LLM</option><option value="repeat">Use the same prompt for every image</option></select></label>
+</div>
+<p class="hint">Unique prompts are prepared in batches of 10, then rendered one by one. In repeat mode, only the next pending prompt appears. Completed images are added to the collection for manual labels or AI corner suggestions.</p>
+<p id="generation-entry-prompt" hidden></p>
+<div id="generation-jobs" aria-label="Generation jobs"></div>
+</div>
+</div>
+<div id="generation-actions" class="action-bar" hidden><button id="generate" class="primary" disabled>Generate dataset</button><button id="generation-cancel" hidden>Stop generation</button><span id="generation-status" role="status" aria-live="polite"></span></div>
+<div id="capture-actions" class="action-bar"><button id="start-camera">Start camera</button><select id="devices" aria-label="Camera" hidden></select><div class="spacer"></div><button id="capture" class="primary" disabled>Capture image <kbd>Space</kbd></button><button id="timer" disabled>7s timer</button></div>
+<div id="label-actions" class="action-bar" hidden><button id="delete-image" class="danger">Delete image</button><button id="previous">← Previous</button><button id="next">Next →</button><div class="spacer"></div><span id="save-status" role="status"></span><button id="suggest">Suggest corners</button><button id="save">Save label</button><button id="save-next" class="primary">Save & next</button></div>
+</section>
+<aside class="inspector">
+<section id="generation-settings" hidden>
+<h2>Generation models</h2>
+<label>Pumas gateway URL<input id="generation-url" type="url" placeholder="Pumas gateway address" autocomplete="off"></label>
+<button id="generation-scan" type="button">Scan local ports</button>
+<p id="gateway-scan-status" class="hint" role="status" aria-live="polite">Find Pumas running on the Tuldok computer.</p>
+<label id="gateway-results-row" hidden>Discovered gateways<select id="gateway-results"><option value="">Choose a gateway</option></select></label>
+<label>Image model<select id="generation-model"><option value="">Refresh models to choose</option></select></label>
+<button id="generation-refresh" type="button">Refresh image models</button>
+<div id="prompt-model-settings">
+<label>Prompt model server URL<input id="prompt-url" type="url" placeholder="Same Pumas gateway if blank"></label>
+<label>Prompt LLM<select id="prompt-model"><option value="">Refresh models to choose</option></select></label>
+<button id="prompt-refresh" type="button">Refresh prompt models</button>
+</div>
+<label>Width<input id="generation-width" type="number" min="1" step="1" value="1280"></label><label>Height<input id="generation-height" type="number" min="1" step="1" value="720"></label>
+<label>Starting seed (optional)<input id="generation-seed" type="number" min="0" max="4294967295" step="1" placeholder="Random"></label>
+<p class="hint">A starting seed increments for each image. Leave blank for random seeds.</p>
+<p id="generation-details" class="hint"></p>
+</section>
+<details id="ai-settings">
+<summary>AI model</summary>
+<label>Provider<select id="ai-provider"><option value="codex">Codex</option><option value="openrouter">OpenRouter</option><option value="llamacpp">llama.cpp</option><option value="pumas">Pumas</option></select></label>
+<label id="ai-url-row" hidden>Server URL<input id="ai-url" value="http://127.0.0.1:8080" autocomplete="off"></label>
+<div id="ai-pumas-row" hidden><button id="ai-scan" type="button">Scan local ports</button><label id="ai-gateway-row" hidden>Discovered vision endpoints<select id="ai-gateways"></select></label><p id="ai-scan-status" class="hint" role="status" aria-live="polite">Find a Pumas gateway or managed model server with a ready vision model.</p></div>
+<label id="ai-key-row" hidden>OpenRouter API key<input id="ai-key" type="password" autocomplete="off" placeholder="OPENROUTER_API_KEY on server"></label>
+<label>Model<select id="ai-model"><option value="">Refresh models to choose a model</option></select></label>
+<label id="ai-effort-row">Thinking level<select id="ai-effort"><option>low</option><option>medium</option><option>high</option><option>xhigh</option></select></label>
+<button id="ai-refresh" type="button">Refresh models</button>
+</details>
+<h2 id="labels-heading">Labels</h2>
+<form id="label-form" hidden>
+<label>Book ID<input id="book-id" placeholder="Required when a book is present"></label>
+<label>Session ID<input id="session-id" required></label>
+<label>Dataset split<select id="split"><option value="unassigned">Unassigned</option><option value="train">Training</option><option value="validation">Validation</option><option value="test">Test</option></select></label>
+<div class="answer-row"><span>Book in image</span><div class="segmented"><button type="button" id="present-yes">Yes</button><button type="button" id="present-no">No</button></div></div>
+<label class="check"><input type="checkbox" id="suitable">Full outline is visible and suitable to crop</label>
+<label>Corner reference<select id="corner-reference"><option value="book">Book orientation</option><option value="image">Image orientation</option></select></label>
+<div id="corners"></div>
+<button type="button" id="reset-points" class="text-button">Clear corner positions</button>
+</form>
+</aside>
+</main><script type="module" src="/app.js"></script>
+</body></html>

@@ -1,0 +1,15 @@
+{
+  "status": "publication_blocked_pending_recovery_repair_and_requalification",
+  "superseded_qualification_head": "e32b407c6164f5650e1944c356ec0d00d7536667",
+  "superseded_qualification_scope": "All46 earlier bounded gates passed, but they did not qualify durable pending admission recovery across reload. Preserve those receipts as historical pre-recovery evidence.",
+  "known_defect": "Pending classification request ID and original author intent were kept only in memory. Reload during an unknown admission can lose that intent, and held recovery lookup must not admit a different request ID.",
+  "required_repair": [
+    "Persist the bounded exact request ID and original frozen intent synchronously before admission POST.",
+    "Restore and recover that exact ID before accepting a new request after reload.",
+    "Fence changed intent during unresolved admission; fail closed if durable storage is unavailable.",
+    "Add bounded controller/browser coverage and rerun all46 gates on the frozen repair successor."
+  ],
+  "publication_authorized_by_this_status": false,
+  "current_qualification_complete": false,
+  "next_report_root": "docs/plans/text-classification-proposals/reports/recovery-persistence"
+}
