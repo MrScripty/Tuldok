@@ -93,6 +93,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('document.getElementById("text-classification-proposal-panel").open=true;document.getElementById("text-classification-proposal-panel").scrollIntoView({block:"start"})');
   const screenshot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-text-review.jpg'),Buffer.from(screenshot.data,'base64'));
   await send('Page.navigate',{url:base+'/'});await until(()=>evaluate('typeof pumasTypedSettings === "function" && document.getElementById("generate")'));
+  const studioReady=()=>evaluate('!!document.getElementById("generation-refresh")?.onclick && !document.getElementById("generation-refresh").disabled');
+  await until(studioReady);
   await click('generation-view');
   await fill('generation-protocol','pumas_typed_v1');await fill('generation-url',gateway);await click('generation-refresh');await until(()=>evaluate('document.getElementById("generation-model").options.length===2'));
   assert.ok(!await evaluate('document.getElementById("generation-status").textContent.includes("image models ready")'),'Typed alias listing must not claim image readiness');
@@ -102,6 +104,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(entry.metadata.protocol,'pumas_typed_v1');assert.equal(entry.metadata.canonical_request.profile,'controlled-image-cpu');
   const imageReloadFrame=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload');await until(()=>pageLoads.reloaded(imageReloadFrame));await until(()=>evaluate('document.getElementById("generation-protocol").value==="pumas_typed_v1"'));
   assert.equal(await evaluate('document.getElementById("generation-width").value'),'16');
+  await until(studioReady);
   await click('generation-view');await click('generation-refresh');await until(()=>evaluate('document.getElementById("generation-model").options.length===2'));
   await fill('generation-model','controlled-image');await click('generation-capabilities');
   await until(()=>evaluate('document.getElementById("generation-capability-metadata").textContent.includes("observed_sha256")'));
