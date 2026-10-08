@@ -76,7 +76,7 @@ def png(raw, row):
             if measured != row['pixel_hash']:
                 raise WorkbenchError('Native image pixels do not match the pixel hash.')
             return measured
-    except (OSError, Image.DecompressionBombError):
+    except (OSError, SyntaxError, Image.DecompressionBombError):
         raise WorkbenchError('Native image is damaged or exceeds the geometry bound.') from None
 
 

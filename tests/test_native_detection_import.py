@@ -6,6 +6,8 @@ import io
 import json
 from pathlib import Path
 import sqlite3
+import struct
+import zlib
 import tempfile
 import threading
 import unittest
@@ -134,6 +136,37 @@ class NativeDetectionImportTests(unittest.TestCase):
         self.dataset.workbench.save(reviewed[0]['id'], dict(reviewed[0], annotation={'boxes': []}, review='draft'))
         self.assertFalse(self.dataset.releases.preview(body)['eligible'])
         self.assertEqual(self.dataset.releases.locate(release['id']).read_bytes(), frozen)
+
+    def test_invalid_png_chunk_returns_400_without_mutation(self):
+        """Real Pillow SyntaxError during decode, with valid archive/content hashes."""
+        def damage(entries):
+            manifest = json.loads(entries['manifest.json'])
+            row = manifest['records'][0]
+            raw = entries[row['asset']]
+            offset = 8  # PNG signature; keep IHDR and all metadata intact.
+            while raw[offset + 4:offset + 8] != b'IDAT':
+                offset += 12 + struct.unpack('>I', raw[offset:offset + 4])[0]
+            length = struct.unpack('>I', raw[offset:offset + 4])[0]
+            payload = raw[offset + 8:offset + 8 + length]
+            def chunk(name, data):
+                return (struct.pack('>I', len(data)) + name + data
+                        + struct.pack('>I', zlib.crc32(name + data) & 0xffffffff))
+            # A valid partial IDAT forces the decoder to read the illegal chunk ID.
+            broken = (raw[:offset] + chunk(b'IDAT', payload[:1]) + chunk(b'bad!', b'')
+                      + chunk(b'IDAT', payload[1:]) + raw[offset + length + 12:])
+            with Image.open(io.BytesIO(broken)) as image:
+                self.assertEqual((image.format, image.mode, image.size), ('PNG', 'RGB', (8, 12)))
+                with self.assertRaisesRegex(SyntaxError, 'broken PNG file'):
+                    image.load()
+            row['content_hash'] = row['asset_sha256'] = hashlib.sha256(broken).hexdigest()
+            entries[row['asset']] = broken
+            entries['manifest.json'] = encode(manifest).encode()
+        before = self.snapshot()
+        value = self.prepare(rewrite(self.raw, damage), expected=400)
+        self.assertEqual(value['error'], 'Native image is damaged or exceeds the geometry bound.')
+        self.assertEqual(before, self.snapshot())
+        # A failed preparation does not poison the following request.
+        self.prepare()
 
     def test_malformed_bundles_are_read_only_and_typed(self):
         before = self.snapshot()
