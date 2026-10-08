@@ -17,6 +17,7 @@ try{
   assert.deepEqual(fs.readdirSync(path.join(fake,'docs/fixtures')),[]);
 }finally{fs.rmSync(fake,{recursive:true,force:true});}
 const callers=[
+  ['browser_saved_searches.cjs','saved-searches'],
   ['browser_sequences.cjs','simulation-sequence'],
   ['browser_sequences_actual.cjs','simulation-sequence-actual','TULDOK_SEQUENCE_ACTUAL_REPORT_ROOT'],
   ['browser_meshes.cjs','static-mesh'],

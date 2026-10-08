@@ -188,8 +188,9 @@ In **Dataset workbench**, choose records with the checkboxes, enter a selection
 name, then **Save selected records as a new set**. A set contains fixed record IDs,
 annotation/source revisions, and source hashes. Filters and searches remain live
 collection controls; new matching records never join a saved set automatically.
-There is no dynamic saved-search feature in this slice. Names may repeat; each set
-has its own ID. Saving creates a separate set rather than replacing membership.
+Dynamic saved searches use a separate panel and never supply membership. Names may
+repeat; each set has its own ID. Saving creates a separate set rather than replacing
+membership.
 
 Choose a saved set and **Open fixed selection** to replace the current selection,
 including records outside the current filter. The current filter, release settings
@@ -224,6 +225,27 @@ currency rather than review or release eligibility. POST `.../ID/rename` accepts
 `name` and saved-set `revision`; POST `.../ID/delete` accepts only `revision`.
 Stale mutations return HTTP 409 / `conflict`; a deleted set returns 404 / `unavailable`.
 For release preview, project saved items to `{id, revision, source_revision}`.
+
+## Saved dynamic searches
+
+**Saved searches · dynamic results** stores the entered search/filter values,
+even before **Search collection** is clicked. **Open dynamic search** explicitly
+applies them to the current collection, starting at page 1. New matching records
+can appear; selected record/answer/preference revisions, editor drafts, fixed sets,
+review decisions and history URLs remain separate. Reload lists saved searches
+without automatically opening any. Exact metadata values restore through JSON
+entry, preserving interior LF/CR/CRLF and literal backslashes. Search text is
+single-line. Names may repeat; criteria are immutable, so save changed filters as
+a new search. Rename/delete are revision-checked. Delete retains collection records.
+
+`GET/POST /api/workbench/searches` lists or creates searches. Create accepts only
+`name` (1–120 code points) and `criteria` with exactly `q`, `kind`, `task`, `review`,
+`sort`, `label`, `group`, `rights`, using the existing filter limits and semantics.
+`GET .../ID` returns explicit `mode: "dynamic"`, `schema_version: 1` metadata;
+`POST .../ID/rename` accepts `revision`/`name`, and `.../ID/delete` accepts `revision`.
+At most 100 searches and 32 KiB strict UTF-8 JSON per write. Saved searches contain
+no membership or assets and grant no release authority. Unknown write responses
+require list inspection before an explicit repeat; requests are not replayed.
 
 ## Selected-release preview
 
