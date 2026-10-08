@@ -28,6 +28,8 @@ jobs:
       - run: node --check static/rights-note.js
       - run: node --check static/preferences.js
       - run: node --check static/instruction-responses.js
+      - run: node --check static/native_detection_import.js
+      - run: node tests/test_native_detection_import_controller.cjs
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
       - run: node --check static/text-classification-proposals.js
@@ -131,6 +133,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_native_detection_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_native_text_import.cjs
         env:
           BROWSER: /usr/bin/google-chrome
