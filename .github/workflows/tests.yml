@@ -36,6 +36,8 @@ jobs:
       - run: node --check static/meshes.js
       - run: node tests/test_meshes_controller.cjs
       - run: node --check static/sequences.js
+      - run: node --check static/sequence-batch.js
+      - run: node tests/test_sequence_batch_controller.cjs
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
       - run: node tests/test_qa_artifacts.cjs
@@ -133,6 +135,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequence_batch.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences_actual.cjs

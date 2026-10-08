@@ -343,6 +343,37 @@ and a byte-exact frozen release. It never runs the exporter or simulation.
 No models, downloads or training are needed for these sequence checks.
 Focused Python check: `python3 -m unittest discover -s tests -p test_sequences.py`.
 
+The local follow-on **Import a folder of Rheon trajectories** accepts one selected
+folder containing only `<trajectory-label>/run.json` and `frames.jsonl` pairs.
+Preflight checks all pairs before reading: at most 32 pairs / 64 files / 40 MiB
+total raw files, 64 KiB per manifest and 2 MiB per frames file. Each server request
+is independently capped at 3 MiB and uses the unchanged fee7b4a validator. These
+selected-file limits do not impose a server-wide quota across independent imports.
+The existing 40 MiB immutable selection/release budget includes ZIP overhead.
+
+Each valid pair commits one whole draft trajectory with initial history and a
+computed acquisition marker/hash receipt. Invalid or duplicate items are rejected
+without modifying existing records; earlier successful items remain. Stop prevents
+the next admission, while an in-flight item may complete. Unknown responses or
+storage failures pause without automatic replay. **Check pending trajectory** is
+read-only and matches the marker, declared labels/index and both consumed-file
+hashes. It confirms admission only, never current source integrity, rights or
+human review. Missing lookup does not prove cessation. Confirmation does not
+resume later items; dismissal/departure/reload makes no rollback claim. Progress
+is held in this page; inspect the collection after reload. Imports retain the
+independent editor and exact selected revision pairs.
+
+Folder labels remain declared context and do not automatically group independent
+families. Use the optional shared protected group only when runs must stay together.
+Review, rights/history, fixed saved selections and canonical whole-trajectory
+export use their existing controls. No time flattening, frame split or scientific
+training qualification is added. `tests/test_sequence_batch.py` and
+`tests/browser_sequence_batch.cjs` use the retained actual fee7b4a pair and separately
+labeled source-derived synthetic controls; they execute no simulation.
+Rheon's still-draft PR20 has advanced to `3bf61ba85d066cadb95cddffb29a2b40fe497ccf`
+with a Cargo artifact repair and a new allowed build-command form. This adapter
+does not adopt that contract form; it is rejected until a separately reviewed repin.
+
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
 
 ### Import an annotated caption corpus
