@@ -60,6 +60,25 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   // Only the user's separate catalog action touches the existing served-model contract.
   await click('text-classification-proposal-models');
   await until(()=>evaluate('[...document.getElementById("text-classification-proposal-model").options].some(o=>o.value==="source-derived-chat-fixture")'));
+  // Authored recovery input drives the actual no-event Restore settings action;
+  // no admission or provider inference is created for this ownership regression.
+  const recovery={request_id:'a'.repeat(32),source_id:seed.id,revision:before.revision,source_revision:before.source_revision,
+    server_url:'http://127.0.0.1:33333',model:'restored-frozen-model',instruction:'Authored restore ownership input',seed:42,labels:['keep']};
+  await evaluate('localStorage.setItem(textClassificationProposalStorageKey,JSON.stringify({schema_version:1,body:'+JSON.stringify(recovery)+'}))');
+  await fill('pumas-gateway-target','classification');await control({hold:true});await click('pumas-gateway-use');
+  await until(async()=>(await providerState()).entered);await click('text-classification-proposal-restore');
+  assert.match(await evaluate('document.getElementById("text-classification-proposal-status").textContent'),/Frozen request settings restored/);
+  await control({hold:false});await idle();
+  assert.equal(await evaluate('document.getElementById("text-classification-proposal-url").value'),recovery.server_url);
+  assert.equal(await evaluate('document.getElementById("text-classification-proposal-model").value'),recovery.model);
+  assert.deepEqual(await evaluate('textClassificationProposalPendingRequest'),recovery);
+  assert.deepEqual(await evaluate('JSON.parse(localStorage.getItem(textClassificationProposalStorageKey)).body'),recovery);
+  await control({hold:true});await click('pumas-gateway-use');await until(async()=>(await providerState()).entered);
+  await click('text-classification-proposal-restore');await control({hold:false});await idle();
+  assert.equal(await evaluate('document.getElementById("text-classification-proposal-url").value'),recovery.server_url,'Same-value restore still supersedes the pending choice');
+  assert.equal(await evaluate('document.getElementById("text-classification-proposal-model").value'),recovery.model);
+  await evaluate('localStorage.removeItem(textClassificationProposalStorageKey);textClassificationProposalPendingRequest=null;textClassificationProposalRecoveryId=null;syncTextClassificationProposalRecovery()');
+  await fill('pumas-gateway-target','caption');
   await control({generation:'00000000-0000-4000-8000-000000000002'});await click('pumas-gateway-use');await idle();
   assert.match(await evaluate('document.getElementById("pumas-gateway-status").textContent'),/advertisement changed/);
   assert.equal(await evaluate('document.getElementById("pumas-gateway-choice").options.length'),1);
@@ -82,6 +101,6 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("pumas-gateway-choice").options.length'),1);
   assert.deepEqual((await providerState()).requests,requests,'Reload makes no automatic discovery or model request');
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
-  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({fixture:'source-derived PR51 80f06ab17f9eea639fee143c86319ca9b5e1a21c',requests,editorBefore,metadata,errors},null,2)+'\n');
-  console.log('Gateway Chromium: production descriptor scan/recheck, all three forms, stale catalog invalidation, real held-response URL fence, changed generation, unchanged dirty editor/selection/review/history, explicit catalog only, reload and narrow JPEG85 passed.');
+  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({fixture:'source-derived PR51 80f06ab17f9eea639fee143c86319ca9b5e1a21c',recoveryFixture:'Authored frozen settings input; actual Restore handler; no admitted job or inference',requests,editorBefore,metadata,errors},null,2)+'\n');
+  console.log('Gateway Chromium: production descriptor scan/recheck, all three forms, stale catalog invalidation, real held-response URL and frozen/same-value Restore fences, changed generation, unchanged dirty editor/selection/review/history, explicit catalog only, reload and narrow JPEG85 passed.');
 })().catch(error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(250);for(const child of children)if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');fs.rmSync(temporary,{recursive:true,force:true});});

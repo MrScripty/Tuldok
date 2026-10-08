@@ -4,6 +4,12 @@ let pumasGateways=[],pumasGatewayEpoch=0,pumasGatewayOperation=null,pumasGateway
 const pumasGatewayTargets={caption:'caption-proposal-url',classification:'text-classification-proposal-url',rewrite:'grounded-url'};
 const pumasGatewayStatus=message=>{$('pumas-gateway-status').textContent=message;};
 function selectedPumasGateway(){return pumasGateways.find(row=>row.server_url===$('pumas-gateway-choice').value);}
+function pumasGatewayConfiguration(target){
+  // Existing owners can restore frozen settings without dispatching DOM events.
+  const owner=target==='text-classification-proposal-url'?[textClassificationProposalModelEpoch,textClassificationProposalFormEpoch]:
+    target==='caption-proposal-url'?captionProposalModelEpoch:modelEpoch;
+  return JSON.stringify([$(target).value,$(target.replace(/-url$/,'-model')).value,owner]);
+}
 function renderPumasGateway(){
   const row=selectedPumasGateway();
   $('pumas-gateway-metadata').hidden=!row;
@@ -37,18 +43,18 @@ for(const id of Object.values(pumasGatewayTargets)) {
 $('pumas-gateway-use').addEventListener('click',async()=>{
   const row=selectedPumasGateway(),target=pumasGatewayTargets[$('pumas-gateway-target').value];
   if(!row||!target||pumasGatewayOperation||pumasGatewayPaused)return;
-  const token={epoch:++pumasGatewayEpoch};pumasGatewayOperation=token;renderPumasGateway();
+  const token={epoch:++pumasGatewayEpoch,configuration:pumasGatewayConfiguration(target)};pumasGatewayOperation=token;renderPumasGateway();
   pumasGatewayStatus('Rechecking the selected gateway…');
   try{
     const result=await api('/api/generation/inspect-gateway',{server_url:row.server_url});
-    if(token.epoch!==pumasGatewayEpoch||pumasGatewayPaused)return;
+    if(token.epoch!==pumasGatewayEpoch||pumasGatewayPaused||token.configuration!==pumasGatewayConfiguration(target))return;
     if(result.server_url!==row.server_url||JSON.stringify(result.advertisement)!==JSON.stringify(row.advertisement)){
       clearPumasGateways();throw Error('Gateway advertisement changed. Scan again before choosing it.');
     }
     const input=$(target);input.value=row.server_url;
     input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));
     pumasGatewayStatus('Gateway URL set. Open the chosen proposal form and list its served models; no proposal was started.');
-  }catch(error){if(token.epoch===pumasGatewayEpoch&&!pumasGatewayPaused)pumasGatewayStatus(error.message);}
+  }catch(error){if(token.epoch===pumasGatewayEpoch&&!pumasGatewayPaused&&token.configuration===pumasGatewayConfiguration(target))pumasGatewayStatus(error.message);}
   finally{if(pumasGatewayOperation===token){pumasGatewayOperation=null;renderPumasGateway();}}
 });
 window.addEventListener('pagehide',()=>{++pumasGatewayEpoch;pumasGatewayPaused=true;pumasGatewayOperation=null;clearPumasGateways();});

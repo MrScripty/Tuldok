@@ -10,7 +10,7 @@ class Element{
 }
 const elements=new Map(),$=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 const requests=[],events={};
-const context=vm.createContext({console,$,Option:class{constructor(text,value){this.textContent=text;this.value=value;}},Event:class{constructor(type){this.type=type;}},
+const context=vm.createContext({console,$,textClassificationProposalModelEpoch:0,textClassificationProposalFormEpoch:0,captionProposalModelEpoch:0,modelEpoch:0,Option:class{constructor(text,value){this.textContent=text;this.value=value;}},Event:class{constructor(type){this.type=type;}},
   window:{addEventListener:(name,fn)=>events[name]=fn},api:(url,body)=>new Promise((resolve,reject)=>requests.push({url,body,resolve,reject}))});
 const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..'));
 vm.runInContext(fs.readFileSync(path.join(root,'static/pumas-gateways.js'),'utf8'),context);
@@ -32,6 +32,13 @@ async function scan(){const p=$('pumas-gateway-scan').fire('click');next().resol
     const model=$(url.replace(/-url$/,'-model'));model.value='later-model';
     const heldModel=$('pumas-gateway-use').fire('click'),modelRequest=next();await model.fire('change');modelRequest.resolve(row);await heldModel;
     assert.equal($(url).value,'http://127.0.0.1:30000');assert.equal(model.value,'later-model');
+    const restored=$('pumas-gateway-use').fire('click'),restoredRequest=next();
+    $(url).value='http://127.0.0.1:33333';model.value='restored-frozen-model';restoredRequest.resolve(row);await restored;
+    assert.equal($(url).value,'http://127.0.0.1:33333','Programmatic no-event restore owns configuration');assert.equal(model.value,'restored-frozen-model');
+    if(kind==='classification'){
+      const same=$('pumas-gateway-use').fire('click'),sameRequest=next();run('++textClassificationProposalFormEpoch');sameRequest.resolve(row);await same;
+      assert.equal($(url).value,'http://127.0.0.1:33333','Same-value frozen settings restoration fences the old choice');
+    }
     let inputEvents=0;$(url).addEventListener('input',()=>inputEvents++);
     const using=$('pumas-gateway-use').fire('click');await $('pumas-gateway-use').fire('click');assert.equal(requests.length,1);
     next().resolve(row);await using;assert.equal($(url).value,row.server_url);assert.equal(inputEvents,1);
@@ -48,5 +55,5 @@ async function scan(){const p=$('pumas-gateway-scan').fire('click');next().resol
   $('grounded-url').value='retain';purposeRequest.resolve(row);await purpose;assert.equal($('grounded-url').value,'retain');
   const failed=$('pumas-gateway-use').fire('click');next().reject(Error('Unavailable descriptor'));await failed;
   assert.match($('pumas-gateway-status').textContent,/Unavailable/);assert.equal(requests.length,0);
-  console.log('Gateway chooser: explicit configuration only; three URL/model fences, generation drift, later purpose, duplicate clicks and pagehide/new-operation ownership pass.');
+  console.log('Gateway chooser: explicit configuration only; three URL/model and no-event restore fences, same-value owner epoch, generation drift, later purpose, duplicate clicks and pagehide/new-operation ownership pass.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
