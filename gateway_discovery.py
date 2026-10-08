@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import http.client
 import json
 from pathlib import Path
+import socket
 import threading
 import time
 import pumas_gateway_descriptor as descriptor
@@ -39,11 +40,29 @@ def get_json(host, port, path, deadline, payload=None, max_response=MAX_RESPONSE
     if timeout <= 0:
         raise TimeoutError()
     connection = http.client.HTTPConnection(host, port, timeout=timeout)
+    expiry = None
+    deadline_transport = None
     try:
         connection.request('POST' if payload is not None else 'GET', path,
                            body=json.dumps(payload) if payload is not None else None,
                            headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
         transport = connection.sock
+        if require_complete:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError()
+            # The HTTP parser may close its own socket before our finally runs.
+            # Retain a distinct descriptor until the deadline actor has retired.
+            deadline_transport = transport.dup()
+            def expire():
+                try:
+                    deadline_transport.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+            # Idle socket timeouts alone do not bound dribbled response headers.
+            expiry = threading.Timer(remaining, expire)
+            expiry.daemon = True
+            expiry.start()
         with connection.getresponse() as response:
             if response.status != 200:
                 raise ValueError('Not a gateway response')
@@ -65,8 +84,16 @@ def get_json(host, port, path, deadline, payload=None, max_response=MAX_RESPONSE
                     raise ValueError('Oversized discovery response')
             if require_complete and response.length not in (None, 0):
                 raise ValueError('Pumas descriptor response ended before its declared length')
+            if require_complete and time.monotonic() >= deadline:
+                raise TimeoutError()
             return decode(data)
     finally:
+        if expiry is not None:
+            expiry.cancel()
+            if expiry.ident is not None:
+                expiry.join()
+        if deadline_transport is not None:
+            deadline_transport.close()
         connection.close()
 
 

@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import socketserver
 import threading
 import time
 import unittest
@@ -134,6 +135,27 @@ class PumasGateways(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'before its declared length'):
             discovery.inspect_advertised(f'http://127.0.0.1:{endpoint[1]}')
         self.assertEqual(calls, ['/.well-known/pumas'])
+
+    def test_dribbled_headers_cannot_escape_absolute_observation_deadline(self):
+        class Drip(socketserver.BaseRequestHandler):
+            def handle(self):
+                self.request.recv(4096)
+                try:
+                    self.request.sendall(b'HTTP/1.1 200 OK\r\nX-Dribble: ')
+                    for _ in range(30):
+                        time.sleep(.03)
+                        self.request.sendall(b'x')
+                    self.request.sendall(b'\r\nContent-Length: 2\r\n\r\n{}')
+                except OSError:
+                    pass
+        server = socketserver.ThreadingTCPServer(('127.0.0.1', 0), Drip)
+        server.daemon_threads = True
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
+        start = time.monotonic()
+        with self.assertRaises((OSError, ValueError)):
+            discovery.inspect_advertised(f'http://127.0.0.1:{server.server_address[1]}', start + .15)
+        self.assertLess(time.monotonic() - start, .5, 'Total deadline must interrupt header parsing, not only body reads')
 
 
 if __name__ == '__main__':
