@@ -548,3 +548,22 @@ tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
 that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).
 
 Static mesh import: [bounded ASCII PLY/sidecar contract](docs/contracts/static-mesh.md), with native units/frame/provenance inspection and human review before export.
+
+### Selected-model Pumas typed operations
+
+The annotation workbench and image studio offer an explicit **Pumas typed v1** API choice. This consumer pins the public, unmerged [Pumas PR54](https://github.com/MrScripty/Pumas-Library/pull/54) source `40c5cbfed67a6f0e862a1197bb5105363d67bdb1`, including [PR53](https://github.com/MrScripty/Pumas-Library/pull/53) streaming/lifetime source `f3b3c770ca531f013c8e1f8b1f958b9dc0babbfb`. Existing compatible API settings remain the default. PR51 gateway advertisements belong to a separate producer stack; this consumer does not assume those drafts are merged together.
+
+Choose the exact serving alias and optionally its exact profile; inspect capabilities before requesting a text label, grounded rewrite, or text-to-PNG image. The server resolves an omitted profile, and the consumer binds the provider POST to that exact returned profile. Catalog aliases may appear under multiple profiles; their listing alone proves no capability. Typed text has no seed or JSON-format option. Frozen typed text intent records `seed:null`, and complete stop-terminated results still need valid application JSON. Typed image batches currently require the explicit repeat-prompt strategy. Captioning requires image input, which this typed contract does not support; audio is also unavailable. No typed streaming UI is claimed: requests use `stream:false`.
+
+Proposals preserve actual capability observations, their SHA-256, exact typed request/hash, response hash, selected alias/profile and producer source. Pumas request IDs are correlation only; local classification admission IDs separately reconcile without repeating inference. Authoritative `not_admitted` and `unknown` errors remain inspectable. A successful projected response is recorded locally as `result_received`. Transport loss, cancellation or an interrupted image attempt cannot replay automatically; uncertain image queues cannot resume that attempt. Cancellation retires local transport actors, and does not establish native provider cessation. Applying labels or admitting rewrites creates drafts through existing revision/history, rights and family owners. Human annotation review remains separate and required for release. Generated prompts remain provenance, never image captions.
+
+Discovery limits are separate from inference lifetime: local scans share ten seconds; descriptor inspection, typed selected-alias catalogs and capability inspection use three-second observation budgets. Typed generation bounds connection establishment to ten seconds and has no total, read, idle or drain deadline afterward. Consumer limits: capability JSON 64 KiB, catalog JSON 1 MiB/512 served rows, text result 256 KiB, image result JSON 12 MiB/PNG 8 MiB, typed image dimensions 2048 per axis/4194304 pixels, profile 128 ASCII bytes and serving alias 256 UTF-8 bytes. Image dimensions are checked before POST and PNG decoding. Producer wire limits do not override these consumer allocation bounds. No provider redirects, fallback or automatic inference retry.
+
+`tests/fixtures/pumas-typed-v1` labels its actual native controlled-gateway capability captures and authored harness. Offline CI uses a source-derived HTTP fixture. Separate native qualification runs the pinned production HTTP/admission/handler code with an external controlled text backend and an owned managed literal-PNG process compiled without `cfg(test)`. No model is loaded or downloaded, and these checks do not qualify model accuracy or training. With that harness already running:
+
+```sh
+python scripts/qualify_pumas_typed_actual.py --gateway-receipt /path/to/gateway.json --output /path/to/ignored/consumer-native.json
+PUMAS_TYPED_GATEWAY_RECEIPT=/path/to/gateway.json node tests/browser_pumas_typed.cjs
+```
+
+Keep reports, generated datasets and JPEG85 screenshots in ignored `build/` or external qualification directories. The authored harness instructions document startup and owned shutdown; production source remains pinned and unchanged.

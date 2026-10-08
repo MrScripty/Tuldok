@@ -49,16 +49,18 @@ function validateTextClassificationProposalGateway(value) {
     throw Error('Use a classification gateway URL without credentials, query or fragment.');
 }
 function validateTextClassificationProposalBody(body) {
-  const keys=['request_id','source_id','revision','source_revision','server_url','model','instruction','seed','labels'];
+  const mode=body?.protocol==='pumas_typed_v1';
+  const keys=['request_id','source_id','revision','source_revision','server_url','model','instruction','seed','labels',...(mode?['protocol','profile']:[])];
   if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).length!==keys.length || keys.some(key=>!Object.hasOwn(body,key)) ||
      typeof body.request_id!=='string' || body.request_id.length!==32 || !/^[a-f0-9]{32}$/.test(body.request_id) || typeof body.source_id!=='string' || body.source_id.length!==32 || !/^[a-f0-9]{32}$/.test(body.source_id) ||
      !['revision','source_revision'].every(key=>Number.isSafeInteger(body[key]) && body[key]>0) ||
-     !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295)
+     (mode?body.seed!==null || !(body.profile===null || typeof body.profile==='string' && /^[A-Za-z0-9_.-]{1,128}$/.test(body.profile)):!Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295))
     throw Error('Invalid classification recovery identity or revision evidence.');
   const validText=(value,max)=>typeof value==='string' && /[^\u0009-\u000D\u001C-\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/u.test(value) && Array.from(value).length<=max && !/[\uD800-\uDFFF]/u.test(value);
-  if(!validText(body.instruction,2000) || !validText(body.model,200) || /[\u0000-\u001F]/u.test(body.model))
+  if(!validText(body.instruction,2000) || !validText(body.model,mode?256:200) || /[\u0000-\u001F]/u.test(body.model))
     throw Error('Invalid bounded classification recovery settings.');
   validateTextClassificationProposalGateway(body.server_url);
+  if(mode && (new TextEncoder().encode(body.model).length>256 || body.model!==body.model.trim() || /[\u0000-\u001F\u007F]/u.test(body.model)))throw Error('Invalid exact typed serving alias.');
   validateTextClassificationProposalLabels(body.labels);
   if(JSON.stringify(body).length>textClassificationProposalStorageLimit-100)
     throw Error('Classification recovery settings exceed the bounded storage limit.');
@@ -225,7 +227,7 @@ function textClassificationProposalRestoreStorage() {
 }
 function textClassificationProposalJobMatches(job, body) {
   return job?.id===body.request_id && job.source?.id===body.source_id && job.source.revision===body.revision && job.source.source_revision===body.source_revision &&
-    job.config?.requested_server_url===body.server_url && job.config.requested_model===body.model && job.config.instruction===body.instruction && job.config.seed===body.seed && JSON.stringify(job.config.labels)===JSON.stringify(body.labels);
+    job.config?.requested_server_url===body.server_url && job.config.requested_model===body.model && job.config.instruction===body.instruction && job.config.seed===body.seed && (job.config.protocol||null)===(body.protocol||null) && (job.config.profile||null)===(body.profile||null) && JSON.stringify(job.config.labels)===JSON.stringify(body.labels);
 }
 async function textClassificationProposalStorageLock(fn) {
   if(typeof navigator==='undefined' || !navigator.locks?.request) {
@@ -324,7 +326,8 @@ textClassificationProposalLoadAuthority().catch(error=>textClassificationProposa
 if(textClassificationProposalStorageBlocked)textClassificationProposalStatus(textClassificationProposalStorageBlocked);
 function textClassificationProposalConfig() {
   return {server_url:$('text-classification-proposal-url').value,model:$('text-classification-proposal-model').value,
-    instruction:$('text-classification-proposal-guidance').value,seed:Number($('text-classification-proposal-seed').value),labels:textClassificationProposalLabels()};
+    instruction:$('text-classification-proposal-guidance').value,seed:$('text-classification-proposal-protocol').value==='pumas_typed_v1'?null:Number($('text-classification-proposal-seed').value),labels:textClassificationProposalLabels(),
+    ...(typeof pumasTypedSettings==='function'?pumasTypedSettings('text-classification-proposal'):{})};
 }
 function textClassificationProposalsShown(record) {
   ++textClassificationProposalEpoch; clearTimeout(textClassificationProposalTimer); textClassificationProposalRendered = '';
@@ -430,19 +433,20 @@ async function decideTextClassificationProposal(job, decision) {
   await refreshTextClassificationProposals();
 }
 $('text-classification-proposal-url').addEventListener('input',()=>{++textClassificationProposalModelEpoch;$('text-classification-proposal-model').replaceChildren();});
-for(const id of ['url','model','guidance','seed','labels']) {
+for(const id of ['url','model','guidance','seed','labels','protocol','profile']) {
   const input=$('text-classification-proposal-'+id);
   for(const event of ['input','change'])input.addEventListener(event,()=>{++textClassificationProposalFormEpoch;});
 }
 action('text-classification-proposal-models',async()=>{
-  const epoch=++textClassificationProposalModelEpoch,url=$('text-classification-proposal-url').value;
-  const result=await api('/api/generation/prompt-models',{server_url:url});
+  const epoch=++textClassificationProposalModelEpoch,url=$('text-classification-proposal-url').value,formEpoch=textClassificationProposalFormEpoch;
+  const result=await api($('text-classification-proposal-protocol').value==='pumas_typed_v1'?'/api/generation/typed-models':'/api/generation/prompt-models',{server_url:url});
+  if(formEpoch!==textClassificationProposalFormEpoch)return;
   if(epoch!==textClassificationProposalModelEpoch||url!==$('text-classification-proposal-url').value||textClassificationProposalPaused)return;
   ++textClassificationProposalFormEpoch;
   $('text-classification-proposal-model').replaceChildren();for(const model of result.models) {
     const option=document.createElement('option');option.value=model.id;option.textContent=model.name;$('text-classification-proposal-model').append(option);
   }
-  textClassificationProposalStatus('Listed served text models. Listing does not establish classification or JSON compatibility; incompatible requests fail without fallback.');
+  textClassificationProposalStatus($('text-classification-proposal-protocol').value==='pumas_typed_v1'?'Listed serving aliases. Selected-model capabilities govern admission; listing does not establish classification or JSON compatibility.':'Listed served text models. Listing does not establish classification or JSON compatibility; incompatible requests fail without fallback.');
 });
 $('text-classification-proposal-form').addEventListener('submit',async event=>{
   event.preventDefault();if(textClassificationProposalBusy||textClassificationProposalPaused)return;
@@ -476,6 +480,8 @@ action('text-classification-proposal-restore',()=>{
   if(!body)throw Error('No unresolved classification admission is stored.');
   ++textClassificationProposalModelEpoch;++textClassificationProposalFormEpoch;
   $('text-classification-proposal-url').value=body.server_url;
+  $('text-classification-proposal-protocol').value=body.protocol||'legacy';$('text-classification-proposal-profile').value=body.profile||'';
+  if(typeof pumasTypedRender==='function')pumasTypedRender('text-classification-proposal');
   const option=document.createElement('option');option.value=body.model;option.textContent=body.model;
   $('text-classification-proposal-model').replaceChildren(option);$('text-classification-proposal-model').value=body.model;
   $('text-classification-proposal-guidance').value=body.instruction;$('text-classification-proposal-seed').value=body.seed;

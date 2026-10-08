@@ -29,6 +29,8 @@ jobs:
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
       - run: node --check static/text-classification-proposals.js
+      - run: node --check static/pumas-typed.js
+      - run: node tests/test_pumas_typed_controller.cjs
       - run: node --check static/pumas-gateways.js
       - run: node tests/test_pumas_gateways_controller.cjs
       - run: node --check static/meshes.js
@@ -134,6 +136,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences_actual.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_pumas_typed.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
