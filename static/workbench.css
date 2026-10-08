@@ -27,3 +27,5 @@
 
 #sequence-metadata {white-space:pre-wrap; overflow-wrap:anywhere; max-height:32rem; overflow:auto;}
 #mesh-projections{display:flex;flex-wrap:wrap;gap:.7rem}#mesh-projections figure{flex:1 1 180px;margin:0;min-width:0}#mesh-projections svg{display:block;width:100%;max-height:240px;background:#f4f6fa;border:1px solid #ccd4df}#mesh-projections polygon{fill:none;stroke:#28598b;stroke-width:1.2}#mesh-metadata{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+
+#pumas-gateway-panel {margin-block:1rem;} #pumas-gateway-metadata {max-height:24rem;overflow:auto;}

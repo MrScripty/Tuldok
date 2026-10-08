@@ -1,0 +1,85 @@
+// Source-derived pinned PR51 payload; production decoder/routes and real Chromium, no Pumas inference.
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {spawn}=require('node:child_process');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..')),report=qaDirectory(root,'pumas-gateways'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-pumas-gateway-')),children=[];
+const errors=[],tracker=pageLoadTracker(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws;
+async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+(async()=>{
+  const server=launch('python3',['-u','tests/browser_pumas_gateways_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='',serverErrors='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
+  const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
+  const seed=await api('import',{kind:'text',text:'Independent editor stays intact.',name:'Existing editor',groups:['existing-source'],rights:'Authored'});
+  const gatewayPort=await until(()=>output.match(/FIXTURE_PUMAS_PORT=(\d+)/)?.[1]),gateway='http://127.0.0.1:'+gatewayPort;
+  const control=body=>fetch(gateway+'/fixture/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const providerState=async()=>await(await fetch(gateway+'/fixture/state')).json();
+  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const active=path.join(temporary,'browser','DevToolsActivePort'),debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');
+  assert.ok(target);ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map();
+  const send=(method,params={})=>new Promise((resolve,reject)=>{const key=++id,timer=setTimeout(()=>{pending.delete(key);reject(Error('CDP timeout '+method));},20000);pending.set(key,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});ws.send(JSON.stringify({id:key,method,params}));});
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);if(!task)return;pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Page.javascriptDialogOpening')send('Page.handleJavaScriptDialog',{accept:true}).catch(error=>errors.push(String(error)));};
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const fill=(id,value)=>evaluate(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  const click=id=>evaluate(`document.getElementById(${JSON.stringify(id)}).click()`);
+  const idle=()=>until(()=>evaluate('!document.getElementById("pumas-gateway-scan").disabled'));
+  const before=await api('records/'+seed.id),history=await api('history/'+seed.id);
+  await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  await evaluate('openRecord('+JSON.stringify(seed.id)+')');await fill('label','retain unsaved target');
+  await evaluate('document.querySelector(".record input").click();document.getElementById("pumas-gateway-panel").open=true');
+  const editor=()=>evaluate('({id:current.id,dirty,selected:selected.size,label:document.getElementById("label").value,review:document.getElementById("record-review").value})');
+  const editorBefore=await editor(),urlBefore=await evaluate('document.getElementById("text-classification-proposal-url").value');
+  await click('pumas-gateway-scan');await idle();
+  assert.equal(await evaluate('document.getElementById("pumas-gateway-choice").options.length'),2);
+  assert.equal(await evaluate('document.getElementById("pumas-gateway-choice").value'),'');
+  assert.equal(await evaluate('document.getElementById("text-classification-proposal-url").value'),urlBefore);
+  await fill('pumas-gateway-choice',gateway);await fill('pumas-gateway-target','classification');
+  const metadata=JSON.parse(await evaluate('document.getElementById("pumas-gateway-metadata").textContent'));
+  assert.equal(metadata.server_url,gateway);assert.equal(metadata.advertisement.build_info.package_version,'0.7.0');assert.match(metadata.observed_sha256,/^[a-f0-9]{64}$/);
+  assert.ok(metadata.advertisement.instance.registry_library_id);assert.ok(metadata.advertisement.instance.build_info);
+  // Copying config emits the existing owners' invalidation events; no catalog starts implicitly.
+  await evaluate('document.getElementById("text-classification-proposal-model").add(new Option("stale catalog","old"))');
+  await click('pumas-gateway-use');await idle();
+  assert.equal(await evaluate('document.getElementById("text-classification-proposal-url").value'),gateway);
+  assert.ok(!await evaluate('[...document.getElementById("text-classification-proposal-model").options].some(o=>o.value==="old")'));
+  assert.deepEqual(await editor(),editorBefore);
+  assert.ok((await providerState()).requests.every(route=>route==='GET /.well-known/pumas'));
+  // A real delayed HTTP observation cannot overwrite a later user URL edit.
+  await fill('pumas-gateway-target','caption');await control({hold:true});await click('pumas-gateway-use');
+  await until(async()=>(await providerState()).entered);
+  await fill('caption-proposal-url','http://127.0.0.1:30000');await control({hold:false});await idle();
+  assert.equal(await evaluate('document.getElementById("caption-proposal-url").value'),'http://127.0.0.1:30000');
+  await click('pumas-gateway-use');await idle();
+  assert.equal(await evaluate('document.getElementById("caption-proposal-url").value'),gateway);
+  // Only the user's separate catalog action touches the existing served-model contract.
+  await click('text-classification-proposal-models');
+  await until(()=>evaluate('[...document.getElementById("text-classification-proposal-model").options].some(o=>o.value==="source-derived-chat-fixture")'));
+  await control({generation:'00000000-0000-4000-8000-000000000002'});await click('pumas-gateway-use');await idle();
+  assert.match(await evaluate('document.getElementById("pumas-gateway-status").textContent'),/advertisement changed/);
+  assert.equal(await evaluate('document.getElementById("pumas-gateway-choice").options.length'),1);
+  assert.equal(await evaluate('document.getElementById("caption-proposal-url").value'),gateway);
+  await click('pumas-gateway-scan');await idle();await fill('pumas-gateway-choice',gateway);await fill('pumas-gateway-target','rewrite');await click('pumas-gateway-use');await idle();
+  assert.equal(await evaluate('document.getElementById("grounded-url").value'),gateway);
+  assert.deepEqual(await editor(),editorBefore);
+  await evaluate('document.querySelector("#pumas-gateway-panel details").open=true;document.getElementById("pumas-gateway-panel").scrollIntoView()');
+  fs.writeFileSync(path.join(report,'gateway-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Chooser fits narrow viewport');
+  fs.writeFileSync(path.join(report,'gateway-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
+  const requests=(await providerState()).requests;
+  assert.equal(requests.filter(route=>route==='GET /v1/models').length,1);
+  assert.ok(requests.every(route=>['GET /.well-known/pumas','GET /v1/models'].includes(route)),JSON.stringify(requests));
+  assert.deepEqual(await api('records/'+seed.id),before);assert.deepEqual(await api('history/'+seed.id),history);
+  await evaluate('dirty=false');await send('Page.reload');await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  assert.equal(await evaluate('document.getElementById("pumas-gateway-choice").options.length'),1);
+  assert.deepEqual((await providerState()).requests,requests,'Reload makes no automatic discovery or model request');
+  assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
+  fs.writeFileSync(path.join(report,'session.json'),JSON.stringify({fixture:'source-derived PR51 80f06ab17f9eea639fee143c86319ca9b5e1a21c',requests,editorBefore,metadata,errors},null,2)+'\n');
+  console.log('Gateway Chromium: production descriptor scan/recheck, all three forms, stale catalog invalidation, real held-response URL fence, changed generation, unchanged dirty editor/selection/review/history, explicit catalog only, reload and narrow JPEG85 passed.');
+})().catch(error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(250);for(const child of children)if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');fs.rmSync(temporary,{recursive:true,force:true});});
