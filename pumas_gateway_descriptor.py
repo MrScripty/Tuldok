@@ -19,7 +19,7 @@ def endpoint(value):
         port = parts.port if parts.port is not None else 80
     except ValueError:
         raise ValueError('Enter a numeric-loopback HTTP base URL.') from None
-    if (parts.scheme != 'http' or not host.is_loopback or not 1 <= port <= 65535
+    if (parts.scheme != 'http' or not host.is_loopback or '%' in (parts.hostname or '') or not 1 <= port <= 65535
             or parts.username is not None or parts.password is not None
             or parts.path not in ('', '/') or parts.query or parts.fragment
             or '?' in value or '#' in value):

@@ -72,6 +72,7 @@ class PumasGateways(unittest.TestCase):
             lambda v: v['instance'].update(capabilities=['x'] * 65),
             lambda v: v['instance'].update(library_root='x' * 4097),
             lambda v: v.update(endpoint='http://example.com:8765'),
+            lambda v: v.update(endpoint='http://[::1%lo]:8765'),
         ]
         for mutate in mutations:
             value = fixture(); mutate(value)
@@ -85,7 +86,8 @@ class PumasGateways(unittest.TestCase):
         self.assertEqual(descriptor.endpoint('http://127.0.0.1'), 'http://127.0.0.1:80')
         for url in ('http://localhost:8765', 'https://127.0.0.1:8765', 'http://127.0.0.1:0',
                     'http://127.0.0.1:8765/v1', 'http://127.0.0.1:8765?', 'http://user@127.0.0.1:8765',
-                    'http://127.0.0.1:8765#', 'http://127.0.0.1:8765\n', 'http://10.0.0.1:8765'):
+                    'http://127.0.0.1:8765#', 'http://127.0.0.1:8765\n', 'http://10.0.0.1:8765',
+                    'http://[::1%lo]:8765', 'http://[::1%25lo]:8765', 'http://[::1%1]:8765'):
             with self.subTest(url=url), self.assertRaises(ValueError): descriptor.endpoint(url)
 
     def test_actual_get_scan_inspection_hash_and_no_rpc_catalog_or_inference(self):
