@@ -70,6 +70,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('document.querySelector("#pumas-gateway-panel details").open=true;document.getElementById("pumas-gateway-panel").scrollIntoView()');
   fs.writeFileSync(path.join(report,'gateway-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+  await evaluate('document.getElementById("pumas-gateway-panel").scrollIntoView()');
+  await until(()=>evaluate('Math.abs(document.getElementById("pumas-gateway-panel").getBoundingClientRect().top)<2'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Chooser fits narrow viewport');
   fs.writeFileSync(path.join(report,'gateway-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   const requests=(await providerState()).requests;
