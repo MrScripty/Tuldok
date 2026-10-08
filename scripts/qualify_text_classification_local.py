@@ -23,11 +23,15 @@ NEW_COMMANDS = (
     'node --check static/text-classification-proposals.js',
     'node tests/test_text_classification_proposals_controller.cjs',
     'node tests/browser_text_classification_proposals.cjs',
+    'node tests/test_image_classification_export_controller.cjs',
+    'node tests/browser_image_classification_export.cjs',
+    'node tests/check_image_classification_consumer.cjs',
 )
 CONSUMER_COMMANDS = {
     'node tests/browser_preferences.cjs',
     'node tests/browser_instruction_responses.cjs',
     'node tests/browser_combined_workbench.cjs',
+    'node tests/check_image_classification_consumer.cjs',
 }
 
 

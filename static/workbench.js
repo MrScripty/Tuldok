@@ -242,6 +242,9 @@ function renderReleasePreview(result) {
     previewLine(root, 'Selected class / target label counts: '+counts(a.labels));
     previewLine(root, `${a.unlabeled} unlabeled · ${a.empty_targets} empty targets · ${a.duplicate_content_records} exact duplicate records · ${a.unknown_rights} unknown rights`);
   }
+  if(result.class_coverage) {
+    for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder} (index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
+  }
   for(const item of result.blockers) previewLine(root, (item.record_id ? item.record_id+': ' : '')+item.message);
   const report=result.split_report;
   if(report) {
@@ -264,7 +267,7 @@ function renderReleasePreview(result) {
 for(const id of ['release-format','train','validation','test','split-seed']) {
   for(const event of ['input','change']) $(id).addEventListener(event, syncReleaseSelection);
 }
-$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';});
+$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';});
 $('preview-release').addEventListener('click', async event=>{
   event.preventDefault(); if(releaseBusy) return;
   syncReleaseSelection();
@@ -291,7 +294,7 @@ $('release-form').addEventListener('submit',async event=>{
     const result=await api('releases',body);
     if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
     const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' small-image warnings; inspect manifest.json.' : ''));
+    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(result.format==='image_classification_v1'?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
   } catch(error) {
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }

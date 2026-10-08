@@ -620,3 +620,35 @@ PUMAS_TYPED_GATEWAY_RECEIPT=/path/to/gateway.json node tests/browser_pumas_typed
 ```
 
 Keep reports, generated datasets and JPEG85 screenshots in ignored `build/` or external qualification directories. The authored harness instructions document startup and owned shutdown; production source remains pinned and unchanged.
+
+### Reviewed image classes for the Chapter 8 trainer
+
+Choose **Image classes · Chapter 8 trainer** when freezing selected Workbench
+records. This adapter targets the exact `train_image_classifier.py` fixture in
+`tests/fixtures/` with Torch 2.8.0 / torchvision 0.23.0. It requires human-reviewed
+single-class images, at least two classes, and every class in train, validation
+and test. Preview shows missing class coverage; whole protected families and
+existing source splits remain intact. These consumer-specific requirements do
+not restrict the canonical format.
+
+The ZIP contains `train/val/test/class_000000/ID.png`, with unchanged normalized
+PNG bytes. `manifest.json` maps each opaque folder/index to the exact Unicode
+label and retains annotation/review revisions, provenance, hashes and connected
+lineage. Keep this mapping with the model: the unchanged trainer and prediction
+utility report opaque folder names. Label text never becomes a filesystem path.
+Same-split pixel repeats are retained with warnings, never silently discarded.
+This is a training view, not an original-byte backup or a data-quality guarantee.
+
+The actual-reader check needs the existing pinned consumer environment plus
+CPU `torchvision==0.23.0` and `scikit-learn==1.7.2`:
+
+```sh
+INSTRUCTION_CONSUMER_PYTHON=/path/to/consumer-venv/bin/python node tests/check_image_classification_consumer.cjs
+node tests/test_image_classification_export_controller.cjs
+node tests/browser_image_classification_export.cjs
+```
+
+The reader gate also executes the unchanged tiny CPU trainer for one epoch,
+without downloading model weights, using six authored transport fixtures. Its
+metrics establish no training-quality claim. See the
+[classification export plan](docs/plans/image-classification-export/plan.md).
