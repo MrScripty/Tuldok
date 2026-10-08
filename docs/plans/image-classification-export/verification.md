@@ -8,8 +8,8 @@ Frozen main remains separate. No branch, pull request or merge was published.
 ## Passed
 
 - The explicit nonbrowser aggregate scope passed **41/41 registered commands**,
-  with zero failures or skips in that scope. This included **366 Python tests**,
-  the 17 new classification tests, existing controllers and syntax gates, the
+  with zero failures or skips in that scope. This included **367 Python tests**,
+  the 18 new classification tests, existing controllers and syntax gates, the
   focused classification controller, and the actual consumer gate.
 - Python checks used a real local HTTP server for preview, token-required freeze,
   download hashes, stale-revision rejection and immutable reread. The source
