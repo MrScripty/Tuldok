@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'sequence_transport', 'mesh_geometry')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -73,6 +73,10 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Choose a task matching the asset type.')
     if not isinstance(value, dict):
         raise WorkbenchError('Annotation must be an object.')
+    if task == 'text_corpus':
+        if set(value) != {'note'}:
+            raise WorkbenchError('Text corpus review requires exactly one note.')
+        return {'note': text_value(value['note'], 'Corpus review note', 4000)}
     if task in ('sequence_transport', 'mesh_geometry'):
         if set(value) != {'note'}:
             raise WorkbenchError(record['kind'].title() + ' review requires exactly one note; fields stay immutable.')
@@ -407,6 +411,8 @@ class Workbench:
         if not groups:
             raise WorkbenchError('Keep at least one protected group.')
         review = body.get('review')
+        if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
+            raise WorkbenchError('Text corpus data requires an explicit human review decision.')
         if before['kind'] in ('sequence', 'mesh'):
             if not set(before[before['kind']]['protected_groups']) <= set(groups):
                 raise WorkbenchError('Keep the whole trajectory and initial-family protected groups.' if before['kind'] == 'sequence' else 'Keep the immutable mesh source and family protected groups.')
@@ -580,11 +586,11 @@ class Workbench:
             raise WorkbenchError('Source image unavailable.', 'unavailable', 404)
         return path, 'image/png'
 
-    def selection(self, items):
+    def selection(self, items, *, max_snapshot_bytes=None):
         if not isinstance(items, list) or not 1 <= len(items) <= 5000:
             raise WorkbenchError('Select 1–5,000 records per synchronous release.')
         self._sync_images()
-        result, seen = [], set()
+        result, seen, snapshot_bytes = [], set(), 0
         for item in items:
             if not isinstance(item, dict) or not isinstance(item.get('id'), str) or item['id'] in seen:
                 raise WorkbenchError('Selection contains an invalid or repeated record.')
@@ -592,6 +598,10 @@ class Workbench:
             for key in ('revision', 'source_revision'):
                 if type(item.get(key)) is not int or item[key] != record[key]:
                     raise WorkbenchError('Selection changed. Refresh and select the current revisions.', 'conflict', 409)
+            if max_snapshot_bytes is not None:
+                snapshot_bytes += len(encode(record).encode('utf-8'))
+                if snapshot_bytes > max_snapshot_bytes:
+                    raise WorkbenchError('Selected snapshots exceed the 40 MiB complete logical archive bound.')
             seen.add(item['id'])
             result.append(record)
         return sorted(result, key=lambda row: row['id'])

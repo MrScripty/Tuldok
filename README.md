@@ -652,3 +652,35 @@ The reader gate also executes the unchanged tiny CPU trainer for one epoch,
 without downloading model weights, using six authored transport fixtures. Its
 metrics establish no training-quality claim. See the
 [classification export plan](docs/plans/image-classification-export/plan.md).
+
+### Reviewed plain-text corpora for Chapter 11
+
+Import text, choose **text corpus**, add a corpus review note, and explicitly
+save as **Human reviewed**. Classification/entity approval does not approve
+corpus use. Choose **Text corpus · Chapter 11 byte transformer** in the existing
+release menu, preview the saved selection, then freeze its exact revisions.
+
+`text_corpus_v1` emits `train.txt`, `validation.txt`, `test.txt`, exact byte-range
+mapping in `documents.jsonl`, duplicated canonical document assets, and frozen
+review/provenance/family evidence. Existing NFC/LF text becomes UTF-8 without
+further normalization or trimming. IDs are sorted within each split. Exactly two
+LF bytes are appended after every document, including the last; existing trailing
+newlines remain.
+
+The unchanged published consumer uses raw-byte IDs, a 256-value vocabulary and
+one-byte-shifted windows. Windows may cross document and UTF-8 character
+boundaries. Separators are ordinary bytes, **not EOS or attention resets**. For
+reference context 128, train must exceed 128 bytes; validation/test each need at
+least 2 bytes. All three connected-family splits must be nonempty. Preview shows
+byte, document and family counts separately. Allocation weights records, never
+bytes; fixed splits and unselected lineage bridges remain protected. No document
+is split, discarded or automatically moved to satisfy a quota.
+
+A fresh preview is mandatory. Releases are immutable, deterministic,
+content-addressed ZIPs bounded to 5,000 records and 40 MiB for the full logical
+archive, including duplicated data and metadata. Human review and family
+protection do not establish data quality, semantic independence or permission.
+
+See the [consumer pin, byte contract and qualification plan](docs/plans/text-corpus-export/plan.md).
+The actual-consumer gate uses Torch 2.8.0 on CPU, synthetic authored fixtures and
+the unchanged companion reader/trainer/evaluator. It downloads no models or data.

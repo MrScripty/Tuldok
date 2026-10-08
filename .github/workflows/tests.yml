@@ -45,6 +45,7 @@ jobs:
       - run: node tests/test_qa_artifacts.cjs
       - run: node tests/test_workbench_controller.cjs
       - run: node tests/test_image_classification_export_controller.cjs
+      - run: node tests/test_text_corpus_export_controller.cjs
       - run: node tests/test_saved_selections_controller.cjs
       - run: node tests/test_saved_selection_intent.cjs
       - run: node tests/test_bulk_import_controller.cjs
@@ -64,6 +65,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_captions.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_text_corpus_export.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_image_classification_export.cjs
@@ -113,6 +117,9 @@ jobs:
           BROWSER: /usr/bin/google-chrome
       - run: python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
       - run: python -m pip install -r tests/instruction-consumer-requirements.txt scikit-learn==1.7.2
+      - run: node tests/check_text_corpus_consumer.cjs
+        env:
+          TEXT_CORPUS_CONSUMER_PYTHON: python
       - run: node tests/check_image_classification_consumer.cjs
         env:
           INSTRUCTION_CONSUMER_PYTHON: python
