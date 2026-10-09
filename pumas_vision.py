@@ -1,4 +1,4 @@
-"""Finite Image→Text consumer pinned to Pumas PR65, never model qualification.
+"""Finite Image→Text consumer pinned to combined Pumas PR68, never model qualification.
 
 The application sends its prepared image bytes, without URL/path authority.
 Pumas's production PNG/turbojpeg decoder remains the admission authority.
@@ -17,7 +17,7 @@ import gateway_discovery
 import pumas_operations as pumas
 from workbench import encode
 
-SOURCE_COMMIT = 'f83770d571b3f45707bd4def2a5d6f8619bb1dcf'
+SOURCE_COMMIT = '19f17303b8e63aa9447fba2f733c73e9dfcfc049'
 SCHEMA = 'pumas.model-operations.image-to-text'
 MAX_REQUEST = 32 * 1024 * 1024
 MAX_IMAGE = 8 * 1024 * 1024

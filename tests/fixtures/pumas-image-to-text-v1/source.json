@@ -1,8 +1,8 @@
 {
   "producer_repository": "MrScripty/Pumas-Library",
-  "producer_pr": 65,
-  "producer_commit": "f83770d571b3f45707bd4def2a5d6f8619bb1dcf",
-  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/f83770d571b3f45707bd4def2a5d6f8619bb1dcf/docs/contracts/image-to-text-v0.8.md",
+  "producer_pr": 68,
+  "producer_commit": "19f17303b8e63aa9447fba2f733c73e9dfcfc049",
+  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/19f17303b8e63aa9447fba2f733c73e9dfcfc049/docs/contracts/image-to-text-v0.8.md",
   "fixture_kind": "Source-derived controlled consumer fixture; not actual native DTO export or model inference",
   "inspected_source_sha256": {
     "types.rs": "875977948163c4256e60783d540337f117ec70edb1bb3636e7598e516587cca3",
@@ -10,11 +10,21 @@
     "projection.rs": "444c500edd7ca3ea478d37e68212f8da9325028b87a35f6cdedb3e0e8aaed7a7",
     "vision_tests.rs": "38bd0f3b40dfda219a21d49c4ca3a33f54b354aadfd33363bc5ad65c964bbc8e"
   },
-  "schema_export_status": "Await final composed provider DTO/desktop schema pin from integration lead. No schema-export acceptance claimed.",
+  "schema_export_status": "Six actual production Rust DTO exports from the combined draft source; verified schema identities and controlled wire compatibility. Final source pin and packaged/native qualification remain pending.",
   "inspected_source_native_blob_sha": {
     "types.rs": "f7d70f90770deb124dc17dde5212d88b058d9e0e",
     "model_operations.rs": "b4c6ffa60ba6f4c0905bba0d4d6e97616e42cc62",
     "projection.rs": "2a2061a0659a916998455bd22cbc55a7b7f4b0a6",
     "vision_tests.rs": "fd476b44691b202002b325ced7fe712b65f1a52b"
-  }
+  },
+  "originating_vision_pr": 65,
+  "actual_dto_schema_sha256": {
+    "capabilities-response.schema.json": "b55b150f6958239e71d71f1b28fd36450907ddccf78544d52b64543ad4f2493d",
+    "capability-descriptor.schema.json": "eb25783123d38de5ff6aedf4cfa69de8f4f5f5c60799768b1b90da258b85f922",
+    "error-response.schema.json": "b024363b19d55a004d9577ad04d7e2ec9209d3d1193b7c53c46a7d6ed401e3be",
+    "modality-request.schema.json": "24b5f0a73a1252d31a3b22687a84f07b16a9d3ea700809a42e615e7f4e668704",
+    "operation-request.schema.json": "08f46f0e79c6cb288c413b008abbdfbedb1898d02fb98d396ef73faf8634c642",
+    "operation-response.schema.json": "20bf98dfd7292b1e3a99bf34ec524858351ba6f9d226f17257362e9ddf0500f8"
+  },
+  "schema_export_command": "PUMAS_IMAGE_CONTRACT_EXPORT_DIR=... ORT_SKIP_DOWNLOAD=1 CARGO_BUILD_JOBS=1 cargo test --locked --offline --manifest-path rust/Cargo.toml -p pumas-rpc --bin pumas-rpc --all-features handlers::model_operations::types::image_to_text_schema_tests::image_to_text_actual_dto_schema_export"
 }

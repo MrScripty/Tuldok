@@ -1,4 +1,4 @@
-"""Application acceptance of source-derived PR65 wire fixtures, not inference."""
+"""Application acceptance of source-derived vision fixtures and actual DTO schema pins, not inference."""
 import base64
 import copy
 import hashlib
@@ -26,6 +26,23 @@ def image(encoding='png', size=(16,8), progressive=False):
 
 class VisionBoundaryTests(unittest.TestCase):
     def job(self): return {'id':'caption-17','config':{'model':'controlled-vision','profile':'vision-cpu'}}
+    def test_actual_dto_schema_identities_and_closed_capability_enum(self):
+        source = json.loads((FIXTURES/'source.json').read_text())
+        self.assertEqual(source['producer_commit'], vision.SOURCE_COMMIT)
+        schemas = source['actual_dto_schema_sha256']
+        self.assertEqual(set(schemas), {name+'.schema.json' for name in (
+            'operation-request', 'modality-request', 'capabilities-response',
+            'capability-descriptor', 'operation-response', 'error-response')})
+        for name, digest in schemas.items():
+            raw = (FIXTURES/'schemas'/name).read_bytes()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), digest, name)
+            self.assertEqual(json.loads(raw)['$schema'], 'https://json-schema.org/draft/2020-12/schema')
+        descriptor = json.loads((FIXTURES/'schemas/capability-descriptor.schema.json').read_text())
+        self.assertEqual(set(descriptor['$defs']['Capability']['enum']), set(pumas.CAPABILITIES))
+        for name in ('operation-request', 'modality-request'):
+            schema = json.loads((FIXTURES/'schemas'/(name+'.schema.json')).read_text())
+            self.assertFalse(schema['additionalProperties'])
+            self.assertEqual(schema['$defs']['ImageEncoding']['enum'], ['png','jpeg'])
     def test_seven_source_derived_descriptors_hash_reasons_and_closed_fields(self):
         raw = (FIXTURES/'controlled-capabilities.json').read_bytes()
         observed = pumas.validate_manifest(raw)

@@ -1,8 +1,8 @@
 # Pumas Image→Text consumer
 
-This opt-in caption path consumes the contract at Pumas Library draft PR65,
-source `f83770d571b3f45707bd4def2a5d6f8619bb1dcf`:
-[Image→Text contract](https://github.com/MrScripty/Pumas-Library/blob/f83770d571b3f45707bd4def2a5d6f8619bb1dcf/docs/contracts/image-to-text-v0.8.md).
+This opt-in caption path consumes the contract at Pumas Library combined draft PR68,
+source `19f17303b8e63aa9447fba2f733c73e9dfcfc049`:
+[Image→Text contract](https://github.com/MrScripty/Pumas-Library/blob/19f17303b8e63aa9447fba2f733c73e9dfcfc049/docs/contracts/image-to-text-v0.8.md).
 It is based on Tuldok main `d99e23d2b0d2783a7a9863232a7453cd9f2db7aa`.
 The legacy compatible caption path and the previous typed text/image operations
 remain available. Their existing producer receipt is not silently repinned.
@@ -72,8 +72,16 @@ draft/history, live selection refusal, cancellation/borrowed-owner survival,
 HTTP outcomes, restart and no replay. The existing typed browser suite additionally
 checks the actual caption form, capability inspection, application and disconnect.
 
-Before coordinated merge, the parent/integration lead must reconcile this pin
-with the composed Pumas provider source and regenerate/provide the six actual DTO
-schemas and combined desktop contract. These controlled consumer tests do not
-claim native Pumas/schema-export acceptance, real model/projector inference,
-semantic accuracy or platform packaging. No models or runtimes are acquired here.
+The six actual production DTO schemas exported from the combined draft source
+are retained in `tests/fixtures/pumas-image-to-text-v1/schemas/`, with SHA-256
+identities in `source.json`. The source-derived capability fixture and authored
+named/facade image requests and typed responses validate against these exports.
+The schemas describe wire shape; finite bounds and live readiness remain runtime
+checks. Neither fixture output nor schema validity proves native inference.
+
+This source pin is provisional until the coordinated combined source is final.
+The combined desktop contract and packaged application are provider integration
+gates. Real model/projector inference, semantic quality, managed native teardown
+and production audio qualification remain unclaimed. No models or runtimes are
+acquired by this consumer. Existing historical text/image fixture receipts retain
+their original source identities.

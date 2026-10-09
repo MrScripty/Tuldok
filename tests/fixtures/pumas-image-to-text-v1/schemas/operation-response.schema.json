@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "FinishReason": {
+      "enum": [
+        "stop",
+        "length",
+        "content_filter"
+      ],
+      "type": "string"
+    },
+    "OperationResult": {
+      "oneOf": [
+        {
+          "properties": {
+            "finish_reason": {
+              "$ref": "#/$defs/FinishReason"
+            },
+            "kind": {
+              "const": "text",
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "text",
+            "finish_reason"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "embeddings",
+              "type": "string"
+            },
+            "vectors": {
+              "items": {
+                "items": {
+                  "format": "float",
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "kind",
+            "vectors"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "image",
+              "type": "string"
+            },
+            "png_base64": {
+              "type": "string"
+            },
+            "seed": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "png_base64",
+            "seed"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "contract_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "result": {
+      "$ref": "#/$defs/OperationResult"
+    }
+  },
+  "required": [
+    "contract_version",
+    "request_id",
+    "result"
+  ],
+  "title": "OperationResponse",
+  "type": "object"
+}

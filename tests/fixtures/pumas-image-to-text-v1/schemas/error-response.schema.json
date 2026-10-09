@@ -1,0 +1,66 @@
+{
+  "$defs": {
+    "ErrorCode": {
+      "enum": [
+        "invalid_request",
+        "unsupported_contract",
+        "model_not_found",
+        "ambiguous_model",
+        "ambiguous_operation",
+        "unsupported_modality",
+        "capability_unavailable",
+        "provider_failure",
+        "invalid_provider_result",
+        "request_limit",
+        "response_limit",
+        "transport_lost"
+      ],
+      "type": "string"
+    },
+    "OperationError": {
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ErrorCode"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        }
+      },
+      "required": [
+        "code",
+        "outcome"
+      ],
+      "type": "object"
+    },
+    "Outcome": {
+      "enum": [
+        "not_admitted",
+        "unknown"
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "contract_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "error": {
+      "$ref": "#/$defs/OperationError"
+    },
+    "request_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "contract_version",
+    "error"
+  ],
+  "title": "ErrorResponse",
+  "type": "object"
+}
