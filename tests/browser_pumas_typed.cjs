@@ -113,7 +113,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await evaluate('refreshCaptionProposals()');
   await evaluate('[...document.querySelectorAll("#caption-proposal-jobs button")].find(b=>b.textContent==="Apply as draft").click()');
   const visionApplied=await until(async()=>{const row=await request('records/'+visionSource.id);return row.annotation?.caption==='A blue rectangle.'&&row;});
-  assert.equal(visionApplied.review,'draft');assert.equal(visionApplied.target_proposal.producer_contract_source,'f83770d571b3f45707bd4def2a5d6f8619bb1dcf');
+  assert.equal(visionApplied.review,'draft');assert.equal(visionApplied.target_proposal.producer_contract_source,JSON.parse(fs.readFileSync(path.join(root,'tests/fixtures/pumas-image-to-text-v1/source.json'),'utf8')).producer_commit);
   assert.deepEqual(visionApplied.groups,visionSource.groups);
   await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'loss'})});
   await evaluate('openRecord('+JSON.stringify(visionApplied.id)+')');
