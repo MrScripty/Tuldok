@@ -9,6 +9,7 @@ import gateway_discovery
 import workbench
 import dataset_recipes
 import dataset_releases
+import grounded_candidates
 import base64
 import hashlib
 import io
@@ -136,8 +137,10 @@ class Dataset:
         self._recover_deletions()
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
+        self.grounded = grounded_candidates.Proposals(self.workbench)
 
     def close(self):
+        self.grounded.close()
         self.generation_jobs.close()
         self.db.close()
 
@@ -361,6 +364,10 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workbench/grounded/jobs':
+                    return self.reply(dataset.grounded.snapshot())
+                if path.startswith('/api/workbench/grounded/jobs/'):
+                    return self.reply(dataset.grounded.get(path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/records':
                     options = {key: value[-1] for key, value in parse_qs(urlsplit(self.path).query).items()}
                     return self.reply(dataset.workbench.query(options))
@@ -439,6 +446,12 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/workbench/grounded/jobs':
+                    return self.reply(dataset.grounded.start(body), 202)
+                if path == '/api/workbench/grounded/cancel':
+                    return self.reply(dataset.grounded.cancel(body.get('job_id')))
+                if path.startswith('/api/workbench/grounded/review/'):
+                    return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
                 if path.startswith('/api/workbench/records/'):
@@ -454,9 +467,7 @@ def make_handler(dataset):
                 if path == '/api/generation/jobs/resume':
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
-                    result = ai_http.models('llamacpp', body.get('server_url'))
-                    image_ids = {m['id'] for m in image_generation.models(body)['models']}
-                    return self.reply({'models': [m for m in result['models'] if m['id'] not in image_ids]})
+                    return self.reply(ai_http.text_models(body.get('server_url')))
                 if path == '/api/generation/scan':
                     return self.reply(gateway_discovery.scan())
                 if path == '/api/generation/models':

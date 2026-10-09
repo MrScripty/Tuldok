@@ -4,7 +4,7 @@ const selected = new Map();
 let page = null, offset = 0, current = null, targets = [], dirty = false, queryEpoch = 0, editorEpoch = 0;
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error', error); }
 async function api(path, body) {
-  const response = await fetch('/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const response = await fetch(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   const result = await response.json();
   if (!response.ok) throw Error(result.error || 'Request failed.');
   return result;
@@ -148,3 +148,64 @@ action('release-form',async()=>{
 },'submit');
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 refresh().then(()=>notice('Collection ready.')).catch(error=>notice(error.message,true));
+
+// Proposal requests own their refresh timer; polling ends at terminal state/page exit.
+let groundedEpoch=0, modelEpoch=0, groundedTimer=null, groundedPaused=false, groundedRevision='';
+const proposalNotes=new Map();
+function groundedButton(label, fn) {
+  const button=document.createElement('button');button.type='button';button.textContent=label;
+  button.onclick=async()=>{if(button.disabled)return;button.disabled=true;try{await fn();}catch(error){notice(error.message,true);}finally{button.disabled=false;}};
+  return button;
+}
+function renderGrounded(jobs) {
+  const opened=new Set([...document.querySelectorAll('.proposal-job[open]')].map(element=>element.dataset.jobId));
+  const active=document.activeElement, focus=active?.id?.startsWith('proposal-note-') ? {id:active.id,start:active.selectionStart,end:active.selectionEnd} : null;
+  $('grounded-jobs').replaceChildren();
+  for(const job of jobs) {
+    const container=document.createElement('details');container.className='proposal-job';container.dataset.jobId=job.id;container.open=opened.has(job.id)||['preparing','generating','stopping'].includes(job.status);
+    const summary=document.createElement('summary');summary.textContent=`${job.source.name} · ${job.status} · ${job.candidates.length} proposals`;container.append(summary);
+    const status=document.createElement('p');status.textContent=`${job.config.model} · requested seed ${job.config.seed} · source revision ${job.source.revision}. ${job.error || job.verification}`;container.append(status);
+    const source=document.createElement('pre');source.textContent=`Captured source (${job.source.annotation.label}):\n${job.source.text}`;container.append(source);
+    if(['preparing','generating','stopping'].includes(job.status))container.append(groundedButton('Cancel request',async()=>{await api('grounded/cancel',{job_id:job.id});await refreshGrounded();}));
+    for(const candidate of job.candidates) {
+      const item=document.createElement('div');item.className='proposal-candidate';
+      const text=document.createElement('pre');text.textContent=candidate.text;item.append(text);
+      const target=document.createElement('p');target.textContent=`Proposed class: ${candidate.label}. State: ${candidate.status}.`;item.append(target);
+      const evidence=document.createElement('pre');evidence.textContent='Exact source evidence:\n'+candidate.evidence.map(span=>`[${span.start},${span.end}): ${span.quote}`).join('\n');item.append(evidence);
+      if(candidate.status==='pending_review') {
+        const label=document.createElement('label');label.textContent='Review / admission note';const note=document.createElement('textarea');note.id='proposal-note-'+candidate.id;note.value=proposalNotes.get(candidate.id)||'';note.maxLength=1000;note.rows=2;note.oninput=()=>proposalNotes.set(candidate.id,note.value);label.append(note);item.append(label);
+        const decide=async decision=>{await api('grounded/review/'+job.id,{revision:job.revision,candidate_id:candidate.id,decision,note:note.value});proposalNotes.delete(candidate.id);await refreshGrounded();await refresh();notice(decision==='reject'?'Candidate rejected and retained for audit.':'Candidate admitted as a draft. Open it and review the annotation before release.');};
+        item.append(groundedButton('Admit as draft',()=>decide('admit_draft')),groundedButton('Reject candidate',()=>decide('reject')));
+      } else {
+        const note=document.createElement('p');note.textContent=candidate.review_note;item.append(note);
+        if(candidate.record_id)item.append(groundedButton('Open admitted draft',()=>openRecord(candidate.record_id)));
+      }
+      container.append(item);
+    }
+    $('grounded-jobs').append(container);
+  }
+  if(focus){const note=$(focus.id);if(note){note.focus();note.setSelectionRange(focus.start,focus.end);}}
+}
+async function refreshGrounded() {
+  clearTimeout(groundedTimer);const epoch=++groundedEpoch;
+  const result=await api('grounded/jobs');if(epoch!==groundedEpoch||groundedPaused)return;
+  const revision=result.jobs.map(job=>job.id+':'+job.revision).join(',');
+  if(revision!==groundedRevision){renderGrounded(result.jobs);groundedRevision=revision;}
+  if(result.jobs.some(job=>['preparing','generating','stopping'].includes(job.status)))groundedTimer=setTimeout(()=>refreshGrounded().catch(error=>notice(error.message,true)),1000);
+}
+$('grounded-url').addEventListener('input',()=>{++modelEpoch;$('grounded-model').replaceChildren();});
+action('grounded-models',async()=>{
+  const epoch=++modelEpoch,url=$('grounded-url').value;const result=await api('/api/generation/prompt-models',{server_url:url});
+  if(epoch!==modelEpoch||url!==$('grounded-url').value)return;
+  $('grounded-model').replaceChildren();for(const model of result.models){const option=document.createElement('option');option.value=model.id;option.textContent=model.name;$('grounded-model').append(option);}
+  notice(result.models.length?result.qualification:'No listed non-image models. Load a text model in Pumas.');
+});
+action('grounded-form',async()=>{
+  if(!current||dirty||current.kind!=='text'||current.task!=='text_classification'||current.review!=='human_reviewed')throw Error('Open and save a human-reviewed text-classification source first.');
+  await api('grounded/jobs',{source_id:current.id,revision:current.revision,source_revision:current.source_revision,server_url:$('grounded-url').value,model:$('grounded-model').value,instruction:$('grounded-instruction').value,count:Number($('grounded-count').value),seed:Number($('grounded-seed').value)});
+  await refreshGrounded();notice('Proposal request started. Outputs remain unreviewed candidates.');
+},'submit');
+action('grounded-refresh',refreshGrounded);
+window.addEventListener('pagehide',()=>{groundedPaused=true;++groundedEpoch;clearTimeout(groundedTimer);});
+window.addEventListener('pageshow',()=>{if(groundedPaused){groundedPaused=false;refreshGrounded().catch(error=>notice(error.message,true));}});
+refreshGrounded().catch(error=>notice(error.message,true));
