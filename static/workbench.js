@@ -97,7 +97,7 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_segmentation','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus','text_retrieval']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_segmentation','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : record.kind === 'pointcloud' ? ['pointcloud_geometry'] : ['text_classification','text_entities','text_corpus','text_retrieval']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
   $('corpus-note').value = record.task === 'text_corpus' ? record.annotation?.note || '' : '';
@@ -105,6 +105,7 @@ function showRecord(record) {
   if(typeof retrievalShown === 'function') retrievalShown(record);
   if(typeof sequenceShown === 'function') sequenceShown(record);
   if(typeof meshShown === 'function') meshShown(record);
+  if(typeof pointcloudShown === 'function') pointcloudShown(record);
   targets = structuredClone(record.annotation?.instances || record.annotation?.boxes || record.annotation?.spans || []);
   if(typeof polygonShown === 'function') polygonShown(record);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
@@ -123,7 +124,7 @@ function renderTargets() {
   if(typeof polygonControls === 'function') polygonControls(task);
   if(typeof retrievalControls === 'function') retrievalControls(task);
   $('corpus-controls').hidden = task !== 'text_corpus';
-  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_retrieval' || task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_retrieval' || task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry' || task === 'pointcloud_geometry';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -187,7 +188,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'text_retrieval' ? retrievalAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':task==='image_segmentation'?'instances':'spans']:targets};
+  const annotation=task === 'text_retrieval' ? retrievalAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'pointcloud_geometry' ? {note:$('pointcloud-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':task==='image_segmentation'?'instances':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&

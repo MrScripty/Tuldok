@@ -17,8 +17,8 @@ function validateSearch(value,expected) {
     || !searchString(value.created_at,64) || !Number.isFinite(Date.parse(value.created_at)) || !searchString(value.updated_at,64) || !Number.isFinite(Date.parse(value.updated_at))) throw Error('Invalid saved-search receipt. Refresh the list before opening.');
   const c=value.criteria,limits={q:200,kind:20,task:40,review:40,sort:20,label:80,group:120,rights:1000};
   if(!searchKeys(c,Object.keys(searchFields)) || !Object.entries(limits).every(([key,limit])=>searchString(c[key],limit)) || /[\r\n]/.test(c.q)
-    || !['','image','text','sequence','mesh'].includes(c.kind) || !['','draft','human_reviewed','programmatically_verified'].includes(c.review)
-    || !['','newest','oldest','name','review'].includes(c.sort) || !['','image_detection','image_classification','image_caption','text_classification','text_entities','sequence_transport','mesh_geometry'].includes(c.task)) throw Error('Unsupported saved-search criteria.');
+    || !['','image','text','sequence','mesh','pointcloud'].includes(c.kind) || !['','draft','human_reviewed','programmatically_verified'].includes(c.review)
+    || !['','newest','oldest','name','review'].includes(c.sort) || !['','image_detection','image_classification','image_caption','text_classification','text_entities','sequence_transport','mesh_geometry','pointcloud_geometry'].includes(c.task)) throw Error('Unsupported saved-search criteria.');
   return value;
 }
 function cancelSearchOpen(message='Opening cancelled. Current filters retained.') {

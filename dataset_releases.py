@@ -53,7 +53,7 @@ def canonical_payloads(rows, assignments, report, seed, roots, groups, snapshots
     typed = {split:[] for split in SPLITS}
     for index,row in enumerate(rows,1):
         split = assignments[row['id']]
-        filename = 'assets/' + row['id'] + {'image':'.png','text':'.txt','sequence':'.zip','mesh':'.zip'}[row['kind']]
+        filename = 'assets/' + row['id'] + {'image':'.png','text':'.txt','sequence':'.zip','mesh':'.zip','pointcloud':'.zip'}[row['kind']]
         record = dict(row,split=split,asset=filename,asset_sha256=row['content_hash'])
         if sequence_only:
             record['export_group'] = groups[roots[row['id']]]
@@ -313,8 +313,10 @@ class Releases:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
-                if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
-                    raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
+                if row['kind'] in ('sequence', 'mesh', 'pointcloud') and row['review'] != 'human_reviewed':
+                    raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Geometry export requires human-reviewed whole records.')
+                if row['kind'] == 'pointcloud' and not row['annotation'].get('note', '').strip():
+                    raise WorkbenchError('Point-cloud export requires a nonempty human inspection note.')
                 if row['task'] == segmentation.TASK and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Segmentation export requires explicit human review, including negative images.')
                 if row['task'] == 'text_retrieval':
@@ -382,6 +384,8 @@ class Releases:
         if format_name == 'canonical_v1':
             if any(row['task'] == 'text_retrieval' for row in rows):
                 preview['warnings'].append(retrieval_export.POSITIVE_ONLY_WARNING)
+            if any(row['kind'] == 'pointcloud' for row in rows):
+                preview['warnings'].append('Point-cloud assets retain raw PLY/sidecar bytes, named attributes and immutable declared lineage/splits; geometry inspection is not inference or training qualification.')
             if any(row['kind'] == 'mesh' for row in rows):
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
             if any(row['kind'] == 'sequence' for row in rows):

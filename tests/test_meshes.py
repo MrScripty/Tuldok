@@ -261,7 +261,7 @@ class Meshes(unittest.TestCase):
         with self.d.db:
             sql=self.d.db.execute("SELECT sql FROM sqlite_master WHERE name='workbench_records'").fetchone()[0]
             indexes=[r[0] for r in self.d.db.execute("SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name='workbench_records' AND sql IS NOT NULL")]
-            self.d.db.execute(sql.replace('workbench_records','previous_records',1).replace("'sequence','mesh'","'sequence'"))
+            self.d.db.execute(sql.replace('workbench_records','previous_records',1).replace("'sequence','mesh','pointcloud'","'sequence'"))
             self.d.db.execute('INSERT INTO previous_records SELECT * FROM workbench_records')
             self.d.db.execute('DROP TABLE workbench_records');self.d.db.execute('ALTER TABLE previous_records RENAME TO workbench_records')
             for statement in indexes:self.d.db.execute(statement)

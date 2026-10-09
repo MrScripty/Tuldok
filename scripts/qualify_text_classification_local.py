@@ -66,6 +66,8 @@ def consumer_blocker(python):
 def source_snapshot():
     paths = {path for path in ROOT.glob('*.py') if path.is_file()}
     paths.add(ROOT / 'requirements.txt')
+    if (ROOT / 'requirements-pointcloud-consumer.txt').is_file():
+        paths.add(ROOT / 'requirements-pointcloud-consumer.txt')
     for directory in ('static', 'tests', 'scripts', 'tools', '.github'):
         paths.update(path for path in (ROOT / directory).rglob('*')
                      if path.is_file() and '__pycache__' not in path.parts)

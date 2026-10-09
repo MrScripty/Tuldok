@@ -46,3 +46,9 @@
 #grounded-composer,#grounded-context-inspection{min-width:0;overflow-wrap:anywhere}
 #grounded-passages{padding-left:1.3rem}#grounded-passages li{margin-bottom:1rem}
 #grounded-prompt-preview,#grounded-context-evidence{max-height:28rem;overflow:auto}
+
+#pointcloud-projections { display:flex; flex-wrap:wrap; gap:1rem; }
+#pointcloud-projections figure { margin:0; flex:1 1 160px; min-width:0; }
+#pointcloud-projections svg { width:100%; max-width:240px; border:1px solid #777; }
+#pointcloud-projections circle { fill:currentColor; }
+#pointcloud-metadata { overflow:auto; max-height:24rem; }

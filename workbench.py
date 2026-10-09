@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_segmentation', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'sequence_transport', 'mesh_geometry')
+TASKS = ('image_detection', 'image_segmentation', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'sequence_transport', 'mesh_geometry', 'pointcloud_geometry')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -48,7 +48,7 @@ def query_criteria(options):
     kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
     if any(not isinstance(value, str) for value in (kind, review, sort, task)):
         raise WorkbenchError('Filter and sort values must be strings.')
-    if kind not in ('', 'image', 'text', 'sequence', 'mesh') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
+    if kind not in ('', 'image', 'text', 'sequence', 'mesh', 'pointcloud') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
         raise WorkbenchError('Invalid filter or sort.')
     if task not in ('', *TASKS):
         raise WorkbenchError('Invalid task filter.')
@@ -86,7 +86,7 @@ def validate_annotation(task, value, record):
     if task == 'sequence_transport' and 'temporal_labels' in value:
         from sequence_temporal_labels import validate
         return validate(value, record)
-    if task in ('sequence_transport', 'mesh_geometry'):
+    if task in ('sequence_transport', 'mesh_geometry', 'pointcloud_geometry'):
         if set(value) != {'note'}:
             raise WorkbenchError(record['kind'].title() + ' review requires exactly one note; fields stay immutable.')
         return {'note': text_value(value['note'], record['kind'].title() + ' review note', 4000, empty=True)}
@@ -168,11 +168,13 @@ class Workbench:
             from immutable_assets import migrate_records
             from sequence_assets import SequenceAssets
             from meshes import MeshAssets
+            from pointclouds import PointCloudAssets
             self.db.execute('SAVEPOINT immutable_setup')
             try:
                 migrate_records(self.db)
                 self.sequences = SequenceAssets(self)
                 self.meshes = MeshAssets(self)
+                self.pointclouds = PointCloudAssets(self)
                 self.db.execute('RELEASE immutable_setup')
             except BaseException:
                 self.db.execute('ROLLBACK TO immutable_setup')
@@ -257,14 +259,14 @@ class Workbench:
                     result.update(dict(retained))
                     result['source_lineage_known'] = True
             result['name'] = result.pop('image_name') or '(source image deleted)'
-        elif result['kind'] in ('sequence', 'mesh'):
+        elif result['kind'] in ('sequence', 'mesh', 'pointcloud'):
             result.pop('image_name')
-            owner = self.sequences if result['kind'] == 'sequence' else self.meshes
+            owner = self.sequences if result['kind'] == 'sequence' else self.meshes if result['kind'] == 'mesh' else self.pointclouds
             result[result['kind']] = owner.metadata(record_id)
             result['source_available'] = result[result['kind']] is not None
-            result['source_lineage_known'] = True
+            result['source_lineage_known'] = result['kind'] != 'pointcloud' or result['pointcloud'] is not None
             result['source_revision'] = 1
-            result['source_split'] = 'unassigned'
+            result['source_split'] = result['pointcloud']['manifest']['lineage']['split'] if result['kind'] == 'pointcloud' and result['pointcloud'] else 'unassigned'
             result['source_sha256'] = result['content_hash']
         else:
             result.pop('image_name')
@@ -454,11 +456,13 @@ class Workbench:
                 check_positives(self, annotation['positive_refs'])
         if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
             raise WorkbenchError('Text corpus data requires an explicit human review decision.')
-        if before['kind'] in ('sequence', 'mesh'):
+        if before['kind'] in ('sequence', 'mesh', 'pointcloud'):
             if not set(before[before['kind']]['protected_groups']) <= set(groups):
-                raise WorkbenchError('Keep the whole trajectory and initial-family protected groups.' if before['kind'] == 'sequence' else 'Keep the immutable mesh source and family protected groups.')
+                raise WorkbenchError('Keep the whole trajectory and initial-family protected groups.' if before['kind'] == 'sequence' else 'Keep the immutable geometry source and family protected groups.')
             if review not in ('draft', 'human_reviewed') or verified_provenance:
                 raise WorkbenchError(before['kind'].title() + ' data requires a human review decision.')
+        if before['kind'] == 'pointcloud' and review == 'human_reviewed' and not annotation['note'].strip():
+            raise WorkbenchError('Point-cloud human review requires a nonempty inspection note.')
         if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
             raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
         if task == 'sequence_transport' and 'temporal_labels' in annotation:
@@ -649,8 +653,8 @@ class Workbench:
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""
         record = self._get(record_id)
-        if record['kind'] in ('sequence', 'mesh'):
-            return (self.sequences if record['kind'] == 'sequence' else self.meshes).asset(record)
+        if record['kind'] in ('sequence', 'mesh', 'pointcloud'):
+            return (self.sequences if record['kind'] == 'sequence' else self.meshes if record['kind'] == 'mesh' else self.pointclouds).asset(record)
         if record['kind'] == 'text':
             if not record['source_available']:
                 raise WorkbenchError('Text source was deleted.', 'unavailable', 404)

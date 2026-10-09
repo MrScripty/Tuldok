@@ -885,3 +885,18 @@ Fresh qualification uses actual serialized files and unchanged published JSONL r
 Choose **image segmentation** for an oriented image. Capture vertices with primary pointer clicks or enter exact native pixel-edge x,y coordinates (including integral floats and signed zero), then explicitly Add or Clear unfinished vertices before Save. Save/reopen a draft and review its complete simple rings separately; an explicitly reviewed empty instance list is a negative image. Pending vertices and active capture fence late source opens and participate in discard/unload guards. Rights notes, original source evidence, history and exact saved selections keep their existing owners.
 
 Canonical preview/freeze shares release-local COCO categories with detection boxes. Polygon bbox/area are continuous geometry; actual consumer masks are quantized and may be empty for a valid positive tiny polygon. Native canonical import supports polygon-only and mixed box/polygon packets as new local drafts with unknown rights and exact upstream evidence. Limits include 100 instances, 128 vertices/ring, 1,024 vertices/record; segmentation-bearing releases have 100 selected records, 100MP image pixels and 40MiB complete logical/stored ZIP bounds. Native import and reader QA have stricter separate limits. Actual pinned COCO mask/CocoDetection reading and Chromium downloads qualify compatibility and workflow, without models, evaluation, training or corpus-quality claims. [Contract, source pins and limits](docs/contracts/polygon-segmentation.md). UI provisional.
+
+### Vertex-only point-cloud preparation
+
+Import a complete points.ply/points.json pair in the workbench.
+The [bounded point-cloud v1 profile](docs/contracts/point-clouds.md) retains XYZ,
+optional complete normals/RGB, named native dtypes, units/frame/provenance and
+immutable declared source/family/splits. Two MiB, 20,000 points; the first 512
+points are inspection only. Float32 decimal incompatibilities are rejected, never
+rewritten. Imports are drafts requiring a nonempty human review note. Canonical
+release retains both raw files unchanged; this is preparation, not model training.
+
+For actual pinned-parser QA, provision `requirements-pointcloud-consumer.txt`
+separately, then run `node tests/check_pointcloud_consumer.cjs` and
+`node tests/browser_pointclouds.cjs` (with Chromium). Native PLY arrays and exact
+raw files are checked across fresh owners; no model is instantiated or trained.

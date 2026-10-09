@@ -1,6 +1,6 @@
 # Dataset ownership and frozen releases
 
-Dataset owns original image bytes, normalized image identity and legacy corners. Workbench references existing image samples and owns independently revisioned image/text targets, text sources, sequence/mesh records, reviews and lineage. Immutable sequence and mesh asset stores use the same Dataset lock/transaction boundary for source, record and initial history publication. There is no competing image BLOB authority.
+Dataset owns original image bytes, normalized image identity and legacy corners. Workbench references existing image samples and owns independently revisioned image/text targets, text sources, sequence/mesh/pointcloud records, reviews and lineage. Immutable sequence and mesh asset stores use the same Dataset lock/transaction boundary for source, record and initial history publication. There is no competing image BLOB authority.
 
 Different targets have explicit contracts: corner geometry, detection boxes, class labels, captions, Unicode spans, corpus notes, independent instruction answers, preference judgments and human sequence ranges are not automatic conversions of one another. Numerical simulation evidence remains separate from human labels. Technical verification and a foreign review declaration never grant local human approval.
 

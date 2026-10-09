@@ -222,7 +222,7 @@ def inspect_archive(raw, expected_records=None):
             and family == 'component:' + sha(encoded(mids).encode()), 'Exact family membership hash')
         for s in members:
             require(type(s) is dict and set(s) == SNAPSHOT_KEYS and type(s['id']) is str and ID.fullmatch(s['id']), 'Closed family snapshot')
-            require(s['id'] not in snapshot_by_id and s['kind'] in ('text', 'image', 'sequence', 'mesh'), 'Unique source snapshot')
+            require(s['id'] not in snapshot_by_id and s['kind'] in ('text', 'image', 'sequence', 'mesh', 'pointcloud'), 'Unique source snapshot')
             positive_integer(s['revision'], 'Snapshot revision')
             require(type(s['source_available']) is bool and s['source_lineage_known'] is True, 'Typed known source availability')
             require(s['source_split'] in ('unassigned', *SPLITS), 'Known source split')
@@ -232,9 +232,9 @@ def inspect_archive(raw, expected_records=None):
                     and type(s['source_revision']) is int and s['source_revision'] == 1 and s['source_split'] == 'unassigned'
                     and s['pixel_hash'] is s['book_id'] is s['session_id'] is None
                     and type(s['source_sha256']) is str and HASH.fullmatch(s['source_sha256']), 'Text snapshot source identity')
-            elif s['kind'] in ('sequence', 'mesh'):
+            elif s['kind'] in ('sequence', 'mesh', 'pointcloud'):
                 require(s['source_available'] is True and type(s['source_revision']) is int and s['source_revision'] == 1
-                    and s['source_split'] == 'unassigned' and s['source_sha256'] == s['content_hash']
+                    and (s['kind'] == 'pointcloud' or s['source_split'] == 'unassigned') and s['source_sha256'] == s['content_hash']
                     and HASH.fullmatch(s['content_hash']) and s['pixel_hash'] is s['book_id'] is s['session_id'] is None,
                     'Immutable native snapshot source identity')
             elif s['source_available']:

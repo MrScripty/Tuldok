@@ -11,7 +11,7 @@ MAX_SELECTED_ASSET_BYTES = 40 * 1024 * 1024
 
 def check_selection(records):
     total = sum(row[row['kind']]['bundle_bytes'] for row in records
-                if row['kind'] in ('sequence', 'mesh') and row.get(row['kind']))
+                if row['kind'] in ('sequence', 'mesh', 'pointcloud') and row.get(row['kind']))
     if total > MAX_SELECTED_ASSET_BYTES:
         raise WorkbenchError('Selected immutable assets exceed the synchronous 40 MiB bound.')
 
@@ -20,7 +20,8 @@ def migrate_records(db):
     """Admit known retained schemas only; preserve values/indexes in a savepoint."""
     sql = db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='workbench_records'").fetchone()[0]
     constraints = ("CHECK(kind IN ('image','text'))", "CHECK(kind IN ('image','text','sequence'))",
-                   "CHECK(kind IN ('image','text','sequence','mesh'))")
+                   "CHECK(kind IN ('image','text','sequence','mesh'))",
+                   "CHECK(kind IN ('image','text','sequence','mesh','pointcloud'))")
     found = [value for value in constraints if value in sql]
     columns = [('id', 'TEXT', 0, None, 1), ('kind', 'TEXT', 1, None, 0),
         ('name', 'TEXT', 0, None, 0), ('text', 'TEXT', 0, None, 0), ('original_text', 'TEXT', 0, None, 0),
@@ -66,7 +67,7 @@ def migrate_records(db):
 class ImmutableAssets:
     """Concrete facades select trusted table/task policy, adapters own file meaning."""
     def __init__(self, workbench, *, kind, task, maximum, default_name):
-        if kind not in ('sequence', 'mesh'):
+        if kind not in ('sequence', 'mesh', 'pointcloud'):
             raise ValueError('Unsupported immutable asset owner.')
         self.workbench, self.kind, self.task = workbench, kind, task
         self.maximum, self.default_name = maximum, default_name
@@ -89,7 +90,7 @@ class ImmutableAssets:
         w = self.workbench
         name = text_value(body.get('name', self.default_name), 'Name')
         rights = text_value(body.get('rights', 'unknown'), 'Rights / permission note', 1000)
-        groups = strings(body.get('groups', []), 'Protected groups', maximum=28)
+        groups = strings(body.get('groups', []), 'Protected groups', maximum=30 - len(prepared['metadata']['protected_groups']))
         parents = strings(body.get('parents', []), 'Parent IDs')
         groups = list(dict.fromkeys(groups + prepared['metadata']['protected_groups']))
         bundle = prepared['bundle']

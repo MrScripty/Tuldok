@@ -35,3 +35,8 @@ Unchanged TRL0.23.1/Datasets4.1.1 package/source hashes remain in `tests/instruc
 ## Single-object image detection
 
 `image_detection_v1` adds the roadmap’s [pinned Chapter 9 reader projection](image-detection-export.md) through the existing exact-selection preview and atomic release owner. Original current boxes/label/review/provenance and whole-family splits stay intact; derived masks are transport only. Canonical COCO mapping and geometry remain unchanged.
+
+Point-cloud assets retain unchanged points.ply/points.json, native attribute dtypes,
+units/frame and immutable declared source/family/fixed-split lineage. New-owner
+raw-pair imports are drafts; local reviews/rights and newly allocated splits for
+unassigned inputs do not transfer. See [point-cloud v1](point-clouds.md).

@@ -1,0 +1,24 @@
+{
+  "format": "tuldok_pointcloud_v1",
+  "geometry_file": "points.ply",
+  "geometry_bytes": 373,
+  "geometry_sha256": "d99c9adfb7ea97977d1b709e276399a238ca1ce5119643e42884245f720f6e04",
+  "units": "m",
+  "coordinate_system": {
+    "frame": "authored-colored",
+    "handedness": "right",
+    "up_axis": "z"
+  },
+  "provenance": {
+    "source": "Tuldok authored analytic point fixture colored",
+    "revision": "1",
+    "license": "Project-authored test data; same terms as Tuldok",
+    "description": "Tiny native-attribute transport fixture; no quality/training claim"
+  },
+  "lineage": {
+    "namespace": "tuldok-authored-point-fixtures",
+    "source_id": "colored-scan",
+    "family_id": "colored-family",
+    "split": "train"
+  }
+}
