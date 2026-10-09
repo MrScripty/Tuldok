@@ -411,6 +411,24 @@ automatic replay. Restart requires choosing the archive again for preparation;
 committed records and receipts persist. Limits and qualification are recorded in
 [the import plan](docs/plans/native-text-classification-import/plan.md).
 
+### Choose an advertised Pumas gateway
+
+In the workbench, open **Find Pumas for annotation** and **Scan advertised
+gateways**. Select a gateway to inspect its advertised library context, separate
+core and HTTP build identities, generations, endpoint and observation hash.
+Choose an annotation workflow, then **Use selected gateway**. Tuldok rechecks
+the descriptor before copying its URL into that workflow's existing form. List
+served models and request a proposal separately; choosing a gateway makes no
+model request and changes no source, annotation, review or selection.
+
+This consumer follows public **unmerged** Pumas-Library PR51 at
+`80f06ab17f9eea639fee143c86319ca9b5e1a21c`. HTTP advertisements are unauthenticated;
+compiled features do not prove model readiness. Numeric-loopback HTTP descriptors
+are bounded to 64 KiB, with no redirects, legacy fallback or automatic model
+acquisition. Manual URLs remain available. Qualification uses an explicitly
+source-derived fixture, not a live Pumas runtime or a v0.8 release.
+[Contract, limits and verification](docs/plans/pumas-advertised-gateways/plan.md).
+
 ### Propose a caption from an existing image
 
 Select one image in the workbench and open **Propose a caption for this image**.
