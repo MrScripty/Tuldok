@@ -50,7 +50,7 @@ $('exact-filter-format').addEventListener('change', () => {
     exactFilterFormat = format;
   } catch(error) { $('exact-filter-format').value = exactFilterFormat; notice(error.message,true); }
 });
-async function refresh() {
+async function refresh(isCurrent = () => true) {
   const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
     ...Object.fromEntries(exactFilters.map(([key,name]) => [key,exactFilterValue(key,name)])), offset, limit:40});
   const epoch = ++queryEpoch;
@@ -58,7 +58,7 @@ async function refresh() {
   let result;
   try { result = await api('records?' + params); }
   finally { if(epoch === queryEpoch && typeof curationQueryFinished === 'function') curationQueryFinished(); }
-  if (epoch !== queryEpoch) return;
+  if (epoch !== queryEpoch || !isCurrent()) return;
   page = result;
   $('records').replaceChildren();
   for (const record of page.items) {
