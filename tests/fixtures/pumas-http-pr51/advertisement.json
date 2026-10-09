@@ -1,0 +1,102 @@
+{
+  "advertisement_schema_version": 1,
+  "service_generation": "00000000-0000-4000-8000-000000000001",
+  "endpoint": "http://127.0.0.1:8765",
+  "instance": {
+    "discovery_schema_version": 1,
+    "registry_library_id": "00000000-0000-4000-8000-000000000002",
+    "library_root": "/source-derived/pumas-library",
+    "generation": "2026-10-08T00:00:00Z",
+    "pumas_version": "0.7.0",
+    "protocols": [
+      {
+        "name": "pumas.local-ipc",
+        "versions": [
+          1
+        ]
+      }
+    ],
+    "capabilities": [
+      "model.query@1",
+      "model.get.local@1",
+      "model.selector@1",
+      "artifact.resolve@1"
+    ],
+    "model_ref_schema_version": 1,
+    "selector_schema_version": 1,
+    "build_info": {
+      "build_info_schema_version": 1,
+      "component": "pumas-library",
+      "package_version": "0.7.0",
+      "compiled_features": [],
+      "protocols": [
+        {
+          "name": "pumas.local-ipc",
+          "versions": [
+            1
+          ]
+        }
+      ],
+      "schemas": [
+        {
+          "name": "pumas.build-info",
+          "version": 1
+        },
+        {
+          "name": "pumas.discovery",
+          "version": 1
+        },
+        {
+          "name": "pumas.model-ref",
+          "version": 1
+        },
+        {
+          "name": "pumas.model-selector",
+          "version": 1
+        }
+      ]
+    }
+  },
+  "build_info": {
+    "build_info_schema_version": 1,
+    "component": "pumas-rpc",
+    "package_version": "0.7.0",
+    "compiled_features": [],
+    "protocols": [
+      {
+        "name": "pumas.local-ipc",
+        "versions": [
+          1
+        ]
+      },
+      {
+        "name": "pumas.local-http",
+        "versions": [
+          1
+        ]
+      }
+    ],
+    "schemas": [
+      {
+        "name": "pumas.build-info",
+        "version": 1
+      },
+      {
+        "name": "pumas.discovery",
+        "version": 1
+      },
+      {
+        "name": "pumas.model-ref",
+        "version": 1
+      },
+      {
+        "name": "pumas.model-selector",
+        "version": 1
+      },
+      {
+        "name": "pumas.http-advertisement",
+        "version": 1
+      }
+    ]
+  }
+}

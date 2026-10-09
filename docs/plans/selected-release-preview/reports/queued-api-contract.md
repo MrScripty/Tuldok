@@ -1,0 +1,13 @@
+# New queued generation API contract
+
+2026-10-06: additional PR4 finding, local follow-on to published `a3f3cbead4137110dfa8af81c94178e6d53aa036`.
+
+`synthetic.validate` selected numeric image fields and discarded a supplied `size`. A new queued HTTP request could therefore choose current 1280 by 720 defaults instead of rejecting obsolete input. This is separate from the explicitly supported migration of old persisted size-only jobs. The queued API now rejects any presence of `size` before job persistence or provider work and directs the caller to numeric width/height. Valid numeric requests and genuinely omitted dimensions retain current API behavior. Saved legacy normalization remains unchanged.
+
+Two real local HTTP tests exercise the actual app server and controlled image gateway: valid legacy strings and malformed/null/boolean/list/object size values, both alone and alongside numeric dimensions, receive HTTP 400 with no jobs, entries, images or provider calls. The direct generate route still rejects size. Numeric 37 by 29 and truly omitted 1280 by 720 requests complete with numeric transport. A disposable detached pre-repair worktree reproduces acceptance of obsolete input; its failure log is retained at `/workspace/scratch/tuldok-retry/queued-size-before.log`. The new fixture was corrected to supply the existing required session ID.
+
+The complete suite exposed an existing caption fixture that submitted obsolete `size`; it now explicitly requests 512 by 512 and checks transport/provenance dimensions. Every prompt-versus-caption and reviewed-export assertion remains. This corrects its request contract rather than removing coverage.
+
+Final local verification: 132 Python tests in 34.692 seconds, including all five persisted-job restart/resume regressions; both JavaScript page-load/controller gates; all six real Chromium browser suites; all JavaScript syntax checks, Python compilation and diff checks. Runtime remains Linux x86_64, Python 3.12.14, Node 24.19.0, Pillow 12.3.0 and Chromium 151.0.7922.173, using controlled providers and no model/ONNX downloads. Full final logs use `/workspace/scratch/tuldok-retry/queued-size-` (`queued-size-python-final.log`, six `queued-size-browser-*.log`, controller/page-load and `queued-size-full-gates-final.log`).
+
+This follow-on is kept local: existing GitHub authentication last returned `HTTP 401: Bad credentials (https://api.github.com/graphql)` and REST `Bad credentials (HTTP 401)` from `api.github.com`. No denied authentication call, credential setup or network change is retried. Hosted results for published `a3f3cbe` are not attributed to this newer local repair. Main and PR1–3 remain unchanged, and parent retains review/publication coordination.

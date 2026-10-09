@@ -43,7 +43,9 @@ Write set: `workbench.py`, `dataset_recipes.py`, `dataset_releases.py`, `app.py`
 
 Preserve existing corner schemas, source bytes, Pumas interfaces and all existing tests. Prove imported assets and generated pixels/text become reviewed/versioned records, coherent split allocations and valid exported data through the UI. Parent owns independent review and integration. No parallel writers to shared contracts or this plan.
 
-### M2: model-assisted candidates and grounded transformations — Planned
+### M2: model-assisted candidates and grounded transformations — Active, bounded M2a
+
+M2a is admitted on dependent branch `feature/grounded-text-candidates`; see [bounded plan](../grounded-text-candidates/plan.md). Source-grounded text-classification rewrites are the first consumer-compatible slice.
 
 Design against observed local provider capabilities and actual configurable source forms. Separate generated proposals from verified/human-reviewed targets; preserve provider/model/prompt/seed/source lineage, failures/cancellation/reopen, and train/evaluation ancestry. Use controlled providers for semantics; real inference is blocked until authorized and available. Exact write set and consumers are selected after M1; no claim of implemented model-assisted text generation now.
 
@@ -68,7 +70,7 @@ First-slice acceptance is A1–A7 only; overall objective remains open until A8.
 
 ## Next slice
 
-Exactly one: review the provisional UI and remaining interaction coverage against actual user needs before admitting M2 implementation. M2 remains a follow-on rather than a disguised claim that toy recipes fulfill all synthetic-data needs.
+Exactly one: implement and verify the admitted M2a source-grounded candidate lifecycle on its dependent branch; retain M1 for separate UI feedback. M2 remains a follow-on rather than a disguised claim that toy recipes fulfill all synthetic-data needs.
 
 ## Blockers and re-plan triggers
 

@@ -11,7 +11,7 @@ import ai_codex
 import ai_http
 import ai_openrouter
 
-PROVIDERS = ('codex', 'openrouter', 'llamacpp')
+PROVIDERS = ('codex', 'openrouter', 'llamacpp', 'pumas')
 EFFORTS = ('low', 'medium', 'high', 'xhigh', 'max', 'ultra')
 DEFAULT_MODEL = os.environ.get('TULDOK_CODEX_MODEL', 'gpt-5.6-luna')
 TIMEOUT = float(os.environ.get('TULDOK_AI_TIMEOUT', '180'))
@@ -63,14 +63,17 @@ def codex_models():
 def settings(body):
     provider = body.get('provider', 'codex')
     if provider not in PROVIDERS:
-        raise ValueError('Choose Codex, OpenRouter, or llama.cpp.')
+        raise ValueError('Choose Codex, OpenRouter, llama.cpp, or Pumas.')
     model = model_id(body.get('model', DEFAULT_MODEL if provider == 'codex' else None))
     effort = body.get('effort', 'low')
     if provider == 'codex':
         option = next((m for m in codex_models()['models'] if m['id'] == model), None)
         if effort not in (option['efforts'] if option else EFFORTS):
             raise ValueError('Choose a supported thinking level for this Codex model.')
-    server_url = ai_http.validate_url('llamacpp', body.get('server_url', ai_http.DEFAULT_URLS['llamacpp'])) if provider == 'llamacpp' else None
+    server_url = None
+    if provider in ('llamacpp', 'pumas'):
+        default = ai_http.DEFAULT_URLS['llamacpp'] if provider == 'llamacpp' else None
+        server_url = ai_http.validate_url('llamacpp', body.get('server_url', default))
     key = ai_openrouter.api_key(body.get('api_key')) if provider == 'openrouter' else None
     return provider, model, effort, server_url, key
 
@@ -83,7 +86,9 @@ def models(body):
         return ai_openrouter.models(ai_openrouter.api_key(body.get('api_key')))
     if provider == 'llamacpp':
         return ai_http.models(provider, body.get('server_url', ai_http.DEFAULT_URLS[provider]))
-    raise ValueError('Choose Codex, OpenRouter, or llama.cpp.')
+    if provider == 'pumas':
+        return ai_http.models('llamacpp', body.get('server_url'))
+    raise ValueError('Choose Codex, OpenRouter, llama.cpp, or Pumas.')
 
 
 def suggest(image_path, body):

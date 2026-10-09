@@ -1,0 +1,26 @@
+# Independent published classification boundary review
+
+Reviewed published PR18 head `12b174f7a7b2fd6aa36d71da450ad657a5443114`; runtime predecessor `c5500cba5021949bccf45d2124ee5e2910dc5c92`. Review artifacts live outside the repository. No implementation edits, integration, credential changes, inference, commits, or public writes were performed.
+
+## Finding: frontend URL validation can persist an impossible recovery intent
+
+`static/text-classification-proposals.js:37` accepts a raw URL up to 4096 UTF-16 code units; `text_classification_proposals.py` validates the requested URL with `text_value(..., 2048)`, measured in Unicode code points. A valid ASCII URL of 2072 code points passes the production form handler and is written to durable recovery storage before POST, but the real backend returns HTTP 400 before admitting any job or starting a worker.
+
+If that first 400 acknowledgement is lost, the original request remains uncertain. A new page restores the exact durable body synchronously; summary and exact-ID GET return no job / 404. Changing to a valid short URL produces zero POSTs because the stored intent differs. Restoring the captured settings and explicitly repeating the same body receives HTTP 400 again, but the repeated-refusal path (`static/text-classification-proposals.js:268`) deliberately retains previous uncertain admissions. The durable body remains unchanged and correcting the URL is still refused. This blocks subsequent classification admissions for that origin through the available UI; no annotation or provenance changes, and no provider transport runs.
+
+This is a validator boundary defect, distinct from the previously investigated fresh-invalid-guidance issue. Ordinary initial definite refusals can clear; the failure requires the first refusal acknowledgement to be lost. Fix and requalify frontend/backend validation agreement before integrating this published runtime. Preserve uncertain admission protections and exact evidence; do not treat a 404 as proof that inference never ran.
+
+Executable evidence: `url-lost-refusal-probe.cjs` invokes the actual production form handler in isolated VM pages, shares origin storage across a full controller reload, and calls `url-refusal-http.py` for real loopback backend POST/GET/POST refusals. `url-real-refusal.json` records first/repeated HTTP400, exact GET404, zero admitted jobs and no started worker. `url-lost-refusal.log` records persisted exact body and corrected-URL zero POST behavior. The lost HTTP acknowledgement is intentionally injected after the real backend refusal. No native-browser repeat was required for this new finding.
+
+## Passed independent checks
+
+- `boundary-probe.py`: four bounded real loopback HTTP scenarios passed. Source deletion blocks Apply without persisted mutation; same-ID replay after deletion does not rerun inference; stale Reject is refused and current Reject remains usable independent of deleted source/unrelated labels. Proposal revision and exact label CAS protect existing human-reviewed targets. Explicit Apply preserves acquisition/source data, grants only draft state, keeps saved independent answers intact, makes fixed text/answer revisions stale, and rejects an old export preview. BOM/composed/decomposed label identities and raw gateway/guidance remain exact. Explicit abstention never applies or grants review. Four synthetic provider requests total.
+- `composed-recovery-ownership-probe.cjs`: all 11 composed controller scenarios passed on the published source, including projected summary Apply, raw `/v1/` configuration, source/label fences, early404/lost acknowledgement, changed-form Apply acknowledgement, response editing/saving races, Reject during unrelated annotation save, guarded pending controls, catalog response fencing, navigation/evidence ownership, fixed selections and abstention.
+- `storage-matrix-probe.cjs`: six storage/locking scenarios passed, including unavailable read/write/remove, corrupt/unsupported records, credential URLs, serialized two-page admission and stale acknowledgement CAS.
+- Prior fresh validation evidence remains at `/workspace/scratch/tuldok-classification-publication/12b174f7a7b2fd6aa36d71da450ad657a5443114/fresh-validation/`: nine fresh-invalid corrections without reload and four corrupt/unavailable stored-recovery fail-closed cases passed. Those cases were not repeated during this review.
+
+## Published source verification
+
+Read-only `git ls-remote` returned exact head `12b174f7a7b2fd6aa36d71da450ad657a5443114` for both `refs/pull/18/head` and `refs/heads/feature/text-classification-proposals`. Authorized GitHub metadata reports PR18 open, draft, unmerged, at that exact head. Independently fetched GitHub blobs at that exact ref for classification JS/backend, workbench HTML/JS and app.py match the corresponding local Git blob IDs. `published-source-metadata.json` retains the remote metadata/blob evidence. Local HEAD stayed exact12b and clean. Relevant runtime files have no changes between c550 and12b.
+
+Integration remains unreviewed: the final caption repair SHA has not been supplied to this reviewer. No merge or intermediate-caption integration was attempted. Prior evidence was preserved unchanged. Real provider compatibility and semantic quality are outside synthetic review scope.

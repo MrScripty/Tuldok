@@ -1,0 +1,45 @@
+{
+  "repository": "MrScripty/Rheon",
+  "pull_request": 20,
+  "source_commit": "fee7b4a139574f87b259796b1ba8698a41d31ac1",
+  "state_observed": "open draft, unmerged",
+  "read_method": "GitHub fetch_file connector with exact commit ref",
+  "files": [
+    {
+      "path": "tools/import_dense3d_sequence.py",
+      "git_blob_sha": "bcfff65366038fecbf898600fa0bec18626ce700",
+      "url": "https://github.com/MrScripty/Rheon/blob/fee7b4a139574f87b259796b1ba8698a41d31ac1/tools/import_dense3d_sequence.py"
+    },
+    {
+      "path": "tools/export_dense3d_sequence.py",
+      "git_blob_sha": "b94cf84a24d865fea6b3a0ea28adf1ef47981759",
+      "url": "https://github.com/MrScripty/Rheon/blob/fee7b4a139574f87b259796b1ba8698a41d31ac1/tools/export_dense3d_sequence.py"
+    },
+    {
+      "path": "tools/test_dense3d_sequence_import.py",
+      "git_blob_sha": "d565a60611408941c7cf555c96510b4268279bc7",
+      "url": "https://github.com/MrScripty/Rheon/blob/fee7b4a139574f87b259796b1ba8698a41d31ac1/tools/test_dense3d_sequence_import.py"
+    },
+    {
+      "path": "docs/implementation/dense3d-sequence.md",
+      "git_blob_sha": "cb942f1001f2a84c81485c6113b186bb94a2cc6c",
+      "url": "https://github.com/MrScripty/Rheon/blob/fee7b4a139574f87b259796b1ba8698a41d31ac1/docs/implementation/dense3d-sequence.md"
+    },
+    {
+      "path": "examples/dense3d_sequence.rs",
+      "git_blob_sha": "439f5d81ee5b60bcd20eed7a9db177ac6ca7c3b8",
+      "url": "https://github.com/MrScripty/Rheon/blob/fee7b4a139574f87b259796b1ba8698a41d31ac1/examples/dense3d_sequence.rs"
+    },
+    {
+      "path": "src/dense3d_sequence.rs",
+      "git_blob_sha": "a2bb1ae21d4628fa1beaf676e81d098134d83fd3",
+      "url": "https://github.com/MrScripty/Rheon/blob/fee7b4a139574f87b259796b1ba8698a41d31ac1/src/dense3d_sequence.rs"
+    }
+  ],
+  "vendored_validator": {
+    "local_path": "rheon_sequence_contract.py",
+    "sha256": "063d17a3bbc92a27c26c0f5dd4588a9478091ebbf53ce0ccb818cee6a9393b98",
+    "git_blob_sha": "bcfff65366038fecbf898600fa0bec18626ce700",
+    "upstream_exact_bytes": true
+  }
+}

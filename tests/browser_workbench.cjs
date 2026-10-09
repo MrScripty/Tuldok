@@ -1,7 +1,9 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
+const {STARTUP_BUDGET_MS,waitForDebugger}=require('./browser_startup.cjs');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-test-')),children=[];
 let ws, inspect;
 const errors=[];
@@ -12,9 +14,22 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
-  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const browserCommand=process.env.BROWSER||'/usr/bin/chromium';
+  const browser=launch(browserCommand,['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','pipe','pipe'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  // Chrome wrappers can report startup failure on stdout. Retain bounded tails
+  // and process state; only debugger startup gets the 60-second allowance.
+  let browserStdout='',browserStderr='',browserSpawnError;
+  browser.stdout.on('data',data=>browserStdout=(browserStdout+data).slice(-8192));
+  browser.stderr.on('data',data=>{browserStderr=(browserStderr+data).slice(-8192);process.stderr.write(data);});
+  browser.on('error',error=>browserSpawnError=error.message);
   const active=path.join(temporary,'browser','DevToolsActivePort');
-  const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  let debugPort;
+  try{
+    debugPort=await waitForDebugger(browser,active);
+  }catch(error){
+    console.error('Browser startup diagnostics:',JSON.stringify({command:browserCommand,pid:browser.pid,exitCode:browser.exitCode,signal:browser.signalCode,spawnError:browserSpawnError,startupBudgetMs:STARTUP_BUDGET_MS,activePortFile:active,activePortFileExists:fs.existsSync(active),stdout:browserStdout,stderr:browserStderr}));
+    throw error;
+  }
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
   const target=tabs.find(tab=>tab.type==='page' && tab.url==='about:blank');
   assert.ok(target,'Expected the explicitly launched blank page target');
@@ -56,15 +71,16 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');
   await until(()=>evaluate('document.getElementById("notice").textContent === "Annotation saved."'));
   await click('select-page');await until(()=>evaluate('document.getElementById("selection").textContent === "8 selected"'));
+  await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
   await evaluate('document.getElementById("release-form").requestSubmit()');
   await until(()=>evaluate('!!document.querySelector("#release-result a")'));
   const release=await evaluate('document.querySelector("#release-result a").href');
   const archive=await fetch(release);assert.equal(archive.status,200);assert.equal((await archive.arrayBuffer()).byteLength>1000,true);
-  const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-desktop.png'),Buffer.from(desktop.data,'base64'));
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'dataset-workflows'),'workbench-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
-  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
-  fs.writeFileSync(path.join(root,'docs/plans/dataset-workflows/reports/workbench-narrow.png'),Buffer.from(shot.data,'base64'));
+  const shot=await send('Page.captureScreenshot',screenshotOptions);
+  fs.writeFileSync(path.join(qaDirectory(root,'dataset-workflows'),'workbench-narrow.jpg'),Buffer.from(shot.data,'base64'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Narrow layout must not overflow');
   assert.deepEqual(errors,[]);console.log('Workbench Chromium lifecycle, stale conflicts, frozen download and narrow layout passed.');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

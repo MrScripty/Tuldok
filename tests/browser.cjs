@@ -1,4 +1,5 @@
 // Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
@@ -55,7 +56,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const zoomPoint=await evaluate('(()=>{const r=document.querySelector("#overlay circle").getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};})()');
   await send('Input.dispatchMouseEvent',{type:'mousePressed',...zoomPoint,button:'left',clickCount:1});
   assert.ok(await evaluate('(()=>{const z=document.getElementById("corner-zoom"),r=z.getBoundingClientRect(),v=document.getElementById("image-stage").getBoundingClientRect();return !z.hidden&&z.width>0&&Math.abs(r.width*r.height/(v.width*v.height)-1/3)<.001&&r.left>=v.left&&r.right<=v.right+1;})()'),'Drag zoom occupies a third inside the image');
-  fs.writeFileSync('/tmp/tuldok-crosshair-zoom.png',Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  fs.writeFileSync(path.join(qaDirectory(root,'corner-studio'),'crosshair-zoom.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await evaluate('(()=>{const c=document.getElementById("corner-zoom").getContext("2d"),draw=c.drawImage.bind(c);window.zoomDraws=[];c.drawImage=(...args)=>{window.zoomDraws.push(args.slice(1));return draw(...args);};})()');
   await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:zoomPoint.x+120,y:zoomPoint.y+90,button:'left',buttons:1});
   await until(()=>evaluate('window.zoomDraws.length>0'));
@@ -117,8 +118,16 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("suggest").disabled'),true);
   await fill('ai-model','corners-test');await suggest();await saveAI();
   assert.equal((await savedRecords())[0].annotation.suggested_by.provider,'llamacpp');
+  await fill('ai-provider','pumas');await click('ai-scan');
+  const fixtureURL='http://127.0.0.1:'+output.match(/FIXTURE_LLM_PORT=(\d+)/)[1];
+  await until(()=>evaluate('[...document.getElementById("ai-gateways").options].some(option=>option.value==='+JSON.stringify(fixtureURL)+')&&!document.getElementById("ai-scan").disabled'));
+  await fill('ai-gateways',fixtureURL);
+  await until(()=>evaluate('document.getElementById("ai-model").value==="corners-test"&&!document.getElementById("ai-gateways").disabled'));
+  assert.equal(await evaluate('document.getElementById("ai-url").value'),fixtureURL);
+  await suggest();await saveAI();
+  assert.equal((await savedRecords())[0].annotation.suggested_by.provider,'pumas');
   await evaluate('document.getElementById("ai-settings").open=false');
-  const screenshot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/tmp/tuldok-desktop.png',Buffer.from(screenshot.data,'base64'));
+  const screenshot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(qaDirectory(root,'corner-studio'),'desktop.jpg'),Buffer.from(screenshot.data,'base64'));
   await click('camera-view');await evaluate('paint("#d5b2a1")');await pause(200);
   await click('timer');await until(()=>evaluate('!document.getElementById("label-form").hidden&&!document.getElementById("save").disabled'));
   await click('present-no');await fill('book-id','');await click('save-next');
@@ -135,5 +144,5 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await pause(200);
   assert.ok(await evaluate('(()=>{const v=document.getElementById("image-stage").getBoundingClientRect(),r=document.getElementById("viewer").getBoundingClientRect();return v.width>0&&v.left>=r.left&&v.right<=r.right+1&&v.height<=r.height;})()'),'The image fits a narrow display');
   assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(stderr,'',stderr);
-  console.log('PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all three AI providers and unsaved suggestions');
+  console.log('PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all four AI providers and unsaved suggestions');
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Camera diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children)child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),500);});

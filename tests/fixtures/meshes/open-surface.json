@@ -1,0 +1,18 @@
+{
+  "format": "tuldok_mesh_v1",
+  "geometry_file": "mesh.ply",
+  "geometry_bytes": 342,
+  "geometry_sha256": "44077c2aa23fc562e5b8270ae3dec5d6776407f48e71ae202f70d5a8b9dd5cf2",
+  "units": "m",
+  "coordinate_system": {
+    "frame": "fixture-world",
+    "handedness": "right",
+    "up_axis": "z"
+  },
+  "provenance": {
+    "source": "Tuldok authored analytic test fixture open-surface.ply",
+    "revision": "1",
+    "license": "Project-authored test data; same terms as Tuldok",
+    "description": "Open two-metre square; provided normals have magnitude two"
+  }
+}

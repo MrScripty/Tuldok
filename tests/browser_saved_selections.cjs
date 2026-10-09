@@ -1,0 +1,132 @@
+// Native browser smoke test. No npm dependencies.
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {spawn}=require('node:child_process');
+const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-saved-browser-')),children=[];
+let ws, inspect;
+const errors=[];
+const {pageLoadTracker}=require('./browser_page_load.cjs');const pageLoads=pageLoadTracker();
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function until(fn){for(let i=0;i<150;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+(async()=>{
+  const server=launch('python3',['-u','tests/browser_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
+  const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
+  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const active=path.join(temporary,'browser','DevToolsActivePort');
+  const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
+  const target=tabs.find(tab=>tab.type==='page' && tab.url==='about:blank');
+  assert.ok(target,'Expected the explicitly launched blank page target');
+  ws=new WebSocket(target.webSocketDebuggerUrl);
+  await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map();
+  ws.onmessage=event=>{const message=JSON.parse(event.data);pageLoads.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,body:document.body?.innerText.slice(0,1500),viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll("body *")].filter(e=>e.getBoundingClientRect().right>innerWidth || e.scrollWidth>e.clientWidth+1).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).slice(0,30)})');
+  const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/workbench'});
+  await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
+  const submit=id=>evaluate('document.getElementById('+JSON.stringify(id)+').requestSubmit()');
+  const savedStatus=()=>evaluate('document.getElementById("saved-selection-status").textContent');
+  const chosen=()=>evaluate('[...selected.keys()].sort()');
+  for(const name of ['Alpha','Beta']) {
+    await fill('import-name',name);await fill('import-group',name);await fill('rights','owned');await fill('import-text','Actual local source text for '+name);
+    await submit('import-form');await until(()=>evaluate('document.getElementById("notice").textContent === "Record imported."'));
+    await fill('label','accepted');await fill('record-review','human_reviewed');await submit('editor');
+    await until(()=>evaluate('document.getElementById("notice").textContent === "Annotation saved."'));
+  }
+  await click('select-page');await until(()=>evaluate('document.getElementById("selection").textContent === "2 selected"'));
+  const original=await chosen();
+  const evidence=await evaluate('Promise.all([...selected.keys()].map(id=>api("records/"+id)))');
+  await fill('train',100);await fill('validation',0);await fill('test',0);
+  await fill('selection-name','Research set');await submit('save-selection-form');
+  await until(async()=>(await savedStatus()).startsWith('Saved “Research set”'));
+  const savedId=await evaluate('document.getElementById("saved-selection").value');assert.match(savedId,/^[a-f0-9]{32}$/);
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true,'Save grants no export proof');
+  assert.deepEqual(await evaluate('Promise.all([...selected.keys()].map(id=>api("records/"+id)))'),evidence,'Save preserves annotations and human-review history');
+  await fill('query','Alpha');await submit('filters');await until(()=>evaluate('page.total===1'));
+  await click('clear-selection');await until(()=>evaluate('selected.size===0'));
+  await click('load-selection');await until(async()=>(await savedStatus()).startsWith('Opened “Research set”'));
+  assert.deepEqual(await chosen(),original);assert.equal(await evaluate('document.getElementById("query").value'),'Alpha');
+  assert.equal(await evaluate('page.total'),1,'Filtered view is independent of loaded membership');
+  await click('preview-release');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
+  assert.equal(await evaluate('releasePreview.selected_count'),2);
+  await submit('release-form');await until(()=>evaluate('!!document.querySelector("#release-result a")'));
+  const zip=await fetch(await evaluate('document.querySelector("#release-result a").href'));assert.equal(zip.status,200);
+  assert.ok((await zip.arrayBuffer()).byteLength>1000);
+  // Reload observes a changed, fully loaded main document before checking saved membership.
+  const previous=(await send('Page.getFrameTree')).frameTree.frame;
+  await send('Page.reload');await until(()=>pageLoads.reloaded(previous));
+  await until(async()=>(await savedStatus()).startsWith('Opened “Research set”'));
+  assert.deepEqual(await chosen(),original);assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
+  // New matching records do not dynamically join this set.
+  await fill('recipe','intent-requests-v1');await fill('count',3);await submit('generate-form');
+  await until(()=>evaluate('document.getElementById("notice").textContent.includes("3 candidates created")'));
+  await click('load-selection');await until(()=>evaluate('!savedLoadBusy'));
+  assert.deepEqual(await chosen(),original);
+  // Hold real HTTP responses at the browser boundary; cancellation suppresses application only.
+  await evaluate(`(()=>{const original=window.fetch;window.holdLoad=false;window.openCalls=0;window.resumeOpen=null;
+    window.fetch=async(...args)=>{const held=window.holdLoad && String(args[0]).includes('/selections/');if(held)window.openCalls++;
+    const response=await original(...args);if(held)await new Promise(resolve=>window.resumeOpen=resolve);return response;};})()`);
+  await click('clear-selection');await until(()=>evaluate('selected.size===0'));
+  await evaluate('window.holdLoad=true');await click('load-selection');await click('load-selection');
+  await until(()=>evaluate('typeof window.resumeOpen === "function"'));
+  assert.equal(await evaluate('window.openCalls'),1);
+  await click('cancel-selection-load');assert.equal(await evaluate('savedLoadBusy'),false);
+  await evaluate('window.holdLoad=false;window.resumeOpen();window.resumeOpen=null');await pause(200);
+  assert.equal(await evaluate('selected.size'),0,'Cancelled open leaves membership untouched');
+  assert.ok((await savedStatus()).includes('cancelled'));
+  await evaluate('window.holdLoad=true');await click('load-selection');await until(()=>evaluate('typeof window.resumeOpen === "function"'));
+  await evaluate('document.querySelector(".record input[type=checkbox]").click()');
+  const manuallyChosen=await chosen();
+  await evaluate('window.holdLoad=false;window.resumeOpen();window.resumeOpen=null');await pause(200);
+  assert.deepEqual(await chosen(),manuallyChosen,'A manual selection fences a delayed open');
+  await click('load-selection');await until(()=>evaluate('!savedLoadBusy'));assert.deepEqual(await chosen(),original);
+  // An external revision edit is reported while the old pair remains selected and blocks export.
+  const changedId=original[0];
+  await evaluate(`(async()=>{const r=await api('records/'+${JSON.stringify(changedId)});await api('records/'+r.id,{...r,annotation:{label:'later'},review:'draft'});})()`);
+  await click('load-selection');await until(()=>evaluate('document.getElementById("saved-selection-issues").textContent.includes("stale")'));
+  const savedPair=await evaluate('selected.get('+JSON.stringify(changedId)+').revision');
+  assert.equal(savedPair,evidence.find(r=>r.id===changedId).revision);
+  await click('preview-release');await until(()=>evaluate('document.getElementById("release-preview").textContent.includes("Selection changed")'));
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
+  // Loading and history navigation never discard unsaved annotation edits.
+  await evaluate('openRecord('+JSON.stringify(original[1])+')');await fill('label','keep my edits');
+  assert.equal(await evaluate('dirty'),true);
+  await evaluate('history.back()');await until(()=>evaluate('selected.size===0'));
+  assert.equal(await evaluate('document.getElementById("label").value'),'keep my edits');
+  await evaluate('history.forward()');await until(()=>evaluate('selected.size===2 && !savedLoadBusy'));
+  assert.equal(await evaluate('document.getElementById("label").value'),'keep my edits');
+  assert.deepEqual(await chosen(),original);
+  await fill('selection-rename','Renamed set');await submit('rename-selection-form');
+  await until(async()=>(await savedStatus()).startsWith('Renamed to “Renamed set”'));
+  assert.deepEqual(await chosen(),original);
+  // Save/load a deleted image retains its original ID, even after its bytes are gone.
+  const imageId=await evaluate(`(async()=>{const canvas=document.createElement('canvas');canvas.width=16;canvas.height=16;canvas.getContext('2d').fillRect(0,0,16,16);
+    const r=await api('import',{kind:'image',name:'Deleted image',groups:['image-source'],rights:'owned',image:canvas.toDataURL('image/png').split(',')[1]});
+    const set=await api('selections',{name:'Deleted source set',items:[{id:r.id,revision:r.revision,source_revision:r.source_revision}]});
+    await api('/api/samples/delete/'+r.id,{revision:r.source_revision});await refreshSavedSets(set.id);return r.id;})()`);
+  await click('load-selection');await until(()=>evaluate('document.getElementById("saved-selection-issues").textContent.includes("deleted source")'));
+  assert.deepEqual(await chosen(),[imageId]);assert.equal(await evaluate('dirty'),true);
+  await evaluate('document.getElementById("saved-selection-panel").scrollIntoView()');
+  const reports=qaDirectory(root,'saved-dataset-selections');fs.mkdirSync(reports,{recursive:true});
+  const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'saved-desktop.jpg'),Buffer.from(desktop.data,'base64'));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+  await evaluate('document.getElementById("saved-selection-status").scrollIntoView()');
+  const narrow=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(reports,'saved-narrow.jpg'),Buffer.from(narrow.data,'base64'));
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow saved-selection controls do not overflow');
+  await evaluate('window.confirm=()=>false');await click('delete-selection');await pause(100);
+  assert.equal(await evaluate('savedSets.size'),2,'Delete cancellation preserves both saved sets');
+  await evaluate('window.confirm=()=>true');await click('delete-selection');
+  await until(async()=>(await savedStatus()).startsWith('Saved set deleted'));
+  assert.deepEqual(await chosen(),[imageId],'Deleting the named set does not delete current membership');
+  assert.equal(await evaluate('savedSets.size'),1);
+  assert.deepEqual(errors,[]);
+  console.log('Fixed save/open/export, changed filters, reload/Back/Forward, delayed/repeated/cancelled opens, stale revisions, deleted sources, rename/delete and desktop/narrow layout passed.');
+})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

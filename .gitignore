@@ -4,3 +4,11 @@ __pycache__/
 data/
 *.zip
 .pytest_cache/
+/test-results/rights-note/
+/test-results/caption-proposals/
+/test-results/text-classification-proposals/
+/test-results/classification-preferences/
+/build/
+/output/
+/test-results/
+*.pdf
