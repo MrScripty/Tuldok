@@ -50,7 +50,7 @@ $('exact-filter-format').addEventListener('change', () => {
     exactFilterFormat = format;
   } catch(error) { $('exact-filter-format').value = exactFilterFormat; notice(error.message,true); }
 });
-async function refresh() {
+async function refresh(isCurrent = () => true) {
   const params = new URLSearchParams({q:$('query').value, kind:$('kind').value, review:$('review-filter').value, sort:$('sort').value, task:$('task-filter').value,
     ...Object.fromEntries(exactFilters.map(([key,name]) => [key,exactFilterValue(key,name)])), offset, limit:40});
   const epoch = ++queryEpoch;
@@ -58,7 +58,7 @@ async function refresh() {
   let result;
   try { result = await api('records?' + params); }
   finally { if(epoch === queryEpoch && typeof curationQueryFinished === 'function') curationQueryFinished(); }
-  if (epoch !== queryEpoch) return;
+  if (epoch !== queryEpoch || !isCurrent()) return;
   page = result;
   $('records').replaceChildren();
   for (const record of page.items) {
@@ -315,6 +315,7 @@ function renderGrounded(jobs) {
     const container=document.createElement('details');container.className='proposal-job';container.dataset.jobId=job.id;container.open=opened.has(job.id)||['preparing','generating','stopping'].includes(job.status);
     const summary=document.createElement('summary');summary.textContent=`${job.source.name} · ${job.status} · ${job.candidates.length} proposals`;container.append(summary);
     const status=document.createElement('p');status.textContent=`${job.config.model} · requested seed ${job.config.seed} · source revision ${job.source.revision}. ${job.error || job.verification}`;container.append(status);
+    if(job.capability_observation){const metadata=document.createElement('pre');metadata.textContent=JSON.stringify({protocol:job.config.protocol,...job.capability_observation,request:job.canonical_request,producer_contract_source:job.producer_contract_source},null,2);container.append(metadata);}
     const source=document.createElement('pre');source.textContent=`Captured source (${job.source.annotation.label}):\n${job.source.text}`;container.append(source);
     if(['preparing','generating','stopping'].includes(job.status))container.append(groundedButton('Cancel request',async()=>{await api('grounded/cancel',{job_id:job.id});await refreshGrounded();}));
     for(const candidate of job.candidates) {
@@ -344,15 +345,17 @@ async function refreshGrounded() {
   if(result.jobs.some(job=>['preparing','generating','stopping'].includes(job.status)))groundedTimer=setTimeout(()=>refreshGrounded().catch(error=>notice(error.message,true)),1000);
 }
 $('grounded-url').addEventListener('input',()=>{++modelEpoch;$('grounded-model').replaceChildren();});
+for(const id of ['grounded-protocol','grounded-profile'])for(const event of ['input','change'])$(id).addEventListener(event,()=>{++modelEpoch;});
 action('grounded-models',async()=>{
-  const epoch=++modelEpoch,url=$('grounded-url').value;const result=await api('/api/generation/prompt-models',{server_url:url});
+  const epoch=++modelEpoch,url=$('grounded-url').value,settings=JSON.stringify([$('grounded-protocol').value,$('grounded-profile').value]);const result=await api($('grounded-protocol').value==='pumas_typed_v1'?'/api/generation/typed-models':'/api/generation/prompt-models',{server_url:url});
+  if(settings!==JSON.stringify([$('grounded-protocol').value,$('grounded-profile').value]))return;
   if(epoch!==modelEpoch||url!==$('grounded-url').value)return;
   $('grounded-model').replaceChildren();for(const model of result.models){const option=document.createElement('option');option.value=model.id;option.textContent=model.name;$('grounded-model').append(option);}
   notice(result.models.length?result.qualification:'No listed non-image models. Load a text model in Pumas.');
 });
 action('grounded-form',async()=>{
   if(!current||dirty||current.kind!=='text'||current.task!=='text_classification'||current.review!=='human_reviewed')throw Error('Open and save a human-reviewed text-classification source first.');
-  await api('grounded/jobs',{source_id:current.id,revision:current.revision,source_revision:current.source_revision,server_url:$('grounded-url').value,model:$('grounded-model').value,instruction:$('grounded-instruction').value,count:Number($('grounded-count').value),seed:Number($('grounded-seed').value)});
+  await api('grounded/jobs',{source_id:current.id,revision:current.revision,source_revision:current.source_revision,server_url:$('grounded-url').value,model:$('grounded-model').value,instruction:$('grounded-instruction').value,count:Number($('grounded-count').value),seed:$('grounded-protocol').value==='pumas_typed_v1'?null:Number($('grounded-seed').value),...(typeof pumasTypedSettings==='function'?pumasTypedSettings('grounded'):{})});
   await refreshGrounded();notice('Proposal request started. Outputs remain unreviewed candidates.');
 },'submit');
 action('grounded-refresh',refreshGrounded);

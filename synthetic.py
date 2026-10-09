@@ -6,6 +6,7 @@ import uuid
 
 import ai_http
 import image_generation
+import pumas_operations as pumas
 
 BATCH_SIZE = 10
 ACTIVE = ('preparing', 'generating', 'stopping')
@@ -89,9 +90,11 @@ def validate(body):
     strategy = body.get('strategy')
     if strategy not in ('varied', 'repeat'):
         raise ValueError('Choose varied prompts or repeat the same prompt.')
-    image = {key: body[key] for key in ('server_url', 'model', 'prompt', 'width', 'height', 'seed') if key in body}
+    image = {key: body[key] for key in ('server_url', 'model', 'prompt', 'width', 'height', 'seed', 'protocol', 'profile') if key in body}
     base, _, payload = image_generation.validate(dict(image, request_id=uuid.uuid4().hex))
     config = dict(image, server_url=base, width=payload['width'], height=payload['height'], count=count, strategy=strategy)
+    if pumas.typed(config) and strategy != 'repeat':
+        raise ValueError('Typed image batches currently support repeat prompts. Select repeat explicitly.')
     if strategy == 'varied':
         config['prompt_url'] = ai_http.validate_url('llamacpp', body.get('prompt_url') or base)
         config['prompt_model'] = ai_http.validate_model(body.get('prompt_model'))
@@ -121,6 +124,13 @@ class Jobs:
                     continue
                 if job['status'] in ACTIVE:
                     job.update(status='interrupted', error='Server stopped. Resume to continue the saved queue.')
+                    if pumas.typed(job['config']):
+                        for entry in self._entries(job['id']):
+                            if entry['status'] == 'generating':
+                                entry.update(status='failed', provider_outcome='unknown',
+                                    error='Server stopped during an image attempt; provider outcome unknown. No replay.')
+                                self._entry(entry)
+                        job['error'] = 'Server stopped. Inspect retained attempts; uncertain image work cannot replay.'
                     self._save(job)
 
     def _jobs(self):
@@ -155,6 +165,7 @@ class Jobs:
     def record_output(self, sample_id, entry, job, metadata):
         """Called only inside Dataset.add's sample-insert transaction and lock."""
         entry.update(status='completed', sample_id=sample_id, metadata=metadata)
+        if pumas.typed(job['config']): entry['provider_outcome'] = 'result_received'
         self._entry(entry)
         job['completed'] += 1
         self._save(job)
@@ -187,6 +198,8 @@ class Jobs:
             if not job or job['status'] == 'completed':
                 raise ValueError('Choose an unfinished generation job.')
             job = self._normalize_saved(job)
+            if pumas.typed(job['config']) and any(e.get('provider_outcome') == 'unknown' for e in self._entries(job_id)):
+                raise ValueError('An image attempt has an unknown provider outcome. Inspect it; this queue cannot replay it.')
             job.update(status='preparing', error='')
             self._save(job)
             self._launch(job)
@@ -261,26 +274,45 @@ class Jobs:
                     continue
                 entry.update(status='generating', error='')
                 with self.lock, self.db:
-                    self._entry(entry)
                     self.request_id = uuid.uuid4().hex
+                    if pumas.typed(config):
+                        entry.update(request_id=self.request_id, provider_outcome='unknown')
+                    self._entry(entry)
                 body = {key: config[key] for key in ('server_url', 'model', 'width', 'height')}
+                body.update({key: config[key] for key in ('protocol', 'profile') if key in config})
                 body.update(prompt=entry['prompt'], request_id=self.request_id)
                 if config.get('seed') is not None:
                     body['seed'] = (config['seed'] + ordinal) % 4294967296
                 self._check()
-                result = self.dataset.image_requests.generate(body, cancel_event=self.stop)
+                def retain_admission(evidence):
+                    with self.lock, self.db:
+                        if self.stop.is_set():
+                            raise pumas.OperationError('Cancelled before image provider admission.')
+                        entry['attempt_evidence'] = evidence
+                        self._entry(entry)
+                result = self.dataset.image_requests.generate(body, cancel_event=self.stop,
+                    **({'on_admission': retain_admission} if pumas.typed(config) else {}))
                 # Queue link and sample insert commit together, including across restarts.
-                self.dataset.add(dict(job['meta'], image=result['image'],
-                    filename=f'synthetic-{job["id"][:8]}-{ordinal + 1:05d}.png'),
-                    generation=(entry, job, result['metadata']))
+                with self.lock:
+                    self._check()
+                    self.dataset.add(dict(job['meta'], image=result['image'],
+                        filename=f'synthetic-{job["id"][:8]}-{ordinal + 1:05d}.png'),
+                        generation=(entry, job, result['metadata']))
                 with self.lock:
                     self.request_id = None
             job.update(status='completed', error='')
         except Exception as error:
             job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
+            pumas.failure_evidence(job, error)
             with self.lock, self.db:
                 for entry in self._entries(job['id']):
                     if entry['status'] == 'generating':
+                        if pumas.typed(config):
+                            entry['provider_outcome'] = getattr(error, 'outcome', 'unknown')
+                            entry['status'] = 'failed'
+                            entry['error'] = job['error']
+                            self._entry(entry)
+                            continue
                         entry.update(status='pending' if self.stop.is_set() else 'failed', error=job['error'])
                         self._entry(entry)
         finally:

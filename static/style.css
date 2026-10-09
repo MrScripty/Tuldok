@@ -27,6 +27,7 @@
 .generation-options{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap}.generation-options label{flex:1;min-width:140px}
 .generation-job{padding:12px 0;border-top:1px solid var(--line)}.generation-job p{font-size:12px;line-height:1.6;margin-bottom:8px}
 #generation-entry-prompt{padding:16px;border:1px solid var(--line);white-space:pre-wrap;line-height:1.6}
+#generation-capability-metadata{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.5;max-height:320px;overflow:auto;padding:10px;border:1px solid var(--line);border-radius:7px}
 .prompt-entry{min-height:64px;border-style:dashed}.prompt-entry strong{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 .workspace-bar{flex-wrap:wrap}
 

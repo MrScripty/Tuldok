@@ -37,7 +37,7 @@
 <aside class="inspector">
 <section id="generation-settings" hidden>
 <h2>Generation models</h2>
-<label>Pumas gateway URL<input id="generation-url" type="url" placeholder="Pumas gateway address" autocomplete="off"></label>
+<label>Gateway API<select id="generation-protocol"><option value="legacy">Compatible API</option><option value="pumas_typed_v1">Pumas typed v1</option></select></label><label>Exact Pumas profile (optional)<input id="generation-profile" maxlength="128" placeholder="Resolve selected model profile"></label><button type="button" id="generation-capabilities">Inspect selected capabilities</button><p>Typed v1 sends finite requests. Text-to-PNG only; choose repeat prompts for typed batches. Generation runs until completion, failure or cancellation. Capability inspection has a separate bounded discovery budget.</p><pre id="generation-capability-metadata" hidden></pre><label>Pumas gateway URL<input id="generation-url" type="url" placeholder="Pumas gateway address" autocomplete="off"></label>
 <button id="generation-scan" type="button">Scan local ports</button>
 <p id="gateway-scan-status" class="hint" role="status" aria-live="polite">Find Pumas running on the Tuldok computer.</p>
 <label id="gateway-results-row" hidden>Discovered gateways<select id="gateway-results"><option value="">Choose a gateway</option></select></label>
@@ -75,5 +75,5 @@
 <button type="button" id="reset-points" class="text-button">Clear corner positions</button>
 </form>
 </aside>
-</main><script type="module" src="/app.js"></script>
+</main><script src="/pumas-typed.js"></script><script type="module" src="/app.js"></script>
 </body></html>

@@ -12,6 +12,7 @@ import unicodedata
 import uuid
 
 import ai_http
+import pumas_operations as pumas
 from workbench import IDENTIFIER, WorkbenchError, encode, text_value, timestamp
 
 MAX_SOURCE = 20_000
@@ -35,6 +36,10 @@ def catalog(base, cancel_event=None):
 
 
 def request_payload(job):
+    if pumas.typed(job['config']):
+        return pumas.chat_request(job, encode({'source': job['source']['text'],
+            'source_class': job['source']['annotation']['label'], 'variation': job['config']['instruction'],
+            'number_of_candidates': job['config']['count']}), 6000)
     return {'model': job['config']['model'], 'stream': False, 'max_tokens': 6000,
             'seed': job['config']['seed'], 'response_format': {'type': 'json_object'},
             'messages': [{'role': 'system', 'content': job['system_prompt']}, {'role': 'user', 'content': encode({
@@ -43,6 +48,9 @@ def request_payload(job):
 
 
 def complete(job, stop):
+    if pumas.typed(job['config']):
+        return pumas.exchange(job['config']['server_url'], request_payload(job), stop,
+            min(MAX_OUTPUT, job['capability_observation']['capabilities']['max_response_bytes']))[0]
     with ai_http.request(job['config']['server_url'], '/v1/chat/completions', request_payload(job),
                          timeout=180, label='Pumas grounded text model', cancel_event=stop) as (response, transport, deadline):
         data = bytearray()
@@ -64,17 +72,20 @@ def complete(job, stop):
     return bytes(data)
 
 
-def decode(data, source, count):
+def decode(data, source, count, typed_request_id=None):
     """All-or-nothing candidate validation; this is not a semantic verifier."""
     try:
-        response = json.loads(data)
-        choices = response['choices']
-        if not isinstance(choices, list) or len(choices) != 1 or choices[0].get('finish_reason') != 'stop':
-            raise ValueError()
-        content = choices[0]['message']['content']
+        if typed_request_id is not None:
+            content = pumas.result(data, typed_request_id)['text']
+        else:
+            response = json.loads(data)
+            choices = response['choices']
+            if not isinstance(choices, list) or len(choices) != 1 or choices[0].get('finish_reason') != 'stop':
+                raise ValueError()
+            content = choices[0]['message']['content']
         if not isinstance(content, str):
             raise ValueError()
-        result = json.loads(content)
+        result = pumas.strict_json(content)
         if not isinstance(result, dict) or set(result) != {'candidates'} or not isinstance(result['candidates'], list) or len(result['candidates']) != count:
             raise ValueError()
     except (ValueError, KeyError, IndexError, TypeError, AttributeError):
@@ -117,6 +128,7 @@ class Proposals:
             for row in self.db.execute('SELECT data FROM grounded_jobs').fetchall():
                 job = json.loads(row[0])
                 if job['status'] in ACTIVE:
+                    if pumas.typed(job['config']): job['provider_outcome'] = 'unknown'
                     job.update(status='interrupted', error='Server stopped; no automatic retry. Start a new request after inspecting this attempt.')
                     self._save(job)
 
@@ -164,13 +176,15 @@ class Proposals:
         return source
 
     def start(self, body):
-        if set(body) != {'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'count', 'seed'}:
+        fields = {'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'count', 'seed'}
+        if not isinstance(body, dict) or set(body) not in (fields, fields | {'protocol', 'profile'}):
             raise WorkbenchError('Unsupported or missing grounded-generation fields.')
-        base = text_value(ai_http.validate_url('llamacpp', body['server_url']), 'Server URL', 2048)
-        model = text_value(ai_http.validate_model(body['model']), 'Model ID', 200)
+        mode = pumas.configuration(body)
+        base = pumas.endpoint(body['server_url']) if mode else text_value(ai_http.validate_url('llamacpp', body['server_url']), 'Server URL', 2048)
+        model = pumas.alias(body['model']) if mode else text_value(ai_http.validate_model(body['model']), 'Model ID', 200)
         instruction = text_value(body['instruction'], 'Variation instruction', 2000)
         count, seed = body['count'], body['seed']
-        if type(count) is not int or not 1 <= count <= 10 or type(seed) is not int or not 0 <= seed <= 2**32 - 1:
+        if type(count) is not int or not 1 <= count <= 10 or (not mode and (type(seed) is not int or not 0 <= seed <= 2**32 - 1)):
             raise WorkbenchError('Use 1–10 candidates and a nonnegative 32-bit seed.')
         with self.lock, self.db:
             if self.worker is not None and self.worker.is_alive():
@@ -181,6 +195,7 @@ class Proposals:
                    'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION, 'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
                    'candidates': [], 'response_sha256': None, 'raw_response': None, 'raw_response_base64': None,
                    'verification': 'Schema and exact source quotes only; class/factual preservation requires human review.'}
+            job['config'].update(mode)
             job['canonical_request_sha256'] = hashlib.sha256(encode(request_payload(job)).encode()).hexdigest()
             self._save(job)
             self.stop.clear(); self.active_id = job['id']
@@ -191,7 +206,12 @@ class Proposals:
     def _run(self, job_id):
         job = self.get(job_id)
         try:
-            available = catalog(job['config']['server_url'], cancel_event=self.stop)
+            if pumas.typed(job['config']):
+                pumas.prepare_chat(job, 6000)
+                pumas.request_evidence(job, request_payload(job))
+                available = [job['config']['model']]
+            else:
+                available = catalog(job['config']['server_url'], cancel_event=self.stop)
             if self.stop.is_set():
                 raise WorkbenchError('Generation cancelled.', 'cancelled')
             if job['config']['model'] not in available:
@@ -200,8 +220,10 @@ class Proposals:
                 if self.stop.is_set():
                     raise WorkbenchError('Generation cancelled.', 'cancelled')
                 job.update(status='generating', listed_models=available)
+                if pumas.typed(job['config']): job['provider_outcome'] = 'unknown'
                 self._save(job)
             data = complete(job, self.stop)
+            if pumas.typed(job['config']): job['provider_outcome'] = 'result_received'
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
             job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
             # Exact bytes are authoritative; the optional UTF-8 view is never lossy.
@@ -209,8 +231,8 @@ class Proposals:
                 job['raw_response'] = data.decode('utf-8')
             except UnicodeDecodeError:
                 job['raw_response'] = None
-            candidates = decode(data, job['source'], job['config']['count'])
-            reported = json.loads(data).get('model')
+            candidates = decode(data, job['source'], job['config']['count'], job['id'] if pumas.typed(job['config']) else None)
+            reported = None if pumas.typed(job['config']) else json.loads(data).get('model')
             job['reported_model'] = text_value(reported, 'Reported model', 200) if reported is not None else None
             with self.lock, self.db:
                 if self.stop.is_set():
@@ -220,6 +242,7 @@ class Proposals:
                 self._save(job)
         except Exception as error:
             with self.lock, self.db:
+                pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
         finally:
@@ -265,6 +288,9 @@ class Proposals:
                               'source': {'id': source['id'], 'revision': source['revision'], 'source_revision': source['source_revision'],
                                          'content_hash': source['content_hash'], 'text': source['text'], 'annotation': source['annotation']},
                               'evidence': candidate['evidence'], 'verification': job['verification'], 'admission_note': note}
+                provenance.update(pumas.provenance(job))
+                if pumas.typed(job['config']):
+                    provenance.update(provider=pumas.PROTOCOL, profile=job['config'].get('profile'))
                 record = self.workbench._insert_text(candidate['text'], ('Rewrite: '+source['name'])[:200],
                     source['groups'], [source['id']], source['provenance'].get('rights', 'unknown'),
                     provenance=provenance, annotation={'label': candidate['label']})

@@ -188,8 +188,9 @@ In **Dataset workbench**, choose records with the checkboxes, enter a selection
 name, then **Save selected records as a new set**. A set contains fixed record IDs,
 annotation/source revisions, and source hashes. Filters and searches remain live
 collection controls; new matching records never join a saved set automatically.
-There is no dynamic saved-search feature in this slice. Names may repeat; each set
-has its own ID. Saving creates a separate set rather than replacing membership.
+Dynamic saved searches use a separate panel and never supply membership. Names may
+repeat; each set has its own ID. Saving creates a separate set rather than replacing
+membership.
 
 Choose a saved set and **Open fixed selection** to replace the current selection,
 including records outside the current filter. The current filter, release settings
@@ -224,6 +225,27 @@ currency rather than review or release eligibility. POST `.../ID/rename` accepts
 `name` and saved-set `revision`; POST `.../ID/delete` accepts only `revision`.
 Stale mutations return HTTP 409 / `conflict`; a deleted set returns 404 / `unavailable`.
 For release preview, project saved items to `{id, revision, source_revision}`.
+
+## Saved dynamic searches
+
+**Saved searches · dynamic results** stores the entered search/filter values,
+even before **Search collection** is clicked. **Open dynamic search** explicitly
+applies them to the current collection, starting at page 1. New matching records
+can appear; selected record/answer/preference revisions, editor drafts, fixed sets,
+review decisions and history URLs remain separate. Reload lists saved searches
+without automatically opening any. Exact metadata values restore through JSON
+entry, preserving interior LF/CR/CRLF and literal backslashes. Search text is
+single-line. Names may repeat; criteria are immutable, so save changed filters as
+a new search. Rename/delete are revision-checked. Delete retains collection records.
+
+`GET/POST /api/workbench/searches` lists or creates searches. Create accepts only
+`name` (1–120 code points) and `criteria` with exactly `q`, `kind`, `task`, `review`,
+`sort`, `label`, `group`, `rights`, using the existing filter limits and semantics.
+`GET .../ID` returns explicit `mode: "dynamic"`, `schema_version: 1` metadata;
+`POST .../ID/rename` accepts `revision`/`name`, and `.../ID/delete` accepts `revision`.
+At most 100 searches and 32 KiB strict UTF-8 JSON per write. Saved searches contain
+no membership or assets and grant no release authority. Unknown write responses
+require list inspection before an explicit repeat; requests are not replayed.
 
 ## Selected-release preview
 
@@ -342,6 +364,37 @@ recorded bytes through the normal UI and checks review, family split protection,
 and a byte-exact frozen release. It never runs the exporter or simulation.
 No models, downloads or training are needed for these sequence checks.
 Focused Python check: `python3 -m unittest discover -s tests -p test_sequences.py`.
+
+The local follow-on **Import a folder of Rheon trajectories** accepts one selected
+folder containing only `<trajectory-label>/run.json` and `frames.jsonl` pairs.
+Preflight checks all pairs before reading: at most 32 pairs / 64 files / 40 MiB
+total raw files, 64 KiB per manifest and 2 MiB per frames file. Each server request
+is independently capped at 3 MiB and uses the unchanged fee7b4a validator. These
+selected-file limits do not impose a server-wide quota across independent imports.
+The existing 40 MiB immutable selection/release budget includes ZIP overhead.
+
+Each valid pair commits one whole draft trajectory with initial history and a
+computed acquisition marker/hash receipt. Invalid or duplicate items are rejected
+without modifying existing records; earlier successful items remain. Stop prevents
+the next admission, while an in-flight item may complete. Unknown responses or
+storage failures pause without automatic replay. **Check pending trajectory** is
+read-only and matches the marker, declared labels/index and both consumed-file
+hashes. It confirms admission only, never current source integrity, rights or
+human review. Missing lookup does not prove cessation. Confirmation does not
+resume later items; dismissal/departure/reload makes no rollback claim. Progress
+is held in this page; inspect the collection after reload. Imports retain the
+independent editor and exact selected revision pairs.
+
+Folder labels remain declared context and do not automatically group independent
+families. Use the optional shared protected group only when runs must stay together.
+Review, rights/history, fixed saved selections and canonical whole-trajectory
+export use their existing controls. No time flattening, frame split or scientific
+training qualification is added. `tests/test_sequence_batch.py` and
+`tests/browser_sequence_batch.cjs` use the retained actual fee7b4a pair and separately
+labeled source-derived synthetic controls; they execute no simulation.
+Rheon's still-draft PR20 has advanced to `3bf61ba85d066cadb95cddffb29a2b40fe497ccf`
+with a Cargo artifact repair and a new allowed build-command form. This adapter
+does not adopt that contract form; it is rejected until a separately reviewed repin.
 
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
 
@@ -548,3 +601,22 @@ tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
 that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).
 
 Static mesh import: [bounded ASCII PLY/sidecar contract](docs/contracts/static-mesh.md), with native units/frame/provenance inspection and human review before export.
+
+### Selected-model Pumas typed operations
+
+The annotation workbench and image studio offer an explicit **Pumas typed v1** API choice. This consumer pins the public, unmerged [Pumas PR54](https://github.com/MrScripty/Pumas-Library/pull/54) source `40c5cbfed67a6f0e862a1197bb5105363d67bdb1`, including [PR53](https://github.com/MrScripty/Pumas-Library/pull/53) streaming/lifetime source `f3b3c770ca531f013c8e1f8b1f958b9dc0babbfb`. Existing compatible API settings remain the default. PR51 gateway advertisements belong to a separate producer stack; this consumer does not assume those drafts are merged together.
+
+Choose the exact serving alias and optionally its exact profile; inspect capabilities before requesting a text label, grounded rewrite, or text-to-PNG image. The server resolves an omitted profile, and the consumer binds the provider POST to that exact returned profile. Catalog aliases may appear under multiple profiles; their listing alone proves no capability. Typed text has no seed or JSON-format option. Frozen typed text intent records `seed:null`, and complete stop-terminated results still need valid application JSON. Typed image batches currently require the explicit repeat-prompt strategy. Captioning requires image input, which this typed contract does not support; audio is also unavailable. No typed streaming UI is claimed: requests use `stream:false`.
+
+Proposals preserve actual capability observations, their SHA-256, exact typed request/hash, response hash, selected alias/profile and producer source. Pumas request IDs are correlation only; local classification admission IDs separately reconcile without repeating inference. Authoritative `not_admitted` and `unknown` errors remain inspectable. A successful projected response is recorded locally as `result_received`. Transport loss, cancellation or an interrupted image attempt cannot replay automatically; uncertain image queues cannot resume that attempt. Cancellation retires local transport actors, and does not establish native provider cessation. Applying labels or admitting rewrites creates drafts through existing revision/history, rights and family owners. Human annotation review remains separate and required for release. Generated prompts remain provenance, never image captions.
+
+Discovery limits are separate from inference lifetime: local scans share ten seconds; descriptor inspection, typed selected-alias catalogs and capability inspection use three-second observation budgets. Typed generation bounds connection establishment to ten seconds and has no total, read, idle or drain deadline afterward. Consumer limits: capability JSON 64 KiB, catalog JSON 1 MiB/512 served rows, text result 256 KiB, image result JSON 12 MiB/PNG 8 MiB, typed image dimensions 2048 per axis/4194304 pixels, profile 128 ASCII bytes and serving alias 256 UTF-8 bytes. Image dimensions are checked before POST and PNG decoding. Producer wire limits do not override these consumer allocation bounds. No provider redirects, fallback or automatic inference retry.
+
+`tests/fixtures/pumas-typed-v1` labels its actual native controlled-gateway capability captures and authored harness. Offline CI uses a source-derived HTTP fixture. Separate native qualification runs the pinned production HTTP/admission/handler code with an external controlled text backend and an owned managed literal-PNG process compiled without `cfg(test)`. No model is loaded or downloaded, and these checks do not qualify model accuracy or training. With that harness already running:
+
+```sh
+python scripts/qualify_pumas_typed_actual.py --gateway-receipt /path/to/gateway.json --output /path/to/ignored/consumer-native.json
+PUMAS_TYPED_GATEWAY_RECEIPT=/path/to/gateway.json node tests/browser_pumas_typed.cjs
+```
+
+Keep reports, generated datasets and JPEG85 screenshots in ignored `build/` or external qualification directories. The authored harness instructions document startup and owned shutdown; production source remains pinned and unchanged.

@@ -10,7 +10,10 @@ class SequenceAssets(ImmutableAssets):
         super().__init__(workbench, kind='sequence', task='sequence_transport',
                          maximum=MAX_BUNDLE_BYTES, default_name='Rheon transport sequence')
 
-    def admit(self, prepared, body):
+    def admit(self, prepared, body, *, acquisition=None):
         metadata = prepared['metadata']
-        return super().admit(prepared, body, {'method': 'simulation_import', 'adapter': metadata['adapter'],
-            'run_sha256': metadata['run_sha256'], 'frames_sha256': metadata['manifest']['frames_sha256']})
+        origin = {'method': 'simulation_import', 'adapter': metadata['adapter'],
+            'run_sha256': metadata['run_sha256'], 'frames_sha256': metadata['manifest']['frames_sha256']}
+        if acquisition is not None:
+            origin['sequence_acquisition'] = acquisition
+        return super().admit(prepared, body, origin)

@@ -4,12 +4,14 @@ import ai
 import ai_codex
 import ai_http
 import image_generation
+import pumas_operations
 import synthetic
 import gateway_discovery
 import workbench
 import dataset_recipes
 import dataset_releases
 import saved_selections
+import saved_searches
 import grounded_candidates
 import caption_proposals
 import text_classification_proposals
@@ -18,6 +20,7 @@ import curation
 import caption_import
 import native_text_import
 import rheon_sequences
+import sequence_batch_import
 import meshes
 import base64
 import hashlib
@@ -147,6 +150,7 @@ class Dataset:
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
         self.selections = saved_selections.SavedSelections(self.workbench)
+        self.searches = saved_searches.SavedSearches(self.workbench)
         self.caption_imports = caption_import.CaptionImports(self.workbench)
         self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
         self.grounded = grounded_candidates.Proposals(self.workbench)
@@ -386,10 +390,16 @@ def make_handler(dataset):
             try:
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.list())
+                if path == '/api/workbench/searches':
+                    return self.reply(dataset.searches.list())
+                if path.startswith('/api/workbench/searches/'):
+                    return self.reply(dataset.searches.get(path.removeprefix('/api/workbench/searches/')))
                 if path.startswith('/api/workbench/selections/'):
                     return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
                 if path.startswith('/api/workbench/import-result/'):
                     return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/sequence-import-result/'):
+                    return self.reply(sequence_batch_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/text-classification-proposals':
                     return self.reply(dataset.text_classification_proposals.snapshot())
                 if path.startswith('/api/workbench/text-classification-proposals/'):
@@ -464,7 +474,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                assets = {'/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -485,16 +495,23 @@ def make_handler(dataset):
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
-                limit = meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path == '/api/workbench/sequence-import' else MAX_BODY
+                limit = saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.create(body), 201)
+                if path == '/api/workbench/searches':
+                    return self.reply(dataset.searches.create(body), 201)
+                if path.startswith('/api/workbench/searches/'):
+                    parts = path.removeprefix('/api/workbench/searches/').split('/')
+                    if len(parts) != 2:
+                        raise workbench.WorkbenchError('Invalid saved search route.')
+                    return self.reply(dataset.searches.mutate(parts[0], parts[1], body))
                 if path.startswith('/api/workbench/selections/'):
                     parts = path.removeprefix('/api/workbench/selections/').split('/')
                     if len(parts) != 2:
@@ -524,6 +541,8 @@ def make_handler(dataset):
                     return self.reply(meshes.admit(dataset.workbench, body), 201)
                 if path == '/api/workbench/sequence-import':
                     return self.reply(rheon_sequences.admit(dataset.workbench, body), 201)
+                if path == '/api/workbench/sequence-import-item':
+                    return self.reply(sequence_batch_import.import_item(dataset.workbench, body), 201)
                 if path == '/api/workbench/curation':
                     return self.reply(curation.inspect(dataset.workbench, body))
                 if path == '/api/workbench/import-row':
@@ -560,6 +579,12 @@ def make_handler(dataset):
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
                     return self.reply(ai_http.text_models(body.get('server_url')))
+                if path == '/api/generation/typed-models':
+                    if set(body) != {'server_url'}: raise ValueError('Supply only the gateway URL.')
+                    return self.reply(pumas_operations.models(body['server_url']))
+                if path == '/api/generation/typed-capabilities':
+                    if set(body) != {'server_url', 'model', 'profile'}: raise ValueError('Supply the exact selected model and optional profile.')
+                    return self.reply(pumas_operations.capabilities(body['server_url'], body['model'], body['profile']))
                 if path == '/api/ai/scan':
                     return self.reply(gateway_discovery.scan_labeling())
                 if path == '/api/generation/scan':
