@@ -1,5 +1,6 @@
 """Frozen, self-contained releases with connected-source split allocation."""
 import hashlib
+import io
 import json
 import os
 import re
@@ -10,6 +11,7 @@ from pathlib import Path
 from PIL import Image
 
 import image_classification_export as classification_export
+import image_detection_export as detection_export
 import text_corpus_export as corpus_export
 
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
@@ -182,6 +184,8 @@ class Releases:
         """
         workbench = self.workbench
         format_name = body.get('format', 'canonical_v1')
+        if format_name == detection_export.FORMAT:
+            return self._prepare_detection(body)
         if format_name == corpus_export.FORMAT:
             return self._prepare_corpus(body)
         if format_name == PREFERENCE_FORMAT:
@@ -314,6 +318,146 @@ class Releases:
         if 'preview_token' in body and body['preview_token'] != preview['preview_token']:
             raise WorkbenchError('Release preview changed. Preview the current selection and settings again.', 'conflict', 409)
         return prepared
+
+    def _prepare_detection(self, body):
+        preview = dict(format=detection_export.FORMAT, eligible=False, selected_count=0,
+                       analysis=None, blockers=[], warnings=[], lineage=[], assignments={},
+                       split_report=None, preview_token=None)
+        record_id = None
+        try:
+            if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
+                raise WorkbenchError('Unknown detection release fields.')
+            items = body.get('items')
+            if not isinstance(items, list) or not 1 <= len(items) <= detection_export.MAX_RECORDS:
+                raise WorkbenchError('Select 1–100 records per Chapter 9 release.')
+            try:
+                rows = self.workbench.selection(items, max_snapshot_bytes=detection_export.MAX_BYTES)
+            except WorkbenchError:
+                raise
+            except ValueError:
+                raise WorkbenchError('Stored selection must contain bounded finite JSON values.') from None
+            preview['selected_count'] = len(rows)
+            detection_export.validate_records(rows)
+            self.workbench.check_immutable_selection(rows)
+            # Capture within the aggregate byte budget before any raster decode.
+            # External replacements cannot change the bytes later decoded/archived.
+            minimum = sum(len(encode(row).encode()) for row in rows)
+            captured = {}
+            for row in rows:
+                record_id = row['id']
+                asset, _ = self.workbench.asset(row['id'])
+                remaining = detection_export.MAX_BYTES - minimum
+                if remaining < 0 or asset.stat().st_size > remaining:
+                    raise WorkbenchError('Detection archive exceeds the 40 MiB complete logical archive bound.')
+                with asset.open('rb') as source:
+                    value = source.read(remaining + 1)
+                if len(value) > remaining:
+                    raise WorkbenchError('Detection archive exceeds the 40 MiB complete logical archive bound.')
+                minimum += len(value)
+                captured[row['id']] = value
+            # Check every captured header before allocating the first RGB raster.
+            for row in rows:
+                record_id = row['id']
+                with Image.open(io.BytesIO(captured[row['id']])) as image:
+                    if image.format != 'PNG':
+                        raise WorkbenchError('Image assets must be normalized PNGs.')
+                    if image.size != (row['width'], row['height']):
+                        raise WorkbenchError('Source dimensions changed outside Tuldok.', 'conflict', 409)
+            for row in rows:
+                record_id = row['id']
+                value = captured[row['id']]
+                if hashlib.sha256(value).hexdigest() != row['content_hash']:
+                    raise WorkbenchError('Source bytes changed outside Tuldok.', 'conflict', 409)
+                with Image.open(io.BytesIO(value)) as image:
+                    if image.size != (row['width'], row['height']):
+                        raise WorkbenchError('Source dimensions changed outside Tuldok.', 'conflict', 409)
+                    if image.getexif().get(274, 1) != 1:
+                        raise WorkbenchError('Image assets must have EXIF orientation 1.')
+                    image = image.convert('RGB')
+                    digest = hashlib.sha256(str(image.size).encode() + image.tobytes()).hexdigest()
+                    if digest != row['pixel_hash']:
+                        raise WorkbenchError('Source pixels changed outside Tuldok.', 'conflict', 409)
+            record_id = None
+            preview['analysis'] = analyze(rows)
+            universe = self.workbench._all()
+            roots, groups, snapshots, preview['lineage'] = family_context(rows, universe)
+            preview['assignments'], preview['split_report'] = allocate(rows, universe, body.get('ratios'), body.get('seed'))
+            preview['foreground_label'], preview['detection_counts'] = detection_export.inspect_projection(rows, preview['assignments'])
+            preview['native_category_evidence'] = dict.fromkeys(('retained', 'unavailable', 'not_native'), 0)
+            for row in rows:
+                preview['native_category_evidence'][detection_export.category_id_status(row)] += 1
+            if preview['native_category_evidence']['unavailable']:
+                preview['warnings'].append('Legacy native records lack original category-ID evidence. Those IDs are unavailable and have not been guessed.')
+            preview['warnings'].append(detection_export.WARNING)
+            for split, count in preview['detection_counts'].items():
+                if not count['positive']:
+                    preview['warnings'].append(f'{split} has no positives: localization is untrained in train, and positive IoU is undefined in evaluation.')
+                if not count['negative']:
+                    preview['warnings'].append(f'{split} has no negatives: false-alarm rate is undefined.')
+            if preview['analysis']['duplicate_content_records']:
+                preview['warnings'].append('Exact pixel repeats remain in one connected split; none are discarded.')
+            if preview['analysis']['unknown_rights']:
+                preview['warnings'].append('Some selected images have unknown rights. Review permission before training or sharing.')
+            preview['warnings'].append('Human review and protected families do not establish semantic independence, quality or permission.')
+            prepared = dict(preview=preview, rows=rows, roots=roots, groups=groups,
+                            snapshots=snapshots, captured_images=captured)
+            total, hashes = 0, {}
+            for name, value, expected in detection_export.entries(self.workbench, prepared, body):
+                total += len(value)
+                if total > detection_export.MAX_BYTES:
+                    raise WorkbenchError('Detection archive exceeds the 40 MiB complete logical archive bound, including masks and metadata.')
+                digest = hashlib.sha256(value).hexdigest()
+                if expected and digest != expected:
+                    raise WorkbenchError('Source bytes changed outside Tuldok.', 'conflict', 409)
+                hashes[name] = digest
+            prepared['entry_hashes'] = hashes
+            preview['artifact_bytes'] = total
+            preview['preview_token'] = hashlib.sha256(encode(dict(format=detection_export.FORMAT,
+                schema=1, ratios=body['ratios'], seed=body['seed'], records=rows,
+                protected_components=snapshots, assignments=preview['assignments'],
+                consumer=detection_export.CONSUMER, target_contract=detection_export.TARGET_CONTRACT,
+                entry_hashes=hashes)).encode()).hexdigest()
+            preview['eligible'] = True
+            return prepared
+        except (WorkbenchError, OSError, ValueError, SyntaxError, Image.DecompressionBombError) as error:
+            if not isinstance(error, WorkbenchError):
+                error = WorkbenchError('Source asset is unreadable.', 'unavailable', 409)
+            blocker = dict(message=str(error), code=error.code, status=error.status)
+            if record_id is not None:
+                blocker['record_id'] = record_id
+            preview['blockers'].append(blocker)
+            return dict(preview=preview)
+
+    def _create_detection(self, body):
+        with self.workbench.lock, self.workbench.db:
+            prepared = self._checked(body)
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        total, names = 0, set()
+                        for name, value, _ in detection_export.entries(self.workbench, prepared, body):
+                            total += len(value)
+                            if total > detection_export.MAX_BYTES:
+                                raise WorkbenchError('Detection archive exceeds the 40 MiB complete logical archive bound.')
+                            if name in names or name not in prepared['entry_hashes']:
+                                raise WorkbenchError('Detection projection changed.', 'conflict', 409)
+                            names.add(name)
+                            archive_asset(archive, value, name, prepared['entry_hashes'][name])
+                        if names != set(prepared['entry_hashes']):
+                            raise WorkbenchError('Detection projection changed.', 'conflict', 409)
+                    target.flush(); os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            preview = prepared['preview']
+            return dict(id=release_id, url='/api/workbench/releases/' + release_id + '.zip',
+                        format=detection_export.FORMAT, records=len(prepared['rows']),
+                        split_report=preview['split_report'], foreground_label=preview['foreground_label'],
+                        detection_counts=preview['detection_counts'], artifact_bytes=preview['artifact_bytes'],
+                        warnings=preview['warnings'])
 
     def _prepare_corpus(self, body):
         preview = {'format': corpus_export.FORMAT, 'eligible': False, 'selected_count': 0,
@@ -629,6 +773,10 @@ class Releases:
 
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
+        if format_name == detection_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact detection selection before exporting.', 'conflict', 409)
+            return self._create_detection(body)
         if format_name == corpus_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact corpus selection before exporting.', 'conflict', 409)

@@ -247,6 +247,12 @@ function renderReleasePreview(result) {
   if(result.class_coverage) {
     for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder} (index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
   }
+  if(result.detection_counts) {
+    previewLine(root, `${JSON.stringify(result.foreground_label)} → foreground object (class index 0; positive presence 1; one class, at most one object). Derived rectangular masks transport boxes, not segmentation ground truth.`);
+    for(const [split, count] of Object.entries(result.detection_counts)) previewLine(root, `${split}: ${count.positive} positive · ${count.negative} negative images.`);
+    if(result.native_category_evidence) previewLine(root, `Original native category-ID evidence: ${result.native_category_evidence.retained} retained · ${result.native_category_evidence.unavailable} unavailable · ${result.native_category_evidence.not_native} locally acquired. Original IDs describe original targets, independently of later edits.`);
+    if(typeof result.artifact_bytes === 'number') previewLine(root, `Complete logical archive: ${result.artifact_bytes} bytes / 40 MiB, including source PNGs, derived masks and metadata.`);
+  }
   if(result.corpus_counts) {
     for(const [split, count] of Object.entries(result.corpus_counts)) previewLine(root, `${split}.txt: ${count.bytes} bytes · ${count.documents} documents · ${count.families} connected families (${count.document_bytes} document bytes + ${count.separator_bytes} separator bytes).`);
     if(result.artifact_bytes !== undefined) previewLine(root, `Complete logical archive: ${result.artifact_bytes} bytes / 40 MiB, including duplicated assets and metadata.`);
@@ -273,7 +279,7 @@ function renderReleasePreview(result) {
 for(const id of ['release-format','train','validation','test','split-seed']) {
   for(const event of ['input','change']) $(id).addEventListener(event, syncReleaseSelection);
 }
-$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
+$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('detection-export-help').hidden = $('release-format').value !== 'image_detection_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
 $('preview-release').addEventListener('click', async event=>{
   event.preventDefault(); if(releaseBusy) return;
   syncReleaseSelection();
@@ -300,7 +306,7 @@ $('release-form').addEventListener('submit',async event=>{
     const result=await api('releases',body);
     if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
     const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(['image_classification_v1','text_corpus_v1'].includes(result.format)?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
+    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(['image_classification_v1','image_detection_v1','text_corpus_v1'].includes(result.format)?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
   } catch(error) {
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }

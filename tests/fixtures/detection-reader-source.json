@@ -1,0 +1,22 @@
+{
+  "basis": "Two unchanged actual published companion source files, retained from the existing reviewed detection checkpoint; no new download or reconstruction.",
+  "repository": "bc-ai-ecosystem/training-your-own-models",
+  "commit": "fb895e1a3e08fac86738106e6122bdcafb124e65",
+  "archive": "docs/downloads/training-models-companion.zip",
+  "archive_bytes": 806494,
+  "archive_sha256": "e924589b152f68bb15d89b8f95e3b52005bbe4a9f7770f2d0550b5422d3a11d6",
+  "retained_checkpoint": "39fa1396c38ba333e0a9ddfde841e73b2aad2ed9",
+  "files": {
+    "train_detector.py": {
+      "upstream_path": "examples/tiny-ml/train_detector.py",
+      "sha256": "a764f819c9757b9c6869d1695db620372e81aadb2442e018830d21b2743ee551"
+    },
+    "detector_common.py": {
+      "upstream_path": "examples/tiny-ml/detector_common.py",
+      "sha256": "f99664c5ebc09a07b39d3dd7643bbbe1e669e8c85975642ae8be60dc72591924"
+    }
+  },
+  "executed_scope": "Images/image_tensor/box_from_mask only; no model, trainer, objective, evaluation, predictor, optimizer, checkpoint or download.",
+  "fixture_scope": "Six retained authored compatibility images and test-only annotation/review states. Not actual human-labelled data or new physical families.",
+  "reuse": "Attribution and source evidence only; no new blanket license or training-quality qualification is implied."
+}

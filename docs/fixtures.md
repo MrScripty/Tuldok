@@ -14,3 +14,5 @@ Fixtures are retained inputs/authored generators, not approved targets, addition
 | QA registry and instruction/preference consumer pins | Exact gate/package/source identities, never prior runtime results. |
 
 See [simulation pins](contracts/simulation-sequences.md) and attribution beside retained book sources. Optional dependencies/harnesses require separate provisioning/authorization. Fixtures never request a producer/provider rerun.
+
+The detection reader retains two unchanged published Chapter 9 files with hashes and attribution in [detection-reader-source.json](../tests/fixtures/detection-reader-source.json). Its six retained authored image fixtures and test-only annotations simulate workflow review; they are not a human-labelled corpus or meaningful physical diversity. Only the reader/helper are invoked; no trainer, predictor, model, checkpoint or download.

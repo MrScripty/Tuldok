@@ -31,3 +31,7 @@ Chapter11 uses256 raw-byte token IDs and one-byte-shifted targets. Windows may c
 `text_preference_v1` requires a separately reviewed comparison of two distinct existing answers bound to one exact prompt. Directional rows contain `prompt/chosen/rejected`; ties/abstentions retain manifest evidence/exclusion reasons. Current opposing reviewed judgments of an exact unordered pair block even if unselected. Identical strings remain with a degenerate-pair warning. Answer review/order/provider scores never grant preference review. Competing evidence participates in preview and bounds; history/deletion/frozen output remain independent.
 
 Unchanged TRL0.23.1/Datasets4.1.1 package/source hashes remain in `tests/instruction-consumer-pins.json` and `tests/preference-consumer-pins.json`. Isolated dependencies are in `tests/instruction-consumer-requirements.txt`, not app runtime. Completion masks/EOS/padding/truncation/collators are consumer settings. Export alone does not qualify a tokenizer/trainer/model; the separate neural consumer browser gates are excluded from current scoped QA.
+
+## Single-object image detection
+
+`image_detection_v1` adds the roadmap’s [pinned Chapter 9 reader projection](image-detection-export.md) through the existing exact-selection preview and atomic release owner. Original current boxes/label/review/provenance and whole-family splits stay intact; derived masks are transport only. Canonical COCO mapping and geometry remain unchanged.

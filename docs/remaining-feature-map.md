@@ -9,13 +9,15 @@ This inventory describes source capability, not publication, merge, scientific a
 | Native import | Caption folder, text-classification ZIP, detection canonical ZIP, whole Rheon v1/v2 pairs/triples, bounded meshes | Foreign review is not local approval; upstream originals/arbitrary adapters unsupported. |
 | Simulation authoring | Named staggered fields/index/time/plane/trace inspection, human inclusive ranges, explicit save/reopen/review/history and whole-family export | Scientific target truth, free-surface/two-phase physics and physical diversity are not supplied. |
 | Native numerical consumer | NumPy whole trajectories/explicit windows, separate TXYZ fields/dtypes/anchors/human coverage, atomic pickle-free NPZ, sequence-only declared family proof | Actual objective/trainer/taxonomy and meaningful independent initial/configuration families remain required inputs. |
-| Specialized releases | Canonical COCO/typed rows, caption, Chapter8 classification, Chapter11 corpus, instruction/preference projections | Retained specialized detection/retrieval implementations still require reviewed integration into this release owner. |
+| Specialized releases | Canonical COCO/typed rows, caption, Chapter8 classification, Chapter11 corpus, instruction/preference projections | Bounded Chapter9 detection-reader projection is integrated; retained retrieval implementation still requires reviewed integration. |
 | Assisted drafts | Capability-gated caption/classification/grounded rewrite proposals, typed model/profile selection and existing-owner observation | Semantic quality, multiple-source grounded instructions and joint native SDK/typed serving are separate. |
 | Spatial/video | Corners/boxes, stills, bounded static meshes and preserved simulation time | Consumer-backed segmentation/polygons and general video recording/extraction/deduplication/tracking are absent. |
 
 ## Next unblocked feature
 
-Reconcile the existing bounded detection-reader projection into the release menu/API instead of creating another adapter. Its admitted profile uses reviewed integer exclusive pixel-edge boxes, one class, zero/one object with explicit negatives, whole-family splits and bounded archives. Derived rectangular masks are transport for that named reader, not segmentation truth. Fractional/multiple-box rejection stays explicit; canonical detection retains broader semantics. Exact retained implementation and reader-only integration need independent review, without training or new physical data.
+The bounded Chapter9 detection projection is now integrated through exact reviewed selections, fresh preview/freeze and immutable download. Original native categories remain source evidence, separate from current labels and binary reader presence. Its authored fixtures qualify reader compatibility and rendered control behavior only.
+
+Review the existing retained retrieval export as the next established integration candidate; it adds judgment ownership and consumer work, without defining a simulation objective.
 
 Retrieval export is a subsequent existing implementation to assess; it adds judgment ownership/consumer work. Source-grounded multi-context instruction, consumer-backed segmentation and video each need concrete observed product/consumer contracts. Manual answer/entity/preference tools already exist.
 

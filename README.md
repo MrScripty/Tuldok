@@ -710,6 +710,12 @@ See the [consumer pin and byte contract](docs/contracts/dataset-releases.md).
 The actual-consumer gate uses Torch 2.8.0 on CPU, synthetic authored fixtures and
 the unchanged companion reader/trainer/evaluator. It downloads no models or data.
 
+### Export reviewed single-object detection
+
+Save and review image boxes, select their exact revisions, then choose **Chapter 9 · reviewed single-object detection**. Preview shows the exact label mapping, positive/negative coverage, protected splits, original category evidence and blockers. Freeze creates immutable RGB PNG / derived rectangular-mask pairs for the pinned reader. Integer edges, one class, zero/one object and nonempty train/validation/test are required; fractional/multiple boxes remain supported by canonical COCO. Masks are box transport, not segmentation truth.
+
+New native imports preserve validated original category tables/IDs as source evidence, separately from later edits and the reader’s binary presence target. Legacy omitted IDs remain unavailable. The [export contract](docs/contracts/image-detection-export.md) gives bounds and the strictly reader-only QA scope. Test annotations and automated review actions do not constitute human-labelled training data; UI remains provisional.
+
 ### Native detection corpus imports
 
 Choose **Import native detection release** for a detection-only `canonical_v1`

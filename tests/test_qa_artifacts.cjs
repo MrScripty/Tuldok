@@ -21,6 +21,8 @@ const callers=[
   ['check_text_corpus_consumer.cjs','text-corpus-consumer'],
   ['browser_saved_searches.cjs','saved-searches'],
   ['browser_native_detection_import.cjs','native-detection-import'],
+  ['browser_image_detection_export.cjs','image-detection-export'],
+  ['check_image_detection_reader.cjs','image-detection-reader'],
   ['browser_sequences.cjs','simulation-sequence'],
   ['browser_sequences_actual.cjs','simulation-sequence-actual','TULDOK_SEQUENCE_ACTUAL_REPORT_ROOT'],
   ['browser_meshes.cjs','static-mesh'],

@@ -76,7 +76,7 @@ def png(raw, row):
             if measured != row['pixel_hash']:
                 raise WorkbenchError('Native image pixels do not match the pixel hash.')
             return measured
-    except (OSError, Image.DecompressionBombError):
+    except (OSError, SyntaxError, Image.DecompressionBombError):
         raise WorkbenchError('Native image is damaged or exceeds the geometry bound.') from None
 
 
@@ -214,7 +214,9 @@ class NativeDetectionImports:
                         asset_sha256=digest(asset), input_sha256=digest(asset), pixel_sha256=measured,
                         input_basis='consumed_exported_png', upstream_graph='selected_declared_links_only',
                         declared=dict(archive_name=name, metadata_path='manifest.json', row_number=number,
-                            asset=row['asset'], upstream=dict(record=row, original_status='unavailable')))
+                            asset=row['asset'], upstream=dict(record=row, original_status='unavailable',
+                                category_table=projections[row['split']]['categories'],
+                                annotation_category_ids=[categories[box['label']] for box in row['annotation']['boxes']])))
                     token = self._seal(dict(image=base64.b64encode(asset).decode(), groups=groups[row['id']], context=context))
                     total += len(token)
                     if total > MAX_PREPARED:
