@@ -1,0 +1,47 @@
+{
+  "artifact_commit": "7eec7ef00c005ac3168e51cb93cb4b212fe31e36",
+  "method": "exact published GitHub git blob API",
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 2737,
+      "git_blob": "7f5c01c6149745926e9180ce72a6d41b3931fcd6",
+      "sha256": "3d46bf0b673f69a8aed4df49e16258b62b6bb1716c58a15740694165cec08d65"
+    },
+    {
+      "name": "manifest.json",
+      "bytes": 2025,
+      "git_blob": "a3c6354ea7a7e51a016838ddab67e3a041ebc741",
+      "sha256": "83c91c61bf1f479cc791e2044fcfa8a79a966ce853caf221b61f6e82d7c16388"
+    },
+    {
+      "name": "request.json",
+      "bytes": 62,
+      "git_blob": "a5faa2e97eced7a86c49cfcef801d533da7d2097",
+      "sha256": "25ef5907280cdc35774634a5f62370e091404cbcce503442ab6a2c188e841d91"
+    },
+    {
+      "name": "response.json.gz",
+      "bytes": 1508798,
+      "git_blob": "3e2c08db80bd263c1f60bce440600e8894ec73c9",
+      "sha256": "66fdbca45c1a70a2589ccc5af137af76c2c46443595d1fbe8ba7300a87bb599b"
+    }
+  ],
+  "repository": "https://github.com/MrScripty/Kenoma",
+  "path": "assets/samples/rig_bind_v1/",
+  "source_commit": "136f4947c7ef9bd2d4fe5cff09086489b0cb501d",
+  "provenance": "Actual owner-published fresh deterministic bind response; not historical wire capture. Downloaded and hash-verified only; no producer executed.",
+  "decoded_response": {
+    "bytes": 5257666,
+    "sha256": "034f9f4a27339488e8cea40d00a508f4d02fbfeb5b4a8f5bf59a95c9c6d6a7a0"
+  },
+  "source_files": [
+    {
+      "path": "crates/human_surface/src/lib.rs",
+      "git_blob": "2cb7af867a101d52bca9c0c012f047b0c21f0588",
+      "bytes": 19024,
+      "sha256": "46fb136acc0e440e838ca2e287e3f2124033f3456be95f9ff6ce9bbeeb11d2c6",
+      "use": "Pinned field options and native f32 radius-resolution condition; exact supported blob read, not execution."
+    }
+  ]
+}

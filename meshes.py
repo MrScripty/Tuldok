@@ -126,11 +126,18 @@ class MeshAssets(ImmutableAssets):
             raise WorkbenchError('Mesh source or metadata changed outside Tuldok.', 'conflict', 409) from error
 
     def asset(self, record):
+        from binary_mesh_assets import is_binary, BinaryMeshAssets
+        if is_binary(record):
+            return BinaryMeshAssets(self.workbench).asset(record)
         bundle, mime = super().asset(record)
         self.validated(record, bundle)
         return bundle, mime
 
     def inspect(self, record_id):
+        from binary_mesh_assets import is_binary, BinaryMeshAssets
+        with self.workbench.lock:
+            if is_binary(self.workbench._get(record_id)):
+                return BinaryMeshAssets(self.workbench).inspect(record_id)
         with self.workbench.lock:
             record = self.workbench._get(record_id)
             if record['kind'] != 'mesh':

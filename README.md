@@ -919,3 +919,22 @@ Reviewed binary retrieval is a separate bounded `text_retrieval_binary_v2` profi
 ### Native mesh preparation
 
 Reviewed mesh-only canonical releases can be consumed with `native_mesh_dataset.py --sha256 OWNER_SHA --split train --npz sample.npz --ply sample.ply RELEASE.zip`. The bounded consumer verifies the full known family graph and returns whole meshes with separate native properties and ordered triangles. Standard binary PLY derivatives correct the pinned reader's ASCII float32 rounding mismatch while preserving declared native values; original raw pairs remain unchanged. Derived files carry source provenance, and complete owner review/rights/family evidence stays in NPZ metadata and the retained release. See [contract, exact pins and limits](docs/contracts/native-mesh-consumer.md). No simulation, inference or training qualification is implied.
+
+### Source-bound whole-mesh acquisition
+
+The separate source-bound binary mesh form imports a complete hash-verified mesh
+and its authoritative source within an explicit 50,000-vertex/100,000-triangle
+Linux profile. Existing ASCII mesh and point-cloud defaults remain.
+`mesh_binary_packet.py` packages original v1 source plus a binary derivative, or
+the retained exact Kenoma neutral-bind request/response/producer manifest. Import
+creates a local unreviewed draft; rights correction, human review and whole-family
+canonical freeze use existing owners.
+
+`NativeBinaryMeshDataset` reads only this additive profile with the pinned optional
+reader dependencies in `requirements-mesh-consumer.txt`. It preserves separate
+native properties and int32/uint32 topology and supports atomic NPZ, PLY and
+`write_import_bundle` outputs. The complete source-bound ZIP is reimportable through
+the intended form; standalone PLY lacks the authoritative files. Actual retained
+Kenoma fixture qualification covers 46,728 vertices/93,452 triangles, with fresh
+deterministic generation provenance, not historical capture or model qualification.
+See [exact source, bounds, APIs and limitations](docs/contracts/binary-mesh-acquisition.md).

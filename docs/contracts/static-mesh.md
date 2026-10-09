@@ -99,3 +99,10 @@ unknown versions reject rather than guessing. There is no general PLY promise.
 ## Native-value consumer
 
 The original ASCII pair remains byte-exact transport. The bounded [native mesh consumer](native-mesh-consumer.md) resolves the pinned reader's decimal float32 rounding mismatch through a clearly labeled standard binary PLY derivative. Native dtypes/topology are preserved; standalone derivatives retain source claims, while full review/rights/family evidence remains in the original release and NPZ metadata. Input acceptance and numerical rounding policy are unchanged.
+
+## Separate source-bound binary acquisition
+
+The additive [binary mesh acquisition profile](binary-mesh-acquisition.md) retains
+original source and exact native bits under its own explicit limits. This v1
+ASCII profile and its binary-input refusal remain unchanged. Standalone binary
+derivatives require the original source bundle before wrapping for acquisition.

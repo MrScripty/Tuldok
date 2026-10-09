@@ -68,6 +68,8 @@ class NativeMeshDataset:
     Item access reparses captured immutable bytes and returns fresh arrays and deep
     metadata. Variable vertex/triangle counts and optional normals need an explicit collator.
     """
+    BUNDLE_LIMIT = meshes.BUNDLE_LIMIT
+
     def __init__(self, release, *, sha256, split):
         require(type(sha256) is str and HASH.fullmatch(sha256), 'Supply exact release SHA256 from its owner')
         require(type(split) is str and split in SPLITS, 'Supply explicit train/validation/test split')
@@ -126,7 +128,7 @@ class NativeMeshDataset:
                 require(row['asset'] == asset and asset in archive.namelist(), 'Exact whole-mesh asset path required')
                 assets.add(asset)
                 info = archive.getinfo(asset)
-                require(0 < info.file_size <= meshes.BUNDLE_LIMIT, 'Mesh bundle exceeds byte bounds')
+                require(0 < info.file_size <= self.BUNDLE_LIMIT, 'Mesh bundle exceeds byte bounds')
                 bundle_bytes += info.file_size
                 require(bundle_bytes <= MAX_SELECTED_ASSET_BYTES, 'Selected raw bundles exceed 40 MiB')
                 raw = archive.read(asset)

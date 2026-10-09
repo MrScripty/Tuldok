@@ -4,7 +4,7 @@
 
 ## Canonical/native assets
 
-Canonical manifests and split JSONL retain typed targets and canonical assets; detection is projected to COCO pixel-edge `xywh` (including fractional coordinates and multiple objects/categories; see [general COCO contract](general-coco-detection.md)), text spans use Unicode code points. Sequence/mesh/point-cloud raw bundles remain whole assets. New sequence-only and point-cloud-only exports add declared `protected_components` and per-record `export_group`; mixed and other nonsequence key sets stay unchanged. Native consumption validates the included known graph and raw-derived groups, not omitted upstream completeness/authenticity. [Point-cloud numerical consumption](native-pointcloud-consumer.md) requires modern complete proof and keeps every native property separate.
+Canonical manifests and split JSONL retain typed targets and canonical assets; detection is projected to COCO pixel-edge `xywh` (including fractional coordinates and multiple objects/categories; see [general COCO contract](general-coco-detection.md)), text spans use Unicode code points. Sequence/mesh/point-cloud raw bundles remain whole assets. New sequence-only, mesh-only and point-cloud-only exports add declared `protected_components` and per-record `export_group`; mixed and other nonsequence key sets stay unchanged. Native consumption validates the included known graph and raw-derived groups, not omitted upstream completeness/authenticity. [Point-cloud numerical consumption](native-pointcloud-consumer.md) requires modern complete proof and keeps every native property separate.
 
 ## Image captions
 
@@ -40,3 +40,10 @@ Point-cloud assets retain unchanged points.ply/points.json, native attribute dty
 units/frame and immutable declared source/family/fixed-split lineage. New-owner
 raw-pair imports are drafts; local reviews/rights and newly allocated splits for
 unassigned inputs do not transfer. See [point-cloud v1](point-clouds.md).
+
+Source-bound binary mesh assets remain whole raw bundles in canonical mesh-only
+releases, with the existing complete declared family proof. The separate
+[binary numerical consumer](binary-mesh-acquisition.md) retains original source
+files in importable bundles and verifies native values through the actual pinned
+reader. Raw transfer creates fresh local drafts and rights; it does not transfer
+human approval or allocate triangles as independent samples.

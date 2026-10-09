@@ -29,6 +29,7 @@ import retrieval_binary
 import sequence_inspection
 import sequence_batch_import
 import meshes
+import binary_mesh_assets
 import pointclouds
 import base64
 import hashlib
@@ -167,6 +168,7 @@ class Dataset:
         self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
 
     def close(self):
+        binary_mesh_assets.close(self.workbench)
         self.text_classification_proposals.close()
         self.caption_proposals.close()
         self.grounded.close()
@@ -488,7 +490,7 @@ def make_handler(dataset, owner_reuse=None):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/retrieval-binary.js': ('retrieval-binary.js', 'text/javascript'), '/pointclouds.js': ('pointclouds.js', 'text/javascript'), '/polygons.js': ('polygons.js', 'text/javascript'), '/grounded-instructions.js': ('grounded-instructions.js', 'text/javascript'), '/retrieval.js': ('retrieval.js', 'text/javascript'), '/sequence-temporal-labels.js': ('sequence-temporal-labels.js', 'text/javascript'), '/sequence-review.js': ('sequence-review.js', 'text/javascript'), '/sequence-probe.js': ('sequence-probe.js', 'text/javascript'), '/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/pumas-owner-reuse.js': ('pumas-owner-reuse.js', 'text/javascript'), '/pumas-model-selection.js': ('pumas-model-selection.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                assets = {'/binary-meshes.js': ('binary-meshes.js', 'text/javascript'), '/retrieval-binary.js': ('retrieval-binary.js', 'text/javascript'), '/pointclouds.js': ('pointclouds.js', 'text/javascript'), '/polygons.js': ('polygons.js', 'text/javascript'), '/grounded-instructions.js': ('grounded-instructions.js', 'text/javascript'), '/retrieval.js': ('retrieval.js', 'text/javascript'), '/sequence-temporal-labels.js': ('sequence-temporal-labels.js', 'text/javascript'), '/sequence-review.js': ('sequence-review.js', 'text/javascript'), '/sequence-probe.js': ('sequence-probe.js', 'text/javascript'), '/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/pumas-owner-reuse.js': ('pumas-owner-reuse.js', 'text/javascript'), '/pumas-model-selection.js': ('pumas-model-selection.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -510,6 +512,8 @@ def make_handler(dataset, owner_reuse=None):
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
                 limit = retrieval_binary.MAX_REQUEST if path == '/api/workbench/retrieval-binary-import' else retrieval_binary.MAX_QUERY_REQUEST if path == '/api/workbench/retrieval-binary-query' else retrieval_export.MAX_REQUEST if path == '/api/workbench/retrieval-query' else sequence_inspection.REVIEW_MAX_REQUEST if path.startswith('/api/workbench/sequence-review/') else sequence_inspection.MAX_REQUEST if path.startswith('/api/workbench/sequence-inspection/') else native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else pointclouds.MAX_REQUEST if path == '/api/workbench/pointcloud-import' else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                if path.startswith('/api/workbench/mesh-binary/'):
+                    limit = binary_mesh_assets.MAX_REQUEST
                 if path == '/api/workbench/instruction-compose' or path.startswith(('/api/workbench/instruction-reinspect/', '/api/workbench/text-delete/')):
                     limit = grounded_instructions.MAX_REQUEST
                 elif path == '/api/generation/typed-selection':
@@ -519,6 +523,15 @@ def make_handler(dataset, owner_reuse=None):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
+                if path.startswith('/api/workbench/mesh-binary/'):
+                    action=path.removeprefix('/api/workbench/mesh-binary/')
+                    if action not in ('start','chunk','finish','cancel'):
+                        return self.reply({'error':'Unknown binary mesh upload action.'},404)
+                    try:
+                        value=binary_mesh_assets.core.strict_json(raw_body,binary_mesh_assets.MAX_REQUEST)
+                    except (ValueError,UnicodeError,RecursionError) as error:
+                        raise workbench.WorkbenchError(str(error)) from error
+                    return self.reply(binary_mesh_assets.route(dataset.workbench,action,value),201 if action=='finish' else 200)
                 body = retrieval_binary.decode(raw_body) if path in ('/api/workbench/retrieval-binary-query', '/api/workbench/retrieval-binary-import') else grounded_instructions.parse(raw_body) if path == '/api/workbench/instruction-compose' or path.startswith(('/api/workbench/instruction-reinspect/', '/api/workbench/text-delete/')) else sequence_inspection.contract.parse(raw_body) if path == '/api/workbench/retrieval-query' else pumas_owner_reuse.parse(raw_body) if path.startswith('/api/generation/local-pumas/') or path == '/api/generation/typed-selection' else sequence_inspection.contract.parse(raw_body) if path.startswith(('/api/workbench/sequence-inspection/', '/api/workbench/sequence-review/')) else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else pointclouds.parse_json(raw_body) if path == '/api/workbench/pointcloud-import' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if path.startswith('/api/workbench/records/') and isinstance(body,dict) and body.get('task') == 'image_segmentation':
                     body = native_detection_import.parse_request(raw_body)

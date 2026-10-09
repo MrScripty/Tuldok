@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [feature/native-pointcloud-consumer-20261009, feature/retrieval-binary-20261009, feature/pointcloud-profile-20261009, develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
+    branches: [feature/bounded-mesh-acquisition-20261009, feature/native-mesh-consumer-20261009, feature/native-pointcloud-consumer-20261009, feature/retrieval-binary-20261009, feature/pointcloud-profile-20261009, develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
   pull_request:
 permissions:
   contents: read
@@ -262,6 +262,14 @@ jobs:
           INSTRUCTION_CONSUMER_PYTHON: python
       - run: node tests/check_native_mesh_consumer.cjs
         env:
+          POINTCLOUD_CONSUMER_PYTHON: python
+      - run: node --check static/binary-meshes.js
+      - run: node tests/check_native_binary_mesh_consumer.cjs
+        env:
+          POINTCLOUD_CONSUMER_PYTHON: python
+      - run: node tests/browser_bounded_meshes.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
           POINTCLOUD_CONSUMER_PYTHON: python
       - uses: actions/upload-artifact@v4
         if: always()

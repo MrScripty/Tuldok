@@ -37,6 +37,7 @@ function meshShown(record) {
   $('mesh-note').value=record.annotation?.note||'';
   $('mesh-metadata').textContent=JSON.stringify(record.mesh,null,2);
   $('mesh-download').href='/api/workbench/asset/'+record.id;$('mesh-download').download=record.id+'.zip';
+  $('mesh-download').textContent=record.mesh?.manifest?.format==='tuldok_mesh_binary_v1'?'Download complete mesh and authoritative source bundle':'Download original PLY + sidecar bundle';
   const controller=new AbortController();meshInspectionController=controller;
   const owns=()=>generation===meshInspectionGeneration&&current?.id===record.id&&current?.kind==='mesh'&&current.content_hash===record.content_hash;
   $('mesh-preview-status').textContent='Loading bounded geometry inspection…';

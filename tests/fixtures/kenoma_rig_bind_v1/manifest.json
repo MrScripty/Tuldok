@@ -1,0 +1,65 @@
+{
+  "fixture_version": 1,
+  "provenance": "Fresh deterministic rig_bind response from the retained WASM artifact verified in the 136f494 browser receipts; not a retained original request/response pair.",
+  "source_commit": "136f4947c7ef9bd2d4fe5cff09086489b0cb501d",
+  "compatible_editor_checkpoint": "3e7ff0887d01a1f4c440d3808770ea3eac7ec8d4",
+  "protocol_version": 1,
+  "rig_version": 1,
+  "crate_version": "0.1.0",
+  "wasm": {
+    "sha256": "da3958056caeda3d190dfff7cb708657fb81c8389f953ad4c022a26e64bcdf8f",
+    "bytes": 471190
+  },
+  "coordinate_frame": {
+    "handedness": "right-handed",
+    "up": "+Y",
+    "head_forward": "+Z",
+    "length_unit": "metre",
+    "angle_unit": "radian",
+    "space": "character-local; no scene placement transform",
+    "triangle_winding": "counterclockwise viewed from outside"
+  },
+  "request": {
+    "file": "request.json",
+    "bytes": 62,
+    "sha256": "25ef5907280cdc35774634a5f62370e091404cbcce503442ab6a2c188e841d91",
+    "encoding": "UTF-8; trailing LF included"
+  },
+  "response": {
+    "file": "response.json",
+    "bytes": 5257666,
+    "sha256": "034f9f4a27339488e8cea40d00a508f4d02fbfeb5b4a8f5bf59a95c9c6d6a7a0",
+    "encoding": "UTF-8; exact evaluate() return, no added newline",
+    "compressed_file": "response.json.gz",
+    "compressed_bytes": 1508798,
+    "compressed_sha256": "66fdbca45c1a70a2589ccc5af137af76c2c46443595d1fbe8ba7300a87bb599b"
+  },
+  "counts": {
+    "source_nodes": 16,
+    "source_edges": 15,
+    "positions": 46728,
+    "normals": 46728,
+    "triangle_indices": 280356,
+    "triangles": 93452
+  },
+  "bounds": {
+    "min": [
+      -0.844649,
+      0.015281506,
+      -0.22679392
+    ],
+    "max": [
+      0.8446473,
+      1.8957239,
+      0.22679386
+    ]
+  },
+  "options": {
+    "cell_size": 0.016,
+    "head": {
+      "yaw": 0,
+      "pitch": 0
+    }
+  },
+  "note": "Schematic artistic mannequin. No anatomical/medical inputs, physics, contact simulation or research artifacts. rig_id is instance-local and cannot be reused in another process."
+}

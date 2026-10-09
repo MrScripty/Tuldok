@@ -6,9 +6,9 @@ This inventory describes source capability, not publication, merge, scientific a
 | --- | --- | --- |
 | Image/text targets | Original/normalized images and canonical text; corners, boxes, simple polygon instances, classes, captions, Unicode spans, corpus notes, retrieval document/query positive-only and binary judgments; raw/procedural acquisition, review/rights/history | Real-user/platform/keyboard qualification, authenticated reviewer identity, shared taxonomy/adjudication. |
 | Collection/releases | Metadata filters, named dynamic searches, exact fixed sets, confirmed bulk-result selection, lineage/duplicate diagnostics, fresh preview and immutable releases | Exact grouping does not establish semantic independence or benchmark decontamination. |
-| Native import | Caption folder, text-classification ZIP, detection/polygon canonical ZIP, whole Rheon v1/v2 pairs/triples, bounded meshes and vertex-only point clouds | Foreign review is not local approval; upstream originals/arbitrary adapters unsupported. |
+| Native import | Caption folder, text-classification ZIP, detection/polygon canonical ZIP, whole Rheon v1/v2 pairs/triples, bounded ASCII meshes, source-bound whole binary meshes and vertex-only point clouds | Foreign review is not local approval; upstream originals/arbitrary adapters unsupported. |
 | Simulation authoring | Named staggered fields/index/time/plane/trace inspection, human inclusive ranges, explicit save/reopen/review/history and whole-family export | Scientific target truth, free-surface/two-phase physics and physical diversity are not supplied. |
-| Native numerical consumer | NumPy whole trajectories/explicit windows and whole point clouds, separate TXYZ or native XYZ/normals/RGB properties/dtypes/anchors/human coverage, atomic pickle-free NPZ, sequence-only and point-only declared family proof | Actual objective/trainer/taxonomy and meaningful independent initial/configuration or scanned families remain required inputs; mesh reader compatibility remains separate. |
+| Native numerical consumer | NumPy whole trajectories/explicit windows, whole point clouds and meshes, separate native properties/dtypes/typed ordered topology, atomic pickle-free NPZ, complete declared family proof | Actual objective/trainer/taxonomy and meaningful independent initial/configuration or scanned/binding families remain required inputs; arbitrary foreign source profiles remain unsupported. |
 | Specialized releases | Canonical COCO/typed rows, caption, Chapter8 classification, Chapter11 corpus, instruction/preference, positive-only retrieval v1 and binary retrieval v2 projections | General multi-category/multi-object COCO and the bounded Chapter9 reader projection are qualified; positive-only retrieval now uses exact fixed selections, whole-family export and unchanged JSONL reading/pure helpers; reviewed binary v2 now transports relevant/not relevant/explicit unjudged with native second-owner drafts and exact refs; graded relevance and trainer/objective remain unqualified. |
 | Assisted drafts | Capability-gated caption/classification/grounded rewrite proposals, typed model/profile selection and existing-owner observation | Human-composed multi-source instructions now retain exact passage provenance and independent answer review; semantic grounding quality and joint native SDK/typed serving are separate. |
 | Spatial/video | Corners/boxes, bounded human-authored simple polygon COCO with native roundtrip and actual mask reading, stills, bounded static meshes/point clouds and preserved simulation time | Holes/multipart instances, crowds/RLE, semantic masks and general video recording/extraction/deduplication/tracking remain absent. |
@@ -28,5 +28,10 @@ adds whole-cloud named arrays and bounded atomic pickle-free NPZ from existing
 reviewed point-only canonical releases. Modern complete declared family proof
 is mandatory; old proofless bytes remain unchanged and are refused by this
 consumer. It preserves native dtypes/attributes and has no target/taxonomy or
-trainer. Mesh's demonstrated external-reader float32 mismatch remains a separate
-compatibility decision before adding a general mesh numerical consumer.
+trainer. [Native mesh preparation](contracts/native-mesh-consumer.md) corrects the
+demonstrated pinned ASCII-reader float32 mismatch with exact standard binary
+derivatives. [Source-bound binary acquisition](contracts/binary-mesh-acquisition.md)
+adds a separate bounded whole-mesh workflow, actual retained Kenoma neutral-bind
+fixture and importable consumer outputs. Source bytes remain authoritative and
+human review stays local. Posed trajectories, arbitrary rigs and scientific target
+quality remain separate requirements.
