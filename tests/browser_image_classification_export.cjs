@@ -1,0 +1,96 @@
+// Native Chromium gate: real local HTTP service, immutable download, no inference.
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {spawn,execFileSync}=require('node:child_process');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const {waitForDebugger}=require('./browser_startup.cjs');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..'));
+const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-classifier-browser-')),children=[],errors=[];
+const output=qaDirectory(root,'image-classification-export'),tracker=pageLoadTracker();
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function until(fn){for(let i=0;i<200;i++){if(await fn())return;await pause(75);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+let ws,evaluate;
+(async()=>{
+  const server=launch('python3',['-u','tests/browser_image_classification_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let stdout='',stderr='';server.stdout.on('data',data=>stdout+=data);server.stderr.on('data',data=>stderr+=data);
+  await until(()=>{if(server.exitCode!==null)throw Error(stderr);return /127\.0\.0\.1:(\d+)/.test(stdout);});
+  const url='http://127.0.0.1:'+stdout.match(/127\.0\.0\.1:(\d+)/)[1];
+  const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','pipe'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  let browserStderr='';browser.stderr.on('data',data=>browserStderr+=data);
+  const port=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort')).catch(error=>{throw Error(error.message+'\n'+browserStderr);});
+  const tabs=await(await fetch('http://127.0.0.1:'+port+'/json')).json();
+  ws=new WebSocket(tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank').webSocketDebuggerUrl);
+  await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  const pending=new Map();let id=0;
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
+  const preview=async()=>{await click('preview-release');await until(()=>evaluate('!releaseBusy'));};
+  await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await send('Page.navigate',{url:url+'/workbench'});
+  await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  await click('select-page');
+  assert.equal(await evaluate('document.getElementById("selection").textContent'),'6 selected');
+  await evaluate('document.querySelector(".record button").click()');
+  await until(()=>evaluate('!document.getElementById("editor").hidden'));
+  const savedLabel=await evaluate('document.getElementById("label").value');
+  await fill('label','Unsaved annotation must survive');
+  await fill('release-format','image_classification_v1');
+  assert.equal(await evaluate('document.getElementById("classification-export-help").hidden'),false);
+  assert.equal(await evaluate('document.getElementById("caption-export-help").hidden'),true);
+  await preview();
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),false);
+  assert.equal(await evaluate('document.getElementById("label").value'),'Unsaved annotation must survive');
+  assert.equal(await evaluate('document.getElementById("record-review").value'),'draft');
+  const coverage=await evaluate('document.getElementById("release-preview").textContent');
+  assert.ok(coverage.includes('<img src=x onerror=alert(1)>'));
+  assert.ok(coverage.includes('class_000000 (index 0): train: 1 · validation: 1 · test: 1'));
+  assert.equal(await evaluate('document.querySelectorAll("#release-preview img, #release-preview script").length'),0);
+  // Format changes immediately revoke a preview and never change fixed selection/editor state.
+  await fill('release-format','canonical_v1');
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
+  await fill('release-format','image_classification_v1');
+  const cancelled=click('reload');await pause(100);await send('Page.handleJavaScriptDialog',{accept:false});await cancelled;
+  assert.equal(await evaluate('document.getElementById("label").value'),'Unsaved annotation must survive');
+  const discard=click('reload');await pause(100);await send('Page.handleJavaScriptDialog',{accept:true});await discard;
+  await until(()=>evaluate('document.getElementById("label").value==='+JSON.stringify(savedLabel)));
+  await preview();
+  // Repeated submits are fenced; the frozen selection is complete and hash-addressed.
+  await evaluate('window.exportPosts=0;window.actualFetch=window.fetch;window.fetch=(u,o)=>{if(String(u).endsWith("/releases")&&o?.method==="POST")window.exportPosts++;return window.actualFetch(u,o);};document.getElementById("release-form").requestSubmit();document.getElementById("release-form").requestSubmit();');
+  await until(()=>evaluate('!!document.querySelector("#release-result a")'));
+  assert.equal(await evaluate('window.exportPosts'),1);
+  assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('export warnings'));
+  const download=await evaluate('document.querySelector("#release-result a").href');
+  const archive=await fetch(download);assert.equal(archive.status,200);
+  const zipPath=path.join(output,'classification.zip');fs.writeFileSync(zipPath,Buffer.from(await archive.arrayBuffer()));
+  execFileSync('python3',['-c',`import hashlib,json,zipfile;from pathlib import Path;p=Path(${JSON.stringify(zipPath)});z=zipfile.ZipFile(p);m=json.loads(z.read('manifest.json'));assert m['format']=='image_classification_v1';assert len(m['records'])==6;assert m['class_to_idx']=={'class_000000':0,'class_000001':1};assert len(z.namelist())==8;assert hashlib.sha256(p.read_bytes()).hexdigest() in ${JSON.stringify(download)};[(lambda r: (hashlib.sha256(z.read(r['asset'])).hexdigest()==r['asset_sha256'] or (_ for _ in ()).throw(AssertionError('hash'))))(r) for r in m['records']]`]);
+  // A later source revision invalidates an otherwise unchanged preview at publication.
+  const row=(await(await fetch(url+'/api/workbench/records?')).json()).items[0];
+  const changed=await fetch(url+'/api/workbench/records/'+row.id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision:row.revision,source_revision:row.source_revision,task:row.task,annotation:row.annotation,groups:row.groups,review:'human_reviewed'})});
+  assert.equal(changed.status,200);
+  await evaluate('document.getElementById("release-form").requestSubmit()');
+  await until(()=>evaluate('document.getElementById("release-preview-status").textContent.includes("Selection changed")'));
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
+  // Re-selecting current rows is explicit; a filter alone does not refresh selected revisions.
+  await evaluate('document.getElementById("filters").requestSubmit()');await until(()=>evaluate('!document.getElementById("filters").dataset.busy'));
+  await click('clear-selection');await click('select-page');await preview();
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),false);
+  fs.writeFileSync(path.join(output,'classification-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+  await evaluate('document.getElementById("release-form").scrollIntoView()');
+  assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
+  fs.writeFileSync(path.join(output,'classification-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
+  const old=(await send('Page.getFrameTree')).frameTree.frame;
+  await send('Page.reload');await until(()=>tracker.reloaded(old));
+  await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  assert.equal(await evaluate('document.getElementById("selection").textContent'),'0 selected');
+  assert.equal(await evaluate('document.getElementById("freeze-release").disabled'),true);
+  assert.equal(await evaluate('document.getElementById("release-format").value'),'canonical_v1');
+  const again=await fetch(download);assert.deepEqual(Buffer.from(await again.arrayBuffer()),fs.readFileSync(zipPath),'Old release remains immutable after live edits/reload');
+  assert.deepEqual(errors,[]);
+  console.log('Classifier browser: exact coverage, safe labels, dirty-editor/cancel preservation, stale revisions, repeated submit, frozen download/reload and narrow layout passed.');
+})().catch(async error=>{console.error(error);if(evaluate)try{console.error(await evaluate('document.body.innerText.slice(-12000)'));}catch{}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

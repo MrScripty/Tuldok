@@ -620,3 +620,67 @@ PUMAS_TYPED_GATEWAY_RECEIPT=/path/to/gateway.json node tests/browser_pumas_typed
 ```
 
 Keep reports, generated datasets and JPEG85 screenshots in ignored `build/` or external qualification directories. The authored harness instructions document startup and owned shutdown; production source remains pinned and unchanged.
+
+### Reviewed image classes for the Chapter 8 trainer
+
+Choose **Image classes · Chapter 8 trainer** when freezing selected Workbench
+records. This adapter targets the exact `train_image_classifier.py` fixture in
+`tests/fixtures/` with Torch 2.8.0 / torchvision 0.23.0. It requires human-reviewed
+single-class images, at least two classes, and every class in train, validation
+and test. Preview shows missing class coverage; whole protected families and
+existing source splits remain intact. These consumer-specific requirements do
+not restrict the canonical format.
+
+The ZIP contains `train/val/test/class_000000/ID.png`, with unchanged normalized
+PNG bytes. `manifest.json` maps each opaque folder/index to the exact Unicode
+label and retains annotation/review revisions, provenance, hashes and connected
+lineage. Keep this mapping with the model: the unchanged trainer and prediction
+utility report opaque folder names. Label text never becomes a filesystem path.
+Same-split pixel repeats are retained with warnings, never silently discarded.
+This is a training view, not an original-byte backup or a data-quality guarantee.
+
+The actual-reader check needs the existing pinned consumer environment plus
+CPU `torchvision==0.23.0` and `scikit-learn==1.7.2`:
+
+```sh
+INSTRUCTION_CONSUMER_PYTHON=/path/to/consumer-venv/bin/python node tests/check_image_classification_consumer.cjs
+node tests/test_image_classification_export_controller.cjs
+node tests/browser_image_classification_export.cjs
+```
+
+The reader gate also executes the unchanged tiny CPU trainer for one epoch,
+without downloading model weights, using six authored transport fixtures. Its
+metrics establish no training-quality claim. See the
+[classification export plan](docs/plans/image-classification-export/plan.md).
+
+### Reviewed plain-text corpora for Chapter 11
+
+Import text, choose **text corpus**, add a corpus review note, and explicitly
+save as **Human reviewed**. Classification/entity approval does not approve
+corpus use. Choose **Text corpus · Chapter 11 byte transformer** in the existing
+release menu, preview the saved selection, then freeze its exact revisions.
+
+`text_corpus_v1` emits `train.txt`, `validation.txt`, `test.txt`, exact byte-range
+mapping in `documents.jsonl`, duplicated canonical document assets, and frozen
+review/provenance/family evidence. Existing NFC/LF text becomes UTF-8 without
+further normalization or trimming. IDs are sorted within each split. Exactly two
+LF bytes are appended after every document, including the last; existing trailing
+newlines remain.
+
+The unchanged published consumer uses raw-byte IDs, a 256-value vocabulary and
+one-byte-shifted windows. Windows may cross document and UTF-8 character
+boundaries. Separators are ordinary bytes, **not EOS or attention resets**. For
+reference context 128, train must exceed 128 bytes; validation/test each need at
+least 2 bytes. All three connected-family splits must be nonempty. Preview shows
+byte, document and family counts separately. Allocation weights records, never
+bytes; fixed splits and unselected lineage bridges remain protected. No document
+is split, discarded or automatically moved to satisfy a quota.
+
+A fresh preview is mandatory. Releases are immutable, deterministic,
+content-addressed ZIPs bounded to 5,000 records and 40 MiB for the full logical
+archive, including duplicated data and metadata. Human review and family
+protection do not establish data quality, semantic independence or permission.
+
+See the [consumer pin, byte contract and qualification plan](docs/plans/text-corpus-export/plan.md).
+The actual-consumer gate uses Torch 2.8.0 on CPU, synthetic authored fixtures and
+the unchanged companion reader/trainer/evaluator. It downloads no models or data.

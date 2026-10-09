@@ -95,9 +95,10 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
+  $('corpus-note').value = record.task === 'text_corpus' ? record.annotation?.note || '' : '';
   $('task').value = record.task; $('caption').value = record.annotation?.caption || ''; $('label').value = record.annotation?.label || 'object';
   if(typeof sequenceShown === 'function') sequenceShown(record);
   if(typeof meshShown === 'function') meshShown(record);
@@ -114,7 +115,8 @@ function showRecord(record) {
 }
 function renderTargets() {
   const task = $('task').value;
-  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
+  $('corpus-controls').hidden = task !== 'text_corpus';
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -122,7 +124,7 @@ function renderTargets() {
     $('box-overlay').setAttribute('viewBox',`0 0 ${current.width} ${current.height}`);
     for(const box of targets){const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');for(const key of ['x','y','width','height'])rect.setAttribute(key,box[key]);$('box-overlay').append(rect);}
   }
-  if(task.endsWith('_classification') || task === 'image_caption') return;
+  if(task.endsWith('_classification') || task === 'image_caption' || task === 'text_corpus') return;
   targets.forEach((target,index)=>{
     const li = document.createElement('li'); li.textContent = JSON.stringify(target);
     const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'Remove'; remove.setAttribute('aria-label','Remove target ' + (index+1));
@@ -172,7 +174,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
@@ -242,6 +244,13 @@ function renderReleasePreview(result) {
     previewLine(root, 'Selected class / target label counts: '+counts(a.labels));
     previewLine(root, `${a.unlabeled} unlabeled · ${a.empty_targets} empty targets · ${a.duplicate_content_records} exact duplicate records · ${a.unknown_rights} unknown rights`);
   }
+  if(result.class_coverage) {
+    for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder} (index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
+  }
+  if(result.corpus_counts) {
+    for(const [split, count] of Object.entries(result.corpus_counts)) previewLine(root, `${split}.txt: ${count.bytes} bytes · ${count.documents} documents · ${count.families} connected families (${count.document_bytes} document bytes + ${count.separator_bytes} separator bytes).`);
+    if(result.artifact_bytes !== undefined) previewLine(root, `Complete logical archive: ${result.artifact_bytes} bytes / 40 MiB, including duplicated assets and metadata.`);
+  }
   for(const item of result.blockers) previewLine(root, (item.record_id ? item.record_id+': ' : '')+item.message);
   const report=result.split_report;
   if(report) {
@@ -264,7 +273,7 @@ function renderReleasePreview(result) {
 for(const id of ['release-format','train','validation','test','split-seed']) {
   for(const event of ['input','change']) $(id).addEventListener(event, syncReleaseSelection);
 }
-$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';});
+$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
 $('preview-release').addEventListener('click', async event=>{
   event.preventDefault(); if(releaseBusy) return;
   syncReleaseSelection();
@@ -291,7 +300,7 @@ $('release-form').addEventListener('submit',async event=>{
     const result=await api('releases',body);
     if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
     const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' small-image warnings; inspect manifest.json.' : ''));
+    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(['image_classification_v1','text_corpus_v1'].includes(result.format)?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
   } catch(error) {
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }

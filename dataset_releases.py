@@ -9,6 +9,9 @@ from collections import Counter
 from pathlib import Path
 from PIL import Image
 
+import image_classification_export as classification_export
+import text_corpus_export as corpus_export
+
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
 
 SPLITS = ('train', 'validation', 'test')
@@ -179,6 +182,8 @@ class Releases:
         """
         workbench = self.workbench
         format_name = body.get('format', 'canonical_v1')
+        if format_name == corpus_export.FORMAT:
+            return self._prepare_corpus(body)
         if format_name == PREFERENCE_FORMAT:
             return self._prepare_preferences(body)
         if format_name == INSTRUCTION_FORMAT:
@@ -191,7 +196,7 @@ class Releases:
             if record_id is not None:
                 item['record_id'] = record_id
             preview['blockers'].append(item)
-        if format_name not in ('canonical_v1', CAPTION_FORMAT):
+        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT):
             block(WorkbenchError('Unknown release format.'))
         try:
             rows = workbench.selection(body.get('items'))
@@ -199,6 +204,16 @@ class Releases:
             block(error)
             return {'preview': preview}
         preview['selected_count'] = len(rows)
+        if format_name == classification_export.FORMAT:
+            if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
+                block(WorkbenchError('Unknown classification release fields.'))
+                return {'preview': preview}
+            for row in rows:
+                try:
+                    classification_export.validate_records([row])
+                except WorkbenchError as error:
+                    block(error, row['id'])
+                    return {'preview': preview}
         preview['analysis'] = analyze(rows)
         try:
             workbench.check_immutable_selection(rows)
@@ -210,7 +225,10 @@ class Releases:
         pixels, pixel_hashes = set(), {}
         for row in rows:
             try:
-                if format_name == CAPTION_FORMAT:
+                if format_name == classification_export.FORMAT:
+                    if row['task'] != 'image_classification' or row['review'] != 'human_reviewed' or not row['source_available']:
+                        raise WorkbenchError('Chapter 8 classification export requires available images with human-reviewed single-class annotations.')
+                elif format_name == CAPTION_FORMAT:
                     if row['task'] != 'image_caption' or row['review'] != 'human_reviewed' or not row['source_available']:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
@@ -251,6 +269,17 @@ class Releases:
                 raise WorkbenchError('Image-caption export requires nonempty train, validation and test splits.')
         except WorkbenchError as error:
             block(error)
+        if format_name == classification_export.FORMAT:
+            try:
+                vocabulary, coverage, blockers = classification_export.inspect_projection(rows, preview['assignments'])
+                preview['class_vocabulary'], preview['class_coverage'] = vocabulary, coverage
+                for message in blockers:
+                    block(WorkbenchError(message))
+            except WorkbenchError as error:
+                block(error)
+            if preview['analysis']['duplicate_content_records']:
+                preview['warnings'].append('Exact decoded-pixel repeats are retained in the same connected split. Inspect repeated examples and contradictory labels before training; none are discarded.')
+            preview['warnings'].append('Opaque class folders are model indices. Use manifest.json class_vocabulary to recover exact labels. The mapping is frozen per release, not shared automatically across releases.')
         if format_name == 'canonical_v1':
             if any(row['kind'] == 'mesh' for row in rows):
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
@@ -280,6 +309,103 @@ class Releases:
         if 'preview_token' in body and body['preview_token'] != preview['preview_token']:
             raise WorkbenchError('Release preview changed. Preview the current selection and settings again.', 'conflict', 409)
         return prepared
+
+    def _prepare_corpus(self, body):
+        preview = {'format': corpus_export.FORMAT, 'eligible': False, 'selected_count': 0,
+                   'analysis': None, 'blockers': [], 'warnings': [], 'lineage': [],
+                   'assignments': {}, 'split_report': None, 'preview_token': None}
+        record_id = None
+        try:
+            if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
+                raise WorkbenchError('Unknown corpus release fields.')
+            rows = self.workbench.selection(body.get('items'), max_snapshot_bytes=MAX_SELECTED_TEXT_BYTES)
+            preview['selected_count'] = len(rows)
+            minimum_bytes = 0
+            for row in rows:
+                record_id = row['id']
+                corpus_export.validate_records([row])
+                minimum_bytes += len(encode(row).encode('utf-8')) + 2 * len(row['text'].encode('utf-8')) + 2
+                if minimum_bytes > MAX_SELECTED_TEXT_BYTES:
+                    raise WorkbenchError('Corpus archive exceeds the 40 MiB complete logical archive bound, including duplicated assets and metadata.')
+                asset, _ = self.workbench.asset(row['id'])
+                if hashlib.sha256(asset).hexdigest() != row['content_hash']:
+                    raise WorkbenchError('Source bytes changed outside Tuldok.', 'conflict', 409)
+            record_id = None
+            preview['analysis'] = analyze(rows)
+            universe = self.workbench._all()
+            roots, groups, snapshots, preview['lineage'] = family_context(rows, universe)
+            assignments, report = allocate(rows, universe, body.get('ratios'), body.get('seed'))
+            preview['assignments'], preview['split_report'] = assignments, report
+            counts, blockers = corpus_export.inspect_projection(rows, assignments, roots)
+            preview['corpus_counts'] = counts
+            if blockers:
+                raise WorkbenchError(' '.join(blockers))
+            preview['warnings'].append(corpus_export.WINDOW_WARNING)
+            if preview['analysis']['duplicate_content_records']:
+                preview['warnings'].append('Exact document repeats remain in one connected split; none are discarded.')
+            if preview['analysis']['unknown_rights']:
+                preview['warnings'].append('Some selected documents have unknown rights. Review permission before training or sharing.')
+            preview['warnings'].append('Explicit corpus review and protected families do not establish semantic independence, training quality or permission.')
+            prepared = dict(preview=preview, rows=rows, roots=roots, groups=groups, snapshots=snapshots)
+            total = 0
+            for _, value, expected in corpus_export.entries(prepared, body):
+                total += len(value)
+                if total > MAX_SELECTED_TEXT_BYTES:
+                    raise WorkbenchError('Corpus archive exceeds the 40 MiB complete logical archive bound, including duplicated assets and metadata.')
+                if expected and hashlib.sha256(value).hexdigest() != expected:
+                    raise WorkbenchError('Source bytes changed outside Tuldok.', 'conflict', 409)
+            preview['artifact_bytes'] = total
+            preview['preview_token'] = hashlib.sha256(encode({
+                'format': corpus_export.FORMAT, 'schema': 1, 'ratios': body['ratios'], 'seed': body['seed'],
+                'records': rows, 'protected_components': snapshots, 'assignments': assignments,
+                'consumer': corpus_export.CONSUMER, 'text_contract': corpus_export.TEXT_CONTRACT}).encode()).hexdigest()
+            preview['eligible'] = True
+            return prepared
+        except WorkbenchError as error:
+            blocker = {'message': str(error), 'code': error.code, 'status': error.status}
+            if record_id is not None:
+                blocker['record_id'] = record_id
+            preview['blockers'].append(blocker)
+            return {'preview': preview}
+
+    def _create_corpus(self, body):
+        with self.workbench.lock, self.workbench.db:
+            prepared = self._checked(body)
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        stream, total = None, 0
+                        try:
+                            for filename, value, expected in corpus_export.entries(prepared, body):
+                                total += len(value)
+                                if total > MAX_SELECTED_TEXT_BYTES:
+                                    raise WorkbenchError('Corpus archive exceeds the 40 MiB complete logical archive bound.')
+                                if expected and hashlib.sha256(value).hexdigest() != expected:
+                                    raise WorkbenchError('Source bytes changed outside Tuldok.', 'conflict', 409)
+                                if filename is not None:
+                                    if stream is not None:
+                                        stream.close(); stream = None
+                                    if filename in ('train.txt', 'validation.txt', 'test.txt'):
+                                        stream = archive.open(zipfile.ZipInfo(filename), 'w')
+                                    else:
+                                        archive_asset(archive, value, filename, expected or hashlib.sha256(value).hexdigest())
+                                else:
+                                    stream.write(value)
+                        finally:
+                            if stream is not None:
+                                stream.close()
+                    target.flush(); os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            preview = prepared['preview']
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': corpus_export.FORMAT, 'records': len(prepared['rows']),
+                    'split_report': preview['split_report'], 'corpus_counts': preview['corpus_counts'],
+                    'artifact_bytes': preview['artifact_bytes'], 'warnings': preview['warnings']}
 
     def _prepare_responses(self, body):
         preview = {'format': INSTRUCTION_FORMAT, 'eligible': False, 'selected_count': 0,
@@ -498,12 +624,20 @@ class Releases:
 
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
+        if format_name == corpus_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact corpus selection before exporting.', 'conflict', 409)
+            return self._create_corpus(body)
         if format_name in (INSTRUCTION_FORMAT, PREFERENCE_FORMAT):
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact responses before exporting.', 'conflict', 409)
             return self._create_responses(body)
-        if format_name not in ('canonical_v1', CAPTION_FORMAT):
+        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT):
             raise WorkbenchError('Unknown release format.')
+        if format_name == classification_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact classification selection before exporting.', 'conflict', 409)
+            return self._create_classification(body)
         if format_name == CAPTION_FORMAT:
             return self._create_captions(body)
         workbench = self.workbench
@@ -603,3 +737,58 @@ class Releases:
                     os.unlink(temporary)
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': CAPTION_FORMAT, 'records': len(rows), 'split_report': report, 'warnings': manifest['warnings']}
+
+    def _create_classification(self, body):
+        """Publish every reviewed selected image through a trainer-specific view."""
+        workbench = self.workbench
+        with workbench.lock, workbench.db:
+            prepared = self._checked(body)
+            preview, rows = prepared['preview'], prepared['rows']
+            vocabulary = preview['class_vocabulary']
+            by_label = {item['label']: item for item in vocabulary}
+            manifest = {'schema_version': 1, 'format': classification_export.FORMAT,
+                        'consumer': classification_export.CONSUMER, 'seed': body['seed'],
+                        'split_mapping': classification_export.SPLIT_MAPPING,
+                        'split_report': preview['split_report'], 'class_vocabulary': vocabulary,
+                        'class_coverage': preview['class_coverage'],
+                        'class_to_idx': {item['folder']: item['index'] for item in vocabulary},
+                        'protected_components': prepared['snapshots'], 'records': [],
+                        'warnings': preview['warnings'],
+                        'limitations': ['Human review is evidence, not a quality guarantee.',
+                                       'The consumer predicts opaque folders; map these back to exact labels with class_vocabulary.',
+                                       'Rights, semantic independence and fitness for training require human judgment.']}
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        for row in rows:
+                            split = preview['assignments'][row['id']]
+                            exported_split = classification_export.SPLIT_MAPPING[split]
+                            category = by_label[row['annotation']['label']]
+                            filename = exported_split + '/' + category['folder'] + '/' + row['id'] + '.png'
+                            asset, _ = workbench.asset(row['id'])
+                            digest = archive_asset(archive, asset, filename, row['content_hash'])
+                            manifest['records'].append(dict(row, split=split, export_split=exported_split,
+                                export_group=prepared['groups'][prepared['roots'][row['id']]],
+                                class_index=category['index'], class_folder=category['folder'],
+                                asset=filename, asset_sha256=digest,
+                                exported_pixel_sha256=prepared['pixel_hashes'][row['id']]))
+                        archive.writestr(zipfile.ZipInfo('manifest.json'), encode(manifest))
+                        archive.writestr(zipfile.ZipInfo('README.txt'),
+                            'Tuldok image_classification_v1 for the pinned Chapter 8 image trainer.\n'
+                            'Extract; pass the archive root as --data to the named consumer.\n'
+                            'train/val/test contain class_000000-style folders and unchanged normalized PNGs.\n'
+                            'manifest.json class_vocabulary maps opaque folder/index to exact Unicode label.\n'
+                            'Predictions and consumer class_to_idx use folder names; preserve this mapping with the model.\n'
+                            'All selected records are retained, including same-split pixel repeats with a warning.\n'
+                            'Canonical revisions, provenance, hashes and connected lineage are frozen in manifest.json.\n')
+                    target.flush(); os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': classification_export.FORMAT, 'records': len(rows),
+                    'split_report': preview['split_report'], 'class_vocabulary': vocabulary,
+                    'warnings': preview['warnings']}
