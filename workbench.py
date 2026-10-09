@@ -42,6 +42,22 @@ def text_value(value, name, maximum=200, empty=False):
     return value.strip()
 
 
+def query_criteria(options):
+    """Validate metadata criteria without enumerating or enrolling any assets."""
+    query = text_value(options.get('q', ''), 'Search', 200, empty=True)
+    kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
+    if any(not isinstance(value, str) for value in (kind, review, sort, task)):
+        raise WorkbenchError('Filter and sort values must be strings.')
+    if kind not in ('', 'image', 'text', 'sequence', 'mesh') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
+        raise WorkbenchError('Invalid filter or sort.')
+    if task not in ('', *TASKS):
+        raise WorkbenchError('Invalid task filter.')
+    return dict(q=query, kind=kind, review=review, sort=sort, task=task,
+                label=text_value(options.get('label', ''), 'Label filter', 80, empty=True),
+                group=text_value(options.get('group', ''), 'Protected source/group filter', 120, empty=True),
+                rights=text_value(options.get('rights', ''), 'Rights-note filter', 1000, empty=True))
+
+
 def strings(value, name, maximum=30):
     if not isinstance(value, list) or len(value) > maximum:
         raise WorkbenchError(f'{name} must be a list of at most {maximum} values.')
@@ -268,15 +284,9 @@ class Workbench:
 
     def _filtered(self, options):
         """Shared current metadata criteria; caller owns lock and transaction."""
-        query = text_value(options.get('q', ''), 'Search', 200, empty=True).casefold()
-        kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
-        if kind not in ('', 'image', 'text', 'sequence', 'mesh') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
-            raise WorkbenchError('Invalid filter or sort.')
-        if task not in ('', *TASKS):
-            raise WorkbenchError('Invalid task filter.')
-        label = text_value(options.get('label', ''), 'Label filter', 80, empty=True)
-        group = text_value(options.get('group', ''), 'Protected source/group filter', 120, empty=True)
-        rights = text_value(options.get('rights', ''), 'Rights-note filter', 1000, empty=True)
+        criteria = query_criteria(options)
+        query = criteria['q'].casefold()
+        kind, review, sort, task, label, group, rights = (criteria[k] for k in ('kind', 'review', 'sort', 'task', 'label', 'group', 'rights'))
         rows = self._all()
         filtered = [r for r in rows if (not kind or r['kind'] == kind) and (not review or r['review'] == review)
                     and (not task or r['task'] == task)
@@ -288,8 +298,7 @@ class Workbench:
         key = {'name': lambda r: (r['name'].casefold(), r['id']),
                'review': lambda r: (r['review'], r['created_at'], r['id'])}.get(sort, lambda r: (r['created_at'], r['id']))
         filtered.sort(key=key, reverse=sort in ('', 'newest'))
-        criteria = dict(q=query, kind=kind, review=review, sort=sort, task=task,
-                        label=label, group=group, rights=rights)
+        criteria['q'] = query
         return filtered, criteria
 
     def query(self, options):
