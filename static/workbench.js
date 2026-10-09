@@ -79,7 +79,7 @@ async function refresh(isCurrent = () => true) {
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
 function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty) || (typeof responseDirty !== 'undefined' && responseDirty) || (typeof preferenceDirty !== 'undefined' && preferenceDirty); }
 function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation, rights-note, response or judgment edits?'); }
-function responseIntentEpoch() { return `${typeof responseEditEpoch === 'undefined' ? '' : responseEditEpoch}/${typeof preferenceEditEpoch === 'undefined' ? '' : preferenceEditEpoch}`; }
+function responseIntentEpoch() { return `${typeof responseEditEpoch === 'undefined' ? '' : responseEditEpoch}/${typeof preferenceEditEpoch === 'undefined' ? '' : preferenceEditEpoch}/${typeof groundedEditEpoch === 'undefined' ? '' : groundedEditEpoch}`; }
 async function openRecord(id, force = false) {
   if (!force && ($('editor').dataset.busy || !mayDiscard())) return;
   const epoch = ++editorEpoch, responseEpoch = responseIntentEpoch();
@@ -110,6 +110,7 @@ function showRecord(record) {
   if(typeof rightsRecordShown === 'function') rightsRecordShown(record);
   if(typeof captionProposalsShown === 'function') captionProposalsShown(record);
   if(typeof textClassificationProposalsShown === 'function') textClassificationProposalsShown(record);
+  if(typeof groundedShown === 'function') groundedShown(record);
   if(typeof showResponses === 'function') showResponses(record);
   if(typeof showPreferences === 'function') showPreferences(record);
   notice('Record loaded.');

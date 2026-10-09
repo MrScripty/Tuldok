@@ -49,6 +49,9 @@ class Preferences:
                               ('left_revision', left['revision']), ('right_revision', right['revision'])):
             if value[key] != expected:
                 raise WorkbenchError('Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.', 'conflict', 409)
+        from grounded_instructions import check_answer
+        for answer in (left, right):
+            check_answer(self.w, parent, response=answer)
         return parent, left, right
 
     def list(self, prompt_id):

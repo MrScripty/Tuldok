@@ -14,6 +14,7 @@ import dataset_recipes
 import dataset_releases
 import saved_selections
 import saved_searches
+import grounded_instructions
 import grounded_candidates
 import caption_proposals
 import text_classification_proposals
@@ -419,6 +420,8 @@ def make_handler(dataset, owner_reuse=None):
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
                     return self.reply(dataset.grounded.get(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/instruction-contexts/'):
+                    return self.reply(grounded_instructions.inspect(dataset.workbench, path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/records':
                     options = {key: value[-1] for key, value in parse_qs(urlsplit(self.path).query).items()}
                     return self.reply(dataset.workbench.query(options))
@@ -481,7 +484,7 @@ def make_handler(dataset, owner_reuse=None):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/retrieval.js': ('retrieval.js', 'text/javascript'), '/sequence-temporal-labels.js': ('sequence-temporal-labels.js', 'text/javascript'), '/sequence-review.js': ('sequence-review.js', 'text/javascript'), '/sequence-probe.js': ('sequence-probe.js', 'text/javascript'), '/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/pumas-owner-reuse.js': ('pumas-owner-reuse.js', 'text/javascript'), '/pumas-model-selection.js': ('pumas-model-selection.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                assets = {'/grounded-instructions.js': ('grounded-instructions.js', 'text/javascript'), '/retrieval.js': ('retrieval.js', 'text/javascript'), '/sequence-temporal-labels.js': ('sequence-temporal-labels.js', 'text/javascript'), '/sequence-review.js': ('sequence-review.js', 'text/javascript'), '/sequence-probe.js': ('sequence-probe.js', 'text/javascript'), '/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/pumas-owner-reuse.js': ('pumas-owner-reuse.js', 'text/javascript'), '/pumas-model-selection.js': ('pumas-model-selection.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -503,14 +506,16 @@ def make_handler(dataset, owner_reuse=None):
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
                 limit = retrieval_export.MAX_REQUEST if path == '/api/workbench/retrieval-query' else sequence_inspection.REVIEW_MAX_REQUEST if path.startswith('/api/workbench/sequence-review/') else sequence_inspection.MAX_REQUEST if path.startswith('/api/workbench/sequence-inspection/') else native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
-                if path == '/api/generation/typed-selection':
+                if path == '/api/workbench/instruction-compose' or path.startswith(('/api/workbench/instruction-reinspect/', '/api/workbench/text-delete/')):
+                    limit = grounded_instructions.MAX_REQUEST
+                elif path == '/api/generation/typed-selection':
                     limit = pumas_model_selection.MAX_REQUEST
                 elif path.startswith('/api/generation/local-pumas/'):
                     limit = pumas_owner_reuse.MAX_REQUEST
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = sequence_inspection.contract.parse(raw_body) if path == '/api/workbench/retrieval-query' else pumas_owner_reuse.parse(raw_body) if path.startswith('/api/generation/local-pumas/') or path == '/api/generation/typed-selection' else sequence_inspection.contract.parse(raw_body) if path.startswith(('/api/workbench/sequence-inspection/', '/api/workbench/sequence-review/')) else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = grounded_instructions.parse(raw_body) if path == '/api/workbench/instruction-compose' or path.startswith(('/api/workbench/instruction-reinspect/', '/api/workbench/text-delete/')) else sequence_inspection.contract.parse(raw_body) if path == '/api/workbench/retrieval-query' else pumas_owner_reuse.parse(raw_body) if path.startswith('/api/generation/local-pumas/') or path == '/api/generation/typed-selection' else sequence_inspection.contract.parse(raw_body) if path.startswith(('/api/workbench/sequence-inspection/', '/api/workbench/sequence-review/')) else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
@@ -564,6 +569,13 @@ def make_handler(dataset, owner_reuse=None):
                     return self.reply(curation.inspect(dataset.workbench, body))
                 if path == '/api/workbench/import-row':
                     return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
+                if path == '/api/workbench/instruction-compose':
+                    result = grounded_instructions.admit(dataset.workbench, body)
+                    return self.reply(result, 201 if result['created'] else 200)
+                if path.startswith('/api/workbench/instruction-reinspect/'):
+                    return self.reply(grounded_instructions.reinspect(dataset.workbench, path.rsplit('/', 1)[-1], body))
+                if path.startswith('/api/workbench/text-delete/'):
+                    return self.reply(dataset.workbench.delete_text(path.rsplit('/', 1)[-1], body))
                 if path.startswith('/api/workbench/rights/'):
                     return self.reply(dataset.workbench.correct_rights_note(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/native-text-import/prepare':

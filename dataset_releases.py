@@ -582,6 +582,14 @@ class Releases:
                     ('retrieval_counts' if adapter is retrieval_export else 'corpus_counts'): preview['retrieval_counts' if adapter is retrieval_export else 'corpus_counts'],
                     'artifact_bytes': preview['artifact_bytes'], 'warnings': preview['warnings']}
 
+    def _context_sources(self, parents):
+        return {context['ref']['id']: self.workbench._get(context['ref']['id'])
+                for parent in parents for context in parent.get('grounded_context_binding', [])}
+
+    def _context_entries(self, prepared):
+        for source in sorted(prepared.get('grounded_sources', {}).values(), key=lambda row: row['id']):
+            yield 'contexts/' + source['id'] + '.txt', source['text'].encode('utf-8'), source['content_hash']
+
     def _prepare_responses(self, body):
         preview = {'format': INSTRUCTION_FORMAT, 'eligible': False, 'selected_count': 0,
                    'example_count': 0, 'unique_prompt_count': 0, 'blockers': [], 'warnings': [],
@@ -603,8 +611,9 @@ class Releases:
                 asset, _ = self.workbench.asset(parent['id'])
                 if hashlib.sha256(asset).hexdigest() != parent['content_hash']:
                     raise WorkbenchError('Prompt bytes changed outside Tuldok.', 'conflict', 409)
+            grounded_sources = self._context_sources(parents)
             prepared = {'preview': preview, 'rows': responses, 'parents': parents, 'roots': roots,
-                        'groups': groups, 'snapshots': snapshots}
+                        'groups': groups, 'snapshots': snapshots, 'grounded_sources': grounded_sources}
             # The exact logical artifact, including duplicate consumer projection, is bounded.
             total = 0
             for _, value, expected in self._instruction_entries(prepared, body):
@@ -619,7 +628,7 @@ class Releases:
                 'responses': responses, 'parents': parents, 'protected_components': snapshots,
                 'assignments': preview['assignments']}).encode()).hexdigest()
             preview['eligible'] = True
-            if any(rights_note(parent) == 'unknown' for parent in parents):
+            if any(rights_note(parent) == 'unknown' for parent in [*parents, *grounded_sources.values()]):
                 preview['warnings'].append('Some selected prompts have unknown rights. Review permission before training or sharing.')
             preview['warnings'].append('Human review and protected families do not establish semantic quality or permission.')
             return prepared
@@ -647,7 +656,11 @@ class Releases:
                     'text_contract': 'Prompt: existing NFC/LF. Completion: exact Unicode and whitespace.',
                     'limits': {'response_code_points': MAX_TEXT, 'selected_responses': 5000,
                                'archive_uncompressed_bytes': MAX_SELECTED_TEXT_BYTES}}
+        if prepared.get('grounded_sources'):
+            manifest['grounded_sources'] = sorted(prepared['grounded_sources'].values(), key=lambda row: row['id'])
+            manifest['grounded_instruction_limits'] = dict(source_passages=[2, 4], passage_codepoints=10000, question_codepoints=4000, completion_codepoints=20000)
         yield 'manifest.json', encode(manifest).encode('utf-8'), None
+        yield from self._context_entries(prepared)
         yield 'rows.jsonl', ''.join(encode(row) + '\n' for row in mapping).encode('utf-8'), None
         for parent in parents:
             yield 'prompts/' + parent['id'] + '.txt', parent['text'].encode('utf-8'), parent['content_hash']
@@ -689,8 +702,9 @@ class Releases:
                 if hashlib.sha256(asset).hexdigest() != parent['content_hash']:
                     raise WorkbenchError('Prompt bytes changed outside Tuldok.', 'conflict', 409)
             competing = self.workbench.preferences.competing(judgments)
+            grounded_sources = self._context_sources(parents)
             prepared = {'preview': preview, 'rows': judgments, 'parents': parents, 'answers': answers,
-                        'roots': roots, 'groups': groups, 'snapshots': snapshots, 'competing': competing}
+                        'roots': roots, 'groups': groups, 'snapshots': snapshots, 'competing': competing, 'grounded_sources': grounded_sources}
             total = 0
             for _, value, _ in self._preference_entries(prepared, body):
                 total += len(value)
@@ -701,7 +715,7 @@ class Releases:
                 'format': PREFERENCE_FORMAT, 'schema': 1, 'ratios': body['ratios'], 'seed': body['seed'],
                 'judgments': judgments, 'parents': parents, 'answers': answers, 'competing': competing,
                 'protected_components': snapshots, 'assignments': preview['assignments']}).encode()).hexdigest()
-            if any(rights_note(parent) == 'unknown' for parent in parents):
+            if any(rights_note(parent) == 'unknown' for parent in [*parents, *grounded_sources.values()]):
                 preview['warnings'].append('Some selected prompts have unknown rights. Review permission before training or sharing.')
             preview['warnings'].extend('Excluded judgment ' + row['id'] + ': ' + row['reason'] for row in excluded)
             answer_map = {row['id']: row for row in answers}
@@ -743,7 +757,10 @@ class Releases:
                     'text_contract': 'Prompt: existing NFC/LF. Answers: exact Unicode and whitespace.',
                     'limits': {'answer_code_points': MAX_TEXT, 'selected_judgments': 5000,
                                'archive_uncompressed_bytes': MAX_SELECTED_TEXT_BYTES}}
+        if prepared.get('grounded_sources'):
+            manifest['grounded_sources'] = sorted(prepared['grounded_sources'].values(), key=lambda row: row['id'])
         yield 'manifest.json', encode(manifest).encode('utf-8'), None
+        yield from self._context_entries(prepared)
         yield 'rows.jsonl', ''.join(encode(row) + '\n' for row in mapping).encode('utf-8'), None
         for parent in prepared['parents']:
             yield 'prompts/' + parent['id'] + '.txt', parent['text'].encode('utf-8'), parent['content_hash']

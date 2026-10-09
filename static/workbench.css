@@ -42,3 +42,7 @@
 #sequence-temporal li { margin-bottom: 1rem; padding: .75rem; border: 1px solid #cbd3de; border-radius: .4rem; }
 #sequence-temporal p, #sequence-temporal button { overflow-wrap: anywhere; }
 #sequence-temporal li button { margin: .2rem; }
+
+#grounded-composer,#grounded-context-inspection{min-width:0;overflow-wrap:anywhere}
+#grounded-passages{padding-left:1.3rem}#grounded-passages li{margin-bottom:1rem}
+#grounded-prompt-preview,#grounded-context-evidence{max-height:28rem;overflow:auto}

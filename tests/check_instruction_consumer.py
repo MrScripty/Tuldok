@@ -12,29 +12,107 @@ import tempfile
 import zipfile
 
 
-def qualify(path):
+def check_families(manifest, mapping):
+    """Check the complete supplied snapshot graph, without claiming DB authenticity."""
+    graph = {}
+    def root(key):
+        graph.setdefault(key, key)
+        while graph[key] != key:
+            graph[key] = graph[graph[key]]; key = graph[key]
+        return key
+    def join(a, b):
+        graph[root(b)] = root(a)
+    snapshots, owners = {}, {}
+    for family, members in manifest['protected_components'].items():
+        assert isinstance(members, list) and members
+        for member in members:
+            assert member['id'] not in snapshots
+            snapshots[member['id']] = member; owners[member['id']] = family
+            key = 'id:' + member['id']
+            links = ['group:' + group for group in member['groups']] + ['id:' + parent for parent in member['parents']]
+            if member['content_hash']: links.append('content:' + member['kind'] + ':' + member['content_hash'])
+            if member['pixel_hash']: links.append('pixels:' + member['pixel_hash'])
+            if member['kind'] == 'image' and member['source_lineage_known']:
+                links.append('legacy:' + ('book:' + member['book_id'] if member['book_id'] else 'session:' + member['session_id']))
+            root(key)
+            for link in links: join(key, link)
+    roots = {}
+    for family, members in manifest['protected_components'].items():
+        components = {root('id:' + member['id']) for member in members}
+        assert len(components) == 1, 'Declared family must be connected in the supplied relationship graph'
+        component = components.pop(); assert component not in roots, 'Related families cannot be divided'
+        roots[component] = family
+    prompts = {row['id']: row for row in manifest['prompts']}
+    for row in [*prompts.values(), *manifest.get('grounded_sources', [])]:
+        snapshot = snapshots[row['id']]
+        assert all(row[key] == value for key, value in snapshot.items()), 'Frozen source/prompt snapshot must match family evidence'
+    family_splits, prompt_splits = {}, {}
+    for pair in mapping:
+        family, split = pair['family'], pair['split']; prompt = prompts[pair['prompt_id']]
+        assert split in ('train', 'validation', 'test') and owners[prompt['id']] == family
+        assert all(owners[parent] == family for parent in prompt['parents'])
+        assert family_splits.setdefault(family, split) == split, 'One family cannot leak across splits'
+        assert prompt_splits.setdefault(prompt['id'], split) == split, 'One prompt cannot leak across splits'
+        fixed = {member['source_split'] for member in manifest['protected_components'][family] if member['source_split'] != 'unassigned'}
+        assert len(fixed) <= 1 and (not fixed or fixed == {split}), 'Inherited fixed source splits must be preserved'
+
+
+def qualify(path, *, reader_only=False):
     pins = json.loads((Path(__file__).parent / 'instruction-consumer-pins.json').read_text())
     for name, version in pins['versions'].items():
         assert importlib.metadata.version(name) == version, (name, version)
     for filename, expected in pins['sources'].items():
-        module = importlib.import_module(filename[:-3].replace('/', '.'))
-        assert hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest() == expected, filename
+        source = importlib.metadata.distribution(filename.split('/')[0]).locate_file(filename)
+        assert hashlib.sha256(Path(source).read_bytes()).hexdigest() == expected, filename
     from datasets import load_dataset, Features, Value, disable_progress_bars
-    from tokenizers import Tokenizer, models, pre_tokenizers, decoders
-    from transformers import PreTrainedTokenizerFast, GPT2Config, GPT2LMHeadModel
-    from trl import SFTConfig, SFTTrainer
     disable_progress_bars()
     before = hashlib.sha256(path.read_bytes()).hexdigest()
     with tempfile.TemporaryDirectory(prefix='instruction-consumer-') as temporary:
         root = Path(temporary)
         with zipfile.ZipFile(path) as archive:
             assert len(archive.namelist()) == len(set(archive.namelist()))
+            assert sum(member.file_size for member in archive.infolist()) <= 40*1024*1024
             manifest = json.loads(archive.read('manifest.json'))
             assert manifest['format'] == 'text_instruction_v1' and manifest['schema_version'] == 1
             mapping = [json.loads(line) for line in archive.read('rows.jsonl').splitlines()]
             prompts = {row['id']: row for row in manifest['prompts']}
             answers = {row['id']: row for row in manifest['responses']}
+            contexts = {row['id']: row for row in manifest.get('grounded_sources', [])}
+            assert len(contexts) == len(manifest.get('grounded_sources', []))
+            canonical = lambda value: json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False)
+            for source in contexts.values():
+                content = archive.read('contexts/' + source['id'] + '.txt')
+                assert source['kind'] == 'text' and source['source_available']
+                assert content == source['text'].encode('utf-8')
+                assert hashlib.sha256(content).hexdigest() == source['content_hash']
+            for prompt in prompts.values():
+                recipe = prompt['provenance'].get('grounded_instruction')
+                if not recipe:
+                    continue
+                assert recipe['schema'] == 'tuldok_grounded_instruction_v1'
+                captured = prompt['grounded_context_binding']
+                assert 2 <= len(captured) <= 4 and len({item['ref']['id'] for item in captured}) == len(captured)
+                assert len(recipe['question']) <= 4000
+                assert len(recipe['creation_contexts']) == len(captured)
+                for original, item in zip(recipe['creation_contexts'], captured):
+                    ref = item['ref']; source = contexts[ref['id']]
+                    for key in ('id', 'content_hash', 'start', 'end', 'quote'):
+                        assert original['ref'][key] == ref[key]
+                    assert ref['id'] in prompt['parents']
+                    for key in ('id', 'revision', 'source_revision', 'content_hash'):
+                        assert ref[key] == source[key]
+                    assert type(ref['start']) is int and type(ref['end']) is int
+                    assert 0 <= ref['start'] < ref['end'] <= len(source['text']) and ref['end']-ref['start'] <= 10000
+                    assert source['text'][ref['start']:ref['end']] == ref['quote']
+                    assert item['source_metadata'] == {key: source[key] for key in ('name', 'groups', 'parents', 'provenance', 'review', 'task')}
+                expected = '\n\n'.join(f"Source {i} [{item['ref']['id']}]\n{item['ref']['quote']}" for i, item in enumerate(captured, 1)) + '\n\nQuestion\n' + recipe['question']
+                assert prompt['text'] == expected
+                digest = hashlib.sha256(canonical(dict(parent_revision=prompt['revision'], contexts=captured)).encode()).hexdigest()
+                for answer in answers.values():
+                    if answer['prompt_id'] == prompt['id']:
+                        assert answer['grounded_binding_sha256'] == digest and len(answer['completion']) <= 20000
             assert len(answers) == len(mapping) == manifest['split_report']['example_count']
+            check_families(manifest, mapping)
             data_files, expected_splits, mapped = {}, {}, set()
             for prompt in prompts.values():
                 content = archive.read('prompts/' + prompt['id'] + '.txt')
@@ -52,6 +130,9 @@ def qualify(path):
                     assert pair['id'] not in mapped; mapped.add(pair['id'])
                     assert pair['revision'] == answer['revision'] and answer['review'] == 'human_reviewed'
                     assert answer['prompt_id'] == prompt['id'] and pair['parent_revision'] == prompt['revision'] and pair['source_revision'] == prompt['source_revision']
+                    if prompt.get('grounded_context_binding'):
+                        members = {member['id'] for member in manifest['protected_components'][pair['family']]}
+                        assert all(item['ref']['id'] in members for item in prompt['grounded_context_binding'])
                     assert pair['split'] == split and prompt['id'] in {member['id'] for member in manifest['protected_components'][pair['family']]}
                     assert row == {'prompt': prompt['text'], 'completion': answer['completion']}
                 if rows:
@@ -60,6 +141,17 @@ def qualify(path):
         data = load_dataset('json', data_files=data_files, features=Features({'prompt': Value('string'), 'completion': Value('string')}), cache_dir=str(root / 'cache'))
         for split, rows in expected_splits.items():
             assert list(data[split]) == rows, 'The unchanged JSON consumer must preserve exact Unicode/whitespace'
+        if reader_only:
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == before
+            return dict(result='PASS', mode='pinned_datasets_json_reader_only', zip_sha256=before,
+                        versions=pins['versions'], source_hashes=pins['sources'], examples=len(answers),
+                        unique_prompts=len(prompts), context_sources=len(contexts),
+                        split_counts={split: len(rows) for split, rows in expected_splits.items()},
+                        exact_unicode_and_context_evidence='PASS', models_or_trainers_constructed=False,
+                        training=False, quality_claim=False, offline=True)
+        from tokenizers import Tokenizer, models, pre_tokenizers, decoders
+        from transformers import PreTrainedTokenizerFast, GPT2Config, GPT2LMHeadModel
+        from trl import SFTConfig, SFTTrainer
         # Byte BPE with no merges has an exact prefix boundary and complete UTF-8 coverage.
         vocab = {token: index for index, token in enumerate(['<pad>', '<eos>', '<unk>', *sorted(pre_tokenizers.ByteLevel.alphabet())])}
         local = Tokenizer(models.BPE(vocab=vocab, merges=[], unk_token='<unk>'))
@@ -105,6 +197,7 @@ def qualify(path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(); parser.add_argument('archive', type=Path); parser.add_argument('--report', type=Path)
-    arguments = parser.parse_args(); result = qualify(arguments.archive)
+    parser.add_argument('--reader-only', action='store_true', help='Read exact JSON rows/evidence with pinned Datasets; construct no tokenizer/model/trainer.')
+    arguments = parser.parse_args(); result = qualify(arguments.archive, reader_only=arguments.reader_only)
     if arguments.report: arguments.report.write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps(result))

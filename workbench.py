@@ -194,6 +194,10 @@ class Workbench:
                 id TEXT PRIMARY KEY, book_id TEXT NOT NULL, session_id TEXT NOT NULL,
                 split TEXT NOT NULL)''')
 
+            self.db.execute('CREATE TABLE IF NOT EXISTS workbench_deleted_text (id TEXT PRIMARY KEY)')
+            from grounded_instructions import setup
+            setup(self)
+
         from preferences import Preferences
         self.preferences = Preferences(self)
 
@@ -264,6 +268,12 @@ class Workbench:
             result['source_revision'] = 1
             result['source_split'] = 'unassigned'
             result['source_sha256'] = hashlib.sha256(result['original_text'].encode()).hexdigest()
+        if result['kind'] == 'text':
+            result['source_available'] = self.db.execute('SELECT 1 FROM workbench_deleted_text WHERE id=?', (record_id,)).fetchone() is None
+            result['source_lineage_known'] = True
+        current_binding = self.db.execute('SELECT data FROM instruction_context_bindings WHERE prompt_id=?', (record_id,)).fetchone()
+        if current_binding is not None:
+            result['grounded_context_binding'] = json.loads(current_binding[0])
         for field in ('groups', 'parents', 'provenance', 'annotation'):
             raw = result.pop(field + '_json')
             result[field] = json.loads(raw) if raw is not None else None
@@ -499,12 +509,34 @@ class Workbench:
             record = self._get(record_id)
             self._history(record)
             return {'record': record, 'changed': True}
+    def delete_text(self, record_id, body):
+        """Retain immutable bytes/history/lineage; refuse further source use."""
+        if not isinstance(body, dict) or set(body) != {'revision', 'source_revision'}:
+            raise WorkbenchError('Supply exact text record/source revisions.')
+        with self.lock, self.db:
+            before = self._get(record_id)
+            if before['kind'] != 'text':
+                raise WorkbenchError('Only text sources use this deletion owner.')
+            for key in ('revision', 'source_revision'):
+                if type(body[key]) is not int or body[key] != before[key]:
+                    raise WorkbenchError('Source changed. Reload before deleting.', 'conflict', 409)
+            if not before['source_available']:
+                return {'record': before, 'changed': False}
+            self.db.execute('INSERT INTO workbench_deleted_text VALUES (?)', (record_id,))
+            self.db.execute("UPDATE workbench_records SET revision=revision+1,review='draft',updated_at=? WHERE id=?", (timestamp(), record_id))
+            record = self._get(record_id)
+            self._history(record)
+            return {'record': record, 'changed': True}
+
     def _response(self, response_id):
         row = self.db.execute('SELECT * FROM workbench_responses WHERE id=?', (response_id,)).fetchone()
         if row is None:
             raise WorkbenchError('Response not found.', 'unavailable', 404)
         response = dict(row)
         response['provenance'] = json.loads(response.pop('provenance_json'))
+        saved_binding = self.db.execute('SELECT digest FROM instruction_response_bindings WHERE response_id=?', (response_id,)).fetchone()
+        if saved_binding is not None:
+            response['grounded_binding_sha256'] = saved_binding[0]
         return response
 
     def responses(self, prompt_id):
@@ -542,13 +574,15 @@ class Workbench:
             for request_key, parent_key in (('parent_revision', 'revision'), ('source_revision', 'source_revision')):
                 if type(body[request_key]) is not int or body[request_key] != parent[parent_key]:
                     raise WorkbenchError('The prompt changed. Reload before saving the response.', 'conflict', 409)
+            from grounded_instructions import check_answer
+            context_digest = check_answer(self, parent, completion=completion)
             existing = self.db.execute('SELECT id FROM workbench_responses WHERE id=?', (body['id'],)).fetchone()
             created = timestamp()
             if existing:
                 before = self._response(body['id'])
                 if before['prompt_id'] != body['prompt_id'] or body['revision'] != before['revision']:
                     raise WorkbenchError('The response changed or belongs to another prompt. Reload before saving.', 'conflict', 409)
-                if before['completion'] == completion and before['review'] == body['review']:
+                if before['completion'] == completion and before['review'] == body['review'] and (context_digest is None or before.get('grounded_binding_sha256') == context_digest):
                     return {'response': before, 'parent': parent, 'changed': False}
                 self.db.execute('''UPDATE workbench_responses SET completion=?,review=?,revision=revision+1,
                     updated_at=? WHERE id=?''', (completion, body['review'], created, body['id']))
@@ -557,8 +591,12 @@ class Workbench:
                     raise WorkbenchError('Response no longer exists.', 'unavailable', 409)
                 origin = {'method': 'human_authored', 'prompt_id': parent['id'],
                           'prompt_sha256': parent['content_hash'], 'source_sha256': parent['source_sha256']}
+                if context_digest is not None:
+                    origin['grounded_creation_binding_sha256'] = context_digest
                 self.db.execute('INSERT INTO workbench_responses VALUES (?,?,?,?,?,?,?,?)',
                                 (body['id'], parent['id'], 1, completion, body['review'], encode(origin), created, created))
+            if context_digest is not None:
+                self.db.execute('INSERT INTO instruction_response_bindings VALUES (?,?) ON CONFLICT(response_id) DO UPDATE SET digest=excluded.digest', (body['id'], context_digest))
             response = self._response(body['id'])
             self.db.execute('INSERT INTO workbench_response_history VALUES (?,?,?)',
                             (response['id'], response['revision'], encode({'response': response, 'parent': parent})))
@@ -587,6 +625,8 @@ class Workbench:
                 raise WorkbenchError('Selected response requires an available text prompt.')
             if response['review'] != 'human_reviewed':
                 raise WorkbenchError('Every selected response needs explicit human review.')
+            from grounded_instructions import check_answer
+            check_answer(self, parent, response=response)
             text_value(response['completion'], 'Completion', MAX_TEXT)
             size += len(response['completion'].encode('utf-8'))
             if parent['id'] not in parents:
@@ -607,6 +647,8 @@ class Workbench:
         if record['kind'] in ('sequence', 'mesh'):
             return (self.sequences if record['kind'] == 'sequence' else self.meshes).asset(record)
         if record['kind'] == 'text':
+            if not record['source_available']:
+                raise WorkbenchError('Text source was deleted.', 'unavailable', 404)
             return record['text'].encode(), 'text/plain; charset=utf-8'
         if not record['source_available']:
             raise WorkbenchError('Source image unavailable.', 'unavailable', 404)
