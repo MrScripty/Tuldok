@@ -28,13 +28,59 @@ excluded from future exports; previously downloaded exports are unchanged. Gener
 images stay deleted when their job resumes, and job progress shows the deleted count.
 If another tab has edited an image, reload before deleting it.
 
+## Import a real corpus
+
+In the dataset workbench, **Import a real corpus** accepts a local UTF-8 JSONL
+manifest with one raw asset per physical line and explicitly selected image
+files. Start with raw assets; annotate and review them afterward. For example:
+
+```jsonl
+{"kind":"text","name":"Note","text":"A real source note","groups":["document-01"],"rights":"Authored"}
+{"kind":"image","file":"photo.png","groups":["shoot-01"],"rights":"Permission granted"}
+```
+
+`kind`, a nonempty `groups` list and the matching `text` or `file` field are
+required. `name`, `parents` (existing record IDs) and `rights` are optional;
+omitted rights remain `unknown`. Each image reference must be a flat filename
+matching exactly one selected file, with exact spelling and case. Missing or
+ambiguous matches are row errors. No server paths, URL fetches or archives are
+used. Supplied annotations, tasks, review states, provenance, duplicate JSON
+keys and other unknown fields are rejected. Existing annotated corpus formats
+require a separate field/coordinate contract.
+
+Limits: 8 MiB per manifest, 1,000 physical lines (blank lines keep their source
+number but are skipped), 3 MiB per UTF-8 JSON row, existing 200,000-code-point
+text and 25 MiB / 40-megapixel image limits. LF and CRLF are supported; source
+text remains original while its canonical form uses NFC and LF. Image originals
+remain intact while the existing owner normalizes EXIF orientation/RGB pixels.
+All imported records are unlabeled drafts, independent of supplied source claims.
+
+Imports run sequentially and show per-row outcomes and record IDs. Valid rows
+remain when another row fails. Repeated canonical text or exact original image
+bytes are rejected without modifying existing records, review or provenance.
+Storage failures stop scheduling. **Stop after current row** prevents the next
+admission; an in-flight row may complete and remains in the collection.
+
+Lost or malformed responses pause the batch without automatic retry. **Check
+pending row** reads a saved acquisition marker and verifies the row proof before
+crediting creation. No visible result does not prove the request stopped.
+**Dismiss pending check** does not roll back an import; inspect the collection
+before retrying. These controls retain existing editor edits and selection.
+
+Provenance records the server-computed source-row SHA-256 and the existing
+source-byte/pixel hashes. Manifest filename, physical row number and image-file
+label are caller-declared context, stored separately from those derived facts.
+The manifest itself is not copied or independently authenticated. Result lookup
+is read-only; the request marker does not grant annotation review or source rights.
+
 ## AI corner suggestions
 
-Open **AI model**, choose Codex, OpenRouter, or llama.cpp, and select or enter a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.
+Open **AI model**, choose Codex, OpenRouter, llama.cpp, or Pumas, and select a vision model. With an image selected, click **Suggest corners**. Adjust the returned pins and visibility flags, then **Save**. Suggestions remain unsaved until reviewed; invalid results leave your current pins intact.
 
 - **Codex:** install and sign in to the Codex CLI on the Tuldok computer. Uses its app-server interface, cached model catalog, and selected thinking level. `TULDOK_CODEX_MODEL` overrides the default model.
 - **OpenRouter:** enter an API key or set `OPENROUTER_API_KEY` on the server. Refresh models lists image-capable models advertising structured outputs. The entered key stays in the current page; it is not written to browser storage, labels, or exports.
 - **llama.cpp:** run a vision model with its required image projector and supply the server URL (default `http://127.0.0.1:8080`). Refresh models reads its model list. The server must be reachable from the Tuldok computer and support image input and JSON schema output.
+- **Pumas:** serve a vision model and click **Scan local ports**. Tuldok lists ready Pumas gateways and local llama.cpp model endpoints, including a separate endpoint when Pumas manages the model there. Select the endpoint that lists your VLM, or enter its URL manually, then refresh models. The model must support image input and JSON output.
 
 The adapters follow Book-Be-Gone's provider interfaces without depending on that repository. Each request sends a JPEG copy of the selected image, at most 1600 pixels on its longest side, preserving orientation and aspect ratio. Original dataset images remain intact. The prompt in `prompts/corners.md` asks for screen-relative corner positions plus an explicit identification of the book’s upright top-left from its text or artwork. Tuldok rotates the handle identities into book order while preserving image coordinates and visibility. Ambiguous orientation requires manual labeling; no-book scenes remain supported. Saved suggestions include provider/model provenance in `suggested_by`; they still need human review before use as training labels.
 
@@ -70,7 +116,7 @@ Select one of two strategies:
 - **Use the same prompt for every image:** Tuldok renders the description repeatedly,
   creating only the next pending gallery entry as it proceeds.
 
-Choose the image size and an optional starting seed. The seed increments for each
+Choose the image width and height (default 1280 by 720) and an optional starting seed. The seed increments for each
 image; leaving it blank lets Pumas sample randomly. Click **Generate dataset**.
 Prompt entries appear in the collection and become images as generation completes.
 Click a pending entry to inspect its prompt. Completed images immediately support
@@ -86,10 +132,124 @@ jobs without redoing saved images. One job runs at a time. A rendering failure s
 the queue for inspection; images are not automatically retried. Exact duplicate
 images remain rejected by the dataset, including repeated deterministic output.
 
-Image requests have a 630-second deadline. GPU cancellation may need to reach the
-runtime’s next cancellation checkpoint. After a server restart, explicitly resume
-unfinished jobs. Keep the dataset backed up and review synthetic images and labels
-before using them for training.
+Image requests have no duration deadline: generation runs until it completes,
+fails, or you explicitly cancel it. Only connection establishment stays bounded;
+once admitted there is no total, read, idle, or elapsed timeout. GPU cancellation
+may need to reach the runtime’s next cancellation checkpoint. If the response is
+lost before completion, the outcome is uncertain — provider work may have
+continued — and the request is not automatically retried. After a server restart,
+explicitly resume unfinished jobs. Returned generation metadata may gain
+additional public fields over time. Keep the dataset backed up and review
+synthetic images and labels before using them for training.
+
+## Explicit collection filters
+
+In **Dataset workbench**, combine the existing search/type/task/review/sort controls
+with **Target label (exact)**, **Protected source/group (exact)** and **Rights note
+(exact)**. All criteria must match. Leave a criterion blank for any value; nonempty
+values are trimmed and compared case-sensitively. A label matches a current class,
+box or entity-span label, not words in a caption or source. A group matches an ID
+stored directly in the record's protected `groups`, not all ancestors or connected
+release-family members.
+
+Rights notes remain arbitrary recorded text, not license categories or permission
+decisions. Missing, null, blank and literal `unknown` notes display/filter as
+`unknown`; other notes retain their text, including uppercase `UNKNOWN`. The
+collection shows each record's group IDs and rights note so exact criteria can be
+chosen. No metadata, annotation, revision or review changes during filtering.
+
+`GET /api/workbench/records` accepts optional `label` (up to 80 Unicode code points),
+`group` (120) and `rights` (1,000) alongside its existing parameters. Invalid values
+return HTTP 400 / `invalid`. Returned page items include a read-only `rights_note`
+projection; original `provenance.rights` is preserved. Analysis and total counts
+describe the complete filtered result before pagination. Browser controls allow
+the full valid Unicode lengths; the API remains the validation authority.
+
+Use **Exact filter entry → JSON strings** for values containing internal line
+breaks. Enter double-quoted strings: `"first\nsecond"` preserves LF,
+`"first\rsecond"` preserves CR and `"first\r\nsecond"` preserves CRLF.
+Escape a literal backslash as `\\` and a quote as `\"`. Blank fields still mean
+any value. All three exact criteria use the selected entry format; ordinary
+criteria convert without changing their meaning when switching formats. Invalid
+or non-string JSON produces an error without issuing a query. Switching back to
+plain text is blocked while any criterion contains a line break. This keeps
+exact codepoints intact rather than relying on single-line or textarea line-ending
+normalization; stored metadata and API matching semantics remain unchanged.
+
+Filtered results are dynamic: later matching records can appear after searching
+again. They do not join fixed saved membership or replace chosen revision pairs.
+Opening a fixed set preserves the current filter; filtering never grants review,
+creates release proof, or changes an existing exact-selection preview's membership.
+Release export still rechecks source/revision/lineage freshness independently.
+
+## Saved fixed selections
+
+In **Dataset workbench**, choose records with the checkboxes, enter a selection
+name, then **Save selected records as a new set**. A set contains fixed record IDs,
+annotation/source revisions, and source hashes. Filters and searches remain live
+collection controls; new matching records never join a saved set automatically.
+There is no dynamic saved-search feature in this slice. Names may repeat; each set
+has its own ID. Saving creates a separate set rather than replacing membership.
+
+Choose a saved set and **Open fixed selection** to replace the current selection,
+including records outside the current filter. The current filter, release settings
+and unsaved annotation edits stay intact. Opening always clears previous export
+proof and requires a fresh release preview. **Cancel opening** keeps the current
+selection and ignores a delayed response. The `#selection=ID` URL reopens the set
+on reload and Back/Forward navigation. Saving or opening never changes annotations
+or grants human review; draft records remain ineligible for release.
+
+Initial URL opening stops if a newer selection action or navigation occurs while
+the saved-set list is loading. Opening a fixed set also revokes an earlier editor
+save's ability to advance its selected revisions. That annotation save may still
+persist successfully; the older selected pair stays stale and release-blocked.
+Explicitly select the current records to adopt their newer revisions. Ordinary
+editor saves can advance the selected pair they observed only while that exact
+pair and selection intent remain current.
+
+Reopen reports stale revisions, missing records, deleted images, unavailable bytes,
+and changed source identity while retaining every original saved reference. It
+never substitutes newer revisions or replacement images. These are references,
+not historical source/annotation copies: to release updated records, explicitly
+select their current revisions and save a new set. Frozen ZIPs remain separate.
+Rename and delete use saved-set revision checks; deleting a set retains records,
+the current selection, and existing exports. Back up the whole data directory.
+
+`GET /api/workbench/selections` lists metadata. `POST` on that route accepts exactly
+`name` (1–120 characters) and `items` (1–5,000 distinct `{id, revision,
+source_revision}` objects). `GET /api/workbench/selections/ID` returns `selection`
+(`mode: "fixed"`, `schema_version: 1`, immutable `items` with source identity),
+per-member `status`/`message`/current revision pairs, and `current`, which describes
+currency rather than review or release eligibility. POST `.../ID/rename` accepts
+`name` and saved-set `revision`; POST `.../ID/delete` accepts only `revision`.
+Stale mutations return HTTP 409 / `conflict`; a deleted set returns 404 / `unavailable`.
+For release preview, project saved items to `{id, revision, source_revision}`.
+
+## Selected-release preview
+
+Select records, choose an export format and split targets, then click **Preview selected release**. This summary describes exactly the saved selected revisions, independently of the current collection filter. It shows task/review/class-target counts, eligibility blockers, connected source families (including unselected and deleted relatives), requested versus achievable splits, and format/rights warnings. Whole source families remain indivisible; ratios are targets, not guarantees of exact quotas.
+
+Preview creates no ZIP and persists no record, annotation, review, split, or lazy image enrollment. **Freeze & export ZIP** becomes available only for an eligible current preview. Selection or release-control changes invalidate it, and late responses cannot restore an old preview. Unsaved editor changes are not part of a release.
+
+`POST /api/workbench/releases/preview` accepts the same `items`, `ratios`, `seed`, and optional `format` as the release endpoint. It returns `eligible`, `analysis`, `blockers`, `warnings`, `lineage`, `split_report`, `assignments`, and a `preview_token` for eligible selections. Invalid/stale selections are blocked without a token; their analysis is unavailable. Lineage uses stable complete-family IDs, not a count of the visible filter's group labels.
+
+The UI includes `preview_token` in the final release request. Export revalidates source bytes, selected revisions, relevant transitive lineage and controls under the source lock, then hashes the bytes actually archived. A stale token requires a fresh preview. Existing API clients may omit the token and still receive full final validation; an explicitly supplied invalid token is rejected. A preview is a point-in-time check, not a frozen release or a claim about rights, semantic independence, or model quality.
+
+## Workbench image captions
+
+Open **Dataset workbench** from the corner studio. Existing imported and Pumas-generated images share the original Dataset source ID and bytes. Select **image caption**, write a caption describing the visible result, save as a draft, then explicitly review it. Editing a target resets the editor's review choice to draft. Generation prompts remain source provenance; they are never used as automatic captions. Each record has one current workbench task, with previous targets retained in revision history. Corner labels remain a separate annotation.
+
+Filter by task, review state or caption text. Select human-reviewed caption records and choose **Image captions · train/val/test** when previewing a release, then freeze the eligible selection. The `/api/workbench/releases` request adds `format: "image_caption_v1"`; omission retains the canonical mixed-task release. Captions use exactly `{"caption": "..."}` and are bounded to 4,000 Unicode code points. Unknown formats and invalid caption fields are rejected.
+
+Caption ZIPs contain PNGs beside `train/metadata.jsonl`, `val/metadata.jsonl` and `test/metadata.jsonl`. Every row has exactly `file_name`, `text` (the accepted caption), and `group`. The existing `validation` assignment is explicitly projected to `val`. All three splits must be nonempty. Connected protected groups, parents, duplicate identities, book/session assignments and retained deleted ancestry share a component ID; the export never chooses an arbitrary first group. Existing source splits are preserved. Conflicts, insufficient independent families, missing lineage, draft targets, stale revisions, missing/tampered bytes, unnormalized PNGs and exact decoded-pixel duplicates fail before publication. Images below 512 pixels are exported with warnings.
+
+`manifest.json` freezes canonical annotations, source/target revisions, byte/pixel hashes, provenance, split mapping and complete relevant protected-component lineage snapshots. ZIP identity is the SHA-256 of its frozen bytes. Later edits or source deletion cannot change an existing release. Back up the full data directory, including releases. Human review does not establish rights, remove sensitive image metadata, detect near-duplicates or prove training quality.
+
+The consumer is the training companion's `examples/diffusion/check_image_data.py`, pinned to SHA-256 `6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94`. Extract the ZIP and run:
+
+    python3 /path/to/check_image_data.py /path/to/extracted-release
+
+The unchanged pinned snapshot in `tests/fixtures/diffusion_check_image_data.py` is used for producer/consumer contract tests. An alternate checkout may be supplied through `TULDOK_CAPTION_CONSUMER`; tests reject a different hash. This milestone runs no model training or paid inference. [Scope and verification](docs/plans/image-caption-exports/plan.md).
 
 ## Dataset conventions
 
@@ -110,9 +270,205 @@ This first version supports still capture and image import, including frames ext
     python3 -m unittest discover -s tests
     node tests/browser.cjs
     node tests/browser_images.cjs
+    node tests/test_workbench_controller.cjs
+    node tests/test_saved_selections_controller.cjs
+    node tests/test_saved_selection_intent.cjs
+    node tests/browser_workbench.cjs
+    node tests/browser_grounded.cjs
+    node tests/browser_captions.cjs
+    node tests/browser_release_preview.cjs
+    node tests/browser_saved_selections.cjs
+    node tests/browser_saved_selection_intent.cjs
+    node tests/browser_metadata_filters.cjs
+    node tests/browser_bulk_import.cjs
+    node tests/browser_dataset_integration.cjs
 
-The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all three AI providers. Tests do not contact paid models.
+The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the browser executable. It uses a synthetic camera, a temporary dataset, and local fixtures for all four AI providers. Tests do not contact paid models.
 
 ## Repository
 
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
+
+### Import an annotated caption corpus
+
+The workbench imports one existing annotated format: an **expanded Tuldok
+`image_caption_v1` release**, including `manifest.json`, the three
+`train/val/test/metadata.jsonl` files and their normalized PNGs. Choose its folder
+in “Import a frozen caption corpus.” Metadata rows use exactly:
+
+```json
+{"file_name":"0123456789abcdef0123456789abcdef.png","text":"A reviewed source caption.","group":"component:<complete-family-hash>"}
+```
+
+The native manifest must agree with every caption, group, image path, split and
+asset/pixel hash. Original train/validation/test assignments remain active source
+splits; foreign IDs, original acquisition hashes, review and provenance are
+retained as declared origin evidence. Received PNGs get new local IDs and actual
+source hashes. Imported captions are **drafts**, requiring your explicit human
+review before export. Existing records are never overwritten. No archive
+extraction, URL fetching, arbitrary imagefolder columns, coordinate conversion
+or other annotation format is supported by this slice.
+
+At most 1,000 combined physical metadata lines and 8 MiB source JSON are supported,
+with existing image/caption/group limits and bounded prepared evidence. Choose
+files again after a server restart. Successful rows remain when another row
+fails; Stop prevents the next admission while an in-flight row may complete.
+A lost response pauses for a read-only saved-result check without replay. Batch
+progress is kept only in the current page; reload is not batch recovery.
+
+Authored examples and an existing-owner design rehearsal are under
+`docs/plans/annotated-caption-import/reports/fixtures/`. Native-import HTTP and
+Chromium tests independently check admission, fresh review and actual downloaded
+release consumption by the unchanged pinned chapter-26 validator.
+
+### Independent instruction answers
+
+Open an existing text record and use **Instruction answers** to add, edit and explicitly review separate completions. Each answer has its own stable ID, revision, review and history. The prompt and its classification/entity target remain unchanged; multiple answers coexist. Plain entry uses browser LF newlines; JSON-string entry preserves CR/CRLF. Completion whitespace and Unicode are stored exactly, with the existing 200,000-code-point bounded-text policy.
+
+Select individual answers and use **Freeze selected answers**. Selection captures response and parent/source revisions and never expands to later answers. Download/open a fixed selection JSON file to retain those exact pairs across page reloads. Filters and record saved sets remain separate. Stale or draft answers require explicit current reselection/review.
+
+The dedicated `text_instruction_v1` ZIP preserves canonical prompt/response snapshots, provenance, hashes and full related family evidence in manifest.json; prompt assets are under prompts/. Consumer rows have only prompt/completion in train/validation/test data.jsonl. rows.jsonl maps deterministic zero-based rows to exact revisions and family IDs. Splits weight selected examples and never divide a source family; reports also count unique prompts. Up to 5,000 responses and 40 MiB total uncompressed archive data are permitted, using existing synchronous resource contracts. Empty unused splits are declared but omitted from the consumer's loading map. Final export requires a fresh eligible proof.
+
+Consumer verification uses unchanged hash-pinned TRL0.23.1 and Datasets4.1.1, isolated verification dependencies, a locally constructed tokenizer and tiny random CPU model. It checks actual browser-downloaded strings, row mapping, completion masks, EOS, padding and explicitly disabled truncation, with no pretrained download or training-quality claim. Dependencies belong to tests/instruction-consumer-requirements.txt, not app runtime. [Scope/contracts](docs/plans/instruction-responses/plan.md).
+
+### Native text-classification releases
+
+The workbench can import a locally selected frozen `canonical_v1` ZIP (manifest
+`schema_version: 1`) through **Import native text-classification release**. It
+checks exact manifest/JSONL row/text-asset bindings and hashes the consumed ZIP.
+Only `text_classification` rows are admitted; per-row rejections leave other valid
+rows available. Every imported label starts as a new draft, with rights unknown
+and no inherited approval or source split. Existing canonical text and request
+markers are rejected without overwriting annotations, review or provenance.
+
+Exported text is the new import input, preserved exactly before the existing
+NFC/LF normalization. Native releases omit upstream original text, so recovering
+those bytes is unsupported. The new input hash is measured independently;
+upstream record/hash/review/rights fields remain declared historical provenance
+with `original_status: unavailable`. Measured acquisition evidence binds archive,
+manifest, metadata, physical row and text asset. Native groups are retained, with
+stable foreign identity links; upstream IDs are not restored as local parents.
+
+Stop prevents later admissions; an in-flight record may finish. An uncertain
+response pauses the batch and offers read-only saved-result reconciliation, never
+automatic replay. Restart requires choosing the archive again for preparation;
+committed records and receipts persist. Limits and qualification are recorded in
+[the import plan](docs/plans/native-text-classification-import/plan.md).
+
+### Propose a caption from an existing image
+
+Select one image in the workbench and open **Propose a caption for this image**.
+List the served models at your Pumas-compatible gateway, choose a model, and
+explicitly request a caption. A catalog entry does not prove vision or JSON
+support. Unsupported image input, unavailable models and invalid responses fail
+without fallback or automatic retries. The request sends an oriented JPEG copy
+at most 1600 pixels on its longest side; original source bytes stay unchanged.
+Only one caption request runs at a time, independently of existing generation jobs.
+
+Inspect the proposal, reject it, or explicitly **Apply as draft**. Applying checks
+both captured revisions and original/canonical image hashes; it updates the
+existing image's target and proposal receipt atomically. It never grants review.
+Explicitly review the draft and select its new revision before freezing a caption
+release. Fixed selections retain their old revisions. Source acquisition evidence,
+rights, parent relationships and protected groups are preserved. Target-associated
+model evidence survives explicit review and frozen export; changing the caption
+or task removes that evidence from the current target while retaining history.
+
+Attempts retain the exact bounded submitted JPEG, prompt, requested provider/model,
+seed, revisions, hashes, complete bounded response bytes and application receipt.
+Seeds are requests, not reproduction guarantees. Stop cancels Tuldok's transport
+and fences late output; it does not prove when backend inference stops. Interrupted
+attempts remain inspectable after restart and never auto-resume. Refresh requests
+and inspect the record after a lost acknowledgement; repeating the same request ID
+or application reconciles existing state without another inference/target write.
+
+Before submission, one bounded recovery intent is stored in this tab’s
+`sessionStorage` and restored synchronously on reload. It contains the request ID,
+source ID/revisions, credential-free gateway URL, model, guidance and seed, without
+image/response bytes. Changed intent stays blocked until a persisted GET outcome
+is reconciled; ambiguous 404 and refused repeats retain the original ID. An
+explicit unchanged retry uses the same body/ID. No inference replays on reload.
+Storage read/write/removal failures block new submissions; restore storage and
+reload rather than abandoning an unknown request. Closing the tab ends this local
+recovery scope; it is not cross-tab/device recovery.
+
+This single-image slice is tested with local synthetic HTTP providers and real
+Chromium. It asserts no real-model caption quality and adds no models, credentials,
+provider registry or dependencies. [Contract and acceptance](docs/plans/caption-proposals/plan.md).
+
+### Propose a label for existing text
+
+Open one unannotated text record and **Propose a class for this unannotated text**.
+Enter the author's exact label choices as a JSON array, list served models at the
+Pumas-compatible gateway, choose a model and explicitly request a proposal. Labels
+are unique, case-sensitive strings (1–30 choices, up to 80 Unicode code points
+each); leading/trailing whitespace is rejected rather than trimmed. The selected
+source text, labels, guidance, provider/model, seed and revision evidence are
+frozen for this attempt. Source text is sent exactly as stored; it is not rewritten.
+
+The model may return exactly one offered label or explicitly abstain. Unknown or
+malformed labels, partial output and incompatible models fail without fallback.
+Abstention saves no target and offers no Apply action. Listing a model and passing
+shape checks do not establish semantic correctness. Inspect the evidence, reject
+the proposal, or explicitly **Apply as draft** after checking the label. Apply
+requires the captured source revisions and unchanged label choices, preserves
+acquisition provenance and atomically records one draft annotation with its
+receipt. Explicit human review and reselecting the new revision are required
+before export; fixed selections keep their old revisions.
+
+Lost request acknowledgements reconcile through the same admission ID. An early
+404 keeps that ID pending, and explicit unchanged repeats do not infer twice.
+The exact pending ID and request commit to IndexedDB before their recovery mirror
+and POST. Submission waits for origin authority after reload. Visible recovery
+controls open the captured source and restore its settings; retry still requires
+explicit submission. Transactions coordinate stale storage views across tabs,
+with Web Locks providing additional coordination. Unavailable IndexedDB, origin
+storage or locking support and invalid recovery evidence block new requests. An
+exact admitted receipt retires the request; failed mirror cleanup retains its
+retirement evidence and blocks new POSTs until cleanup succeeds.
+Every explicit POST also commits an attempt generation bound to that exact
+request. An initial rejection can release recovery only if its captured generation
+is still current; a retry in another tab prevents the older rejection from
+discarding its unresolved admission. Legacy or crash-restored evidence remains
+unknown until an exact receipt reconciles it. No inference automatically retries.
+Apply receipts likewise reconcile lost replies without another target write.
+Cancellation fences late output; interrupted requests never resume automatically
+after restart. Polling uses bounded summaries; individual request reads retain
+the exact source, prompts and bounded complete response evidence. This first stage
+uses synthetic local HTTP and Chromium fixtures, with no real-model qualification.
+[Contract and verification](docs/plans/text-classification-proposals/plan.md).
+### Explicit preference pairs
+
+Use **Comparative judgments** on a text prompt with two existing independent
+answers. Choose each answer and explicitly prefer left/right, tie or abstain,
+then independently review that exact comparison. Answer order, answer review
+and model scores never grant preference. Judgment history retains exact prompt,
+source and answer revisions; editing any bound evidence requires deliberate
+rejudgment and fresh review. Deleting a judgment preserves history and frozen
+exports. Stale judgments can be deleted without re-reviewing them.
+
+Select fixed judgment revisions and use **Freeze selected preference pairs**.
+The `text_preference_v1` ZIP emits only explicit `prompt/chosen/rejected` strings.
+Reviewed ties/abstentions remain in the manifest and are excluded with reasons;
+an all-excluded selection cannot export. Current opposing reviewed judgments
+for the same exact pair block even when unselected. Current tie/abstention
+judgments warn without vetoing a direction. Distinct answer IDs with identical
+strings remain explicit degenerate pairs with a warning. Answer review is
+retained as separate evidence; it is not required to grant comparative review.
+
+The existing protected family graph and weighted allocator keep all related
+pairs in one split. Manifest and row sidecar freeze both answers, judgments,
+source/rights provenance, complete lineage, exact revisions and exclusions.
+Stale selections and changed competing review invalidate proof. Selections are
+held in the current page; reload requires deliberate reselection. Releases use
+the existing 5,000-unit and 40 MiB synchronous bounds and immutable publication.
+
+Qualification invokes unchanged hash-pinned TRL 0.23.1 DPO dataset preparation
+and preference collator against actual browser-downloaded strings. A local byte
+tokenizer tests prompt left padding, completion right padding, attention masks,
+EOS and disabled truncation. DPO appends EOS unconditionally, including after
+an existing EOS. No model is constructed or run; no pretrained download or
+training-quality claim is involved. Reuse the isolated official dependencies
+in `tests/instruction-consumer-requirements.txt`. Run `node
+tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
+that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).

@@ -1,0 +1,10 @@
+{
+  "source_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "revision": 1,
+  "source_revision": 1,
+  "server_url": "http://127.0.0.1:9999",
+  "model": "caption-fixture",
+  "instruction": "   ",
+  "seed": 42,
+  "request_id": "565c50e4158b4345b4c8a088128692c9"
+}

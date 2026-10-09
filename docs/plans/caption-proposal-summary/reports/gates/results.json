@@ -1,0 +1,260 @@
+[
+  {
+    "command": "python -m unittest discover -s tests",
+    "exit_code": 0,
+    "seconds": 85.926,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/workbench.js",
+    "exit_code": 0,
+    "seconds": 0.14,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/saved-selections.js",
+    "exit_code": 0,
+    "seconds": 0.132,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/curation.js",
+    "exit_code": 0,
+    "seconds": 0.142,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/bulk_import.js",
+    "exit_code": 0,
+    "seconds": 0.134,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/caption_import.js",
+    "exit_code": 0,
+    "seconds": 0.142,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/rights-note.js",
+    "exit_code": 0,
+    "seconds": 0.139,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/instruction-responses.js",
+    "exit_code": 0,
+    "seconds": 0.15,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/native_text_import.js",
+    "exit_code": 0,
+    "seconds": 0.129,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node --check static/caption-proposals.js",
+    "exit_code": 0,
+    "seconds": 0.134,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_curation_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.167,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_browser_page_load.cjs",
+    "exit_code": 0,
+    "seconds": 0.136,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_workbench_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.167,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_saved_selections_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.157,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_saved_selection_intent.cjs",
+    "exit_code": 0,
+    "seconds": 0.168,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_bulk_import_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.225,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_caption_import_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.27,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_rights_note_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.273,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_instruction_responses_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.163,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_browser_startup.cjs",
+    "exit_code": 0,
+    "seconds": 21.238,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_native_text_import_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.263,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_combined_workbench_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.17,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_caption_proposals_controller.cjs",
+    "exit_code": 0,
+    "seconds": 0.166,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_workbench.cjs",
+    "exit_code": 0,
+    "seconds": 2.738,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_grounded.cjs",
+    "exit_code": 0,
+    "seconds": 4.696,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_captions.cjs",
+    "exit_code": 0,
+    "seconds": 3.792,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_release_preview.cjs",
+    "exit_code": 0,
+    "seconds": 2.846,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_saved_selections.cjs",
+    "exit_code": 0,
+    "seconds": 4.23,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_saved_selection_intent.cjs",
+    "exit_code": 0,
+    "seconds": 2.771,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_metadata_filters.cjs",
+    "exit_code": 0,
+    "seconds": 4.736,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_bulk_import.cjs",
+    "exit_code": 0,
+    "seconds": 2.522,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_dataset_integration.cjs",
+    "exit_code": 0,
+    "seconds": 4.285,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_curation.cjs",
+    "exit_code": 0,
+    "seconds": 4.335,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_caption_import.cjs",
+    "exit_code": 0,
+    "seconds": 4.845,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_caption_dataset_integration.cjs",
+    "exit_code": 0,
+    "seconds": 8.812,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser.cjs",
+    "exit_code": 0,
+    "seconds": 12.031,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_images.cjs",
+    "exit_code": 0,
+    "seconds": 4.611,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_rights_note.cjs",
+    "exit_code": 0,
+    "seconds": 4.455,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/test_rights_note_artifacts.cjs",
+    "exit_code": 0,
+    "seconds": 8.954,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_instruction_responses.cjs",
+    "exit_code": 0,
+    "seconds": 9.569,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_native_text_import.cjs",
+    "exit_code": 0,
+    "seconds": 4.079,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_combined_workbench.cjs",
+    "exit_code": 0,
+    "seconds": 11.619,
+    "historical_report_files_preserved": 826
+  },
+  {
+    "command": "node tests/browser_caption_proposals.cjs",
+    "exit_code": 0,
+    "seconds": 7.699,
+    "historical_report_files_preserved": 826
+  }
+]

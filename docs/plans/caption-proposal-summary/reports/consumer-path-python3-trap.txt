@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "Controlled PATH python3 must not select the consumer interpreter" >&2
+exit 87

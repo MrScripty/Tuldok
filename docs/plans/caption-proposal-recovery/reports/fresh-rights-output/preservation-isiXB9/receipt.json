@@ -1,0 +1,35 @@
+{
+  "source_head": "ff91d0d920a57df6585ee84bcbfa204910b13438",
+  "source_tree": "01741c7c219d64c0490e264252dc9dca5a0aedc8",
+  "source_state": "committed",
+  "browser_script_sha256": "bc46635d0c818907dcc802cf51b0c3e66a6e23c61e740652f8bef9d9b2a7ce79",
+  "regression_script_sha256": "f492f408b4c7e94754d7bffd69dd8c22811478fefe56cae400a9ff6311db3e84",
+  "browser_runs": 2,
+  "tracked_evidence_files": 668,
+  "tracked_evidence_before_sha256": "9341eaa9bf780ca92e5cc4cc0df06afb8b2bbbee94f8fb09ba953464e72de84c",
+  "tracked_evidence_unchanged_after_each_run": true,
+  "earlier_captures_retained": true,
+  "captures": [
+    {
+      "file": "test-results/rights-note/run-19QAQL/rights-desktop.png",
+      "sha256": "820b6f0fa1352615a82e1a3e141a225f02adad37ac26b419f48bd5da5d04ae20",
+      "bytes": 136998
+    },
+    {
+      "file": "test-results/rights-note/run-19QAQL/rights-narrow.png",
+      "sha256": "637fb091467c3a6083219918683640c18a1340d53f1e27feecc6e34ca1683382",
+      "bytes": 59191
+    },
+    {
+      "file": "test-results/rights-note/run-B4KuYE/rights-desktop.png",
+      "sha256": "820b6f0fa1352615a82e1a3e141a225f02adad37ac26b419f48bd5da5d04ae20",
+      "bytes": 136998
+    },
+    {
+      "file": "test-results/rights-note/run-B4KuYE/rights-narrow.png",
+      "sha256": "637fb091467c3a6083219918683640c18a1340d53f1e27feecc6e34ca1683382",
+      "bytes": 59191
+    }
+  ],
+  "result": "PASS"
+}

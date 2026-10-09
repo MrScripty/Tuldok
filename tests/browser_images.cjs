@@ -4,7 +4,8 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),cryp
 const {spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-images-')),children=[];
 const evidence=process.env.TULDOK_EVIDENCE_DIR; if(evidence)fs.mkdirSync(evidence,{recursive:true});
-let ws;
+let ws, inspect;
+const errors=[];
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn){for(let i=0;i<200;i++){const value=await fn();if(value)return value;await pause(100);}throw Error('Timed out');}
 function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
@@ -17,17 +18,23 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json();
-  ws=new WebSocket(tabs[0].webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
-  let id=0,loads=0;const pending=new Map(),errors=[];
+  const target=tabs.find(tab=>tab.type==='page' && tab.url==='about:blank');
+  assert.ok(target,'Expected the explicitly launched blank page target');
+  console.log('Browser targets:',JSON.stringify(tabs.map(({type,url})=>({type,url}))));
+  ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0,loads=0;const pending=new Map();
   ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Page.loadEventFired')loads++;if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,session:document.getElementById("capture-session")?.value,generationDisabled:document.getElementById("generation-view")?.disabled,generationStatus:document.getElementById("generation-status")?.textContent,body:document.body?.innerText.slice(0,1500)})');
   const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await send('Page.enable');await send('Runtime.enable');
+  console.log('Browser version:',JSON.stringify(await send('Browser.getVersion')));
   const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);
   await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
-  await send('Page.navigate',{url:'http://127.0.0.1:'+port});
+  const navigation=await send('Page.navigate',{url:'http://127.0.0.1:'+port});
+  assert.equal(navigation.errorText,undefined,'Navigate to the real Tuldok fixture');
   await until(()=>evaluate('!!document.getElementById("capture-session")?.value&&!document.getElementById("generation-view").disabled'));
   await click('generation-view');
   // Keep real backend discovery, then present a deterministic extra idle instance.
@@ -42,7 +49,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
 
   await until(()=>evaluate('document.getElementById("generation-model").value==="image-test"'));
   assert.equal(await evaluate('document.getElementById("generation-model").options.length'),1,'Text/VLM model excluded from image selector');
-  await fill('generation-size','512x512');await fill('generation-seed','20');await fill('generation-count','12');
+  await fill('generation-width','512');await fill('generation-height','512');await fill('generation-seed','20');await fill('generation-count','12');
   await click('prompt-refresh');await until(()=>evaluate('document.getElementById("prompt-model").value==="vision-only"&&!document.getElementById("prompt-refresh").disabled'));
   await fill('generation-prompt','photorealistic open books');await click('generate');
   await until(()=>evaluate('document.getElementById("generation-status").textContent.includes("12 / 12 images · completed")'));
@@ -91,4 +98,4 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const result={fixture:true,generated_images:12,unique_prompts:12,ai_label_saved:true,queue_survives_reload:true,repeat_pending_entries:1,cancelled_backend_request:true,deletion_verified:true};
   if(evidence)fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result));
-})().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>{if(ws)ws.close();for(const child of children.reverse())child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),300);});
+})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(()=>{if(ws)ws.close();for(const child of children.reverse())child.kill('SIGTERM');setTimeout(()=>fs.rmSync(temporary,{recursive:true,force:true}),300);});

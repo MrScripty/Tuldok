@@ -1,0 +1,47 @@
+{
+  "expected_id": "94c5e6fc5a3e46b2ad3ca87f90654efd",
+  "restored_controls": {
+    "server_url": "http://127.0.0.1:46757/v1/",
+    "model": "classification-fixture",
+    "instruction": "Frozen reload recovery",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ]
+  },
+  "restored_before_submit": {
+    "source_id": "58064620b2634c689ca676b588f410db",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:46757/v1/",
+    "model": "classification-fixture",
+    "instruction": "Frozen reload recovery",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "94c5e6fc5a3e46b2ad3ca87f90654efd"
+  },
+  "restored_pending": {
+    "source_id": "58064620b2634c689ca676b588f410db",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:46757/v1/",
+    "model": "classification-fixture",
+    "instruction": "Frozen reload recovery",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "94c5e6fc5a3e46b2ad3ca87f90654efd"
+  },
+  "posted_bodies": [],
+  "before_inference": 1,
+  "after_inference": 1
+}

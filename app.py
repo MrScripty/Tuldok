@@ -9,7 +9,14 @@ import gateway_discovery
 import workbench
 import dataset_recipes
 import dataset_releases
+import saved_selections
 import grounded_candidates
+import caption_proposals
+import text_classification_proposals
+import bulk_import
+import curation
+import caption_import
+import native_text_import
 import base64
 import hashlib
 import io
@@ -137,9 +144,16 @@ class Dataset:
         self._recover_deletions()
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
+        self.selections = saved_selections.SavedSelections(self.workbench)
+        self.caption_imports = caption_import.CaptionImports(self.workbench)
+        self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
         self.grounded = grounded_candidates.Proposals(self.workbench)
+        self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
+        self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
 
     def close(self):
+        self.text_classification_proposals.close()
+        self.caption_proposals.close()
         self.grounded.close()
         self.generation_jobs.close()
         self.db.close()
@@ -155,7 +169,7 @@ class Dataset:
             for row in rows:
                 if row['id'] in provenance:
                     entry = provenance[row['id']]
-                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if key in entry}
+                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'width', 'height', 'requested_seed') if key in entry}
                 row['annotation'] = json.loads(row['annotation']) if row['annotation'] else None
                 if row['annotation'] is not None:
                     row['annotation'].setdefault('corner_reference', 'image')
@@ -180,7 +194,7 @@ class Dataset:
                             " AND id<>? AND split='unassigned'", (chosen, *args))
         return chosen
 
-    def add(self, body, generation=None):
+    def add(self, body, generation=None, *, enrollment=None):
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -220,6 +234,10 @@ class Dataset:
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
                         self.generation_jobs.record_output(sample_id, *generation)
+                    if enrollment is not None:
+                        # Imported Workbench source metadata shares acquisition's
+                        # commit and original-file cleanup on admission failure.
+                        self.workbench._enroll_import(sample_id, *enrollment)
             except Exception:
                 shutil.rmtree(folder)
                 raise
@@ -364,6 +382,20 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.list())
+                if path.startswith('/api/workbench/selections/'):
+                    return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
+                if path.startswith('/api/workbench/import-result/'):
+                    return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
+                if path == '/api/workbench/text-classification-proposals':
+                    return self.reply(dataset.text_classification_proposals.snapshot())
+                if path.startswith('/api/workbench/text-classification-proposals/'):
+                    return self.reply(dataset.text_classification_proposals.get(path.rsplit('/', 1)[-1]))
+                if path == '/api/workbench/caption-proposals':
+                    return self.reply(dataset.caption_proposals.snapshot())
+                if path.startswith('/api/workbench/caption-proposals/'):
+                    return self.reply(dataset.caption_proposals.get(path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.snapshot())
                 if path.startswith('/api/workbench/grounded/jobs/'):
@@ -374,7 +406,15 @@ def make_handler(dataset):
                 if path == '/api/workbench/recipes':
                     return self.reply(dataset_recipes.RECIPES)
                 if path.startswith('/api/workbench/records/'):
+                    if path.endswith('/preferences'):
+                        return self.reply(dataset.workbench.preferences.list(path.split('/')[-2]))
+                    if path.endswith('/responses'):
+                        return self.reply(dataset.workbench.responses(path.split('/')[-2]))
                     return self.reply(dataset.workbench.get(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/preference-history/'):
+                    return self.reply(dataset.workbench.preferences.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/response-history/'):
+                    return self.reply(dataset.workbench.response_history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/history/'):
                     return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/asset/'):
@@ -420,7 +460,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -446,6 +486,25 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.create(body), 201)
+                if path.startswith('/api/workbench/selections/'):
+                    parts = path.removeprefix('/api/workbench/selections/').split('/')
+                    if len(parts) != 2:
+                        raise workbench.WorkbenchError('Invalid saved selection route.')
+                    return self.reply(dataset.selections.mutate(parts[0], parts[1], body))
+                if path == '/api/workbench/text-classification-proposals':
+                    return self.reply(dataset.text_classification_proposals.start(body), 202)
+                if path == '/api/workbench/text-classification-proposals/cancel':
+                    return self.reply(dataset.text_classification_proposals.cancel(body))
+                if path.startswith('/api/workbench/text-classification-proposals/decide/'):
+                    return self.reply(dataset.text_classification_proposals.decide(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/caption-proposals':
+                    return self.reply(dataset.caption_proposals.start(body), 202)
+                if path == '/api/workbench/caption-proposals/cancel':
+                    return self.reply(dataset.caption_proposals.cancel(body))
+                if path.startswith('/api/workbench/caption-proposals/decide/'):
+                    return self.reply(dataset.caption_proposals.decide(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/grounded/jobs':
                     return self.reply(dataset.grounded.start(body), 202)
                 if path == '/api/workbench/grounded/cancel':
@@ -454,10 +513,32 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/curation':
+                    return self.reply(curation.inspect(dataset.workbench, body))
+                if path == '/api/workbench/import-row':
+                    return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
+                if path.startswith('/api/workbench/rights/'):
+                    return self.reply(dataset.workbench.correct_rights_note(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/native-text-import/prepare':
+                    return self.reply(dataset.native_text_imports.prepare(body))
+                if path == '/api/workbench/native-text-import/row':
+                    return self.reply(dataset.native_text_imports.admit(body), 201)
+                if path == '/api/workbench/caption-import/prepare':
+                    return self.reply(dataset.caption_imports.prepare(body))
+                if path == '/api/workbench/caption-import/row':
+                    return self.reply(dataset.caption_imports.admit(body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/preferences':
+                    return self.reply(dataset.workbench.preferences.save(body))
+                if path == '/api/workbench/preferences/delete':
+                    return self.reply(dataset.workbench.preferences.delete(body))
+                if path == '/api/workbench/responses':
+                    return self.reply(dataset.workbench.save_response(body))
                 if path == '/api/workbench/generate':
                     return self.reply(dataset_recipes.generate(dataset.workbench, body), 201)
+                if path == '/api/workbench/releases/preview':
+                    return self.reply(dataset.releases.preview(body))
                 if path == '/api/workbench/releases':
                     return self.reply(dataset.releases.create(body), 201)
                 if path == '/api/generation/jobs':
@@ -468,6 +549,8 @@ def make_handler(dataset):
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
                     return self.reply(ai_http.text_models(body.get('server_url')))
+                if path == '/api/ai/scan':
+                    return self.reply(gateway_discovery.scan_labeling())
                 if path == '/api/generation/scan':
                     return self.reply(gateway_discovery.scan())
                 if path == '/api/generation/models':

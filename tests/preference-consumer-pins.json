@@ -1,0 +1,21 @@
+{
+  "versions": {
+    "trl": "0.23.1",
+    "datasets": "4.1.1",
+    "transformers": "4.56.2",
+    "torch": "2.8.0+cpu",
+    "accelerate": "1.10.1",
+    "tokenizers": "0.22.1"
+  },
+  "sources": {
+    "trl/data_utils.py": "a66cb8fb91cb5f50ef2fc631662284cb9e2f5841a785cd9ea48cdfab2c7fa29d",
+    "datasets/packaged_modules/json/json.py": "c467154ba0254134ec8eac950b96c5ff22a3d35d9ea8d9f3b9d3984d7c76231c",
+    "datasets/load.py": "0b2357d00215aaf22ca1dc0e91f7745042b8850a5136f6cea7b620c7f60ff836",
+    "trl/trainer/dpo_trainer.py": "b44f4308d6a080e1284c9a4d3752f397b2334f6a3782b5c4fd469e90b7a412ea",
+    "trl/trainer/dpo_config.py": "a12f941bc0801ede8b4f54f47c894ec895d94fc7c563f66fc32ca00ee739e59d"
+  },
+  "upstream_commits": {
+    "trl": "4529a1c8b1813480a85b02c9c8e7f75a29085d65",
+    "datasets": "9be15a723b460586999b6aa1f346e284342fcc1f"
+  }
+}

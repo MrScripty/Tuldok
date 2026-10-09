@@ -1,0 +1,41 @@
+{
+  "review_type": "self-check of own merge resolutions; not independent review",
+  "classification_parent": "7ec7e47a090467fa37b68d33a7e81438828eea9d",
+  "preference_parent": "321f710a9b185bf6e9eac518579c083079a6d751",
+  "scope": [
+    "static/workbench.html",
+    "static/workbench.js",
+    "read-only classification Apply hooks"
+  ],
+  "passed": true,
+  "checks": {
+    "control_inventory_exact_union": true,
+    "unique_control_count": 233,
+    "script_inventory_exact_union": true,
+    "relative_script_order_preserved_for_each_parent": true,
+    "scripts": [
+      "/workbench.js",
+      "/saved-selections.js",
+      "/bulk-import.js",
+      "/caption-import.js",
+      "/curation.js",
+      "/rights-note.js",
+      "/instruction-responses.js",
+      "/preferences.js",
+      "/native-text-import.js",
+      "/caption-proposals.js",
+      "/text-classification-proposals.js"
+    ],
+    "both_showRecord_callbacks_and_save_guards": true,
+    "response_and_preference_intent_epoch_fences": true,
+    "classification_apply_immediate_preference_preview_invalidation_on_success_and_uncertain_ack": true,
+    "workbench_files_match_index": true,
+    "javascript_syntax": true
+  },
+  "sha256": {
+    "static/workbench.html": "f539de40dd657ec6ac2dcb72e3dde0c83333933045cfa2fb8dde5740a695b180",
+    "static/workbench.js": "fec1095ecbe83516f0eb40ee17772fdfbfea3a1c75244c531fbc41acf2d451f4",
+    "static/text-classification-proposals.js": "8adc70abde59a65f584a038d777e48182b85bf5abf288dc2c5369f2fefe23cd5"
+  },
+  "remaining": "Inspect frozen combined native browser screenshots and evidence hashes when parent supplies paths."
+}

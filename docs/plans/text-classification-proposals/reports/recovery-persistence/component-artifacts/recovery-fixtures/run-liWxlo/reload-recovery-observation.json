@@ -1,0 +1,37 @@
+{
+  "expected_id": "4d8bd008a986469a8d3331dd5d24acf9",
+  "restored_pending": {
+    "source_id": "ee4399b1998644e8bce31034a07eff40",
+    "revision": 1,
+    "source_revision": 1,
+    "server_url": "http://127.0.0.1:44117/v1/",
+    "model": "classification-fixture",
+    "instruction": "Changed intent before initial reconciliation",
+    "seed": 42,
+    "labels": [
+      "cancel",
+      "keep",
+      "café 😀"
+    ],
+    "request_id": "38d14e88a2e74e938e7586fbdbd709ab"
+  },
+  "posted_bodies": [
+    {
+      "source_id": "ee4399b1998644e8bce31034a07eff40",
+      "revision": 1,
+      "source_revision": 1,
+      "server_url": "http://127.0.0.1:44117/v1/",
+      "model": "classification-fixture",
+      "instruction": "Changed intent before initial reconciliation",
+      "seed": 42,
+      "labels": [
+        "cancel",
+        "keep",
+        "café 😀"
+      ],
+      "request_id": "38d14e88a2e74e938e7586fbdbd709ab"
+    }
+  ],
+  "before_inference": 1,
+  "after_inference": 2
+}

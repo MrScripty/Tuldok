@@ -1,0 +1,81 @@
+curationLaterEdit: Diagnostic inspection must retain later response intent
+
+false !== true
+
+rightsLaterEdit: Rights acknowledgement must retain later response intent
+
+false !== true
+
+rightsRejectsExistingDraft: Rights correction must not discard an existing response draft
+
+1 !== 0
+
+rightsInvalidatesResponseProofBeforeRefresh: Known rights change must invalidate answer proof before the held list refresh
++ actual - expected
+
++ {
++   eligible: true
++ }
+- null
+
+AggregateError: Combined ownership failures
+    at /workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:71:27 {
+  [errors]: [
+    AssertionError [ERR_ASSERTION]: Diagnostic inspection must retain later response intent
+    
+    false !== true
+    
+        at curationLaterEdit (/workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:32:9)
+        at async /workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:69:7 {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: false,
+      expected: true,
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: Rights acknowledgement must retain later response intent
+    
+    false !== true
+    
+        at rightsLaterEdit (/workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:43:9)
+        at async /workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:69:7 {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: false,
+      expected: true,
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: Rights correction must not discard an existing response draft
+    
+    1 !== 0
+    
+        at rightsRejectsExistingDraft (/workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:50:9)
+        at async /workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:69:7 {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 1,
+      expected: 0,
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: Known rights change must invalidate answer proof before the held list refresh
+    + actual - expected
+    
+    + {
+    +   eligible: true
+    + }
+    - null
+    
+        at rightsInvalidatesResponseProofBeforeRefresh (/workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:62:9)
+        at async /workspace/Tuldok-combined-workbench-local/tests/test_combined_workbench_controller.cjs:69:7 {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: [Object],
+      expected: null,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ]
+}

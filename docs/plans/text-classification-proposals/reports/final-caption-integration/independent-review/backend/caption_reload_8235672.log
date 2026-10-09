@@ -1,0 +1,3 @@
+Fresh guidance ASCII/non-BMP 2000/2001 boundaries and correction/refresh without reload passed; invalid stored evidence remains fail-closed.
+Caption reload: durable before POST, synchronous restore/held GET, changed-intent refusal, 404/refused repeat retention, exact retry, terminal/active reconciliation, storage read/write/remove/corruption bounds and credential exclusion passed.
+Shared tab recovery: history restore/held lookup, stale repeat overwrite, late first-refusal and success ownership, and pageshow storage failure passed.

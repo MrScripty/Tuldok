@@ -1,0 +1,486 @@
+[
+  {
+    "command": "python -m unittest discover -s tests",
+    "status": "failed",
+    "exit_code": 1,
+    "seconds": 95.154,
+    "log": "docs/plans/text-classification-proposals/reports/gates/python--m-unittest-discover--s-tests.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/workbench.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.274,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-workbench.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/saved-selections.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.22,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-saved-selections.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/curation.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.21,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-curation.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/bulk_import.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.3,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-bulk_import.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/caption_import.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.257,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-caption_import.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/rights-note.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.217,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-rights-note.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/instruction-responses.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.229,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-instruction-responses.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/native_text_import.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.226,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-native_text_import.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node --check static/caption-proposals.js",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.184,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node---check-static-caption-proposals.js.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_curation_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.224,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_curation_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_browser_page_load.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.216,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_browser_page_load.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_workbench_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.274,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_workbench_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_saved_selections_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.223,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_saved_selections_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_saved_selection_intent.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.297,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_saved_selection_intent.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_bulk_import_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.285,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_bulk_import_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_caption_import_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.381,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_caption_import_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_rights_note_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.356,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_rights_note_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_instruction_responses_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.235,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_instruction_responses_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_browser_startup.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 21.328,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_browser_startup.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_native_text_import_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.322,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_native_text_import_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_combined_workbench_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.277,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_combined_workbench_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_caption_proposals_controller.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 0.276,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_caption_proposals_controller.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_workbench.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 3.305,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_workbench.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_workbench.cjs/docs/plans/dataset-workflows/reports/workbench-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_workbench.cjs/docs/plans/dataset-workflows/reports/workbench-narrow.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_grounded.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 4.647,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_grounded.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_grounded.cjs/docs/plans/dataset-workflows/reports/workbench-grounded.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_captions.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 4.812,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_captions.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_captions.cjs/docs/plans/image-caption-exports/reports/captions-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_captions.cjs/docs/plans/image-caption-exports/reports/captions-desktop.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_release_preview.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 3.584,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_release_preview.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_release_preview.cjs/docs/plans/selected-release-preview/reports/preview-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_release_preview.cjs/docs/plans/selected-release-preview/reports/preview-narrow.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_saved_selections.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 5.272,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_saved_selections.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_saved_selections.cjs/docs/plans/saved-dataset-selections/reports/saved-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_saved_selections.cjs/docs/plans/saved-dataset-selections/reports/saved-narrow.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_saved_selection_intent.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 3.258,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_saved_selection_intent.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_saved_selection_intent.cjs/docs/plans/saved-selection-intent/reports/intent-blocked.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_metadata_filters.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 5.797,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_metadata_filters.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_metadata_filters.cjs/docs/plans/explicit-metadata-filters/reports/filters-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_metadata_filters.cjs/docs/plans/explicit-metadata-filters/reports/filters-narrow.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_bulk_import.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 3.314,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_bulk_import.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_bulk_import.cjs/docs/plans/bulk-real-import/reports/bulk-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_bulk_import.cjs/docs/plans/bulk-real-import/reports/bulk-desktop.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_dataset_integration.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 5.231,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_dataset_integration.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_dataset_integration.cjs/docs/plans/dataset-integration/reports/integration-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_dataset_integration.cjs/docs/plans/dataset-integration/reports/integration-narrow.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_curation.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 5.515,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_curation.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_curation.cjs/docs/plans/curation-diagnostics/reports/curation-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_curation.cjs/docs/plans/curation-diagnostics/reports/curation-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_curation.cjs/docs/plans/curation-diagnostics/reports/curation-members-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_curation.cjs/docs/plans/curation-diagnostics/reports/curation-members-desktop.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_caption_import.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 6.131,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_caption_import.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_import.cjs/docs/plans/annotated-caption-import/reports/caption-import-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_import.cjs/docs/plans/annotated-caption-import/reports/caption-import-desktop.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_caption_dataset_integration.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 10.201,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_caption_dataset_integration.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-07-download-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-07-download-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-narrow.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_caption_dataset_integration.cjs/docs/plans/dataset-caption-integration/reports/caption-combined-session.json"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 12.829,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_images.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 5.168,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_images.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_rights_note.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 5.387,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_rights_note.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/test_rights_note_artifacts.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 10.721,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-test_rights_note_artifacts.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_instruction_responses.cjs",
+    "status": "blocked",
+    "exit_code": null,
+    "seconds": 0.188,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_instruction_responses.cjs.log",
+    "historical_report_files_preserved": 959,
+    "blocker": "Pinned instruction-consumer dependencies unavailable: trl==0.23.1 (installed: missing), datasets==4.1.1 (installed: missing), transformers==4.56.2 (installed: missing), torch==2.8.0+cpu (installed: missing), accelerate==1.10.1 (installed: missing), tokenizers==0.22.1 (installed: missing). Dependency/model downloads and installations are outside this authorized stage.",
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_native_text_import.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 4.771,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_native_text_import.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_native_text_import.cjs/docs/plans/native-text-classification-import/reports/native-text-desktop.png",
+      "docs/plans/text-classification-proposals/reports/component-artifacts/node-tests-browser_native_text_import.cjs/docs/plans/native-text-classification-import/reports/native-text-narrow.png"
+    ],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_combined_workbench.cjs",
+    "status": "blocked",
+    "exit_code": null,
+    "seconds": 0.165,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_combined_workbench.cjs.log",
+    "historical_report_files_preserved": 959,
+    "blocker": "Pinned instruction-consumer dependencies unavailable: trl==0.23.1 (installed: missing), datasets==4.1.1 (installed: missing), transformers==4.56.2 (installed: missing), torch==2.8.0+cpu (installed: missing), accelerate==1.10.1 (installed: missing), tokenizers==0.22.1 (installed: missing). Dependency/model downloads and installations are outside this authorized stage.",
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  },
+  {
+    "command": "node tests/browser_caption_proposals.cjs",
+    "status": "passed",
+    "exit_code": 0,
+    "seconds": 7.801,
+    "log": "docs/plans/text-classification-proposals/reports/gates/node-tests-browser_caption_proposals.cjs.log",
+    "historical_report_files_preserved": 959,
+    "component_artifacts": [],
+    "historical_report_hashes_preserved": true
+  }
+]

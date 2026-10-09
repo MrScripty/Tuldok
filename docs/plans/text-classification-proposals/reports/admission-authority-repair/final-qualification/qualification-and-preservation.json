@@ -1,0 +1,37 @@
+{
+  "status": "all_required_gates_passed_exact_candidate",
+  "source_head": "97144cb85b274cf68e20e0952907787b28b3026a",
+  "source_tree": "04226dcdf5cf11c0683cad6f28e4af20dfce978f",
+  "caption_source_parent": "12690a58d9b2a781efd081f1a3e796313d5235c1",
+  "landed_development_parent": "2f1d68ee29ec98a524bdf0f14d20b6024a25364c",
+  "required_gates": 46,
+  "passed": 46,
+  "failed": 0,
+  "blocked": 0,
+  "qualified_passing_gates": 46,
+  "seconds": 299.598,
+  "python_discovery_tests": 273,
+  "all_gate_heads_exact": true,
+  "all_gate_source_hashes_stable": true,
+  "source_snapshot_sha256": "d37c2f4cc4c19c20326752d96613897f148a3a9a769eaf1d3716188f12113c56",
+  "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "preservation": {
+    "all_prior_report_file_count": 2801,
+    "all_prior_report_hashes_unchanged": true,
+    "original_historical_reports": 2478,
+    "prior_failed_stage_and_review_files": 323,
+    "original2212_2098_1457_959_unchanged": true,
+    "failed_f95_receipts_unchanged": true,
+    "tmp_backup": "/tmp/tuldok-authority-final-history-uuz5p_cd"
+  },
+  "classification_runtime_sha256": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16",
+  "classification_controller_sha256": "8591e0fa1b8ded04172e06280df0870b838f00cb8a3aed5e97f41c7e32dd15b3",
+  "classification_native_fixture_sha256": "be0772ed87cb20c01336667945bd1f1afb3f3641bf03d3766f63345077a77bb8",
+  "native_raw_run": "/workspace/Tuldok/test-results/text-classification-proposals/run-bS9fAC",
+  "native_copied_run_directories": [
+    "docs/plans/text-classification-proposals/reports/admission-authority-repair/final-qualification/component-artifacts/node-tests-browser_text_classification_proposals.cjs/test-results/text-classification-proposals/run-bS9fAC"
+  ],
+  "native_component_artifact_count": 8,
+  "scope": "Bounded synthetic HTTP/browser fixtures using previously authorized exact pinned isolated environment; no model downloads, real inference, credentials or public writes during qualification.",
+  "publication": "Qualification passed locally; final independent artifact audits and parent publication remain separate actions."
+}

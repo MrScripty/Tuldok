@@ -1,0 +1,51 @@
+{
+  "scope": "Independent backend/strict durable-generation review; full aggregate qualification is still running and not claimed by this receipt",
+  "source_head": "824e3ee1181184e2284875e5a08ebd1406318bfc",
+  "source_tree": "45bbb665da96a719d5e9ae900ce6439bcd2e1f70",
+  "source_hashes": {
+    "static/text-classification-proposals.js": "13e1c6a688a526cf3888bdf1b67c83cd8ee78fa97a0da4f5fcdc1021202738bf",
+    "tests/test_text_classification_proposals_controller.cjs": "2ffcae8773fa5de5f0b7321478d4a0b67b3b83be0ab1a513fe2eb160640a502c",
+    "tests/browser_text_classification_proposals.cjs": "8ca420746d32d930e9f81ad145adfd00f731359fa4368262e2221b4f1489070b",
+    "tests/browser_text_classification_proposals_server.py": "41e1163104d30621e660e00ff2f6aeee7d7f43dda895d5cbbf1cc1229abe1068",
+    "text_classification_proposals.py": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
+    "app.py": "00ce4e44dbb9b80f073ceb19a456ad31392a6f5fee19d043e1ee6674d2f398f0",
+    "workbench.py": "9dec957dcb7f1dd172f3cdb6a4f058a6f07f422071651132637b2bafa9fa7a23",
+    "caption_proposals.py": "f7d428a2da504bd64ed69e63f20b6b40c9070127d710ce6ce0e4f5ef926bf587",
+    "static/caption-proposals.js": "a359fbc0cec9d7d99f724830efafb5c2cfbf35e28aac3e099264ddecab601610"
+  },
+  "unchanged_runtime_from_published_b1": {
+    "text_classification_proposals.py": true,
+    "app.py": true,
+    "workbench.py": true,
+    "caption_proposals.py": true,
+    "static/caption-proposals.js": true
+  },
+  "native_cases_passed": 16,
+  "native_source_unchanged": true,
+  "actual_http_backend_timing": {
+    "first_delayed_POST": 409,
+    "early_GET": 404,
+    "second_same_ID_POST": 202,
+    "durable_GET": 200,
+    "exact_replay_after_source_change": 202,
+    "synthetic_model_requests": 1,
+    "backend_sha256": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
+    "source_scope": "b1 HEAD, backend runtime byte-identical to824e3ee"
+  },
+  "findings": [],
+  "limitations": [
+    "Opaque, foreign-schema, foreign-raw, extra-field and orphan attempt evidence stays failclosed; normal atomic claim/retirement cannot produce an orphan. This scoped implementation does not guess or discard such evidence.",
+    "The positive counter-corruption recovery exception requires the exact valid pending frame/body/ID and a matching admitted receipt; strict Claim and refusal CAS never accept a malformed generation.",
+    "Native browser probes inject bounded synthetic receipts/lost acknowledgements while exercising actual IndexedDB/Web Locks; actual backend loopback proof uses one synthetic provider response and no real inference."
+  ],
+  "backend_contract_audit": [
+    "Exact existing request ID/body returns previously admitted job before busy or current source checks; changed intent409, no replay inference",
+    "Strict label identity and explicit boolean abstention; no fallback",
+    "Immutable source/prompt/provider/raw requested inputs/labels/revision evidence unchanged",
+    "Bounded SQL summary strips source text and raw response before decode; full GET retains evidence",
+    "Source/deletion/revision/annotation guards at completion and Apply; draft-only atomic idempotent Apply and acquisition provenance preservation unchanged",
+    "Restart interrupts unresolved backend work, cancellation fences late output, no automatic inference"
+  ],
+  "working_tree_diff": "",
+  "source_head_end": "824e3ee1181184e2284875e5a08ebd1406318bfc"
+}

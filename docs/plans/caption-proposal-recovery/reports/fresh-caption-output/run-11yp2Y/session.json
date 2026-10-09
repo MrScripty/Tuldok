@@ -1,0 +1,37 @@
+{
+  "source_head": "ff91d0d920a57df6585ee84bcbfa204910b13438",
+  "model": "controlled local HTTP fixture",
+  "fixed": [
+    {
+      "id": "0a3e272964784a168572d28ad07142df",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "cc4010dfd5534aa1bd87712040822456",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "f815636aa9674603bdd11166422c1df5",
+      "revision": 2,
+      "source_revision": 1
+    }
+  ],
+  "job_id": "da3b92f8884647449f82f352eadc356b",
+  "application_revision": 3,
+  "recovery_id": "da3b92f8884647449f82f352eadc356b",
+  "recovery_post_ids": [
+    "da3b92f8884647449f82f352eadc356b",
+    "da3b92f8884647449f82f352eadc356b"
+  ],
+  "recovery_backend_requests": 1,
+  "reject_save_revision": 5,
+  "subsequent_save_revision": 6,
+  "cancelled_id": "134194bab97d4bc3a03f0b1c536e8c4f",
+  "fresh_intent_id": "e0d259c5d04043f4abeb02b67adfa80d",
+  "downloaded_zip_sha256": "6aecb85498443a21d5f20ef9a0351fdbed86076049cba5c509795ab1413bd65c",
+  "consumer": "unchanged pinned diffusion_check_image_data.py",
+  "real_model_quality": false,
+  "tests": "held admission/early real 404/lost start acknowledgement/exact-ID repeat runs backend once, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout"
+}

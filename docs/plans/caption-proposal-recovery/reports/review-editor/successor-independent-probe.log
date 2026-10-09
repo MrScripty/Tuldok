@@ -1,0 +1,1 @@
+{"result":"PASS","trace":[{"phase":"save_pending","parent":2,"current":2,"dirty":true},{"phase":"save_ack_after_reject","current":3,"dirty":false,"caption":"Independent saved caption"},{"phase":"next_save_parent","revision":3,"caption":"Independent subsequent save"},{"phase":"save_ack_before_reject","current":3,"dirty":false,"reject_pending":true}]}

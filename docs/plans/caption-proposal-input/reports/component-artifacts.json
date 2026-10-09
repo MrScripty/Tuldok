@@ -1,0 +1,366 @@
+[
+  {
+    "gate": 24,
+    "path": "component-artifacts/gate-24/docs/plans/dataset-workflows/reports/workbench-narrow.png",
+    "original_path": "docs/plans/dataset-workflows/reports/workbench-narrow.png",
+    "bytes": 57989,
+    "sha256": "20ba012e9602a2dbce74a3ce5e071e665f0907013b89dd7f2e93404d1d6c6635"
+  },
+  {
+    "gate": 24,
+    "path": "component-artifacts/gate-24/docs/plans/dataset-workflows/reports/workbench-desktop.png",
+    "original_path": "docs/plans/dataset-workflows/reports/workbench-desktop.png",
+    "bytes": 129701,
+    "sha256": "3f6a8409b1312be37c2e70134638d2231c0be0c0f147d58efffbbf22f075c4a8"
+  },
+  {
+    "gate": 25,
+    "path": "component-artifacts/gate-25/docs/plans/dataset-workflows/reports/workbench-grounded.png",
+    "original_path": "docs/plans/dataset-workflows/reports/workbench-grounded.png",
+    "bytes": 105731,
+    "sha256": "ad6af8c0104c9830572a3b817753c54057f23f4ec284a62ec44e20869c0cb623"
+  },
+  {
+    "gate": 26,
+    "path": "component-artifacts/gate-26/docs/plans/image-caption-exports/reports/captions-narrow.png",
+    "original_path": "docs/plans/image-caption-exports/reports/captions-narrow.png",
+    "bytes": 58414,
+    "sha256": "2138cbaad8cc0be17f4acb23e93dde47f5f314d65b6395313fe97c9828060469"
+  },
+  {
+    "gate": 26,
+    "path": "component-artifacts/gate-26/docs/plans/image-caption-exports/reports/captions-desktop.png",
+    "original_path": "docs/plans/image-caption-exports/reports/captions-desktop.png",
+    "bytes": 142720,
+    "sha256": "9d95d7aed5fe0e8e918df8f593abf8f5decc76743ab761fd62b8d15f3c4107a8"
+  },
+  {
+    "gate": 27,
+    "path": "component-artifacts/gate-27/docs/plans/selected-release-preview/reports/preview-desktop.png",
+    "original_path": "docs/plans/selected-release-preview/reports/preview-desktop.png",
+    "bytes": 78176,
+    "sha256": "aed2e6e7dfc207ef1f9885524941d94d1797b84fd052ad14d7434f6f43321402"
+  },
+  {
+    "gate": 27,
+    "path": "component-artifacts/gate-27/docs/plans/selected-release-preview/reports/preview-narrow.png",
+    "original_path": "docs/plans/selected-release-preview/reports/preview-narrow.png",
+    "bytes": 69913,
+    "sha256": "b73bb3024655d276c64e2c92968998b4b8dde7f1fc99cbd92a9b634b4f6a04d8"
+  },
+  {
+    "gate": 28,
+    "path": "component-artifacts/gate-28/docs/plans/saved-dataset-selections/reports/saved-narrow.png",
+    "original_path": "docs/plans/saved-dataset-selections/reports/saved-narrow.png",
+    "bytes": 61311,
+    "sha256": "258e2c0d1255997c4f6530842697ed8317e443531add961dd4285351fdcb75e9"
+  },
+  {
+    "gate": 28,
+    "path": "component-artifacts/gate-28/docs/plans/saved-dataset-selections/reports/saved-desktop.png",
+    "original_path": "docs/plans/saved-dataset-selections/reports/saved-desktop.png",
+    "bytes": 178722,
+    "sha256": "bf22b759079d5d16beb8c12ba67009247e09c6b2f1548b2306118f0ec037c960"
+  },
+  {
+    "gate": 29,
+    "path": "component-artifacts/gate-29/docs/plans/saved-selection-intent/reports/intent-blocked.png",
+    "original_path": "docs/plans/saved-selection-intent/reports/intent-blocked.png",
+    "bytes": 60551,
+    "sha256": "00fa687099c875bb271ce9165a9afb4481c2961971503903c61f75acb152d30a"
+  },
+  {
+    "gate": 30,
+    "path": "component-artifacts/gate-30/docs/plans/explicit-metadata-filters/reports/filters-narrow.png",
+    "original_path": "docs/plans/explicit-metadata-filters/reports/filters-narrow.png",
+    "bytes": 65468,
+    "sha256": "10ddda1e2c057e869d5d4382ffd2c628632a50da5e4e9d7ff7fd5f9e4f8584e4"
+  },
+  {
+    "gate": 30,
+    "path": "component-artifacts/gate-30/docs/plans/explicit-metadata-filters/reports/filters-desktop.png",
+    "original_path": "docs/plans/explicit-metadata-filters/reports/filters-desktop.png",
+    "bytes": 132096,
+    "sha256": "1da506ed40bdf28140d5ced2263fdab5ed44fa7b33557feaf35a5aff7fcdfc3f"
+  },
+  {
+    "gate": 31,
+    "path": "component-artifacts/gate-31/docs/plans/bulk-real-import/reports/bulk-narrow.png",
+    "original_path": "docs/plans/bulk-real-import/reports/bulk-narrow.png",
+    "bytes": 64095,
+    "sha256": "10a2e3bfad271b7998dc754acc270707585ff44e263f9bd796ac689c8d7ca0be"
+  },
+  {
+    "gate": 31,
+    "path": "component-artifacts/gate-31/docs/plans/bulk-real-import/reports/bulk-desktop.png",
+    "original_path": "docs/plans/bulk-real-import/reports/bulk-desktop.png",
+    "bytes": 213246,
+    "sha256": "950de1abbb0a2adeb55c30261c41181caef12dba4f6ad5084144063ccc719c6d"
+  },
+  {
+    "gate": 32,
+    "path": "component-artifacts/gate-32/docs/plans/dataset-integration/reports/integration-desktop.png",
+    "original_path": "docs/plans/dataset-integration/reports/integration-desktop.png",
+    "bytes": 210632,
+    "sha256": "8f3c00fea5d1a818c8c837e56d20df8c40c549566088bcafe284349eea8ac87a"
+  },
+  {
+    "gate": 32,
+    "path": "component-artifacts/gate-32/docs/plans/dataset-integration/reports/integration-narrow.png",
+    "original_path": "docs/plans/dataset-integration/reports/integration-narrow.png",
+    "bytes": 66158,
+    "sha256": "d792e0ea9c9d0c7865cdc952d5e3b72f1363ba2e09bd3082b894fc7fe195b553"
+  },
+  {
+    "gate": 33,
+    "path": "component-artifacts/gate-33/docs/plans/curation-diagnostics/reports/curation-desktop.png",
+    "original_path": "docs/plans/curation-diagnostics/reports/curation-desktop.png",
+    "bytes": 141010,
+    "sha256": "a20c4605548082953d1be4c4b2568aeffd6964e4cbad11dad4a7c8dca21b8297"
+  },
+  {
+    "gate": 33,
+    "path": "component-artifacts/gate-33/docs/plans/curation-diagnostics/reports/curation-members-narrow.png",
+    "original_path": "docs/plans/curation-diagnostics/reports/curation-members-narrow.png",
+    "bytes": 59560,
+    "sha256": "6a66bbeeb01598ba71c75d32a62bc32d0ee0c78b27878136b4c3c921a12460f8"
+  },
+  {
+    "gate": 33,
+    "path": "component-artifacts/gate-33/docs/plans/curation-diagnostics/reports/curation-narrow.png",
+    "original_path": "docs/plans/curation-diagnostics/reports/curation-narrow.png",
+    "bytes": 70476,
+    "sha256": "6f393ac099224d6ae57b7d6b19c5bc438cd0327551b79cb0fd16f0c58a6e8a86"
+  },
+  {
+    "gate": 33,
+    "path": "component-artifacts/gate-33/docs/plans/curation-diagnostics/reports/curation-members-desktop.png",
+    "original_path": "docs/plans/curation-diagnostics/reports/curation-members-desktop.png",
+    "bytes": 132411,
+    "sha256": "cf793754ecc341622ca238f8611f53ae8370fe0ba6b8b2838d49eaa232dd7631"
+  },
+  {
+    "gate": 34,
+    "path": "component-artifacts/gate-34/docs/plans/annotated-caption-import/reports/caption-import-narrow.png",
+    "original_path": "docs/plans/annotated-caption-import/reports/caption-import-narrow.png",
+    "bytes": 78405,
+    "sha256": "d965ef3e775826480ccd46d0af4ac32cedafc9ff700344f1a9adf84588f47e3b"
+  },
+  {
+    "gate": 34,
+    "path": "component-artifacts/gate-34/docs/plans/annotated-caption-import/reports/caption-import-desktop.png",
+    "original_path": "docs/plans/annotated-caption-import/reports/caption-import-desktop.png",
+    "bytes": 169215,
+    "sha256": "36f271dbd479fcc719d469cc4c0a6bc0e51532677f9c2aba977bf205888edbbd"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-narrow.png",
+    "bytes": 73204,
+    "sha256": "97aff4ad29d28b937ba67a2ef31da07678575b5fe7f79d598b108fd3c743f4a3"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-desktop.png",
+    "bytes": 404959,
+    "sha256": "792dd3e5912a1cb35ec384315c263516e00e13825ec7851f764adf88ca89e688"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-narrow.png",
+    "bytes": 65812,
+    "sha256": "c3ca625c58e407d28a1bccdb649728951d08275cf05be81c86ae66bdbbb073b5"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-05-fixed-set-narrow.png",
+    "bytes": 52871,
+    "sha256": "ffb1b6d48b9cc2c21a9bef655ca2dee250e97869ede7453eab9d7a82e7cb98b0"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-desktop.png",
+    "bytes": 363492,
+    "sha256": "58eb405ba9145ef6fc2ff7db6c3e279e284eb25d716851e96592d3f7148b4af9"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-desktop.png",
+    "bytes": 210418,
+    "sha256": "1f84185112d09d338806888634790b88473fb3d95a9201491a87b68e4b6666e5"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-07-download-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-07-download-desktop.png",
+    "bytes": 83798,
+    "sha256": "f14e4c78ddeae9d40591a1c388ede9210ec71bacf820ed2849c4762bf753a3c3"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-03-caption-reviewed-narrow.png",
+    "bytes": 93189,
+    "sha256": "b564e7185e930e71c51cb9a76065f172ee0467c30eb172d39f5e4f6839b42748"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-02-draft-blocked-desktop.png",
+    "bytes": 183896,
+    "sha256": "a62ab9fe0d4afe0da7837a25d2fae22ceec4cf5cdeb88a9328fa2cdd0cf64c4b"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-06-release-preview-desktop.png",
+    "bytes": 111104,
+    "sha256": "dd5d8b49a8b4675738b517cd6a8f92e23686fc6bcea7d1e07821992fbff7fea1"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-session.json",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-session.json",
+    "bytes": 92239,
+    "sha256": "7495d1c7bf4520de7d19d13ffbeea5391fd65027ee7da0d69aaa0c3b5b8038ea"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-desktop.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-desktop.png",
+    "bytes": 209687,
+    "sha256": "5e81f0ad148ba7776fb013bcceca47f477f363fb93920080c7bf4880ce10807d"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-01-folder-import-narrow.png",
+    "bytes": 78075,
+    "sha256": "3695f151871f9efaf4cdac0c53792cc62bc1953d22c68653bbf5bc0fd7044036"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-04-exact-filter-narrow.png",
+    "bytes": 60951,
+    "sha256": "e47ed076a4a4e5ca76a779e90d703d8b55bb9f1a9b1b4b66f7dd37648d4fb63d"
+  },
+  {
+    "gate": 35,
+    "path": "component-artifacts/gate-35/docs/plans/dataset-caption-integration/reports/caption-combined-07-download-narrow.png",
+    "original_path": "docs/plans/dataset-caption-integration/reports/caption-combined-07-download-narrow.png",
+    "bytes": 54811,
+    "sha256": "a1cdcf8c3be7c4e99c17f16e475c2eb211341f6204a162b3406a493926b3bede"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-narrow.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-narrow.png",
+    "bytes": 63507,
+    "sha256": "65a38d986d91ca591ed42ddc7f0a69dc5ae5cd3f1fb420006d00f188c5b97d5b"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-03-weighted-preview-narrow.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-03-weighted-preview-narrow.png",
+    "bytes": 67588,
+    "sha256": "e22712b75ad71976b6635dedeaa3737f6967f08dfa875b6ce134fad74a940909"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-04-download-desktop.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-04-download-desktop.png",
+    "bytes": 96374,
+    "sha256": "c6d375c8f3b045107c7cb1b787366e94a9e6293aac93250d57087e13972f8dde"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-01-independent-answers-narrow.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-01-independent-answers-narrow.png",
+    "bytes": 49039,
+    "sha256": "7dc64ac58a461a8d6b0db3a38fbc54c0e649cd3c5ebae8ddcc54f090536ff262"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-session.json",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-session.json",
+    "bytes": 10555,
+    "sha256": "0f7636882babcfaf1ab23312003b536175c0da4a783b0163e93e96867b4caa53"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-01-independent-answers-desktop.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-01-independent-answers-desktop.png",
+    "bytes": 225624,
+    "sha256": "c16e0cce3917d7a33e21faee1f4c05f0c840c8acfc415c3b7cdba1618cf9b3da"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-desktop.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-02-stale-fixed-selection-desktop.png",
+    "bytes": 84705,
+    "sha256": "9a46df3c8948f5e2d92b257331a03c12c00ae0b567cd53a40f6f00258ec4b299"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-03-weighted-preview-desktop.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-03-weighted-preview-desktop.png",
+    "bytes": 96852,
+    "sha256": "494e6592a7cfce1d2c2ae6929a45617a2124f44e4ee2138e4010804aeee8721e"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-downloaded.zip",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-downloaded.zip",
+    "bytes": 12658,
+    "sha256": "9383b47933c24bd83132a0368b48683a3c4a10e674a085000d9abfe719ecf249"
+  },
+  {
+    "gate": 40,
+    "path": "component-artifacts/gate-40/docs/plans/instruction-responses/reports/instruction-04-download-narrow.png",
+    "original_path": "docs/plans/instruction-responses/reports/instruction-04-download-narrow.png",
+    "bytes": 67037,
+    "sha256": "e8c5e1ac5dcd35d641d39f1d0121d76a7121f22b3577788556307be8dc51dee6"
+  },
+  {
+    "gate": 41,
+    "path": "component-artifacts/gate-41/docs/plans/native-text-classification-import/reports/native-text-narrow.png",
+    "original_path": "docs/plans/native-text-classification-import/reports/native-text-narrow.png",
+    "bytes": 61434,
+    "sha256": "7768d2cdc2a8513d21b9313dc7802217e3beb10faa0dc13d0538214314147831"
+  },
+  {
+    "gate": 41,
+    "path": "component-artifacts/gate-41/docs/plans/native-text-classification-import/reports/native-text-desktop.png",
+    "original_path": "docs/plans/native-text-classification-import/reports/native-text-desktop.png",
+    "bytes": 135087,
+    "sha256": "2a8ca9344960767e4a8d368dad6b3af369930f2a271c1312a1de83ead6177f3f"
+  },
+  {
+    "gate": 42,
+    "path": "component-artifacts/gate-42/docs/plans/workbench-projection-warnings-fix/reports/combined-session.json",
+    "original_path": "docs/plans/workbench-projection-warnings-fix/reports/combined-session.json",
+    "bytes": 6198,
+    "sha256": "f44f618cf2c48c5b27ca253e5041d8360734aad6527636a177fc3cc99cba17a4"
+  },
+  {
+    "gate": 42,
+    "path": "component-artifacts/gate-42/docs/plans/workbench-projection-warnings-fix/reports/combined-canonical-downloaded.zip",
+    "original_path": "docs/plans/workbench-projection-warnings-fix/reports/combined-canonical-downloaded.zip",
+    "bytes": 8061,
+    "sha256": "916702faee073f83ee078ab35244f5b3e17147b141040911ce5019ae31ab2618"
+  },
+  {
+    "gate": 42,
+    "path": "component-artifacts/gate-42/docs/plans/workbench-projection-warnings-fix/reports/combined-instruction-downloaded.zip",
+    "original_path": "docs/plans/workbench-projection-warnings-fix/reports/combined-instruction-downloaded.zip",
+    "bytes": 8303,
+    "sha256": "28badda195a51159ea8b9df9b286a2337b784f712eb9592d46799e7ce0e361fb"
+  }
+]

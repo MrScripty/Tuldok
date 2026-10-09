@@ -1,0 +1,88 @@
+{
+  "candidate": "f95cd5c95189165534d21c204a227f4dd8145c92",
+  "tree": "6e12a1578a0027e5f4e384bea240ba8bbc158032",
+  "caption_head": "12690a58d9b2a781efd081f1a3e796313d5235c1",
+  "start_and_end_candidate_hashes_match": true,
+  "findings": [],
+  "interaction_signoff": "no_remaining_findings_in_scope",
+  "prior_823_files_preserved": 31,
+  "native_fresh_origin_race_runs": 3,
+  "native_race_results": [
+    {
+      "run": 1,
+      "request_id": "29f341c26af84113af839fdfc11e879a",
+      "POSTs": 1,
+      "provider_requests": 1,
+      "loser_POSTs": 0
+    },
+    {
+      "run": 2,
+      "request_id": "4aaf44f5fa4a4b21905c71ac35a378fb",
+      "POSTs": 1,
+      "provider_requests": 1,
+      "loser_POSTs": 0
+    },
+    {
+      "run": 3,
+      "request_id": "3368e4c35bd24a398864341a465a5528",
+      "POSTs": 1,
+      "provider_requests": 1,
+      "loser_POSTs": 0
+    }
+  ],
+  "native_lifecycle_results": {
+    "real_IDB_open_held_pagehide": "passed",
+    "actual_pending_commit_readonly_visible_full_reload": "passed",
+    "actual_two_feature_reload_two_tabs_held_caption_apply": "passed"
+  },
+  "composed_cases_passed": 16,
+  "caption_fresh_invalid_same_document_corrections_passed": 12,
+  "source_sha256": {
+    "static/text-classification-proposals.js": "5d2b4a7328f90bb9ae2a009802d7dba8e4ec3277e4c5797d154b93e68883ae16",
+    "static/caption-proposals.js": "a359fbc0cec9d7d99f724830efafb5c2cfbf35e28aac3e099264ddecab601610",
+    "static/workbench.js": "c810e63c3060683b4f3ec03a5184ab6abe96c5a3bcff93f84309329eb90ffd63",
+    "static/workbench.html": "12fd0ae34a32ba43d90c84bb048f52f4cdd5530b107288a969facf3e7af513af",
+    "static/instruction-responses.js": "93b647fa0bc0fc064207d7c6170ac7c5788629727c4edf7b3353a2e6e5391c61",
+    "text_classification_proposals.py": "ae24de313d56be60c6210c01297f393bee380ce306fe8a04a6a0ab98a989406d",
+    "caption_proposals.py": "f7d428a2da504bd64ed69e63f20b6b40c9070127d710ce6ce0e4f5ef926bf587",
+    "tests/test_text_classification_proposals_controller.cjs": "8591e0fa1b8ded04172e06280df0870b838f00cb8a3aed5e97f41c7e32dd15b3",
+    "tests/browser_text_classification_proposals.cjs": "299550776729787559033790e85aeaa8f386ae0a85a943c860b403034127ef59"
+  },
+  "artifact_sha256": {
+    "atomic-indexeddb-fixture.cjs": "ccd08c2f2008e16b08bba13e98b1ed19a255749e124cefd28e4bbdb077c24161",
+    "caption-fresh-parity-f95.log": "2ea9f4d38f96e27d63228a1094a48964738714a3356b9eeb493cb779d0e54e75",
+    "caption-fresh-parity-probe.cjs": "6f2eae06d99cde534193a7d4b2219d4af7d26755e1000a668f85ee23d2041206",
+    "caption-storage-harness.cjs": "94cd873f13fc84da81ae3d10dc042e01254bbd0f4996da4a0aec3c95a4e9178f",
+    "composed-cross-feature-f95.log": "89106c85cd3af7c4c29dcb2d7329dca6bed81cc3525c6ec5e83e16136e7c8f63",
+    "composed-cross-feature-probe.cjs": "3a2d69bf527690975889f7ad9f2b7088e61571db40e003c4123215c3cffc592d",
+    "composed-preparation-first-attempt.log": "d566d0eda0de7d38e982c6582c420f1cc9a5a346d500aec215d9d9b950052b28",
+    "composition-preservation-f95.json": "bf2e22a6d58023a1d5204ef114c76c6c7cb12e6b3b95b003941208da322064db",
+    "native-commit-reload-before-live-read-probe.cjs": "410399f34973d2c08ca5158329e1bb1ae408e6c5d5b78b4e8cdd0469ca2a6808",
+    "native-commit-reload-f95-first.log": "8b33eb76009c2a29946f832f60d8c8f880969199ba03187c16ea2abf33530da7",
+    "native-commit-reload-f95.log": "d9b6482a9693ebbab8b94d6fdb39072fcfc5618567dac5497cadc028b4e4c3a4",
+    "native-commit-reload-probe.cjs": "d750edffc10ad7fa9136064f208115cf3b4f41826fd3bd503d8011e38c48ff0d",
+    "native-commit-reload-session-first.json": "824a6ba8a1b2556565dc550811f1c01d547d3159ed1feacf66e8140ea31b1c20",
+    "native-commit-reload-session.json": "57f70d010dd1fe01a90c99f5a7801ebd56a42b3645754f5a9eea1f5f3a1ae2de",
+    "native-cross-feature-f95.log": "b9147204e684bd0b06a502e9ccc0d48f0c3399b25885d0311a9a1fb97fbda81f",
+    "native-cross-feature-probe.cjs": "63dea8019ac69e4f393e919aec53c0510acbc90579bffe56531f47fdce9974ca",
+    "native-cross-feature-server.py": "7fc0bfd22f0bfa444e26226474c5f04758d030d6e3fcf45b60cefcea2e3a5115",
+    "native-cross-feature-session.json": "036f9a0099d3d242a9bb65ffe95892336e083c4d46104f5dc0140c51b7a7c830",
+    "native-readiness-pagehide-f95.log": "94cefa9feb9e2c2f1a84652a145830f2d023f6eeddaf6e787bd1114b576a21df",
+    "native-readiness-pagehide-probe.cjs": "c7fcc2f93493edb8d0cdfc9e57ab9428b47e1df0febc9e4700e4bfa5aece381d",
+    "native-readiness-pagehide-session.json": "bff3eeb335d76bbd8cc2755b8414045b9bfad7fdce410d580b65d81c8191a299",
+    "native-two-pages-f95-run1.log": "602f41c0b91ca70795040fd63c4fd90baa9e7bcfb94498a5345d1e77562875a5",
+    "native-two-pages-f95-run2.log": "eb5bed5791b37572ee3e5c7756122b4f63fd90baddbe3cd94a632784b96c5114",
+    "native-two-pages-f95-run3.log": "d9a4b67f2e66e73888f3d541b56c305224d9badc8a6ef879f1cc86c4b0101e9a",
+    "native-two-pages-probe.cjs": "2cf256acc4632a8e5dda1c22fb837b670dd7a5611b8385a9df880a7049ed92f3",
+    "review-f95.md": "18d270238dae05646fe5c9d96a553ceb3244753e262faf1c2df0abe9e14be969"
+  },
+  "implementation_edits": false,
+  "commits": false,
+  "public_writes": false,
+  "full_aggregate_completed_by_this_reviewer": false,
+  "limits": [
+    "synthetic_inference_only",
+    "BFCache_navigation_not_qualified",
+    "IDB_failure_CAS_migration_review_owned_by_backend_reviewer"
+  ]
+}

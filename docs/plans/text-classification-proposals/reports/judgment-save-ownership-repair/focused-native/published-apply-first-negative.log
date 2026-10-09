@@ -1,0 +1,70 @@
+Classification/preferences integration evidence: /workspace/scratch/tuldok-classification-judgment-busy-repair/run-Ak3dOw
+[95275:95302:1007/140942.505147:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[95275:95302:1007/140942.515157:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95302:1007/140942.515245:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[95275:95302:1007/140942.515285:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[95275:95302:1007/140942.515290:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95313:1007/140942.520054:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 95315: Read-only file system (30)
+[95275:95302:1007/140943.040839:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95302:1007/140943.084449:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95313:1007/140943.085457:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 95331: Read-only file system (30)
+[95275:95275:1007/140943.115875:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95302:1007/140943.116572:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95275:1007/140943.116573:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95302:1007/140943.116610:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+
+DevTools listening on ws://127.0.0.1:36953/devtools/browser/d243cb40-1074-4b19-9056-7afb5cb1b5f7
+[95275:95275:1007/140943.126519:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95275:1007/140943.130156:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95302:1007/140943.132184:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[95275:95302:1007/140943.132207:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[95275:95275:1007/140943.132210:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95275:1007/140943.132547:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95302:1007/140943.132702:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95313:1007/140943.177586:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 95363: Read-only file system (30)
+[95275:95313:1007/140943.240203:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 95373: Read-only file system (30)
+[95275:95313:1007/140943.244182:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 95380: Read-only file system (30)
+[95275:95275:1007/140943.270617:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: 
+[95275:95275:1007/140943.275644:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95302:1007/140943.275766:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95275:1007/140943.290439:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[95275:95302:1007/140943.296120:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[95275:95275:1007/140943.299695:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+AssertionError [ERR_ASSERTION]: Clean busy judgment retains editor
++ actual - expected
+
++ null
+- {
+-   created_at: '2026-10-07T14:09:48.160520+00:00',
+-   deleted: false,
+-   id: 'c8d36508d1fe4030a020cfb61f7e819e',
+-   left_id: 'fc2c2eedc438427bbb04084836c214f9',
+-   left_revision: 1,
+-   outcome: 'left',
+-   parent_revision: 1,
+-   prompt_id: '5150a507e3274b9e9b021bc95e3c6921',
+-   provenance: {
+-     method: 'human_comparative_judgment'
+-   },
+-   rationale: 'Explicit original comparison.',
+-   review: 'human_reviewed',
+-   revision: 1,
+-   right_id: '01c532ac92714edeaec91f2004759058',
+-   right_revision: 1,
+-   source_revision: 1,
+-   stale_warning: 'Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.',
+-   updated_at: '2026-10-07T14:09:48.160520+00:00'
+- }
+
+    at assertCleanOwner (/workspace/Tuldok/tests/browser_classification_preferences_integration.cjs:69:207)
+    at /workspace/Tuldok/tests/browser_classification_preferences_integration.cjs:87:5
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: [Object],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+Runtime errors: []
+Integration diagnostics: {"current":"5150a507e3274b9e9b021bc95e3c6921","revision":3,"notice":"Record loaded.","classification":false,"classificationStatus":"Classification applied as draft. Fixed selections retain their old revisions; explicitly review and reselect before export. Later edits are retained if the editor changed.","preferenceBusy":false,"preferenceDirty":false,"responseBusy":false,"responseDirty":false,"held":"before","posts":[{"route":"/api/workbench/releases/preview","body":{"format":"text_preference_v1","items":[{"id":"575effd33db444c38fb222600deaca4f","revision":1,"prompt_id":"02154433e9824fb1a650419a9aa2aed4","parent_revision":1,"source_revision":1,"left_id":"d2d01d41ae484556a31b6e6f194de449","left_revision":1,"right_id":"87692abefef5463094affc27840b1a3b","right_revision":1}],"ratios":{"train":100,"validation":0,"test":0},"seed":42}},{"route":"/api/generation/prompt-models","body":{"server_url":"http://127.0.0.1:39345/v1/"}},{"route":"/api/workbench/text-classification-proposals","body":{"source_id":"02154433e9824fb1a650419a9aa2aed4","revision":1,"source_revision":1,"server_url":"http://127.0.0.1:39345/v1/","model":"classification-fixture","instruction":"Combined explicit classification","seed":42,"labels":["cancel","keep"],"request_id":"245dcc864b0a43fa8337d7c2964f7d9b"}},{"route":"/api/workbench/text-classification-proposals/decide/245dcc864b0a43fa8337d7c2964f7d9b","body":{"revision":3,"decision":"apply_draft","labels":["cancel","keep"]}},{"route":"/api/workbench/releases/preview","body":{"format":"text_preference_v1","items":[{"id":"575effd33db444c38fb222600deaca4f","revision":1,"prompt_id":"02154433e9824fb1a650419a9aa2aed4","parent_revision":1,"source_revision":1,"left_id":"d2d01d41ae484556a31b6e6f194de449","left_revision":1,"right_id":"87692abefef5463094affc27840b1a3b","right_revision":1}],"ratios":{"train":100,"validation":0,"test":0},"seed":42}},{"route":"/api/workbench/releases/preview","body":{"format":"text_preference_v1","items":[{"id":"f907510859f94464a852c6d8c0ff4646","revision":1,"prompt_id":"0105019ed4324d57aa3d357414e4d865","parent_revision":1,"source_revision":1,"left_id":"d066b8ae35b94b7691c4f33f29ef3389","left_revision":1,"right_id":"8a576911d2e14bd69bca004195ca222c","right_revision":1}],"ratios":{"train":100,"validation":0,"test":0},"seed":42}},{"route":"/api/generation/prompt-models","body":{"server_url":"http://127.0.0.1:39345/v1/"}},{"route":"/api/workbench/text-classification-proposals","body":{"source_id":"0105019ed4324d57aa3d357414e4d865","revision":1,"source_revision":1,"server_url":"http://127.0.0.1:39345/v1/","model":"classification-fixture","instruction":"Combined explicit classification","seed":42,"labels":["cancel","keep"],"request_id":"934b05fe68e14b5080710fb053ba3f18"}},{"route":"/api/workbench/text-classification-proposals/decide/934b05fe68e14b5080710fb053ba3f18","body":{"revision":3,"decision":"apply_draft","labels":["cancel","keep"]}},{"route":"/api/workbench/releases/preview","body":{"format":"text_preference_v1","items":[{"id":"f907510859f94464a852c6d8c0ff4646","revision":1,"prompt_id":"0105019ed4324d57aa3d357414e4d865","parent_revision":1,"source_revision":1,"left_id":"d066b8ae35b94b7691c4f33f29ef3389","left_revision":1,"right_id":"8a576911d2e14bd69bca004195ca222c","right_revision":1}],"ratios":{"train":100,"validation":0,"test":0},"seed":42}},{"route":"/api/generation/prompt-models","body":{"server_url":"http://127.0.0.1:39345/v1/"}},{"route":"/api/workbench/text-classification-proposals","body":{"source_id":"2a8148453ed4438fa6942dd7711660b7","revision":1,"source_revision":1,"server_url":"http://127.0.0.1:39345/v1/","model":"classification-fixture","instruction":"Combined explicit classification","seed":42,"labels":["cancel","keep"],"request_id":"b3180c8cf5744723bb9483da10fa369f"}},{"route":"/api/workbench/text-classification-proposals/decide/b3180c8cf5744723bb9483da10fa369f","body":{"revision":3,"decision":"apply_draft","labels":["cancel","keep"]}},{"route":"/api/generation/prompt-models","body":{"server_url":"http://127.0.0.1:39345/v1/"}},{"route":"/api/workbench/text-classification-proposals","body":{"source_id":"1cc69d463eb944e8971bb34d8936618f","revision":1,"source_revision":1,"server_url":"http://127.0.0.1:39345/v1/","model":"classification-fixture","instruction":"Combined explicit classification","seed":42,"labels":["cancel","keep"],"request_id":"f9aa24e489d441d390d580e114390306"}},{"route":"/api/workbench/preferences","body":{"id":"469560a58597436a9c2f61039de4466d","revision":1,"prompt_id":"1cc69d463eb944e8971bb34d8936618f","parent_revision":1,"source_revision":1,"left_id":"eee26310115948ad9fa5d02d166a3e26","left_revision":1,"right_id":"fabb6304dd264f65ab9e5a6175922267","right_revision":1,"outcome":"left","rationale":"Explicit saved comparative rationale.","review":"draft"}},{"route":"/api/workbench/text-classification-proposals/decide/f9aa24e489d441d390d580e114390306","body":{"revision":3,"decision":"reject"}},{"route":"/api/generation/prompt-models","body":{"server_url":"http://127.0.0.1:39345/v1/"}},{"route":"/api/workbench/text-classification-proposals","body":{"source_id":"2dd7baf547ec4b1aa9a28f4af15a2f21","revision":1,"source_revision":1,"server_url":"http://127.0.0.1:39345/v1/","model":"classification-fixture","instruction":"Recovery with independent saves","seed":42,"labels":["cancel","keep"],"request_id":"4d6f44a1aee441419654900db2c4903f"}},{"route":"/api/workbench/responses","body":{"id":"1e96e4f8ee5d44fb9ab6dddce4b8ef2f","prompt_id":"2dd7baf547ec4b1aa9a28f4af15a2f21","revision":1,"parent_revision":1,"source_revision":1,"completion":"Exact changed answer during unknown classification.","review":"draft"}},{"route":"/api/workbench/preferences","body":{"id":"17a5cf2e0c504fdaa783ce71e9754f10","revision":1,"prompt_id":"2dd7baf547ec4b1aa9a28f4af15a2f21","parent_revision":1,"source_revision":1,"left_id":"1e96e4f8ee5d44fb9ab6dddce4b8ef2f","left_revision":2,"right_id":"66e1b6492f394558be0e010f0f246751","right_revision":1,"outcome":"left","rationale":"Fresh explicit judgment during unknown classification.","review":"draft"}},{"route":"/api/generation/prompt-models","body":{"server_url":"http://127.0.0.1:39345/v1/"}},{"route":"/api/workbench/text-classification-proposals","body":{"source_id":"5150a507e3274b9e9b021bc95e3c6921","revision":2,"source_revision":1,"server_url":"http://127.0.0.1:39345/v1/","model":"classification-fixture","instruction":"Combined explicit classification","seed":42,"labels":["cancel","keep"],"request_id":"728ea56eebf34178898abeb3c29bd436"}},{"route":"/api/workbench/text-classification-proposals/decide/728ea56eebf34178898abeb3c29bd436","body":{"revision":3,"decision":"apply_draft","labels":["cancel","keep"]}},{"route":"/api/workbench/preferences","body":{"id":"c8d36508d1fe4030a020cfb61f7e819e","revision":1,"prompt_id":"5150a507e3274b9e9b021bc95e3c6921","parent_revision":2,"source_revision":1,"left_id":"fc2c2eedc438427bbb04084836c214f9","left_revision":1,"right_id":"01c532ac92714edeaec91f2004759058","right_revision":1,"outcome":"left","rationale":"Explicit original comparison.","review":"draft"}}]}

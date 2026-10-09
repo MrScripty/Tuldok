@@ -1,0 +1,20 @@
+[
+  {
+    "name": "long_requested_url",
+    "accepted": false,
+    "status": 400,
+    "error": "Requested server URL must be text, 1\u20132048 characters."
+  },
+  {
+    "name": "newline_request_id",
+    "accepted": false,
+    "status": 400,
+    "error": "Supply a valid classification request ID."
+  },
+  {
+    "name": "newline_source_id",
+    "accepted": false,
+    "status": 400,
+    "error": "Select one existing text record."
+  }
+]

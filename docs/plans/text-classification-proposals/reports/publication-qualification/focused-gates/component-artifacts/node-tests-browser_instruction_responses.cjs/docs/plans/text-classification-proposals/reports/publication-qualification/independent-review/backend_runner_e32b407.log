@@ -1,0 +1,29 @@
+test_fresh_root_restores_prior_reports_and_retains_current_artifacts (__main__.ReportIsolationReview.test_fresh_root_restores_prior_reports_and_retains_current_artifacts) ... [1/1] python -c 'from pathlib import Path; Path('"'"'/tmp/tmpgzi7uk2z/docs/plans/text-classification-proposals/reports/gates/old.log'"'"').write_text("independent-gate-marker current output"); Path('"'"'/tmp/tmpgzi7uk2z/docs/plans/text-classification-proposals/reports/new-report.txt'"'"').write_text("new synthetic report")'
+  running (0.002s)
+ERROR
+test_output_root_outside_repository_is_rejected_without_writes (__main__.ReportIsolationReview.test_output_root_outside_repository_is_rejected_without_writes) ... usage: review [-h] [--inherited-only] [--only ONLY] [--resume]
+              [--python PYTHON] [--report-root REPORT_ROOT]
+              [--timeout TIMEOUT]
+review: error: --report-root must be inside this repository
+ok
+test_report_projection_excludes_only_fresh_output_root (__main__.ReportIsolationReview.test_report_projection_excludes_only_fresh_output_root) ... ok
+
+======================================================================
+ERROR: test_fresh_root_restores_prior_reports_and_retains_current_artifacts (__main__.ReportIsolationReview.test_fresh_root_restores_prior_reports_and_retains_current_artifacts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok/docs/plans/text-classification-proposals/reports/publication-qualification/independent-review/backend_runner_probe.py", line 61, in test_fresh_root_restores_prior_reports_and_retains_current_artifacts
+    self.assertEqual(runner.main(), 1)  # A deliberately partial aggregate is never fully qualified.
+                     ^^^^^^^^^^^^^
+  File "/workspace/Tuldok/scripts/qualify_text_classification_local.py", line 147, in main
+    with log.open('w') as output:
+         ^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 36] File name too long: '/tmp/tmpgzi7uk2z/docs/plans/text-classification-proposals/reports/publication-qualification/fresh-run/gates/python--c-from-pathlib-import-Path-Path-tmp-tmpgzi7uk2z-docs-plans-text-classification-proposals-reports-gates-old.log-.write_text-independent-gate-marker-current-output-Path-tmp-tmpgzi7uk2z-docs-plans-text-classification-proposals-reports-new-report.txt-.write_text-new-synthetic-report.log'
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.017s
+
+FAILED (errors=1)

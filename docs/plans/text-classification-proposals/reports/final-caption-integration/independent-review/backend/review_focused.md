@@ -1,0 +1,11 @@
+# Focused independent classification review
+
+Exact frozen candidate `8235672a8482e10e95df7a6d5b05540325f66816`, tree `7a834c1abf9dceeb88cf3307a128300bb8907153`. Inspected/tested source hashes match committed bytes. Classification backend, app, workbench and HTTP validation remain unchanged from prior c550 runtime; caption JS matches final caption `10de10b6710976570ace33b033ffb2349995edec` unchanged. All2098 prior tracked report files retain their bytes.
+
+The classification freshURL availability finding is resolved. Independent frontend/backend11-case matrix agrees for ordinary/ASCII2048/astral2048/NELedge acceptance and ASCII2049/surrogate/BOM/internalNEL/missing-slash/single-slash/backslash authority refusals. Raw admitted URL evidence stays exact;2048 counts Unicode codepoints rather than UTF16units. Client prevalidation preserves malformed previously stored intent, never guesses anotherID or automatically replays inference.
+
+Exact-candidate checks passed:5 independent authoritative loopbackHTTP recovery probes,10 storage helper probes,3 cross-page actual-submit probes,11 URL parity cases,16 repository backend tests, and the actual classification controller suite. Standalone caption reload controller gate also passed. Logs and probe snapshots retained here; no real inference or model downloads ran.
+
+Backend source review and synthetic checks found no further defect in strict exact offeredlabels/explicitabstention, frozen source/prompt/provider/labels/revisions/evidence, projected latest50 summary with authoritative exactGET outside50, sameID intent conflicts, sourcechange/deletion checks, restart/cancel fences, transactional idempotent draftApply, or preservation of acquisition provenance without human review grant.
+
+Integration remains BLOCKED by the separate caption validation/lost-refusal recovery issue in `caption_shared_finding.md`. Passing caption reload coverage does not cover that badURL case; independent actual-caption-submitVM probe reproduces it. Full46 aggregate and integrated publication were explicitly withheld by parent pending caption author repair and exact successorSHA. This is a focused classification review, not full integrated publication clearance. No implementation edits, commits or public writes by this reviewer.

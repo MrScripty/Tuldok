@@ -1,0 +1,14 @@
+{
+  "full_native_reload": true,
+  "original_caption_id": "03f6f6da08274769aa9fa2a66afef4ca",
+  "original_classification_id": "becc22ce61b64ec6b4ba4a4ca6be9607",
+  "second_tab_classification_identity_shared": true,
+  "second_tab_caption_identity_absent": true,
+  "changed_second_tab_provider_posts": 0,
+  "classification_provider_requests": 1,
+  "caption_provider_requests": 1,
+  "separate_pending_stores_preserved": true,
+  "late_caption_apply_preserves_later_text_answer": true,
+  "image_applied_as": "draft",
+  "text_annotation_unchanged": true
+}

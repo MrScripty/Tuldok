@@ -1,0 +1,48 @@
+Caption proposal evidence: /workspace/Tuldok-caption-input-local/test-results/caption-proposals/run-LCCNcL
+[198992:199020:1007/100310.403917:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[198992:199020:1007/100310.407012:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:199020:1007/100310.407055:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[198992:199020:1007/100310.407070:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[198992:199020:1007/100310.407075:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:199033:1007/100310.415310:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 199035: Read-only file system (30)
+[198992:199020:1007/100310.745306:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:199020:1007/100310.776676:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:199033:1007/100310.779772:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 199055: Read-only file system (30)
+[198992:198992:1007/100310.791706:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:199020:1007/100310.791782:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:198992:1007/100310.791800:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:199020:1007/100310.791820:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+
+DevTools listening on ws://127.0.0.1:32877/devtools/browser/8cbafa0e-810f-4d1c-8a66-283476ef4ccb
+[198992:198992:1007/100310.798263:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:198992:1007/100310.801262:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:199020:1007/100310.803074:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[198992:199020:1007/100310.803130:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory
+[198992:198992:1007/100310.803163:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:198992:1007/100310.804167:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:199020:1007/100310.804223:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:199033:1007/100310.834720:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 199084: Read-only file system (30)
+[198992:199033:1007/100310.872842:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 199093: Read-only file system (30)
+[198992:199033:1007/100310.876768:ERROR:content/browser/zygote_host/zygote_host_impl_linux.cc:279] Failed to adjust OOM score of renderer with pid 199102: Read-only file system (30)
+[198992:198992:1007/100310.887909:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: unknown error type: 
+[198992:198992:1007/100310.888184:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:199020:1007/100310.888249:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:198992:1007/100310.902051:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[198992:199020:1007/100310.902126:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[198992:198992:1007/100310.909310:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '{"source_id":"9df755798f194c79bc9b39585d5a41d8","revision":2,"source_revision":1,"server_url":"http://127.0.0.1:39635","model":"caption-fixture","instruction":"   ","seed":42,"request_id":"ef21a63c13324497991ef02820753095"}'
+- null
+
+    at /workspace/Tuldok-caption-validation-local/tests/browser_caption_proposals.cjs:78:12 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '{"source_id":"9df755798f194c79bc9b39585d5a41d8","revision":2,"source_revision":1,"server_url":"http://127.0.0.1:39635","model":"caption-fixture","instruction":"   ","seed":42,"request_id":"ef21a63c13324497991ef02820753095"}',
+  expected: null,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+Runtime errors: []
+Page diagnostics: {"url":"http://127.0.0.1:45863/workbench#selection=aeb29e10287b4c23a2a6cf1038b8526f","ready":"complete","notice":"Record loaded.","body":"← Corner studio\nDataset workbench\n\nReal assets, explicit targets, reproducible releases.\n\nDevelopment workspace\n\nRecord loaded.\n\nCollection\nSearch\nType\nAll assets\nText\nTask\nAll tasks\nImage detection\nImage classification\nImage caption\nText classification\nText entities\nReview\nAll states\nDraft\nHuman reviewed\nProgrammatically verified\nSort\nNewest\nOldest\nName\nReview\nExact filter entry\nPlain text\nJSON strings · preserves line breaks\nTarget label (exact)\nProtected source/group (exact)\nRights note (exact)\n\nExact, case-sensitive values; leave blank for any. For values with line breaks, choose JSON strings and enter double-quoted values: \"first\\nsecond\" for LF, \\r for CR and \\r\\n for CRLF. Escape literal backslashes as \\\\ and quotes as \\\". Groups match IDs stored on the record, not all related sources. Rights notes are metadata, not permission decisions. Missing notes appear as unknown. Filtered results are dynamic; saved fixed membership and release selection stay separate.\n\nSearch collection\n\n3 records · 0 unlabeled · 3 protected groups · 0 exact duplicates · 0 unknown rights. Labels: none. Exact matching only; balance is not coverage.\n\nSelect page\nClear selection\nSaved fixed selections\n\nSave the chosen records at their exact revisions. Searches and filters stay separate; saving or opening never approves annotations.\n\nSelection name\nSave selected records as a new set\nSaved set\nChoose a saved selection\nFixed caption set · 3 fixed records\nOpen fixed selection\nRefresh saved sets\nNew nam","viewport":1400,"documentWidth":1385,"overflow":[]}

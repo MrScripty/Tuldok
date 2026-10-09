@@ -1,0 +1,39 @@
+{
+  "source_head": "602d25f5d4dd7a904a6d1aaae23824838d0790aa",
+  "model": "controlled local HTTP fixture",
+  "fixed": [
+    {
+      "id": "083d3cff7ae949638aecdd5106fae9e8",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "605cc770846b4b0aa588e14f22bb0617",
+      "revision": 2,
+      "source_revision": 1
+    },
+    {
+      "id": "af7fa19be30d4fc6be42072165a33b56",
+      "revision": 2,
+      "source_revision": 1
+    }
+  ],
+  "job_id": "fc25611395d34d57827cbc9b958e27b1",
+  "application_revision": 3,
+  "recovery_id": "fc25611395d34d57827cbc9b958e27b1",
+  "recovery_post_ids": [
+    "fc25611395d34d57827cbc9b958e27b1",
+    "fc25611395d34d57827cbc9b958e27b1"
+  ],
+  "recovery_backend_requests": 1,
+  "reload_changed_intent_posts": 0,
+  "storage_failure_posts": 0,
+  "reject_save_revision": 5,
+  "subsequent_save_revision": 6,
+  "cancelled_id": "f0a0af9a0e394e52b9faec9caeab682b",
+  "fresh_intent_id": "2c4d3ceb7bf0456f9c69d077c5107014",
+  "downloaded_zip_sha256": "5dc53cb324c5a35a94f71b35ef436c6fc122c99d295babaa44f24d6728c8fa07",
+  "consumer": "unchanged pinned diffusion_check_image_data.py",
+  "real_model_quality": false,
+  "tests": "held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout"
+}

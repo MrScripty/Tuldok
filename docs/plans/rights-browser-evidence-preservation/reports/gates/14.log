@@ -1,0 +1,8 @@
+PASS delayedInitialListing
+PASS delayedInitialListingAfterClear
+PASS pendingEditorSaveAfterFixedOpen
+PASS ordinaryEditorSaveKeepsCurrentIntent
+PASS laterSaveCannotAdoptAlreadyStalePair
+PASS explicitClearCancelsPendingEmptyOpen
+PASS samePairReselectionInvalidatesKnownStalePreview
+PASS olderSaveCannotInvalidateNewerSelectedProof

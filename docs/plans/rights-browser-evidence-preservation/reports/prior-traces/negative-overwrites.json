@@ -1,0 +1,12 @@
+[
+  {
+    "path": "docs/plans/rights-note-correction/reports/rights-desktop.png",
+    "baseline_sha256": "05b42beef3020d95d510ef62b9f50df4151cc56525bfa66dc9701abab027f503",
+    "overwritten_sha256": "820b6f0fa1352615a82e1a3e141a225f02adad37ac26b419f48bd5da5d04ae20"
+  },
+  {
+    "path": "docs/plans/rights-note-correction/reports/rights-narrow.png",
+    "baseline_sha256": "d446356de33a05a6ded5dc5543c8bdfc078e3a0a36f21e4c481a3f5505739dd4",
+    "overwritten_sha256": "637fb091467c3a6083219918683640c18a1340d53f1e27feecc6e34ca1683382"
+  }
+]

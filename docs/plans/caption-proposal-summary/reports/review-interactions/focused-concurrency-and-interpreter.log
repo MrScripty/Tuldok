@@ -1,0 +1,7 @@
+test_poll_capture_is_atomic_and_decoding_releases_shared_lock (test_caption_proposals.CaptionProposalTests.test_poll_capture_is_atomic_and_decoding_releases_shared_lock) ... ok
+test_review_export_consumer_evidence_history_and_fixed_selection (test_caption_proposals.CaptionProposalTests.test_review_export_consumer_evidence_history_and_fixed_selection) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.025s
+
+OK

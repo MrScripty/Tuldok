@@ -1,0 +1,12 @@
+{
+  "baseline-source.json": "2fb50f3656c305251e36f3b5f4fc531ea89741b7275484ecbe4768edca5a6965",
+  "cross-tab-initial-refusal.cjs": "a46bbe93113c3540da0c9a33d3b334f7333984b0345cb38d468e42ddef2f56dc",
+  "cross-tab-initial-refusal.log": "d1c0dee2d9f891753e8ae526c801b9aa353d66292ce5ec1d1be1608bae70d006",
+  "qualified-controller-helpers.cjs": "bc0455896fbeee5f2689401a273ca34ed6d56e9567540463b8f7efa9f2d7ad99",
+  "receipt-b1-dispatch-race.json": "dac4b0c4065ed09c2094d1ab06236f7db9a20374087b13d7d76fe96509ae63b5",
+  "review-b1-dispatch-race.md": "1a2d461b65d8bba49880739651a0a415295cfc01744df59c8e3a7b0fed8cf77e",
+  "scenario-400-second-held.json": "a064fabf7b843c8375425484696cb70b3a0f455833e08b9bba7ce50c73c4e413",
+  "scenario-409-lost-second-ack.json": "a2d40d0228c11200c5d636a0dabe62c68c224680ab882a140d5da2b608e772e7",
+  "scenario-409-second-held.json": "c6deba7f2066f3f5ef14fb7b6e042037046531dfc9dd8504393c42a0c407e2e2",
+  "scenario-422-second-held.json": "83d084e5a0f7c58e8a8f0a8b0dff031d61f55b2910b2992b1d2ba03c96d69347"
+}

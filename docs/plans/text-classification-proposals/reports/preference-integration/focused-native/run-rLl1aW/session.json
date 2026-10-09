@@ -1,0 +1,214 @@
+{
+  "source_head": "7ec7e47a090467fa37b68d33a7e81438828eea9d",
+  "synthetic_only": true,
+  "negative_apply_hook": false,
+  "steps": [
+    {
+      "name": "Immediate preference proof invalidation success",
+      "job_id": "b60bfb033ed640b3900d65f4f674c414",
+      "fixed": [
+        {
+          "id": "d3b531f7a4dc4459b1fae50f83951b7a",
+          "revision": 1,
+          "prompt_id": "7d9b97f28806448b8077b6198278b6cd",
+          "parent_revision": 1,
+          "source_revision": 1,
+          "left_id": "2ca2d8ac3d3a472ba1c4a2358412411e",
+          "left_revision": 1,
+          "right_id": "59652f3462c447e28bfc6170e4774ecf",
+          "right_revision": 1
+        }
+      ],
+      "state": {
+        "preview": null,
+        "freeze_disabled": true,
+        "items": [
+          {
+            "id": "d3b531f7a4dc4459b1fae50f83951b7a",
+            "revision": 1,
+            "prompt_id": "7d9b97f28806448b8077b6198278b6cd",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "2ca2d8ac3d3a472ba1c4a2358412411e",
+            "left_revision": 1,
+            "right_id": "59652f3462c447e28bfc6170e4774ecf",
+            "right_revision": 1
+          }
+        ],
+        "held_lists": 1
+      }
+    },
+    {
+      "name": "Immediate preference proof invalidation uncertain",
+      "job_id": "72cafaf6961e44a7b4d569c1ff9d0cb6",
+      "fixed": [
+        {
+          "id": "074d65f8c06647138ad9d31e34d4bba1",
+          "revision": 1,
+          "prompt_id": "fc237b6b7e274df084cd39739114ce1c",
+          "parent_revision": 1,
+          "source_revision": 1,
+          "left_id": "e58bf3776fc048da887cfbdd2dcb1be5",
+          "left_revision": 1,
+          "right_id": "3195e674b60c45c2a07533e3c7d34f79",
+          "right_revision": 1
+        }
+      ],
+      "state": {
+        "preview": null,
+        "freeze_disabled": true,
+        "items": [
+          {
+            "id": "074d65f8c06647138ad9d31e34d4bba1",
+            "revision": 1,
+            "prompt_id": "fc237b6b7e274df084cd39739114ce1c",
+            "parent_revision": 1,
+            "source_revision": 1,
+            "left_id": "e58bf3776fc048da887cfbdd2dcb1be5",
+            "left_revision": 1,
+            "right_id": "3195e674b60c45c2a07533e3c7d34f79",
+            "right_revision": 1
+          }
+        ],
+        "held_lists": 0
+      }
+    },
+    {
+      "name": "Held classification Apply retains later judgment draft",
+      "opened": {
+        "editor": {
+          "created_at": "2026-10-07T13:23:56.578454+00:00",
+          "deleted": false,
+          "id": "637173cf3ebb42dabb525c800b6533f6",
+          "left_id": "aa02fa5612cf4f9eb7b63b691dbd2675",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "83420d774c6d4fb28c1377fd1c0cd29c",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "f69b10e80953401684c4d061f5735bd1",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T13:23:56.578454+00:00",
+          "stale_warning": null
+        },
+        "epoch": 12,
+        "current": "83420d774c6d4fb28c1377fd1c0cd29c",
+        "revision": 1
+      },
+      "retained": {
+        "editor": {
+          "created_at": "2026-10-07T13:23:56.578454+00:00",
+          "deleted": false,
+          "id": "637173cf3ebb42dabb525c800b6533f6",
+          "left_id": "aa02fa5612cf4f9eb7b63b691dbd2675",
+          "left_revision": 1,
+          "outcome": "left",
+          "parent_revision": 1,
+          "prompt_id": "83420d774c6d4fb28c1377fd1c0cd29c",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          },
+          "rationale": "Explicit original comparison.",
+          "review": "human_reviewed",
+          "revision": 1,
+          "right_id": "f69b10e80953401684c4d061f5735bd1",
+          "right_revision": 1,
+          "source_revision": 1,
+          "updated_at": "2026-10-07T13:23:56.578454+00:00",
+          "stale_warning": null
+        },
+        "epoch": 12,
+        "current": "83420d774c6d4fb28c1377fd1c0cd29c",
+        "revision": 1,
+        "dirty": true,
+        "rationale": "Later exact unsaved comparative rationale 😀.",
+        "review": "draft"
+      }
+    },
+    {
+      "name": "Classification Reject preserves unrelated judgment save owner",
+      "job_id": "162991cd923749c79ce51419d0e8d092",
+      "state": {
+        "dirty": true,
+        "rationale": "Later draft during judgment acknowledgment.",
+        "review": "draft",
+        "editor": {
+          "id": "a23c741e6a1a4c57b5471dc5ccbed532",
+          "revision": 2,
+          "prompt_id": "ba51ab9abb9c4fbdb26aceb46b6da628",
+          "parent_revision": 1,
+          "source_revision": 1,
+          "left_id": "5ed2d6f6301b4fcd9c21828d00c1ebb8",
+          "left_revision": 1,
+          "right_id": "5612de1f8c8e46258720a18e20613762",
+          "right_revision": 1,
+          "outcome": "left",
+          "rationale": "Explicit saved comparative rationale.",
+          "review": "draft",
+          "deleted": false,
+          "created_at": "2026-10-07T13:23:58.030427+00:00",
+          "updated_at": "2026-10-07T13:23:59.037407+00:00",
+          "provenance": {
+            "method": "human_comparative_judgment"
+          }
+        }
+      }
+    },
+    {
+      "name": "Recovery unchanged across actual answer and judgment saves",
+      "body": {
+        "source_id": "bd7dccb88c63484b8b22abd8a13f7497",
+        "revision": 1,
+        "source_revision": 1,
+        "server_url": "http://127.0.0.1:44717/v1/",
+        "model": "classification-fixture",
+        "instruction": "Recovery with independent saves",
+        "seed": 42,
+        "labels": [
+          "cancel",
+          "keep"
+        ],
+        "request_id": "e51cc3f046514e84973e50b6338c59b7"
+      },
+      "early_exact_get_status": 404,
+      "before_inference": 4,
+      "after_inference": 5,
+      "answer_revision": 2,
+      "judgment_revision": 2
+    }
+  ],
+  "source_sha256": {
+    "static/workbench.js": "fec1095ecbe83516f0eb40ee17772fdfbfea3a1c75244c531fbc41acf2d451f4",
+    "static/preferences.js": "9d2af15422ee81bf79c35af7c87beaebe870b4acb1ee2b4c1fd229be9f5f2606",
+    "static/instruction-responses.js": "3fb4fb8d78154bedb37ef90afbcc269fdab0938c4ac50236f38a7f26f54ac940",
+    "static/text-classification-proposals.js": "8adc70abde59a65f584a038d777e48182b85bf5abf288dc2c5369f2fefe23cd5",
+    "static/workbench.html": "f539de40dd657ec6ac2dcb72e3dde0c83333933045cfa2fb8dde5740a695b180",
+    "tests/browser_classification_preferences_integration.cjs": "a5bdb8c35a3740377361f110d747812fb4c623cfa12c669ed04636793542fbd2",
+    "tests/browser_text_classification_proposals_server.py": "41e1163104d30621e660e00ff2f6aeee7d7f43dda895d5cbbf1cc1229abe1068"
+  },
+  "screenshots": [
+    {
+      "filename": "combined-desktop.png",
+      "viewport": {
+        "width": 1400,
+        "height": 807
+      },
+      "sha256": "3f1c1775d7be8c5d4fbe3c5636b64a3747fcd48f178a2daca093f195e9a986f2"
+    },
+    {
+      "filename": "combined-narrow.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "e64cdbd0689a837ea9dab1d57376057fe10a532afbcd2b1dc165fd0acfa6762c"
+    }
+  ],
+  "result": "PASS"
+}

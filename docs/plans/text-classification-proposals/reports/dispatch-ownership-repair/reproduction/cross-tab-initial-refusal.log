@@ -1,0 +1,5 @@
+{"status":400,"losesSecondAck":false,"firstId":"c3f85c749daa40b09d88c98cebd135b1","newId":"cf85e4a2a39e4a54b751ee124195d44e","unresolvedSecondAtRefusal":true,"authorityCleared":true,"changedIntentPosted":true,"providerCallsPerformed":0}
+{"status":409,"losesSecondAck":false,"firstId":"a3be166568ba49c883d1c84e732efcb2","newId":"6c55cf38a8c34e7a93312f45c8ee5fba","unresolvedSecondAtRefusal":true,"authorityCleared":true,"changedIntentPosted":true,"providerCallsPerformed":0}
+{"status":422,"losesSecondAck":false,"firstId":"fa0492036cac4fe99d0e1ff23e404fb6","newId":"4d60e67a351f4a5e94fe4121d48bf08a","unresolvedSecondAtRefusal":true,"authorityCleared":true,"changedIntentPosted":true,"providerCallsPerformed":0}
+{"status":409,"losesSecondAck":true,"firstId":"f9835659df8b4a119bb2a101f2dcf80b","newId":"bc1b1b254b91455c9f624600c6b70c2c","unresolvedSecondAtRefusal":true,"authorityCleared":true,"changedIntentPosted":true,"providerCallsPerformed":0}
+Confirmed four bounded cross-tab initial-refusal retirement reproductions against exact unchanged controller.

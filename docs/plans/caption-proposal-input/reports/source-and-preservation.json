@@ -1,0 +1,70 @@
+{
+  "qualified_source": {
+    "head": "10bc3f35d7a4b875eceaebb82c8d5b2085a81285",
+    "tree": "4b3c03ea133854066d968d347f04f33cab6d7e69",
+    "base": "4ed5466fd764e938999cca1d535e9a33379271a0",
+    "inherited_gates": 43,
+    "gates": 43
+  },
+  "python_tests": 255,
+  "python_seconds": 85.052,
+  "caption_python_tests": 20,
+  "gates_passed": 43,
+  "chromium_invocations": 21,
+  "independent_reviews_no_findings": 2,
+  "historical_report_files_preserved": 1169,
+  "other_existing_local_heads_preserved": 19,
+  "browser": {
+    "source_head": "10bc3f35d7a4b875eceaebb82c8d5b2085a81285",
+    "model": "controlled local HTTP fixture",
+    "fixed": [
+      {
+        "id": "64c23beb08c74d34af2b94bb0a132d89",
+        "revision": 2,
+        "source_revision": 1
+      },
+      {
+        "id": "91960348344843ce8426adc011034eb0",
+        "revision": 2,
+        "source_revision": 1
+      },
+      {
+        "id": "e893108fd2314ad086fb3b52915f291e",
+        "revision": 2,
+        "source_revision": 1
+      }
+    ],
+    "job_id": "69e6f02ca0564837b0e3b132dc001a79",
+    "application_revision": 3,
+    "recovery_id": "69e6f02ca0564837b0e3b132dc001a79",
+    "recovery_post_ids": [
+      "69e6f02ca0564837b0e3b132dc001a79",
+      "69e6f02ca0564837b0e3b132dc001a79"
+    ],
+    "recovery_backend_requests": 1,
+    "reload_changed_intent_posts": 0,
+    "storage_failure_posts": 0,
+    "fresh_guidance_2001_latched_storage_error": false,
+    "corrected_non_bmp_guidance_codepoints": 2000,
+    "corrected_non_bmp_guidance_utf16_units": 4000,
+    "corrected_without_reload": true,
+    "reject_save_revision": 5,
+    "subsequent_save_revision": 6,
+    "cancelled_id": "2872bbb7ddf64a9494c4204a27f2d026",
+    "fresh_intent_id": "8f4d0796d70d4381b433aac4a0ef8dce",
+    "downloaded_zip_sha256": "ea107a5793b60505069ff6ab2a9dd232418d721ea1a46826a8984107f0892a14",
+    "consumer": "unchanged pinned diffusion_check_image_data.py",
+    "real_model_quality": false,
+    "tests": "fresh guidance2001 recoverable error then2000 non-BMP correction without reload; held admission/early real 404/lost start acknowledgement/full new-document reload/held reconciliation/changed-intent refusal/exact-ID repeat runs backend once/storage-write failure before POST, held annotation-save/reject/acknowledgement/subsequent save, explicit cancelled/new intent, request/apply double clicks, exact image evidence, unsupported vision, lost apply acknowledgement, idempotency, fixed stale selection, draft block, human review, ZIP consumption, navigation/reload, keyboard and narrow layout"
+  },
+  "production_changes": [
+    "static/caption-proposals.js"
+  ],
+  "test_changes": [
+    "tests/test_caption_reload_controller.cjs",
+    "tests/browser_caption_proposals.cjs"
+  ],
+  "recovery_identity_semantics_changed": false,
+  "negative_base": "4ed5466fd764e938999cca1d535e9a33379271a0",
+  "negative_result": "Fresh2001 guidance latches durable-storage failure before write/POST on base; corrected source stays editable."
+}

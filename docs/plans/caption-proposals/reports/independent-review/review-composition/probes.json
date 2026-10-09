@@ -1,0 +1,24 @@
+{
+  "source_open_race": {
+    "status": "completed",
+    "submitted_center_pixel": [
+      254,
+      0,
+      0
+    ],
+    "source_restored": true,
+    "applied": true,
+    "captured_canonical_hash": "2be32b792ecbb560804a2f8e081ccb78f70feab36d40df1bc327521d6bad2e9b",
+    "current_canonical_hash": "2be32b792ecbb560804a2f8e081ccb78f70feab36d40df1bc327521d6bad2e9b"
+  },
+  "worker_start_failure": {
+    "error": "injected cannot start thread",
+    "job": "preparing",
+    "active_id": "537c5ac2d1bd46279950dedc74194c2b",
+    "worker_alive": false,
+    "later_job": "completed",
+    "stranded_status": "preparing",
+    "stranded_cancel": false,
+    "closed_after_successor": true
+  }
+}
