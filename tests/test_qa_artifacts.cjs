@@ -17,6 +17,8 @@ try{
   assert.deepEqual(fs.readdirSync(path.join(fake,'docs/fixtures')),[]);
 }finally{fs.rmSync(fake,{recursive:true,force:true});}
 const callers=[
+  ['browser_retrieval_integration.cjs','retrieval-integration'],
+  ['check_retrieval_reader.cjs','retrieval-reader'],
   ['browser_text_corpus_export.cjs','text-corpus-export'],
   ['check_text_corpus_consumer.cjs','text-corpus-consumer'],
   ['browser_saved_searches.cjs','saved-searches'],

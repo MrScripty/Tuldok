@@ -1,0 +1,27 @@
+# Reviewed positive retrieval export
+
+This bounded integration preserves immutable canonical text records and existing record IDs, revision checks, rights notes, review, history and fixed selections. It derives from retained Tuldok commit `8c54816a54cb711925a8a6843dffdf7c11b06fa7`; it does not import foreign judgments or grant approval from source metadata. UI provisional.
+
+Choose **text_retrieval**, assign document or query role and save a draft. Reopen it, inspect source and associations, then separately set human review. A document's inspectable reference contains `id`, `revision`, `source_revision`. Raw query import accepts 1–30 exact references to current available human-reviewed retrieval documents and records immutable parent IDs plus declared references. The new query remains an unannotated draft with the default text-classification task. Change its task, inspect and author its relevance judgment, save/reopen, then review. Draft declarations are unreviewed source claims. Editing a document makes old positive references stale; inspect it and deliberately replace each affected query reference. There is no automatic repair or request replay.
+
+Judgments are **positive only**. Listed relationships are explicitly reviewed positives; every omitted query–document relationship is **UNJUDGED**, never an inferred negative. Empty positive sets, negative grades, graded relevance, abstentions and adjudication are unsupported. The review flag records an explicit local action; authenticated reviewer identity and semantic truth are separate gaps.
+
+Select every desired document and query, including every referenced positive. Save/open a named exact selection and preview **Reviewed retrieval corpus + positive query judgments** before freezing. The existing allocator preserves whole connected source families, including unselected/deleted bridges, former positive parents, duplicate source ties, groups and inherited fixed splits. IDs remain record identities across releases. Families help avoid observed source leakage; they do not establish semantic independence or benchmark decontamination.
+
+The ZIP contains three exact published consumer schemas:
+
+| File | Fields |
+| --- | --- |
+| `corpus.jsonl` | `doc_id`, `text`, `group`, `split` |
+| `queries.jsonl` | `query_id`, `text`, `relevant_doc_ids`, `split` |
+| `train_pairs.jsonl` | `query`, `positive`, `doc_id`, `group` |
+
+Consumer splits use `train`, `val`, `test`. All selected documents, including held-out documents, form the fixed inference database. Only train queries produce positive pairs. Text remains canonical NFC/LF, including leading/trailing whitespace, without instruction prefixes. Train queries require exactly one positive, at least two distinct training-positive documents with distinct text, and unique consumer-formatted query anchors. Evaluation queries permit 1–30 positives. Each split must contain documents and queries. No judgment is dropped to satisfy these constraints.
+
+`manifest.json` retains selected record snapshots, review/rights/provenance, exact positive reference revisions, complete declared protected components, lineage, assignments, file and asset hashes, consumer pins, limits and explicit `judgment_scope`. Preview warnings expose the positive-only scope; the exact scope is part of the preview fingerprint. Publication revalidates the current source and associations, streams through the existing atomic release publisher and removes partial files on failure. Frozen ZIPs remain immutable after subsequent edits.
+
+Production limits are 5,000 selected records, 200,000 source codepoints per text, 30 positive references per query, 1 MiB raw query requests and **40 MiB complete logical ZIP bytes**, including repeated text and metadata. Server revisions are positive signed-64-bit integers; browser authoring accepts only positive JavaScript safe integers. The consumer QA reader accepts at most 48 MiB physical ZIP bytes, 40 MiB complete logical bytes, 5,000 selected records, 5,005 ZIP members, 5,000 declared families, 5,000 members per family, 50,000 total source snapshots and JSON depth 64. It requires exact comment-free, unencrypted stored ZIP members without ZIP64. These are reader acceptance fences, not larger production budgets. Production family proof size is bounded by the complete logical archive budget rather than these additional QA family-count caps. The reader reconstructs the supplied known snapshot graph; it does not authenticate completeness against an external database.
+
+The observed consumer is `bc-ai-ecosystem/training-your-own-models` at `fb895e1a3e08fac86738106e6122bdcafb124e65`, companion SHA256 `e924589b152f68bb15d89b8f95e3b52005bbe4a9f7770f2d0550b5422d3a11d6`. Exact source hashes and paths are in `retrieval_export.CONSUMER` and the fixture pins. Qualification runs unchanged `retrieval_common.read_jsonl` and pure `embedding_contract.format_query` / `sha256_file` after an independent bounded ZIP/schema/source/family oracle. The retained lexical source is attribution evidence only. No lexical fitting, ranking, relevance metrics, model loading, training or downloads run. Published trainers can introduce implicit in-batch negatives; trainer/objective compatibility is unqualified and requires a deliberate treatment of unjudged relationships.
+
+Automated authored QA judgments qualify transport, ownership and controls. They are not genuine human labels, an independent corpus, retrieval scores or a qualified training model.

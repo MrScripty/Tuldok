@@ -13,6 +13,7 @@ from PIL import Image
 import image_classification_export as classification_export
 import image_detection_export as detection_export
 import text_corpus_export as corpus_export
+import retrieval_export
 
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
 
@@ -191,6 +192,8 @@ class Releases:
         """
         workbench = self.workbench
         format_name = body.get('format', 'canonical_v1')
+        if format_name == retrieval_export.FORMAT:
+            return retrieval_export.prepare(self, body)
         if format_name == detection_export.FORMAT:
             return self._prepare_detection(body)
         if format_name == corpus_export.FORMAT:
@@ -246,6 +249,14 @@ class Releases:
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
                 if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
+                if row['task'] == 'text_retrieval':
+                    if row['review'] != 'human_reviewed':
+                        raise WorkbenchError('Retrieval targets require explicit human review.')
+                    target = retrieval_export.annotation(row['annotation'], row)
+                    if encode(target) != encode(row['annotation']):
+                        raise WorkbenchError('Stored retrieval target is invalid.')
+                    if target['role'] == 'query':
+                        retrieval_export.check_positives(workbench, target['positive_refs'])
                 normalized = validate_annotation(row['task'], row['annotation'], row)
                 if row['task'] == 'sequence_transport' and 'temporal_labels' in row['annotation']:
                     from sequence_temporal_labels import verify_source
@@ -297,6 +308,8 @@ class Releases:
                 preview['warnings'].append('Exact decoded-pixel repeats are retained in the same connected split. Inspect repeated examples and contradictory labels before training; none are discarded.')
             preview['warnings'].append('Opaque class folders are model indices. Use manifest.json class_vocabulary to recover exact labels. The mapping is frozen per release, not shared automatically across releases.')
         if format_name == 'canonical_v1':
+            if any(row['task'] == 'text_retrieval' for row in rows):
+                preview['warnings'].append(retrieval_export.POSITIVE_ONLY_WARNING)
             if any(row['kind'] == 'mesh' for row in rows):
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
             if any(row['kind'] == 'sequence' for row in rows):
@@ -527,6 +540,9 @@ class Releases:
             return {'preview': preview}
 
     def _create_corpus(self, body):
+        return self._create_text_dataset(body, corpus_export)
+
+    def _create_text_dataset(self, body, adapter):
         with self.workbench.lock, self.workbench.db:
             prepared = self._checked(body)
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
@@ -535,7 +551,7 @@ class Releases:
                     with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
                         stream, total = None, 0
                         try:
-                            for filename, value, expected in corpus_export.entries(prepared, body):
+                            for filename, value, expected in adapter.entries(prepared, body):
                                 total += len(value)
                                 if total > MAX_SELECTED_TEXT_BYTES:
                                     raise WorkbenchError('Corpus archive exceeds the 40 MiB complete logical archive bound.')
@@ -544,7 +560,7 @@ class Releases:
                                 if filename is not None:
                                     if stream is not None:
                                         stream.close(); stream = None
-                                    if filename in ('train.txt', 'validation.txt', 'test.txt'):
+                                    if filename in (retrieval_export.STREAM_FILES if adapter is retrieval_export else ('train.txt', 'validation.txt', 'test.txt')):
                                         stream = archive.open(zipfile.ZipInfo(filename), 'w')
                                     else:
                                         archive_asset(archive, value, filename, expected or hashlib.sha256(value).hexdigest())
@@ -561,8 +577,9 @@ class Releases:
                     os.unlink(temporary)
             preview = prepared['preview']
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
-                    'format': corpus_export.FORMAT, 'records': len(prepared['rows']),
-                    'split_report': preview['split_report'], 'corpus_counts': preview['corpus_counts'],
+                    'format': adapter.FORMAT, 'records': len(prepared['rows']),
+                    'split_report': preview['split_report'],
+                    ('retrieval_counts' if adapter is retrieval_export else 'corpus_counts'): preview['retrieval_counts' if adapter is retrieval_export else 'corpus_counts'],
                     'artifact_bytes': preview['artifact_bytes'], 'warnings': preview['warnings']}
 
     def _prepare_responses(self, body):
@@ -782,6 +799,10 @@ class Releases:
 
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
+        if format_name == retrieval_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact retrieval selection before exporting.', 'conflict', 409)
+            return self._create_text_dataset(body, retrieval_export)
         if format_name == detection_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact detection selection before exporting.', 'conflict', 409)

@@ -220,6 +220,15 @@ jobs:
       - run: node tests/browser_sequence_batch_v2.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node --check static/retrieval.js
+      - run: node tests/test_retrieval_controller.cjs
+      - run: node tests/check_retrieval_reader.cjs
+        env:
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_retrieval_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
       - uses: actions/upload-artifact@v4
         if: always()
         with:

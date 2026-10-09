@@ -871,3 +871,10 @@ Canonical export supports multiple objects and exact-case categories, fractional
 ## Repository
 
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
+
+
+## Reviewed retrieval judgments and release
+
+Immutable text IDs now support retrieval document roles and explicit positive query judgments. Import raw queries with exact current document references, save and reopen drafts, review relevance separately, and save/open a fixed selection before preview/freeze. Declared import references grant no review. Every omitted relationship remains **UNJUDGED**, never an inferred negative; empty/negative/graded judgments are unsupported. Whole connected families, including former positive parents and unselected/deleted bridges, preserve split boundaries. The release keeps canonical text, original record IDs, exact revisions, provenance/rights/review, family evidence and hashes; train pairs contain train positives only and the selected inference corpus includes held-out documents.
+
+Fresh qualification uses actual serialized files and unchanged published JSONL reading plus pure formatting/hash helpers. It performs no fitting, ranking, metrics, training or model downloads and makes no corpus-quality or trainer-compatibility claim. UI provisional. [Contract, exact source pins and limits](docs/contracts/retrieval-export.md).

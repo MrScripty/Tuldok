@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'sequence_transport', 'mesh_geometry')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -73,6 +73,9 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Choose a task matching the asset type.')
     if not isinstance(value, dict):
         raise WorkbenchError('Annotation must be an object.')
+    if task == 'text_retrieval':
+        from retrieval_export import annotation
+        return annotation(value, record)
     if task == 'text_corpus':
         if set(value) != {'note'}:
             raise WorkbenchError('Text corpus review requires exactly one note.')
@@ -428,6 +431,12 @@ class Workbench:
         if not groups:
             raise WorkbenchError('Keep at least one protected group.')
         review = body.get('review')
+        if task == 'text_retrieval':
+            from retrieval_export import check_positives
+            if review not in ('draft', 'human_reviewed') or verified_provenance:
+                raise WorkbenchError('Retrieval data requires explicit human review.')
+            if annotation['role'] == 'query':
+                check_positives(self, annotation['positive_refs'])
         if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
             raise WorkbenchError('Text corpus data requires an explicit human review decision.')
         if before['kind'] in ('sequence', 'mesh'):

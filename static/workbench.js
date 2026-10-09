@@ -95,11 +95,12 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus','text_retrieval']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
   $('corpus-note').value = record.task === 'text_corpus' ? record.annotation?.note || '' : '';
   $('task').value = record.task; $('caption').value = record.annotation?.caption || ''; $('label').value = record.annotation?.label || 'object';
+  if(typeof retrievalShown === 'function') retrievalShown(record);
   if(typeof sequenceShown === 'function') sequenceShown(record);
   if(typeof meshShown === 'function') meshShown(record);
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
@@ -115,8 +116,9 @@ function showRecord(record) {
 }
 function renderTargets() {
   const task = $('task').value;
+  if(typeof retrievalControls === 'function') retrievalControls(task);
   $('corpus-controls').hidden = task !== 'text_corpus';
-  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_retrieval' || task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -174,7 +176,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'text_retrieval' ? retrievalAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
@@ -257,6 +259,8 @@ function renderReleasePreview(result) {
     if(result.native_category_evidence) previewLine(root, `Original native category-ID evidence: ${result.native_category_evidence.retained} retained · ${result.native_category_evidence.unavailable} unavailable · ${result.native_category_evidence.not_native} locally acquired. Original IDs describe original targets, independently of later edits.`);
     if(typeof result.artifact_bytes === 'number') previewLine(root, `Complete logical archive: ${result.artifact_bytes} bytes / 40 MiB, including source PNGs, derived masks and metadata.`);
   }
+  if(result.retrieval_counts && result.artifact_bytes !== undefined) previewLine(root, `Complete logical archive: ${result.artifact_bytes} bytes / 40 MiB.`);
+  if(result.retrieval_counts) for(const [split,count] of Object.entries(result.retrieval_counts)) previewLine(root, `${split}: ${count.documents} documents · ${count.queries} queries · ${count.emitted_pairs} positive pair rows · ${count.distinct_positive_documents} distinct positives · ${count.families} families.`);
   if(result.corpus_counts) {
     for(const [split, count] of Object.entries(result.corpus_counts)) previewLine(root, `${split}.txt: ${count.bytes} bytes · ${count.documents} documents · ${count.families} connected families (${count.document_bytes} document bytes + ${count.separator_bytes} separator bytes).`);
     if(result.artifact_bytes !== undefined) previewLine(root, `Complete logical archive: ${result.artifact_bytes} bytes / 40 MiB, including duplicated assets and metadata.`);
@@ -283,7 +287,7 @@ function renderReleasePreview(result) {
 for(const id of ['release-format','train','validation','test','split-seed']) {
   for(const event of ['input','change']) $(id).addEventListener(event, syncReleaseSelection);
 }
-$('release-format').addEventListener('change',()=>{$('canonical-export-help').hidden = $('release-format').value !== 'canonical_v1';$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('detection-export-help').hidden = $('release-format').value !== 'image_detection_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
+$('release-format').addEventListener('change',()=>{$('retrieval-export-help').hidden = $('release-format').value !== 'text_retrieval_v1';$('canonical-export-help').hidden = $('release-format').value !== 'canonical_v1';$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('detection-export-help').hidden = $('release-format').value !== 'image_detection_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
 $('preview-release').addEventListener('click', async event=>{
   event.preventDefault(); if(releaseBusy) return;
   syncReleaseSelection();

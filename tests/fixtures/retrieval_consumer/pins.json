@@ -1,0 +1,13 @@
+{
+  "repository": "bc-ai-ecosystem/training-your-own-models",
+  "commit": "fb895e1a3e08fac86738106e6122bdcafb124e65",
+  "companion_sha256": "e924589b152f68bb15d89b8f95e3b52005bbe4a9f7770f2d0550b5422d3a11d6",
+  "originating_neural_source_sha256": "a22e8a48fd7ce4aacbc311f7222f92706da219e579b542e7376de114cbbb4b22",
+  "files": {
+    "retrieval_common.py": "2c31d9dc1cfd3e79675e95191ca3af341047ff7b622a4d605b9867d24f526e46",
+    "embedding_contract.py": "c84d518d3dc392ab9cc5082e822cc68fee1bb52fefa49ff71d33b9a719a421ff",
+    "lexical_baseline.py": "ada8e0780f41f70332dda3563332103a16b09f865f5758f301d07068ee6c7a9d"
+  },
+  "executed_functions": ["retrieval_common.read_jsonl", "embedding_contract.format_query", "embedding_contract.sha256_file"],
+  "scope": "Serialized parsing and pure formatting/hash helpers only. Unlisted relations are unjudged, never negatives. No fitting, ranking, metrics, models or training."
+}
