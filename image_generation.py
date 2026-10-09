@@ -110,7 +110,7 @@ def decode_png(encoded, width, height):
             image.load()
         return {'image': encoded, 'width': width, 'height': height,
                 'sha256': hashlib.sha256(raw).hexdigest(), 'metadata': {}}
-    except (ValueError, TypeError, OSError, Image.DecompressionBombError):
+    except (ValueError, TypeError, OSError, Image.DecompressionBombError, SyntaxError):
         raise ValueError('Pumas returned an invalid PNG or unexpected image dimensions.') from None
 
 

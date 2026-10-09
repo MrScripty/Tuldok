@@ -97,6 +97,34 @@ class TypedTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.data.generation_jobs.start(dict(self.image(),count=1,strategy='varied'))
         with self.assertRaises(ValueError): self.data.text_classification_proposals.start(self.body(seed=7))
         self.assertFalse(self.state['requests'])
+    def test_malformed_png_returns_http400_without_admission_or_replay(self):
+        from http.server import ThreadingHTTPServer
+        from urllib.error import HTTPError
+        from urllib.request import Request, urlopen
+        from app import make_handler
+        server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.data))
+        self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        url = 'http://127.0.0.1:' + str(server.server_port) + '/api/generation/generate'
+        before = list(self.data.db.iterdump())
+        self.state['mode'] = 'malformed_png'
+        body = self.image()
+        request = Request(url, encode(body).encode(), {'Content-Type': 'application/json'})
+        with self.assertRaises(HTTPError) as rejected:
+            urlopen(request, timeout=3)
+        self.assertEqual(rejected.exception.code, 400)
+        error = json.loads(rejected.exception.read())
+        self.assertIn('invalid PNG', error['error'])
+        self.assertEqual(list(self.data.db.iterdump()), before)
+        self.assertEqual(len(self.state['requests']), 1)
+        self.assertFalse(self.data.image_requests.active)
+        self.assertFalse(self.data.db.execute('SELECT id FROM samples').fetchall())
+        self.state['mode'] = 'success'
+        request = Request(url, encode(self.image()).encode(), {'Content-Type': 'application/json'})
+        with urlopen(request, timeout=3) as response:
+            self.assertEqual(response.status, 200)
+            self.assertEqual(json.loads(response.read())['width'], 16)
+        self.assertEqual(len(self.state['requests']), 2)
     def test_uncertain_image_batch_cannot_resume_provider_attempt(self):
         self.state['mode']='unknown'
         job=self.data.generation_jobs.start(dict(self.image(),count=1,strategy='repeat',session_id='fixture-family',split='unassigned'))
