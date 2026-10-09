@@ -115,3 +115,10 @@ property arrays before/after export, exact raw pairs, second-owner drafts/review
 declared fixed splits and protected whole-family boundaries. Tiny inputs are
 project-authored actual PLY files and explicitly labeled source-derived controls,
 not scanner samples, Rheon output, parser mocks or training benchmarks.
+
+The reusable [native numerical consumer](native-pointcloud-consumer.md) exposes
+whole-cloud named NumPy properties and atomic pickle-free NPZ samples. New
+point-cloud-only canonical releases carry the same complete known family proof
+used by sequences; older proofless point packets are refused by this consumer.
+This adds data preparation without changing raw profile admission or granting
+labels, review, rights, an objective or a trained model.

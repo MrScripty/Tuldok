@@ -15,6 +15,14 @@ Fixtures are retained inputs/authored generators, not approved targets, addition
 
 See [simulation pins](contracts/simulation-sequences.md) and attribution beside retained book sources. Optional dependencies/harnesses require separate provisioning/authorization. Fixtures never request a producer/provider rerun.
 
+`native_pointcloud_fixture.py` uses the retained authored actual colored/XYZ PLY
+pairs, one sidecar-only provenance variant and an unselected known deleted text
+parent. The three clouds form two declared fixed-split families; the bridge is
+graph QA rather than a scanned source. Whole raw pairs and separate native
+properties are checked through actual pinned plyfile/NumPy and pickle-free NPZ,
+including a second owner's new draft IDs/review. No scanner samples, physical
+independence, semantic labels or training corpus are claimed.
+
 The detection reader retains two unchanged published Chapter 9 files with hashes and attribution in [detection-reader-source.json](../tests/fixtures/detection-reader-source.json). Its six retained authored image fixtures and test-only annotations simulate workflow review; they are not a human-labelled corpus or meaningful physical diversity. Only the reader/helper are invoked; no trainer, predictor, model, checkpoint or download.
 
 `general_coco_fixture.py` reuses those same six authored lossless PNGs with test-only multi-object targets: exact-case labels, repeated categories, overlap, fractional/subpixel edges and reviewed empty-box negatives. Its paired split families exercise ownership boundaries; they do not establish real-world independence. `coco-consumer-pins.json` binds the actual pycocotools2.0.11 and torchvision0.23.0 readers. Programmatic and rendered review actions are QA simulation, not authenticated human annotation.

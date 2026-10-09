@@ -8,7 +8,7 @@ The scoped, no-training regression command excludes five separately registered c
 python scripts/qualify_text_classification_local.py --python /path/to/consumer-venv/bin/python --timeout 240 --only '^(?!node tests/(?:check_text_corpus_consumer|check_image_classification_consumer|browser_preferences|browser_instruction_responses|browser_combined_workbench)\.cjs$)'
 ```
 
-That scope contains107 of112 registered gates. It includes Python discovery, current controller/real browser checks and actual NumPy/NPZ consumption. Optional installed Torch2.8 CPU is used only for explicit list-collated DataLoader iteration in the native sequence gate. The excluded gates are not qualified by a scoped run; some separately exercise trainer or other neural consumer behavior. Do not interpret a previous pass or authored fixture as current runtime evidence.
+The runner reports current registered and selected gate counts from the workflow. This scope includes Python discovery, current controller/real browser checks and actual NumPy/NPZ consumption. Optional installed Torch2.8 CPU is used only for explicit list-collated DataLoader iteration in the native sequence gate. The five excluded gates are not qualified by a scoped run; some separately exercise trainer or other neural consumer behavior. Do not interpret a previous pass or authored fixture as current runtime evidence.
 
 An optional `TULDOK_NATIVE_LEGACY_RELEASE` path lets the native gate read an existing frozen release with its exact pinned hash. This is a data input, never an old report copied as a new result. A configured missing or mismatched input fails; no alternate source is selected. Legacy packets without family-context proof are admitted only with one populated split and a visible limitation.
 
@@ -21,6 +21,18 @@ The unregistered historical `capture.cjs` replay requires its exact previously p
 General COCO qualification uses actual pycocotools2.0.11 and torchvision0.23.0 bbox readers, with independent strict geometry/ID/hash checks before permissive COCO indexing. Provision `tests/coco-consumer-requirements.txt` separately (CPU Torch wheels are sufficient); optional `COCO_CONSUMER_PATH` points to an isolated installed package directory. Neither gate downloads packages or data. `check_general_coco.cjs` covers multiple objects/categories, reviewed negatives, native canonical roundtrip and an all-negative train-only profile. `browser_general_coco.cjs` exercises fractional/subpixel authoring, explicit review, exact saved selections, export and a second scratch owner's native import/review/export. No model, optimizer, mask conversion, evaluation or training executes. Exact consumer source/package pins and fixture limitations are retained in `tests/fixtures/coco-consumer-pins.json`.
 
 Multi-source instruction authoring adds `browser_grounded_instructions.cjs` and the composer syntax gate to that scope. Its downloaded ZIP uses the existing instruction consumer in `--reader-only` mode: pinned source checks plus actual Datasets JSON reading and exact passage evidence, with no tokenizer/model/trainer construction. The five separate neural/combined gates remain excluded. See [composition/review contract](../decisions/grounded-instructions.md).
+
+Native point-cloud consumption adds `check_native_pointcloud_consumer.cjs` and
+extends the existing actual `browser_pointclouds.cjs` downloads. The pinned
+plyfile1.1.3/NumPy2.5.3 reader verifies all named native properties and whole-cloud
+pickle-free NPZ from modern point-only canonical family proof. The independent
+checker reconstructs raw properties, declared graph, fixed splits, deterministic
+allocation and stream associations before consumer execution. First/second-owner
+browser files share that checker and retain new draft IDs/unknown rights/separate
+review; sender-local relationships/assignments are not raw-pair transfer claims.
+Authored tiny inputs establish compatibility and workflow only, not scanned
+accuracy, labels, physical independence or training quality. Existing optional
+point consumer dependencies are provisioned separately; no gate installs them.
 
 
 Polygon qualification adds the polygons.js syntax gate, `check_polygon_coco.cjs` and `browser_polygon_segmentation.cjs`. The independent strict oracle checks the exact task-dependent coordinate statement and primitive-preserving source targets before actual pinned `frPyObjects`/merge/decode, `annToMask`, mask area/bbox and CocoDetection reading. Its six authored images have12 positive rings, three reviewed negatives and three positive zero-pixel rasters; independent hand-specified bitmaps distinguish continuous geometry from quantization. QA-only limits are8MiB physical/16MiB expanded,100 records,4,096 pixels/axis,100MP selected image pixels and100MP total work counting both full mask decodes per polygon. Model/optimizer/loadRes/download/iou paths are forbidden; evaluation/training never executes. Chromium actually clicks rendered links, downloads source/second-owner ZIPs to fresh disk files and passes those exact bytes to the reader. Second-owner evidence includes local rights correction, draft save/reopen/review and original provenance inspection. These are workflow/reader tests, not a human-labelled benchmark. The five excluded gates remain excluded. See [polygon contract](../contracts/polygon-segmentation.md).

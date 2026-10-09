@@ -117,6 +117,51 @@ def source_identity(member):
             require(member['source_sha256'] == member['content_hash'], 'Immutable source/content hash mismatch')
 
 
+def declared_family_context(manifest, rows, *, allow_legacy=False):
+    """Validate the declared complete known graph; legacy fallback is explicit."""
+    require(allow_legacy or "protected_components" in manifest, "Complete declared family proof required")
+    if 'protected_components' not in manifest:
+        require(len({r['split'] for r in rows}) == 1, 'Legacy release must have exactly one populated split')
+        context = [{key: row[key] for key in CONTEXT_KEYS} for row in rows]
+    else:
+        components = manifest['protected_components']
+        require(type(components) is dict and 1 <= len(components) <= len(rows), 'Bounded declared family components required')
+        require(all(type(members) is list and members for members in components.values())
+                and sum(len(members) for members in components.values()) <= MAX_CONTEXT, 'Bounded complete family members required')
+        context = [member for members in components.values() for member in members]
+        seen = {}
+        for group, members in components.items():
+            for member in members:
+                require(type(member) is dict and set(member) == CONTEXT_KEYS, 'Exact family snapshot required')
+                ident = member['id']
+                require(type(ident) is str and ID.fullmatch(ident) and ident not in seen, 'Unique snapshot IDs required')
+                seen[ident] = member
+                source_identity(member)
+                require(strings(member['groups'], 'Snapshot groups') == member['groups'] and strings(member['parents'], 'Snapshot parents') == member['parents'], 'Canonical snapshot relationships required')
+                require(member['source_split'] in (*SPLITS, 'unassigned'), 'Snapshot source split required')
+            expected = 'component:' + sha(encode(sorted(m['id'] for m in members)).encode())
+            require(group == expected, 'Declared component identity mismatch')
+        require(all(parent in seen for member in context for parent in member['parents']), 'Missing declared parent bridge')
+        for row in rows:
+            require(row['id'] in seen and encode(seen[row['id']]) == encode({k: row[k] for k in CONTEXT_KEYS}), 'Selected snapshot/revision mismatch')
+            require(type(row['export_group']) is str and row['export_group'] in components
+                    and row['id'] in {m['id'] for m in components[row['export_group']]}, 'Selected component association mismatch')
+        roots = connected_components(context)
+        require(len({roots[m['id']] for m in context}) == len(components)
+                and all(len({roots[m['id']] for m in members}) == 1 for members in components.values()), 'Declared connected closure mismatch')
+        require({row['export_group'] for row in rows} == set(components), 'Unselected declared component')
+    roots = connected_components(context)
+    assigned = {}
+    for row in rows:
+        root, split = roots[row['id']], row['split']
+        require(root not in assigned or assigned[root] == split, 'Whole family crosses splits')
+        assigned[root] = split
+    for member in context:
+        fixed = member['source_split']
+        require(fixed == 'unassigned' or fixed == assigned[roots[member['id']]], 'Related fixed source split conflict')
+    return context
+
+
 class NativeSequenceDataset:
     """Map-style dataset; explicit split, default whole trajectory, optional windows.
 
@@ -231,47 +276,7 @@ class NativeSequenceDataset:
                 self._limitations.append('Legacy single-split release lacks declared unselected-bridge closure proof.')
 
     def _verify_families(self, manifest):
-        rows = self._records
-        if 'protected_components' not in manifest:
-            require(len({r['split'] for r in rows}) == 1, 'Legacy release must have exactly one populated split')
-            context = [{key: row[key] for key in CONTEXT_KEYS} for row in rows]
-        else:
-            components = manifest['protected_components']
-            require(type(components) is dict and 1 <= len(components) <= len(rows), 'Bounded declared family components required')
-            require(all(type(members) is list and members for members in components.values())
-                    and sum(len(members) for members in components.values()) <= MAX_CONTEXT, 'Bounded complete family members required')
-            context = [member for members in components.values() for member in members]
-            seen = {}
-            for group, members in components.items():
-                for member in members:
-                    require(type(member) is dict and set(member) == CONTEXT_KEYS, 'Exact family snapshot required')
-                    ident = member['id']
-                    require(type(ident) is str and ID.fullmatch(ident) and ident not in seen, 'Unique snapshot IDs required')
-                    seen[ident] = member
-                    source_identity(member)
-                    require(strings(member['groups'], 'Snapshot groups') == member['groups'] and strings(member['parents'], 'Snapshot parents') == member['parents'], 'Canonical snapshot relationships required')
-                    require(member['source_split'] in (*SPLITS, 'unassigned'), 'Snapshot source split required')
-                expected = 'component:' + sha(encode(sorted(m['id'] for m in members)).encode())
-                require(group == expected, 'Declared component identity mismatch')
-            require(all(parent in seen for member in context for parent in member['parents']), 'Missing declared parent bridge')
-            for row in rows:
-                require(row['id'] in seen and encode(seen[row['id']]) == encode({k: row[k] for k in CONTEXT_KEYS}), 'Selected snapshot/revision mismatch')
-                require(type(row['export_group']) is str and row['export_group'] in components
-                        and row['id'] in {m['id'] for m in components[row['export_group']]}, 'Selected component association mismatch')
-            roots = connected_components(context)
-            require(len({roots[m['id']] for m in context}) == len(components)
-                    and all(len({roots[m['id']] for m in members}) == 1 for members in components.values()), 'Declared connected closure mismatch')
-            require({row['export_group'] for row in rows} == set(components), 'Unselected declared component')
-        roots = connected_components(context)
-        assigned = {}
-        for row in rows:
-            root, split = roots[row['id']], row['split']
-            require(root not in assigned or assigned[root] == split, 'Whole family crosses splits')
-            assigned[root] = split
-        for member in context:
-            fixed = member['source_split']
-            require(fixed == 'unassigned' or fixed == assigned[roots[member['id']]], 'Related fixed source split conflict')
-        return context
+        return declared_family_context(manifest, self._records, allow_legacy=True)
 
     def __len__(self):
         return len(self._samples)
