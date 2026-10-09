@@ -42,7 +42,7 @@ def coco_category_table(rows):
 def canonical_payloads(rows, assignments, report, seed, roots, groups, snapshots):
     """One serialization owns canonical preview budgets and immutable writing."""
     segmented = segmentation.present(rows)
-    native_only = all(row['kind'] == 'sequence' for row in rows) or all(row['kind'] == 'pointcloud' for row in rows)
+    native_only = all(row['kind'] == 'sequence' for row in rows) or all(row['kind'] == 'pointcloud' for row in rows) or all(row['kind'] == 'mesh' for row in rows)
     table = coco_category_table(rows)
     categories = {item['name']:item['id'] for item in table}
     manifest = dict(schema_version=1,seed=seed,split_report=report,

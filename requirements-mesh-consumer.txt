@@ -1,0 +1,2 @@
+-r requirements-pointcloud-consumer.txt
+# Same exact reader pins; binary native-value mesh path, no training dependencies.

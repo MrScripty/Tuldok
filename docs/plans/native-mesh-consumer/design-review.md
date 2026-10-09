@@ -1,0 +1,5 @@
+# Independent design clearance
+
+Reviewed before implementation by `/root/pointcloud_source_review`; status ADMITTED_DESIGN_ONLY, no blockers. Exact retained receipt `/workspace/native-mesh-consumer-qualification/design-independent-review.json` SHA256 `c0380028e611372f88ea0c1e7bf21a5ed933f55954e3e1412725a7d54da2fcaf`. The approved choice preserves original ASCII input/transport and uses the unchanged pinned reader's supported standard binary PLY path for exact declared native-value consumption. Standard comments carry atomic original-sidecar/source identities; standalone derivatives do not claim complete review/rights/family proof. Existing mesh positive-zero policy and point-cloud signed-zero behavior remain separate.
+
+The independent actual-reader diagnosis at `/workspace/native-mesh-consumer-qualification/reader-diagnosis/diagnosis-review.json` SHA256 `bcf5f7cf50b3f7af065d79ac63260dc0d2f09a2cf8c7fad1180be63d00a09dce` reproduced the original precision mismatch and passed 11 standard binary read/write round trips with mixed native properties and ordered topology. No source acceptance change or tolerance relaxation was admitted.

@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -r requirements-mesh-consumer.txt
       - run: python -m unittest discover -s tests
       - run: node --check static/workbench.js
       - run: node --check static/saved-selections.js
@@ -179,7 +179,6 @@ jobs:
       - run: node tests/browser_pumas_gateways.cjs
         env:
           BROWSER: /usr/bin/google-chrome
-      - run: python -m pip install -r requirements-pointcloud-consumer.txt
       - run: node tests/check_pointcloud_consumer.cjs
       - run: node tests/check_native_pointcloud_consumer.cjs
         env:
@@ -261,6 +260,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/check_native_mesh_consumer.cjs
+        env:
+          POINTCLOUD_CONSUMER_PYTHON: python
       - uses: actions/upload-artifact@v4
         if: always()
         with:

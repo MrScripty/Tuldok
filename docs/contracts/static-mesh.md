@@ -95,3 +95,7 @@ mesh, preserving rows and explicit indexes. Unexpected columns, kind constraints
 or migration-time triggers are refused. Existing sequence asset tables/APIs,
 raw bytes and producer validator remain unchanged. The profile is versioned;
 unknown versions reject rather than guessing. There is no general PLY promise.
+
+## Native-value consumer
+
+The original ASCII pair remains byte-exact transport. The bounded [native mesh consumer](native-mesh-consumer.md) resolves the pinned reader's decimal float32 rounding mismatch through a clearly labeled standard binary PLY derivative. Native dtypes/topology are preserved; standalone derivatives retain source claims, while full review/rights/family evidence remains in the original release and NPZ metadata. Input acceptance and numerical rounding policy are unchanged.
