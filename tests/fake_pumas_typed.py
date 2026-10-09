@@ -53,7 +53,20 @@ def start():
                 import io
                 from PIL import Image
                 out = io.BytesIO(); Image.new('RGB', (body['options']['width'], body['options']['height']), (35,95,160)).save(out, 'PNG')
-                result = {'kind': 'image', 'png_base64': base64.b64encode(out.getvalue()).decode(), 'seed': body['options'].get('seed', 7)}
+                raw = out.getvalue()
+                if mode == 'malformed_png':
+                    import struct, zlib
+                    offset = 8
+                    while raw[offset + 4:offset + 8] != b'IDAT':
+                        offset += 12 + struct.unpack('>I', raw[offset:offset + 4])[0]
+                    length = struct.unpack('>I', raw[offset:offset + 4])[0]
+                    payload = raw[offset + 8:offset + 8 + length]
+                    def chunk(name, data):
+                        return (struct.pack('>I', len(data)) + name + data
+                                + struct.pack('>I', zlib.crc32(name + data) & 0xffffffff))
+                    raw = (raw[:offset] + chunk(b'IDAT', payload[:1]) + chunk(b'bad!', b'')
+                           + chunk(b'IDAT', payload[1:]) + raw[offset + length + 12:])
+                result = {'kind': 'image', 'png_base64': base64.b64encode(raw).decode(), 'seed': body['options'].get('seed', 7)}
             if mode == 'wrong_kind': result = {'kind': 'image', 'png_base64': '', 'seed': 7}
             if mode == 'length': result['finish_reason'] = 'length'
             value = {'contract_version': 1, 'request_id': 'foreign' if mode == 'wrong_id' else body['request_id'], 'result': result}
