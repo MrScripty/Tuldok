@@ -1,0 +1,17 @@
+{
+  "pycocotools_version": "2.0.11",
+  "source_commit": "ac87f5077ad6b8864c2dc5e93d14cae62d1db05a",
+  "coco_sha256": "4a234fc502c6e622f044747312d6a696652545f527e766c98bedf5aa4ca77f41",
+  "mask_sha256": "4d4788f995971c97c5548f0bd19941f6ec1faaf5d0d7fb6ec489256ff872c617",
+  "compiled_extension": "_mask.abi3.so",
+  "compiled_extension_bytes": 1363024,
+  "compiled_extension_sha256": "fd22099149a494c583e60be648924a71d51a46add9f2f112d695c89434e772de",
+  "retained_wheel_bytes": 411685,
+  "retained_wheel_sha256": "a82d1c9ed83f75da0b3f244f2a3cf559351a283307bd9b79a4ee2b93ab3231dd",
+  "torchvision_version": "0.23.0",
+  "torchvision_coco_sha256": "d8dd3308e92111bb8b58f6908cc9097b6f27c6f3b5f0eeb98deebdd9782fd135",
+  "source_url": "https://raw.githubusercontent.com/ppwwyyxx/cocoapi/ac87f5077ad6b8864c2dc5e93d14cae62d1db05a/PythonAPI/pycocotools/mask.py",
+  "scope": "Exact installed retained Linux CPython abi3 wheel mask decoder and CocoDetection reader; source revision evidence does not claim reproducibility of wheel compilation. Other compiled platforms need separate pins. No model, optimizer, evaluation, training or downloads.",
+  "reader_limits": {"records":100,"archive_bytes":8388608,"expanded_bytes":16777216,"axis_pixels":4096,"counted_decoded_pixels":100000000},
+  "fixture_scope": "Retained six authored images, manually authored polygon rings and independent explicit bitmap expectations; automated review is not authentic human-labelled benchmark or semantic truth."
+}

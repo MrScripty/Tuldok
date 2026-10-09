@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'sequence_transport', 'mesh_geometry')
+TASKS = ('image_detection', 'image_segmentation', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'sequence_transport', 'mesh_geometry')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -73,6 +73,9 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Choose a task matching the asset type.')
     if not isinstance(value, dict):
         raise WorkbenchError('Annotation must be an object.')
+    if task == 'image_segmentation':
+        from image_segmentation import validate
+        return validate(value, record)
     if task == 'text_retrieval':
         from retrieval_export import annotation
         return annotation(value, record)
@@ -134,7 +137,7 @@ def labels(record):
         return temporal_labels(annotation)
     if 'label' in annotation:
         return [annotation['label']]
-    return [item['label'] for item in annotation.get('boxes', annotation.get('spans', []))]
+    return [item['label'] for item in annotation.get('instances', annotation.get('boxes', annotation.get('spans', [])))]
 
 
 def rights_note(record):
@@ -357,7 +360,7 @@ class Workbench:
         rights = text_value(body.get('rights', 'unknown'), 'Rights / permission note', 1000)
         parents = strings(body.get('parents', []), 'Parent IDs')
         if annotation is not None:
-            if kind != 'image' or annotation_task not in ('image_caption', 'image_detection'):
+            if kind != 'image' or annotation_task not in ('image_caption', 'image_detection', 'image_segmentation'):
                 raise WorkbenchError('Unsupported initial image annotation task.')
             if annotation_task == 'image_caption':
                 annotation = validate_annotation(annotation_task, annotation, {'kind': kind})
@@ -391,7 +394,7 @@ class Workbench:
         self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
                         (encode(groups), encode(parents), encode(origin), sample_id))
         if annotation is not None:
-            if annotation_task not in ('image_caption', 'image_detection'):
+            if annotation_task not in ('image_caption', 'image_detection', 'image_segmentation'):
                 raise WorkbenchError('Unsupported initial image annotation task.')
             annotation = validate_annotation(annotation_task, annotation, record)
             self.db.execute("UPDATE workbench_records SET task=?,annotation_json=?,review='draft' WHERE id=?",
@@ -441,6 +444,8 @@ class Workbench:
         if not groups:
             raise WorkbenchError('Keep at least one protected group.')
         review = body.get('review')
+        if task == 'image_segmentation' and (review not in ('draft', 'human_reviewed') or verified_provenance):
+            raise WorkbenchError('Segmentation data requires an explicit human review decision.')
         if task == 'text_retrieval':
             from retrieval_export import check_positives
             if review not in ('draft', 'human_reviewed') or verified_provenance:
@@ -678,10 +683,17 @@ class Workbench:
         return sorted(result, key=lambda row: row['id'])
 
 
-def file_hash(path):
+def file_hash(path, max_bytes=None):
     digest = hashlib.sha256()
+    counted = 0
     with path.open('rb') as source:
-        for chunk in iter(lambda: source.read(1024 * 1024), b''):
+        while True:
+            chunk = source.read(1024 * 1024 if max_bytes is None else min(1024 * 1024, max_bytes - counted + 1))
+            if not chunk:
+                break
+            counted += len(chunk)
+            if max_bytes is not None and counted > max_bytes:
+                raise WorkbenchError('Source byte bound exceeded while reading.', 'conflict', 409)
             digest.update(chunk)
     return digest.hexdigest()
 
@@ -706,7 +718,7 @@ def analyze(rows):
             'unlabeled': len(members['unlabeled']),
             'missing_sources': len(members['missing_sources']),
             'unknown_rights': len(members['unknown_rights']),
-            'empty_targets': sum(r['annotation'] in ({'boxes': []}, {'spans': []}) for r in rows),
+            'empty_targets': sum(r['annotation'] in ({'boxes': []}, {'spans': []}, {'instances': []}) for r in rows),
             'image_size': {'min_width': min((r['width'] for r in rows if r['width']), default=None),
                            'min_height': min((r['height'] for r in rows if r['height']), default=None)},
             'limits': ['Exact decoded-content matches only; semantic/near duplicates are not measured.',

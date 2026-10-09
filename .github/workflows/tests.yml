@@ -233,6 +233,14 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node --check static/polygons.js
+      - run: node tests/check_polygon_coco.cjs
+        env:
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_polygon_segmentation.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
       - uses: actions/upload-artifact@v4
         if: always()
         with:

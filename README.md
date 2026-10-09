@@ -293,7 +293,7 @@ Labels and metadata are stored in SQLite with optimistic revision checks. Stale 
 
 ## Scope
 
-This first version supports still capture and image import, including frames extracted from videos elsewhere. It does not yet record video, extract/deduplicate video frames, train models, or provide segmentation labels. Exports include images and metadata but omit original source bytes. Manual labeling stays local; optional AI suggestions send the selected image to the configured provider.
+This first version supports still capture and image import, including frames extracted from videos elsewhere. It does not yet record video, extract/deduplicate video frames, or train models. Bounded human-authored polygon labels are available through the dataset workbench; see the [polygon contract](docs/contracts/polygon-segmentation.md). Exports include images and metadata but omit original source bytes. Manual labeling stays local; optional AI suggestions send the selected image to the configured provider.
 
 ## Tests
 
@@ -878,3 +878,10 @@ Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A d
 Immutable text IDs now support retrieval document roles and explicit positive query judgments. Import raw queries with exact current document references, save and reopen drafts, review relevance separately, and save/open a fixed selection before preview/freeze. Declared import references grant no review. Every omitted relationship remains **UNJUDGED**, never an inferred negative; empty/negative/graded judgments are unsupported. Whole connected families, including former positive parents and unselected/deleted bridges, preserve split boundaries. The release keeps canonical text, original record IDs, exact revisions, provenance/rights/review, family evidence and hashes; train pairs contain train positives only and the selected inference corpus includes held-out documents.
 
 Fresh qualification uses actual serialized files and unchanged published JSONL reading plus pure formatting/hash helpers. It performs no fitting, ranking, metrics, training or model downloads and makes no corpus-quality or trainer-compatibility claim. UI provisional. [Contract, exact source pins and limits](docs/contracts/retrieval-export.md).
+
+
+### Human-authored polygon instance segmentation
+
+Choose **image segmentation** for an oriented image. Capture vertices with primary pointer clicks or enter exact native pixel-edge x,y coordinates (including integral floats and signed zero), then explicitly Add or Clear unfinished vertices before Save. Save/reopen a draft and review its complete simple rings separately; an explicitly reviewed empty instance list is a negative image. Pending vertices and active capture fence late source opens and participate in discard/unload guards. Rights notes, original source evidence, history and exact saved selections keep their existing owners.
+
+Canonical preview/freeze shares release-local COCO categories with detection boxes. Polygon bbox/area are continuous geometry; actual consumer masks are quantized and may be empty for a valid positive tiny polygon. Native canonical import supports polygon-only and mixed box/polygon packets as new local drafts with unknown rights and exact upstream evidence. Limits include 100 instances, 128 vertices/ring, 1,024 vertices/record; segmentation-bearing releases have 100 selected records, 100MP image pixels and 40MiB complete logical/stored ZIP bounds. Native import and reader QA have stricter separate limits. Actual pinned COCO mask/CocoDetection reading and Chromium downloads qualify compatibility and workflow, without models, evaluation, training or corpus-quality claims. [Contract, source pins and limits](docs/contracts/polygon-segmentation.md). UI provisional.

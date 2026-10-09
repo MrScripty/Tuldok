@@ -6,9 +6,11 @@ let selectionEpoch = 0;
 let page = null, offset = 0, current = null, targets = [], dirty = false, queryEpoch = 0, editorEpoch = 0;
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error', error); }
 async function api(path, body) {
-  const response = await fetch(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const response = await fetch(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:typeof polygonRequestBody==='function'&&body.task==='image_segmentation'?polygonRequestBody(body):JSON.stringify(body)});
+  const polygonCopy=typeof polygonReadResponse==='function'&&/^(?:records|rights)\/[^/]+$/.test(path)?response.clone():null;
   const result = await response.json();
   if (!response.ok) { const error=Error(result.error || 'Request failed.');error.status=response.status;throw error; }
+  if(polygonCopy) await polygonReadResponse(polygonCopy,result);
   return result;
 }
 function action(id, fn, event = 'click') {
@@ -77,7 +79,7 @@ async function refresh(isCurrent = () => true) {
   pagination(); selection();
 }
 function markDirty(resetReview = true) { dirty = true; ++editorEpoch; if(resetReview) $('record-review').value = 'draft'; }
-function hasUnsavedEdits() { return dirty || (typeof rightsDirty !== 'undefined' && rightsDirty) || (typeof responseDirty !== 'undefined' && responseDirty) || (typeof preferenceDirty !== 'undefined' && preferenceDirty); }
+function hasUnsavedEdits() { return dirty || (typeof polygonPending === 'function' && (polygonPending() || polygonPointer !== null)) || (typeof rightsDirty !== 'undefined' && rightsDirty) || (typeof responseDirty !== 'undefined' && responseDirty) || (typeof preferenceDirty !== 'undefined' && preferenceDirty); }
 function mayDiscard() { return !hasUnsavedEdits() || confirm('Discard unsaved annotation, rights-note, response or judgment edits?'); }
 function responseIntentEpoch() { return `${typeof responseEditEpoch === 'undefined' ? '' : responseEditEpoch}/${typeof preferenceEditEpoch === 'undefined' ? '' : preferenceEditEpoch}/${typeof groundedEditEpoch === 'undefined' ? '' : groundedEditEpoch}`; }
 async function openRecord(id, force = false) {
@@ -95,7 +97,7 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus','text_retrieval']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_segmentation','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus','text_retrieval']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
   $('corpus-note').value = record.task === 'text_corpus' ? record.annotation?.note || '' : '';
@@ -103,7 +105,8 @@ function showRecord(record) {
   if(typeof retrievalShown === 'function') retrievalShown(record);
   if(typeof sequenceShown === 'function') sequenceShown(record);
   if(typeof meshShown === 'function') meshShown(record);
-  targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
+  targets = structuredClone(record.annotation?.instances || record.annotation?.boxes || record.annotation?.spans || []);
+  if(typeof polygonShown === 'function') polygonShown(record);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
   $('history-output').hidden = true; renderTargets();
@@ -117,15 +120,21 @@ function showRecord(record) {
 }
 function renderTargets() {
   const task = $('task').value;
+  if(typeof polygonControls === 'function') polygonControls(task);
   if(typeof retrievalControls === 'function') retrievalControls(task);
   $('corpus-controls').hidden = task !== 'text_corpus';
   $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_retrieval' || task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
-  if(current?.kind === 'image' && task === 'image_detection'){
+  if(current?.kind === 'image' && ['image_detection','image_segmentation'].includes(task)){
     $('box-overlay').setAttribute('viewBox',`0 0 ${current.width} ${current.height}`);
-    for(const box of targets){const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');for(const key of ['x','y','width','height'])rect.setAttribute(key,box[key]);$('box-overlay').append(rect);}
+    for(const target of targets){
+      const shape=document.createElementNS('http://www.w3.org/2000/svg',task==='image_segmentation'?'polygon':'rect');
+      if(task==='image_segmentation') shape.setAttribute('points',target.points.map(point=>point.join(',')).join(' '));
+      else for(const key of ['x','y','width','height']) shape.setAttribute(key,target[key]);
+      $('box-overlay').append(shape);
+    }
   }
   if(task.endsWith('_classification') || task === 'image_caption' || task === 'text_corpus') return;
   targets.forEach((target,index)=>{
@@ -136,7 +145,7 @@ function renderTargets() {
   });
 }
 $('editor').addEventListener('input',event=>markDirty(event.target?.id !== 'record-review'));
-$('task').addEventListener('change',()=>{targets=[];markDirty();renderTargets();});
+$('task').addEventListener('change',()=>{if(typeof polygonTaskChange==='function'&&!polygonTaskChange())return;drag=null;targets=[];markDirty();renderTargets();});
 action('filters',async()=>{offset=0;await refresh();notice('Collection updated.');},'submit');
 action('previous',async()=>{offset=Math.max(0,offset-40);await refresh();});
 action('next',async()=>{offset+=40;await refresh();});
@@ -170,6 +179,7 @@ $('asset-image').addEventListener('pointerup',event=>{
 });
 $('asset-image').addEventListener('pointercancel',()=>drag=null);
 action('editor',async()=>{
+  if(typeof polygonSaveCheck === 'function') polygonSaveCheck();
   if(typeof rightsDirty !== 'undefined' && rightsDirty) throw Error('Save or cancel the rights-note edit before saving an annotation.');
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) throw Error('Save or cancel the response edit before saving the annotation.');
   if(typeof captionProposalBusy !== 'undefined' && captionProposalBusy) throw Error('Wait for the caption action to finish before saving an annotation.');
@@ -177,7 +187,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'text_retrieval' ? retrievalAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'text_retrieval' ? retrievalAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':task==='image_segmentation'?'instances':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
@@ -275,6 +285,7 @@ function renderReleasePreview(result) {
     }
     previewLine(root, report.note);
   } else previewLine(root, 'No valid split allocation is available for these settings.');
+  if(result.segmentation_bounds) { const b=result.segmentation_bounds; previewLine(root, `Polygon release: ${b.records}/100 records · ${b.image_pixels}/100,000,000 image pixels · ${b.logical_bytes} logical bytes · ${b.stored_zip_bytes}/${b.maximum_bytes} stored ZIP bytes.`); }
   const families=document.createElement('details'), summary=document.createElement('summary');
   summary.textContent=`${result.lineage.length} connected lineage groups in this selection`;families.append(summary);
   for(const family of result.lineage) {

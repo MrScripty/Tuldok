@@ -14,6 +14,7 @@ import image_classification_export as classification_export
 import image_detection_export as detection_export
 import text_corpus_export as corpus_export
 import retrieval_export
+import image_segmentation as segmentation
 
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
 
@@ -32,9 +33,47 @@ CAPTION_SPLITS = {'train': 'train', 'validation': 'val', 'test': 'test'}
 
 def coco_category_table(rows):
     """Existing release-local vocabulary, shared by preview and COCO writer."""
-    vocabulary = sorted({box['label'] for row in rows if row['task'] == 'image_detection'
-                         for box in row['annotation']['boxes']})
+    vocabulary = sorted({target['label'] for row in rows if row['task'] in ('image_detection', segmentation.TASK)
+                         for target in segmentation.targets(row)})
     return [{'id': index + 1, 'name': label} for index, label in enumerate(vocabulary)]
+
+
+def canonical_payloads(rows, assignments, report, seed, roots, groups, snapshots):
+    """One serialization owns canonical preview budgets and immutable writing."""
+    segmented = segmentation.present(rows)
+    sequence_only = all(row['kind'] == 'sequence' for row in rows)
+    table = coco_category_table(rows)
+    categories = {item['name']:item['id'] for item in table}
+    manifest = dict(schema_version=1,seed=seed,split_report=report,
+        coordinate_contract=segmentation.COORDINATES if segmented else segmentation.BASE_COORDINATES,
+        limitations=['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],records=[])
+    if sequence_only:
+        manifest['protected_components'] = snapshots
+    coco = {split:dict(info=dict(description='Tuldok detection release',version='1'),licenses=[],images=[],annotations=[],categories=table) for split in SPLITS}
+    typed = {split:[] for split in SPLITS}
+    for index,row in enumerate(rows,1):
+        split = assignments[row['id']]
+        filename = 'assets/' + row['id'] + {'image':'.png','text':'.txt','sequence':'.zip','mesh':'.zip'}[row['kind']]
+        record = dict(row,split=split,asset=filename,asset_sha256=row['content_hash'])
+        if sequence_only:
+            record['export_group'] = groups[roots[row['id']]]
+        manifest['records'].append(record)
+        if row['task'] in ('image_detection',segmentation.TASK):
+            coco[split]['images'].append(dict(id=index,file_name=filename,width=row['width'],height=row['height']))
+            for target in segmentation.targets(row):
+                coco[split]['annotations'].append(segmentation.coco_target(target,row['task'],len(coco[split]['annotations'])+1,index,categories[target['label']]))
+        else:
+            typed[split].append(record)
+    manifest['vocabulary'] = [item['name'] for item in table]
+    payloads = {'manifest.json':encode(manifest).encode('utf-8')}
+    for split in SPLITS:
+        payloads[split+'/coco.json'] = encode(coco[split]).encode('utf-8')
+        payloads[split+'/records.jsonl'] = ''.join(encode(row)+'\n' for row in typed[split]).encode('utf-8')
+    note = ('Tuldok frozen release v1. Asset paths are relative to archive root.\nCOCO projections contain detection only. JSONL contains other task records.\nText spans index Unicode code points in canonical text, not UTF-16 or bytes.\nSee manifest.json for revisions, lineage, review, vocabulary and split report.\n')
+    if segmented:
+        note += 'COCO also contains explicitly human-reviewed polygon instances. Continuous polygon bounds/area differ from quantized masks; an empty raster does not make an instance a negative.\n'
+    payloads['README.txt'] = note.encode('utf-8')
+    return manifest['records'],payloads
 
 
 def connected_components(universe):
@@ -142,16 +181,25 @@ def allocate(selected, universe, ratios, seed, weights=None):
                       'note': 'Whole connected groups are indivisible; existing source splits are preserved. Requested percentages are targets, not exact quotas.'}
 
 
-def archive_asset(archive, asset, filename, expected_hash):
+def archive_asset(archive, asset, filename, expected_hash, max_bytes=None):
     """Hash the bytes actually archived, not a preceding filesystem read."""
     if isinstance(asset, Path):
         hasher = hashlib.sha256()
+        counted = 0
         with asset.open('rb') as source, archive.open(zipfile.ZipInfo(filename), 'w') as dest:
-            for chunk in iter(lambda: source.read(1024 * 1024), b''):
+            while True:
+                chunk = source.read(1024 * 1024 if max_bytes is None else min(1024 * 1024, max_bytes - counted + 1))
+                if not chunk:
+                    break
+                counted += len(chunk)
+                if max_bytes is not None and counted > max_bytes:
+                    raise WorkbenchError('Source byte bound exceeded while archiving.', 'conflict', 409)
                 hasher.update(chunk)
                 dest.write(chunk)
         digest = hasher.hexdigest()
     else:
+        if max_bytes is not None and len(asset) > max_bytes:
+            raise WorkbenchError('Source byte bound exceeded while archiving.', 'conflict', 409)
         digest = hashlib.sha256(asset).hexdigest()
         archive.writestr(zipfile.ZipInfo(filename), asset)
     if digest != expected_hash:
@@ -218,6 +266,24 @@ class Releases:
             block(error)
             return {'preview': preview}
         preview['selected_count'] = len(rows)
+        segmented = format_name == 'canonical_v1' and segmentation.present(rows)
+        asset_sizes = {}
+        if segmented:
+            try:
+                segmentation.selection_bounds(rows)
+                minimum_bytes = len(encode(rows).encode('utf-8'))
+                for row in rows:
+                    asset, _ = workbench.asset(row['id'])
+                    asset_sizes[row['id']] = asset.stat().st_size if isinstance(asset, Path) else len(asset)
+                    minimum_bytes += asset_sizes[row['id']]
+                    if minimum_bytes > segmentation.MAX_BYTES:
+                        raise WorkbenchError('Segmentation-bearing releases exceed the 40 MiB complete archive bound.')
+            except WorkbenchError as error:
+                block(error)
+                return {'preview': preview}
+            except (OSError,ValueError,UnicodeError):
+                block(WorkbenchError('Segmentation source evidence is unreadable or nonfinite.'))
+                return {'preview': preview}
         if format_name == classification_export.FORMAT:
             if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
                 block(WorkbenchError('Unknown classification release fields.'))
@@ -249,6 +315,8 @@ class Releases:
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
                 if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
+                if row['task'] == segmentation.TASK and row['review'] != 'human_reviewed':
+                    raise WorkbenchError('Segmentation export requires explicit human review, including negative images.')
                 if row['task'] == 'text_retrieval':
                     if row['review'] != 'human_reviewed':
                         raise WorkbenchError('Retrieval targets require explicit human review.')
@@ -258,6 +326,8 @@ class Releases:
                     if target['role'] == 'query':
                         retrieval_export.check_positives(workbench, target['positive_refs'])
                 normalized = validate_annotation(row['task'], row['annotation'], row)
+                if row['task'] == segmentation.TASK and encode(normalized) != encode(row['annotation']):
+                    raise WorkbenchError('Stored polygon targets are not canonical.')
                 if row['task'] == 'sequence_transport' and 'temporal_labels' in row['annotation']:
                     from sequence_temporal_labels import verify_source
                     if encode(normalized) != encode(row['annotation']):
@@ -267,13 +337,15 @@ class Releases:
                 block(error, row['id'])
             try:
                 asset, _ = workbench.asset(row['id'])
-                digest = file_hash(asset) if isinstance(asset, Path) else hashlib.sha256(asset).hexdigest()
+                digest = file_hash(asset, asset_sizes[row['id']]) if segmented and isinstance(asset, Path) else file_hash(asset) if isinstance(asset, Path) else hashlib.sha256(asset).hexdigest()
                 if digest != row['content_hash']:
                     raise WorkbenchError('Source bytes changed outside Tuldok. Restore the original asset before release.', 'conflict', 409)
                 if row['kind'] == 'image':
                     with Image.open(asset) as image:
                         if image.format != 'PNG' or image.getexif().get(274, 1) != 1:
                             raise WorkbenchError('Image assets must be normalized PNGs with EXIF orientation 1.')
+                        if segmented and (image.size != (row['width'], row['height']) or image.width * image.height > 40000000):
+                            raise WorkbenchError('Source dimensions changed before raster decoding.', 'conflict', 409)
                         image = image.convert('RGB'); image.load()
                         pixel_hash = hashlib.sha256(str(image.size).encode() + image.tobytes()).hexdigest()
                         if image.size != (row['width'], row['height']) or pixel_hash != row['pixel_hash']:
@@ -314,22 +386,32 @@ class Releases:
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
             if any(row['kind'] == 'sequence' for row in rows):
                 preview['warnings'].append('Sequence assets are complete raw run.json/frames.jsonl ZIPs. Read sequence-only releases with native_sequence_dataset.py: separate native MAC arrays/time and human coverage. This transport-only data does not qualify a trainer, physical truth or independent train/evaluation families.')
-            preview['warnings'].append('Canonical export projects detection to COCO; other tasks remain typed JSONL records, not one interchangeable training format.')
+            preview['warnings'].append('Canonical export projects detection and polygon instances to COCO; other tasks remain typed JSONL records, not one interchangeable training format.')
+            if segmented:
+                preview['warnings'].append('Polygon bbox/area are continuous geometry. Consumer masks are quantized and can be empty for a valid positive tiny polygon; masks do not grant target review or truth.')
             if any(row['task'] == 'image_caption' for row in rows):
                 preview['warnings'].append('Canonical captions remain manifest/JSONL records. Choose image-caption format for the pinned train/val/test imagefolder consumer.')
         if preview['analysis']['unknown_rights']:
             preview['warnings'].append('Some selected records have unknown rights. Review permission before training or sharing.')
         preview['warnings'].append('Exact matches and protected lineage do not establish semantic independence or training quality.')
+        if segmented and not preview['blockers']:
+            records,payloads = canonical_payloads(rows,preview['assignments'],preview['split_report'],body['seed'],roots,groups,snapshots)
+            logical = sum(asset_sizes.values()) + sum(len(value) for value in payloads.values())
+            names = [record['asset'] for record in records] + list(payloads)
+            physical = logical + 22 + sum(76+2*len(name.encode('utf-8')) for name in names)
+            preview['segmentation_bounds'] = dict(records=len(rows),image_pixels=sum(r['width']*r['height'] for r in rows if r['kind']=='image'),logical_bytes=logical,stored_zip_bytes=physical,maximum_bytes=segmentation.MAX_BYTES)
+            if logical > segmentation.MAX_BYTES or physical > segmentation.MAX_BYTES:
+                block(WorkbenchError('Segmentation-bearing complete logical/stored ZIP exceeds 40 MiB.'))
         preview['eligible'] = not preview['blockers']
         if preview['eligible']:
-            if format_name == 'canonical_v1' and any(row['task'] == 'image_detection' for row in rows):
+            if format_name == 'canonical_v1' and any(row['task'] in ('image_detection',segmentation.TASK) for row in rows):
                 preview['coco_categories'] = coco_category_table(rows)
             preview['preview_token'] = hashlib.sha256(encode({
                 'preview_schema': 1, 'format': format_name, 'ratios': body['ratios'], 'seed': body['seed'],
                 'records': rows, 'protected_components': snapshots,
                 'assignments': preview['assignments']}).encode()).hexdigest()
         return {'preview': preview, 'rows': rows, 'pixel_hashes': pixel_hashes,
-                'roots': roots, 'groups': groups, 'snapshots': snapshots}
+                'roots': roots, 'groups': groups, 'snapshots': snapshots, 'asset_sizes': asset_sizes}
 
     def _checked(self, body):
         prepared = self._prepare(body)
@@ -846,45 +928,21 @@ class Releases:
             rows = prepared['rows']
             assignments = prepared['preview']['assignments']
             report = prepared['preview']['split_report']
-            manifest = {'schema_version': 1, 'seed': body['seed'], 'split_report': report,
-                        'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end). Sequence bundles preserve original named staggered fields and accepted intervals; each whole trajectory is indivisible. Static mesh bundles preserve native xyz/topology and declared units/frame; each whole mesh is indivisible.',
-                        'limitations': ['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],
-                        'records': []}
-            sequence_only = all(row['kind'] == 'sequence' for row in rows)
-            if sequence_only:
-                manifest['protected_components'] = prepared['snapshots']
-            category_table = coco_category_table(rows)
-            vocabulary = [item['name'] for item in category_table]
-            categories = {item['name']: item['id'] for item in category_table}
-            coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': category_table} for split in SPLITS}
-            text_rows = {split: [] for split in SPLITS}
+            records, payloads = canonical_payloads(rows, assignments, report, body['seed'], prepared['roots'], prepared['groups'], prepared['snapshots'])
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:
                 with os.fdopen(fd, 'w+b') as target:
                     with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
-                        for index, row in enumerate(rows, 1):
-                            split = assignments[row['id']]
+                        for row, record in zip(rows, records):
                             asset, _ = workbench.asset(row['id'])
-                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip'}[row['kind']]
-                            digest = archive_asset(archive, asset, filename, row['content_hash'])
-                            record = dict(row, split=split, asset=filename, asset_sha256=digest)
-                            if sequence_only:
-                                record['export_group'] = prepared['groups'][prepared['roots'][row['id']]]
-                            manifest['records'].append(record)
-                            if row['task'] == 'image_detection':
-                                coco[split]['images'].append({'id': index, 'file_name': filename, 'width': row['width'], 'height': row['height']})
-                                for box in row['annotation']['boxes']:
-                                    coco[split]['annotations'].append({'id': len(coco[split]['annotations']) + 1, 'image_id': index,
-                                        'category_id': categories[box['label']], 'bbox': [box[k] for k in ('x', 'y', 'width', 'height')],
-                                        'area': box['width'] * box['height'], 'iscrowd': 0})
+                            if segmentation.present(rows):
+                                archive_asset(archive, asset, record['asset'], row['content_hash'], prepared['asset_sizes'][row['id']])
                             else:
-                                text_rows[split].append(record)
-                        manifest['vocabulary'] = vocabulary
-                        archive.writestr(zipfile.ZipInfo('manifest.json'), encode(manifest))
-                        for split in SPLITS:
-                            archive.writestr(zipfile.ZipInfo(split + '/coco.json'), encode(coco[split]))
-                            archive.writestr(zipfile.ZipInfo(split + '/records.jsonl'), ''.join(encode(row) + '\n' for row in text_rows[split]))
-                        archive.writestr(zipfile.ZipInfo('README.txt'), 'Tuldok frozen release v1. Asset paths are relative to archive root.\nCOCO projections contain detection only. JSONL contains other task records.\nText spans index Unicode code points in canonical text, not UTF-16 or bytes.\nSee manifest.json for revisions, lineage, review, vocabulary and split report.\n')
+                                archive_asset(archive, asset, record['asset'], row['content_hash'])
+                        for filename, payload in payloads.items():
+                            archive.writestr(zipfile.ZipInfo(filename), payload)
+                    if segmentation.present(rows) and target.tell() > segmentation.MAX_BYTES:
+                        raise WorkbenchError('Segmentation-bearing stored ZIP exceeds 40 MiB.')
                     target.flush()
                     os.fsync(target.fileno())
                 release_id = file_hash(Path(temporary))

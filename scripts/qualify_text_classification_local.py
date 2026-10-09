@@ -20,6 +20,9 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 NEW_COMMANDS = (
+    'node --check static/polygons.js',
+    'node tests/check_polygon_coco.cjs',
+    'node tests/browser_polygon_segmentation.cjs',
     'node --check static/text-classification-proposals.js',
     'node tests/test_text_classification_proposals_controller.cjs',
     'node tests/browser_text_classification_proposals.cjs',

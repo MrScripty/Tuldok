@@ -9,7 +9,7 @@ function detectionControls(){
   for(const id of ['native-detection-check','native-detection-dismiss'])$(id).disabled=detectionRunning || !detectionPending;
 }
 function detectionSummary(counts,state){
-  $('native-detection-status').textContent=`${state}: ${counts.created} created, ${counts.rejected} rejected, ${counts.unknown} uncertain; ${counts.total-counts.attempted} not attempted. New detection records require human review.`;
+  $('native-detection-status').textContent=`${state}: ${counts.created} created, ${counts.rejected} rejected, ${counts.unknown} uncertain; ${counts.total-counts.attempted} not attempted. New COCO targets require human review.`;
 }
 function detectionRow(number,state,message){
   const item=document.createElement('li');item.textContent=`Manifest record ${number} · ${state}: ${String(message).slice(0,500)}`;
@@ -72,7 +72,7 @@ $('native-detection-form').addEventListener('submit',async event=>{
       if(detectionStopped){state='Stopped';break;}
       const body={token:row.token,request_id:crypto.randomUUID().replaceAll('-','')};
       const proof={request_id:body.request_id,row_number:row.row_number,row_sha256:row.row_sha256};
-      counts.attempted++;const item=detectionRow(row.row_number,'importing','Validating native image and initial boxes…');
+      counts.attempted++;const item=detectionRow(row.row_number,'importing','Validating native image and initial targets…');
       detectionFlight={...proof,counts,item};
       try{
         const admission=await fetch('/api/workbench/native-detection-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});

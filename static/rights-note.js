@@ -65,6 +65,7 @@ $('rights-note-cancel').addEventListener('click',()=>{
 });
 $('rights-note-form').addEventListener('submit',async event=>{
   event.preventDefault();if(rightsBusy || !current) return;
+  if(typeof polygonPointer !== 'undefined' && polygonPointer) { $('rights-note-status').textContent = 'Finish or cancel polygon capture before correcting the rights note.'; return; }
   if(dirty || $('editor').dataset.busy) { $('rights-note-status').textContent = 'Save or discard annotation edits before correcting the rights note.'; return; }
   if(typeof responseDirty !== 'undefined' && (responseDirty || responseBusy)) { $('rights-note-status').textContent = 'Save or cancel the response edit before correcting the rights note.'; return; }
   let note;try { note = rightsValue(); } catch(error) { $('rights-note-status').textContent = error.message; return; }

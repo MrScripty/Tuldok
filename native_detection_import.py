@@ -1,4 +1,4 @@
-"""Consume only the existing detection-only canonical_v1 ZIP export contract."""
+"""Consume bounded native canonical COCO box/polygon ZIPs through image ownership."""
 import base64
 import hashlib
 import hmac
@@ -13,6 +13,7 @@ from bulk_import import REQUEST_ID, find_result, leaf_name, result
 from dataset_releases import SPLITS, connected_components
 from native_text_import import MANIFEST_KEYS, RECORD_KEYS, decode, valid_hash
 from workbench import IDENTIFIER, WorkbenchError, encode, strings, validate_annotation
+import image_segmentation as segmentation
 
 MAX_ARCHIVE = 8 * 1024 * 1024
 MAX_EXPANDED = 16 * 1024 * 1024
@@ -129,7 +130,7 @@ class NativeDetectionImports:
                 canonical(manifest)
                 if (not isinstance(manifest, dict) or set(manifest) != MANIFEST_KEYS
                         or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1
-                        or manifest['coordinate_contract'] != COORDINATES):
+                        or manifest['coordinate_contract'] not in (COORDINATES,segmentation.COORDINATES)):
                     raise WorkbenchError('Only the existing native canonical_v1 coordinate/schema contract is supported.')
                 records = manifest['records']
                 if not isinstance(records, list) or not 1 <= len(records) <= MAX_RECORDS:
@@ -148,9 +149,9 @@ class NativeDetectionImports:
                 ids, groups = set(), {}
                 for row in records:
                     if (not isinstance(row, dict) or set(row) != RECORD_KEYS or row['kind'] != 'image'
-                            or row['task'] != 'image_detection' or not isinstance(row['id'], str)
+                            or row['task'] not in ('image_detection',segmentation.TASK) or not isinstance(row['id'], str)
                             or not IDENTIFIER.fullmatch(row['id']) or row['id'] in ids):
-                        raise WorkbenchError('Only unique exact native image_detection record fields are supported.')
+                        raise WorkbenchError('Only unique exact native detection/segmentation record fields are supported.')
                     ids.add(row['id'])
                     if (row['asset'] != 'assets/' + row['id'] + '.png' or row['split'] not in SPLITS
                             or row['source_split'] not in (*SPLITS, 'unassigned')
@@ -165,10 +166,16 @@ class NativeDetectionImports:
                     for key in ('book_id', 'session_id'):
                         if not isinstance(row[key], str) or len(row[key]) > 200:
                             raise WorkbenchError('Invalid declared native book/session link.')
-                    target = validate_annotation('image_detection', row['annotation'], row)
+                    if row['task'] == segmentation.TASK and row['review'] != 'human_reviewed':
+                        raise WorkbenchError('Native polygon evidence requires declared human review; local approval is still separate.')
+                    target = validate_annotation(row['task'], row['annotation'], row)
                     if not same(target, row['annotation']):
                         raise WorkbenchError('Native detection targets must already be canonical.')
                     groups[row['id']] = foreign_groups(row)
+                if manifest['coordinate_contract'] != (segmentation.COORDINATES if segmentation.present(records) else COORDINATES):
+                    raise WorkbenchError('Native coordinate contract differs from its exact target tasks.')
+                if segmentation.present(records):
+                    segmentation.selection_bounds(records)
                 counts = {split: sum(row['split'] == split for row in records) for split in SPLITS}
                 if report['actual_counts'] != {split: count for split, count in counts.items() if count}:
                     raise WorkbenchError('Native split counts differ from the selected records.')
@@ -185,7 +192,7 @@ class NativeDetectionImports:
                     if root in partitions and partitions[root] != row['split']:
                         raise WorkbenchError('Retained native family links conflict across exported splits.')
                     partitions[root] = row['split']
-                vocabulary = sorted({box['label'] for row in records for box in row['annotation']['boxes']})
+                vocabulary = sorted({target['label'] for row in records for target in segmentation.targets(row)})
                 if not same(manifest['vocabulary'], vocabulary):
                     raise WorkbenchError('Native vocabulary differs from its detection targets.')
                 categories = {label: number + 1 for number, label in enumerate(vocabulary)}
@@ -194,10 +201,8 @@ class NativeDetectionImports:
                 for number, row in enumerate(records, 1):
                     projection = projections[row['split']]
                     projection['images'].append(dict(id=number, file_name=row['asset'], width=row['width'], height=row['height']))
-                    for box in row['annotation']['boxes']:
-                        projection['annotations'].append(dict(id=len(projection['annotations']) + 1, image_id=number,
-                            category_id=categories[box['label']], bbox=[box[key] for key in ('x', 'y', 'width', 'height')],
-                            area=box['width'] * box['height'], iscrowd=0))
+                    for target in segmentation.targets(row):
+                        projection['annotations'].append(segmentation.coco_target(target,row['task'],len(projection['annotations'])+1,number,categories[target['label']]))
                 hashes = {}
                 for split in SPLITS:
                     coco_raw = archive.read(split + '/coco.json')
@@ -216,7 +221,7 @@ class NativeDetectionImports:
                         declared=dict(archive_name=name, metadata_path='manifest.json', row_number=number,
                             asset=row['asset'], upstream=dict(record=row, original_status='unavailable',
                                 category_table=projections[row['split']]['categories'],
-                                annotation_category_ids=[categories[box['label']] for box in row['annotation']['boxes']])))
+                                annotation_category_ids=[categories[target['label']] for target in segmentation.targets(row)])))
                     token = self._seal(dict(image=base64.b64encode(asset).decode(), groups=groups[row['id']], context=context))
                     total += len(token)
                     if total > MAX_PREPARED:
@@ -253,7 +258,7 @@ class NativeDetectionImports:
                     raise WorkbenchError('Existing protected lineage has an unknown or conflicting source split.', 'conflict', 409)
                 row = w.import_asset(dict(kind='image', image=payload['image'], name=origin['id'] + '.png',
                     groups=payload['groups'], parents=[], rights='unknown'), acquisition=context,
-                    annotation=origin['annotation'], annotation_task='image_detection', source_split=origin['split'], source_session=session)
+                    annotation=origin['annotation'], annotation_task=origin['task'], source_split=origin['split'], source_session=session)
                 return result(row)
         except (OSError, sqlite3.Error):
             raise WorkbenchError('Detection import storage failed. Inspect the saved result before retrying.', 'storage', 500) from None
