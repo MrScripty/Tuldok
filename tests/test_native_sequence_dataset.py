@@ -282,8 +282,13 @@ class NativeSequenceTests(unittest.TestCase):
         # Existing unselected text context receives no raw frame interpretation.
         def member(m):return next(x for x in next(iter(m['protected_components'].values())) if x['kind']=='text')
         for change in [{'content_hash':'not-a-SHA256'},{'source_sha256':'not-a-SHA256'},{'source_revision':99},{'book_id':'fake book'},
-                       {'pixel_hash':'f'*64},{'source_available':False},{'kind':'sequence','source_sha256':'not-a-SHA256'}]:
+                       {'pixel_hash':'f'*64},{'source_available':False,'source_lineage_known':False},{'kind':'sequence','source_sha256':'not-a-SHA256'}]:
             self.invalid(rewrite(self.raw,lambda m,v:member(m).update(change)))
+        # Binary imports retain immutable text identity/split after deletion.
+        # Availability does not grant a bridge target or permit unknown lineage.
+        known=copy.deepcopy(member(json.loads(entries(self.raw)['manifest.json'])))
+        known.update(source_available=False,source_split='train')
+        native.source_identity(known)
         raw=packet(self.root/'unselected-sequence',unselected_sequence=True)
         def unselected(m):
             ids={r['id'] for r in m['records']}

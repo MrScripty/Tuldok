@@ -900,3 +900,5 @@ For actual pinned-parser QA, provision `requirements-pointcloud-consumer.txt`
 separately, then run `node tests/check_pointcloud_consumer.cjs` and
 `node tests/browser_pointclouds.cjs` (with Chromium). Native PLY arrays and exact
 raw files are checked across fresh owners; no model is instantiated or trained.
+
+Reviewed binary retrieval is a separate bounded `text_retrieval_binary_v2` profile: exact document revisions, relevant/not relevant/explicit unjudged, TREC1/0/-1 qrels, native second-owner drafts and protected whole-family splits. Positive-only v1 remains available. See [contract and limits](docs/contracts/retrieval-binary.md). This prepares/inspects source judgments; no ranking, metrics or training qualification.

@@ -1,0 +1,20 @@
+{
+  "format": "retrieval-binary-reader-pins-v1",
+  "package": "ir_measures",
+  "version": "0.4.3",
+  "release_url": "https://pypi.org/project/ir-measures/0.4.3/",
+  "wheel_name": "ir_measures-0.4.3-py3-none-any.whl",
+  "wheel_bytes": 61311,
+  "wheel_sha256": "3d8b3b5283e4a77df85f9f6c8a1c2c99a7421b78fa014ef97f2ddab3037d3dcf",
+  "files": {
+    "util.py": "0920e4b211b1d32e2fed011dddc8f96ce589b63e379d10fd9b4fa1c454afcc6e",
+    "LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "source_path": "ir_measures/util.py",
+  "definitions": [
+    "Qrel",
+    "read_trec_qrels"
+  ],
+  "definition_ast_sha256": "ce0aff6105b59223459b163741e9019233b5a5527e00d21d1d5e39413ae1b46a",
+  "scope": "Unchanged released source-loaded Qrel/read_trec_qrels only; actual local qrels file; no full package/providers/metrics/ranking/model/training initialization."
+}

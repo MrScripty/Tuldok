@@ -111,11 +111,9 @@ def source_identity(member):
             require(member['source_revision'] is None and member['source_sha256'] is None, 'Deleted image source identity required')
     else:
         integer(member['source_revision'], 1, 1, 'immutable/text source revision')
-        require((kind == 'pointcloud' or member['source_split'] == 'unassigned') and member['pixel_hash'] is None
+        require((kind in ('pointcloud', 'text') or member['source_split'] == 'unassigned') and member['pixel_hash'] is None
                 and member['book_id'] is None and member['session_id'] is None and digest(member['source_sha256']), 'Canonical immutable/text source identity required')
-        if kind == 'text':
-            require(available, 'Text owner retains its original available source')
-        else:
+        if kind != 'text':
             require(member['source_sha256'] == member['content_hash'], 'Immutable source/content hash mismatch')
 
 

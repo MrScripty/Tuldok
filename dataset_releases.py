@@ -14,6 +14,7 @@ import image_classification_export as classification_export
 import image_detection_export as detection_export
 import text_corpus_export as corpus_export
 import retrieval_export
+import retrieval_binary
 import image_segmentation as segmentation
 
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
@@ -242,6 +243,8 @@ class Releases:
         format_name = body.get('format', 'canonical_v1')
         if format_name == retrieval_export.FORMAT:
             return retrieval_export.prepare(self, body)
+        if format_name == retrieval_binary.FORMAT:
+            return retrieval_binary.prepare(self, body)
         if format_name == detection_export.FORMAT:
             return self._prepare_detection(body)
         if format_name == corpus_export.FORMAT:
@@ -327,6 +330,14 @@ class Releases:
                         raise WorkbenchError('Stored retrieval target is invalid.')
                     if target['role'] == 'query':
                         retrieval_export.check_positives(workbench, target['positive_refs'])
+                if row['task'] == retrieval_binary.TASK:
+                    if row['review'] != 'human_reviewed':
+                        raise WorkbenchError('Binary retrieval targets require explicit human review.')
+                    target = retrieval_binary.annotation(row['annotation'], row)
+                    if encode(target) != encode(row['annotation']):
+                        raise WorkbenchError('Stored binary retrieval target is invalid.')
+                    if target['role'] == 'query':
+                        retrieval_binary.check_documents(workbench, target['judgments'])
                 normalized = validate_annotation(row['task'], row['annotation'], row)
                 if row['task'] == segmentation.TASK and encode(normalized) != encode(row['annotation']):
                     raise WorkbenchError('Stored polygon targets are not canonical.')
@@ -639,14 +650,14 @@ class Releases:
                         try:
                             for filename, value, expected in adapter.entries(prepared, body):
                                 total += len(value)
-                                if total > MAX_SELECTED_TEXT_BYTES:
+                                if total > getattr(adapter, 'MAX_LOGICAL', MAX_SELECTED_TEXT_BYTES):
                                     raise WorkbenchError('Corpus archive exceeds the 40 MiB complete logical archive bound.')
                                 if expected and hashlib.sha256(value).hexdigest() != expected:
                                     raise WorkbenchError('Source bytes changed outside Tuldok.', 'conflict', 409)
                                 if filename is not None:
                                     if stream is not None:
                                         stream.close(); stream = None
-                                    if filename in (retrieval_export.STREAM_FILES if adapter is retrieval_export else ('train.txt', 'validation.txt', 'test.txt')):
+                                    if filename in (adapter.STREAM_FILES if adapter in (retrieval_export, retrieval_binary) else ('train.txt', 'validation.txt', 'test.txt')):
                                         stream = archive.open(zipfile.ZipInfo(filename), 'w')
                                     else:
                                         archive_asset(archive, value, filename, expected or hashlib.sha256(value).hexdigest())
@@ -665,7 +676,7 @@ class Releases:
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': adapter.FORMAT, 'records': len(prepared['rows']),
                     'split_report': preview['split_report'],
-                    ('retrieval_counts' if adapter is retrieval_export else 'corpus_counts'): preview['retrieval_counts' if adapter is retrieval_export else 'corpus_counts'],
+                    ('retrieval_counts' if adapter in (retrieval_export, retrieval_binary) else 'corpus_counts'): preview['retrieval_counts' if adapter in (retrieval_export, retrieval_binary) else 'corpus_counts'],
                     'artifact_bytes': preview['artifact_bytes'], 'warnings': preview['warnings']}
 
     def _context_sources(self, parents):
@@ -902,6 +913,10 @@ class Releases:
 
     def create(self, body):
         format_name = body.get('format', 'canonical_v1')
+        if format_name == retrieval_binary.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact binary retrieval selection before exporting.', 'conflict', 409)
+            return self._create_text_dataset(body, retrieval_binary)
         if format_name == retrieval_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact retrieval selection before exporting.', 'conflict', 409)

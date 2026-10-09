@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [feature/pointcloud-profile-20261009, develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
+    branches: [feature/retrieval-binary-20261009, feature/pointcloud-profile-20261009, develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
   pull_request:
 permissions:
   contents: read
@@ -246,6 +246,15 @@ jobs:
         env:
           INSTRUCTION_CONSUMER_PYTHON: python
       - run: node tests/browser_polygon_segmentation.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node --check static/retrieval-binary.js
+      - run: node tests/test_retrieval_binary_controller.cjs
+      - run: node tests/check_retrieval_binary_reader.cjs
+        env:
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_retrieval_binary.cjs
         env:
           BROWSER: /usr/bin/google-chrome
           INSTRUCTION_CONSUMER_PYTHON: python

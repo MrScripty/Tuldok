@@ -52,3 +52,10 @@
 #pointcloud-projections svg { width:100%; max-width:240px; border:1px solid #777; }
 #pointcloud-projections circle { fill:currentColor; }
 #pointcloud-metadata { overflow:auto; max-height:24rem; }
+#retrieval-binary-controls,#retrieval-binary-judgments-control{min-width:0;max-width:100%}
+#retrieval-binary-controls pre{max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#retrieval-binary-judgments{padding-left:1.4rem;min-width:0}
+#retrieval-binary-judgments li{display:flex;flex-wrap:wrap;gap:.4rem;min-width:0;max-width:100%;margin-bottom:.8rem}
+#retrieval-binary-judgments code{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;min-width:0;flex:1 1 100%}
+#retrieval-binary-judgments select,#retrieval-binary-judgments button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+#retrieval-binary-native-evidence{min-width:0;max-width:100%;max-height:24rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}

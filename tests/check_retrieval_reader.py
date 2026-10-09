@@ -178,7 +178,7 @@ def inspect_archive(raw, expected_records=None):
         require(type(row['source_revision']) is int and row['source_revision'] == 1, 'Immutable text source revision')
         require(row['kind'] == 'text' and row['task'] == 'text_retrieval' and row['review'] == 'human_reviewed'
             and row['source_available'] is True and row['source_lineage_known'] is True, 'Reviewed available retrieval source')
-        require(row['source_split'] == 'unassigned' and all(row[k] is None for k in ('pixel_hash', 'book_id', 'session_id', 'width', 'height')), 'Text source identity')
+        require(row['source_split'] in ('unassigned', *SPLITS) and all(row[k] is None for k in ('pixel_hash', 'book_id', 'session_id', 'width', 'height')), 'Text source identity')
         require(type(row['text']) is str and 0 < len(row['text']) <= 200000 and row['text'].strip()
             and unicodedata.normalize('NFC', row['text']) == row['text'] and '\r' not in row['text'], 'Canonical source text')
         require(type(row['source_sha256']) is str and HASH.fullmatch(row['source_sha256'])
@@ -228,8 +228,8 @@ def inspect_archive(raw, expected_records=None):
             require(s['source_split'] in ('unassigned', *SPLITS), 'Known source split')
             string_list(s['groups'], 'Snapshot groups'); string_list(s['parents'], 'Snapshot parents', True)
             if s['kind'] == 'text':
-                require(s['source_available'] is True and s['source_lineage_known'] is True
-                    and type(s['source_revision']) is int and s['source_revision'] == 1 and s['source_split'] == 'unassigned'
+                require(s['source_lineage_known'] is True
+                    and type(s['source_revision']) is int and s['source_revision'] == 1
                     and s['pixel_hash'] is s['book_id'] is s['session_id'] is None
                     and type(s['source_sha256']) is str and HASH.fullmatch(s['source_sha256']), 'Text snapshot source identity')
             elif s['kind'] in ('sequence', 'mesh', 'pointcloud'):

@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_segmentation', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'sequence_transport', 'mesh_geometry', 'pointcloud_geometry')
+TASKS = ('image_detection', 'image_segmentation', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'text_retrieval', 'text_retrieval_binary', 'sequence_transport', 'mesh_geometry', 'pointcloud_geometry')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -78,6 +78,9 @@ def validate_annotation(task, value, record):
         return validate(value, record)
     if task == 'text_retrieval':
         from retrieval_export import annotation
+        return annotation(value, record)
+    if task == 'text_retrieval_binary':
+        from retrieval_binary import annotation
         return annotation(value, record)
     if task == 'text_corpus':
         if set(value) != {'note'}:
@@ -202,6 +205,8 @@ class Workbench:
             self.db.execute('CREATE TABLE IF NOT EXISTS workbench_deleted_text (id TEXT PRIMARY KEY)')
             from grounded_instructions import setup
             setup(self)
+            from retrieval_binary import setup as binary_setup
+            binary_setup(self)
 
         from preferences import Preferences
         self.preferences = Preferences(self)
@@ -282,6 +287,15 @@ class Workbench:
         for field in ('groups', 'parents', 'provenance', 'annotation'):
             raw = result.pop(field + '_json')
             result[field] = json.loads(raw) if raw is not None else None
+        if result['kind'] == 'text':
+            from retrieval_binary import binding
+            retained = binding(self, result)
+            if retained is False:
+                result['source_lineage_known'] = False
+            elif retained is not None:
+                result['source_split'] = retained['source_split']
+                if not set(retained['protected_groups']) <= set(result['groups']):
+                    result['source_lineage_known'] = False
         correction = self.db.execute('SELECT note,revision FROM workbench_rights_notes WHERE id=?', (record_id,)).fetchone()
         if correction is not None:
             result['provenance']['rights_note_correction'] = dict(correction)
@@ -454,6 +468,19 @@ class Workbench:
                 raise WorkbenchError('Retrieval data requires explicit human review.')
             if annotation['role'] == 'query':
                 check_positives(self, annotation['positive_refs'])
+        if task == 'text_retrieval_binary':
+            from retrieval_binary import check_documents
+            if review not in ('draft', 'human_reviewed') or verified_provenance:
+                raise WorkbenchError('Binary retrieval requires separate explicit human review.')
+            if annotation['role'] == 'query':
+                check_documents(self, annotation['judgments'])
+        if before['kind'] == 'text':
+            from retrieval_binary import binding
+            retained = binding(self, before)
+            if retained is False:
+                raise WorkbenchError('Imported binary source binding is unavailable or changed.', 'conflict', 409)
+            if retained is not None and not set(retained['protected_groups']) <= set(groups):
+                raise WorkbenchError('Keep every immutable imported binary source and family anchor.')
         if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
             raise WorkbenchError('Text corpus data requires an explicit human review decision.')
         if before['kind'] in ('sequence', 'mesh', 'pointcloud'):
@@ -472,6 +499,14 @@ class Workbench:
         origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
         provenance = dict(verified_provenance) if verified_provenance else origin
         if verified_provenance:
+            if before['kind'] == 'text':
+                from retrieval_binary import binding
+                binary_origin = binding(self, before)
+                if binary_origin is not None:
+                    for key in ('acquisition', 'normalization'):
+                        if key in verified_provenance and verified_provenance[key] != origin[key]:
+                            raise WorkbenchError('Owned verification cannot replace immutable imported binary source evidence.', 'conflict', 409)
+                        provenance[key] = origin[key]
             reserved = 'rights_note_correction'
             if reserved in origin:
                 if reserved not in provenance or provenance[reserved] != origin[reserved]:
