@@ -247,6 +247,10 @@ function renderReleasePreview(result) {
   if(result.class_coverage) {
     for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder} (index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
   }
+  if(result.coco_categories) {
+    previewLine(root, 'COCO category IDs are release-local: the full exact label vocabulary is shared across all splits. A different vocabulary can renumber IDs.');
+    for(const item of result.coco_categories) previewLine(root, `${JSON.stringify(item.name)} → COCO category ${item.id}`);
+  }
   if(result.detection_counts) {
     previewLine(root, `${JSON.stringify(result.foreground_label)} → foreground object (class index 0; positive presence 1; one class, at most one object). Derived rectangular masks transport boxes, not segmentation ground truth.`);
     for(const [split, count] of Object.entries(result.detection_counts)) previewLine(root, `${split}: ${count.positive} positive · ${count.negative} negative images.`);
@@ -279,7 +283,7 @@ function renderReleasePreview(result) {
 for(const id of ['release-format','train','validation','test','split-seed']) {
   for(const event of ['input','change']) $(id).addEventListener(event, syncReleaseSelection);
 }
-$('release-format').addEventListener('change',()=>{$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('detection-export-help').hidden = $('release-format').value !== 'image_detection_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
+$('release-format').addEventListener('change',()=>{$('canonical-export-help').hidden = $('release-format').value !== 'canonical_v1';$('caption-export-help').hidden = $('release-format').value !== 'image_caption_v1';$('classification-export-help').hidden = $('release-format').value !== 'image_classification_v1';$('detection-export-help').hidden = $('release-format').value !== 'image_detection_v1';$('corpus-export-help').hidden = $('release-format').value !== 'text_corpus_v1';});
 $('preview-release').addEventListener('click', async event=>{
   event.preventDefault(); if(releaseBusy) return;
   syncReleaseSelection();

@@ -1,0 +1,6 @@
+# Separate reader-only environment; application runtime requirements unchanged.
+pycocotools==2.0.11
+numpy==2.5.3
+Pillow==12.3.0
+torch==2.8.0
+torchvision==0.23.0

@@ -4,7 +4,7 @@
 
 ## Canonical/native assets
 
-Canonical manifests and split JSONL retain typed targets and canonical assets; detection is projected to COCO pixel-edge `xywh`, text spans use Unicode code points. Sequence/mesh raw bundles remain whole assets. New sequence-only exports add declared `protected_components` and per-record `export_group`; mixed/nonsequence key sets stay unchanged. Native consumption validates the included known graph and raw-derived groups, not omitted upstream completeness/authenticity.
+Canonical manifests and split JSONL retain typed targets and canonical assets; detection is projected to COCO pixel-edge `xywh` (including fractional coordinates and multiple objects/categories; see [general COCO contract](general-coco-detection.md)), text spans use Unicode code points. Sequence/mesh raw bundles remain whole assets. New sequence-only exports add declared `protected_components` and per-record `export_group`; mixed/nonsequence key sets stay unchanged. Native consumption validates the included known graph and raw-derived groups, not omitted upstream completeness/authenticity.
 
 ## Image captions
 

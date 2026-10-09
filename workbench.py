@@ -103,7 +103,11 @@ def validate_annotation(task, value, record):
         label = text_value(target['label'], 'Target label', 80)
         if key == 'boxes':
             x, y, width, height = (target[k] for k in ('x', 'y', 'width', 'height'))
-            if any(type(n) not in (int, float) or not math.isfinite(n) for n in (x, y, width, height)):
+            try:
+                finite = all(type(n) in (int, float) and math.isfinite(n) for n in (x, y, width, height))
+            except OverflowError:
+                finite = False
+            if not finite:
                 raise WorkbenchError('Box coordinates must be finite numbers.')
             if x < 0 or y < 0 or width <= 0 or height <= 0 or x + width > record['width'] or y + height > record['height']:
                 raise WorkbenchError('Boxes must fit oriented image pixel edges, with positive width and height.')

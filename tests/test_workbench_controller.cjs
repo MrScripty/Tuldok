@@ -62,6 +62,18 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
   element('train').value='100';element('validation').value='0';element('test').value='0';element('split-seed').value='7';
   context.fixture=record('selected');run('selected.set(fixture.id,fixture);selection()');
   await element('release-form').dispatch('submit');assert.equal(requests.length,0);
+  // Exact canonical category names/IDs use text nodes, including markup-like labels.
+  context.cocoPreview={eligible:true,selected_count:1,blockers:[],warnings:[],lineage:[],
+    coco_categories:[{id:1,name:'<img src=x onerror=alert(1)> β'},{id:2,name:'Object'},{id:3,name:'object'}]};
+  run('renderReleasePreview(cocoPreview)');
+  assert.ok(element('release-preview').children.some(row=>row.textContent?.includes('"Object" → COCO category 2')));
+  const literal=element('release-preview').children.find(row=>row.textContent?.includes('<img src=x onerror=alert(1)>'));
+  assert.equal(literal.innerHTML,undefined);assert.ok(literal.textContent.includes('category 1'));
+  element('release-format').value='canonical_v1';await element('release-format').dispatch('change');
+  assert.equal(element('canonical-export-help').hidden,false);
+  element('release-format').value='image_detection_v1';await element('release-format').dispatch('change');
+  assert.equal(element('canonical-export-help').hidden,true);
+  element('release-format').value='canonical_v1';await element('release-format').dispatch('change');
   const eligible={eligible:true,selected_count:1,format:'canonical_v1',preview_token:'a'.repeat(64),
     analysis:{tasks:{text_classification:1},reviews:{human_reviewed:1},labels:{one:1},unlabeled:0,empty_targets:0,duplicate_content_records:0,unknown_rights:0},
     blockers:[],warnings:['fixture warning'],lineage:[{id:'family',selected_ids:['selected'],member_ids:['selected'],deleted_ids:[],fixed_splits:[]}],

@@ -29,6 +29,13 @@ CAPTION_CONSUMER = {'path': 'examples/diffusion/check_image_data.py',
 CAPTION_SPLITS = {'train': 'train', 'validation': 'val', 'test': 'test'}
 
 
+def coco_category_table(rows):
+    """Existing release-local vocabulary, shared by preview and COCO writer."""
+    vocabulary = sorted({box['label'] for row in rows if row['task'] == 'image_detection'
+                         for box in row['annotation']['boxes']})
+    return [{'id': index + 1, 'name': label} for index, label in enumerate(vocabulary)]
+
+
 def connected_components(universe):
     """One relationship graph owns allocation and exported family identities."""
     parent = {}
@@ -302,6 +309,8 @@ class Releases:
         preview['warnings'].append('Exact matches and protected lineage do not establish semantic independence or training quality.')
         preview['eligible'] = not preview['blockers']
         if preview['eligible']:
+            if format_name == 'canonical_v1' and any(row['task'] == 'image_detection' for row in rows):
+                preview['coco_categories'] = coco_category_table(rows)
             preview['preview_token'] = hashlib.sha256(encode({
                 'preview_schema': 1, 'format': format_name, 'ratios': body['ratios'], 'seed': body['seed'],
                 'records': rows, 'protected_components': snapshots,
@@ -806,9 +815,10 @@ class Releases:
             sequence_only = all(row['kind'] == 'sequence' for row in rows)
             if sequence_only:
                 manifest['protected_components'] = prepared['snapshots']
-            vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
-            categories = {label: i + 1 for i, label in enumerate(vocabulary)}
-            coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': [{'id': i, 'name': label} for label, i in categories.items()]} for split in SPLITS}
+            category_table = coco_category_table(rows)
+            vocabulary = [item['name'] for item in category_table]
+            categories = {item['name']: item['id'] for item in category_table}
+            coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': category_table} for split in SPLITS}
             text_rows = {split: [] for split in SPLITS}
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:

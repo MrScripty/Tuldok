@@ -864,6 +864,10 @@ annotation gaps.
 
 Read a frozen sequence-only canonical ZIP with `native_sequence_dataset.py`, its exact release SHA256 and an explicit split. The NumPy API returns separate native MAC fields with time/x/y/z axes and original staggered shapes/f32-f64 representation; default whole trajectories or explicit contiguous windows retain record/family identity. Human range coverage and original source/endpoint anchors remain separate from numerical evidence. Inspect JSON or atomically export a pickle-free native NPZ sample. New sequence-only releases carry declared family closure; older train-only packets expose their missing-closure limitation. This adds numerical consumption, without qualifying a trainer, scientific truth or an independent train/evaluation corpus. [Consumer contract](docs/contracts/native-sequence-consumer.md). UI provisional.
 
+### General COCO detection
+
+Canonical export supports multiple objects and exact-case categories, fractional/subpixel pixel-edge boxes and explicitly reviewed empty-box negatives. Use the existing box editor, save drafts, review each record, save/open an exact selection, then preview and freeze **Canonical**. The preview shows the sorted category table shared by all three split files. IDs are stable within that release; changing the selected vocabulary can renumber them. Original imported category IDs remain separate provenance. Whole source families retain existing split boundaries. Actual COCO/torchvision readers and two-owner native roundtrip qualify transport and UI behavior, without training or a meaningful benchmark corpus. [Contract and limits](docs/contracts/general-coco-detection.md). UI provisional.
+
 ## Repository
 
 Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.

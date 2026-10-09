@@ -1,0 +1,20 @@
+{
+  "pycocotools": {
+    "version": "2.0.11",
+    "repository": "ppwwyyxx/cocoapi",
+    "commit": "ac87f5077ad6b8864c2dc5e93d14cae62d1db05a",
+    "source_url": "https://raw.githubusercontent.com/ppwwyyxx/cocoapi/ac87f5077ad6b8864c2dc5e93d14cae62d1db05a/PythonAPI/pycocotools/coco.py",
+    "coco_sha256": "4a234fc502c6e622f044747312d6a696652545f527e766c98bedf5aa4ca77f41",
+    "wheel": "pycocotools-2.0.11-cp312-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+    "wheel_bytes": 411685,
+    "wheel_sha256": "a82d1c9ed83f75da0b3f244f2a3cf559351a283307bd9b79a4ee2b93ab3231dd",
+    "pypi_url": "https://pypi.org/project/pycocotools/2.0.11/"
+  },
+  "torchvision": {
+    "version": "0.23.0",
+    "reader": "torchvision.datasets.CocoDetection",
+    "source_sha256": "d8dd3308e92111bb8b58f6908cc9097b6f27c6f3b5f0eeb98deebdd9782fd135"
+  },
+  "scope": "Actual bbox indexing and PIL-image/raw-annotation reads only; no model, evaluation, training, masks, weights or data downloads. COCO API indexing is not strict validation; gate independently verifies IDs/associations/geometry/hashes and canonical roundtrip.",
+  "fixture_scope": "Six retained authored PNGs; simulated review actions and test-only boxes, not human-labelled or scientifically independent data."
+}
