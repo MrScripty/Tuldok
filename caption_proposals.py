@@ -12,6 +12,8 @@ import time
 
 from PIL import Image
 import ai_http
+import pumas_operations as pumas
+import pumas_vision
 from workbench import IDENTIFIER, WorkbenchError, encode, file_hash, text_value, timestamp, validate_annotation
 
 MAX_IMAGE = 2 * 1024 * 1024
@@ -28,6 +30,11 @@ SYSTEM_PROMPT = ('Describe only the supplied visible image in one concise captio
 
 
 def payload(job):
+    if pumas.typed(job['config']):
+        return pumas_vision.request(job, {'kind': 'messages', 'messages': [
+            {'role': 'system', 'content': [{'kind': 'text', 'text': job['system_prompt']}]},
+            {'role': 'user', 'content': [{'kind': 'text', 'text': job['config']['instruction']},
+                {'kind': 'image', 'encoding': 'jpeg', 'data_base64': job['input_image_base64']}]}]})
     return {'model': job['config']['model'], 'stream': False, 'max_tokens': 2000,
             'seed': job['config']['seed'], 'response_format': {'type': 'json_object'},
             'messages': [{'role': 'system', 'content': job['system_prompt']},
@@ -37,6 +44,10 @@ def payload(job):
 
 
 def complete(job, stop):
+    if pumas.typed(job['config']):
+        raw, _ = pumas.exchange(job['config']['server_url'], job['canonical_request'], stop,
+                              min(MAX_OUTPUT, job['capability_observation']['capabilities']['max_response_bytes']))
+        return raw
     with ai_http.request(job['config']['server_url'], '/v1/chat/completions', payload(job),
                          timeout=180, label='Caption model', cancel_event=stop) as (response, transport, deadline):
         data = bytearray()
@@ -71,7 +82,15 @@ def strict_json(data):
     return json.loads(data, object_pairs_hook=pairs, parse_constant=nonfinite)
 
 
-def decode(data, source):
+def decode(data, source, request_id=None):
+    if request_id is not None:
+        projected = pumas.result(data, request_id)
+        if projected['kind'] != 'text':
+            raise pumas.OperationError('Image→Text returned the wrong result kind; no replay.', 'unknown', raw=data)
+        try:
+            return validate_annotation('image_caption', strict_json(projected['text']), source), None
+        except (ValueError, TypeError, KeyError):
+            raise pumas.OperationError('Typed caption text must contain complete caption JSON; no output was applied.', 'unknown', raw=data) from None
     try:
         response = strict_json(data)
         choices = response['choices']
@@ -105,6 +124,8 @@ class CaptionProposals:
             for row in self.db.execute('SELECT data FROM caption_proposals').fetchall():
                 job = json.loads(row[0])
                 if job['status'] in ACTIVE:
+                    if pumas.typed(job['config']):
+                        job['provider_outcome'] = 'not_admitted' if job['status'] == 'preparing' else 'unknown'
                     job.update(status='interrupted', error='Server stopped; inspect this attempt. No automatic inference retry.')
                     self._save(job)
 
@@ -129,7 +150,7 @@ class CaptionProposals:
     def snapshot(self):
         with self.lock:
             # Project before crossing into Python; retain exact evidence on job GET.
-            rows = self.db.execute("SELECT json_remove(data, '$.input_image_base64', '$.raw_response_base64') "
+            rows = self.db.execute("SELECT json_remove(data, '$.input_image_base64', '$.raw_response_base64', '$.canonical_request') "
                                    'FROM caption_proposals ORDER BY rowid DESC LIMIT 50').fetchall()
         # Capture every row under the shared lock, then decode only those summaries.
         return {'jobs': [json.loads(row[0]) for row in rows]}
@@ -164,7 +185,7 @@ class CaptionProposals:
 
     def start(self, body):
         fields = {'request_id', 'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'seed'}
-        if not isinstance(body, dict) or set(body) != fields:
+        if not isinstance(body, dict) or not fields <= body.keys() or body.keys() - fields - {'protocol', 'profile'}:
             raise WorkbenchError('Supply only caption request identity, exact image revisions, model, guidance and seed.')
         request_id = body['request_id']
         if not isinstance(request_id, str) or not IDENTIFIER.fullmatch(request_id):
@@ -173,7 +194,10 @@ class CaptionProposals:
                   'server_url': text_value(ai_http.validate_url('llamacpp', body['server_url']), 'Server URL', 2048),
                   'model': text_value(ai_http.validate_model(body['model']), 'Model ID', 200),
                   'instruction': text_value(body['instruction'], 'Caption guidance', 2000), 'seed': body['seed']}
-        if type(config['seed']) is not int or not 0 <= config['seed'] <= 2**32 - 1:
+        config.update(pumas.configuration(body))
+        if pumas.typed(config):
+            config.update(provider='pumas_image_to_text', server_url=pumas.endpoint(body['server_url']), model=pumas.alias(body['model']))
+        elif type(config['seed']) is not int or not 0 <= config['seed'] <= 2**32 - 1:
             raise WorkbenchError('Seed must be a nonnegative 32-bit integer.')
         intent_hash = hashlib.sha256(encode(body).encode()).hexdigest()
         with self.lock:
@@ -208,6 +232,8 @@ class CaptionProposals:
                        'verification': 'Caption shape only. Vision compatibility and factual correctness are not established by the catalog; human review is required.',
                        'application': None}
                 job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
+                if pumas.typed(config):
+                    job['provider_outcome'] = 'not_admitted'
                 self._save(job)
             # Persistence has committed; this lock serializes startup and shutdown.
             self.stop.clear()
@@ -225,7 +251,12 @@ class CaptionProposals:
     def _run(self, job_id):
         job = self.get(job_id)
         try:
-            models = ai_http.text_models(job['config']['server_url'], cancel_event=self.stop)
+            if pumas.typed(job['config']):
+                pumas_vision.prepare(job, payload(job), self.stop)
+                models = {'models': [{'id': job['config']['model']}],
+                          'qualification': 'Live Image→Text descriptor and build observation; no model/semantic qualification.'}
+            else:
+                models = ai_http.text_models(job['config']['server_url'], cancel_event=self.stop)
             if self.stop.is_set():
                 raise WorkbenchError('Caption request cancelled.', 'cancelled')
             if job['config']['model'] not in [item['id'] for item in models['models']]:
@@ -234,11 +265,16 @@ class CaptionProposals:
                 if self.stop.is_set():
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
                 job.update(status='generating', catalog_qualification=models['qualification'])
+                if pumas.typed(job['config']):
+                    # Persist uncertainty before possible effects; restart never replays it.
+                    job['provider_outcome'] = 'unknown'
                 self._save(job)
             data = complete(job, self.stop)
+            if pumas.typed(job['config']):
+                job['provider_outcome'] = 'result_received'
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
             job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
-            annotation, reported = decode(data, job['source'])
+            annotation, reported = decode(data, job['source'], job['id'] if pumas.typed(job['config']) else None)
             with self.lock, self.db:
                 if self.stop.is_set():
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
@@ -247,6 +283,7 @@ class CaptionProposals:
                 self._save(job)
         except Exception as error:
             with self.lock, self.db:
+                pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
         finally:
@@ -286,6 +323,8 @@ class CaptionProposals:
                             'prompt_version': job['prompt_version'], 'prompt_sha256': job['prompt_sha256'],
                             'canonical_request_sha256': job['canonical_request_sha256'], 'response_sha256': job['response_sha256'],
                             'reported_model': job.get('reported_model'), 'verification': 'Caption shape only; applied as draft, never approved.'}
+                # Exact image-bearing request stays on the bounded job receipt.
+                evidence.update({key: value for key, value in pumas.provenance(job).items() if key != 'canonical_request'})
                 record = self.workbench._save_annotation(source['id'], dict(revision=source['revision'], source_revision=source['source_revision'],
                     task='image_caption', annotation=job['annotation'], groups=source['groups'], review='draft'), proposal_evidence=evidence)
                 job.update(status='applied', application={'record_id': record['id'], 'revision': record['revision'], 'source_revision': record['source_revision']})

@@ -21,8 +21,10 @@ MAX_DIMENSION = 2048
 MAX_PIXELS = 4194304
 CAPABILITIES = {'chat_generation': 'chat_generation', 'text_generation': 'text_generation',
                 'text_embedding': 'text_embedding', 'image_generation': 'text_to_image',
+                'image_to_text': 'image_to_text',
                 'audio_transcription': 'speech_to_text', 'audio_classification': 'audio_classification'}
 ERROR_CODES = {'invalid_request', 'unsupported_contract', 'model_not_found', 'ambiguous_model',
+               'ambiguous_operation', 'unsupported_modality',
                'capability_unavailable', 'provider_failure', 'invalid_provider_result',
                'request_limit', 'response_limit', 'transport_lost'}
 
@@ -32,6 +34,7 @@ class OperationError(WorkbenchError):
         super().__init__(message, 'unavailable')
         self.outcome, self.provider_code, self.raw = outcome, provider_code, raw
         self.evidence = evidence or {}
+        self.provider_http_status = None
 
 
 def strict_json(raw):
@@ -100,7 +103,7 @@ def validate_manifest(raw):
         if type(value[key]) is not int or not 0 < value[key] <= maximum:
             raise ValueError('Unsupported typed Pumas byte bounds.')
     entries = value['capabilities']
-    if type(entries) is not list or len(entries) > 6:
+    if type(entries) is not list or len(entries) > len(CAPABILITIES):
         raise ValueError('Invalid typed Pumas capability list.')
     seen = set()
     for item in entries:
@@ -109,10 +112,10 @@ def validate_manifest(raw):
         if type(name) is not str or name not in CAPABILITIES or name in seen or item['semantic_task'] != CAPABILITIES[name] or type(item['streaming']) is not bool:
             raise ValueError('Unsupported typed Pumas semantic capability.')
         seen.add(name)
-        for field, allowed in [('input_formats', {'messages_text', 'text', 'text_batch', 'pcm_s16le', 'pcm_f32le'}),
+        for field, allowed in [('input_formats', {'messages_text', 'text', 'text_batch', 'pcm_s16le', 'pcm_f32le', 'png_base64', 'jpeg_base64', 'messages_image'}),
                                ('output_formats', {'text', 'embeddings_float32', 'png_base64', 'labels'})]:
             items = item[field]
-            if type(items) is not list or not 1 <= len(items) <= 6 or any(type(v) is not str or v not in allowed for v in items) or len(set(items)) != len(items):
+            if type(items) is not list or not 1 <= len(items) <= len(allowed) or any(type(v) is not str or v not in allowed for v in items) or len(set(items)) != len(items):
                 raise ValueError('Unsupported typed Pumas format.')
         availability = item['availability']
         object_fields(availability, ('state',), ('reason',))
@@ -120,12 +123,12 @@ def validate_manifest(raw):
                 type(availability.get('reason')) is not str or availability.get('reason') not in {'unsupported_adapter', 'unqualified_audio_runtime', 'unknown_model_task', 'model_task_mismatch', 'runtime_unavailable'}):
             raise ValueError('Invalid typed Pumas availability.')
         bounds = item['option_bounds']
-        if type(bounds) is not list or len(bounds) > 10:
+        if type(bounds) is not list or len(bounds) > 13:
             raise ValueError('Invalid typed Pumas option bounds.')
         options = set()
         for bound in bounds:
             object_fields(bound, ('option', 'minimum', 'maximum'))
-            if type(bound['option']) is not str or bound['option'] not in {'max_tokens', 'temperature', 'top_p', 'dimensions', 'input_count', 'input_characters', 'width', 'height', 'seed'} or bound['option'] in options:
+            if type(bound['option']) is not str or bound['option'] not in {'max_tokens', 'temperature', 'top_p', 'dimensions', 'input_count', 'input_characters', 'width', 'height', 'seed', 'max_output_tokens', 'image_bytes', 'image_pixels', 'image_count'} or bound['option'] in options:
                 raise ValueError('Unsupported typed Pumas option.')
             options.add(bound['option'])
             if any(type(bound[k]) not in (int, float) or not -1e308 <= bound[k] <= 1e308 for k in ('minimum', 'maximum')) or bound['minimum'] > bound['maximum']:
@@ -230,7 +233,13 @@ def exchange(base, payload, stop, max_bytes):
             if stop.is_set():
                 raise OperationError('Local delivery canceled; provider cessation is unconfirmed, no replay.', 'unknown')
             raw = bytes(raw)
-            value = result(raw, payload['request_id'])
+            try:
+                value = result(raw, payload['request_id'])
+            except OperationError as error:
+                error.provider_http_status = response.status
+                if error.provider_code and response.status not in (400, 413, 422, 502, 503):
+                    error.outcome = 'unknown'
+                raise
             if value['kind'] != {'text': 'text', 'png_base64': 'image'}.get(payload['output']):
                 raise OperationError('Typed result has the wrong output kind; no replay.', 'unknown', raw=raw)
             if response.status != 200:
@@ -306,6 +315,7 @@ def failure_evidence(job, error):
         job.update(error.evidence)
         job['provider_outcome'] = error.outcome
         job['provider_error_code'] = error.provider_code
+        job['provider_http_status'] = error.provider_http_status
         if error.raw is not None:
             import base64
             job['raw_response_base64'] = base64.b64encode(error.raw).decode('ascii')
@@ -314,4 +324,5 @@ def failure_evidence(job, error):
 
 def provenance(job):
     return {key: job[key] for key in ('capability_observation', 'producer_contract_source', 'canonical_request',
-                                     'provider_outcome', 'provider_error_code') if key in job}
+                                     'provider_outcome', 'provider_error_code', 'provider_http_status',
+                                     'build_observation') if key in job}

@@ -1,0 +1,20 @@
+{
+  "producer_repository": "MrScripty/Pumas-Library",
+  "producer_pr": 65,
+  "producer_commit": "f83770d571b3f45707bd4def2a5d6f8619bb1dcf",
+  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/f83770d571b3f45707bd4def2a5d6f8619bb1dcf/docs/contracts/image-to-text-v0.8.md",
+  "fixture_kind": "Source-derived controlled consumer fixture; not actual native DTO export or model inference",
+  "inspected_source_sha256": {
+    "types.rs": "875977948163c4256e60783d540337f117ec70edb1bb3636e7598e516587cca3",
+    "model_operations.rs": "1722402ec5160a5704b062e888b78afec0fc6bf425ee3cd37b6594cf31e7cea5",
+    "projection.rs": "444c500edd7ca3ea478d37e68212f8da9325028b87a35f6cdedb3e0e8aaed7a7",
+    "vision_tests.rs": "38bd0f3b40dfda219a21d49c4ca3a33f54b354aadfd33363bc5ad65c964bbc8e"
+  },
+  "schema_export_status": "Await final composed provider DTO/desktop schema pin from integration lead. No schema-export acceptance claimed.",
+  "inspected_source_native_blob_sha": {
+    "types.rs": "f7d70f90770deb124dc17dde5212d88b058d9e0e",
+    "model_operations.rs": "b4c6ffa60ba6f4c0905bba0d4d6e97616e42cc62",
+    "projection.rs": "2a2061a0659a916998455bd22cbc55a7b7f4b0a6",
+    "vision_tests.rs": "fd476b44691b202002b325ced7fe712b65f1a52b"
+  }
+}

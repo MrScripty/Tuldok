@@ -5,7 +5,7 @@ class Element {
   addEventListener(event,fn){(this.listeners[event]||=[]).push(fn);}
   async fire(event){for(const fn of this.listeners[event]||[])await fn();}
 }
-const elements=new Map(),events={},prefix='text-classification-proposal';
+const elements=new Map(),events={},prefix=process.env.PUMAS_TYPED_PREFIX||'text-classification-proposal';
 for(const name of ['url','model','profile','protocol','seed','capabilities','capability-metadata'])elements.set(prefix+'-'+name,new Element());
 const get=name=>elements.get(prefix+'-'+name);
 get('url').value='http://127.0.0.1:39019';get('model').value='controlled-text';get('protocol').value='pumas_typed_v1';

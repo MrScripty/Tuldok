@@ -122,6 +122,14 @@ const button=label=>element('caption-proposal-jobs').children.flatMap(section=>s
   // Page exit fences late polling and model responses, and removes the poll timer.
   const pendingPoll=element('caption-proposal-refresh').dispatch('click');for(const fn of listeners.pagehide||[])fn();resolve('/caption-proposals',{jobs:[{...job,status:'generating'}]});await pendingPoll;
   assert.equal(timers.size,0);assert.equal(run('captionProposalJobs[0].status'),'applied');
+  // Exact typed intent survives recovery; profile/protocol changes cannot become a retry.
+  const typedBody={request_id:'d'.repeat(32),source_id:row.id,revision:2,source_revision:1,server_url:'http://127.0.0.1:39019',
+    model:'controlled-vision',instruction:'Describe pixels.',seed:null,protocol:'pumas_typed_v1',profile:'vision-cpu'};
+  context.typedBody=typedBody;
+  assert.deepEqual(JSON.parse(run('JSON.stringify(captionProposalRecoveryBody(typedBody))')),typedBody);
+  assert.throws(()=>run('captionProposalRecoveryBody({...typedBody,seed:42})'));
+  assert.throws(()=>run('captionProposalRecoveryBody({...typedBody,profile:"bad/profile"})'));
+  assert.notEqual(run('JSON.stringify(captionProposalIntent(typedBody))'),run('JSON.stringify(captionProposalIntent({...typedBody,profile:"other"}))'));
   for(const fn of listeners.pageshow||[])fn();resolve('/caption-proposals',{jobs:[{...job,status:'generating'}]});await flush();assert.equal(timers.size,1);
   for(const fn of listeners.pagehide||[])fn();assert.equal(timers.size,0);assert.equal(requests.length,0);
   console.log('Caption controller held admission/early 404/lost acknowledgement/exact-ID repeat, cancelled/new intent, held annotation-save/reject/subsequent save, later-input/apply ownership and polling lifecycle passed.');

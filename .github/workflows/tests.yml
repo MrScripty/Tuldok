@@ -35,6 +35,7 @@ jobs:
       - run: node --check static/text-classification-proposals.js
       - run: node --check static/pumas-typed.js
       - run: node tests/test_pumas_typed_controller.cjs
+      - run: PUMAS_TYPED_PREFIX=caption-proposal node tests/test_pumas_typed_controller.cjs
       - run: node --check static/pumas-gateways.js
       - run: node tests/test_pumas_gateways_controller.cjs
       - run: node --check static/meshes.js

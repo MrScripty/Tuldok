@@ -6,6 +6,8 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import app
 from fake_pumas_typed import start
+from fake_pumas_vision import start as start_vision
+vision_server,vision_url,vision_state=start_vision()
 receipt=os.environ.get('PUMAS_TYPED_GATEWAY_RECEIPT')
 server=None
 if receipt:
@@ -26,10 +28,16 @@ def make_handler(dataset):
   def do_POST(self):
    if self.path=='/test/pumas-control':
     body=json.loads(self.rfile.read(int(self.headers['Content-Length'])));configure(body);return self.reply({'configured':True})
+   if self.path=='/test/pumas-vision':
+    body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+    vision_state.update(mode=body.get('mode','success'))
+    return self.reply({'configured':True,'requests':vision_state['requests']})
    return super().do_POST()
  return Handler
 app.make_handler=make_handler
 print('TYPED_GATEWAY='+url,flush=True);print('TYPED_ORIGIN='+origin,flush=True)
+print('VISION_GATEWAY='+vision_url,flush=True)
 try:app.main()
 finally:
  if server:server.shutdown();server.server_close()
+ vision_state['release'].set();vision_server.shutdown();vision_server.server_close()

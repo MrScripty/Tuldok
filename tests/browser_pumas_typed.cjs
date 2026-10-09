@@ -92,6 +92,39 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(admitted.record.review,'draft');assert.deepEqual(admitted.record.parents,[source.id]);assert.deepEqual(admitted.record.groups,source.groups);
   await evaluate('document.getElementById("text-classification-proposal-panel").open=true;document.getElementById("text-classification-proposal-panel").scrollIntoView({block:"start"})');
   const screenshot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-text-review.jpg'),Buffer.from(screenshot.data,'base64'));
+  // PR65 consumer adoption uses a source-derived vision gateway, never model inference.
+  const visionGateway=output.match(/VISION_GATEWAY=(.+)/)[1];
+  const pixels=await evaluate('(()=>{const c=document.createElement("canvas");c.width=64;c.height=32;const x=c.getContext("2d");x.fillStyle="blue";x.fillRect(0,0,64,32);return c.toDataURL("image/png").split(",")[1];})()');
+  const visionSource=await request('import',{kind:'image',name:'Typed vision fixture',image:pixels,groups:['vision-family'],rights:'Authored controlled fixture'});
+  await evaluate('openRecord('+JSON.stringify(visionSource.id)+')');
+  await until(()=>evaluate('current?.id === '+JSON.stringify(visionSource.id)));
+  await evaluate('document.getElementById("caption-proposal-panel").open=true');
+  await fill('caption-proposal-protocol','pumas_typed_v1');await fill('caption-proposal-url',visionGateway);await fill('caption-proposal-profile','vision-cpu');
+  await click('caption-proposal-models');await until(()=>evaluate('document.getElementById("caption-proposal-model").options.length===1'));
+  assert.equal(await evaluate('document.getElementById("caption-proposal-seed").disabled'),true);
+  await click('caption-proposal-capabilities');await until(()=>evaluate('document.getElementById("caption-proposal-capability-metadata").textContent.includes("image_to_text")'));
+  const visionManifest=JSON.parse(await evaluate('document.getElementById("caption-proposal-capability-metadata").textContent'));
+  assert.equal(visionManifest.capabilities.capabilities.length,7);
+  await evaluate('document.getElementById("caption-proposal-form").requestSubmit()');
+  const visionJob=await until(async()=> (await request('caption-proposals')).jobs.find(j=>j.source.id===visionSource.id && j.status==='completed'));
+  const visionExact=await request('caption-proposals/'+visionJob.id);
+  assert.equal(visionExact.canonical_request.semantic_task,'image_to_text');assert.equal(visionExact.canonical_request.profile,'vision-cpu');
+  assert.equal(visionExact.config.seed,null);assert.equal(visionExact.reported_model,null);assert.ok(!visionJob.canonical_request);
+  await evaluate('refreshCaptionProposals()');
+  await evaluate('[...document.querySelectorAll("#caption-proposal-jobs button")].find(b=>b.textContent==="Apply as draft").click()');
+  const visionApplied=await until(async()=>{const row=await request('records/'+visionSource.id);return row.annotation?.caption==='A blue rectangle.'&&row;});
+  assert.equal(visionApplied.review,'draft');assert.equal(visionApplied.target_proposal.producer_contract_source,'f83770d571b3f45707bd4def2a5d6f8619bb1dcf');
+  assert.deepEqual(visionApplied.groups,visionSource.groups);
+  await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'loss'})});
+  await evaluate('openRecord('+JSON.stringify(visionApplied.id)+')');
+  await until(()=>evaluate('current?.revision === '+visionApplied.revision));
+  await evaluate('document.getElementById("caption-proposal-form").requestSubmit()');
+  const visionLost=await until(async()=> (await request('caption-proposals')).jobs.find(j=>j.source.id===visionSource.id && j.status==='failed'));
+  assert.equal(visionLost.provider_outcome,'unknown');
+  await click('caption-proposal-refresh');await pause(150);
+  const visionControl=await(await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
+  assert.equal(visionControl.requests.length,2,'Refreshing an unknown outcome never replays inference');
+  const visionShot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-vision-caption.jpg'),Buffer.from(visionShot.data,'base64'));
   await send('Page.navigate',{url:base+'/'});await until(()=>evaluate('typeof pumasTypedSettings === "function" && document.getElementById("generate")'));
   const studioReady=()=>evaluate('!!document.getElementById("generation-refresh")?.onclick && !document.getElementById("generation-refresh").disabled');
   await until(studioReady);
@@ -110,6 +143,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await until(()=>evaluate('document.getElementById("generation-capability-metadata").textContent.includes("observed_sha256")'));
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Typed metadata must fit the image studio viewport');
   const imageShot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-image-batch.jpg'),Buffer.from(imageShot.data,'base64'));
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({origin,gateway,manifest,classification:job,grounded,admitted_record:admitted.record,batch,entry,errors},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({origin,gateway,manifest,classification:job,grounded,admitted_record:admitted.record,
+    vision:{origin:'Source-derived PR65 HTTP fixture; not native/model qualification',gateway:visionGateway,manifest:visionManifest,job:visionExact,applied:visionApplied,lost:visionLost},batch,entry,errors},null,2));
   assert.deepEqual(errors,[]);console.log('Typed classification draft, fixed selections, exact profile, held capabilities, grounded family/review, text-to-PNG and settings restore passed: '+origin);
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const socket of extraSockets)socket.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
