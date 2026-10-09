@@ -684,3 +684,30 @@ protection do not establish data quality, semantic independence or permission.
 See the [consumer pin, byte contract and qualification plan](docs/plans/text-corpus-export/plan.md).
 The actual-consumer gate uses Torch 2.8.0 on CPU, synthetic authored fixtures and
 the unchanged companion reader/trainer/evaluator. It downloads no models or data.
+
+### Native detection corpus imports
+
+Choose **Import native detection release** for a detection-only `canonical_v1`
+ZIP produced by this Workbench. Its manifest, all three COCO projections and
+normalized RGB PNGs must agree on vocabulary, image indices, oriented geometry,
+pixel/byte hashes and pixel-edge xywh boxes. Empty boxes remain negative images.
+Mixed tasks and arbitrary third-party COCO archives require a separate contract.
+
+Imports create new detection drafts with unknown rights and actual hashes of the
+consumed exported PNGs. Upstream originals are unavailable; original identity,
+review, rights and provenance remain declared evidence. Exported partitions become
+fixed source splits. Native groups and foreign ID/parent/book-or-session links
+remain protected; inconsistent retained or existing/deleted family splits reject
+admission. The native manifest omits unselected upstream family members, so this
+preserves declared links and partitions without reconstructing the entire graph
+or proving semantic independence.
+
+Limits: 1–100 images, 8 MiB stored ZIP, 16 MiB expanded bytes, 3 MiB per prepared
+row including base64 PNG and historical metadata, and 16 MiB total signed row
+evidence. Preparation validates the whole bundle without writes. Admission is
+atomic per image; successful rows remain after another fails. Stop prevents the
+next row while in-flight work may finish. Uncertain outcomes require read-only
+saved-result inspection, with no automatic replay. Restart expires preparation;
+committed records persist. Progress stays in the current page. Explicit human
+review and current selection are required before release. [Scope and roadmap
+inventory](docs/plans/native-detection-import/plan.md).

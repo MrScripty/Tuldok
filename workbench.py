@@ -326,7 +326,7 @@ class Workbench:
             return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit,
                     'analysis': summary, 'criteria': criteria}
 
-    def import_asset(self, body, *, acquisition=None, annotation=None, source_split='unassigned', source_session=None):
+    def import_asset(self, body, *, acquisition=None, annotation=None, annotation_task='image_caption', source_split='unassigned', source_session=None):
         kind = body.get('kind')
         groups = strings(body.get('groups', []), 'Protected groups')
         if not groups:
@@ -334,7 +334,12 @@ class Workbench:
         rights = text_value(body.get('rights', 'unknown'), 'Rights / permission note', 1000)
         parents = strings(body.get('parents', []), 'Parent IDs')
         if annotation is not None:
-            annotation = validate_annotation('image_caption', annotation, {'kind': kind})
+            if kind != 'image' or annotation_task not in ('image_caption', 'image_detection'):
+                raise WorkbenchError('Unsupported initial image annotation task.')
+            if annotation_task == 'image_caption':
+                annotation = validate_annotation(annotation_task, annotation, {'kind': kind})
+            # Detection requires the measured oriented geometry. Enrollment
+            # validates it inside Dataset's existing acquisition transaction.
         if kind != 'image' and source_split != 'unassigned':
             raise WorkbenchError('Only image acquisition owns source splits.')
         with self.lock, self.db:
@@ -346,14 +351,14 @@ class Workbench:
                 row = self.dataset.add({'image': body.get('image'), 'filename': body.get('name', 'image.png'),
                                         'session_id': groups[0] if source_session is None else source_session,
                                         'book_id': '', 'split': source_split},
-                                       enrollment=(groups, parents, rights, acquisition, annotation))
+                                       enrollment=(groups, parents, rights, acquisition, annotation, annotation_task))
                 return self._get(row['id'])
             if kind != 'text':
                 raise WorkbenchError('Asset kind must be image or text.')
             return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights,
                                      provenance={'acquisition': acquisition} if acquisition is not None else None)
 
-    def _enroll_import(self, sample_id, groups, parents, rights, acquisition=None, annotation=None):
+    def _enroll_import(self, sample_id, groups, parents, rights, acquisition=None, annotation=None, annotation_task='image_caption'):
         """Called only inside Dataset.add's acquisition transaction and lock."""
         self._sync_images()
         record = self._get(sample_id)
@@ -363,9 +368,11 @@ class Workbench:
         self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
                         (encode(groups), encode(parents), encode(origin), sample_id))
         if annotation is not None:
-            annotation = validate_annotation('image_caption', annotation, record)
-            self.db.execute("UPDATE workbench_records SET task='image_caption',annotation_json=?,review='draft' WHERE id=?",
-                            (encode(annotation), sample_id))
+            if annotation_task not in ('image_caption', 'image_detection'):
+                raise WorkbenchError('Unsupported initial image annotation task.')
+            annotation = validate_annotation(annotation_task, annotation, record)
+            self.db.execute("UPDATE workbench_records SET task=?,annotation_json=?,review='draft' WHERE id=?",
+                            (annotation_task, encode(annotation), sample_id))
         # Initial enrollment is internal, not a second user-visible revision.
         self.db.execute('DELETE FROM workbench_history WHERE id=?', (sample_id,))
         self._history(self._get(sample_id))
