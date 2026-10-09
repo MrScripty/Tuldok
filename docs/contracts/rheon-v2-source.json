@@ -1,0 +1,14 @@
+{
+  "repository": "MrScripty/Rheon",
+  "pr": 32,
+  "head": "020437fa638ad56823b544ba1f9207ceef065f12",
+  "tree": "3cf138c626564853f05b8b3114cc77b8ebe152d8",
+  "base": "fee7b4a139574f87b259796b1ba8698a41d31ac1",
+  "draft_unmerged": true,
+  "v1_validator_sha256": "063d17a3bbc92a27c26c0f5dd4588a9478091ebbf53ce0ccb818cee6a9393b98",
+  "original_v2_validator_sha256": "215f98241e01a6fb099b5b1b8789e00c951988e1382438afbd45cfbb7e1c4c43",
+  "adaptation": "sole dependency import alias: import import_dense3d_sequence as v1 -> import rheon_sequence_contract as v1",
+  "test_fixture": "explicit source-derived synthetic v2 wire controls with synthetic v1 frame numbers; no producer execution/authenticity",
+  "actual_v2_acceptance": false,
+  "qualification_scope": "Source-derived synthetic controls are compatibility fixtures. Original external producer packet acceptance is not granted by this handoff."
+}

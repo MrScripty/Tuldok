@@ -1,9 +1,0 @@
-Independent interaction signoff
-
-Exact candidate `824e3ee1181184e2284875e5a08ebd1406318bfc` passes all 11 independent interaction cases. Classification JS SHA256 is `13e1c6a688a526cf3888bdf1b67c83cd8ee78fa97a0da4f5fcdc1021202738bf`. HEAD, tree, and reviewed controller/source hashes match before and after the run.
-
-The four original b1 failures now retain canonical recovery. Both tabs can still explicitly POST identical ID/body. Committed generations advance before transport. The older initial 400/409/422 cannot purge generation2 while its sibling remains unresolved. Lost second acknowledgment plus full replacement-context reload and early exact404 preserves recovery; changed intent sends zero POST. Explicit unchanged retry retains the exact ID/body and advances to generation3; repeat409 cannot clear earlier uncertainty. Matching canonical receipt can reconcile the whole ID as authorized, and a late old receipt cannot erase a fresh successor.
-
-Three recognizable raw-bound malformed counters (zero, fractional, and string) correctly block POST and then recover only through a matching exact GET receipt. Four opaque/unknown/foreign/extra-schema attempts preserve all evidence and block POST even after the matching receipt. Source inspection confirms strict counter validation, strict transaction commit before transport, refusal CAS before all purge operations, conservative legacy-pending behavior, and the narrow matching-receipt exception.
-
-No outstanding correctness findings remain in this reviewed scope. The b1 negative probes and first workingtree pass remain byte-identical and separately preserved. This reviewer performed no real provider calls, native rerun, runtime/test edits, commits, or public actions. Parent/backend evidence separately covers actual HTTP/native mutation behavior and aggregate qualification.

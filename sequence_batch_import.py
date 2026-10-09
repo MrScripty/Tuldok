@@ -7,6 +7,7 @@ import rheon_sequences as rheon
 from workbench import WorkbenchError, text_value
 
 FORMAT = 'tuldok_rheon_batch_v1'
+CONTROLS_FORMAT = 'tuldok_rheon_batch_v2'
 MAX_ITEMS = 32
 REQUEST_ID = re.compile(r'^[a-f0-9]{32}$')
 
@@ -52,9 +53,9 @@ def find_result(workbench, request_id):
     marker(request_id)
     with workbench.lock:
         matches = workbench.db.execute("""SELECT id FROM workbench_records WHERE kind='sequence'
-            AND json_extract(provenance_json, '$.sequence_acquisition.format')=?
+            AND json_extract(provenance_json, '$.sequence_acquisition.format') IN (?,?)
             AND json_extract(provenance_json, '$.sequence_acquisition.request_id')=? LIMIT 2""",
-            (FORMAT, request_id)).fetchall()
+            (FORMAT, CONTROLS_FORMAT, request_id)).fetchall()
         if len(matches) > 1:
             raise WorkbenchError('Trajectory import marker is ambiguous; inspect the collection.', 'conflict', 409)
         return dict(found=True, **receipt(workbench._get(matches[0][0]))) if matches else {'found': False}
@@ -62,8 +63,8 @@ def find_result(workbench, request_id):
 
 def import_item(workbench, body):
     allowed = {'files', 'request_id', 'batch_name', 'item_name', 'item_index', 'name', 'groups', 'parents', 'rights'}
-    if type(body) is not dict or set(body) - allowed or type(body.get('files')) is not dict or set(body['files']) != {'run.json', 'frames.jsonl'}:
-        raise WorkbenchError('Supply exactly one complete run.json / frames.jsonl pair and bounded item metadata.')
+    if type(body) is not dict or set(body) - allowed or type(body.get('files')) is not dict or set(body['files']) not in ({'run.json', 'frames.jsonl'}, {'run.json', 'frames.jsonl', 'controls.json'}):
+        raise WorkbenchError('Supply one complete run/frame trajectory with optional original producer-v2 controls and bounded item metadata.')
     request_id = marker(body.get('request_id'))
     batch_name, item_name = label(body.get('batch_name'), 'Batch label'), label(body.get('item_name'), 'Trajectory label')
     index = body.get('item_index')
@@ -72,10 +73,13 @@ def import_item(workbench, body):
     try:
         run = rheon.decode_file(body['files']['run.json'], rheon.contract.MANIFEST_LIMIT, 'run.json')
         frames = rheon.decode_file(body['files']['frames.jsonl'], rheon.contract.FRAMES_LIMIT, 'frames.jsonl')
-        prepared = rheon.prepare(run, frames)
+        controls = rheon.decode_file(body['files']['controls.json'], rheon.controls_contract.CONTROLS_LIMIT, 'controls.json') if 'controls.json' in body['files'] else None
+        prepared = rheon.prepare(run, frames, controls)
         context = dict(format=FORMAT, request_id=request_id, batch_name=batch_name, item_name=item_name,
                        item_index=index, run_sha256=prepared['metadata']['run_sha256'],
                        frames_sha256=prepared['metadata']['manifest']['frames_sha256'])
+        if prepared['metadata']['manifest']['version'] == 2:
+            context.update(format=CONTROLS_FORMAT, sequence_version=2, controls_sha256=prepared['metadata']['controls']['sha256'])
         metadata = {key: body[key] for key in ('name', 'groups', 'parents', 'rights') if key in body}
         metadata.setdefault('name', item_name)
         # Validation is outside the lock; marker check and atomic publication share it.

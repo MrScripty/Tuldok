@@ -1,10 +1,10 @@
 # Tuldok
 
-A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
+A local dataset studio for image, text, mesh, and native simulation evidence. Acquire original assets, author explicit targets, review exact revisions, and export immutable datasets through named consumer contracts. The book-corner editor remains available. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone. The UI remains provisional.
 
 ## Run
 
-Requires Python 3.10+ and Pillow. There is no JavaScript build step. Manual labeling needs no external service.
+Requires Python 3.12+ with the pinned dependencies in `requirements.txt` (Pillow and NumPy2.5.3). There is no JavaScript build step. Manual labeling needs no external service.
 
     python3 -m venv .venv
     .venv/bin/pip install -r requirements.txt
@@ -66,6 +66,14 @@ pending row** reads a saved acquisition marker and verifies the row proof before
 crediting creation. No visible result does not prove the request stopped.
 **Dismiss pending check** does not roll back an import; inspect the collection
 before retrying. These controls retain existing editor edits and selection.
+
+After the batch stops, **Add confirmed imports to selection** adds its confirmed
+records across collection pages. Existing selected revision pairs take precedence;
+repeated clicks retain them. Pairs reflect admission or saved-result confirmation,
+so later edits can make them stale. The entire action is rejected above 5,000
+selected records. Then use **Save selected records as a new set** to retain fixed
+membership. Selection grants no review or export approval. Results remain in this
+page until another batch or reload; explicitly saved sets persist.
 
 Provenance records the server-computed source-row SHA-256 and the existing
 source-byte/pixel hashes. Manifest filename, physical row number and image-file
@@ -271,7 +279,7 @@ The consumer is the training companion's `examples/diffusion/check_image_data.py
 
     python3 /path/to/check_image_data.py /path/to/extracted-release
 
-The unchanged pinned snapshot in `tests/fixtures/diffusion_check_image_data.py` is used for producer/consumer contract tests. An alternate checkout may be supplied through `TULDOK_CAPTION_CONSUMER`; tests reject a different hash. This milestone runs no model training or paid inference. [Scope and verification](docs/plans/image-caption-exports/plan.md).
+The unchanged pinned snapshot in `tests/fixtures/diffusion_check_image_data.py` is used for producer/consumer contract tests. An alternate checkout may be supplied through `TULDOK_CAPTION_CONSUMER`; tests reject a different hash. This milestone runs no model training or paid inference. [Contract](docs/contracts/dataset-releases.md).
 
 ## Dataset conventions
 
@@ -309,13 +317,13 @@ The browser smoke test requires Node 22+ and Chromium/Brave. Set BROWSER to the 
 
 Generated QA outputs use fresh ignored `build/qa/` directories. Ordinary screenshots
 use JPEG quality 85; authored fixture images remain lossless. See [QA commands,
-retained inputs and historical evidence retrieval](docs/qa/README.md).
+retained inputs and fixture provenance](docs/qa/README.md).
 
-## Repository
+## Native simulation and mesh assets
 
 The development workbench can import a complete bounded Rheon simulation sequence
-from **Import Rheon simulation sequence**. Select exactly `run.json` and
-`frames.jsonl`, give it a name and a rights note, then open the imported collection
+from **Import Rheon simulation sequence**. For version 1 select `run.json` and
+`frames.jsonl`. For producer version 2 also select the original `controls.json`. Give it a name and a rights note, then open the imported collection
 record to inspect its original metadata and nine-entry frame index. Imports remain
 **draft** until a person inspects the data and explicitly saves **Human reviewed**
 with a review note. Contract checks do not grant human review or establish permission.
@@ -328,7 +336,16 @@ preserved as declared evidence; hashes detect byte changes, not source authentic
 The producer's base commit and each run's declared source commit remain distinct
 from the adapter's pinned contract commit. Contract changes need coordinated review.
 
-Consumer limits are 64 KiB for `run.json`, 2 MiB for `frames.jsonl`, 256 KiB per
+Producer-v2 controls use [Rheon draft PR 32](https://github.com/MrScripty/Rheon/pull/32)
+at exact `020437fa638ad56823b544ba1f9207ceef065f12`. The source-pinned
+`rheon_controls_contract.py` preserves the producer validator except its v1 dependency
+import alias. It validates all eight controls against adjacent native stamps and
+times, raw hashes and the exact run binding. Producer origin remains a declaration;
+these checks neither authenticate the executable nor grant human review. Version-1
+authored sidecar inspection remains independent. The folder importer accepts v1 pairs and producer-v2 triples, including mixed folders.
+
+Consumer limits are 64 KiB each for `run.json` and optional v2 `controls.json`,
+2 MiB for `frames.jsonl`, 256 KiB per
 JSONL line, exactly nine frames (constructor plus eight accepted steps), and exactly
 16×8×4 cells. The HTTP import envelope is capped at 3 MiB. Completion, SHA256,
 byte counts, exact geometry/axes/shapes/types/units/configuration, finite native
@@ -343,14 +360,14 @@ the original bundle to inspect every dense field. No images, cell-centered vecto
 or flattened-time records are synthesized. The fixed fixture supports represented
 fraction donor transport with an all-fluid constant-density carrier. It does not
 qualify free surfaces, two-phase inertia, material calibration, multidirectional
-accuracy, performance or training quality. This is an import facility, not a
-qualified training model or training consumer.
+accuracy, performance or training quality. This import facility does not qualify a training model. The separate native
+numerical reader is described below; an actual training objective remains an input.
 
 Each trajectory is one indivisible record. Automatically protected trajectory and
 initial-condition family groups cannot be removed; related initial families and
 parent/source groups stay together in the existing connected split allocator.
 Canonical releases require human-reviewed sequences and package each exact original
-two-file bundle as an `assets/ID.zip` with typed metadata in split `records.jsonl`.
+two- or three-file bundle as an `assets/ID.zip` with typed metadata in split `records.jsonl`.
 Selected sequence bundles have a synchronous aggregate limit of 40 MiB, including
 saved-selection source checks. Rights-note corrections, optimistic revisions and
 append-only review history use the existing workbench controls.
@@ -364,22 +381,29 @@ recorded bytes through the normal UI and checks review, family split protection,
 and a byte-exact frozen release. It never runs the exporter or simulation.
 No models, downloads or training are needed for these sequence checks.
 Focused Python check: `python3 -m unittest discover -s tests -p test_sequences.py`.
+Producer-v2 tests in `test_producer_v2_controls.py` and
+`browser_producer_v2_controls.cjs` use explicitly synthetic source-derived bytes.
+They exercise the local contract/import/inspection/release mechanism. Synthetic
+fixtures do not grant original producer-packet acceptance and are not presented as
+actual producer output. See the [simulation contract](docs/contracts/simulation-sequences.md).
 
 The local follow-on **Import a folder of Rheon trajectories** accepts one selected
-folder containing only `<trajectory-label>/run.json` and `frames.jsonl` pairs.
-Preflight checks all pairs before reading: at most 32 pairs / 64 files / 40 MiB
-total raw files, 64 KiB per manifest and 2 MiB per frames file. Each server request
-is independently capped at 3 MiB and uses the unchanged fee7b4a validator. These
+folder containing `<trajectory-label>/run.json` and `frames.jsonl`, plus original
+`controls.json` for producer version 2. Preflight checks all rosters before reading:
+at most 32 trajectories / 96 files / 40 MiB total raw files, 64 KiB each per
+manifest/controls and 2 MiB per frames file. Each server request is independently
+capped at 3 MiB and uses the appropriate pinned v1/v2 validator. These
 selected-file limits do not impose a server-wide quota across independent imports.
 The existing 40 MiB immutable selection/release budget includes ZIP overhead.
 
-Each valid pair commits one whole draft trajectory with initial history and a
+Each valid item commits one whole draft trajectory with initial history and a
 computed acquisition marker/hash receipt. Invalid or duplicate items are rejected
 without modifying existing records; earlier successful items remain. Stop prevents
 the next admission, while an in-flight item may complete. Unknown responses or
 storage failures pause without automatic replay. **Check pending trajectory** is
-read-only and matches the marker, declared labels/index and both consumed-file
-hashes. It confirms admission only, never current source integrity, rights or
+read-only and matches the marker, declared labels/index and all consumed-file hashes. V2 receipts additionally
+require typed sequence version 2 and the original control hash; v1 receipts remain
+unchanged and reject those v2 fields. It confirms admission only, never current source integrity, rights or
 human review. Missing lookup does not prove cessation. Confirmation does not
 resume later items; dismissal/departure/reload makes no rollback claim. Progress
 is held in this page; inspect the collection after reload. Imports retain the
@@ -391,12 +415,13 @@ Review, rights/history, fixed saved selections and canonical whole-trajectory
 export use their existing controls. No time flattening, frame split or scientific
 training qualification is added. `tests/test_sequence_batch.py` and
 `tests/browser_sequence_batch.cjs` use the retained actual fee7b4a pair and separately
-labeled source-derived synthetic controls; they execute no simulation.
-Rheon's still-draft PR20 has advanced to `3bf61ba85d066cadb95cddffb29a2b40fe497ccf`
-with a Cargo artifact repair and a new allowed build-command form. This adapter
-does not adopt that contract form; it is rejected until a separately reviewed repin.
+labeled source-derived synthetic controls; they execute no simulation. The separate
+`test_sequence_batch_v2.py`, `test_sequence_batch_v2_controller.cjs` and
+`browser_sequence_batch_v2.cjs` verify mixed v1/synthetic-v2 acquisition, shared marker
+races, exact control proofs and frozen three-file transport. They establish local
+compatibility only; actual producer-v2 packet acceptance remains blocked.
+This adapter remains pinned to its exact documented contract. Unsupported build/provenance forms require a separately reviewed versioned contract.
 
-Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.
 
 ### Import an annotated caption corpus
 
@@ -438,7 +463,7 @@ Select individual answers and use **Freeze selected answers**. Selection capture
 
 The dedicated `text_instruction_v1` ZIP preserves canonical prompt/response snapshots, provenance, hashes and full related family evidence in manifest.json; prompt assets are under prompts/. Consumer rows have only prompt/completion in train/validation/test data.jsonl. rows.jsonl maps deterministic zero-based rows to exact revisions and family IDs. Splits weight selected examples and never divide a source family; reports also count unique prompts. Up to 5,000 responses and 40 MiB total uncompressed archive data are permitted, using existing synchronous resource contracts. Empty unused splits are declared but omitted from the consumer's loading map. Final export requires a fresh eligible proof.
 
-Consumer verification uses unchanged hash-pinned TRL0.23.1 and Datasets4.1.1, isolated verification dependencies, a locally constructed tokenizer and tiny random CPU model. It checks actual browser-downloaded strings, row mapping, completion masks, EOS, padding and explicitly disabled truncation, with no pretrained download or training-quality claim. Dependencies belong to tests/instruction-consumer-requirements.txt, not app runtime. [Scope/contracts](docs/plans/instruction-responses/plan.md).
+Consumer verification uses unchanged hash-pinned TRL0.23.1 and Datasets4.1.1, isolated verification dependencies, a locally constructed tokenizer and tiny random CPU model. It checks actual browser-downloaded strings, row mapping, completion masks, EOS, padding and explicitly disabled truncation, with no pretrained download or training-quality claim. Dependencies belong to tests/instruction-consumer-requirements.txt, not app runtime. [Contract](docs/contracts/dataset-releases.md).
 
 ### Native text-classification releases
 
@@ -462,7 +487,7 @@ Stop prevents later admissions; an in-flight record may finish. An uncertain
 response pauses the batch and offers read-only saved-result reconciliation, never
 automatic replay. Restart requires choosing the archive again for preparation;
 committed records and receipts persist. Limits and qualification are recorded in
-[the import plan](docs/plans/native-text-classification-import/plan.md).
+[the import contract](docs/contracts/native-imports.md).
 
 ### Choose an advertised Pumas gateway
 
@@ -474,13 +499,13 @@ the descriptor before copying its URL into that workflow's existing form. List
 served models and request a proposal separately; choosing a gateway makes no
 model request and changes no source, annotation, review or selection.
 
-This consumer follows public **unmerged** Pumas-Library PR51 at
+This advertisement consumer retains historical Pumas-Library PR51 source at
 `80f06ab17f9eea639fee143c86319ca9b5e1a21c`. HTTP advertisements are unauthenticated;
 compiled features do not prove model readiness. Numeric-loopback HTTP descriptors
 are bounded to 64 KiB, with no redirects, legacy fallback or automatic model
 acquisition. Manual URLs remain available. Qualification uses an explicitly
 source-derived fixture, not a live Pumas runtime or a v0.8 release.
-[Contract, limits and verification](docs/plans/pumas-advertised-gateways/plan.md).
+[Contract and limits](docs/contracts/pumas-integration.md).
 
 ### Propose a caption from an existing image
 
@@ -521,7 +546,7 @@ recovery scope; it is not cross-tab/device recovery.
 
 This single-image slice is tested with local synthetic HTTP providers and real
 Chromium. It asserts no real-model caption quality and adds no models, credentials,
-provider registry or dependencies. [Contract and acceptance](docs/plans/caption-proposals/plan.md).
+provider registry or dependencies. [Contract](docs/contracts/pumas-integration.md).
 
 ### Propose a label for existing text
 
@@ -563,7 +588,7 @@ Cancellation fences late output; interrupted requests never resume automatically
 after restart. Polling uses bounded summaries; individual request reads retain
 the exact source, prompts and bounded complete response evidence. This first stage
 uses synthetic local HTTP and Chromium fixtures, with no real-model qualification.
-[Contract and verification](docs/plans/text-classification-proposals/plan.md).
+[Contract](docs/contracts/pumas-integration.md).
 ### Explicit preference pairs
 
 Use **Comparative judgments** on a text prompt with two existing independent
@@ -598,13 +623,13 @@ an existing EOS. No model is constructed or run; no pretrained download or
 training-quality claim is involved. Reuse the isolated official dependencies
 in `tests/instruction-consumer-requirements.txt`. Run `node
 tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
-that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).
+that environment. [Contract](docs/contracts/dataset-releases.md).
 
 Static mesh import: [bounded ASCII PLY/sidecar contract](docs/contracts/static-mesh.md), with native units/frame/provenance inspection and human review before export.
 
 ### Selected-model Pumas typed operations
 
-The annotation workbench and image studio offer an explicit **Pumas typed v1** API choice. This consumer pins the public, unmerged [Pumas PR54](https://github.com/MrScripty/Pumas-Library/pull/54) source `40c5cbfed67a6f0e862a1197bb5105363d67bdb1`, including [PR53](https://github.com/MrScripty/Pumas-Library/pull/53) streaming/lifetime source `f3b3c770ca531f013c8e1f8b1f958b9dc0babbfb`. Existing compatible API settings remain the default. PR51 gateway advertisements belong to a separate producer stack; this consumer does not assume those drafts are merged together.
+The annotation workbench and image studio offer an explicit **Pumas typed v1** API choice. This consumer pins the historical draft [Pumas PR54](https://github.com/MrScripty/Pumas-Library/pull/54) source `40c5cbfed67a6f0e862a1197bb5105363d67bdb1`, including [PR53](https://github.com/MrScripty/Pumas-Library/pull/53) streaming/lifetime source `f3b3c770ca531f013c8e1f8b1f958b9dc0babbfb`. Existing compatible API settings remain the default. PR51 gateway advertisements belong to a separate producer stack; this consumer does not assume those drafts are merged together.
 
 Choose the exact serving alias and optionally its exact profile; inspect capabilities before requesting a text label, grounded rewrite, or text-to-PNG image. The server resolves an omitted profile, and the consumer binds the provider POST to that exact returned profile. Catalog aliases may appear under multiple profiles; their listing alone proves no capability. Typed text has no seed or JSON-format option. Frozen typed text intent records `seed:null`, and complete stop-terminated results still need valid application JSON. Typed image batches currently require the explicit repeat-prompt strategy. Captioning requires image input, which this typed contract does not support; audio is also unavailable. No typed streaming UI is claimed: requests use `stream:false`.
 
@@ -651,7 +676,7 @@ node tests/browser_image_classification_export.cjs
 The reader gate also executes the unchanged tiny CPU trainer for one epoch,
 without downloading model weights, using six authored transport fixtures. Its
 metrics establish no training-quality claim. See the
-[classification export plan](docs/plans/image-classification-export/plan.md).
+[classification export contract](docs/contracts/dataset-releases.md).
 
 ### Reviewed plain-text corpora for Chapter 11
 
@@ -681,7 +706,7 @@ content-addressed ZIPs bounded to 5,000 records and 40 MiB for the full logical
 archive, including duplicated data and metadata. Human review and family
 protection do not establish data quality, semantic independence or permission.
 
-See the [consumer pin, byte contract and qualification plan](docs/plans/text-corpus-export/plan.md).
+See the [consumer pin and byte contract](docs/contracts/dataset-releases.md).
 The actual-consumer gate uses Torch 2.8.0 on CPU, synthetic authored fixtures and
 the unchanged companion reader/trainer/evaluator. It downloads no models or data.
 
@@ -710,4 +735,129 @@ next row while in-flight work may finish. Uncertain outcomes require read-only
 saved-result inspection, with no automatic replay. Restart expires preparation;
 committed records persist. Progress stays in the current page. Explicit human
 review and current selection are required before release. [Scope and roadmap
-inventory](docs/plans/native-detection-import/plan.md).
+inventory](docs/contracts/native-imports.md).
+
+### Explicit selected-library authenticated owner observation
+
+In the annotation workbench, **Reuse an existing Pumas library** lists the
+operator-selected registry and its local model indexes. Select one exact library,
+authenticate its existing HTTP owner, inspect the public observation, choose an
+annotation destination, then **Reauthenticate and use URL**. This copies a URL only;
+it starts no proposal, model query, owner or download. Local index references stay
+scoped by library and are not evidence of served aliases or model readiness.
+
+This adapter calls the unmodified Pumas SDK at
+`ab9890fe3248ed7c435b958cded0b131b0700a35`, tree
+`302a9ef3f2931d46d4a424d049725b15fc8291aa`. This is the historical PR48/PR51 snapshot, without an assumed v0.8 release
+or current merge status. Typed PR54 `40c5cbfed67a6f0e862a1197bb5105363d67bdb1` remains a separate
+stack, so this chooser refuses typed composition. Port advertisements alone
+remain unauthenticated. Startup, bootstrap, reclamation, shutdown and acquisition
+are unsupported here; ambiguous attachment never starts a replacement owner.
+
+An operator must explicitly supply a clean exact SDK checkout, installed Rust
+and cached dependencies. The offline helper verifies all producer source bytes
+and builds a separate consumer adapter outside the producer checkout:
+
+```sh
+python tools/build_pumas_local_bridge.py --producer-source /path/to/exact/Pumas-Library --output /path/to/consumer-build
+python app.py --data /path/to/dataset --pumas-local-bridge /path/to/consumer-build/target/debug/tuldok-pumas-local --pumas-local-bridge-sha256 EXACT_EXECUTABLE_SHA256 --pumas-registry /path/to/selected/registry.db
+```
+
+The build receipt records executable/source hashes and the consumer lockfile.
+Application startup never installs or builds the bridge. Without these settings,
+the panel returns an explicit unsupported configuration error.
+
+Limits: 32 library contexts, 64 complete local-index rows per library (larger or
+inconsistent counts refuse; no pagination), 16 KiB adapter input, 1 MiB output,
+64 KiB stderr, and 15 seconds for each observation or full Use operation. The
+owned process group and pipe actors must retire before another observation;
+unresolved custody retains the slot and returns an error. Credentials and
+registry metadata are not returned. Receipts are signed for the application
+lifetime and are not restored after page reload. Fresh SDK core authentication,
+HTTP descriptor equality and final core reauthentication precede URL use.
+Authentication is observed at selection; it grants no lifetime lease or guarantee
+for later inference. Editor changes, restored settings and page departure fence
+late results. Existing dataset rights, review, history and family splits retain
+their owners.
+
+The ordinary browser gate checks the real unsupported configuration path. Native
+qualification additionally requires explicitly configured, separately built owned
+fixtures (`--fixture`); these use the original SDK core/IPC and an authored HTTP
+descriptor responder with controlled indexes, no inference runtime or assets:
+
+```sh
+python tests/check_pumas_owner_reuse_native.py --bridge /path/to/tuldok-pumas-local --fixture /path/to/tuldok-pumas-owner-fixture --output /path/to/fresh/evidence
+TULDOK_PUMAS_NATIVE_BRIDGE=/path/to/tuldok-pumas-local TULDOK_PUMAS_OWNER_FIXTURE=/path/to/tuldok-pumas-owner-fixture node tests/browser_pumas_owner_reuse.cjs
+```
+
+See the [contract and scope](docs/contracts/pumas-integration.md).
+
+
+### Inspect and reuse a selected typed text model
+
+The classification and grounded rewrite forms offer **Inspect selected text model**
+and **Use compatible selected model**. At the explicitly configured numeric-loopback
+URL, the consumer reads the public `/v1/models` and `/v1/capabilities`, resolves an
+exact served profile, and requires available `chat_generation` with `messages_text`
+input, text output, and the existing worker token bounds (2000 classification,
+6000 rewrite). Use rechecks the exact profile and original capability SHA-256,
+then applies URL, alias, profile and protocol through ordinary form events. It
+starts no proposal. Later generation retains its existing capability validation,
+job, cancellation, recovery, draft review, rights, history and family ownership.
+Edits, Restore epochs, source navigation, dirty state and page departure reject
+late replies. Serving aliases are separate from local model references.
+
+This slice pins typed PR54 `40c5cbfed67a6f0e862a1197bb5105363d67bdb1`
+and discovery PR48 `ab9890fe3248ed7c435b958cded0b131b0700a35` as separate
+historical draft snapshots, without assuming a merged producer stack. The discovery server lacks typed operation and
+capability routes; the typed server lacks authenticated HTTP discovery publication.
+There is no qualified joint producer. The selected-library panel therefore permits
+only read-only serving inspection between two fresh complete SDK owner checks;
+owner-bound typed configuration and inference remain unavailable. No local index
+ID becomes an alias automatically. Image-to-Text, caption and audio selection are
+unsupported; text-to-image capabilities do not establish Image-to-Text.
+
+The standalone read shares a six-second deadline, with three seconds per public
+HTTP read, a 1 MiB catalog and 64 KiB manifest bound, at most 512 raw catalog rows
+and 64 distinct serving aliases, and an 8 KiB request. Owner inspection shares the
+existing fifteen-second deadline across both fresh SDK borrows and public reads.
+All observations retain exact source/profile and inspectable capability hashes;
+they grant no owner lease or inference admission. Default test HTTP fixtures are
+source-derived. An explicit `TULDOK_PUMAS_TEXT_SELECTION_GATEWAY_RECEIPT` allows
+the Chromium selector gate to use pinned native typed production modules with an
+authored external text backend, no model loaded. The original discovery SDK browser
+fixture has authored HTTP descriptor responses and serving-route refusals; it does
+not claim to execute the production PR48 HTTP router. Joint producer integration
+requires a supported exact combined source and operation transport/identity contract.
+
+### Native trajectory review
+
+The native trajectory review workspace loads a named field at one native index and an x/y/z plane across all nine frames. The read-only `POST /api/workbench/sequence-review/<id>` requires exact `revision`, `source_revision`, `field`, `index: [i,j,k]` and `plane_axis`; its strict JSON request is capped at 4 KiB and response at 128 KiB. The largest plane contains 144 native samples (1,296 across nine frames), with a nine-sample native-index time trace. Shared stored-bundle verification precedes projection. MAC staggering, f32/f64 interpretation, units, original frame hashes/time/stamps/diagnostics and v2 accepted-interval controls remain associated; constructor controls and v1 emitted controls are explicitly unavailable. Pressure retains last-accepted-interval semantics.
+
+Explicit Load admits the complete bounded response before showing native sample plots or enabling note append. Frame navigation/playback uses the nine loaded entries locally. Inputs, cancellation and departure revoke late reads. Inspection leaves annotation dirty state and selection unchanged. “Append current inspection reference” preserves the existing note, checks its complete 4,000-code-point Unicode limit and resets the draft review choice; it neither saves nor reviews. Existing save/revision/history and human review are separate actions, and releases still contain whole trajectories within protected initial-state/source families. SVG plots are inspection only; no model-training or scientific qualification is claimed.
+
+Qualification uses retained recorded fee7b4a output for all-field/all-axis/all-frame native indexing and real HTTP/Chromium review/export, with separately labelled source-derived synthetic v2 controls. No producer or model runs. Focused gates are `python -m unittest discover -s tests -p test_sequence_review.py`, `node tests/test_sequence_review_controller.cjs` and `node tests/browser_sequence_review.cjs`; UI remains provisional.
+
+### Human-defined temporal sequence targets
+
+The supported `sequence_transport` task accepts optional version1 `temporal_labels` alongside the existing whole-trajectory review note. In **Human-defined temporal labels**, choose inclusive native first/last frames0..8, enter your own label and a rationale, then explicitly **Add draft range**. Edit, Remove and Clear operate on staged targets; pending controls must be explicitly Add/Update or Cancel before record Save. Drafts survive inspection and restored-page lifecycle events. Saving, then separately choosing human review, uses existing exact revision/source CAS and history. A competing edit returns409 and retains local staged labels until deliberate reload.
+
+At most16 ranges, labels80 Unicode code points, rationales500, whole note4000 and complete canonical annotation64KiB UTF8. One-frame ranges and overlapping different labels are allowed; duplicate normalized label/start/end is refused. Empty ranges mean no authored temporal targets, not a physical negative. Human labels remain separate from declared producer provenance, numerical fields and authenticated physical truth. The versioned envelope binds whole source hashes and endpoint frame/time/hash/native stamp copies; requests accept JSON numeric time0 and normalize authoritative float0.0 where stored metadata requires it. Save and export revalidate the unchanged original bundle/index; noncanonical persisted targets fail preview/freeze. Existing note-only annotations/clients continue using their complete-target replacement contract.
+
+Canonical releases retain these structured human targets in the manifest and typed JSONL beside the byte-exact original raw bundle. Whole trajectories and unselected constructor/source-family relatives retain the existing split boundary. No frame records, images, cell-centered vectors, continuous interpolated labels, solver-truth labels, new producer execution or training consumer is added. UI provisional. [Target contract](docs/contracts/sequence-temporal-labels.md).
+
+The [whole-trajectory workflow](docs/trajectory-workflow.md) connects file import,
+native inspection, temporal authoring, draft/reopen/human review, exact saved
+selection and family-safe preview/export. Its joined browser gate also checks an
+owned app restart and later stale saved references while frozen bytes remain
+unchanged. The [remaining feature map](docs/remaining-feature-map.md) distinguishes
+completed capabilities from corpus-diversity, downstream-objective, and broader
+annotation gaps.
+
+### Native simulation numerical datasets
+
+Read a frozen sequence-only canonical ZIP with `native_sequence_dataset.py`, its exact release SHA256 and an explicit split. The NumPy API returns separate native MAC fields with time/x/y/z axes and original staggered shapes/f32-f64 representation; default whole trajectories or explicit contiguous windows retain record/family identity. Human range coverage and original source/endpoint anchors remain separate from numerical evidence. Inspect JSON or atomically export a pickle-free native NPZ sample. New sequence-only releases carry declared family closure; older train-only packets expose their missing-closure limitation. This adds numerical consumption, without qualifying a trainer, scientific truth or an independent train/evaluation corpus. [Consumer contract](docs/contracts/native-sequence-consumer.md). UI provisional.
+
+## Repository
+
+Source is hosted at [MrScripty/Tuldok](https://github.com/MrScripty/Tuldok). A distribution license has not yet been selected.

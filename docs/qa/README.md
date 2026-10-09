@@ -1,91 +1,19 @@
-# QA outputs and retained inputs
+# Local QA and fixture inputs
 
-Run the complete registered offline gate set with an installed pinned consumer
-environment:
+Python, controller, browser and consumer gates are registered in `.github/workflows/tests.yml`. Provision dependencies separately; the runner never installs packages. The application requirements include NumPy2.5.3 and require Python3.12+. Node22+ with WebSocket and Chromium are needed for browser tests; set `BROWSER` to the executable.
 
-```sh
-python scripts/qualify_text_classification_local.py --python /path/to/consumer-venv/bin/python
-```
-
-The runner prints a fresh directory under `build/qa/qualification/run-*`.
-Each gate receives its own output root. Logs and generated screenshots, session
-JSON, test ZIPs and manifests stay directly in that gate's output directory;
-nothing scans or copies old report trees or earlier runs. `--report-root` accepts
-only ignored `build/` or `output/` containers. `--resume` requires an explicit
-existing run directory and reuses passing results only for unchanged source and
-complete, hash-matching artifacts within that gate's original output subtree.
-`--only` records the chosen scope; it does not certify the entire registered set.
-The aggregate pins `TULDOK_SOURCE_ROOT` to its own checkout, so ambient standalone
-browser overrides cannot select a different source than the recorded hashes.
-
-Standalone browser tests use fresh `build/qa/SUITE/run-*` directories. Set
-`TULDOK_QA_OUTPUT_ROOT` to another ignored build/output directory or an external
-output directory. Authored source/fixture/report paths are rejected as destinations,
-including paths aliased through existing symlinks. CI uploads `build/qa/**` as
-temporary artifacts. These are optional downloads, never repository inputs.
-
-The retained manual UI replay is a historical cleanup replay. It checks the
-production sources of development `309a87d7` and must run from exact cleanup
-PR21 `2026d716ea88fc303ed3e298031b3314f30d4ea7`, whose product source is unchanged.
-It intentionally rejects the integrated mesh/sequence checkout. To compare that
-historical application with frozen main, use separate exact checkouts:
+The scoped, no-training regression command excludes five separately registered consumer/combined workflows:
 
 ```sh
-git worktree add --detach /tmp/tuldok-qa-replay 2026d716ea88fc303ed3e298031b3314f30d4ea7
-git worktree add --detach /tmp/tuldok-frozen-main 2fc4a46f12d73a0fa467d5482f68edb83d6df6af
-cd /tmp/tuldok-qa-replay
-TULDOK_LEGACY_ROOT=/tmp/tuldok-frozen-main node docs/plans/workbench-ui-qualification/capture.cjs
+python scripts/qualify_text_classification_local.py --python /path/to/consumer-venv/bin/python --timeout 240 --only '^(?!node tests/(?:check_text_corpus_consumer|check_image_classification_consumer|browser_preferences|browser_instruction_responses|browser_combined_workbench)\.cjs$)'
 ```
 
-The replay verifies application sources against development `309a87d7` and the
-legacy checkout against frozen main before launching either application.
+That scope contains93 of98 registered gates. It includes Python discovery, current controller/real browser checks and actual NumPy/NPZ consumption. Optional installed Torch2.8 CPU is used only for explicit list-collated DataLoader iteration in the native sequence gate. The excluded gates are not qualified by a scoped run; some separately exercise trainer or other neural consumer behavior. Do not interpret a previous pass or authored fixture as current runtime evidence.
 
-Ordinary screenshots are JPEG quality **85**. Fixture images and original
-pixel/hash-dependent image bytes remain lossless PNGs; new JPEG hashes describe
-new captures and do not replace archived original PNG hashes. Generated PDFs,
-archives, logs and screenshots belong in ignored output or separate downloads.
-No PDF or generated artifact bundle is added to Git.
+An optional `TULDOK_NATIVE_LEGACY_RELEASE` path lets the native gate read an existing frozen release with its exact pinned hash. This is a data input, never an old report copied as a new result. A configured missing or mismatched input fails; no alternate source is selected. Legacy packets without family-context proof are admitted only with one populated split and a visible limitation.
 
-## Necessary inputs
+Every invocation writes fresh ignored `build/qa/qualification/run-*` outputs. Each gate gets its own subtree; previous reports/runs are never scanned or recaptured. `--report-root` permits only ignored build/output containers. `--resume` needs an exact existing run and unchanged source plus complete matching direct artifacts. `TULDOK_SOURCE_ROOT` is pinned to this checkout. Standalone tests accept `TULDOK_QA_OUTPUT_ROOT` outside source or within ignored build/output; aliases into tracked fixtures/docs are rejected before child startup. Screenshots use JPEG85. Authored source images and pixel/hash-dependent inputs stay lossless PNG.
 
-- `tests/fixtures/native-caption-release`: nine unchanged files, including four
-  normalized PNGs, canonical manifest and split metadata. Used by native-caption
-  HTTP/SQLite and browser integration checks. All original hashes remain pinned
-  in [the historical index](historical-artifacts.json).
-- `tests/fixtures/workbench-ui`: authored blue-book PNG and asset JSONL for the
-  UI replay. Source-image and manifest bytes remain exact.
-- `tests/fixtures/qa/inherited-gates.json`: the original 43-command registry;
-  runtime results are not inputs to the runner.
-- `scripts/prepare_caption_fixtures.py`: the retained authored fixture generator;
-  output must be a fresh path in ignored build/output.
+`historical-artifacts.json` retains only11 lossless fixture paths, sizes, hashes and original-source locators. The unchanged QA regression reads that path. Its name is retained for compatibility; generated artifacts, outcome indexes and review histories are not present. [Fixture provenance](../fixtures.md) identifies required source inputs. No generated datasets, ZIP releases, screenshots, logs, checkpoints, PDFs or qualification receipts belong in Git.
 
-Simulation-import draft PR20 is a separate branch. Its 529,032-byte actual Rheon
-fixture, source/evidence commits and public head are untouched by this cleanup.
-Its synthetic fixture stays separately labeled. The local cleanup/sequence/mesh
-integration also routes both sequence browser suites and mesh inspection through
-validated fresh QA directories; all ordinary captures use JPEG85. The actual
-sequence output override is validated and cleared in aggregate children so their
-outputs stay in the corresponding gate. No training, model download or new
-simulation is needed for repository hygiene or this integration.
-
-## Historical evidence retrieval
-
-The unchanged reachable ancestor
-`309a87d753f97b245385f8d6db20353ab536a836` contains all original report bytes.
-Cleanup removes generated outputs from the current tracked tree without rewriting
-history. Authored review/verification prose, including the sole recorded real-Pumas
-observation, remains accessible. Its historical relative artifact links refer to
-the archived baseline tree. The compact index records original source identity,
-relocated input hashes, compressed oracle hashes and small outcome summaries.
-
-Retrieve any original byte stream or recreate the complete historical checkout:
-
-```sh
-git show 309a87d753f97b245385f8d6db20353ab536a836:docs/plans/annotated-caption-import/reports/fixtures/native-caption-release/manifest.json
-git worktree add --detach /tmp/tuldok-qa-history 309a87d753f97b245385f8d6db20353ab536a836
-```
-
-Historical probes and compressed oracle cases can be inspected or reproduced in
-that checkout using their retained source and commands. Old real-runtime observations
-are preserved evidence; they do not request new inference or external model access.
-No additional binary archive is necessary while that ancestor is retained.
+The unregistered historical `capture.cjs` replay requires its exact previously published cleanup checkout and is omitted from this current handoff. Use current registered browser tests here; source-only cleanup does not rewrite or erase inherited public history. Existing checkouts and retained originals remain separate.

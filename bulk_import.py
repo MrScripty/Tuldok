@@ -61,6 +61,7 @@ def decode_row(line):
 def result(record):
     context = record['provenance']['acquisition']
     return dict(record_id=record['id'], name=record['name'], kind=record['kind'],
+                revision=record['revision'], source_revision=record['source_revision'],
                 request_id=context['request_id'], row_number=context['declared']['row_number'],
                 row_sha256=context['row_sha256'], review=record['review'])
 

@@ -25,6 +25,7 @@ const callers=[
   ['browser_sequences_actual.cjs','simulation-sequence-actual','TULDOK_SEQUENCE_ACTUAL_REPORT_ROOT'],
   ['browser_meshes.cjs','static-mesh'],
   ['browser_pumas_gateways.cjs','pumas-gateways'],
+  ['browser_pumas_model_selection.cjs','pumas-model-selection'],
   ['browser_caption_proposals.cjs','caption-proposals'],
   ['browser_text_classification_proposals.cjs','text-classification-proposals','TULDOK_CLASSIFICATION_REPORT_ROOT'],
   ['browser_classification_preferences_integration.cjs','classification-preferences','TULDOK_CLASSIFICATION_PREFERENCES_REPORT_ROOT'],

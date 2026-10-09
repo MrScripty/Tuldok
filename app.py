@@ -7,6 +7,8 @@ import image_generation
 import pumas_operations
 import synthetic
 import gateway_discovery
+import pumas_owner_reuse
+import pumas_model_selection
 import workbench
 import dataset_recipes
 import dataset_releases
@@ -21,6 +23,7 @@ import caption_import
 import native_text_import
 import native_detection_import
 import rheon_sequences
+import sequence_inspection
 import sequence_batch_import
 import meshes
 import base64
@@ -368,7 +371,8 @@ class Dataset:
             raise
 
 
-def make_handler(dataset):
+def make_handler(dataset, owner_reuse=None):
+    owner_reuse = owner_reuse if owner_reuse is not None else pumas_owner_reuse.Service()
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -476,7 +480,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                assets = {'/sequence-temporal-labels.js': ('sequence-temporal-labels.js', 'text/javascript'), '/sequence-review.js': ('sequence-review.js', 'text/javascript'), '/sequence-probe.js': ('sequence-probe.js', 'text/javascript'), '/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/pumas-owner-reuse.js': ('pumas-owner-reuse.js', 'text/javascript'), '/pumas-model-selection.js': ('pumas-model-selection.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -497,11 +501,15 @@ def make_handler(dataset):
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
-                limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                limit = sequence_inspection.REVIEW_MAX_REQUEST if path.startswith('/api/workbench/sequence-review/') else sequence_inspection.MAX_REQUEST if path.startswith('/api/workbench/sequence-inspection/') else native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                if path == '/api/generation/typed-selection':
+                    limit = pumas_model_selection.MAX_REQUEST
+                elif path.startswith('/api/generation/local-pumas/'):
+                    limit = pumas_owner_reuse.MAX_REQUEST
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = pumas_owner_reuse.parse(raw_body) if path.startswith('/api/generation/local-pumas/') or path == '/api/generation/typed-selection' else sequence_inspection.contract.parse(raw_body) if path.startswith(('/api/workbench/sequence-inspection/', '/api/workbench/sequence-review/')) else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
@@ -541,6 +549,10 @@ def make_handler(dataset):
                     return self.reply(dataset.workbench.import_asset(body), 201)
                 if path == '/api/workbench/mesh-import':
                     return self.reply(meshes.admit(dataset.workbench, body), 201)
+                if path.startswith('/api/workbench/sequence-review/'):
+                    return self.reply(sequence_inspection.review(dataset.workbench, path.rsplit('/', 1)[-1], body))
+                if path.startswith('/api/workbench/sequence-inspection/'):
+                    return self.reply(sequence_inspection.inspect(dataset.workbench, path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/sequence-import':
                     return self.reply(rheon_sequences.admit(dataset.workbench, body), 201)
                 if path == '/api/workbench/sequence-import-item':
@@ -585,6 +597,13 @@ def make_handler(dataset):
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
                     return self.reply(ai_http.text_models(body.get('server_url')))
+                if path.startswith('/api/generation/local-pumas/'):
+                    operation = path.removeprefix('/api/generation/local-pumas/')
+                    if operation not in ('libraries','observe','use','typed_models','typed_selection'):
+                        raise ValueError('Local Pumas startup, shutdown, acquisition and reclamation are unsupported; no owner fallback.')
+                    return self.reply(getattr(owner_reuse,operation)(body))
+                if path == '/api/generation/typed-selection':
+                    return self.reply(pumas_model_selection.selection(body))
                 if path == '/api/generation/typed-models':
                     if set(body) != {'server_url'}: raise ValueError('Supply only the gateway URL.')
                     return self.reply(pumas_operations.models(body['server_url']))
@@ -632,9 +651,16 @@ def main():
     parser.add_argument('--data', type=Path, default=ROOT / 'data')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
+    parser.add_argument('--pumas-local-bridge', type=Path)
+    parser.add_argument('--pumas-local-bridge-sha256')
+    parser.add_argument('--pumas-registry', type=Path)
     args = parser.parse_args()
     dataset = Dataset(args.data)
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
+    owner_reuse = pumas_owner_reuse.Service(args.pumas_local_bridge,args.pumas_registry,args.pumas_local_bridge_sha256)
+    # Preserve existing handler compositions unless the operator opts into the SDK.
+    configured = any(value is not None for value in (args.pumas_local_bridge,args.pumas_registry,args.pumas_local_bridge_sha256))
+    handler = make_handler(dataset,owner_reuse) if configured else make_handler(dataset)
+    server = ThreadingHTTPServer((args.host, args.port), handler)
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)
     try:
         server.serve_forever()

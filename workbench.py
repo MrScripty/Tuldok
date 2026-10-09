@@ -77,6 +77,9 @@ def validate_annotation(task, value, record):
         if set(value) != {'note'}:
             raise WorkbenchError('Text corpus review requires exactly one note.')
         return {'note': text_value(value['note'], 'Corpus review note', 4000)}
+    if task == 'sequence_transport' and 'temporal_labels' in value:
+        from sequence_temporal_labels import validate
+        return validate(value, record)
     if task in ('sequence_transport', 'mesh_geometry'):
         if set(value) != {'note'}:
             raise WorkbenchError(record['kind'].title() + ' review requires exactly one note; fields stay immutable.')
@@ -119,6 +122,9 @@ def labels(record):
     annotation = record.get('annotation')
     if not annotation:
         return []
+    if record.get('task') == 'sequence_transport':
+        from sequence_temporal_labels import labels as temporal_labels
+        return temporal_labels(annotation)
     if 'label' in annotation:
         return [annotation['label']]
     return [item['label'] for item in annotation.get('boxes', annotation.get('spans', []))]
@@ -427,6 +433,9 @@ class Workbench:
                 raise WorkbenchError(before['kind'].title() + ' data requires a human review decision.')
         if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
             raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
+        if task == 'sequence_transport' and 'temporal_labels' in annotation:
+            from sequence_temporal_labels import verify_source
+            verify_source(self, before)
         # A trusted verifier may replace origin, but never persist or alter the note owner's projection.
         origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
         provenance = dict(verified_provenance) if verified_provenance else origin

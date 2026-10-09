@@ -1,7 +1,0 @@
-# Shared caption admission validation finding
-
-Observed on integrated commit `71752fadd68efd092f53ee356ffb64061fa064da`; caption JS was inherited unchanged from final caption successor. The caption validator accepts frontend intents rejected before backend admission: missing/single/backslash authority, internal NEL, port0, lone surrogate URL, empty/surrogate model and empty/surrogate guidance (see `caption_validation_comparison.json`). Ordinary control accepted both; BOM rejected both.
-
-The actual caption submit handler VM preserves a malformed single-slash URL before POST. Losing its backend400 acknowledgment and reloading restores this pending intent. Exact GET404 keeps it; correcting URL causes0POST; repeating unchanged ID receives400 and retains pending evidence indefinitely. The standalone reproduction is `caption_lost_refusal_probe.cjs`/`.log`, using the same DOM/transport harness as the repository caption reload test. Backend rejection was independently confirmed by its authoritative config validators; this report does not claim an actual caption HTTP transport probe or real inference.
-
-This is the same availability mechanism as the newly repaired classification fresh-validation finding. Existing durable invalid storage intentionally fails closed; fresh validation should reject impossible requests before creating it. It belongs to the caption author; no caption code was edited by this reviewer.

@@ -18,7 +18,7 @@ function action(id, fn, event = 'click') {
     if (control.dataset.busy) return;
     control.dataset.busy = 'true'; buttons.forEach(b => b.disabled = true);
     try { await fn(e); } catch (error) { notice(error.message, true); }
-    finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(page) pagination(); }
+    finally { delete control.dataset.busy; buttons.forEach(b => b.disabled = false); if(control === $('editor') && typeof sequenceTemporalControls === 'function') sequenceTemporalControls(); if(page) pagination(); }
   });
 }
 function selection(intent = false) { if(intent) ++selectionEpoch; $('selection').textContent = selected.size + ' selected'; syncReleaseSelection(); if(typeof savedSelectionChanged === 'function') savedSelectionChanged(intent); if(typeof curationChanged === 'function') curationChanged(); }
@@ -174,7 +174,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? (typeof sequenceTemporalAnnotation === 'function' ? sequenceTemporalAnnotation(record,$('sequence-note').value) : {note:$('sequence-note').value}) : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&

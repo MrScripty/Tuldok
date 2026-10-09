@@ -67,6 +67,9 @@ class BulkImportTests(unittest.TestCase):
         status, result = self.request('/api/workbench/import-row', body)
         self.assertEqual(status, 201, result)
         self.assertEqual(result['row_sha256'], hashlib.sha256(body['line'].encode()).hexdigest())
+        record = self.dataset.workbench.get(result['record_id'])
+        self.assertEqual((result['revision'], result['source_revision']),
+                         (record['revision'], record['source_revision']))
         return body, result
 
     def test_mixed_sources_keep_originals_provenance_and_draft_review_after_restart(self):
@@ -177,7 +180,33 @@ class BulkImportTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(found['review'], 'human_reviewed')
         self.assertEqual(found['record_id'], record['id'])
+        self.assertEqual((found['revision'], found['source_revision']),
+                         (reviewed['revision'], reviewed['source_revision']))
         self.assertEqual(self.dataset.workbench.query({})['total'], 1)
+
+    def test_confirmed_pairs_save_exact_sets_and_later_changes_conflict(self):
+        body, receipt = self.admit(self.row(text='Batch selected source'))
+        pair = dict(id=receipt['record_id'], revision=receipt['revision'],
+                    source_revision=receipt['source_revision'])
+        original = self.dataset.workbench.get(pair['id'])
+        status, saved = self.request('/api/workbench/selections', {'name': 'Imported batch', 'items': [pair]})
+        self.assertEqual(status, 201, saved)
+        self.assertEqual(saved['items'][0]['revision'], pair['revision'])
+        self.assertEqual(self.dataset.workbench.get(pair['id']), original)
+        reviewed = self.dataset.workbench.save(pair['id'], dict(pair, task='text_classification',
+            annotation={'label': 'Human target'}, review='human_reviewed', groups=original['groups']))
+        self.assertEqual(self.request('/api/workbench/selections', {'name': 'Stale batch', 'items': [pair]})[0], 409)
+        before = list(self.dataset.db.iterdump())
+        for _ in range(2):
+            status, current = self.request('/api/workbench/import-result/' + body['request_id'])
+            self.assertEqual(status, 200)
+            self.assertEqual(current['revision'], reviewed['revision'])
+            self.assertEqual(current['source_revision'], reviewed['source_revision'])
+        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        status, loaded = self.request('/api/workbench/selections/' + saved['id'])
+        self.assertEqual(status, 200)
+        self.assertEqual(loaded['members'][0]['status'], 'stale')
+        self.assertEqual(loaded['selection']['items'][0]['revision'], receipt['revision'])
 
     def test_storage_failure_is_fatal_and_atomic_not_a_bad_user_row(self):
         with self.dataset.db:

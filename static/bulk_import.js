@@ -1,12 +1,14 @@
 'use strict';
-// Sequential admission owns only this form/results; it never opens the editor
-// or changes selection. The source owners retain normalization and review.
+// Acquisition never changes selection. Only the explicit confirmed-import
+// action below adds revision pairs; source owners retain normalization/review.
 let bulkRunning = false, bulkStopped = false, bulkPending = null;
+const bulkConfirmed = new Map();
 function bulkControls() {
   for(const id of ['bulk-manifest','bulk-images','bulk-start'])$(id).disabled=bulkRunning;
   $('bulk-stop').disabled=!bulkRunning || bulkStopped;
   $('bulk-check').disabled=bulkRunning || !bulkPending;
   $('bulk-dismiss').disabled=bulkRunning || !bulkPending;
+  $('bulk-select').disabled=bulkRunning || !bulkConfirmed.size;
 }
 function bulkSummary(counts, state) {
   $('bulk-status').textContent=`${state}: ${counts.created} created, ${counts.rejected} rejected, ${counts.unknown} uncertain; ${counts.total-counts.attempted} not attempted. All new records start as drafts.`;
@@ -32,6 +34,16 @@ function bulkReceipt(value, pending) {
     && value.row_number===pending.row_number && value.row_sha256===pending.row_sha256
     && ['text','image'].includes(value.kind) && typeof value.name==='string';
 }
+function bulkConfirmedReceipt(value, proof) {
+  return bulkReceipt(value,proof) && typeof value.record_id==='string'
+    && !bulkConfirmed.has(value.record_id)
+    && value.kind===proof.kind && Number.isSafeInteger(value.revision) && value.revision>0
+    && Number.isSafeInteger(value.source_revision) && value.source_revision>0;
+}
+function bulkRemember(value) {
+  bulkConfirmed.set(value.record_id,{id:value.record_id,name:value.name,kind:value.kind,
+    revision:value.revision,source_revision:value.source_revision});
+}
 async function bulkHash(line) {
   const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(line));
   return [...new Uint8Array(hash)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
@@ -43,11 +55,23 @@ $('bulk-stop').addEventListener('click',()=>{
   bulkStopped=true;bulkControls();
   $('bulk-status').textContent='Stopping before the next admission. An in-flight row may still complete and remains in the collection.';
 });
+$('bulk-select').addEventListener('click',()=>{
+  if(bulkRunning || !bulkConfirmed.size)return;
+  const additions=[...bulkConfirmed.values()].filter(pair=>!selected.has(pair.id));
+  if(selected.size+additions.length>5000){
+    $('bulk-selection-status').textContent='Selection would exceed 5,000 records. Clear or reduce the current selection before adding this batch.';
+    return;
+  }
+  for(const pair of additions)selected.set(pair.id,{...pair});
+  selection(true);invalidateRelease();
+  $('bulk-selection-status').textContent=`Added ${additions.length} confirmed imports; ${bulkConfirmed.size-additions.length} already selected pairs retained. Save selected records as a new fixed set when ready. Review states are unchanged.`;
+  void bulkRefresh();
+});
 $('bulk-form').addEventListener('submit',async event=>{
   event.preventDefault();if(bulkRunning)return;
   if(bulkPending){notice('Check or dismiss the uncertain row before starting another batch.',true);return;}
   const manifest=$('bulk-manifest').files[0], files=[...$('bulk-images').files];
-  bulkRunning=true;bulkStopped=false;bulkControls();$('bulk-results').replaceChildren();
+  bulkRunning=true;bulkStopped=false;bulkConfirmed.clear();bulkControls();$('bulk-results').replaceChildren();$('bulk-selection-status').textContent='';
   const counts={created:0,rejected:0,unknown:0,attempted:0,total:0};
   let state='Complete';
   try{
@@ -69,7 +93,7 @@ $('bulk-form').addEventListener('submit',async event=>{
           if(matches.length!==1)throw Error(matches.length?'Image filename is ambiguous in the selected files.':'Referenced image was not selected.');
           body.image_name=matches[0].name;body.image=await readImportImage(matches[0]);
         }
-        proof={request_id:body.request_id,row_number:row.number,row_sha256:await bulkHash(row.line)};
+        proof={request_id:body.request_id,row_number:row.number,row_sha256:await bulkHash(row.line),kind:parsed.kind};
       }catch(error){counts.attempted++;counts.rejected++;bulkRow(row.number,'rejected',error.message);bulkSummary(counts,'Importing');continue;}
       if(bulkStopped){state='Stopped';break;}
       counts.attempted++;
@@ -85,7 +109,8 @@ $('bulk-form').addEventListener('submit',async event=>{
             bulkPending={...proof,counts,item};break;
           }
         }else{
-          if(!bulkReceipt(result,proof))throw Error('Invalid admission receipt.');
+          if(!bulkConfirmedReceipt(result,proof))throw Error('Invalid admission receipt.');
+          bulkRemember(result);
           counts.created++;bulkRow(row.number,'created',`${result.name} · ${result.record_id}`);
         }
       }catch(error){
@@ -107,8 +132,9 @@ $('bulk-check').addEventListener('click',async()=>{
     const response=await fetch('/api/workbench/import-result/'+pending.request_id);
     const result=await response.json();
     if(!response.ok)throw Error(result.error||'Result check failed.');
-    if(!result.found){$('bulk-status').textContent='No saved result is visible yet. This does not prove the in-flight row stopped. Inspect the collection before retrying.';return;}
-    if(!bulkReceipt(result,pending))throw Error('Saved result does not match the pending row.');
+    if(result.found===false){$('bulk-status').textContent='No saved result is visible yet. This does not prove the in-flight row stopped. Inspect the collection before retrying.';return;}
+    if(result.found!==true || !bulkConfirmedReceipt(result,pending))throw Error('Saved result does not match the pending row.');
+    bulkRemember(result);
     pending.item.textContent=`Row ${pending.row_number} · created (saved result confirmed): ${result.name} · ${result.record_id}`;
     pending.counts.unknown--;pending.counts.created++;bulkSummary(pending.counts,'Paused; saved result confirmed');bulkPending=null;
   }catch(error){notice(error.message,true);}

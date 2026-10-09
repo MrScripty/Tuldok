@@ -8,6 +8,7 @@ function pumasTypedSettings(prefix) {
   return get('protocol')?.value==='pumas_typed_v1'?{protocol:'pumas_typed_v1',profile:get('profile').value||null}:{};
 }
 function pumasTypedRender(prefix) {
+  if(typeof pumasModelSelectionInvalidate==='function')pumasModelSelectionInvalidate(prefix);
   const seed=document.getElementById(prefix+'-seed');
   if(seed && prefix!=='generation')seed.disabled=!!pumasTypedSettings(prefix).protocol;
   const catalog=document.getElementById(prefix+(prefix==='generation'?'-refresh':'-models'));

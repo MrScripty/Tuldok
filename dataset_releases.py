@@ -235,7 +235,12 @@ class Releases:
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
                 if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
-                validate_annotation(row['task'], row['annotation'], row)
+                normalized = validate_annotation(row['task'], row['annotation'], row)
+                if row['task'] == 'sequence_transport' and 'temporal_labels' in row['annotation']:
+                    from sequence_temporal_labels import verify_source
+                    if encode(normalized) != encode(row['annotation']):
+                        raise WorkbenchError('Temporal labels are not canonical stored targets.')
+                    verify_source(workbench, row)
             except WorkbenchError as error:
                 block(error, row['id'])
             try:
@@ -284,7 +289,7 @@ class Releases:
             if any(row['kind'] == 'mesh' for row in rows):
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
             if any(row['kind'] == 'sequence' for row in rows):
-                preview['warnings'].append('Sequence assets are complete raw run.json/frames.jsonl ZIPs. MAC fields and accepted intervals stay intact; transport-only data has no qualified training consumer.')
+                preview['warnings'].append('Sequence assets are complete raw run.json/frames.jsonl ZIPs. Read sequence-only releases with native_sequence_dataset.py: separate native MAC arrays/time and human coverage. This transport-only data does not qualify a trainer, physical truth or independent train/evaluation families.')
             preview['warnings'].append('Canonical export projects detection to COCO; other tasks remain typed JSONL records, not one interchangeable training format.')
             if any(row['task'] == 'image_caption' for row in rows):
                 preview['warnings'].append('Canonical captions remain manifest/JSONL records. Choose image-caption format for the pinned train/val/test imagefolder consumer.')
@@ -650,6 +655,9 @@ class Releases:
                         'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end). Sequence bundles preserve original named staggered fields and accepted intervals; each whole trajectory is indivisible. Static mesh bundles preserve native xyz/topology and declared units/frame; each whole mesh is indivisible.',
                         'limitations': ['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],
                         'records': []}
+            sequence_only = all(row['kind'] == 'sequence' for row in rows)
+            if sequence_only:
+                manifest['protected_components'] = prepared['snapshots']
             vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
             categories = {label: i + 1 for i, label in enumerate(vocabulary)}
             coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': [{'id': i, 'name': label} for label, i in categories.items()]} for split in SPLITS}
@@ -664,6 +672,8 @@ class Releases:
                             filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip'}[row['kind']]
                             digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
+                            if sequence_only:
+                                record['export_group'] = prepared['groups'][prepared['roots'][row['id']]]
                             manifest['records'].append(record)
                             if row['task'] == 'image_detection':
                                 coco[split]['images'].append({'id': index, 'file_name': filename, 'width': row['width'], 'height': row['height']})

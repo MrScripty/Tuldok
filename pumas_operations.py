@@ -2,6 +2,7 @@
 import hashlib
 import http.client
 import json
+import math
 import re
 import socket
 import threading
@@ -44,10 +45,15 @@ def strict_json(raw):
         return result
     def constant(_):
         raise ValueError('Nonfinite JSON number.')
+    def finite_float(number):
+        value = float(number)
+        if not math.isfinite(value):
+            raise ValueError('Nonfinite JSON number.')
+        return value
     try:
         if isinstance(raw, (bytes, bytearray)):
             raw = raw.decode('utf-8')
-        return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+        return json.loads(raw, object_pairs_hook=pairs, parse_constant=constant, parse_float=finite_float)
     except (ValueError, UnicodeError, RecursionError):
         raise ValueError('Invalid typed Pumas JSON.') from None
 
@@ -133,7 +139,7 @@ def validate_manifest(raw):
     return {'capabilities': value, 'observed_sha256': hashlib.sha256(raw).hexdigest()}
 
 
-def capabilities(base, model, exact_profile=None):
+def capabilities(base, model, exact_profile=None, *, deadline=None):
     base = endpoint(base); model = alias(model); exact_profile = profile(exact_profile)
     parts = urlsplit(base)
     query = {'model': model}
@@ -141,7 +147,7 @@ def capabilities(base, model, exact_profile=None):
         query['profile'] = exact_profile
     try:
         observed = gateway_discovery.get_json(parts.hostname, parts.port, '/v1/capabilities?' + urlencode(query),
-            time.monotonic()+3, max_response=MAX_CAPABILITIES, decode=validate_manifest, require_complete=True)
+            min(time.monotonic()+3,deadline) if deadline is not None else time.monotonic()+3, max_response=MAX_CAPABILITIES, decode=validate_manifest, require_complete=True)
     except (ValueError, OSError, http.client.HTTPException) as error:
         raise OperationError('Selected-model capabilities unavailable: '+str(error)) from None
     manifest = observed['capabilities']
@@ -150,7 +156,7 @@ def capabilities(base, model, exact_profile=None):
     return observed
 
 
-def models(base):
+def models(base, *, deadline=None):
     parts = urlsplit(endpoint(base))
     def decode(raw):
         value = strict_json(raw)
@@ -168,7 +174,7 @@ def models(base):
                 names.append(name)
         return {'models': [{'id': name, 'name': name} for name in names],
                 'qualification': 'Serving aliases only. Inspect the selected model capabilities before admission.'}
-    return gateway_discovery.get_json(parts.hostname, parts.port, '/v1/models', time.monotonic()+3,
+    return gateway_discovery.get_json(parts.hostname, parts.port, '/v1/models', min(time.monotonic()+3,deadline) if deadline is not None else time.monotonic()+3,
         max_response=1024*1024, decode=decode, require_complete=True)
 
 

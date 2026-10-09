@@ -21,16 +21,16 @@ function sequenceBatchLabel(value) {
   return value;
 }
 function sequenceBatchPairs(files) {
-  if(!files.length || files.length>64)throw Error('Choose a folder containing 1–32 complete trajectory pairs (at most 64 files).');
+  if(!files.length || files.length>96)throw Error('Choose a folder containing 1–32 complete trajectories (at most 96 files).');
   const pairs=new Map();let root=null,total=0;
   for(const file of files) {
     const parts=(file.webkitRelativePath||'').split('/');
-    if(parts.length!==3 || !['run.json','frames.jsonl'].includes(parts[2]) || file.name!==parts[2])throw Error('Select only folder/trajectory/run.json and folder/trajectory/frames.jsonl pairs.');
+    if(parts.length!==3 || !['run.json','frames.jsonl','controls.json'].includes(parts[2]) || file.name!==parts[2])throw Error('Select only folder/trajectory/run.json, frames.jsonl and optional producer-v2 controls.json.');
     const batch_name=sequenceBatchLabel(parts[0]),item_name=sequenceBatchLabel(parts[1]);
     if(root!==null && root!==batch_name)throw Error('All selected pairs must share one folder.');
     root=batch_name;
     if(!Number.isSafeInteger(file.size) || file.size<=0)throw Error('Selected files must be nonempty with bounded sizes.');
-    if(file.size>(file.name==='run.json'?65536:2097152))throw Error('Each selected run.json must be at most 64 KiB and frames.jsonl at most 2 MiB.');
+    if(file.size>(file.name==='frames.jsonl'?2097152:65536))throw Error('Each run.json/controls.json must be at most 64 KiB and frames.jsonl at most 2 MiB.');
     total+=file.size;
     if(total>40*1024*1024)throw Error('Selected raw trajectory files exceed 40 MiB.');
     const pair=pairs.get(item_name)||{batch_name,item_name,files:{}};
@@ -48,9 +48,12 @@ async function sequenceBatchHash(encoded) {
   return [...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
 }
 function sequenceBatchReceipt(value,proof) {
-  return value && value.format==='tuldok_rheon_batch_v1' && value.kind==='sequence'
+  const hasControls=Object.hasOwn(proof,'controls_sha256');
+  return value && value.format===(hasControls?'tuldok_rheon_batch_v2':'tuldok_rheon_batch_v1') && value.kind==='sequence'
     && typeof value.record_id==='string' && /^[a-f0-9]{32}$/.test(value.record_id) && typeof value.name==='string'
-    && ['request_id','batch_name','item_name','item_index','run_sha256','frames_sha256'].every(key=>value[key]===proof[key]);
+    && ['request_id','batch_name','item_name','item_index','run_sha256','frames_sha256'].every(key=>value[key]===proof[key])
+    && (hasControls ? value.sequence_version===2 && value.controls_sha256===proof.controls_sha256
+      : !Object.hasOwn(value,'sequence_version') && !Object.hasOwn(value,'controls_sha256'));
 }
 async function sequenceBatchRefresh(epoch) {
   if(epoch!==sequenceBatchEpoch)return;
@@ -94,10 +97,21 @@ $('sequence-batch-form').addEventListener('submit',async event=>{
         const frames=await sequenceFile(pair.files['frames.jsonl'],2097152,'frames.jsonl');
         if(epoch!==sequenceBatchEpoch)return;
         if(sequenceBatchStopped){state='Stopped';break;}
-        proof={request_id:crypto.randomUUID().replaceAll('-',''),batch_name:pair.batch_name,item_name:pair.item_name,item_index:offset+1,
-          run_sha256:await sequenceBatchHash(run),frames_sha256:await sequenceBatchHash(frames)};
+        const files={'run.json':run,'frames.jsonl':frames};
+        if(pair.files['controls.json']) {
+          files['controls.json']=await sequenceFile(pair.files['controls.json'],65536,'controls.json');
+          if(epoch!==sequenceBatchEpoch)return;
+          if(sequenceBatchStopped){state='Stopped';break;}
+        }
+        proof={request_id:crypto.randomUUID().replaceAll('-',''),batch_name:pair.batch_name,item_name:pair.item_name,item_index:offset+1};
+        for(const [name,value] of Object.entries(files)) {
+          const key={'run.json':'run_sha256','frames.jsonl':'frames_sha256','controls.json':'controls_sha256'}[name];
+          proof[key]=await sequenceBatchHash(value);
+          if(epoch!==sequenceBatchEpoch)return;
+          if(sequenceBatchStopped)break;
+        }
         body={request_id:proof.request_id,batch_name:proof.batch_name,item_name:proof.item_name,item_index:proof.item_index,
-          files:{'run.json':run,'frames.jsonl':frames},name:pair.item_name,groups:group?[group]:[],rights};
+          files,name:pair.item_name,groups:group?[group]:[],rights};
       } catch(error) {
         if(epoch!==sequenceBatchEpoch)return;
         if(sequenceBatchStopped){state='Stopped';break;}

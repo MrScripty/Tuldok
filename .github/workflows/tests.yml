@@ -33,12 +33,22 @@ jobs:
       - run: node --check static/native_text_import.js
       - run: node --check static/caption-proposals.js
       - run: node --check static/text-classification-proposals.js
+      - run: node --check static/pumas-model-selection.js
+      - run: node tests/test_pumas_model_selection_controller.cjs
       - run: node --check static/pumas-typed.js
       - run: node tests/test_pumas_typed_controller.cjs
+      - run: node --check static/pumas-owner-reuse.js
+      - run: node tests/test_pumas_owner_reuse_controller.cjs
       - run: node --check static/pumas-gateways.js
       - run: node tests/test_pumas_gateways_controller.cjs
       - run: node --check static/meshes.js
       - run: node tests/test_meshes_controller.cjs
+      - run: node --check static/sequence-temporal-labels.js
+      - run: node tests/test_sequence_temporal_labels_controller.cjs
+      - run: node --check static/sequence-review.js
+      - run: node tests/test_sequence_review_controller.cjs
+      - run: node --check static/sequence-probe.js
+      - run: node tests/test_sequence_probe_controller.cjs
       - run: node --check static/sequences.js
       - run: node --check static/sequence-batch.js
       - run: node tests/test_sequence_batch_controller.cjs
@@ -152,6 +162,12 @@ jobs:
       - run: node tests/browser_classification_preferences_integration.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_pumas_model_selection.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_pumas_owner_reuse.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_pumas_gateways.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -164,10 +180,28 @@ jobs:
       - run: node tests/browser_sequence_batch.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequence_temporal_labels.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_trajectory_workflow.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/check_native_sequence_consumer.cjs
+      - run: node tests/browser_sequence_review.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences_actual.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_pumas_typed.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/test_sequence_import_controller.cjs
+      - run: node tests/browser_producer_v2_controls.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/test_sequence_batch_v2_controller.cjs
+      - run: node tests/browser_sequence_batch_v2.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4

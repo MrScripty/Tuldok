@@ -97,14 +97,20 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('curationQueryPending'),false,'Completed departed refresh retires diagnostics ownership');
   assert.equal(await evaluate('!!sequenceBatchPending'),false,'Known committed receipt is not uncertain because refresh departed');
   assert.equal((await api('records?kind=sequence')).total,5);
-  await evaluate('refresh()');
+  // Resume the simulated departed page before human editor actions. A hidden
+  // sequence editor deliberately refuses saves until its pageshow lifecycle.
+  await evaluate('window.dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));refresh()');
   // Existing human review, fixed selections and whole-trajectory export are reused.
   await evaluate('dirty=false');
   for(const row of [actualRow,syntheticRow]) {
     await evaluate('openRecord('+JSON.stringify(row.id)+')');
+    assert.equal(await evaluate('current.id'),row.id,'Settled editor opens the requested trajectory');
     await fill('sequence-note','Inspected native MAC fields, time index and transport-only scope.');
     await fill('record-review','human_reviewed');await evaluate('document.getElementById("editor").requestSubmit()');
-    await until(()=>evaluate('current.review==="human_reviewed"&&!dirty&&current.revision===2'));
+    // showRecord(saved) precedes the save action's awaited collection refresh.
+    // Wait for full settlement before opening the next record.
+    await until(()=>evaluate('current.id==='+JSON.stringify(row.id)+'&&current.review==="human_reviewed"&&!dirty&&current.revision===2&&!document.getElementById("editor").dataset.busy'));
+
   }
   await evaluate('document.getElementById("clear-selection").click()');await until(()=>evaluate('selected.size===0'));
   await evaluate('refresh()');
