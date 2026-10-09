@@ -352,7 +352,7 @@ function aiBody(){
   const provider=$('ai-provider').value;
   return {provider,model:$('ai-model').value.trim(),
     ...(provider==='codex'?{effort:$('ai-effort').value}:{}),
-    ...(provider==='llamacpp'?{server_url:$('ai-url').value.trim()}:{}),
+    ...(['llamacpp','pumas'].includes(provider)?{server_url:$('ai-url').value.trim()}:{}),
     ...(provider==='openrouter'?{api_key:$('ai-key').value}:{})};
 }
 function rememberAI(){
@@ -377,8 +377,9 @@ function renderModels(items,preferred=$('ai-model').value||aiPreferences[$('ai-p
 }
 function chooseProvider(){
   const provider=$('ai-provider').value,prefs=aiPreferences[provider]||{};
-  $('ai-url-row').hidden=provider!=='llamacpp';$('ai-key-row').hidden=provider!=='openrouter';$('ai-effort-row').hidden=provider!=='codex';
-  $('ai-url').value=prefs.server_url||'http://127.0.0.1:8080';
+  $('ai-url-row').hidden=!['llamacpp','pumas'].includes(provider);$('ai-pumas-row').hidden=provider!=='pumas';$('ai-key-row').hidden=provider!=='openrouter';$('ai-effort-row').hidden=provider!=='codex';
+  $('ai-url-row').firstChild.textContent=provider==='pumas'?'Vision endpoint URL':'Server URL';
+  $('ai-url').value=prefs.server_url||(provider==='pumas'?'':'http://127.0.0.1:8080');
   renderModels(provider==='codex'?aiConfig.models||[]:[],prefs.model||(provider==='codex'?aiConfig.default:''));
   if(prefs.effort&&[...$('ai-effort').options].some(option=>option.value===prefs.effort))$('ai-effort').value=prefs.effort;
   rememberAI();
@@ -388,7 +389,7 @@ async function initializeAI(){
   try{
     const stored=JSON.parse(localStorage.getItem('tuldok-ai')||'{}');
     aiPreferences=stored.providers||{};
-    if(['codex','openrouter','llamacpp'].includes(stored.provider))$('ai-provider').value=stored.provider;
+    if(['codex','openrouter','llamacpp','pumas'].includes(stored.provider))$('ai-provider').value=stored.provider;
   }catch{}
   $('ai-key').placeholder=aiConfig.openrouter_key_configured?'Configured on server':'API key or OPENROUTER_API_KEY on server';
   chooseProvider();
@@ -396,12 +397,32 @@ async function initializeAI(){
 $('ai-provider').onchange=chooseProvider;
 $('ai-model').onchange=()=>{renderEfforts();rememberAI();};
 $('ai-effort').onchange=rememberAI;$('ai-url').onchange=()=>{renderModels([]);rememberAI();};
-$('ai-refresh').onclick=()=>run(async()=>{
+async function refreshAIModels(){
   const result=await api('/api/ai/models',aiBody());
   renderModels(result.models);
   renderEfforts();rememberAI();
   if(!result.models.length)notice('No compatible models found. Check the provider and server URL, then refresh models.');
+}
+$('ai-refresh').onclick=()=>run(refreshAIModels);
+$('ai-scan').onclick=()=>run(async()=>{
+  $('ai-scan-status').textContent='Scanning local ports…';$('ai-gateway-row').hidden=true;
+  try{
+    const result=await api('/api/ai/scan',{});
+    $('ai-gateways').replaceChildren(new Option('Choose an endpoint',''),...result.endpoints.map(endpoint=>new Option(endpoint.server_url+' · '+endpoint.kind+' · '+endpoint.models+' models',endpoint.server_url)));
+    $('ai-gateway-row').hidden=!result.endpoints.length;
+    const current=result.endpoints.find(endpoint=>endpoint.server_url===$('ai-url').value.trim().replace(/\/v1\/?$|\/$/g,''));
+    const focused=result.endpoints.filter(endpoint=>endpoint.kind==='model server'&&endpoint.models===1);
+    const chosen=current||(focused.length===1?focused[0]:result.endpoints.length===1?result.endpoints[0]:null);
+    $('ai-scan-status').textContent=result.message||(result.endpoints.length+' vision endpoint'+(result.endpoints.length===1?' found':'s found')+(chosen?' — selecting '+chosen.server_url:'. Choose an endpoint below.'));
+    if(chosen){$('ai-gateways').value=chosen.server_url;await useAIGateway();}
+  }catch(error){$('ai-scan-status').textContent=error.message;throw error;}
 });
+async function useAIGateway(){
+  if(!$('ai-gateways').value)return;
+  $('ai-url').value=$('ai-gateways').value;$('ai-url').onchange();
+  await refreshAIModels();
+}
+$('ai-gateways').onchange=()=>run(useAIGateway);
 $('suggest').onclick=()=>run(async()=>{
   const imageId=selected.id,revision=selected.revision,previousStatus=$('save-status').textContent;
   $('suggest').textContent='Suggesting…';$('save-status').textContent='Finding corners…';
@@ -417,12 +438,14 @@ $('suggest').onclick=()=>run(async()=>{
 
 // Jobs live on the server, so labeling and page reloads do not interrupt a dataset.
 function rememberGeneration(){
-  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,size:$('generation-size').value,seed:$('generation-seed').value,prompt_url:$('prompt-url').value,prompt_model:$('prompt-model').value||promptPreferred,prompt:$('generation-prompt').value,count:$('generation-count').value,strategy:$('generation-strategy').value}));
+  localStorage.setItem('tuldok-generation',JSON.stringify({server_url:$('generation-url').value.trim(),model:$('generation-model').value||generationPreferred,width:$('generation-width').value,height:$('generation-height').value,seed:$('generation-seed').value,prompt_url:$('prompt-url').value,prompt_model:$('prompt-model').value||promptPreferred,...pumasTypedSettings('generation'),prompt:$('generation-prompt').value,count:$('generation-count').value,strategy:$('generation-strategy').value}));
 }
 try{
   const settings=JSON.parse(localStorage.getItem('tuldok-generation')||'{}');
   $('generation-url').value=settings.server_url||'';generationPreferred=settings.model||'';
-  if([...$('generation-size').options].some(option=>option.value===settings.size))$('generation-size').value=settings.size;
+  $('generation-protocol').value=settings.protocol==='pumas_typed_v1'?'pumas_typed_v1':'legacy';$('generation-profile').value=settings.profile||'';
+  pumasTypedRender('generation');
+  $('generation-width').value=settings.width??1280;$('generation-height').value=settings.height??720;
   $('generation-seed').value=settings.seed??'';$('prompt-url').value=settings.prompt_url||'';promptPreferred=settings.prompt_model||'';
   $('generation-prompt').value=settings.prompt||'';$('generation-count').value=settings.count||500;$('generation-strategy').value=settings.strategy||'varied';
 }catch{}
@@ -445,7 +468,8 @@ function renderPromptEntry(entry){
 function renderJobs(){
   $('generation-jobs').replaceChildren();
   const active=generationState.jobs.find(job=>['preparing','generating','stopping'].includes(job.status));
-  $('generation-status').textContent=active?jobText(active):(generationState.jobs.length?jobText(generationState.jobs.at(-1)):'');
+  const shown=active??(generationState.jobs.length?generationState.jobs.at(-1):null);
+  $('generation-status').textContent=shown?jobText(shown)+(shown.error?' · '+shown.error:''):'';
   for(const job of generationState.jobs){
     const row=document.createElement('div');row.className='generation-job';
     const text=document.createElement('p');text.textContent=jobText(job)+(job.error?' · '+job.error:'');row.append(text);
@@ -478,7 +502,7 @@ $('generation-url').onchange=()=>{
   generationCatalog=[];$('generation-model').replaceChildren(new Option('Refresh models to choose',''));if(!$('prompt-url').value.trim())clearPromptCatalog();rememberGeneration();controls();
 };
 $('prompt-url').onchange=()=>{clearPromptCatalog();rememberGeneration();controls();};
-for(const id of ['generation-size','generation-seed','generation-model','generation-count','generation-strategy','prompt-model'])$(id).onchange=()=>{rememberGeneration();controls();};
+for(const id of ['generation-width','generation-height','generation-seed','generation-model','generation-count','generation-strategy','generation-protocol','generation-profile','prompt-model'])$(id).onchange=()=>{rememberGeneration();controls();};
 $('generation-count').oninput=controls;
 $('generation-prompt').oninput=()=>{rememberGeneration();controls();};
 $('generation-scan').onclick=()=>run(async()=>{
@@ -506,11 +530,14 @@ async function useDiscoveredGateway(){
 }
 $('gateway-results').onchange=()=>run(useDiscoveredGateway);
 async function refreshImageModels(){
-  const result=await api('/api/generation/models',{server_url:$('generation-url').value.trim()});generationCatalog=result.models;
+  const held=JSON.stringify([$('generation-url').value,$('generation-protocol').value,$('generation-profile').value]),epoch=pumasTypedEpoch.generation;
+  const result=await api($('generation-protocol').value==='pumas_typed_v1'?'/api/generation/typed-models':'/api/generation/models',{server_url:$('generation-url').value.trim()});
+  if(epoch!==pumasTypedEpoch.generation||held!==JSON.stringify([$('generation-url').value,$('generation-protocol').value,$('generation-profile').value]))return;
+  generationCatalog=result.models;
   $('generation-model').replaceChildren(...result.models.map(item=>new Option(item.name,item.id)));
   if(result.models.some(item=>item.id===generationPreferred))$('generation-model').value=generationPreferred;
-  if(!result.models.length)$('generation-model').append(new Option('No ready image models',''));
-  $('generation-status').textContent=result.message||result.models.length+' image models ready';rememberGeneration();
+  if(!result.models.length)$('generation-model').append(new Option($('generation-protocol').value==='pumas_typed_v1'?'No serving aliases available':'No ready image models',''));
+  $('generation-status').textContent=result.qualification||result.message||result.models.length+' image models ready';rememberGeneration();
 }
 $('generation-refresh').onclick=()=>run(refreshImageModels);
 async function refreshPromptModels(){
@@ -524,8 +551,8 @@ $('prompt-refresh').onclick=()=>run(refreshPromptModels);
 $('generate').onclick=()=>run(async()=>{
   const seed=$('generation-seed').value;
   await api('/api/generation/jobs',{...captureMeta(),server_url:$('generation-url').value.trim(),model:$('generation-model').value,
-    prompt:$('generation-prompt').value,count:Number($('generation-count').value),strategy:$('generation-strategy').value,
-    prompt_url:$('prompt-url').value.trim(),prompt_model:$('prompt-model').value,size:$('generation-size').value,...(seed===''?{}:{seed:Number(seed)})});
+    ...pumasTypedSettings('generation'),prompt:$('generation-prompt').value,count:Number($('generation-count').value),strategy:$('generation-strategy').value,
+    prompt_url:$('prompt-url').value.trim(),prompt_model:$('prompt-model').value,width:Number($('generation-width').value),height:Number($('generation-height').value),...(seed===''?{}:{seed:Number(seed)})});
   rememberGeneration();await refreshGeneration();
 });
 $('generation-cancel').onclick=()=>run(async()=>{

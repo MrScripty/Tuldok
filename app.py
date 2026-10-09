@@ -4,11 +4,25 @@ import ai
 import ai_codex
 import ai_http
 import image_generation
+import pumas_operations
 import synthetic
 import gateway_discovery
 import workbench
 import dataset_recipes
 import dataset_releases
+import saved_selections
+import saved_searches
+import grounded_candidates
+import caption_proposals
+import text_classification_proposals
+import bulk_import
+import curation
+import caption_import
+import native_text_import
+import native_detection_import
+import rheon_sequences
+import sequence_batch_import
+import meshes
 import base64
 import hashlib
 import io
@@ -136,8 +150,19 @@ class Dataset:
         self._recover_deletions()
         self.workbench = workbench.Workbench(self)
         self.releases = dataset_releases.Releases(self.workbench)
+        self.selections = saved_selections.SavedSelections(self.workbench)
+        self.searches = saved_searches.SavedSearches(self.workbench)
+        self.caption_imports = caption_import.CaptionImports(self.workbench)
+        self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
+        self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
+        self.grounded = grounded_candidates.Proposals(self.workbench)
+        self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
+        self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
 
     def close(self):
+        self.text_classification_proposals.close()
+        self.caption_proposals.close()
+        self.grounded.close()
         self.generation_jobs.close()
         self.db.close()
 
@@ -152,7 +177,7 @@ class Dataset:
             for row in rows:
                 if row['id'] in provenance:
                     entry = provenance[row['id']]
-                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'requested_seed') if key in entry}
+                    row['generation'] = {key: entry[key] for key in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'width', 'height', 'requested_seed') if key in entry}
                 row['annotation'] = json.loads(row['annotation']) if row['annotation'] else None
                 if row['annotation'] is not None:
                     row['annotation'].setdefault('corner_reference', 'image')
@@ -177,7 +202,7 @@ class Dataset:
                             " AND id<>? AND split='unassigned'", (chosen, *args))
         return chosen
 
-    def add(self, body, generation=None):
+    def add(self, body, generation=None, *, enrollment=None):
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -217,6 +242,10 @@ class Dataset:
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
                         self.generation_jobs.record_output(sample_id, *generation)
+                    if enrollment is not None:
+                        # Imported Workbench source metadata shares acquisition's
+                        # commit and original-file cleanup on admission failure.
+                        self.workbench._enroll_import(sample_id, *enrollment)
             except Exception:
                 shutil.rmtree(folder)
                 raise
@@ -361,15 +390,49 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.list())
+                if path == '/api/workbench/searches':
+                    return self.reply(dataset.searches.list())
+                if path.startswith('/api/workbench/searches/'):
+                    return self.reply(dataset.searches.get(path.removeprefix('/api/workbench/searches/')))
+                if path.startswith('/api/workbench/selections/'):
+                    return self.reply(dataset.selections.load(path.removeprefix('/api/workbench/selections/')))
+                if path.startswith('/api/workbench/import-result/'):
+                    return self.reply(bulk_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/sequence-import-result/'):
+                    return self.reply(sequence_batch_import.find_result(dataset.workbench, path.rsplit('/', 1)[-1]))
+                if path == '/api/workbench/text-classification-proposals':
+                    return self.reply(dataset.text_classification_proposals.snapshot())
+                if path.startswith('/api/workbench/text-classification-proposals/'):
+                    return self.reply(dataset.text_classification_proposals.get(path.rsplit('/', 1)[-1]))
+                if path == '/api/workbench/caption-proposals':
+                    return self.reply(dataset.caption_proposals.snapshot())
+                if path.startswith('/api/workbench/caption-proposals/'):
+                    return self.reply(dataset.caption_proposals.get(path.rsplit('/', 1)[-1]))
+                if path == '/api/workbench/grounded/jobs':
+                    return self.reply(dataset.grounded.snapshot())
+                if path.startswith('/api/workbench/grounded/jobs/'):
+                    return self.reply(dataset.grounded.get(path.rsplit('/', 1)[-1]))
                 if path == '/api/workbench/records':
                     options = {key: value[-1] for key, value in parse_qs(urlsplit(self.path).query).items()}
                     return self.reply(dataset.workbench.query(options))
                 if path == '/api/workbench/recipes':
                     return self.reply(dataset_recipes.RECIPES)
                 if path.startswith('/api/workbench/records/'):
+                    if path.endswith('/preferences'):
+                        return self.reply(dataset.workbench.preferences.list(path.split('/')[-2]))
+                    if path.endswith('/responses'):
+                        return self.reply(dataset.workbench.responses(path.split('/')[-2]))
                     return self.reply(dataset.workbench.get(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/preference-history/'):
+                    return self.reply(dataset.workbench.preferences.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/response-history/'):
+                    return self.reply(dataset.workbench.response_history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/history/'):
                     return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/mesh-inspection/'):
+                    return self.reply(dataset.workbench.meshes.inspect(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/asset/'):
                     with dataset.lock:
                         record_id = path.rsplit('/', 1)[-1]
@@ -413,7 +476,7 @@ def make_handler(dataset):
                         self.end_headers()
                         shutil.copyfileobj(archive, self.wfile)
                     return
-                assets = {'/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css')}
+                assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
@@ -433,18 +496,85 @@ def make_handler(dataset):
                 if self.headers.get_content_type() != 'application/json':
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
-                if not 0 < length <= MAX_BODY:
+                path = urlsplit(self.path).path
+                limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
-                body = json.loads(self.rfile.read(length))
+                raw_body = self.rfile.read(length)
+                body = native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path == '/api/workbench/selections':
+                    return self.reply(dataset.selections.create(body), 201)
+                if path == '/api/workbench/searches':
+                    return self.reply(dataset.searches.create(body), 201)
+                if path.startswith('/api/workbench/searches/'):
+                    parts = path.removeprefix('/api/workbench/searches/').split('/')
+                    if len(parts) != 2:
+                        raise workbench.WorkbenchError('Invalid saved search route.')
+                    return self.reply(dataset.searches.mutate(parts[0], parts[1], body))
+                if path.startswith('/api/workbench/selections/'):
+                    parts = path.removeprefix('/api/workbench/selections/').split('/')
+                    if len(parts) != 2:
+                        raise workbench.WorkbenchError('Invalid saved selection route.')
+                    return self.reply(dataset.selections.mutate(parts[0], parts[1], body))
+                if path == '/api/workbench/text-classification-proposals':
+                    return self.reply(dataset.text_classification_proposals.start(body), 202)
+                if path == '/api/workbench/text-classification-proposals/cancel':
+                    return self.reply(dataset.text_classification_proposals.cancel(body))
+                if path.startswith('/api/workbench/text-classification-proposals/decide/'):
+                    return self.reply(dataset.text_classification_proposals.decide(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/caption-proposals':
+                    return self.reply(dataset.caption_proposals.start(body), 202)
+                if path == '/api/workbench/caption-proposals/cancel':
+                    return self.reply(dataset.caption_proposals.cancel(body))
+                if path.startswith('/api/workbench/caption-proposals/decide/'):
+                    return self.reply(dataset.caption_proposals.decide(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/grounded/jobs':
+                    return self.reply(dataset.grounded.start(body), 202)
+                if path == '/api/workbench/grounded/cancel':
+                    return self.reply(dataset.grounded.cancel(body.get('job_id')))
+                if path.startswith('/api/workbench/grounded/review/'):
+                    return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/mesh-import':
+                    return self.reply(meshes.admit(dataset.workbench, body), 201)
+                if path == '/api/workbench/sequence-import':
+                    return self.reply(rheon_sequences.admit(dataset.workbench, body), 201)
+                if path == '/api/workbench/sequence-import-item':
+                    return self.reply(sequence_batch_import.import_item(dataset.workbench, body), 201)
+                if path == '/api/workbench/curation':
+                    return self.reply(curation.inspect(dataset.workbench, body))
+                if path == '/api/workbench/import-row':
+                    return self.reply(bulk_import.import_row(dataset.workbench, body), 201)
+                if path.startswith('/api/workbench/rights/'):
+                    return self.reply(dataset.workbench.correct_rights_note(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/native-text-import/prepare':
+                    return self.reply(dataset.native_text_imports.prepare(body))
+                if path == '/api/workbench/native-text-import/row':
+                    return self.reply(dataset.native_text_imports.admit(body), 201)
+                if path == '/api/workbench/native-detection-import/prepare':
+                    return self.reply(dataset.native_detection_imports.prepare(body))
+                if path == '/api/workbench/native-detection-import/row':
+                    return self.reply(dataset.native_detection_imports.admit(body), 201)
+                if path == '/api/workbench/caption-import/prepare':
+                    return self.reply(dataset.caption_imports.prepare(body))
+                if path == '/api/workbench/caption-import/row':
+                    return self.reply(dataset.caption_imports.admit(body), 201)
                 if path.startswith('/api/workbench/records/'):
                     return self.reply(dataset.workbench.save(path.rsplit('/', 1)[-1], body))
+                if path == '/api/workbench/preferences':
+                    return self.reply(dataset.workbench.preferences.save(body))
+                if path == '/api/workbench/preferences/delete':
+                    return self.reply(dataset.workbench.preferences.delete(body))
+                if path == '/api/workbench/responses':
+                    return self.reply(dataset.workbench.save_response(body))
                 if path == '/api/workbench/generate':
                     return self.reply(dataset_recipes.generate(dataset.workbench, body), 201)
+                if path == '/api/workbench/releases/preview':
+                    return self.reply(dataset.releases.preview(body))
                 if path == '/api/workbench/releases':
                     return self.reply(dataset.releases.create(body), 201)
                 if path == '/api/generation/jobs':
@@ -454,11 +584,21 @@ def make_handler(dataset):
                 if path == '/api/generation/jobs/resume':
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
                 if path == '/api/generation/prompt-models':
-                    result = ai_http.models('llamacpp', body.get('server_url'))
-                    image_ids = {m['id'] for m in image_generation.models(body)['models']}
-                    return self.reply({'models': [m for m in result['models'] if m['id'] not in image_ids]})
+                    return self.reply(ai_http.text_models(body.get('server_url')))
+                if path == '/api/generation/typed-models':
+                    if set(body) != {'server_url'}: raise ValueError('Supply only the gateway URL.')
+                    return self.reply(pumas_operations.models(body['server_url']))
+                if path == '/api/generation/typed-capabilities':
+                    if set(body) != {'server_url', 'model', 'profile'}: raise ValueError('Supply the exact selected model and optional profile.')
+                    return self.reply(pumas_operations.capabilities(body['server_url'], body['model'], body['profile']))
+                if path == '/api/ai/scan':
+                    return self.reply(gateway_discovery.scan_labeling())
                 if path == '/api/generation/scan':
                     return self.reply(gateway_discovery.scan())
+                if path == '/api/generation/advertised-gateways':
+                    return self.reply(gateway_discovery.scan_advertised())
+                if path == '/api/generation/inspect-gateway':
+                    return self.reply(gateway_discovery.inspect_advertised(body.get('server_url')))
                 if path == '/api/generation/models':
                     return self.reply(image_generation.models(body))
                 if path == '/api/generation/cancel':

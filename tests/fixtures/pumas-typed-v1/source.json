@@ -1,0 +1,12 @@
+{
+  "producer_repository": "MrScripty/Pumas-Library",
+  "producer_pr": 54,
+  "producer_commit": "40c5cbfed67a6f0e862a1197bb5105363d67bdb1",
+  "streaming_pr": 53,
+  "streaming_commit": "f3b3c770ca531f013c8e1f8b1f958b9dc0babbfb",
+  "fixture_origin": "Actual non-test pinned gateway with authored controlled text backend and owned managed image worker. No model inference.",
+  "capabilities_sha256": {
+    "controlled-image-capabilities.json": "dc884c0a2ef44cdcb36a5cfb6b4658630ee625f9eeed4864aba9aa296844982b",
+    "controlled-text-capabilities.json": "f67f101ea23679cdc0062169b11fe8ab0769a87491bbb7f85fdbc1452c0af8c9"
+  }
+}

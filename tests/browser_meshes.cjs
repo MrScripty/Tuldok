@@ -1,0 +1,81 @@
+// Actual authored PLY files; real loopback HTTP and Chromium, JPEG85 output only.
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {spawn,spawnSync}=require('node:child_process');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..')),report=qaDirectory(root,'static-mesh'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-mesh-')),children=[];
+const errors=[],tracker=pageLoadTracker(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws;
+async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
+function launch(command,args,options={}){const child=spawn(command,args,options);children.push(child);return child;}
+(async()=>{
+  const fixture=path.join(root,'tests/fixtures/meshes');
+  const ply=fs.readFileSync(path.join(fixture,'tetrahedron.ply')),sidecar=fs.readFileSync(path.join(fixture,'tetrahedron.json'));
+  const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='',serverErrors='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
+  const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
+  const seed=await api('import',{kind:'text',text:'Independent editor stays intact.',name:'Existing editor',groups:['existing-source'],rights:'Authored'});
+  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const active=path.join(temporary,'browser','DevToolsActivePort'),debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');
+  assert.ok(target);ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let id=0;const pending=new Map();
+  const send=(method,params={})=>new Promise((resolve,reject)=>{const key=++id,timer=setTimeout(()=>{pending.delete(key);reject(Error('CDP timeout '+method));},20000);pending.set(key,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});ws.send(JSON.stringify({id:key,method,params}));});
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);if(!task)return;pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Page.javascriptDialogOpening')send('Page.handleJavaScriptDialog',{accept:true}).catch(error=>errors.push(String(error)));};
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const fill=(id,value)=>evaluate(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  const choose=(id,name,raw)=>evaluate(`(()=>{const raw=Uint8Array.from(atob(${JSON.stringify(raw.toString('base64'))}),c=>c.charCodeAt(0)),dt=new DataTransfer();dt.items.add(new File([raw],${JSON.stringify(name)}));document.getElementById(${JSON.stringify(id)}).files=dt.files;})()`);
+  await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
+  await evaluate('openRecord('+JSON.stringify(seed.id)+')');await fill('label','retain unsaved target');
+  await evaluate('document.querySelector(".record input").click();document.getElementById("mesh-import-panel").open=true');
+  await choose('mesh-ply','mesh.ply',ply);await choose('mesh-manifest','mesh.json',sidecar);await fill('mesh-name','Authored tetrahedron');
+  await evaluate(`(()=>{const original=window.fetch;window.meshPosts=0;window.holdMesh=true;window.fetch=async(...args)=>{if(String(args[0]).endsWith('/mesh-import')){window.meshPosts++;const response=await original(...args);if(window.holdMesh){window.holdMesh=false;await new Promise(resolve=>window.releaseMesh=resolve);}return response;}return original(...args);};})()`);
+  await evaluate('document.getElementById("mesh-import-form").requestSubmit()');await until(()=>evaluate('!!window.releaseMesh'));
+  await evaluate('document.getElementById("mesh-import-form").requestSubmit()');assert.equal(await evaluate('meshPosts'),1);
+  await evaluate('window.releaseMesh()');await until(()=>evaluate('!meshImportBusy'));
+  assert.match(await evaluate('document.getElementById("mesh-import-status").textContent'),/4 vertices, 4 triangles, unreviewed/);
+  assert.equal(await evaluate('current.id'),seed.id);assert.equal(await evaluate('dirty'),true);assert.equal(await evaluate('selected.size'),1);assert.equal(await evaluate('document.getElementById("label").value'),'retain unsaved target');
+  const row=(await api('records?kind=mesh')).items[0];assert.equal(row.review,'draft');assert.equal(row.annotation,null);
+  await choose('mesh-ply','mesh.ply',Buffer.from(ply.toString().replace('0 0 0','bad!!')));
+  await evaluate('document.getElementById("mesh-import-form").requestSubmit()');await until(()=>evaluate('!meshImportBusy'));
+  assert.match(await evaluate('document.getElementById("mesh-import-status").textContent'),/SHA256 mismatch/);
+  await choose('mesh-ply','wrong.ply',ply);await evaluate('document.getElementById("mesh-import-form").requestSubmit()');await until(()=>evaluate('!meshImportBusy'));
+  assert.match(await evaluate('document.getElementById("mesh-import-status").textContent'),/Choose mesh.ply/);assert.equal((await api('records?kind=mesh')).total,1);
+  await evaluate('dirty=false');await evaluate('openRecord('+JSON.stringify(row.id)+')');
+  await until(()=>evaluate('document.querySelectorAll("#mesh-projections polygon").length===12'));
+  assert.equal(await evaluate('document.getElementById("task").value'),'mesh_geometry');assert.match(await evaluate('document.getElementById("mesh-preview-status").textContent'),/right-handed, z up/);
+  assert.equal(await evaluate('document.querySelectorAll("#mesh-projections svg[role=img]").length'),3);assert.match(await evaluate('document.getElementById("mesh-metadata").textContent'),/fixture-world/);
+  // Completed-but-delayed inspection cannot replace another record or a later same-ID editor.
+  await evaluate(`(()=>{const original=window.fetch;window.holdInspection=true;window.fetch=async(...args)=>{const response=await original(...args);if(String(args[0]).includes('/mesh-inspection/')&&window.holdInspection){window.holdInspection=false;await new Promise(resolve=>window.releaseInspection=resolve);}return response;};})()`);
+  await evaluate('openRecord('+JSON.stringify(row.id)+')');await until(()=>evaluate('!!window.releaseInspection'));
+  await evaluate('openRecord('+JSON.stringify(seed.id)+')');assert.equal(await evaluate('document.getElementById("mesh-inspection").hidden'),true);
+  await evaluate('openRecord('+JSON.stringify(row.id)+')');await until(()=>evaluate('document.querySelectorAll("#mesh-projections polygon").length===12'));
+  await fill('mesh-note','Unsaved inspection note survives old preview');await evaluate('window.releaseInspection()');await pause(250);
+  assert.equal(await evaluate('document.getElementById("mesh-note").value'),'Unsaved inspection note survives old preview');assert.equal(await evaluate('dirty'),true);
+  assert.equal(await evaluate('document.querySelectorAll("#mesh-projections polygon").length'),12);
+  const draftPreview=await api('releases/preview',{items:[{id:row.id,revision:1,source_revision:1}],ratios:{train:100,validation:0,test:0},seed:4});assert.equal(draftPreview.eligible,false);
+  // Native keyboard activation submits the real review form.
+  await fill('record-review','human_reviewed');
+  await evaluate('document.querySelector("#editor button:not([type=button])").focus()');
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  try {await until(()=>evaluate('current.review==="human_reviewed"&&!dirty&&current.revision===2'));} catch(error) {console.error(await evaluate('({review:current.review,revision:current.revision,dirty,notice:document.getElementById("notice").textContent,valid:document.getElementById("editor").checkValidity(),focused:document.activeElement.id})'));throw error;}
+  assert.equal((await api('history/'+row.id)).length,2);
+  const asset=await fetch(base+'/api/workbench/asset/'+row.id);assert.equal(asset.headers.get('content-type'),'application/zip');
+  fs.writeFileSync(path.join(temporary,'download.zip'),Buffer.from(await asset.arrayBuffer()));
+  const check=spawnSync('python3',['-c',"import sys,zipfile;from pathlib import Path;p=Path(sys.argv[1]);f=Path(sys.argv[2]);z=zipfile.ZipFile(p/'download.zip');assert z.read('mesh.ply')==(f/'tetrahedron.ply').read_bytes();assert z.read('mesh.json')==(f/'tetrahedron.json').read_bytes()",temporary,fixture],{cwd:root,encoding:'utf8'});assert.equal(check.status,0,check.stderr);
+  await evaluate('document.getElementById("clear-selection").click()');await evaluate('document.querySelector('+JSON.stringify('input[aria-label="Select '+row.name+'"]')+').click()');
+  await fill('train',100);await fill('validation',0);await fill('test',0);await evaluate('document.getElementById("preview-release").click()');await until(()=>evaluate('!document.getElementById("freeze-release").disabled'));
+  assert.match(await evaluate('document.getElementById("release-preview").textContent'),/Static mesh assets/);
+  await evaluate('document.getElementById("release-form").requestSubmit()');await until(()=>evaluate('!!document.querySelector("#release-result a")'));assert.equal((await fetch(await evaluate('document.querySelector("#release-result a").href'))).status,200);
+  await send('Page.reload');await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));await evaluate('openRecord('+JSON.stringify(row.id)+')');await until(()=>evaluate('document.querySelectorAll("#mesh-projections polygon").length===12'));
+  assert.equal(await evaluate('current.review'),'human_reviewed');assert.equal(await evaluate('document.getElementById("mesh-note").value'),'Unsaved inspection note survives old preview');
+  await evaluate('document.getElementById("mesh-inspection").scrollIntoView()');fs.writeFileSync(path.join(report,'mesh-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});await evaluate('document.getElementById("mesh-inspection").scrollIntoView()');
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Mesh inspector fits narrow viewport');
+  assert.ok(await evaluate('[...document.querySelectorAll("#mesh-projections polygon")].every(p=>!p.getAttribute("points").includes("NaN")&&!p.getAttribute("points").includes("Infinity"))'));
+  fs.writeFileSync(path.join(report,'mesh-narrow.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
+  assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
+  console.log('Mesh Chromium: authored real PLY import/inspection/native projections, hash/name rejection, duplicate-submit fencing, dirty editor/selection and stale same-ID preview ownership, keyboard human review/history, exact raw download, reviewed whole-mesh release/reload/narrow JPEG85 passed.');
+})().catch(error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(250);for(const child of children)if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');fs.rmSync(temporary,{recursive:true,force:true});});

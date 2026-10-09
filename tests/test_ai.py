@@ -37,6 +37,15 @@ class AITests(unittest.TestCase):
         saved=self.data.save(self.sample['id'],dict(book_id='b',session_id='s',revision=1,annotation=response['annotation']))
         self.assertEqual(saved['annotation']['suggested_by']['provider'],'llamacpp')
 
+    def test_pumas_gateway_models_and_suggestion(self):
+        body=dict(self.body,provider='pumas')
+        catalog=ai.models(body)
+        self.assertIn('corners-test',[item['id'] for item in catalog['models']])
+        response=self.data.suggest(body)
+        self.assertEqual(response['annotation']['corners'],RESULT['corners'])
+        self.assertEqual(response['annotation']['suggested_by']['provider'],'pumas')
+        self.assertEqual(self.requests[-1][0],'/v1/chat/completions')
+
     def test_ai_corner_identity_follows_book_rotation(self):
         for start in range(4):
             with self.subTest(start=start):

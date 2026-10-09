@@ -1,0 +1,9 @@
+# PR12 stale-export test synchronization
+
+Parent reported push run 37547825617 failed in the rights browser suite while waiting for a refreshed eligible preview. The old synchronization predicate inspected release-form.dataset.busy, which the release submit handler never sets. It could pass while releaseBusy was true and the previous eligible proof was still present. Clicking disabled Preview then issued no request.
+
+The browser regression now holds the actual stale export HTTP response after it has returned. It proves HTTP 409 with the lineage freshness error, the true pending releaseBusy flag, the old token, the ineffective former predicate and the disabled click that issues no preview request. After releasing the response, it waits for releaseBusy to clear, the proof to be invalidated and the freshness error to render. It then requires exactly one new preview request and a newly returned eligible token different from the stale token before the successful ZIP download.
+
+The production-controller regression independently checks the same pending fence, invalidation and new-token export using deterministic response fixtures. Product behavior, freshness assertions, registered gates and timeouts are unchanged. This repair touches only these existing tests and this execution record; the accepted component histories and main remain unchanged.
+
+Focused controller and actual Chromium checks passed before commit. Full committed-source Python discovery, all registered controller/syntax checks and all fourteen real browser suites are required before publication. Exact source identity, logs and fresh screenshots are retained outside historical repository captures in /workspace/scratch/tuldok-retry/rights-sync-evidence.json and rights-sync-publication-handoff.md. Local passes do not establish hosted status; parent owns the successor exact-head hosted qualification.

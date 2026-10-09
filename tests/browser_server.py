@@ -1,4 +1,4 @@
-"""Browser fixture: all three providers run locally without credentials."""
+"""Browser fixture: all four providers run locally without credentials."""
 import os
 import sys
 import tempfile

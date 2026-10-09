@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
   pull_request:
 permissions:
   contents: read
@@ -19,16 +19,160 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests
       - run: node --check static/workbench.js
+      - run: node --check static/saved-selections.js
+      - run: node --check static/saved-searches.js
+      - run: node tests/test_saved_searches_controller.cjs
+      - run: node --check static/curation.js
+      - run: node --check static/bulk_import.js
+      - run: node --check static/caption_import.js
+      - run: node --check static/rights-note.js
+      - run: node --check static/preferences.js
+      - run: node --check static/instruction-responses.js
+      - run: node --check static/native_detection_import.js
+      - run: node tests/test_native_detection_import_controller.cjs
+      - run: node --check static/native_text_import.js
+      - run: node --check static/caption-proposals.js
+      - run: node --check static/text-classification-proposals.js
+      - run: node --check static/pumas-typed.js
+      - run: node tests/test_pumas_typed_controller.cjs
+      - run: node --check static/pumas-gateways.js
+      - run: node tests/test_pumas_gateways_controller.cjs
+      - run: node --check static/meshes.js
+      - run: node tests/test_meshes_controller.cjs
+      - run: node --check static/sequences.js
+      - run: node --check static/sequence-batch.js
+      - run: node tests/test_sequence_batch_controller.cjs
+      - run: node tests/test_curation_controller.cjs
+      - run: node tests/test_browser_page_load.cjs
+      - run: node tests/test_qa_artifacts.cjs
       - run: node tests/test_workbench_controller.cjs
+      - run: node tests/test_image_classification_export_controller.cjs
+      - run: node tests/test_text_corpus_export_controller.cjs
+      - run: node tests/test_saved_selections_controller.cjs
+      - run: node tests/test_saved_selection_intent.cjs
+      - run: node tests/test_bulk_import_controller.cjs
+      - run: node tests/test_caption_import_controller.cjs
+      - run: node tests/test_rights_note_controller.cjs
+      - run: node tests/test_preferences_controller.cjs
+      - run: node tests/test_instruction_responses_controller.cjs
+      - run: node tests/test_browser_startup.cjs
+      - run: node tests/test_native_text_import_controller.cjs
+      - run: node tests/test_combined_workbench_controller.cjs
+      - run: node tests/test_caption_proposals_controller.cjs
+      - run: node tests/test_text_classification_proposals_controller.cjs
       - run: node tests/browser_workbench.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_grounded.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_captions.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_text_corpus_export.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_image_classification_export.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_release_preview.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_saved_selections.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_saved_searches.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_saved_selection_intent.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_metadata_filters.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_bulk_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_dataset_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_curation.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_caption_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_caption_dataset_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_images.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_rights_note.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/test_rights_note_artifacts.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install -r tests/instruction-consumer-requirements.txt scikit-learn==1.7.2
+      - run: node tests/check_text_corpus_consumer.cjs
+        env:
+          TEXT_CORPUS_CONSUMER_PYTHON: python
+      - run: node tests/check_image_classification_consumer.cjs
+        env:
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_preferences.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_instruction_responses.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_native_detection_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_native_text_import.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_combined_workbench.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          INSTRUCTION_CONSUMER_PYTHON: python
+      - run: node tests/browser_caption_proposals.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_text_classification_proposals.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_classification_preferences_integration.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_pumas_gateways.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_meshes.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequences.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequence_batch.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_sequences_actual.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_pumas_typed.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: workbench-browser-screenshots
-          path: docs/plans/dataset-workflows/reports/workbench-*.png
+          name: workbench-qa-artifacts
+          path: build/qa/**
           if-no-files-found: ignore
-      - run: node tests/browser.cjs
-        env:
-          BROWSER: /usr/bin/google-chrome

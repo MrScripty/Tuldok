@@ -15,7 +15,10 @@ def start():
         def log_message(self,*args):pass
         def do_GET(self):
             requests.append((self.path,None,dict(self.headers)))
-            data={'data':[{'id':'corners-test','name':'Corner test','architecture':{'input_modalities':['image'],'output_modalities':['text']},'supported_parameters':['structured_outputs']},
+            if self.path == '/props':
+                data={'build_info':'llama.cpp fixture','modalities':{'vision':True}}
+            else:
+                data={'data':[{'id':'corners-test','name':'Corner test','architecture':{'input_modalities':['image'],'output_modalities':['text']},'supported_parameters':['structured_outputs']},
                           {'id':'text-only','architecture':{'input_modalities':['text'],'output_modalities':['text']},'supported_parameters':['structured_outputs']}]}
             encoded=json.dumps(data).encode();self.send_response(200);self.send_header('Content-Length',str(len(encoded)));self.end_headers();self.wfile.write(encoded)
         def do_POST(self):

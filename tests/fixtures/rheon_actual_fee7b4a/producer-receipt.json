@@ -1,0 +1,22 @@
+{
+  "basis": "actual producer execution, exactly one capped pilot; synthetic comparison remains source-derived synthetic",
+  "producer_repository": "MrScripty/Rheon",
+  "producer_commit": "fee7b4a139574f87b259796b1ba8698a41d31ac1",
+  "producer_git_tree": "7a8809b5609610337a40429f3540232aebb89125",
+  "source_dirty": false,
+  "frame_count": 9,
+  "run_sha256": "7c5fb70eb900c290e0680dce71b7f1ff278d817879e782bb072bc31fbbcf389e",
+  "frames_sha256": "1f0cb462f6d145cdaca62a11d180c1bbcb0da6f8a7dae5369faf0be8f2dcdd28",
+  "frames_bytes": 518951,
+  "executable_sha256": "e00e1bc6027fb309aca164a22933bd631eeda13c91e9a1e03d6e1562d0313734",
+  "source_hashes_verified": 35,
+  "actual_vs_synthetic_max_abs_by_field": {
+    "velocity_x": 0.0,
+    "velocity_y": 1.5256773708977045e-13,
+    "velocity_z": 1.3346835030410287e-13,
+    "tracer": 0.0,
+    "fraction": 2.0800028366352308e-13,
+    "pressure": 4.602043190971017e-10
+  },
+  "numerical_scope": "fixed all-fluid constant-density carrier plus represented-fraction donor transport; no training qualification"
+}
