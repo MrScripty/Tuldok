@@ -1,8 +1,8 @@
 # Pumas Image→Text consumer
 
-This opt-in caption path consumes the contract at Pumas Library combined PR68,
-source `9ce74bd0b6f5b1497175e42daf364dd72b4d1b29`:
-[Image→Text contract](https://github.com/MrScripty/Pumas-Library/blob/9ce74bd0b6f5b1497175e42daf364dd72b4d1b29/docs/contracts/image-to-text-v0.8.md).
+This opt-in caption path consumes the contract at Pumas Library merged PR68,
+source `36c2aab2c885b8416fd4e39cf8c37c510596d6e4`:
+[Image→Text contract](https://github.com/MrScripty/Pumas-Library/blob/36c2aab2c885b8416fd4e39cf8c37c510596d6e4/docs/contracts/image-to-text-v0.8.md).
 It is based on Tuldok main `d99e23d2b0d2783a7a9863232a7453cd9f2db7aa`.
 The legacy compatible caption path and the previous typed text/image operations
 remain available. Their existing producer receipt is not silently repinned.
@@ -84,8 +84,8 @@ all six exported schema SHA-256 identities are unchanged. `source.json` records
 the export commit and refreshed handler/controlled-test source hashes. The fixture
 gateway advertisement reads the same versioned source pin as its consumer
 acceptance evidence.
-This pin awaits the coordinated producer merge; its final merge identity will be
-reconciled before the consumer merges.
+This pin is the immutable merged Pumas main commit. Its source tree is identical
+to the reviewed producer that passed CI before the coordinated merge.
 The combined desktop contract and packaged application are provider integration
 gates. Real model/projector inference, semantic quality, managed native teardown
 and production audio qualification remain unclaimed. No models or runtimes are

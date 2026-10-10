@@ -1,8 +1,8 @@
 {
   "producer_repository": "MrScripty/Pumas-Library",
   "producer_pr": 68,
-  "producer_commit": "9ce74bd0b6f5b1497175e42daf364dd72b4d1b29",
-  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/9ce74bd0b6f5b1497175e42daf364dd72b4d1b29/docs/contracts/image-to-text-v0.8.md",
+  "producer_commit": "36c2aab2c885b8416fd4e39cf8c37c510596d6e4",
+  "contract_url": "https://github.com/MrScripty/Pumas-Library/blob/36c2aab2c885b8416fd4e39cf8c37c510596d6e4/docs/contracts/image-to-text-v0.8.md",
   "fixture_kind": "Source-derived controlled consumer fixture; not actual native DTO export or model inference",
   "inspected_source_sha256": {
     "types.rs": "875977948163c4256e60783d540337f117ec70edb1bb3636e7598e516587cca3",
@@ -10,7 +10,7 @@
     "projection.rs": "444c500edd7ca3ea478d37e68212f8da9325028b87a35f6cdedb3e0e8aaed7a7",
     "vision_tests.rs": "e2c175c8d1eab53227d1a91b0fca4621838081ec1d587325ff29312f93be41d6"
   },
-  "schema_export_status": "Six actual production Rust DTO schemas were regenerated at schema_export_commit. The reviewed producer retains identical DTO definitions and schema dependencies; all six SHA-256 identities are unchanged. Handler and controlled-test source hashes are refreshed. Final merge identity and packaged/native qualification remain pending.",
+  "schema_export_status": "Six actual production Rust DTO schemas were regenerated at schema_export_commit. The reviewed producer retains identical DTO definitions and schema dependencies; all six SHA-256 identities are unchanged. Handler and controlled-test source hashes are refreshed. The merged main source tree matches the reviewed producer exactly. Packaged/native qualification remains separate.",
   "inspected_source_native_blob_sha": {
     "types.rs": "f7d70f90770deb124dc17dde5212d88b058d9e0e",
     "model_operations.rs": "13d15ea4805cfc4df103951d974d76f8987d2964",

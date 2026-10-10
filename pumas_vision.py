@@ -17,7 +17,7 @@ import gateway_discovery
 import pumas_operations as pumas
 from workbench import encode
 
-SOURCE_COMMIT = '9ce74bd0b6f5b1497175e42daf364dd72b4d1b29'
+SOURCE_COMMIT = '36c2aab2c885b8416fd4e39cf8c37c510596d6e4'
 SCHEMA = 'pumas.model-operations.image-to-text'
 MAX_REQUEST = 32 * 1024 * 1024
 MAX_IMAGE = 8 * 1024 * 1024
