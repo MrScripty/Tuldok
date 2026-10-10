@@ -135,6 +135,7 @@ class VisionApplicationTests(unittest.TestCase):
         self.assertEqual(request['input']['messages'][1]['content'][1]['data_base64'],job['input_image_base64'])
         self.assertEqual(job['canonical_request_sha256'],hashlib.sha256(encode(request).encode()).hexdigest())
         self.assertEqual(job['producer_contract_source'],vision.SOURCE_COMMIT);self.assertIsNone(job['reported_model'])
+        self.assertEqual(job['build_observation']['advertisement']['build_info']['source_revision'],vision.SOURCE_COMMIT)
         self.assertEqual(job['provider_outcome'],'result_received')
         snapshot=self.data.caption_proposals.snapshot()['jobs'][0]
         self.assertNotIn('canonical_request',snapshot);self.assertNotIn('input_image_base64',snapshot)

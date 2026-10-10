@@ -1,4 +1,4 @@
-"""Source-derived PR65 wire fixture: no native Pumas session or model inference."""
+"""Source-derived combined Pumas wire fixture: no native Pumas session or model inference."""
 import copy
 import json
 import threading
@@ -26,7 +26,7 @@ def start():
                 advertisement = json.loads((FIXTURES.parent / 'pumas-http-pr51/advertisement.json').read_bytes())
                 advertisement['endpoint'] = 'http://127.0.0.1:' + str(self.server.server_port)
                 build = advertisement['build_info']
-                build['source_revision'] = 'f83770d571b3f45707bd4def2a5d6f8619bb1dcf'
+                build['source_revision'] = json.loads((FIXTURES / 'source.json').read_bytes())['producer_commit']
                 if state['mode'] != 'missing_build':
                     build['schemas'].append({'name':'pumas.model-operations.image-to-text','version':1})
                 return self.reply(advertisement)
