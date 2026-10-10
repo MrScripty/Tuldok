@@ -17,7 +17,7 @@ function pumasTypedRender(prefix) {
   pumasTypedEpoch[prefix]=(pumasTypedEpoch[prefix]||0)+1;
 }
 window.addEventListener('DOMContentLoaded',()=>{
-  for(const prefix of ['text-classification-proposal','grounded','generation']) {
+  for(const prefix of ['text-classification-proposal','grounded','generation','caption-proposal']) {
     const get=name=>document.getElementById(prefix+'-'+name);
     if(!get('protocol'))continue;
     pumasTypedRender(prefix);

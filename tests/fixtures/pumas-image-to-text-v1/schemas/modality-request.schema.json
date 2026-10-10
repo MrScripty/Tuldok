@@ -1,0 +1,496 @@
+{
+  "$defs": {
+    "AudioEncoding": {
+      "enum": [
+        "pcm_s16le",
+        "pcm_f32le"
+      ],
+      "type": "string"
+    },
+    "AudioLanguage": {
+      "description": "The existing private speech owner's closed language vocabulary.",
+      "enum": [
+        "en",
+        "de",
+        "fr",
+        "it",
+        "es",
+        "pt",
+        "el",
+        "nl",
+        "pl",
+        "vi",
+        "zh",
+        "ar",
+        "ja",
+        "ko"
+      ],
+      "type": "string"
+    },
+    "Content": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/Part"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "ImageEncoding": {
+      "enum": [
+        "png",
+        "jpeg"
+      ],
+      "type": "string"
+    },
+    "Input": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "text",
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "text_batch",
+              "type": "string"
+            },
+            "texts": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "kind",
+            "texts"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "messages",
+              "type": "string"
+            },
+            "messages": {
+              "items": {
+                "$ref": "#/$defs/ModalityMessage"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "kind",
+            "messages"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "data_base64": {
+              "type": "string"
+            },
+            "encoding": {
+              "$ref": "#/$defs/ImageEncoding"
+            },
+            "kind": {
+              "const": "image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "encoding",
+            "data_base64"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "channels": {
+              "format": "uint16",
+              "maximum": 65535,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "data_base64": {
+              "type": "string"
+            },
+            "encoding": {
+              "$ref": "#/$defs/AudioEncoding"
+            },
+            "kind": {
+              "const": "audio",
+              "type": "string"
+            },
+            "sample_count": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "sample_rate_hz": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "encoding",
+            "sample_rate_hz",
+            "channels",
+            "sample_count",
+            "data_base64"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ModalityMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/Content"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "type": "object"
+    },
+    "OperationOptions": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "text_generation",
+              "type": "string"
+            },
+            "max_tokens": {
+              "default": null,
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "temperature": {
+              "default": null,
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "top_p": {
+              "default": null,
+              "format": "double",
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "dimensions": {
+              "default": null,
+              "format": "uint",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "kind": {
+              "const": "embeddings",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "height": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "kind": {
+              "const": "image_generation",
+              "type": "string"
+            },
+            "seed": {
+              "default": null,
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "width": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "width",
+            "height"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "audio",
+              "type": "string"
+            },
+            "language": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/AudioLanguage"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "max_output_tokens": {
+              "default": null,
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Output": {
+      "enum": [
+        "text",
+        "embeddings_float32",
+        "png_base64",
+        "labels",
+        "pcm_s16le",
+        "pcm_f32le"
+      ],
+      "type": "string"
+    },
+    "Part": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "text",
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "text"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "data_base64": {
+              "type": "string"
+            },
+            "encoding": {
+              "$ref": "#/$defs/ImageEncoding"
+            },
+            "kind": {
+              "const": "image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "encoding",
+            "data_base64"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "channels": {
+              "format": "uint16",
+              "maximum": 65535,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "data_base64": {
+              "type": "string"
+            },
+            "encoding": {
+              "$ref": "#/$defs/AudioEncoding"
+            },
+            "kind": {
+              "const": "audio",
+              "type": "string"
+            },
+            "sample_count": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "sample_rate_hz": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "encoding",
+            "sample_rate_hz",
+            "channels",
+            "sample_count",
+            "data_base64"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Role": {
+      "enum": [
+        "system",
+        "user",
+        "assistant"
+      ],
+      "type": "string"
+    },
+    "SemanticTask": {
+      "enum": [
+        "chat_generation",
+        "text_generation",
+        "text_embedding",
+        "text_to_image",
+        "speech_to_text",
+        "audio_classification",
+        "image_to_text"
+      ],
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "input": {
+      "$ref": "#/$defs/Input"
+    },
+    "model": {
+      "type": "string"
+    },
+    "options": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OperationOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "output": {
+      "$ref": "#/$defs/Output"
+    },
+    "profile": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "request_id": {
+      "type": "string"
+    },
+    "semantic_task": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SemanticTask"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "stream": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "contract_version",
+    "request_id",
+    "model",
+    "input",
+    "output"
+  ],
+  "title": "ModalityRequest",
+  "type": "object"
+}

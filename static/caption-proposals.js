@@ -6,7 +6,8 @@ const captionProposalRecoveryKey = 'tuldok.caption-proposal-recovery.v1';
 let captionProposalStorageError = '';
 function captionProposalIntent(body) {
   return {source_id:body.source_id,revision:body.revision,source_revision:body.source_revision,
-    server_url:body.server_url,model:body.model,instruction:body.instruction,seed:body.seed};
+    server_url:body.server_url,model:body.model,instruction:body.instruction,seed:body.seed,
+    ...(body.protocol ? {protocol:body.protocol,profile:body.profile} : {})};
 }
 // Match Python's strip/isspace set; JS trim differs for U+0085, U+001C–1F and FEFF.
 const captionProposalWhitespace = /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/u;
@@ -44,10 +45,12 @@ function captionProposalServerURL(value) {
 }
 function captionProposalRecoveryBody(body) {
   const fields=['source_id','revision','source_revision','server_url','model','instruction','seed','request_id'];
+  const typed=body?.protocol==='pumas_typed_v1';
+  if(typed)fields.push('protocol','profile');
   if(!body || typeof body!=='object' || Object.keys(body).length!==fields.length || fields.some(field=>!Object.hasOwn(body,field)) ||
      typeof body.request_id!=='string' || typeof body.source_id!=='string' || body.request_id.length!==32 || body.source_id.length!==32 || !/^[a-f0-9]{32}$/.test(body.request_id) || !/^[a-f0-9]{32}$/.test(body.source_id) ||
      !Number.isSafeInteger(body.revision) || body.revision<1 || !Number.isSafeInteger(body.source_revision) || body.source_revision<1 ||
-     !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295)
+     (typed ? body.seed!==null || (body.profile!==null && (typeof body.profile!=='string' || !/^[A-Za-z0-9_.-]{1,128}$/.test(body.profile))) : !Number.isInteger(body.seed) || body.seed<0 || body.seed>4294967295))
     throw Error('Invalid request identifiers, revisions or seed.');
   captionProposalServerURL(body.server_url);
   captionProposalText(body.model,'Model ID',200,true);
@@ -72,6 +75,9 @@ function captionProposalSyncRecovery(restoreForm=false) {
       $('caption-proposal-url').value=stored.server_url;
       $('caption-proposal-guidance').value=stored.instruction;
       $('caption-proposal-seed').value=stored.seed;
+      $('caption-proposal-protocol').value=stored.protocol||'legacy';
+      $('caption-proposal-profile').value=stored.profile||'';
+      if(typeof pumasTypedRender==='function')pumasTypedRender('caption-proposal');
       const option=document.createElement('option');option.value=stored.model;option.textContent=option.value+' (recovered request)';
       $('caption-proposal-model').replaceChildren(option);$('caption-proposal-model').value=option.value;
     }
@@ -144,7 +150,7 @@ function renderCaptionProposals() {
     section.append(captionProposalButton('Inspect request evidence',async()=>{
       const epoch=captionProposalEpoch,id=current?.id;const detail=await api('caption-proposals/'+job.id);
       if(epoch!==captionProposalEpoch||id!==current?.id||captionProposalPaused)return;
-      const display={...detail};delete display.input_image_base64;delete display.raw_response_base64;
+      const display={...detail};delete display.input_image_base64;delete display.raw_response_base64;delete display.canonical_request;
       const evidence=document.createElement('pre');evidence.textContent=JSON.stringify(display,null,2);section.append(evidence);
     }));
     $('caption-proposal-jobs').append(section);
@@ -201,14 +207,15 @@ async function decideCaptionProposal(job, decision) {
   await refreshCaptionProposals();
 }
 $('caption-proposal-url').addEventListener('input',()=>{++captionProposalModelEpoch;$('caption-proposal-model').replaceChildren();});
+for(const name of ['protocol','profile'])for(const event of ['input','change'])$('caption-proposal-'+name).addEventListener(event,()=>{++captionProposalModelEpoch;});
 action('caption-proposal-models',async()=>{
-  const epoch=++captionProposalModelEpoch,url=$('caption-proposal-url').value;
-  const result=await api('/api/generation/prompt-models',{server_url:url});
-  if(epoch!==captionProposalModelEpoch||url!==$('caption-proposal-url').value||captionProposalPaused)return;
+  const epoch=++captionProposalModelEpoch,url=$('caption-proposal-url').value,protocol=$('caption-proposal-protocol').value;
+  const result=await api(protocol==='pumas_typed_v1'?'/api/generation/typed-models':'/api/generation/prompt-models',{server_url:url});
+  if(epoch!==captionProposalModelEpoch||url!==$('caption-proposal-url').value||protocol!==$('caption-proposal-protocol').value||captionProposalPaused)return;
   $('caption-proposal-model').replaceChildren();for(const model of result.models) {
     const option=document.createElement('option');option.value=model.id;option.textContent=model.name;$('caption-proposal-model').append(option);
   }
-  captionProposalStatus('Listed non-image served models. Listing does not establish vision or JSON compatibility; incompatible requests fail without fallback.');
+  captionProposalStatus('Listed serving aliases. Listing does not establish vision or JSON compatibility; incompatible requests fail without fallback.');
 });
 $('caption-proposal-form').addEventListener('submit',async event=>{
   event.preventDefault();if(captionProposalBusy)return;
@@ -217,7 +224,8 @@ $('caption-proposal-form').addEventListener('submit',async event=>{
   if(current?.kind!=='image'||hasUnsavedEdits()||$('editor').dataset.busy) {captionProposalStatus('Select an image and save or discard edits before requesting a caption.');return;}
   const intent={source_id:current.id,revision:current.revision,source_revision:current.source_revision,
     server_url:$('caption-proposal-url').value,model:$('caption-proposal-model').value,
-    instruction:$('caption-proposal-guidance').value,seed:Number($('caption-proposal-seed').value)};
+    instruction:$('caption-proposal-guidance').value,seed:$('caption-proposal-protocol').value==='pumas_typed_v1'?null:Number($('caption-proposal-seed').value),
+    ...($('caption-proposal-protocol').value==='pumas_typed_v1'?{protocol:'pumas_typed_v1',profile:$('caption-proposal-profile').value||null}:{})};
   const previous=captionProposalPendingRequest;
   if(previous && JSON.stringify(captionProposalIntent(previous))!==JSON.stringify(intent)) {
     captionProposalStatus('An earlier request has an unknown acknowledgement. Refresh requests before changing its intent.');return;
