@@ -191,6 +191,43 @@ browser zoom-setting assertion or complete accessibility audit**. Native 200%
 zoom and maintainer visual acceptance remain part of final integration review.
 The independent reviewer also inspected desktop, tablet and narrow captures.
 
+## Published documentation images
+
+The delegated follow-up explicitly requested durable, directly reviewable
+documentation images on the UI branch. The six curated captures below are the
+narrow exception to the normal ignored-QA-output rule. The complete browser
+output stays in `build/qa/`; these published images are documentation, never
+test fixtures or inputs. They preserve the original JPEG85 bytes and visible
+fixture labels without cropping, resizing, recompression or relabelling.
+
+All six capture reviewed source **`f8e8ea4e7718bc139e36ffea4002f77c5187cf82`**
+with a clean working tree. Desktop images are 1440×900, narrow images 390×844;
+the complete set is 497,118 bytes. The
+[image manifest](../../../../images/workspaces-m1/manifest.json) records exact
+dimensions, hashes, source, capture command and fixture status. They show the
+M1 interface before PostgreSQL integration; no training ran.
+
+### Data
+
+![Data workspace showing authored fixtures, source context and capability states](../../../../images/workspaces-m1/data-1440.jpg)
+
+[Open desktop Data](../../../../images/workspaces-m1/data-1440.jpg) ·
+[Open narrow Data](../../../../images/workspaces-m1/data-390.jpg)
+
+### Pipeline
+
+![Editable Pipeline workspace labelled as a fixture with real execution unavailable](../../../../images/workspaces-m1/pipeline-1440.jpg)
+
+[Open desktop Pipeline](../../../../images/workspaces-m1/pipeline-1440.jpg) ·
+[Open narrow Pipeline](../../../../images/workspaces-m1/pipeline-390.jpg)
+
+### Runs
+
+![Runs workspace explicitly labelling authored metrics and predictions as fixtures with no training or real checkpoint](../../../../images/workspaces-m1/runs-1440.jpg)
+
+[Open desktop Runs](../../../../images/workspaces-m1/runs-1440.jpg) ·
+[Open narrow Runs](../../../../images/workspaces-m1/runs-390.jpg)
+
 ## Handoff and boundaries
 
 M1's runnable implementation, focused browser/contract gates, screenshots,

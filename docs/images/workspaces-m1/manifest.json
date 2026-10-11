@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "purpose": "User-requested durable documentation images, not test inputs or production execution evidence",
+  "source_commit": "f8e8ea4e7718bc139e36ffea4002f77c5187cf82",
+  "source_dirty": false,
+  "command": "node tests/browser_workspaces.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "source_receipt": "build/qa/workspaces/run-z0x61u/receipt.json",
+  "encoding": "Original JPEG quality 85 capture bytes; no cropping, resizing, relabelling or recompression",
+  "training": false,
+  "images": [
+    {
+      "file": "data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "bytes": 119388,
+      "sha256": "eb3480cc81fc76c426c5f40fc112eb5e1dd6136345a7d56fa7e497f1f60a7ec6",
+      "fixture": true
+    },
+    {
+      "file": "data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "bytes": 43260,
+      "sha256": "5ca6274d17b5c06fecdc039979c89b5fcd2dbe616e24f42304cf6f18e7a22c41",
+      "fixture": true
+    },
+    {
+      "file": "pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "bytes": 127877,
+      "sha256": "0e716e7e6b33dd5f1ab6935f8c22f8b0246c885726d09e7f06b90bcc07323713",
+      "fixture": true
+    },
+    {
+      "file": "pipeline-390.jpg",
+      "width": 390,
+      "height": 844,
+      "bytes": 51230,
+      "sha256": "d211ec785d3416747429f84f17d5b4e3b942fdddf99ee8f02c82530349c06046",
+      "fixture": true
+    },
+    {
+      "file": "runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "bytes": 110295,
+      "sha256": "b9a74b8137fe72cb7a173fd708e1267519df6e459e53503bf4fc02b698dd94a0",
+      "fixture": true
+    },
+    {
+      "file": "runs-390.jpg",
+      "width": 390,
+      "height": 844,
+      "bytes": 45068,
+      "sha256": "a377fd5f990085fcb28521378d4e0bdad1158be38f0b8837ecb6b1e13f762d2a",
+      "fixture": true
+    }
+  ]
+}
