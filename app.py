@@ -477,6 +477,18 @@ def make_handler(dataset):
                         shutil.copyfileobj(archive, self.wfile)
                     return
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                # M1 opt-in shell: static presentation only, no storage/run routes.
+                assets.update({
+                    '/workspaces': ('workspaces.html', 'text/html'),
+                    '/workspaces.css': ('workspaces.css', 'text/css'),
+                    '/workspaces.js': ('workspaces.js', 'text/javascript'),
+                    '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
+                    '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
+                    '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
+                    '/runs-view.js': ('runs-view.js', 'text/javascript'),
+                    '/workspaces-data.js': ('workspaces-data.js', 'text/javascript'),
+                    '/workspaces-data.css': ('workspaces-data.css', 'text/css'),
+                })
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
