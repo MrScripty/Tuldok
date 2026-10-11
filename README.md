@@ -39,6 +39,10 @@ Open http://127.0.0.1:8091. Change the port or data location with --port and --d
 
 ## Real image workflow in Workspaces
 
+[Real workflow screenshots](docs/images/workspaces-m2/README.md) show Data,
+Pipeline, active execution, results and correction, with exact source/run
+provenance and responsive/native zoom captures.
+
 The first real recipe uses reviewed `image_classification_v1` releases, a saved
 five-stage graph and a scratch TinyCNN on one CPU thread. It accepts at most
 128 images and eight classes; the optional training environment is separate

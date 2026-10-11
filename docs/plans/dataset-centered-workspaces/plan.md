@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M2 implementation on `feature/workspace-image-runs-20261011`, admitted from combined checkpoint `907da2f3df974802f167dd4ce1905159bf50126a` (all 93 lifecycle steps passed, no skips; focused M1 CI passed).
+**Current phase:** M2 qualification on `feature/workspace-image-runs-20261011`, admitted from combined checkpoint `907da2f3df974802f167dd4ce1905159bf50126a` (all 93 lifecycle steps passed, no skips; focused M1 CI passed).
 
-**Next slice:** Implement and qualify one complete real image-classification workflow using the [bounded S1 graph choice](reports/m2/graph-choice.md).
+**Next slice:** Finish exact-source lifecycle CI and independent review for the implemented real image workflow; see [M2 verification](reports/m2/verification.md).
 
 **Acceptance status:** `pending`
 
@@ -208,7 +208,7 @@ Every milestone delivers a runnable browser path before its backend expansion is
 
 **Status:** `Verifying`
 
-M1 source, screenshot and verification evidence: [implementation record](reports/m1/implementation.md) and [accepted independent review](reports/m1/independent-review.md). Focused CI passed on source `f8e8ea4`; maintainer/native-zoom and full integration consumer qualification remain pending. The fixture service and opt-in Data adapter are presentation boundaries; no storage migration or real run API is included.
+M1 source, screenshot and verification evidence: [implementation record](reports/m1/implementation.md) and [accepted independent review](reports/m1/independent-review.md). Focused CI passed on source `f8e8ea4`; the combined `907da2f` passed all 93 lifecycle steps. Native 200% zoom of all three current-catalog workspaces passed on clean M2 source `f725bd1`; screenshots remain available for maintainer review. The fixture service and opt-in Data adapter are presentation boundaries; no storage migration or real run API is included.
 
 ### Milestone MB: Qualify and migrate local metadata to PostgreSQL
 
@@ -234,7 +234,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Acceptance gate:** Browser imports/reviews a small two-class corpus with independent families and valid coverage, previews/fixes a split blocker, freezes/downloads a release, changes an actual trainer parameter in the graph, saves/reloads/submits, observes the real child, and opens metrics/checkpoint/logs/predictions. Correct one validation example through a result link and produce a distinct new release without changing old hashes. Inspect/reuse a test example in a separate negative scenario and verify its visible exposed/reused status cannot be presented as fresh holdout evidence. Repeat after application restart with outbound network disabled; verify duplicate submit, lost acknowledgement, graph edits during execution, late responses, worker failure, cancel/confirmed drain, interrupted training restart, artifact tamper and stale source/graph. Actual pinned ImageFolder and a scratch CPU epoch are required in the later implementation environment; fixture values cannot satisfy this. Capture real Data/Pipeline/Running/Results/correction states before acceptance. Replan if bounds, dependency footprint, consumer compatibility or chosen graph transport invalidate this small path.
 
-**Status:** `Implementing`
+**Status:** `Verifying`
 
 ### Milestone 3: Existing image/text breadth and reusable recipes
 
@@ -282,7 +282,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 ## Blockers
 
-- M1 source review and hosted focused CI passed; maintainer/native-zoom acceptance and the unavailable pinned full consumer environment remain integration gates. Local PostgreSQL migration/lifecycle acceptance remains a prerequisite to M2 persistence; the separate migration branch is not presumed accepted or integrated.
+- Original M1 full-consumer and MB prerequisite gates were satisfied by parent-admitted MB and the combined `907da2f` lifecycle run. Current M2 final CI is a separate open gate; no broader modality acceptance is inferred.
 - Standards Engine MCP is unavailable in this environment. The source-based template/validator/review evidence is reported precisely; do not claim an Engine route or certificate.
 - PR33 lifecycle CI is failing; any reuse needs a current resolved result or a separately diagnosed integration candidate. PR32 also currently reports lifecycle failure; its screenshots are preserved as branch work, not proof of this plan's future UI.
 - Pantograph embedding and production audio inference are unqualified for Tuldok. They block only their respective adapters, not M1 or local audio data work.

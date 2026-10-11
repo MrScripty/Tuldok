@@ -96,3 +96,11 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 - M2 workers now have disjoint implementation ownership: explicit PostgreSQL v1→v2 upgrade/backup compatibility; fixed graph/run supervision; closed scratch CPU trainer. Root owns routes, presentation, browser acceptance and shared evidence. Narrow storage write-set refinement is recorded in M2.
 - Bound first workflow: at most 128 authored/owned images, eight classes, 40 MiB frozen ZIP; TinyCNN on one CPU thread, 96px inputs, epochs1–5/batch1–16/learning rate1e-5–1e-2. Existing image export contract remains authoritative. No pretrained weights or network execution services.
 - This admission is not M2 acceptance. Immutable admission, actual execution/results, lifecycle/recovery, exposure/correction, offline/reopen, browser and independent review gates remain open.
+
+## 2026-10-11 — real M2 checkpoint and browser qualification
+
+- Pushed runnable `54fac0fa747f14df7494abd234d8f61326f37f7a`, then source successor `f725bd1806bfe5e27635eb817a403b602a14591a`. The integration and standalone M1 branches remain unchanged.
+- Dedicated storage, graph/run and trainer workers completed their owned boundaries. Root integrated routes/UI and fixed exact JSON artifact byte delivery; independent review additionally found and verified the damaged-run navigation repair.
+- All 507 Python tests passed locally without skips. Clean `f725bd1` passed 14 real-browser checks including actual CPU training, hashes, stale/lost-ack admission, loading/error/empty states, late responses, correction/new release, durable test exposure and restart. Three explicitly mocked browser recovery regressions also passed.
+- Published original JPEG85 screenshots and clean-source/hash manifest in `docs/images/workspaces-m2/`. Native Chromium 200% zoom is measured for all three current-catalog views, separately from 390/1024/1440px emulation. The original M1 browser gate passed 18 checks after post-scroll physical hit testing was tightened; prior failed checkbox assertion is retained in the verification report.
+- Focused CI38179432749 passed on `f725bd1`; complete hosted lifecycle qualification remains pending. The actual adopted plan validator passes; unavailable Engine MCP is not claimed. No main merge, deployment, personal-data migration or broader modality implementation.

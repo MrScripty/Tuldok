@@ -3,8 +3,38 @@
 The first real image workflow is implemented on
 `feature/workspace-image-runs-20261011`, admitted from the fully qualified
 combined PostgreSQL/M1 checkpoint `907da2f3df974802f167dd4ce1905159bf50126a`.
-This report records an implementation checkpoint; final exact-source browser,
-CI and independent review evidence remain required before M2 acceptance.
+Runnable checkpoint `54fac0fa747f14df7494abd234d8f61326f37f7a` is pushed.
+Its successor `f725bd1806bfe5e27635eb817a403b602a14591a` contains the final
+damaged-run navigation repair and expanded browser qualification. Final hosted
+lifecycle CI remains required before M2 acceptance.
+
+## Clean source browser evidence
+
+`f725bd1806bfe5e27635eb817a403b602a14591a` passed 14 real-browser checks with
+`dirty:false`, including real stale-validation rejection/recovery, deliberate
+loss of a committed submission response and explicit same-key reconciliation,
+delayed correction navigation, loading/error/empty states and restart.
+The [published screenshots](../../../../images/workspaces-m2/README.md) retain
+the original receipt and hashes. Desktop 1440px, intermediate 1024px, narrow
+390px and genuine native Chromium 200% zoom passed overflow checks. At native
+zoom, Data, Pipeline and Runs were reached by keyboard; device-pixel ratio
+doubled and CSS width halved after clearing device emulation.
+
+The separate `browser_workspace_recovery.cjs` uses explicitly mocked transport
+to reproduce exposed-run→new-run validation reset, prediction-fetch failure
+isolation and damaged-detail→healthy-run navigation. All three pass. This
+suite makes no backend or training execution claim.
+
+The original M1 browser gate passed all 18 checks after its physical click
+helper was tightened to wait for post-scroll paint and assert the target is
+unobscured. A preceding local attempt missed a checkbox immediately after
+closing an embedded dialog; no selection assertion was removed or weakened.
+Product behavior was unchanged by this harness repair.
+
+The actual adopted Coding-Standards plan validator passes. It caught a
+noncanonical `Implementing` milestone value in the earlier admission record;
+the current M2 status is the supported `Verifying` value. Engine MCP remains
+unavailable; no Engine certification is claimed.
 
 ## Candidate evidence
 

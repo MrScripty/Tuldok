@@ -138,8 +138,12 @@ function launch(command, args, options) {
   const text = (selector, frame = false) =>
     evaluate(`${element(selector, frame)}?.textContent`);
   async function click(selector, frame = false) {
+    await evaluate(`${element(selector, frame)}.scrollIntoView({block:'center'})`);
+    // Closing a dialog and scrolling an embedded owner can move its hit target
+    // at the next paint. Dispatch physical input only after that layout settles.
+    await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
     const box = await evaluate(
-      `(()=>{const el=${element(selector, frame)};if(!el)throw Error('Missing '+${JSON.stringify(selector)});el.scrollIntoView({block:'center'});const r=el.getBoundingClientRect(),f=${frame ? 'document.getElementById("catalog-frame").getBoundingClientRect()' : "{left:0,top:0}"};return {x:r.x+r.width/2+f.left,y:r.y+r.height/2+f.top};})()`,
+      `(()=>{const el=${element(selector, frame)};if(!el)throw Error('Missing '+${JSON.stringify(selector)});const r=el.getBoundingClientRect(),f=${frame ? 'document.getElementById("catalog-frame").getBoundingClientRect()' : "{left:0,top:0}"};const hit=${doc(frame)}.elementFromPoint(r.x+r.width/2,r.y+r.height/2);if(!el.contains(hit))throw Error('Click target obscured: '+${JSON.stringify(selector)});return {x:r.x+r.width/2+f.left,y:r.y+r.height/2+f.top};})()`,
     );
     await send("Input.dispatchMouseEvent", {
       type: "mousePressed",
