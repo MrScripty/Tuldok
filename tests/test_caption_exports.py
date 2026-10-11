@@ -448,8 +448,8 @@ class CaptionReleaseTests(unittest.TestCase):
         self.assertEqual(groups[first['id']], groups[second['id']])
         self.assertEqual(len(set(groups.values())), 3)
         self.assert_component(manifest, groups[first['id']], [rows[0], rows[1], retained])
-        with self.dataset.db:
-            self.dataset.db.execute('DELETE FROM workbench_deleted_sources WHERE id=?', (bridge['id'],))
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('DELETE FROM workbench_deleted_sources WHERE id=%s', (bridge['id'],))
         with self.assertRaises(WorkbenchError):
             self.release(rows)
 

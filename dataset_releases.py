@@ -166,13 +166,8 @@ class Releases:
     def preview(self, body):
         """Inspect the exact selection without persisting even lazy image enrollment."""
         workbench = self.workbench
-        with workbench.lock:
-            workbench.db.execute('SAVEPOINT release_preview')
-            try:
-                return self._prepare(body)['preview']
-            finally:
-                workbench.db.execute('ROLLBACK TO release_preview')
-                workbench.db.execute('RELEASE release_preview')
+        with workbench.lock, workbench.db.transaction(force_rollback=True):
+            return self._prepare(body)['preview']
 
     def _prepare(self, body):
         """Shared validation/allocation authority for preview and final export.
@@ -369,7 +364,7 @@ class Releases:
             return {'preview': preview}
 
     def _create_corpus(self, body):
-        with self.workbench.lock, self.workbench.db:
+        with self.workbench.lock, self.workbench.db.transaction():
             prepared = self._checked(body)
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:
@@ -589,7 +584,7 @@ class Releases:
 
     def _create_responses(self, body):
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:
@@ -623,6 +618,12 @@ class Releases:
                     'split_report': preview['split_report']}
 
     def create(self, body):
+        with self.workbench.lock:
+            if self.workbench.db.in_transaction:
+                raise WorkbenchError('Freeze releases outside an enclosing metadata transaction.')
+            return self._create(body)
+
+    def _create(self, body):
         format_name = body.get('format', 'canonical_v1')
         if format_name == corpus_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
@@ -641,7 +642,7 @@ class Releases:
         if format_name == CAPTION_FORMAT:
             return self._create_captions(body)
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             rows = prepared['rows']
             assignments = prepared['preview']['assignments']
@@ -691,7 +692,7 @@ class Releases:
     def _create_captions(self, body):
         """Freeze only reviewed captions into the pinned imagefolder contract."""
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             rows = prepared['rows']
             assignments = prepared['preview']['assignments']
@@ -741,7 +742,7 @@ class Releases:
     def _create_classification(self, body):
         """Publish every reviewed selected image through a trainer-specific view."""
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             preview, rows = prepared['preview'], prepared['rows']
             vocabulary = preview['class_vocabulary']

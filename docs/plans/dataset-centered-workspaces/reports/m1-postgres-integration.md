@@ -1,5 +1,36 @@
 # M1 / PostgreSQL controlled integration preparation
 
+## Subsequent admission
+
+The later parent handoff explicitly qualified and admitted exact MB commit
+`9e94d69484218e64a3ee1bddcf4c61d8aa93df16`: hosted run38175261609 passed all
+93 steps with no skips, including 32 browser workflows, typed-Pumas and consumer
+gates; the clean local TCP run passed 458 tests. The pending-worker condition in
+the historical preparation below is satisfied. Controlled integration now
+proceeds on this branch, followed by combined application qualification before
+one real M2 image-classification workflow. No personal-data migration, main
+merge or deployment is authorized.
+
+The actual merge retains all runtime owners and resolves only the three shared
+plan records. MB's historical I11 is integrated I12; the separate UI I11 stays
+distinct. Both existing lifecycle and M1 workflows register the integration
+branch, and the M1 job gains its own isolated PostgreSQL service. Combined
+qualification is pending; neither the previous UI nor MB run substitutes for it.
+
+Current combined launch requires the MB runbook setup with a **fresh catalog**:
+
+```sh
+python3 -m pip install -r requirements.txt
+python3 scripts/local_postgres.py init --directory /tmp/tuldok-integration-postgres
+eval "$(python3 scripts/local_postgres.py env --directory /tmp/tuldok-integration-postgres)"
+python3 app.py --port 8092 --data /tmp/tuldok-integration-catalog
+# Open http://127.0.0.1:8092/workspaces
+```
+
+The paths above must be newly selected disposable paths, not an existing SQLite
+catalog or initialized service. For reopen, use `start` and `env` rather than
+`init`. Normal development should choose a persistent owned service directory.
+
 ## Status and exact inputs
 
 **Preparation only; MB is not admitted or qualified here.** The delegated

@@ -1,8 +1,9 @@
 """Existing admission authority reused by the proposed structured bulk importer."""
+from postgres_helpers import drop_failure_trigger, install_failure_trigger
 import base64
 import hashlib
 import io
-import sqlite3
+import psycopg
 import tempfile
 import unittest
 from pathlib import Path
@@ -32,7 +33,7 @@ class RealImportFoundationTests(unittest.TestCase):
             self.assertEqual(raw, self.image)
             self.assertEqual(record['provenance']['source_sha256'], hashlib.sha256(raw).hexdigest())
         else:
-            self.assertEqual(self.dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=?', (record['id'],)).fetchone()[0], 'cafe\u0301\r\n')
+            self.assertEqual(self.dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=%s', (record['id'],)).fetchone()[0], 'cafe\u0301\r\n')
             self.assertEqual(record['text'], 'café\n')
 
     def test_import_cannot_grant_review_or_replace_verified_source_facts(self):
@@ -57,7 +58,7 @@ class RealImportFoundationTests(unittest.TestCase):
                                 self.assertEqual(raw, self.image)
                                 self.assertEqual(record['provenance']['source_sha256'], hashlib.sha256(raw).hexdigest())
                             else:
-                                self.assertEqual(dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=?', (record['id'],)).fetchone()[0], 'cafe\u0301\r\n')
+                                self.assertEqual(dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=%s', (record['id'],)).fetchone()[0], 'cafe\u0301\r\n')
                                 self.assertEqual(record['text'], 'café\n')
                         finally:
                             dataset.close()
@@ -79,33 +80,28 @@ class RealImportFoundationTests(unittest.TestCase):
         self.assertEqual(self.dataset.workbench.query({})['total'], 2)
 
     def test_image_enrollment_storage_failure_leaves_no_partial_row_or_asset(self):
-        # Exercise real SQLite rollback after original image acquisition, before
+        # Exercise real PostgreSQL rollback after original image acquisition, before
         # Workbench source metadata is admitted. This is a system failure, not
         # a bad user row that a future bulk loop may silently skip.
-        with self.dataset.db:
-            self.dataset.db.execute('''CREATE TRIGGER reject_import_metadata
-                BEFORE UPDATE OF groups_json ON workbench_records
-                BEGIN SELECT RAISE(ABORT, 'injected enrollment failure'); END''')
-        with self.assertRaisesRegex(sqlite3.IntegrityError, 'injected enrollment failure'):
+        with self.dataset.db.transaction():
+            install_failure_trigger(self.dataset.db, 'workbench_records', 'reject_import_metadata', 'injected enrollment failure', event='UPDATE OF groups_json')
+        with self.assertRaisesRegex(psycopg.IntegrityError, 'injected enrollment failure'):
             self.dataset.workbench.import_asset(self.payload('image'))
         self.assertEqual(self.dataset.rows(), [])
         self.assertEqual(self.dataset.db.execute('SELECT COUNT(*) FROM workbench_records').fetchone()[0], 0)
         self.assertEqual(self.dataset.db.execute('SELECT COUNT(*) FROM workbench_history').fetchone()[0], 0)
         self.assertEqual(list((Path(self.temp.name) / 'images').iterdir()), [])
-        with self.dataset.db:
-            self.dataset.db.execute('DROP TRIGGER reject_import_metadata')
+        with self.dataset.db.transaction():
+            drop_failure_trigger(self.dataset.db, 'workbench_records', 'reject_import_metadata')
         admitted = self.dataset.workbench.import_asset(self.payload('image'))
         self.assertEqual(admitted['review'], 'draft')
         self.assertEqual(admitted['groups'], ['owned-source'])
         self.assert_source(admitted, 'image')
 
     def test_image_enrollment_history_failure_rolls_back_source_metadata_and_files(self):
-        with self.dataset.db:
-            self.dataset.db.execute('''CREATE TRIGGER reject_import_history
-                BEFORE INSERT ON workbench_history
-                WHEN NEW.snapshot LIKE '%Authored fixture%'
-                BEGIN SELECT RAISE(ABORT, 'injected initial history failure'); END''')
-        with self.assertRaisesRegex(sqlite3.IntegrityError, 'injected initial history failure'):
+        with self.dataset.db.transaction():
+            install_failure_trigger(self.dataset.db, 'workbench_history', 'reject_import_history', 'injected initial history failure', condition="NEW.snapshot LIKE '%Authored fixture%'")
+        with self.assertRaisesRegex(psycopg.IntegrityError, 'injected initial history failure'):
             self.dataset.workbench.import_asset(self.payload('image'))
         self.assertEqual(self.dataset.rows(), [])
         self.assertEqual(self.dataset.db.execute('SELECT COUNT(*) FROM workbench_records').fetchone()[0], 0)

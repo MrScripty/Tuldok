@@ -3,6 +3,7 @@ import base64
 import hashlib
 import io
 import json
+from postgres_helpers import database_snapshot
 from pathlib import Path
 import sys
 import tempfile
@@ -80,11 +81,11 @@ class DetectionStackTests(unittest.TestCase):
         fixed = self.w.import_asset(dict(kind='image',image=base64.b64encode(data.getvalue()).decode(),
             name='Existing validation family',groups=[self.link],rights='Retained existing fixture'),source_split='validation')
         preview = self.dataset.releases.preview(self.body);self.assertTrue(preview['eligible'],preview)
-        before = list(self.dataset.db.iterdump());source = self.w.get(fixed['id']);row = self.prepared()
+        before = database_snapshot(self.dataset.db);source = self.w.get(fixed['id']);row = self.prepared()
         with self.assertRaises(WorkbenchError) as error:
             self.dataset.native_detection_imports.admit(dict(token=row['token'],request_id=uuid.uuid4().hex))
         self.assertEqual(error.exception.status,409)
-        self.assertEqual(list(self.dataset.db.iterdump()),before)
+        self.assertEqual(database_snapshot(self.dataset.db),before)
         self.assertEqual(self.w.get(fixed['id']),source)
         self.assertEqual(self.dataset.releases.preview(self.body)['preview_token'],preview['preview_token'])
 

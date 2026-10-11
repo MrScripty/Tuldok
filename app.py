@@ -1,5 +1,6 @@
 """Tuldok: local image capture and corner-label dataset workspace."""
 import argparse
+import psycopg
 import ai
 import ai_codex
 import ai_http
@@ -29,7 +30,7 @@ import io
 import json
 import math
 import shutil
-import sqlite3
+from metadata import Metadata, StorageError, CommitOutcomeUnknown
 import tempfile
 import threading
 import uuid
@@ -129,35 +130,31 @@ def validate_annotation(body):
 
 
 class Dataset:
-    def __init__(self, path):
+    def __init__(self, path, *, dsn=None):
         self.path = Path(path).resolve()
         self.path.mkdir(parents=True, exist_ok=True)
         (self.path / 'images').mkdir(exist_ok=True)
-        self.lock = threading.RLock()
         self.ai_lock = threading.Lock()
         self.image_requests = image_generation.ImageRequests()
-        self.db = sqlite3.connect(self.path / 'dataset.sqlite3', check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.execute('PRAGMA journal_mode=WAL')
-        self.db.execute("""CREATE TABLE IF NOT EXISTS samples (
-            id TEXT PRIMARY KEY, sha256 TEXT UNIQUE NOT NULL, filename TEXT NOT NULL,
-            width INTEGER NOT NULL, height INTEGER NOT NULL,
-            book_id TEXT NOT NULL, session_id TEXT NOT NULL, split TEXT NOT NULL,
-            created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-            revision INTEGER NOT NULL DEFAULT 1, annotation TEXT)""")
-        self.db.commit()
-        self.generation_jobs = synthetic.Jobs(self)
-        self._recover_deletions()
-        self.workbench = workbench.Workbench(self)
-        self.releases = dataset_releases.Releases(self.workbench)
-        self.selections = saved_selections.SavedSelections(self.workbench)
-        self.searches = saved_searches.SavedSearches(self.workbench)
-        self.caption_imports = caption_import.CaptionImports(self.workbench)
-        self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
-        self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
-        self.grounded = grounded_candidates.Proposals(self.workbench)
-        self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
-        self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
+        self.db = Metadata(self.path, dsn=dsn)
+        self.lock = self.db.lock
+        try:
+            self.generation_jobs = synthetic.Jobs(self)
+            with self.lock:
+                self._recover_deletions()
+            self.workbench = workbench.Workbench(self)
+            self.releases = dataset_releases.Releases(self.workbench)
+            self.selections = saved_selections.SavedSelections(self.workbench)
+            self.searches = saved_searches.SavedSearches(self.workbench)
+            self.caption_imports = caption_import.CaptionImports(self.workbench)
+            self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
+            self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
+            self.grounded = grounded_candidates.Proposals(self.workbench)
+            self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
+            self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
+        except BaseException:
+            self.db.close()
+            raise
 
     def close(self):
         self.text_classification_proposals.close()
@@ -188,18 +185,18 @@ class Dataset:
 
     def resolve_split(self, meta, exclude=''):
         key = 'book_id' if meta['book_id'] else 'session_id'
-        where = key + '=?' + (" AND book_id=''" if key == 'session_id' else '')
+        where = key + '=%s' + (" AND book_id=''" if key == 'session_id' else '')
         args = (meta[key], exclude)
         assigned = {r[0] for r in self.db.execute(
-            'SELECT DISTINCT split FROM samples WHERE ' + where + " AND id<>? AND split<>'unassigned'", args)}
+            'SELECT DISTINCT split FROM samples WHERE ' + where + " AND id<>%s AND split<>'unassigned'", args)}
         desired = meta['split']
         if assigned and desired != 'unassigned' and desired not in assigned:
             raise Conflict('This book/session already belongs to ' + next(iter(assigned)) + '. Keep the same split.')
         chosen = next(iter(assigned), desired)
         # Existing unassigned members move together. Each change invalidates stale editors.
         if chosen != 'unassigned':
-            self.db.execute("UPDATE samples SET split=?, revision=revision+1 WHERE " + where +
-                            " AND id<>? AND split='unassigned'", (chosen, *args))
+            self.db.execute("UPDATE samples SET split=%s, revision=revision+1 WHERE " + where +
+                            " AND id<>%s AND split='unassigned'", (chosen, *args))
         return chosen
 
     def add(self, body, generation=None, *, enrollment=None):
@@ -225,7 +222,7 @@ class Dataset:
         name = name.replace('\\', '/').rsplit('/', 1)[-1][:200]
         sample_id, timestamp = uuid.uuid4().hex, now()
         with self.lock:
-            if self.db.execute('SELECT id FROM samples WHERE sha256=?', (digest,)).fetchone():
+            if self.db.execute('SELECT id FROM samples WHERE sha256=%s', (digest,)).fetchone():
                 raise Conflict('This exact image is already in the dataset.')
             folder = self.path / 'images' / sample_id
             folder.mkdir()
@@ -235,9 +232,10 @@ class Dataset:
                 thumbnail = image.copy()
                 thumbnail.thumbnail((160, 120))
                 thumbnail.save(folder / 'thumb.jpg', 'JPEG', quality=85)
-                with self.db:
+                with self.db.transaction():
+                    self.db.on_rollback(lambda: shutil.rmtree(folder, ignore_errors=True))
                     split = self.resolve_split(meta)
-                    self.db.execute('INSERT INTO samples VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                    self.db.execute('INSERT INTO samples VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                                     (sample_id, digest, name, image.width, image.height, meta['book_id'],
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
@@ -246,8 +244,10 @@ class Dataset:
                         # Imported Workbench source metadata shares acquisition's
                         # commit and original-file cleanup on admission failure.
                         self.workbench._enroll_import(sample_id, *enrollment)
+            except CommitOutcomeUnknown:
+                raise
             except Exception:
-                shutil.rmtree(folder)
+                shutil.rmtree(folder, ignore_errors=True)
                 raise
         return self.sample(sample_id)
 
@@ -258,20 +258,20 @@ class Dataset:
         for folder in staging.iterdir():
             if not folder.is_dir() or len(folder.name) != 32 or any(c not in '0123456789abcdef' for c in folder.name):
                 continue
-            if self.db.execute('SELECT 1 FROM samples WHERE id=?', (folder.name,)).fetchone():
+            if self.db.execute('SELECT 1 FROM samples WHERE id=%s', (folder.name,)).fetchone():
                 folder.rename(self.path / 'images' / folder.name)
             else:
                 shutil.rmtree(folder)
 
     def delete(self, sample_id, body):
         with self.lock:
-            row = self.db.execute('SELECT revision FROM samples WHERE id=?', (sample_id,)).fetchone()
+            row = self.db.execute('SELECT revision FROM samples WHERE id=%s', (sample_id,)).fetchone()
             if not row:
                 raise ValueError('Image not found. It may already have been deleted.')
             if type(body.get('revision')) is not int or body['revision'] != row['revision']:
                 raise Conflict('This image changed in another tab. Reload it before deleting.')
             # Enrol before moving bytes; retain lineage in the deletion transaction.
-            with self.db:
+            with self.db.transaction():
                 self.workbench._sync_images()
             folder = self.path / 'images' / sample_id
             staging = self.path / '.deleting-images'
@@ -280,38 +280,47 @@ class Dataset:
             # Rename first, then commit the row deletion. Startup restores staged
             # files if a crash occurred before commit, or removes them afterwards.
             folder.rename(staged)
+            cleanup_warning = []
+            def restore_files():
+                if staged.exists():
+                    staged.rename(folder)
+            def remove_files():
+                try:
+                    shutil.rmtree(staged)
+                except OSError:
+                    cleanup_warning.append('Image removed from the dataset. Remaining file cleanup will be retried when Tuldok restarts.')
             try:
-                with self.db:
+                with self.db.transaction():
+                    self.db.on_rollback(restore_files)
+                    self.db.on_commit(remove_files)
                     for record in self.db.execute('SELECT data FROM generation_entries').fetchall():
                         entry = json.loads(record[0])
                         if entry.get('sample_id') == sample_id:
                             entry.update(status='deleted', sample_id=None, deleted_at=now())
                             self.generation_jobs._entry(entry)
                     self.workbench.preserve_deleted_source(sample_id)
-                    self.db.execute('DELETE FROM samples WHERE id=?', (sample_id,))
-            except Exception:
-                staged.rename(folder)
+                    self.db.execute('DELETE FROM samples WHERE id=%s', (sample_id,))
+            except CommitOutcomeUnknown:
                 raise
-            warning = ''
-            try:
-                shutil.rmtree(staged)
-            except OSError:
-                warning = 'Image removed from the dataset. Remaining file cleanup will be retried when Tuldok restarts.'
-            return dict(self.generation_jobs.snapshot(), samples=self.rows(), deleted=sample_id, warning=warning)
+            except Exception:
+                restore_files()
+                raise
+            return dict(self.generation_jobs.snapshot(), samples=self.rows(), deleted=sample_id,
+                        warning=cleanup_warning[0] if cleanup_warning else '')
 
     def save(self, sample_id, body):
         annotation = validate_annotation(body.get('annotation', {}))
         meta = metadata(body)
         if annotation['book_present'] and not meta['book_id']:
             raise ValueError('Enter a book ID for images containing a book.')
-        with self.lock, self.db:
-            row = self.db.execute('SELECT revision FROM samples WHERE id=?', (sample_id,)).fetchone()
+        with self.lock, self.db.transaction():
+            row = self.db.execute('SELECT revision FROM samples WHERE id=%s', (sample_id,)).fetchone()
             if not row:
                 raise ValueError('Image not found.')
             if body.get('revision') != row['revision']:
                 raise Conflict('This image changed in another tab. Reload it before saving.')
             split = self.resolve_split(meta, sample_id)
-            self.db.execute('UPDATE samples SET annotation=?,book_id=?,session_id=?,split=?,updated_at=?,revision=revision+1 WHERE id=?',
+            self.db.execute('UPDATE samples SET annotation=%s,book_id=%s,session_id=%s,split=%s,updated_at=%s,revision=revision+1 WHERE id=%s',
                             (json.dumps(annotation), meta['book_id'], meta['session_id'], split, now(), sample_id))
         return self.sample(sample_id)
 
@@ -493,6 +502,10 @@ def make_handler(dataset):
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
                 return self.reply({'error': 'Not found.'}, 404)
+            except psycopg.Error:
+                return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
+            except CommitOutcomeUnknown as error:
+                return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
             except workbench.WorkbenchError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except (ValueError, OSError) as error:
@@ -628,6 +641,10 @@ def make_handler(dataset):
                 if path.startswith('/api/labels/'):
                     return self.reply(dataset.save(path.rsplit('/', 1)[-1], body))
                 return self.reply({'error': 'Not found.'}, 404)
+            except psycopg.Error:
+                return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
+            except CommitOutcomeUnknown as error:
+                return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
             except workbench.WorkbenchError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except Conflict as error:
@@ -645,7 +662,10 @@ def main():
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
     args = parser.parse_args()
-    dataset = Dataset(args.data)
+    try:
+        dataset = Dataset(args.data)
+    except StorageError as error:
+        parser.exit(2, str(error) + "\n")
     server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)
     try:

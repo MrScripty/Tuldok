@@ -144,7 +144,7 @@ class GroundedTests(unittest.TestCase):
         self.assertEqual(final['candidates'],[])
         self.data.close();self.data=Dataset(self.tmp.name)
         self.assertEqual(self.data.grounded.get(job['id'])['status'],'cancelled')
-        with self.data.lock,self.data.db:
+        with self.data.lock,self.data.db.transaction():
             final['status']='generating';self.data.grounded._save(final)
         self.data.close();self.data=Dataset(self.tmp.name)
         self.assertEqual(self.data.grounded.get(job['id'])['status'],'interrupted')

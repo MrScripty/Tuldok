@@ -1,4 +1,5 @@
-"""Saved criteria against actual SQLite/HTTP; fixed membership remains independent."""
+"""Saved criteria against actual PostgreSQL/HTTP; fixed membership remains independent."""
+from postgres_helpers import drop_failure_trigger, install_failure_trigger
 import json
 from pathlib import Path
 import sys
@@ -12,7 +13,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app import Dataset, make_handler
-from saved_searches import SavedSearches, criteria, parse_request
+from saved_searches import criteria, parse_request
+from metadata import StorageError
 from workbench import WorkbenchError
 
 
@@ -99,27 +101,27 @@ class SavedSearchTests(unittest.TestCase):
 
     def test_future_schema_trigger_and_malformed_storage_fail_closed(self):
         saved = self.save()
-        with self.dataset.db:
-            self.dataset.db.execute('UPDATE saved_searches SET criteria_json=? WHERE id=?', ('{"q":"x"}', saved['id']))
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('UPDATE saved_searches SET criteria_json=%s WHERE id=%s', ('{"q":"x"}', saved['id']))
         with self.assertRaises(WorkbenchError): self.s.get(saved['id'])
-        with self.dataset.db:
-            self.dataset.db.execute('CREATE TRIGGER unsupported_search AFTER UPDATE ON saved_searches BEGIN SELECT 1; END')
-        with self.assertRaises(WorkbenchError): SavedSearches(self.w)
+        with self.dataset.db.transaction():
+            install_failure_trigger(self.dataset.db, 'saved_searches', 'unsupported_search', 'unsupported', event='UPDATE')
+        with self.assertRaises(StorageError): self.dataset.db.validate_schema()
 
-        with self.dataset.db:
-            self.dataset.db.execute('DROP TRIGGER unsupported_search'); self.dataset.db.execute('ALTER TABLE saved_searches ADD COLUMN future_version INTEGER')
-        with self.assertRaises(WorkbenchError): SavedSearches(self.w)
+        with self.dataset.db.transaction():
+            drop_failure_trigger(self.dataset.db, 'saved_searches', 'unsupported_search'); self.dataset.db.execute('ALTER TABLE saved_searches ADD COLUMN future_version INTEGER')
+        with self.assertRaises(StorageError): self.dataset.db.validate_schema()
 
     def test_finite_json_and_unexpected_storage_constraints(self):
         for raw in [b'{"q":1e999}', b'{"q":NaN}', b'{"q":0,"q":1}', b'', b'\xff', b'['*16000+b']'*16000]:
             with self.assertRaises(WorkbenchError): parse_request(raw)
         saved = self.save()
-        with self.dataset.db:
+        with self.dataset.db.transaction():
             self.dataset.db.execute('CREATE UNIQUE INDEX unsupported_name ON saved_searches(name)')
-        with self.assertRaises(WorkbenchError): SavedSearches(self.w)
-        with self.dataset.db:
+        with self.assertRaises(StorageError): self.dataset.db.validate_schema()
+        with self.dataset.db.transaction():
             self.dataset.db.execute('DROP INDEX unsupported_name')
-            self.dataset.db.execute('UPDATE saved_searches SET created_at=? WHERE id=?', ('future', saved['id']))
+            self.dataset.db.execute('UPDATE saved_searches SET created_at=%s WHERE id=%s', ('future', saved['id']))
         with self.assertRaises(WorkbenchError): self.s.get(saved['id'])
 
     def test_actual_http_routes_and_strict_json(self):

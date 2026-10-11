@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 implemented on an isolated UI branch with passing focused browser/contracts, independent review and hosted M1 CI. Maintainer acceptance and combined integration qualification remain pending. MB has a separate worker and is not integrated here.
+**Current phase:** Controlled M1 + qualified MB integration at exact MB commit `9e94d69484218e64a3ee1bddcf4c61d8aa93df16`; combined application qualification precedes one real M2 image workflow.
 
-**Next slice:** Parent review of the retained M1 branch and screenshots, native 200% zoom check, and consumer qualification in the pinned integration environment. M2 remains gated on accepted MB qualification.
+**Next slice:** Qualify the combined existing application, resolve the bounded S1 graph choice, then implement one complete real image workflow under the newly delegated M2 authorization.
 
 **Acceptance status:** `pending`
 
@@ -13,6 +13,8 @@
 **Issues:** [issues.md](issues.md)
 
 This is the canonical plan for the requested new workspace experience. The original planning task authorized planning publication only. The later delegated user instruction admits M1 `start` on `ui/dataset-workspaces-m1-20261011`; the [M1 implementation record](reports/m1/implementation.md) binds that authorization and exact source. It does not authorize main merge, deployment, model acquisition or real M2 execution. Conditional integration choices remain explicit spikes. Existing feature plans retain authority for their own work.
+
+The subsequent parent handoff admits qualified MB `9e94d69484218e64a3ee1bddcf4c61d8aa93df16` (hosted CI38175261609, 93 successful steps, zero skipped; local TCP458 tests) and authorizes controlled integration followed by the smallest complete M2 image workflow. It does not authorize personal-data migration, main merge, deployment or broader modality execution. The earlier milestone-specific restrictions below are historical; the new admission is recorded in the execution ledger.
 
 ## Objective
 
@@ -218,7 +220,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Acceptance gate:** Real current and older fixtures cover every metadata owner; independent comparison verifies values, ordering, hashes and references. Prove nested commit/rollback, preview savepoint rollback, lost post-commit responses, and stale-save/idempotency behavior using two independent DB connections. Run existing import/edit/review/select/preview/release/reopen/proposal recovery with equivalent assertions, replacing SQLite-only test mechanics without weakening them. Isolate PostgreSQL test databases in CI. Demonstrate offline local startup/shutdown/reopen, complete metadata+artifact backup/restore and browser screenshots of the existing working UI. Switch only after verification; preserve the source backup. Replan on unsupported retained values, altered snapshot semantics, unqualified lifecycle or unbounded migration scope; do not estimate delivery days from static call counts.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ### Milestone 2: One complete real image workflow
 

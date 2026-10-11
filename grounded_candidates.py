@@ -3,6 +3,7 @@
 Exact quotes/schema are mechanical checks, never semantic or human review.
 Existing ai_http owns HTTP; Workbench owns all admitted assets and annotations.
 """
+from workbench import encode_retained
 import base64
 import hashlib
 import json
@@ -123,8 +124,10 @@ class Proposals:
         self.db, self.lock = workbench.db, workbench.lock
         self.worker, self.active_id = None, None
         self.stop = threading.Event()
-        with self.lock, self.db:
-            self.db.execute('CREATE TABLE IF NOT EXISTS grounded_jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL)')
+        with self.lock, self.db.transaction():
+            self.runtime_owner = self.db.claim_runtime('grounded_jobs')
+            if not self.runtime_owner:
+                return
             for row in self.db.execute('SELECT data FROM grounded_jobs').fetchall():
                 job = json.loads(row[0])
                 if job['status'] in ACTIVE:
@@ -133,15 +136,15 @@ class Proposals:
                     self._save(job)
 
     def _save(self, job):
-        previous = self.db.execute('SELECT data FROM grounded_jobs WHERE id=?', (job['id'],)).fetchone()
+        previous = self.db.execute('SELECT data FROM grounded_jobs WHERE id=%s', (job['id'],)).fetchone()
         job['revision'] = (json.loads(previous[0])['revision'] if previous else 0) + 1
         job['updated_at'] = timestamp()
-        self.db.execute('INSERT INTO grounded_jobs VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode(job)))
+        self.db.execute('INSERT INTO grounded_jobs (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode_retained(job)))
 
     def _get(self, job_id):
         if not isinstance(job_id, str) or not IDENTIFIER.fullmatch(job_id):
             raise WorkbenchError('Invalid proposal request ID.')
-        row = self.db.execute('SELECT data FROM grounded_jobs WHERE id=?', (job_id,)).fetchone()
+        row = self.db.execute('SELECT data FROM grounded_jobs WHERE id=%s', (job_id,)).fetchone()
         if not row:
             raise WorkbenchError('Proposal request not found.', 'unavailable', 404)
         return json.loads(row[0])
@@ -154,7 +157,7 @@ class Proposals:
 
     def snapshot(self):
         with self.lock:
-            jobs = [json.loads(row[0]) for row in self.db.execute('SELECT data FROM grounded_jobs ORDER BY rowid DESC LIMIT 50')]
+            jobs = [json.loads(row[0]) for row in self.db.execute('SELECT data FROM grounded_jobs ORDER BY ordinal DESC LIMIT 50')]
             # Raw bounded responses remain available on the exact job GET, not every poll.
             for job in jobs:
                 job.pop('raw_response', None)
@@ -186,21 +189,32 @@ class Proposals:
         count, seed = body['count'], body['seed']
         if type(count) is not int or not 1 <= count <= 10 or (not mode and (type(seed) is not int or not 0 <= seed <= 2**32 - 1)):
             raise WorkbenchError('Use 1–10 candidates and a nonnegative 32-bit seed.')
-        with self.lock, self.db:
-            if self.worker is not None and self.worker.is_alive():
-                raise WorkbenchError('A grounded request is active. Cancel or wait before starting another.', 'conflict', 409)
-            source = self._source(body)
-            job = {'schema_version': 1, 'id': uuid.uuid4().hex, 'revision': 0, 'status': 'preparing', 'error': '', 'created_at': timestamp(),
-                   'source': source, 'config': {'server_url': base, 'model': model, 'instruction': instruction, 'count': count, 'seed': seed},
-                   'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION, 'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
-                   'candidates': [], 'response_sha256': None, 'raw_response': None, 'raw_response_base64': None,
-                   'verification': 'Schema and exact source quotes only; class/factual preservation requires human review.'}
-            job['config'].update(mode)
-            job['canonical_request_sha256'] = hashlib.sha256(encode(request_payload(job)).encode()).hexdigest()
-            self._save(job)
+        with self.lock:
+            if self.db.in_transaction:
+                raise WorkbenchError('Grounded dispatch requires its own committed transaction.', 'conflict', 409)
+            with self.db.transaction():
+                if not self.runtime_owner:
+                    raise WorkbenchError('Grounded workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
+                if self.worker is not None and self.worker.is_alive():
+                    raise WorkbenchError('A grounded request is active. Cancel or wait before starting another.', 'conflict', 409)
+                source = self._source(body)
+                job = {'schema_version': 1, 'id': uuid.uuid4().hex, 'revision': 0, 'status': 'preparing', 'error': '', 'created_at': timestamp(),
+                       'source': source, 'config': {'server_url': base, 'model': model, 'instruction': instruction, 'count': count, 'seed': seed},
+                       'system_prompt': SYSTEM_PROMPT, 'prompt_version': PROMPT_VERSION, 'prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
+                       'candidates': [], 'response_sha256': None, 'raw_response': None, 'raw_response_base64': None,
+                       'verification': 'Schema and exact source quotes only; class/factual preservation requires human review.'}
+                job['config'].update(mode)
+                job['canonical_request_sha256'] = hashlib.sha256(encode(request_payload(job)).encode()).hexdigest()
+                self._save(job)
             self.stop.clear(); self.active_id = job['id']
             self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
-            self.worker.start()
+            try:
+                self.worker.start()
+            except RuntimeError:
+                self.worker, self.active_id = None, None
+                with self.db.transaction():
+                    job.update(status='failed', error='Could not start the grounded worker; no inference ran. Start a new request explicitly.')
+                    self._save(job)
             return job
 
     def _run(self, job_id):
@@ -216,7 +230,7 @@ class Proposals:
                 raise WorkbenchError('Generation cancelled.', 'cancelled')
             if job['config']['model'] not in available:
                 raise WorkbenchError('Selected model is not currently listed as a non-image served model. Refresh models.', 'unavailable')
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 if self.stop.is_set():
                     raise WorkbenchError('Generation cancelled.', 'cancelled')
                 job.update(status='generating', listed_models=available)
@@ -234,14 +248,14 @@ class Proposals:
             candidates = decode(data, job['source'], job['config']['count'], job['id'] if pumas.typed(job['config']) else None)
             reported = None if pumas.typed(job['config']) else json.loads(data).get('model')
             job['reported_model'] = text_value(reported, 'Reported model', 200) if reported is not None else None
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 if self.stop.is_set():
                     raise WorkbenchError('Generation cancelled.', 'cancelled')
                 self._source({'source_id': job['source']['id'], 'revision': job['source']['revision'], 'source_revision': job['source']['source_revision']})
                 job.update(status='completed', candidates=candidates)
                 self._save(job)
         except Exception as error:
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
@@ -250,7 +264,7 @@ class Proposals:
                 self.active_id = None
 
     def cancel(self, job_id):
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             job = self._get(job_id)
             if job_id != self.active_id or job['status'] not in ACTIVE:
                 return {'cancelled': False, 'job': job}
@@ -263,7 +277,7 @@ class Proposals:
         if set(body) != {'revision', 'candidate_id', 'decision', 'note'} or body['decision'] not in ('reject', 'admit_draft'):
             raise WorkbenchError('Choose reject or admit_draft with the current proposal revision and a review note.')
         note = text_value(body['note'], 'Review note', 1000)
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             job = self._get(job_id)
             candidate = next((c for c in job['candidates'] if c['id'] == body['candidate_id']), None)
             if candidate is None:

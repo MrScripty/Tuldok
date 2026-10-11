@@ -1,4 +1,5 @@
-"""Native caption admission through real HTTP/SQLite/Pillow/frozen consumer."""
+"""Native caption admission through real HTTP/PostgreSQL/Pillow/frozen consumer."""
+from postgres_helpers import drop_failure_trigger, in_transaction, independent_reader, install_failure_trigger
 import base64
 from concurrent.futures import ThreadPoolExecutor
 import copy
@@ -6,7 +7,6 @@ import hashlib
 from http.server import ThreadingHTTPServer
 import io
 import json
-import sqlite3
 from pathlib import Path
 import subprocess
 import sys
@@ -206,13 +206,13 @@ class CaptionImportTests(unittest.TestCase):
 
     def test_caption_update_and_initial_history_failures_rollback_files_and_source(self):
         row = self.prepare()[0]
-        triggers = ["BEFORE UPDATE OF annotation_json ON workbench_records BEGIN SELECT RAISE(ABORT,'caption failed'); END",
-                    "BEFORE INSERT ON workbench_history WHEN json_extract(NEW.snapshot,'$.task')='image_caption' BEGIN SELECT RAISE(ABORT,'history failed'); END"]
-        for trigger in triggers:
-            with self.dataset.db: self.dataset.db.execute('CREATE TRIGGER fail_caption ' + trigger)
+        triggers = [('workbench_records', 'UPDATE OF annotation_json', None),
+                    ('workbench_history', 'INSERT', "NEW.snapshot::json->>'task'='image_caption'")]
+        for table, event, condition in triggers:
+            install_failure_trigger(self.dataset.db, table, 'fail_caption', 'caption/history failed', event=event, condition=condition)
             status, result = self.request('/api/workbench/caption-import/row', self.payload(row))
             self.assertEqual(status, 500, result); self.empty_storage()
-            with self.dataset.db: self.dataset.db.execute('DROP TRIGGER fail_caption')
+            drop_failure_trigger(self.dataset.db, table, 'fail_caption')
         self.assertEqual(self.request('/api/workbench/caption-import/row', self.payload(row))[0], 201)
 
     def test_concurrent_duplicate_bytes_pixels_and_markers_do_not_modify_records(self):
@@ -359,8 +359,8 @@ class CaptionImportTests(unittest.TestCase):
         files_before={str(path.relative_to(self.dataset.path)):path.read_bytes()
             for path in (self.dataset.path/'images').rglob('*') if path.is_file()}
         row=self.prepare()[0]
-        with self.dataset.db:
-            self.dataset.db.execute("CREATE TRIGGER fail_final_caption BEFORE INSERT ON workbench_history WHEN json_extract(NEW.snapshot,'$.task')='image_caption' BEGIN SELECT RAISE(ABORT,'caption history failed'); END")
+        with self.dataset.db.transaction():
+            install_failure_trigger(self.dataset.db, 'workbench_history', 'fail_final_caption', 'caption history failed', condition="NEW.snapshot::json->>'task'='image_caption'")
         body=self.payload(row)
         status,result=self.request('/api/workbench/caption-import/row',body)
         self.assertEqual(status,500,result)
@@ -371,7 +371,7 @@ class CaptionImportTests(unittest.TestCase):
         self.assertEqual({str(path.relative_to(self.dataset.path)):path.read_bytes()
             for path in (self.dataset.path/'images').rglob('*') if path.is_file()},files_before)
         self.assertEqual(self.request('/api/workbench/import-result/'+body['request_id']), (200,{'found':False}))
-        with self.dataset.db: self.dataset.db.execute('DROP TRIGGER fail_final_caption')
+        drop_failure_trigger(self.dataset.db, 'workbench_history', 'fail_final_caption')
         self.assertEqual(self.request('/api/workbench/caption-import/row',body)[0],201)
 
     def test_split_rejection_rolls_back_lazy_enrollment_without_pending_or_durable_writes(self):
@@ -389,17 +389,17 @@ class CaptionImportTests(unittest.TestCase):
         def snapshot(connection):
             return {table:[tuple(record) for record in connection.execute('SELECT * FROM '+table)] for table in tables}
         before=snapshot(self.dataset.db)
-        self.assertFalse(self.dataset.db.in_transaction)
+        self.assertFalse(in_transaction(self.dataset.db))
         self.assertEqual(len(before['workbench_records']),1)
         files_before={str(path.relative_to(self.dataset.path)):path.read_bytes()
             for path in (self.dataset.path/'images').rglob('*') if path.is_file()}
-        with sqlite3.connect(self.dataset.path/'dataset.sqlite3') as reader:
+        with independent_reader(self.dataset.db) as reader:
             self.assertEqual(snapshot(reader),before)
             body=self.payload(row)
             status,result=self.request('/api/workbench/caption-import/row',body)
             self.assertEqual(status,409,result)
             self.assertIn('conflicting source split',result['error'])
-            self.assertFalse(self.dataset.db.in_transaction,'A rejection must leave no pending lazy-enrollment transaction')
+            self.assertFalse(in_transaction(self.dataset.db),'A rejection must leave no pending lazy-enrollment transaction')
             self.assertEqual(snapshot(self.dataset.db),before)
             self.assertEqual(snapshot(reader),before,'Durable source/record/history state is unchanged')
             self.assertEqual({str(path.relative_to(self.dataset.path)):path.read_bytes()
@@ -410,7 +410,7 @@ class CaptionImportTests(unittest.TestCase):
             # Ordinary browsing can later enroll that retained original in its
             # own transaction; it does not commit leftovers from the rejection.
             self.dataset.workbench.query({})
-            self.assertFalse(self.dataset.db.in_transaction)
+            self.assertFalse(in_transaction(self.dataset.db))
             self.assertEqual(len(snapshot(reader)['workbench_records']),2)
             self.assertEqual(len(snapshot(reader)['workbench_history']),2)
 

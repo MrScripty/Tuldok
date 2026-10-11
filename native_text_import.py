@@ -6,7 +6,7 @@ import io
 import json
 import re
 import secrets
-import sqlite3
+import psycopg
 import zipfile
 
 from bulk_import import MAX_ROW_BYTES, REQUEST_ID, find_result, invalid_constant, leaf_name, result, unique_object
@@ -211,12 +211,12 @@ class NativeTextImports:
         context = dict(payload['context'], request_id=body['request_id'])
         w = self.workbench
         try:
-            with w.lock, w.db:
+            with w.lock, w.db.transaction():
                 if find_result(w, body['request_id'])['found']:
                     raise WorkbenchError('This import request marker was already admitted; inspect its saved result.', 'conflict', 409)
                 record = w._insert_text(payload['text'], payload['name'], payload['groups'], [], 'unknown',
                     provenance={'acquisition': context}, annotation=payload['annotation'])
                 receipt = result(record)
             return receipt
-        except (OSError, sqlite3.Error):
+        except (OSError, psycopg.Error):
             raise WorkbenchError('Import stopped because storage failed. Inspect the collection before retrying.', 'storage', 500) from None
