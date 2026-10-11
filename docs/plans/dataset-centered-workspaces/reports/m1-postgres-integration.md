@@ -31,6 +31,26 @@ The paths above must be newly selected disposable paths, not an existing SQLite
 catalog or initialized service. For reopen, use `start` and `env` rather than
 `init`. Normal development should choose a persistent owned service directory.
 
+### Combined checkpoint qualification
+
+Merge checkpoint `b42a51900dcfe821b223fea7b75d2fe67aa991a6` passed local
+**460 Python tests** (234.167 s), the complete M1 browser gate on the least-privilege
+application role, original Workbench and mesh browser gates, and the pinned
+ImageFolder/TinyCNN one-epoch consumer check. PostgreSQL 17.11 was extracted into
+`/tmp` and started as a private socket-only service with the qualified helper;
+no system service or personal catalog was used. Training dependencies are in
+the separate `/tmp/tuldok-training-venv`: Torch 2.8.0+cpu, torchvision 0.23.0+cpu,
+scikit-learn 1.7.2. No weights or external datasets were downloaded.
+
+Hosted M1 run38176295818 passed on the merge. Full lifecycle run38176295870
+passed Python/controller gates but failed the original Workbench browser's
+unchanged narrow-overflow assertion. Authorized job logs identified the new
+header link as a third flex item: at 390px the badge extended to 392.3125px.
+The integration fix puts the workspace link inside the existing heading group,
+preserving the original two header items and all controls. The original browser
+gate passed locally again. No failure suppression or assertion relaxation is
+used; the fixed exact source requires a new complete hosted run.
+
 ## Status and exact inputs
 
 **Preparation only; MB is not admitted or qualified here.** The delegated
