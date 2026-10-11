@@ -29,7 +29,7 @@
         </select>
       </div>
       <div id="context" class="context-copy">Loading workspace…</div>
-      <span class="badge amber">M1 preview</span>
+      <span class="badge amber">Local preview</span>
     </div>
     <nav class="workspace-nav" aria-label="Workspaces">
       <a href="#data" id="nav-data"><span>01</span> Data</a
@@ -57,6 +57,7 @@
             preserves this editor.
           </p>
           <p id="catalog-status" role="status">Loading current catalog…</p>
+          <p id="real-correction-context" class="callout" hidden></p>
           <iframe
             id="catalog-frame"
             title="Current catalog — existing import, record editor, review and releases"
@@ -72,6 +73,7 @@
           <p>Edit the graph. Inspect each boundary.</p>
         </div>
         <div id="pipeline-root"></div>
+        <div id="real-pipeline-root" hidden></div>
       </section>
       <section id="view-runs" aria-labelledby="runs-heading" hidden>
         <div class="view-heading">
@@ -82,13 +84,14 @@
           <p>Trace results back to the exact source.</p>
         </div>
         <div id="runs-root"></div>
+        <div id="real-runs-root" hidden></div>
       </section>
     </main>
     <footer>
       <span>Tuldok · Dataset-centered workspaces</span
       ><span
-        >Fixture runs never write to your catalog. Real execution awaits MB + M2
-        qualification.</span
+        >Fixtures are isolated examples. Current catalog runs use an optional
+        local CPU runtime.</span
       >
     </footer>
     <dialog id="leave-dialog">
@@ -107,6 +110,7 @@
     <script src="/workspace-service.js"></script>
     <script src="/pipeline-editor.js"></script>
     <script src="/runs-view.js"></script>
+    <script src="/workspace-real.js"></script>
     <script src="/workspaces.js"></script>
   </body>
 </html>

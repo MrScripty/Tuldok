@@ -2,7 +2,7 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
-Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. M1 keeps the current Data editors available and adds a browser-local editable graph and clearly labelled fixture results. Audio and 3D subtypes show their exact capability limits; no real training or new modality importer is enabled. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support one bounded scratch CPU image-classification recipe. Audio and 3D subtypes retain their exact capability limits; no new modality importer or trainer is enabled. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
 
 ## Run
 
@@ -36,6 +36,48 @@ See [local storage and recovery](docs/contracts/local-storage.md) for legacy imp
 complete backup/restore, supported versions and preservation limits.
 
 Open http://127.0.0.1:8091. Change the port or data location with --port and --data. Camera access works on localhost; accessing a machine over the network requires HTTPS for browser camera access. Image import also works without camera access.
+
+## Real image workflow in Workspaces
+
+The first real recipe uses reviewed `image_classification_v1` releases, a saved
+five-stage graph and a scratch TinyCNN on one CPU thread. It accepts at most
+128 images and eight classes; the optional training environment is separate
+from the application. On Linux with Python 3.12, install it explicitly once:
+
+```sh
+python3.12 -m venv .venv-training
+.venv-training/bin/python -m pip install -r requirements-training.txt
+export TULDOK_TRAINING_PYTHON="$PWD/.venv-training/bin/python"
+# Configure/start local PostgreSQL as described above, then:
+.venv/bin/python app.py --data ./workspace-data
+# Open http://127.0.0.1:8091/workspaces and choose Current local catalog.
+```
+
+No worker installs packages or downloads weights. Missing/incompatible runtime
+is a visible validation result. In **Data**, import images with honest rights
+notes and independent groups, label and review them, preview the selected
+release's class/split coverage, then freeze it. In **Pipeline**, create a named
+recipe, edit bounded trainer parameters/connections, save and validate. In
+**Runs**, inspect the verified frozen export, actual progress, checkpoint,
+validation metrics and per-example predictions. A correction link opens the
+current record; saving/reviewing and freezing a new release leaves old results
+unchanged. Viewing test results records durable exposure; reused records or
+pixels cannot be presented as fresh holdout evidence.
+
+Fresh catalogs use schema 2. Existing PostgreSQL schema-1 catalogs require an
+explicit stopped-writer backup and upgrade, never an automatic startup change:
+
+```sh
+.venv/bin/python backup_metadata.py backup ./workspace-data ./before-workspaces --quiesced
+.venv/bin/python upgrade_metadata.py ./workspace-data --quiesced
+```
+
+Use a new backup destination and keep every app/worker stopped until verification
+finishes. See [workspace storage](docs/contracts/workspace-storage.md),
+[graph contract](docs/contracts/workspace-pipeline.md),
+[run lifecycle](docs/contracts/workspace-runs.md) and
+[CPU adapter](docs/contracts/workspace-image-training.md) for bounds and recovery.
+The original corner studio and classic Workbench remain available.
 
 ## Workflow
 

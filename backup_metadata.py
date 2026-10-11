@@ -159,10 +159,9 @@ def table_state(columns, rows):
 
 
 def read_catalog(metadata):
-    from metadata import TABLES
     metadata.validate_schema()
     result = {}
-    for table in sorted(TABLES):
+    for table in sorted(metadata.tables):
         cursor = metadata.connection.execute(sql.SQL('SELECT * FROM {}').format(sql.Identifier(table)))
         result[table] = table_state([column.name for column in cursor.description], cursor.fetchall())
     return result
@@ -202,9 +201,8 @@ def summaries(tables):
 
 def populate_catalog(metadata, tables):
     """Caller owns one transaction; identity order is imported explicitly."""
-    from metadata import TABLES
     expected = read_catalog(metadata)
-    if set(tables) != set(TABLES):
+    if set(tables) != set(metadata.tables):
         raise StorageTransferError('Unsupported backup table set.')
     for table, state in tables.items():
         if state['columns'] != expected[table]['columns']:
@@ -230,7 +228,7 @@ def populate_catalog(metadata, tables):
 
 def backup_catalog(path, backup, *, dsn=None, quiesced=False):
     """Create a complete immutable backup after the caller stops every writer."""
-    from metadata import Metadata, SCHEMA_VERSION
+    from metadata import Metadata
     if not quiesced:
         raise StorageTransferError('Stop all app/artifact writers and explicitly pass quiesced=True / --quiesced.')
     path, backup = separate_paths(path, backup)
@@ -238,7 +236,7 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
         raise StorageTransferError('Backup destination already exists; never overwrite a backup.')
     backup.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=backup.name + '.partial-', dir=backup.parent))
-    metadata = Metadata(path, dsn=dsn, create=False)
+    metadata = Metadata(path, dsn=dsn, create=False, schema_version=None)
     try:
         with metadata.lock, metadata.transaction():
             before = tree_manifest(path)
@@ -248,11 +246,11 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
             if before != tree_manifest(path) or before != tree_manifest(temporary / 'catalog'):
                 raise StorageTransferError('Artifacts changed during backup. Keep all writers stopped.')
             write_json(temporary / 'metadata.json', {'format_version': FORMAT_VERSION,
-                       'schema_version': SCHEMA_VERSION, 'dataset_id': metadata.dataset_id, 'tables': tables,
+                       'schema_version': metadata.schema_version, 'dataset_id': metadata.dataset_id, 'tables': tables,
                        'sequences': sequences})
             import psycopg
             receipt = {'format_version': FORMAT_VERSION, 'kind': 'postgresql',
-                       'schema_version': SCHEMA_VERSION, 'dataset_id': metadata.dataset_id,
+                       'schema_version': metadata.schema_version, 'dataset_id': metadata.dataset_id,
                        'postgresql_server_version': metadata.connection.info.server_version,
                        'driver': 'psycopg ' + psycopg.__version__,
                        'restore_privileges': 'CONNECT and CREATE on a new PostgreSQL database; catalog schema must be absent',
@@ -270,15 +268,19 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
 
 def restore_catalog(backup, destination, *, dsn=None):
     """Restore the same dataset identity into an absent schema and new directory."""
-    from metadata import Metadata, SCHEMA_VERSION
+    from metadata import Metadata, SUPPORTED_SCHEMA_VERSIONS
     backup, destination = separate_paths(backup, destination)
     receipt = json.loads((backup / RECEIPT).read_bytes())
-    if receipt.get('format_version') != FORMAT_VERSION or receipt.get('kind') != 'postgresql' or receipt.get('schema_version') != SCHEMA_VERSION:
+    version = receipt.get('schema_version')
+    if (receipt.get('format_version') != FORMAT_VERSION or receipt.get('kind') != 'postgresql'
+            or type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS):
         raise StorageTransferError('Unsupported PostgreSQL backup version.')
     if tree_manifest(backup / 'catalog') != receipt['files'] or file_hash(backup / 'metadata.json') != receipt['metadata_sha256']:
         raise StorageTransferError('Backup file/hash reconciliation failed.')
     data = json.loads((backup / 'metadata.json').read_bytes())
-    if (data.get('format_version'), data.get('schema_version'), data.get('dataset_id')) != (FORMAT_VERSION, SCHEMA_VERSION, receipt['dataset_id']) or summaries(data['tables']) != receipt['tables'] or data.get('sequences') != receipt.get('sequences'):
+    if (type(data.get('schema_version')) is not int or
+            (data.get('format_version'), data.get('schema_version'), data.get('dataset_id')) != (FORMAT_VERSION, version, receipt['dataset_id']) or
+            summaries(data['tables']) != receipt['tables'] or data.get('sequences') != receipt.get('sequences')):
         raise StorageTransferError('Backup metadata/receipt reconciliation failed.')
     identity = receipt['dataset_id']
     if not isinstance(identity, str) or len(identity) != 32 or any(c not in '0123456789abcdef' for c in identity):
@@ -289,7 +291,7 @@ def restore_catalog(backup, destination, *, dsn=None):
     if destination.exists():
         if json.loads((destination / marker_name).read_bytes()) != marker:
             raise StorageTransferError('Destination already exists and belongs to another restore.')
-        metadata = Metadata(destination, dsn=dsn, create=False, dataset_id=identity)
+        metadata = Metadata(destination, dsn=dsn, create=False, dataset_id=identity, schema_version=version)
         try:
             with metadata.lock, metadata.transaction():
                 if summaries(read_catalog(metadata)) != receipt['tables'] or read_sequences(metadata) != receipt['sequences'] or tree_manifest(destination, (marker_name,)) != receipt['files']:
@@ -306,7 +308,7 @@ def restore_catalog(backup, destination, *, dsn=None):
     # The source manifest names an already existing schema. Create this catalog
     # before copying that manifest, so an existing schema is never reused.
     existed = (staging / '.tuldok.json').exists()
-    metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity)
+    metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity, schema_version=version)
     try:
         with metadata.lock, metadata.transaction():
             current = read_catalog(metadata)

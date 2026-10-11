@@ -24,6 +24,8 @@ import native_detection_import
 import rheon_sequences
 import sequence_batch_import
 import meshes
+import pipeline
+import runs
 import base64
 import hashlib
 import io
@@ -152,11 +154,14 @@ class Dataset:
             self.grounded = grounded_candidates.Proposals(self.workbench)
             self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
             self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
+            self.pipelines = pipeline.Pipelines(self)
+            self.runs = runs.Runs(self, self.pipelines)
         except BaseException:
             self.db.close()
             raise
 
     def close(self):
+        self.runs.close()
         self.text_classification_proposals.close()
         self.caption_proposals.close()
         self.grounded.close()
@@ -383,7 +388,7 @@ def make_handler(dataset):
             pass
 
         def reply(self, data, status=200, content_type='application/json'):
-            if content_type == 'application/json':
+            if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
             self.send_response(status)
             self.send_header('Content-Type', content_type)
@@ -399,6 +404,30 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path.startswith('/api/workspace/'):
+                    parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['context']:
+                        return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
+                                           'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
+                    if parts == ['definitions']:
+                        return self.reply(dataset.pipelines.definitions())
+                    if parts == ['releases']:
+                        return self.reply(dataset.pipelines.releases())
+                    if parts == ['graphs']:
+                        return self.reply(dataset.pipelines.list())
+                    if len(parts) == 2 and parts[0] == 'graphs':
+                        return self.reply(dataset.pipelines.get(parts[1]))
+                    if parts == ['runs']:
+                        return self.reply(dataset.runs.list())
+                    if len(parts) == 2 and parts[0] == 'runs':
+                        return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'predictions':
+                        query = parse_qs(urlsplit(self.path).query)
+                        return self.reply(dataset.runs.predictions(parts[1], query.get('split', ['validation'])[-1]))
+                    if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifacts':
+                        data, media_type = dataset.runs.artifact(parts[1], parts[3])
+                        return self.reply(data, content_type=media_type)
+                    return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.list())
                 if path == '/api/workbench/searches':
@@ -486,11 +515,12 @@ def make_handler(dataset):
                         shutil.copyfileobj(archive, self.wfile)
                     return
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
-                # M1 opt-in shell: static presentation only, no storage/run routes.
+                # Opt-in workspace shell keeps fixture and real service boundaries distinct.
                 assets.update({
                     '/workspaces': ('workspaces.html', 'text/html'),
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
+                    '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
@@ -523,6 +553,8 @@ def make_handler(dataset):
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                if path.startswith('/api/workspace/'):
+                    limit = 256 * 1024
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
@@ -530,6 +562,27 @@ def make_handler(dataset):
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path.startswith('/api/workspace/'):
+                    parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['graphs']:
+                        return self.reply(dataset.pipelines.create(body), 201)
+                    if len(parts) == 2 and parts[0] == 'graphs':
+                        return self.reply(dataset.pipelines.save(parts[1], body))
+                    if len(parts) == 3 and parts[0] == 'graphs':
+                        if parts[2] == 'clone':
+                            return self.reply(dataset.pipelines.clone(parts[1], body), 201)
+                        if parts[2] == 'validate':
+                            return self.reply(dataset.pipelines.validate(parts[1], body))
+                    if parts == ['runs']:
+                        return self.reply(dataset.runs.submit(body), 201)
+                    if len(parts) == 3 and parts[0] == 'runs':
+                        if parts[2] == 'cancel':
+                            return self.reply(dataset.runs.cancel(parts[1]))
+                        if parts[2] == 'retry':
+                            return self.reply(dataset.runs.retry(parts[1], body), 201)
+                        if parts[2] == 'expose-test':
+                            return self.reply(dataset.runs.expose_test(parts[1], body))
+                    return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.create(body), 201)
                 if path == '/api/workbench/searches':

@@ -19,8 +19,12 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMA_VERSIONS = (1, 2)
 MANIFEST = '.tuldok.json'
+CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
+    version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
+    definition_sha256 TEXT NOT NULL, catalog_sha256 TEXT NOT NULL)'''
 
 
 class StorageError(ValueError):
@@ -132,16 +136,25 @@ class CatalogLock:
 
 
 class Metadata:
-    def __init__(self, path, dsn=None, *, create=True, dataset_id=None):
+    def __init__(self, path, dsn=None, *, create=True, dataset_id=None,
+                 schema_version=SCHEMA_VERSION):
+        # Version selection belongs to offline transfer/upgrade tools. Runtime
+        # callers omit it and require the current schema, never auto-upgrade.
+        if schema_version is not None and (type(schema_version) is not int or
+                                           schema_version not in SUPPORTED_SCHEMA_VERSIONS):
+            raise StorageError('Unsupported PostgreSQL catalog version.')
         path = Path(path).resolve()
         if create:
             path.mkdir(parents=True, exist_ok=True)
         with (path / '.metadata-init.lock').open('a') as guard:
             fcntl.flock(guard, fcntl.LOCK_EX)
-            self._initialize(path, dsn, create=create, dataset_id=dataset_id)
+            self._initialize(path, dsn, create=create, dataset_id=dataset_id,
+                             schema_version=schema_version)
 
-    def _initialize(self, path, dsn=None, *, create=True, dataset_id=None):
+    def _initialize(self, path, dsn=None, *, create=True, dataset_id=None,
+                    schema_version=SCHEMA_VERSION):
         self.path = Path(path).resolve()
+        self.schema_version = SCHEMA_VERSION if schema_version is None else schema_version
         self.dsn = connection_info(dsn)
         manifest = self.path / MANIFEST
         pending = self.path / '.tuldok-initializing.json'
@@ -167,7 +180,7 @@ class Metadata:
                 try:
                     reservation = json.loads(pending.read_text())
                     identity = reservation['dataset_id']
-                    if reservation != {'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash()}:
+                    if reservation != {'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash(self.schema_version)}:
                         raise ValueError()
                     if dataset_id is not None and identity != dataset_id:
                         raise ValueError()
@@ -196,7 +209,7 @@ class Metadata:
                     raise StorageError('Destination catalog already exists; refuse adopting it without its dataset manifest.')
                 if not manifest.exists() and not pending.exists():
                     with pending.open('x') as handle:
-                        json.dump({'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash()}, handle)
+                        json.dump({'version': 1, 'dataset_id': identity, 'definition_sha256': definition_hash(self.schema_version)}, handle)
                         handle.flush()
                         os.fsync(handle.fileno())
                     _sync_directory(self.path)
@@ -208,22 +221,28 @@ class Metadata:
                     with self.connection.transaction():
                         self.connection.execute(sql.SQL('CREATE SCHEMA {}').format(sql.Identifier(self.schema)))
                         self._search_path()
-                        for statement in TABLES.values():
+                        for statement in self.tables.values():
                             self.connection.execute(statement)
                         for statement in INDEXES:
                             self.connection.execute(statement)
-                        self.connection.execute('''CREATE TABLE catalog_version (
-                            version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
-                            definition_sha256 TEXT NOT NULL, catalog_sha256 TEXT NOT NULL)''')
+                        self.connection.execute(CATALOG_VERSION_DDL)
                         signature = self._signature()
                         self.connection.execute('INSERT INTO catalog_version VALUES (%s,%s,%s,%s)',
-                                                (SCHEMA_VERSION, identity, definition_hash(), signature))
+                                                (self.schema_version, identity, definition_hash(self.schema_version), signature))
                 else:
                     self._search_path()
+                    if schema_version is None:
+                        try:
+                            versions = self.execute('SELECT version FROM catalog_version').fetchall()
+                            if len(versions) != 1 or versions[0][0] not in SUPPORTED_SCHEMA_VERSIONS:
+                                raise StorageError('Unsupported PostgreSQL catalog version.')
+                            self.schema_version = versions[0][0]
+                        except psycopg.Error:
+                            raise StorageError('Unsupported PostgreSQL catalog schema or version ledger.') from None
                 self.validate_schema()
                 if not manifest.exists():
                     if any(self.execute(sql.SQL('SELECT 1 FROM {} LIMIT 1').format(sql.Identifier(table))).fetchone()
-                           for table in TABLES):
+                           for table in self.tables):
                         raise StorageError('Interrupted catalog initialization contains unexpected application rows.')
                     _publish_manifest(manifest, {'version': 1, 'dataset_id': identity})
                 if pending.exists():
@@ -235,6 +254,10 @@ class Metadata:
 
     def _search_path(self):
         self.connection.execute(sql.SQL('SET search_path TO {}').format(sql.Identifier(self.schema)))
+
+    @property
+    def tables(self):
+        return tables_for_version(self.schema_version)
 
     def execute(self, statement, parameters=None):
         if parameters is not None and any(isinstance(value, str) and '\x00' in value for value in parameters):
@@ -307,8 +330,9 @@ class Metadata:
                     (_key(self.schema + ':worker:' + name),)).fetchone()[0])
             return self._runtime_claims[name]
 
-    def _signature(self):
+    def _signature(self, schema=None):
         """Catalog structures, not formatted CREATE strings, detect unsupported drift."""
+        schema = schema or self.schema
         values = []
         queries = [
             '''SELECT c.relname,a.attname,a.atttypid::regtype::text,a.attnotnull,
@@ -329,13 +353,37 @@ class Metadata:
                WHERE n.nspname=%s ORDER BY c.relname''',
         ]
         for query in queries:
-            values.append([list(row) for row in self.execute(query, (self.schema,))])
-        return hashlib.sha256(json.dumps(values, ensure_ascii=True, separators=(',', ':')).replace(self.schema, '<catalog>').encode()).hexdigest()
+            values.append([list(row) for row in self.execute(query, (schema,))])
+        return hashlib.sha256(json.dumps(values, ensure_ascii=True, separators=(',', ':')).replace(schema, '<catalog>').encode()).hexdigest()
+
+    def expected_signature(self, version):
+        """Derive the accepted structure independently of a possibly edited ledger.
+
+        An always-rolled-back reference schema uses this server's formatting, so
+        verification does not pin pg_get_constraintdef output across server majors.
+        Call only from quiesced schema evolution under the catalog transaction.
+        """
+        if not self.in_transaction:
+            raise RuntimeError('Schema proof must belong to a metadata transaction.')
+        tables = tables_for_version(version)
+        reference = 'tuldok_schema_proof_' + uuid.uuid4().hex
+        with self.connection.transaction(force_rollback=True):
+            self.execute(sql.SQL('CREATE SCHEMA {}').format(sql.Identifier(reference)))
+            self.execute(sql.SQL('SET LOCAL search_path TO {}').format(sql.Identifier(reference)))
+            for statement in tables.values():
+                self.execute(statement)
+            for statement in INDEXES:
+                self.execute(statement)
+            self.execute(CATALOG_VERSION_DDL)
+            signature = self._signature(reference)
+        return signature
 
     def validate_schema(self):
         try:
             rows = self.execute('SELECT version,dataset_id,definition_sha256,catalog_sha256 FROM catalog_version').fetchall()
-            if len(rows) != 1 or tuple(rows[0][:3]) != (SCHEMA_VERSION, self.dataset_id, definition_hash()):
+            if len(rows) == 1 and rows[0][0] == 1 and self.schema_version != 1:
+                raise StorageError('PostgreSQL catalog schema 1 requires an explicit upgrade. Stop all writers, back up the catalog, then run upgrade_metadata.py CATALOG --quiesced; see docs/contracts/workspace-storage.md.')
+            if len(rows) != 1 or tuple(rows[0][:3]) != (self.schema_version, self.dataset_id, definition_hash(self.schema_version)):
                 raise StorageError('Unsupported PostgreSQL catalog version or definition.')
             if rows[0][3] != self._signature():
                 raise StorageError('Unsupported PostgreSQL catalog schema, constraints, indexes or triggers.')
@@ -363,9 +411,19 @@ INDEXES = (
 )
 
 
-def definition_hash():
-    return hashlib.sha256(json.dumps([SCHEMA_VERSION, TABLES, INDEXES], sort_keys=True).encode()).hexdigest()
-TABLES = {
+def tables_for_version(version):
+    if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
+        raise StorageError('Unsupported PostgreSQL catalog version.')
+    return TABLES_V1 if version == 1 else TABLES
+
+
+def definition_hash(version=SCHEMA_VERSION):
+    return hashlib.sha256(json.dumps([version, tables_for_version(version), INDEXES], sort_keys=True).encode()).hexdigest()
+
+
+# Schema 1 is the exact retained MB contract, including DDL whitespace because
+# its definition hash is part of the persisted version ledger.
+TABLES_V1 = {
     'samples': """CREATE TABLE samples (
             id TEXT PRIMARY KEY, sha256 TEXT UNIQUE NOT NULL, filename TEXT NOT NULL,
             width INTEGER NOT NULL, height INTEGER NOT NULL,
@@ -421,3 +479,16 @@ TABLES = {
     id TEXT PRIMARY KEY, bundle BYTEA NOT NULL, metadata_json TEXT NOT NULL,
     bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))""",
 }
+
+WORKSPACE_TABLES = {
+    'workspace_graphs': '''CREATE TABLE workspace_graphs (
+        id TEXT PRIMARY KEY, revision INTEGER NOT NULL, document TEXT NOT NULL)''',
+    'workspace_runs': '''CREATE TABLE workspace_runs (
+        id TEXT PRIMARY KEY, request_key TEXT UNIQUE NOT NULL,
+        request_sha256 TEXT NOT NULL, document TEXT NOT NULL)''',
+    'workspace_exposures': '''CREATE TABLE workspace_exposures (
+        id TEXT PRIMARY KEY, record_id TEXT NOT NULL, source_hash TEXT NOT NULL,
+        reason TEXT NOT NULL, run_id TEXT NOT NULL, release_id TEXT NOT NULL,
+        created_at TEXT NOT NULL)''',
+}
+TABLES = {**TABLES_V1, **WORKSPACE_TABLES}

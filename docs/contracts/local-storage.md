@@ -45,7 +45,7 @@ Each dataset directory contains `.tuldok.json` with manifest `version: 1` and a
 random persistent `dataset_id`. Its schema is `catalog_<dataset_id>`. Paths,
 names and connection strings are not identities. Keep the manifest with the
 artifacts. Opening it against the wrong database fails instead of manufacturing
-an empty replacement catalog. `catalog_version` records schema version 1,
+an empty replacement catalog. `catalog_version` records the supported schema version (currently 2; see the explicit [workspace schema upgrade](workspace-storage.md)),
 identity, definition and actual catalog signatures; unknown versions, altered
 tables, indexes, constraints or triggers fail closed.
 

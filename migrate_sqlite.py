@@ -174,7 +174,7 @@ def legacy_backup(source, backup):
 
 def migrate_sqlite(source, destination, backup, *, dsn=None, quiesced=False):
     """Preserve one stopped catalog; retry only its proven unchanged snapshot."""
-    from metadata import Metadata, TABLES, SCHEMA_VERSION
+    from metadata import Metadata, SCHEMA_VERSION, SUPPORTED_SCHEMA_VERSIONS
     if not quiesced:
         raise StorageTransferError('Stop all app/artifact writers and explicitly pass quiesced=True / --quiesced.')
     source, destination, backup = separate_paths(source, destination, backup)
@@ -188,12 +188,24 @@ def migrate_sqlite(source, destination, backup, *, dsn=None, quiesced=False):
              'source_sha256': receipt['source_sha256'], 'dataset_id': identity,
              'schema_version': SCHEMA_VERSION, 'tables': summaries(tables), 'files': files}
     staging = destination.with_name(destination.name + '.migrating-' + identity)
+    # A retained v1 transfer receipt still owns its exact import. Continuing it
+    # preserves v1 until an explicit upgrade; a completed, upgraded destination
+    # may reconcile it only while every added table remains empty.
+    owned = destination if destination.exists() else staging
+    if owned.exists():
+        saved = json.loads((owned / MIGRATION_RECEIPT).read_bytes())
+        version = saved.get('schema_version')
+        if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
+            raise StorageTransferError('Unsupported SQLite migration destination version.')
+        state['schema_version'] = version
     if destination.exists():
         if json.loads((destination / MIGRATION_RECEIPT).read_bytes()) != state:
             raise StorageTransferError('Destination exists with a different migration receipt.')
-        metadata = Metadata(destination, dsn=dsn, create=False, dataset_id=identity)
+        metadata = Metadata(destination, dsn=dsn, create=False, dataset_id=identity, schema_version=None)
         try:
             with metadata.lock, metadata.transaction():
+                if metadata.schema_version < state['schema_version']:
+                    raise StorageTransferError('Migrated catalog version contradicts its receipt.')
                 current = read_catalog(metadata)
                 for name, table in current.items():
                     if (name in tables and summaries({name: table}) != summaries({name: tables[name]})) or (name not in tables and table['count']):
@@ -214,12 +226,13 @@ def migrate_sqlite(source, destination, backup, *, dsn=None, quiesced=False):
         raise StorageTransferError('Migration staging contains unexpected artifact bytes.')
     copy_tree(backup / 'catalog', staging, files)
     existed = (staging / '.tuldok.json').exists()
-    metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity)
+    metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity,
+                        schema_version=state['schema_version'])
     try:
         with metadata.lock, metadata.transaction():
             current = read_catalog(metadata)
             # An earlier import either committed every table or rolled back all.
-            merged = {name: tables.get(name, table_state(current[name]['columns'], [])) for name in TABLES}
+            merged = {name: tables.get(name, table_state(current[name]['columns'], [])) for name in metadata.tables}
             if any(table['count'] for table in current.values()):
                 if summaries(current) != summaries(merged):
                     raise StorageTransferError('Staged PostgreSQL catalog differs from the retained snapshot.')

@@ -133,7 +133,21 @@
         "Restored exact saved catalog context; unsaved edits are never replayed.",
     };
   }
-  window.TuldokWorkspaceData = { snapshot, restoreContext };
+  let correctionGeneration = 0;
+  async function openCurrentRecord(id) {
+    if (hasUnsavedEdits()) return { kind: "invalid", message: "Save or discard current Data edits before opening a result correction." };
+    const generation = ++correctionGeneration, editor = editorEpoch,
+      selectionIntent = selectionEpoch, responseIntent = responseIntentEpoch();
+    const record = await api("records/" + encodeURIComponent(id));
+    if (generation !== correctionGeneration || editor !== editorEpoch ||
+        selectionIntent !== selectionEpoch || responseIntent !== responseIntentEpoch() || hasUnsavedEdits())
+      return { kind: "invalid", message: "Data changed while the record loaded. Your current work is retained." };
+    showRecord(record);
+    publish();
+    return { kind: "available", record: { id: record.id, revision: record.revision, source_revision: record.source_revision } };
+  }
+  window.TuldokWorkspaceData = { snapshot, restoreContext, openCurrentRecord,
+    cancelRecordOpen: () => { correctionGeneration++; } };
   const publish = () =>
     window.parent.postMessage(
       { type: "tuldok-data-context", context: snapshot() },

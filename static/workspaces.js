@@ -30,6 +30,37 @@ window.workspaceEscape = (value) =>
   let store = null,
     pipeline = null,
     runs = null;
+  let workspaceIntent = 0, fragmentIntent = null, realCorrection = null;
+  function invalidateCorrection() {
+    workspaceIntent++;
+    $("catalog-frame").contentWindow?.TuldokWorkspaceData?.cancelRecordOpen?.();
+  }
+  function renderCorrection(record = catalogContext?.record) {
+    const banner = $("real-correction-context");
+    banner.hidden = source !== "catalog" || !realCorrection || record?.id !== realCorrection.id;
+    if (banner.hidden) return;
+    const p = realCorrection;
+    banner.textContent = `Correction from ${p.split} run ${p.run_id.slice(0, 12)}. Frozen target: ${p.truth_label}; source r${p.source_revision}, annotation r${p.revision}. Current annotation r${record.revision}. Save and review deliberately, then select current revisions and freeze a new release. The old result stays unchanged.`;
+  }
+  const real = WorkspaceReal({
+    pipelineRoot: $("real-pipeline-root"),
+    runsRoot: $("real-runs-root"),
+    announce,
+    openRun: () => { location.hash = "runs"; },
+    openRecord: async (prediction) => {
+      const bridge = $("catalog-frame").contentWindow?.TuldokWorkspaceData;
+      if (!bridge) { announce("Open Data once to load the current catalog editor.", true); return; }
+      const intent = ++workspaceIntent;
+      try {
+        const result = await bridge.openCurrentRecord(prediction.id);
+        if (intent !== workspaceIntent || source !== "catalog" || currentView !== "runs") return;
+        if (result.kind !== "available") { announce(result.message, true); return; }
+        realCorrection = { ...prediction };
+        renderCorrection(result.record);
+        location.hash = "data";
+      } catch (error) { announce(error.message, true); }
+    },
+  });
   $("dataset").disabled = true;
   let fixtures = null,
     active = "fixture-image",
@@ -59,6 +90,8 @@ window.workspaceEscape = (value) =>
   let restoringCatalog = false,
     catalogRestoreNotice = null;
   function remember() {
+    // Keep context writes out of a pending fragment navigation.
+    if (fragmentIntent !== null && location.hash !== fragmentIntent) return;
     history.replaceState(
       {
         ...history.state,
@@ -88,13 +121,14 @@ window.workspaceEscape = (value) =>
     );
   }
   function context() {
+    renderCorrection();
     if (!restoringCatalog) remember();
     if (source === "fixtures")
       $("context").textContent =
         `fixture-dataset-v1 · ${selected.size} selected · ${draftDirty ? "unsaved fixture draft" : "authored CC0 examples"} · release fixture-release-v1`;
     else
       $("context").textContent = catalogContext
-        ? `${catalogContext.selection.length} exact revisions selected · ${catalogContext.record?.name || "No active record"} · ${catalogContext.dirty ? "unsaved edits" : "saved state"} · current catalog handle`
+        ? `${catalogContext.selection.length} exact revisions selected · ${catalogContext.record?.name || "No active record"} · ${catalogContext.dirty ? "unsaved edits" : "saved state"}${real.identity() ? " · catalog " + real.identity().slice(0, 12) : " · current catalog handle"}`
         : "Current catalog handle · loading existing Data owner";
   }
   function visual(record) {
@@ -207,6 +241,7 @@ window.workspaceEscape = (value) =>
       $("keep-editing").focus();
       return;
     }
+    invalidateCorrection();
     source = next;
     $("dataset").value = next;
     renderData();
@@ -245,11 +280,14 @@ window.workspaceEscape = (value) =>
       if (name === next) $("nav-" + name).setAttribute("aria-current", "page");
     }
     currentView = next;
-    if (next === "runs") runs?.render();
+    $("pipeline-root").hidden = source !== "fixtures";
+    $("runs-root").hidden = source !== "fixtures";
+    $("real-pipeline-root").hidden = source !== "catalog";
+    $("real-runs-root").hidden = source !== "catalog";
+    real.show(source === "catalog" ? next : null);
+    if (next === "runs" && source === "fixtures") runs?.render();
     if (next !== "data" && source === "catalog")
-      announce(
-        "Pipeline and Runs show the isolated fixture dataset. Your current catalog editor remains mounted; real execution is unavailable.",
-      );
+      announce("Current catalog · real " + next + ". Source edits remain mounted in Data.");
     else
       announce(
         next === "data"
@@ -258,10 +296,7 @@ window.workspaceEscape = (value) =>
             : "Current catalog · existing Data workflow."
           : "Fixture " + next + " · browser-local examples only.",
       );
-    if (next !== "data" && source === "catalog")
-      $("context").textContent =
-        "Current catalog retained below Data · this workspace uses fixture-dataset-v1 only";
-    else context();
+    context();
     $(lastFocus[next] || next + "-heading")?.focus({ preventScroll: true });
   }
   document.addEventListener("focusin", (event) => {
@@ -273,9 +308,17 @@ window.workspaceEscape = (value) =>
       lastFocus[currentView] = event.target.id;
   });
   window.addEventListener("hashchange", () => {
+    fragmentIntent = null;
+    invalidateCorrection();
     showView();
     window.scrollTo(0, 0);
   });
+  document.addEventListener("click", (event) => {
+    const anchor = event.target.closest?.('a[href^="#"]');
+    if (!anchor || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    fragmentIntent = anchor.getAttribute("href");
+    invalidateCorrection();
+  }, true);
   window.addEventListener("storage", (event) => {
     if (event.key === service.STORE_KEY)
       announce(
@@ -284,7 +327,7 @@ window.workspaceEscape = (value) =>
       );
   });
   window.addEventListener("beforeunload", (event) => {
-    if (fixtureDirty() || catalogDirty()) {
+    if (fixtureDirty() || catalogDirty() || real.isDirty()) {
       event.preventDefault();
       event.returnValue = "";
     }
@@ -298,9 +341,11 @@ window.workspaceEscape = (value) =>
     )
       return;
     if (restoringCatalog) return;
+    if (JSON.stringify(catalogContext) === JSON.stringify(event.data.context)) return;
     if (JSON.stringify(catalogContext) !== JSON.stringify(event.data.context))
       catalogRestoreNotice = null;
     catalogContext = event.data.context;
+    renderCorrection();
     remember();
     $("catalog-status").textContent =
       catalogRestoreNotice ||
@@ -311,6 +356,7 @@ window.workspaceEscape = (value) =>
   });
   let catalogLoadEpoch = 0;
   $("catalog-frame").addEventListener("load", async () => {
+    invalidateCorrection();
     const epoch = ++catalogLoadEpoch;
     const bridge = $("catalog-frame").contentWindow?.TuldokWorkspaceData;
     if (!bridge) {

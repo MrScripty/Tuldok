@@ -16,7 +16,7 @@ from psycopg import sql
 
 from backup_metadata import (StorageTransferError, backup_catalog, digest, file_hash,
     read_catalog, read_sequences, restore_catalog, summaries, tree_manifest)
-from metadata import Metadata, TABLES, connection_info
+from metadata import Metadata, TABLES, TABLES_V1, WORKSPACE_TABLES, connection_info
 from migrate_sqlite import (LEGACY_DDL, LEGACY_INDEXES, ORDERS, legacy_backup,
                              migrate_sqlite, read_legacy)
 
@@ -76,7 +76,7 @@ class LegacyPreflight(unittest.TestCase):
         fixture(self.root / 'source', all_tables=True)
         before = tree_manifest(self.root / 'source')
         tables = read_legacy(self.root / 'source')
-        self.assertEqual(set(tables), set(TABLES))
+        self.assertEqual(set(tables), set(TABLES_V1))
         self.assertTrue(all(state['count'] == 2 for state in tables.values()))
         for table, column in ORDERS.items():
             self.assertEqual(sorted(row[-1] for row in tables[table]['rows']), [7, 41])
@@ -182,7 +182,9 @@ class PostgreSQLTransfers(unittest.TestCase):
         receipt = self.migrate()
         metadata = Metadata(self.root / 'dest', create=False)
         try:
-            self.assertEqual(summaries(read_catalog(metadata)), summaries(expected))
+            actual = read_catalog(metadata)
+            self.assertEqual(summaries({name: actual[name] for name in TABLES_V1}), summaries(expected))
+            self.assertTrue(all(actual[name]['count'] == 0 for name in WORKSPACE_TABLES))
             for table, column in ORDERS.items():
                 order = metadata.execute(sql.SQL('SELECT {} FROM {} ORDER BY {}').format(sql.Identifier(column), sql.Identifier(table), sql.Identifier(column))).fetchall()
                 self.assertEqual([r[0] for r in order], [7, 41])
