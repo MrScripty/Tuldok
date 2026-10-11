@@ -33,7 +33,7 @@ weights, real provider calls, paid inference or personal data were used.
 | Two-server complete restore | Source metadata retained; restored same identity and reviewed text/history; exact frozen ZIP SHA; service stop/start plus new Python process reopen passed |
 | Actual Coding-Standards plan validator | Passed using adopted dcc56f26 source and real `validate_plan` function |
 | Compilation and diff whitespace | Passed |
-| Hosted CI | Run38173918147 on ac83d2c failed Python discovery; downstream JS/browser/consumer gates skipped. Authorized log download returned HTTP403. Failure is unclassified; no hosted success claimed |
+| Hosted CI | Initial runs38173918147/ac83d2c and38174382414/0d4d69d failed Python discovery; downstream gates skipped. The credential-aware helper correction is qualified separately below; its exact-head workflow is the remaining hosted gate |
 
 The existing consumer tests require tiny CPU training: two text-training steps
 and one tiny classifier epoch. They ran in an isolated verification virtualenv,
@@ -103,7 +103,7 @@ CI retains the existing upload-artifact step for these captures and sessions.
 No Standards Engine MCP was available. Actual adopted source policies, plan
 template and structural validator were used; this is not an Engine certificate.
 
-## Publication and remaining blocker
+## Publication and hosted qualification
 
 Implementation commit
 [`ac83d2c4d82165960e204eb39a72d542bc4a98ed`](https://github.com/MrScripty/Tuldok/commit/ac83d2c4d82165960e204eb39a72d542bc4a98ed)
@@ -122,11 +122,36 @@ assertion change or gate removal was attempted. The failing test is **unknown**;
 it must not be labelled the previously reported PR32/PR33 Pumas failure without
 accessible evidence. The green local results do not establish hosted success.
 
-Remaining integration gate: obtain authorized failure output for that run,
-classify and resolve the failure, and require the existing complete workflow to
-pass. This evidence-only successor retains all CI gates and does not claim a fix;
-its normal push-triggered run is a new observation, not proof that the earlier
-failure was resolved. The final handoff supplies its exact remote SHA/status.
+The documentation successor `0d4d69d5fac0348d7f4e7eadfbf5f01dd79ca376`
+triggered [run38174382414](https://github.com/MrScripty/Tuldok/actions/runs/38174382414),
+which also failed Python discovery. Permitted job/check metadata and annotations
+reported only exit code 1. The denied log endpoint was not retried.
+
+Qualification continued through local reproduction instead of treating log access
+as the end of diagnosis. A fresh tracked-only checkout, requirements-only virtual
+environment, Node24, and the workflow's default PostgreSQL17 image over
+127.0.0.1:5432 reproduced a fixture authentication defect. The independent-reader
+helper used `connection.info.dsn`, which omits passwords; the original Unix-socket
+fixture's password-file path had concealed this difference. Reusing the already
+validated `Metadata.dsn` preserves the configured credentials while still opening
+a separate connection. The caption-import rollback/committed-visibility
+assertions, runtime and CI gates are unchanged.
+
+The affected test passed with both explicit-password TCP (0.628s) and socket
+password-file (0.750s) configuration. Independent review confirmed that the helper
+retains separate-connection semantics and does not print or persist credentials.
+The initial clean reproduction also exposed an omitted Node PATH in the local
+harness; adding the installed Node24 directory fixed that unrelated setup error,
+with its affected QA test passing in0.182s. The hosted workflow already installs
+Node24, so no workflow change was needed.
+
+The fresh tracked-only checkout with only this helper correction passed all **458 tests in225.993s**, with no skips, using the workflow command `python -m unittest discover -s tests` and the explicit-password TCP fixture.
+
+The local host is Debian13, while hosted CI uses ubuntu-latest; PostgreSQL image,
+Python3.12.14, Node24, Pillow12.3.0 and psycopg3.3.6 match the selected workflow
+versions. Local reproduction does not identify an unseen hosted traceback. The
+final handoff records the helper-fix commit's exact remote SHA and terminal hosted
+result; only the complete successful workflow establishes hosted acceptance.
 
 For the separately owned M1 fixture UI, successful HTTP routes/response shapes and
 revision checks are stable. Dataset construction may take `dsn=` or inherit the

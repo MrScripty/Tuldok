@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** MB — locally qualified PostgreSQL published; hosted failure diagnosis blocked.
+**Current phase:** MB — PostgreSQL published; credential-aware test fixture and hosted qualification.
 
-**Next slice:** Obtain authorized failure output for hosted run38173918147, resolve the classified failure and requalify the unchanged full CI gate.
+**Next slice:** Finish local TCP-fixture and exact-head hosted qualification after correcting the independent-reader credential handling; preserve every existing CI gate.
 
 **Acceptance status:** `pending`
 
@@ -282,7 +282,7 @@ Additional admitted write set: `backup_metadata.py`, `tests/postgres_helpers.py`
 
 ## Blockers
 
-- MB local full regression, migration/restore and exact-commit independent review passed. Hosted run38173918147 failed Python discovery; log download returned HTTP403, so the failing test is unknown and hosted acceptance remains blocked. No personal-data cutover or merge readiness is claimed.
+- MB local full regression, migration/restore and exact-commit independent review passed. Initial hosted runs failed Python discovery; logs remain inaccessible. A clean TCP reproduction exposed and corrected independent-reader credential loss, with unchanged assertions. Exact-head hosted success remains required; denied logs were not retried. No personal-data cutover or merge readiness is claimed.
 - Standards Engine MCP is unavailable in this environment. The source-based template/validator/review evidence is reported precisely; do not claim an Engine route or certificate.
 - PR33 lifecycle CI is failing; any reuse needs a current resolved result or a separately diagnosed integration candidate. PR32 also currently reports lifecycle failure; its screenshots are preserved as branch work, not proof of this plan's future UI.
 - Pantograph embedding and production audio inference are unqualified for Tuldok. They block only their respective adapters, not M1 or local audio data work.

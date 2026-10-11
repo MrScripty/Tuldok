@@ -76,7 +76,8 @@ def observed_statements(db):
 @contextmanager
 def independent_reader(db):
     """A real second connection sees only committed catalog rows."""
-    with psycopg.connect(db.connection.info.dsn, autocommit=True) as reader:
+    # The validated original DSN retains credentials; connection.info.dsn redacts passwords.
+    with psycopg.connect(db.dsn, autocommit=True) as reader:
         schema = db.execute('SELECT current_schema()').fetchone()[0]
         reader.execute(sql.SQL('SET search_path TO {}').format(sql.Identifier(schema)))
         yield reader
