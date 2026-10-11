@@ -1,6 +1,36 @@
 # Tuldok
 
-A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
+A local dataset studio for importing, annotating and inspecting image, text,
+static mesh and simulation-sequence assets. The dataset workbench lives at
+`/workbench`; the book-corner studio remains available at `/` for capturing
+images, labeling four corners and exporting training data. Tuldok is a separate
+developer tool; it does not depend on Book-Be-Gone.
+
+## Dataset workbench
+
+These screenshots show the running application with authored and built-in
+synthetic sample data, captured from main commit
+[`1bb2c3a`](https://github.com/MrScripty/Tuldok/commit/1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c).
+They are actual browser captures, not UI mockups or pretrained inference results.
+
+![Dataset workbench showing an authored sample text and its saved draft scheduling class](docs/images/dataset-workbench-text.jpg)
+
+*Text annotation: explicit source groups, draft targets and review controls.*
+
+![Image detection editor showing a built-in synthetic rectangle sample with bounding boxes and target coordinates](docs/images/dataset-workbench-image.jpg)
+
+*Offline image sample: the built-in rectangle recipe supplies detection targets.*
+
+![Static mesh inspector showing an authored tetrahedron in three orthographic wireframe projections](docs/images/dataset-workbench-mesh.jpg)
+
+*Bounded static mesh inspection: native units, coordinate frame and three projections.*
+
+Mesh inspection is bounded static geometry inspection, not an interactive 3D
+simulation. Sequence support imports bounded accepted-state trajectories and
+exposes transport metadata and frame indices; it is not an animated simulation
+or a qualified training consumer. No audio workflow is available. Model-backed
+workflows require a separately configured provider and are not demonstrated here.
+See [capture details](docs/images/README.md) for sample sources and limitations.
 
 ## Run
 
@@ -10,9 +40,13 @@ Requires Python 3.10+ and Pillow. There is no JavaScript build step. Manual labe
     .venv/bin/pip install -r requirements.txt
     .venv/bin/python app.py
 
-Open http://127.0.0.1:8091. Change the port or data location with --port and --data. Camera access works on localhost; accessing a machine over the network requires HTTPS for browser camera access. Image import also works without camera access.
+Open http://127.0.0.1:8091/workbench for the dataset interface, or
+http://127.0.0.1:8091/ for the book-corner studio. Change the port or data location
+with --port and --data. Camera access works on localhost; accessing a machine
+over the network requires HTTPS for browser camera access. Image import also
+works without camera access.
 
-## Workflow
+## Book-corner workflow
 
 1. Set a book ID and recording session ID. Use a new session for a different lighting/background setup. Leave the book ID empty for no-book scenes.
 2. Start the camera and capture immediately or with the seven-second timer. Import JPEG, PNG, or WebP images individually or in batches.
