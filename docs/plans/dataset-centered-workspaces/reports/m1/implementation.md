@@ -83,3 +83,64 @@ Next slice: complete actual browser interaction, responsive/keyboard/error
 coverage, screenshot review and independent exact-source review, then report
 CI/integration readiness separately. The branch is retained for parent review;
 no task-created worktree or external dependency is removed.
+
+## Qualification additions
+
+The final UI uses a compact node canvas with drawn edges and an equivalent
+keyboard-operable node/connection form. Changing a parameter immediately marks
+the draft dirty and preview stale. Drafts may be saved while invalid; recording
+an authored run requires a valid complete starter graph. Unknown definitions,
+versions, malformed stored runs, conflicting tabs, and unsupported store
+versions fail explicitly. The fixture store envelope is now **v2**, retaining
+its original namespace so v1 checkpoint data is detected and left untouched
+until an explicit demo reset. Graph and authored record contracts remain v1.
+
+Browser history retains the selected dataset handle, fixture record/selection,
+and selected run. Current catalog context is re-read and exact revisions are
+checked on reload; missing or changed sources are reported instead of silently
+opening a different/newer record. This is navigation memory for the current
+catalog, not the persistent opaque dataset identity owned by MB. Unsaved live
+edits are never replayed as saved data. Overlapping restore generations, newer
+editor/selection/response intent, and failed refreshes retain current work and
+release the restoration gate. Existing annotation, rights and review controls
+remain their original owners and DOM elements.
+
+The additive `.github/workflows/workspaces-m1.yml` runs fixture contracts and the
+real browser gate on this branch, independently of the existing lifecycle job.
+It uploads ignored screenshots/receipt for 14 days. This is a narrow write-set
+extension to avoid serial editing of the storage worker's existing workflow;
+it does not disable or waive any existing job. A one-off pinned Prettier 3.6.2
+formatter was used from `/tmp` for readable new source. It adds no runtime/build
+or checked-in package dependency.
+
+Verified locally during implementation:
+
+- `python3 -m unittest discover -s tests`: **417 passed** (141.758 s).
+- Registered existing controller/static gate subset: **43 passed, zero failed**,
+  `python3 scripts/qualify_text_classification_local.py --only 'node (tests/test_|--check)' --python python3`;
+  receipt `build/qa/qualification/run-12l0po3s/gates/summary.json`.
+- Existing real Chromium `browser_workbench.cjs`, `browser_meshes.cjs` and
+  `browser_sequences.cjs`: **passed**, including original Data review/export,
+  legacy source/revision ownership, and narrow layouts.
+- `node tests/test_workspace_service.cjs` and both
+  `tests/test_workspace_contracts.py` cases: **passed**.
+- M1 browser walkthrough: actual pointer and keyboard activation, all seven
+  representation/capability examples, retained drafts/selection, native discard
+  dialog, empty Runs, parameter edits, undo/redo/clone, typed reconnect,
+  unavailable audio node, graph save/reload, stale validation, all five run
+  states, per-cell meaning, frozen/current correction linkage, fixture JSON
+  download, current catalog import/human review, responsive tools/focus,
+  revision-checked reload/conflict, failed restore refresh and subsequent
+  context updates, browser Back, run selection reload, unsupported fixture
+  store refusal. Fixture-only actions issued **zero API POSTs**.
+- Actual upstream `plan_contract.validate_plan`: **passed** for the updated
+  active/Verifying plan. No Standards Engine certification is claimed.
+
+The full training-bearing offline aggregate is **not passed**. Its prerequisite
+probe is recorded at `build/qa/qualification/run-z24othta/gates/`: the installed
+consumer environment lacks pinned TRL/datasets/transformers/Torch/accelerate/
+tokenizers. No installation, training or model acquisition was performed.
+This affects full merge qualification, not the isolated M1 fixture workflow.
+The parent must reconcile this evidence with its qualified integration
+consumer environment. Hosted CI and final independent source review are
+recorded separately below once observed; local checks do not imply them.

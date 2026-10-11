@@ -1,1 +1,112 @@
-.workspace-embedded body{padding:14px;margin:0;background:#fff;color:#202b3d;font-family:system-ui,sans-serif}.workspace-embedded body>header{display:none}.workspace-embedded main{display:grid;grid-template-columns:235px minmax(0,1fr);gap:14px}.workspace-embedded main>section{padding:12px;min-width:0;border-radius:8px}.workspace-embedded main>section>h2{font-size:15px}.workspace-embedded .embed-toolbar{display:flex;justify-content:flex-end;margin:8px 0}.workspace-embedded button{background:#365edb;border-color:#cad3e2;border-radius:6px;font-size:12px}.workspace-embedded .record button{background:transparent;color:#365edb}.workspace-embedded #asset-image{max-height:400px}.workspace-embedded #analysis{font-size:11px}.workspace-embedded dialog{width:min(700px,calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid #ccd5e1;border-radius:10px;color:inherit;padding:18px}.workspace-embedded dialog::backdrop{background:#182b4755}.workspace-embedded dialog>aside{display:block;border:0;padding:0;margin-top:16px}.workspace-embedded dialog>h2{font-size:18px}.workspace-embedded #notice{font-size:12px;min-height:34px;padding:7px 12px}.workspace-embedded details{margin-bottom:12px}.workspace-embedded input,.workspace-embedded select,.workspace-embedded textarea{font-size:12px;padding:7px}.workspace-embedded #record-provenance{font-size:11px}.workspace-embedded .record small{font-size:10px}.workspace-embedded #empty-editor{padding:25px 0;color:#627087}.workspace-embedded summary{font-size:12px}.workspace-embedded #filters label{font-size:11px}.workspace-embedded #filters .row{gap:4px}@media(max-width:700px){.workspace-embedded body{padding:8px}.workspace-embedded main{display:block}.workspace-embedded main>section{margin-bottom:12px}.workspace-embedded dialog>aside{display:block}}
+.workspace-embedded body {
+  padding: 14px;
+  margin: 0;
+  background: #fff;
+  color: #202b3d;
+  font-family: system-ui, sans-serif;
+}
+.workspace-embedded body > header {
+  display: none;
+}
+.workspace-embedded main {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  gap: 14px;
+}
+.workspace-embedded main > section {
+  padding: 12px;
+  min-width: 0;
+  border-radius: 8px;
+}
+.workspace-embedded main > section > h2 {
+  font-size: 15px;
+}
+.workspace-embedded .embed-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0;
+}
+.workspace-embedded button {
+  background: #365edb;
+  border-color: #cad3e2;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.workspace-embedded .record button {
+  background: transparent;
+  color: #365edb;
+}
+.workspace-embedded #asset-image {
+  max-height: 400px;
+}
+.workspace-embedded #analysis {
+  font-size: 11px;
+}
+.workspace-embedded dialog {
+  width: min(700px, calc(100% - 32px));
+  max-height: 85vh;
+  overflow: auto;
+  border: 1px solid #ccd5e1;
+  border-radius: 10px;
+  color: inherit;
+  padding: 18px;
+}
+.workspace-embedded dialog::backdrop {
+  background: #182b4755;
+}
+.workspace-embedded dialog > aside {
+  display: block;
+  border: 0;
+  padding: 0;
+  margin-top: 16px;
+}
+.workspace-embedded dialog > h2 {
+  font-size: 18px;
+}
+.workspace-embedded #notice {
+  font-size: 12px;
+  min-height: 34px;
+  padding: 7px 12px;
+}
+.workspace-embedded details {
+  margin-bottom: 12px;
+}
+.workspace-embedded input,
+.workspace-embedded select,
+.workspace-embedded textarea {
+  font-size: 12px;
+  padding: 7px;
+}
+.workspace-embedded #record-provenance {
+  font-size: 11px;
+}
+.workspace-embedded .record small {
+  font-size: 10px;
+}
+.workspace-embedded #empty-editor {
+  padding: 25px 0;
+  color: #627087;
+}
+.workspace-embedded summary {
+  font-size: 12px;
+}
+.workspace-embedded #filters label {
+  font-size: 11px;
+}
+.workspace-embedded #filters .row {
+  gap: 4px;
+}
+@media (max-width: 700px) {
+  .workspace-embedded body {
+    padding: 8px;
+  }
+  .workspace-embedded main {
+    display: block;
+  }
+  .workspace-embedded main > section {
+    margin-bottom: 12px;
+  }
+  .workspace-embedded dialog > aside {
+    display: block;
+  }
+}

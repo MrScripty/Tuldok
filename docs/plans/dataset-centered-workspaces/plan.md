@@ -1,10 +1,10 @@
 # Plan: Dataset-centered Data, Pipeline, and Runs workspaces
 
-**Plan status:** `Planned`
+**Plan status:** `Active`
 
-**Current phase:** Planning delivery; implementation has not started.
+**Current phase:** M1 implemented on an isolated UI branch; browser, independent review and CI qualification. MB has a separate worker and is not integrated here.
 
-**Next slice:** M1 — runnable three-workspace interface with labelled fixtures and screenshot review, after implementation is authorized.
+**Next slice:** Finish M1 source-bound review and CI evidence, then hand off the retained branch for parent integration review. M2 remains gated on accepted MB qualification.
 
 **Acceptance status:** `pending`
 
@@ -12,7 +12,7 @@
 
 **Issues:** [issues.md](issues.md)
 
-This is the canonical plan for the requested new workspace experience. The present task authorizes research, documentation, independent review, and commit/push on a planning branch only. It does not admit `start`, implement features, merge, deploy, download models, or run training. `Planned` records the requested three-workspace direction and sequence; conditional integration choices below remain explicit spikes. Existing feature plans retain authority for their own work.
+This is the canonical plan for the requested new workspace experience. The original planning task authorized planning publication only. The later delegated user instruction admits M1 `start` on `ui/dataset-workspaces-m1-20261011`; the [M1 implementation record](reports/m1/implementation.md) binds that authorization and exact source. It does not authorize main merge, deployment, model acquisition or real M2 execution. Conditional integration choices remain explicit spikes. Existing feature plans retain authority for their own work.
 
 ## Objective
 
@@ -46,7 +46,7 @@ These are future implementation claims, all pending. Planning/documentation chec
 
 ### Out Of Scope
 
-- Implementation in this planning task; main merges, deployment, paid services, credentials, user-computer access, model acquisition or training now.
+- Main merges, deployment, paid services, credentials, user-computer access, model acquisition or real M2 training in this M1 task.
 - A universal plugin framework, distributed scheduler, hosted collaboration, arbitrary shell nodes, general 3D training or claims that Pumas trains models.
 - Replacing existing image storage, review history, family allocation or frozen releases merely to introduce the new UI.
 
@@ -204,7 +204,9 @@ Every milestone delivers a runnable browser path before its backend expansion is
 
 **Acceptance gate:** Run local app and `node tests/browser_workspaces.cjs`; test navigation/back/reload, editable nodes and connections, stale validation and dirty-state handling. Manually inspect JPEG85 screenshots at 1440×900, 1024×768 and 390×844; keyboard-only import/record/form/graph-list/run navigation, focus restoration, zoom 200%, readable errors and no whole-page overflow. Store captures in ignored `build/qa/` with source revision and fixture labels. M1 passes A1's prototype scope, not A2. Replan if fitting the shell requires a framework rewrite or discards working editors.
 
-**Status:** `Planned`
+**Status:** `Verifying`
+
+M1 source, screenshot and verification evidence: [implementation record](reports/m1/implementation.md). The fixture service and opt-in Data adapter are presentation boundaries; no storage migration or real run API is included.
 
 ### Milestone MB: Qualify and migrate local metadata to PostgreSQL
 
@@ -276,7 +278,7 @@ Every milestone delivers a runnable browser path before its backend expansion is
 
 ## Blockers
 
-- No blocker to publishing the plan. Implementation is outside current authorization. Local PostgreSQL migration/lifecycle qualification remains a prerequisite to M2 persistence, not a completed capability.
+- M1 is authorized and implemented on its own branch; final review/CI evidence remains its qualification gate. Local PostgreSQL migration/lifecycle acceptance remains a prerequisite to M2 persistence; the separate migration branch is not presumed accepted or integrated.
 - Standards Engine MCP is unavailable in this environment. The source-based template/validator/review evidence is reported precisely; do not claim an Engine route or certificate.
 - PR33 lifecycle CI is failing; any reuse needs a current resolved result or a separately diagnosed integration candidate. PR32 also currently reports lifecycle failure; its screenshots are preserved as branch work, not proof of this plan's future UI.
 - Pantograph embedding and production audio inference are unqualified for Tuldok. They block only their respective adapters, not M1 or local audio data work.
@@ -317,4 +319,4 @@ Suggested bounded feature branches: `ui/dataset-workspaces`, `feature/local-post
 - Planning evidence: [research](reports/research.md), [verification](reports/verification.md), [independent review](reports/independent-review.md).
 - Existing durable ownership decision: [Dataset workbench ADR](../../decisions/dataset-workbench.md). Storage cutover ADR/runbook is finalized with MB qualification; the graph/run ADR follows S1/M2 admission. The new local-first/PostgreSQL decision is recorded here until then.
 - Deferred follow-ups: production ASR, extra training adapters, generic reusable subgraphs and expanded spatial/temporal formats; owners and revisit gates above.
-- Final status: `Planned`; publication of this document is not product acceptance.
+- Current overall status: `Active`; M1 prototype qualification does not satisfy real execution, migration or production modality acceptance. The [M1 report](reports/m1/implementation.md) records the bounded delivered behavior.
