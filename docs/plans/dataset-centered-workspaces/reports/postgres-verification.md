@@ -4,8 +4,8 @@ Scope: MB, existing metadata functionality only. Base is main
 `1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c`; the approved plan directory was
 selectively retained from `4d8a237e9221d8cc327a547df1abb846460ed1a3`.
 No PR, main merge, user database migration or deployment is authorized or performed.
-This report accompanies the implementation checkpoint; final remote SHA and hosted
-CI disposition are recorded in the publication successor.
+The implementation checkpoint and its later publication evidence are recorded
+below. Documentation-only successors do not change the qualified runtime tree.
 
 ## Result and limits
 
@@ -22,7 +22,7 @@ weights, real provider calls, paid inference or personal data were used.
 
 | Evidence | Result / actual scope |
 | --- | --- |
-| Independent focused storage suite | 41 tests passed in 17.800s: transaction, workers, importer/backup/restore |
+| Independent exact-commit suite | 44 tests passed in 30.253s on ac83d2c: transaction, workers, importer/backup/restore and both native-input negative cases |
 | Owner regression suite | 149 tests passed in 119.987s, all converted generation/proposal/import/search/selection owners |
 | Complete Python discovery | 457 tests passed in 267.628s, no skips; separately added retained-envelope mutation regression passed (1 test, 0.229s) |
 | Static JavaScript/controller checks | 46 commands passed: syntax, controllers, startup, fixture/artifact assertions |
@@ -33,7 +33,7 @@ weights, real provider calls, paid inference or personal data were used.
 | Two-server complete restore | Source metadata retained; restored same identity and reviewed text/history; exact frozen ZIP SHA; service stop/start plus new Python process reopen passed |
 | Actual Coding-Standards plan validator | Passed using adopted dcc56f26 source and real `validate_plan` function |
 | Compilation and diff whitespace | Passed |
-| Hosted CI | Pending first branch push; no current hosted success claimed |
+| Hosted CI | Run38173918147 on ac83d2c failed Python discovery; downstream JS/browser/consumer gates skipped. Authorized log download returned HTTP403. Failure is unclassified; no hosted success claimed |
 
 The existing consumer tests require tiny CPU training: two text-training steps
 and one tiny classifier epoch. They ran in an isolated verification virtualenv,
@@ -102,3 +102,35 @@ CI retains the existing upload-artifact step for these captures and sessions.
 
 No Standards Engine MCP was available. Actual adopted source policies, plan
 template and structural validator were used; this is not an Engine certificate.
+
+## Publication and remaining blocker
+
+Implementation commit
+[`ac83d2c4d82165960e204eb39a72d542bc4a98ed`](https://github.com/MrScripty/Tuldok/commit/ac83d2c4d82165960e204eb39a72d542bc4a98ed)
+was pushed to `feature/local-postgres-metadata-20261011`. `git ls-remote` verified
+that exact remote SHA. Main remained `1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c`.
+Independent review inspected that exact clean committed tree. No PR, merge,
+deployment, personal-data operation or unrelated branch change was performed.
+
+[Hosted run38173918147](https://github.com/MrScripty/Tuldok/actions/runs/38173918147)
+provisioned PostgreSQL and installed the application dependencies successfully,
+then failed `python -m unittest discover -s tests`. Its remaining controller,
+browser and consumer gates were skipped. One normal authorized
+`gh run view --log-failed` attempt returned HTTP403 at GitHub's log-download
+service. No alternative download path, permission workaround, hidden retry,
+assertion change or gate removal was attempted. The failing test is **unknown**;
+it must not be labelled the previously reported PR32/PR33 Pumas failure without
+accessible evidence. The green local results do not establish hosted success.
+
+Remaining integration gate: obtain authorized failure output for that run,
+classify and resolve the failure, and require the existing complete workflow to
+pass. This evidence-only successor retains all CI gates and does not claim a fix;
+its normal push-triggered run is a new observation, not proof that the earlier
+failure was resolved. The final handoff supplies its exact remote SHA/status.
+
+For the separately owned M1 fixture UI, successful HTTP routes/response shapes and
+revision checks are stable. Dataset construction may take `dsn=` or inherit the
+local environment, and outage/unknown-commit errors are explicit HTTP503. The
+[service contract](../../../contracts/local-storage.md) keeps real fixture setup
+behind Dataset/Workbench and fixture-only UI isolated in memory. No new SQLite
+or schema ownership is needed in M1.

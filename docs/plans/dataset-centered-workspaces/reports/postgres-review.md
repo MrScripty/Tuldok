@@ -4,8 +4,15 @@ Reviewer: independent agent, read-only ownership. Reviewed the integrated
 implementation against main1bb2c3a and adopted Coding-Standardsdcc56f26 persistence,
 contracts, concurrency, implementation and verification policies.
 
-Final disposition before checkpoint: **no remaining P1/P2 finding in the reviewed
-storage, transaction, migration, backup/restore and worker paths**.
+Exact-commit disposition for
+[`ac83d2c4d82165960e204eb39a72d542bc4a98ed`](https://github.com/MrScripty/Tuldok/commit/ac83d2c4d82165960e204eb39a72d542bc4a98ed):
+**no remaining P1/P2 finding in the reviewed storage, transaction, migration,
+backup/restore, worker and native-input boundary paths**. The working tree was
+clean and byte-identical to that commit before and after independent review.
+All three metadata suites plus both native malformed/Unicode rejection cases
+passed **44 tests in 30.253s**, including the new retained-envelope regression.
+Committed whitespace and frozen ZIP hash checks also passed. The earlier focused
+review below remains historical evidence.
 Independent real PostgreSQL qualification:41 tests passed in17.800s using:
 
 ```sh
@@ -52,5 +59,4 @@ quiescence, memory, platform and post-cutover rollback limits.
 
 Browser/consumer/full aggregate checks and hosted CI are integration-owner
 responsibilities and are recorded separately; this review does not assert their
-results. No tracked files were edited by the reviewer. Exact committed-source
-follow-up is recorded with the publication evidence.
+results. No tracked files were edited by the reviewer. Hosted failure and log-access limits are recorded with the publication evidence.
