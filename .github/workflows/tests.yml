@@ -1,7 +1,7 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals, feature/local-postgres-metadata-20261011, integration/workspaces-postgres-20261011]
+    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals, feature/local-postgres-metadata-20261011, integration/workspaces-postgres-20261011, feature/workspace-image-runs-20261011]
   pull_request:
 permissions:
   contents: read

@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** Controlled M1 + qualified MB integration at exact MB commit `9e94d69484218e64a3ee1bddcf4c61d8aa93df16`; combined application qualification precedes one real M2 image workflow.
+**Current phase:** M2 implementation on `feature/workspace-image-runs-20261011`, admitted from combined checkpoint `907da2f3df974802f167dd4ce1905159bf50126a` (all 93 lifecycle steps passed, no skips; focused M1 CI passed).
 
-**Next slice:** Qualify the combined existing application, resolve the bounded S1 graph choice, then implement one complete real image workflow under the newly delegated M2 authorization.
+**Next slice:** Implement and qualify one complete real image-classification workflow using the [bounded S1 graph choice](reports/m2/graph-choice.md).
 
 **Acceptance status:** `pending`
 
@@ -228,11 +228,13 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Allowed write set:** `pipeline.py`, `runs.py`, `image_training.py`, `requirements-training.txt`, `docs/contracts/workspace-pipeline.md`, `docs/contracts/workspace-runs.md`; focused integration in `app.py`, existing `workbench.py`/`dataset_releases.py` only where reference/admission APIs require it; M1 UI files; `tests/test_pipeline.py`, `tests/test_runs.py`, `tests/test_image_training.py`, `tests/browser_workspace_image_run.cjs`, `tests/fixtures/workspaces/`, affected `.github/workflows/tests.yml` registration; README and plan reports. Preserve `tests/fixtures/train_image_classifier.py` and its pinned hash as an oracle; production adapter is separately owned.
 
+**Admission refinement (2026-10-11):** The independently owned M2 storage extension adds `upgrade_metadata.py`, narrow `metadata.py`/`backup_metadata.py`/legacy receipt compatibility changes, `tests/test_workspace_metadata.py`, and `docs/contracts/workspace-storage.md`. It creates exactly three graph/run/exposure tables under explicit schema v2; existing v1 catalogs require a quiesced verified upgrade. The root owns HTTP/UI integration and CI; separate workers own storage, pipeline/runs and trainer, with independent review. No worker replaces an existing modality owner or the historical trainer oracle.
+
 **Tasks:** After MB acceptance, persist graph/run metadata additively in PostgreSQL and large artifacts in managed local files; implement release-validation/export nodes first and immediately show real preview/artifacts in Runs. Then add the closed TinyCNN CPU adapter/evaluator, bounded worker and result linkage. Pin Torch 2.8.0/torchvision 0.23.0/scikit-learn 1.7.2 in an optional runtime with an explicit install procedure; no pretrained path, model download or automatic environment installation. Add per-example prediction output and lifecycle support absent from the historical trainer fixture. Keep all advertised M2 graph nodes real. Implement safe completed-stage reuse, fresh training attempts and explicit interruption/cancellation semantics.
 
 **Acceptance gate:** Browser imports/reviews a small two-class corpus with independent families and valid coverage, previews/fixes a split blocker, freezes/downloads a release, changes an actual trainer parameter in the graph, saves/reloads/submits, observes the real child, and opens metrics/checkpoint/logs/predictions. Correct one validation example through a result link and produce a distinct new release without changing old hashes. Inspect/reuse a test example in a separate negative scenario and verify its visible exposed/reused status cannot be presented as fresh holdout evidence. Repeat after application restart with outbound network disabled; verify duplicate submit, lost acknowledgement, graph edits during execution, late responses, worker failure, cancel/confirmed drain, interrupted training restart, artifact tamper and stale source/graph. Actual pinned ImageFolder and a scratch CPU epoch are required in the later implementation environment; fixture values cannot satisfy this. Capture real Data/Pipeline/Running/Results/correction states before acceptance. Replan if bounds, dependency footprint, consumer compatibility or chosen graph transport invalidate this small path.
 
-**Status:** `Planned`
+**Status:** `Implementing`
 
 ### Milestone 3: Existing image/text breadth and reusable recipes
 

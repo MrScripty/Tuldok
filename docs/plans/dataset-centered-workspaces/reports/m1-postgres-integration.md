@@ -14,8 +14,7 @@ merge or deployment is authorized.
 The actual merge retains all runtime owners and resolves only the three shared
 plan records. MB's historical I11 is integrated I12; the separate UI I11 stays
 distinct. Both existing lifecycle and M1 workflows register the integration
-branch, and the M1 job gains its own isolated PostgreSQL service. Combined
-qualification is pending; neither the previous UI nor MB run substitutes for it.
+branch, and the M1 job gains its own isolated PostgreSQL service. Combined qualification passed at the later exact checkpoint below; neither the previous UI nor MB run substituted for it.
 
 Current combined launch requires the MB runbook setup with a **fresh catalog**:
 
@@ -50,6 +49,17 @@ The integration fix puts the workspace link inside the existing heading group,
 preserving the original two header items and all controls. The original browser
 gate passed locally again. No failure suppression or assertion relaxation is
 used; the fixed exact source requires a new complete hosted run.
+
+### Qualified combined source
+
+Exact `907da2f3df974802f167dd4ce1905159bf50126a` passed
+[lifecycle run38176685353](https://github.com/MrScripty/Tuldok/actions/runs/38176685353):
+all 93 steps successful, zero skipped.
+[M1 run38176685355](https://github.com/MrScripty/Tuldok/actions/runs/38176685355)
+also passed. Independent review found no actionable runtime findings and
+verified the narrow header fix at 320/390/1024px. The integration branch remains
+at this source; one bounded M2 workflow starts on its own dependent branch.
+Maintainer product acceptance and native zoom evidence remain separate from CI.
 
 ## Status and exact inputs
 

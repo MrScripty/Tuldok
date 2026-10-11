@@ -87,3 +87,12 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 
 - Parent explicitly admitted MB commit `9e94d69484218e64a3ee1bddcf4c61d8aa93df16`, hosted run38175261609 (93 successful steps, no skips), and local TCP458 tests. The prior pending handoff is satisfied. Controlled integration proceeds on the separate integration branch; no personal dataset is touched.
 - The same instruction authorizes one complete real M2 image classification workflow only after combined existing-app qualification. S1 graph choice, owned persistence and isolated CPU training remain explicit evidence gates. No main merge, deployment or broader modality execution is admitted.
+
+
+## 2026-10-11 — combined qualification and bounded M2 start
+
+- Exact combined `907da2f3df974802f167dd4ce1905159bf50126a` passed [lifecycle run38176685353](https://github.com/MrScripty/Tuldok/actions/runs/38176685353), all 93 steps with no skips, and [M1 run38176685355](https://github.com/MrScripty/Tuldok/actions/runs/38176685355). The independent reviewer found no actionable runtime issues, checked header widths 320/390/1024 and confirmed MB owners unchanged.
+- Root created dependent branch `feature/workspace-image-runs-20261011`; the integration branch remains at the qualified checkpoint. S1 selects the explicitly permitted fixed DAG after pinned Pantograph host inspection. No native Pantograph execution is claimed.
+- M2 workers now have disjoint implementation ownership: explicit PostgreSQL v1→v2 upgrade/backup compatibility; fixed graph/run supervision; closed scratch CPU trainer. Root owns routes, presentation, browser acceptance and shared evidence. Narrow storage write-set refinement is recorded in M2.
+- Bound first workflow: at most 128 authored/owned images, eight classes, 40 MiB frozen ZIP; TinyCNN on one CPU thread, 96px inputs, epochs1–5/batch1–16/learning rate1e-5–1e-2. Existing image export contract remains authoritative. No pretrained weights or network execution services.
+- This admission is not M2 acceptance. Immutable admission, actual execution/results, lifecycle/recovery, exposure/correction, offline/reopen, browser and independent review gates remain open.
