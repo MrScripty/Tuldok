@@ -43,3 +43,7 @@ The request supplies the product direction; this task performs bounded source fe
 ## Publication boundary
 
 Commit and push only the planning branch; verify its remote SHA and retain it for review. No draft PR is opened in this task: the unrestricted `pull_request` workflow executes the actual trainer consumer and installs its runtime, which conflicts with the explicit no-training task boundary. Opening a PR is conditional in the request and is not necessary to publish the plan. No PR approval rejection occurred and no alternative route was used to bypass one. The branch can be opened for review later with authorization for its CI effects.
+
+## Source-review clarification checks
+
+The narrow follow-up was checked against pinned Pantograph `docs/headless-workflow.md` (the UniFFI attribution store and publication lifecycle). The actual upstream plan validator, affected relative/pinned-source links, Markdown fences, staged write-set and whitespace checks were repeated successfully. The original independent review remains bound to its recorded original plan digest; the follow-up implements the separately supplied source-review findings. No application or CI tests were run.

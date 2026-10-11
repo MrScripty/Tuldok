@@ -2,7 +2,7 @@
 
 Independent read-only reviewer: `independent_plan_review`, 2026-10-11. No tracked files were edited by the reviewer. Result: **no remaining material blocker to publishing the documentation branch**. This is a planning review, not product acceptance.
 
-Reviewed plan content SHA-256: `a8fc1787c92a7cd2d667cf90ead0dcb77cd2bd5b4133ed75fc328cf9ae04923d`.
+Original reviewed plan content SHA-256: `a8fc1787c92a7cd2d667cf90ead0dcb77cd2bd5b4133ed75fc328cf9ae04923d`.
 
 ## Findings and dispositions
 
@@ -24,3 +24,7 @@ Reviewed plan content SHA-256: `a8fc1787c92a7cd2d667cf90ead0dcb77cd2bd5b4133ed75
 - Planning/Discovery scope is explicit: the delegated intent already establishes the workspaces and plan-only task. Source investigation separates observations from conditional choices; S1–S5 retain questions and exit criteria. No substantial interactive discovery session or separate HTML discovery artifact was performed; the Mermaid flow does not claim that broader process.
 
 Standards Engine MCP was unavailable. This is source-based template, structural and independent semantic review, not Engine certification. No application, training or native-runtime test was executed. Final staged-scope review and remote publication verification remain the publication author's responsibility.
+
+## Source-review clarification follow-up
+
+The delegated second independent source review reported no material blocker and requested two narrow clarifications: UniFFI executable-validation publication and republication after runtime restart; validation-first correction examples with exposed/reused test data distinguished from fresh holdout. Both are now explicit in S1, the Pantograph boundary, Runs/split semantics and the M2 gate. The publication author rechecked the pinned Pantograph source and reran affected documentation checks; this addendum does not claim another full independent review of the revised plan.

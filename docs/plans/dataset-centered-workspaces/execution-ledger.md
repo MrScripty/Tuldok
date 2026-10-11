@@ -12,3 +12,9 @@
 - Independent review and final checks/publication are recorded in [verification](reports/verification.md) and [review](reports/independent-review.md). Product milestones remain Planned and acceptance pending.
 - Independent review found no remaining material blocker after correcting artifact-reuse identity, M1 CI registration, exact controller write sets and fixture isolation. Actual structural validation, local/pinned source links, Markdown fences and whitespace checks passed. The plan content reviewed independently is SHA-256 `a8fc1787c92a7cd2d667cf90ead0dcb77cd2bd5b4133ed75fc328cf9ae04923d`.
 - Publication boundary is the planning branch only. A draft PR would start the existing training-bearing CI, so it is intentionally omitted under the present no-training constraint. No approval was rejected or bypassed. The final delivery records the pushed commit/remote SHA; this ledger does not attempt to embed its own future commit hash.
+
+## 2026-10-11 — source-review clarifications
+
+- Applied the delegated second independent source review: made UniFFI executable-validation snapshot publication and republication after runtime restart explicit; made validation-set correction the default and required exposed/reused test data to remain distinguishable from a fresh holdout.
+- Rechecked Pantograph `256b6b94` headless-workflow source. Updated only the plan and its research/review/verification records; retained the original independent-review digest as historical evidence.
+- Repeated the upstream plan validator, affected Markdown/source links and staged whitespace/scope checks before committing on the same planning branch. No implementation, PR, CI run or training was started.
