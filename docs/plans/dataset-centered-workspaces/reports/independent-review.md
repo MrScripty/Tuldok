@@ -1,0 +1,26 @@
+# Independent planning review
+
+Independent read-only reviewer: `independent_plan_review`, 2026-10-11. No tracked files were edited by the reviewer. Result: **no remaining material blocker to publishing the documentation branch**. This is a planning review, not product acceptance.
+
+Reviewed plan content SHA-256: `a8fc1787c92a7cd2d667cf90ead0dcb77cd2bd5b4133ed75fc328cf9ae04923d`.
+
+## Findings and dispositions
+
+| Finding | Disposition |
+| --- | --- |
+| Design probe labels did not initially match the actual template | Corrected labels; upstream `plan_contract.validate_plan` passes without modification |
+| Proposed stage reuse key omitted upstream artifact and execution-environment meaning | Bound reuse to executable graph digest, upstream hashes, release, node/adapter/dependency versions, parameters and seed |
+| M1 allowed write set omitted registration of new checks in feature CI | Added narrow `.github/workflows/tests.yml` registration |
+| M3 named controllers generically | Replaced with concrete existing controller paths |
+| Fixture UI could be mistaken for a production result source | Explicit isolated demo store and prohibition on demo-result admission into real data/releases |
+
+## Independent observations
+
+- Actual standards structural validator and `git diff --check` passed. Checked relative links, pinned source paths and README discoverability; no missing targets.
+- Applicable standards/template/validator files are unchanged between adopted `dcc56f26e884ade260770beceba2501d3746200d` and fetched `188beda1fa477d21d576c233dd8c7f4c4c267d23`.
+- The actual image exporter, reader check and TinyCNN fixture support the first-workflow premise. The plan correctly leaves production lifecycle and per-example output unimplemented.
+- Pantograph execution is workflow-service owned; Svelte alone is insufficient. Pumas uncertain-outcome/correlation semantics and experimental audio restriction are preserved. Six primary product pages support the research patterns without proving integration compatibility.
+- UI-first runnable evidence, one complete image workflow before breadth, audio time/channel/provenance, distinct spatial/temporal contracts, migration/rollback and per-branch gates meet the request.
+- Planning/Discovery scope is explicit: the delegated intent already establishes the workspaces and plan-only task. Source investigation separates observations from conditional choices; S1–S5 retain questions and exit criteria. No substantial interactive discovery session or separate HTML discovery artifact was performed; the Mermaid flow does not claim that broader process.
+
+Standards Engine MCP was unavailable. This is source-based template, structural and independent semantic review, not Engine certification. No application, training or native-runtime test was executed. Final staged-scope review and remote publication verification remain the publication author's responsibility.

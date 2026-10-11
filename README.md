@@ -2,6 +2,8 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
+Planned direction: [dataset-centered Data, Pipeline, and Runs workspaces](docs/plans/dataset-centered-workspaces/plan.md), with interface-first milestones, a complete first workflow, modality contracts, and separate feature branches. This is an implementation plan, not a claim that those workspaces are available yet.
+
 ## Run
 
 Requires Python 3.10+ and Pillow. There is no JavaScript build step. Manual labeling needs no external service.
