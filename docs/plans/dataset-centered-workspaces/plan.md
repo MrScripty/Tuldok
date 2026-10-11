@@ -2,11 +2,11 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M2 qualification on `feature/workspace-image-runs-20261011`, admitted from combined checkpoint `907da2f3df974802f167dd4ce1905159bf50126a` (all 93 lifecycle steps passed, no skips; focused M1 CI passed).
+**Current phase:** M1/MB/M2 technical qualification complete. Exact checkpoint `acac0d32e89b67fa5d9b351ea058152adbe196e3` on `feature/workspace-image-runs-20261011` passed all 98 lifecycle steps with zero skips and focused M1 CI; independent source/test review accepted.
 
-**Next slice:** Finish exact-source lifecycle CI and independent review for the implemented real image workflow; see [M2 verification](reports/m2/verification.md).
+**Next slice:** Parent/integration owner can proceed to the next bounded M3 image/text slice from this runnable checkpoint. Broader modality and external-runtime gates remain separate; see [M2 verification](reports/m2/verification.md).
 
-**Acceptance status:** `pending`
+**Acceptance status:** `partial`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -24,16 +24,16 @@ The first complete workflow is: import owned images → classify and human-revie
 
 ## Objective Acceptance
 
-Overall acceptance remains pending. The M1 prototype has focused implementation evidence below; broader production claims retain their own gates. Planning/documentation checks are recorded separately in [verification](reports/verification.md); they do not satisfy product acceptance.
+Acceptance is partial: the bounded M1/MB/M2 workflow has qualified implementation evidence below; broader modality and integration claims retain their own gates. Planning/documentation checks are recorded separately in [verification](reports/verification.md); they do not satisfy product acceptance.
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| A1 | Runnable Data/Pipeline/Runs navigation retains dataset, selection, dirty edits, graph and run context; desktop/narrow/keyboard walkthrough has readable screenshots and labelled fixture states | user-workflow | representative | either | pending | [M1 reviewed source/browser/CI evidence](reports/m1/implementation.md); maintainer acceptance pending |
-| A2 | Real image import/review/frozen release → edited graph → CPU training/evaluation → immutable results → correction/new release works after application restart | user-workflow | representative | automated | pending | M2 browser + subprocess + consumer proof |
-| A3 | Revisions, rights, family splits, transform fit scope and artifact hashes remain correct across stale edits, source changes, cancellation and restart | contract | representative | automated | pending | M2 owner tests and migration/recovery cases |
-| A4 | Versioned typed graphs, named recipes, node previews, invalid connections, missing capabilities and stale validation produce the declared outcomes; fixture nodes cannot execute as real nodes | contract | not-applicable | automated | pending | M1/M2 graph cases |
+| A1 | Runnable Data/Pipeline/Runs navigation retains dataset, selection, dirty edits, graph and run context; desktop/narrow/keyboard walkthrough has readable screenshots and labelled fixture states | user-workflow | representative | either | satisfied | [M1/MB/M2 qualification and limits](reports/m2/verification.md), [independent review](reports/m2/independent-review.md) |
+| A2 | Real image import/review/frozen release → edited graph → CPU training/evaluation → immutable results → correction/new release works after application restart | user-workflow | representative | automated | satisfied | [M1/MB/M2 qualification and limits](reports/m2/verification.md), [independent review](reports/m2/independent-review.md) |
+| A3 | Revisions, rights, family splits, transform fit scope and artifact hashes remain correct across stale edits, source changes, cancellation and restart | contract | representative | automated | satisfied | [M1/MB/M2 qualification and limits](reports/m2/verification.md), [independent review](reports/m2/independent-review.md) |
+| A4 | Versioned typed graphs, named recipes, node previews, invalid connections, missing capabilities and stale validation produce the declared outcomes; fixture nodes cannot execute as real nodes | contract | not-applicable | automated | satisfied | [M1/MB/M2 qualification and limits](reports/m2/verification.md), [independent review](reports/m2/independent-review.md) |
 | A5 | Image/text/audio/3D contracts have valid and invalid fixtures from M1; real task editors and import/review/export paths pass their modality-specific gates before advertising support | user-workflow | representative | either | pending | M3/M4/M5 walkthroughs |
-| A6 | Existing corners, acquisition, proposal recovery, saved selections/searches and releases remain usable; migration/rollback preserves IDs, bytes and history | integration | representative | automated | pending | MB/M2 and affected milestone regressions |
+| A6 | Existing corners, acquisition, proposal recovery, saved selections/searches and releases remain usable; migration/rollback preserves IDs, bytes and history | integration | representative | automated | satisfied | [M1/MB/M2 qualification and limits](reports/m2/verification.md), [independent review](reports/m2/independent-review.md) |
 | A7 | Each feature branch has applicable standards review, CI, consumer checks, navigation/responsive evidence and reviewed screenshots; external integrations pass pinned producer/consumer gates before enablement | release-artifact | representative | either | pending | Per-branch review record and CI |
 | A8 | The supported workflow runs on one machine with outbound network disabled after local installation; metadata/artifact backup restores a usable catalog, and PostgreSQL migration preserves existing data and behavior | system | representative | automated | pending | MB local lifecycle/migration gates; M2 and later offline workflows |
 
@@ -158,12 +158,12 @@ The [research report](reports/research.md) distinguishes inspected code from run
 
 | Assumption or claim | Decision affected | Owner | Executable procedure | Required environment | Status/evidence |
 | --- | --- | --- | --- | --- | --- |
-| S1 Pantograph can be economically embedded in this Python/plain-JS application | Adopt graph UI, execution service, both or neither | Integration owner | One bounded engineering-day spike: pin producer; build minimal consumer; discover definitions, edit/save/reload, reject invalid/stale connection, preflight; for UniFFI, refresh the current graph validation summary and publish the executable-validation snapshot before session execution, then repeat validation/publication after runtime restart. Create an execution session, submit a no-model operation, inspect artifact/status, cancel and close. Record transport, package/license, build footprint and lifecycle gaps. Stop with accept/reject and exact supported surface. | Supported Rust runtime plus a demonstrated host transport; no models | Source inspected, integration pending; M1 does not wait |
-| S2 Small CPU trainer is a sufficient first result path | M2 adapter and resource limits | Run owner | Validate existing export with pinned real reader, run one tiny scratch epoch in a future authorized implementation environment, verify checkpoint/metrics/prediction linkage and interrupt/restart. Measure actual time/RAM; stop when this small workflow passes or bound is disproved. | CPU Torch 2.8.0, torchvision 0.23.0, scikit-learn 1.7.2 | Fixture/test code inspected; not run in this task |
+| S1 Pantograph can be economically embedded in this Python/plain-JS application | Adopt graph UI, execution service, both or neither | Integration owner | One bounded engineering-day spike: pin producer; build minimal consumer; discover definitions, edit/save/reload, reject invalid/stale connection, preflight; for UniFFI, refresh the current graph validation summary and publish the executable-validation snapshot before session execution, then repeat validation/publication after runtime restart. Create an execution session, submit a no-model operation, inspect artifact/status, cancel and close. Record transport, package/license, build footprint and lifecycle gaps. Stop with accept/reject and exact supported surface. | Supported Rust runtime plus a demonstrated host transport; no models | Bounded fallback selected after pinned-source inspection; [S1 decision](reports/m2/graph-choice.md). No native Pantograph qualification |
+| S2 Small CPU trainer is a sufficient first result path | M2 adapter and resource limits | Run owner | Validate existing export with pinned real reader, run one tiny scratch epoch in a future authorized implementation environment, verify checkpoint/metrics/prediction linkage and interrupt/restart. Measure actual time/RAM; stop when this small workflow passes or bound is disproved. | CPU Torch 2.8.0, torchvision 0.23.0, scikit-learn 1.7.2 | Qualified bounded real CPU adapter; 2-epoch authored run measured 3.03 seconds and 398,884,864 peak RSS bytes; [evidence](reports/m2/verification.md) |
 | S3 Audio sample/time mapping is sufficient | M4 storage/editor/export | Audio owner | Stereo WAV with known impulses and rates; import, select channel/interval, export, cold-read exact frames; test crop/resample mapping including end boundaries. Choose duration/byte limits from measured decoding. | Browser audio + WAV reader | Pending; no ASR dependency |
 | S4 Existing 3D branch and a bounded volume format meet separate needs | M5 subtype admission | 3D owner | Reconcile current branch diff and accepted tests; for volume, pick one actual consumer and independently read an anisotropic/oriented tiny grid, verify slices and spatial coordinates. Record format/license/limits and reject unsupported forms. | Selected parser/viewer; no simulation/training | Pending; main bounds known |
-| S5 Compact UI can be incorporated safely | M1 overlapping static files | UI/integration owner | Re-read PR33 current diff and check results, preserve useful layout/keyboard behavior, run new shell workflow and inherited affected browser tests on the combined candidate. | Browser and CI | Pending; PR33 CI failure visible |
-| S6 Local PostgreSQL preserves existing application semantics | Metadata cutover before graph/run persistence | Storage/integration owner | Qualify local install/start/stop/reopen and supported versions; migrate complete current/older SQLite fixtures into a new DB; run all-owner fidelity, transaction, two-connection conflict/idempotency and metadata+artifact restore gates in MB. Stop with verified cutover evidence or a named blocker/re-plan; static counts provide no duration estimate. | Local PostgreSQL and selected Python driver, filesystem and browser; no external service | Source audit complete; runtime/migration qualification pending |
+| S5 Compact UI can be incorporated safely | M1 overlapping static files | UI/integration owner | Re-read PR33 current diff and check results, preserve useful layout/keyboard behavior, run new shell workflow and inherited affected browser tests on the combined candidate. | Browser and CI | Isolated compact workspace qualified; PR33 was inspected, never merged/copied, and remains separate |
+| S6 Local PostgreSQL preserves existing application semantics | Metadata cutover before graph/run persistence | Storage/integration owner | Qualify local install/start/stop/reopen and supported versions; migrate complete current/older SQLite fixtures into a new DB; run all-owner fidelity, transaction, two-connection conflict/idempotency and metadata+artifact restore gates in MB. Stop with verified cutover evidence or a named blocker/re-plan; static counts provide no duration estimate. | Local PostgreSQL and selected Python driver, filesystem and browser; no external service | Parent accepted exact MB9e94d69; combined907da2f and M2acac0d3 lifecycle gates passed; explicit v1→v2 extension qualified |
 
 **Pantograph decision boundary.** At `256b6b94ece4dbbaa1fb236bc4092ad08aa63525`, `pantograph-workflow-service` owns graph and execution contracts; Svelte graph is a UI projection with Svelte 5 and `@xyflow/svelte` peers. `WorkflowRunRequest` carries workflow ID/version, typed port bindings and output targets. Graph edits use sessions/revisions. The documented flow is discovery → preflight/validation → execution session → submit/status/artifacts → close/shutdown, with binding/runtime remediation still acknowledged. For UniFFI, `workflow_graph_refresh_current_validation_summary` must allow submission, then `publish_graph_session_executable_validation_snapshot` binds the saved workflow/version and current graph/validation session before `workflow_run_session`. The attribution store is ephemeral: repeat validation and publication after `FfiPantographRuntime` restarts. Saving a graph or preflight alone is insufficient; missing/stale publication must fail closed. The frontend HTTP adapter is a frontend URL proxy, not an established Python/headless REST bridge. A generic process node is not a training lifecycle. If S1 passes, Pantograph owns graph semantics and scheduling behind one Tuldok adapter; do not retain a second semantic validator/scheduler. If it fails, keep a small Tuldok-owned fixed DAG for existing local operations and record why; defer permanent Pantograph dependencies. M1's fixture editor is disposable presentation work, not an alternative engine.
 
@@ -206,7 +206,7 @@ Every milestone delivers a runnable browser path before its backend expansion is
 
 **Acceptance gate:** Run local app and `node tests/browser_workspaces.cjs`; test navigation/back/reload, editable nodes and connections, stale validation and dirty-state handling. Manually inspect JPEG85 screenshots at 1440×900, 1024×768 and 390×844; keyboard-only import/record/form/graph-list/run navigation, focus restoration, zoom 200%, readable errors and no whole-page overflow. Store captures in ignored `build/qa/` with source revision and fixture labels. M1 passes A1's prototype scope, not A2. Replan if fitting the shell requires a framework rewrite or discards working editors.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 M1 source, screenshot and verification evidence: [implementation record](reports/m1/implementation.md) and [accepted independent review](reports/m1/independent-review.md). Focused CI passed on source `f8e8ea4`; the combined `907da2f` passed all 93 lifecycle steps. Native 200% zoom of all three current-catalog workspaces passed on clean M2 source `f725bd1`; screenshots remain available for maintainer review. The fixture service and opt-in Data adapter are presentation boundaries; no storage migration or real run API is included.
 
@@ -220,7 +220,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Acceptance gate:** Real current and older fixtures cover every metadata owner; independent comparison verifies values, ordering, hashes and references. Prove nested commit/rollback, preview savepoint rollback, lost post-commit responses, and stale-save/idempotency behavior using two independent DB connections. Run existing import/edit/review/select/preview/release/reopen/proposal recovery with equivalent assertions, replacing SQLite-only test mechanics without weakening them. Isolate PostgreSQL test databases in CI. Demonstrate offline local startup/shutdown/reopen, complete metadata+artifact backup/restore and browser screenshots of the existing working UI. Switch only after verification; preserve the source backup. Replan on unsupported retained values, altered snapshot semantics, unqualified lifecycle or unbounded migration scope; do not estimate delivery days from static call counts.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 ### Milestone 2: One complete real image workflow
 
@@ -234,7 +234,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Acceptance gate:** Browser imports/reviews a small two-class corpus with independent families and valid coverage, previews/fixes a split blocker, freezes/downloads a release, changes an actual trainer parameter in the graph, saves/reloads/submits, observes the real child, and opens metrics/checkpoint/logs/predictions. Correct one validation example through a result link and produce a distinct new release without changing old hashes. Inspect/reuse a test example in a separate negative scenario and verify its visible exposed/reused status cannot be presented as fresh holdout evidence. Repeat after application restart with outbound network disabled; verify duplicate submit, lost acknowledgement, graph edits during execution, late responses, worker failure, cancel/confirmed drain, interrupted training restart, artifact tamper and stale source/graph. Actual pinned ImageFolder and a scratch CPU epoch are required in the later implementation environment; fixture values cannot satisfy this. Capture real Data/Pipeline/Running/Results/correction states before acceptance. Replan if bounds, dependency footprint, consumer compatibility or chosen graph transport invalidate this small path.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 ### Milestone 3: Existing image/text breadth and reusable recipes
 
@@ -282,7 +282,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 ## Blockers
 
-- Original M1 full-consumer and MB prerequisite gates were satisfied by parent-admitted MB and the combined `907da2f` lifecycle run. Current M2 final CI is a separate open gate; no broader modality acceptance is inferred.
+- Original M1 full-consumer and MB prerequisite gates were satisfied by parent-admitted MB and the combined `907da2f` lifecycle run. Current M2 final CI also passed on `acac0d3`; no broader modality acceptance is inferred.
 - Standards Engine MCP is unavailable in this environment. The source-based template/validator/review evidence is reported precisely; do not claim an Engine route or certificate.
 - PR33 lifecycle CI is failing; any reuse needs a current resolved result or a separately diagnosed integration candidate. PR32 also currently reports lifecycle failure; its screenshots are preserved as branch work, not proof of this plan's future UI.
 - Pantograph embedding and production audio inference are unqualified for Tuldok. They block only their respective adapters, not M1 or local audio data work.
@@ -319,8 +319,8 @@ Suggested bounded feature branches: `ui/dataset-workspaces`, `feature/local-post
 
 ## Final Acceptance
 
-- Acceptance status: `pending` for implementation; all product claims remain open.
+- Acceptance status: `partial`. M1, MB and the bounded real M2 image workflow are technically qualified. Broader modality delivery, all future branch qualification and the wider offline matrix remain open under A5/A7/A8.
 - Planning evidence: [research](reports/research.md), [verification](reports/verification.md), [independent review](reports/independent-review.md).
 - Existing durable ownership decision: [Dataset workbench ADR](../../decisions/dataset-workbench.md). Storage cutover ADR/runbook is finalized with MB qualification; the graph/run ADR follows S1/M2 admission. The new local-first/PostgreSQL decision is recorded here until then.
 - Deferred follow-ups: production ASR, extra training adapters, generic reusable subgraphs and expanded spatial/temporal formats; owners and revisit gates above.
-- Current overall status: `Active`; M1 prototype qualification does not satisfy real execution, migration or production modality acceptance. The [M1 report](reports/m1/implementation.md) records the bounded delivered behavior.
+- Current overall status: `Active`; accepted M1/MB/M2 evidence is recorded in the [M2 report](reports/m2/verification.md). M3/M4/M5 and native external adapters remain outside this completed slice. No main merge or deployment is authorized by technical acceptance.

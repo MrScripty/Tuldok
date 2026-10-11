@@ -15,7 +15,19 @@
 | I11 | Medium: M1 environment lacks pinned TRL/datasets/transformers/Torch/accelerate/tokenizers for the full training-bearing consumer aggregate; prerequisite receipt `build/qa/qualification/run-z24othta/gates/summary.json` is blocked | Parent/integration owner; full merge qualification | M1 contracts/browser, 417 Python tests, 43 existing controller/static gates, legacy browsers, independent review and focused hosted CI passed. Run the remaining registered consumer gates in the qualified integration environment; do not infer aggregate success or acquire large runtimes/models in this UI task | Combined candidate qualification before merge |
 | I12 | High: initial hosted runs38173918147 and38174382414 failed Python discovery; log download returned HTTP403 | Storage/integration owner; MB qualification | Clean TCP reproduction identified credential loss in the independent-reader fixture; corrected to use validated Metadata.dsn without changing assertions. Both authentication styles pass. Qualified by parent handoff at 9e94d69484218e64a3ee1bddcf4c61d8aa93df16 and successful run38175261609; preserve no guessed attribution to earlier Pumas failures or denied-log retry | Exact-head hosted result for the helper correction |
 
-These are bounded planning findings, not a discovered systemic defect being repaired in this task. The plan's ownership review prevents introducing duplicate data/graph authority. All future acceptance claims remain pending.
+These rows retain the original bounded planning findings. The plan's ownership
+review prevents introducing duplicate data/graph authority. Their current
+M1/MB/M2 resolution is recorded below; later modality claims remain pending.
 
 
 Integrated I12 retains MB branch issue I11; integrated I11 remains the UI consumer-environment finding. Parent has admitted the exact qualified MB commit; combined-app qualification remains separate.
+
+## M1/MB/M2 resolution
+
+- I1/I2: PR33 was inspected but never merged/copied; existing screenshot work was preserved. The separately implemented workspace passed its own combined gates. Neither external branch's failing check was waived.
+- I5: S1 selected the permitted small fixed DAG after pinned Pantograph source inspection. Native Pantograph remains deferred and unqualified.
+- I7: The dedicated bounded CPU adapter, durable runs, actual per-example results and lifecycle/recovery gates passed. The original trainer fixture remains an independent unchanged oracle.
+- I9: Later explicit M1/M2 implementation and CI admission superseded the planning-only restriction for these feature branches. No main merge or deployment was admitted.
+- I10/I11/I12: Parent accepted exact MB9e94d69; combined907da2f passed 93 lifecycle steps. The final image checkpoint acac0d3 passed all 98 steps without skips, including 507 Python tests and the pinned consumers. Earlier failures remain in the evidence history.
+- The later inherited Pumas browser readiness failure was reproduced, repaired only in the test, independently reviewed and closed by complete successor CI38180720462; see [M2 verification](reports/m2/verification.md).
+- I3/I4/I6/I8 remain their stated bounded follow-ups: unreconciled 3D branch, unavailable Engine MCP, unqualified production ASR and unselected volume consumer. They do not turn the delivered bounded image workflow into an unqualified native/modality claim.
