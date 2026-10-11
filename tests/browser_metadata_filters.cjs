@@ -56,6 +56,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const submit=async()=>{await evaluate('document.getElementById("filters").requestSubmit()');await until(()=>evaluate('!document.getElementById("filters").dataset.busy'));};
   const ids=()=>evaluate('page.items.map(r=>r.id).sort()');
   const chosen=()=>evaluate('releaseBody().items');
+  // Reveal advanced criteria before focusing the native keyboard target.
+  await evaluate('document.querySelector("#advanced-filters > summary").click()');
   // Keyboard Enter submits the exact label criterion, rather than broad source-word matching.
   await fill('label-filter',label);await evaluate('document.getElementById("label-filter").focus()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
