@@ -1,9 +1,9 @@
-"""Note-only correction traverses HTTP, CAS, SQLite and frozen source/history contracts."""
+"""Note-only correction traverses HTTP, CAS, PostgreSQL and frozen source/history contracts."""
+from postgres_helpers import database_snapshot, in_transaction
 import base64
 import hashlib
 import io
 import json
-import sqlite3
 import tempfile
 import threading
 import unittest
@@ -42,12 +42,11 @@ class RightsNoteTests(unittest.TestCase):
     def ref(row):return {key:row[key] for key in ('id','revision','source_revision')}
 
     def state(self):
-        with sqlite3.connect(self.dataset.path/'dataset.sqlite3') as db:
-            return {t:db.execute('SELECT * FROM '+t+' ORDER BY rowid').fetchall() for (t,) in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")}
+        return database_snapshot(self.dataset.db)
 
     def test_changed_note_one_revision_preserves_original_origin_and_every_source_target_field(self):
         row=self.row();row=self.w.save(row['id'],dict(row,annotation={'label':'intent'},review='human_reviewed'))
-        origin=self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(row['id'],)).fetchone()[0]
+        origin=self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s',(row['id'],)).fetchone()[0]
         history=self.w.history(row['id']);status,result=self.request(row,'Corrected owner note')
         self.assertEqual(status,200);self.assertTrue(result['changed']);after=result['record']
         self.assertEqual(after['revision'],row['revision']+1);self.assertNotEqual(after['updated_at'],row['updated_at'])
@@ -55,7 +54,7 @@ class RightsNoteTests(unittest.TestCase):
         self.assertEqual(after['provenance']['rights'],row['provenance']['rights'])
         self.assertEqual({k:v for k,v in after['provenance'].items() if k!='rights_note_correction'},row['provenance'])
         self.assertEqual(after['provenance']['rights_note_correction'],{'note':'Corrected owner note','revision':after['revision']})
-        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(row['id'],)).fetchone()[0],origin)
+        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s',(row['id'],)).fetchone()[0],origin)
         self.assertEqual(self.w.history(row['id']),[after]+history);self.assertEqual(rights_note(after),'Corrected owner note')
         self.assertEqual(self.w.query({'rights':'Corrected owner note'})['total'],1)
         self.assertEqual(self.w.query({'rights':'Declared origin note'})['total'],0)
@@ -63,7 +62,7 @@ class RightsNoteTests(unittest.TestCase):
         # Subsequent annotation saves retain both original JSON and separate owned correction.
         edited=self.w.save(row['id'],dict(after,annotation={'label':'new'},review='draft'))
         self.assertEqual(edited['provenance'],after['provenance']);self.assertEqual(rights_note(edited),'Corrected owner note')
-        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(row['id'],)).fetchone()[0],origin)
+        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s',(row['id'],)).fetchone()[0],origin)
 
     def test_unchanged_and_projected_unknown_are_true_noops(self):
         row=self.row();before=self.state();status,result=self.request(row,'  Declared origin note \n')
@@ -76,7 +75,7 @@ class RightsNoteTests(unittest.TestCase):
         def edit(note):barrier.wait();return self.request(row,note)
         with ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(edit,['first correction','second correction']))
         self.assertEqual(sorted(status for status,_ in results),[200,409]);self.assertEqual(self.w.get(row['id'])['revision'],2)
-        self.assertEqual(len(self.w.history(row['id'])),2);self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(len(self.w.history(row['id'])),2);self.assertFalse(in_transaction(self.w.db))
 
     def test_unicode_and_internal_cr_lf_are_preserved_but_invalid_input_has_no_effect(self):
         row=self.row();note='café e\u0301 😀\nline two\rline three\r\nfinal'
@@ -91,13 +90,13 @@ class RightsNoteTests(unittest.TestCase):
         out=io.BytesIO();Image.new('RGB',(16,12),'green').save(out,'PNG')
         row=self.w.import_asset(dict(kind='image',name='fixture.png',image=base64.b64encode(out.getvalue()).decode(),groups=['images']))
         path=self.dataset.path/'images'/row['id'];hashes={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in path.iterdir() if p.is_file()}
-        sample=dict(self.w.db.execute('SELECT * FROM samples WHERE id=?',(row['id'],)).fetchone())
+        sample=dict(self.w.db.execute('SELECT * FROM samples WHERE id=%s',(row['id'],)).fetchone())
         status,result=self.request(row,'Permission claimed by operator');self.assertEqual(status,200)
         self.assertEqual(result['record']['review'],'draft');self.assertIsNone(result['record']['annotation'])
-        self.assertEqual(dict(self.w.db.execute('SELECT * FROM samples WHERE id=?',(row['id'],)).fetchone()),sample)
+        self.assertEqual(dict(self.w.db.execute('SELECT * FROM samples WHERE id=%s',(row['id'],)).fetchone()),sample)
         self.assertEqual({p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in path.iterdir() if p.is_file()},hashes)
         # A corner-source revision change independently rejects a current Workbench revision.
-        with self.w.db:self.w.db.execute('UPDATE samples SET revision=revision+1 WHERE id=?',(row['id'],))
+        with self.w.db.transaction():self.w.db.execute('UPDATE samples SET revision=revision+1 WHERE id=%s',(row['id'],))
         before=self.state();self.assertEqual(self.request(result['record'],'stale source note')[0],409);self.assertEqual(self.state(),before)
         latest=self.w.get(row['id']);self.dataset.delete(row['id'],{'revision':latest['source_revision']})
         before=self.state();self.assertEqual(self.request(latest,'deleted')[0],409);self.assertEqual(self.state(),before)
@@ -120,8 +119,8 @@ class RightsNoteTests(unittest.TestCase):
         row=self.row();before=self.state()
         with patch.object(self.w,'_history',side_effect=ValueError('fixture history failure')):
             status,_=self.request(row,'failed');self.assertEqual(status,400)
-        self.assertEqual(self.state(),before);self.assertFalse(self.w.db.in_transaction)
-        with self.w.db:self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?',(encode(dict(row['provenance'],rights_note_correction={'declared':'foreign evidence'})),row['id']))
+        self.assertEqual(self.state(),before);self.assertFalse(in_transaction(self.w.db))
+        with self.w.db.transaction():self.w.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s',(encode(dict(row['provenance'],rights_note_correction={'declared':'foreign evidence'})),row['id']))
         before=self.state();self.assertEqual(self.request(row,'cannot replace evidence')[0],409);self.assertEqual(self.state(),before)
 
     def test_restart_retains_note_and_migration_leaves_prior_history_intact(self):
@@ -133,15 +132,15 @@ class RightsNoteTests(unittest.TestCase):
             self.assertEqual(reopened.workbench.history(row['id']),[result['record']]+prior)
         finally:reopened.close()
 
-    def test_upgrade_from_prior_schema_keeps_existing_records_and_history(self):
+    def test_missing_postgres_table_fails_closed_without_mutating_records_or_history(self):
+        from metadata import StorageError
         row=self.row();prior=self.w.history(row['id'])
-        with self.w.db:self.w.db.execute('DROP TABLE workbench_rights_notes')
-        reopened=Dataset(self.tmp.name)
-        try:
-            self.assertEqual(reopened.workbench.get(row['id']),row)
-            self.assertEqual(reopened.workbench.history(row['id']),prior)
-            self.assertEqual(reopened.db.execute('SELECT COUNT(*) FROM workbench_rights_notes').fetchone()[0],0)
-        finally:reopened.close()
+        with self.w.db.transaction():self.w.db.execute('DROP TABLE workbench_rights_notes')
+        before=database_snapshot(self.w.db)
+        with self.assertRaises(StorageError):Dataset(self.tmp.name)
+        self.assertEqual(database_snapshot(self.w.db),before)
+        self.assertEqual(self.w.db.execute('SELECT id FROM workbench_records').fetchone()[0],row['id'])
+        self.assertEqual(self.w.db.execute('SELECT count(*) FROM workbench_history').fetchone()[0],len(prior))
 
     def test_owned_programmatic_review_evidence_is_retained_without_a_new_grant(self):
         import dataset_recipes
@@ -167,8 +166,8 @@ class RightsNoteTests(unittest.TestCase):
                         verified_provenance=dict(plain['provenance'], rights_note_correction={'note':'Unowned', 'revision':1}))
         self.assertEqual(self.state(), before)
         foreign = {'declared':'Reserved foreign origin'}
-        with self.w.db:
-            self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?',
+        with self.w.db.transaction():
+            self.w.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s',
                               (encode(dict(plain['provenance'], rights_note_correction=foreign)), plain['id']))
         before = self.state()
         with self.assertRaises(WorkbenchError):
@@ -189,12 +188,12 @@ class RightsNoteTests(unittest.TestCase):
             row=self.dataset.caption_imports.admit(dict(token=item['token'],asset=item['asset'],request_id=uuid.uuid4().hex,image=base64.b64encode((fixture/item['asset']).read_bytes()).decode()))
             rows.append(self.w.get(row['record_id']))
         original=rows[0];saved=self.dataset.selections.create(dict(name='Caption fixed',items=[self.ref(original)]))
-        raw_origin=self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(original['id'],)).fetchone()[0]
+        raw_origin=self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s',(original['id'],)).fetchone()[0]
         status,result=self.request(original,'Caption operator note\nNo legal determination');self.assertEqual(status,200)
         updated=result['record'];self.assertEqual(updated['review'],'draft');self.assertEqual(updated['annotation'],original['annotation'])
         for key in ('content_hash','pixel_hash','source_sha256','source_revision','groups','parents','source_split'):
             self.assertEqual(updated[key],original[key],key)
-        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?',(original['id'],)).fetchone()[0],raw_origin)
+        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s',(original['id'],)).fetchone()[0],raw_origin)
         self.assertEqual(self.dataset.selections.load(saved['id'])['members'][0]['status'],'stale')
         rows[0]=updated
         reviewed=[self.w.save(row['id'],dict(row,review='human_reviewed')) for row in rows]
@@ -222,7 +221,7 @@ class RightsNoteTests(unittest.TestCase):
         self.assertEqual(status,200);self.assertFalse(result['changed']);self.assertEqual(result['record'],feff)
         self.assertEqual(rights_note(result['record']),'\ufeffowner\ufeff');self.assertEqual(self.state(),before)
         legacy=self.row('python whitespace',rights='owner');origin=dict(legacy['provenance'],rights='\u0085owner\u001c\u001f')
-        with self.w.db:self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?',(encode(origin),legacy['id']))
+        with self.w.db.transaction():self.w.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s',(encode(origin),legacy['id']))
         legacy=self.w.get(legacy['id']);before=self.state()
         self.assertEqual(rights_note(legacy),'owner')
         for note in ['owner','\u0085owner\u001c\u001f']:

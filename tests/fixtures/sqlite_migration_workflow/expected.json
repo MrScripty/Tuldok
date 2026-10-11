@@ -1,0 +1,359 @@
+{
+  "record": {
+    "id": "da9dfeda53884b479644c4646ef5c8b8",
+    "kind": "text",
+    "name": "Legacy caf\u00e9",
+    "text": "  Caf\u00e9\nUnicode \ud83d\ude00\nEvidence  ",
+    "content_hash": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+    "pixel_hash": null,
+    "task": "text_classification",
+    "review": "human_reviewed",
+    "revision": 3,
+    "created_at": "2026-10-11T20:28:55.114865+00:00",
+    "updated_at": "2026-10-11T20:28:55.115465+00:00",
+    "width": null,
+    "height": null,
+    "source_revision": 1,
+    "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598",
+    "book_id": null,
+    "session_id": null,
+    "source_split": "unassigned",
+    "corner_annotation": null,
+    "source_available": true,
+    "source_lineage_known": true,
+    "groups": [
+      "protected-family"
+    ],
+    "parents": [],
+    "provenance": {
+      "method": "import",
+      "normalization": "NFC; LF newlines",
+      "rights": "Authored migration fixture",
+      "rights_note_correction": {
+        "note": "Rights correction e\u0301",
+        "revision": 3
+      }
+    },
+    "annotation": {
+      "label": "Exact class"
+    }
+  },
+  "child": {
+    "id": "e834d6082b3045589536b0ea848a5f1e",
+    "kind": "text",
+    "name": "Child",
+    "text": "Retained derivation",
+    "content_hash": "a8542db60a85da2fe48cdd87f991cb804fcb2d47767291dcc4282287478aa8ed",
+    "pixel_hash": null,
+    "task": "text_classification",
+    "review": "draft",
+    "revision": 1,
+    "created_at": "2026-10-11T20:28:55.115804+00:00",
+    "updated_at": "2026-10-11T20:28:55.115804+00:00",
+    "width": null,
+    "height": null,
+    "source_revision": 1,
+    "source_sha256": "a8542db60a85da2fe48cdd87f991cb804fcb2d47767291dcc4282287478aa8ed",
+    "book_id": null,
+    "session_id": null,
+    "source_split": "unassigned",
+    "corner_annotation": null,
+    "source_available": true,
+    "source_lineage_known": true,
+    "groups": [
+      "derived-family"
+    ],
+    "parents": [
+      "da9dfeda53884b479644c4646ef5c8b8"
+    ],
+    "provenance": {
+      "method": "import",
+      "normalization": "NFC; LF newlines",
+      "rights": "fixture"
+    },
+    "annotation": null
+  },
+  "image": {
+    "id": "3e317e10e0bb4c67a6a513127ee0e7ba",
+    "kind": "image",
+    "name": "source.png",
+    "text": null,
+    "content_hash": "ab512540f0b279ff4f376c14fca35828b45b890690211c74ebd385176a94f5bc",
+    "pixel_hash": "e4ca8ca37f8df8e92612bcb4826710a2810fe188eb9a90610b27de606b5a1110",
+    "task": "image_detection",
+    "review": "draft",
+    "revision": 1,
+    "created_at": "2026-10-11T20:28:55.119682+00:00",
+    "updated_at": "2026-10-11T20:28:55.119682+00:00",
+    "width": 3,
+    "height": 4,
+    "source_revision": 1,
+    "source_sha256": "ab512540f0b279ff4f376c14fca35828b45b890690211c74ebd385176a94f5bc",
+    "book_id": "",
+    "session_id": "image-family",
+    "source_split": "unassigned",
+    "corner_annotation": null,
+    "source_available": true,
+    "source_lineage_known": true,
+    "groups": [
+      "image-family"
+    ],
+    "parents": [],
+    "provenance": {
+      "method": "import",
+      "rights": "fixture",
+      "source_sha256": "ab512540f0b279ff4f376c14fca35828b45b890690211c74ebd385176a94f5bc"
+    },
+    "annotation": null
+  },
+  "deleted": {
+    "id": "48d34c5af802473082574e58a54db72b",
+    "kind": "image",
+    "name": "deleted.png",
+    "text": null,
+    "content_hash": "66ebdd74c6b1843ff1d0a31b0aeb562e70aa33a18fad6de1baee13c46d9f4375",
+    "pixel_hash": "4797269a450c6230764017b7900ec82556c78919af2943ccd4165dbada785aaf",
+    "task": "image_detection",
+    "review": "draft",
+    "revision": 1,
+    "created_at": "2026-10-11T20:28:55.121065+00:00",
+    "updated_at": "2026-10-11T20:28:55.121065+00:00",
+    "width": 3,
+    "height": 4,
+    "source_revision": 1,
+    "source_sha256": "66ebdd74c6b1843ff1d0a31b0aeb562e70aa33a18fad6de1baee13c46d9f4375",
+    "book_id": "",
+    "session_id": "deleted-family",
+    "source_split": "unassigned",
+    "corner_annotation": null,
+    "source_available": true,
+    "source_lineage_known": true,
+    "groups": [
+      "deleted-family"
+    ],
+    "parents": [],
+    "provenance": {
+      "method": "import",
+      "rights": "fixture",
+      "source_sha256": "66ebdd74c6b1843ff1d0a31b0aeb562e70aa33a18fad6de1baee13c46d9f4375"
+    },
+    "annotation": null
+  },
+  "left": {
+    "id": "e44bb2e5db424bd2bfeb0756ffa5e462",
+    "prompt_id": "da9dfeda53884b479644c4646ef5c8b8",
+    "revision": 1,
+    "completion": " exact\r\ne\u0301 \ud83d\ude00\ufeff ",
+    "review": "human_reviewed",
+    "created_at": "2026-10-11T20:28:55.122100+00:00",
+    "updated_at": "2026-10-11T20:28:55.122100+00:00",
+    "provenance": {
+      "method": "human_authored",
+      "prompt_id": "da9dfeda53884b479644c4646ef5c8b8",
+      "prompt_sha256": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+      "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598"
+    }
+  },
+  "right": {
+    "id": "0eac9119102241f0b1d709f7af7169c3",
+    "prompt_id": "da9dfeda53884b479644c4646ef5c8b8",
+    "revision": 1,
+    "completion": "Other exact completion",
+    "review": "human_reviewed",
+    "created_at": "2026-10-11T20:28:55.122657+00:00",
+    "updated_at": "2026-10-11T20:28:55.122657+00:00",
+    "provenance": {
+      "method": "human_authored",
+      "prompt_id": "da9dfeda53884b479644c4646ef5c8b8",
+      "prompt_sha256": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+      "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598"
+    }
+  },
+  "judgment": {
+    "id": "bdcf6bcb23074753ba296ae2762007d3",
+    "revision": 1,
+    "prompt_id": "da9dfeda53884b479644c4646ef5c8b8",
+    "parent_revision": 3,
+    "source_revision": 1,
+    "left_id": "e44bb2e5db424bd2bfeb0756ffa5e462",
+    "left_revision": 1,
+    "right_id": "0eac9119102241f0b1d709f7af7169c3",
+    "right_revision": 1,
+    "outcome": "left",
+    "rationale": "Exact rationale e\u0301",
+    "review": "human_reviewed",
+    "deleted": false,
+    "created_at": "2026-10-11T20:28:55.122900+00:00",
+    "updated_at": "2026-10-11T20:28:55.122900+00:00",
+    "provenance": {
+      "method": "human_comparative_judgment"
+    }
+  },
+  "selection": {
+    "id": "8d897e23daf542bfa2fad96dfdf4c4a1",
+    "name": "Fixed legacy set",
+    "revision": 1,
+    "member_count": 1,
+    "created_at": "2026-10-11T20:28:55.123129+00:00",
+    "updated_at": "2026-10-11T20:28:55.123129+00:00",
+    "items": [
+      {
+        "content_hash": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+        "id": "da9dfeda53884b479644c4646ef5c8b8",
+        "kind": "text",
+        "name": "Legacy caf\u00e9",
+        "pixel_hash": null,
+        "revision": 3,
+        "source_revision": 1,
+        "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598"
+      }
+    ],
+    "mode": "fixed",
+    "schema_version": 1
+  },
+  "search": {
+    "id": "5945bdeab53a4720ae79905f9940df8e",
+    "name": "Legacy exact search",
+    "revision": 1,
+    "created_at": "2026-10-11T20:28:55.123326+00:00",
+    "updated_at": "2026-10-11T20:28:55.123326+00:00",
+    "criteria": {
+      "q": "",
+      "kind": "text",
+      "review": "",
+      "sort": "",
+      "task": "",
+      "label": "Exact class",
+      "group": "",
+      "rights": ""
+    },
+    "mode": "dynamic",
+    "schema_version": 1
+  },
+  "release": {
+    "id": "ca3cc6c36ad232912e5b833564c4353e638979ee330895c54c0dc852b952a156",
+    "url": "/api/workbench/releases/ca3cc6c36ad232912e5b833564c4353e638979ee330895c54c0dc852b952a156.zip",
+    "records": 1,
+    "split_report": {
+      "requested_percentages": {
+        "train": 100,
+        "validation": 0,
+        "test": 0
+      },
+      "actual_counts": {
+        "train": 1
+      },
+      "independent_components": 1,
+      "note": "Whole connected groups are indivisible; existing source splits are preserved. Requested percentages are targets, not exact quotas."
+    }
+  },
+  "history": [
+    {
+      "annotation": {
+        "label": "Exact class"
+      },
+      "book_id": null,
+      "content_hash": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+      "corner_annotation": null,
+      "created_at": "2026-10-11T20:28:55.114865+00:00",
+      "groups": [
+        "protected-family"
+      ],
+      "height": null,
+      "id": "da9dfeda53884b479644c4646ef5c8b8",
+      "kind": "text",
+      "name": "Legacy caf\u00e9",
+      "parents": [],
+      "pixel_hash": null,
+      "provenance": {
+        "method": "import",
+        "normalization": "NFC; LF newlines",
+        "rights": "Authored migration fixture",
+        "rights_note_correction": {
+          "note": "Rights correction e\u0301",
+          "revision": 3
+        }
+      },
+      "review": "human_reviewed",
+      "revision": 3,
+      "session_id": null,
+      "source_available": true,
+      "source_lineage_known": true,
+      "source_revision": 1,
+      "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598",
+      "source_split": "unassigned",
+      "task": "text_classification",
+      "text": "  Caf\u00e9\nUnicode \ud83d\ude00\nEvidence  ",
+      "updated_at": "2026-10-11T20:28:55.115465+00:00",
+      "width": null
+    },
+    {
+      "annotation": {
+        "label": "Exact class"
+      },
+      "book_id": null,
+      "content_hash": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+      "corner_annotation": null,
+      "created_at": "2026-10-11T20:28:55.114865+00:00",
+      "groups": [
+        "protected-family"
+      ],
+      "height": null,
+      "id": "da9dfeda53884b479644c4646ef5c8b8",
+      "kind": "text",
+      "name": "Legacy caf\u00e9",
+      "parents": [],
+      "pixel_hash": null,
+      "provenance": {
+        "method": "import",
+        "normalization": "NFC; LF newlines",
+        "rights": "Authored migration fixture"
+      },
+      "review": "human_reviewed",
+      "revision": 2,
+      "session_id": null,
+      "source_available": true,
+      "source_lineage_known": true,
+      "source_revision": 1,
+      "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598",
+      "source_split": "unassigned",
+      "task": "text_classification",
+      "text": "  Caf\u00e9\nUnicode \ud83d\ude00\nEvidence  ",
+      "updated_at": "2026-10-11T20:28:55.115184+00:00",
+      "width": null
+    },
+    {
+      "annotation": null,
+      "book_id": null,
+      "content_hash": "4b74faca4e69334b8d6748ace779edf6127223dcabf5ebfb6729a9ae280fe678",
+      "corner_annotation": null,
+      "created_at": "2026-10-11T20:28:55.114865+00:00",
+      "groups": [
+        "protected-family"
+      ],
+      "height": null,
+      "id": "da9dfeda53884b479644c4646ef5c8b8",
+      "kind": "text",
+      "name": "Legacy caf\u00e9",
+      "parents": [],
+      "pixel_hash": null,
+      "provenance": {
+        "method": "import",
+        "normalization": "NFC; LF newlines",
+        "rights": "Authored migration fixture"
+      },
+      "review": "draft",
+      "revision": 1,
+      "session_id": null,
+      "source_available": true,
+      "source_lineage_known": true,
+      "source_revision": 1,
+      "source_sha256": "9090e5e311a87e5dd437fd22bd4b88384ab1ec31d045b5e6daeea721d201a598",
+      "source_split": "unassigned",
+      "task": "text_classification",
+      "text": "  Caf\u00e9\nUnicode \ud83d\ude00\nEvidence  ",
+      "updated_at": "2026-10-11T20:28:55.114865+00:00",
+      "width": null
+    }
+  ]
+}

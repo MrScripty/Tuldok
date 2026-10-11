@@ -4,7 +4,7 @@ import hashlib
 import hmac
 import io
 import secrets
-import sqlite3
+import psycopg
 import zipfile
 
 from PIL import Image
@@ -233,25 +233,27 @@ class NativeDetectionImports:
         origin = context['declared']['upstream']['record']
         w = self.workbench
         try:
-            with w.lock, w.db:
-                if find_result(w, body['request_id'])['found']:
-                    raise WorkbenchError('This marker was already admitted; inspect its saved result.', 'conflict', 409)
-                universe = w._all()
-                if w.db.execute('SELECT 1 FROM workbench_records WHERE id=? OR pixel_hash=?', (origin['id'], context['pixel_sha256'])).fetchone():
-                    raise WorkbenchError('Native source identity or exact pixels already exist; existing records are unchanged.', 'conflict', 409)
-                session = 'native-detection:' + body['request_id']
-                if w.db.execute("SELECT 1 FROM samples WHERE book_id='' AND session_id=?", (session,)).fetchone():
-                    raise WorkbenchError('Import acquisition session already exists.', 'conflict', 409)
-                candidate = dict(id='detection-candidate:' + body['request_id'], kind='image', groups=payload['groups'],
-                    parents=[], content_hash=context['input_sha256'], pixel_hash=context['pixel_sha256'], book_id='',
-                    session_id=session, source_available=True, source_lineage_known=True)
-                roots = connected_components([*universe, candidate])
-                related = [row for row in universe if roots[row['id']] == roots[candidate['id']]]
-                if any(not row['source_lineage_known'] or row['source_split'] in SPLITS and row['source_split'] != origin['split'] for row in related):
-                    raise WorkbenchError('Existing protected lineage has an unknown or conflicting source split.', 'conflict', 409)
+            with w.lock:
+                # Keep preflight writes private; admission owns its commit and receipt.
+                with w.db.transaction(force_rollback=True):
+                    if find_result(w, body['request_id'])['found']:
+                        raise WorkbenchError('This marker was already admitted; inspect its saved result.', 'conflict', 409)
+                    universe = w._all()
+                    if w.db.execute('SELECT 1 FROM workbench_records WHERE id=%s OR pixel_hash=%s', (origin['id'], context['pixel_sha256'])).fetchone():
+                        raise WorkbenchError('Native source identity or exact pixels already exist; existing records are unchanged.', 'conflict', 409)
+                    session = 'native-detection:' + body['request_id']
+                    if w.db.execute("SELECT 1 FROM samples WHERE book_id='' AND session_id=%s", (session,)).fetchone():
+                        raise WorkbenchError('Import acquisition session already exists.', 'conflict', 409)
+                    candidate = dict(id='detection-candidate:' + body['request_id'], kind='image', groups=payload['groups'],
+                        parents=[], content_hash=context['input_sha256'], pixel_hash=context['pixel_sha256'], book_id='',
+                        session_id=session, source_available=True, source_lineage_known=True)
+                    roots = connected_components([*universe, candidate])
+                    related = [row for row in universe if roots[row['id']] == roots[candidate['id']]]
+                    if any(not row['source_lineage_known'] or row['source_split'] in SPLITS and row['source_split'] != origin['split'] for row in related):
+                        raise WorkbenchError('Existing protected lineage has an unknown or conflicting source split.', 'conflict', 409)
                 row = w.import_asset(dict(kind='image', image=payload['image'], name=origin['id'] + '.png',
                     groups=payload['groups'], parents=[], rights='unknown'), acquisition=context,
                     annotation=origin['annotation'], annotation_task='image_detection', source_split=origin['split'], source_session=session)
                 return result(row)
-        except (OSError, sqlite3.Error):
+        except (OSError, psycopg.Error):
             raise WorkbenchError('Detection import storage failed. Inspect the saved result before retrying.', 'storage', 500) from None

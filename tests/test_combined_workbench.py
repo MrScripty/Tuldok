@@ -1,4 +1,4 @@
-"""Real HTTP/SQLite/ZIP interactions across the composed feature owners."""
+"""Real HTTP/PostgreSQL/ZIP interactions across the composed feature owners."""
 import base64
 import io
 import json
@@ -7,6 +7,7 @@ import urllib.request
 import uuid
 import zipfile
 
+from postgres_helpers import in_transaction
 from tests import test_native_text_import as native_tests
 from tests import test_curation as curation_tests
 
@@ -45,19 +46,19 @@ class CombinedWorkbenchTests(unittest.TestCase):
     def test_owned_verifier_projection_then_later_note_and_instruction_warning(self):
         parent = self.call('import', dict(kind='text', text='Authored verifier prompt', name='Verifier prompt',
                           rights='Original local declaration', groups=['verifier-source']))
-        origin = json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0])
+        origin = json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone()[0])
         corrected = self.call('rights/'+parent['id'], dict(revision=parent['revision'], source_revision=parent['source_revision'], note='First note'))['record']
         projected = dict(corrected['provenance'], verification='Owned fixture verifier')
         verified = self.w.save(parent['id'], dict(corrected, task='text_classification', annotation={'label':'fixture'},
                                review='programmatically_verified'), verified_provenance=projected)
-        stored = json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0])
+        stored = json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone()[0])
         self.assertNotIn('rights_note_correction', stored, 'Verifier projection must never enter origin')
         self.assertEqual(stored, dict(origin, verification='Owned fixture verifier'))
         self.assertEqual(verified['provenance']['rights_note_correction'], corrected['provenance']['rights_note_correction'])
         later = self.call('rights/'+parent['id'], dict(revision=verified['revision'], source_revision=verified['source_revision'], note='unknown'))['record']
         self.assertEqual(later['review'], 'programmatically_verified')
         self.assertEqual(later['provenance']['verification'], 'Owned fixture verifier')
-        self.assertEqual(json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0]), stored)
+        self.assertEqual(json.loads(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone()[0]), stored)
         answer = self.answer(later, 'Exact independent answer\r\ne\u0301 😀')
         body = self.release_body([self.answer_pair(later, answer)], 'text_instruction_v1')
         before = self.state(); preview = self.call('releases/preview', body)
@@ -104,7 +105,7 @@ class CombinedWorkbenchTests(unittest.TestCase):
         _, receipt = self.admit(self.prepare()['rows'][0])
         parent = self.call('records/'+receipt['record_id'])
         self.assertEqual(parent['review'], 'draft')
-        original = self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0]
+        original = self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone()[0]
         fixed = self.call('selections', dict(name='Imported exact pair', items=[self.ref(parent)]))
         completions = [' exact answer\r\ne\u0301 😀\ufeff ', 'Independent sibling']
         answers = [self.answer(parent, value) for value in completions]
@@ -116,7 +117,7 @@ class CombinedWorkbenchTests(unittest.TestCase):
         self.assertEqual(corrected['source_sha256'], parent['source_sha256'])
         self.assertEqual(corrected['content_hash'], parent['content_hash'])
         self.assertEqual(corrected['annotation'], parent['annotation'])
-        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()[0], original)
+        self.assertEqual(self.w.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone()[0], original)
         self.assertEqual(self.request('releases', dict(old_body, preview_token=old_preview['preview_token']))[0], 409)
         before_stale_answer = self.state()
         self.assertEqual(self.request('responses', dict(id=answers[0]['id'], prompt_id=parent['id'],
@@ -163,7 +164,7 @@ class CombinedWorkbenchTests(unittest.TestCase):
         before = self.state()
         self.call('curation', dict(scope='selected', category='unknown_rights', items=[dict(id=legacy['id'], revision=1, source_revision=legacy['revision'])]))
         self.assertEqual(self.state(), before)
-        self.assertFalse(self.w.db.in_transaction)
+        self.assertFalse(in_transaction(self.w.db))
 
     def test_rights_change_on_unselected_lineage_invalidates_answer_proof(self):
         parent = self.call('import', dict(kind='text', name='Selected prompt', text='Selected prompt', groups=['shared']))

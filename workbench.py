@@ -34,6 +34,14 @@ def encode(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False)
 
 
+def encode_retained(value):
+    """Serialize retained database envelopes; never use this as input validation."""
+    encoded = encode(value)
+    if re.search('[\ud800-\udfff]', encoded):
+        return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(',', ':'), allow_nan=False)
+    return encoded
+
+
 def text_value(value, name, maximum=200, empty=False):
     if not isinstance(value, str) or len(value) > maximum or (not empty and not value.strip()):
         raise WorkbenchError(f'{name} must be text, 1–{maximum} characters.')
@@ -134,52 +142,16 @@ def rights_note(record):
 class Workbench:
     """Own generic targets/text; Dataset retains original images and corners.
 
-    All SQLite access uses the Dataset lock. Image state is joined at read time,
+    All metadata access uses the cross-connection Dataset lock. Image state is joined at read time,
     not copied into a competing asset database. Annotation history is append-only.
     """
     def __init__(self, dataset):
         self.dataset = dataset
         self.db, self.lock = dataset.db, dataset.lock
-        with self.lock, self.db:
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_records (
-                id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('image','text')),
-                name TEXT, text TEXT, original_text TEXT,
-                content_hash TEXT NOT NULL, pixel_hash TEXT,
-                groups_json TEXT NOT NULL, parents_json TEXT NOT NULL,
-                provenance_json TEXT NOT NULL, task TEXT NOT NULL,
-                annotation_json TEXT, review TEXT NOT NULL,
-                revision INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
-            from immutable_assets import migrate_records
-            from sequence_assets import SequenceAssets
-            from meshes import MeshAssets
-            self.db.execute('SAVEPOINT immutable_setup')
-            try:
-                migrate_records(self.db)
-                self.sequences = SequenceAssets(self)
-                self.meshes = MeshAssets(self)
-                self.db.execute('RELEASE immutable_setup')
-            except BaseException:
-                self.db.execute('ROLLBACK TO immutable_setup')
-                self.db.execute('RELEASE immutable_setup')
-                raise
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_history (
-                id TEXT NOT NULL, revision INTEGER NOT NULL, snapshot TEXT NOT NULL,
-                PRIMARY KEY(id, revision))''')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_rights_notes (
-                id TEXT PRIMARY KEY, note TEXT NOT NULL, revision INTEGER NOT NULL)''')
-            self.db.execute('CREATE TABLE IF NOT EXISTS workbench_target_proposals (id TEXT PRIMARY KEY, evidence TEXT NOT NULL)')
-            self.db.execute('CREATE INDEX IF NOT EXISTS workbench_content ON workbench_records(content_hash)')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_responses (
-                id TEXT PRIMARY KEY, prompt_id TEXT NOT NULL, revision INTEGER NOT NULL,
-                completion TEXT NOT NULL, review TEXT NOT NULL, provenance_json TEXT NOT NULL,
-                created_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
-            self.db.execute('CREATE INDEX IF NOT EXISTS workbench_response_prompt ON workbench_responses(prompt_id)')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_response_history (
-                id TEXT NOT NULL, revision INTEGER NOT NULL, snapshot TEXT NOT NULL,
-                PRIMARY KEY(id,revision))''')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_deleted_sources (
-                id TEXT PRIMARY KEY, book_id TEXT NOT NULL, session_id TEXT NOT NULL,
-                split TEXT NOT NULL)''')
+        from sequence_assets import SequenceAssets
+        from meshes import MeshAssets
+        self.sequences = SequenceAssets(self)
+        self.meshes = MeshAssets(self)
 
         from preferences import Preferences
         self.preferences = Preferences(self)
@@ -189,7 +161,7 @@ class Workbench:
         query = '''SELECT s.* FROM samples s LEFT JOIN workbench_records w
             ON w.id=s.id WHERE w.id IS NULL'''
         if record_id is not None:
-            query += ' AND s.id=?'
+            query += ' AND s.id=%s'
         rows = self.db.execute(query, () if record_id is None else (record_id,)).fetchall()
         for row in rows:
             path = self.dataset.path / 'images' / row['id'] / 'image.png'
@@ -201,30 +173,30 @@ class Workbench:
                 # The record stays visible and release validation reports missing bytes.
                 content_hash, pixel_hash = '', ''
             group = 'book:' + row['book_id'] if row['book_id'] else 'session:' + row['session_id']
-            generation = self.dataset.db.execute('SELECT data FROM generation_entries WHERE data LIKE ?', ('%' + row['id'] + '%',)).fetchall()
+            generation = self.dataset.db.execute('SELECT data FROM generation_entries WHERE data LIKE %s', ('%' + row['id'] + '%',)).fetchall()
             origin = {'method': 'import', 'source_sha256': row['sha256'], 'rights': 'unknown'}
             for item in generation:
                 entry = json.loads(item[0])
                 if entry.get('sample_id') == row['id']:
                     origin = {'method': 'model_generated', 'source_sha256': row['sha256'], 'rights': 'unknown',
                               'generation': {k: entry[k] for k in ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'size', 'width', 'height', 'requested_seed') if k in entry}}
-            self.db.execute('INSERT INTO workbench_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            self.db.execute('INSERT INTO workbench_records VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                             (row['id'], 'image', None, None, None, content_hash, pixel_hash,
-                             encode([group]), '[]', encode(origin), 'image_detection', None,
+                             encode_retained([group]), '[]', encode_retained(origin), 'image_detection', None,
                              'draft', 1, row['created_at'], row['created_at']))
             self._history(self._get(row['id']))
 
     def preserve_deleted_source(self, record_id):
         """Called in Dataset's deletion transaction before removing source authority."""
         self.db.execute('''INSERT INTO workbench_deleted_sources
-            SELECT id, book_id, session_id, split FROM samples WHERE id=?''', (record_id,))
+            SELECT id, book_id, session_id, split FROM samples WHERE id=%s''', (record_id,))
 
     def _get(self, record_id):
         row = self.db.execute('''SELECT w.*, s.filename AS image_name, s.width, s.height,
             s.revision AS source_revision, s.sha256 AS source_sha256,
             s.book_id, s.session_id, s.split AS source_split, s.annotation AS corner_annotation
             FROM workbench_records w LEFT JOIN samples s ON s.id=w.id
-            WHERE w.id=?''', (record_id,)).fetchone()
+            WHERE w.id=%s''', (record_id,)).fetchone()
         if not row:
             raise WorkbenchError('Record not found.', 'unavailable', 404)
         result = dict(row)
@@ -232,7 +204,7 @@ class Workbench:
         result['source_lineage_known'] = result['source_available']
         if result['kind'] == 'image':
             if not result['source_available']:
-                retained = self.db.execute('SELECT book_id, session_id, split AS source_split FROM workbench_deleted_sources WHERE id=?', (record_id,)).fetchone()
+                retained = self.db.execute('SELECT book_id, session_id, split AS source_split FROM workbench_deleted_sources WHERE id=%s', (record_id,)).fetchone()
                 if retained:
                     result.update(dict(retained))
                     result['source_lineage_known'] = True
@@ -254,10 +226,10 @@ class Workbench:
         for field in ('groups', 'parents', 'provenance', 'annotation'):
             raw = result.pop(field + '_json')
             result[field] = json.loads(raw) if raw is not None else None
-        correction = self.db.execute('SELECT note,revision FROM workbench_rights_notes WHERE id=?', (record_id,)).fetchone()
+        correction = self.db.execute('SELECT note,revision FROM workbench_rights_notes WHERE id=%s', (record_id,)).fetchone()
         if correction is not None:
             result['provenance']['rights_note_correction'] = dict(correction)
-        proposal = self.db.execute('SELECT evidence FROM workbench_target_proposals WHERE id=?', (record_id,)).fetchone()
+        proposal = self.db.execute('SELECT evidence FROM workbench_target_proposals WHERE id=%s', (record_id,)).fetchone()
         if proposal is not None:
             result['target_proposal'] = json.loads(proposal[0])
         result.pop('original_text')
@@ -268,19 +240,19 @@ class Workbench:
     def get(self, record_id):
         if not isinstance(record_id, str) or not IDENTIFIER.fullmatch(record_id):
             raise WorkbenchError('Invalid record ID.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             self._sync_images()
             return self._get(record_id)
 
     def _history(self, record):
-        self.db.execute('INSERT INTO workbench_history VALUES (?,?,?)',
-                        (record['id'], record['revision'], encode(record)))
+        self.db.execute('INSERT INTO workbench_history VALUES (%s,%s,%s)',
+                        (record['id'], record['revision'], encode_retained(record)))
 
     def history(self, record_id):
         self.get(record_id)
         with self.lock:
             return [json.loads(row[0]) for row in self.db.execute(
-                'SELECT snapshot FROM workbench_history WHERE id=? ORDER BY revision DESC', (record_id,))]
+                'SELECT snapshot FROM workbench_history WHERE id=%s ORDER BY revision DESC', (record_id,))]
 
     def _all(self):
         self._sync_images()
@@ -313,7 +285,7 @@ class Workbench:
             raise WorkbenchError('Invalid pagination.') from None
         if offset < 0 or not 1 <= limit <= 100:
             raise WorkbenchError('Page size must be 1–100 and offset nonnegative.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             filtered, criteria = self._filtered(options)
             summary = analyze(filtered)
             page = []
@@ -342,21 +314,24 @@ class Workbench:
             # validates it inside Dataset's existing acquisition transaction.
         if kind != 'image' and source_split != 'unassigned':
             raise WorkbenchError('Only image acquisition owns source splits.')
-        with self.lock, self.db:
-            self._sync_images()
-            for parent in parents:
-                self._get(parent)
-            if kind == 'image':
-                # Reuse the existing normalizer, original storage and dedup contract.
-                row = self.dataset.add({'image': body.get('image'), 'filename': body.get('name', 'image.png'),
-                                        'session_id': groups[0] if source_session is None else source_session,
-                                        'book_id': '', 'split': source_split},
-                                       enrollment=(groups, parents, rights, acquisition, annotation, annotation_task))
-                return self._get(row['id'])
-            if kind != 'text':
-                raise WorkbenchError('Asset kind must be image or text.')
-            return self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights,
-                                     provenance={'acquisition': acquisition} if acquisition is not None else None)
+        with self.lock:
+            with self.db.transaction():
+                self._sync_images()
+                for parent in parents:
+                    self._get(parent)
+                if kind == 'image':
+                    row = self.dataset.add({'image': body.get('image'), 'filename': body.get('name', 'image.png'),
+                                            'session_id': groups[0] if source_session is None else source_session,
+                                            'book_id': '', 'split': source_split},
+                                           enrollment=(groups, parents, rights, acquisition, annotation, annotation_task))
+                elif kind == 'text':
+                    row = self._insert_text(body.get('text'), body.get('name', 'Text record'), groups, parents, rights,
+                                           provenance={'acquisition': acquisition} if acquisition is not None else None)
+                else:
+                    raise WorkbenchError('Asset kind must be image or text.')
+            # Receipt projection is after the owning commit. Failure to return it
+            # cannot roll back an already admitted row or remove its image bytes.
+            return self._get(row['id'])
 
     def _enroll_import(self, sample_id, groups, parents, rights, acquisition=None, annotation=None, annotation_task='image_caption'):
         """Called only inside Dataset.add's acquisition transaction and lock."""
@@ -365,16 +340,16 @@ class Workbench:
         origin = dict(record['provenance'], rights=rights)
         if acquisition is not None:
             origin['acquisition'] = acquisition
-        self.db.execute('UPDATE workbench_records SET groups_json=?,parents_json=?,provenance_json=? WHERE id=?',
-                        (encode(groups), encode(parents), encode(origin), sample_id))
+        self.db.execute('UPDATE workbench_records SET groups_json=%s,parents_json=%s,provenance_json=%s WHERE id=%s',
+                        (encode_retained(groups), encode_retained(parents), encode_retained(origin), sample_id))
         if annotation is not None:
             if annotation_task not in ('image_caption', 'image_detection'):
                 raise WorkbenchError('Unsupported initial image annotation task.')
             annotation = validate_annotation(annotation_task, annotation, record)
-            self.db.execute("UPDATE workbench_records SET task=?,annotation_json=?,review='draft' WHERE id=?",
-                            (annotation_task, encode(annotation), sample_id))
+            self.db.execute("UPDATE workbench_records SET task=%s,annotation_json=%s,review='draft' WHERE id=%s",
+                            (annotation_task, encode_retained(annotation), sample_id))
         # Initial enrollment is internal, not a second user-visible revision.
-        self.db.execute('DELETE FROM workbench_history WHERE id=?', (sample_id,))
+        self.db.execute('DELETE FROM workbench_history WHERE id=%s', (sample_id,))
         self._history(self._get(sample_id))
 
     def _insert_text(self, source, name, groups, parents, rights, *, provenance=None, annotation=None):
@@ -383,7 +358,7 @@ class Workbench:
         text = unicodedata.normalize('NFC', source.replace('\r\n', '\n').replace('\r', '\n'))
         name = text_value(name, 'Name')
         digest = hashlib.sha256(text.encode()).hexdigest()
-        if self.db.execute("SELECT 1 FROM workbench_records WHERE kind='text' AND content_hash=?", (digest,)).fetchone():
+        if self.db.execute("SELECT 1 FROM workbench_records WHERE kind='text' AND content_hash=%s", (digest,)).fetchone():
             raise WorkbenchError('This canonical text already exists.', 'conflict', 409)
         if annotation is not None:
             annotation = validate_annotation('text_classification', annotation, {'kind': 'text', 'text': text})
@@ -391,16 +366,16 @@ class Workbench:
         if provenance is not None:
             origin.update(provenance)
         record_id, created = uuid.uuid4().hex, timestamp()
-        self.db.execute('INSERT INTO workbench_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                        (record_id, 'text', name, text, source, digest, None, encode(groups), encode(parents),
-                         encode(origin), 'text_classification', encode(annotation) if annotation is not None else None,
+        self.db.execute('INSERT INTO workbench_records VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                        (record_id, 'text', name, text, source, digest, None, encode_retained(groups), encode_retained(parents),
+                         encode_retained(origin), 'text_classification', encode_retained(annotation) if annotation is not None else None,
                          'draft', 1, created, created))
         record = self._get(record_id)
         self._history(record)
         return record
 
     def save(self, record_id, body, *, verified_provenance=None):
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             return self._save_annotation(record_id, body, verified_provenance=verified_provenance)
 
     def _save_annotation(self, record_id, body, *, verified_provenance=None, proposal_evidence=None):
@@ -428,7 +403,7 @@ class Workbench:
         if review not in ('draft', 'human_reviewed') and not (review == 'programmatically_verified' and verified_provenance):
             raise WorkbenchError('Only an owned verifier can grant programmatic verification.')
         # A trusted verifier may replace origin, but never persist or alter the note owner's projection.
-        origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
+        origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (record_id,)).fetchone()[0])
         provenance = dict(verified_provenance) if verified_provenance else origin
         if verified_provenance:
             reserved = 'rights_note_correction'
@@ -439,14 +414,14 @@ class Workbench:
                 if reserved not in before['provenance'] or provenance[reserved] != before['provenance'][reserved]:
                     raise WorkbenchError('Verifier provenance cannot change the owned rights correction. Reload before saving.', 'conflict', 409)
                 provenance.pop(reserved)
-        self.db.execute('''UPDATE workbench_records SET task=?,annotation_json=?,review=?,groups_json=?,
-            provenance_json=?,revision=revision+1,updated_at=? WHERE id=?''',
-                        (task, encode(annotation), review, encode(groups), encode(provenance), timestamp(), record_id))
+        self.db.execute('''UPDATE workbench_records SET task=%s,annotation_json=%s,review=%s,groups_json=%s,
+            provenance_json=%s,revision=revision+1,updated_at=%s WHERE id=%s''',
+                        (task, encode_retained(annotation), review, encode_retained(groups), encode_retained(provenance), timestamp(), record_id))
         if proposal_evidence is not None:
-            self.db.execute('INSERT INTO workbench_target_proposals VALUES (?,?) ON CONFLICT(id) DO UPDATE SET evidence=excluded.evidence',
-                            (record_id, encode(proposal_evidence)))
+            self.db.execute('INSERT INTO workbench_target_proposals VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET evidence=excluded.evidence',
+                            (record_id, encode_retained(proposal_evidence)))
         elif before['task'] != task or before['annotation'] != annotation:
-            self.db.execute('DELETE FROM workbench_target_proposals WHERE id=?', (record_id,))
+            self.db.execute('DELETE FROM workbench_target_proposals WHERE id=%s', (record_id,))
         record = self._get(record_id)
         self._history(record)
         return record
@@ -459,7 +434,7 @@ class Workbench:
         if not isinstance(body, dict) or set(body) != {'revision', 'source_revision', 'note'}:
             raise WorkbenchError('Supply only current record/source revisions and a rights note.')
         note = text_value(body['note'], 'Rights note', 1000, empty=True) or 'unknown'
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             before = self._get(record_id)
             for key in ('revision', 'source_revision'):
                 if type(body[key]) is not int or body[key] != before[key]:
@@ -468,17 +443,17 @@ class Workbench:
                 raise WorkbenchError('The source image was deleted.', 'unavailable', 409)
             if note == rights_note(before):
                 return {'record': before, 'changed': False}
-            origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=?', (record_id,)).fetchone()[0])
+            origin = json.loads(self.db.execute('SELECT provenance_json FROM workbench_records WHERE id=%s', (record_id,)).fetchone()[0])
             if 'rights_note_correction' in origin:
                 raise WorkbenchError('Stored origin uses the reserved correction field; cannot replace origin evidence.', 'conflict', 409)
-            self.db.execute('INSERT INTO workbench_rights_notes VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET note=excluded.note,revision=excluded.revision',
+            self.db.execute('INSERT INTO workbench_rights_notes VALUES (%s,%s,%s) ON CONFLICT(id) DO UPDATE SET note=excluded.note,revision=excluded.revision',
                             (record_id, note, before['revision'] + 1))
-            self.db.execute('UPDATE workbench_records SET revision=revision+1,updated_at=? WHERE id=?', (timestamp(), record_id))
+            self.db.execute('UPDATE workbench_records SET revision=revision+1,updated_at=%s WHERE id=%s', (timestamp(), record_id))
             record = self._get(record_id)
             self._history(record)
             return {'record': record, 'changed': True}
     def _response(self, response_id):
-        row = self.db.execute('SELECT * FROM workbench_responses WHERE id=?', (response_id,)).fetchone()
+        row = self.db.execute('SELECT * FROM workbench_responses WHERE id=%s', (response_id,)).fetchone()
         if row is None:
             raise WorkbenchError('Response not found.', 'unavailable', 404)
         response = dict(row)
@@ -490,14 +465,14 @@ class Workbench:
             parent = self._get(prompt_id)
             if parent['kind'] != 'text':
                 raise WorkbenchError('Instruction responses require a text prompt.')
-            ids = self.db.execute('SELECT id FROM workbench_responses WHERE prompt_id=? ORDER BY created_at,id', (prompt_id,))
+            ids = self.db.execute('SELECT id FROM workbench_responses WHERE prompt_id=%s ORDER BY created_at,id', (prompt_id,))
             return {'parent': parent, 'responses': [self._response(row['id']) for row in ids]}
 
     def response_history(self, response_id):
         with self.lock:
             self._response(response_id)
             return {'history': [json.loads(row[0]) for row in self.db.execute(
-                'SELECT snapshot FROM workbench_response_history WHERE id=? ORDER BY revision', (response_id,))]}
+                'SELECT snapshot FROM workbench_response_history WHERE id=%s ORDER BY revision', (response_id,))]}
 
     def save_response(self, body):
         """An independent target with immutable prompt identity and explicit CAS."""
@@ -513,14 +488,14 @@ class Workbench:
         text_value(completion, 'Completion', MAX_TEXT)
         if body['review'] not in ('draft', 'human_reviewed'):
             raise WorkbenchError('Explicitly choose draft or review this exact completion.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             parent = self._get(body['prompt_id'])
             if parent['kind'] != 'text' or not parent['source_available']:
                 raise WorkbenchError('Instruction responses require an available text prompt.')
             for request_key, parent_key in (('parent_revision', 'revision'), ('source_revision', 'source_revision')):
                 if type(body[request_key]) is not int or body[request_key] != parent[parent_key]:
                     raise WorkbenchError('The prompt changed. Reload before saving the response.', 'conflict', 409)
-            existing = self.db.execute('SELECT id FROM workbench_responses WHERE id=?', (body['id'],)).fetchone()
+            existing = self.db.execute('SELECT id FROM workbench_responses WHERE id=%s', (body['id'],)).fetchone()
             created = timestamp()
             if existing:
                 before = self._response(body['id'])
@@ -528,18 +503,18 @@ class Workbench:
                     raise WorkbenchError('The response changed or belongs to another prompt. Reload before saving.', 'conflict', 409)
                 if before['completion'] == completion and before['review'] == body['review']:
                     return {'response': before, 'parent': parent, 'changed': False}
-                self.db.execute('''UPDATE workbench_responses SET completion=?,review=?,revision=revision+1,
-                    updated_at=? WHERE id=?''', (completion, body['review'], created, body['id']))
+                self.db.execute('''UPDATE workbench_responses SET completion=%s,review=%s,revision=revision+1,
+                    updated_at=%s WHERE id=%s''', (completion, body['review'], created, body['id']))
             else:
                 if body['revision'] != 0:
                     raise WorkbenchError('Response no longer exists.', 'unavailable', 409)
                 origin = {'method': 'human_authored', 'prompt_id': parent['id'],
                           'prompt_sha256': parent['content_hash'], 'source_sha256': parent['source_sha256']}
-                self.db.execute('INSERT INTO workbench_responses VALUES (?,?,?,?,?,?,?,?)',
-                                (body['id'], parent['id'], 1, completion, body['review'], encode(origin), created, created))
+                self.db.execute('INSERT INTO workbench_responses VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
+                                (body['id'], parent['id'], 1, completion, body['review'], encode_retained(origin), created, created))
             response = self._response(body['id'])
-            self.db.execute('INSERT INTO workbench_response_history VALUES (?,?,?)',
-                            (response['id'], response['revision'], encode({'response': response, 'parent': parent})))
+            self.db.execute('INSERT INTO workbench_response_history VALUES (%s,%s,%s)',
+                            (response['id'], response['revision'], encode_retained({'response': response, 'parent': parent})))
             return {'response': response, 'parent': parent, 'changed': True}
 
     def response_selection(self, items):

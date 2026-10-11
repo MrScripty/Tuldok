@@ -79,14 +79,14 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await click('bulk-stop');await evaluate('window.releaseManifestRead();window.restoreManifestRead()');await idle();
   assert.equal(await evaluate('window.bulkPosts.length'),beforeRead);assert.match(await evaluate('document.getElementById("bulk-status").textContent'),/Stopped: 0 created.*1 not attempted/);
   // Actual storage failure must halt scheduling, with no orphan asset.
-  const db=path.join(temporary,'data/dataset.sqlite3');
-  python("import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute(\"CREATE TRIGGER reject_bulk_metadata BEFORE UPDATE OF groups_json ON workbench_records BEGIN SELECT RAISE(ABORT, 'controlled storage failure'); END\"); db.commit()",db);
+  const db=path.join(temporary,'data');
+  python("import sys; sys.path.insert(0,'tests'); from postgres_helpers import fixture_database, install_failure_trigger; db=fixture_database(sys.argv[1]); install_failure_trigger(db, 'workbench_records', 'reject_bulk_metadata', 'controlled storage failure', event='UPDATE OF groups_json'); db.close()",db);
   await choose([JSON.stringify({kind:'image',file:'other.png',groups:['storage-source']}),row('after failed storage','Must not run')].join('\n'),[{name:'other.png',data:other.toString('base64')}]);
   await importNow();await idle();assert.match(await evaluate('document.getElementById("bulk-status").textContent'),/Paused after server failure: 0 created, 0 rejected, 1 uncertain.*1 not attempted/);
   assert.equal((await api('records')).total,5);assert.equal(fs.readdirSync(path.join(temporary,'data/images')).length,1);
   await click('bulk-check');await until(()=>evaluate('document.getElementById("bulk-status").textContent.includes("does not prove")'));
   await click('bulk-dismiss');
-  python("import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute('DROP TRIGGER reject_bulk_metadata'); db.commit()",db);
+  python("import sys; sys.path.insert(0,'tests'); from postgres_helpers import fixture_database, drop_failure_trigger; db=fixture_database(sys.argv[1]); drop_failure_trigger(db, 'workbench_records', 'reject_bulk_metadata'); db.close()",db);
   // Lose a real committed response; lookup confirms that admission without replay.
   await choose([row('response saved','Saved despite response loss'),row('not scheduled after loss','Never scheduled')].join('\n'));
   const beforeLoss=await evaluate('window.bulkPosts.length');await evaluate('window.loseNextRow=true');await importNow();await idle();

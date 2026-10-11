@@ -1,4 +1,5 @@
 """Named fixed membership, independent of filters, review and frozen releases."""
+from workbench import encode_retained
 import json
 import uuid
 
@@ -9,16 +10,11 @@ class SavedSelections:
     def __init__(self, workbench):
         self.workbench = workbench
         self.db, self.lock = workbench.db, workbench.lock
-        with self.lock, self.db:
-            self.db.execute('''CREATE TABLE IF NOT EXISTS saved_selections (
-                id TEXT PRIMARY KEY, name TEXT NOT NULL, revision INTEGER NOT NULL,
-                members_json TEXT NOT NULL, member_count INTEGER NOT NULL,
-                created_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
 
     def _get(self, selection_id):
         if not isinstance(selection_id, str) or not IDENTIFIER.fullmatch(selection_id):
             raise WorkbenchError('Invalid saved selection ID.')
-        row = self.db.execute('SELECT * FROM saved_selections WHERE id=?', (selection_id,)).fetchone()
+        row = self.db.execute('SELECT * FROM saved_selections WHERE id=%s', (selection_id,)).fetchone()
         if row is None:
             raise WorkbenchError('Saved selection not found.', 'unavailable', 404)
         result = dict(row)
@@ -40,7 +36,7 @@ class SavedSelections:
         items = body.get('items')
         if not isinstance(items, list) or not 1 <= len(items) <= 5000:
             raise WorkbenchError('Select 1–5,000 records per saved selection.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             for item in items:
                 if not isinstance(item, dict) or set(item) != {'id', 'revision', 'source_revision'}:
                     raise WorkbenchError('Provide only record ID, revision and source revision.')
@@ -60,13 +56,15 @@ class SavedSelections:
                 members.append({key: row[key] for key in ('id', 'name', 'kind', 'revision', 'source_revision',
                                'source_sha256', 'content_hash', 'pixel_hash')})
             selection_id, now = uuid.uuid4().hex, timestamp()
-            self.db.execute('INSERT INTO saved_selections VALUES (?,?,?,?,?,?,?)',
-                            (selection_id, name, 1, encode(members), len(members), now, now))
+            self.db.execute('''INSERT INTO saved_selections
+                (id, name, revision, members_json, member_count, created_at, updated_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)''',
+                            (selection_id, name, 1, encode_retained(members), len(members), now, now))
             return self._get(selection_id)
 
     def load(self, selection_id):
         """Keep every saved reference; current metadata never replaces a saved pair."""
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             saved = self._get(selection_id)
             self.workbench._sync_images()
             rows = []
@@ -109,14 +107,14 @@ class SavedSelections:
         expected = {'revision', 'name'} if action == 'rename' else {'revision'}
         if action not in ('rename', 'delete') or set(body) != expected:
             raise WorkbenchError('Invalid saved selection action.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             saved = self._get(selection_id)
             if type(body.get('revision')) is not int or body['revision'] != saved['revision']:
                 raise WorkbenchError('Saved selection changed. Refresh before renaming or deleting.', 'conflict', 409)
             if action == 'delete':
-                self.db.execute('DELETE FROM saved_selections WHERE id=?', (selection_id,))
+                self.db.execute('DELETE FROM saved_selections WHERE id=%s', (selection_id,))
                 return {'deleted': selection_id}
             name = text_value(body.get('name'), 'Selection name', 120)
-            self.db.execute('UPDATE saved_selections SET name=?,revision=revision+1,updated_at=? WHERE id=?',
+            self.db.execute('UPDATE saved_selections SET name=%s,revision=revision+1,updated_at=%s WHERE id=%s',
                             (name, timestamp(), selection_id))
             return self._get(selection_id)

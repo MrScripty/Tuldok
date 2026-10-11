@@ -37,11 +37,11 @@ class SavedGenerationTests(unittest.TestCase):
     def store(self, job, entries=()):
         # These are the exact size-only JSON fields persisted by PR3, not
         # current validate()/start() objects altered after a worker has loaded.
-        with self.dataset.db:
-            self.dataset.db.execute('INSERT INTO generation_jobs VALUES (?,?)',
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('INSERT INTO generation_jobs (id,data) VALUES (%s,%s)',
                                     (job['id'], json.dumps(job)))
             for entry in entries:
-                self.dataset.db.execute('INSERT INTO generation_entries VALUES (?,?,?,?)',
+                self.dataset.db.execute('INSERT INTO generation_entries (id,job_id,ordinal,data) VALUES (%s,%s,%s,%s)',
                                         (entry['id'], job['id'], entry['ordinal'], json.dumps(entry)))
 
     def restart(self):
@@ -64,7 +64,7 @@ class SavedGenerationTests(unittest.TestCase):
         self.dataset.add(dict(job['meta'], image=base64.b64encode(raw).decode(), filename='old-output.png'),
                          generation=(first, job, {'seed': 40, 'duration_seconds': .01}))
         pending = self.legacy_entry(job, 1)
-        with self.dataset.db:
+        with self.dataset.db.transaction():
             self.dataset.generation_jobs._entry(pending)
         raw_config = json.loads(self.dataset.db.execute('SELECT data FROM generation_jobs').fetchone()[0])['config']
         self.assertNotIn('width', raw_config)

@@ -1,0 +1,16 @@
+# Issues and decisions requiring follow-up
+
+| ID | Severity/evidence | Relationship and owner | Disposition and required verification | Revisit trigger |
+| --- | --- | --- | --- | --- |
+| I1 | Medium: PR33 lifecycle failure at `581fa5c`; prior typed-Pumas detail, current failed check verified | UI integration owner; compact layout overlap | Defer fix outside docs scope. Inspect current head and successful affected/CI gates before reuse; do not retry inaccessible logs | M1 integration |
+| I2 | Medium: PR32 lifecycle failure at `83b2df9` | Documentation/UI owner; existing screenshot work | Preserve branch. Reconcile README link on integration; old screenshots do not satisfy new UI gates | PR32 review/merge under separate authority |
+| I3 | High: bounded mesh branch `dd7661d` contains a broad unmerged stack | 3D and integration owners; baseline/contract uncertainty | Defer branch adoption. Review actual current diff and native reader/browser evidence by subtype | Before M5a |
+| I4 | Medium: no Standards Engine MCP or Tuldok local agent skill/config available | Planning author; tooling evidence | Complete source/template/structural/manual review now; explicitly report unavailable Engine routing, no certification claim | A configured application-purpose Engine becomes available |
+| I5 | High: Pantograph host packaging/transport unqualified for Tuldok | Integration owner | S1 bounded real no-model embedding probe; adopt only demonstrated surface or retain small local DAG | Before M2 graph-engine admission |
+| I6 | High: Pumas audio is experimental, production unavailable | Audio/inference owner | Local audio data work proceeds; keep ASR disabled until producer/runtime qualification and consumer tests pass | A supported production contract/runtime is available |
+| I7 | Medium: trainer fixture is not app lifecycle and omits per-example output | Run owner | M2 dedicated adapter, environment limits, prediction mapping, process/cancel/restart and artifact evidence | M2 admission |
+| I8 | Medium: no current volume format/consumer selected | 3D owner | S4 bounded format choice with affine/grid reader proof; no generic 3D claim | Before M5b |
+| I9 | Medium: new docs branch is outside push CI allowlist; PR CI invokes training-bearing checks | Planning author/integration owner | Docs-only source checks are the planning gate. Do not open a PR that starts excluded training in this task; no workflow changes to evade scope | Separate PR/CI authorization or future implementation |
+| I10 | High: distributed SQLite coupling; PostgreSQL lifecycle/migration not qualified | Storage/integration owner; MB before M2 persistence | Preserve all owners/bytes/history/rights/receipts through new-database migration; qualify explicit transactions, two independent connections, local lifecycle and metadata+artifact restore. Stop on lossy conversion or unsupported values; no silent second production backend | S6/MB admission and before cutover |
+
+MB implementation is active under later user authorization. I10 local implementation and preservation evidence is in [PostgreSQL qualification](reports/postgres-verification.md); hosted CI is pending. Broader workspace claims and PR32/33 remain outside this implementation.
