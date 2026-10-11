@@ -28,3 +28,14 @@ Standards Engine MCP was unavailable. This is source-based template, structural 
 ## Source-review clarification follow-up
 
 The delegated second independent source review reported no material blocker and requested two narrow clarifications: UniFFI executable-validation publication and republication after runtime restart; validation-first correction examples with exposed/reused test data distinguished from fresh holdout. Both are now explicit in S1, the Pantograph boundary, Runs/split semantics and the M2 gate. The publication author rechecked the pinned Pantograph source and reran affected documentation checks; this addendum does not claim another full independent review of the revised plan.
+
+## Local-first PostgreSQL amendment review
+
+The same independent reviewer performed a narrow read-only review of the amended plan and storage audit on 2026-10-11. Final disposition: **no remaining material blocker to publication**. Reviewed plan SHA-256: `db0c0e160542e3458bc2a2c560771af06db96b61e390f3a9699751d9f8368951`.
+
+Two findings were corrected and confirmed:
+
+- Keep source application writers and artifact mutators quiesced from final snapshot through verification and authority switch; otherwise intervening writes could be lost despite a successful snapshot/import comparison. Failed cutover resumes the untouched source; online migration requires separately admitted reconciliation.
+- Include `native_text_import.py` in MB's transaction-owner write set. It owns a connection context and SQLite error handling without a direct `execute` call, so the 16-module execute count alone did not identify it.
+
+The reviewer independently passed the actual upstream plan validator and whitespace check, reproduced the four SQL/test-coupling counts, inspected persistence owners and checked transaction/backup cautions against primary documentation. M1 remains independent; MB precedes M2 persistence with lossless migration, two-connection, complete restore and post-cutover preservation gates. This narrow follow-up does not claim runtime qualification, application testing, training or Standards Engine certification.
