@@ -10,6 +10,40 @@ lifecycle CI remains required before M2 acceptance.
 
 ## Clean source browser evidence
 
+Reviewed runtime `f725bd1806bfe5e27635eb817a403b602a14591a` passed
+[full lifecycle CI38179432512](https://github.com/MrScripty/Tuldok/actions/runs/38179432512):
+all 98 steps succeeded, zero skipped. Its job log confirms **507 Python tests
+in 272.605 seconds, OK**, the real image workflow and all three browser
+recovery checks. [Focused CI38179432749](https://github.com/MrScripty/Tuldok/actions/runs/38179432749)
+also passed. The earlier runnable checkpoint's CI38179222116 passed all 97
+then-registered steps. No inherited gate was removed.
+
+The later publication/test checkpoint `bfdf475` failed
+[CI38179625084](https://github.com/MrScripty/Tuldok/actions/runs/38179625084)
+at the inherited `browser_pumas_typed.cjs` line 122: the second caption request's
+deliberately lost response never reached the expected failed job within the
+existing deadline. The run ended with 92 successful steps and five skipped;
+it is not an accepted final-head qualification. Authorized job logs provide
+the exact location and no page runtime exceptions. Targeted investigation is
+required; the earlier green source run does not waive this failure.
+
+The unchanged test reproduced the exact line-122 timeout locally. A dedicated
+worker then proved its missing readiness boundary: holding the real Apply
+response after the backend commit lets the old current-revision predicate pass
+while `captionProposalBusy` remains true. Replaying the old programmatic submit
+then produces zero admission POSTs, as the controller intends. The repaired
+test releases that response, waits for completed UI action and cleared pending
+receipt, then uses an enabled, visible, hit-tested physical click. It asserts
+one new admission, binds the failed job to that exact request ID, and preserves
+the unknown-outcome and exactly-two-provider-requests/no-replay assertions.
+No timeout was extended and no product file changed.
+
+The independent reviewer accepted the stable test SHA-256
+`2280074da9ae31710ec79fe3bd498b6d44827e6aaf0a10b9f11f560603da600d` and
+reran it successfully with that same hash before/after execution. Its receipt
+is `build/qa/pumas-typed/run-dihbUA/receipt.json`. A fresh full successor CI is
+required; this targeted pass alone does not close the hosted qualification.
+
 `f725bd1806bfe5e27635eb817a403b602a14591a` passed 14 real-browser checks with
 `dirty:false`, including real stale-validation rejection/recovery, deliberate
 loss of a committed submission response and explicit same-key reconciliation,
@@ -83,6 +117,23 @@ python app.py --data /tmp/tuldok-image-workspace --port 8092
 Open `http://127.0.0.1:8092/workspaces` and choose Current local catalog.
 Existing schema-v1 catalogs require the explicit documented, quiesced
 `upgrade_metadata.py` operation; ordinary startup does not silently upgrade.
+
+The selected execution environment currently serves the populated authored
+capture catalog at `http://127.0.0.1:8094/workspaces`. A recovery command after
+the environment-disconnected callback confirmed the branch/commit and a live
+HTTP 200 response with exactly one completed run. No duplicate build, push,
+service or training request was started for recovery. To open a separate fresh
+catalog in this same environment while keeping that demo available:
+
+```sh
+TULDOK_DATABASE_URL='host=/tmp/tuldok-pg/socket port=5432 dbname=tuldok user=tuldok passfile=/tmp/tuldok-pg/app.pgpass' \
+TULDOK_TRAINING_PYTHON=/tmp/tuldok-training-venv/bin/python \
+/tmp/tuldok-app-venv/bin/python app.py --data /tmp/tuldok-m2-fresh --port 8095
+```
+
+The referenced local passfile contains temporary fixture credentials outside
+Git. It is not needed for the portable README setup using the user's own local
+PostgreSQL configuration.
 
 The classifier runs from scratch on tiny authored workflow inputs. Its metrics
 are actual execution evidence and do not establish model quality. Audio and 3D
