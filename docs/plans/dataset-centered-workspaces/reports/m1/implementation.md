@@ -65,7 +65,8 @@ fixtures, malformed graph, incompatible ports, cycle, missing inputs,
 unavailable ASR, bounded parameters, stale validation, immutable run snapshot,
 reopen, cancel/unknown, cross-tab conflict, unsupported store version and failed
 storage write), two independent Python fixture checks, and whitespace check.
-Comprehensive browser/legacy verification and independent review are in progress.
+This early checkpoint preceded the browser/legacy verification and independent
+review recorded below.
 
 ## Standards and remaining evidence
 
@@ -79,10 +80,9 @@ Persistence for disposable fixture storage, and Documentation. Plain JS/Python
 and no framework build are retained. Source-based review does not claim an
 engine-backed compliance result.
 
-Next slice: complete actual browser interaction, responsive/keyboard/error
-coverage, screenshot review and independent exact-source review, then report
-CI/integration readiness separately. The branch is retained for parent review;
-no task-created worktree or external dependency is removed.
+The branch is retained for parent review; no task-created worktree or external
+dependency is removed. The completed M1 source review and CI evidence below
+remain separate from full integration readiness.
 
 ## Qualification additions
 
@@ -143,4 +143,67 @@ tokenizers. No installation, training or model acquisition was performed.
 This affects full merge qualification, not the isolated M1 fixture workflow.
 The parent must reconcile this evidence with its qualified integration
 consumer environment. Hosted CI and final independent source review are
-recorded separately below once observed; local checks do not imply them.
+recorded separately below; local checks do not imply them.
+
+## Reviewed source and hosted evidence
+
+The final product/test source checkpoint is
+**`f8e8ea4e7718bc139e36ffea4002f77c5187cf82`**, pushed on
+`ui/dataset-workspaces-m1-20261011`. The following documentation checkpoint only
+records its evidence; it does not change product or test source. The earlier
+runnable checkpoint remains `9ae31492140505fc7bc6e23406c36f85034c1c08`.
+
+- **Independent review accepted the bounded M1 scope with no open actionable
+  findings** at this exact SHA. The reviewer reran service/contracts, the full
+  Chromium gate and additional restoration race probes; see the
+  [independent review record](independent-review.md).
+- **Hosted M1 CI passed**, including contracts, real Chromium navigation and
+  screenshot upload: [run 38175309323](https://github.com/MrScripty/Tuldok/actions/runs/38175309323),
+  head `f8e8ea4e7718bc139e36ffea4002f77c5187cf82`.
+- The [screenshot artifact](https://github.com/MrScripty/Tuldok/actions/runs/38175309323/artifacts/11715826428)
+  includes source-bound receipts and captures. Its SHA-256 is
+  `3536d6e83203459673fbe7d0e86eb08d966662565658d39083f683ac44e6c75c`;
+  GitHub retention expires on 2026-10-25. This is hosted M1 evidence, not a
+  claim that the existing full lifecycle/consumer workflow passed.
+
+The clean local browser receipt is
+`build/qa/workspaces/run-z0x61u/receipt.json`: source `f8e8ea4`, `dirty: false`,
+Chrome `151.0.7922.173`, command `node tests/browser_workspaces.cjs`.
+The independent rerun is `build/qa/workspaces/run-jnR4bj/receipt.json`, also
+clean at that source. Each records all 18 interaction checks and no training.
+The three real API writes in each full walkthrough are the explicit current
+catalog import/save/review checks against an isolated temporary test catalog;
+fixture-only actions were separately asserted to issue zero API POSTs.
+
+All 15 final local JPEG85 screenshots were manually inspected by the UI owner:
+
+| Capture group in `build/qa/workspaces/run-z0x61u/` | Dimensions | Findings |
+| --- | --- | --- |
+| `data-1440.jpg`, `pipeline-1440.jpg`, `runs-1440.jpg` | 1440×900 | Compact readable hierarchy, authored state labels and source context visible |
+| `data-1024.jpg`, `pipeline-1024.jpg`, `runs-1024.jpg` | 1024×768 | Panels and graph adapt without overlapping controls |
+| `data-390.jpg`, `pipeline-390.jpg`, `runs-390.jpg` | 390×844 | Readable narrow layout, bounded local scrolling, no whole-page horizontal overflow |
+| `data-zoom200.jpg`, `pipeline-zoom200.jpg`, `runs-zoom200.jpg` | 720×450 CSS viewport | 200% equivalent reflow coverage from a 1440×900 viewport; readable wrapped controls and vertical scrolling |
+| `catalog-1440.jpg`, `catalog-390.jpg` | 1440×900 / 390×844 | Original real Data controls retained in the compact adapter |
+| `loading-error-390.jpg` | 390×844 | Explicit failure and keyboard-operable retry, no fake loaded state |
+
+The zoom captures test effective CSS viewport reflow; they are **not a native
+browser zoom-setting assertion or complete accessibility audit**. Native 200%
+zoom and maintainer visual acceptance remain part of final integration review.
+The independent reviewer also inspected desktop, tablet and narrow captures.
+
+## Handoff and boundaries
+
+M1's runnable implementation, focused browser/contract gates, screenshots,
+independent review and hosted M1 CI are delivered. A1 remains pending maintainer
+acceptance; A2 and production modality/execution claims remain pending their own
+milestones. The full consumer environment prerequisite is recorded as I11.
+
+Shared integration surfaces are only additive static route entries in `app.py`,
+navigation/script additions in `static/index.html` and `static/workbench.html`,
+README and these plan records. Existing backend/SQL owners and the original
+lifecycle workflow are untouched. Parent integration must serialize these
+small overlaps with MB and any chosen PR33 work, then rerun affected gates on
+the combined candidate. The separate PostgreSQL worker's branch is neither
+integrated nor declared qualified by this report. Real execution remains
+disabled until accepted MB/M2 evidence exists. No PR, merge or deployment was
+performed.

@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 implemented on an isolated UI branch; browser, independent review and CI qualification. MB has a separate worker and is not integrated here.
+**Current phase:** M1 implemented on an isolated UI branch with passing focused browser/contracts, independent review and hosted M1 CI. Maintainer acceptance and combined integration qualification remain pending. MB has a separate worker and is not integrated here.
 
-**Next slice:** Finish M1 source-bound review and CI evidence, then hand off the retained branch for parent integration review. M2 remains gated on accepted MB qualification.
+**Next slice:** Parent review of the retained M1 branch and screenshots, native 200% zoom check, and consumer qualification in the pinned integration environment. M2 remains gated on accepted MB qualification.
 
 **Acceptance status:** `pending`
 
@@ -22,11 +22,11 @@ The first complete workflow is: import owned images → classify and human-revie
 
 ## Objective Acceptance
 
-These are future implementation claims, all pending. Planning/documentation checks are recorded separately in [verification](reports/verification.md); they do not satisfy product acceptance.
+Overall acceptance remains pending. The M1 prototype has focused implementation evidence below; broader production claims retain their own gates. Planning/documentation checks are recorded separately in [verification](reports/verification.md); they do not satisfy product acceptance.
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| A1 | Runnable Data/Pipeline/Runs navigation retains dataset, selection, dirty edits, graph and run context; desktop/narrow/keyboard walkthrough has readable screenshots and labelled fixture states | user-workflow | representative | either | pending | M1 browser walkthrough |
+| A1 | Runnable Data/Pipeline/Runs navigation retains dataset, selection, dirty edits, graph and run context; desktop/narrow/keyboard walkthrough has readable screenshots and labelled fixture states | user-workflow | representative | either | pending | [M1 reviewed source/browser/CI evidence](reports/m1/implementation.md); maintainer acceptance pending |
 | A2 | Real image import/review/frozen release → edited graph → CPU training/evaluation → immutable results → correction/new release works after application restart | user-workflow | representative | automated | pending | M2 browser + subprocess + consumer proof |
 | A3 | Revisions, rights, family splits, transform fit scope and artifact hashes remain correct across stale edits, source changes, cancellation and restart | contract | representative | automated | pending | M2 owner tests and migration/recovery cases |
 | A4 | Versioned typed graphs, named recipes, node previews, invalid connections, missing capabilities and stale validation produce the declared outcomes; fixture nodes cannot execute as real nodes | contract | not-applicable | automated | pending | M1/M2 graph cases |
@@ -206,7 +206,7 @@ Every milestone delivers a runnable browser path before its backend expansion is
 
 **Status:** `Verifying`
 
-M1 source, screenshot and verification evidence: [implementation record](reports/m1/implementation.md). The fixture service and opt-in Data adapter are presentation boundaries; no storage migration or real run API is included.
+M1 source, screenshot and verification evidence: [implementation record](reports/m1/implementation.md) and [accepted independent review](reports/m1/independent-review.md). Focused CI passed on source `f8e8ea4`; maintainer/native-zoom and full integration consumer qualification remain pending. The fixture service and opt-in Data adapter are presentation boundaries; no storage migration or real run API is included.
 
 ### Milestone MB: Qualify and migrate local metadata to PostgreSQL
 
@@ -278,7 +278,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 ## Blockers
 
-- M1 is authorized and implemented on its own branch; final review/CI evidence remains its qualification gate. Local PostgreSQL migration/lifecycle acceptance remains a prerequisite to M2 persistence; the separate migration branch is not presumed accepted or integrated.
+- M1 source review and hosted focused CI passed; maintainer/native-zoom acceptance and the unavailable pinned full consumer environment remain integration gates. Local PostgreSQL migration/lifecycle acceptance remains a prerequisite to M2 persistence; the separate migration branch is not presumed accepted or integrated.
 - Standards Engine MCP is unavailable in this environment. The source-based template/validator/review evidence is reported precisely; do not claim an Engine route or certificate.
 - PR33 lifecycle CI is failing; any reuse needs a current resolved result or a separately diagnosed integration candidate. PR32 also currently reports lifecycle failure; its screenshots are preserved as branch work, not proof of this plan's future UI.
 - Pantograph embedding and production audio inference are unqualified for Tuldok. They block only their respective adapters, not M1 or local audio data work.
