@@ -191,6 +191,9 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
       - run: cc -shared -fPIC -O2 -Wall -Wextra -Werror -o build/qa/workspace-offline.so tests/fixtures/workspaces/offline_loopback.c -ldl
+      - run: node tests/browser_workspace_recovery.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_workspace_image_run.cjs
         env:
           BROWSER: /usr/bin/google-chrome

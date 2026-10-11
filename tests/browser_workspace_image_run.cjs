@@ -264,6 +264,11 @@ function launch(command, args, options) {
   await until(() => evaluate('!!document.getElementById("fixture-label")'));
   await select("#dataset", "catalog");
   await until(() => text("#notice", true).then(t => t === "Collection ready."));
+  await focus('#nav-runs'); await key('Enter');
+  await until(() => text('#real-runs-root').then(t => t?.includes('No real runs yet')));
+  await focus('#nav-data'); await key('Enter');
+  await until(() => evaluate('!document.getElementById("view-data").hidden'));
+  check('keyboard navigation reaches honest empty real runs and returns to retained Data');
   const corpus = JSON.parse(execFileSync("python3", ["tests/fixtures/workspaces/image_corpus.py", "--output", path.join(temporary, "imports")], { cwd: root, encoding: "utf8" }));
   async function attachImage(filename) {
     const result = await send("Runtime.evaluate", { expression: `${element("#import-image", true)}` });
@@ -316,8 +321,28 @@ function launch(command, args, options) {
   await screenshot("catalog-data-390", 390, 844);
   await send("Emulation.setDeviceMetricsOverride", { width:1440,height:900,deviceScaleFactor:1,mobile:false });
   check("fixed split preview, exact reviewed source release and immutable ZIP download");
+  await send('Fetch.enable', {patterns:[{urlPattern:base + '/api/workspace/definitions',requestStage:'Response'}]});
+  pausedRequest = null;
   await nav("pipeline");
+  await until(() => pausedRequest);
+  assert.match(await text('#real-pipeline-root'), /Loading saved recipes/);
+  await nav('runs');
+  await send('Fetch.continueRequest', {requestId:pausedRequest});
+  await send('Fetch.disable'); pausedRequest = null;
+  await until(() => text('#real-runs-root').then(t => t?.includes('No real runs yet')));
+  assert.equal(await evaluate('document.getElementById("view-pipeline").hidden'), true);
+  await send('Fetch.enable', {patterns:[{urlPattern:base + '/api/workspace/definitions',requestStage:'Response'}]});
+  await nav('pipeline');
+  await until(() => pausedRequest);
+  await send('Fetch.fulfillRequest', {requestId:pausedRequest,responseCode:503,
+    responseHeaders:[{name:'Content-Type',value:'application/json'}],
+    body:Buffer.from(JSON.stringify({error:'Injected definition transport failure',code:'unavailable'})).toString('base64')});
+  await send('Fetch.disable'); pausedRequest = null;
+  await until(() => evaluate('!!document.getElementById("real-load-retry")'));
+  assert.match(await text('#real-pipeline-root'), /Injected definition transport failure/);
+  await click('#real-load-retry');
   await until(() => evaluate('!!document.getElementById("real-create-form")'));
+  check('real Pipeline loading, late-response navigation fence and explicit error retry');
   await fill("#real-create-name", "Authored shape baseline");
   await select("#real-create-release", releaseId);
   await click("#real-create-form button");
@@ -343,14 +368,46 @@ function launch(command, args, options) {
   await focus("#real-validate"); await key("Enter");
   await until(() => evaluate('document.getElementById("real-submit")?.disabled===false'));
   assert.match(await text("#real-validation"), /Verified frozen input/);
+  // A peer saves after this browser validated: rejection must clear the pending
+  // receipt so explicit reload + validation can recover without a new page.
+  const graphBefore = (await (await fetch(base + '/api/workspace/graphs')).json())[0];
+  const peerSave = await fetch(base + '/api/workspace/graphs/' + graphBefore.id, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({revision:graphBefore.revision,document:graphBefore}),
+  });
+  assert.equal(peerSave.status, 200);
+  await click('#real-submit');
+  await until(() => text('#real-pipeline-root .real-status').then(t => t?.includes('No run was admitted')));
+  assert.equal(await evaluate('history.state.realWorkspace.pendingSubmission'), null);
+  assert.equal((await (await fetch(base + '/api/workspace/runs')).json()).length, 0);
+  await click('#real-reload');
+  await until(() => text('#real-dirty').then(t => t === 'Saved r5'));
+  await click('#real-validate');
+  await until(() => evaluate('document.getElementById("real-submit")?.disabled===false'));
+  check('real HTTP stale validation rejects before admission and explicit reload/revalidation recovers');
   await screenshot("pipeline-real-1440", 1440, 900);
   await screenshot("pipeline-real-390", 390, 844);
   await send("Emulation.setDeviceMetricsOverride", { width:1440,height:900,deviceScaleFactor:1,mobile:false });
   check("actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview");
   const submittedBefore = posts.filter(p => p.endsWith("/api/workspace/runs")).length;
+  // Fail only delivery of the committed POST response. The browser must retain
+  // its exact key/body and require explicit reconciliation, without auto retry.
+  await send('Fetch.enable', {patterns:[{urlPattern:base + '/api/workspace/runs',requestStage:'Response'}]});
+  pausedRequest = null;
   await evaluate('document.getElementById("real-submit").click();document.getElementById("real-submit").click()');
+  await until(() => pausedRequest);
+  await send('Fetch.failRequest', {requestId:pausedRequest,errorReason:'Failed'});
+  await send('Fetch.disable'); pausedRequest = null;
+  await until(() => text('#real-pipeline-root .real-status').then(t => t?.includes('Failed to fetch')));
+  const uncertain = await evaluate('history.state.realWorkspace.pendingSubmission');
+  assert.ok(uncertain?.request_key);
+  assert.equal(posts.filter(p => p.endsWith('/api/workspace/runs')).length - submittedBefore, 1);
+  assert.equal((await (await fetch(base + '/api/workspace/runs')).json()).length, 1);
+  await click('#real-submit');
   await until(() => evaluate('!!document.getElementById("real-run-state")'));
-  assert.equal(posts.filter(p => p.endsWith("/api/workspace/runs")).length - submittedBefore, 1);
+  assert.equal(posts.filter(p => p.endsWith("/api/workspace/runs")).length - submittedBefore, 2);
+  assert.equal(await evaluate('history.state.realWorkspace.pendingSubmission'), null);
+  check('lost committed response retains exact receipt; explicit reconciliation returns the same single run');
   await screenshot("running-real-1440", 1440, 900);
   await until(() => text("#real-run-state").then(t => ["completed","failed","unknown"].includes(t)));
   assert.equal(await text("#real-run-state"), "completed", await text("#real-runs-root"));
@@ -366,10 +423,53 @@ function launch(command, args, options) {
   assert.equal((await fetch(base + `/api/workspace/runs/${run.id}/artifacts/test-metrics.json`)).status, 409);
   assert.ok(!JSON.stringify(run.metrics).includes('"test"'));
   await screenshot("results-real-1440", 1440, 900);
+  await screenshot("results-real-1024", 1024, 768);
   await screenshot("results-real-390", 390, 844);
+  if (process.env.TULDOK_NATIVE_ZOOM) {
+    await send('Emulation.clearDeviceMetricsOverride');
+    const xdotool = process.env.TULDOK_XDOTOOL || 'xdotool';
+    const windows = execFileSync(xdotool, ['search','--onlyvisible','--class','Chromium'], {encoding:'utf8'}).trim().split('\n');
+    assert.equal(windows.length, 1, 'Native zoom requires one owned visible Chromium window');
+    execFileSync(xdotool, ['windowfocus','--sync',windows[0]]);
+    execFileSync(xdotool, ['key','--clearmodifiers','ctrl+0']);
+    const unzoomed = await evaluate('({width:innerWidth,ratio:devicePixelRatio})');
+    for (let i=0;i<5;i++) execFileSync(xdotool, ['key','--clearmodifiers','ctrl+plus']);
+    await until(() => evaluate('devicePixelRatio') .then(r => Math.abs(r / unzoomed.ratio - 2) < .01));
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth+1'));
+    const zoomed = await evaluate('({width:innerWidth,ratio:devicePixelRatio})');
+    assert.ok(Math.abs(zoomed.width * 2 - unzoomed.width) < 20);
+    for (const [view, target] of [['pipeline','#real-param-epochs'],['data','#catalog-frame'],['runs','.metric-grid']]) {
+      await focus('#nav-' + view); await key('Enter');
+      await until(() => evaluate(`!document.getElementById('view-${view}').hidden`));
+      await until(() => evaluate(`!!document.querySelector(${JSON.stringify(target)})`));
+      await evaluate(`document.querySelector(${JSON.stringify(target)}).scrollIntoView({block:'center'})`);
+      assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'), view+' native zoom overflow');
+      if (view === 'data') assert.ok(await evaluate(`${doc(true)}.documentElement.scrollWidth<=${doc(true)}.defaultView.innerWidth+1`));
+      const filename = view + '-native-200.jpg', shot = await send('Page.captureScreenshot', screenshotOptions);
+      fs.writeFileSync(path.join(report,filename), Buffer.from(shot.data,'base64'));
+      captures.push({file:filename,native_browser_zoom:200,unzoomed,zoomed,quality:85});
+    }
+    execFileSync(xdotool, ['key','--clearmodifiers','ctrl+0']);
+    await until(() => evaluate('devicePixelRatio').then(r => r === unzoomed.ratio));
+    check('native Chromium 200% menu zoom verified by doubled device ratio and halved CSS viewport; no horizontal overflow');
+  }
   check("one admitted real child completed; verified checkpoint, validation metrics and exact predictions; test access remains locked");
   await send("Emulation.setDeviceMetricsOverride", { width:1440,height:900,deviceScaleFactor:1,mobile:false });
   const example = originalPredictions.rows.find(p => p.truth_index !== p.predicted_index) || originalPredictions.rows[0];
+  const previousRecord = await evaluate(`${doc(true)}.defaultView.TuldokWorkspaceData.snapshot().record.id`);
+  await send('Fetch.enable', {patterns:[{urlPattern:base + '/api/workbench/records/' + example.id,requestStage:'Response'}]});
+  pausedRequest = null;
+  await click(`[data-correct-record="${example.id}"]`);
+  await until(() => pausedRequest);
+  await nav('pipeline');
+  await send('Fetch.continueRequest', {requestId:pausedRequest});
+  await send('Fetch.disable'); pausedRequest = null;
+  await evaluate('new Promise(resolve=>setTimeout(resolve,150))');
+  assert.equal(await evaluate('document.getElementById("view-data").hidden'), true);
+  assert.equal(await evaluate(`${doc(true)}.defaultView.TuldokWorkspaceData.snapshot().record.id`), previousRecord);
+  await nav('runs');
+  await until(() => evaluate(`!!document.querySelector('[data-correct-record="${example.id}"]')`));
+  check('late correction response cannot override newer Pipeline navigation or the active Data record');
   await click(`[data-correct-record="${example.id}"]`);
   await until(() => evaluate('!document.getElementById("view-data").hidden'));
   assert.match(await text("#real-correction-context"), /Frozen target/);
@@ -377,6 +477,7 @@ function launch(command, args, options) {
   await select("#record-review", "human_reviewed", true);
   await click("#save", true);
   await until(() => evaluate(`${doc(true)}.defaultView.TuldokWorkspaceData.snapshot().dirty===false`));
+  await until(() => text('#real-correction-context').then(t => t?.includes(`Current annotation r${example.revision+1}`)));
   await screenshot("catalog-correction-1440", 1440, 900);
   await click("#clear-selection", true); await click("#select-page", true);
   await click(".embed-toolbar button", true);
@@ -395,6 +496,10 @@ function launch(command, args, options) {
   const correctedDownload = await evaluate(`${doc(true)}.querySelector('#release-result a').href`);
   assert.ok(correctedDownload && correctedDownload !== download);
   await key("Escape");
+  // Another active record must never inherit the first example's provenance.
+  const otherRecord = originalPredictions.rows.find(p => p.id !== example.id);
+  await evaluate(`${doc(true)}.defaultView.TuldokWorkspaceData.openCurrentRecord(${JSON.stringify(otherRecord.id)})`);
+  await until(() => evaluate('document.getElementById("real-correction-context").hidden'));
   assert.deepEqual(Buffer.from(await (await fetch(download)).arrayBuffer()), releaseBytes);
   const revisedPredictions = await (await fetch(predictionURL)).json();
   assert.deepEqual(revisedPredictions.rows.map(p => p.frozen_reference), originalPredictions.rows.map(p => p.frozen_reference));

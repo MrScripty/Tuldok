@@ -204,9 +204,19 @@
       try {
         const list = await api("runs");
         const id = list.some(r => r.id === chosen) ? chosen : list[0]?.id;
-        const detail = id ? await api("runs/" + encoded(id)) : null;
-        let rows = null, rowsError = null;
-        if (detail?.state === "completed") {
+        let detail = null, rows = null, rowsError = null;
+        if (id) {
+          try { detail = await api("runs/" + encoded(id)); }
+          catch (error) {
+            // The list's durable receipt remains useful when verifying its
+            // artifacts fails. Keep other runs reachable; never trust cached
+            // metrics or offer artifacts from the failed detail read.
+            detail = { ...list.find(r => r.id === id), metrics: null, artifacts: [],
+              artifact_status: {status: "unavailable", message: error.message} };
+            rowsError = error.message;
+          }
+        }
+        if (detail?.state === "completed" && !detail.artifact_status) {
           try { rows = await api("runs/" + encoded(id) + "/predictions?split=" + split); }
           catch (error) { rowsError = error.message; }
         }
