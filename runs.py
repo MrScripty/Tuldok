@@ -15,6 +15,7 @@ import uuid
 
 import image_training
 import text_training
+import audio_training
 import psycopg
 from workbench import WorkbenchError, encode, timestamp, text_value
 from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, source_content_hash, training_environment
@@ -575,13 +576,14 @@ class Runs:
         return {key: run[key] for key in ('dataset_id', 'graph_sha256', 'release_id', 'release_sha256')} | {'run_id': run['id']}
 
     def _fit_count(self, run):
-        return 1 if adapter_for_graph(run['graph']) is text_training else run['parameters']['epochs']
+        return run['parameters']['epochs'] if adapter_for_graph(run['graph']) is image_training else 1
 
     def _payloads(self, run):
-        return PAYLOADS - {'checkpoint.pt'} | {'model.json'} if adapter_for_graph(run['graph']) is text_training else PAYLOADS
+        return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
 
     def _reference_keys(self, run):
-        return text_training.REFERENCE_KEYS if adapter_for_graph(run['graph']) is text_training else (
+        adapter = adapter_for_graph(run['graph'])
+        return adapter.REFERENCE_KEYS if adapter is not image_training else (
             'id', 'revision', 'source_revision', 'source_sha256', 'asset_sha256', 'exported_pixel_sha256')
 
     def _verify_directory(self, run, directory):
@@ -625,11 +627,12 @@ class Runs:
                 raise ValueError('Executed runtime differs from the admission fingerprint.')
             if metrics['parameters'] != run['parameters'] or metrics['transform'] != adapter_for_graph(run['graph']).TRANSFORM:
                 raise ValueError('Default metrics are inconsistent or disclose test results.')
-            if adapter_for_graph(run['graph']) is text_training:
-                model = text_training.validate_model(payloads['model.json'])
+            if adapter_for_graph(run['graph']) is not image_training:
+                adapter = adapter_for_graph(run['graph'])
+                model = adapter.validate_model(payloads['model.json'])
                 self._vocabulary(run, model)
-                if model['parameters'] != run['parameters'] or model['transform'] != text_training.TRANSFORM:
-                    raise ValueError('Text model differs from the admitted recipe.')
+                if model['parameters'] != run['parameters'] or model['transform'] != adapter.TRANSFORM:
+                    raise ValueError('JSON model differs from the admitted recipe.')
             self._metric(metrics['validation'], 'validation', run)
             if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= self._fit_count(run):
                 raise ValueError('Selected checkpoint epoch is invalid.')
@@ -657,6 +660,10 @@ class Runs:
         except (ValueError, TypeError, KeyError, OSError) as error:
             raise WorkbenchError('Artifact verification failed: ' + str(error)[:300], 'unavailable', 409) from None
 
+    @staticmethod
+    def _source_label(row):
+        return row['target_label'] if row['kind'] == 'audio' else row['annotation']['label']
+
     def _metric(self, value, split, run):
         closed(value, ('split', 'examples', 'loss', 'accuracy', 'macro_f1', 'confusion_matrix'))
         examples = sum(row['split'] == split for row in run['source_records'])
@@ -666,7 +673,7 @@ class Runs:
             number = value[key]
             if type(number) not in (int, float) or not 0 <= number <= (1e12 if key == 'loss' else 1) or not math.isfinite(number):
                 raise ValueError('Metric is not a finite result.')
-        count = len({row['annotation']['label'] for row in run['source_records']})
+        count = len({self._source_label(row) for row in run['source_records']})
         matrix = value['confusion_matrix']
         if (not isinstance(matrix, list) or len(matrix) != count or
                 any(not isinstance(row, list) or len(row) != count or any(type(number) is not int or number < 0 for number in row) for row in matrix)
@@ -676,8 +683,8 @@ class Runs:
             raise ValueError('Accuracy disagrees with the confusion matrix.')
 
     def _vocabulary(self, run, payload):
-        labels = sorted({row['annotation']['label'] for row in run['source_records']})
-        if adapter_for_graph(run['graph']) is text_training:
+        labels = sorted({self._source_label(row) for row in run['source_records']})
+        if adapter_for_graph(run['graph']) is not image_training:
             vocabulary = [{'label': label, 'index': index} for index, label in enumerate(labels)]
             mapping = {item['label']: item['index'] for item in vocabulary}
         else:
@@ -700,9 +707,11 @@ class Runs:
             source = sources.get(row['id'])
             if any(type(row[key]) is not int or row[key] < 1 for key in ('revision', 'source_revision')):
                 raise ValueError('Prediction revisions must be positive integers.')
+            if adapter_for_graph(run['graph']) is audio_training and any(type(row[key]) is not int for key in ('sample_rate_hz', 'channels', 'channel', 'start_frame', 'end_frame')):
+                raise ValueError('Audio prediction coordinates must be integer source frames and channels.')
             if source is None or any(row[key] != source['content_hash' if key == 'content_sha256' else key] for key in self._reference_keys(run)):
                 raise ValueError('Prediction references a different frozen example.')
-            if row['source_sha256'] != source.get('source_sha256') or row['truth_label'] != source['annotation']['label'] or row['split'] != split:
+            if row['source_sha256'] != source.get('source_sha256') or row['truth_label'] != self._source_label(source) or row['split'] != split:
                 raise ValueError('Prediction target or original source identity differs.')
             if any(type(row[key]) is not int or not 0 <= row[key] < len(vocabulary) for key in ('truth_index', 'predicted_index')):
                 raise ValueError('Prediction class index is invalid.')
