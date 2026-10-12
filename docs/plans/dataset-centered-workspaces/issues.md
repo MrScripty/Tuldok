@@ -53,3 +53,10 @@ Integrated I12 retains MB branch issue I11; integrated I11 remains the UI consum
 - I13: Real one-interval CPU execution, exact source frames/channels, complete family evidence, whole-PCM exposure and cancellation/restart pass source/numeric/browser review. A validated-path replacement defect was reproduced with actual training and repaired by consuming one owned verified byte capture. Old image/text results remain exact. Final hosted qualification is pending; broader audio and ASR remain excluded.
 - I14: The bounded validator explicitly reports selected-record-only family checks and retains original native coordinates/properties. Valid empty human notes and supplementary Unicode producer values now pass with regression coverage. The omitted-ancestor and generic external ASCII-reader limits remain real limits, not certified capabilities.
 - Integration qualification: Mesh CI's saved-selection VM event primitive omission and the old WAV execution-unavailable expectation were independently repaired in tests without runtime fallbacks or weaker assertions. Corrected normal PR checkpoints must pass terminal automatic CI before bounded acceptance. [Evidence](reports/audio-mesh-20261012.md).
+
+
+Terminal disposition: both corrected feature heads passed their full103-step
+lifecycle and focused interface jobs, independently verified. Bounded I13/A11
+and I14/A12 gates are qualified in [the combined report](reports/audio-mesh-20261012.md).
+The declared ASR, broader 3D and omitted-ancestor/reader limits remain unchanged;
+they are outside this accepted increment. No task-local acceptance blocker remains.

@@ -165,3 +165,10 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 - Retained old image/text public results, predictions, all graph/run/exposure rows and68 managed files remain byte-identical. No child or supervisor started during those reads. Independent review verified133437-byte snapshots and original source identity.
 - Found defects were repaired, not waived: mesh empty optional review notes and Unicode code-point counting; actual audio ZIP pathname replacement custody; missing browser primitives in existing VM tests; obsolete WAV capability assertion. All22 controller/intent suites now pass. Exact-source native200% screenshots remain distinct from early dirty evidence.
 - Separate draft PR36(mesh4266a76) and PR37(audio ccc9bf6) are published. Their corrected automatic lifecycle runs remain pending; A11/A12 remain pending at this checkpoint. Broader M4/M5, production ASR, 3D execution, no-new-schema and no-main-merge restrictions remain in effect.
+
+
+## 2026-10-12 — terminal audio/mesh acceptance
+
+- Exact mesh4266a76 passed lifecycle38266637351 (543 Python/303.923s) and focused38266637380; exact audioccc9bf6 passed lifecycle38267098776 (550 Python/258.340s) and focused38267098643. Each full job completed103successful steps, zero skips/failures, original automatic attempt1. Independent review separately verified terminal status and unchanged PR heads.
+- Bounded A11/A12 are now satisfied. Earlier failed checkpoints remain recorded; corrected ordinary pushes qualified every previously skipped product gate. No runtime changed after the clean combined408/6f browser evidence. The [combined report](reports/audio-mesh-20261012.md) links exact CI, branch heads, screenshots and launch commands.
+- Main remains ee81555586ef96c56b78dde1858f3c5f689b27c1. PR36/37 remain separate open drafts; no main merge, deployment, personal-data migration or broader capability approval is implied. Whole-plan acceptance remains partial and broader M3/M4/M5 remain Active.

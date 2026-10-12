@@ -54,11 +54,18 @@ Mesh review also repaired valid empty optional review-note rejection and UTF-16/
 
 ## Hosted qualification
 
-Current audio lifecycle `38267098776` and focused UI `38267098643` qualify exact `ccc9bf6`. Current mesh lifecycle `38266637351` and focused UI `38266637380` qualify exact `4266a76`. Terminal lifecycle results are pending at this report checkpoint; A11/A12 remain pending until recorded below.
+Both exact feature heads passed their original automatic checkpoint attempts; each full lifecycle job completed **103 successful steps, zero skipped, zero failed**. Independent review separately verified terminal status and unchanged PR heads. Bounded A11/A12 are satisfied; the whole plan and broader M4/M5 remain Active/partial.
+
+| Feature head | Full lifecycle | Python result | Focused interface |
+| --- | --- | --- | --- |
+| Audio `ccc9bf6ba1e303ee8657b6935da6262b80f2c8db` | [38267098776](https://github.com/MrScripty/Tuldok/actions/runs/38267098776), job114871883801, success | 550 tests in 258.340s, no skips | [38267098643](https://github.com/MrScripty/Tuldok/actions/runs/38267098643), success |
+| Mesh `4266a76b7a86f89e707ae166d535bce2768c5a32` | [38266637351](https://github.com/MrScripty/Tuldok/actions/runs/38266637351), job114870357211, success | 543 tests in 303.923s, no skips | [38266637380](https://github.com/MrScripty/Tuldok/actions/runs/38266637380), success |
+
+The source changed between failed and successful checkpoints; these are normal automatic runs, all attempt1, not manual retries of unchanged failures. The final audio job actually executed both the corrected WAV Data gate and the new real audio Runs gate. The final mesh job executed its new embedded validation browser plus existing image/text/audio and sequence workflows. Main was rechecked at `ee81555586ef96c56b78dde1858f3c5f689b27c1`; both PRs remain open drafts, unmerged. No runtime files changed after the clean combined browser proofs.
 
 Earlier mesh lifecycle `38265471446` passed 543 Python tests in 253.948s and then exposed a missing `CustomEvent`/`dispatchEvent` primitive in the existing saved-selection intent VM. It was reproduced, repaired without changing assertions or application behavior, independently accepted and pushed normally. The root controller glob originally omitted that differently named intent suite; the completed repair batch includes it. Earlier focused UI `38265471538` passed. Skipped later gates in the failed run are not acceptance evidence.
 
-The combined old WAV browser exposed an obsolete assertion that all audio execution was unavailable. The reviewed test-only correction asserts the admitted one-interval CPU capability, original WAV Data functionality and continued ASR/resampling/downmix restrictions. All existing Data and illustrative-fixture checks remain. PR37's original `cf684f7` run is historical; the corrected head requires its own automatic result. No manual workflow rerun or failing-check waiver was used.
+The combined old WAV browser exposed an obsolete assertion that all audio execution was unavailable. The reviewed test-only correction asserts the admitted one-interval CPU capability, original WAV Data functionality and continued ASR/resampling/downmix restrictions. All existing Data and illustrative-fixture checks remain. PR37's original `cf684f7` lifecycle `38266407983` passed 550 Python tests in 325.820s, then failed this exact obsolete WAV assertion and skipped the new audio Runs gate (plus two post-setup steps). The corrected head passed its own full automatic run, including that previously unreached gate. No manual workflow rerun or failing-check waiver was used.
 
 ## Launch and retained resources
 
