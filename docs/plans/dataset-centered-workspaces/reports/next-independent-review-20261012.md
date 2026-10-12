@@ -93,6 +93,36 @@ UI consumer were still implementation candidates. Typed validation errors,
 late-response suppression, preservation of an existing download after validation
 failure, rendered controls and complete browser behavior remain feature gates.
 
+## First mesh visual checkpoint and retained-result procedure
+
+Viewed both original JPEGs from the mesh owner's
+`build/qa/workspace-mesh/run-HdbmHD`: desktop 1400×950 and narrow 390×844.
+The spatial drawing and seven buttons are legible; narrow buttons remain in two
+columns with a full-width reset. The diagram and explanatory text remain inside
+their card without visible horizontal clipping. First-8-of-8 sampling and
+source frame/unit captions are explicit. No blocking visual finding in this
+early checkpoint. The receipt accurately identifies dirty source based on
+`2344b819c21a92bb32a1dfbc386b030888400212` and `native_zoom: false`; this is not
+clean-source or native-200% qualification. Final embedded `/workspaces` Data,
+validation-result/download and native-zoom evidence remain pending.
+
+Original screenshot SHA-256 values:
+
+- `mesh-desktop.jpg`: `827d476c9b153d481f4312cb5cfa3228c08c108c79300d20278978722c9251d7`.
+- `mesh-narrow.jpg`: `ea92acc1e076bc1baeb01042d095f7a1e73ed22fcd4387fdb3c3110dabe4ec31`.
+
+Read root's `/tmp/tuldok-audio-mesh-retained-20261012/check.py` and
+`before.json` without executing the script or opening either catalog. The
+procedure observes public completed runs and both split prediction references,
+exact graph/run/exposure rows, and every managed file's length/hash except
+volatile `*.lock` files. It blocks `subprocess.Popen`, requires no supervisor
+thread and compares rows/files before and after observation. Its baseline
+contains authored text run `1cfdf8fb3fe54ff599f0c6891a53af07` (17 files, four
+exposure rows) and image run `36a82a2ff267465d90c4ad69fa7a9496` (51 files, three
+exposure rows). This procedure can decide retained-result compatibility when
+root compares candidate output byte-for-byte with that baseline; that comparison
+was still pending at this review.
+
 ## Pending qualification
 
 - Review exact candidate SHAs and first original desktop/narrow screenshots.
