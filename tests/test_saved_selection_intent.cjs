@@ -22,9 +22,9 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function setup(hash='') {
   const elements=new Map(),requests=[];
   const element=id=>{if(!elements.has(id))elements.set(id,new Element(id));return elements.get(id);};
-  const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,location:{hash},
+  const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,CustomEvent,location:{hash},
     history:{pushState(){}},confirm:()=>true,
-    document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(){}},
+    document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(){},dispatchEvent(){return true;}},
     fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(emptyPage)):
       url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):
       new Promise(resolve=>requests.push({url,options,resolve}))
