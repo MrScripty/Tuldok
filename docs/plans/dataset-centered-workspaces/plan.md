@@ -4,7 +4,7 @@
 
 **Current phase:** Combined qualification of the delivered bounded M3 text classifier and first M4 WAV Data increment at runtime `83f53385a6812be4026302e7362a240b68ceb339`. Independent source review, 537 Python tests, retained-image schema upgrade and all three real browser workflows passed. Draft PR34 independently qualifies the preserved M1/MB/M2 base; combined hosted CI is a separate gate.
 
-**Next slice:** Complete the registered combined regression/hosted gates and publish the stacked draft integration PR with an exact readiness report. See [combined evidence](reports/combined-20261012.md) and [parallel admission and ownership](reports/parallel-admission-20261012.md).
+**Next slice:** Complete corrected-checkpoint hosted qualification for [draft PR35](https://github.com/MrScripty/Tuldok/pull/35) and publish its terminal readiness report. Two demonstrated browser-fixture/readiness omissions were repaired without application changes. See [combined evidence](reports/combined-20261012.md) and [parallel admission and ownership](reports/parallel-admission-20261012.md).
 
 **Acceptance status:** `partial`
 
