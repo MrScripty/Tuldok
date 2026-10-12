@@ -11,6 +11,7 @@ MAX_SELECTED_ASSET_BYTES = 40 * 1024 * 1024
 def check_selection(records):
     total = sum(row[row['kind']]['bundle_bytes'] for row in records
                 if row['kind'] in ('sequence', 'mesh') and row.get(row['kind']))
+    total += sum(row['audio']['source_bytes'] for row in records if row['kind'] == 'audio')
     if total > MAX_SELECTED_ASSET_BYTES:
         raise WorkbenchError('Selected immutable assets exceed the synchronous 40 MiB bound.')
 
