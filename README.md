@@ -711,7 +711,7 @@ in `tests/instruction-consumer-requirements.txt`. Run `node
 tests/browser_preferences.cjs` with `INSTRUCTION_CONSUMER_PYTHON` pointing to
 that environment. [Contract and evidence](docs/plans/preference-pairs/plan.md).
 
-Static mesh import: [bounded ASCII PLY/sidecar contract](docs/contracts/static-mesh.md), with native units/frame/provenance inspection and human review before export.
+Static mesh import follows the [bounded ASCII PLY/sidecar contract](docs/contracts/static-mesh.md). Data includes a keyboard-accessible spatial view, native geometry properties and declared units/frame/provenance. The view explicitly labels sampling when it displays only the first 512 triangles; original geometry stays unchanged. After human review and a mesh-only canonical freeze, choose **Validate mesh release** to check the downloaded archive's hashes, associations and reparsed native geometry, or run `.venv/bin/python mesh_release.py ./release.zip`. Validation covers selected records and their available family references; it does not establish complete omitted-ancestor isolation, physics validity or compatibility with every third-party PLY reader. [Validation contract and limits](docs/contracts/mesh-release-validation.md).
 
 ### Selected-model Pumas typed operations
 

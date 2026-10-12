@@ -11,8 +11,8 @@ const windowListeners=new Map();
 const beforeUnload=()=>{let prevented=false;const event={preventDefault(){prevented=true;}};for(const fn of windowListeners.get('beforeunload')||[])fn(event);return prevented;};
 const requests=[],response=data=>({ok:true,json:async()=>data});
 const emptyPage={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
-const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>false,location:{hash:''},history:{pushState(){}},
- document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(name,fn){if(!windowListeners.has(name))windowListeners.set(name,[]);windowListeners.get(name).push(fn);}},
+const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>false,location:{hash:''},history:{pushState(){}},
+ document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{dispatchEvent(){return true;},addEventListener(name,fn){if(!windowListeners.has(name))windowListeners.set(name,[]);windowListeners.get(name).push(fn);}},
  fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(emptyPage)):url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise(resolve=>requests.push({url,options,resolve}))});
 const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..');
 for(const file of ['workbench.js','saved-selections.js','rights-note.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),context);
