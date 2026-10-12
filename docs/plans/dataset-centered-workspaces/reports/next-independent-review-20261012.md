@@ -330,7 +330,8 @@ it adds only the native `CustomEvent` binding and `window.dispatchEvent` stub to
 the VM. All eight existing scenarios pass when independently executed at the
 exact repair head. No assertions, scenarios or application files changed.
 Root separately reports all twenty-two controller/intent suites passed in one
-completed batch. Hosted CI must still run to completion on the repaired head.
+completed batch. The required terminal CI evidence on the repaired head is
+recorded below.
 
 Root's full Python qualification on exact 148e7af completed 556 tests in 503.794
 seconds, with one existing restore test skipped because the app role lacks
@@ -372,12 +373,41 @@ on clean 408623a; real audio Runs passed twelve headless checks on clean 6f56a36
 including real CPU execution, correction, durable exposure and restart. Final
 audio native-zoom evidence remains the separately accepted feature gallery.
 No application runtime changed across these last integration commits. Combined
-local source qualification is accepted; hosted feature CI remains pending.
+local source qualification is accepted.
 
-## Pending qualification
+## Hosted feature disposition
 
-- Review serial integration and applicable automatic feature CI to terminal
-  outcomes. Failed evidence remains visible until a scoped repair qualifies.
+Independently queried the terminal GitHub evidence for mesh PR36. Lifecycle
+[run 38266637351](https://github.com/MrScripty/Tuldok/actions/runs/38266637351)
+completed successfully on exact
+`4266a76b7a86f89e707ae166d535bce2768c5a32`: all 103 steps succeeded, zero
+steps failed or skipped. Focused workspace UI
+[run 38266637380](https://github.com/MrScripty/Tuldok/actions/runs/38266637380)
+also succeeded, and the PR head still matches that reviewed source. This
+completes the admitted bounded mesh qualification, suitable for A12 acceptance;
+the stated native-reader, selected-family and broader M5 limits remain.
+
+Independently queried audio PR37 after its corrected normal push. Lifecycle
+[run 38267098776](https://github.com/MrScripty/Tuldok/actions/runs/38267098776)
+completed successfully on exact
+`ccc9bf6ba1e303ee8657b6935da6262b80f2c8db`: all 103 steps succeeded, zero
+steps failed or skipped. Focused workspace UI
+[run 38267098643](https://github.com/MrScripty/Tuldok/actions/runs/38267098643)
+also succeeded. Both current PR heads still match the independently reviewed
+and qualified sources. The earlier failed audio head remains historical
+evidence and is not used to establish this result.
+
+## Final review disposition
+
+The admitted bounded audio and mesh increments are independently accepted for
+A11/A12, with no remaining demonstrated source, visual, integration or required
+feature-CI blocker. Root's draft combined report and plan/issues/ledger update
+were also reviewed for accurate source lineage, evidence attribution, preserved
+failed observations and limits. Root retains canonical acceptance and serial
+integration ownership. Broader M4/M5, production ASR, point-cloud/volume/physics
+execution, generic external-reader certification and omitted-ancestor mesh
+proof are not established. Neither main merge nor deployment was performed or
+approved by this review.
 
 Review branch `review/workspace-audio-mesh-20261012` and worktree
 `/workspace/Tuldok-next-review-20261012` are retained for independent evidence
