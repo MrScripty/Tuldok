@@ -2,7 +2,7 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
-Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support one bounded scratch CPU image-classification recipe. Audio and 3D subtypes retain their exact capability limits; no new modality importer or trainer is enabled. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image and text classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Audio training and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
 
 ## Run
 
@@ -68,7 +68,7 @@ current record; saving/reviewing and freezing a new release leaves old results
 unchanged. Viewing test results records durable exposure; reused records or
 pixels cannot be presented as fresh holdout evidence.
 
-Fresh catalogs use schema 2. Existing PostgreSQL schema-1 catalogs require an
+Fresh catalogs use schema 3. Existing PostgreSQL schema-1 or schema-2 catalogs require an
 explicit stopped-writer backup and upgrade, never an automatic startup change:
 
 ```sh
@@ -82,6 +82,27 @@ finishes. See [workspace storage](docs/contracts/workspace-storage.md),
 [run lifecycle](docs/contracts/workspace-runs.md) and
 [CPU adapter](docs/contracts/workspace-image-training.md) for bounds and recovery.
 The original corner studio and classic Workbench remain available.
+
+## Text classification and WAV data
+
+The same optional CPU environment supports a bounded **TF-IDF / MultinomialNB**
+text recipe. Import and human-review text classes in Data, preview and freeze
+**Text classification**, then create that recipe in Pipeline. Edit, save and
+validate its parameters before submitting; Runs retains the fitted data-only
+model, split metrics and source-bound predictions. The recipe accepts 6–512
+records and 2–8 classes, with every class present in all three protected splits.
+Vocabulary and fitting use the train split only. See the
+[text contract](docs/contracts/workspace-text-training.md) and
+[text screenshots](docs/images/workspaces-m3-text/README.md).
+
+For audio, open **Data → Dataset tools → Import WAV audio**. Import a local
+PCM16 WAV (mono/stereo, 8–96 kHz, at most 8 MiB and 120 seconds), play the source
+or a selected channel interval, and annotate exact source-frame intervals.
+Human review enables the canonical mixed-task export with original WAV bytes
+and typed targets. Audio Pipeline/Runs, ASR and audio training remain unavailable.
+See the [audio contract](docs/contracts/audio-data.md) and
+[WAV screenshots](docs/images/workspaces-audio/README.md). FFmpeg is used only
+by verification, not by the application.
 
 ## Workflow
 

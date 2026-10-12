@@ -1,5 +1,6 @@
 """Real text export/reader/trainer and durable graph/run custody contracts."""
 import copy
+import base64
 import hashlib
 import json
 import os
@@ -78,6 +79,29 @@ class TextCase(unittest.TestCase):
 
 
 class TextContractTests(TextCase):
+    def test_real_unselected_audio_bridge_preserves_text_split_custody(self):
+        wav = Path(__file__).parent / 'fixtures/workspaces/audio/stereo-impulses.wav'
+        parents = [row['id'] for row in self.rows[:2]]
+        audio = self.dataset.workbench.audio.admit({
+            'wav': base64.b64encode(wav.read_bytes()).decode(),
+            'name': 'Authored audio lineage bridge', 'groups': ['audio-bridge'],
+            'parents': parents, 'rights': 'CC0 authored PCM test fixture.'})
+        for seed in range(42, 100):
+            body = dict(self.body, seed=seed)
+            preview = self.dataset.releases.preview(body)
+            if preview['eligible']:
+                break
+        self.assertTrue(preview['eligible'], preview['blockers'])
+        release = self.dataset.releases.create(dict(body, preview_token=preview['preview_token']))
+        frozen = training.inspect_release(self.dataset.releases.locate(release['id']), release['id'])
+        family = next(members for members in frozen['protected_components'].values()
+                      if any(member['id'] == audio['id'] for member in members))
+        self.assertEqual({member['id'] for member in family}, {*parents, audio['id']})
+        self.assertEqual(next(member for member in family if member['id'] == audio['id'])['kind'], 'audio')
+        self.assertEqual({row['id'] for row in frozen['records']}, {row['id'] for row in self.rows})
+        self.assertEqual(len({row['split'] for row in frozen['records'] if row['id'] in parents}), 1)
+        self.assertEqual(self.dataset.workbench.get(audio['id'])['review'], 'draft')
+
     def test_actual_release_preserves_canonical_and_original_source_identity(self):
         result = training.inspect_release(self.release_path, self.release_id)
         self.assertEqual(result, self.manifest)

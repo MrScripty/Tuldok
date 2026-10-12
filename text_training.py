@@ -88,7 +88,7 @@ def _families(manifest):
             if key in members:
                 _invalid('Frozen member appears in multiple protected components.')
             members[key] = (component, row)
-            if (row.get('kind') not in ('image', 'text', 'sequence', 'mesh')
+            if (row.get('kind') not in ('image', 'text', 'audio', 'sequence', 'mesh')
                     or type(row.get('revision')) is not int or row['revision'] < 1
                     or type(row.get('source_available')) is not bool or type(row.get('source_lineage_known')) is not bool
                     or not row['source_lineage_known']
