@@ -1,7 +1,7 @@
 """Bounded per-trajectory acquisition; Rheon meaning and storage stay with owners."""
 import json
 import re
-import sqlite3
+import psycopg
 
 import rheon_sequences as rheon
 from workbench import WorkbenchError, text_value
@@ -51,10 +51,18 @@ def find_result(workbench, request_id):
     """Confirm committed acquisition, not current bytes, review or scientific validity."""
     marker(request_id)
     with workbench.lock:
-        matches = workbench.db.execute("""SELECT id FROM workbench_records WHERE kind='sequence'
-            AND json_extract(provenance_json, '$.sequence_acquisition.format')=?
-            AND json_extract(provenance_json, '$.sequence_acquisition.request_id')=? LIMIT 2""",
-            (FORMAT, request_id)).fetchall()
+        matches = workbench.db.execute("""SELECT id FROM workbench_records WHERE kind='sequence' AND
+            CASE WHEN strpos(provenance_json, %s)>0 THEN false ELSE
+            provenance_json::json #>> '{sequence_acquisition,format}'=%s
+            AND provenance_json::json #>> '{sequence_acquisition,request_id}'=%s END LIMIT 2""",
+            (r'\u', FORMAT, request_id)).fetchall()
+        for row in workbench.db.execute("""SELECT id,provenance_json FROM workbench_records
+                WHERE kind='sequence' AND strpos(provenance_json, %s)>0""", (r'\u',)):
+            acquisition = json.loads(row[1]).get('sequence_acquisition')
+            if isinstance(acquisition, dict) and acquisition.get('format') == FORMAT and acquisition.get('request_id') == request_id:
+                matches.append(row)
+                if len(matches) > 1:
+                    break
         if len(matches) > 1:
             raise WorkbenchError('Trajectory import marker is ambiguous; inspect the collection.', 'conflict', 409)
         return dict(found=True, **receipt(workbench._get(matches[0][0]))) if matches else {'found': False}
@@ -87,5 +95,5 @@ def import_item(workbench, body):
         if error.status == 404:
             raise WorkbenchError('A declared parent record was not found.') from None
         raise
-    except (OSError, sqlite3.Error):
+    except (OSError, psycopg.Error):
         raise WorkbenchError('Trajectory import stopped because storage failed. Check its saved result and the collection before retrying.', 'storage', 500) from None

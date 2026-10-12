@@ -6,6 +6,7 @@ import tempfile
 import threading
 import unittest
 import uuid
+from postgres_helpers import database_snapshot
 from unittest.mock import patch
 
 from app import Dataset
@@ -18,7 +19,7 @@ from workbench import WorkbenchError, encode
 class TypedTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.data = Dataset(self.tmp.name); self.addCleanup(self.data.close)
+        self.data = Dataset(self.tmp.name); self.addCleanup(lambda: self.data.close())
         self.server, self.url, self.state = start()
         self.addCleanup(self.server.server_close); self.addCleanup(self.server.shutdown)
         self.row = self.data.workbench.import_asset({'kind':'text','name':'Positive','text':'The meeting is confirmed.',
@@ -106,7 +107,7 @@ class TypedTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         url = 'http://127.0.0.1:' + str(server.server_port) + '/api/generation/generate'
-        before = list(self.data.db.iterdump())
+        before = database_snapshot(self.data.db)
         self.state['mode'] = 'malformed_png'
         body = self.image()
         request = Request(url, encode(body).encode(), {'Content-Type': 'application/json'})
@@ -115,7 +116,7 @@ class TypedTests(unittest.TestCase):
         self.assertEqual(rejected.exception.code, 400)
         error = json.loads(rejected.exception.read())
         self.assertIn('invalid PNG', error['error'])
-        self.assertEqual(list(self.data.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.data.db), before)
         self.assertEqual(len(self.state['requests']), 1)
         self.assertFalse(self.data.image_requests.active)
         self.assertFalse(self.data.db.execute('SELECT id FROM samples').fetchall())
@@ -139,8 +140,8 @@ class TypedTests(unittest.TestCase):
         import synthetic
         job=dict(id=uuid.uuid4().hex,config=synthetic.validate(config),meta={},status='generating',error='',completed=0)
         entry=owner._new_entry(job,0,config['prompt']); entry.update(status='generating',request_id='retained-attempt')
-        with self.data.lock,self.data.db: owner._save(job); owner._entry(entry)
-        self.data.close(); self.data=Dataset(self.tmp.name); self.addCleanup(self.data.close)
+        with self.data.lock,self.data.db.transaction(): owner._save(job); owner._entry(entry)
+        self.data.close(); self.data=Dataset(self.tmp.name)
         saved=self.data.generation_jobs.snapshot()['entries'][0]
         self.assertEqual(saved['request_id'],'retained-attempt'); self.assertEqual(saved['provider_outcome'],'unknown')
         with self.assertRaises(ValueError): self.data.generation_jobs.resume(job['id'])

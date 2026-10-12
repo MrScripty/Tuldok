@@ -178,7 +178,7 @@ class VisionApplicationTests(unittest.TestCase):
         self.assertEqual(self.data.workbench.get(self.row['id']),self.row)
     def test_restart_keeps_possibly_dispatched_attempt_interrupted_without_replay(self):
         body=self.body();job=self.generate(body)
-        with self.data.lock,self.data.db:
+        with self.data.lock,self.data.db.transaction():
             job.update(status='generating',provider_outcome='not_admitted')
             self.data.caption_proposals._save(job)
         self.data.close();self.data=Dataset(self.tmp.name)

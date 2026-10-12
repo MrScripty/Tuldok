@@ -3,6 +3,7 @@
 Dataset owns image bytes; Workbench owns targets and their evidence. This owner
 persists bounded attempts and applies a caption plus its receipt in one transaction.
 """
+from workbench import encode_retained
 import base64
 import hashlib
 import io
@@ -119,8 +120,10 @@ class CaptionProposals:
         self.worker, self.active_id = None, None
         self.stop = threading.Event()
         self.closed = False
-        with self.lock, self.db:
-            self.db.execute('CREATE TABLE IF NOT EXISTS caption_proposals (id TEXT PRIMARY KEY, data TEXT NOT NULL)')
+        with self.lock, self.db.transaction():
+            self.runtime_owner = self.db.claim_runtime('caption_proposals')
+            if not self.runtime_owner:
+                return
             for row in self.db.execute('SELECT data FROM caption_proposals').fetchall():
                 job = json.loads(row[0])
                 if job['status'] in ACTIVE:
@@ -130,15 +133,15 @@ class CaptionProposals:
                     self._save(job)
 
     def _save(self, job):
-        previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=?', (job['id'],)).fetchone()
+        previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=%s', (job['id'],)).fetchone()
         job['revision'] = (json.loads(previous[0])['revision'] if previous else 0) + 1
         job['updated_at'] = timestamp()
-        self.db.execute('INSERT INTO caption_proposals VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode(job)))
+        self.db.execute('INSERT INTO caption_proposals (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode_retained(job)))
 
     def _get(self, job_id):
         if not isinstance(job_id, str) or not IDENTIFIER.fullmatch(job_id):
             raise WorkbenchError('Invalid caption request ID.')
-        row = self.db.execute('SELECT data FROM caption_proposals WHERE id=?', (job_id,)).fetchone()
+        row = self.db.execute('SELECT data FROM caption_proposals WHERE id=%s', (job_id,)).fetchone()
         if row is None:
             raise WorkbenchError('Caption request not found.', 'unavailable', 404)
         return json.loads(row[0])
@@ -149,11 +152,20 @@ class CaptionProposals:
 
     def snapshot(self):
         with self.lock:
-            # Project before crossing into Python; retain exact evidence on job GET.
-            rows = self.db.execute("SELECT json_remove(data, '$.input_image_base64', '$.raw_response_base64', '$.canonical_request') "
-                                   'FROM caption_proposals ORDER BY rowid DESC LIMIT 50').fetchall()
-        # Capture every row under the shared lock, then decode only those summaries.
-        return {'jobs': [json.loads(row[0]) for row in rows]}
+            # Project only the poll response; stored JSON remains byte-for-byte intact.
+            # PostgreSQL JSON operators decode Unicode escapes even in unrelated
+            # fields. Keep legacy NUL/surrogate evidence on the Python path.
+            rows = self.db.execute('''SELECT CASE WHEN strpos(data, %s)>0 THEN data ELSE (
+                SELECT json_object_agg(key, value) FROM json_each(data::json)
+                WHERE key NOT IN ('input_image_base64', 'raw_response_base64', 'canonical_request')
+                )::text END FROM caption_proposals ORDER BY ordinal DESC LIMIT 50''', (r'\u',)).fetchall()
+        jobs = []
+        for row in rows:
+            job = json.loads(row[0])
+            for field in ('input_image_base64', 'raw_response_base64', 'canonical_request'):
+                job.pop(field, None)
+            jobs.append(job)
+        return {'jobs': jobs}
 
     def _source(self, body, *, capture_image=False):
         record_id = body['source_id']
@@ -201,13 +213,17 @@ class CaptionProposals:
             raise WorkbenchError('Seed must be a nonnegative 32-bit integer.')
         intent_hash = hashlib.sha256(encode(body).encode()).hexdigest()
         with self.lock:
-            with self.db:
-                previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=?', (request_id,)).fetchone()
+            if self.db.in_transaction:
+                raise WorkbenchError('Caption dispatch requires its own committed transaction.', 'conflict', 409)
+            with self.db.transaction():
+                previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=%s', (request_id,)).fetchone()
                 if previous:
                     job = json.loads(previous[0])
                     if job['intent_sha256'] != intent_hash:
                         raise WorkbenchError('Caption request ID already belongs to a different request.', 'conflict', 409)
                     return job
+                if not self.runtime_owner:
+                    raise WorkbenchError('Caption workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
                 if self.closed or (self.worker is not None and self.worker.is_alive()):
                     raise WorkbenchError('A caption request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
                 source, image_bytes = self._source(body, capture_image=True)
@@ -243,7 +259,7 @@ class CaptionProposals:
                 self.worker.start()
             except RuntimeError:
                 self.worker, self.active_id = None, None
-                with self.db:
+                with self.db.transaction():
                     job.update(status='failed', error='Could not start the caption worker; no inference ran. Start a new request explicitly.')
                     self._save(job)
             return job
@@ -261,7 +277,7 @@ class CaptionProposals:
                 raise WorkbenchError('Caption request cancelled.', 'cancelled')
             if job['config']['model'] not in [item['id'] for item in models['models']]:
                 raise WorkbenchError('Selected model is not currently listed as a non-image served model. Refresh models.', 'unavailable')
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 if self.stop.is_set():
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
                 job.update(status='generating', catalog_qualification=models['qualification'])
@@ -275,14 +291,14 @@ class CaptionProposals:
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
             job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
             annotation, reported = decode(data, job['source'], job['id'] if pumas.typed(job['config']) else None)
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 if self.stop.is_set():
                     raise WorkbenchError('Caption request cancelled.', 'cancelled')
                 self._source(dict(source_id=job['source']['id'], revision=job['source']['revision'], source_revision=job['source']['source_revision']))
                 job.update(status='completed', annotation=annotation, reported_model=reported)
                 self._save(job)
         except Exception as error:
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
@@ -293,7 +309,7 @@ class CaptionProposals:
     def cancel(self, body):
         if not isinstance(body, dict) or set(body) != {'job_id'}:
             raise WorkbenchError('Supply only the caption request ID.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             job = self._get(body['job_id'])
             if job['id'] != self.active_id or job['status'] not in ACTIVE:
                 return {'cancelled': False, 'job': job}
@@ -305,7 +321,7 @@ class CaptionProposals:
     def decide(self, job_id, body):
         if not isinstance(body, dict) or set(body) != {'revision', 'decision'} or body['decision'] not in ('reject', 'apply_draft'):
             raise WorkbenchError('Choose reject or apply_draft with the current proposal revision.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             job = self._get(job_id)
             if job['status'] == 'applied' and body['decision'] == 'apply_draft':
                 return {'job': job, 'record': self.workbench._get(job['source']['id']), 'changed': False}
@@ -334,7 +350,8 @@ class CaptionProposals:
             return {'job': job, 'record': record, 'changed': True}
 
     def close(self):
-        with self.lock:
+        # Shutdown must drain local workers even when the database is unavailable.
+        with self.lock.mutex:
             self.closed = True
             self.stop.set()
             worker = self.worker

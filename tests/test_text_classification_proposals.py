@@ -1,4 +1,5 @@
 """Synthetic HTTP classification contracts; no model downloads or inference."""
+from postgres_helpers import database_snapshot
 import base64
 import hashlib
 import json
@@ -47,8 +48,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         return self.owner.decide(job['id'], body)
 
     def state(self):
-        return [list(self.data.db.execute('SELECT * FROM '+name+' ORDER BY rowid')) for name in
-                ('workbench_records', 'workbench_history', 'workbench_target_proposals', 'text_classification_proposals')]
+        return database_snapshot(self.data.db)
 
     def wait(self, predicate):
         end = time.monotonic() + 3
@@ -149,12 +149,12 @@ class TextClassificationProposalTests(unittest.TestCase):
                 self.row = self.data.workbench.import_asset(dict(kind='text', text='unique '+action, groups=[action]))
                 job = self.generate()
                 if action in ('text', 'original_text'):
-                    with self.data.lock, self.data.db:
-                        self.data.db.execute('UPDATE workbench_records SET '+action+'=? WHERE id=?', ('changed exact source', self.row['id']))
+                    with self.data.lock, self.data.db.transaction():
+                        self.data.db.execute('UPDATE workbench_records SET '+action+'=%s WHERE id=%s', ('changed exact source', self.row['id']))
                 elif action == 'target':
                     self.data.workbench.save(self.row['id'], dict(self.row, annotation={'label': 'keep'}, review='draft'))
                 else:
-                    with self.data.lock, self.data.db: self.data.db.execute('DELETE FROM workbench_records WHERE id=?', (self.row['id'],))
+                    with self.data.lock, self.data.db.transaction(): self.data.db.execute('DELETE FROM workbench_records WHERE id=%s', (self.row['id'],))
                 state = self.state()
                 with self.assertRaises(WorkbenchError): self.decide(job)
                 self.assertEqual(self.state(), state)
@@ -166,7 +166,7 @@ class TextClassificationProposalTests(unittest.TestCase):
             raw = complete(job, stop); entered.set(); release.wait(3); return raw
         with patch('text_classification_proposals.complete', side_effect=held):
             job = self.owner.start(self.config()); self.assertTrue(entered.wait(3))
-            with self.data.lock, self.data.db: self.data.db.execute('UPDATE workbench_records SET text=? WHERE id=?', ('changed', self.row['id']))
+            with self.data.lock, self.data.db.transaction(): self.data.db.execute('UPDATE workbench_records SET text=%s WHERE id=%s', ('changed', self.row['id']))
             release.set(); self.owner.worker.join(3)
         final = self.owner.get(job['id']); self.assertEqual(final['status'], 'failed'); self.assertIsNone(final['annotation']); self.assertTrue(final['response_sha256'])
 
@@ -203,7 +203,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         with patch('text_classification_proposals.complete', side_effect=held):
             job = self.owner.start(self.config()); self.assertTrue(entered.wait(3)); self.owner.cancel({'job_id':job['id']}); release.set(); self.owner.worker.join(3)
         self.assertEqual(self.owner.get(job['id'])['status'], 'cancelled')
-        with self.data.lock, self.data.db:
+        with self.data.lock, self.data.db.transaction():
             interrupted = self.owner.get(job['id']); interrupted['status']='generating'; self.owner._save(interrupted)
         count = len(self.requests); self.data.close(); self.data = Dataset(self.tmp.name)
         self.assertEqual(self.owner.get(job['id'])['status'], 'interrupted'); self.assertEqual(len(self.requests), count)
@@ -229,7 +229,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         owner = self.owner; original = self.generate(); full_text = 'S' * 200000
         response = base64.b64encode(b'R' * (256 * 1024)).decode()
         ids = []
-        with owner.lock, owner.db:
+        with owner.lock, owner.db.transaction():
             for index in range(51):
                 job = dict(original, id=uuid.uuid4().hex, source=dict(original['source'], text=full_text), raw_response_base64=response)
                 owner._save(job); ids.append(job['id'])

@@ -2,15 +2,86 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support one bounded scratch CPU image-classification recipe. Audio and 3D subtypes retain their exact capability limits; no new modality importer or trainer is enabled. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+
 ## Run
 
-Requires Python 3.10+ and Pillow. There is no JavaScript build step. Manual labeling needs no external service.
+The current PostgreSQL runtime supports Linux and WSL2. It requires Python 3.10+,
+PostgreSQL 16–18 and the packages in `requirements.txt`; PostgreSQL 17.11 is the
+version qualified by this migration.
+There is no JavaScript build step or external database service. Install PostgreSQL
+locally using your operating system's package manager or the official PostgreSQL
+installer, with its `bin` directory on `PATH`. Initialize a private service once:
 
     python3 -m venv .venv
     .venv/bin/pip install -r requirements.txt
+    .venv/bin/python scripts/local_postgres.py init
+    eval "$(.venv/bin/python scripts/local_postgres.py env)"
     .venv/bin/python app.py
 
+The setup script uses a Unix socket under `~/.local/share/tuldok/postgres`,
+generates private credentials, and creates a database role without superuser,
+role-creation or database-creation permissions. It opens no TCP listener. Stop the
+application before `.venv/bin/python scripts/local_postgres.py stop`; use `start` and `env` to reopen
+it later. `--directory PATH` chooses another private service location and must be
+supplied consistently for each action. On Windows, run both Tuldok and PostgreSQL
+inside WSL2. Native Windows and macOS have not been qualified; native Windows is
+unsupported by the current filesystem locking implementation.
+
+`TULDOK_DATABASE_URL` must explicitly select a local socket or loopback host and a
+database. Each `--data` folder retains a `.tuldok.json` identity selecting its own
+PostgreSQL schema. Keep that file with its image and release files. Missing service,
+unsupported schemas and legacy SQLite folders produce explicit startup errors.
+See [local storage and recovery](docs/contracts/local-storage.md) for legacy import,
+complete backup/restore, supported versions and preservation limits.
+
 Open http://127.0.0.1:8091. Change the port or data location with --port and --data. Camera access works on localhost; accessing a machine over the network requires HTTPS for browser camera access. Image import also works without camera access.
+
+## Real image workflow in Workspaces
+
+[Real workflow screenshots](docs/images/workspaces-m2/README.md) show Data,
+Pipeline, active execution, results and correction, with exact source/run
+provenance and responsive/native zoom captures.
+
+The first real recipe uses reviewed `image_classification_v1` releases, a saved
+five-stage graph and a scratch TinyCNN on one CPU thread. It accepts at most
+128 images and eight classes; the optional training environment is separate
+from the application. On Linux with Python 3.12, install it explicitly once:
+
+```sh
+python3.12 -m venv .venv-training
+.venv-training/bin/python -m pip install -r requirements-training.txt
+export TULDOK_TRAINING_PYTHON="$PWD/.venv-training/bin/python"
+# Configure/start local PostgreSQL as described above, then:
+.venv/bin/python app.py --data ./workspace-data
+# Open http://127.0.0.1:8091/workspaces and choose Current local catalog.
+```
+
+No worker installs packages or downloads weights. Missing/incompatible runtime
+is a visible validation result. In **Data**, import images with honest rights
+notes and independent groups, label and review them, preview the selected
+release's class/split coverage, then freeze it. In **Pipeline**, create a named
+recipe, edit bounded trainer parameters/connections, save and validate. In
+**Runs**, inspect the verified frozen export, actual progress, checkpoint,
+validation metrics and per-example predictions. A correction link opens the
+current record; saving/reviewing and freezing a new release leaves old results
+unchanged. Viewing test results records durable exposure; reused records or
+pixels cannot be presented as fresh holdout evidence.
+
+Fresh catalogs use schema 2. Existing PostgreSQL schema-1 catalogs require an
+explicit stopped-writer backup and upgrade, never an automatic startup change:
+
+```sh
+.venv/bin/python backup_metadata.py backup ./workspace-data ./before-workspaces --quiesced
+.venv/bin/python upgrade_metadata.py ./workspace-data --quiesced
+```
+
+Use a new backup destination and keep every app/worker stopped until verification
+finishes. See [workspace storage](docs/contracts/workspace-storage.md),
+[graph contract](docs/contracts/workspace-pipeline.md),
+[run lifecycle](docs/contracts/workspace-runs.md) and
+[CPU adapter](docs/contracts/workspace-image-training.md) for bounds and recovery.
+The original corner studio and classic Workbench remain available.
 
 ## Workflow
 
@@ -124,7 +195,7 @@ manual labeling or **Suggest corners**, with the same review-and-save process as
 camera captures. Original PNG bytes and generation provenance are retained; labeled
 exports include the individual prompt and returned generation metadata.
 
-Jobs and prompt entries are saved in SQLite. Generation continues while you label
+Jobs and prompt entries are saved in PostgreSQL. Generation continues while you label
 images or reload the browser. **Stop generation** cancels the image request, or waits
 for the current prompt batch to return (up to 180 seconds), then stops scheduling
 work. **Resume remaining images** continues cancelled, failed, or server-interrupted
@@ -214,7 +285,7 @@ never substitutes newer revisions or replacement images. These are references,
 not historical source/annotation copies: to release updated records, explicitly
 select their current revisions and save a new set. Frozen ZIPs remain separate.
 Rename and delete use saved-set revision checks; deleting a set retains records,
-the current selection, and existing exports. Back up the whole data directory.
+the current selection, and existing exports. Back up PostgreSQL metadata together with the whole data directory.
 
 `GET /api/workbench/selections` lists metadata. `POST` on that route accepts exactly
 `name` (1–120 characters) and `items` (1–5,000 distinct `{id, revision,
@@ -265,7 +336,7 @@ Filter by task, review state or caption text. Select human-reviewed caption reco
 
 Caption ZIPs contain PNGs beside `train/metadata.jsonl`, `val/metadata.jsonl` and `test/metadata.jsonl`. Every row has exactly `file_name`, `text` (the accepted caption), and `group`. The existing `validation` assignment is explicitly projected to `val`. All three splits must be nonempty. Connected protected groups, parents, duplicate identities, book/session assignments and retained deleted ancestry share a component ID; the export never chooses an arbitrary first group. Existing source splits are preserved. Conflicts, insufficient independent families, missing lineage, draft targets, stale revisions, missing/tampered bytes, unnormalized PNGs and exact decoded-pixel duplicates fail before publication. Images below 512 pixels are exported with warnings.
 
-`manifest.json` freezes canonical annotations, source/target revisions, byte/pixel hashes, provenance, split mapping and complete relevant protected-component lineage snapshots. ZIP identity is the SHA-256 of its frozen bytes. Later edits or source deletion cannot change an existing release. Back up the full data directory, including releases. Human review does not establish rights, remove sensitive image metadata, detect near-duplicates or prove training quality.
+`manifest.json` freezes canonical annotations, source/target revisions, byte/pixel hashes, provenance, split mapping and complete relevant protected-component lineage snapshots. ZIP identity is the SHA-256 of its frozen bytes. Later edits or source deletion cannot change an existing release. Back up PostgreSQL metadata together with the full data directory, including releases. Human review does not establish rights, remove sensitive image metadata, detect near-duplicates or prove training quality.
 
 The consumer is the training companion's `examples/diffusion/check_image_data.py`, pinned to SHA-256 `6a4394308a4cc69b4ca965aca7f8459d7711ac9d51ce70492562c6ec6d806f94`. Extract the ZIP and run:
 
@@ -281,7 +352,7 @@ The original uploaded bytes are preserved at data/images/ID/source. The labeling
 
 Book IDs group related frames. Assigning a training/validation/test split applies to all previously unassigned images with the same book ID. No-book images without a book ID are grouped by session. Conflicting assigned splits are rejected. Reserve whole books and sessions for evaluation; this tool enforces group consistency, but you choose which groups to hold out.
 
-Labels and metadata are stored in SQLite with optimistic revision checks. Stale tabs cannot overwrite newer labels. Exact duplicate source images are rejected. Unsaved editor changes are protected when navigating away. Back up the entire data directory, including source files, with the application stopped.
+Labels and metadata are stored in PostgreSQL with optimistic revision checks. Stale tabs cannot overwrite newer labels. Exact duplicate source images are rejected. Unsaved editor changes are protected when navigating away. With the application stopped, back up PostgreSQL metadata and the entire data directory, including source files; copying the data directory alone is incomplete.
 
 ## Scope
 
@@ -334,7 +405,7 @@ JSONL line, exactly nine frames (constructor plus eight accepted steps), and exa
 byte counts, exact geometry/axes/shapes/types/units/configuration, finite native
 numbers, canonical decimal u64 stamps, accepted time/dt and diagnostic associations
 are validated before any asset, record or initial history is published. Publication
-shares one SQLite transaction with the existing Dataset owner.
+shares one PostgreSQL transaction with the existing Dataset owner.
 
 Velocity X/Y/Z retain their named MAC staggering, separate shapes and f32 types;
 tracer stays f32 appearance data, fraction/pressure stay f64. Pressure is the last
@@ -711,3 +782,20 @@ saved-result inspection, with no automatic replay. Restart expires preparation;
 committed records persist. Progress stays in the current page. Explicit human
 review and current selection are required before release. [Scope and roadmap
 inventory](docs/plans/native-detection-import/plan.md).
+
+## PostgreSQL test environment
+
+Run the existing lifecycle suite against a **disposable local PostgreSQL database**:
+
+```sh
+export TULDOK_DATABASE_URL='host=127.0.0.1 dbname=tuldok_test user=tuldok_test passfile=/absolute/private/test.pgpass'
+.venv/bin/python -m unittest discover -s tests
+```
+
+Tests use temporary data folders and isolated catalog schemas. The database itself
+is disposable: schemas remain after their temporary folders are removed, so drop
+and recreate only the dedicated test database between runs. Never point tests at a
+personal or shared catalog. Browser subprocesses inherit the same environment.
+`.github/workflows/tests.yml` provisions PostgreSQL 17 and runs the lifecycle,
+controller, browser and existing consumer suites. Consumer suites use tiny CPU
+fixtures and do not download model weights or call paid inference providers.

@@ -109,9 +109,10 @@ class Jobs:
         self.worker = None
         self.stop = threading.Event()
         self.request_id = None
-        with self.lock, self.db:
-            self.db.execute('CREATE TABLE IF NOT EXISTS generation_jobs (id TEXT PRIMARY KEY, data TEXT NOT NULL)')
-            self.db.execute('CREATE TABLE IF NOT EXISTS generation_entries (id TEXT PRIMARY KEY, job_id TEXT NOT NULL, ordinal INTEGER NOT NULL, data TEXT NOT NULL, UNIQUE(job_id, ordinal))')
+        with self.lock, self.db.transaction():
+            self.runtime_owner = self.db.claim_runtime('generation_jobs')
+            if not self.runtime_owner:
+                return
             for job in self._jobs():
                 try:
                     job = self._normalize_saved(job)
@@ -134,16 +135,16 @@ class Jobs:
                     self._save(job)
 
     def _jobs(self):
-        return [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_jobs ORDER BY rowid')]
+        return [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_jobs ORDER BY ordinal')]
 
     def _save(self, job):
-        self.db.execute('INSERT INTO generation_jobs VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], json.dumps(job)))
+        self.db.execute('INSERT INTO generation_jobs (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], json.dumps(job)))
 
     def _entries(self, job_id):
-        return [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_entries WHERE job_id=? ORDER BY ordinal', (job_id,))]
+        return [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_entries WHERE job_id=%s ORDER BY ordinal', (job_id,))]
 
     def _entry(self, entry):
-        self.db.execute('INSERT INTO generation_entries VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
+        self.db.execute('INSERT INTO generation_entries (id, job_id, ordinal, data) VALUES (%s,%s,%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
                         (entry['id'], entry['job_id'], entry['ordinal'], json.dumps(entry)))
 
     def _normalize_saved(self, job):
@@ -164,6 +165,15 @@ class Jobs:
 
     def record_output(self, sample_id, entry, job, metadata):
         """Called only inside Dataset.add's sample-insert transaction and lock."""
+        previous_entry, previous_job = dict(entry), dict(job)
+
+        def restore_progress():
+            entry.clear()
+            entry.update(previous_entry)
+            job.clear()
+            job.update(previous_job)
+
+        self.db.on_rollback(restore_progress)
         entry.update(status='completed', sample_id=sample_id, metadata=metadata)
         if pumas.typed(job['config']): entry['provider_outcome'] = 'result_received'
         self._entry(entry)
@@ -172,46 +182,63 @@ class Jobs:
 
     def snapshot(self):
         with self.lock:
-            return {'jobs': self._jobs(), 'entries': [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_entries ORDER BY rowid')]}
+            return {'jobs': self._jobs(), 'entries': [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_entries ORDER BY storage_order')]}
 
     def start(self, body):
         # Validate everything before starting billable work or persisting a job.
         from app import metadata
         config, meta = validate(body), metadata(body)
-        with self.lock, self.db:
-            self._idle()
-            job = dict(id=uuid.uuid4().hex, config=config, meta=meta, status='preparing', error='', completed=0)
-            self._save(job)
+        with self.lock:
+            if self.db.in_transaction:
+                raise ValueError('Generation dispatch requires its own committed transaction.')
+            with self.db.transaction():
+                self._idle()
+                job = dict(id=uuid.uuid4().hex, config=config, meta=meta, status='preparing', error='', completed=0)
+                self._save(job)
+            # Dispatch only after durable admission, including a successful commit.
             self._launch(job)
         return job
 
     def _idle(self):
+        if not self.runtime_owner:
+            raise ValueError('Generation workers belong to another open application. Use that application or reopen after it closes.')
         if self.worker and self.worker.is_alive():
             raise ValueError('A generation job is already running. Stop it before starting another.')
         if any(job['status'] in ACTIVE for job in self._jobs()):
             raise ValueError('A generation job is already starting.')
 
     def resume(self, job_id):
-        with self.lock, self.db:
-            self._idle()
-            job = next((j for j in self._jobs() if j['id'] == job_id), None)
-            if not job or job['status'] == 'completed':
-                raise ValueError('Choose an unfinished generation job.')
-            job = self._normalize_saved(job)
-            if pumas.typed(job['config']) and any(e.get('provider_outcome') == 'unknown' for e in self._entries(job_id)):
-                raise ValueError('An image attempt has an unknown provider outcome. Inspect it; this queue cannot replay it.')
-            job.update(status='preparing', error='')
-            self._save(job)
+        with self.lock:
+            if self.db.in_transaction:
+                raise ValueError('Generation dispatch requires its own committed transaction.')
+            with self.db.transaction():
+                self._idle()
+                job = next((j for j in self._jobs() if j['id'] == job_id), None)
+                if not job or job['status'] == 'completed':
+                    raise ValueError('Choose an unfinished generation job.')
+                job = self._normalize_saved(job)
+                if pumas.typed(job['config']) and any(e.get('provider_outcome') == 'unknown' for e in self._entries(job_id)):
+                    raise ValueError('An image attempt has an unknown provider outcome. Inspect it; this queue cannot replay it.')
+                job.update(status='preparing', error='')
+                self._save(job)
             self._launch(job)
         return job
 
     def _launch(self, job):
         self.stop.clear()
         self.worker = threading.Thread(target=self._run, args=(job,), daemon=True)
-        self.worker.start()
+        try:
+            self.worker.start()
+        except RuntimeError:
+            self.worker = None
+            with self.db.transaction():
+                job.update(status='failed', error='Could not start the generation worker; no inference ran. Resume explicitly.')
+                self._save(job)
 
     def cancel(self, job_id):
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
+            if not self.runtime_owner:
+                raise ValueError('Generation workers belong to another open application. Cancel in that application.')
             job = next((j for j in self._jobs() if j['id'] == job_id), None)
             if not job or job['status'] not in ACTIVE:
                 return {'cancelled': False}
@@ -252,7 +279,7 @@ class Jobs:
                         if key not in seen:
                             seen.add(key)
                             added.append(self._new_entry(job, len(entries) + len(added), prompt))
-                    with self.lock, self.db:
+                    with self.lock, self.db.transaction():
                         for entry in added:
                             self._entry(entry)
                     entries.extend(added)
@@ -260,20 +287,20 @@ class Jobs:
                     if attempts >= 3:
                         raise ValueError('Prompt model repeatedly returned duplicates. Saved unique prompts; resume to fill the remaining slots.')
             job['status'] = 'generating'
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 self._save(job)
             for ordinal in range(config['count']):
                 self._check()
                 if ordinal == len(entries):
                     entry = self._new_entry(job, ordinal, config['prompt'])
                     entries.append(entry)
-                    with self.lock, self.db:
+                    with self.lock, self.db.transaction():
                         self._entry(entry)
                 entry = entries[ordinal]
                 if entry.get('sample_id') or entry['status'] == 'deleted':
                     continue
                 entry.update(status='generating', error='')
-                with self.lock, self.db:
+                with self.lock, self.db.transaction():
                     self.request_id = uuid.uuid4().hex
                     if pumas.typed(config):
                         entry.update(request_id=self.request_id, provider_outcome='unknown')
@@ -285,7 +312,7 @@ class Jobs:
                     body['seed'] = (config['seed'] + ordinal) % 4294967296
                 self._check()
                 def retain_admission(evidence):
-                    with self.lock, self.db:
+                    with self.lock, self.db.transaction():
                         if self.stop.is_set():
                             raise pumas.OperationError('Cancelled before image provider admission.')
                         entry['attempt_evidence'] = evidence
@@ -304,7 +331,7 @@ class Jobs:
         except Exception as error:
             job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
             pumas.failure_evidence(job, error)
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 for entry in self._entries(job['id']):
                     if entry['status'] == 'generating':
                         if pumas.typed(config):
@@ -316,7 +343,7 @@ class Jobs:
                         entry.update(status='pending' if self.stop.is_set() else 'failed', error=job['error'])
                         self._entry(entry)
         finally:
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 self.request_id = None
                 self._save(job)
 

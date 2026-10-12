@@ -1,7 +1,9 @@
 """Exact current-field filtering through real storage and HTTP, without permission inference."""
+from postgres_helpers import table_names
 import base64
 import io
 import json
+from postgres_helpers import database_snapshot
 from pathlib import Path
 import sys
 import tempfile
@@ -80,11 +82,11 @@ class MetadataFilterTests(unittest.TestCase):
         rows = [self.text(name) for name in ('absent', 'null', 'blank', 'literal')]
         for row, value in zip(rows[:3], ({}, {'rights': None}, {'rights': '   '})):
             origin = dict(row['provenance']); origin.pop('rights'); origin.update(value)
-            with self.w.lock, self.w.db:
-                self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?', (encode(origin), row['id']))
+            with self.w.lock, self.w.db.transaction():
+                self.w.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s', (encode(origin), row['id']))
         self.text('uppercase note', rights='UNKNOWN')
         note = self.text('present', rights='Permission not established; check with owner.')
-        before = list(self.w.db.iterdump())
+        before = database_snapshot(self.w.db)
         result = self.w.query({'rights': 'unknown'})
         self.assertEqual({r['id'] for r in result['items']}, {r['id'] for r in rows})
         self.assertEqual(result['analysis']['unknown_rights'], 4)
@@ -92,7 +94,7 @@ class MetadataFilterTests(unittest.TestCase):
         self.assertEqual(self.ids(rights='UNKNOWN'), self.ids(q='uppercase note'))
         self.assertEqual(self.ids(rights='Permission not established; check with owner.'), {note['id']})
         self.assertEqual(self.w.get(note['id'])['review'], 'draft')
-        self.assertEqual(list(self.w.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.w.db), before)
 
     def test_combined_filters_apply_before_full_analysis_sort_and_pagination(self):
         alpha = self.text('Alpha', 'target', ['source-a'], 'Fixture note')
@@ -143,12 +145,12 @@ class MetadataFilterTests(unittest.TestCase):
 
     def test_current_metadata_queries_survive_reopen_without_schema_or_state_changes(self):
         row = self.text('reopen', 'é😀', ['case-sensitive'], 'Fixture rights note')
-        tables = [r[0] for r in self.w.db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+        tables = table_names(self.w.db)
         self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.w = self.dataset.workbench
-        before = list(self.w.db.iterdump())
+        before = database_snapshot(self.w.db)
         self.assertEqual(self.ids(label='é😀', group='case-sensitive', rights='Fixture rights note'), {row['id']})
-        self.assertEqual(list(self.w.db.iterdump()), before)
-        self.assertEqual([r[0] for r in self.w.db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")], tables)
+        self.assertEqual(database_snapshot(self.w.db), before)
+        self.assertEqual(table_names(self.w.db), tables)
 
     def test_real_http_percent_encoded_filters_and_invalid_field_diagnostics(self):
         row = self.text('http', 'cat & café +😀', ['group &😀'], 'Owner note: ? & + permission unverified')
@@ -169,7 +171,7 @@ class MetadataFilterTests(unittest.TestCase):
     def test_internal_line_endings_are_distinct_exact_values_through_storage_and_http(self):
         values = ['ordinary', 'left\nright', 'left\rright', 'left\r\nright', r'left\nright']
         rows = [self.text('ending '+str(i), value, [value], value) for i, value in enumerate(values)]
-        before = list(self.w.db.iterdump())
+        before = database_snapshot(self.w.db)
         server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
@@ -187,7 +189,7 @@ class MetadataFilterTests(unittest.TestCase):
                 self.assertEqual(stored['groups'], [value])
                 self.assertEqual(stored['provenance']['rights'], value)
         self.assertEqual(self.ids(label='leftright', group='leftright', rights='leftright'), set())
-        self.assertEqual(list(self.w.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.w.db), before)
 
 
 if __name__ == '__main__': unittest.main()

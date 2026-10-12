@@ -1,5 +1,6 @@
 """Independent answers, real persistence/HTTP, exact proof and frozen artifacts."""
 from concurrent.futures import ThreadPoolExecutor
+from postgres_helpers import install_failure_trigger
 import hashlib
 from http.server import ThreadingHTTPServer
 import json
@@ -65,14 +66,14 @@ class InstructionResponsesTests(unittest.TestCase):
     def test_two_responses_preserve_existing_target_siblings_and_original_source(self):
         parent = self.prompt()
         parent = self.w.save(parent['id'], dict(parent, task='text_entities', annotation={'spans': [{'label': 'word', 'start': 0, 'end': 6}]}, review='human_reviewed'))
-        original = dict(self.d.db.execute('SELECT * FROM workbench_records WHERE id=?', (parent['id'],)).fetchone())
+        original = dict(self.d.db.execute('SELECT * FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone())
         history = self.w.history(parent['id'])
         a, b = self.answer(parent), self.answer(parent, completion='Alternative', review='draft')
         self.assertNotEqual(a['id'], b['id']); self.assertEqual(len(self.w.responses(parent['id'])['responses']), 2)
         changed = self.answer(parent, response=a, completion=' Changed exact \r\n', review='draft')
         self.assertEqual(changed['review'], 'draft'); self.assertEqual(changed['revision'], 2)
         self.assertEqual(self.w._response(b['id']), b)
-        self.assertEqual(dict(self.d.db.execute('SELECT * FROM workbench_records WHERE id=?', (parent['id'],)).fetchone()), original)
+        self.assertEqual(dict(self.d.db.execute('SELECT * FROM workbench_records WHERE id=%s', (parent['id'],)).fetchone()), original)
         self.assertEqual(self.w.history(parent['id']), history)
         snapshots = self.w.response_history(a['id'])['history']; self.assertEqual(len(snapshots), 2)
         self.assertEqual(snapshots[0]['response'], a); self.assertEqual(snapshots[1]['parent'], parent)
@@ -118,7 +119,7 @@ class InstructionResponsesTests(unittest.TestCase):
 
     def test_history_failure_rolls_back_response_and_review(self):
         parent = self.prompt(); answer = self.answer(parent)
-        self.d.db.execute("CREATE TRIGGER reject_response_history BEFORE INSERT ON workbench_response_history BEGIN SELECT RAISE(ABORT,'fixture rollback'); END")
+        install_failure_trigger(self.d.db, 'workbench_response_history', 'reject_response_history', 'fixture rollback')
         with self.assertRaises(Exception): self.answer(parent, response=answer, completion='Uncommitted', review='draft')
         self.assertEqual(self.w._response(answer['id']), answer)
         self.assertEqual(len(self.w.response_history(answer['id'])['history']), 1)

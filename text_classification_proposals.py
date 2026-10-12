@@ -1,4 +1,5 @@
 """Frozen-label proposals for one existing text record; author Apply grants draft only."""
+from workbench import encode_retained
 import base64
 import hashlib
 import json
@@ -110,8 +111,10 @@ class TextClassificationProposals:
         self.worker, self.active_id = None, None
         self.stop = threading.Event()
         self.closed = False
-        with self.lock, self.db:
-            self.db.execute('CREATE TABLE IF NOT EXISTS text_classification_proposals (id TEXT PRIMARY KEY, data TEXT NOT NULL)')
+        with self.lock, self.db.transaction():
+            self.runtime_owner = self.db.claim_runtime('text_classification_proposals')
+            if not self.runtime_owner:
+                return
             for row in self.db.execute('SELECT data FROM text_classification_proposals').fetchall():
                 job = json.loads(row[0])
                 if job['status'] in ACTIVE:
@@ -120,15 +123,15 @@ class TextClassificationProposals:
                     self._save(job)
 
     def _save(self, job):
-        previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=?', (job['id'],)).fetchone()
+        previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=%s', (job['id'],)).fetchone()
         job['revision'] = (json.loads(previous[0])['revision'] if previous else 0) + 1
         job['updated_at'] = timestamp()
-        self.db.execute('INSERT INTO text_classification_proposals VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode(job)))
+        self.db.execute('INSERT INTO text_classification_proposals (id, data) VALUES (%s,%s) ON CONFLICT(id) DO UPDATE SET data=excluded.data', (job['id'], encode_retained(job)))
 
     def _get(self, job_id):
         if not isinstance(job_id, str) or not IDENTIFIER.fullmatch(job_id):
             raise WorkbenchError('Invalid classification request ID.')
-        row = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=?', (job_id,)).fetchone()
+        row = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=%s', (job_id,)).fetchone()
         if row is None:
             raise WorkbenchError('Classification request not found.', 'unavailable', 404)
         return json.loads(row[0])
@@ -139,9 +142,21 @@ class TextClassificationProposals:
 
     def snapshot(self):
         with self.lock:
-            rows = self.db.execute("SELECT json_remove(data, '$.raw_response_base64', '$.source.text') "
-                                   'FROM text_classification_proposals ORDER BY rowid DESC LIMIT 50').fetchall()
-        return {'jobs': [json.loads(row[0]) for row in rows]}
+            # Retain escaped Unicode that PostgreSQL JSON processing cannot decode.
+            rows = self.db.execute('''SELECT CASE WHEN strpos(data, %s)>0 THEN data ELSE (
+                SELECT json_object_agg(field.key, CASE WHEN field.key='source' THEN (
+                    SELECT json_object_agg(source.key, source.value)
+                    FROM json_each(field.value) AS source WHERE source.key<>'text'
+                ) ELSE field.value END)
+                FROM json_each(data::json) AS field WHERE field.key<>'raw_response_base64'
+                )::text END FROM text_classification_proposals ORDER BY ordinal DESC LIMIT 50''', (r'\u',)).fetchall()
+        jobs = []
+        for row in rows:
+            job = json.loads(row[0])
+            job.pop('raw_response_base64', None)
+            job['source'].pop('text', None)
+            jobs.append(job)
+        return {'jobs': jobs}
 
     def _source(self, body, *, captured=None):
         record_id = body['source_id']
@@ -189,13 +204,17 @@ class TextClassificationProposals:
             raise WorkbenchError('Seed must be a nonnegative 32-bit integer.')
         intent_hash = hashlib.sha256(encode(body).encode()).hexdigest()
         with self.lock:
-            with self.db:
-                previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=?', (request_id,)).fetchone()
+            if self.db.in_transaction:
+                raise WorkbenchError('Classification dispatch requires its own committed transaction.', 'conflict', 409)
+            with self.db.transaction():
+                previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=%s', (request_id,)).fetchone()
                 if previous:
                     job = json.loads(previous[0])
                     if job['intent_sha256'] != intent_hash:
                         raise WorkbenchError('Classification request ID already belongs to a different request.', 'conflict', 409)
                     return job
+                if not self.runtime_owner:
+                    raise WorkbenchError('Classification workers belong to another open application. Use that application or reopen after it closes.', 'unavailable', 409)
                 if self.closed or (self.worker is not None and self.worker.is_alive()):
                     raise WorkbenchError('A classification request is active or closing. Cancel or wait before starting another.', 'conflict', 409)
                 source = self._source(body)
@@ -217,7 +236,7 @@ class TextClassificationProposals:
                 self.worker.start()
             except RuntimeError:
                 self.worker, self.active_id = None, None
-                with self.db:
+                with self.db.transaction():
                     job.update(status='failed', error='Could not start the classification worker; no inference ran. Start a new request explicitly.')
                     self._save(job)
             return job
@@ -235,7 +254,7 @@ class TextClassificationProposals:
                 raise WorkbenchError('Classification request cancelled.', 'cancelled')
             if job['config']['model'] not in [item['id'] for item in models['models']]:
                 raise WorkbenchError('Selected model is not currently listed as a non-image served model. Refresh models.', 'unavailable')
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 if self.stop.is_set():
                     raise WorkbenchError('Classification request cancelled.', 'cancelled')
                 job.update(status='generating', catalog_qualification=models['qualification'])
@@ -246,7 +265,7 @@ class TextClassificationProposals:
             job['response_sha256'] = hashlib.sha256(data).hexdigest()
             job['raw_response_base64'] = base64.b64encode(data).decode('ascii')
             annotation, reported = decode(data, job['config']['labels'], job['id'] if pumas.typed(job['config']) else None)
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 if self.stop.is_set():
                     raise WorkbenchError('Classification request cancelled.', 'cancelled')
                 self._source(dict(source_id=job['source']['id'], revision=job['source']['revision'],
@@ -254,7 +273,7 @@ class TextClassificationProposals:
                 job.update(status='abstained' if annotation is None else 'completed', annotation=annotation, reported_model=reported)
                 self._save(job)
         except Exception as error:
-            with self.lock, self.db:
+            with self.lock, self.db.transaction():
                 pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
@@ -265,7 +284,7 @@ class TextClassificationProposals:
     def cancel(self, body):
         if not isinstance(body, dict) or set(body) != {'job_id'}:
             raise WorkbenchError('Supply only the classification request ID.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             job = self._get(body['job_id'])
             if job['id'] != self.active_id or job['status'] not in ACTIVE:
                 return {'cancelled': False, 'job': job}
@@ -278,7 +297,7 @@ class TextClassificationProposals:
         if (not isinstance(body, dict) or set(body) not in ({'revision', 'decision'}, {'revision', 'decision', 'labels'})
                 or body['decision'] not in ('reject', 'apply_draft')):
             raise WorkbenchError('Choose reject or apply_draft with the current proposal revision and frozen labels for Apply.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             job = self._get(job_id)
             if body['decision'] == 'apply_draft' and body.get('labels') != job['config']['labels']:
                 raise WorkbenchError('Class label choices changed. Restore the exact frozen labels or start a new request.', 'conflict', 409)
@@ -316,7 +335,8 @@ class TextClassificationProposals:
             return {'job': job, 'record': record, 'changed': True}
 
     def close(self):
-        with self.lock:
+        # Shutdown must drain local workers even when the database is unavailable.
+        with self.lock.mutex:
             self.closed = True
             self.stop.set()
             worker = self.worker

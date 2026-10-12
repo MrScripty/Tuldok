@@ -1,4 +1,5 @@
 """Explicit comparative judgments; responses and source records retain ownership."""
+from workbench import encode_retained
 import json
 
 from workbench import WorkbenchError, IDENTIFIER, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, encode, text_value, timestamp
@@ -11,17 +12,9 @@ class Preferences:
     def __init__(self, workbench):
         self.w = workbench
         self.db, self.lock = workbench.db, workbench.lock
-        with self.lock, self.db:
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_preferences (
-                id TEXT PRIMARY KEY, prompt_id TEXT NOT NULL, revision INTEGER NOT NULL,
-                data TEXT NOT NULL)''')
-            self.db.execute('CREATE INDEX IF NOT EXISTS workbench_preference_prompt ON workbench_preferences(prompt_id)')
-            self.db.execute('''CREATE TABLE IF NOT EXISTS workbench_preference_history (
-                id TEXT NOT NULL, revision INTEGER NOT NULL, snapshot TEXT NOT NULL,
-                PRIMARY KEY(id,revision))''')
 
     def _get(self, identity):
-        row = self.db.execute('SELECT data FROM workbench_preferences WHERE id=?', (identity,)).fetchone()
+        row = self.db.execute('SELECT data FROM workbench_preferences WHERE id=%s', (identity,)).fetchone()
         if row is None:
             raise WorkbenchError('Judgment not found.', 'unavailable', 404)
         return json.loads(row[0])
@@ -55,7 +48,7 @@ class Preferences:
         with self.lock:
             parent = self.w._get(prompt_id)
             result = []
-            for row in self.db.execute('SELECT data FROM workbench_preferences WHERE prompt_id=? ORDER BY id', (prompt_id,)):
+            for row in self.db.execute('SELECT data FROM workbench_preferences WHERE prompt_id=%s ORDER BY id', (prompt_id,)):
                 judgment = json.loads(row[0]); warning = None
                 try:
                     self._bindings(judgment)
@@ -68,7 +61,7 @@ class Preferences:
         with self.lock:
             self._get(identity)
             return {'history': [json.loads(row[0]) for row in self.db.execute(
-                'SELECT snapshot FROM workbench_preference_history WHERE id=? ORDER BY revision', (identity,))]}
+                'SELECT snapshot FROM workbench_preference_history WHERE id=%s ORDER BY revision', (identity,))]}
 
     def save(self, body):
         self._shape(body, SELECTION_FIELDS | {'outcome', 'rationale', 'review'})
@@ -77,9 +70,9 @@ class Preferences:
         text_value(body['rationale'], 'Judgment rationale', 4000, empty=True)
         if body['review'] not in ('draft', 'human_reviewed'):
             raise WorkbenchError('Explicitly choose draft or human review of this judgment.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             parent, left, right = self._bindings(body)
-            row = self.db.execute('SELECT data FROM workbench_preferences WHERE id=?', (body['id'],)).fetchone()
+            row = self.db.execute('SELECT data FROM workbench_preferences WHERE id=%s', (body['id'],)).fetchone()
             before = json.loads(row[0]) if row else None
             if before:
                 if before['deleted'] or before['revision'] != body['revision'] or before['prompt_id'] != body['prompt_id']:
@@ -96,15 +89,15 @@ class Preferences:
             return {'judgment': judgment, 'changed': True}
 
     def _persist(self, judgment, parent, left, right):
-        self.db.execute('''INSERT INTO workbench_preferences VALUES (?,?,?,?)
+        self.db.execute('''INSERT INTO workbench_preferences (id, prompt_id, revision, data) VALUES (%s,%s,%s,%s)
             ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data''',
-                        (judgment['id'], judgment['prompt_id'], judgment['revision'], encode(judgment)))
-        self.db.execute('INSERT INTO workbench_preference_history VALUES (?,?,?)',
-                        (judgment['id'], judgment['revision'], encode({'judgment': judgment, 'parent': parent, 'left': left, 'right': right})))
+                        (judgment['id'], judgment['prompt_id'], judgment['revision'], encode_retained(judgment)))
+        self.db.execute('INSERT INTO workbench_preference_history (id, revision, snapshot) VALUES (%s,%s,%s)',
+                        (judgment['id'], judgment['revision'], encode_retained({'judgment': judgment, 'parent': parent, 'left': left, 'right': right})))
 
     def delete(self, body):
         self._shape(body, SELECTION_FIELDS)
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             before = self._get(body['id'])
             if before['deleted'] or any(body[key] != before[key] for key in SELECTION_FIELDS):
                 raise WorkbenchError('Judgment changed or was deleted. Reload before deleting.', 'conflict', 409)
@@ -122,7 +115,7 @@ class Preferences:
         keys = {key(row) for row in selected}
         result, size = [], 0
         for prompt_id in sorted({row['prompt_id'] for row in selected}):
-            for (data,) in self.db.execute('SELECT data FROM workbench_preferences WHERE prompt_id=?', (prompt_id,)):
+            for (data,) in self.db.execute('SELECT data FROM workbench_preferences WHERE prompt_id=%s', (prompt_id,)):
                 row = json.loads(data)
                 if row['deleted'] or row['review'] != 'human_reviewed' or key(row) not in keys:
                     continue

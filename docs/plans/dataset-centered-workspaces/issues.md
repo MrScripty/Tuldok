@@ -1,0 +1,33 @@
+# Issues and decisions requiring follow-up
+
+| ID | Severity/evidence | Relationship and owner | Disposition and required verification | Revisit trigger |
+| --- | --- | --- | --- | --- |
+| I1 | Medium: PR33 lifecycle failure at `581fa5c`; prior typed-Pumas detail, current failed check verified | UI integration owner; compact layout overlap | Defer fix outside docs scope. Inspect current head and successful affected/CI gates before reuse; do not retry inaccessible logs | M1 integration |
+| I2 | Medium: PR32 lifecycle failure at `83b2df9` | Documentation/UI owner; existing screenshot work | Preserve branch. Reconcile README link on integration; old screenshots do not satisfy new UI gates | PR32 review/merge under separate authority |
+| I3 | High: bounded mesh branch `dd7661d` contains a broad unmerged stack | 3D and integration owners; baseline/contract uncertainty | Defer branch adoption. Review actual current diff and native reader/browser evidence by subtype | Before M5a |
+| I4 | Medium: no Standards Engine MCP or Tuldok local agent skill/config available | Planning author; tooling evidence | Complete source/template/structural/manual review now; explicitly report unavailable Engine routing, no certification claim | A configured application-purpose Engine becomes available |
+| I5 | High: Pantograph host packaging/transport unqualified for Tuldok | Integration owner | S1 bounded real no-model embedding probe; adopt only demonstrated surface or retain small local DAG | Before M2 graph-engine admission |
+| I6 | High: Pumas audio is experimental, production unavailable | Audio/inference owner | Local audio data work proceeds; keep ASR disabled until producer/runtime qualification and consumer tests pass | A supported production contract/runtime is available |
+| I7 | Medium: trainer fixture is not app lifecycle and omits per-example output | Run owner | M2 dedicated adapter, environment limits, prediction mapping, process/cancel/restart and artifact evidence | M2 admission |
+| I8 | Medium: no current volume format/consumer selected | 3D owner | S4 bounded format choice with affine/grid reader proof; no generic 3D claim | Before M5b |
+| I9 | Medium: new docs branch is outside push CI allowlist; PR CI invokes training-bearing checks | Planning author/integration owner | Docs-only source checks are the planning gate. Do not open a PR that starts excluded training in this task; no workflow changes to evade scope | Separate PR/CI authorization or future implementation |
+| I10 | High: distributed SQLite coupling; PostgreSQL lifecycle/migration not qualified | Storage/integration owner; MB before M2 persistence | Preserve all owners/bytes/history/rights/receipts through new-database migration; qualify explicit transactions, two independent connections, local lifecycle and metadata+artifact restore. Stop on lossy conversion or unsupported values; no silent second production backend | S6/MB admission and before cutover |
+| I11 | Medium: M1 environment lacks pinned TRL/datasets/transformers/Torch/accelerate/tokenizers for the full training-bearing consumer aggregate; prerequisite receipt `build/qa/qualification/run-z24othta/gates/summary.json` is blocked | Parent/integration owner; full merge qualification | M1 contracts/browser, 417 Python tests, 43 existing controller/static gates, legacy browsers, independent review and focused hosted CI passed. Run the remaining registered consumer gates in the qualified integration environment; do not infer aggregate success or acquire large runtimes/models in this UI task | Combined candidate qualification before merge |
+| I12 | High: initial hosted runs38173918147 and38174382414 failed Python discovery; log download returned HTTP403 | Storage/integration owner; MB qualification | Clean TCP reproduction identified credential loss in the independent-reader fixture; corrected to use validated Metadata.dsn without changing assertions. Both authentication styles pass. Qualified by parent handoff at 9e94d69484218e64a3ee1bddcf4c61d8aa93df16 and successful run38175261609; preserve no guessed attribution to earlier Pumas failures or denied-log retry | Exact-head hosted result for the helper correction |
+
+These rows retain the original bounded planning findings. The plan's ownership
+review prevents introducing duplicate data/graph authority. Their current
+M1/MB/M2 resolution is recorded below; later modality claims remain pending.
+
+
+Integrated I12 retains MB branch issue I11; integrated I11 remains the UI consumer-environment finding. Parent has admitted the exact qualified MB commit; combined-app qualification remains separate.
+
+## M1/MB/M2 resolution
+
+- I1/I2: PR33 was inspected but never merged/copied; existing screenshot work was preserved. The separately implemented workspace passed its own combined gates. Neither external branch's failing check was waived.
+- I5: S1 selected the permitted small fixed DAG after pinned Pantograph source inspection. Native Pantograph remains deferred and unqualified.
+- I7: The dedicated bounded CPU adapter, durable runs, actual per-example results and lifecycle/recovery gates passed. The original trainer fixture remains an independent unchanged oracle.
+- I9: Later explicit M1/M2 implementation and CI admission superseded the planning-only restriction for these feature branches. No main merge or deployment was admitted.
+- I10/I11/I12: Parent accepted exact MB9e94d69; combined907da2f passed 93 lifecycle steps. The final image checkpoint acac0d3 passed all 98 steps without skips, including 507 Python tests and the pinned consumers. Earlier failures remain in the evidence history.
+- The later inherited Pumas browser readiness failure was reproduced, repaired only in the test, independently reviewed and closed by complete successor CI38180720462; see [M2 verification](reports/m2/verification.md).
+- I3/I4/I6/I8 remain their stated bounded follow-ups: unreconciled 3D branch, unavailable Engine MCP, unqualified production ASR and unselected volume consumer. They do not turn the delivered bounded image workflow into an unqualified native/modality claim.
