@@ -81,6 +81,12 @@ returns first 512 triangles' native vertices, all-mesh bounds and sample count.
 UI presents XY/XZ/YZ wireframes with axes/units and an explicit sample label;
 these are inspection projections, not changed assets or training images.
 Superseded inspection responses cannot replace the current editor or note.
+An additional orthographic spatial view offers native yaw/tilt, zoom and reset
+buttons without dragging. Native XYZ labels and declared frame/units accompany
+the same bounded sample; screen rotation never transforms the source geometry.
+The first 512 triangles are not a representative sampling guarantee. Full
+frozen exports can be checked with the read-only
+[mesh release validator](mesh-release-validation.md).
 Raw asset download and canonical release retain both files byte-exactly.
 Canonical records.jsonl includes mesh metadata and existing ownership/history
 snapshot semantics; snapshot rehash/CAS and human review remain required.

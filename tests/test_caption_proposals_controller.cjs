@@ -10,11 +10,11 @@ const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,new E
 const listeners={},requests=[],timers=new Map();let timerId=0;
 const response=(data,ok=true,status=200)=>({ok,status,json:async()=>data});
 const empty={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
-const context=vm.createContext({console,URLSearchParams,structuredClone,crypto,confirm:()=>false,location:{hash:''},history:{pushState(){}},
+const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,crypto,confirm:()=>false,location:{hash:''},history:{pushState(){}},
   URL,sessionStorage:{data:new Map(),getItem(key){return this.data.get(key)??null;},setItem(key,value){this.data.set(key,value);},removeItem(key){this.data.delete(key);}},
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
   document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
-  window:{addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
+  window:{dispatchEvent(){return true;},addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
   fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(empty)):url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))});
 const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..');
 for(const file of ['workbench.js','caption-proposals.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),context);

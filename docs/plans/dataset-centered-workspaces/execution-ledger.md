@@ -144,3 +144,15 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 - Root then executed the skipped real workflows in headless mode: image 13/text 13 passed at clean 831. Audio exposed a toolbar-before-attachment test race; its owner is qualifying a semantic readiness repair before the next integration push. No runtime/schema fallback, timeout extension, failing-check waiver or manual hosted rerun.
 
 - Audio readiness repair reproduced the absent-toolbar failure under controlled adapter-script withholding. A semantic wait passed that delayed case and the ordinary headless 12-check workflow, with unchanged assertions/time budgets and no application changes. Independent review accepted the exact test helper; both test repairs are included together in the next normal PR checkpoint qualification.
+
+## 2026-10-12 — completed qualification and approved merges
+
+- Exact d3b1a31f57c6a69fa4db175294ba3e5ada742286 passed lifecycle38245839781: all 102 steps, zero skips/failures, 537 Python tests in 306.750s and real recovery/image/text/audio browsers. Focused38245839783 passed. Independent review accepted that source; earlier failures were repaired, not waived.
+- User then explicitly approved PR34 followed by PR35. Ordinary expected-head-protected merges produced 2ba43ab68aebbfadfa1b6bfbb533776d7b74cce5 and main ee81555586ef96c56b78dde1858f3c5f689b27c1. Retargeted PR35's effective diff was unchanged and final tree4794a5488dd7d3215e61f702996aed7579422fed exactly matched reviewed d3b1a31. No main-push workflows exist; no duplicate run was started. PR descriptions retain terminal CI and merge proof. No user data migration or deployment occurred; PR32/33 remain unchanged.
+
+## 2026-10-12 — next parallel audio/mesh admission
+
+- User requested continued development with parallel workers. Main was rechecked at ee81555 with no newer user commit. Root created integration/workspace-audio-mesh-20261012; all source changes start after this plan update.
+- Actual workers audio_runs_next and mesh_next independently scoped one real interval-classification workflow and an existing-profile static-mesh inspection/validation increment. next_review independently assessed contracts/candidate reuse; root owns plan/shared integration. Exact files, branches, limits and checkpoints are in [the admission](reports/audio-mesh-admission-20261012.md).
+- Reconciled old mesh/point-cloud work without copying its divergent 392-file stack. Preserve known float32 precision findings and the distinction between selected-row checks and complete family evidence. Sequence contracts remain unchanged.
+- Local PostgreSQL17.11, app Python/psycopg3.3.6, pinned sklearn1.7.2/Torch2.8 CPU runtime, Node24 and Chromium151 are available. No installation/model acquisition or schema change is needed. A11/A12 and new branch qualification remain pending; no new main merge or deployment authority.

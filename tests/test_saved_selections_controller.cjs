@@ -16,10 +16,10 @@ const requests=[],windowEvents={},historyEntries=[],location={hash:''};
 const response=data=>({ok:true,json:async()=>data});
 const page={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
 let list=[],allowDelete=true;
-const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,location,
+const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,setTimeout,clearTimeout,location,
   history:{pushState(_state,_title,hash){historyEntries.push(hash);location.hash=hash;}},confirm:()=>allowDelete,
   document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
-  window:{addEventListener(event,fn){(windowEvents[event] ||= []).push(fn);}},
+  window:{dispatchEvent(){return true;},addEventListener(event,fn){(windowEvents[event] ||= []).push(fn);}},
   fetch:(url,options)=>url.endsWith('/grounded/jobs')&&!options?.method?Promise.resolve(response({jobs:[]})):
     url.includes('/records?')?Promise.resolve(response(page)):
     url.endsWith('/selections')&&!options?.method?Promise.resolve(response({selections:list})):

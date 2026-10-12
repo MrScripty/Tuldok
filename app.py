@@ -471,6 +471,11 @@ def make_handler(dataset):
                     return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/audio-inspection/'):
                     return self.reply(dataset.workbench.audio.inspect(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/mesh-release-validation/'):
+                    import mesh_release
+                    release_id = path.rsplit('/', 1)[-1]
+                    archive = dataset.releases.locate(release_id)
+                    return self.reply(mesh_release.validate_release(archive, expected_sha256=release_id))
                 if path.startswith('/api/workbench/mesh-inspection/'):
                     return self.reply(dataset.workbench.meshes.inspect(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/asset/'):
@@ -521,6 +526,7 @@ def make_handler(dataset):
                 assets.update({
                     '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
                     '/audio-editor.css': ('audio-editor.css', 'text/css'),
+                    '/meshes.css': ('meshes.css', 'text/css'),
                     '/workspaces': ('workspaces.html', 'text/html'),
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
