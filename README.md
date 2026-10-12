@@ -2,7 +2,7 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
-Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image and text classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Audio training and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
 
 ## Run
 
@@ -99,10 +99,29 @@ For audio, open **Data → Dataset tools → Import WAV audio**. Import a local
 PCM16 WAV (mono/stereo, 8–96 kHz, at most 8 MiB and 120 seconds), play the source
 or a selected channel interval, and annotate exact source-frame intervals.
 Human review enables the canonical mixed-task export with original WAV bytes
-and typed targets. Audio Pipeline/Runs, ASR and audio training remain unavailable.
+and typed targets. ASR, cropping and resampling remain unavailable.
 See the [audio contract](docs/contracts/audio-data.md) and
 [WAV screenshots](docs/images/workspaces-audio/README.md). FFmpeg is used only
 by verification, not by the application.
+
+For a real audio classification run, human-review exactly one class-labelled
+interval per recording, then freeze **Audio classification** in Data. Create the
+audio recipe in Pipeline, edit its bounded regularization parameter **C**, save
+and validate, then run it in the same optional CPU environment described above.
+The recipe measures eight fixed time/frequency features on the exact selected
+channel and half-open source-frame interval. Only train data fits its scaler and
+logistic classifier. Runs retains a data-only JSON model, actual metrics,
+source-bound predictions and cancellation/restart history. Corrections create
+new reviewed releases; inspecting test results records durable exposure.
+
+This recipe accepts 6–256 recordings and 2–8 classes represented in all three
+protected splits. Each interval has 128–65,536 frames and lasts at most 10 seconds;
+the release is bounded to 40 MiB of original WAV bytes and 4,194,304 analyzed
+frames. Whole recordings/families remain indivisible. No transcription,
+resampling, downmixing or weight download occurs. Authored signal examples prove
+the workflow, not model quality. See the
+[audio training contract](docs/contracts/workspace-audio-training.md) and
+[first release/graph checkpoint](docs/images/workspaces-audio-runs-checkpoint/README.md).
 
 ## Workflow
 
