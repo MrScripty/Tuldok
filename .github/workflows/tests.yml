@@ -181,6 +181,9 @@ jobs:
       - run: node tests/browser_meshes.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_workspace_mesh.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences.cjs
         env:
           BROWSER: /usr/bin/google-chrome
