@@ -130,3 +130,9 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 - A real old6d image run survived complete stopped-writer schema2 backup and explicit2→3 upgrade. All table/sequence/file snapshots, stored/public results, six artifact hashes and exposure history remained exact; second reopen and a no-child-process oracle proved no replay. Independent review rechecked backup hashes and seven comparison categories.
 - [Combined report](reports/combined-20261012.md) and [original screenshots/receipts](../../images/workspaces-combined-20261012/README.md) bind the evidence. A9/A10 are satisfied for these bounded increments; broad M3/M4 and remaining A5/A7/A8 scope remain Active/pending.
 - Base draft PR34 is mergeable/clean with original automatic full98-step and focused passes. The new stacked draft targets the preserved image branch; its original automatic hosted run remains the final integration gate. No older PR32/33 merge/copy, manual CI rerun, main merge, deployment, private-data migration or model-weight download.
+
+
+## 2026-10-12 — hosted caption assertion correction
+
+- Original PR35 lifecycle38242303937 on b554a9e passed537Python tests (323.717s), then failed the legacy caption browser's old small-image-warning copy assertion. This integration omission was not waived; later gates were skipped and no full hosted pass is claimed.
+- Corrected only the browser expectation to the intentional generic export notice and strengthened downloaded-manifest validation to require four actual small-image warnings. The affected actual Chromium workflow passed locally with all existing assertions retained. Application runtime remains83f5338; a new corrected checkpoint triggers normal automatic PR qualification, with no manual rerun.
