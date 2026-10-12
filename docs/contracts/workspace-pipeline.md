@@ -1,9 +1,10 @@
 # Workspace pipeline v1
 
 Owner: `pipeline.py:Pipelines`. PostgreSQL catalog version 2 owns persistence;
-`app.py` translates HTTP requests. The S1 fallback admits two fixed CPU classification recipes: image TinyCNN and
-text TF-IDF / MultinomialNB. It remains a closed graph engine; audio/3D execution
-and other trainers are unsupported.
+`app.py` translates HTTP requests. The S1 fallback admits three fixed CPU classification recipes: image TinyCNN,
+text TF-IDF / MultinomialNB and reviewed WAV interval features / logistic
+regression. It remains a closed graph engine; ASR, 3D execution and other
+trainers are unsupported.
 
 ## Documents and editing
 
@@ -28,10 +29,11 @@ and other trainers are unsupported.
 ```
 
 The example shows a partial editable image draft. Missing `recipe` retains the
-original image v1 interpretation and digest; text graphs explicitly contain
-`recipe: "text_classification"`, recipe version 1. Unknown recipe names fail
-closed. New text documents require this recipe-aware application; application
-downgrade requires restoring the pre-M3 backup rather than deleting new state.
+original image v1 interpretation and digest; text and audio graphs explicitly
+contain `recipe: "text_classification"` or `"audio_classification"`, recipe
+version 1. Unknown recipe names fail closed. New recipe documents require the
+corresponding application version; downgrade requires a stopped-writer complete
+pre-feature backup rather than deleting newer state.
 
 The example shows a partial editable draft. `create` supplies all five nodes and
 four edges. Drafts permit 1–10 nodes, at most 12 edges and 32 KiB of finite JSON.
@@ -67,8 +69,8 @@ Executable graphs require exactly one of each type, definition version 1, and
 exactly those four ordered connections. Cycles, disconnected graphs, duplicates,
 wrong ports and unsupported nodes cannot execute. This fixed recipe is the
 complete admitted image engine surface. The text recipe uses the same five
-stages with `text_export` in place of `image_export`; the chosen release format
-must match the saved recipe.
+stages with `text_export` in place of `image_export`; audio uses `audio_export`.
+The chosen release format must match the saved recipe.
 
 The release node accepts only `release_id`; train accepts exactly `epochs`,
 `batch_size`, `learning_rate`, `seed`; other nodes accept no parameters. The
@@ -76,7 +78,10 @@ adapter's `PARAMETER_BOUNDS`/`validate_parameters` remain their single owner:
 1–5 epochs, batch size 1–16, learning rate 0.00001–0.01, unsigned 32-bit seed.
 Defaults are 1, 8, 0.001 and 42 respectively. Text accepts exactly
 `max_features` (64–4096, default 1024) and `alpha` (0.01–10, default 1); it
-performs one fit. See [the text contract](workspace-text-training.md).
+performs one fit. Audio accepts exactly `C` (0.01–100, default 1) and fits
+train-only scaling plus bounded logistic regression. See the
+[text](workspace-text-training.md) and [audio](workspace-audio-training.md)
+contracts for exact input, numerical and model semantics.
 
 `validate(id, {revision})` returns `status`, `valid`, `errors` (each with `path`,
 `code`, `message`), `validation_token`, `graph_revision`, `execution_sha256`,
@@ -84,7 +89,7 @@ performs one fit. See [the text contract](workspace-text-training.md).
 distinct. No preview launches training or downloads a model.
 
 The server reads a saved graph, validates its semantic contract, independently
-verifies frozen release bytes through the selected image/text adapter reader, probes
+verifies frozen release bytes through the selected image/text/audio adapter reader, probes
 the actual configured local Python runtime, then rechecks the graph revision.
 The token fingerprints the saved revision, executable digest, release SHA,
 adapter definitions and runtime. It is a freshness proof, not authorization:
@@ -95,9 +100,9 @@ the application interpreter is probed. Nothing installs an environment. The
 probe has a 45-second bound and reports missing pinned packages honestly. Source
 identity covers `image_training.py`, `image_classification_export.py` and
 `workbench.py`, the worker's actual local import set. Execution copies those
-hash-verified files into its private attempt staging directory. The text recipe
-pins its own reader/export modules plus existing JSON/process primitives and
-Workbench; see its contract. Probes and workers override inherited native math
+hash-verified files into its private attempt staging directory. Text and audio recipes pin their own reader/export modules, shared complete-family
+reader, existing JSON/process primitives and Workbench; audio additionally pins
+the existing WAV parser. See their contracts. Probes and workers override inherited native math
 thread settings to one. A malformed/unsupported ZIP remains an individual typed
 release entry and cannot break the release listing.
 
@@ -111,8 +116,9 @@ The original Workbench and Releases owners retain review, family and release
 creation authority. Current annotation edits cannot alter a frozen export.
 
 `prior_test_exposure` lists append-only events matching a record ID **or** its
-exported image pixel SHA or canonical text content SHA, so a new release or
-reimport cannot silently present exposed content as a fresh holdout. Runs preserve admission evidence and also expose
+exported image pixel SHA, canonical text content SHA or whole decoded-PCM/rate/
+channel family SHA, so a new release, interval change or reimport cannot silently
+present exposed content as a fresh holdout. Runs preserve admission evidence and also expose
 current evidence and a fresh pre-execution snapshot.
 
 All public errors use `WorkbenchError(message, code, status)`. Bad input is 400,

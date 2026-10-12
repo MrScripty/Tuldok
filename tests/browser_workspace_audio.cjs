@@ -109,7 +109,12 @@ function launch(command,args,options){const child=spawn(command,args,options);ch
   assert.equal(await frame('document.getElementById("notice").textContent'),noticeBefore);checks.push('Failed late audio request cannot overwrite a newer editor notice');
   await frame('openRecord('+JSON.stringify(row.id)+')');await until(()=>frame('!!audioInspection'));
   const capability=await evaluate('WorkspaceService.capabilities.audio');
-  assert.equal(capability.state,'available');assert.match(capability.reason,/Audio Pipeline\/Runs execution and ASR are unavailable/);checks.push('Catalog capability advertises only qualified WAV Data; execution and ASR remain unavailable');
+  assert.equal(capability.state,'available');
+  assert.match(capability.reason,/Bounded PCM16 WAV import, playback, timed human review and frozen export/);
+  assert.match(capability.reason,/One reviewed labelled interval per record supports a real local CPU feature\/logistic classifier with frozen source-frame results/);
+  assert.match(capability.reason,/ASR is unavailable/);
+  assert.equal(capability.gate,'PCM interval classification only; no ASR, resampling or downmix');
+  checks.push('Catalog capability states bounded WAV Data and reviewed-interval CPU classification; ASR remains unavailable');
   if(process.env.TULDOK_NATIVE_ZOOM){
     await send('Emulation.clearDeviceMetricsOverride');
     const xdotool=process.env.TULDOK_XDOTOOL||'xdotool';

@@ -7,7 +7,6 @@ import struct
 import uuid
 import wave
 
-from metadata import CommitOutcomeUnknown
 from workbench import WorkbenchError, encode, strings, text_value, timestamp
 
 MAX_WAV_BYTES = 8 * 1024 * 1024
@@ -107,6 +106,7 @@ class AudioAssets:
         self.path = workbench.dataset.path / 'audio'
 
     def admit(self, body):
+        from metadata import CommitOutcomeUnknown
         if type(body) is not dict or set(body) - {'wav', 'name', 'rights', 'groups', 'parents'}:
             invalid('import expects wav, name, rights, groups and optional parents.')
         encoded = body.get('wav')

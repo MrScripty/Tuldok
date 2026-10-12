@@ -1,0 +1,169 @@
+{
+  "source_commit": "292ba880b8bdcb80a469e5d370e29e5f006929a9",
+  "dirty": false,
+  "command": "node tests/browser_workspace_audio_run.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "18 authored stereo WAV fixtures admitted and reviewed through ordinary API; current Data shows actual source",
+    "Data UI previews class coverage, freezes and downloads original WAV classification release",
+    "real Pipeline loading, late-response navigation fence and explicit error retry",
+    "real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+    "actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+    "lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+    "native Chromium 200% menu zoom verified by doubled device ratio and halved CSS viewport; no horizontal overflow",
+    "one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+    "late correction response cannot override newer Pipeline navigation or the active Data record",
+    "result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+    "explicit test inspection is durable; later releases containing the records/decoded PCM are marked exposed/reused",
+    "application restart retains exact run, immutable inputs/predictions and durable test exposure without replay"
+  ],
+  "captures": [
+    {
+      "file": "catalog-audio-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "catalog-audio-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "audio-source-interval-390.jpg",
+      "width": 390,
+      "height": 844,
+      "quality": 85,
+      "scrolled_to": "actual audio waveform and saved source interval controls"
+    },
+    {
+      "file": "pipeline-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-real-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "running-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-real-1024.jpg",
+      "width": 1024,
+      "height": 768,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-real-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-detail-390.jpg",
+      "width": 390,
+      "height": 844,
+      "quality": 85,
+      "scrolled_to": "validation metrics"
+    },
+    {
+      "file": "audio-result-frames-390.jpg",
+      "width": 390,
+      "height": 844,
+      "quality": 85,
+      "scrolled_to": "exact frozen audio source/frame/channel prediction"
+    },
+    {
+      "file": "pipeline-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85
+    },
+    {
+      "file": "data-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85
+    },
+    {
+      "file": "runs-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85
+    },
+    {
+      "file": "catalog-correction-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real CPU execution on authored CC0 mathematical PCM; no quality claim",
+      "quality": 85
+    }
+  ],
+  "run_id": "9a6f253dc1b24355ab0fd1858d47606a",
+  "release_id": "2b445a9bfef27c337501e71ac1a279c1c48c13b37281adae50220e5a1b8ed4b0",
+  "training": true,
+  "quality_claim": false,
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "outbound_transport": "libc loopback-only injection (not a direct-syscall security sandbox)",
+  "fixture_provenance": "18 CC0 mathematical stereo WAV fixtures admitted/reviewed through ordinary HTTP; release, graph, correction and run controls exercised in browser"
+}
