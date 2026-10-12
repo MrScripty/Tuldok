@@ -1,6 +1,7 @@
 # M3 bounded text workflow
 
-Status: implemented and locally verified; independent source review accepted.
+Status: implemented, independently reviewed and qualified at clean source
+`a10f2cb9296e1070683352cd6e5b544729219738`; published on the text feature branch.
 The parent integration owner owns combined text/audio qualification, hosted CI,
 plan acceptance and PR publication. No main merge or deployment is authorized.
 
@@ -119,6 +120,27 @@ TULDOK_TRAINING_PYTHON=/tmp/tuldok-training-venv/bin/python \
 Open `http://127.0.0.1:8096/workspaces` and choose **Current local catalog**.
 The DSN uses a local private passfile; no credential contents are committed.
 Fresh authored catalogs are disposable. Root owns migration of retained catalogs.
+
+
+## Clean checkpoint acceptance
+
+Exact source `a10f2cb9296e1070683352cd6e5b544729219738` passed the complete browser
+workflow at `build/qa/workspace-text-run/run-WsB2Uf/receipt.json`, `dirty: false`.
+All **14 checks passed**, including real parameter changes (`max_features: 512`,
+`alpha: 0.5`), native 200% zoom on Data/Pipeline/Runs, restart and exposure.
+All 12 ordinary libc transport canaries passed with the guard inherited by the
+app, browser and trainer. This is not a direct-syscall/network-namespace sandbox.
+
+- Actual run: `78bd09fe80164b8abb5eff3efc2c7e1a`
+- Frozen release: `46b8f6e9740632303866479536e57b64dfb557d822737fb57e257d389605747d`
+- [13 original screenshots and hashed manifest](../../../images/workspaces-m3-text/README.md)
+
+The source review accepted this exact four-file runtime fingerprint, recorded
+in the independent mathematical receipt. Publication after this checkpoint adds
+only documentation/screenshots; it does not alter the qualified runtime or tests.
+The existing branch CI filter does not select this new feature ref. Root's
+combined integration PR/CI remains the hosted acceptance gate; no standalone
+hosted pass is claimed here.
 
 ## Remaining integration gate
 
