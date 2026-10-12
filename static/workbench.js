@@ -245,7 +245,7 @@ function renderReleasePreview(result) {
     previewLine(root, `${a.unlabeled} unlabeled · ${a.empty_targets} empty targets · ${a.duplicate_content_records} exact duplicate records · ${a.unknown_rights} unknown rights`);
   }
   if(result.class_coverage) {
-    for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder} (index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
+    for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder ? item.folder + " " : ""}(index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
   }
   if(result.corpus_counts) {
     for(const [split, count] of Object.entries(result.corpus_counts)) previewLine(root, `${split}.txt: ${count.bytes} bytes · ${count.documents} documents · ${count.families} connected families (${count.document_bytes} document bytes + ${count.separator_bytes} separator bytes).`);
@@ -300,7 +300,7 @@ $('release-form').addEventListener('submit',async event=>{
     const result=await api('releases',body);
     if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
     const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(['image_classification_v1','text_corpus_v1'].includes(result.format)?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
+    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(['image_classification_v1','text_classification_v1','text_corpus_v1'].includes(result.format)?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
   } catch(error) {
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }
