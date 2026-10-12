@@ -340,10 +340,42 @@ skip and separate verification explicitly; it does not claim a zero-skip suite
 or broaden application database privileges. These are root-run observations,
 separate from the focused tests independently executed above.
 
+The reviewer then inspected the root logs directly in
+`build/qa/audio-mesh-integration`: `python-full.log` and
+`independent-restore.log` confirm those terminal outcomes.
+`mesh-sequence-browsers.log` confirms the existing mesh browser, existing
+simulation-sequence browser and new embedded mesh workflow passed. Final
+candidate `6f56a3694ce27a2132fa67b260979243c7ea3782` differs from Python-tested
+148e7af only by the exact accepted channel-display substitution in runtime
+files; a byte comparison confirms every backend file is unchanged. Root's
+`combined-display-final.json` also compares byte-for-byte with the same retained
+baseline and SHA-256 above.
+
+The combined existing WAV Data browser next exposed an obsolete capability
+expectation: it still required all audio execution to be unavailable. This was
+a test expectation failure against the admitted real interval classifier, not
+an application capability failure. Repair
+`ccc9bf6ba1e303ee8657b6935da6262b80f2c8db` changes that scenario alone to require
+the existing bounded PCM16 Data path, one reviewed labelled interval, real
+local CPU execution, frozen source frames, ASR unavailable and no
+resampling/downmix. All other WAV import, playback, review, export, stale-editor
+and fixture assertions remain unchanged. The reviewer accepted the exact diff
+and inspected the worker's twelve-check actual-browser pass. Its receipt
+accurately records dirty cf684f7 plus this sole test change.
+
+The later clean integrated head
+`408623a4eeca9ef0166a79f3b36fe9d3870a36d3` adds only that test repair and
+the preceding independent review report to 6f56a36. The reviewer inspected the
+completed local logs and source receipts: existing image and text browser gates
+passed thirteen checks each; the repaired WAV Data browser passed twelve checks
+on clean 408623a; real audio Runs passed twelve headless checks on clean 6f56a36,
+including real CPU execution, correction, durable exposure and restart. Final
+audio native-zoom evidence remains the separately accepted feature gallery.
+No application runtime changed across these last integration commits. Combined
+local source qualification is accepted; hosted feature CI remains pending.
+
 ## Pending qualification
 
-- Bind final serial integration, including presentation-only channel copy and
-  accepted test VM repair, to its exact source and local qualification evidence.
 - Review serial integration and applicable automatic feature CI to terminal
   outcomes. Failed evidence remains visible until a scoped repair qualifies.
 
