@@ -160,7 +160,8 @@ explicit asymmetric coordinates, ordered faces, mixed property types and
 positive/negative float32 midpoint-neighbor bit expectations. The reader keeps
 the original parser and source bytes, reports selected-row family scope, and
 the UI's generation/abort ownership leaves the existing download outside its
-mutation boundary. Two demonstrated consumer incompatibilities block acceptance:
+mutation boundary. At that head, two demonstrated consumer incompatibilities
+blocked acceptance:
 
 1. **P2 — empty human note rejected.** The existing mesh annotation owner admits
    `{"note":""}` with an explicit human review decision. The new validator's
@@ -177,13 +178,18 @@ mutation boundary. Two demonstrated consumer incompatibilities block acceptance:
    the exact `decodeMeshReleaseReport` function, without changing application
    source. Root sent the scoped repair to the mesh owner.
 
-The passing original tests did not cover these two paths. Required repairs and
-their exact source/regression evidence remain pending; no mesh feature
-acceptance or waiver is recorded.
+The passing original tests did not cover these two paths. Both were repaired at
+`8320c9066858cef73d493b9a97b7fcfa39bc655d` and independently accepted. The original
+actual-producer 61-emoji report passes the repaired exact browser decoder. All
+six PostgreSQL reader tests passed in 1.515 seconds and the controller suite
+passed against an immutable archive of 8320c90. New evidence covers actual empty
+human-note export, supplementary Unicode at all declared caps, over-cap fields
+and lone-surrogate refusal. No demonstrated source blocker remains. These
+repairs do not waive final browser, screenshot, integration or CI gates.
 
 ## Pending qualification
 
-- Review final candidate SHAs, the two mesh repairs and final original screenshots.
+- Review final candidate SHAs and final original screenshots.
 - Observe the complete audio Data → edited Pipeline → real Runs → correction
   path, plus independent numeric/PCM and retained image/text evidence.
 - Observe mesh import → spatial inspection → review → freeze → downloaded
