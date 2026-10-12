@@ -134,12 +134,14 @@ Open `http://127.0.0.1:8092/workspaces` and choose Current local catalog.
 Existing schema-v1 catalogs require the explicit documented, quiesced
 `upgrade_metadata.py` operation; ordinary startup does not silently upgrade.
 
-The selected execution environment currently serves the populated authored
+On 2026-10-11 the selected execution environment served the populated authored
 capture catalog at `http://127.0.0.1:8094/workspaces`. A recovery command after
 the environment-disconnected callback confirmed the branch/commit and a live
 HTTP 200 response with exactly one completed run. No duplicate build, push,
-service or training request was started for recovery. To open a separate fresh
-catalog in this same environment while keeping that demo available:
+service or training request was started for recovery. The 2026-10-12 environment
+restart retained the repository but removed that temporary service/catalog; the
+historical URL is not a claim of current availability. With the described
+temporary PostgreSQL and Python environments provisioned, a fresh launch is:
 
 ```sh
 TULDOK_DATABASE_URL='host=/tmp/tuldok-pg/socket port=5432 dbname=tuldok user=tuldok passfile=/tmp/tuldok-pg/app.pgpass' \

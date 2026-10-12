@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1/MB/M2 technical qualification complete. Exact checkpoint `acac0d32e89b67fa5d9b351ea058152adbe196e3` on `feature/workspace-image-runs-20261011` passed all 98 lifecycle steps with zero skips and focused M1 CI; independent source/test review accepted.
+**Current phase:** Parallel implementation of one bounded M3 text training workflow and the first M4 WAV data increment, with independent integration review of completed M1/MB/M2. Final image checkpoint `6d939359d3cef2464c2aff990dd58d50c4f8d791` passed all 98 lifecycle steps with zero skips and focused M1 CI.
 
-**Next slice:** Parent/integration owner can proceed to the next bounded M3 image/text slice from this runnable checkpoint. Broader modality and external-runtime gates remain separate; see [M2 verification](reports/m2/verification.md).
+**Next slice:** Serially integrate and qualify the bounded text-classification recipe from frozen reviewed text through actual CPU results; the independent WAV data increment remains separately gated. See [parallel admission and ownership](reports/parallel-admission-20261012.md).
 
 **Acceptance status:** `partial`
 
@@ -15,6 +15,8 @@
 This is the canonical plan for the requested new workspace experience. The original planning task authorized planning publication only. The later delegated user instruction admits M1 `start` on `ui/dataset-workspaces-m1-20261011`; the [M1 implementation record](reports/m1/implementation.md) binds that authorization and exact source. It does not authorize main merge, deployment, model acquisition or real M2 execution. Conditional integration choices remain explicit spikes. Existing feature plans retain authority for their own work.
 
 The subsequent parent handoff admits qualified MB `9e94d69484218e64a3ee1bddcf4c61d8aa93df16` (hosted CI38175261609, 93 successful steps, zero skipped; local TCP458 tests) and authorizes controlled integration followed by the smallest complete M2 image workflow. It does not authorize personal-data migration, main merge, deployment or broader modality execution. The earlier milestone-specific restrictions below are historical; the new admission is recorded in the execution ledger.
+
+On 2026-10-12 the user explicitly requested continued development with parallel agents. The delegated scope admits this plan's `continue` operation, starting the bounded M3 text trainer and first M4 WAV data increment, plus integration review and a draft PR. This extends M3's earlier export-only scope through one closed, real CPU classifier. It does not admit ASR, arbitrary execution, broader 3D training, main merge or deployment. Root owns shared contracts and serial integration; exact candidate write sets and dependencies are recorded in the admission report.
 
 ## Objective
 
@@ -36,6 +38,8 @@ Acceptance is partial: the bounded M1/MB/M2 workflow has qualified implementatio
 | A6 | Existing corners, acquisition, proposal recovery, saved selections/searches and releases remain usable; migration/rollback preserves IDs, bytes and history | integration | representative | automated | satisfied | [M1/MB/M2 qualification and limits](reports/m2/verification.md), [independent review](reports/m2/independent-review.md) |
 | A7 | Each feature branch has applicable standards review, CI, consumer checks, navigation/responsive evidence and reviewed screenshots; external integrations pass pinned producer/consumer gates before enablement | release-artifact | representative | either | pending | Per-branch review record and CI |
 | A8 | The supported workflow runs on one machine with outbound network disabled after local installation; metadata/artifact backup restores a usable catalog, and PostgreSQL migration preserves existing data and behavior | system | representative | automated | pending | MB local lifecycle/migration gates; M2 and later offline workflows |
+| A9 | Reviewed text freezes with exact source/label/family references, an edited saved recipe trains only on its train split, and durable Runs results survive restart without modifying old image results | user-workflow | representative | automated | pending | Bounded M3 actual trainer, browser and retained-image regressions |
+| A10 | Bounded PCM WAV imports, plays, preserves channel/sample-frame interval annotations through review and frozen export, and rejects unsupported or stale input without silent conversion | user-workflow | representative | automated | pending | First M4 independent WAV reader, browser and explicit schema-upgrade gates |
 
 ## Scope
 
@@ -48,7 +52,7 @@ Acceptance is partial: the bounded M1/MB/M2 workflow has qualified implementatio
 
 ### Out Of Scope
 
-- Main merges, deployment, paid services, credentials, user-computer access, model acquisition or real M2 training in this M1 task.
+- Main merges, deployment, paid services, user-computer access, model-weight acquisition or personal-data migration. Temporary isolated test-service credentials remain outside Git.
 - A universal plugin framework, distributed scheduler, hosted collaboration, arbitrary shell nodes, general 3D training or claims that Pumas trains models.
 - Replacing existing image storage, review history, family allocation or frozen releases merely to introduce the new UI.
 
@@ -242,11 +246,13 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Allowed write set:** M1 UI files; narrow integrations in existing `static/workbench.js`, `static/caption-proposals.js`, `static/instruction-responses.js`, `static/preferences.js` and `static/text-classification-proposals.js`; `pipeline.py`; `tests/browser_workspace_text.cjs`, `tests/test_pipeline.py`, existing affected consumer tests; new task-specific contract/recipe fixtures under `tests/fixtures/workspaces/`; README, CI gate registration and plan reports. Any new external text trainer requires a separately admitted adapter write set.
 
+**2026-10-12 admission:** The first bounded sub-slice additionally admits a real TF-IDF/MultinomialNB CPU text classifier and a narrow frozen text-classification view. Exact owners, bounds and compatibility gates are in the [parallel admission](reports/parallel-admission-20261012.md). This sub-slice does not mark the remaining M3 breadth accepted.
+
 **Tasks:** Carry class/entities/corpus/captions/responses/preferences through Data and existing export adapters. Save/clone named recipe versions with previews and explicit upgrade differences. Use real current text export/consumer paths; introduce inference nodes only behind current Pumas capabilities and preserved draft/review semantics. General subgraphs require a second real reuse case.
 
 **Acceptance gate:** Browser text edit/review/release/recipe run/export and exact-string/Unicode consumer checks; negative stale spans and draft targets; recipe edits leave old run results unchanged. Existing corner/image/proposal recovery regressions and desktop/narrow/keyboard screenshots. This does not claim a new text trainer or model quality. Replan when a consumer needs a different text normalization or role schema.
 
-**Status:** `Planned`
+**Status:** `Active`
 
 ### Milestone 4: Real audio data workflow
 
@@ -254,11 +260,13 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 **Allowed write set:** `audio_assets.py`, `audio_export.py`, `static/audio-editor.js`, `docs/contracts/audio-data.md`; bounded integrations in `workbench.py`, `immutable_assets.py`, `dataset_releases.py`, `app.py`, M1 UI and `pipeline.py`; `tests/test_audio_data.py`, `tests/browser_workspace_audio.cjs`, audio fixtures and reader check under `tests/fixtures/workspaces/`; README and affected CI gates.
 
+**2026-10-12 admission:** Start with runnable Data import/playback/timed annotation/review/export plus an explicit schema-3 audio-kind upgrade. The graph/Runs audio export recipe remains pending; first-increment evidence cannot mark all M4 accepted. See [ownership and gates](reports/parallel-admission-20261012.md).
+
 **Tasks:** Apply S3 limits and frame semantics; import PCM WAV, render waveform/channel/interval editor and transcript/class drafts; review and freeze original bytes plus versioned targets/provenance. Add a real validation/export recipe and Runs artifact preview. Resampling/augmentation is a separate explicit derived operation. ASR stays unavailable until a later adapter proves the selected Pumas production contract and actual runtime; no experimental readiness override.
 
 **Acceptance gate:** Known stereo impulses prove channel and interval accuracy through import, playback controls, edit/review, frozen export and independent reader; reject mismatched rate/frame count, invalid timestamps, unsupported encoding and unreviewed targets. Show duration/channel metadata and provenance in all three workspaces; keyboard transcript editing and narrow viewport captures. Replan for compressed-codec or alignment requirements beyond the selected WAV scope.
 
-**Status:** `Planned`
+**Status:** `Active`
 
 ### Milestone 5: Separate spatial and temporal workflows
 
