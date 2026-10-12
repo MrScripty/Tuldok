@@ -63,6 +63,36 @@ Sequence v1 remains unchanged: whole nine-frame trajectories, declared native
 field types and MAC shapes, original units and last-accepted-interval pressure
 semantics. Its regression checks do not authorize an expanded simulation path.
 
+## Shared presentation and route review
+
+Reviewed root's audio selector commit
+`2faae82445f55483ee408ba519c1cb304a84c63c` and mesh integration commit
+`2344b819c21a92bb32a1dfbc386b030888400212` independently. No blocking finding
+within these narrow changes. An exact before/after comparison proves the audio
+HTML adds only one `audio_classification_v1` option and preserves every prior
+byte; existing recipe/context behavior is unchanged by that commit.
+
+Every core release-result clearing site now emits `tuldok:release-cleared`.
+Publication remains after the existing request epoch and exact release-body
+checks, and after constructing the current download link. An obsolete response
+cannot publish the validation handle. Only canonical exports emit that handle;
+image/text-specific exports retain their existing behavior. The GET adapter
+first uses the release owner's bounded identity/location check, then delegates
+validation; it adds no mutation or alternative archive authority.
+
+Independently ran `node tests/test_workbench_controller.cjs` against exact
+`static/workbench.js` blob `e5219ae0c82206181cd564dc111aef5870904216`: passed.
+The test observes stale preview/export suppression, repeated request fencing,
+current publication identity and clearing after selection changes. Source
+review also confirms the other controller changes supply the newly used DOM
+event primitives rather than removing assertions. Root reports all ten affected
+controller suites passed; the reviewer reran the directly relevant one.
+
+This accepts only the shared wiring. At this point `mesh_release.py` and its
+UI consumer were still implementation candidates. Typed validation errors,
+late-response suppression, preservation of an existing download after validation
+failure, rendered controls and complete browser behavior remain feature gates.
+
 ## Pending qualification
 
 - Review exact candidate SHAs and first original desktop/narrow screenshots.
