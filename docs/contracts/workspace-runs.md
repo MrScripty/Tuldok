@@ -3,7 +3,7 @@
 Owner: `runs.py:Runs`. The Dataset shares its PostgreSQL connection, catalog lock
 and transactions. `metadata.claim_runtime('workspace_runs')` gives one supervisor
 per catalog across application instances and local paths. Construction performs
-recovery without loading Torch or starting a worker thread. Real work starts only
+recovery without loading Torch or scikit-learn or starting a worker thread. Real work starts only
 after explicit durable admission. Another application may observe and cancel
 through the shared store, but cannot submit through a non-owner supervisor.
 
@@ -26,7 +26,8 @@ graph and release SHA, graph revision, adapter/runtime/parameters, attempt and
 parent IDs, timestamps, events, progress, node attempts, artifacts, metrics,
 errors and exposure evidence. `quality_claim` is false: actual execution proves
 the result was computed, not that the corpus/model is fit for a real use.
-Progress totals are null until actual bounded epoch events establish them.
+Progress totals are null until actual bounded fit-pass events establish them.
+Image epochs retain their existing meaning; text has one non-iterative fit pass.
 
 The state vocabulary is `queued`, `running`, `cancelling`, `completed`, `failed`,
 `cancelled`, `interrupted`, `unknown`. `completed` requires a drained successful
@@ -36,11 +37,13 @@ process creation, while running attempts remain cancelling until cessation.
 
 ## Worker and restart lifecycle
 
-The supervisor copies the pinned adapter and its two local source dependencies
+The supervisor copies the selected closed image/text adapter and its pinned local source dependencies
 into a private `.staging-<run_id>` directory, writes the closed trusted job, and
 launches the configured interpreter in a new Linux process group. It performs
 probes, training and waits outside database locks. The adapter arms Linux parent
-death protection before importing Torch; its DataLoaders use no child workers.
+death protection before importing the numerical runtime. Image DataLoaders use
+no child workers; text fitting also creates no child workers. Native math thread
+environment settings are bounded to one, including inherited OpenBLAS settings.
 
 Process identity is PID, Linux boot ID and `/proc` start ticks. The owner signals
 only its currently owned live `Popen` process after checking that identity.
@@ -86,14 +89,18 @@ Private output must contain exactly five payloads plus `artifact-manifest.json`:
 - `metrics.json`: validation metrics, training history, transforms and runtime;
 - `predictions-validation.json`: exact validation example references;
 - `test-metrics.json` and `predictions-test.json`: separately gated test results;
-- `checkpoint.pt`: actual selected model weights and frozen execution metadata.
+- Image `checkpoint.pt`: actual selected model weights and frozen execution metadata;
+- Text substitutes `model.json`: checked plain JSON TF-IDF vocabulary/IDF and
+  MultinomialNB coefficients; no pickle loader or arbitrary estimator is exposed.
 
 The run owner verifies regular files, no symlinks, a 64 MiB aggregate bound,
 manifest hashes/sizes/media/split roles, closed JSON envelopes, source identity,
 runtime, class vocabulary, finite metrics, history and exact prediction references.
 Prediction probabilities, labels and indices must agree; independently tallied
 predictions must match confusion matrices and their reported accuracies. The
-owner does not deserialize arbitrary checkpoint pickle data.
+owner does not deserialize arbitrary checkpoint pickle data. The text model
+reader additionally checks bounded numeric arrays, exact class/feature indices,
+recipe and source identity. The retained image payload contract is unchanged.
 
 Files and directory are fsynced, then output is renamed atomically to the run ID
 directory. Only afterward is the completed receipt committed. A crash or failed
@@ -112,7 +119,8 @@ Completed or unknown attempts cannot be restarted through this operation.
 
 Default metrics and predictions are validation-only. `expose_test(id, {reason})`
 requires completed verified output and an explicit nonempty reason, then commits
-append-only exposure rows for every frozen test record ID and exported pixel SHA.
+append-only exposure rows for every frozen test record ID and its image pixel SHA or canonical text
+content SHA. Original text source SHA remains separate provenance.
 Only after this durable event may test metrics/predictions be downloaded.
 Exposures never change frozen releases, metrics or predictions.
 
@@ -135,3 +143,7 @@ TinyCNN CPU result. Failure-only sleeping/exiting workers isolate cancellation
 and recovery proofs; they are never presented as trained results. Actual offline
 network-denial/browser qualification is owned by the integration gate, not proved
 merely by these local unit tests.
+
+The [text recipe contract](workspace-text-training.md) defines the new versioned
+release/adapter/model meanings. No SQL/schema migration or second run supervisor
+is introduced. Retained M2 image receipts, artifacts and exposure remain readable.

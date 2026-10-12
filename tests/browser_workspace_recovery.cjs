@@ -19,7 +19,12 @@ window.g={id:'a'.repeat(32),name:'Recipe',revision:1,nodes:types.map(type=>({id:
 window.a={id:'c'.repeat(32),state:'completed',graph:g,graph_revision:1,attempt:1,release_id:'b'.repeat(64),created_at:'now',artifacts:[],test_exposure:{exposed:true},progress:{stage:'completed'}};
 window.b={...structuredClone(a),id:'d'.repeat(32),test_exposure:{exposed:false}};window.list=[a];
 window.fetch=async(url,options)=>{const route=url.replace('/api/workspace/','');calls.push(route);let value,status=200;
-if(route==='definitions')value={recipe:types,nodes:types.map(type=>({type,input:'i',output:'o'}))};
+// Match the image_training.PARAMETER_BOUNDS published by Pipelines.definitions.
+if(route==='definitions')value={recipe:types,nodes:types.map(type=>({type,input:'i',output:'o'})),parameter_bounds:{
+epochs:{minimum:1,maximum:5,default:1,type:'integer'},
+batch_size:{minimum:1,maximum:16,default:8,type:'integer'},
+learning_rate:{minimum:0.00001,maximum:0.01,default:0.001,type:'number'},
+seed:{minimum:0,maximum:4294967295,default:42,type:'integer'}}};
 else if(route==='releases')value=[{id:'b'.repeat(64),status:'available',records:6}];else if(route==='graphs')value=[g];else if(route==='context')value={dataset_id:'e'.repeat(32)};
 else if(route.endsWith('/validate'))value={valid:true,status:'valid',validation_token:'token'};
 else if(route==='runs'&&options?.method==='POST'){list=[b,a];value=b;}else if(route==='runs')value=list;
@@ -30,7 +35,20 @@ await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-real.js'),'
 await ev(`window.real=WorkspaceReal({pipelineRoot:document.getElementById('p'),runsRoot:document.getElementById('r'),announce:s=>notes.push(s),openRecord:()=>{},openRun:()=>real.show('runs')});real.show('runs')`);
 if(!await ev(`!!document.getElementById('real-test-predictions')`))throw Error(await ev(`document.getElementById('r').innerText`));
 await ev(`document.getElementById('real-test-predictions').click()`);await pause(100);
-await ev(`real.show('pipeline')`);await ev(`document.getElementById('real-validate').onclick()`);await ev(`document.getElementById('real-submit').onclick()`);await pause(200);
+await ev(`real.show('pipeline')`);
+const renderedPipeline=await ev(`({validateReady:!!document.getElementById('real-validate')&&!document.getElementById('real-validate').disabled,
+parameters:[...document.querySelectorAll('#p [data-param]')].map(input=>[input.dataset.param,input.min,input.max,input.step,input.value]),
+error:document.querySelector('#p .error-panel')?.textContent||null})`);
+const expectedParameters=[
+['epochs','1','5','1','1'],
+['batch_size','1','16','1','8'],
+['learning_rate','0.00001','0.01','any','0.001'],
+['seed','0','4294967295','1','42']];
+if(!renderedPipeline.validateReady||renderedPipeline.error||JSON.stringify(renderedPipeline.parameters)!==JSON.stringify(expectedParameters)){
+throw Error('Image Pipeline fixture did not render its parameter contract: '+JSON.stringify({...renderedPipeline,visibleText:await ev(`document.getElementById('p').innerText`)}));
+}
+console.log('PASS: mocked image Pipeline renders exact parameter min/max/step/defaults and ready Validate control. '+JSON.stringify(renderedPipeline));
+await ev(`document.getElementById('real-validate').onclick()`);await ev(`document.getElementById('real-submit').onclick()`);await pause(200);
 const result=await ev(`({newRunPredictionRequests:calls.filter(x=>x.includes(b.id)&&x.includes('predictions')),completedControlsVisible:!!document.getElementById('real-test-predictions'),visibleText:document.getElementById('r').innerText.slice(0,180)})`);console.log(JSON.stringify(result));
 if(result.newRunPredictionRequests.some(x=>x.endsWith('split=test'))||!result.completedControlsVisible)throw Error('Sticky test split still broken');
 console.log('PASS: exposed test view on A → new submission B opens validation with completed controls. UI mocked transport only.');

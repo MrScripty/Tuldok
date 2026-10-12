@@ -188,9 +188,9 @@ def migrate_sqlite(source, destination, backup, *, dsn=None, quiesced=False):
              'source_sha256': receipt['source_sha256'], 'dataset_id': identity,
              'schema_version': SCHEMA_VERSION, 'tables': summaries(tables), 'files': files}
     staging = destination.with_name(destination.name + '.migrating-' + identity)
-    # A retained v1 transfer receipt still owns its exact import. Continuing it
-    # preserves v1 until an explicit upgrade; a completed, upgraded destination
-    # may reconcile it only while every added table remains empty.
+    # A retained transfer receipt still owns its exact version and import.
+    # Continuing it preserves that version until an explicit upgrade; a completed,
+    # upgraded destination reconciles only unchanged rows/files and empty new tables.
     owned = destination if destination.exists() else staging
     if owned.exists():
         saved = json.loads((owned / MIGRATION_RECEIPT).read_bytes())

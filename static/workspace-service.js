@@ -56,20 +56,20 @@
     image: {
       state: "available",
       reason:
-        "Class, caption, detection and corner editors in the current catalog. Training is unavailable.",
-      gate: "M2 execution; M3 breadth",
+        "Class, caption, detection and corner editors in the current catalog. Reviewed image releases support the bounded TinyCNN CPU recipe.",
+      gate: "Other image tasks need their own qualified training recipes",
     },
     text: {
       state: "available",
       reason:
-        "Existing text class, entities, corpus, responses and preferences in the current catalog.",
-      gate: "M3 consumer qualification",
+        "Text class, entities, corpus, responses and preferences in Data. Reviewed text classification releases support a train-only TF-IDF / Naive Bayes CPU recipe.",
+      gate: "Other text tasks retain their existing reviewed exports; no general language-model trainer",
     },
     audio: {
-      state: "unavailable",
+      state: "available",
       reason:
-        "Fixture contract only. PCM WAV import, playback and review await M4. No ASR.",
-      gate: "M4",
+        "Bounded PCM16 WAV import, playback, timed human review and frozen export in the current catalog. Audio Pipeline/Runs execution and ASR are unavailable.",
+      gate: "M4 Data qualified; audio recipe and ASR pending",
     },
     mesh: {
       state: "available",

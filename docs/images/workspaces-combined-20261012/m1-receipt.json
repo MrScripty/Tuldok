@@ -1,0 +1,135 @@
+{
+  "source_commit": "e9809b5220f7ff03b3ce8795376e5379e9c9f4a1",
+  "dirty": false,
+  "command": "node tests/browser_workspaces.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "loading state before fixture response",
+    "fixture load failure and real retry",
+    "all seven modality/subtype fixture records and capability states",
+    "draft/selection retained across workspaces, discard dialog Escape, keyboard save",
+    "empty Runs state",
+    "graph parameters, undo/redo, clone, add/remove, compatible reconnect and unavailable node refusal",
+    "saved graph reload and stale validation after reload",
+    "cell meaning, exact frozen/current revisions and correction preserves historical run",
+    "failed/cancelled/unknown/running scenarios and explicit fixture cancellation",
+    "all fixture interactions issue zero POST requests",
+    "real catalog keyboard import/save/review and retained draft/selection through all workspaces",
+    "responsive current catalog and repeated modal focus restoration",
+    "catalog reload restores only exact saved record and selection revisions",
+    "failed restore refresh releases its gate and later catalog context still updates",
+    "stale catalog context remains an explicit conflict after reload",
+    "keyboard navigation focus restoration and browser Back",
+    "downloaded JSON remains fixture-labelled and selected run survives reload",
+    "unsupported stored version refused without overwrite"
+  ],
+  "captures": [
+    {
+      "file": "loading-error-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "data-1024.jpg",
+      "width": 1024,
+      "height": 768,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "data-zoom200.jpg",
+      "width": 720,
+      "height": 450,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-1024.jpg",
+      "width": 1024,
+      "height": 768,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-zoom200.jpg",
+      "width": 720,
+      "height": 450,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "runs-1024.jpg",
+      "width": 1024,
+      "height": 768,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "runs-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "runs-zoom200.jpg",
+      "width": 720,
+      "height": 450,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "catalog-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    },
+    {
+      "file": "catalog-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "fixture unless catalog named",
+      "quality": 85
+    }
+  ],
+  "realPosts": 3,
+  "training": false
+}

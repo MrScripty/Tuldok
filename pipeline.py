@@ -1,6 +1,6 @@
-"""Versioned real image recipes and their authoritative admission checks.
+"""Versioned real classification recipes and their authoritative admission checks.
 
-This deliberately owns one bounded recipe, not a general-purpose graph engine.
+This owns two closed classification recipes, not a general-purpose graph engine.
 Release custody and CPU adapter eligibility remain with their existing owners.
 """
 import copy
@@ -13,9 +13,11 @@ import re
 import subprocess
 import sys
 import uuid
+import zipfile
 
 from workbench import WorkbenchError, encode, text_value
 import image_training
+import text_training
 
 ID = re.compile(r'^[a-f0-9]{32}$')
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -26,7 +28,6 @@ PORTS = {
     'train': ('image_export', 'trained_model'), 'evaluate': ('trained_model', 'evaluation'),
     'publish': ('evaluation', None),
 }
-DEFAULT_PARAMETERS = {'epochs': 1, 'batch_size': 8, 'learning_rate': .001, 'seed': 42}
 
 
 def digest(value):
@@ -45,14 +46,18 @@ def closed(value, required, optional=()):
 
 
 def execution_digest(graph):
-    return digest({key: graph[key] for key in ('schema_version', 'mode', 'recipe_version', 'nodes', 'edges')})
+    value = {key: graph[key] for key in ('schema_version', 'mode', 'recipe_version', 'nodes', 'edges')}
+    if 'recipe' in graph:  # Retained image v1 digests remain byte-for-byte unchanged.
+        value['recipe'] = graph['recipe']
+    return digest(value)
 
 
 def decode_graph(value):
     """Decode editable drafts; semantic validation is a separate explicit action."""
-    closed(value, ('schema_version', 'mode', 'id', 'revision', 'name', 'recipe_version', 'nodes', 'edges'), ('layout',))
+    closed(value, ('schema_version', 'mode', 'id', 'revision', 'name', 'recipe_version', 'nodes', 'edges'), ('layout', 'recipe'))
     if value['schema_version'] != 1 or type(value['schema_version']) is not int or value['mode'] != 'real':
         raise WorkbenchError('Only real graph schema 1 is supported; fixture graphs cannot execute.', 'unsupported', 400)
+    adapter_for_graph(value)
     identifier(value['id'], 'Graph ID')
     if type(value['revision']) is not int or value['revision'] < 1 or value['recipe_version'] != 1 or type(value['recipe_version']) is not int:
         raise WorkbenchError('Invalid graph or recipe revision.')
@@ -91,19 +96,52 @@ def decode_graph(value):
     return json.loads(serialized)
 
 
+ADAPTERS = {'image_classification': image_training, 'text_classification': text_training}
+
+
+def adapter_for_graph(graph):
+    recipe = graph.get('recipe', 'image_classification')
+    if not isinstance(recipe, str) or recipe not in ADAPTERS:
+        raise WorkbenchError('Only the versioned image and text classification recipes are supported.', 'unsupported', 400)
+    return ADAPTERS[recipe]
+
+
+def ports_for_graph(graph):
+    ports = dict(PORTS)
+    if adapter_for_graph(graph) is text_training:
+        ports.update(validate=('frozen_release', 'text_export'), train=('text_export', 'trained_model'))
+    return ports
+
+
+def training_environment():
+    """The owned probe/worker cannot inherit a wider native CPU thread pool."""
+    return dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1',
+                OPENBLAS_NUM_THREADS='1', BLIS_NUM_THREADS='1', VECLIB_MAXIMUM_THREADS='1', NUMEXPR_NUM_THREADS='1')
+
+
+def source_content_hash(row):
+    # Canonical text bytes and decoded image pixels are distinct evidence types.
+    return row['content_hash'] if row['kind'] == 'text' else row['exported_pixel_sha256']
+
+
 class Pipelines:
     def __init__(self, dataset):
         self.dataset, self.db, self.lock = dataset, dataset.db, dataset.lock
-        self.worker_path = Path(image_training.__file__).resolve()
+        self.source_path = Path(__file__).resolve().parent
 
     def definitions(self):
-        return {'schema_version': 1, 'mode': 'real', 'recipe_version': 1,
-                'nodes': [{'type': name, 'definition_version': 1, 'input': PORTS[name][0],
-                           'output': PORTS[name][1]} for name in TYPES],
-                'parameter_bounds': image_training.PARAMETER_BOUNDS,
-                'default_parameters': DEFAULT_PARAMETERS, 'recipe': list(TYPES),
-                'limitations': ['One image classification recipe; TinyCNN CPU training only.',
-                                'Audio, text training and 3D execution are unsupported.']}
+        def definition(recipe, adapter):
+            ports = ports_for_graph({'recipe': recipe})
+            return {'id': recipe, 'recipe_version': 1,
+                    'nodes': [{'type': name, 'definition_version': 1, 'input': ports[name][0], 'output': ports[name][1]} for name in TYPES],
+                    'parameter_bounds': adapter.PARAMETER_BOUNDS,
+                    'default_parameters': {key: rule['default'] for key, rule in adapter.PARAMETER_BOUNDS.items()},
+                    'recipe': list(TYPES)}
+        image = definition('image_classification', image_training)
+        return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
+                'recipes': [image, definition('text_classification', text_training)],
+                'limitations': ['Closed image TinyCNN and text TF-IDF + MultinomialNB CPU recipes only.',
+                                'Audio and 3D execution are unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')
@@ -128,17 +166,23 @@ class Pipelines:
             return [self._get(graph_id) for graph_id in ids]
 
     def create(self, body):
-        closed(body, ('name', 'release_id'))
+        closed(body, ('name', 'release_id'), ('recipe',))
+        recipe = body.get('recipe', 'image_classification')
+        adapter = adapter_for_graph({'recipe': recipe})
+        ports = ports_for_graph({'recipe': recipe})
+        parameters = {key: rule['default'] for key, rule in adapter.PARAMETER_BOUNDS.items()}
         release_id = body['release_id']
         if not isinstance(release_id, str) or not HASH.fullmatch(release_id):
-            raise WorkbenchError('Choose a frozen real image release.')
+            raise WorkbenchError('Choose a frozen classification release.')
         graph = {'schema_version': 1, 'mode': 'real', 'recipe_version': 1,
                  'id': uuid.uuid4().hex, 'revision': 1, 'name': text_value(body['name'], 'Recipe name', 120),
                  'nodes': [{'id': name, 'type': name, 'definition_version': 1,
                             'parameters': {'release_id': release_id} if name == 'release' else
-                            copy.deepcopy(DEFAULT_PARAMETERS) if name == 'train' else {}} for name in TYPES],
-                 'edges': [{'from': first, 'output': PORTS[first][1], 'to': second, 'input': PORTS[second][0]}
+                            copy.deepcopy(parameters) if name == 'train' else {}} for name in TYPES],
+                 'edges': [{'from': first, 'output': ports[first][1], 'to': second, 'input': ports[second][0]}
                            for first, second in zip(TYPES, TYPES[1:])], 'layout': {}}
+        if recipe != 'image_classification':
+            graph['recipe'] = recipe
         with self.lock, self.db.transaction():
             self.db.execute('INSERT INTO workspace_graphs(id,revision,document) VALUES(%s,%s,%s)',
                             (graph['id'], graph['revision'], encode(graph)))
@@ -170,12 +214,28 @@ class Pipelines:
     def inspect_release(self, release_id, *, private=False):
         path = self.dataset.releases.locate(release_id)
         try:
-            manifest = image_training.inspect_release(path, release_id)
+            # Selection inspects only the bounded format tag; the selected reader
+            # independently verifies the entire archive, identity and payload.
+            with zipfile.ZipFile(path) as archive:
+                with archive.open('manifest.json') as handle:
+                    raw = handle.read(7 * 1024**2 + 1)
+                if len(raw) > 7 * 1024**2:
+                    raise WorkbenchError('Frozen manifest exceeds the supported bound.')
+                format_name = image_training._json(raw, 'Release manifest').get('format')
+            recipe = {'image_classification_v1': 'image_classification',
+                      'text_classification_v1': 'text_classification'}.get(format_name)
+            if recipe is None:
+                raise WorkbenchError('Choose a frozen image_classification_v1 or text_classification_v1 release.', 'unsupported', 409)
+            manifest = ADAPTERS[recipe].inspect_release(path, release_id)
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None
+        except WorkbenchError:
+            raise
+        except (zipfile.BadZipFile, OSError, KeyError, AttributeError, NotImplementedError, RuntimeError, ValueError):
+            raise WorkbenchError('Frozen release manifest is unavailable.', 'unavailable', 409) from None
         records = manifest['records']
         exposure = self.exposures(records)
-        result = {'id': release_id, 'sha256': release_id, 'format': manifest['format'], 'records': len(records),
+        result = {'id': release_id, 'sha256': release_id, 'format': manifest['format'], 'recipe': recipe, 'records': len(records),
                   'class_vocabulary': manifest['class_vocabulary'],
                   'split_counts': {split: sum(row['split'] == split for row in records) for split in ('train', 'validation', 'test')},
                   'prior_test_exposure': exposure,
@@ -191,7 +251,7 @@ class Pipelines:
             exposures = [dict(row) for row in self.db.execute(
                 'SELECT id,record_id,source_hash,reason,run_id,release_id,created_at FROM workspace_exposures '
                 'WHERE record_id = ANY(%s) OR source_hash = ANY(%s) ORDER BY created_at,id',
-                ([row['id'] for row in records], [row['exported_pixel_sha256'] for row in records]))]
+                ([row['id'] for row in records], [source_content_hash(row) for row in records]))]
         return {'exposed': bool(exposures), 'events': exposures}
 
     def releases(self):
@@ -204,35 +264,40 @@ class Pipelines:
                 result.append({'id': path.stem, 'status': error.code, 'message': str(error)})
         return result
 
-    def probe(self):
+    def probe(self, recipe='image_classification'):
+        adapter = adapter_for_graph({'recipe': recipe})
+        worker_path = Path(adapter.__file__).resolve()
         executable = os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable
         try:
-            response = subprocess.run([executable, str(self.worker_path), '--probe'], capture_output=True,
-                                      timeout=45, check=False, env=dict(os.environ, CUDA_VISIBLE_DEVICES=''))
+            response = subprocess.run([executable, str(worker_path), '--probe'], capture_output=True,
+                                      timeout=45, check=False, env=training_environment())
             if len(response.stdout) > 32768:
                 raise ValueError('Oversized runtime response.')
             probe = json.loads(response.stdout)
             if (not isinstance(probe, dict) or probe.get('schema_version') != 1 or
-                    type(probe.get('available')) is not bool or probe.get('adapter') != {'name': 'tinycnn_cpu', 'version': 1}
+                    type(probe.get('available')) is not bool or probe.get('adapter') != adapter.ADAPTER
                     or not isinstance(probe.get('runtime'), dict) or not isinstance(probe.get('problems'), list)):
                 raise ValueError('Malformed runtime response.')
             if response.returncode and probe['available']:
                 raise ValueError('Runtime probe failed.')
         except (OSError, ValueError, subprocess.TimeoutExpired):
-            probe = {'schema_version': 1, 'available': False, 'adapter': {'name': 'tinycnn_cpu', 'version': 1},
+            probe = {'schema_version': 1, 'available': False, 'adapter': dict(adapter.ADAPTER),
                      'runtime': {}, 'problems': [{'code': 'unavailable', 'message': 'Local training runtime probe failed.'}]}
-        probe.update(self.definition_identity())
+        probe.update(self.definition_identity(recipe))
         return probe
 
-    def definition_identity(self):
+    def definition_identity(self, recipe='image_classification'):
         # The worker imports the existing frozen-export contract, which in turn
         # imports Workbench's annotation types. Pin that small actual import set.
-        files = {name: hashlib.sha256((self.worker_path.parent / name).read_bytes()).hexdigest()
-                 for name in ('image_training.py', 'image_classification_export.py', 'workbench.py')}
+        adapter = adapter_for_graph({'recipe': recipe})
+        names = ('image_training.py', 'image_classification_export.py', 'workbench.py') if adapter is image_training else ('text_training.py', 'text_classification_export.py', 'image_training.py', 'workbench.py')
+        files = {name: hashlib.sha256((self.source_path / name).read_bytes()).hexdigest() for name in names}
         return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
 
     def validate_graph(self, graph):
         graph = decode_graph(graph)
+        adapter = adapter_for_graph(graph)
+        ports = ports_for_graph(graph)
         errors = []
         def issue(path, message, code='invalid'):
             errors.append({'path': path, 'message': message, 'code': code})
@@ -241,25 +306,25 @@ class Pipelines:
         for index, node in enumerate(graph['nodes']):
             by_type.setdefault(node['type'], []).append(node)
             if node['type'] not in TYPES:
-                issue(f'nodes/{index}/type', 'Only the fixed image recipe can execute.', 'unsupported')
+                issue(f'nodes/{index}/type', 'Only the fixed classification recipe can execute.', 'unsupported')
             if node['definition_version'] != 1:
                 issue(f'nodes/{index}/definition_version', 'Node definition is unavailable.', 'stale')
         if set(by_type) != set(TYPES) or any(len(items) != 1 for items in by_type.values()):
             issue('nodes', 'Require exactly one release, validate, train, evaluate and publish node.')
         expected = []
         if not errors:
-            expected = [{'from': by_type[a][0]['id'], 'output': PORTS[a][1],
-                         'to': by_type[b][0]['id'], 'input': PORTS[b][0]} for a, b in zip(TYPES, TYPES[1:])]
+            expected = [{'from': by_type[a][0]['id'], 'output': ports[a][1],
+                         'to': by_type[b][0]['id'], 'input': ports[b][0]} for a, b in zip(TYPES, TYPES[1:])]
         if sorted(map(encode, graph['edges'])) != sorted(map(encode, expected)):
             issue('edges', 'Connect the five typed stages once in release → validate → train → evaluate → publish order.')
         for index, node in enumerate(graph['nodes']):
             try:
                 if node['type'] == 'train':
-                    image_training.validate_parameters(node['parameters'])
+                    adapter.validate_parameters(node['parameters'])
                 elif node['type'] == 'release':
                     closed(node['parameters'], ('release_id',))
                     if not isinstance(node['parameters']['release_id'], str) or not HASH.fullmatch(node['parameters']['release_id']):
-                        raise WorkbenchError('Release must be a content-addressed image export.')
+                        raise WorkbenchError('Release must be a content-addressed classification export.')
                 elif node['parameters']:
                     raise WorkbenchError('This stage does not accept parameters.')
             except (WorkbenchError, image_training.TrainingError) as error:
@@ -268,9 +333,11 @@ class Pipelines:
         if not errors:
             try:
                 release = self.inspect_release(by_type['release'][0]['parameters']['release_id'])
+                if release['recipe'] != graph.get('recipe', 'image_classification'):
+                    raise WorkbenchError('Frozen release task differs from this saved recipe.', 'unsupported', 409)
             except WorkbenchError as error:
                 issue('nodes/release', str(error), error.code)
-            runtime = self.probe()
+            runtime = self.probe(graph.get('recipe', 'image_classification'))
             if not runtime['available']:
                 issue('nodes/train/runtime', 'Install the qualified local CPU training environment and set TULDOK_TRAINING_PYTHON.', 'unavailable')
         token = digest({'graph_id': graph['id'], 'revision': graph['revision'], 'execution_sha256': execution_digest(graph),

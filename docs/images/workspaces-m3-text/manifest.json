@@ -1,0 +1,194 @@
+{
+  "source_commit": "a10f2cb9296e1070683352cd6e5b544729219738",
+  "dirty": false,
+  "command": "node tests/browser_workspace_text.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "18 authored independent texts imported, labelled and explicitly reviewed using Data controls",
+    "invalid held-out class coverage blocks release before training",
+    "fixed split preview, exact reviewed source release and immutable ZIP download",
+    "real Pipeline loading, late-response navigation fence and explicit error retry",
+    "real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+    "actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+    "lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+    "native Chromium 200% menu zoom verified by doubled device ratio and halved CSS viewport; no horizontal overflow",
+    "one admitted real child completed; verified data-only model, validation metrics and exact predictions; test access remains locked",
+    "late correction response cannot override newer Pipeline navigation or the active Data record",
+    "result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+    "explicit test inspection is durable; later releases containing the records/canonical text are marked exposed/reused",
+    "application restart retains exact run, immutable inputs/predictions and durable test exposure without replay"
+  ],
+  "captures": [
+    {
+      "file": "catalog-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "0f683e69b003f5de5c65a037e2dc26775f0c869d7912765abbe2d457f0ea91bb",
+      "bytes": 104932
+    },
+    {
+      "file": "catalog-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "42d1404db8f73a25a06667627f92bc28f585080abfe13b276bb6c45853362a14",
+      "bytes": 51604
+    },
+    {
+      "file": "pipeline-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "f034970e4d61954b669b3edb08f31b4410c0d91624346d29a04fa3a96bdbe430",
+      "bytes": 121711
+    },
+    {
+      "file": "pipeline-real-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "56d38e65dceec941e5b1df1775b1f7a21a653a7233fe950bcfa253b42edae12b",
+      "bytes": 49891
+    },
+    {
+      "file": "running-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "9f8ee4dfe7739a95d5651660efb5c3802fbdf0b5b641506600a0d5607ac0b138",
+      "bytes": 96668
+    },
+    {
+      "file": "results-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "2d1e6d31ff95f9277afd067bfd5424adb5fafb4e738d54bf373cd218978bb84e",
+      "bytes": 102495
+    },
+    {
+      "file": "results-real-1024.jpg",
+      "width": 1024,
+      "height": 768,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "a108ad0c8d8e75e50c8bbc926f8c012d6cb8a059bd39857514f1072d1837aa10",
+      "bytes": 69724
+    },
+    {
+      "file": "results-real-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "8c27741f6654690bf636c55817a7093f37b3c1b78daaa9d81f08cd5d072f7e71",
+      "bytes": 46238
+    },
+    {
+      "file": "results-detail-390.jpg",
+      "width": 390,
+      "height": 844,
+      "quality": 85,
+      "scrolled_to": "validation metrics",
+      "sha256": "51ff407167d5bcb70feebbf92877f6108a43ebd04a9a154e0f1d1d6445654d86",
+      "bytes": 48834
+    },
+    {
+      "file": "pipeline-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85,
+      "sha256": "412b7e5b5e2e1d2d66dc8087ccb3230a9e882c13ebab3093377efcb5590de4c8",
+      "bytes": 98523
+    },
+    {
+      "file": "data-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85,
+      "sha256": "136c1036e7223ed1a25310d90f27c3ee123af81e68c602af686fe75164d16137",
+      "bytes": 64905
+    },
+    {
+      "file": "runs-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85,
+      "sha256": "c1883373323ad194acf7374594b5c53675d42dbc693e16b48239fc76bb50c91c",
+      "bytes": 74403
+    },
+    {
+      "file": "catalog-correction-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85,
+      "sha256": "496f16491962185121d438e767649164224fca42e89947ac7572e41263f9ebfd",
+      "bytes": 109910
+    }
+  ],
+  "run_id": "78bd09fe80164b8abb5eff3efc2c7e1a",
+  "release_id": "46b8f6e9740632303866479536e57b64dfb557d822737fb57e257d389605747d",
+  "training": true,
+  "quality_claim": false,
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "outbound_transport": "libc loopback-only injection (not a direct-syscall security sandbox)",
+  "fixture_provenance": "18 CC0 authored independent texts imported through ordinary Data UI",
+  "source_report": "build/qa/workspace-text-run/run-WsB2Uf/receipt.json",
+  "training_measurement": {
+    "Pillow": "12.3.0",
+    "device": "cpu",
+    "elapsed_seconds": 0.9506052169999748,
+    "numpy": "2.5.4",
+    "peak_rss_bytes": 111874048,
+    "python": "3.12.14",
+    "scikit_learn": "1.7.2",
+    "scipy": "1.18.1",
+    "threads": 1
+  }
+}

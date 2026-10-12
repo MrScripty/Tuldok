@@ -469,6 +469,8 @@ def make_handler(dataset):
                     return self.reply(dataset.workbench.response_history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/history/'):
                     return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/audio-inspection/'):
+                    return self.reply(dataset.workbench.audio.inspect(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/mesh-inspection/'):
                     return self.reply(dataset.workbench.meshes.inspect(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/asset/'):
@@ -517,6 +519,8 @@ def make_handler(dataset):
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 # Opt-in workspace shell keeps fixture and real service boundaries distinct.
                 assets.update({
+                    '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
+                    '/audio-editor.css': ('audio-editor.css', 'text/css'),
                     '/workspaces': ('workspaces.html', 'text/html'),
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
@@ -617,6 +621,8 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path == '/api/workbench/audio-import':
+                    return self.reply(dataset.workbench.audio.admit(body), 201)
                 if path == '/api/workbench/mesh-import':
                     return self.reply(meshes.admit(dataset.workbench, body), 201)
                 if path == '/api/workbench/sequence-import':

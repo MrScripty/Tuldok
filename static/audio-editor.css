@@ -1,0 +1,14 @@
+#audio-inspection { margin: 12px 0; padding: 14px; background: #f5f8ff; border: 1px solid #dce5f7; border-radius: 10px; min-width: 0; }
+#audio-inspection h4 { margin: 0 0 6px; color: #283d69; }
+#audio-inspection p { font-size: 12px; overflow-wrap: anywhere; margin: 6px 0; }
+#audio-inspection label { margin: 6px 0; }
+#audio-metadata { font-weight: 600; }
+#audio-player { display: block; width: 100%; height: 42px; margin: 10px 0; }
+#audio-waveform { display: block; width: 100%; height: 64px; background: #fff; border-radius: 6px; margin: 10px 0; }
+#audio-inspection .audio-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+#audio-inspection .audio-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+#audio-segments { padding-left: 20px; }
+#audio-segments li { padding: 6px 0; }
+#audio-segments li button { margin-right: 6px; }
+#audio-inspection [hidden] { display: none !important; }
+@media (max-width: 420px) { #audio-inspection { padding: 9px; } #audio-inspection .audio-fields { grid-template-columns: 1fr; } }

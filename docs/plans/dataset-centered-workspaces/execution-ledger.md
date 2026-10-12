@@ -112,3 +112,35 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 - Final qualified checkpoint `acac0d32e89b67fa5d9b351ea058152adbe196e3` passed [full CI38180720462](https://github.com/MrScripty/Tuldok/actions/runs/38180720462), all 98 steps with zero skips, and [focused M1 CI38180720467](https://github.com/MrScripty/Tuldok/actions/runs/38180720467). Hosted Python discovery passed 507 tests in 199.067 seconds. The repaired gate, three recovery cases and real image workflow all passed.
 - Original clean-source JPEG85 captures, native 200% zoom evidence, exact identities/hashes, launch commands and offline transport limits are published in the [M2 verification record](reports/m2/verification.md). The populated authored demo is available at local port 8094. The environment-disconnected callback was checked with a real command and HTTP request; state survived, and no duplicate build/push was launched for recovery.
 - M1/MB/M2 technical acceptance is complete. The overall plan remains Active/partial for later image/text breadth, audio, 3D and separately qualified native adapters. Final evidence publication changes documentation only; no main merge, deployment or personal-data migration.
+
+
+## 2026-10-12 — parallel text/audio implementation admission
+
+- User requested continued development with parallel agents. Root admitted the canonical Active plan under `continue`, from clean image checkpoint `6d939359d3cef2464c2aff990dd58d50c4f8d791`; remote main remains `1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c`.
+- Three initial workers started for integration review, one real text classifier workflow, and one WAV data increment; a fourth worker owns the necessary explicit schema-3 audio-kind extension. Isolated worktrees and exact write sets are in the [admission record](reports/parallel-admission-20261012.md). Root serially owns shared contracts, plan and integration.
+- Frozen text-family provenance requires a narrow text-classification export; audio requires widening a versioned kind constraint. Neither is solved by weakening existing evidence or silently upgrading metadata. No arbitrary graph execution, ASR, model-weight acquisition, personal-data migration, main merge or deployment.
+- Fresh environment restored repository state but not temporary services. Root is provisioning one disposable PostgreSQL fixture service and isolated optional CPU runtime for all workers; no user machine or external Codex Cloud harness.
+
+
+## 2026-10-12 — combined text and WAV runnable qualification
+
+- Complete independently reviewed text2328370, audio1cb9e04 and schema126e677 branches were serially integrated. Runtime83f53385a6812be4026302e7362a240b68ceb339 preserves imagebase6d93935 and main1bb2c3a unchanged. Root resolved one HTML overlap by retaining audio and the new text-export option; independent review verified byte-level composition.
+- The new real WAV cross-family regression proved that an unselected audio bridge holds connected texts in one split while training stays text-only. Fourteen text cases passed. The final small warning-copy correction is modality-neutral.
+- All 537 Python tests passed in 392.818s with zero skips. Clean combined image/text/audio browser gates passed 14/14/13 checks with native 200% zoom; M1 passed 18 at the prior runtime whose only later UI change was the export-warning message. Existing affected controllers, screenshot hashes/links and adopted plan validator passed.
+- A real old6d image run survived complete stopped-writer schema2 backup and explicit2→3 upgrade. All table/sequence/file snapshots, stored/public results, six artifact hashes and exposure history remained exact; second reopen and a no-child-process oracle proved no replay. Independent review rechecked backup hashes and seven comparison categories.
+- [Combined report](reports/combined-20261012.md) and [original screenshots/receipts](../../images/workspaces-combined-20261012/README.md) bind the evidence. A9/A10 are satisfied for these bounded increments; broad M3/M4 and remaining A5/A7/A8 scope remain Active/pending.
+- Base draft PR34 is mergeable/clean with original automatic full 98-step and focused passes. The new stacked draft targets the preserved image branch; its original automatic hosted run remains the final integration gate. No older PR32/33 merge/copy, manual CI rerun, main merge, deployment, private-data migration or model-weight download.
+
+
+## 2026-10-12 — hosted caption assertion correction
+
+- Original PR35 lifecycle38242303937 on b554a9e passed 537Python tests (323.717s), then failed the legacy caption browser's old small-image-warning copy assertion. This integration omission was not waived; later gates were skipped and no full hosted pass is claimed.
+- Corrected only the browser expectation to the intentional generic export notice and strengthened downloaded-manifest validation to require four actual small-image warnings. The affected actual Chromium workflow passed locally with all existing assertions retained. Application runtime remains83f5338; a new corrected checkpoint triggers normal automatic PR qualification, with no manual rerun.
+
+## 2026-10-12 — recovery contract and headless readiness follow-through
+
+- Full CI38243376001 at831fe735 passed 537Python tests (288.362s) and every legacy browser/consumer gate, then exposed an incomplete mocked definitions response in the recovery browser; three later workspace gates were skipped. FocusedCI38243376097 passed. No full hosted pass or stalled-job claim is made.
+- Separate text repair worker reproduced the missing-epochs editor error, restored accurate producer parameter bounds, and checked their rendered attributes while retaining all three recovery scenarios. Independently accepted test-only c166aa4 was merged locally as 418d6cb.
+- Root then executed the skipped real workflows in headless mode: image 13/text 13 passed at clean 831. Audio exposed a toolbar-before-attachment test race; its owner is qualifying a semantic readiness repair before the next integration push. No runtime/schema fallback, timeout extension, failing-check waiver or manual hosted rerun.
+
+- Audio readiness repair reproduced the absent-toolbar failure under controlled adapter-script withholding. A semantic wait passed that delayed case and the ordinary headless 12-check workflow, with unchanged assertions/time budgets and no application changes. Independent review accepted the exact test helper; both test repairs are included together in the next normal PR checkpoint qualification.

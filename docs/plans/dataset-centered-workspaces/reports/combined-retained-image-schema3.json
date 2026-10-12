@@ -1,0 +1,46 @@
+{
+  "artifacts": {
+    "artifact-manifest.json": "91daf266d24830cbfaa5d346413cf6b13fd4790bdba9aae1e94d05cbd5bda727",
+    "checkpoint.pt": "e256c181a017f2f6939a6cf8151c2a3eab9281dcac14151c7cae0759c072534b",
+    "metrics.json": "796e87752a025a2f32a021c2943eb84622abbebebb4895f517f4ada9f302cf0c",
+    "predictions-test.json": "a2c6562b0e3325e8d2019ef1b99fa0261f3e2891b06b891e5a3591efbfc7b5b7",
+    "predictions-validation.json": "cd9d9461efe9ed4eef5d71cea08b8de89dc94d752b83ee2ef5aab488a10752b9",
+    "test-metrics.json": "3f22b4935dd27e57bbb85aa80574ab78ad165cc14449cfe1b4a496008357679d"
+  },
+  "backup": "/tmp/tuldok-retained-image-schema3-proof-y5roa253/schema2-backup",
+  "checks": [
+    "retained image runtime hashes match exact original source commit",
+    "complete schema2 backup preserved byte-for-byte",
+    "explicit schema2 to schema3 upgrade",
+    "exact all-table row summaries, sequence states and managed files",
+    "exact stored run, graph and exposure rows",
+    "exact public run, graph, metrics and prediction references",
+    "all six artifact hashes and frozen release hash",
+    "durable test exposure unchanged",
+    "one completed run, no new supervisor or child process",
+    "second reopen unchanged"
+  ],
+  "compatibility_before_sha256": "121462ab9618062661f5ab3fcec28a62ee6e4dbe3821822f8ef78ad55cf31143",
+  "data": "/tmp/tuldok-retained-image-m3-nx3h0gxb",
+  "dataset_id": "d1518b49468c489dbe986d32cbb401f7",
+  "evidence": "/tmp/tuldok-retained-image-schema3-proof-y5roa253",
+  "graph_sha256": "0c9120e8c8946b1b59e427a11342872d93df7ff25d7c063d8ab471f59d55b1f5",
+  "original_image_source_commit": "6d939359d3cef2464c2aff990dd58d50c4f8d791",
+  "passed": true,
+  "preserved_text_probe_sha256": "2ec29962e309fe2605e328dfdde8b0812887b65369d75a65178575f29ab5e1c6",
+  "release_sha256": "6cad94481c648f609d303963191e9ffa31a4a571114800d7dfcfa018fab150bf",
+  "run_id": "e9b38263fab54d04ba79264d7317aeae",
+  "schema_after": 3,
+  "schema_before": 2,
+  "source_commit": "e9809b5220f7ff03b3ce8795376e5379e9c9f4a1",
+  "source_dirty_files": [],
+  "upgrade": {
+    "catalog_sha256": "751db681a19406a14fbfe3927acc0e5289725c99f7e421a3393e67f11340e26b",
+    "dataset_id": "d1518b49468c489dbe986d32cbb401f7",
+    "definition_sha256": "54fade5b56207edf7c9a33bfa9187f85b3e42ea779869314e7ab0fa8bdc242a4",
+    "kind": "postgresql-schema-upgrade",
+    "migration": "audio-metadata-2-to-3",
+    "schema_version": 3,
+    "status": "upgraded"
+  }
+}

@@ -165,7 +165,7 @@ python backup_metadata.py backup ./dataset-postgres ./complete-backup --quiesced
 ```
 
 The backup contains `catalog/` with all ordinary files, `metadata.json` with all
-19 tables and a lossless typed representation of SQL text/integer/NULL/bytea
+tables declared by its schema version (19 in version 1; 22 in versions 2 and 3) and a lossless typed representation of SQL text/integer/NULL/bytea
 values and identity-sequence high-water marks (including deleted allocations),
 and `backup-receipt.json` with row and file hashes, schema/format/driver
 and server versions. The schema ledger is validated and recreated from the same

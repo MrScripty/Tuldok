@@ -1,0 +1,23 @@
+{
+  "source_commit": "83f53385a6812be4026302e7362a240b68ceb339",
+  "source_dirty": false,
+  "description": "Unmodified JPEG85 real workflow captures on authored test inputs, not model quality evidence. Exact browser receipts retain source, run, command, native zoom and offline limits.",
+  "files": {
+    "image-results-1440.jpg": {
+      "original": "build/qa/workspace-image-run/run-gfWn22/results-real-1440.jpg",
+      "sha256": "4b0dcf1c011b3d725f7ba8e69ab4d407f45909f558942a6680c1e2451bfbac11"
+    },
+    "text-pipeline-1440.jpg": {
+      "original": "build/qa/workspace-text-run/run-TP154S/pipeline-real-1440.jpg",
+      "sha256": "ded8c7055aaca769c2f35ac57e2b0156dc62b39618c932be2f73c87ed1b30942"
+    },
+    "text-results-390.jpg": {
+      "original": "build/qa/workspace-text-run/run-TP154S/results-detail-390.jpg",
+      "sha256": "ee7510e7467b7fba87bb4ed51e6e3b2cdef00238f291cee2f5d46e4c7bc3bc23"
+    },
+    "audio-reviewed-390.jpg": {
+      "original": "build/qa/workspace-audio/run-AgmvIG/audio-reviewed-390.jpg",
+      "sha256": "4dd17b931a686a22f685403177299b2dc5ecf17f9e490b4ede086b24a142de4e"
+    }
+  }
+}
