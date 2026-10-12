@@ -225,15 +225,17 @@ scalar RMS oracle from the original training intervals: expected mean
 zero PCM; the published model retained the original release identity and used
 the original samples. Local evidence is
 `/tmp/tuldok-audio-owned-capture-independent-5db2240.json`, with rerunnable probe
-`/tmp/tuldok-audio-owned-capture-independent.py`. No demonstrated audio source
-blocker remains after this repair.
+`/tmp/tuldok-audio-owned-capture-independent.py`. A byte-identical durable copy
+of the result is now in the
+[audio gallery](../../../images/workspaces-audio-runs/independent-owned-capture.json).
+No demonstrated audio source blocker remains after this repair.
 
 Independently compared root's `before.json` and `audio-final.json` in
 `/tmp/tuldok-audio-mesh-retained-20261012`: all 133,437 bytes match. This is the
 retained image/text proof at clean 61a9f67, including both public completed runs,
 both prediction sets, raw rows and 68 managed files. The reviewer compared
-evidence files without reopening retained catalogs. Combined-candidate retained
-evidence remains a separate integration gate.
+evidence files without reopening retained catalogs. The combined-candidate
+comparison is recorded below.
 
 ## Final mesh source and visual qualification
 
@@ -267,23 +269,81 @@ observes both device-pixel ratio and halved content width. This supports the
 bounded mesh flow and does not establish general PLY conformance or completion
 of all 3D work.
 
+## Final audio visual qualification
+
+Accepted clean source-bound audio gallery publication
+`cf684f7de2be7e828cade7c11ad3249b65413502`. Its receipt binds runtime source
+`292ba880b8bdcb80a469e5d370e29e5f006929a9`, thirteen actual-browser checks
+and fifteen original JPEG85 captures. The only runtime change after the
+accepted custody repair clarifies prediction copy: `Source channel 1 (index 0)`
+and `Source channel 2 (index 1)` agree with the existing Data editor while
+preserving the zero-based wire coordinate. Source review confirms this is
+renderer wording only; the service already checks integer channel bounds.
+
+Independently viewed all fifteen originals in the
+[final audio gallery](../../../images/workspaces-audio-runs/README.md) and
+verified all eighteen manifest hashes. The saved interval controls and frozen
+prediction references remain legible at 390 pixels. Desktop, 1024-pixel, narrow
+and genuine native-200% views have no visible horizontal clipping. The native
+receipt observes device ratio 1 → 2 and CSS width 1440 → 720. Running progress
+states unknown duration and cancellation only after worker cessation. Completed
+results keep test artifacts locked; correction shows frozen annotation r2 and
+current r3 with unchanged old results. The small-run quality limitation remains
+visible. These are actual authored PCM runs, without ASR or model-quality claims.
+
+Inspected the final browser harness through its real HTTP and UI workflow:
+loading/error retry, delayed-response navigation, disconnected graph refusal,
+stale validation before admission, lost committed response and explicit receipt
+reconciliation, actual CPU completion, later-intent correction fencing, a new
+reviewed release, durable test exposure and application restart. Original
+release bytes and frozen predictions are compared across correction/restart.
+Gallery evidence distinguishes HTTP fixture setup from subsequent browser
+actions; it does not claim that fixture import was manually performed in Data.
+
 ## Serial integration review
 
 Independently checked merge
 `9d9e18eb5038e3fce02c82f090ed885c0e68fda2`: its conflicted workbench HTML is
 byte-for-byte the first parent's audio HTML with only the two admitted mesh
 changes applied (stylesheet and explanatory paragraph). No resolution drift
-was found. The audio repair and remaining event-stub qualification are included
-in candidate `148e7af`; full combined execution and final clean audio visuals
-were still pending when this checkpoint was recorded.
+was found. Candidate `148e7af25477d71359b7b205dc07eb715fa1f6d9` contains
+byte-identical accepted audio runtime files from 5db2240 and mesh runtime files,
+routes and workbench publication logic from dfe7a3e. The reviewer independently
+compared these files against both owner heads, beyond the HTML composition.
+
+Root produced `combined-final.json` on exact clean 148e7af. The reviewer
+independently compared it with the retained baseline: exact equality of all
+133,437 bytes, SHA-256
+`c2894f78259f53c65fbd96b91ac83079f67206fca377b975cbbcc839ff1ce734`.
+This includes the custody repair and preference VM adapter. The later audio
+channel-copy change has no backend or stored-result effect. Complete combined
+execution and terminal hosted CI remain separate gates.
+
+Hosted mesh lifecycle run `38265471446` on dfe7a3e subsequently exposed a missing
+`CustomEvent` primitive in the saved-selection intent test VM, after 543 Python
+tests passed in 253.948 seconds. Earlier controller globs did not include that differently named test;
+the successful subsets do not establish full controller qualification. No
+application fallback or assertion weakening is justified by this failure.
+
+Repair `4266a76b7a86f89e707ae166d535bce2768c5a32` is independently accepted:
+it adds only the native `CustomEvent` binding and `window.dispatchEvent` stub to
+the VM. All eight existing scenarios pass when independently executed at the
+exact repair head. No assertions, scenarios or application files changed.
+Root separately reports all twenty-two controller/intent suites passed in one
+completed batch. Hosted CI must still run to completion on the repaired head.
+
+Root's full Python qualification on exact 148e7af completed 556 tests in 503.794
+seconds, with one existing restore test skipped because the app role lacks
+`CREATEDB`. Root then ran that exact skipped case using the isolated local test
+administrator: one test passed in 3.168 seconds. This reports the limited-role
+skip and separate verification explicitly; it does not claim a zero-skip suite
+or broaden application database privileges. These are root-run observations,
+separate from the focused tests independently executed above.
 
 ## Pending qualification
 
-- Review final clean audio candidate gallery and browser harness for the complete
-  Data → edited Pipeline → real Runs → correction path, including keyboard,
-  repeated/loading/error/stale/empty behavior and responsive evidence.
-- Verify combined-candidate retained image/text evidence and complete local
-  qualification results against the exact integrated source.
+- Bind final serial integration, including presentation-only channel copy and
+  accepted test VM repair, to its exact source and local qualification evidence.
 - Review serial integration and applicable automatic feature CI to terminal
   outcomes. Failed evidence remains visible until a scoped repair qualifies.
 
