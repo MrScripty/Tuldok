@@ -28,7 +28,15 @@ function launch(command,args,options){const child=spawn(command,args,options);ch
   const fill=(id,value)=>frame(`(()=>{const el=document.getElementById(${JSON.stringify(id)});el.value=${JSON.stringify(value)};el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const key=async(value,code=value)=>{const common={key:value,code,windowsVirtualKeyCode:value==='Enter'?13:value==='Tab'?9:0};await send('Input.dispatchKeyEvent',{type:'keyDown',...common,...(value==='Enter'?{text:'\r',unmodifiedText:'\r'}:{})});await send('Input.dispatchKeyEvent',{type:'keyUp',...common});};
   const click=id=>frame(`document.getElementById(${JSON.stringify(id)}).click()`);
-  const tools=async()=>{await frame('document.querySelector(".embed-toolbar button").click()');await until(()=>frame('document.getElementById("embed-tools").open'));};
+  // Collection data can finish before the later workspace adapter attaches its controls.
+  const toolsReady=()=>evaluate(`(()=>{
+    const host=document.getElementById('catalog-frame'),doc=host?.contentDocument;
+    const button=doc?.querySelector('.embed-toolbar button'),drawer=doc?.getElementById('embed-tools');
+    return Boolean(!document.getElementById('catalog-data')?.hidden && doc?.readyState==='complete' &&
+      button?.isConnected && !button.disabled && button.getClientRects().length && drawer?.isConnected &&
+      typeof host?.contentWindow?.TuldokWorkspaceData?.snapshot==='function');
+  })()`);
+  const tools=async()=>{await until(toolsReady,'Embedded catalog tools did not become ready');await frame('document.querySelector(".embed-toolbar button").click()');await until(()=>frame('document.getElementById("embed-tools").open'));};
   const closeTools=()=>frame('document.querySelector("#embed-tools>button").click()');
   async function capture(name,width,height){await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});await frame('document.getElementById("audio-inspection").scrollIntoView({block:"start"})');await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'workspace fits viewport');assert.ok(await frame('document.documentElement.scrollWidth<=innerWidth'),'audio editor fits viewport');const filename=name+'.jpg';fs.writeFileSync(path.join(report,filename),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));captures.push(filename);}
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
