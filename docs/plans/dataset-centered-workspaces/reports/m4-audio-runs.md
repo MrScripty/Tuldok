@@ -105,3 +105,51 @@ The earlier clean cbbde7c native/loopback workflow passed thirteen checks with
 fourteen captures at `build/qa/workspace-audio-run/run-F882Kq`; it is retained as
 historical evidence. Final clean captures follow the source repair. Source
 review and hosted qualification remain pending; no failure is waived.
+
+
+## Repaired source qualification
+
+Runtime repair `5db224059162e2600bb4f05d754de167f4d752f3` passed all thirteen
+focused audio tests in 53.897s. Independent review repeated the thirteen with
+zero skips in 55.721s and accepted the custody repair: an atomic pathname swap
+to zero WAV samples during probing retained the original frozen SHA and
+produced mean RMS 0.20060549270526823, matching the independent scalar original
+0.2006054927052682. No additional audio source blocker was demonstrated.
+The portable [review evidence](../../../images/workspaces-audio-runs/independent-owned-capture.json)
+and [focused test log](../../../images/workspaces-audio-runs/focused-audio-tests.txt)
+are preserved with the screenshots. Final visual review remains independent.
+
+Harness-only successor `a9f5ad39132a8795122bfbb360591ff17d142d0a` added
+saved interval and prediction frame detail captures without changing runtime.
+Root's visual review then identified a channel display ambiguity: Data showed
+human channel numbers alongside zero-based indices, while predictions showed
+only the index. Renderer-only `292ba880b8bdcb80a469e5d370e29e5f006929a9` now
+states “Source channel 1 (index 0)” explicitly without changing stored values.
+Independent review accepted this exact copy change; runtime tests remain
+applicable.
+
+Clean292ba880's actual native Chromium workflow passed thirteen checks and
+produced fifteen original JPEG85 screenshots at
+`build/qa/workspace-audio-run/run-jUilnE`. The
+[final feature gallery](../../../images/workspaces-audio-runs/README.md)
+contains all captures, an exact source receipt (`dirty:false`) and SHA-256
+manifest. The owner visually inspected final saved source fields, prediction
+references, desktop graph/results and native Runs; the preceding full gallery
+was also inspected before the one-line wording correction. Desktop 1440,
+intermediate 1024, narrow 390 and native 200% layouts remain readable without
+document horizontal overflow. Root and independent visual acceptance are
+recorded separately from this implementation pass.
+
+The final browser uses eighteen authored mathematical CC0 WAVs admitted and
+reviewed through ordinary HTTP APIs, then actual release, graph, submission,
+results and correction controls. It verifies loading/error/late-response and
+keyboard navigation, stale revisions, lost committed response reconciliation,
+one real CPU child, locked test artifacts, immutable results after correction,
+durable exposure and reopen without replay. Its twelve transport canaries
+qualify ordinary libc loopback restrictions, not a direct-syscall sandbox.
+
+Root has integrated the repaired runtime into its combined feature source and
+owns one combined Python run, final retained-image/text proof, draft PR and
+hosted gates. Those results are not inferred from this feature pass. No main
+merge, deployment, new dependency, weight download or personal catalog access
+was performed by this worker. ASR and general audio inference remain unavailable.
