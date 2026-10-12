@@ -28,6 +28,7 @@ errors and exposure evidence. `quality_claim` is false: actual execution proves
 the result was computed, not that the corpus/model is fit for a real use.
 Progress totals are null until actual bounded fit-pass events establish them.
 Image epochs retain their existing meaning; text has one non-iterative fit pass.
+Audio records one bounded logistic fit as epoch 1, not one optimizer iteration.
 
 The state vocabulary is `queued`, `running`, `cancelling`, `completed`, `failed`,
 `cancelled`, `interrupted`, `unknown`. `completed` requires a drained successful
@@ -37,12 +38,12 @@ process creation, while running attempts remain cancelling until cessation.
 
 ## Worker and restart lifecycle
 
-The supervisor copies the selected closed image/text adapter and its pinned local source dependencies
+The supervisor copies the selected closed image/text/audio adapter and its pinned local source dependencies
 into a private `.staging-<run_id>` directory, writes the closed trusted job, and
 launches the configured interpreter in a new Linux process group. It performs
 probes, training and waits outside database locks. The adapter arms Linux parent
 death protection before importing the numerical runtime. Image DataLoaders use
-no child workers; text fitting also creates no child workers. Native math thread
+no child workers; text/audio fitting also creates no child workers. Native math thread
 environment settings are bounded to one, including inherited OpenBLAS settings.
 
 Process identity is PID, Linux boot ID and `/proc` start ticks. The owner signals
@@ -92,6 +93,8 @@ Private output must contain exactly five payloads plus `artifact-manifest.json`:
 - Image `checkpoint.pt`: actual selected model weights and frozen execution metadata;
 - Text substitutes `model.json`: checked plain JSON TF-IDF vocabulary/IDF and
   MultinomialNB coefficients; no pickle loader or arbitrary estimator is exposed.
+- Audio substitutes `model.json`: checked scaling statistics and logistic
+  coefficients/intercepts for its eight fixed source-interval features.
 
 The run owner verifies regular files, no symlinks, a 64 MiB aggregate bound,
 manifest hashes/sizes/media/split roles, closed JSON envelopes, source identity,
@@ -100,7 +103,10 @@ Prediction probabilities, labels and indices must agree; independently tallied
 predictions must match confusion matrices and their reported accuracies. The
 owner does not deserialize arbitrary checkpoint pickle data. The text model
 reader additionally checks bounded numeric arrays, exact class/feature indices,
-recipe and source identity. The retained image payload contract is unchanged.
+recipe and source identity. The audio reader additionally checks bounded scaler
+and binary/multiclass coefficient shapes; predictions bind integer source
+rate/channel/frame coordinates and original/PCM identities. The retained image
+payload contract is unchanged.
 
 Files and directory are fsynced, then output is renamed atomically to the run ID
 directory. Only afterward is the completed receipt committed. A crash or failed
@@ -120,7 +126,9 @@ Completed or unknown attempts cannot be restarted through this operation.
 Default metrics and predictions are validation-only. `expose_test(id, {reason})`
 requires completed verified output and an explicit nonempty reason, then commits
 append-only exposure rows for every frozen test record ID and its image pixel SHA or canonical text
-content SHA. Original text source SHA remains separate provenance.
+content SHA, or the complete decoded-PCM/rate/channel family SHA for audio.
+Changing an audio interval or RIFF metadata does not erase exposure. Original
+source hashes remain separate provenance.
 Only after this durable event may test metrics/predictions be downloaded.
 Exposures never change frozen releases, metrics or predictions.
 
@@ -144,6 +152,6 @@ and recovery proofs; they are never presented as trained results. Actual offline
 network-denial/browser qualification is owned by the integration gate, not proved
 merely by these local unit tests.
 
-The [text recipe contract](workspace-text-training.md) defines the new versioned
-release/adapter/model meanings. No SQL/schema migration or second run supervisor
+The [text](workspace-text-training.md) and [audio](workspace-audio-training.md)
+recipe contracts define their versioned release/adapter/model meanings. No SQL/schema migration or second run supervisor
 is introduced. Retained M2 image receipts, artifacts and exposure remain readable.
