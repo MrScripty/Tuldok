@@ -81,3 +81,27 @@ exposure and restart. This candidate receipt truthfully records dirty source;
 final clean/native-zoom captures and independent review remain pending. Root's
 4a919ad integrates the exact training scope into HTML/README and registers the
 new browser in hosted lifecycle CI. No hosted success is claimed yet.
+
+
+## Independent custody finding and repair
+
+Independent reviewer reproduced P2 on runtime61a9f67: after the release reader
+verified captured ZIP bytes, the runtime probe hook replaced the pathname with
+zero-sample WAVs. The trainer reopened that pathname and could publish zero-RMS
+features under the original release identity. This was a real custody defect;
+prior successful fitting/browser evidence did not establish this race property.
+
+The repair makes the private reader return the manifest plus its exact owned
+immutable ZIP capture. The public inspection response remains manifest-only;
+training extracts features from the retained capture, with no second pathname
+read or weaker rehash fallback. The actual-trainer regression replaces the path
+after verification: it fails against the old adapter (mean RMS 0) and passes
+against the repair (retained original mean RMS greater than .15). Repair evidence
+is `/tmp/tuldok-audio-owned-bytes-before.log` and
+`/tmp/tuldok-audio-owned-bytes.log` (1 test, 2.455s). Independent exact-repair
+retest remains a separate gate.
+
+The earlier clean cbbde7c native/loopback workflow passed thirteen checks with
+fourteen captures at `build/qa/workspace-audio-run/run-F882Kq`; it is retained as
+historical evidence. Final clean captures follow the source repair. Source
+review and hosted qualification remain pending; no failure is waived.

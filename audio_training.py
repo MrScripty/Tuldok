@@ -48,7 +48,8 @@ def validate_parameters(value):
     return dict(value)
 
 
-def inspect_release(path, expected_sha256):
+def _read_release(path, expected_sha256):
+    """Return the validated manifest and the exact owned bytes it describes."""
     if not isinstance(expected_sha256, str) or not HASH.fullmatch(expected_sha256):
         _invalid('Expected audio release SHA-256 is invalid.')
     try:
@@ -147,13 +148,17 @@ def inspect_release(path, expected_sha256):
             validate_families(value, 'audio')
             if set(names) != assets | metadata_names:
                 _invalid('Audio release contains undeclared or missing files.')
-            return value
+            return value, raw
     except (zipfile.BadZipFile, KeyError, OSError, ValueError, TypeError, UnicodeError, NotImplementedError) as error:
         if isinstance(error, TrainingError):
             raise
         if isinstance(error, WorkbenchError):
             raise TrainingError('invalid', str(error)) from None
         raise TrainingError('invalid', 'Frozen audio ZIP or metadata cannot be decoded.') from error
+
+
+def inspect_release(path, expected_sha256):
+    return _read_release(path, expected_sha256)[0]
 
 
 def probe_runtime():
@@ -291,7 +296,7 @@ def train(job):
     job = _checked_job(job)
     guard_parent(job['parent_pid'])
     started = time.monotonic()
-    manifest = inspect_release(job['release_path'], job['release_sha256'])
+    manifest, release_bytes = _read_release(job['release_path'], job['release_sha256'])
     readiness = probe_runtime()
     if not readiness['available']:
         raise TrainingError('unavailable', '; '.join(item['message'] for item in readiness['problems']))
@@ -311,7 +316,9 @@ def train(job):
     vocabulary, mapping = manifest['class_vocabulary'], manifest['class_to_idx']
     splits = {split: [row for row in manifest['records'] if row['split'] == split] for split in projection.SPLITS}
     _emit('started', epochs=1)
-    with zipfile.ZipFile(job['release_path']) as archive:
+    # Never reopen the path after verification: a concurrent file replacement
+    # must not change the samples bound to this attempt's frozen identity.
+    with zipfile.ZipFile(io.BytesIO(release_bytes)) as archive:
         features = {row['id']: extract_features(archive.read(row['asset']), row['start_frame'], row['end_frame'], row['channel'])
                     for row in manifest['records']}
     x = [features[row['id']] for row in splits['train']]
