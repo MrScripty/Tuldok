@@ -1,5 +1,6 @@
 """Real PostgreSQL version evolution and lossless retained backup contracts."""
 from contextlib import contextmanager
+import io
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import wave
 
 import psycopg
 from psycopg import sql
@@ -18,9 +20,10 @@ from backup_metadata import (backup_catalog, populate_catalog, read_catalog,
                              read_sequences, restore_catalog, summaries,
                              table_state, tree_manifest)
 from metadata import (CommitOutcomeUnknown, Metadata, SCHEMA_VERSION, StorageError,
-                      TABLES_V1, WORKSPACE_TABLES, connection_info, definition_hash)
+                      TABLES_V1, TABLES_V2, WORKSPACE_TABLES, connection_info,
+                      definition_hash)
 from migrate_sqlite import migrate_sqlite, read_legacy
-from upgrade_metadata import upgrade_catalog
+from upgrade_metadata import UPGRADES, upgrade_catalog
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'sqlite_migration_workflow'
 
@@ -30,9 +33,17 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertEqual(len(TABLES_V1), 19)
         self.assertEqual(definition_hash(1),
                          '859a04c5ee618faae689885bee79054d5e92098e746d058fd2bcb599da4c80db')
-        self.assertEqual(SCHEMA_VERSION, 2)
+        self.assertEqual(SCHEMA_VERSION, 3)
         self.assertEqual(set(WORKSPACE_TABLES),
                          {'workspace_graphs', 'workspace_runs', 'workspace_exposures'})
+
+    def test_retained_v2_definition_is_exactly_the_qualified_22_table_contract(self):
+        self.assertEqual(len(TABLES_V2), 22)
+        self.assertEqual(definition_hash(2),
+                         'ac4d969f8794004dc11942d8fdb53181e453240c489ddf2605ea32606f911274')
+        self.assertNotEqual(definition_hash(3), definition_hash(2))
+        self.assertEqual([UPGRADES[version][0] for version in (1, 2)],
+                         ['workspace-metadata-1-to-2', 'audio-metadata-2-to-3'])
 
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL TULDOK_DATABASE_URL')
@@ -67,9 +78,9 @@ class WorkspaceMetadata(unittest.TestCase):
             shutil.copytree(FIXTURE / directory, path / directory)
         return path
 
-    def historical_catalog(self):
+    def historical_catalog(self, version=1):
         source = self.historical_source()
-        metadata = self.catalog()
+        metadata = self.catalog(version=version)
         tables = read_legacy(source)
         current = read_catalog(metadata)
         with metadata.transaction():
@@ -105,7 +116,7 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(read_sequences(reopened), sequences)
         self.assertTrue(all(current[name]['count'] == 0 for name in WORKSPACE_TABLES))
         self.assertEqual(reopened.dataset_id, identity)
-        self.assertEqual(reopened.schema_version, 2)
+        self.assertEqual(reopened.schema_version, 3)
         from app import Dataset
         dataset = Dataset(self.root / 'catalog')
         try:
@@ -121,8 +132,8 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(repeat, dict(result, status='already_current'))
         self.assertEqual(summaries(read_catalog(reopened)), summaries(current))
 
-    def test_fresh_v2_persists_opaque_workspace_rows_and_enforces_unique_request_keys(self):
-        metadata = self.catalog(version=2)
+    def test_fresh_v3_persists_opaque_workspace_rows_and_enforces_unique_request_keys(self):
+        metadata = self.catalog(version=3)
         self.assertEqual(len(read_catalog(metadata)), 22)
         self.workspace_rows(metadata)
         rows = summaries(read_catalog(metadata))
@@ -143,6 +154,131 @@ class WorkspaceMetadata(unittest.TestCase):
             metadata.execute('INSERT INTO workspace_runs VALUES (%s,%s,%s,%s)', ('run-1', 'request-1', 'a' * 64, run))
             metadata.execute('INSERT INTO workspace_exposures VALUES (%s,%s,%s,%s,%s,%s,%s)',
                              ('exposure-1', 'record-1', 'b' * 64, 'test_prediction_opened', 'run-1', 'release-1', '2026-10-11T00:00:00Z'))
+
+    def audio_row(self, metadata, *, kind='audio'):
+        # Authored opaque storage evidence, not an audio-domain validation oracle.
+        provenance = ' { "source": "音声.wav", "duration_ms": 10, "hash": "original" } '
+        annotation = ' { "segments": [{"start_ms":0,"end_ms":10,"text":"é"}] } '
+        with metadata.transaction():
+            metadata.execute('''INSERT INTO workbench_records
+                (id,kind,name,content_hash,groups_json,parents_json,provenance_json,
+                 task,annotation_json,review,revision,created_at,updated_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+                ('audio-1', kind, '音声.wav', 'c' * 64, '{}', '[]', provenance,
+                 'audio_segments', annotation, 'reviewed', 2, 'created', 'updated'))
+            metadata.execute('INSERT INTO workbench_history VALUES (%s,%s,%s)',
+                             ('audio-1', 1, ' { "kind": "audio", "annotation": null } '))
+
+    def test_v2_upgrade_preserves_populated_catalog_and_only_then_admits_audio(self):
+        metadata = self.historical_catalog(version=2)
+        self.workspace_rows(metadata)
+        rows = summaries(read_catalog(metadata))
+        sequences = read_sequences(metadata)
+        files = tree_manifest(metadata.path)
+        ledger = metadata.execute('SELECT * FROM catalog_version').fetchall()
+        with self.assertRaisesRegex(StorageError, 'schema 2 requires an explicit upgrade'):
+            Metadata(metadata.path, create=False)
+        self.assertEqual(metadata.execute('SELECT * FROM catalog_version').fetchall(), ledger)
+        with self.assertRaises(psycopg.errors.CheckViolation):
+            self.audio_row(metadata)
+        with self.assertRaisesRegex(StorageError, 'Stop all'):
+            upgrade_catalog(metadata.path)
+        result = upgrade_catalog(metadata.path, quiesced=True)
+        self.assertEqual(result['migration'], 'audio-metadata-2-to-3')
+        self.assertEqual(result['schema_version'], 3)
+        current = Metadata(metadata.path, create=False)
+        self.addCleanup(current.close)
+        self.assertEqual(current.dataset_id, metadata.dataset_id)
+        self.assertEqual(summaries(read_catalog(current)), rows)
+        self.assertEqual(read_sequences(current), sequences)
+        self.assertEqual(tree_manifest(current.path), files)
+        with self.assertRaises(psycopg.errors.CheckViolation):
+            self.audio_row(current, kind='video')
+        self.audio_row(current)
+        after = summaries(read_catalog(current))
+        self.assertEqual(upgrade_catalog(current.path, quiesced=True), dict(result, status='already_current'))
+        self.assertEqual(summaries(read_catalog(current)), after)
+        current.close()
+        reopened = Metadata(metadata.path, create=False)
+        self.addCleanup(reopened.close)
+        self.assertEqual(summaries(read_catalog(reopened)), after)
+
+    def test_audio_upgrade_failure_rolls_back_entire_v1_or_v2_chain(self):
+        for version in (1, 2):
+            for stage in ('constraint', 'proof', 'ledger'):
+                with self.subTest(version=version, stage=stage):
+                    metadata = self.catalog(f'rollback-{version}-{stage}', version)
+                    rows = summaries(read_catalog(metadata))
+                    signature = metadata._signature()
+                    ledger = metadata.execute('SELECT * FROM catalog_version').fetchall()
+                    execute = Metadata.execute
+                    proof = Metadata.expected_signature
+
+                    def fail(owner, statement, parameters=None):
+                        if stage == 'constraint' and statement == UPGRADES[2][1][1]:
+                            raise OSError('injected after old constraint removal')
+                        if (stage == 'ledger' and isinstance(statement, str)
+                                and statement.startswith('UPDATE catalog_version') and parameters[0] == 3):
+                            raise OSError('injected before final ledger publication')
+                        return execute(owner, statement, parameters)
+
+                    def fail_proof(owner, target):
+                        return 'wrong' if stage == 'proof' and target == 3 else proof(owner, target)
+
+                    with patch.object(Metadata, 'execute', fail), patch.object(Metadata, 'expected_signature', fail_proof):
+                        with self.assertRaises((StorageError, OSError)):
+                            upgrade_catalog(metadata.path, quiesced=True)
+                    self.assertEqual(metadata._signature(), signature)
+                    self.assertEqual(metadata.execute('SELECT * FROM catalog_version').fetchall(), ledger)
+                    self.assertEqual(summaries(read_catalog(metadata)), rows)
+                    metadata.validate_schema()
+                    with self.assertRaises(psycopg.errors.CheckViolation):
+                        self.audio_row(metadata)
+                    self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'upgraded')
+
+    def test_resigned_audio_constraint_cannot_be_blessed_as_retained_v2(self):
+        metadata = self.catalog(version=2)
+        for statement in UPGRADES[2][1]:
+            metadata.execute(statement)
+        metadata.execute('UPDATE catalog_version SET catalog_sha256=%s', (metadata._signature(),))
+        before = metadata._signature()
+        ledger = metadata.execute('SELECT * FROM catalog_version').fetchall()
+        with self.assertRaisesRegex(StorageError, 'known schema definition'):
+            upgrade_catalog(metadata.path, quiesced=True)
+        self.assertEqual(metadata._signature(), before)
+        self.assertEqual(metadata.execute('SELECT * FROM catalog_version').fetchall(), ledger)
+
+    def test_v3_backup_restores_audio_bytes_metadata_history_and_workspace_rows(self):
+        metadata = self.historical_catalog(version=3)
+        self.workspace_rows(metadata)
+        self.audio_row(metadata)
+        audio = metadata.path / 'audio'
+        audio.mkdir()
+        buffer = io.BytesIO()
+        with wave.open(buffer, 'wb') as handle:
+            handle.setparams((1, 2, 8000, 0, 'NONE', 'not compressed'))
+            handle.writeframes(b'\x00\x00' * 80)
+        (audio / 'audio-1.wav').write_bytes(buffer.getvalue())
+        rows = summaries(read_catalog(metadata))
+        files = tree_manifest(metadata.path)
+        backup = self.root / 'backup-v3'
+        receipt = backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual(receipt['schema_version'], 3)
+        self.assertEqual(len(receipt['tables']), 22)
+        before = tree_manifest(backup)
+        self.drop(metadata)
+        restored = self.root / 'restored-v3'
+        marker = restore_catalog(backup, restored)
+        self.assertEqual(restore_catalog(backup, restored), marker)
+        current = Metadata(restored, create=False)
+        self.addCleanup(current.close)
+        self.assertEqual(summaries(read_catalog(current)), rows)
+        restored_files = tree_manifest(restored)
+        self.assertEqual({name: restored_files[name] for name in files}, files)
+        self.assertEqual(tree_manifest(backup), before)
+        current.execute("UPDATE workbench_records SET revision=3 WHERE id='audio-1'")
+        with self.assertRaisesRegex(ValueError, 'later writes'):
+            restore_catalog(backup, restored)
 
     def test_unknown_version_definition_and_structural_drift_are_refused_without_mutation(self):
         mutations = {
@@ -166,7 +302,7 @@ class WorkspaceMetadata(unittest.TestCase):
                 self.assertIsNone(metadata.execute("SELECT to_regclass('workspace_graphs')").fetchone()[0])
 
     def test_resigning_a_mutated_schema_cannot_bless_it_as_a_known_source_or_destination(self):
-        for version in (1, 2):
+        for version in (1, 2, 3):
             with self.subTest(version=version):
                 metadata = self.catalog('resigned-' + str(version), version)
                 metadata.execute('ALTER TABLE samples ADD COLUMN unowned TEXT')
@@ -203,7 +339,7 @@ class WorkspaceMetadata(unittest.TestCase):
                 self.assertIsNone(metadata.execute("SELECT to_regclass('workspace_graphs')").fetchone()[0])
                 self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'upgraded')
 
-    def test_lost_commit_acknowledgement_reopens_and_reconciles_known_v2(self):
+    def test_lost_commit_acknowledgement_reopens_and_reconciles_known_v3(self):
         metadata = self.catalog()
         factory = Metadata.transaction
 
@@ -227,7 +363,7 @@ class WorkspaceMetadata(unittest.TestCase):
                 upgrade_catalog(metadata.path, quiesced=True)
         reopened = Metadata(metadata.path, create=False)
         self.addCleanup(reopened.close)
-        self.assertEqual(reopened.schema_version, 2)
+        self.assertEqual(reopened.schema_version, 3)
         self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'already_current')
 
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
@@ -258,12 +394,8 @@ class WorkspaceMetadata(unittest.TestCase):
             restore_catalog(backup, restored)
 
     def test_v2_backup_restore_preserves_graph_run_exposure_rows_and_rejects_later_writes(self):
-        metadata = self.historical_catalog()
+        metadata = self.historical_catalog(version=2)
         path = metadata.path
-        metadata.close()
-        upgrade_catalog(path, quiesced=True)
-        metadata = Metadata(path, create=False)
-        self.addCleanup(metadata.close)
         self.workspace_rows(metadata)
         artifacts = path / 'runs' / 'run-1'
         artifacts.mkdir(parents=True)
@@ -277,7 +409,7 @@ class WorkspaceMetadata(unittest.TestCase):
         self.drop(metadata)
         restored = self.root / 'restored'
         restore_catalog(backup, restored)
-        current = Metadata(restored, create=False)
+        current = Metadata(restored, create=False, schema_version=2)
         self.addCleanup(current.close)
         self.assertEqual(summaries(read_catalog(current)), rows)
         self.assertEqual(tree_manifest(restored / 'runs'), tree_manifest(path / 'runs'))
@@ -334,6 +466,34 @@ class WorkspaceMetadata(unittest.TestCase):
                     self.assertEqual(summaries({name: actual[name] for name in expected}), summaries(expected))
                 finally:
                     old.close()
+
+    def test_retained_v2_import_resumes_exact_receipt_and_reconciles_upgrade_until_audio_write(self):
+        source = self.historical_source()
+        destination, backup = self.root / 'destination-v2', self.root / 'backup-v2'
+        with patch('metadata.SCHEMA_VERSION', 2), patch('migrate_sqlite.populate_catalog', side_effect=OSError('injected interruption')):
+            with self.assertRaisesRegex(OSError, 'interruption'):
+                migrate_sqlite(source, destination, backup, quiesced=True)
+        staging = next(self.root.glob('destination-v2.migrating-*'))
+        saved = (staging / '.migration-receipt.json').read_bytes()
+        identity = json.loads(saved)['dataset_id']
+        self.schemas.add('catalog_' + identity)
+        result = migrate_sqlite(source, destination, backup, quiesced=True)
+        self.assertEqual(result['schema_version'], 2)
+        self.assertEqual(result['dataset_id'], identity)
+        self.assertEqual((destination / '.migration-receipt.json').read_bytes(), saved)
+        old = Metadata(destination, create=False, schema_version=2)
+        expected = read_legacy(source)
+        actual = read_catalog(old)
+        self.assertEqual(summaries({name: actual[name] for name in expected}), summaries(expected))
+        old.close()
+        upgrade_catalog(destination, quiesced=True)
+        self.assertEqual(migrate_sqlite(source, destination, backup, quiesced=True), result)
+        self.assertEqual((destination / '.migration-receipt.json').read_bytes(), saved)
+        current = Metadata(destination, create=False)
+        self.addCleanup(current.close)
+        self.audio_row(current)
+        with self.assertRaisesRegex(ValueError, 'later writes'):
+            migrate_sqlite(source, destination, backup, quiesced=True)
 
     def test_upgrade_cli_reopens_catalog_and_never_runs_on_ordinary_startup(self):
         metadata = self.catalog()

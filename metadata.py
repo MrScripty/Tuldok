@@ -19,8 +19,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 2
-SUPPORTED_SCHEMA_VERSIONS = (1, 2)
+SCHEMA_VERSION = 3
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -381,8 +381,9 @@ class Metadata:
     def validate_schema(self):
         try:
             rows = self.execute('SELECT version,dataset_id,definition_sha256,catalog_sha256 FROM catalog_version').fetchall()
-            if len(rows) == 1 and rows[0][0] == 1 and self.schema_version != 1:
-                raise StorageError('PostgreSQL catalog schema 1 requires an explicit upgrade. Stop all writers, back up the catalog, then run upgrade_metadata.py CATALOG --quiesced; see docs/contracts/workspace-storage.md.')
+            if (len(rows) == 1 and rows[0][0] in SUPPORTED_SCHEMA_VERSIONS
+                    and rows[0][0] < self.schema_version):
+                raise StorageError(f'PostgreSQL catalog schema {rows[0][0]} requires an explicit upgrade. Stop all writers, back up the catalog, then run upgrade_metadata.py CATALOG --quiesced; see docs/contracts/workspace-storage.md.')
             if len(rows) != 1 or tuple(rows[0][:3]) != (self.schema_version, self.dataset_id, definition_hash(self.schema_version)):
                 raise StorageError('Unsupported PostgreSQL catalog version or definition.')
             if rows[0][3] != self._signature():
@@ -414,7 +415,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return TABLES_V1 if version == 1 else TABLES
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -491,4 +492,17 @@ WORKSPACE_TABLES = {
         reason TEXT NOT NULL, run_id TEXT NOT NULL, release_id TEXT NOT NULL,
         created_at TEXT NOT NULL)''',
 }
-TABLES = {**TABLES_V1, **WORKSPACE_TABLES}
+# Retained schema 2 is the exact M2 contract. Do not edit either old definition:
+# their DDL hashes identify existing catalogs and retained backup receipts.
+TABLES_V2 = {**TABLES_V1, **WORKSPACE_TABLES}
+TABLES = {
+    **TABLES_V2,
+    'workbench_records': """CREATE TABLE workbench_records (
+                id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('image','text','sequence','mesh','audio')),
+                name TEXT, text TEXT, original_text TEXT,
+                content_hash TEXT NOT NULL, pixel_hash TEXT,
+                groups_json TEXT NOT NULL, parents_json TEXT NOT NULL,
+                provenance_json TEXT NOT NULL, task TEXT NOT NULL,
+                annotation_json TEXT, review TEXT NOT NULL,
+                revision INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""",
+}
