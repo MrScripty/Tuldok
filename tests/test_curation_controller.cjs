@@ -10,8 +10,8 @@ class Element {
 const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 const requests=[],response=data=>({ok:true,json:async()=>data});
 const emptyPage={items:[],total:0,criteria:{q:''},analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
-const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>false,
- document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(){}},
+const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>false,
+ document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{dispatchEvent(){return true;},addEventListener(){}},
  fetch:(url,options)=>url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise(resolve=>requests.push({url,options,resolve}))});
 const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..');
 for(const file of ['workbench.js','curation.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),context);

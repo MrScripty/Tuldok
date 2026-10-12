@@ -227,7 +227,7 @@ function invalidateRelease() {
   ++releaseEpoch; releasePreview = null;
   $('release-preview').replaceChildren();
   $('release-preview-status').textContent = selected.size ? 'Preview the saved selected revisions before exporting.' : 'Select records to preview a release.';
-  $('release-result').replaceChildren(); releaseButtons();
+  $('release-result').replaceChildren();window.dispatchEvent(new CustomEvent('tuldok:release-cleared')); releaseButtons();
 }
 function syncReleaseSelection() {
   const key = JSON.stringify(releaseBody());
@@ -280,7 +280,7 @@ $('preview-release').addEventListener('click', async event=>{
   syncReleaseSelection();
   const body=releaseBody(), key=releaseKey, epoch=++releaseEpoch;
   releasePreview=null; releaseBusy=true; releaseButtons();
-  $('release-preview').replaceChildren();$('release-result').replaceChildren();
+  $('release-preview').replaceChildren();$('release-result').replaceChildren();window.dispatchEvent(new CustomEvent('tuldok:release-cleared'));
   $('release-preview-status').textContent='Checking saved selection, source bytes and connected lineage…';
   try {
     const result=await api('releases/preview',body);
@@ -296,11 +296,12 @@ $('release-form').addEventListener('submit',async event=>{
   syncReleaseSelection();
   if(!releasePreview?.eligible) { $('release-preview-status').textContent='Preview an eligible selection before exporting.';return; }
   const body={...releaseBody(),preview_token:releasePreview.preview_token ?? null}, key=releaseKey, epoch=releaseEpoch;
-  releaseBusy=true;releaseButtons();$('release-result').replaceChildren();
+  releaseBusy=true;releaseButtons();$('release-result').replaceChildren();window.dispatchEvent(new CustomEvent('tuldok:release-cleared'));
   try {
     const result=await api('releases',body);
     if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
     const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
+    if(body.format==='canonical_v1')window.dispatchEvent(new CustomEvent('tuldok:release-published',{detail:{id:result.id,url:result.url}}));
     notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' export warnings; inspect manifest.json.' : ''));
   } catch(error) {
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
