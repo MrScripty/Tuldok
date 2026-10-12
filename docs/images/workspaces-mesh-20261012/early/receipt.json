@@ -1,0 +1,21 @@
+{
+  "source_commit": "2344b819c21a92bb32a1dfbc386b030888400212",
+  "source_dirty": true,
+  "fixture": "Project-authored asymmetric prism; real PLY bytes, no physics producer",
+  "viewports": [
+    {
+      "width": 1400,
+      "height": 950
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "screenshots": [
+    "mesh-desktop.jpg",
+    "mesh-narrow.jpg"
+  ],
+  "command": "node tests/browser_workspace_mesh.cjs",
+  "native_zoom": false
+}
