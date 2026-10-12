@@ -39,3 +39,10 @@ Set `TULDOK_DATABASE_URL` using the existing local PostgreSQL runbook. Existing
 catalog migration/backup requirements remain unchanged. No personal catalog was
 opened. The local browser command is `node tests/browser_workspace_audio_run.cjs`
 with app Python on PATH and the same test-service environment.
+
+
+Clean checkpoint `1959775933030a3639ad504143207d9d8d786f1d` repeats all four
+browser checks with `dirty:false`; source-bound unmodified captures are in
+[the checkpoint gallery](../../../images/workspaces-audio-runs-checkpoint/README.md).
+Root and owner reviewed desktop Pipeline/narrow Data. The feature branch is
+pushed; no PR, merge or deployment has been performed by this worker.
