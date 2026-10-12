@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry', 'audio_timed')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -56,7 +56,7 @@ def query_criteria(options):
     kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
     if any(not isinstance(value, str) for value in (kind, review, sort, task)):
         raise WorkbenchError('Filter and sort values must be strings.')
-    if kind not in ('', 'image', 'text', 'sequence', 'mesh') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
+    if kind not in ('', 'image', 'text', 'sequence', 'mesh', 'audio') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
         raise WorkbenchError('Invalid filter or sort.')
     if task not in ('', *TASKS):
         raise WorkbenchError('Invalid task filter.')
@@ -81,6 +81,9 @@ def validate_annotation(task, value, record):
         raise WorkbenchError('Choose a task matching the asset type.')
     if not isinstance(value, dict):
         raise WorkbenchError('Annotation must be an object.')
+    if task == 'audio_timed':
+        from audio_assets import validate_annotation as validate_audio
+        return validate_audio(value, record)
     if task == 'text_corpus':
         if set(value) != {'note'}:
             raise WorkbenchError('Text corpus review requires exactly one note.')
@@ -127,6 +130,8 @@ def labels(record):
     annotation = record.get('annotation')
     if not annotation:
         return []
+    if record['kind'] == 'audio':
+        return [item['label'] for item in annotation.get('segments', []) if item['label']]
     if 'label' in annotation:
         return [annotation['label']]
     return [item['label'] for item in annotation.get('boxes', annotation.get('spans', []))]
@@ -152,6 +157,8 @@ class Workbench:
         from meshes import MeshAssets
         self.sequences = SequenceAssets(self)
         self.meshes = MeshAssets(self)
+        from audio_assets import AudioAssets
+        self.audio = AudioAssets(self)
 
         from preferences import Preferences
         self.preferences = Preferences(self)
@@ -209,6 +216,13 @@ class Workbench:
                     result.update(dict(retained))
                     result['source_lineage_known'] = True
             result['name'] = result.pop('image_name') or '(source image deleted)'
+        elif result['kind'] == 'audio':
+            result.pop('image_name')
+            result['audio'], result['source_available'] = self.audio.metadata(record_id, json.loads(result['provenance_json']))
+            result['source_lineage_known'] = True
+            result['source_revision'] = 1
+            result['source_split'] = 'unassigned'
+            result['source_sha256'] = result['content_hash']
         elif result['kind'] in ('sequence', 'mesh'):
             result.pop('image_name')
             owner = self.sequences if result['kind'] == 'sequence' else self.meshes
@@ -395,6 +409,12 @@ class Workbench:
         review = body.get('review')
         if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
             raise WorkbenchError('Text corpus data requires an explicit human review decision.')
+        if before['kind'] == 'audio':
+            if not set(before['audio']['protected_groups']) <= set(groups):
+                raise WorkbenchError('Keep the immutable audio source and family protected groups.')
+            if review not in ('draft', 'human_reviewed') or verified_provenance:
+                raise WorkbenchError('Audio data requires an explicit human review decision.')
+            self.audio.asset(before)
         if before['kind'] in ('sequence', 'mesh'):
             if not set(before[before['kind']]['protected_groups']) <= set(groups):
                 raise WorkbenchError('Keep the whole trajectory and initial-family protected groups.' if before['kind'] == 'sequence' else 'Keep the immutable mesh source and family protected groups.')
@@ -557,6 +577,8 @@ class Workbench:
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""
         record = self._get(record_id)
+        if record['kind'] == 'audio':
+            return self.audio.asset(record)
         if record['kind'] in ('sequence', 'mesh'):
             return (self.sequences if record['kind'] == 'sequence' else self.meshes).asset(record)
         if record['kind'] == 'text':

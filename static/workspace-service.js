@@ -66,10 +66,10 @@
       gate: "M3 consumer qualification",
     },
     audio: {
-      state: "unavailable",
+      state: "available",
       reason:
-        "Fixture contract only. PCM WAV import, playback and review await M4. No ASR.",
-      gate: "M4",
+        "Bounded PCM16 WAV import, playback, timed human review and frozen export in the current catalog. Audio Pipeline/Runs execution and ASR are unavailable.",
+      gate: "M4 Data qualified; audio recipe and ASR pending",
     },
     mesh: {
       state: "available",

@@ -1,4 +1,5 @@
 """Frozen, self-contained releases with connected-source split allocation."""
+import audio_export
 import hashlib
 import json
 import os
@@ -230,6 +231,8 @@ class Releases:
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
                 if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
+                if row['kind'] == 'audio':
+                    audio_export.validate_record(row)
                 validate_annotation(row['task'], row['annotation'], row)
             except WorkbenchError as error:
                 block(error, row['id'])
@@ -276,6 +279,8 @@ class Releases:
                 preview['warnings'].append('Exact decoded-pixel repeats are retained in the same connected split. Inspect repeated examples and contradictory labels before training; none are discarded.')
             preview['warnings'].append('Opaque class folders are model indices. Use manifest.json class_vocabulary to recover exact labels. The mapping is frozen per release, not shared automatically across releases.')
         if format_name == 'canonical_v1':
+            if any(row['kind'] == 'audio' for row in rows):
+                preview['warnings'].append(audio_export.CONTRACT)
             if any(row['kind'] == 'mesh' for row in rows):
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
             if any(row['kind'] == 'sequence' for row in rows):
@@ -662,9 +667,11 @@ class Releases:
                         for index, row in enumerate(rows, 1):
                             split = assignments[row['id']]
                             asset, _ = workbench.asset(row['id'])
-                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip'}[row['kind']]
+                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip', 'audio': '.wav'}[row['kind']]
                             digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
+                            if row['kind'] == 'audio':
+                                record = audio_export.project(record)
                             manifest['records'].append(record)
                             if row['task'] == 'image_detection':
                                 coco[split]['images'].append({'id': index, 'file_name': filename, 'width': row['width'], 'height': row['height']})
