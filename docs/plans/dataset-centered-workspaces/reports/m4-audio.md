@@ -1,6 +1,9 @@
 # M4 first increment: local WAV Data workflow
 
-Status: locally qualified; independent review and final publication in progress.
+Status: first Data increment locally qualified and independently accepted.
+Exact runtime/test checkpoint: `2d5b8217967c6564b1b7089aef04be0b48c8c28a`.
+The publication successor adds documentation/screenshots only; integration CI
+remains the coordinating owner's gate.
 The admitted increment is Data import/playback/timed annotation/human review and
 frozen export. It does not close the planned full M4 Pipeline/Runs recipe.
 
@@ -66,3 +69,61 @@ source review and the named executable evidence remain separately recorded.
 No app database table or column was added by the audio owner. The separate
 schema worker's reviewed v2→v3 constraint extension is preserved as a complete
 merge, with retained v1/v2 migrations and backup semantics.
+
+## Independent review and clean evidence
+
+The independent integration reviewer accepted exact runtime/test checkpoint
+`2d5b8217967c6564b1b7089aef04be0b48c8c28a` on 2026-10-12, with no remaining
+demonstrated P1/P2 findings. The reviewer independently ran three real PostgreSQL
+custody cases (0.407 seconds; zero skips), and an actual Chromium discriminator
+for invalid audio draft → text save and failed stale audio request → retained
+newer text notice. The review identified those two editor-lifecycle issues before
+publication; the owning fix and direct regressions are included. It also identified
+nested rollback custody, now owned by `Metadata.on_rollback` without losing the
+unknown-commit byte-retention contract.
+
+Final audio-owner SHA-256:
+`c96e70da0d969161412a69acefd1badf56f72ed451e20c81a7e0f5fd95298507`.
+Final audio-editor SHA-256:
+`445441b9ff4eb480cf26711b8a94eb55c1472164d7bb4ea3c68a1874f2093661`.
+
+The final native Chromium gate is
+`build/qa/workspace-audio/run-STgbvr/receipt.json`: source `2d5b821…`,
+`dirty=false`, 13 passed checks. [Four original screenshots and their exact
+manifest](../../../images/workspaces-audio/README.md) include saved source-channel
+intervals, transcript/class text, the 390px layout and native 200% zoom. Zoom was
+established by actual Chromium keyboard zoom with doubled device pixel ratio and
+halved CSS viewport, after clearing viewport emulation. No horizontal overflow;
+Tab reached the end-frame field. The reviewer inspected clean receipt and image
+hashes separately from earlier dirty-candidate captures.
+
+Earlier development checks revealed test-assumption errors, not suppressed gates:
+connected-family 50/50 splits correctly refused a single component; restore
+correctly required an absent destination schema; Chromium float positive sample
+normalization needed the documented one-LSB comparison while frames/raw PCM stay
+exact; reload needed the existing fresh-document barrier and explicit current
+revision reselection after an intentional external edit. Final gates pass with
+those owning semantics preserved.
+
+## Runnable local demonstration
+
+The authored populated demo was started at `http://127.0.0.1:8097/workspaces`,
+with real HTTP 200 checked for the page and audio catalog. Choose **Current local
+catalog**, then open **Authored stereo impulses.wav**. It contains a reviewed
+channel-2 interval `[4000,8001)` and a frozen canonical release. The demo's record
+ID is `4abdba399bb04667a1962e6c6e9e10ed`; its existing release is
+`083c71a50fb59bbfdea233767febb69a54e5e4fd864cb038077a83f8647dd717`.
+This separately seeded demo is distinct from the screenshot gate's retained IDs.
+
+Launch command in this qualification environment (stop an existing instance on
+that port before launching another):
+
+```sh
+TULDOK_DATABASE_URL='host=/tmp/tuldok-pg/socket port=5432 dbname=tuldok user=tuldok passfile=/tmp/tuldok-pg/app.pgpass' \
+/tmp/tuldok-app-venv/bin/python app.py --data /tmp/tuldok-audio-demo-20261012 --port 8097
+```
+
+The PostgreSQL service and local app environment are prerequisites. Existing v1/v2
+catalogs require the explicit quiesced schema upgrade described in the
+[storage contract](../../../contracts/workspace-storage.md); this demonstration
+created a new disposable schema-3 catalog and migrated no personal data.
