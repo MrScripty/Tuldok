@@ -123,9 +123,67 @@ exposure rows). This procedure can decide retained-result compatibility when
 root compares candidate output byte-for-byte with that baseline; that comparison
 was still pending at this review.
 
+## Audio release and graph checkpoint
+
+Reviewed exact source `1959775933030a3639ad504143207d9d8d786f1d` from an
+immutable temporary archive, independent of subsequent worker edits. No blocking
+finding in the bounded release/graph checkpoint. The target binds one exact
+reviewed interval/channel to original WAV bytes; decoded whole-record identity
+includes rate and channels and does not depend on interval coordinates. Family
+allocation remains release-owned. The extracted reader preserves the previous
+text validation algorithm and diagnostics, and new text definition identities
+include the module copied into private worker staging. The lazy custody import
+does not change the WAV admission transaction or rollback paths.
+
+Independently ran five audio release/graph tests in 2.733 seconds and fourteen
+text reader/trainer/run tests in 12.966 seconds, all passing without skips,
+against this source with the configured local PostgreSQL and CPU interpreter.
+Text evidence includes a new actual CPU result, restart, exposure/correction,
+deleted/unselected family bridges and inherited-thread limits. Test catalogs
+were independently disposable; retained catalogs were not opened by review.
+
+Independently compared root's retained `before.json` and
+`audio-checkpoint.json`: exact equality of all 133,437 bytes. These cover both
+old public runs, validation/test prediction references, raw graph/run/exposure
+rows and 68 managed files. Reviewed the clean source-bound desktop Pipeline and
+narrow Data images in `docs/images/workspaces-audio-runs-checkpoint/`; readable
+controls and no visible horizontal clipping, with explicit unavailable trainer.
+The receipt binds clean source 1959775, four actual-browser checks and no training
+or quality claim. This accepts the first checkpoint, not real audio execution.
+
+## First mesh source review and required repairs
+
+Reviewed exact `44664439124bf2d738ce823e3e4ed6d936709d8e` from an immutable
+temporary archive. Independently ran all four mesh-release PostgreSQL tests in
+1.104 seconds and the mesh controller suite: passed. Authored geometry provides
+explicit asymmetric coordinates, ordered faces, mixed property types and
+positive/negative float32 midpoint-neighbor bit expectations. The reader keeps
+the original parser and source bytes, reports selected-row family scope, and
+the UI's generation/abort ownership leaves the existing download outside its
+mutation boundary. Two demonstrated consumer incompatibilities block acceptance:
+
+1. **P2 — empty human note rejected.** The existing mesh annotation owner admits
+   `{"note":""}` with an explicit human review decision. The new validator's
+   additional `note.strip()` requirement rejects this valid canonical export.
+   Root independently found the same issue. Remove the extra policy and prove
+   actual empty-note review/freeze/validation while preserving draft rejection.
+2. **P2 — Unicode code-point bounds interpreted as UTF-16 units.** Actual
+   import, human review, freeze and server validation succeed for an authored
+   sidecar whose frame is 61 `😀` characters, within the 120-code-point contract.
+   The exact browser decoder rejects that valid report because JavaScript
+   `.length` returns 122. The same helper affects name, rights and provenance.
+   Count Unicode code points consistently and test valid and over-cap boundaries.
+   The reviewer reproduced this through a separate real PostgreSQL catalog and
+   the exact `decodeMeshReleaseReport` function, without changing application
+   source. Root sent the scoped repair to the mesh owner.
+
+The passing original tests did not cover these two paths. Required repairs and
+their exact source/regression evidence remain pending; no mesh feature
+acceptance or waiver is recorded.
+
 ## Pending qualification
 
-- Review exact candidate SHAs and first original desktop/narrow screenshots.
+- Review final candidate SHAs, the two mesh repairs and final original screenshots.
 - Observe the complete audio Data → edited Pipeline → real Runs → correction
   path, plus independent numeric/PCM and retained image/text evidence.
 - Observe mesh import → spatial inspection → review → freeze → downloaded
