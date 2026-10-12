@@ -25,8 +25,8 @@ async function parentLoadRaces(){
  const page={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
  let confirms=0,answers=[a,b],judgments=[{...judgment,parent_revision:record.revision,stale_warning:null}];
  const response=data=>({ok:true,json:async()=>data});
- const env=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,Blob,URL,crypto:{randomUUID:()=> 'e'.repeat(32)},
-  confirm:()=>{++confirms;return true;},fixture:{record,other,a,b,judgment:{...judgment,parent_revision:record.revision,stale_warning:null}},window:{addEventListener(){}},
+ const env=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,Blob,URL,CustomEvent,crypto:{randomUUID:()=> 'e'.repeat(32)},
+  confirm:()=>{++confirms;return true;},fixture:{record,other,a,b,judgment:{...judgment,parent_revision:record.revision,stale_warning:null}},window:{addEventListener(){},dispatchEvent(){return true;}},
   document:{getElementById:element,querySelectorAll:()=>[],createElement:()=>new Element(),createElementNS:()=>new Element()},
   fetch:(url,options)=>url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):url.includes('/records?')?Promise.resolve(response(page)):url.endsWith('/responses')&&!options?.method?Promise.resolve(response({parent:record,responses:answers})):url.endsWith('/preferences')&&!options?.method?Promise.resolve(response({parent:record,responses:answers,judgments})):new Promise(resolve=>pending.push({url,options,resolve}))});
  const evaluate=code=>vm.runInContext(code,env);
