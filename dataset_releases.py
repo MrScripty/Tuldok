@@ -12,6 +12,7 @@ from PIL import Image
 
 import image_classification_export as classification_export
 import text_corpus_export as corpus_export
+import text_classification_export as text_class_export
 
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
 
@@ -192,7 +193,7 @@ class Releases:
             if record_id is not None:
                 item['record_id'] = record_id
             preview['blockers'].append(item)
-        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT):
+        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT, text_class_export.FORMAT):
             block(WorkbenchError('Unknown release format.'))
         try:
             rows = workbench.selection(body.get('items'))
@@ -200,13 +201,14 @@ class Releases:
             block(error)
             return {'preview': preview}
         preview['selected_count'] = len(rows)
-        if format_name == classification_export.FORMAT:
+        if format_name in (classification_export.FORMAT, text_class_export.FORMAT):
+            projection = text_class_export if format_name == text_class_export.FORMAT else classification_export
             if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
                 block(WorkbenchError('Unknown classification release fields.'))
                 return {'preview': preview}
             for row in rows:
                 try:
-                    classification_export.validate_records([row])
+                    projection.validate_records([row])
                 except WorkbenchError as error:
                     block(error, row['id'])
                     return {'preview': preview}
@@ -224,6 +226,8 @@ class Releases:
                 if format_name == classification_export.FORMAT:
                     if row['task'] != 'image_classification' or row['review'] != 'human_reviewed' or not row['source_available']:
                         raise WorkbenchError('Chapter 8 classification export requires available images with human-reviewed single-class annotations.')
+                elif format_name == text_class_export.FORMAT:
+                    text_class_export.validate_records([row])
                 elif format_name == CAPTION_FORMAT:
                     if row['task'] != 'image_caption' or row['review'] != 'human_reviewed' or not row['source_available']:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
@@ -278,6 +282,18 @@ class Releases:
             if preview['analysis']['duplicate_content_records']:
                 preview['warnings'].append('Exact decoded-pixel repeats are retained in the same connected split. Inspect repeated examples and contradictory labels before training; none are discarded.')
             preview['warnings'].append('Opaque class folders are model indices. Use manifest.json class_vocabulary to recover exact labels. The mapping is frozen per release, not shared automatically across releases.')
+        if format_name == text_class_export.FORMAT:
+            try:
+                vocabulary, coverage, blockers = text_class_export.inspect_projection(rows, preview['assignments'])
+                preview['class_vocabulary'], preview['class_coverage'] = vocabulary, coverage
+                for message in blockers:
+                    block(WorkbenchError(message))
+                if not preview['blockers']:
+                    prepared = {'preview': preview, 'rows': rows, 'roots': roots, 'groups': groups, 'snapshots': snapshots}
+                    if sum(len(data) for _, data in text_class_export.entries(prepared, body)) > text_class_export.MAX_PAYLOAD_BYTES:
+                        block(WorkbenchError('Frozen text assets and complete provenance exceed the 7 MiB payload bound.'))
+            except WorkbenchError as error:
+                block(error)
         if format_name == 'canonical_v1':
             if any(row['kind'] == 'audio' for row in rows):
                 preview['warnings'].append(audio_export.CONTRACT)
@@ -638,8 +654,12 @@ class Releases:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact responses before exporting.', 'conflict', 409)
             return self._create_responses(body)
-        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT):
+        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT, text_class_export.FORMAT):
             raise WorkbenchError('Unknown release format.')
+        if format_name == text_class_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact text classification selection before exporting.', 'conflict', 409)
+            return self._create_text_classification(body)
         if format_name == classification_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact classification selection before exporting.', 'conflict', 409)
@@ -800,3 +820,26 @@ class Releases:
                     'format': classification_export.FORMAT, 'records': len(rows),
                     'split_report': preview['split_report'], 'class_vocabulary': vocabulary,
                     'warnings': preview['warnings']}
+
+    def _create_text_classification(self, body):
+        """Publish the reviewed text projection through the existing release owner."""
+        with self.workbench.lock, self.workbench.db.transaction():
+            prepared = self._checked(body)
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        for name, contents in text_class_export.entries(prepared, body):
+                            archive.writestr(zipfile.ZipInfo(name), contents)
+                    target.flush()
+                    os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': text_class_export.FORMAT, 'records': len(prepared['rows']),
+                    'split_report': prepared['preview']['split_report'],
+                    'class_vocabulary': prepared['preview']['class_vocabulary'],
+                    'warnings': prepared['preview']['warnings']}

@@ -14,9 +14,10 @@ import time
 import uuid
 
 import image_training
+import text_training
 import psycopg
 from workbench import WorkbenchError, encode, timestamp, text_value
-from pipeline import closed, digest, execution_digest, identifier
+from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, source_content_hash, training_environment
 
 ACTIVE = ('queued', 'running', 'cancelling')
 TERMINAL = ('completed', 'failed', 'cancelled', 'interrupted', 'unknown')
@@ -91,7 +92,8 @@ class Runs:
                     or run['mode'] != 'real' or run['state'] not in (*ACTIVE, *TERMINAL)
                     or run['request_key'] != row['request_key'] or run['request_sha256'] != row['request_sha256']
                     or digest(run['graph']) != run['graph_document_sha256']
-                    or execution_digest(run['graph']) != run['graph_sha256']):
+                    or execution_digest(run['graph']) != run['graph_sha256']
+                    or run['adapter'] != adapter_for_graph(run['graph']).ADAPTER):
                 raise ValueError('Invalid retained run identity.')
             return run
         except (ValueError, KeyError, TypeError):
@@ -132,7 +134,7 @@ class Runs:
             return 'unknown'
         command = run.get('worker_command')
         if (not isinstance(command, list) or len(command) != 4 or not all(isinstance(value, str) for value in command)
-                or command[2] != '--job' or not command[1].endswith(f"/.staging-{run['id']}/image_training.py")
+                or command[2] != '--job' or not command[1].endswith(f"/.staging-{run['id']}/{Path(adapter_for_graph(run['graph']).__file__).name}")
                 or Path(command[3]) != Path(command[1]).with_name('job.json')):
             return 'unknown'
         try:
@@ -362,7 +364,7 @@ class Runs:
             self._save(run)
         try:
             release = self.pipelines.inspect_release(run['release_id'], private=True)
-            runtime = self.pipelines.probe()
+            runtime = self.pipelines.probe(run['graph'].get('recipe', 'image_classification'))
             if not runtime['available'] or runtime != run['runtime']:
                 raise WorkbenchError('Training runtime changed after admission.', 'stale', 409)
             stage = self.path / ('.staging-' + run_id)
@@ -379,13 +381,13 @@ class Runs:
             if digest(definition_files) != run['runtime']['adapter_definition_sha256']:
                 raise WorkbenchError('Pinned adapter definition is inconsistent.', 'stale', 409)
             for name, expected_hash in definition_files.items():
-                if name not in ('image_training.py', 'image_classification_export.py', 'workbench.py'):
+                if name not in self.pipelines.definition_identity(run['graph'].get('recipe', 'image_classification'))['definition_files']:
                     raise WorkbenchError('Unsupported adapter source dependency.', 'unsupported', 409)
-                contents = (self.pipelines.worker_path.parent / name).read_bytes()
+                contents = (self.pipelines.source_path / name).read_bytes()
                 if hashlib.sha256(contents).hexdigest() != expected_hash:
                     raise WorkbenchError('Adapter source changed before process creation.', 'stale', 409)
                 (stage / name).write_bytes(contents)
-            worker_path = stage / 'image_training.py'
+            worker_path = stage / Path(adapter_for_graph(run['graph']).__file__).name
             command = [run['python'], str(worker_path), '--job', str(job_path)]
             with self.lock, self.db.transaction():
                 current = self._load(run_id)
@@ -401,7 +403,7 @@ class Runs:
                 self._save(current)
             process = subprocess.Popen(command,
                                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True,
-                                       env=dict(os.environ, CUDA_VISIBLE_DEVICES='', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1'))
+                                       env=training_environment())
             os.set_blocking(process.stdout.fileno(), False)
             progress = {'buffer': b'', 'bytes': 0, 'epoch': 0}
             owner = process_identity(process.pid)
@@ -520,7 +522,7 @@ class Runs:
                             raise ValueError('Malformed adapter failure.')
                         message = f"Adapter {event['outcome']}: {event['message']}"
                     else:
-                        if type(event['epochs']) is not int or event['epochs'] != run['parameters']['epochs']:
+                        if type(event['epochs']) is not int or event['epochs'] != self._fit_count(run):
                             raise ValueError('Progress epoch total differs from admitted parameters.')
                         message = 'Local CPU worker started.' if kind == 'started' else 'CPU worker finished; verifying outputs before publication.'
                         if kind == 'epoch':
@@ -528,7 +530,7 @@ class Runs:
                                 raise ValueError('Worker epoch sequence is invalid.')
                             self._metric(event['validation'], 'validation', run)
                             progress['epoch'] = event['epoch']
-                            message = f"Epoch {event['epoch']} of {event['epochs']} completed; validation accuracy {event['validation']['accuracy']:.3f}."
+                            message = f"Fit pass {event['epoch']} of {event['epochs']} completed; validation accuracy {event['validation']['accuracy']:.3f}."
                     with self.lock, self.db.transaction():
                         current = self._load(run['id'])
                         current['events'].append({'at': timestamp(), 'state': current['state'], 'message': message})
@@ -572,11 +574,22 @@ class Runs:
     def _identity(self, run):
         return {key: run[key] for key in ('dataset_id', 'graph_sha256', 'release_id', 'release_sha256')} | {'run_id': run['id']}
 
+    def _fit_count(self, run):
+        return 1 if adapter_for_graph(run['graph']) is text_training else run['parameters']['epochs']
+
+    def _payloads(self, run):
+        return PAYLOADS - {'checkpoint.pt'} | {'model.json'} if adapter_for_graph(run['graph']) is text_training else PAYLOADS
+
+    def _reference_keys(self, run):
+        return text_training.REFERENCE_KEYS if adapter_for_graph(run['graph']) is text_training else (
+            'id', 'revision', 'source_revision', 'source_sha256', 'asset_sha256', 'exported_pixel_sha256')
+
     def _verify_directory(self, run, directory):
         if directory.is_symlink() or not directory.is_dir():
             raise WorkbenchError('Published artifact directory is unavailable.', 'unavailable', 409)
+        payload_names = self._payloads(run)
         paths = list(directory.iterdir())
-        if {path.name for path in paths} != PAYLOADS | {'artifact-manifest.json'} or any(path.is_symlink() or not path.is_file() for path in paths):
+        if {path.name for path in paths} != payload_names | {'artifact-manifest.json'} or any(path.is_symlink() or not path.is_file() for path in paths):
             raise WorkbenchError('Artifact files do not match the closed result contract.', 'unavailable', 409)
         if sum(path.stat().st_size for path in paths) > MAX_ARTIFACT_BYTES:
             raise WorkbenchError('Artifacts exceed the 64 MiB result bound.', 'unavailable', 409)
@@ -587,12 +600,12 @@ class Runs:
             if manifest['schema_version'] != 1 or manifest['source_identity'] != self._identity(run) or manifest['adapter'] != run['adapter']:
                 raise ValueError('Artifact identity mismatch.')
             artifacts = manifest['artifacts']
-            if len(artifacts) != 5 or {item['name'] for item in artifacts} != PAYLOADS:
+            if len(artifacts) != 5 or {item['name'] for item in artifacts} != payload_names:
                 raise ValueError('Artifact inventory mismatch.')
             payloads = {}
             for item in artifacts:
                 closed(item, ('name', 'sha256', 'bytes', 'media_type', 'split'))
-                expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'].endswith('.json') else None
+                expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'] in ('metrics.json', 'predictions-validation.json') else None
                 expected_media = 'application/json' if item['name'].endswith('.json') else 'application/octet-stream'
                 if item['split'] != expected_split or item['media_type'] != expected_media:
                     raise ValueError('Artifact media type or split differs from its declared role.')
@@ -610,12 +623,17 @@ class Runs:
             self._vocabulary(run, metrics)
             if any(metrics['runtime'].get(key) != value for key, value in run['runtime']['runtime'].items()):
                 raise ValueError('Executed runtime differs from the admission fingerprint.')
-            if metrics['parameters'] != run['parameters'] or metrics['transform'] != image_training.TRANSFORM:
+            if metrics['parameters'] != run['parameters'] or metrics['transform'] != adapter_for_graph(run['graph']).TRANSFORM:
                 raise ValueError('Default metrics are inconsistent or disclose test results.')
+            if adapter_for_graph(run['graph']) is text_training:
+                model = text_training.validate_model(payloads['model.json'])
+                self._vocabulary(run, model)
+                if model['parameters'] != run['parameters'] or model['transform'] != text_training.TRANSFORM:
+                    raise ValueError('Text model differs from the admitted recipe.')
             self._metric(metrics['validation'], 'validation', run)
-            if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= run['parameters']['epochs']:
+            if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= self._fit_count(run):
                 raise ValueError('Selected checkpoint epoch is invalid.')
-            if not isinstance(metrics['history'], list) or len(metrics['history']) != run['parameters']['epochs']:
+            if not isinstance(metrics['history'], list) or len(metrics['history']) != self._fit_count(run):
                 raise ValueError('Training history does not contain the admitted epoch count.')
             for epoch, entry in enumerate(metrics['history'], 1):
                 closed(entry, ('epoch', 'training_loss', 'validation'))
@@ -659,8 +677,13 @@ class Runs:
 
     def _vocabulary(self, run, payload):
         labels = sorted({row['annotation']['label'] for row in run['source_records']})
-        vocabulary = [{'label': label, 'folder': f'class_{index:06d}', 'index': index} for index, label in enumerate(labels)]
-        if payload['class_vocabulary'] != vocabulary or payload['class_to_idx'] != {item['folder']: item['index'] for item in vocabulary}:
+        if adapter_for_graph(run['graph']) is text_training:
+            vocabulary = [{'label': label, 'index': index} for index, label in enumerate(labels)]
+            mapping = {item['label']: item['index'] for item in vocabulary}
+        else:
+            vocabulary = [{'label': label, 'folder': f'class_{index:06d}', 'index': index} for index, label in enumerate(labels)]
+            mapping = {item['folder']: item['index'] for item in vocabulary}
+        if payload['class_vocabulary'] != vocabulary or payload['class_to_idx'] != mapping:
             raise ValueError('Result vocabulary differs from the frozen release.')
         return vocabulary
 
@@ -673,12 +696,11 @@ class Runs:
         if payload['split'] != split or len(rows) != len(sources) or len({row['id'] for row in rows}) != len(rows):
             raise ValueError('Prediction cardinality differs from the frozen split.')
         for row in rows:
-            closed(row, ('id', 'revision', 'source_revision', 'source_sha256', 'asset_sha256', 'exported_pixel_sha256',
-                         'split', 'truth_label', 'truth_index', 'predicted_label', 'predicted_index', 'probabilities'))
+            closed(row, (*self._reference_keys(run), 'split', 'truth_label', 'truth_index', 'predicted_label', 'predicted_index', 'probabilities'))
             source = sources.get(row['id'])
             if any(type(row[key]) is not int or row[key] < 1 for key in ('revision', 'source_revision')):
                 raise ValueError('Prediction revisions must be positive integers.')
-            if source is None or any(row[key] != source[key] for key in ('revision', 'source_revision', 'asset_sha256', 'exported_pixel_sha256')):
+            if source is None or any(row[key] != source['content_hash' if key == 'content_sha256' else key] for key in self._reference_keys(run)):
                 raise ValueError('Prediction references a different frozen example.')
             if row['source_sha256'] != source.get('source_sha256') or row['truth_label'] != source['annotation']['label'] or row['split'] != split:
                 raise ValueError('Prediction target or original source identity differs.')
@@ -705,10 +727,12 @@ class Runs:
         return artifacts
 
     def artifact(self, run_id, name):
-        if name not in PAYLOADS | {'artifact-manifest.json', 'release.zip'}:
+        if name not in PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown run artifact.', 'unavailable', 404)
         with self.lock:
             run = self._load(run_id)
+        if name not in self._payloads(run) | {'artifact-manifest.json', 'release.zip'}:
+            raise WorkbenchError('Unknown artifact for this recipe.', 'unavailable', 404)
         if name == 'release.zip':
             release = self.pipelines.inspect_release(run['release_id'], private=True)
             contents = Path(release['path']).read_bytes()
@@ -737,7 +761,7 @@ class Runs:
                 if source['split'] == 'test':
                     self.db.execute('INSERT INTO workspace_exposures(id,record_id,source_hash,reason,run_id,release_id,created_at) '
                                     'VALUES(%s,%s,%s,%s,%s,%s,%s)',
-                                    (uuid.uuid4().hex, source['id'], source['exported_pixel_sha256'], reason, run_id, run['release_id'], at))
+                                    (uuid.uuid4().hex, source['id'], source_content_hash(source), reason, run_id, run['release_id'], at))
             run['exposure_events'].append({'id': event_id, 'created_at': at, 'reason': reason})
             self._save(run)
         return {'id': event_id, 'run_id': run_id, 'release_id': run['release_id'], 'created_at': at, 'reason': reason,
@@ -748,8 +772,10 @@ class Runs:
             raise WorkbenchError('Choose validation or test predictions.')
         contents, _ = self.artifact(run_id, f'predictions-{split}.json')
         result = json.loads(contents)
+        with self.lock:
+            run = self._load(run_id)
         for row in result['rows']:
-            row['frozen_reference'] = {key: row[key] for key in ('id', 'revision', 'source_revision', 'source_sha256', 'asset_sha256', 'exported_pixel_sha256')}
+            row['frozen_reference'] = {key: row[key] for key in self._reference_keys(run)}
             try:
                 current = self.dataset.workbench.get(row['id'])
                 row['current_record'] = {key: current.get(key) for key in ('id', 'revision', 'source_revision', 'task', 'annotation', 'review', 'source_available')}
