@@ -22,7 +22,9 @@ stale selections do not silently lose records to become eligible.
 
 `audio_training.inspect_release` independently checks exact assets, metadata,
 reviewed target projection, class/JSONL mapping, bounds and frozen family
-bridges. It uses the existing WAV parser. Only the custody-specific PostgreSQL
+bridges. Training retains and consumes the exact immutable ZIP byte capture
+that passed this reader, including across runtime probing; it never reopens the
+release path to obtain feature samples. It uses the existing WAV parser. Only the custody-specific PostgreSQL
 exception import moves into `AudioAssets.admit`; import/rollback semantics do
 not change. `frozen_classification.py` is the shared complete-family reader,
 preserving the text reader's previous validation meaning. Existing image

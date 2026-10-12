@@ -171,6 +171,43 @@ print(json.dumps([features(zero),features(dc),features(alternating),features(qua
 
 
 class AudioExecutionTests(AudioCase):
+    def test_path_replaced_after_verification_cannot_replace_training_samples(self):
+        output = Path(self.tmp.name) / 'captured-output'; output.mkdir()
+        checked_path = Path(self.tmp.name) / 'replaceable.zip'
+        checked_path.write_bytes(self.release_path.read_bytes())
+        job = dict(schema_version=1,dataset_id=self.dataset.db.dataset_id,run_id='c'*32,graph_sha256='d'*64,
+            release_id=self.release['id'],release_sha256=self.release['id'],release_path=str(checked_path),
+            output_dir=str(output),parameters={'C':1},parent_pid=os.getpid())
+        # This is an actual trainer, with a bounded boundary hook only. A second
+        # path read would see valid ZIP/WAV structure containing zero samples.
+        script = '''import io,json,sys,zipfile,wave
+from pathlib import Path
+import audio_training as t
+job=json.loads(sys.argv[1]);original=t.probe_runtime
+def replace_after_verification():
+ with zipfile.ZipFile(job['release_path']) as z:
+  members={name:z.read(name) for name in z.namelist()}
+ for name,data in list(members.items()):
+  if name.endswith('.wav'):
+   with wave.open(io.BytesIO(data)) as r:params=r.getparams()
+   b=io.BytesIO()
+   with wave.open(b,'wb') as w:
+    w.setparams(params);w.writeframes(b'\\0'*(params.nframes*params.nchannels*params.sampwidth))
+   members[name]=b.getvalue()
+ with zipfile.ZipFile(job['release_path'],'w') as z:
+  for name,data in members.items():z.writestr(name,data)
+ return original()
+t.probe_runtime=replace_after_verification
+t.train(job)
+'''
+        from pipeline import training_environment
+        subprocess.check_output([os.environ['TULDOK_TRAINING_PYTHON'],'-c',script,json.dumps(job)],env=training_environment(),timeout=30)
+        self.assertNotEqual(hashlib.sha256(checked_path.read_bytes()).hexdigest(),self.release['id'])
+        model=json.loads((output/'model.json').read_text())
+        self.assertEqual(model['source_identity']['release_sha256'],self.release['id'])
+        self.assertGreater(model['mean'][1],.15)
+        self.assertTrue((output/'artifact-manifest.json').is_file())
+
     def test_nonconvergent_fit_has_no_published_model_or_artifact_manifest(self):
         output = Path(self.tmp.name) / 'nonconvergent-output'; output.mkdir()
         job = dict(schema_version=1,dataset_id=self.dataset.db.dataset_id,run_id='a'*32,graph_sha256='b'*64,
