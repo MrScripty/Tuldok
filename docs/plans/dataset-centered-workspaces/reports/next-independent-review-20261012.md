@@ -96,7 +96,9 @@ failure, rendered controls and complete browser behavior remain feature gates.
 ## First mesh visual checkpoint and retained-result procedure
 
 Viewed both original JPEGs from the mesh owner's
-`build/qa/workspace-mesh/run-HdbmHD`: desktop 1400×950 and narrow 390×844.
+`build/qa/workspace-mesh/run-HdbmHD`: desktop 1400×807 and narrow 390×844.
+The receipt's 1400×950 desktop size describes the requested window, while the
+published original image has 807 content pixels in height.
 The spatial drawing and seven buttons are legible; narrow buttons remain in two
 columns with a full-width reset. The diagram and explanatory text remain inside
 their card without visible horizontal clipping. First-8-of-8 sampling and
@@ -187,15 +189,101 @@ human-note export, supplementary Unicode at all declared caps, over-cap fields
 and lone-surrogate refusal. No demonstrated source blocker remains. These
 repairs do not waive final browser, screenshot, integration or CI gates.
 
+## Real audio execution and verified-byte custody
+
+Reviewed the actual CPU adapter and run integration at
+`61a9f67671fcd2efa7d872a5710e746cf9b29e29` from an immutable source archive.
+All twelve focused audio tests passed independently in 76.350 seconds without
+skips. They exercise actual child cancellation/drain and fresh retry, abrupt
+supervisor death and interrupted reopen, binary and three-class training,
+nonconvergence refusal, train-only scaling, exact interval/channel selection,
+source-family guards and unavailable-runtime refusal. The numeric oracles use
+analytic PCM cases and a scalar standard-library DFT/probability implementation;
+they include silence, DC, Nyquist, quarter-band boundaries and an odd 129-frame
+impulse. This is bounded audio classification, with no ASR or acquired-audio
+quality claim.
+
+That passing suite did not cover one independently demonstrated **P2 custody
+defect**. After the reader verified captured ZIP bytes, training reopened the
+release path after its runtime probe. A probe-boundary replacement with a valid
+ZIP containing zero-valued WAVs made the actual trainer publish an artifact
+manifest under the original frozen release hash while its saved RMS feature
+mean was zero. The original and replacement SHA-256 values were respectively
+`113287da9de23d15b56cc5cdcacf74371f60826f8dd3c64bc323d67d32527d89`
+and `0d56974daca150c674b4b91f15789528597a6b6ebde8898462408f5e61c38ff5`.
+Review used a separate disposable PostgreSQL catalog and retained no user data.
+
+Repair `5db224059162e2600bb4f05d754de167f4d752f3` is independently accepted.
+The private reader returns its validated manifest and owned immutable byte
+capture; training reads `BytesIO` over that same capture. Public
+`inspect_release` still returns only the manifest. No second path read or
+fallback can select different samples. All thirteen focused tests passed from
+an immutable archive in 55.721 seconds with no skips. A separate reviewer probe
+atomically replaced the path after verification and computed an independent
+scalar RMS oracle from the original training intervals: expected mean
+`0.2006054927052682`, saved mean `0.20060549270526823`. The replacement contained
+zero PCM; the published model retained the original release identity and used
+the original samples. Local evidence is
+`/tmp/tuldok-audio-owned-capture-independent-5db2240.json`, with rerunnable probe
+`/tmp/tuldok-audio-owned-capture-independent.py`. No demonstrated audio source
+blocker remains after this repair.
+
+Independently compared root's `before.json` and `audio-final.json` in
+`/tmp/tuldok-audio-mesh-retained-20261012`: all 133,437 bytes match. This is the
+retained image/text proof at clean 61a9f67, including both public completed runs,
+both prediction sets, raw rows and 68 managed files. The reviewer compared
+evidence files without reopening retained catalogs. Combined-candidate retained
+evidence remains a separate integration gate.
+
+## Final mesh source and visual qualification
+
+Accepted final mesh source and visual evidence published at
+`dfe7a3e0a1405f5739153382902467c115699cd4`. Its clean browser receipt binds
+`0685d91afd195e64c5f4b1793f0a28be3d470d1d`; runtime changes since repaired
+8320c90 are limited to accurate explanatory HTML about draft import, explicit
+human review, original geometry and source declarations. Later commit
+`1ed743316afd7a4d5447a7c4a927561bc5fc501f` supplies `CustomEvent` and
+`dispatchEvent` to the existing preference-controller VM without removing or
+weakening assertions. The reviewer independently reran preference and mesh
+controller suites successfully.
+
+Viewed all four final original JPEGs in the
+[mesh gallery](../../../images/workspaces-mesh-20261012/README.md). Embedded
+Data at 1440×1000 and 390×844 has readable spatial controls without horizontal
+clipping. The 1400×807 release view shows a usable current download beside
+bounded integrity validation and its selected-record family limit. The genuine
+native-200% 1400×807 image has readable controls and visible keyboard focus.
+All six gallery file lengths/hashes match the manifest; all four final files
+are byte-identical to `build/qa/workspace-mesh/run-PgDfuJ` originals. The receipt
+records clean source, authored real PLY bytes and native zoom, without physics
+or general-reader claims.
+
+Inspected the final real-browser harness: it uses embedded `/workspaces` Data,
+checks actual raw-asset byte equality, holds real inspection/validation replies,
+checks repeat-submit suppression and stale-response clearing, and preserves a
+usable canonical download when the narrow mesh reader refuses a mixed release.
+Keyboard review submits the real form; native zoom uses browser shortcuts and
+observes both device-pixel ratio and halved content width. This supports the
+bounded mesh flow and does not establish general PLY conformance or completion
+of all 3D work.
+
+## Serial integration review
+
+Independently checked merge
+`9d9e18eb5038e3fce02c82f090ed885c0e68fda2`: its conflicted workbench HTML is
+byte-for-byte the first parent's audio HTML with only the two admitted mesh
+changes applied (stylesheet and explanatory paragraph). No resolution drift
+was found. The audio repair and remaining event-stub qualification are included
+in candidate `148e7af`; full combined execution and final clean audio visuals
+were still pending when this checkpoint was recorded.
+
 ## Pending qualification
 
-- Review final candidate SHAs and final original screenshots.
-- Observe the complete audio Data → edited Pipeline → real Runs → correction
-  path, plus independent numeric/PCM and retained image/text evidence.
-- Observe mesh import → spatial inspection → review → freeze → downloaded
-  archive validation, including independent coordinate/topology expectations.
-- Inspect keyboard/repeated/loading/error/stale/empty behavior and responsive
-  evidence; verify source-bound screenshots and honest capability text.
+- Review final clean audio candidate gallery and browser harness for the complete
+  Data → edited Pipeline → real Runs → correction path, including keyboard,
+  repeated/loading/error/stale/empty behavior and responsive evidence.
+- Verify combined-candidate retained image/text evidence and complete local
+  qualification results against the exact integrated source.
 - Review serial integration and applicable automatic feature CI to terminal
   outcomes. Failed evidence remains visible until a scoped repair qualifies.
 
