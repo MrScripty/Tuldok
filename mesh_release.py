@@ -65,7 +65,7 @@ def archive(raw, maximum_entries, maximum_bytes):
         entries = value.infolist()
         names = value.namelist()
         require(len(entries) <= maximum_entries and len(names) == len(set(names)), 'archive has too many or duplicate entries.')
-        require(not value.comment and raw[:4] == b'PK\x03\x04'
+        require(entries and entries[0].header_offset == 0 and not value.comment and raw[:4] == b'PK\x03\x04'
                 and raw[-22:-18] == b'PK\x05\x06', 'archive must have no preamble, comment or trailing bytes.')
         require(all(entry.compress_type == zipfile.ZIP_STORED and not entry.flag_bits & 1
                     and entry.file_size == entry.compress_size for entry in entries),
@@ -89,8 +89,8 @@ def validate_row(row, release, used_ids):
     require(row['split'] in SPLITS, 'invalid frozen split.')
     for field, cap in (('name', 200), ('created_at', 120), ('updated_at', 120)):
         text_value(row[field], field, cap)
-    require(validate_annotation('mesh_geometry', row['annotation'], row) == row['annotation']
-            and row['annotation']['note'].strip(), 'nonempty canonical human inspection note required.')
+    require(validate_annotation('mesh_geometry', row['annotation'], row) == row['annotation'],
+            'canonical human inspection annotation required.')
     require(type(row['provenance']) is dict, 'record provenance must be an object.')
     text_value(row['provenance'].get('rights'), 'Rights note', 1000)
     filename = 'assets/' + row['id'] + '.zip'

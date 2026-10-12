@@ -126,7 +126,7 @@ let meshReleaseGeneration=0,meshReleaseController=null,meshPublishedRelease=null
 function decodeMeshReleaseReport(value,release) {
   const exact=(item,keys)=>item&&typeof item==='object'&&!Array.isArray(item)&&Object.keys(item).sort().join()===keys.sort().join();
   const integer=(n,low,high)=>Number.isInteger(n)&&n>=low&&n<=high;
-  const string=(s,cap)=>typeof s==='string'&&s.length>0&&s.length<=cap;
+  const string=(s,cap)=>typeof s==='string'&&s.length>0&&[...s].length<=cap&&[...s].every(c=>c.codePointAt(0)<0xd800||c.codePointAt(0)>0xdfff);
   const hash=s=>typeof s==='string'&&/^[a-f0-9]{64}$/.test(s);
   const vector=v=>Array.isArray(v)&&v.length===3&&v.every(n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=1e12);
   const keys=['schema_version','validation','release_sha256','mesh_count','triangle_count','vertex_count','split_counts','family_scope','limitations','meshes'];

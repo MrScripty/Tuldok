@@ -44,11 +44,11 @@ class MeshRelease(unittest.TestCase):
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
 
-    def freeze(self, names=('asymmetric-prism',)):
+    def freeze(self, names=('asymmetric-prism',), note='Inspected authored geometry and source declarations.'):
         rows = []
         for name in names:
             row = meshes.admit(self.workbench, body(*fixture(name), name=name, rights='Project-authored fixture'))
-            row = self.workbench.save(row['id'], dict(row, annotation={'note': 'Inspected authored geometry and source declarations.'}, review='human_reviewed'))
+            row = self.workbench.save(row['id'], dict(row, annotation={'note': note}, review='human_reviewed'))
             rows.append(row)
         request = dict(items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows], ratios=dict(train=100, validation=0, test=0), seed=4)
         preview = self.dataset.releases.preview(request)
@@ -100,6 +100,29 @@ class MeshRelease(unittest.TestCase):
             mesh_release.validate_bytes(rewrite(raw, lambda entries: change_manifest(entries, lambda m: m['records'][0].update(name='Changed'), False)))
         with self.assertRaisesRegex(WorkbenchError, 'SHA256 differs'):
             mesh_release.validate_bytes(raw, '0' * 64)
+
+    def test_existing_human_review_with_empty_optional_note_remains_valid(self):
+        raw, rows = self.freeze(note='')
+        self.assertEqual(rows[0]['annotation'], {'note': ''})
+        report = mesh_release.validate_bytes(raw)
+        self.assertEqual(report['meshes'][0]['review'], 'human_reviewed')
+        self.assertEqual(self.workbench.get(rows[0]['id'])['annotation'], {'note': ''})
+
+    def test_actual_unicode_codepoint_boundaries_roundtrip(self):
+        raw, sidecar = fixture('asymmetric-prism')
+        manifest = json.loads(sidecar)
+        manifest['coordinate_system']['frame'] = '\U0001f600' * 120
+        for key in manifest['provenance']:
+            manifest['provenance'][key] = '\U0001f600' * 1000
+        row = meshes.admit(self.workbench, body(raw, encode(manifest).encode(), name='\U0001f600' * 200, rights='\U0001f600' * 1000))
+        row = self.workbench.save(row['id'], dict(row, annotation={'note': ''}, review='human_reviewed'))
+        request = dict(items=[{key: row[key] for key in ('id', 'revision', 'source_revision')}], ratios=dict(train=100, validation=0, test=0), seed=4)
+        preview = self.dataset.releases.preview(request)
+        release = self.dataset.releases.create(dict(request, preview_token=preview['preview_token']))
+        report = mesh_release.validate_release(self.dataset.releases.locate(release['id']))
+        self.assertEqual(report['meshes'][0]['coordinate_system']['frame'], '\U0001f600' * 120)
+        self.assertEqual(report['meshes'][0]['name'], '\U0001f600' * 200)
+        self.assertEqual(report['meshes'][0]['rights'], '\U0001f600' * 1000)
 
     def test_mixed_unknown_archive_and_unavailable_outcomes(self):
         raw, _ = self.freeze()
