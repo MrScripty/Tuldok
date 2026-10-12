@@ -1,6 +1,6 @@
 """Versioned real classification recipes and their authoritative admission checks.
 
-This owns two closed classification recipes, not a general-purpose graph engine.
+This owns three closed classification recipes, not a general-purpose graph engine.
 Release custody and CPU adapter eligibility remain with their existing owners.
 """
 import copy
@@ -18,6 +18,7 @@ import zipfile
 from workbench import WorkbenchError, encode, text_value
 import image_training
 import text_training
+import audio_training
 
 ID = re.compile(r'^[a-f0-9]{32}$')
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -96,13 +97,13 @@ def decode_graph(value):
     return json.loads(serialized)
 
 
-ADAPTERS = {'image_classification': image_training, 'text_classification': text_training}
+ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training}
 
 
 def adapter_for_graph(graph):
     recipe = graph.get('recipe', 'image_classification')
     if not isinstance(recipe, str) or recipe not in ADAPTERS:
-        raise WorkbenchError('Only the versioned image and text classification recipes are supported.', 'unsupported', 400)
+        raise WorkbenchError('Only the versioned image, text and audio classification recipes are supported.', 'unsupported', 400)
     return ADAPTERS[recipe]
 
 
@@ -110,6 +111,8 @@ def ports_for_graph(graph):
     ports = dict(PORTS)
     if adapter_for_graph(graph) is text_training:
         ports.update(validate=('frozen_release', 'text_export'), train=('text_export', 'trained_model'))
+    if adapter_for_graph(graph) is audio_training:
+        ports.update(validate=('frozen_release', 'audio_export'), train=('audio_export', 'trained_model'))
     return ports
 
 
@@ -121,6 +124,8 @@ def training_environment():
 
 def source_content_hash(row):
     # Canonical text bytes and decoded image pixels are distinct evidence types.
+    if row['kind'] == 'audio':
+        return row['audio_family_sha256']
     return row['content_hash'] if row['kind'] == 'text' else row['exported_pixel_sha256']
 
 
@@ -139,9 +144,9 @@ class Pipelines:
                     'recipe': list(TYPES)}
         image = definition('image_classification', image_training)
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
-                'recipes': [image, definition('text_classification', text_training)],
+                'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training)],
                 'limitations': ['Closed image TinyCNN and text TF-IDF + MultinomialNB CPU recipes only.',
-                                'Audio and 3D execution are unsupported.']}
+                                'Audio release/graph inspection is available; audio execution and ASR are unavailable in this checkpoint. 3D execution is unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')
@@ -223,9 +228,9 @@ class Pipelines:
                     raise WorkbenchError('Frozen manifest exceeds the supported bound.')
                 format_name = image_training._json(raw, 'Release manifest').get('format')
             recipe = {'image_classification_v1': 'image_classification',
-                      'text_classification_v1': 'text_classification'}.get(format_name)
+                      'text_classification_v1': 'text_classification', 'audio_classification_v1': 'audio_classification'}.get(format_name)
             if recipe is None:
-                raise WorkbenchError('Choose a frozen image_classification_v1 or text_classification_v1 release.', 'unsupported', 409)
+                raise WorkbenchError('Choose a frozen image_classification_v1, text_classification_v1 or audio_classification_v1 release.', 'unsupported', 409)
             manifest = ADAPTERS[recipe].inspect_release(path, release_id)
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None
@@ -240,6 +245,10 @@ class Pipelines:
                   'split_counts': {split: sum(row['split'] == split for row in records) for split in ('train', 'validation', 'test')},
                   'prior_test_exposure': exposure,
                   'status': 'available'}
+        if recipe == 'audio_classification':
+            result['audio_summary'] = {'sample_rates_hz': sorted({row['sample_rate_hz'] for row in records}),
+                'analyzed_frames': sum(row['end_frame'] - row['start_frame'] for row in records),
+                'coordinate_contract': audio_training.projection.CONTRACT}
         if private:
             result['manifest'] = manifest
             result['path'] = str(path)
@@ -290,7 +299,9 @@ class Pipelines:
         # The worker imports the existing frozen-export contract, which in turn
         # imports Workbench's annotation types. Pin that small actual import set.
         adapter = adapter_for_graph({'recipe': recipe})
-        names = ('image_training.py', 'image_classification_export.py', 'workbench.py') if adapter is image_training else ('text_training.py', 'text_classification_export.py', 'image_training.py', 'workbench.py')
+        names = ('image_training.py', 'image_classification_export.py', 'workbench.py') if adapter is image_training else ('text_training.py', 'text_classification_export.py', 'frozen_classification.py', 'image_training.py', 'workbench.py')
+        if adapter is audio_training:
+            names = ('audio_training.py', 'audio_classification_export.py', 'audio_assets.py', 'frozen_classification.py', 'image_training.py', 'workbench.py')
         files = {name: hashlib.sha256((self.source_path / name).read_bytes()).hexdigest() for name in names}
         return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
 

@@ -68,8 +68,8 @@
     audio: {
       state: "available",
       reason:
-        "Bounded PCM16 WAV import, playback, timed human review and frozen export in the current catalog. Audio Pipeline/Runs execution and ASR are unavailable.",
-      gate: "M4 Data qualified; audio recipe and ASR pending",
+        "Bounded PCM16 WAV import, playback, timed human review and frozen export in the current catalog. One reviewed labelled interval per record can freeze an audio classification release and edit a real graph. Audio execution and ASR are unavailable in this checkpoint.",
+      gate: "M4 Data qualified; audio execution qualification pending; ASR unavailable",
     },
     mesh: {
       state: "available",
