@@ -12,7 +12,7 @@ class Element {
 const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 const requests=[],listeners={};
 const context=vm.createContext({AbortController,console,document:{createElement:()=>new Element(),createElementNS:()=>new Element()},
-  window:{addEventListener:(name,fn)=>listeners[name]=fn},$:element,current:null,
+  window:{addEventListener:(name,fn)=>(listeners[name]??=[]).push(fn)},$:element,current:null,
   fetch:(url,options)=>new Promise(resolve=>requests.push({url,options,resolve})),api:()=>{throw Error('Unexpected import');},refresh:async()=>{}});
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../static/meshes.js'),'utf8'),context);
 const run=source=>vm.runInContext(source,context),flush=()=>new Promise(resolve=>setImmediate(resolve));
@@ -29,6 +29,17 @@ function show(value){context.current=value;context.fixture=value;run('meshShown(
   for(const figure of element('mesh-projections').children){assert.match(figure.children[0].textContent,/m · tiny/);assert.ok(figure.children[1].attrs['aria-label']);for(const polygon of figure.children[1].children){assert.ok(!/Infinity|NaN/.test(polygon.attrs.points));for(const pair of polygon.attrs.points.split(' ')){const [x,y]=pair.split(',').map(Number);assert.ok(x>=0&&x<=240&&y>=0&&y<=220);}}}
   show(record);const stale=requests.shift();show({id:'c'.repeat(32),kind:'text'});reply(stale,{error:'Stale unavailable'},false);await flush();assert.equal(element('mesh-inspection').hidden,true);assert.equal(element('mesh-preview-status').textContent,'');
   show(record);reply(requests.shift(),{...payload,content_hash:'0'.repeat(64)});await flush();assert.equal(element('mesh-preview-status').textContent,'Invalid geometry inspection response.');assert.equal(element('mesh-projections').children.length,0);
-  show(record);const shutdown=requests.shift();listeners.pagehide();assert.equal(shutdown.options.signal.aborted,true);reply(shutdown,payload);await flush();assert.equal(element('mesh-projections').children.length,0);
+  show(record);const shutdown=requests.shift();listeners.pagehide.forEach(fn=>fn());assert.equal(shutdown.options.signal.aborted,true);reply(shutdown,payload);await flush();assert.equal(element('mesh-projections').children.length,0);
+  const published={id:'d'.repeat(64),url:'/api/workbench/releases/'+ 'd'.repeat(64)+'.zip'};
+  context.published=published;run('meshReleasePublished({detail:published})');
+  const firstValidation=run('validateMeshRelease()');const validating=requests.shift();
+  run('validateMeshRelease()');assert.equal(requests.length,0);assert.equal(element('mesh-validate-release').disabled,true);
+  assert.match(element('mesh-release-status').textContent,/Validating/);
+  run('meshReleaseCleared()');assert.equal(validating.options.signal.aborted,true);
+  reply(validating,{error:'Old failure'},false);await firstValidation;assert.equal(element('mesh-release-validation').hidden,true);
+  run('meshReleasePublished({detail:published})');const failed=run('validateMeshRelease()');reply(requests.shift(),{error:'Unsupported mixed release'},false);await failed;
+  assert.equal(element('mesh-release-status').textContent,'Unsupported mixed release');assert.equal(element('mesh-validate-release').disabled,false);
+  run('meshReleasePublished({detail:published})');const malformed=run('validateMeshRelease()');reply(requests.shift(),{schema_version:1});await malformed;
+  assert.equal(element('mesh-release-status').textContent,'Invalid mesh release validation response.');
   console.log('Mesh projection/controller: finite tiny-coordinate wireframes, key-order-independent proof, same-ID/leave/shutdown fencing and malformed-response rejection preserve note ownership.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

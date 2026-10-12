@@ -1,0 +1,12 @@
+#mesh-spatial{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(170px,1fr);gap:1rem;margin:.7rem 0;border:1px solid #cad4da;border-radius:10px;background:#f6fafb;padding:.8rem}
+#mesh-spatial[hidden]{display:none}
+#mesh-spatial-svg{display:block;width:100%;max-height:340px;background:#edf4f6;border-radius:6px;overflow:hidden}
+#mesh-spatial-svg polygon{fill:#31818c12;stroke:#276674;stroke-width:1.2;vector-effect:non-scaling-stroke}
+#mesh-spatial-svg line{stroke-width:2}.mesh-axis-0{stroke:#ad4545}.mesh-axis-1{stroke:#397043}.mesh-axis-2{stroke:#3f68a0}
+#mesh-spatial-svg text{font:12px system-ui;fill:#23343b}
+.mesh-view-controls{min-width:0;align-self:center}.mesh-view-controls strong{font-size:1rem}.mesh-view-controls p{margin:.35rem 0 .65rem}
+.mesh-view-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem}.mesh-view-buttons button{margin:0;padding:.45rem .3rem;white-space:normal;font-size:.85rem}.mesh-view-buttons button:last-child{grid-column:1/-1}
+.mesh-view-buttons button:focus-visible,#mesh-release-validation button:focus-visible{outline:3px solid #186979;outline-offset:2px}
+.mesh-view-help{font-size:.8rem;color:#52616a}#mesh-view-position{font-size:.8rem;font-variant-numeric:tabular-nums}
+#mesh-release-validation{margin-top:.6rem}#mesh-release-validation[hidden]{display:none}#mesh-release-validation p{overflow-wrap:anywhere;margin:.4rem 0}#mesh-release-validation ul{padding-left:1.2rem}
+@media(max-width:650px){#mesh-spatial{grid-template-columns:minmax(0,1fr);gap:.6rem;padding:.6rem}#mesh-spatial-svg{max-height:270px}.mesh-view-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}.mesh-view-help{margin-bottom:0}}
