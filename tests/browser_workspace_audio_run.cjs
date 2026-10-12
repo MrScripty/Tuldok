@@ -304,11 +304,13 @@ function launch(command, args, options) {
   await screenshot('catalog-audio-1440',1440,900);await screenshot('catalog-audio-390',390,844);
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
+  await click('[aria-label="Edit audio interval 1"]',true);
   await evaluate(`${element('#audio-inspection',true)}.scrollIntoView({block:'start'})`);
   await pause(80);
   const audioShot=await send('Page.captureScreenshot',screenshotOptions);
   fs.writeFileSync(path.join(report,'audio-source-interval-390.jpg'),Buffer.from(audioShot.data,'base64'));
-  captures.push({file:'audio-source-interval-390.jpg',width:390,height:844,quality:85,scrolled_to:'actual audio waveform and source interval controls'});
+  captures.push({file:'audio-source-interval-390.jpg',width:390,height:844,quality:85,scrolled_to:'actual audio waveform and saved source interval controls'});
+  await click('#audio-clear-fields',true);
   assert.ok(await evaluate(`${doc(true)}.documentElement.scrollWidth<=${doc(true)}.defaultView.innerWidth+1`));
   await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
   check('Data UI previews class coverage, freezes and downloads original WAV classification release');
@@ -423,6 +425,10 @@ function launch(command, args, options) {
   const detailShot = await send("Page.captureScreenshot", screenshotOptions);
   fs.writeFileSync(path.join(report, "results-detail-390.jpg"), Buffer.from(detailShot.data, "base64"));
   captures.push({file:"results-detail-390.jpg",width:390,height:844,quality:85,scrolled_to:"validation metrics"});
+  await evaluate('document.querySelector(".audio-result-reference").closest(".prediction").scrollIntoView({block:"start"})');
+  const referenceShot = await send("Page.captureScreenshot", screenshotOptions);
+  fs.writeFileSync(path.join(report, "audio-result-frames-390.jpg"), Buffer.from(referenceShot.data, "base64"));
+  captures.push({file:"audio-result-frames-390.jpg",width:390,height:844,quality:85,scrolled_to:"exact frozen audio source/frame/channel prediction"});
   assert.ok(!(await text("#real-runs-root")).includes("Train TinyCNN"));
   if (process.env.TULDOK_NATIVE_ZOOM) {
     await send('Emulation.clearDeviceMetricsOverride');
