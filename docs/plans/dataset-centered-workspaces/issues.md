@@ -31,3 +31,10 @@ Integrated I12 retains MB branch issue I11; integrated I11 remains the UI consum
 - I10/I11/I12: Parent accepted exact MB9e94d69; combined907da2f passed 93 lifecycle steps. The final image checkpoint acac0d3 passed all 98 steps without skips, including 507 Python tests and the pinned consumers. Earlier failures remain in the evidence history.
 - The later inherited Pumas browser readiness failure was reproduced, repaired only in the test, independently reviewed and closed by complete successor CI38180720462; see [M2 verification](reports/m2/verification.md).
 - I3/I4/I6/I8 remain their stated bounded follow-ups: unreconciled 3D branch, unavailable Engine MCP, unqualified production ASR and unselected volume consumer. They do not turn the delivered bounded image workflow into an unqualified native/modality claim.
+
+
+## 2026-10-12 bounded text/audio follow-through
+
+- Independent review accepted the new text, WAV and explicit schema3 sources and their combined integration. Demonstrated defects in thread limits, archive failures, unknown lineage, hidden audio form validity, late playback and nested rollback custody were fixed with regressions before acceptance.
+- The combined audio/text family boundary preserves unselected bridges without enabling audio training. A real old image result passed complete-backup/explicit-upgrade/reopen preservation checks. See [combined evidence](reports/combined-20261012.md).
+- PR34 qualifies the preserved image base; the new stacked draft requires its own automatic hosted pass. Existing PR32/33 checks remain separate and unwaived. Audio Pipeline/Runs, production ASR, additional 3D and native Pantograph remain pending under their original bounds.
