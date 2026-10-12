@@ -1,8 +1,9 @@
 # Local WAV data v1
 
 The audio owner accepts original local audio, timed human annotation, review and
-canonical frozen export. Audio ASR, training, resampling, downmix, crop and a
-Pipeline/Runs recipe remain unavailable. Playing a channel is a transient browser
+canonical frozen export. Exactly one reviewed labelled interval per recording
+can additionally use the [bounded local CPU classification recipe](workspace-audio-training.md)
+through Pipeline and Runs. ASR, resampling, downmix and crop remain unavailable. Playing a channel is a transient browser
 preview, not a derived dataset asset or inference result.
 
 ## Source and ownership

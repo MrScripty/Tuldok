@@ -4,11 +4,17 @@ import copy
 import hashlib
 import importlib.util
 import json
+import math
+import os
 from pathlib import Path
+import struct
+import subprocess
 import tempfile
+import time
 import unittest
 import uuid
 import zipfile
+from unittest.mock import patch
 
 from app import Dataset
 from workbench import WorkbenchError, encode
@@ -62,6 +68,22 @@ class AudioCase(unittest.TestCase):
             for name, contents in members.items(): archive.writestr(name, contents)
         return path, hashlib.sha256(path.read_bytes()).hexdigest()
 
+    def submit(self, key):
+        validation = self.dataset.pipelines.validate(self.graph['id'], {'revision': self.graph['revision']})
+        self.assertTrue(validation['valid'], validation)
+        body = dict(request_key=key, graph_id=self.graph['id'], graph_revision=self.graph['revision'],
+                    validation_token=validation['validation_token'])
+        return self.dataset.runs.submit(body), body
+
+    def await_state(self, run_id, states=('completed', 'failed', 'unknown')):
+        deadline = time.monotonic() + 45
+        while time.monotonic() < deadline:
+            value = self.dataset.runs.get(run_id)
+            if value['state'] in states:
+                return value
+            time.sleep(.03)
+        self.fail('Audio run did not reach a terminal state.')
+
 
 class AudioReleaseTests(AudioCase):
     def test_originals_and_source_coordinates_survive_real_release(self):
@@ -100,14 +122,219 @@ class AudioReleaseTests(AudioCase):
             with self.subTest(mutation=mutation), self.assertRaises(training.TrainingError):
                 training.inspect_release(*self.altered(members_mutate=mutation))
 
-    def test_editable_graph_and_honest_first_checkpoint_unavailable(self):
+    def test_editable_graph_runtime_and_missing_runtime_refusal(self):
         self.assertEqual(self.graph['edges'][1]['output'], 'audio_export')
         edited = copy.deepcopy(self.graph); edited['nodes'][2]['parameters']['C'] = .5
         saved = self.dataset.pipelines.save(edited['id'], {'revision': 1, 'document': edited})
         result = self.dataset.pipelines.validate(saved['id'], {'revision': 2})
-        self.assertFalse(result['valid']); self.assertEqual(result['status'], 'unavailable')
+        self.assertTrue(result['valid'], result)
         self.assertEqual(result['release']['records'], 18)
         self.assertEqual(result['release']['audio_summary']['analyzed_frames'], 18 * 1024)
-        with self.assertRaises(WorkbenchError):
-            self.dataset.runs.submit(dict(request_key='audio-checkpoint-refused', graph_id=saved['id'], graph_revision=2, validation_token='no'))
+        from unittest.mock import patch
+        with patch.dict('os.environ', {'TULDOK_TRAINING_PYTHON': '/missing/audio-python'}):
+            unavailable = self.dataset.pipelines.validate(saved['id'], {'revision': 2})
+            self.assertFalse(unavailable['valid']); self.assertEqual(unavailable['status'], 'unavailable')
+            with self.assertRaises(WorkbenchError):
+                self.dataset.runs.submit(dict(request_key='audio-runtime-refused', graph_id=saved['id'], graph_revision=2, validation_token=result['validation_token']))
         self.assertEqual(self.dataset.runs.list(), [])
+
+
+class AudioNumericTests(unittest.TestCase):
+    def test_independent_analytic_pcm_features_and_interval_boundaries(self):
+        # No FFT implementation is used by this oracle. These exact sequences
+        # have analytic spectra: silence, DC, Nyquist and an exact quarter band.
+        script = '''import audio_training as t,io,wave,struct,json
+def features(samples, channel=0, start=0, end=None):
+ b=io.BytesIO()
+ with wave.open(b,'wb') as w:
+  w.setparams((2,2,8000,0,'NONE','not compressed'))
+  w.writeframes(b''.join(struct.pack('<hh',*p) for p in samples))
+ return t.extract_features(b.getvalue(),start,len(samples) if end is None else end,channel)
+zero=[(0,0)]*128
+dc=[(16384,-8192)]*128
+alternating=[(16384 if i%2==0 else -16384,0) for i in range(128)]
+quarter=[([0,16384,0,-16384][i%4],0) for i in range(128)]
+framed=[(30000,30000)]*16+dc+[(30000,30000)]*16
+odd_impulse=[(16384,0)]+[(0,0)]*128
+print(json.dumps([features(zero),features(dc),features(alternating),features(quarter),features(framed,1,16,144),features(odd_impulse)]))
+'''
+        from pipeline import training_environment
+        values = json.loads(subprocess.check_output([os.environ['TULDOK_TRAINING_PYTHON'], '-c', script], env=training_environment()))
+        expected = [[0] * 8, [.5, .5, 0, 0, 1, 0, 0, 0],
+                    [0, .5, 1, 1, 0, 0, 0, 1],
+                    [0, math.sqrt(.125), 63 / 127, .5, 0, 0, 1, 0],
+                    [-.25, .25, 0, 0, 1, 0, 0, 0],
+                    [.5/129, .5/math.sqrt(129), 0, 64/129, 17/65, 16/65, 16/65, 16/65]]
+        for actual, oracle in zip(values, expected, strict=True):
+            for value, reference in zip(actual, oracle, strict=True):
+                self.assertAlmostEqual(value, reference, places=12)
+
+
+class AudioExecutionTests(AudioCase):
+    def test_nonconvergent_fit_has_no_published_model_or_artifact_manifest(self):
+        output = Path(self.tmp.name) / 'nonconvergent-output'; output.mkdir()
+        job = dict(schema_version=1,dataset_id=self.dataset.db.dataset_id,run_id='a'*32,graph_sha256='b'*64,
+            release_id=self.release['id'],release_sha256=self.release['id'],release_path=str(self.release_path),
+            output_dir=str(output),parameters={'C':.5},parent_pid=os.getpid())
+        script = '''import json,sys,warnings,audio_training as t
+from sklearn.linear_model import LogisticRegression
+from sklearn.exceptions import ConvergenceWarning
+original=LogisticRegression.fit
+def fail_candidate(self,*args,**kwargs):
+ if self.C==.5: warnings.warn('Injected real estimator nonconvergence',ConvergenceWarning)
+ return original(self,*args,**kwargs)
+LogisticRegression.fit=fail_candidate
+try:t.train(json.loads(sys.argv[1]))
+except t.TrainingError as error:print(json.dumps({'outcome':error.outcome,'message':str(error)}))
+'''
+        from pipeline import training_environment
+        lines = subprocess.check_output([os.environ['TULDOK_TRAINING_PYTHON'],'-c',script,json.dumps(job)],env=training_environment()).splitlines()
+        error = json.loads(lines[-1])
+        self.assertEqual(error['outcome'],'failed');self.assertIn('did not converge',error['message'])
+        self.assertEqual(list(output.iterdir()),[])
+
+    def test_multiclass_json_reader_matches_actual_three_class_fit(self):
+        revised = []
+        for index, row in enumerate(self.rows):
+            annotation = copy.deepcopy(row['annotation'])
+            annotation['segments'][0]['label'] = 'class-' + str(index % 3)
+            revised.append(self.dataset.workbench.save(row['id'], dict(revision=row['revision'], source_revision=row['source_revision'],
+                task='audio_timed', annotation=annotation, groups=row['groups'], review='human_reviewed')))
+        body = dict(self.body, items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in revised])
+        for seed in range(100):
+            body['seed'] = seed
+            preview = self.dataset.releases.preview(body)
+            if preview['eligible']: break
+        self.assertTrue(preview['eligible'], preview)
+        release = self.dataset.releases.create(dict(body, preview_token=preview['preview_token']))
+        self.graph = self.dataset.pipelines.create(dict(name='Three-class audio', recipe='audio_classification', release_id=release['id']))
+        run, _ = self.submit('audio-three-class-001')
+        result = self.await_state(run['id'])
+        self.assertEqual(result['state'], 'completed', result)
+        model = json.loads(self.dataset.runs.artifact(run['id'], 'model.json')[0])
+        self.assertEqual(len(model['coefficients']), 3)
+        self.assertTrue(all(len(row['probabilities']) == 3 for row in self.dataset.runs.predictions(run['id'])['rows']))
+
+    def test_real_fit_train_only_json_results_correction_exposure_and_reopen(self):
+        run, body = self.submit('audio-real-fit-001')
+        self.assertEqual(self.dataset.runs.submit(body)['id'], run['id'])
+        result = self.await_state(run['id'])
+        self.assertEqual(result['state'], 'completed', result)
+        model = json.loads(self.dataset.runs.artifact(run['id'], 'model.json')[0])
+        predictions = self.dataset.runs.predictions(run['id'])
+        self.assertTrue(predictions['rows'])
+        self.assertEqual(model['transform']['fit_scope'], 'train')
+        # Independently recover the train mean and binary probabilities using
+        # scalar PCM/DFT, without sklearn, NumPy or the production feature reader.
+        def scalar_features(row):
+            import io, wave, cmath
+            with wave.open(io.BytesIO(self.members[row['asset']])) as reader:
+                pairs = list(struct.iter_unpack('<hh', reader.readframes(reader.getnframes())))
+            x = [pair[row['channel']] / 32768 for pair in pairs[row['start_frame']:row['end_frame']]]
+            n = len(x)
+            power = [abs(sum(value * cmath.exp(-2j * math.pi * k * i / n) for i, value in enumerate(x))) ** 2 for k in range(n // 2 + 1)]
+            frequencies = [2 * k / n for k in range(len(power))]
+            total = sum(power)
+            return [sum(x) / n, math.sqrt(sum(v*v for v in x) / n), sum((a<0)!=(b<0) for a,b in zip(x,x[1:]))/(n-1),
+                    sum(f*p for f,p in zip(frequencies,power))/total if total else 0,
+                    *[sum(p for f,p in zip(frequencies,power) if low<=f and (f<high or high==1 and f<=1))/total if total else 0
+                      for low,high in zip([0,.25,.5,.75],[.25,.5,.75,1])]]
+        train = [row for row in self.manifest['records'] if row['split'] == 'train']
+        features = [scalar_features(row) for row in train]
+        for index, mean in enumerate(model['mean']):
+            self.assertAlmostEqual(mean, sum(row[index] for row in features)/len(features), places=10)
+        source = next(row for row in self.manifest['records'] if row['id'] == predictions['rows'][0]['id'])
+        x = scalar_features(source)
+        score = sum((v-m)/s*w for v,m,s,w in zip(x,model['mean'],model['scale'],model['coefficients'][0]))+model['intercepts'][0]
+        positive = 1/(1+math.exp(-score))
+        self.assertAlmostEqual(predictions['rows'][0]['probabilities'][1],positive,places=9)
+        self.assertEqual({key: predictions['rows'][0][key] for key in training.REFERENCE_KEYS}, {key: source[key] for key in training.REFERENCE_KEYS})
+        with self.assertRaises(WorkbenchError): self.dataset.runs.artifact(run['id'], 'test-metrics.json')
+        self.dataset.runs.expose_test(run['id'], {'reason': 'Authored acceptance exposure; not fresh holdout.'})
+        current = self.dataset.workbench.get(source['id'])
+        annotation = copy.deepcopy(current['annotation']); annotation['segments'][0]['label'] = 'corrected draft'
+        self.dataset.workbench.save(current['id'], dict(revision=current['revision'],source_revision=current['source_revision'],
+            task='audio_timed',annotation=annotation,groups=current['groups'],review='draft'))
+        old_bytes = self.release_path.read_bytes()
+        self.dataset.close(); self.dataset = Dataset(self.tmp.name)
+        self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'completed')
+        reopened = self.dataset.runs.predictions(run['id'])
+        self.assertEqual(reopened['rows'][0]['frozen_reference'],predictions['rows'][0]['frozen_reference'])
+        self.assertTrue(reopened['rows'][0]['current_record']['changed'])
+        self.assertEqual(old_bytes,self.release_path.read_bytes())
+        # Another RIFF wrapper/interval for exposed PCM keeps exposure visible.
+        exposed = next(row for row in self.manifest['records'] if row['split']=='test')
+        raw = self.originals[exposed['id']]
+        chunk = b'JUNK'+struct.pack('<I',4)+b'test'
+        wrapped = raw[:4]+struct.pack('<I',len(raw)+len(chunk)-8)+raw[8:12]+chunk+raw[12:]
+        imported = self.dataset.workbench.audio.admit(dict(wav=base64.b64encode(wrapped).decode(),name='Same PCM changed RIFF',groups=[],rights='Authored test wrapper'))
+        projected = dict(exposed,id=imported['id'],content_hash=imported['content_hash'],source_sha256=imported['source_sha256'])
+        self.assertTrue(self.dataset.pipelines.exposures([projected])['exposed'])
+        self.assertNotEqual(imported['content_hash'],exposed['content_hash'])
+        for field,value in [('scale',[0]*8),('coefficients',[[float('nan')]*8])]:
+            with self.assertRaises(training.TrainingError): training.validate_model(dict(model,**{field:value}))
+        artifact = self.dataset.runs.path / run['id'] / 'model.json'
+        artifact.write_bytes(artifact.read_bytes()+b' ')
+        with self.assertRaisesRegex(WorkbenchError,'hash'): self.dataset.runs.get(run['id'])
+
+    def test_actual_worker_cancel_drains_and_explicit_retry_is_fresh(self):
+        run,_ = self.submit('audio-real-cancel-001')
+        deadline=time.monotonic()+20
+        while time.monotonic()<deadline:
+            with self.dataset.lock:
+                worker=self.dataset.runs._load(run['id']).get('worker')
+            if worker:break
+            time.sleep(.005)
+        self.assertTrue(worker,'Actual audio child never started')
+        self.dataset.runs.cancel(run['id'])
+        stopped=self.await_state(run['id'],('cancelled','failed','unknown'))
+        self.assertEqual(stopped['state'],'cancelled',stopped)
+        from runs import process_status
+        self.assertEqual(process_status(worker),'ceased');self.assertEqual(stopped['artifacts'],[])
+        retried=self.dataset.runs.retry(run['id'],{'request_key':'audio-real-retry-001'})
+        self.assertNotEqual(run['id'],retried['id']);self.assertEqual(retried['attempt'],2)
+        self.assertEqual(self.await_state(retried['id'])['state'],'completed')
+
+    def test_reopen_interrupted_queue_never_replays(self):
+        with patch.object(self.dataset.runs,'_start'):
+            run,_=self.submit('audio-interrupted-001')
+        # Abrupt catalog-connection loss, without the graceful close that
+        # deliberately cancels pending work. No worker was ever started.
+        self.dataset.db.close();self.dataset=Dataset(self.tmp.name)
+        self.assertEqual(self.dataset.runs.get(run['id'])['state'],'interrupted')
+        self.assertEqual(len(self.dataset.runs.list()),1)
+        self.assertIsNone(self.dataset.runs._thread)
+
+    def test_actual_supervisor_death_drains_audio_child_and_requires_restart(self):
+        self.dataset.close()
+        code = '''import json,os,sys,time
+from app import Dataset
+d=Dataset(sys.argv[1]);g=d.pipelines.get(sys.argv[2])
+v=d.pipelines.validate(g['id'],{'revision':g['revision']})
+assert v['valid'],v
+r=d.runs.submit(dict(request_key='audio-parent-death-001',graph_id=g['id'],graph_revision=g['revision'],validation_token=v['validation_token']))
+deadline=time.monotonic()+20
+while time.monotonic()<deadline:
+ with d.lock:
+  r=d.runs._load(r['id'])
+ if r['worker']:
+  print(json.dumps({'run_id':r['id'],'worker':r['worker']}),flush=True)
+  os._exit(0)
+ time.sleep(.002)
+raise RuntimeError('Audio child never became owned')
+'''
+        import sys
+        evidence = json.loads(subprocess.check_output([sys.executable, '-c', code, self.tmp.name, self.graph['id']], timeout=35))
+        from runs import process_status
+        deadline = time.monotonic() + 10
+        while process_status(evidence['worker']) != 'ceased' and time.monotonic() < deadline:
+            time.sleep(.02)
+        self.assertEqual(process_status(evidence['worker']), 'ceased')
+        self.dataset = Dataset(self.tmp.name)
+        result = self.dataset.runs.get(evidence['run_id'])
+        self.assertEqual(result['state'], 'interrupted', result)
+        self.assertEqual(result['artifacts'], [])
+        self.assertIsNone(self.dataset.runs._thread)
+        retry = self.dataset.runs.retry(result['id'], {'request_key': 'audio-parent-death-restart-001'})
+        self.assertEqual(retry['parent_run_id'], result['id'])
+        self.assertEqual(self.await_state(retry['id'])['state'], 'completed')

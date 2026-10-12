@@ -145,8 +145,8 @@ class Pipelines:
         image = definition('image_classification', image_training)
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
                 'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training)],
-                'limitations': ['Closed image TinyCNN and text TF-IDF + MultinomialNB CPU recipes only.',
-                                'Audio release/graph inspection is available; audio execution and ASR are unavailable in this checkpoint. 3D execution is unsupported.']}
+                'limitations': ['Closed image TinyCNN, text TF-IDF + MultinomialNB and audio feature logistic CPU recipes only.',
+                                'Audio execution classifies one reviewed interval per WAV; ASR and 3D execution are unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')

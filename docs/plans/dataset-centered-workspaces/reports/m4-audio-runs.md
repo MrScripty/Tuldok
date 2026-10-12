@@ -46,3 +46,38 @@ browser checks with `dirty:false`; source-bound unmodified captures are in
 [the checkpoint gallery](../../../images/workspaces-audio-runs-checkpoint/README.md).
 Root and owner reviewed desktop Pipeline/narrow Data. The feature branch is
 pushed; no PR, merge or deployment has been performed by this worker.
+
+
+## Real CPU checkpoint
+
+The next source checkpoint implements the admitted eight fixed PCM features,
+train-only scaling and deterministic bounded logistic regression. Binary and
+three-class real fits publish verified JSON models and source/frame/channel
+predictions. No dependencies, schema changes or model downloads were added.
+
+Focused qualification: ten audio tests passed in 33.514s, including an actual
+child cancellation/drain and explicit fresh retry; a separate real supervisor
+process-death/reopen/retry case passed in 10.006s. The ordinary earlier close
+experiment correctly cancelled queued work; its test was corrected to represent
+abrupt connection loss separately from graceful shutdown, without changing the
+production lifecycle. Analytic silence/DC/Nyquist/band-edge and odd-length
+impulse cases plus an independent scalar PCM/direct-DFT model oracle check
+channel selection, half-open coordinates, feature values, training means and
+binary probabilities. Nonconvergence refusal and multi-class cold-read models
+are exercised separately. No model-quality claim is inferred.
+
+Existing shared-owner regression checks: Runs 13 (27.626s), Pipeline 6 (2.678s),
+text 14 (15.235s), fixture service and Workbench controllers passed. Root's
+retained-image/text check at clean1959775 compared both prediction splits,
+public results, raw graph/run/exposure rows and 68 managed file hashes against
+the main-identical baseline with a child-process trap: byte-identical, no replay.
+It will repeat against final source.
+
+The actual headless audio browser candidate passed twelve checks with eleven
+captures (`build/qa/workspace-audio-run/run-QyqTW7`): real release/graph/CPU run,
+loading/error/late responses, stale edits, lost committed response and duplicate
+click reconciliation, exact frame results, correction/new release, durable test
+exposure and restart. This candidate receipt truthfully records dirty source;
+final clean/native-zoom captures and independent review remain pending. Root's
+4a919ad integrates the exact training scope into HTML/README and registers the
+new browser in hosted lifecycle CI. No hosted success is claimed yet.

@@ -29,7 +29,8 @@ FEATURE_NAMES = ['mean', 'rms', 'zero_crossing_fraction', 'spectral_centroid_nyq
                  'power_0_25', 'power_25_50', 'power_50_75', 'power_75_100']
 TRANSFORM = {'name': 'pcm_interval_features', 'version': 1, 'fit_scope': 'train',
              'features': FEATURE_NAMES, 'sample_scale': 32768, 'window': 'rectangular',
-             'spectrum': 'numpy_rfft_power', 'band_edges_nyquist': [0, .25, .5, .75, 1],
+             'spectrum': 'numpy_rfft_power_undoubled', 'zero_sign': 'nonnegative',
+             'centroid_weight': 'power', 'band_edges': 'lower_included_upper_excluded_last_included', 'band_edges_nyquist': [0, .25, .5, .75, 1],
              'standardization': 'train_mean_population_std', 'solver': 'lbfgs', 'max_iter': 200, 'tol': 1e-6}
 MAX_ZIP_BYTES = MAX_EXPANDED_BYTES = 48 * 1024**2
 MAX_JOB_BYTES = 16 * 1024
@@ -156,17 +157,244 @@ def inspect_release(path, expected_sha256):
 
 
 def probe_runtime():
-    # First runnable checkpoint admits real release/graph inspection only.
-    return {'schema_version': 1, 'available': False, 'adapter': dict(ADAPTER), 'runtime': {},
-            'problems': [{'code': 'unavailable', 'message': 'Audio release and graph inspection are implemented; the CPU trainer is not available in this checkpoint.'}]}
+    runtime, problems = {'python': platform.python_version(), 'device': 'cpu', 'threads': 1}, []
+    if sys.platform != 'linux':
+        problems.append({'code': 'unsupported', 'message': 'The supervised audio adapter requires Linux.'})
+    for package in ('scikit-learn', 'numpy', 'scipy', 'Pillow'):
+        try:
+            version = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            version = None
+        runtime[package.replace('-', '_')] = version
+        if version is None or (package == 'scikit-learn' and version != '1.7.2'):
+            problems.append({'code': 'unavailable', 'message': package + ('==1.7.2' if package == 'scikit-learn' else '') + ' is required.'})
+    if not problems:
+        try:
+            from sklearn.linear_model import LogisticRegression
+            LogisticRegression(solver='lbfgs').fit([[0] * 8, [1] * 8], [0, 1])
+            from threadpoolctl import threadpool_info
+            runtime['threads'] = max((item['num_threads'] for item in threadpool_info()), default=1)
+            if runtime['threads'] != 1:
+                problems.append({'code': 'unavailable', 'message': 'CPU math libraries must be limited to one thread.'})
+        except Exception:
+            problems.append({'code': 'unavailable', 'message': 'The pinned local audio runtime could not load.'})
+    return {'schema_version': 1, 'available': not problems, 'adapter': dict(ADAPTER), 'runtime': runtime, 'problems': problems}
+
+
+def extract_features(raw, start_frame, end_frame, channel):
+    """Measure only the exact source-channel interval; never publish changed audio."""
+    meta, pcm = audio_assets.parse_wav(raw)
+    if (type(start_frame) is not int or type(end_frame) is not int or type(channel) is not int
+            or not 0 <= channel < meta['channels'] or not 0 <= start_frame < end_frame <= meta['frame_count']
+            or not projection.MIN_FRAMES <= end_frame - start_frame <= projection.MAX_FRAMES
+            or end_frame - start_frame > meta['sample_rate_hz'] * 10):
+        _invalid('Feature input must be an eligible source-frame interval and channel.')
+    import numpy as np
+    samples = np.frombuffer(pcm, dtype='<i2').reshape(-1, meta['channels'])[start_frame:end_frame, channel].astype(np.float64) / 32768
+    power = np.abs(np.fft.rfft(samples)) ** 2
+    frequency = np.fft.rfftfreq(len(samples)) * 2
+    total = float(power.sum())
+    # Zero is nonnegative. DC is in the first band, Nyquist in the last;
+    # one-sided power is intentionally not doubled and uses actual odd-N bins.
+    bands = [float(power[(frequency >= low) & ((frequency < high) if high < 1 else (frequency <= high))].sum() / total)
+             if total else 0.0 for low, high in zip((0, .25, .5, .75), (.25, .5, .75, 1))]
+    return [float(samples.mean()), float(np.sqrt(np.mean(samples ** 2))),
+            float(np.mean(np.signbit(samples[1:]) != np.signbit(samples[:-1]))),
+            float(np.dot(frequency, power) / total) if total else 0.0, *bands]
+
+
+def validate_model(model):
+    required = {'schema_version', 'source_identity', 'adapter', 'parameters', 'transform',
+                'class_vocabulary', 'class_to_idx', 'mean', 'scale', 'coefficients', 'intercepts'}
+    if (not isinstance(model, dict) or set(model) != required or type(model['schema_version']) is not int
+            or model['schema_version'] != 1 or model['adapter'] != ADAPTER or type(model['adapter'].get('version')) is not int):
+        _invalid('Unsupported audio model envelope.')
+    identity = model['source_identity']
+    if not isinstance(identity, dict) or set(identity) != {'dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256'}:
+        _invalid('Audio model source identity is invalid.')
+    for key, value in identity.items():
+        pattern = IDENTIFIER if key in ('dataset_id', 'run_id') else HASH
+        if not isinstance(value, str) or not pattern.fullmatch(value):
+            _invalid('Audio model source identity is invalid.')
+    if identity['release_id'] != identity['release_sha256']:
+        _invalid('Audio model release identity differs from its digest.')
+    validate_parameters(model['parameters'])
+    if model['transform'] != TRANSFORM:
+        _invalid('Audio model transform differs from the fixed recipe.')
+    classes, mapping = model['class_vocabulary'], model['class_to_idx']
+    if not isinstance(classes, list) or not 2 <= len(classes) <= projection.MAX_CLASSES or not isinstance(mapping, dict):
+        _invalid('Audio model classes are invalid.')
+    labels = [item.get('label') if isinstance(item, dict) else None for item in classes]
+    if (any(not isinstance(label, str) or not label or label.strip() != label or len(label) > 80 for label in labels)
+            or labels != sorted(set(labels)) or classes != [{'label': label, 'index': index} for index, label in enumerate(labels)]
+            or mapping != {label: index for index, label in enumerate(labels)}
+            or any(type(item['index']) is not int for item in classes) or any(type(index) is not int for index in mapping.values())):
+        _invalid('Audio model class mapping is invalid.')
+    def vector(values, length, low, high):
+        return isinstance(values, list) and len(values) == length and all(type(n) in (int, float) and math.isfinite(n) and low <= n <= high for n in values)
+    count = 1 if len(classes) == 2 else len(classes)
+    if (not vector(model['mean'], 8, -1, 1) or not vector(model['scale'], 8, 0, 10)
+            or any(n <= 0 for n in model['scale']) or not vector(model['intercepts'], count, -1e6, 1e6)
+            or not isinstance(model['coefficients'], list) or len(model['coefficients']) != count
+            or any(not vector(row, 8, -1e6, 1e6) for row in model['coefficients'])):
+        _invalid('Audio model numeric arrays are invalid.')
+    return model
+
+
+def predict_features(model, features):
+    """Cold data-only reader: scaling and stable logistic/softmax, no estimator load."""
+    validate_model(model)
+    probabilities = []
+    for row in features:
+        if len(row) != 8 or any(type(value) not in (int, float) or not math.isfinite(value) for value in row):
+            _invalid('Audio feature vector is invalid.')
+        scaled = [(value - mean) / scale for value, mean, scale in zip(row, model['mean'], model['scale'], strict=True)]
+        scores = [sum(weight * value for weight, value in zip(weights, scaled, strict=True)) + bias
+                  for weights, bias in zip(model['coefficients'], model['intercepts'], strict=True)]
+        if len(scores) == 1:
+            score = scores[0]
+            positive = 1 / (1 + math.exp(-score)) if score >= 0 else math.exp(score) / (1 + math.exp(score))
+            probabilities.append([1 - positive, positive])
+        else:
+            maximum = max(scores)
+            weights = [math.exp(score - maximum) for score in scores]
+            total = sum(weights)
+            probabilities.append([weight / total for weight in weights])
+    return probabilities
+
+
+def _checked_job(value):
+    fields = {'schema_version', 'dataset_id', 'run_id', 'graph_sha256', 'release_id',
+              'release_sha256', 'release_path', 'output_dir', 'parameters', 'parent_pid'}
+    if not isinstance(value, dict) or set(value) != fields:
+        _invalid('Training job must contain exactly the version 1 job fields.')
+    if type(value['schema_version']) is not int or value['schema_version'] != 1:
+        raise TrainingError('unsupported', 'Only training job schema version 1 is supported.')
+    for key in ('dataset_id', 'run_id'):
+        if not isinstance(value[key], str) or not IDENTIFIER.fullmatch(value[key]):
+            _invalid(f'{key} must be a canonical 32-character identifier.')
+    for key in ('graph_sha256', 'release_id', 'release_sha256'):
+        if not isinstance(value[key], str) or not HASH.fullmatch(value[key]):
+            _invalid(f'{key} must be a lowercase SHA-256.')
+    if value['release_id'] != value['release_sha256']:
+        _invalid('Release identity and expected release SHA-256 differ.')
+    for key in ('release_path', 'output_dir'):
+        if not isinstance(value[key], str) or '\0' in value[key] or not Path(value[key]).is_absolute():
+            _invalid(f'{key} must be an absolute path supplied by the run owner.')
+    if type(value['parent_pid']) is not int or value['parent_pid'] < 1:
+        _invalid('parent_pid must identify the owning local process.')
+    return dict(value, parameters=validate_parameters(value['parameters']))
+
+
+
+def train(job):
+    job = _checked_job(job)
+    guard_parent(job['parent_pid'])
+    started = time.monotonic()
+    manifest = inspect_release(job['release_path'], job['release_sha256'])
+    readiness = probe_runtime()
+    if not readiness['available']:
+        raise TrainingError('unavailable', '; '.join(item['message'] for item in readiness['problems']))
+    import numpy as np
+    import resource
+    import warnings
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.exceptions import ConvergenceWarning
+    from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss
+    output = Path(job['output_dir'])
+    if output.is_symlink() or not output.is_dir() or any(output.iterdir()):
+        _invalid('The run owner must supply an existing empty output directory.')
+    parameters = job['parameters']
+    identity = {key: job[key] for key in ('dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256')}
+    envelope = {'schema_version': 1, 'adapter': dict(ADAPTER), 'source_identity': identity}
+    vocabulary, mapping = manifest['class_vocabulary'], manifest['class_to_idx']
+    splits = {split: [row for row in manifest['records'] if row['split'] == split] for split in projection.SPLITS}
+    _emit('started', epochs=1)
+    with zipfile.ZipFile(job['release_path']) as archive:
+        features = {row['id']: extract_features(archive.read(row['asset']), row['start_frame'], row['end_frame'], row['channel'])
+                    for row in manifest['records']}
+    x = [features[row['id']] for row in splits['train']]
+    scaler = StandardScaler().fit(x)
+    transformed = scaler.transform(x)
+    estimator = LogisticRegression(C=parameters['C'], solver='lbfgs', max_iter=200, tol=1e-6)
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', ConvergenceWarning)
+            estimator.fit(transformed, [row['class_index'] for row in splits['train']])
+    except ConvergenceWarning as error:
+        raise TrainingError('failed', 'Audio classifier did not converge within 200 iterations; inspect the data or choose another C.') from error
+    saved = {**envelope, 'parameters': parameters, 'transform': TRANSFORM, 'class_vocabulary': vocabulary,
+             'class_to_idx': mapping, 'mean': scaler.mean_.tolist(), 'scale': scaler.scale_.tolist(),
+             'coefficients': estimator.coef_.tolist(), 'intercepts': estimator.intercept_.tolist()}
+    _write_json(output / 'model.json', saved)
+    saved = _json((output / 'model.json').read_bytes(), 'Saved audio model')
+    if not np.allclose(predict_features(saved, x), estimator.predict_proba(transformed), rtol=1e-12, atol=1e-12):
+        raise TrainingError('failed', 'The saved audio model does not reproduce the fitted estimator.')
+    def evaluate(split):
+        sources = splits[split]
+        probability = np.array(predict_features(saved, [features[row['id']] for row in sources]))
+        truth = [row['class_index'] for row in sources]
+        predicted = probability.argmax(axis=1)
+        labels = list(range(len(vocabulary)))
+        metric = {'split': split, 'examples': len(sources), 'loss': float(log_loss(truth, probability, labels=labels)),
+                  'accuracy': float(accuracy_score(truth, predicted)),
+                  'macro_f1': float(f1_score(truth, predicted, labels=labels, average='macro', zero_division=0)),
+                  'confusion_matrix': confusion_matrix(truth, predicted, labels=labels).tolist()}
+        rows = [{**{key: source[key] for key in REFERENCE_KEYS}, 'split': split,
+                 'truth_label': source['target_label'], 'truth_index': source['class_index'],
+                 'predicted_label': vocabulary[int(prediction)]['label'], 'predicted_index': int(prediction),
+                 'probabilities': scores.tolist()} for source, prediction, scores in zip(sources, predicted, probability, strict=True)]
+        return metric, rows
+    training, _ = evaluate('train')
+    validation, validation_rows = evaluate('validation')
+    _emit('epoch', epoch=1, epochs=1, validation=validation)
+    test, test_rows = evaluate('test')
+    runtime = dict(readiness['runtime'], elapsed_seconds=time.monotonic() - started,
+                   peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)
+    _write_json(output / 'metrics.json', {**envelope, 'parameters': parameters, 'transform': TRANSFORM,
+                'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'validation': validation,
+                'history': [{'epoch': 1, 'training_loss': training['loss'], 'validation': validation}],
+                'best_epoch': 1, 'runtime': runtime})
+    _write_json(output / 'test-metrics.json', {**envelope, 'split': 'test', 'metrics': test})
+    for split, rows in (('validation', validation_rows), ('test', test_rows)):
+        _write_json(output / f'predictions-{split}.json', {**envelope, 'split': split,
+                    'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'rows': rows})
+    artifacts = []
+    for name, split in (('metrics.json', 'validation'), ('test-metrics.json', 'test'),
+                        ('predictions-validation.json', 'validation'), ('predictions-test.json', 'test'), ('model.json', None)):
+        raw = (output / name).read_bytes()
+        artifacts.append({'name': name, 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
+                          'media_type': 'application/json', 'split': split})
+    _write_json(output / 'artifact-manifest.json', {**envelope, 'artifacts': artifacts})
+    _emit('completed', epochs=1)
 
 
 def main():
+    for variable in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'BLIS_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS', 'NUMEXPR_NUM_THREADS'):
+        os.environ[variable] = '1'
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--probe', action='store_true', required=True)
-    parser.parse_args()
-    print(json.dumps(probe_runtime(), allow_nan=False), flush=True)
-    return 2
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument('--probe', action='store_true')
+    action.add_argument('--job', type=Path)
+    args = parser.parse_args()
+    try:
+        if args.probe:
+            result = probe_runtime()
+            print(json.dumps(result, allow_nan=False), flush=True)
+            return 0 if result['available'] else 2
+        with args.job.open('rb') as handle:
+            raw = handle.read(MAX_JOB_BYTES + 1)
+        if len(raw) > MAX_JOB_BYTES:
+            _invalid('Training job exceeds 16 KiB.')
+        train(_json(raw, 'Audio training job'))
+        return 0
+    except TrainingError as error:
+        _emit('failed', outcome=error.outcome, message=str(error)[:400])
+        return 2
+    except Exception:
+        _emit('failed', outcome='failed', message='Local audio adapter failed; private outputs were not published.')
+        return 2
 
 
 if __name__ == '__main__':
