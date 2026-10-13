@@ -298,7 +298,7 @@ class Runs:
         if not validation['valid']:
             first = validation['errors'][0]
             raise WorkbenchError(first['message'], first['code'], 409)
-        release = self.pipelines.inspect_release(parent['release_id'], private=True)
+        release = self.pipelines.inspect_release(parent['release_id'], private=True, recipe=parent['graph'].get('recipe', 'image_classification'))
         with self.lock, self.db.transaction():
             receipt = self._receipt(key, request_hash)
             if not receipt:
@@ -373,7 +373,7 @@ class Runs:
             if self._validation_run(run):
                 self._execute_validation(run)
                 return
-            release = self.pipelines.inspect_release(run['release_id'], private=True)
+            release = self.pipelines.inspect_release(run['release_id'], private=True, recipe=run['graph'].get('recipe', 'image_classification'))
             runtime = self.pipelines.probe(run['graph'].get('recipe', 'image_classification'))
             if not runtime['available'] or runtime != run['runtime']:
                 raise WorkbenchError('Training runtime changed after admission.', 'stale', 409)
@@ -526,7 +526,7 @@ class Runs:
         runtime = self.pipelines.probe(run['graph']['recipe'])
         if runtime != run['runtime']:
             raise WorkbenchError('Integrity definition changed after admission.', 'stale', 409)
-        release = self.pipelines.inspect_release(run['release_id'], private=True)
+        release = self.pipelines.inspect_release(run['release_id'], private=True, recipe=run['graph'].get('recipe', 'image_classification'))
         if release['validation_summary'] != run['validation_summary']:
             raise WorkbenchError('Frozen integrity evidence changed after admission.', 'stale', 409)
         # Validate the definition again after reading, before publishing its result.
@@ -815,7 +815,7 @@ class Runs:
         if name not in self._payloads(run) | {'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown artifact for this recipe.', 'unavailable', 404)
         if name == 'release.zip':
-            release = self.pipelines.inspect_release(run['release_id'], private=True)
+            release = self.pipelines.inspect_release(run['release_id'], private=True, recipe=run['graph'].get('recipe', 'image_classification'))
             contents = Path(release['path']).read_bytes()
             if len(contents) != run['release_bytes'] or hashlib.sha256(contents).hexdigest() != run['release_sha256']:
                 raise WorkbenchError('Frozen export changed during read.', 'unavailable', 409)

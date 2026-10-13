@@ -99,7 +99,8 @@ def decode_graph(value):
 
 
 ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation,
-            release_validation.SEQUENCE_RECIPE: release_validation}
+            release_validation.SEQUENCE_RECIPE: release_validation,
+            **{recipe: release_validation for recipe in release_validation.CLASSIFICATION_RECIPES}}
 
 
 def adapter_for_graph(graph):
@@ -158,9 +159,10 @@ class Pipelines:
         image = definition('image_classification', image_training)
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
                 'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation),
-                            definition(release_validation.SEQUENCE_RECIPE, release_validation)],
+                            definition(release_validation.SEQUENCE_RECIPE, release_validation),
+                            *[definition(recipe, release_validation) for recipe in release_validation.CLASSIFICATION_RECIPES]],
                 'limitations': ['Closed image TinyCNN, text TF-IDF + MultinomialNB and audio feature logistic CPU recipes only.',
-                                'Audio execution classifies one reviewed interval per WAV. Mesh and sequence recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
+                                'Classification export-only recipes validate integrity without a model runtime. Audio training classifies one reviewed interval per WAV. Mesh and sequence recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')
@@ -231,7 +233,8 @@ class Pipelines:
                             (graph['id'], 1, encode(graph)))
         return graph
 
-    def inspect_release(self, release_id, *, private=False):
+    def inspect_release(self, release_id, *, private=False, recipe=None):
+        selected_recipe = recipe
         path = self.dataset.releases.locate(release_id)
         try:
             # Selection inspects only the bounded format tag; the selected reader
@@ -250,10 +253,12 @@ class Pipelines:
             if format_name is None and integrity_recipe:
                 manifest, summary = release_validation.inspect_release(path, release_id, integrity_recipe)
                 result = {'id': release_id, 'sha256': release_id, 'format': 'canonical_v1',
-                          'recipe': integrity_recipe, 'result_kind': 'release_validation',
+                          'recipe': integrity_recipe, 'allowed_recipes': [integrity_recipe], 'result_kind': 'release_validation',
                           'records': len(manifest['records']), 'split_counts': summary['split_counts'],
                           'validation_summary': summary, 'prior_test_exposure': {'exposed': False, 'events': []},
                           'status': 'available'}
+                if selected_recipe is not None and selected_recipe != integrity_recipe:
+                    raise WorkbenchError('Frozen release task differs from this saved recipe.', 'unsupported', 409)
                 if private:
                     result.update(manifest=manifest, path=str(path))
                 return result
@@ -261,6 +266,20 @@ class Pipelines:
                       'text_classification_v1': 'text_classification', 'audio_classification_v1': 'audio_classification'}.get(format_name)
             if recipe is None:
                 raise WorkbenchError('Choose a frozen classification release or a mesh-only/sequence-only canonical release.', 'unsupported', 409)
+            export_recipe = recipe.replace('_classification', '_validate_export')
+            allowed_recipes = [recipe, export_recipe]
+            if selected_recipe is not None and selected_recipe not in allowed_recipes:
+                raise WorkbenchError('Frozen release task differs from this saved recipe.', 'unsupported', 409)
+            if selected_recipe == export_recipe:
+                manifest, summary = release_validation.inspect_release(path, release_id, export_recipe)
+                result = {'id': release_id, 'sha256': release_id, 'format': manifest['format'],
+                          'recipe': export_recipe, 'allowed_recipes': allowed_recipes, 'result_kind': 'release_validation',
+                          'records': len(manifest['records']), 'split_counts': summary['split_counts'],
+                          'class_vocabulary': manifest['class_vocabulary'], 'validation_summary': summary,
+                          'prior_test_exposure': self.exposures(manifest['records']), 'status': 'available'}
+                if private:
+                    result.update(manifest=manifest, path=str(path))
+                return result
             manifest = ADAPTERS[recipe].inspect_release(path, release_id)
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None
@@ -270,7 +289,7 @@ class Pipelines:
             raise WorkbenchError('Frozen release manifest is unavailable.', 'unavailable', 409) from None
         records = manifest['records']
         exposure = self.exposures(records)
-        result = {'id': release_id, 'sha256': release_id, 'format': manifest['format'], 'recipe': recipe, 'records': len(records),
+        result = {'id': release_id, 'sha256': release_id, 'format': manifest['format'], 'recipe': recipe, 'allowed_recipes': allowed_recipes, 'records': len(records),
                   'class_vocabulary': manifest['class_vocabulary'],
                   'split_counts': {split: sum(row['split'] == split for row in records) for split in ('train', 'validation', 'test')},
                   'prior_test_exposure': exposure,
@@ -386,7 +405,7 @@ class Pipelines:
         release = runtime = None
         if not errors:
             try:
-                release = self.inspect_release(by_type['release'][0]['parameters']['release_id'])
+                release = self.inspect_release(by_type['release'][0]['parameters']['release_id'], recipe=graph.get('recipe', 'image_classification'))
                 if release['recipe'] != graph.get('recipe', 'image_classification'):
                     raise WorkbenchError('Frozen release task differs from this saved recipe.', 'unsupported', 409)
             except WorkbenchError as error:
@@ -423,4 +442,4 @@ class Pipelines:
             raise WorkbenchError('Validation is stale. Validate the saved graph again.', 'stale', 409)
         if self.get(graph_id) != graph:
             raise WorkbenchError('Graph changed during admission.', 'stale', 409)
-        return graph, result, self.inspect_release(result['release']['id'], private=True)
+        return graph, result, self.inspect_release(result['release']['id'], private=True, recipe=graph.get('recipe', 'image_classification'))

@@ -1,4 +1,4 @@
-"""Closed mesh/sequence workflows; native integrity remains with subtype readers."""
+"""Closed export workflows; frozen integrity remains with existing native readers."""
 import ast
 import hashlib
 import io
@@ -9,10 +9,15 @@ import zipfile
 import mesh_release
 import sequence_release
 import canonical_release
+import image_training
+import text_training
+import audio_training
 from workbench import WorkbenchError, encode
 
 RECIPE = 'mesh_validate_export'
 SEQUENCE_RECIPE = 'sequence_validate_export'
+CLASSIFICATION_RECIPES = {'image_validate_export': image_training,
+                          'text_validate_export': text_training, 'audio_validate_export': audio_training}
 ADAPTER = {'id': RECIPE, 'version': 1}
 PARAMETER_BOUNDS = {}
 TYPES = ('release', 'validate', 'publish')
@@ -23,7 +28,7 @@ PAYLOADS = {'validation-report.json'}
 
 
 def adapter_identity(recipe=RECIPE):
-    if recipe not in (RECIPE, SEQUENCE_RECIPE):
+    if recipe not in (RECIPE, SEQUENCE_RECIPE) and recipe not in CLASSIFICATION_RECIPES:
         raise WorkbenchError('Unsupported integrity recipe.', 'unsupported', 400)
     return {'id': recipe, 'version': 1}
 
@@ -31,6 +36,15 @@ def adapter_identity(recipe=RECIPE):
 def inspect_release(path, release_id, recipe=RECIPE):
     """Read once, validate exact captured bytes, then expose the validated manifest."""
     adapter_identity(recipe)
+    if recipe in CLASSIFICATION_RECIPES:
+        manifest = CLASSIFICATION_RECIPES[recipe].inspect_release(path, release_id)
+        records = manifest['records']
+        summary = {'schema_version': 1, 'format': manifest['format'], 'kind': recipe.split('_')[0],
+                   'record_count': len(records), 'class_vocabulary': manifest['class_vocabulary'],
+                   'split_counts': {split: sum(row['split'] == split for row in records)
+                                    for split in ('train', 'validation', 'test')},
+                   'scope': 'Frozen classification export integrity only; no model training, predictions or quality qualification.'}
+        return manifest, summary
     reader = sequence_release if recipe == SEQUENCE_RECIPE else mesh_release
     try:
         with Path(path).open('rb') as source:
