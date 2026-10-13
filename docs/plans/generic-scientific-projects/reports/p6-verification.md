@@ -5,8 +5,8 @@ Admission: [P6](p6-admission.md). Contract: [agent operations](../../../contract
 
 The scoped agent interface is implemented in the isolated P6 worktree and its
 focused checks passed. This is a reviewable implementation checkpoint, not final
-P6/G5 acceptance: the read-only qualification against retained real scientific
-Runs and the final full regression/CI remain pending. No merge or deployment.
+P6/G5 acceptance: the final full regression/CI remain pending. The read-only qualification against
+retained real scientific Runs has now passed. No merge or deployment.
 
 ## Implemented boundary
 
@@ -39,7 +39,7 @@ not create a bridge-owned file cache or arbitrary filesystem operation.
 | --- | --- | --- |
 | `test_agent_api` initial focused suite | 14 passed, zero skips | Registry/schema projection, stdlib-only import, bounds, authentication/configuration, framing/deadline, no replay, hash checks |
 | Agent API post-integration fix selection | 4 passed, zero skips | Raw-base64 image projection; revoked discovery preserves401/code; schema projections and framing regressions |
-| `test_mcp_stdio` | 12 passed, zero skips | Official SDK subprocess lifecycle, fixed protocol, typed tools, bounded framing and errors |
+| `test_mcp_stdio` final NUL-framing revision | 13 passed, zero skips | Official SDK subprocess lifecycle, fixed protocol, typed tools, bounded framing and errors |
 | `test_artifact_segments` | 5 passed | Exact multichunk reconstruction, linear selected reads, mutation/nonregular/size refusals, revocation and cross-catalog denial |
 | `test_agent_http` | 3 passed | Authenticated registry discovery, real HTTP segment/restart parity and exposure eligibility denial |
 | `test_agent_workflow` + `test_agent_domain_parity` | 3 passed | Public stdio/HTTP workflow, all twelve annotations/native variants and real authored classifier holdout exposure |
@@ -48,7 +48,7 @@ These counts describe recorded runs, not an additive unique-test total. The
 four-test post-fix selection overlaps the initial suite and includes newly added
 regressions; it is not a claim that eighteen distinct client tests ran together.
 The initial agent suite took16.598s; the affected post-fix selection took10.884s.
-The protocol owner recorded13 tests in9.9s. Other timings are not asserted here.
+The final protocol module passed13 tests in8.052s. Other timings are not asserted here.
 
 Public workflow coverage used isolated fixture catalogs and explicit owner
 HTTP review/grants outside MCP. It exercised draft→owner review→freeze→graph
@@ -76,12 +76,10 @@ The measured lock is Linux x86_64 CPython3.12 evidence, not cross-platform accep
 
 Still pending:
 
-- Read-only official-SDK parity against the already retained real scientific
-  artifact inventory; `tests/qualify_agent_scientific.py` exists, but this report
-  does not claim it ran or verified any shared-catalog payload.
 - Final full regression, independent final integration review and hosted CI on
   the published exact source. The task integration owner records final status.
-- P5c's independent scientific acceptance and remaining upstream milestone gates.
+- Final integration of the separately tracked legacy actual-v2 packet gate;
+  P5c scientific acceptance is already complete and published in PR52.
 
 This checkpoint establishes bounded transport/domain behavior, not scientific
 correctness of a model, source authenticity, remote multi-tenant security or
@@ -94,3 +92,37 @@ Final independent protocol review found initialization metadata could contain NU
 although the framing contract promised rejection. The framing owner now rejects
 NUL in every string/key; the final 13-test stdio module passes with no skips
 (8.052 seconds). No scientific model acceptance is inferred from these tests.
+
+## Actual retained scientific MCP read
+
+Official SDK qualification passed at source b02004a with 22 real MCP operations.
+The retained P5c checkpoint (272,149 bytes, one segment) and scientific chunk
+(38,196,421 bytes, five segments) exactly matched the previously qualified HTTP
+inventory and complete hashes. The pressure slice also matched prior HTTP.
+Runs, graphs and the reviewed record remained exactly unchanged. The inspect-only
+credential was revoked and both server/stdio processes closed. This proves
+transport parity, not another scientific/model acceptance run.
+[Receipt](p6/scientific-mcp-receipt.json), SHA256
+`f99cdd6654c5bd3a9271e6e79bc99aa0fed1c53bf36066f39099f74e52f920c2`.
+
+Source is published as draft [PR53](https://github.com/MrScripty/Tuldok/pull/53).
+Final local base, optional and JavaScript regression is running against the
+frozen source. Hosted UI38474544619 passed; lifecycle38474544623 is pending.
+
+The first base-only full discovery exposed missing optional-dependency skips in
+14 client/schema tests. Production discovery still imports without optional
+packages; the bridge correctly reports dependency_missing when they are absent.
+A test-only correction is prepared, preserving cold discovery/config checks in
+the base environment and qualifying all agent tests in the dedicated SDK
+environment. The failing discovery is not counted as a passing final suite.
+
+## Base-environment correction and recovered final run
+
+The preserved full discovery completed900 tests in1,324.060s. Its onefailure and
+12errors were confined to the optional-jsonschema client tests; all336 inventoried
+source files remained unchanged. The test-only correction adds14 precise skips
+when jsonschema is absent, retaining two base discovery/configuration checks.
+The corrected base module passed16 tests with14 explicit skips in0.042s; the
+dedicated SDK environment passed all16 with zero skips in15.356s. No production
+runtime or base dependency was changed. Remaining dedicated/SDK/JavaScript gates
+and fresh hosted full discovery determine final acceptance.
