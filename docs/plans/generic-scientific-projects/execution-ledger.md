@@ -33,3 +33,17 @@ Implemented immutable generic project registration, explicit root binding, bound
 Independent review fixes: reject lone surrogate input; return bytes matching actual hashed read; explain immutable changed-manifest snapshots honestly; clean root handles on malformed internal configuration. Final source review reports no remaining blocker. Hosted exact-head checks remain pending until publication.
 
 Next-stage research found no raw lab capture in the checkout/releases and no native toolchain initially configured. Evaluation NPZ omits RHS; training NPZ omits corrected fields. A separately isolated, pinned native two-frame capture is being prepared as the smallest P2 contract observation; no training or model execution. It is new evidence, not reconstruction of historical artifacts.
+
+## 2026-10-13 — P1 hosted qualification and P2 admission
+
+P1 published as draft PR45 at 46384fca; exact-head UI14/14 and lifecycle122/122 hosted steps passed. Updated PR evidence through REST after the installed gh edit command hit GitHub deprecated classic-project GraphQL fields. No merge. Created feature/scientific-field-sequences-20261013 for P2. Actual native two-frame capture and independent cold verification now resolve the sample-availability prerequisite; algorithm/model qualification remains pending. Root prepared bounded contract and write set; independent design review precedes implementation.
+
+## 2026-10-13 — P2 implementation and independent qualification
+
+Root owns project capture/API, Workbench and canonical release composition. recipe_design owns scientific parser/service/contract; volume_assets owns schema6/sharedfilepublication/storage; mesh_ui owns UI; point_assets owns independent converter/browser; milestone_audit owns cold release reader; mesh_review independently reviews product. Exact write set expanded for existing canonical snapshot kind and scoped metadata bound before dependent edits.
+
+Implemented typed CZYX float sequence custody, pinned observation import, stage/time/grid-aware viewer, whole-trajectory review/release, cold reader, explicit5→6 upgrade and old+new restore. Native and rotated neutral offline browser gates pass with independent NumPy slices/original arrays, restart and held-refresh clean-selection race. Review fixes bind duplicated frozen provenance and protect newer UI intent. Server-only file helper import was moved into audio admission after broad tests exposed the pinned audio worker dependency regression.
+
+Final stable-source suite is in progress; see [P2 verification](reports/p2-verification.md) for completed evidence and boundaries. No training/physics acceptance, merge or deployment. Read-only P3 preparation found existing Runs assumes childless trainers and cgroups are read-only; later external execution requires explicit descendant ownership qualification. P5 installedTorch2.8CPU differs from declaredPumas2.14 target, so actual runtime compatibility remains unqualified.
+
+P2 final stable source:696 tests passed in566.842s, three optional-reader skips independently covered by20 spatial and6 scientific-release tests without skips. Final source hash inventory unchanged. Plan validator/local links/Python-JavaScript syntax/whitespace pass. Ready to commit/push draft; hosted exact-head CI remains acceptance prerequisite before P3 implementation.

@@ -236,7 +236,7 @@ class Releases:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
-                if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume') and row['review'] != 'human_reviewed':
+                if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume', 'field_sequence') and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Spatial export requires human-reviewed whole asset records.')
                 if row['kind'] == 'audio':
                     audio_export.validate_record(row)
@@ -312,6 +312,10 @@ class Releases:
             except WorkbenchError as error:
                 block(error)
         if format_name == 'canonical_v1':
+            if any(row['kind'] == 'field_sequence' for row in rows):
+                if len(rows) > 64 or sum(len(encode(row).encode()) + 512 for row in rows) > 8 * 1024 * 1024 - 65536:
+                    block(WorkbenchError('Scientific releases permit at most 64 records and 8 MiB of frozen metadata.'))
+                preview['warnings'].append('Scientific fields retain exact arrays, grid placement, time and producer stages. Whole trajectories stay indivisible; first observed states and declared families do not certify independent initial conditions.')
             if any(row['kind'] == 'audio' for row in rows):
                 preview['warnings'].append(audio_export.CONTRACT)
             if any(row['kind'] == 'mesh' for row in rows):
@@ -701,6 +705,8 @@ class Releases:
                         'records': []}
             if any(row['kind'] in ('pointcloud', 'volume') for row in rows):
                 manifest['coordinate_contract'] += ' Point clouds preserve ordered points and declared frame; volumes preserve uint8 voxel values and voxel-center affine; whole spatial assets are indivisible.'
+            if any(row['kind'] == 'field_sequence' for row in rows):
+                manifest['coordinate_contract'] += ' Scientific field sequences preserve exact floating values, C-order ZYX arrays, declared grid transform, cell/face offsets, times and producer stages; each whole trajectory is indivisible. First-observed-state identity is not proof of initial-condition independence.'
             vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
             categories = {label: i + 1 for i, label in enumerate(vocabulary)}
             coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': [{'id': i, 'name': label} for label, i in categories.items()]} for split in SPLITS}
@@ -712,7 +718,7 @@ class Releases:
                         for index, row in enumerate(rows, 1):
                             split = assignments[row['id']]
                             asset, _ = workbench.asset(row['id'])
-                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip', 'audio': '.wav', 'pointcloud': '.zip', 'volume': '.zip'}[row['kind']]
+                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip', 'audio': '.wav', 'pointcloud': '.zip', 'volume': '.zip', 'field_sequence': '.zip'}[row['kind']]
                             digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
                             if row['kind'] == 'audio':
@@ -727,6 +733,8 @@ class Releases:
                             else:
                                 text_rows[split].append(record)
                         manifest['vocabulary'] = vocabulary
+                        if any(row['kind'] == 'field_sequence' for row in rows) and len(encode(manifest).encode()) > 8 * 1024 * 1024:
+                            raise WorkbenchError('Scientific release metadata exceeds 8 MiB.')
                         archive.writestr(zipfile.ZipInfo('manifest.json'), encode(manifest))
                         for split in SPLITS:
                             archive.writestr(zipfile.ZipInfo(split + '/coco.json'), encode(coco[split]))

@@ -1,6 +1,8 @@
 """Bounded immutable asset storage; Dataset transaction owns record publication."""
+from contextlib import contextmanager, nullcontext
 import hashlib
 import json
+import os
 import uuid
 
 from workbench import WorkbenchError, encode, strings, text_value, timestamp
@@ -12,8 +14,53 @@ def check_selection(records):
     total = sum(row[row['kind']]['bundle_bytes'] for row in records
                 if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume') and row.get(row['kind']))
     total += sum(row['audio']['source_bytes'] for row in records if row['kind'] == 'audio')
+    total += sum(row['field_sequence']['source_bytes'] for row in records if row['kind'] == 'field_sequence')
     if total > MAX_SELECTED_ASSET_BYTES:
         raise WorkbenchError('Selected immutable assets exceed the synchronous 40 MiB bound.')
+
+
+def _sync_directory(path):
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+@contextmanager
+def publish_file(db, folder, filename, raw):
+    """Publish one trusted local asset path with its metadata transaction.
+
+    Callers supply a server-owned unique folder and fixed filename. Successful
+    savepoints transfer rollback custody to the outer transaction; an uncertain
+    commit retains bytes for catalog reconciliation. This never extracts paths.
+    """
+    from metadata import CommitOutcomeUnknown
+    created = False
+    path = folder / filename
+    def discard():
+        if created and folder.exists():
+            path.unlink(missing_ok=True)
+            folder.rmdir()
+    try:
+        with (nullcontext(db) if db.in_transaction else db.transaction()):
+            folder.parent.mkdir(exist_ok=True)
+            folder.mkdir()
+            created = True
+            db.on_rollback(discard)
+            with path.open('xb') as target:
+                target.write(raw)
+                target.flush()
+                os.fsync(target.fileno())
+            _sync_directory(folder)
+            _sync_directory(folder.parent)
+            _sync_directory(folder.parent.parent)
+            yield path
+    except CommitOutcomeUnknown:
+        raise
+    except BaseException:
+        discard()
+        raise
 
 
 def migrate_records(db):

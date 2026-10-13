@@ -14,6 +14,7 @@ NAME = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}')
 SHA = re.compile(r'[a-f0-9]{64}')
 MANIFEST_LIMIT = 64 * 1024
 FILE_LIMIT = 8 * 1024 * 1024
+DATA_LIMIT = 40 * 1024 * 1024
 INSPECTION_LIMIT = 64 * 1024 * 1024
 TEXT_LIMIT = 64 * 1024
 GROUPS = ('data', 'recipes', 'evidence', 'requirements')
@@ -196,15 +197,15 @@ class Projects:
         entry = self.roots.get(saved['root'])
         return bool(entry and entry[1] == saved['root_identity'])
 
-    def _inspect(self, root, ref, budget):
+    def _inspect(self, root, ref, budget, limit=FILE_LIMIT):
         result = {**ref, 'status': 'available', 'integrity': 'unverified'}
         try:
             with self._file(root, ref['path']) as (_fd, info):
                 result['bytes'] = info.st_size
-            if info.st_size > FILE_LIMIT or info.st_size > budget[0]:
+            if info.st_size > limit or info.st_size > budget[0]:
                 result['reason'] = 'Present; content exceeds the bounded hash inspection budget.'
                 return result
-            raw = self._read(root, ref['path'], min(FILE_LIMIT, budget[0]))
+            raw = self._read(root, ref['path'], min(limit, budget[0]))
             budget[0] -= len(raw)
             result['bytes'] = len(raw)
             result['observed_sha256'] = hashlib.sha256(raw).hexdigest()
@@ -250,9 +251,31 @@ class Projects:
                     except (OSError, WorkbenchError):
                         item.update(status='unavailable', reason='Required file cannot be safely inspected.')
                 else:
-                    item = self._inspect(saved['root'], ref, budget)
+                    item = self._inspect(saved['root'], ref, budget, DATA_LIMIT if group == 'data' else FILE_LIMIT)
                 result[group].append(item)
         return result
+
+    def read_data_reference(self, project_id, reference_id, expected_sha256, limit):
+        """Capture a selected saved reference; source owners interpret its bytes."""
+        if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
+            raise WorkbenchError('Import requires the observed source SHA256.')
+        if type(limit) is not int or not 0 < limit <= DATA_LIMIT:
+            raise WorkbenchError('Invalid bounded data read limit.')
+        saved = self._saved(project_id)
+        if not self._bound(saved):
+            raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
+        ref = next((entry for entry in saved['manifest']['data'] if entry['id'] == reference_id), None)
+        if ref is None:
+            raise WorkbenchError('Data reference not found.', 'not_found', 404)
+        try:
+            raw = self._read(saved['root'], ref['path'], limit)
+        except OSError:
+            raise WorkbenchError('Data reference cannot be safely read.', 'unavailable', 409) from None
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != expected_sha256 or ref.get('sha256', digest) != digest:
+            raise WorkbenchError('Data changed or differs from its declared SHA256. Inspect again before importing.', 'conflict', 409)
+        return raw, {'project_id': project_id, 'manifest_sha256': saved['manifest_sha256'],
+                     'reference_id': reference_id, 'path': ref['path'], 'measured_sha256': digest}
 
     def evidence(self, project_id, reference_id):
         saved = self._saved(project_id)

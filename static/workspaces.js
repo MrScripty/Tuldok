@@ -30,9 +30,10 @@ window.workspaceEscape = (value) =>
   let store = null,
     pipeline = null,
     runs = null;
+  let catalogImportIntent=0;
   let workspaceIntent = 0, fragmentIntent = null, realCorrection = null;
-  function invalidateCorrection() {
-    workspaceIntent++;
+  function invalidateCorrection(navigation=true) {
+    workspaceIntent++;if(navigation)catalogImportIntent++;
     $("catalog-frame").contentWindow?.TuldokWorkspaceData?.cancelRecordOpen?.();
   }
   function renderCorrection(record = catalogContext?.record) {
@@ -92,7 +93,31 @@ window.workspaceEscape = (value) =>
   }
   const projects = WorkspaceProjects({select:$("dataset"),
     roots:{data:$("project-data-root"),pipeline:$("project-pipeline-root"),runs:$("project-runs-root")},
-    announce,switchSource,contextChanged:context});
+    announce,switchSource,contextChanged:context,openCatalogRecord});
+  async function openCatalogRecord(id) {
+    try {
+    switchSource("catalog");
+    location.hash="#data";
+    await new Promise(resolve=>setTimeout(resolve,0));
+    const importIntent=catalogImportIntent,deadline=Date.now()+10000;
+    while(importIntent===catalogImportIntent&&source==="catalog" && Date.now()<deadline) {
+      const bridge=$("catalog-frame").contentWindow?.TuldokWorkspaceData;
+      if(bridge&&catalogReady&&!restoringCatalog&&currentView==="data") {
+        const intent=workspaceIntent;
+        const result=await bridge.openImportedRecord(id);
+        if(intent!==workspaceIntent||source!=="catalog")return;
+        catalogRestoreNotice=null;
+        $("catalog-status").textContent=result.kind==="available"?"Imported scientific fields ready.":`Imported ${id}. ${result.message}`;
+        return;
+      }
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    announce(`Imported ${id}. Open it from the current catalog.`);
+    } catch(error) {
+      const message=`Imported ${id}. Catalog opening failed: ${error.message}`;
+      $("catalog-status").textContent=message;announce(message);
+    }
+  }
   let restoringCatalog = false,
     catalogRestoreNotice = null;
   function remember() {
@@ -367,9 +392,10 @@ window.workspaceEscape = (value) =>
         : "Current Data owner ready.");
     if (source === "catalog" && currentView === "data") context();
   });
-  let catalogLoadEpoch = 0;
+  let catalogLoadEpoch = 0, catalogReady = false;
   $("catalog-frame").addEventListener("load", async () => {
-    invalidateCorrection();
+    invalidateCorrection(false);
+    catalogReady=false;
     const epoch = ++catalogLoadEpoch;
     const bridge = $("catalog-frame").contentWindow?.TuldokWorkspaceData;
     if (!bridge) {
@@ -398,6 +424,7 @@ window.workspaceEscape = (value) =>
         }
       }
     }
+    if(epoch===catalogLoadEpoch)catalogReady=true;
   });
   async function load() {
     const epoch = ++loadEpoch;

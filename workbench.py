@@ -10,7 +10,7 @@ import uuid
 
 from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry', 'audio_timed', 'pointcloud_geometry', 'volume_grid')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry', 'audio_timed', 'pointcloud_geometry', 'volume_grid', 'field_sequence_fields')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -56,7 +56,7 @@ def query_criteria(options):
     kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
     if any(not isinstance(value, str) for value in (kind, review, sort, task)):
         raise WorkbenchError('Filter and sort values must be strings.')
-    if kind not in ('', 'image', 'text', 'sequence', 'mesh', 'audio', 'pointcloud', 'volume') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
+    if kind not in ('', 'image', 'text', 'sequence', 'mesh', 'audio', 'pointcloud', 'volume', 'field_sequence') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
         raise WorkbenchError('Invalid filter or sort.')
     if task not in ('', *TASKS):
         raise WorkbenchError('Invalid task filter.')
@@ -88,7 +88,7 @@ def validate_annotation(task, value, record):
         if set(value) != {'note'}:
             raise WorkbenchError('Text corpus review requires exactly one note.')
         return {'note': text_value(value['note'], 'Corpus review note', 4000)}
-    if task in ('sequence_transport', 'mesh_geometry', 'pointcloud_geometry', 'volume_grid'):
+    if task in ('sequence_transport', 'mesh_geometry', 'pointcloud_geometry', 'volume_grid', 'field_sequence_fields'):
         if set(value) != {'note'}:
             raise WorkbenchError(record['kind'].title() + ' review requires exactly one note; fields stay immutable.')
         return {'note': text_value(value['note'], record['kind'].title() + ' review note', 4000, empty=True)}
@@ -164,6 +164,8 @@ class Workbench:
                                  'pointcloud': self.pointclouds, 'volume': self.volumes}
         from audio_assets import AudioAssets
         self.audio = AudioAssets(self)
+        from scientific_fields import ScientificAssets
+        self.scientific = ScientificAssets(self)
 
         from preferences import Preferences
         self.preferences = Preferences(self)
@@ -221,9 +223,10 @@ class Workbench:
                     result.update(dict(retained))
                     result['source_lineage_known'] = True
             result['name'] = result.pop('image_name') or '(source image deleted)'
-        elif result['kind'] == 'audio':
+        elif result['kind'] in ('audio', 'field_sequence'):
             result.pop('image_name')
-            result['audio'], result['source_available'] = self.audio.metadata(record_id, json.loads(result['provenance_json']))
+            owner = self.audio if result['kind'] == 'audio' else self.scientific
+            result[result['kind']], result['source_available'] = owner.metadata(record_id, json.loads(result['provenance_json']))
             result['source_lineage_known'] = True
             result['source_revision'] = 1
             result['source_split'] = 'unassigned'
@@ -414,6 +417,12 @@ class Workbench:
         review = body.get('review')
         if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
             raise WorkbenchError('Text corpus data requires an explicit human review decision.')
+        if before['kind'] == 'field_sequence':
+            if not set(before['field_sequence']['protected_groups']) <= set(groups):
+                raise WorkbenchError('Keep the immutable source, first-observed-state and declared-family groups.')
+            if review not in ('draft', 'human_reviewed') or verified_provenance:
+                raise WorkbenchError('Scientific fields require an explicit human review decision.')
+            self.scientific.asset(before)
         if before['kind'] == 'audio':
             if not set(before['audio']['protected_groups']) <= set(groups):
                 raise WorkbenchError('Keep the immutable audio source and family protected groups.')
@@ -584,6 +593,8 @@ class Workbench:
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""
         record = self._get(record_id)
+        if record['kind'] == 'field_sequence':
+            return self.scientific.asset(record)
         if record['kind'] == 'audio':
             return self.audio.asset(record)
         if record['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume'):

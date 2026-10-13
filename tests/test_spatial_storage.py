@@ -1,6 +1,7 @@
 """Real PostgreSQL spatial storage, exact bundles and stopped-writer evolution."""
 import base64
 import copy
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -14,7 +15,7 @@ import zipfile
 
 from app import Dataset, make_handler
 from backup_metadata import backup_catalog, restore_catalog, read_catalog, summaries, tree_manifest
-from metadata import SCHEMA_VERSION, Metadata, StorageError, definition_hash, TABLES_V3, SPATIAL_TABLES
+from metadata import SCHEMA_VERSION, Metadata, StorageError, definition_hash, TABLES_V3, TABLES_V5, SPATIAL_TABLES
 from upgrade_metadata import upgrade_catalog, UPGRADES
 import spatial_assets
 import test_workspace_metadata
@@ -47,6 +48,45 @@ class SpatialStorage(unittest.TestCase):
 
     def review(self, dataset, row):
         return dataset.workbench.save(row['id'], dict(row, review='human_reviewed', annotation={'note': 'Inspected whole native source.'}))
+
+    def test_schema5_exact_definition_upgrade_preserves_projects_and_history(self):
+        self.assertEqual(definition_hash(5), 'a01a27f17a12fc264bbeb3c26e89de5931bcf7b8b65f3b3db0ad9b8d30b0618d')
+        old = Metadata(self.root / 'old5', schema_version=5)
+        self.addCleanup(old.close)
+        test_workspace_metadata.WorkspaceMetadata.workspace_rows(self, old)
+        old.execute("INSERT INTO workspace_projects VALUES ('saved',' { \"source\": \"原本\" } ')")
+        before = summaries(read_catalog(old))
+        with self.assertRaisesRegex(StorageError, 'explicit upgrade'):
+            Metadata(old.path, create=False)
+        with self.assertRaisesRegex(StorageError, 'Stop all'):
+            upgrade_catalog(old.path)
+        result = upgrade_catalog(old.path, quiesced=True)
+        self.assertEqual(result['migration'], 'field-sequence-metadata-5-to-6')
+        current = Metadata(old.path, create=False)
+        self.addCleanup(current.close)
+        self.assertEqual(current.schema_version, 6)
+        self.assertEqual(summaries(read_catalog(current)), before)
+        with current.transaction():
+            current.execute("""INSERT INTO workbench_records
+                (id,kind,content_hash,groups_json,parents_json,provenance_json,task,review,revision,created_at,updated_at)
+                VALUES ('science','field_sequence','hash','[]','[]','{}','field_sequence_fields','draft',1,'now','now')""")
+        backup = self.root / 'backup6'
+        self.assertEqual(backup_catalog(current.path, backup, quiesced=True)['schema_version'], 6)
+
+    def test_failed_schema6_transition_rolls_back_exact_schema5(self):
+        import psycopg
+        old = Metadata(self.root / 'failed6', schema_version=5)
+        self.addCleanup(old.close)
+        before = old.execute('SELECT * FROM catalog_version').fetchall()
+        signature = old._signature()
+        migration, statements = UPGRADES[5]
+        with patch.dict(UPGRADES, {5: (migration, (*statements, 'SELECT missing_science_upgrade_function()'))}):
+            with self.assertRaises(psycopg.Error):
+                upgrade_catalog(old.path, quiesced=True)
+        old.validate_schema()
+        self.assertEqual(old._signature(), signature)
+        self.assertEqual(old.execute('SELECT * FROM catalog_version').fetchall(), before)
+        self.assertEqual(set(read_catalog(old)), set(TABLES_V5))
 
     def test_real_both_subtypes_review_inspection_export_and_reopen(self):
         dataset = self.dataset()
@@ -106,7 +146,7 @@ class SpatialStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             upgrade_catalog(path)
         result = upgrade_catalog(path, quiesced=True)
-        self.assertEqual(result['migration'], 'project-metadata-4-to-5')
+        self.assertEqual(result['migration'], 'field-sequence-metadata-5-to-6')
         current = Metadata(path, create=False)
         self.addCleanup(current.close)
         after = read_catalog(current)
@@ -130,6 +170,41 @@ class SpatialStorage(unittest.TestCase):
         self.addCleanup(retained.close)
         self.assertEqual(retained.execute('SELECT * FROM catalog_version').fetchall(), before)
         self.assertEqual(set(read_catalog(retained)), set(TABLES_V3))
+
+    def test_schema6_scientific_backup_restore_retains_exact_source_review_and_history(self):
+        from qualify_scientific_fields import neutral_bundle
+        import psycopg
+        from psycopg import sql
+        from metadata import connection_info
+        raw = neutral_bundle()
+        dataset = self.dataset('scientific')
+        source = dict(project_id='a' * 32, manifest_sha256='b' * 64,
+                      reference_id='authored', path='fields.zip', measured_sha256=hashlib.sha256(raw).hexdigest())
+        row = dataset.workbench.scientific.admit(raw,
+            dict(name='Authored neutral coordinates', rights='Authored fixture; no physics acceptance', groups=[], parents=[]), source)
+        row = self.review(dataset, row)
+        history = dataset.workbench.history(row['id'])
+        self.assertEqual(len(history), 2)
+        expected = summaries(read_catalog(dataset.db))
+        identity, path = dataset.db.dataset_id, dataset.path
+        dataset.close()
+        backup = self.root / 'scientific-backup'
+        receipt = backup_catalog(path, backup, quiesced=True)
+        self.assertEqual(receipt['schema_version'], 6)
+        filename = 'field_sequence/' + row['id'] + '/source.zip'
+        self.assertEqual(receipt['files'][filename]['sha256'], hashlib.sha256(raw).hexdigest())
+        backup_files = tree_manifest(backup)
+        with psycopg.connect(connection_info(), autocommit=True) as connection:
+            connection.execute(sql.SQL('DROP SCHEMA {} CASCADE').format(sql.Identifier('catalog_' + identity)))
+        destination = self.root / 'scientific-restored'
+        restore_catalog(backup, destination)
+        restored = self.dataset('scientific-restored')
+        self.assertEqual(summaries(read_catalog(restored.db)), expected)
+        self.assertEqual(restored.workbench.get(row['id']), row)
+        self.assertEqual(restored.workbench.history(row['id']), history)
+        self.assertEqual(restored.workbench.asset(row['id'])[0], raw)
+        self.assertEqual((destination / filename).read_bytes(), raw)
+        self.assertEqual(tree_manifest(backup), backup_files)
 
     def test_current_schema_backup_restore_retains_original_bytes_review_history_and_release(self):
         dataset = self.dataset()

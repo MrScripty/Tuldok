@@ -81,6 +81,108 @@ class ProjectsTests(unittest.TestCase):
         self.reopen({'fixture': self.external})
         self.assertEqual(self.owner.get(self.value['id']), result)
 
+    def test_data_reference_captures_exact_bytes_and_saved_origin(self):
+        before = self.snapshot()
+        opened = self.open()
+        expected = sha(self.files['data.bin'])
+        with patch.object(subprocess, 'Popen', side_effect=AssertionError('Read cannot execute source')):
+            raw, origin = self.owner.read_data_reference(self.value['id'], 'source', expected, projects.DATA_LIMIT)
+        self.assertEqual(raw, self.files['data.bin'])
+        self.assertEqual(origin, {'project_id': self.value['id'], 'manifest_sha256': opened['manifest_sha256'],
+            'reference_id': 'source', 'path': 'data.bin', 'measured_sha256': expected})
+        self.assertEqual(self.snapshot(), before)
+        (self.external / 'data.bin').write_bytes(b'replaced after capture')
+        self.assertEqual(raw, self.files['data.bin'], 'Caller owns captured bytes, not a path reopened later')
+
+    def test_data_reference_refuses_stale_or_declared_hash_mismatch(self):
+        self.open()
+        changed = b'new source bytes'
+        (self.external / 'data.bin').write_bytes(changed)
+        for expected in (sha(self.files['data.bin']), sha(changed)):
+            with self.subTest(expected=expected), self.assertRaises(WorkbenchError) as caught:
+                self.owner.read_data_reference(self.value['id'], 'source', expected, projects.DATA_LIMIT)
+            self.assertEqual(caught.exception.code, 'conflict')
+        self.value['id'] = uuid.uuid4().hex
+        self.value['data'][0].pop('sha256')
+        self.write_manifest()
+        self.open()
+        with self.assertRaises(WorkbenchError) as caught:
+            self.owner.read_data_reference(self.value['id'], 'source', sha(self.files['data.bin']), projects.DATA_LIMIT)
+        self.assertEqual(caught.exception.code, 'conflict')
+        self.assertEqual(self.owner.read_data_reference(self.value['id'], 'source', sha(changed), projects.DATA_LIMIT)[0], changed)
+
+    def test_data_reference_bounds_and_section_selection(self):
+        self.open()
+        expected = sha(self.files['data.bin'])
+        for reference in ('note', 'script', 'runtime', 'absent', '../data.bin', '/data.bin'):
+            with self.subTest(reference=reference), self.assertRaises(WorkbenchError) as caught:
+                self.owner.read_data_reference(self.value['id'], reference, expected, projects.DATA_LIMIT)
+            self.assertEqual(caught.exception.code, 'not_found')
+        for digest, limit in ((None, 100), ('bad', 100), ('A'*64, 100),
+                              (expected, True), (expected, 0), (expected, projects.DATA_LIMIT+1)):
+            with self.subTest(digest=digest, limit=limit), self.assertRaises(WorkbenchError):
+                self.owner.read_data_reference(self.value['id'], 'source', digest, limit)
+        with self.assertRaises(WorkbenchError) as caught:
+            self.owner.read_data_reference(self.value['id'], 'source', expected, len(self.files['data.bin'])-1)
+        self.assertEqual(caught.exception.code, 'too_large')
+
+    def test_data_reference_inspection_exceeds_text_budget_but_obeys_total_budget(self):
+        raw = b'x' * (projects.FILE_LIMIT + 1)
+        (self.external / 'data.bin').write_bytes(raw)
+        self.value['data'][0]['sha256'] = sha(raw)
+        self.value['recipes'] = [{'id': 'same', 'label': 'Same file as recipe', 'path': 'data.bin'}]
+        self.write_manifest()
+        opened = self.open()
+        self.assertEqual(opened['data'][0]['observed_sha256'], sha(raw))
+        self.assertEqual(opened['data'][0]['bytes'], len(raw))
+        self.assertEqual(opened['recipes'][0]['integrity'], 'unverified')
+        self.assertNotIn('observed_sha256', opened['recipes'][0])
+        captured, _origin = self.owner.read_data_reference(self.value['id'], 'source', sha(raw), projects.DATA_LIMIT)
+        self.assertEqual(captured, raw)
+        with patch.object(projects, 'INSPECTION_LIMIT', len(raw)-1):
+            bounded = self.owner.get(self.value['id'])
+        self.assertNotIn('observed_sha256', bounded['data'][0])
+        self.assertEqual(bounded['data'][0]['integrity'], 'unverified')
+
+    def test_data_reference_missing_and_rebound_root_never_reads_replacement(self):
+        self.open()
+        expected = sha(self.files['data.bin'])
+        (self.external / 'data.bin').unlink()
+        with self.assertRaises(WorkbenchError) as caught:
+            self.owner.read_data_reference(self.value['id'], 'source', expected, projects.DATA_LIMIT)
+        self.assertEqual(caught.exception.code, 'unavailable')
+        replacement = self.path / 'replacement'
+        replacement.mkdir()
+        (replacement / 'data.bin').write_bytes(self.files['data.bin'])
+        for roots in ({}, {'fixture': replacement}):
+            self.reopen(roots)
+            with patch.object(self.owner, '_read', side_effect=AssertionError('Rebound root must not be read')):
+                with self.assertRaises(WorkbenchError) as caught:
+                    self.owner.read_data_reference(self.value['id'], 'source', expected, projects.DATA_LIMIT)
+            self.assertEqual(caught.exception.code, 'unavailable')
+
+    def test_data_reference_rejects_symlinks_special_files_and_traversal(self):
+        outside = self.path / 'outside.bin'
+        outside.write_bytes(self.files['data.bin'])
+        (self.external / 'link.bin').symlink_to(outside)
+        (self.external / 'linkdir').symlink_to(self.path, target_is_directory=True)
+        (self.external / 'folder.bin').mkdir()
+        os.mkfifo(self.external / 'pipe.bin')
+        paths = ('link.bin', 'linkdir/outside.bin', 'folder.bin', 'pipe.bin')
+        self.value['data'] = [{'id': 'r'+str(index), 'label': path, 'path': path} for index, path in enumerate(paths)]
+        self.write_manifest()
+        self.open()
+        for index, path in enumerate(paths):
+            with self.subTest(path=path), self.assertRaises(WorkbenchError):
+                self.owner.read_data_reference(self.value['id'], 'r'+str(index), sha(self.files['data.bin']), projects.DATA_LIMIT)
+        for path in ('../outside.bin', '/outside.bin', 'folder.bin/../data.bin'):
+            self.value['id'] = uuid.uuid4().hex
+            self.value['data'] = [{'id': 'source', 'label': 'Unsafe', 'path': path}]
+            self.write_manifest()
+            with self.subTest(path=path), self.assertRaises(WorkbenchError):
+                self.open()
+        self.assertEqual(len(self.owner.list()['projects']), 1)
+
     def test_changed_manifest_flags_original_snapshot_and_id_conflicts(self):
         opened = self.open()
         changed = copy.deepcopy(self.value)
@@ -209,7 +311,7 @@ class ProjectsTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):
             self.open()
         with (self.external / 'large.bin').open('wb') as handle:
-            handle.truncate(projects.FILE_LIMIT+1)
+            handle.truncate(projects.DATA_LIMIT+1)
         self.value['data'] = [{'id':'large','label':'Large','path':'large.bin','sha256':'0'*64},
                               {'id':'small','label':'Small','path':'data.bin','sha256':sha(self.files['data.bin'])}]
         self.write_manifest()

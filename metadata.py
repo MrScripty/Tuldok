@@ -19,8 +19,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 5
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5)
+SCHEMA_VERSION = 6
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -415,7 +415,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -527,4 +527,10 @@ PROJECT_TABLES = {
     'workspace_projects': '''CREATE TABLE workspace_projects (
         id TEXT PRIMARY KEY, document TEXT NOT NULL)''',
 }
-TABLES = {**TABLES_V4, **PROJECT_TABLES}
+TABLES_V5 = {**TABLES_V4, **PROJECT_TABLES}
+# The scientific source lives in the existing local artifact tree, not a new table.
+TABLES = {
+    **TABLES_V5,
+    'workbench_records': TABLES_V5['workbench_records'].replace(
+        "'pointcloud','volume'", "'pointcloud','volume','field_sequence'"),
+}

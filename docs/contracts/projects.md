@@ -1,9 +1,7 @@
 # Project inspection v1
 
 Owner: `projects.py:Projects`; PostgreSQL schema5 owns immutable registration
-snapshots. HTTP and the workspace UI project the same owner. This first stage
-inspects references only: project files are not imported as Data records,
-recipes are not executable graphs, and external evidence is not a Tuldok Run.
+snapshots. HTTP and the workspace UI project the same owner. Opening inspects references without importing records. A separate explicit action may import a conforming scientific field bundle; recipe references remain non-executable and external evidence is not a Tuldok Run.
 
 ## Opening and reference schema
 
@@ -65,7 +63,7 @@ cannot block the file reader. Root selection itself is a trusted local startup
 action and resolves the configured directory. All project access is read-only;
 opening writes only Tuldok's catalog registration.
 
-Inspection hashes at most8MiB per referenced file and64MiB total per detail
+Inspection hashes at most40MiB per data reference,8MiB per other referenced file and64MiB total per detail
 request. Larger regular files are reported present with unverified contents.
 Bounded reads check size and modification identity before/after and refuse
 observed changes. Presence, measured byte hash, equality to a declared hash and
@@ -117,3 +115,7 @@ Schema version, project manifest version and later scientific/recipe versions
 have independent owners. Runtime requirements are declared file references in
 v1; later qualified execution must use its own admitted runtime/permission
 contract rather than treating presence as capability.
+
+## Explicit scientific data import
+
+POST `/api/workspace/projects/{id}/import-data/{reference_id}` selects only a saved data reference. Body requires `expected_sha256` from the displayed inspection; optional `name`, `rights`, `groups`, `parents` describe the new catalog record. The same root binding and no-follow file walk apply. Both the selected observed hash and any manifest-declared hash must match captured bytes before publication; stale selections return409. The generic project owner captures bytes and source identity; the [scientific data owner](scientific-fields.md) validates their format and owns immutable catalog custody. Opening/getting never imports automatically. Import leaves source files and project registration unchanged.

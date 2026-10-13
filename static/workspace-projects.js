@@ -1,8 +1,9 @@
 'use strict';
 // Projects project server-owned references. Opening never admits an execution.
-window.WorkspaceProjects = function ({select, roots, announce, switchSource, contextChanged}) {
+window.WorkspaceProjects = function ({select, roots, announce, switchSource, contextChanged, openCatalogRecord}) {
   const $=id=>document.getElementById(id), esc=value=>window.workspaceEscape(value);
   let active=null, view=null, detail=null, generation=0, controller=null, evidenceController=null;
+  let importTarget=null, importing=false, importGeneration=0;
   let entries=[], aliases=[], listGeneration=0, opening=false, openGeneration=0;
   const currentSource=()=>select.value;
   async function api(path, options={}) {
@@ -34,7 +35,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     }catch(error){if(epoch===listGeneration)$('project-open-status').textContent=error.message;}
   }
   function reference(item, category) {
-    return `<li class="project-reference"><div><strong>${esc(item.label)}</strong><span class="badge ${item.status==='available'&&item.integrity==='verified'?'':'amber'}">${esc(item.status)} · ${esc(item.integrity)}</span></div><p class="project-path">${esc(item.path)}</p>${item.reason?`<p>${esc(item.reason)}</p>`:''}${item.bytes!==undefined?`<small>${esc(item.bytes)} bytes</small>`:''}${category==='evidence'&&item.status==='available'?`<button type="button" data-project-evidence="${esc(item.id)}">Inspect external evidence</button>`:''}<details><summary>Reference identity</summary><pre>${esc(JSON.stringify({id:item.id,expected_sha256:item.sha256,observed_sha256:item.observed_sha256},null,2))}</pre></details></li>`;
+    return `<li class="project-reference"><div><strong>${esc(item.label)}</strong><span class="badge ${item.status==='available'&&item.integrity==='verified'?'':'amber'}">${esc(item.status)} · ${esc(item.integrity)}</span></div><p class="project-path">${esc(item.path)}</p>${item.reason?`<p>${esc(item.reason)}</p>`:''}${item.bytes!==undefined?`<small>${esc(item.bytes)} bytes</small>`:''}${category==='data'?`<button type="button" data-project-import="${esc(item.id)}" ${item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||''))?'disabled':''}>Import fields</button>`:''}${category==='evidence'&&item.status==='available'?`<button type="button" data-project-evidence="${esc(item.id)}">Inspect external evidence</button>`:''}<details><summary>Reference identity</summary><pre>${esc(JSON.stringify({id:item.id,expected_sha256:item.sha256,observed_sha256:item.observed_sha256},null,2))}</pre></details></li>`;
   }
   function render() {
     if(!active||!view)return;
@@ -43,10 +44,11 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     const changed=detail.manifest_status!=='unchanged';
     const items=view==='data'?detail.data:view==='pipeline'?detail.recipes:detail.evidence;
     const title=view==='data'?'Referenced data':view==='pipeline'?'Referenced recipes':'External evidence';
-    const note=view==='data'?'References are inspected in place; they are not imported catalog records.':view==='pipeline'?'Referenced recipes are not executable in project inspection mode.':'External evidence is not a Tuldok-completed run or scientific qualification.';
+    const note=view==='data'?'Import supported scientific fields explicitly into the catalog. Saved project references remain unchanged.':view==='pipeline'?'Referenced recipes are not executable in project inspection mode.':'External evidence is not a Tuldok-completed run or scientific qualification.';
     root.innerHTML=`<div class="panel panel-pad project-header"><div><span class="eyebrow">PROJECT · INSPECTION ONLY</span><h2>${esc(detail.name)}</h2><p>${esc(detail.root)} / ${esc(detail.manifest_path)}</p></div><button type="button" class="project-refresh">Refresh references</button></div>${changed?`<p class="callout" role="status">Manifest ${esc(detail.manifest_status)}. Saved references remain unchanged; a different manifest requires a new project ID.</p>`:''}<section class="panel panel-pad"><h2>${title}</h2><p>${note}</p>${items.length?`<ul class="project-references">${items.map(item=>reference(item,view==='runs'?'evidence':view)).join('')}</ul>`:`<p class="muted">No ${title.toLowerCase()} declared.</p>`}</section>${view==='data'?`<section class="panel panel-pad"><h2>Runtime requirements</h2><p class="muted">Presence does not qualify a runtime.</p>${detail.requirements.length?`<ul class="project-references">${detail.requirements.map(item=>`<li><strong>${esc(item.label)}</strong><span class="badge amber">${esc(item.status)}</span>${item.path?`<p class="project-path">${esc(item.path)}</p>`:''}${item.reason?`<p>${esc(item.reason)}</p>`:''}</li>`).join('')}</ul>`:'<p class="muted">No requirements declared.</p>'}</section>`:''}<div class="project-evidence-output" aria-live="polite"></div><details class="project-identity"><summary>Saved manifest identity</summary><p class="project-path">${esc(detail.manifest_sha256)}</p><p>Execution: unsupported</p></details>`;
     root.querySelector('.project-refresh').onclick=()=>loadDetail(active,true);
     for(const button of root.querySelectorAll('[data-project-evidence]'))button.onclick=()=>loadEvidence(button.dataset.projectEvidence);
+    for(const button of root.querySelectorAll('[data-project-import]'))button.onclick=()=>openImport(button.dataset.projectImport);
     contextChanged();
   }
   async function loadDetail(id, refresh=false) {
@@ -78,6 +80,31 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     }catch(error){if(evidenceController===request&&epoch===generation&&error.name!=='AbortError')output.textContent=error.message;}
     finally{if(evidenceController===request)evidenceController=null;}
   }
+  function openImport(id) {
+    const item=detail?.data.find(ref=>ref.id===id);
+    if(importing||!item||item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||'')))return;
+    importTarget={project:active,ref:id,sha256:item.observed_sha256};importGeneration++;
+    $('project-import-name').value=item.label;$('project-import-rights').value='unknown';$('project-import-group').value='';
+    $('project-import-identity').textContent=item.path+' · SHA256 '+item.observed_sha256;
+    $('project-import-status').textContent='Import original field bytes as a new catalog record. Source identity is checked again before import.';
+    $('project-import-dialog').showModal();$('project-import-name').focus();
+  }
+  $('project-import-close').onclick=()=>{importGeneration++;$('project-import-dialog').close();if(importing)announce('Import may still complete. Inspect the catalog before repeating it.');};
+  $('project-import-dialog').addEventListener('cancel',()=>{importGeneration++;if(importing)announce('Import may still complete. Inspect the catalog before repeating it.');});
+  $('project-import-form').onsubmit=async event=>{
+    event.preventDefault();if(importing||!importTarget)return;
+    const target={...importTarget},epoch=++importGeneration,owner=generation;
+    const group=$('project-import-group').value.trim();
+    const body={name:$('project-import-name').value,rights:$('project-import-rights').value,groups:group?[group]:[],parents:[],expected_sha256:target.sha256};
+    importing=true;$('project-import-submit').disabled=true;$('project-import-status').textContent='Checking source identity and importing…';
+    try{
+      const record=await api('/'+encodeURIComponent(target.project)+'/import-data/'+encodeURIComponent(target.ref),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(epoch!==importGeneration||owner!==generation||active!==target.project||!$('project-import-dialog').open)return;
+      if(typeof record.id!=='string'||record.kind!=='field_sequence')throw Error('Unsupported imported field record response.');
+      $('project-import-dialog').close();await openCatalogRecord(record.id);
+    }catch(error){if(epoch===importGeneration)$('project-import-status').textContent=error.message+' If a reply was lost, inspect the catalog before repeating the import.';}
+    finally{importing=false;$('project-import-submit').disabled=false;}
+  };
   $('open-project').onclick=()=>{$('project-open-dialog').showModal();$('project-manifest').focus();refreshList();};
   $('project-open-close').onclick=()=>{openGeneration++;$('project-open-dialog').close();$('open-project').focus();};
   $('project-open-dialog').addEventListener('cancel',()=>{openGeneration++;});
@@ -96,7 +123,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     }catch(error){if(epoch===openGeneration)$('project-open-status').textContent=error.message+' Refresh saved projects before repeating an opening whose reply was lost.';}
     finally{opening=false;$('project-open-submit').disabled=!aliases.length;}
   };
-  window.addEventListener('pagehide',()=>{generation++;listGeneration++;openGeneration++;controller?.abort();evidenceController?.abort();});
+  window.addEventListener('pagehide',()=>{generation++;listGeneration++;openGeneration++;importGeneration++;controller?.abort();evidenceController?.abort();});
   return {
     initialize:refreshList,
     label:()=>detail?.name||entries.find(entry=>'project:'+entry.id===currentSource())?.name||'Project',
@@ -104,6 +131,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
       const id=source.startsWith('project:')?source.slice(8):null;
       for(const [name,root] of Object.entries(roots))root.hidden=!id||name!==next;
       if(id===active&&next===view)return;
+      importGeneration++;$('project-import-dialog').close();
       const changed=id!==active;active=id;view=next;generation++;controller?.abort();evidenceController?.abort();controller=null;evidenceController=null;
       if(changed)detail=null;
       if(!id)return;

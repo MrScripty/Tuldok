@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P1 locally verified on feature/generic-project-opening-20261013; final hosted CI pending. Plan published as PR44.
+**Current phase:** P1 qualified at published commit 46384fca; P2 implemented and undergoing final qualification on feature/scientific-field-sequences-20261013.
 
-**Next slice:** P1 — qualify the published project-opening implementation through final CI before P2 admission.
+**Next slice:** P2 — lossless scientific field sequences, source custody, review and freeze.
 
 **Acceptance status:** `partial`
 
@@ -18,7 +18,7 @@ Open an existing scientific repository as a Tuldok project, acquire lossless dat
 
 Use `MrScripty/rheon-surrogate-lab` as the concrete complete acceptance workflow. Wrap its proven generation, modal pressure fitting and autonomous rollout evaluation scripts before considering algorithm replacement. This plan does not promise unrestricted scientific software execution or arbitrary 3D model support.
 
-The user approved publishing this plan and staged implementation on 2026-10-13. Commit/push and draft PR creation are authorized; merge and deployment are not. Start P1 after plan publication and progress to later stages only after their prerequisite gates qualify. All product milestone gates remain pending.
+The user approved publishing this plan and staged implementation on 2026-10-13. Commit/push and draft PR creation are authorized; merge and deployment are not. Start P1 after plan publication and progress to later stages only after their prerequisite gates qualify. G1 is qualified; remaining product gates require their staged evidence.
 
 ## Roadmap continuation
 
@@ -33,7 +33,7 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | G1 | Open/reopen a local project, inspect available/missing artifacts and runtime requirements, navigate all three workspaces without executing or modifying repository code | user-workflow | representative | automated | satisfied | [P1 observed workflow](reports/p1-verification.md) |
-| G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | pending | P2 independent NumPy reader and actual lab samples |
+| G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | satisfied | [Actual native and neutral custody workflows](reports/p2-verification.md) |
 | G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | pending | P4 actual native generator plus no-adapter startup |
 | G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | pending | P5 lab verifier, numerical field comparison and new execution receipts |
 | G5 | Agent and UI clients use the same operations; stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
@@ -114,7 +114,7 @@ Enforce at the service boundary reached by every transport, not only at MCP. Aud
 | Assumption or claim | Decision affected | Owner | Executable procedure | Required environment | Status/evidence |
 | --- | --- | --- | --- | --- | --- |
 | Generic project inspection requires no lab runtime | P1 independence | Project owner | Open external manifest with missing runtime/data; observe no children or source writes | Local app/PostgreSQL/browser | Source-supported; product test pending |
-| Full lab arrays fit the proposed contract | P2 schema and limits | Data owner | Read representative actual NPZ captures in a separate process; inventory dtype/shape/centering/time and round-trip exact arrays | Actual lab capture bytes + NumPy | Missing bulk captures may block positive acceptance |
+| Full lab arrays fit the proposed contract | P2 schema and limits | Data owner | Read representative actual NPZ captures in a separate process; inventory dtype/shape/centering/time and round-trip exact arrays | Actual lab capture bytes + NumPy | Actual two-frame native capture acquired; see P2 admission report |
 | Native process can be controlled by Runs | P3 execution boundary | Runs owner | Start bounded native probe, cancel during request/output, close pipe, kill supervisor, reconcile descendants | Linux, compatible Rust/Rheon binary | Not executed in planning |
 | CPU reproduction is available | P5 acceptance runtime | Lab owner | Inspect installed interpreter/package versions; load hash-verified checkpoint in isolated worker; execute documented CPU control | PyTorch runtime + native build + required inputs | Not qualified; do not auto-install |
 | Prior performance numbers transfer | No design depends on this | Qualification owner | Separate matched-hardware benchmark with recorded protocol | Recorded GPU/CPU hardware | Not claimed |
@@ -160,7 +160,7 @@ The lab verifier expects its own frozen schemas and paths. Keep lab-native artif
 
 ## Milestones
 
-All statuses below describe proposed work under the planning-only boundary. Before starting each milestone, confirm its exact write set against current source, route relevant language/security/persistence standards, and record semantic changes to this plan.
+Statuses below track the approved staged implementation. Before starting each milestone, confirm its exact write set against current source, route relevant language/security/persistence standards, and record semantic changes to this plan.
 
 ### P1: Open and inspect a project
 
@@ -172,19 +172,21 @@ All statuses below describe proposed work under the planning-only boundary. Befo
 
 **Acceptance gate:** G1; real desktop/narrow/keyboard walkthrough; no spawned project code, no source mutations, traversal/symlink rejection, cross-project isolation and restart; existing workspace navigation regressions pass. First slice does not parse arbitrary checkpoints or claim scientific results verified.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 ### P2: Lossless scientific data and retained compatibility
 
 **Goal:** Inspect a real lab field/frame sequence in Data, review/freeze it and download an exactly recoverable generic release.
 
-**Allowed write set:** proposed `scientific_fields.py`, `scientific_release.py`, `docs/contracts/scientific-fields.md`, `tests/test_scientific_fields.py`, `tests/test_scientific_release.py`, `static/scientific-fields.js`; existing immutable asset, Workbench, release, metadata/upgrade/backup owners, `app.py`, workspace UI and affected tests; scoped compatibility modules identified before edits.
+**Allowed write set:** `docs/contracts/projects.md`, `canonical_release.py`, `caption_import.py`, `tests/test_workspace_metadata.py`, `projects.py`, `audio_assets.py`, `immutable_assets.py`, `workbench.py`, `dataset_releases.py`, `metadata.py`, `upgrade_metadata.py`, `README.md`, `docs/contracts/workspace-storage.md`, `.github/workflows/tests.yml`, `tests/qualify_scientific_fields.py`, `tests/browser_scientific_fields.cjs`, `tests/test_projects.py`, `tests/test_audio_assets.py`, `tests/test_spatial_storage.py`, `tests/qualify_spatial_retained_runs.py`, this plan directory; proposed `scientific_fields.py`, `scientific_release.py`, `docs/contracts/scientific-fields.md`, `tests/test_scientific_fields.py`, `tests/test_scientific_release.py`, `static/scientific-fields.js`; existing immutable asset, Workbench, release, metadata/upgrade/backup owners, `app.py`, workspace UI and affected tests; scoped compatibility modules identified before edits.
+
+**Contract admission:** [P2 bounded contract and native evidence](reports/p2-admission.md). No source implementation precedes independent design review.
 
 **Tasks:** Acquire actual sample evidence; fix bounds/layout contract; import via bounded file/stream interface; frame/field/slice viewer with units and sampling disclosure; preserve whole-trajectory families; explicit conversion links; qualify retained v1/v2 readers and schema upgrade.
 
 **Acceptance gate:** G2 and data portion of G7; independent cold read, exact bytes, geometry/time checks, malformed/oversize inputs, restore and retained-history tests. Actual sample unavailability leaves G2 pending while negative fixtures can proceed.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ### P3: Authorized external recipe execution
 
@@ -263,7 +265,7 @@ All statuses below describe proposed work under the planning-only boundary. Befo
 
 ## Concurrent Work
 
-Current planning is serial. After contract decisions, independent UI, adapter and read-only review work may proceed with disjoint assigned write sets. Core data schemas, access policy, metadata, Runs, shared tests and this plan have one serial integration owner. Do not spawn competing implementations of those owners.
+P2 contracts and integration have one serial root owner. After contract decisions, independent UI, adapter and read-only review work may proceed with disjoint assigned write sets. Core data schemas, access policy, metadata, Runs, shared tests and this plan have one serial integration owner. Do not spawn competing implementations of those owners.
 
 ## Repository Isolation
 

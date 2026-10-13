@@ -1,0 +1,27 @@
+{
+  "scope": "Saved artifact custody and independent full-grid numerical check; no replay or benchmark",
+  "receipt_sha256": "332aa36d8ce02585be77fbd74f8a7dfcfe9a297a3054b5bb67461ee3556d1e40",
+  "verifier_sha256": "98cd90583743bf09cecacf587505f6ba679aebdece2009fd603cfd83dd44554e",
+  "checks": [
+    {
+      "frame": 1,
+      "native_divergence_matches": true,
+      "actual_divergence_max": 2.9802322387695312e-08,
+      "normal_wall_velocity_max": 0.0,
+      "native_tracer_integral_within_tolerance": true,
+      "tracer_integral": 0.00034499217481302226,
+      "tracer_integral_abs_difference": 5.366800753803247e-18
+    },
+    {
+      "frame": 2,
+      "native_divergence_matches": true,
+      "actual_divergence_max": 5.960464477539063e-08,
+      "normal_wall_velocity_max": 0.0,
+      "native_tracer_integral_within_tolerance": true,
+      "tracer_integral": 0.0006897932466234993,
+      "tracer_integral_abs_difference": 6.5052130349130266e-18
+    }
+  ],
+  "all_artifact_hashes_pass": true,
+  "all_slices_match_original_wire": true
+}

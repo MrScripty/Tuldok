@@ -480,6 +480,13 @@ def make_handler(dataset):
                 if path == '/api/workbench/recipes':
                     return self.reply(dataset_recipes.RECIPES)
                 if path.startswith('/api/workbench/records/'):
+                    if path.endswith('/scientific'):
+                        options = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+                        if set(options) - {'frame', 'field', 'axis', 'index'} or any(len(values) != 1 for values in options.values()):
+                            raise workbench.WorkbenchError('Choose one frame, field, axis and slice index.')
+                        return self.reply(dataset.workbench.scientific.inspect(path.split('/')[-2],
+                            frame=int(options.get('frame', ['0'])[0]), field=options.get('field', [None])[0],
+                            axis=options.get('axis', ['z'])[0], index=int(options.get('index', ['0'])[0])))
                     if path.endswith('/preferences'):
                         return self.reply(dataset.workbench.preferences.list(path.split('/')[-2]))
                     if path.endswith('/responses'):
@@ -557,6 +564,7 @@ def make_handler(dataset):
                     '/workspace-projects.js': ('workspace-projects.js', 'text/javascript'),
                     '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
                     '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
+                    '/scientific-fields.js': ('scientific-fields.js', 'text/javascript'),
                     '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
                     '/audio-editor.css': ('audio-editor.css', 'text/css'),
                     '/meshes.css': ('meshes.css', 'text/css'),
@@ -605,7 +613,7 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = projects.decode(raw_body) if path == '/api/workspace/projects' else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = projects.decode(raw_body) if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
@@ -613,6 +621,12 @@ def make_handler(dataset):
                     parts = path.removeprefix('/api/workspace/').split('/')
                     if parts == ['projects']:
                         return self.reply(dataset.projects.open(body), 201)
+                    if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'import-data':
+                        projects.closed(body, ('expected_sha256',), ('name', 'rights', 'groups', 'parents'))
+                        raw, origin = dataset.projects.read_data_reference(parts[1], parts[3],
+                            body['expected_sha256'], projects.DATA_LIMIT)
+                        admission = {key: value for key, value in body.items() if key != 'expected_sha256'}
+                        return self.reply(dataset.workbench.scientific.admit(raw, admission, origin), 201)
                     if parts == ['graphs']:
                         return self.reply(dataset.pipelines.create(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':

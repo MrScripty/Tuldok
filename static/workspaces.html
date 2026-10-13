@@ -108,6 +108,17 @@
       </form>
       <p id="project-open-status" role="status">Loading configured roots…</p>
     </dialog>
+    <dialog id="project-import-dialog" aria-labelledby="project-import-title">
+      <div class="panel-title"><h2 id="project-import-title">Import scientific fields</h2><button id="project-import-close" type="button">Close</button></div>
+      <p id="project-import-identity" class="project-path"></p>
+      <form id="project-import-form">
+        <label>Record name<input id="project-import-name" required maxlength="200"></label>
+        <label>Rights<input id="project-import-rights" value="unknown" required maxlength="1000"></label>
+        <label>Additional family group (optional)<input id="project-import-group" maxlength="200"></label>
+        <button id="project-import-submit" class="primary">Import fields</button>
+      </form>
+      <p id="project-import-status" role="status"></p>
+    </dialog>
     <dialog id="leave-dialog">
       <h2>Unsaved fixture edits</h2>
       <p>
