@@ -1,5 +1,5 @@
 """Real PostgreSQL version evolution and lossless retained backup contracts."""
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 import io
 import json
 import os
@@ -408,7 +408,7 @@ class WorkspaceMetadata(unittest.TestCase):
         with patch('backup_metadata.write_json', side_effect=replace):
             with self.assertRaisesRegex(OSError, 'original post-copy failure') as caught:
                 backup_catalog(metadata.path, backup, quiesced=True)
-        self.assertTrue(any('cleanup refused' in note for note in caught.exception.__notes__))
+        self.assertIn('cleanup refused', caught.exception.backup_cleanup_diagnostic)
         self.assertEqual(external.stat().st_mode & 0o777, 0o500)
         self.assertEqual(len(list(self.root.glob('uncertain-backup.partial-*'))), 1)
         external.chmod(0o700)
@@ -432,7 +432,47 @@ class WorkspaceMetadata(unittest.TestCase):
                 with self.assertRaisesRegex(OSError, 'original failure') as caught:
                     backup_catalog(metadata.path, backup, quiesced=True)
         self.assertEqual((replacement[0] / 'unrelated').read_bytes(), b'preserve')
-        self.assertTrue(any('identity changed' in note for note in caught.exception.__notes__))
+        self.assertIn('identity changed', caught.exception.backup_cleanup_diagnostic)
+
+    def test_cleanup_diagnostic_preserves_original_error_without_note_capability_and_reaches_cli(self):
+        import backup_metadata
+        class LegacyOSError(OSError):
+            add_note = None  # Python 3.10 exceptions have no note capability.
+        metadata = self.catalog(version=8)
+        before = tree_manifest(metadata.path)
+        for error_type in (OSError, LegacyOSError):
+            with self.subTest(error_type=error_type.__name__):
+                backup = self.root / ('diagnostic-' + error_type.__name__)
+                original_error = error_type('original post-copy failure')
+                original_args = original_error.args
+                with patch('backup_metadata.write_json', side_effect=original_error), \
+                        patch('backup_metadata._remove_partial_contents',
+                              side_effect=backup_metadata.StorageTransferError('injected custody refusal')):
+                    with self.assertRaises(error_type) as caught:
+                        backup_catalog(metadata.path, backup, quiesced=True)
+                self.assertIs(caught.exception, original_error)
+                self.assertEqual(original_error.args, original_args)
+                self.assertEqual(str(original_error), 'original post-copy failure')
+                partials = list(self.root.glob(backup.name + '.partial-*'))
+                self.assertEqual(len(partials), 1)
+                diagnostic = original_error.backup_cleanup_diagnostic
+                self.assertIn(str(partials[0]), diagnostic)
+                self.assertIn('injected custody refusal', diagnostic)
+                if callable(getattr(original_error, 'add_note', None)):
+                    self.assertIn(diagnostic, original_error.__notes__)
+                else:
+                    self.assertFalse(hasattr(original_error, '__notes__'))
+                stderr = io.StringIO()
+                with patch.object(sys, 'argv', ['backup_metadata.py', 'backup',
+                                               str(metadata.path), str(backup), '--quiesced']), \
+                        patch('backup_metadata.backup_catalog', side_effect=original_error), \
+                        redirect_stderr(stderr):
+                    with self.assertRaises(SystemExit) as exited:
+                        backup_metadata.main()
+                self.assertEqual(exited.exception.code, 1)
+                self.assertEqual(stderr.getvalue(), str(original_error) + '\n' + diagnostic + '\n')
+                self.assertEqual(original_error.args, original_args)
+                self.assertEqual(tree_manifest(metadata.path), before)
 
     def test_backup_partial_descriptor_acquisition_failure_closes_parent(self):
         metadata = self.catalog(version=8)

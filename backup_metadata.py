@@ -357,7 +357,7 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
         sync_directory(backup.parent)
         return receipt
     finally:
-        original_error = sys.exception()
+        original_error = sys.exc_info()[1]
         try:
             if metadata is not None:
                 metadata.close()
@@ -379,7 +379,12 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
         except (OSError, StorageTransferError) as cleanup_error:
             if original_error is None:
                 raise
-            original_error.add_note('Partial backup cleanup refused; preserve for diagnosis: ' + str(cleanup_error))
+            diagnostic = ('Partial backup cleanup refused; preserve for diagnosis: '
+                          + str(temporary) + ': ' + str(cleanup_error))
+            original_error.backup_cleanup_diagnostic = diagnostic
+            add_note = getattr(original_error, 'add_note', None)
+            if callable(add_note):
+                add_note(diagnostic)
         finally:
             if partial_descriptor is not None:
                 os.close(partial_descriptor)
@@ -463,7 +468,11 @@ def main():
         result = (backup_catalog(args.catalog, args.backup, quiesced=args.quiesced)
                   if args.command == 'backup' else restore_catalog(args.backup, args.destination))
     except (StorageTransferError, OSError, ValueError) as error:
-        parser.exit(1, str(error) + '\n')
+        message = str(error)
+        diagnostic = getattr(error, 'backup_cleanup_diagnostic', None)
+        if diagnostic:
+            message += '\n' + diagnostic
+        parser.exit(1, message + '\n')
     print(json.dumps(result, indent=2))
 
 
