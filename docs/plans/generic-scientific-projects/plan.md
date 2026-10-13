@@ -1,12 +1,12 @@
 # Plan: Generic scientific projects and agent operations
 
-**Plan status:** `Planned`
+**Plan status:** `Active`
 
-**Current phase:** Plan publication authorized; P1 implementation follows on a separate feature branch.
+**Current phase:** P1 locally verified on feature/generic-project-opening-20261013; final hosted CI pending. Plan published as PR44.
 
-**Next slice:** P1 — open a generic project and inspect referenced evidence without executing code.
+**Next slice:** P1 — qualify the published project-opening implementation through final CI before P2 admission.
 
-**Acceptance status:** `pending`
+**Acceptance status:** `partial`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -32,7 +32,7 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| G1 | Open/reopen a local project, inspect available/missing artifacts and runtime requirements, navigate all three workspaces without executing or modifying repository code | user-workflow | representative | automated | pending | P1 browser and subprocess/filesystem observation |
+| G1 | Open/reopen a local project, inspect available/missing artifacts and runtime requirements, navigate all three workspaces without executing or modifying repository code | user-workflow | representative | automated | satisfied | [P1 observed workflow](reports/p1-verification.md) |
 | G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | pending | P2 independent NumPy reader and actual lab samples |
 | G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | pending | P4 actual native generator plus no-adapter startup |
 | G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | pending | P5 lab verifier, numerical field comparison and new execution receipts |
@@ -166,13 +166,13 @@ All statuses below describe proposed work under the planning-only boundary. Befo
 
 **Goal:** Runnable compact project selector/header and existing three-workspace navigation, with honest external evidence and missing-dependency states.
 
-**Allowed write set:** proposed `projects.py`, `docs/contracts/projects.md`, `tests/test_projects.py`, `tests/browser_workspace_project.cjs`; existing `app.py`, `metadata.py`, `static/workspace-real.js`, `static/workspaces.js`, `static/workspaces.css`, `static/workspaces.html`, `static/workspace-service.js`, workspace contract tests; this plan directory. Project registration in existing metadata requires explicit upgrade/restore coverage; do not introduce sidecar database authority.
+**Allowed write set:** `README.md`, `docs/contracts/workspace-storage.md`, `upgrade_metadata.py`, `tests/test_spatial_storage.py`, `tests/qualify_spatial_retained_runs.py`, `.github/workflows/tests.yml`, `static/workspace-projects.js`; proposed `projects.py`, `docs/contracts/projects.md`, `tests/test_projects.py`, `tests/browser_workspace_project.cjs`; existing `app.py`, `metadata.py`, `static/workspace-real.js`, `static/workspaces.js`, `static/workspaces.css`, `static/workspaces.html`, `static/workspace-service.js`, workspace contract tests; this plan directory. Project registration in existing metadata requires explicit upgrade/restore coverage; do not introduce sidecar database authority.
 
 **Tasks:** Define manifest/reference boundaries; add read-only validation/inspection and explicit registration/opening; display project context and externally supplied receipt metadata as unverified until checked; preserve ordinary dataset-only entry; handle missing runtime/artifacts without execution.
 
 **Acceptance gate:** G1; real desktop/narrow/keyboard walkthrough; no spawned project code, no source mutations, traversal/symlink rejection, cross-project isolation and restart; existing workspace navigation regressions pass. First slice does not parse arbitrary checkpoints or claim scientific results verified.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ### P2: Lossless scientific data and retained compatibility
 
@@ -271,6 +271,6 @@ Plan publication uses `plan/generic-scientific-projects-20261013` from PR43 in t
 
 ## Final Acceptance
 
-- Acceptance status: `pending`
+- Acceptance status: `partial`
 - Deferred follow-ups: broader ASR, arbitrary scientific models/physics, distributed execution and GPU performance reproduction; each requires a separate concrete consumer/qualification decision.
-- Final status: `Planned`
+- Final status: `Active`

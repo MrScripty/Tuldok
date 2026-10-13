@@ -21,3 +21,15 @@ Verification results and independent review disposition are appended after compl
 ## 2026-10-13 — publication and implementation admission
 
 User approved the presented plan and staged implementation (Sentinel_d7dcd8c1780481919cb7f76d7475632e). Operation: continue `docs/plans/generic-scientific-projects/plan.md`. Publish plan first, then P1 on a separate branch; no merge/deploy. Remote PR inventory still shows PR38–43 as open drafts; refreshed main remains the baseline pending inspection. Preserve their history and qualify this stack independently.
+
+## 2026-10-13 — P1 implementation and local qualification
+
+Plan published first as PR44 at fd3f6a93b9c7f2d7d8056298a02d3f9b362e9b3c. P1 branch feature/generic-project-opening-20261013 descends from it. Root owns project service/API/docs; mesh_ui owned four UI files; volume_assets owned schema5/upgrade and bounded storage tests; recipe_design owned focused project tests; point_assets owned the browser gate; mesh_review independently reviewed source. Shared services were integrated serially.
+
+Implemented immutable generic project registration, explicit root binding, bounded read-only source/evidence inspection, missing requirements, three workspace navigation and retained dataset-only behavior. Schema5 adds one project table with exact old schema definitions retained. Local-only client/Host checks protect the opt-in filesystem surface before P3 actor policy. Opening never executes source code, probes a runtime or loads a model.
+
+649 full Python tests pass (412.564s, two optional-reader skips); independent point/volume reader suites pass20 tests with no skips. Affected schema/migration/worker subset71 passes, focused project11 passes independently, existing workspace browser18 checks passes, generic and actual-lab-copy project browsers pass offline with12 transport canaries each. Retained historical schema3 Run and exact schema4 backups survive explicit schema5 evolution. See [P1 evidence](reports/p1-verification.md). No runtime type-checker or Standards Engine certificate is claimed.
+
+Independent review fixes: reject lone surrogate input; return bytes matching actual hashed read; explain immutable changed-manifest snapshots honestly; clean root handles on malformed internal configuration. Final source review reports no remaining blocker. Hosted exact-head checks remain pending until publication.
+
+Next-stage research found no raw lab capture in the checkout/releases and no native toolchain initially configured. Evaluation NPZ omits RHS; training NPZ omits corrected fields. A separately isolated, pinned native two-frame capture is being prepared as the smallest P2 contract observation; no training or model execution. It is new evidence, not reconstruction of historical artifacts.

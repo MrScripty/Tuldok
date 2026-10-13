@@ -1,4 +1,4 @@
-"""Qualify real old-source schema3 results through explicit schema4 evolution.
+"""Qualify real old-source schema3 results through explicit current-schema evolution.
 
 Uses disposable catalogs only. The legacy checkout must be the exact pinned,
 unmodified source; no synthetic downgrade or mocked execution is accepted.
@@ -18,7 +18,7 @@ import psycopg
 from psycopg import sql
 from app import Dataset
 from backup_metadata import backup_catalog, restore_catalog, tree_manifest
-from metadata import Metadata, StorageError, connection_info
+from metadata import SCHEMA_VERSION, Metadata, StorageError, connection_info
 from upgrade_metadata import upgrade_catalog
 
 LEGACY_COMMIT = 'f1ecf7888a8dfa5b67ac8b087034226d533c682e'
@@ -70,7 +70,7 @@ def drop_fixture_schema(identity):
 def verify(path, receipt, artifacts):
     dataset = Dataset(path)
     try:
-        assert dataset.db.schema_version == 4
+        assert dataset.db.schema_version == SCHEMA_VERSION
         assert dataset.db.dataset_id == receipt['dataset_id']
         assert dataset.pipelines.get(receipt['graph']['id']) == receipt['graph']
         assert dataset.runs.get(receipt['run']['id']) == receipt['run']
@@ -78,7 +78,7 @@ def verify(path, receipt, artifacts):
         for name, expected in artifacts.items():
             observed, _ = dataset.runs.artifact(receipt['run']['id'], name)
             assert observed == expected, name
-        return {'schema_version': 4, 'state': 'completed', 'run_id': receipt['run']['id'],
+        return {'schema_version': SCHEMA_VERSION, 'state': 'completed', 'run_id': receipt['run']['id'],
                 'artifacts': {name: fingerprint(raw) for name, raw in artifacts.items()}}
     finally:
         dataset.close()
@@ -114,16 +114,16 @@ def qualify(legacy_root):
             else:
                 unexpected.close()
                 raise AssertionError('Current application silently accepted schema3.')
-            assert upgrade_catalog(source, quiesced=True)['schema_version'] == 4
+            assert upgrade_catalog(source, quiesced=True)['schema_version'] == SCHEMA_VERSION
             assert tree_manifest(source) == before
             upgraded = verify(source, receipt, artifacts)
-            backup4 = root / 'backup4'
-            assert backup_catalog(source, backup4, quiesced=True)['schema_version'] == 4
-            backup4_files = tree_manifest(backup4)
+            backup_current = root / 'backup_current'
+            assert backup_catalog(source, backup_current, quiesced=True)['schema_version'] == SCHEMA_VERSION
+            backup_current_files = tree_manifest(backup_current)
             drop_fixture_schema(identity)
-            restored4 = root / 'restored4'
-            restore_catalog(backup4, restored4)
-            restored = verify(restored4, receipt, artifacts)
+            restored_current = root / 'restored_current'
+            restore_catalog(backup_current, restored_current)
+            restored = verify(restored_current, receipt, artifacts)
             drop_fixture_schema(identity)
             restored3 = root / 'restored3'
             restore_catalog(backup3, restored3)
@@ -132,9 +132,9 @@ def qualify(legacy_root):
             upgrade_catalog(restored3, quiesced=True)
             restored_legacy = verify(restored3, receipt, artifacts)
             assert tree_manifest(backup3) == backup3_files
-            assert tree_manifest(backup4) == backup4_files
+            assert tree_manifest(backup_current) == backup_current_files
             return {'legacy_commit': head, 'legacy_schema': 3, 'execution': 'real mesh integrity, no training',
-                    'upgrade': upgraded, 'schema4_restore': restored, 'schema3_restore_then_upgrade': restored_legacy,
+                    'upgrade': upgraded, 'current_schema_restore': restored, 'schema3_restore_then_upgrade': restored_legacy,
                     'original_backups_unchanged': True}
         finally:
             # Recover identity even if the child failed after creating its catalog.

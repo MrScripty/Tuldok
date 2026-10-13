@@ -20,7 +20,7 @@ from backup_metadata import (backup_catalog, populate_catalog, read_catalog,
                              read_sequences, restore_catalog, summaries,
                              table_state, tree_manifest)
 from metadata import (CommitOutcomeUnknown, Metadata, SCHEMA_VERSION, StorageError,
-                      TABLES_V1, TABLES_V2, WORKSPACE_TABLES, connection_info,
+                      TABLES_V1, TABLES_V2, TABLES_V3, TABLES_V4, PROJECT_TABLES, WORKSPACE_TABLES, connection_info,
                       definition_hash)
 from migrate_sqlite import migrate_sqlite, read_legacy
 from upgrade_metadata import UPGRADES, upgrade_catalog
@@ -33,7 +33,7 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertEqual(len(TABLES_V1), 19)
         self.assertEqual(definition_hash(1),
                          '859a04c5ee618faae689885bee79054d5e92098e746d058fd2bcb599da4c80db')
-        self.assertEqual(SCHEMA_VERSION, 4)
+        self.assertEqual(SCHEMA_VERSION, 5)
         self.assertEqual(set(WORKSPACE_TABLES),
                          {'workspace_graphs', 'workspace_runs', 'workspace_exposures'})
 
@@ -44,6 +44,15 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertNotEqual(definition_hash(3), definition_hash(2))
         self.assertEqual([UPGRADES[version][0] for version in (1, 2)],
                          ['workspace-metadata-1-to-2', 'audio-metadata-2-to-3'])
+
+    def test_retained_v3_v4_definitions_and_additive_v5_project_table(self):
+        self.assertEqual(len(TABLES_V3), 22)
+        self.assertEqual(definition_hash(3), '54fade5b56207edf7c9a33bfa9187f85b3e42ea779869314e7ab0fa8bdc242a4')
+        self.assertEqual(len(TABLES_V4), 24)
+        self.assertEqual(definition_hash(4), '52242c56f7b88144157b66d93b151d818cecf0b2219226d4aff5734e8a1adcef')
+        self.assertEqual(set(PROJECT_TABLES), {'workspace_projects'})
+        self.assertEqual(UPGRADES[4], ('project-metadata-4-to-5', tuple(PROJECT_TABLES.values())))
+        self.assertNotEqual(definition_hash(5), definition_hash(4))
 
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL TULDOK_DATABASE_URL')
@@ -116,7 +125,7 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(read_sequences(reopened), sequences)
         self.assertTrue(all(current[name]['count'] == 0 for name in WORKSPACE_TABLES))
         self.assertEqual(reopened.dataset_id, identity)
-        self.assertEqual(reopened.schema_version, 4)
+        self.assertEqual(reopened.schema_version, 5)
         from app import Dataset
         dataset = Dataset(self.root / 'catalog')
         try:
@@ -184,8 +193,8 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(metadata.path)
         result = upgrade_catalog(metadata.path, quiesced=True)
-        self.assertEqual(result['migration'], 'spatial-metadata-3-to-4')
-        self.assertEqual(result['schema_version'], 4)
+        self.assertEqual(result['migration'], 'project-metadata-4-to-5')
+        self.assertEqual(result['schema_version'], 5)
         current = Metadata(metadata.path, create=False)
         self.addCleanup(current.close)
         self.assertEqual(current.dataset_id, metadata.dataset_id)
@@ -363,7 +372,7 @@ class WorkspaceMetadata(unittest.TestCase):
                 upgrade_catalog(metadata.path, quiesced=True)
         reopened = Metadata(metadata.path, create=False)
         self.addCleanup(reopened.close)
-        self.assertEqual(reopened.schema_version, 4)
+        self.assertEqual(reopened.schema_version, 5)
         self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'already_current')
 
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
@@ -494,6 +503,101 @@ class WorkspaceMetadata(unittest.TestCase):
         self.audio_row(current)
         with self.assertRaisesRegex(ValueError, 'later writes'):
             migrate_sqlite(source, destination, backup, quiesced=True)
+
+    def test_v4_to_v5_preserves_history_and_only_explicitly_admits_projects(self):
+        metadata = self.historical_catalog(version=4)
+        self.workspace_rows(metadata)
+        self.audio_row(metadata)
+        rows = summaries(read_catalog(metadata))
+        files = tree_manifest(metadata.path)
+        identity = metadata.dataset_id
+        with self.assertRaisesRegex(StorageError, 'explicit upgrade'):
+            Metadata(metadata.path, create=False)
+        with self.assertRaisesRegex(StorageError, 'Stop all'):
+            upgrade_catalog(metadata.path)
+        result = upgrade_catalog(metadata.path, quiesced=True)
+        self.assertEqual((result['schema_version'], result['migration']), (5, 'project-metadata-4-to-5'))
+        current = Metadata(metadata.path, create=False)
+        self.addCleanup(current.close)
+        self.assertEqual(current.dataset_id, identity)
+        self.assertEqual(summaries({name: value for name, value in read_catalog(current).items() if name in rows}), rows)
+        self.assertEqual(tree_manifest(current.path), files)
+        self.assertEqual(current.execute('SELECT count(*) FROM workspace_projects').fetchone()[0], 0)
+        self.assertEqual(upgrade_catalog(current.path, quiesced=True), dict(result, status='already_current'))
+
+    def test_project_upgrade_failure_rolls_back_schema_history_and_ledger(self):
+        for source in (1, 4):
+            for stage in ('create', 'proof', 'ledger'):
+                with self.subTest(source=source, stage=stage):
+                    metadata = self.catalog('project-rollback-' + str(source) + '-' + stage, source)
+                    before = summaries(read_catalog(metadata))
+                    signature = metadata._signature()
+                    ledger = metadata.execute('SELECT * FROM catalog_version').fetchall()
+                    execute, proof = Metadata.execute, Metadata.expected_signature
+                    def fail(owner, statement, parameters=None):
+                        result = execute(owner, statement, parameters)
+                        if stage == 'create' and statement == UPGRADES[4][1][0]:
+                            raise OSError('injected after project table creation')
+                        if stage == 'ledger' and isinstance(statement, str) and statement.startswith('UPDATE catalog_version') and parameters[0] == 5:
+                            raise OSError('injected after project ledger write')
+                        return result
+                    def fail_proof(owner, target):
+                        return 'wrong' if stage == 'proof' and target == 5 else proof(owner, target)
+                    with patch.object(Metadata, 'execute', fail), patch.object(Metadata, 'expected_signature', fail_proof):
+                        with self.assertRaises((StorageError, OSError)):
+                            upgrade_catalog(metadata.path, quiesced=True)
+                    self.assertEqual(metadata._signature(), signature)
+                    self.assertEqual(metadata.execute('SELECT * FROM catalog_version').fetchall(), ledger)
+                    self.assertEqual(summaries(read_catalog(metadata)), before)
+                    metadata.validate_schema()
+
+    def test_retained_v4_backup_restores_exact_old_schema_then_requires_upgrade(self):
+        metadata = self.historical_catalog(version=4)
+        self.workspace_rows(metadata)
+        before = summaries(read_catalog(metadata))
+        backup = self.root / 'backup-v4'
+        receipt = backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual(receipt['schema_version'], 4)
+        self.assertEqual(set(receipt['tables']), set(TABLES_V4))
+        backup_files = tree_manifest(backup)
+        self.drop(metadata)
+        restored = self.root / 'restored-v4'
+        restore_catalog(backup, restored)
+        with self.assertRaisesRegex(StorageError, 'explicit upgrade'):
+            Metadata(restored, create=False)
+        old = Metadata(restored, create=False, schema_version=4)
+        self.addCleanup(old.close)
+        self.assertEqual(summaries(read_catalog(old)), before)
+        old.close()
+        self.assertEqual(upgrade_catalog(restored, quiesced=True)['schema_version'], 5)
+        self.assertEqual(tree_manifest(backup), backup_files)
+
+    def test_v5_backup_restore_preserves_exact_project_snapshot_and_history(self):
+        metadata = self.historical_catalog(version=5)
+        self.workspace_rows(metadata)
+        document = ' { "id":"project-1", "root_alias":"local", "source":"project.json", "sha256":"snapshot", "manifest":{"name":"原本 e\u0301"} } '
+        with metadata.transaction():
+            metadata.execute('INSERT INTO workspace_projects VALUES (%s,%s)', ('project-1', document))
+        with self.assertRaises(psycopg.errors.UniqueViolation), metadata.transaction():
+            metadata.execute('INSERT INTO workspace_projects VALUES (%s,%s)', ('project-1', '{}'))
+        rows = summaries(read_catalog(metadata))
+        backup = self.root / 'backup-v5'
+        receipt = backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual(receipt['schema_version'], 5)
+        self.assertEqual(receipt['tables']['workspace_projects']['count'], 1)
+        backup_files = tree_manifest(backup)
+        self.drop(metadata)
+        restored = self.root / 'restored-v5'
+        restore_catalog(backup, restored)
+        current = Metadata(restored, create=False)
+        self.addCleanup(current.close)
+        self.assertEqual(summaries(read_catalog(current)), rows)
+        self.assertEqual(current.execute('SELECT document FROM workspace_projects').fetchone()[0], document)
+        restore_catalog(backup, restored)
+        current.execute("UPDATE workspace_projects SET document='{}' WHERE id='project-1'")
+        with self.assertRaisesRegex(ValueError, 'later writes'):
+            restore_catalog(backup, restored)
+        self.assertEqual(tree_manifest(backup), backup_files)
 
     def test_upgrade_cli_reopens_catalog_and_never_runs_on_ordinary_startup(self):
         metadata = self.catalog()

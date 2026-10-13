@@ -78,7 +78,7 @@ window.workspaceEscape = (value) =>
   // dataset identity. Live references are re-read and revision-checked on reload.
   const remembered = history.state?.workspace;
   if (remembered?.version === 1) {
-    if (["fixtures", "catalog"].includes(remembered.source))
+    if (["fixtures", "catalog"].includes(remembered.source) || (typeof remembered.source === "string" && remembered.source.startsWith("project:") && remembered.source.length > 8))
       source = remembered.source;
     if (typeof remembered.active === "string") active = remembered.active;
     if (Array.isArray(remembered.selected))
@@ -87,6 +87,12 @@ window.workspaceEscape = (value) =>
       );
     catalogContext = remembered.catalog || null;
   }
+  if (source.startsWith("project:")) {
+    const option=document.createElement("option");option.value=source;option.textContent="Remembered project";$("dataset").append(option);$("dataset").value=source;
+  }
+  const projects = WorkspaceProjects({select:$("dataset"),
+    roots:{data:$("project-data-root"),pipeline:$("project-pipeline-root"),runs:$("project-runs-root")},
+    announce,switchSource,contextChanged:context});
   let restoringCatalog = false,
     catalogRestoreNotice = null;
   function remember() {
@@ -126,6 +132,8 @@ window.workspaceEscape = (value) =>
     if (source === "fixtures")
       $("context").textContent =
         `fixture-dataset-v1 · ${selected.size} selected · ${draftDirty ? "unsaved fixture draft" : "authored CC0 examples"} · release fixture-release-v1`;
+    else if (source.startsWith("project:"))
+      $("context").textContent = projects.label() + " · inspection only · external references";
     else
       $("context").textContent = catalogContext
         ? `${catalogContext.selection.length} exact revisions selected · ${catalogContext.record?.name || "No active record"} · ${catalogContext.dirty ? "unsaved edits" : "saved state"}${real.identity() ? " · catalog " + real.identity().slice(0, 12) : " · current catalog handle"}`
@@ -162,6 +170,7 @@ window.workspaceEscape = (value) =>
         $("catalog-frame").src = "/workbench?workspace=1";
       return;
     }
+    if (source.startsWith("project:")) return;
     if (!fixtures || !store) return;
     const record = fixtures.records.find((r) => r.id === active);
     if (!record) {
@@ -243,6 +252,7 @@ window.workspaceEscape = (value) =>
     }
     invalidateCorrection();
     source = next;
+    if (source.startsWith("project:")) $("dataset").disabled = false;
     $("dataset").value = next;
     renderData();
     showView();
@@ -285,8 +295,11 @@ window.workspaceEscape = (value) =>
     $("real-pipeline-root").hidden = source !== "catalog";
     $("real-runs-root").hidden = source !== "catalog";
     real.show(source === "catalog" ? next : null);
+    projects.show(source, next);
     if (next === "runs" && source === "fixtures") runs?.render();
-    if (next !== "data" && source === "catalog")
+    if (source.startsWith("project:"))
+      announce("Project inspection · " + next + ". Execution is unsupported.");
+    else if (next !== "data" && source === "catalog")
       announce("Current catalog · real " + next + ". Source edits remain mounted in Data.");
     else
       announce(
@@ -463,6 +476,7 @@ window.workspaceEscape = (value) =>
       $("workspace-error").textContent = error.message;
       $("workspace-error").hidden = false;
       $("retry-load").hidden = false;
+      if (source.startsWith("project:")) { $("dataset").disabled=false;renderData();showView(); }
       announce(
         "Workspace fixture loading failed. The classic workbench remains available.",
         true,
@@ -470,5 +484,6 @@ window.workspaceEscape = (value) =>
     }
   }
   $("retry-load").onclick = load;
+  projects.initialize();
   load();
 })();

@@ -26,10 +26,12 @@ import sequence_batch_import
 import meshes
 import spatial_assets
 import pipeline
+import projects
 import runs
 import base64
 import hashlib
 import io
+import ipaddress
 import json
 import math
 import shutil
@@ -133,7 +135,7 @@ def validate_annotation(body):
 
 
 class Dataset:
-    def __init__(self, path, *, dsn=None):
+    def __init__(self, path, *, dsn=None, project_roots=None):
         self.path = Path(path).resolve()
         self.path.mkdir(parents=True, exist_ok=True)
         (self.path / 'images').mkdir(exist_ok=True)
@@ -142,6 +144,7 @@ class Dataset:
         self.db = Metadata(self.path, dsn=dsn)
         self.lock = self.db.lock
         try:
+            self.projects = projects.Projects(self, project_roots)
             self.generation_jobs = synthetic.Jobs(self)
             with self.lock:
                 self._recover_deletions()
@@ -158,6 +161,8 @@ class Dataset:
             self.pipelines = pipeline.Pipelines(self)
             self.runs = runs.Runs(self, self.pipelines)
         except BaseException:
+            if hasattr(self, 'projects'):
+                self.projects.close()
             self.db.close()
             raise
 
@@ -167,6 +172,7 @@ class Dataset:
         self.caption_proposals.close()
         self.grounded.close()
         self.generation_jobs.close()
+        self.projects.close()
         self.db.close()
 
     def rows(self):
@@ -402,11 +408,26 @@ def make_handler(dataset):
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
+        def project_access(self):
+            # This opt-in file inspection surface is local-only until actor authentication.
+            host = urlsplit('http://' + self.headers.get('Host', '')).hostname
+            if (host not in ('localhost', '127.0.0.1', '::1') or
+                    not ipaddress.ip_address(self.client_address[0]).is_loopback):
+                raise workbench.WorkbenchError('Project inspection requires a local loopback client and host.', 'forbidden', 403)
+
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                    self.project_access()
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['projects']:
+                        return self.reply(dataset.projects.list())
+                    if len(parts) == 2 and parts[0] == 'projects':
+                        return self.reply(dataset.projects.get(parts[1]))
+                    if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'evidence':
+                        return self.reply(dataset.projects.evidence(parts[1], parts[3]))
                     if parts == ['context']:
                         return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
                                            'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
@@ -533,6 +554,7 @@ def make_handler(dataset):
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 # Opt-in workspace shell keeps fixture and real service boundaries distinct.
                 assets.update({
+                    '/workspace-projects.js': ('workspace-projects.js', 'text/javascript'),
                     '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
                     '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
                     '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
@@ -573,6 +595,8 @@ def make_handler(dataset):
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
+                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                    self.project_access()
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
                 if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
                     limit = spatial_assets.MAX_REQUEST
@@ -581,12 +605,14 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = projects.decode(raw_body) if path == '/api/workspace/projects' else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['projects']:
+                        return self.reply(dataset.projects.open(body), 201)
                     if parts == ['graphs']:
                         return self.reply(dataset.pipelines.create(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':
@@ -742,10 +768,18 @@ def main():
     parser.add_argument('--data', type=Path, default=ROOT / 'data')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
+    parser.add_argument('--project-root', action='append', default=[], metavar='ALIAS=PATH',
+                        help='Allow read-only project inspection beneath a local directory; repeat for multiple roots.')
     args = parser.parse_args()
+    roots = {}
+    for binding in args.project_root:
+        alias, separator, location = binding.partition('=')
+        if not separator or not location or alias in roots:
+            parser.error('Each project root needs a unique ALIAS=PATH.')
+        roots[alias] = location
     try:
-        dataset = Dataset(args.data)
-    except StorageError as error:
+        dataset = Dataset(args.data, project_roots=roots)
+    except (StorageError, workbench.WorkbenchError) as error:
         parser.exit(2, str(error) + "\n")
     server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)

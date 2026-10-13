@@ -19,8 +19,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 4
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4)
+SCHEMA_VERSION = 5
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -415,7 +415,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -516,8 +516,15 @@ SPATIAL_TABLES = {
     id TEXT PRIMARY KEY, bundle BYTEA NOT NULL, metadata_json TEXT NOT NULL,
     bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))""",
 }
-TABLES = {
+TABLES_V4 = {
     **TABLES_V3, **SPATIAL_TABLES,
     'workbench_records': TABLES_V3['workbench_records'].replace(
         "'sequence','mesh','audio'", "'sequence','mesh','audio','pointcloud','volume'"),
 }
+
+# Retained schema 4 remains exact for old catalogs, receipts and explicit upgrades.
+PROJECT_TABLES = {
+    'workspace_projects': '''CREATE TABLE workspace_projects (
+        id TEXT PRIMARY KEY, document TEXT NOT NULL)''',
+}
+TABLES = {**TABLES_V4, **PROJECT_TABLES}

@@ -68,7 +68,7 @@ current record; saving/reviewing and freezing a new release leaves old results
 unchanged. Viewing test results records durable exposure; reused records or
 pixels cannot be presented as fresh holdout evidence.
 
-Fresh catalogs use schema 4. Existing PostgreSQL schema-1, schema-2 or schema-3 catalogs require an
+Fresh catalogs use schema 5. Existing PostgreSQL schema-1 through schema-4 catalogs require an
 explicit stopped-writer backup and upgrade, never an automatic startup change:
 
 ```sh
@@ -852,4 +852,8 @@ fixtures and do not download model weights or call paid inference providers.
 
 ### Point-cloud and volume workflows
 
-In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.json`. The bounded profiles are [ordered ASCII PLY points](docs/contracts/point-cloud-data.md) and [uint8 NPY1 volumes](docs/contracts/volume-data.md). Inspect native points or index slices/physical coordinates, save human review, select whole assets and freeze a canonical release. In Pipeline, create and edit the corresponding validation/export recipe; Runs retains its integrity report and the unchanged release. Classification releases also offer validation/export without installing a trainer. Existing catalogs require the explicit schema4 upgrade described in the storage runbook; the application never silently migrates them. [Accepted workspace scope, evidence and limitations](docs/plans/dataset-centered-workspaces/reports/final-20261013.md).
+In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.json`. The bounded profiles are [ordered ASCII PLY points](docs/contracts/point-cloud-data.md) and [uint8 NPY1 volumes](docs/contracts/volume-data.md). Inspect native points or index slices/physical coordinates, save human review, select whole assets and freeze a canonical release. In Pipeline, create and edit the corresponding validation/export recipe; Runs retains its integrity report and the unchanged release. Classification releases also offer validation/export without installing a trainer. Existing catalogs require the explicit schema5 upgrade described in the storage runbook; the application never silently migrates them. [Accepted workspace scope, evidence and limitations](docs/plans/dataset-centered-workspaces/reports/final-20261013.md).
+
+## Open a local project
+
+Start with `python app.py --data ./catalog --project-root research=/absolute/research`, then select **Open project** in `/workspaces`. A [project manifest](docs/contracts/projects.md) references files beneath that explicitly selected root. Data shows sources and missing requirements, Pipeline shows recipe references, and Runs shows external evidence. This stage is **inspection only**: no project code, model loading, runtime probing or training executes. Existing catalog workflows remain separate. Opening registers a snapshot in Tuldok; it does not modify the opened project.

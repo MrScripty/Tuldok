@@ -1,4 +1,4 @@
-"""Real PostgreSQL schema4, exact spatial bundles and stopped-writer evolution."""
+"""Real PostgreSQL spatial storage, exact bundles and stopped-writer evolution."""
 import base64
 import copy
 import io
@@ -14,7 +14,7 @@ import zipfile
 
 from app import Dataset, make_handler
 from backup_metadata import backup_catalog, restore_catalog, read_catalog, summaries, tree_manifest
-from metadata import Metadata, StorageError, definition_hash, TABLES_V3, SPATIAL_TABLES
+from metadata import SCHEMA_VERSION, Metadata, StorageError, definition_hash, TABLES_V3, SPATIAL_TABLES
 from upgrade_metadata import upgrade_catalog, UPGRADES
 import spatial_assets
 import test_workspace_metadata
@@ -50,7 +50,7 @@ class SpatialStorage(unittest.TestCase):
 
     def test_real_both_subtypes_review_inspection_export_and_reopen(self):
         dataset = self.dataset()
-        self.assertEqual(dataset.db.schema_version, 4)
+        self.assertEqual(dataset.db.schema_version, SCHEMA_VERSION)
         rows = []
         bundles = {}
         for kind in ('pointcloud', 'volume'):
@@ -106,7 +106,7 @@ class SpatialStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             upgrade_catalog(path)
         result = upgrade_catalog(path, quiesced=True)
-        self.assertEqual(result['migration'], 'spatial-metadata-3-to-4')
+        self.assertEqual(result['migration'], 'project-metadata-4-to-5')
         current = Metadata(path, create=False)
         self.addCleanup(current.close)
         after = read_catalog(current)
@@ -131,7 +131,7 @@ class SpatialStorage(unittest.TestCase):
         self.assertEqual(retained.execute('SELECT * FROM catalog_version').fetchall(), before)
         self.assertEqual(set(read_catalog(retained)), set(TABLES_V3))
 
-    def test_schema4_backup_restore_retains_original_bytes_review_history_and_release(self):
+    def test_current_schema_backup_restore_retains_original_bytes_review_history_and_release(self):
         dataset = self.dataset()
         rows = [self.review(dataset, spatial_assets.admit(dataset.workbench, kind, body(kind))) for kind in ('pointcloud','volume')]
         request = {'items': [{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows],
@@ -145,7 +145,7 @@ class SpatialStorage(unittest.TestCase):
         dataset.close()
         backup = self.root / 'backup'
         receipt = backup_catalog(path, backup, quiesced=True)
-        self.assertEqual(receipt['schema_version'], 4)
+        self.assertEqual(receipt['schema_version'], SCHEMA_VERSION)
         self.assertTrue(set(SPATIAL_TABLES) <= set(receipt['tables']))
         before = tree_manifest(backup)
         destination = self.root / 'restored'
