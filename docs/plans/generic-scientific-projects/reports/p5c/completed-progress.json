@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "run_id": "e731c9569b7d41f9a8f6cde438dcf9ac",
+  "state": "completed",
+  "custody_phase": "drained",
+  "evidence": "custody_verified",
+  "streams": {
+    "stdout": {
+      "available_bytes": 13705,
+      "start_byte": 5513,
+      "text": "ackages\":{\"numpy\":\"2.5.4\",\"torch\":\"2.8.0+cpu\"},\"python\":\"3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]\",\"snapshot_sha256\":\"cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7\",\"sys_path\":[\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/lib-dynload\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages\"],\"virtual_modules\":{\"torch.classes\":{\"class\":\"_Classes\",\"defining_module\":\"torch._classes\",\"defining_path\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_classes.py\",\"pseudo_file\":\"_classes.py\"},\"torch.ops\":{\"class\":\"_Ops\",\"defining_module\":\"torch._ops\",\"defining_path\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_ops.py\",\"pseudo_file\":\"_ops.py\"}}}}\n{\"completed\":0,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"accuracy\",\"total\":4}\n{\"completed\":1,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"max_relative_tracer_l2\":4.881945865359179e-08,\"max_relative_velocity_l2\":8.287529769633644e-08},\"stage\":\"accuracy\",\"total\":4}\ntest seed 900: velocity error 8.29e-08\n{\"completed\":2,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"max_relative_tracer_l2\":5.8869015327550054e-08,\"max_relative_velocity_l2\":8.885705993537438e-08},\"stage\":\"accuracy\",\"total\":4}\ntest seed 901: velocity error 8.89e-08\n{\"completed\":3,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"max_relative_tracer_l2\":5.219647493941186e-08,\"max_relative_velocity_l2\":8.43263168035816e-08},\"stage\":\"accuracy\",\"total\":4}\ntest seed 902: velocity error 8.43e-08\n{\"completed\":4,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"max_relative_tracer_l2\":4.6295605068345483e-08,\"max_relative_velocity_l2\":8.229299913527277e-08},\"stage\":\"accuracy\",\"total\":4}\ntest seed 903: velocity error 8.23e-08\n{\"completed\":1,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":2,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":3,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":4,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":5,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":6,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":7,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":8,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":9,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":10,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":11,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":12,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\nbenchmark repetition 1 complete\n{\"completed\":13,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":14,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":15,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":16,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":17,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":18,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":19,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":20,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":21,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":22,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":23,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":24,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\nbenchmark repetition 2 complete\n{\"completed\":25,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":26,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":27,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":28,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":29,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":30,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":31,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":32,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":33,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":34,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":35,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":36,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\nbenchmark repetition 3 complete\n{\"completed\":37,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":38,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":39,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":40,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":41,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":42,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":43,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":44,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":45,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":46,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":47,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":48,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\nbenchmark repetition 4 complete\n{\"completed\":49,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":50,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":51,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":52,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":53,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":54,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":55,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":56,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":57,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":58,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":59,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\n{\"completed\":60,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"benchmark\",\"total\":60}\nbenchmark repetition 5 complete\n{\n  \"median_120_frame_wall_ms\": {\n    \"jacobi\": 36691.0102619986,\n    \"sgs\": 26321.43825050298,\n    \"learned\": 4756.986147498537\n  },\n  \"speedup_vs_jacobi\": 7.713079063997817,\n  \"speedup_vs_sgs\": 5.533217342737926\n}\n{\"completed\":0,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"publishing\",\"total\":1}\n",
+      "truncated": true
+    },
+    "stderr": {
+      "available_bytes": 0,
+      "start_byte": 0,
+      "text": "",
+      "truncated": false
+    }
+  },
+  "progress": {
+    "completed": 0,
+    "format": "tuldok_progress_v1",
+    "metrics": {},
+    "stage": "publishing",
+    "total": 1
+  },
+  "result": {
+    "status": "hash_verified",
+    "artifact_name": "result-summary.json",
+    "sha256": "c644c5a13f2c18c01a313a5652527ac0eb4c6b6a83095afd0c6bb7c86b1cc9eb",
+    "summary": {
+      "checkpoint": "input-model.pt",
+      "format": "tuldok_result_summary_v1",
+      "metrics": [
+        {
+          "name": "Timed frames",
+          "unit": "frames",
+          "value": 7200
+        },
+        {
+          "name": "Accuracy frames",
+          "unit": "frames",
+          "value": 960
+        },
+        {
+          "name": "Speedup vs Jacobi",
+          "unit": "ratio",
+          "value": 7.713079063997817
+        },
+        {
+          "name": "Maximum velocity relative L2",
+          "unit": "",
+          "value": 8.885705993537438e-8
+        }
+      ],
+      "scope": [
+        "Fresh CPU checkpoint; previously exposed seeds900..903.",
+        "Five repetitions; original numerical algorithms.",
+        "All six fields and exact accuracy stdout retained.",
+        "Evaluated input checkpoint; no retraining or GPU acceptance."
+      ],
+      "title": "Autonomous CPU evaluation"
+    }
+  }
+}
