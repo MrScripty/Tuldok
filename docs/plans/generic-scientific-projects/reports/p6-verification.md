@@ -126,3 +126,15 @@ The corrected base module passed16 tests with14 explicit skips in0.042s; the
 dedicated SDK environment passed all16 with zero skips in15.356s. No production
 runtime or base dependency was changed. Remaining dedicated/SDK/JavaScript gates
 and fresh hosted full discovery determine final acceptance.
+
+## Final local affected and optional gates
+
+After the precise test-only correction, all remaining local gates passed:
+dedicated point11/volume9/training12/evaluation9 with zero skips; official-SDK
+agent22/22 in46.420s; MCP13/13 in8.047s;56/56 JavaScript/syntax commands.
+All336 source hashes stayed stable during those gates, with the intentional
+API-test patch the only change from the original full discovery inventory.
+[Final test receipt](p6/final-test-receipt.json), SHA256
+`7b1de6a33f76b3cf08ad45a91af346bfbb5ff13840a459937d73b5f4120e979a`.
+The failed original900-test discovery remains recorded; fresh hosted full
+discovery on the patched source is the final regression acceptance gate.
