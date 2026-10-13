@@ -1,0 +1,22 @@
+{
+  "format": "tuldok_pointcloud_v1",
+  "geometry_file": "points.ply",
+  "geometry_bytes": 356,
+  "geometry_sha256": "bfdf07e02b5770265887e1b7d8ddef381d35f3db83385f72b8e461892c72fe22",
+  "units": "mm",
+  "coordinate_system": {
+    "frame": "authored laboratory frame",
+    "handedness": "right",
+    "up_axis": "z"
+  },
+  "provenance": {
+    "source": "authored fixture",
+    "revision": "1",
+    "license": "CC0-1.0",
+    "description": "Three ordered points with a repeated position."
+  },
+  "lineage": {
+    "source_id": "authored:ordered",
+    "source_sha256": "bfdf07e02b5770265887e1b7d8ddef381d35f3db83385f72b8e461892c72fe22"
+  }
+}

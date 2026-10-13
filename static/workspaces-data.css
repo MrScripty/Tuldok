@@ -110,3 +110,9 @@
     display: block;
   }
 }
+/* Native spatial inspection keeps display controls separate from saved targets. */
+.workspace-embedded #pointcloud-preview,.workspace-embedded #volume-preview{min-width:0}
+.workspace-embedded #volume-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.workspace-embedded .volume-slice{margin:0;min-width:0}
+.workspace-embedded .volume-slice p{font-size:11px;overflow-wrap:anywhere}
+.workspace-embedded #pointcloud-preview-status,.workspace-embedded #volume-preview-status{font-size:12px;overflow-wrap:anywhere}

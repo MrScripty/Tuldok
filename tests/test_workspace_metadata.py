@@ -33,7 +33,7 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertEqual(len(TABLES_V1), 19)
         self.assertEqual(definition_hash(1),
                          '859a04c5ee618faae689885bee79054d5e92098e746d058fd2bcb599da4c80db')
-        self.assertEqual(SCHEMA_VERSION, 3)
+        self.assertEqual(SCHEMA_VERSION, 4)
         self.assertEqual(set(WORKSPACE_TABLES),
                          {'workspace_graphs', 'workspace_runs', 'workspace_exposures'})
 
@@ -116,7 +116,7 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(read_sequences(reopened), sequences)
         self.assertTrue(all(current[name]['count'] == 0 for name in WORKSPACE_TABLES))
         self.assertEqual(reopened.dataset_id, identity)
-        self.assertEqual(reopened.schema_version, 3)
+        self.assertEqual(reopened.schema_version, 4)
         from app import Dataset
         dataset = Dataset(self.root / 'catalog')
         try:
@@ -140,7 +140,7 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaises(psycopg.errors.UniqueViolation), metadata.transaction():
             metadata.execute("INSERT INTO workspace_runs VALUES ('other','request-1','hash','{}')")
         metadata.close()
-        reopened = Metadata(self.root / 'catalog', create=False)
+        reopened = Metadata(self.root / 'catalog', create=False, schema_version=3)
         self.addCleanup(reopened.close)
         self.assertEqual(summaries(read_catalog(reopened)), rows)
 
@@ -184,12 +184,12 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(metadata.path)
         result = upgrade_catalog(metadata.path, quiesced=True)
-        self.assertEqual(result['migration'], 'audio-metadata-2-to-3')
-        self.assertEqual(result['schema_version'], 3)
+        self.assertEqual(result['migration'], 'spatial-metadata-3-to-4')
+        self.assertEqual(result['schema_version'], 4)
         current = Metadata(metadata.path, create=False)
         self.addCleanup(current.close)
         self.assertEqual(current.dataset_id, metadata.dataset_id)
-        self.assertEqual(summaries(read_catalog(current)), rows)
+        self.assertEqual(summaries({name: value for name, value in read_catalog(current).items() if name in rows}), rows)
         self.assertEqual(read_sequences(current), sequences)
         self.assertEqual(tree_manifest(current.path), files)
         with self.assertRaises(psycopg.errors.CheckViolation):
@@ -270,9 +270,9 @@ class WorkspaceMetadata(unittest.TestCase):
         restored = self.root / 'restored-v3'
         marker = restore_catalog(backup, restored)
         self.assertEqual(restore_catalog(backup, restored), marker)
-        current = Metadata(restored, create=False)
+        current = Metadata(restored, create=False, schema_version=3)
         self.addCleanup(current.close)
-        self.assertEqual(summaries(read_catalog(current)), rows)
+        self.assertEqual(summaries({name: value for name, value in read_catalog(current).items() if name in rows}), rows)
         restored_files = tree_manifest(restored)
         self.assertEqual({name: restored_files[name] for name in files}, files)
         self.assertEqual(tree_manifest(backup), before)
@@ -363,7 +363,7 @@ class WorkspaceMetadata(unittest.TestCase):
                 upgrade_catalog(metadata.path, quiesced=True)
         reopened = Metadata(metadata.path, create=False)
         self.addCleanup(reopened.close)
-        self.assertEqual(reopened.schema_version, 3)
+        self.assertEqual(reopened.schema_version, 4)
         self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'already_current')
 
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
@@ -411,7 +411,7 @@ class WorkspaceMetadata(unittest.TestCase):
         restore_catalog(backup, restored)
         current = Metadata(restored, create=False, schema_version=2)
         self.addCleanup(current.close)
-        self.assertEqual(summaries(read_catalog(current)), rows)
+        self.assertEqual(summaries({name: value for name, value in read_catalog(current).items() if name in rows}), rows)
         self.assertEqual(tree_manifest(restored / 'runs'), tree_manifest(path / 'runs'))
         restore_catalog(backup, restored)
         current.execute("UPDATE workspace_graphs SET revision=8 WHERE id='graph-1'")

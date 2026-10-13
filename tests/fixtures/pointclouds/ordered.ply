@@ -1,0 +1,17 @@
+ply
+format ascii 1.0
+comment Authored points; duplicate positions and order are meaningful.
+element vertex 3
+property float x
+property double y
+property float z
+property float nx
+property float ny
+property float nz
+property uchar red
+property uchar green
+property uchar blue
+end_header
+-0 0 1 0 0 1 255 0 128
+1.25 -2.5 3 0 1 0 1 2 3
+-0 0 1 0 0 1 255 0 128

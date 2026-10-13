@@ -24,6 +24,7 @@ import native_detection_import
 import rheon_sequences
 import sequence_batch_import
 import meshes
+import spatial_assets
 import pipeline
 import runs
 import base64
@@ -469,6 +470,14 @@ def make_handler(dataset):
                     return self.reply(dataset.workbench.response_history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/history/'):
                     return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/pointcloud-inspection/'):
+                    return self.reply(dataset.workbench.pointclouds.inspect(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/volume-inspection/'):
+                    options = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+                    if set(options) - {'axis', 'index'} or any(len(values) != 1 for values in options.values()):
+                        raise workbench.WorkbenchError('Choose one volume axis and index.')
+                    return self.reply(dataset.workbench.volumes.inspect(path.rsplit('/', 1)[-1],
+                        axis=options.get('axis', ['z'])[0], index=int(options.get('index', ['0'])[0])))
                 if path.startswith('/api/workbench/audio-inspection/'):
                     return self.reply(dataset.workbench.audio.inspect(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/mesh-release-validation/'):
@@ -524,6 +533,8 @@ def make_handler(dataset):
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 # Opt-in workspace shell keeps fixture and real service boundaries distinct.
                 assets.update({
+                    '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
+                    '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
                     '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
                     '/audio-editor.css': ('audio-editor.css', 'text/css'),
                     '/meshes.css': ('meshes.css', 'text/css'),
@@ -563,12 +574,14 @@ def make_handler(dataset):
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
+                    limit = spatial_assets.MAX_REQUEST
                 if path.startswith('/api/workspace/'):
                     limit = 256 * 1024
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
@@ -627,6 +640,9 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
+                    kind = 'pointcloud' if path.endswith('/pointcloud-import') else 'volume'
+                    return self.reply(spatial_assets.admit(dataset.workbench, kind, body), 201)
                 if path == '/api/workbench/audio-import':
                     return self.reply(dataset.workbench.audio.admit(body), 201)
                 if path == '/api/workbench/mesh-import':

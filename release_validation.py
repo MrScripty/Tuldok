@@ -1,4 +1,4 @@
-"""Closed mesh/sequence workflows; native integrity remains with subtype readers."""
+"""Closed whole-asset integrity workflows; native integrity remains with subtype readers."""
 import ast
 import hashlib
 import io
@@ -8,11 +8,16 @@ import zipfile
 
 import mesh_release
 import sequence_release
+import spatial_release
 import canonical_release
 from workbench import WorkbenchError, encode
 
 RECIPE = 'mesh_validate_export'
 SEQUENCE_RECIPE = 'sequence_validate_export'
+POINTCLOUD_RECIPE = 'pointcloud_validate_export'
+VOLUME_RECIPE = 'volume_validate_export'
+RECIPES = (RECIPE, SEQUENCE_RECIPE, POINTCLOUD_RECIPE, VOLUME_RECIPE)
+KINDS = {'mesh': RECIPE, 'sequence': SEQUENCE_RECIPE, 'pointcloud': POINTCLOUD_RECIPE, 'volume': VOLUME_RECIPE}
 ADAPTER = {'id': RECIPE, 'version': 1}
 PARAMETER_BOUNDS = {}
 TYPES = ('release', 'validate', 'publish')
@@ -23,7 +28,7 @@ PAYLOADS = {'validation-report.json'}
 
 
 def adapter_identity(recipe=RECIPE):
-    if recipe not in (RECIPE, SEQUENCE_RECIPE):
+    if recipe not in RECIPES:
         raise WorkbenchError('Unsupported integrity recipe.', 'unsupported', 400)
     return {'id': recipe, 'version': 1}
 
@@ -37,7 +42,11 @@ def inspect_release(path, release_id, recipe=RECIPE):
             raw = source.read(canonical_release.MAX_RELEASE_BYTES + 1)
     except OSError:
         raise WorkbenchError('Frozen release is unavailable.', 'unavailable', 409) from None
-    summary = reader.validate_bytes(raw, release_id)
+    if recipe in (POINTCLOUD_RECIPE, VOLUME_RECIPE):
+        kind = 'pointcloud' if recipe == POINTCLOUD_RECIPE else 'volume'
+        summary = spatial_release.validate_bytes(raw, release_id, kind=kind)
+    else:
+        summary = reader.validate_bytes(raw, release_id)
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         manifest = canonical_release.decode(archive.read('manifest.json'))
     return manifest, summary
