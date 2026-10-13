@@ -1,0 +1,27 @@
+{
+  "repository": "MrScripty/Rheon",
+  "source_commit": "2209012bc5f902693d0f695ec1c2d854126af317",
+  "license": "Apache-2.0",
+  "license_copy": "docs/licenses/rheon-APACHE-2.0.txt",
+  "files": [
+    {
+      "upstream": "tools/import_dense3d_controls.py",
+      "local": "rheon_controls_contract.py",
+      "sha256": "215f98241e01a6fb099b5b1b8789e00c951988e1382438afbd45cfbb7e1c4c43",
+      "adaptation": "Only import binding renamed to rheon_controls_sequence_contract.",
+      "local_sha256": "25ec0f98f9b0ec576f30793cd24c1dd7b4e77fa7a6bfc6ed323271f829f982f4"
+    },
+    {
+      "upstream": "tools/import_dense3d_sequence.py",
+      "local": "rheon_controls_sequence_contract.py",
+      "sha256": "5c41f3a3c848940191d05d9b5b01a2a398b0d2a67f23c603ab8e918897bd3b55",
+      "adaptation": "None; exact upstream bytes.",
+      "local_sha256": "5c41f3a3c848940191d05d9b5b01a2a398b0d2a67f23c603ab8e918897bd3b55"
+    }
+  ],
+  "retained_v1": {
+    "path": "rheon_sequence_contract.py",
+    "sha256": "063d17a3bbc92a27c26c0f5dd4588a9478091ebbf53ce0ccb818cee6a9393b98"
+  },
+  "acceptance": "Source provenance only; actual producer packet acceptance remains blocked."
+}

@@ -47,3 +47,11 @@ suite and `tests/browser_workspace_sequence_run.cjs`. The run suite exercises
 actual retained producer bytes through PostgreSQL admission, report publication,
 byte-identical nested source downloads, grid/time/unit checks, restart,
 cancellation/retry, malformed graph/token rejection and artifact corruption.
+
+## Producer controls v2
+
+The same recipe accepts explicitly validated v2 three-file bundles and retains
+controls metadata in its integrity report. No training or simulator runs. V1
+retains its original hashes, protected identities and report shape; v2 adds
+control custody and compact interval/provenance inspection. Fixture-based
+integration is distinct from still-blocked actual PR32 packet acceptance.

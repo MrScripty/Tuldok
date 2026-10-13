@@ -46,19 +46,29 @@ def validate_row(row, release, used_ids):
     raw = release.read(filename)
     require(sha(raw) == row['asset_sha256'] == row['content_hash'] == row['source_sha256'],
             'whole-sequence asset hash mismatch.')
-    with archive(raw, 2, MAX_BUNDLE_BYTES) as bundle:
-        require(bundle.namelist() == ['run.json', 'frames.jsonl'],
-                'sequence bundle must retain exactly run.json and frames.jsonl.')
+    with archive(raw, 3, MAX_BUNDLE_BYTES) as bundle:
+        require(bundle.namelist() in (['run.json', 'frames.jsonl'], ['run.json', 'frames.jsonl', 'controls.json']),
+                'sequence bundle must retain its exact versioned original file set.')
         require(0 < bundle.getinfo('run.json').file_size <= contract.MANIFEST_LIMIT
                 and 0 < bundle.getinfo('frames.jsonl').file_size <= contract.FRAMES_LIMIT,
                 'sequence source member exceeds its bound.')
-        prepared = rheon_sequences.prepare(bundle.read('run.json'), bundle.read('frames.jsonl'))
+        controls_raw = None
+        if 'controls.json' in bundle.namelist():
+            require(0 < bundle.getinfo('controls.json').file_size <= rheon_sequences.controls_contract.CONTROLS_LIMIT,
+                    'controls source exceeds its bound.')
+            controls_raw = bundle.read('controls.json')
+        source_pair = (bundle.read('run.json'), bundle.read('frames.jsonl'))
+        prepared = rheon_sequences.prepare(*source_pair) if controls_raw is None else rheon_sequences.prepare(*source_pair, controls_raw)
     metadata = prepared['metadata']
     require(type(row['sequence']) is dict and encode(row['sequence']) == encode(dict(metadata, bundle_bytes=len(raw))),
             'sequence metadata differs from exact source.')
     require(set(metadata['protected_groups']) <= set(row['groups']), 'protected trajectory or initial family is missing.')
     manifest = metadata['manifest']
-    return {
+    if 'controls_sha256' in metadata:
+        require(all(row['provenance'].get(key) == metadata[key] for key in ('adapter', 'run_sha256', 'controls_sha256'))
+                and row['provenance'].get('frames_sha256') == manifest['frames_sha256'],
+                'version 2 source provenance differs from retained files.')
+    result = {
         'id': row['id'], 'name': row['name'], 'revision': row['revision'], 'source_revision': row['source_revision'],
         'split': row['split'], 'asset_sha256': sha(raw), 'run_sha256': metadata['run_sha256'],
         'frames_sha256': manifest['frames_sha256'], 'frame_count': manifest['frame_count'],
@@ -68,6 +78,10 @@ def validate_row(row, release, used_ids):
         'review': row['review'], 'rights': row['provenance']['rights'],
     }
 
+    if 'controls_sha256' in metadata:
+        result.update(controls_sha256=metadata['controls_sha256'], controls_bytes=metadata['controls_bytes'],
+                      controls_summary=metadata['controls_summary'])
+    return result
 
 def validate_bytes(raw, expected_sha256=None):
     """Verify immutable archive and native pilot semantics, without catalog access."""

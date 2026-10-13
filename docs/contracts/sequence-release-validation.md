@@ -9,8 +9,9 @@ The expected hash, when supplied, must match the complete captured ZIP.
 
 The existing Releases owner produces the archive. `canonical_release.py` owns
 its shared envelope, projection and selected-family validation; the sequence
-reader owns subtype rows and calls unchanged `rheon_sequences.prepare` and
-`rheon_sequence_contract.verify` for the complete pinned native contract. It
+reader owns subtype rows and calls `rheon_sequences.prepare` for explicit versioned
+validation. V1 uses unchanged `rheon_sequence_contract`; v2 uses the separately pinned
+`rheon_controls_contract` and `rheon_controls_sequence_contract`. It
 never writes the catalog or release and never executes producer provenance
 commands. Native validation uses temporary server-owned files which are removed
 on success or failure; no archive-controlled path is extracted.
@@ -24,8 +25,11 @@ must have unique exact member names, no compression/encryption, no preamble,
 comment or trailing bytes. Metadata is bounded to 8 MiB per member, JSONL rows to
 256 KiB and selected raw bundles to 40 MiB. Check every member's CRC.
 
-Each raw nested bundle contains exactly `run.json` and `frames.jsonl`, bounded by
-the existing 64 KiB and 2 MiB native limits. Frozen asset/source hashes must equal
+Each v1 raw nested bundle contains exactly `run.json` and `frames.jsonl`, bounded by
+the existing 64 KiB and 2 MiB native limits. V2 contains those files and exactly
+`controls.json` (at most 64 KiB), in that order. Version/file mixtures are rejected.
+The controls hash, byte count, exact typed run binding, units/order/signs and all eight
+accepted frame/clock/stamp/control associations must pass the pinned producer reader. Frozen asset/source hashes must equal
 the bundle hash. Recompute all source metadata, frame indexes and protected
 trajectory/initial-family identifiers and compare with the frozen record.
 
@@ -59,3 +63,8 @@ selected-family conflicts and rehashed native corruption. Existing mesh reader
 and sequence tests cover the shared boundary and native owner regressions.
 Pipeline/Runs/UI qualification belongs to the milestone integration owner; this
 reader alone does not close M5c.
+
+V2 implementation qualification uses explicitly authored fixtures. The recorded PR32
+actual-packet workflow remains unqualified until its original frames and receipt
+are retrieved and checked. Producer-emitted is a validated declaration, not
+independent authentication. See the [v2 plan](../plans/rheon-v2-consumer/plan.md).

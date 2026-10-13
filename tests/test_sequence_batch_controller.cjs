@@ -26,7 +26,8 @@ function fixture() {
     const body=JSON.parse(request.options.body),digest=raw=>crypto.createHash('sha256').update(Buffer.from(raw,'base64')).digest('hex');
     return {format:'tuldok_rheon_batch_v1',record_id:'a'.repeat(32),kind:'sequence',name:body.name,
       ...Object.fromEntries(['request_id','batch_name','item_name','item_index'].map(key=>[key,body[key]])),
-      run_sha256:digest(body.files['run.json']),frames_sha256:digest(body.files['frames.jsonl'])};
+      run_sha256:digest(body.files['run.json']),frames_sha256:digest(body.files['frames.jsonl']),
+      ...(Object.hasOwn(body.files,'controls.json')?{controls_sha256:digest(body.files['controls.json'])}:{})};
   };
   const resolve=(request,data,status=201)=>request.resolve({ok:status>=200&&status<300,status,json:async()=>data});
   return {$,context,requests,notices,file,pair,choose,receipt,resolve,hide:()=>listeners.get('pagehide')(),reads:()=>reads,refreshes:()=>refreshes,
@@ -54,8 +55,8 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await new Promise
     await f.$('sequence-batch-stop').dispatch('click');f.resolve(f.requests[0],f.receipt(f.requests[0]));await running;
     assert.equal(f.requests.length,1);assert.match(f.$('sequence-batch-status').textContent,/Stopped: 1 created.*1 not attempted/);
   }
-  for(const holdName of ['run.json','frames.jsonl']) {
-    const f=fixture();f.choose('a','b');let finish;
+  for(const holdName of ['run.json','frames.jsonl','controls.json']) {
+    const f=fixture();f.choose('a','b');if(holdName==='controls.json')f.$('sequence-batch-folder').files.push(f.file('corpus/a/controls.json','controls a'));let finish;
     const file=f.$('sequence-batch-folder').files.find(file=>file.name===holdName);file.arrayBuffer=()=>new Promise(resolve=>finish=resolve);
     const running=f.$('sequence-batch-form').dispatch('submit');await until(()=>finish);
     await f.$('sequence-batch-stop').dispatch('click');finish(Buffer.from('held file'));await running;
@@ -141,6 +142,32 @@ async function until(fn){for(let i=0;i<100;i++){if(fn())return;await new Promise
     f.context.allowed=false;finish({items:[],total:0,analysis:{}});await running;
     assert.equal(f.context.curationPending,false,'Departed query still retires its diagnostics ownership');
     assert.equal(f.context.page,null,'Departed query cannot publish its collection');
+  }
+  {
+    const f=fixture();
+    for(const extra of [f.file('corpus/a/unknown.json','x'),{...f.file('corpus/a/controls.json','x'),size:65537}]) {
+      f.$('sequence-batch-folder').files=[...f.pair('a'),extra];await f.$('sequence-batch-form').dispatch('submit');
+      assert.equal(f.requests.length,0);assert.equal(f.reads(),0);
+    }
+    const triple=[...f.pair('a'),f.file('corpus/a/controls.json','accepted controls a')];
+    f.$('sequence-batch-folder').files=[...triple,...f.pair('b')];
+    const running=f.$('sequence-batch-form').dispatch('submit');await until(()=>f.requests.length===1);
+    const body=JSON.parse(f.requests[0].options.body),saved=f.receipt(f.requests[0]);
+    assert.equal(Buffer.from(body.files['controls.json'],'base64').toString(),'accepted controls a');
+    assert.equal(saved.controls_sha256,crypto.createHash('sha256').update('accepted controls a').digest('hex'));
+    f.$('sequence-batch-folder').files=[...f.pair('other'),f.file('corpus/other/controls.json','changed')];
+    f.requests[0].reject(Error('Committed response lost'));await running;
+    for(const controls_sha256 of [undefined,'f'.repeat(64),saved.controls_sha256]) {
+      const check=f.$('sequence-batch-check').dispatch('click');await until(()=>f.requests.at(-1).options===undefined);
+      const observed={found:true,...saved};if(controls_sha256===undefined)delete observed.controls_sha256;else observed.controls_sha256=controls_sha256;
+      f.resolve(f.requests.at(-1),observed,200);await check;
+      assert.equal(f.state('!!sequenceBatchPending'),controls_sha256!==saved.controls_sha256,'Recovery binds the optional third-file hash');
+    }
+    assert.equal(f.requests.filter(r=>r.options?.method==='POST').length,1);
+    const proof={request_id:'proof',batch_name:'batch',item_name:'a',item_index:1,run_sha256:'r',frames_sha256:'f'};
+    assert.equal(f.context.sequenceBatchReceipt({format:'tuldok_rheon_batch_v1',kind:'sequence',record_id:'a'.repeat(32),name:'a',...proof,controls_sha256:'unexpected'},proof),false,'A v1 receipt cannot add controls custody');
+    const full=Array.from({length:32},(_,i)=>[...f.pair(String(i)),f.file(`corpus/${i}/controls.json`,'c')]).flat();
+    assert.equal(f.context.sequenceBatchPairs(full).length,32,'96 files can represent 32 bounded triples');
   }
   console.log('Sequence batch controller: bounded pairing, frozen files/metadata, stop/departure/read/POST/check/refresh fences, partial outcomes and exact GET-only recovery passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

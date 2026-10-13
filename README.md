@@ -2,7 +2,7 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
-Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Frozen mesh, ordered point-cloud, uint8 volume and bounded Rheon v1 sequence releases have three-stage validate/export recipes with durable integrity reports and unchanged release downloads. Classification releases also offer explicit validation/export without a training runtime. Saved recipes show draft and installed-definition differences; existing text/caption/response/preference editors remain in Data. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Frozen mesh, ordered point-cloud, uint8 volume and bounded Rheon sequence releases have three-stage validate/export recipes with durable integrity reports and unchanged release downloads. Classification releases also offer explicit validation/export without a training runtime. Saved recipes show draft and installed-definition differences; existing text/caption/response/preference editors remain in Data. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
 
 ## Run
 
@@ -426,18 +426,27 @@ retained inputs and historical evidence retrieval](docs/qa/README.md).
 
 The development workbench can import a complete bounded Rheon simulation sequence
 from **Import Rheon simulation sequence**. Select exactly `run.json` and
-`frames.jsonl`, give it a name and a rights note, then open the imported collection
+`frames.jsonl` for v1; add the original `controls.json` for producer v2. Give it a name
+and a rights note, then open the imported collection
 record to inspect its original metadata and nine-entry frame index. Imports remain
 **draft** until a person inspects the data and explicitly saves **Human reviewed**
 with a review note. Contract checks do not grant human review or establish permission.
 
-This adapter is pinned to [Rheon draft PR 20](https://github.com/MrScripty/Rheon/pull/20)
-at `fee7b4a139574f87b259796b1ba8698a41d31ac1`; it does not assume that PR is merged.
+The retained v1 adapter is pinned to [Rheon PR 20](https://github.com/MrScripty/Rheon/pull/20)
+at `fee7b4a139574f87b259796b1ba8698a41d31ac1`; this historical contract pin is unchanged.
 The unchanged stdlib validator is retained in `rheon_sequence_contract.py`, derived
 from the exact producer `tools/import_dense3d_sequence.py`. Producer provenance is
 preserved as declared evidence; hashes detect byte changes, not source authenticity.
 The producer's base commit and each run's declared source commit remain distinct
 from the adapter's pinned contract commit. Contract changes need coordinated review.
+
+Producer v2 uses the separately pinned merged producer contract at `2209012`,
+including eight original accepted-interval controls. Controls remain bounded to
+64 KiB and their original bytes survive review, release and Runs downloads.
+Current v2 integration tests use clearly labelled authored fixtures; actual PR32
+packet acceptance remains blocked on original-byte retrieval. See the
+[v2 qualification plan](docs/plans/rheon-v2-consumer/plan.md) and
+[source attribution](docs/plans/rheon-v2-consumer/reports/producer-source.json).
 
 Consumer limits are 64 KiB for `run.json`, 2 MiB for `frames.jsonl`, 256 KiB per
 JSONL line, exactly nine frames (constructor plus eight accepted steps), and exactly
