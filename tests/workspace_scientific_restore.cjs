@@ -20,16 +20,39 @@ const explicitReport=option('--report');
 if(explicitReport)fs.mkdirSync(explicitReport,{recursive:false});
 const report=explicitReport||qaDirectory(root,'workspace-scientific-restore');
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-restored-scientific-browser-'));
-const captures=[],errors=[],children=[];const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws,send,evaluate,serverErrors='';
+const captures=[],errors=[],children=[];const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws,send,evaluate,base,authRegistered=false,serverErrors='';
 async function until(fn,message='Timed out',seconds=60){for(let i=0;i<seconds*10;i++){const value=await fn();if(value)return value;await pause(100);}throw Error(message);}
 function launch(command,args,options){const child=spawn(command,args,options);children.push(child);return child;}
 const serverArgs=port=>['-u','app.py','--port',String(port),'--data',catalog,'--project-root','sample='+projectRoot];
 (async()=>{
-  const server=launch('python3',serverArgs(0),{cwd:root,stdio:['ignore','pipe','pipe']});
+  const serverEnv={...process.env,PGAPPNAME:'tuldok-p7-restore-browser-'+process.pid};
+  const server=launch('python3',serverArgs(0),{cwd:root,env:serverEnv,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
   const port=await until(()=>{if(server.exitCode!==null)throw Error('Project server exited: '+serverErrors);return output.match(/127\.0\.0\.1:(\d+)/)?.[1];});
-  const base='http://127.0.0.1:'+port;
+  base='http://127.0.0.1:'+port;
+  const scopeCode=`import os,sys,json
+from pathlib import Path
+import psycopg
+from metadata import Metadata
+from backup_metadata import digest
+def identity(connection):
+    info=connection.info
+    return digest({'host':info.host,'port':info.port,'dbname':info.dbname})
+metadata=Metadata(sys.argv[1],dsn=os.environ['TULDOK_DATABASE_URL'],create=False,schema_version=None)
+try:
+    with psycopg.connect(os.environ['TULDOK_RESTORE_DATABASE_URL'],autocommit=True) as expected:
+        assert identity(metadata.connection)==identity(expected), 'Effective browser DSN differs from admitted restore DSN'
+        sessions=expected.execute('SELECT datname,count(*) FROM pg_stat_activity WHERE application_name=%s AND pid<>pg_backend_pid() AND pid<>%s GROUP BY datname',(os.environ['PGAPPNAME'],metadata.connection.info.backend_pid)).fetchall()
+        assert sessions and all(row[0]==expected.info.dbname for row in sessions), 'Actual browser app sessions differ from admitted restore database'
+        print(json.dumps({'catalog':str(Path(sys.argv[1]).resolve()),'dataset_id':metadata.dataset_id,'schema_version':metadata.schema_version,'database_identity_sha256':identity(expected),'actual_app_sessions':sum(row[1] for row in sessions),'actual_app_sessions_exclusively_restore_database':True,'verified_before_owner_login':True}))
+finally:
+    metadata.close()
+`;
+  const scope=JSON.parse(execFileSync('python3',['-c',scopeCode,catalog],{cwd:root,env:serverEnv,encoding:'utf8'}));
+  assert.match(scope.dataset_id,/^[a-f0-9]{32}$/);assert.equal(scope.catalog,path.resolve(catalog));
+  fs.writeFileSync(path.join(report,'server-database-scope.json'),JSON.stringify(scope,null,2));
   await fixtureAuth.register('http://127.0.0.1:'+port,catalog,root);
+  authRegistered=true;
   const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1440,900','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');assert.ok(target);
@@ -91,4 +114,20 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',catalog,'--
   assert.deepEqual(await api('/api/workspace/graphs'),beforeGraphs);
   assert.deepEqual((await api('/api/workspace/runs')).map(x=>x.id).sort(),beforeRuns);assert.deepEqual((await api('/api/workbench/records')).items.map(x=>x.id).sort(),beforeRecords);assert.deepEqual(await api('/api/workbench/records/'+recordId),beforeRecord);assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({qualification:'Actual relocated restored catalog: read-only Data/Pipeline/Run UI and all89 authenticated HTTP artifact hashes; no model/import/review/graph mutation',source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),restored_catalog:path.resolve(catalog),prior_evidence:path.resolve(evidence),graphs_exactly_unchanged:true,http_artifacts:inventory.length,http_bytes:inventory.reduce((sum,item)=>sum+item.bytes,0),prior_http_inventory_exact_match:true,run_id:runId,record_id:recordId,run_ids_unchanged:beforeRuns,record_ids_unchanged:beforeRecords,record_exactly_unchanged:true,captures,offline_canary:offlineCanary},null,2));console.log('PASS restored scientific UI and HTTP qualification:',report);
-})().catch(async error=>{console.error(error);console.error('Application stderr:',serverErrors);process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())child.kill('SIGTERM');});
+})().catch(async error=>{console.error(error);console.error('Application stderr:',serverErrors);process.exitCode=1;}).finally(async()=>{
+  const logout={attempted:authRegistered,verified:false};
+  if(authRegistered){
+    try{
+      const response=await fetch(base+'/api/access/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(10000)});
+      logout.http_status=response.status;await response.arrayBuffer();assert.ok(response.ok,'Restored owner session logout refused');
+      logout.verified=true;console.log('Restored owner session logout verified');
+    }catch(error){logout.failure_type=error.name;console.error('Restored owner session logout failed:',error.name);process.exitCode=1;}
+  }
+  try{
+    fs.writeFileSync(path.join(report,'logout.json'),JSON.stringify(logout,null,2));
+    const receiptPath=path.join(report,'receipt.json');
+    if(fs.existsSync(receiptPath)){const receipt=JSON.parse(fs.readFileSync(receiptPath));receipt.owner_session_logout_verified=logout.verified;fs.writeFileSync(receiptPath,JSON.stringify(receipt,null,2));}
+  }finally{
+    try{ws?.close();}finally{for(const child of children.reverse())child.kill('SIGTERM');}
+  }
+});

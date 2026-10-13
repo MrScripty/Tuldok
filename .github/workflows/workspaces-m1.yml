@@ -1,7 +1,7 @@
 name: M1 workspace interface
 on:
   push:
-    branches: [ui/dataset-workspaces-m1-20261011, integration/workspaces-postgres-20261011, feature/workspace-image-runs-20261011]
+    branches: [main, ui/dataset-workspaces-m1-20261011, integration/workspaces-postgres-20261011, feature/workspace-image-runs-20261011]
   pull_request:
     paths:
       - 'static/workspace*'
