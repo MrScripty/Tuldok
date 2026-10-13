@@ -46,6 +46,37 @@ class ContractTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):
             contract.runtime_identity({'executable':'/tmp/python','trusted_install_owner_uid':__import__('os').getuid()})
 
+    def test_cold_runtime_sitecustomize_matches_verified_python_version(self):
+        recipe=definition()
+        project={'project_id':'a'*32,'manifest_sha256':'b'*64,'reference_id':'recipe',
+                 'path':'recipe.json','measured_sha256':'c'*64}
+        source_sha=recipe['sources'][0]['sha256']
+        for version in ('3.12','3.13'):
+            executable='/usr/bin/python'+version
+            configuration='/etc/python'+version+'/sitecustomize.py'
+            files={executable:{'bytes':1,'sha256':'d'*64},configuration:{'bytes':1,'sha256':'e'*64}}
+            runtime={'profile':'system_python','executable':executable,'executable_sha256':'d'*64,
+                     'trusted_install_owner_uid':0,'files':files,'closure_sha256':contract.digest(files),
+                     'assumption':contract.TRUST,'flags':['-I','-S','-B']}
+            material={'schema_version':1,'catalog_id':'catalog-fixture','project':project,
+                      'graph_execution_sha256':'f'*64,'recipe':recipe,'parameters':{'count':1},
+                      'inputs':{'sample':dict(project,reference_id='sample',path='data.bin',measured_sha256='1'*64)},
+                      'captures':{'source/main.py':{'bytes':1,'sha256':source_sha},'input/sample':{'bytes':1,'sha256':'1'*64}},
+                      'runtime':runtime,'host_files':{name:'2'*64 for name in contract.HOST_NAMES},
+                      'permissions':{'filesystem':'trusted-local','network':'not_isolated'},
+                      'environment':{'LANG':'C.UTF-8'},'resources':recipe['resources']}
+            with self.subTest(version=version), patch.object(Path,'read_bytes',side_effect=AssertionError('Cold validation read the filesystem')):
+                self.assertEqual(contract.validate_material(material),material)
+                wrong=copy.deepcopy(material)
+                wrong_path='/etc/python'+('3.13' if version=='3.12' else '3.12')+'/sitecustomize.py'
+                wrong['runtime']['files'][wrong_path]=wrong['runtime']['files'].pop(configuration)
+                wrong['runtime']['closure_sha256']=contract.digest(wrong['runtime']['files'])
+                with self.assertRaises(WorkbenchError): contract.validate_material(wrong)
+                broad=copy.deepcopy(material)
+                broad['runtime']['files']['/etc/sitecustomize.py']=broad['runtime']['files'].pop(configuration)
+                broad['runtime']['closure_sha256']=contract.digest(broad['runtime']['files'])
+                with self.assertRaises(WorkbenchError): contract.validate_material(broad)
+
     def test_output_inventory_refuses_extra_links_and_missing(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary); outputs=definition()['outputs']

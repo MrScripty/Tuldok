@@ -203,7 +203,7 @@ def runtime_identity(profile=None):
     while pending:
         path = pending.pop().resolve(strict=True)
         if str(path) in files: continue
-        if not (path.is_relative_to('/usr') or path == Path('/etc/python3.13/sitecustomize.py')):
+        if not (path.is_relative_to('/usr') or path == Path('/etc') / executable.name / 'sitecustomize.py'):
             raise WorkbenchError('Runtime dependency escapes trusted installation.')
         for ancestor in (path, *path.parents):
             if ancestor == Path('/'): break
@@ -337,7 +337,7 @@ def validate_material(material):
     files = runtime['files']; total = 0
     if not isinstance(files,dict) or not 1 <= len(files) <= 10000: raise WorkbenchError('Invalid runtime closure size.')
     for path, item in files.items():
-        if not isinstance(path,str) or not (path.startswith('/usr/') or path == '/etc/python3.13/sitecustomize.py'):
+        if not isinstance(path,str) or not (path.startswith('/usr/') or path == '/etc/' + Path(runtime['executable']).name + '/sitecustomize.py'):
             raise WorkbenchError('Runtime path escapes the supported trusted installation.')
         relative_path(path[1:]); closed(item,('bytes','sha256')); sha(item['sha256'])
         bounded_int(item['bytes'],0,64*1024*1024,'Runtime file bytes'); total += item['bytes']

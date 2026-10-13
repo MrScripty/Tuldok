@@ -18,7 +18,7 @@ filesystem/network authority is disclosed, not described as isolated.
 
 ## Completed evidence
 
-- Full stable-source Python suite: **749 tests pass in856.353s**, with two optional-reader skips independently covered by20 passing spatial reader tests. All176 Python runtime/test files remained unchanged (aggregate `0a01e023016dc17405966eeb900e90edeb1ceb84725309676f33d8381459792e`).
+- Full stable-source Python suite at `c8ba1ad`: **749 tests pass in856.353s**, with two optional-reader skips independently covered by20 passing spatial reader tests. All176 Python runtime/test files remained unchanged (aggregate `0a01e023016dc17405966eeb900e90edeb1ceb84725309676f33d8381459792e`).
 
 - Access/schema/storage: 50 tests, including approval races, rollback, committed
   but unacknowledged consumption, exact schema7 and schema8 restore.
@@ -72,3 +72,16 @@ A killed custodian can leave descendants alive; the observed same-boot unknown
 fence is deliberate and cannot be dismissed with an acknowledgement. This is
 trusted-code lifecycle custody, not hostile-code confinement or aggregate
 resource enforcement.
+
+## Runtime path portability follow-up
+
+Post-publication inspection found that the system Python configuration exception
+was hard-coded to3.13. Both live and cold checks now derive the exact allowed
+`/etc/python3.N/sitecustomize.py` from the already validated interpreter name; no
+broader `/etc` access is accepted. Six focused host tests (including cold3.12/3.13
+matching and wrong-version refusal), four real HTTP tests and the complete real
+external browser pass after this change. These cold fixtures are not a claim of
+executing Python3.12 locally. Root independently reviewed the two-line runtime
+change. Hosted final-head CI reruns full regression; the176-file inventory records
+the earlier full suite, while source-files.json and browser receipts pin the
+follow-up sources.
