@@ -696,9 +696,11 @@ class Releases:
             assignments = prepared['preview']['assignments']
             report = prepared['preview']['split_report']
             manifest = {'schema_version': 1, 'seed': body['seed'], 'split_report': report,
-                        'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end). Sequence bundles preserve original named staggered fields and accepted intervals; each whole trajectory is indivisible. Static mesh bundles preserve native xyz/topology and declared units/frame; each whole mesh is indivisible. Point clouds preserve ordered points and declared frame; volumes preserve uint8 voxel values and voxel-center affine; whole spatial assets are indivisible.',
+                        'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end). Sequence bundles preserve original named staggered fields and accepted intervals; each whole trajectory is indivisible. Static mesh bundles preserve native xyz/topology and declared units/frame; each whole mesh is indivisible.',
                         'limitations': ['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],
                         'records': []}
+            if any(row['kind'] in ('pointcloud', 'volume') for row in rows):
+                manifest['coordinate_contract'] += ' Point clouds preserve ordered points and declared frame; volumes preserve uint8 voxel values and voxel-center affine; whole spatial assets are indivisible.'
             vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
             categories = {label: i + 1 for i, label in enumerate(vocabulary)}
             coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': [{'id': i, 'name': label} for label, i in categories.items()]} for split in SPLITS}
