@@ -60,3 +60,8 @@ lifecycle and focused interface jobs, independently verified. Bounded I13/A11
 and I14/A12 gates are qualified in [the combined report](reports/audio-mesh-20261012.md).
 The declared ASR, broader 3D and omitted-ancestor/reader limits remain unchanged;
 they are outside this accepted increment. No task-local acceptance blocker remains.
+
+
+## 2026-10-13 — final bounded dispositions
+
+I8 is resolved for admitted uint8 NPY1 volumes by native NumPy/affine, real Data/Pipeline/Runs and migration/restore evidence. M3/M4/M5 and A5/A7/A8 are accepted in [final qualification](reports/final-20261013.md). I1/I2 remain separate owner PRs, not dependencies. I3 candidate stack is not adopted; current bounded subtypes are independently implemented/reviewed. I4 remains an unavailable Engine, with source-based review completed and no certification claim. I5/I6 native Pantograph/ASR are optional integration-owner follow-ups, triggered by separately admitted supported host/runtime evidence. I14 omitted-ancestor/generic-reader limits remain declared contract limits. Rheon producer-v2 remains unsupported; the sequence integration owner must obtain a real completed controls-bound bundle and producer receipt before admitting/qualifying a distinct adapter. No remaining blocker exists for the accepted bounded milestone scope.

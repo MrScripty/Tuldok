@@ -839,3 +839,8 @@ personal or shared catalog. Browser subprocesses inherit the same environment.
 `.github/workflows/tests.yml` provisions PostgreSQL 17 and runs the lifecycle,
 controller, browser and existing consumer suites. Consumer suites use tiny CPU
 fixtures and do not download model weights or call paid inference providers.
+
+
+### Point-cloud and volume workflows
+
+In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.json`. The bounded profiles are [ordered ASCII PLY points](docs/contracts/point-cloud-data.md) and [uint8 NPY1 volumes](docs/contracts/volume-data.md). Inspect native points or index slices/physical coordinates, save human review, select whole assets and freeze a canonical release. In Pipeline, create and edit the corresponding validation/export recipe; Runs retains its integrity report and the unchanged release. Classification releases also offer validation/export without installing a trainer. Existing catalogs require the explicit schema4 upgrade described in the storage runbook; the application never silently migrates them. [Accepted workspace scope, evidence and limitations](docs/plans/dataset-centered-workspaces/reports/final-20261013.md).
