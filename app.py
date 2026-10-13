@@ -440,6 +440,24 @@ def make_handler(dataset):
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
+        def reply_stream(self, stream, metadata):
+            # The owner has already verified a private spool before HTTP success.
+            self.send_response(200)
+            self.send_header('Content-Type', metadata['media_type'])
+            self.send_header('Content-Length', str(metadata['bytes']))
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.end_headers()
+            try:
+                while True:
+                    raw = stream.read(65536)
+                    if not raw:
+                        break
+                    self.wfile.write(raw)
+            except (OSError, ConnectionError):
+                # Headers are committed; never append a JSON error to payload.
+                self.close_connection = True
+
         def project_access(self):
             # This opt-in file inspection surface is local-only until actor authentication.
             host = urlsplit('http://' + self.headers.get('Host', '')).hostname
@@ -578,6 +596,8 @@ def make_handler(dataset):
                         return self.reply(dataset.pipelines.list())
                     if len(parts) == 2 and parts[0] == 'graphs':
                         return self.reply(dataset.pipelines.get(parts[1]))
+                    if parts == ['run-artifact-inputs']:
+                        return self.reply(dataset.runs.input_candidates())
                     if parts == ['runs']:
                         return self.reply(dataset.runs.list())
                     if len(parts) == 2 and parts[0] == 'runs':
@@ -588,8 +608,8 @@ def make_handler(dataset):
                         query = parse_qs(urlsplit(self.path).query)
                         return self.reply(dataset.runs.predictions(parts[1], query.get('split', ['validation'])[-1]))
                     if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifacts':
-                        data, media_type = dataset.runs.artifact(parts[1], parts[3])
-                        return self.reply(data, content_type=media_type)
+                        with dataset.runs.open_artifact(parts[1], parts[3]) as (stream, metadata):
+                            return self.reply_stream(stream, metadata)
                     return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
                 if path == '/api/workbench/releases/input-candidates':
                     return self.reply(dataset.releases.input_candidates())

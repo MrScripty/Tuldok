@@ -292,49 +292,10 @@ def validate_source(method, source, raw):
         text(source['path'], 512, 'Project source path')
     elif method == 'run_artifact_import':
         import recipe_process
-        exact(source, ('schema_version', 'catalog_id', 'run_id', 'attempt_id',
-                       'request_sha256', 'material_sha256', 'artifact_name',
-                       'artifact_role', 'artifact_bytes', 'measured_sha256',
-                       'custody_receipt_sha256', 'custody_identity',
-                       'custody_receipt_base64'), 'Run source')
-        if type(source['schema_version']) is not int or source['schema_version'] != 1:
-            invalid('Unsupported Run source version.')
-        for key in ('catalog_id', 'run_id', 'attempt_id'):
-            if type(source[key]) is not str or not re.fullmatch('[a-f0-9]{32}', source[key]):
-                invalid('Invalid Run source identity.')
-        for key in ('request_sha256', 'material_sha256', 'measured_sha256', 'custody_receipt_sha256'):
-            if type(source[key]) is not str or not HASH.fullmatch(source[key]):
-                invalid('Invalid Run source hash.')
-        if (type(source['artifact_name']) is not str
-                or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', source['artifact_name'])
-                or source['artifact_name'] in ('artifact-manifest.json', 'custody-receipt.json')
-                or type(source['artifact_role']) is not str or not TOKEN.fullmatch(source['artifact_role'])):
-            invalid('Invalid Run artifact declaration.')
-        if type(source['artifact_bytes']) is not int or source['artifact_bytes'] != len(raw):
-            invalid('Run artifact size differs from captured bytes.')
-        identity = source['custody_identity']
-        exact(identity, ('attempt_id', 'request_sha256', 'spec_sha256', 'helper'), 'Custody identity')
-        if (source['run_id'] != source['attempt_id'] or source['attempt_id'] != identity['attempt_id']
-                or source['request_sha256'] != identity['request_sha256']
-                or type(identity['spec_sha256']) is not str or not HASH.fullmatch(identity['spec_sha256'])):
-            invalid('Run source and custody identities differ.')
-        encoded = source['custody_receipt_base64']
-        if type(encoded) is not str or not 1 <= len(encoded) <= 21848:
-            invalid('Invalid retained custody receipt encoding.')
         try:
-            receipt_raw = base64.b64decode(encoded, validate=True)
-        except (ValueError, binascii.Error) as error:
-            raise WorkbenchError('Scientific fields: Invalid retained custody receipt encoding.') from error
-        if (not 0 < len(receipt_raw) <= 16384
-                or base64.b64encode(receipt_raw).decode('ascii') != encoded
-                or hashlib.sha256(receipt_raw).hexdigest() != source['custody_receipt_sha256']):
-            invalid('Retained custody receipt bytes differ.')
-        try:
-            receipt = recipe_process.validate_receipt(receipt_raw, identity)
+            recipe_process.validate_artifact_source(source, digest, len(raw))
         except recipe_process.ProcessError as error:
-            raise WorkbenchError('Scientific fields: Invalid retained custody evidence.') from error
-        if receipt['outcome'] != 'completed' or not receipt['drained']:
-            invalid('Run source requires completed and drained custody.')
+            invalid(str(error), error.code, 409 if error.code == 'conflict' else 400)
     else:
         invalid('Unsupported scientific source method.')
     if source['measured_sha256'] != digest:

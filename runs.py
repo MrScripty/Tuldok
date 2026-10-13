@@ -2,6 +2,9 @@
 from access import authorized
 import base64
 import copy
+from contextlib import contextmanager
+import io
+import tempfile
 import hashlib
 import json
 import math
@@ -33,6 +36,7 @@ PAYLOADS = {'metrics.json', 'test-metrics.json', 'predictions-validation.json',
 TEST_FILES = {'test-metrics.json', 'predictions-test.json'}
 REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$')
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
+_DOWNLOAD_PERMIT = threading.BoundedSemaphore(1)
 
 
 def process_identity(pid):
@@ -249,7 +253,9 @@ class Runs:
             public = self._public(run)
             if run['state'] == 'completed':
                 try:
-                    self._verified_artifacts(run)
+                    status = self._inspect_published(run)
+                    if status:
+                        public['artifact_status'] = status
                 except WorkbenchError as error:
                     public['metrics'] = None
                     public.pop('validation_summary', None)
@@ -261,10 +267,12 @@ class Runs:
     def get(self, run_id):
         with self.lock:
             run = self._load(run_id)
+        public = self._public(run)
         if run['state'] == 'completed':
-            # A retained completed envelope never certifies missing or altered files.
-            self._verified_artifacts(run)
-        return self._public(run)
+            status = self._inspect_published(run)
+            if status:
+                public['artifact_status'] = status
+        return public
 
     def _request(self, body, required):
         closed(body, required)
@@ -334,6 +342,17 @@ class Runs:
                 if receipt:
                     self.db.on_commit(lambda: shutil.rmtree(staging, ignore_errors=True))
                 else:
+                    # Captured/validated resource policy owns this bound. Check
+                    # after both reconciliation opportunities, before consuming
+                    # approval or persisting admission; failure uses normal cleanup.
+                    if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
+                        required_bytes = 2 * spec['max_output_bytes'] + 1024**3
+                        try:
+                            available_bytes = shutil.disk_usage(self.path).free
+                        except OSError as error:
+                            raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
+                        if available_bytes < required_bytes:
+                            raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
                     if self.pipelines._get(graph['id']) != graph:
                         raise WorkbenchError('Graph changed during capture.', 'stale', 409)
                     if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
@@ -503,9 +522,10 @@ class Runs:
         try:
             if len(rules) != 1 or rules[0]['max_bytes'] > 65536:
                 raise ValueError('Invalid result summary declaration.')
-            inventory = self._verified_artifacts(run)
+            inventory = (self._external_inventory(run) if self._large_outputs(run)
+                         else self._verify_external_artifacts(run))
             item = next(item for item in inventory if item['name'] == rules[0]['path'] and item['role'] == 'result_summary')
-            raw, _media = self.artifact(run['id'], item['name'])
+            raw = self._external_bytes(run, item)
             if len(raw) > 65536:
                 raise ValueError('Result summary is too large.')
             value = self._progress_json(raw)
@@ -527,6 +547,13 @@ class Runs:
                 raise ValueError('Invalid scope.')
             if 'checkpoint' in value and not any(item['name'] == value['checkpoint'] and item['role'] == 'checkpoint' for item in inventory):
                 raise ValueError('Checkpoint is not a verified declared output.')
+            if 'checkpoint' in value:
+                checkpoint = next(entry for entry in inventory if entry['name'] == value['checkpoint'])
+                directory = self._diagnostic_directory(self.path / run['id'])
+                try:
+                    self._copy_verified(directory, checkpoint['name'], checkpoint)
+                finally:
+                    os.close(directory)
             return {'status':'hash_verified','artifact_name':item['name'], 'sha256':item['sha256'], 'summary':value}
         except (OSError, ValueError, TypeError, KeyError, StopIteration, OverflowError, RecursionError):
             return {'status':'unavailable'}
@@ -592,19 +619,25 @@ class Runs:
         destination.mkdir(mode=0o700)
         artifacts = []
         total = 0
-        for item in checked:
-            raw = self._read_regular(source / item['path'], item['bytes'])
-            if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
-                raise WorkbenchError('Recipe output changed after validation.', 'stale', 409)
-            total += len(raw)
-            if total > run['spec']['max_output_bytes']:
-                raise WorkbenchError('Recipe outputs exceed their admitted bound.', 'invalid', 409)
-            with (destination / item['path']).open('xb') as output:
-                output.write(raw)
-                output.flush()
-                os.fsync(output.fileno())
-            artifacts.append({'name': item['path'], 'role': item['role'], 'bytes': len(raw),
-                              'sha256': item['sha256'], 'media_type': item.get('media_type', 'application/octet-stream')})
+        source_descriptor = self._diagnostic_directory(source)
+        try:
+            if shutil.disk_usage(self.path).free < sum(item['bytes'] for item in checked) + 512*1024*1024:
+                raise WorkbenchError('Insufficient space for artifact publication.', 'unavailable', 409)
+            for item in checked:
+                total += item['bytes']
+                if total > run['spec']['max_output_bytes']:
+                    raise WorkbenchError('Recipe outputs exceed their admitted bound.', 'invalid', 409)
+                try:
+                    with (destination / item['path']).open('xb') as output:
+                        self._copy_verified(source_descriptor, item['path'], item, output)
+                        output.flush()
+                        os.fsync(output.fileno())
+                except (OSError, ValueError) as error:
+                    raise WorkbenchError('Recipe output changed or could not be published.', 'unavailable', 409) from error
+                artifacts.append({'name':item['path'],'role':item['role'],'bytes':item['bytes'],
+                                  'sha256':item['sha256'],'media_type':item.get('media_type','application/octet-stream')})
+        finally:
+            os.close(source_descriptor)
         receipt_raw = encode(receipt).encode()
         manifest = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
                     'request_sha256': run['request_sha256'], 'custody_receipt_sha256': hashlib.sha256(receipt_raw).hexdigest(),
@@ -707,11 +740,15 @@ class Runs:
                 # to stop and drain; missing evidence remains unknown on reopen.
                 handle.close_control()
 
-    def _verify_external_artifacts(self, run):
+    def _external_inventory(self, run):
         import recipe_process
         import recipe_contract
         directory = self.path / run['id']
+        descriptor = None
         try:
+            descriptor = self._diagnostic_directory(directory)
+            if run['state'] != 'completed':
+                raise ValueError('Only completed Runs publish artifacts.')
             if directory.is_symlink() or not directory.is_dir():
                 raise ValueError('Invalid artifact directory.')
             definition = recipe_contract.decode_definition(encode(run['material']['recipe']).encode())
@@ -732,25 +769,175 @@ class Runs:
             if (any(rule['required'] and name not in seen for name, rule in allowed.items())
                     or total > definition['resources']['max_output_bytes']):
                 raise ValueError('Incomplete or excessive artifact inventory.')
-            receipt_raw = self._read_regular(directory / 'custody-receipt.json', 16384)
+            receipt_raw, _, _ = self._diagnostic_read(descriptor, 'custody-receipt.json', 16384)
             if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
                 raise ValueError('Custody receipt changed.')
-            receipt = recipe_process.load_receipt(directory / 'custody-receipt.json', run['custody_identity'])
+            receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
             if not receipt['drained'] or receipt['outcome'] != 'completed':
                 raise ValueError('Custody did not complete.')
-            manifest = json.loads(self._read_regular(directory / 'artifact-manifest.json', 65536))
+            manifest_raw, _, _ = self._diagnostic_read(descriptor, 'artifact-manifest.json', 65536)
+            manifest = self._progress_json(manifest_raw)
             expected = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
                         'request_sha256': run['request_sha256'], 'custody_receipt_sha256': run['custody_receipt_sha256'],
                         'artifacts': run['artifacts']}
             if manifest != expected:
                 raise ValueError('Artifact manifest changed.')
+            if set(os.listdir(descriptor)) != {item['name'] for item in run['artifacts']} | {'artifact-manifest.json','custody-receipt.json'}:
+                raise ValueError('Published directory inventory differs.')
             for item in run['artifacts']:
-                raw = self._read_regular(directory / item['name'], item['bytes'])
-                if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
-                    raise ValueError('Artifact changed.')
+                info = os.stat(item['name'], dir_fd=descriptor, follow_symlinks=False)
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size != item['bytes']:
+                    raise ValueError('Artifact inventory changed.')
             return run['artifacts']
-        except (OSError, ValueError, KeyError, TypeError) as error:
+        except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
             raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+
+    def _verify_external_artifacts(self, run):
+        inventory = self._external_inventory(run)
+        directory = None
+        try:
+            directory = self._diagnostic_directory(self.path / run['id'])
+            for item in inventory:
+                self._copy_verified(directory, item['name'], item)
+            return inventory
+        except (OSError, ValueError) as error:
+            raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
+        finally:
+            if directory is not None:
+                os.close(directory)
+
+    @staticmethod
+    def _large_outputs(run):
+        return (run.get('execution_kind') == 'external_recipe' and
+                run['material']['recipe']['resources'].get('profile') == 'captured_cpu_large_outputs_v1')
+
+    def _inspect_published(self, run):
+        if self._external(run) and self._large_outputs(run):
+            self._external_inventory(run)
+            return {'status':'receipt_verified', 'payloads':'not_checked'}
+        self._verified_artifacts(run)
+        return None
+
+    @staticmethod
+    def _copy_verified(directory, name, item, output=None):
+        """Hash one exact regular payload, optionally copying with bounded memory."""
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        try:
+            before = os.fstat(fd)
+            if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+                    or before.st_uid != os.getuid() or before.st_size != item['bytes']):
+                raise ValueError('Artifact is not the declared regular file.')
+            total = 0
+            measured = hashlib.sha256()
+            while True:
+                raw = os.read(fd, min(65536, item['bytes'] - total + 1))
+                if not raw:
+                    break
+                total += len(raw)
+                if total > item['bytes']:
+                    raise ValueError('Artifact grew during verification.')
+                measured.update(raw)
+                if output is not None:
+                    if output.write(raw) != len(raw):
+                        raise OSError('Artifact copy made incomplete progress.')
+            after = os.fstat(fd)
+            current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            if (total != item['bytes'] or measured.hexdigest() != item['sha256']
+                    or (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns) !=
+                       (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns)
+                    or (before.st_dev,before.st_ino) != (current.st_dev,current.st_ino)):
+                raise ValueError('Artifact changed during verification.')
+        finally:
+            os.close(fd)
+
+    def _selected_external(self, run, name, *, max_bytes=None):
+        inventory = self._external_inventory(run)
+        item = next((item for item in inventory if item['name'] == name), None)
+        if item is None:
+            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+        if max_bytes is not None and item['bytes'] > max_bytes:
+            raise WorkbenchError('Artifact exceeds the declared input byte bound.', 'invalid', 409)
+        if not self._large_outputs(run):
+            self._verify_external_artifacts(run)
+        return item
+
+    def _external_bytes(self, run, item):
+        directory = None
+        try:
+            directory = self._diagnostic_directory(self.path / run['id'])
+            output = io.BytesIO()
+            self._copy_verified(directory, item['name'], item, output)
+            return output.getvalue()
+        except (OSError, ValueError) as error:
+            raise WorkbenchError('Selected artifact cannot be verified.', 'unavailable', 409) from error
+        finally:
+            if directory is not None:
+                os.close(directory)
+
+    @authorized('inspect', 'runs.input_candidates')
+    def input_candidates(self):
+        with self.lock:
+            rows = self.db.execute('SELECT id FROM workspace_runs ORDER BY id').fetchall()
+            completed = []
+            for row in rows:
+                run = self._load(row[0])
+                if self._external(run) and run['state'] == 'completed':
+                    completed.append(run)
+            completed = sorted(completed, key=lambda run:(run['created_at'],run['id']), reverse=True)[:100]
+        result = []
+        for run in completed:
+            entry = {'run_id':run['id'], 'state':'completed', 'status':'receipt_verified', 'reason':None, 'artifacts':[]}
+            try:
+                inventory = self._external_inventory(run)
+                entry['artifacts'] = [{'artifact_name':item['name'],'role':item['role'],'bytes':item['bytes'],
+                                       'sha256':item['sha256'],'status':'receipt_verified'}
+                                      for item in inventory if item['bytes'] <= 40*1024*1024]
+            except WorkbenchError:
+                entry.update(status='unavailable', reason='Completed artifact inventory cannot be verified.')
+            result.append(entry)
+        return {'runs':result}
+
+    @authorized('inspect', 'runs.open_artifact')
+    def open_artifact(self, run_id, name):
+        return self._open_artifact(run_id, name)
+
+    @contextmanager
+    def _open_artifact(self, run_id, name):
+        # Recheck at context entry: callers cannot retain an unentered context
+        # and use it after their credential has been revoked or unbound.
+        self.access.require('inspect', 'runs.open_artifact', run_id)
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raw, media_type = self.artifact(run_id, name)
+            with io.BytesIO(raw) as stream:
+                yield stream, {'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'media_type':media_type}
+            return
+        item = self._selected_external(run, name)
+        if not _DOWNLOAD_PERMIT.acquire(blocking=False):
+            raise WorkbenchError('Another artifact download is in progress.', 'unavailable', 503)
+        directory = None
+        try:
+            if shutil.disk_usage(self.path).free < item['bytes'] + 512*1024*1024:
+                raise WorkbenchError('Insufficient free space for a verified download.', 'unavailable', 409)
+            directory = self._diagnostic_directory(self.path / run['id'])
+            with tempfile.TemporaryFile(dir=self.path, mode='w+b') as stream:
+                try:
+                    self._copy_verified(directory, name, item, stream)
+                    stream.flush()
+                    stream.seek(0)
+                except (OSError, ValueError) as error:
+                    raise WorkbenchError('Selected artifact cannot be verified.', 'unavailable', 409) from error
+                yield stream, {key:item[key] for key in ('bytes','sha256','media_type')}
+        except OSError as error:
+            raise WorkbenchError('Verified download storage is unavailable.', 'unavailable', 409) from error
+        finally:
+            if directory is not None:
+                os.close(directory)
+            _DOWNLOAD_PERMIT.release()
 
     @authorized('execute', 'runs.submit', owner_only=True)
     def submit(self, body):
@@ -1364,7 +1551,7 @@ class Runs:
         return artifacts
 
     @authorized('inspect', 'runs.capture_artifact')
-    def capture_artifact(self, run_id, name, expected_sha256):
+    def capture_artifact(self, run_id, name, expected_sha256, *, max_bytes=MAX_ARTIFACT_BYTES):
         """Capture a completed external artifact with server-derived custody evidence."""
         import recipe_process
         if type(expected_sha256) is not str or not re.fullmatch('[a-f0-9]{64}', expected_sha256):
@@ -1373,12 +1560,12 @@ class Runs:
             run = self._load(run_id)
         if not self._external(run):
             raise WorkbenchError('Scientific import requires a completed external Run.', 'unsupported', 400)
-        item = next((item for item in self._verified_artifacts(run) if item['name'] == name), None)
-        if item is None:
-            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+        if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
+            raise WorkbenchError('Invalid artifact input byte bound.')
+        item = self._selected_external(run, name, max_bytes=max_bytes)
         if item['sha256'] != expected_sha256:
             raise WorkbenchError('Artifact differs from the expected SHA256.', 'conflict', 409)
-        raw = self._read_regular(self.path / run_id / name, item['bytes'])
+        raw = self._external_bytes(run, item)
         if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != expected_sha256:
             raise WorkbenchError('Artifact changed during capture.', 'conflict', 409)
         receipt_raw = self._read_regular(self.path / run_id / 'custody-receipt.json', 16384)
@@ -1405,10 +1592,8 @@ class Runs:
         with self.lock:
             run = self._load(run_id)
         if self._external(run):
-            item = next((item for item in self._verified_artifacts(run) if item['name'] == name), None)
-            if item is None:
-                raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
-            raw = self._read_regular(self.path / run_id / name, item['bytes'])
+            item = self._selected_external(run, name, max_bytes=MAX_ARTIFACT_BYTES)
+            raw = self._external_bytes(run, item)
             if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
                 raise WorkbenchError('Artifact changed during read.', 'unavailable', 409)
             return raw, item['media_type']

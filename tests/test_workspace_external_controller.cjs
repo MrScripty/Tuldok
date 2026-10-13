@@ -77,6 +77,34 @@ function fixture(){
     const late=fixture(),held=deferred();late.window.TuldokAuth.fetch=async()=>({ok:true,json:async()=>({releases:[candidate]})});late.setHandler(()=>held.promise);
     const request=late.click('#external-input-choices');late[change]();held.resolve({data:project.data,inputs:{sample:{max_bytes:100}}});await request;late.render();assert.doesNotMatch(late.root.innerHTML,/data-external-input-kind/);
   }
+  const sourceRun='1'.repeat(32),otherRun='2'.repeat(32),artifactChoice={artifact_name:'model.pt',role:'checkpoint',bytes:50,sha256:'e'.repeat(64),status:'receipt_verified'};
+  const runCandidates=[{run_id:sourceRun,state:'completed',status:'receipt_verified',reason:null,artifacts:[artifactChoice]},
+    {run_id:otherRun,state:'completed',status:'receipt_verified',reason:null,artifacts:[{...artifactChoice,sha256:'f'.repeat(64)}]},
+    {run_id:'3'.repeat(32),state:'completed',status:'unavailable',reason:'<missing>',artifacts:[]},
+    {run_id:'4'.repeat(32),state:'failed',status:'receipt_verified',reason:null,artifacts:[artifactChoice]}];
+  const runChoices=helpers.choices(project,[candidate],runCandidates);
+  assert.equal(runChoices.run_artifact.length,2);assert.equal(runChoices.runs.length,3);
+  const exactBinding={kind:'run_artifact',run_id:sourceRun,artifact_name:'model.pt',expected_sha256:artifactChoice.sha256};
+  assert.deepEqual(structuredClone(helpers.binding('run_artifact',runChoices.run_artifact[0])),exactBinding);
+  assert.match(helpers.html({sample:exactBinding},{sample:{max_bytes:100}},runChoices),/value="run_artifact" selected/);
+  assert.match(helpers.html({sample:exactBinding},{sample:{max_bytes:100}},runChoices),/value="model.pt" selected/);
+  assert.match(helpers.html({sample:exactBinding},{sample:{max_bytes:100}},runChoices),/&lt;missing&gt;/);
+  assert.match(helpers.html({sample:exactBinding},{sample:{max_bytes:100}},helpers.choices(project,[],[])),/exact binding retained/);
+  bindingUI.window.TuldokAuth.fetch=async url=>({ok:true,json:async()=>url.endsWith('run-artifact-inputs')?{runs:runCandidates}:{releases:[candidate]}});
+  await bindingUI.click('#external-input-choices');
+  const runSelector={value:'',getAttribute:()=> 'sample'},runGroup={getAttribute:()=> 'sample'};
+  bindingUI.fields['[data-external-input-run]']=[runSelector];bindingUI.fields['[data-external-input-run-group]']=[runGroup];bindingUI.render();
+  kind.value='run_artifact';kind.onchange();assert.equal(runGroup.hidden,false);assert.equal(runSelector.required,true);
+  runSelector.value=sourceRun;runSelector.onchange();select.value='model.pt';select.onchange();
+  assert.deepEqual(structuredClone(bindingUI.graph.nodes[0].parameters.inputs.sample),exactBinding);
+  assert.equal(bindingUI.nodes['#external-preflight'].disabled,true);assert.equal(bindingUI.nodes['#external-reviewed'].checked,false);
+  await bindingUI.click('#external-save');assert.deepEqual(bindingUI.calls.filter(call=>call.route==='graphs/g').at(-1).body.document.nodes[0].parameters.inputs.sample,exactBinding);
+  runSelector.value=otherRun;runSelector.onchange();assert.equal(bindingUI.graph.nodes[0].parameters.inputs.sample,undefined);
+  select.value='model.pt';select.onchange();assert.equal(bindingUI.graph.nodes[0].parameters.inputs.sample.expected_sha256,'f'.repeat(64));assert.equal(bindingUI.graph.nodes[0].parameters.inputs.sample.run_id,otherRun);
+  select.value='../../unlisted';select.onchange();assert.equal(bindingUI.graph.nodes[0].parameters.inputs.sample,undefined);
+  kind.value='project_reference';kind.onchange();assert.equal(runGroup.hidden,true);assert.equal(runSelector.disabled,true);select.value='source';select.onchange();assert.deepEqual(structuredClone(bindingUI.graph.nodes[0].parameters.inputs.sample),{reference_id:'source',expected_sha256:'b'.repeat(64)});
+  bindingUI.window.TuldokAuth.fetch=async url=>{if(url.endsWith('run-artifact-inputs'))throw Error('Candidate service unavailable');return {ok:true,json:async()=>({releases:[candidate]})};};
+  const partial=await helpers.catalogs();assert.equal(partial.releases.length,1);assert.equal(partial.runs.length,0);assert.match(partial.errors[0],/Run artifacts/);
   const progressUI=fixture().ui,completed={id:'r',state:'completed',artifacts:[{name:'model.pt',role:'checkpoint'}]};
   const progress={run_id:'r',evidence:'live_unverified',streams:{stdout:{available_bytes:12,start_byte:4,text:'<script>unsafe</script>',truncated:true},stderr:null},progress:{format:'tuldok_progress_v1',stage:'loading',completed:1,total:2,metrics:{actual:4}},result:null};
   let html=progressUI.progressHTML({...completed,state:'running'},progress);assert.match(html,/Live output · unverified/);assert.match(html,/1 \/ 2/);assert.match(html,/&lt;script&gt;/);assert.doesNotMatch(html,/<script>|<details[^>]* open/);
@@ -87,10 +115,11 @@ function fixture(){
   assert.doesNotMatch(progressUI.progressHTML(completed,{...progress,run_id:'other',result}),/Reported result|loading/);
   assert.match(progressUI.progressHTML(completed,{...progress,result:{status:'unavailable'}}),/Result summary unavailable/);
   // Exercise the actual polling composition with held progress responses.
-  for(const change of ['view','session','none']){
+  for(const change of ['view','session','none','receipt']){
     const held=deferred(),requested=deferred(),listeners={};let actor={actor_id:'owner',credential_id:'one',kind:'owner',scopes:[]};
     const root=()=>({innerHTML:'',contains:()=>false,querySelectorAll:()=>[],querySelector:()=>({addEventListener(){},classList:{toggle(){}},setAttribute(){}})});
     const pipelineRoot=root(),runsRoot=root(),record={id:'poll',state:'completed',graph:{recipe:'external_recipe',name:'Polling fixture'},artifacts:[],node_attempts:[],events:[],progress:{}};
+    if(change==='receipt')record.artifact_status={status:'receipt_verified',payloads:'not_checked'};
     const auth={identity:()=>actor,fetch:async url=>({ok:true,json:async()=>{
       if(url.endsWith('/runs'))return [record];if(url.endsWith('/progress')){requested.resolve();return held.promise;}return record;
     }})};
@@ -102,11 +131,12 @@ function fixture(){
     if(change==='view')await workspace.show(null);
     if(change==='session'){actor=null;for(const fn of listeners['tuldok-session'])fn();}
     held.resolve({run_id:'poll',evidence:'custody_verified',streams:{},progress:{format:'tuldok_progress_v1',stage:'HELD_PROGRESS',completed:1,total:1,metrics:{}},result:null});await loading;
-    if(change==='none'){
+    if(change==='none'||change==='receipt'){
+      if(change==='receipt'){assert.match(runsRoot.innerHTML,/Recorded outputs; verified on download/);assert.doesNotMatch(runsRoot.innerHTML,/<h3>Verified artifacts<\/h3>/);}
       assert.match(runsRoot.innerHTML,/HELD_PROGRESS/);assert.doesNotMatch(runsRoot.innerHTML,/<h3>Stage evidence<\/h3>/);assert.match(runsRoot.innerHTML,/Run lifecycle events/);assert.match(runsRoot.innerHTML,/Trusted local execution/);assert.match(runsRoot.innerHTML,/<details id="external-custody-details" data-external-disclosure><summary>Custody and approved material<\/summary>/);actor=null;for(const fn of listeners['tuldok-session'])fn();assert.doesNotMatch(runsRoot.innerHTML,/HELD_PROGRESS/);
     }else assert.doesNotMatch(runsRoot.innerHTML,/HELD_PROGRESS/);
   }
-  console.log('PASS frozen binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.');
+  console.log('PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.');
   console.log('PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only.');
   console.log('PASS external controller: actor-bound unresolved key survives ambiguous→403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -59,6 +59,35 @@ class CustodyTests(unittest.TestCase):
         handle.process.wait(timeout=2)
         return custody.load_receipt(handle.directory/'receipt.json',handle.expected_identity)
 
+    def test_artifact_source_cold_identity_and_completed_custody(self):
+        import copy
+        identity={'attempt_id':'a'*32,'request_sha256':'b'*64,'spec_sha256':'c'*64,
+                  'helper':custody.identity(os.getpid())}
+        receipt=dict(identity,schema_version=1,go_received=True,spawn_closed=True,drained=True,
+                     echild=True,outcome='completed',reason='completed',leader_returncode=0,
+                     streams={name:{'bytes':0,'sha256':custody.digest(b'')} for name in ('stdout','stderr')})
+        raw=custody.encoded(receipt);payload=b'authored artifact'
+        source=dict(schema_version=1,catalog_id='d'*32,run_id='a'*32,attempt_id='a'*32,
+                    request_sha256='b'*64,material_sha256='e'*64,artifact_name='model.pt',
+                    artifact_role='checkpoint',artifact_bytes=len(payload),measured_sha256=custody.digest(payload),
+                    custody_receipt_sha256=custody.digest(raw),custody_identity=identity,
+                    custody_receipt_base64=base64.b64encode(raw).decode())
+        self.assertEqual(custody.validate_artifact_source(source,custody.digest(payload),len(payload)),source)
+        for change in ({'extra':1},{'run_id':'f'*32},{'artifact_name':'../model.pt'},
+                       {'artifact_bytes':len(payload)+1},{'custody_receipt_base64':source['custody_receipt_base64']+'\n'},
+                       {'custody_receipt_sha256':'f'*64}):
+            with self.subTest(change=change),self.assertRaises(custody.ProcessError):
+                custody.validate_artifact_source(dict(source,**change),custody.digest(payload),len(payload))
+        changed=copy.deepcopy(source);changed['custody_identity']['request_sha256']='f'*64
+        with self.assertRaises(custody.ProcessError):custody.validate_artifact_source(changed,custody.digest(payload),len(payload))
+        bad=custody.encoded(dict(receipt,outcome='unknown',drained=False,echild=False))
+        changed=dict(source,custody_receipt_base64=base64.b64encode(bad).decode(),custody_receipt_sha256=custody.digest(bad))
+        with self.assertRaisesRegex(custody.ProcessError,'completed and drained'):
+            custody.validate_artifact_source(changed,custody.digest(payload),len(payload))
+        with self.assertRaises(custody.ProcessError) as error:
+            custody.validate_artifact_source(source,'f'*64,len(payload))
+        self.assertEqual(error.exception.code,'conflict')
+
     def test_barrier_complete_exact_output_and_cold_receipt(self):
         handle=self.start(self.spec())
         time.sleep(.08);self.assertFalse((self.output/'result.txt').exists())
@@ -318,6 +347,54 @@ class CpuSnapshotContractTests(unittest.TestCase):
             'trusted_install_owner_uid':os.stat('/usr').st_uid,'native_loader_policy':'glibc_x86_64_no_preload_v1',
             'cpu_snapshot':self.descriptor,'captured_files':[{'path':str(path),'bytes':path.stat().st_size,'sha256':custody.digest(path.read_bytes())} for path in (bootstrap,descriptor,entry)]}
         return spec
+
+    def test_large_resource_profile_requires_full_cpu_identity_and_keeps_input_bounds(self):
+        import copy
+        spec=self.cpu_spec()
+        large=dict(spec,resource_profile=custody.LARGE_OUTPUT_PROFILE,wall_seconds=2400,
+                   max_output_bytes=4*1024*1024*1024)
+        self.assertEqual(custody.validate_spec(large),large)
+        for change in ({'wall_seconds':2401},{'max_output_bytes':4*1024*1024*1024+1},
+                       {'resource_profile':'large'},{'resource_profile':None},{'wall_seconds':True}):
+            with self.subTest(change=change),self.assertRaises(custody.ProcessError):
+                custody.validate_spec(dict(large,**change))
+        no_cpu=copy.deepcopy(large);del no_cpu['cpu_snapshot']
+        with self.assertRaises(custody.ProcessError):custody.validate_spec(no_cpu)
+        malformed=copy.deepcopy(large);malformed['cpu_snapshot']['manifest_sha256']='bad'
+        with self.assertRaises(custody.ProcessError):custody.validate_spec(malformed)
+        altered=copy.deepcopy(large);altered['captured_files'][1]['sha256']='d'*64
+        with self.assertRaises(custody.ProcessError):custody.validate_spec(altered)
+        for change in ({'wall_seconds':601},{'max_output_bytes':64*1024*1024+1}):
+            with self.subTest(legacy=change),self.assertRaises(custody.ProcessError):
+                custody.validate_spec(dict(spec,**change))
+        large['captured_files'].append(dict(path=str(self.base/'input/oversize'),bytes=40*1024*1024+1,sha256='e'*64))
+        with self.assertRaisesRegex(custody.ProcessError,'bounded named input'):custody.validate_spec(large)
+        large['captured_files'].pop()
+        large['captured_files'].append(dict(path=str(self.base/'source/oversize'),bytes=64*1024*1024+1,sha256='e'*64))
+        with self.assertRaisesRegex(custody.ProcessError,'captured file size'):custody.validate_spec(large)
+
+    def test_large_output_scan_has_exact_file_total_and_count_bounds_without_large_writes(self):
+        output=self.base/'large-output';output.mkdir()
+        spec=dict(self.cpu_spec(),resource_profile=custody.LARGE_OUTPUT_PROFILE,
+                  output_dir=str(output),max_output_bytes=4*1024*1024*1024)
+        spec=custody.validate_spec(spec)
+        for index in range(8):
+            with (output/str(index)).open('wb') as stream:stream.truncate(512*1024*1024)
+        custody._outputs(spec)
+        (output/'extra').write_bytes(b'x')
+        with self.assertRaises(custody.ProcessError):custody._outputs(spec)
+        (output/'extra').unlink()
+        for path in output.iterdir():path.unlink()
+        with (output/'too-big').open('wb') as stream:stream.truncate(512*1024*1024+1)
+        with self.assertRaises(custody.ProcessError):custody._outputs(spec)
+        (output/'too-big').unlink()
+        for index in range(96):(output/str(index)).touch()
+        custody._outputs(spec)
+        (output/'97').touch()
+        with self.assertRaises(custody.ProcessError):custody._outputs(spec)
+        for path in output.iterdir():path.unlink()
+        (output/'link').symlink_to(self.base/'source/recipe.py')
+        with self.assertRaises(custody.ProcessError):custody._outputs(spec)
 
     def test_cpu_capture_and_input_bounds_are_profile_specific(self):
         import copy

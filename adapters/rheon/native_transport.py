@@ -42,11 +42,17 @@ def exact(stream, size):
 class Transport:
     PIPE = subprocess.PIPE
 
-    def __init__(self, binary, policy_raw, *, allowed_seeds=(900, 901, 902, 903), capture_diagnostics=False):
+    def __init__(self, binary, policy_raw, *, allowed_seeds=(900, 901, 902, 903), capture_diagnostics=False, evaluation_mode=False, capture_hook=None):
         if type(allowed_seeds) is not tuple or allowed_seeds not in ((900, 901, 902, 903), (500, 501)):
             raise ValueError('Unsupported reviewed native seed scope.')
         if type(capture_diagnostics) is not bool:
             raise ValueError('Invalid diagnostic capture flag.')
+        if type(evaluation_mode) is not bool or (capture_hook is not None and not callable(capture_hook)):
+            raise ValueError('Invalid evaluation capture hook.')
+        if (evaluation_mode and allowed_seeds != (900, 901, 902, 903)) or (capture_hook is not None and not evaluation_mode):
+            raise ValueError('Evaluation capture requires the closed evaluation seed scope.')
+        self.evaluation_mode = evaluation_mode
+        self.capture_hook = capture_hook
         self.capture_diagnostics = capture_diagnostics
         self.diagnostics = []
         self.allowed_seeds = tuple(str(seed) for seed in allowed_seeds)
@@ -110,10 +116,12 @@ class Transport:
                     or ready.get('face_lengths') != [33*32*32]*3):
                 raise ValueError('Native READY differs from requested controls.')
             maps = generate.mapping_evidence(process.pid, self.observed, native_fd, loader_fd)
-            if len(self.evidence) >= 64:
+            if len(self.evidence) >= (72 if getattr(self, 'evaluation_mode', False) else 64):
                 raise ValueError('Native launch count exceeds admitted comparison.')
             self.evidence.append({'method': args[2], 'seed': int(args[3]), 'ready': ready, 'mappings': maps})
             process.stdout = PrefixReader(header + raw, process.stdout)
+            if getattr(self, 'capture_hook', None) is not None:
+                process.stdout = self.capture_hook(args, process.stdout)
             return process
         except BaseException:
             if process is not None:

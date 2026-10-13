@@ -24,6 +24,10 @@ GRACE_SECONDS = 3
 CLEANUP_SECONDS = 10
 STREAM_LIMIT = 1024 * 1024
 OUTPUT_LIMIT = 64 * 1024 * 1024
+CAPTURE_FILE_LIMIT = 64 * 1024 * 1024
+LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
+LARGE_OUTPUT_LIMIT = 4 * 1024 * 1024 * 1024
+LARGE_OUTPUT_FILE_LIMIT = 512 * 1024 * 1024
 SPEC_LIMIT = 4 * 1024 * 1024
 SOURCE = Path(__file__).read_bytes()
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -298,7 +302,7 @@ def verify_cpu_snapshot(descriptor, *, checkpoint=None):
 def validate_spec(value):
     keys = {'schema_version','attempt_id','request_sha256','argv','env','cwd','stdin_base64',
             'wall_seconds','executable_sha256','max_output_bytes','output_dir','captured_files','runtime_files','trusted_install_owner_uid'}
-    if type(value) is not dict or set(value) - {'native_loader_policy', 'cpu_snapshot'} != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
+    if type(value) is not dict or set(value) - {'native_loader_policy', 'cpu_snapshot', 'resource_profile'} != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
         raise ProcessError('Unsupported custody spec.')
     if not isinstance(value['attempt_id'], str) or not ID.fullmatch(value['attempt_id']):
         raise ProcessError('Invalid attempt identity.')
@@ -314,10 +318,6 @@ def validate_spec(value):
         raise ProcessError('Invalid explicit environment.')
     if not absolute(value['cwd']) or not absolute(value['output_dir']):
         raise ProcessError('Captured working/output directories must be absolute.')
-    if type(value['wall_seconds']) is not int or not 1 <= value['wall_seconds'] <= 600:
-        raise ProcessError('Wall budget must be 1 through 600 seconds.')
-    if type(value['max_output_bytes']) is not int or not 1 <= value['max_output_bytes'] <= OUTPUT_LIMIT:
-        raise ProcessError('Invalid output byte budget.')
     try:
         if type(value['stdin_base64']) is not str or len(value['stdin_base64']) > 87384:
             raise ValueError()
@@ -340,7 +340,7 @@ def validate_spec(value):
         if item['path'] in seen or type(item['sha256']) is not str or not HASH.fullmatch(item['sha256']):
             raise ProcessError('Duplicate capture or invalid hash.')
         seen.add(item['path'])
-        if type(item['bytes']) is not int or not 0 <= item['bytes'] <= OUTPUT_LIMIT:
+        if type(item['bytes']) is not int or not 0 <= item['bytes'] <= CAPTURE_FILE_LIMIT:
             raise ProcessError('Invalid captured file size.')
     if 'cpu_snapshot' in value:
         descriptor = validate_cpu_snapshot_descriptor(value['cpu_snapshot'])
@@ -374,6 +374,16 @@ def validate_spec(value):
             raise ProcessError('CPU input aggregate exceeds its byte bound.')
     if sum(item['bytes'] for item in files) > capture_limit or sum(item['bytes'] for item in runtime) > 512 * 1024 * 1024:
         raise ProcessError('Runtime/source closure exceeds its byte bound.')
+    wall_limit, output_limit = 600, OUTPUT_LIMIT
+    if 'resource_profile' in value:
+        if value['resource_profile'] != LARGE_OUTPUT_PROFILE or 'cpu_snapshot' not in value:
+            raise ProcessError('Large outputs require the explicit qualified CPU resource profile.')
+        # CPU descriptor, launch vector and capture layout have all passed above.
+        wall_limit, output_limit = 2400, LARGE_OUTPUT_LIMIT
+    if type(value['wall_seconds']) is not int or not 1 <= value['wall_seconds'] <= wall_limit:
+        raise ProcessError('Wall budget exceeds its admitted profile.')
+    if type(value['max_output_bytes']) is not int or not 1 <= value['max_output_bytes'] <= output_limit:
+        raise ProcessError('Invalid output byte budget.')
     if len(encoded(value)) > SPEC_LIMIT:
         raise ProcessError('Custody specification exceeds its bound.')
     return decode(encoded(value))
@@ -621,6 +631,62 @@ def validate_receipt(raw, expected_identity):
     return value
 
 
+def validate_artifact_source(source, expected_sha256, expected_bytes):
+    """Check retained Run artifact custody declarations, not historical authority."""
+    if (type(expected_sha256) is not str or not HASH.fullmatch(expected_sha256)
+            or type(expected_bytes) is not int or expected_bytes < 0):
+        raise ProcessError('Invalid expected artifact identity.')
+    def exact(value, keys, label):
+        if type(value) is not dict or set(value) != set(keys):
+            raise ProcessError(label + ' fields differ from schema 1.')
+    exact(source, ('schema_version', 'catalog_id', 'run_id', 'attempt_id',
+                   'request_sha256', 'material_sha256', 'artifact_name',
+                   'artifact_role', 'artifact_bytes', 'measured_sha256',
+                   'custody_receipt_sha256', 'custody_identity',
+                   'custody_receipt_base64'), 'Run source')
+    if type(source['schema_version']) is not int or source['schema_version'] != 1:
+        raise ProcessError('Unsupported Run source version.')
+    for key in ('catalog_id', 'run_id', 'attempt_id'):
+        if type(source[key]) is not str or not re.fullmatch('[a-f0-9]{32}', source[key]):
+            raise ProcessError('Invalid Run source identity.')
+    for key in ('request_sha256', 'material_sha256', 'measured_sha256', 'custody_receipt_sha256'):
+        if type(source[key]) is not str or not HASH.fullmatch(source[key]):
+            raise ProcessError('Invalid Run source hash.')
+    if (type(source['artifact_name']) is not str
+            or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', source['artifact_name'])
+            or source['artifact_name'] in ('artifact-manifest.json', 'custody-receipt.json')
+            or type(source['artifact_role']) is not str or not re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$').fullmatch(source['artifact_role'])):
+        raise ProcessError('Invalid Run artifact declaration.')
+    if type(source['artifact_bytes']) is not int or source['artifact_bytes'] != expected_bytes:
+        raise ProcessError('Run artifact size differs from captured bytes.')
+    identity = source['custody_identity']
+    exact(identity, ('attempt_id', 'request_sha256', 'spec_sha256', 'helper'), 'Custody identity')
+    if (source['run_id'] != source['attempt_id'] or source['attempt_id'] != identity['attempt_id']
+            or source['request_sha256'] != identity['request_sha256']
+            or type(identity['spec_sha256']) is not str or not HASH.fullmatch(identity['spec_sha256'])):
+        raise ProcessError('Run source and custody identities differ.')
+    encoded = source['custody_receipt_base64']
+    if type(encoded) is not str or not 1 <= len(encoded) <= 21848:
+        raise ProcessError('Invalid retained custody receipt encoding.')
+    try:
+        receipt_raw = base64.b64decode(encoded, validate=True)
+    except ValueError as error:
+        raise ProcessError('Invalid retained custody receipt encoding.') from error
+    if (not 0 < len(receipt_raw) <= 16384
+            or base64.b64encode(receipt_raw).decode('ascii') != encoded
+            or hashlib.sha256(receipt_raw).hexdigest() != source['custody_receipt_sha256']):
+        raise ProcessError('Retained custody receipt bytes differ.')
+    try:
+        receipt = validate_receipt(receipt_raw, identity)
+    except ProcessError as error:
+        raise ProcessError('Invalid retained custody evidence.') from error
+    if receipt['outcome'] != 'completed' or not receipt['drained']:
+        raise ProcessError('Run source requires completed and drained custody.')
+    if source['measured_sha256'] != expected_sha256:
+        raise ProcessError('Captured bytes differ from their source receipt.', 'conflict')
+    return dict(source)
+
+
 def _children():
     # /proc/.../children is not exposed on every supported host. PPID is the
     # admitted canonical observation; ECHILD, never this scan, proves drainage.
@@ -651,11 +717,13 @@ def _signal_children(number):
 
 def _outputs(spec):
     root=Path(spec['output_dir']); total=count=0
+    large = spec.get('resource_profile') == LARGE_OUTPUT_PROFILE
+    count_limit, file_limit = (96, LARGE_OUTPUT_FILE_LIMIT) if large else (128, OUTPUT_LIMIT)
     if root.is_symlink() or not root.is_dir():
         raise ProcessError('Output directory changed.')
     for path in root.iterdir():
         info=path.lstat();count+=1;total+=info.st_size
-        if count>128 or not stat.S_ISREG(info.st_mode) or total>spec['max_output_bytes']:
+        if count>count_limit or not stat.S_ISREG(info.st_mode) or info.st_size>file_limit or total>spec['max_output_bytes']:
             raise ProcessError('Output inventory exceeded its admitted bound.')
 
 

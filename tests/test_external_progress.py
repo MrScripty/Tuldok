@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 from access import AccessError
 from runs import Runs
+from workbench import WorkbenchError
 from test_external_runs import ExternalCase
 
 
@@ -104,7 +105,7 @@ class ExternalProgressTests(ExternalCase):
         summary = {'format':'tuldok_result_summary_v1','title':'CPU fit','metrics':[{'name':'fit_error','value':0.1,'unit':''}], 'scope':['QA fixture'],'checkpoint':'model.pt'}
         inventory = [{'name':'summary.json','role':'result_summary','sha256':'a'*64}, {'name':'model.pt','role':'checkpoint','sha256':'b'*64}]
         def project(value, items=inventory):
-            with patch.object(self.dataset.runs, '_verified_artifacts', return_value=items), patch.object(self.dataset.runs, 'artifact', return_value=(json.dumps(value).encode(),'application/json')):
+            with patch.object(self.dataset.runs, '_external_inventory', return_value=items), patch.object(self.dataset.runs, '_external_bytes', return_value=json.dumps(value).encode()), patch.object(self.dataset.runs, '_diagnostic_directory', side_effect=lambda path: os.open(self.path, os.O_RDONLY)), patch.object(self.dataset.runs, '_copy_verified'):
                 return self.dataset.runs._external_result_summary(record)
         self.assertEqual(project(summary)['status'], 'hash_verified')
         self.assertEqual(project(summary)['artifact_name'], 'summary.json')
@@ -150,11 +151,13 @@ class ExternalProgressTests(ExternalCase):
                    'scope':['Synthetic protocol evidence, no fitting'], 'checkpoint':'model.bin'}
         source = ('import pathlib,sys\np=pathlib.Path(sys.argv[3])\n'
                   + 'p.joinpath("summary.json").write_bytes(' + repr(json.dumps(summary).encode()) + ')\n'
-                  + 'p.joinpath("model.bin").write_bytes(b"neutral-not-a-model")\n').encode()
+                  + 'p.joinpath("model.bin").write_bytes(b"neutral-not-a-model")\n'
+                  + 'p.joinpath("other.bin").write_bytes(b"unrelated-evidence")\n').encode()
         self.definition['sources'][0]['sha256'] = hashlib.sha256(source).hexdigest()
         self.definition['outputs'] = [
             {'path':'summary.json','role':'result_summary','max_bytes':4096,'required':True},
-            {'path':'model.bin','role':'checkpoint','max_bytes':4096,'required':True}]
+            {'path':'model.bin','role':'checkpoint','max_bytes':4096,'required':True},
+            {'path':'other.bin','role':'evidence','max_bytes':4096,'required':True}]
         self.definition_raw = json.dumps(self.definition).encode()
         self.manifest['id'] = uuid.uuid4().hex
         self.manifest['recipes'][0]['sha256'] = hashlib.sha256(self.definition_raw).hexdigest()
@@ -171,6 +174,22 @@ class ExternalProgressTests(ExternalCase):
             value = self.dataset.runs.external_progress(run['id'])
         self.assertEqual(value['result']['status'], 'hash_verified')
         self.assertEqual(value['result']['summary'], summary)
+        # Historical small profiles reject unrelated same-size payload damage
+        # through every read surface, not only list/get.
+        other = self.dataset.runs.path / run['id'] / 'other.bin'
+        original = other.read_bytes()
+        other.write_bytes(b'x'*len(original))
+        with self.owner.bound(self.dataset):
+            model_sha = hashlib.sha256(b'neutral-not-a-model').hexdigest()
+            with self.assertRaises(WorkbenchError):
+                self.dataset.runs.artifact(run['id'], 'model.bin')
+            with self.assertRaises(WorkbenchError):
+                self.dataset.runs.capture_artifact(run['id'], 'model.bin', model_sha)
+            with self.assertRaises(WorkbenchError):
+                with self.dataset.runs.open_artifact(run['id'], 'model.bin'):
+                    pass
+            self.assertEqual(self.dataset.runs.external_progress(run['id'])['result'], {'status':'unavailable'})
+        other.write_bytes(original)
         (self.dataset.runs.path / run['id'] / 'model.bin').write_bytes(b'tampered')
         with self.owner.bound(self.dataset):
             value = self.dataset.runs.external_progress(run['id'])

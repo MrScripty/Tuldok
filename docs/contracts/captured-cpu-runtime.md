@@ -110,3 +110,15 @@ original descriptor and specification after relocation; new execution resolves t
 current snapshot root and requires fresh approval. Hash custody is not scientific
 acceptance. Actual CPU computation, checkpoint compatibility, numerical gates and
 UI workflows require their own qualification evidence.
+
+## Optional large-output resource profile
+
+`resources.profile = "captured_cpu_large_outputs_v1"` selects bounded large
+outputs only with the existing qualified captured CPU runtime. Helper validation
+checks the complete descriptor/bootstrap before admitting 2400 seconds and
+4 GiB aggregate outputs (at most 96 files, each at most 512 MiB). Default CPU and
+system profiles retain their old shapes, limits and historical identities.
+This extension does not enlarge captured input/source or diagnostic streams,
+alter cancellation/drain deadlines, enable network isolation, or qualify GPU/JIT.
+Actual recipes retain explicit smaller output budgets and require measured
+capacity admission. See the external recipe contract for custody and downloads.

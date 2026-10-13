@@ -22,6 +22,8 @@ TYPES = ('input', 'execute', 'output')
 PORTS = {'input': (None, 'data'), 'execute': ('data', 'artifacts'), 'output': ('artifacts', None)}
 TRUST = 'Trusted local code; filesystem and network are not sandboxed. Runtime installation must remain immutable for the attempt.'
 CPU_PROFILE = 'captured_cpu_python_v1'
+LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
+INPUT_EVIDENCE = 'runtime-bootstrap/input-evidence.json'
 CPU_DESCRIPTOR = 'runtime-bootstrap/snapshot.json'
 CPU_BOOTSTRAP = 'runtime-bootstrap/recipe_process.py'
 HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py')
@@ -127,11 +129,15 @@ def decode_definition(raw):
             if not isinstance(arg, str) or arg not in paths: raise WorkbenchError('Unknown source argument.')
         elif kind == 'native_policy':
             if not isinstance(arg,str) or arg not in value.get('native_sources',[]): raise WorkbenchError('Native policy argument must select a declared native source.')
-        elif kind != 'output_dir' or arg is not True:
+        elif kind not in ('output_dir', 'input_evidence') or arg is not True:
             raise WorkbenchError('Unsupported argument token.')
+    closed(value['resources'], ('wall_seconds', 'max_output_bytes'), ('profile',))
+    large = 'profile' in value['resources']
+    if large and (value['resources']['profile'] != LARGE_OUTPUT_PROFILE or value['runtime'] != CPU_PROFILE):
+        raise WorkbenchError('Large outputs require the declared captured CPU resource profile.')
     outputs = value['outputs']
-    if not isinstance(outputs, list) or not 1 <= len(outputs) <= 32:
-        raise WorkbenchError('Declare 1–32 output files.')
+    if not isinstance(outputs, list) or not 1 <= len(outputs) <= (96 if large else 32):
+        raise WorkbenchError('Output file count exceeds the resource profile bound.')
     seen = set()
     for output in outputs:
         closed(output, ('path', 'role', 'max_bytes', 'required'))
@@ -140,12 +146,11 @@ def decode_definition(raw):
             raise WorkbenchError('Output must use an unreserved flat filename.')
         if path in seen or type(output['required']) is not bool: raise WorkbenchError('Invalid output contract.')
         seen.add(path)
-        bounded_int(output['max_bytes'], 1, MAX_CAPTURE_BYTES, 'Output bytes')
+        bounded_int(output['max_bytes'], 1, 512 * 1024 * 1024 if large else MAX_CAPTURE_BYTES, 'Output bytes')
     if value['environment'] != {}:
         raise WorkbenchError('Initial runtime admits no project environment overrides.', 'unsupported', 400)
-    closed(value['resources'], ('wall_seconds', 'max_output_bytes'))
-    bounded_int(value['resources']['wall_seconds'], 1, 600, 'Wall seconds')
-    bounded_int(value['resources']['max_output_bytes'], 1, MAX_CAPTURE_BYTES, 'Output bytes')
+    bounded_int(value['resources']['wall_seconds'], 1, 2400 if large else 600, 'Wall seconds')
+    bounded_int(value['resources']['max_output_bytes'], 1, 4 * 1024**3 if large else MAX_CAPTURE_BYTES, 'Output bytes')
     return value
 
 
@@ -425,7 +430,7 @@ def host_identity():
     return current
 
 
-def prepare(projects, graph, execution_sha256, profile=None, *, releases=None):
+def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, runs=None):
     config, values = graph_parameters(graph)
     inspected = inspect_recipe(projects, config['project_id'], config['recipe_id'], config['expected_sha256'])
     definition = inspected['definition']; values = validate_parameters(definition, values)
@@ -435,7 +440,14 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None):
     captured = {'source/' + path: raw for path, raw in sources.items()}
     inputs = {}
     for name, binding in config['inputs'].items():
-        if isinstance(binding, dict) and binding.get('kind') == 'frozen_release':
+        if isinstance(binding, dict) and binding.get('kind') == 'run_artifact':
+            closed(binding, ('kind', 'run_id', 'artifact_name', 'expected_sha256'))
+            if runs is None:
+                raise WorkbenchError('Run artifact input owner is unavailable.', 'unavailable', 409)
+            raw, source = runs.capture_artifact(binding['run_id'], binding['artifact_name'], binding['expected_sha256'],
+                                                max_bytes=definition['inputs'][name]['max_bytes'])
+            receipt = {'kind': 'run_artifact', 'source': source}
+        elif isinstance(binding, dict) and binding.get('kind') == 'frozen_release':
             closed(binding, ('kind', 'release_id', 'expected_sha256'))
             if releases is None:
                 raise WorkbenchError('Frozen release input owner is unavailable.', 'unavailable', 409)
@@ -444,6 +456,8 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None):
             closed(binding, ('reference_id', 'expected_sha256'))
             raw, receipt = projects.read_data_reference(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
         captured['input/' + name] = raw; inputs[name] = receipt
+    if {'input_evidence': True} in definition['arguments']:
+        captured[INPUT_EVIDENCE] = encode(inputs).encode()
     capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
     input_limit = CPU_INPUT_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
     if sum(len(raw) for path,raw in captured.items() if path.startswith('input/')) > input_limit:
@@ -510,7 +524,23 @@ def validate_material(material):
     if not isinstance(material['inputs'], dict) or set(material['inputs']) != set(definition['inputs']): raise WorkbenchError('Material input inventory differs.')
     expected = {'source/'+item['path']:item['sha256'] for item in definition['sources']}
     for name, item in material['inputs'].items():
-        if isinstance(item, dict) and item.get('kind') == 'frozen_release':
+        if isinstance(item, dict) and item.get('kind') == 'run_artifact':
+            import recipe_process
+            closed(item, ('kind', 'source'))
+            source = item['source']
+            capture = material['captures'].get('input/' + name) if isinstance(material['captures'], dict) else None
+            if not isinstance(capture, dict) or not isinstance(source, dict):
+                raise WorkbenchError('Run input capture or receipt is missing.')
+            try:
+                recipe_process.validate_artifact_source(source, capture.get('sha256'), capture.get('bytes'))
+            except recipe_process.ProcessError as error:
+                raise WorkbenchError('Invalid Run input custody: ' + str(error)) from None
+            if source['catalog_id'] != material['catalog_id']:
+                raise WorkbenchError('Run input belongs to another catalog.')
+            bounded_int(source['artifact_bytes'], 0, definition['inputs'][name]['max_bytes'], 'Run input bytes')
+            expected['input/' + name] = source['measured_sha256']
+            continue
+        elif isinstance(item, dict) and item.get('kind') == 'frozen_release':
             closed(item, ('kind','catalog_id','release_id','measured_sha256','bytes'))
             sha(item['release_id']); sha(item['measured_sha256'])
             if item['catalog_id'] != material['catalog_id'] or item['release_id'] != item['measured_sha256']:
@@ -522,6 +552,8 @@ def validate_material(material):
                 raise WorkbenchError('Input receipt belongs to another project snapshot.')
         expected['input/'+name] = item['measured_sha256']
     generated = validate_native_policies(material,definition)
+    if {'input_evidence': True} in definition['arguments']:
+        generated[INPUT_EVIDENCE] = encode(material['inputs']).encode()
     if definition['runtime'] == CPU_PROFILE:
         import recipe_process
         try:
@@ -598,6 +630,7 @@ def spec_for_material(material, staging):
         elif kind == 'input': arg = str(staging/'input'/value)
         elif kind == 'source': arg = str(staging/'source'/value)
         elif kind == 'native_policy': arg = str(staging/native_policy_path(value))
+        elif kind == 'input_evidence': arg = str(staging/INPUT_EVIDENCE)
         else: arg = str(output)
         argv.append(arg)
     spec = {'schema_version':1,'argv':argv,'env':dict(material['environment']),'cwd':str(staging), 'stdin_base64':base64.b64encode(b'').decode(),
@@ -607,6 +640,7 @@ def spec_for_material(material, staging):
             'trusted_install_owner_uid':runtime['trusted_install_owner_uid']}
     if 'native_policies' in material or 'cpu_snapshot' in material: spec['native_loader_policy'] = NATIVE_POLICY
     if 'cpu_snapshot' in material: spec['cpu_snapshot'] = material['cpu_snapshot']
+    if 'profile' in definition['resources']: spec['resource_profile'] = definition['resources']['profile']
     return spec
 
 
@@ -640,28 +674,60 @@ def capture(preflight, captured, staging):
 
 
 def verify_outputs(output_dir, outputs, max_output_bytes):
-    root = Path(output_dir)
-    if root.is_symlink() or not root.is_dir(): raise WorkbenchError('Output root is not a regular directory.')
-    allowed = {entry['path']:entry for entry in outputs}; found = {}; total = 0
-    for directory, dirs, files in os.walk(root, followlinks=False):
-        if any((Path(directory)/name).is_symlink() for name in dirs): raise WorkbenchError('Output directory symlinks are forbidden.')
-        for name in files:
-            path = Path(directory)/name; relative = path.relative_to(root).as_posix()
-            if relative not in allowed or len(found) >= MAX_FILES: raise WorkbenchError('Undeclared output file.')
-            fd = os.open(path, os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
-            try:
-                info = os.fstat(fd); rule = allowed[relative]
-                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > rule['max_bytes']: raise WorkbenchError('Output must be a bounded unlinked regular file.')
-                chunks = []; remaining = rule['max_bytes']+1
-                while remaining:
-                    raw = os.read(fd,min(65536,remaining))
-                    if not raw: break
-                    chunks.append(raw); remaining -= len(raw)
-                raw = b''.join(chunks); after = os.fstat(fd)
-                if len(raw) != info.st_size or (info.st_size,info.st_mtime_ns,info.st_ctime_ns) != (after.st_size,after.st_mtime_ns,after.st_ctime_ns): raise WorkbenchError('Output changed during verification.')
-                total += len(raw)
-                if total > max_output_bytes: raise WorkbenchError('Output total exceeds declared limit.')
-                found[relative] = {'path':relative,'role':rule['role'],'bytes':len(raw),'sha256':file_digest(raw)}
-            finally: os.close(fd)
-    if any(item['required'] and item['path'] not in found for item in outputs): raise WorkbenchError('Required output is missing.')
-    return list(found.values())
+    """Hash declared outputs with bounded memory and anchored file descriptors."""
+    root = Path(output_dir).absolute()
+    root_fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for part in root.parts[1:]:
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root_fd)
+            os.close(root_fd)
+            root_fd = child
+        root_info = os.fstat(root_fd)
+        allowed = {entry['path']: entry for entry in outputs}
+        found = {}
+        total = 0
+        identity = lambda info: (info.st_dev, info.st_ino, info.st_mode, info.st_uid,
+                                 info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+        for directory, dirs, files, directory_fd in os.fwalk('.', dir_fd=root_fd, follow_symlinks=False):
+            if any(stat.S_ISLNK(os.stat(name, dir_fd=directory_fd, follow_symlinks=False).st_mode) for name in dirs):
+                raise WorkbenchError('Output directory symlinks are forbidden.')
+            for name in files:
+                relative = (Path(directory) / name).as_posix()
+                if relative not in allowed or len(found) >= MAX_FILES:
+                    raise WorkbenchError('Undeclared output file.')
+                fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory_fd)
+                try:
+                    info = os.fstat(fd)
+                    rule = allowed[relative]
+                    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                            or info.st_uid != os.getuid() or info.st_size > rule['max_bytes']):
+                        raise WorkbenchError('Output must be a bounded unlinked regular file.')
+                    measured = 0
+                    checksum = hashlib.sha256()
+                    while True:
+                        raw = os.read(fd, min(1024 * 1024, rule['max_bytes'] + 1 - measured))
+                        if not raw:
+                            break
+                        measured += len(raw)
+                        if measured > rule['max_bytes'] or total + measured > max_output_bytes:
+                            raise WorkbenchError('Output total exceeds declared limit.')
+                        checksum.update(raw)
+                    after = os.fstat(fd)
+                    current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+                    if measured != info.st_size or identity(info) != identity(after) or identity(info) != identity(current):
+                        raise WorkbenchError('Output changed during verification.')
+                    total += measured
+                    found[relative] = {'path': relative, 'role': rule['role'],
+                                       'bytes': measured, 'sha256': checksum.hexdigest()}
+                finally:
+                    os.close(fd)
+        current_root = os.stat(root, follow_symlinks=False)
+        if (root_info.st_dev, root_info.st_ino) != (current_root.st_dev, current_root.st_ino):
+            raise WorkbenchError('Output root changed during verification.')
+        if any(item['required'] and item['path'] not in found for item in outputs):
+            raise WorkbenchError('Required output is missing.')
+        return list(found.values())
+    except OSError as error:
+        raise WorkbenchError('Output cannot be safely verified.', 'unavailable', 409) from error
+    finally:
+        os.close(root_fd)

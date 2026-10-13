@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5a qualified at draft PR50 commit05ea66e; P5b actual frozen-input CPU fit qualified locally; final regression and draft publication in progress.
+**Current phase:** P5a qualified at draft PR50 commit05ea66e; P5b published at draft PR51 commit28c666f; isolated P5c source preparation admitted while final P5b gates run.
 
-**Next slice:** Finish P5b regression/publication, then admit P5c autonomous evaluation with completed-Run artifact inputs and durable full fields. See [P5b admission](reports/p5b-admission.md).
+**Next slice:** Implement P5c direct Run-artifact inputs, bounded large-output execution and original autonomous evaluation; no real evaluation before all dependency and review gates pass. See [P5c admission](reports/p5c-admission.md).
 
 **Acceptance status:** `partial`
 
