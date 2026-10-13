@@ -6,7 +6,9 @@
 
 **Persistent task goal:** Complete all remaining Tuldok milestones and ensure implemented code complies with the adopted coding standards. Preserve runnable compact Data / editable Pipeline / Runs checkpoints, PostgreSQL metadata and local artifacts. Push feature branches and draft PRs; do not merge or deploy without separate approval. No native goal-setting mechanism is available in this runtime; this canonical plan retains the goal across checkpoints.
 
-**Next slice:** None within the admitted bounded milestone scope. Review PR38→PR39→PR40→PR41 for a separately approved merge. ASR, general3D training, native Pantograph, wider formats and producer-v2 controls are deferred extensions with the gates and owners in the final report.
+**Broader goal remains open:** The accepted snapshot below covers this bounded workspace plan only. Required real-model positive-path qualification in dataset-workflows A8 and the next Rheon v2 consumer increment are tracked in [the corrected remaining-work audit](../rheon-v2-consumer/reports/readiness-20261013.md) and [next finite plan](../rheon-v2-consumer/plan.md). The actual producer-v2 packet exists in the recorded PR32 handoff; local supported retrieval remains incomplete.
+
+**Next slice:** None within the admitted bounded milestone scope. Review PR38→PR39→PR40→PR41 for a separately approved merge. ASR, general3D training, native Pantograph and wider formats retain their separate exclusions or revisit gates. Producer-v2 controls now have a [planned consumer increment](../rheon-v2-consumer/plan.md).
 
 **Acceptance status:** `satisfied`
 
