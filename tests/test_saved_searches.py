@@ -76,13 +76,34 @@ class SavedSearchTests(unittest.TestCase):
         invalid = [None, [], dict(valid, offset=0), {k: v for k, v in valid.items() if k != 'sort'}]
         for key in valid:
             invalid.extend([dict(valid, **{key: value}) for value in [None, [], {}, True, 1]])
-        invalid.extend([dict(valid, q='a\nb'), dict(valid, q='a\rb'), dict(valid, q='ß'*201), dict(valid, q='\ud800'), dict(valid, kind='volume'), dict(valid, review='accepted'), dict(valid, sort='random'), dict(valid, task='segmentation'), dict(valid, label='a'*81), dict(valid, group='a'*121), dict(valid, rights='a'*1001)])
+        invalid.extend([dict(valid, q='a\nb'), dict(valid, q='a\rb'), dict(valid, q='ß'*201), dict(valid, q='\ud800'), dict(valid, kind='tensor'), dict(valid, review='accepted'), dict(valid, sort='random'), dict(valid, task='segmentation'), dict(valid, label='a'*81), dict(valid, group='a'*121), dict(valid, rights='a'*1001)])
         for value in invalid:
             with self.subTest(value=repr(value)), self.assertRaises(WorkbenchError):
                 self.s.create({'name': 'Rejected', 'criteria': value})
         for body in [{}, {'name': 'x', 'criteria': valid, 'items': []}, {'name': ' ', 'criteria': valid}]:
             with self.assertRaises(WorkbenchError): self.s.create(body)
         self.assertEqual(self.s.list(), {'searches': []})
+
+    def test_spatial_saved_criteria_match_native_imports_and_review_after_reopen(self):
+        import spatial_assets
+        from test_spatial_storage import body as spatial_body
+        saved = {kind: self.save(kind=kind, task=task, review='human_reviewed')
+                 for kind, task in [('pointcloud', 'pointcloud_geometry'), ('volume', 'volume_grid')]}
+        for search in saved.values():
+            self.assertEqual(self.w.query(search['criteria'])['total'], 0)
+        rows = {kind: spatial_assets.admit(self.w, kind, spatial_body(kind)) for kind in saved}
+        for kind, row in rows.items():
+            self.assertEqual(self.w.query(self.filters(kind=kind))['items'][0]['id'], row['id'])
+            self.assertEqual(self.w.query(saved[kind]['criteria'])['total'], 0)
+            rows[kind] = self.w.save(row['id'], dict(row, review='human_reviewed',
+                                                    annotation={'note': 'Inspected native spatial fixture.'}))
+            self.assertEqual([item['id'] for item in self.w.query(saved[kind]['criteria'])['items']], [row['id']])
+        self.dataset.close()
+        self.dataset = Dataset(self.tmp.name)
+        self.w, self.s = self.dataset.workbench, self.dataset.searches
+        for kind, search in saved.items():
+            self.assertEqual(self.s.get(search['id']), search)
+            self.assertEqual([item['id'] for item in self.w.query(search['criteria'])['items']], [rows[kind]['id']])
 
     def test_cap_cas_and_failed_writes_keep_criteria(self):
         first = self.save()
