@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P3 qualified at published commit 7d59060; P4 bounded native generation admitted on feature/native-scientific-generation-20261013.
+**Current phase:** P5a actual captured-runtime and frozen-checkpoint CPU comparison passed; final regression/publication pending on feature/scientific-cpu-comparison-20261013.
 
-**Next slice:** P4 — optional native generation and verified Run artifact import into Data; see [P4 admission](reports/p4-admission.md) for reviewed contracts and exact write boundaries.
+**Next slice:** Finish P5a regression/publication, then admit frozen-release training; see [P5a verification](reports/p5a-verification.md).
 
 **Acceptance status:** `partial`
 
@@ -116,7 +116,7 @@ Enforce at the service boundary reached by every transport, not only at MCP. Aud
 | Generic project inspection requires no lab runtime | P1 independence | Project owner | Open external manifest with missing runtime/data; observe no children or source writes | Local app/PostgreSQL/browser | Source-supported; product test pending |
 | Full lab arrays fit the proposed contract | P2 schema and limits | Data owner | Read representative actual NPZ captures in a separate process; inventory dtype/shape/centering/time and round-trip exact arrays | Actual lab capture bytes + NumPy | Actual two-frame native capture acquired; see P2 admission report |
 | Native process can be controlled by Runs | P3 execution boundary | Runs owner | Start bounded native probe, cancel during request/output, close pipe, kill supervisor, reconcile descendants | Linux, compatible Rust/Rheon binary | Not executed in planning |
-| CPU reproduction is available | P5 acceptance runtime | Lab owner | Inspect installed interpreter/package versions; load hash-verified checkpoint in isolated worker; execute documented CPU control | PyTorch runtime + native build + required inputs | Not qualified; do not auto-install |
+| CPU reproduction is available | P5 acceptance runtime | Lab owner | Inspect installed interpreter/package versions; load hash-verified checkpoint in isolated worker; execute documented CPU control | PyTorch runtime + native build + required inputs | P5a frozen-checkpoint CPU comparison qualified locally; fresh fitting/evaluation pending; do not auto-install |
 | Prior performance numbers transfer | No design depends on this | Qualification owner | Separate matched-hardware benchmark with recorded protocol | Recorded GPU/CPU hardware | Not claimed |
 
 ## Evidence And Oracle Plan
@@ -212,7 +212,7 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G3 and P4 UI path. Real generated arrays pass cold generic and producer readers; invalid controls fail before spawn; removal of optional package leaves generic features operational. No fabricated native output or silent re-use of PR32's different fixed profile.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 ### P5: Surrogate training and autonomous evaluation
 
@@ -224,7 +224,7 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G4 with real runtime/native solver and actual new outputs, protocol-specific lab verification (CPU correctness separated from CUDA/resource/timing claims as detailed in the evidence report), full-field independent checks, no teacher states in learned rollout, seed/family separation, checkpoint/runtime identity and restart inspection. CPU acceptance is distinct from CUDA acceptance and historical speedup reproduction. Missing runtime or bulk inputs is a named blocker, never substituted with fixtures.
 
-**Status:** `Planned`
+**Status:** `Active`
 
 ### P6: Agent domain interface
 

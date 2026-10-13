@@ -91,3 +91,7 @@ P5 requires a separately reviewed captured CPU runtime, actual fitting/evaluatio
 and larger lossless result handling. P6/P7 remain planned. Dataset-workflows A8
 positive real-model proposals and original Rheon v2 packet retrieval/qualification
 remain separate open gates. ASR and general 3D training are explicit extensions.
+
+## Published-head gate
+
+Commit `c7c696bda48cc2917253ffbcf4d01f763196eecc` passed hosted UI run 38447405152 and lifecycle run 38447405078. PR49 remains draft and unmerged. P4 is accepted; P5 may proceed on its own branch.

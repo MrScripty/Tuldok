@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-13T18:48:03.531591+00:00",
+  "sources": {
+    "lab": {
+      "commit": "e8a90bfef6b2955c502008ccc62443e29dd9f2ec",
+      "tree": "deb79c7c491768a22427bb77198b3b670ddc8be1",
+      "status_before": "",
+      "status_after": ""
+    },
+    "Rheon": {
+      "commit": "2209012bc5f902693d0f695ec1c2d854126af317",
+      "tree": "e30b7135eabad4827ee6e21c75715af0f5408d78",
+      "status_before": "",
+      "status_after": ""
+    }
+  },
+  "lock_sha256_before": "6e75b61a8b16dce290081b47c9d0cdb9d21a96c4d53b0385898bc05001307e98",
+  "toolchain_archive_sha256": "d2ccef59dd9f7439f2c694948069f789a044dc1addcc0803613232af8f88ee0c",
+  "toolchain": {
+    "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)",
+    "cargo": "cargo 1.92.0 (344c4567c 2025-10-21)"
+  },
+  "commands": [
+    {
+      "argv": [
+        "cargo",
+        "fetch",
+        "--locked",
+        "--manifest-path",
+        "lab/probes/trajectory-parallel/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "log": "fetch.log",
+      "log_sha256": "026e5ca76bb708ced64deeeb5ffe4a7a4123f1f1bc94fda5d85cc113b2860895"
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "lab/probes/trajectory-parallel/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "log": "build.log",
+      "log_sha256": "f4b595fb99cb710814f05b0dd39467f53758dee814f9bdc46b5c5a83eb3eba7f"
+    }
+  ],
+  "archives": [
+    {
+      "name": "anyhow",
+      "version": "1.0.100",
+      "expected_sha256": "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/anyhow-1.0.100.crate",
+          "sha256": "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-deque",
+      "version": "0.8.8",
+      "expected_sha256": "622f3fc73690be383c7214310406f28a90e6edeadc3cea882f9d71e495b9711a",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/crossbeam-deque-0.8.8.crate",
+          "sha256": "622f3fc73690be383c7214310406f28a90e6edeadc3cea882f9d71e495b9711a"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-epoch",
+      "version": "0.9.21",
+      "expected_sha256": "dc74980687109a3b14c72fd458107bf0baa1da1a1a805e178d15501ba9b86d9d",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/crossbeam-epoch-0.9.21.crate",
+          "sha256": "dc74980687109a3b14c72fd458107bf0baa1da1a1a805e178d15501ba9b86d9d"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-utils",
+      "version": "0.8.23",
+      "expected_sha256": "a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/crossbeam-utils-0.8.23.crate",
+          "sha256": "a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6"
+        }
+      ]
+    },
+    {
+      "name": "either",
+      "version": "1.19.0",
+      "expected_sha256": "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/either-1.19.0.crate",
+          "sha256": "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
+        }
+      ]
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.18",
+      "expected_sha256": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/itoa-1.0.18.crate",
+          "sha256": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+        }
+      ]
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.3",
+      "expected_sha256": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/memchr-2.8.3.crate",
+          "sha256": "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
+        }
+      ]
+    },
+    {
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "expected_sha256": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107.crate",
+          "sha256": "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
+        }
+      ]
+    },
+    {
+      "name": "quote",
+      "version": "1.0.47",
+      "expected_sha256": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/quote-1.0.47.crate",
+          "sha256": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
+        }
+      ]
+    },
+    {
+      "name": "rayon",
+      "version": "1.11.0",
+      "expected_sha256": "368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/rayon-1.11.0.crate",
+          "sha256": "368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f"
+        }
+      ]
+    },
+    {
+      "name": "rayon-core",
+      "version": "1.13.0",
+      "expected_sha256": "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/rayon-core-1.13.0.crate",
+          "sha256": "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
+        }
+      ]
+    },
+    {
+      "name": "serde",
+      "version": "1.0.229",
+      "expected_sha256": "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde-1.0.229.crate",
+          "sha256": "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
+        }
+      ]
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.229",
+      "expected_sha256": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.229.crate",
+          "sha256": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48"
+        }
+      ]
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "expected_sha256": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229.crate",
+          "sha256": "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
+        }
+      ]
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "expected_sha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.151.crate",
+          "sha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
+        }
+      ]
+    },
+    {
+      "name": "syn",
+      "version": "3.0.6",
+      "expected_sha256": "8593e8e72159ed2257d083c7a454a85cbf854f37a0966d8d483aff8c8a3ebcee",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/syn-3.0.6.crate",
+          "sha256": "8593e8e72159ed2257d083c7a454a85cbf854f37a0966d8d483aff8c8a3ebcee"
+        }
+      ]
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.26",
+      "expected_sha256": "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/unicode-ident-1.0.26.crate",
+          "sha256": "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+        }
+      ]
+    },
+    {
+      "name": "zmij",
+      "version": "1.0.23",
+      "expected_sha256": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b",
+      "archives": [
+        {
+          "path": "cargo-home/registry/cache/index.crates.io-1949cf8c6b5b557f/zmij-1.0.23.crate",
+          "sha256": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+        }
+      ]
+    }
+  ],
+  "all_locked_archives_verified": true,
+  "lock_sha256_after": "6e75b61a8b16dce290081b47c9d0cdb9d21a96c4d53b0385898bc05001307e98",
+  "status": "built",
+  "binary": {
+    "path": "/workspace/scratch/tuldok-science-probe/target/release/rheon-trajectory-parallel",
+    "bytes": 1063328,
+    "sha256": "583c939548d68ec7b25cf60bb9434ca1416f28ab6c06b3cad68a1aaf10b344db"
+  },
+  "native_elf_dynamic": "\nDynamic section at offset 0xbedc8 contains 30 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-x86-64.so.2]\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000007 (RELA)               0x12a8\n 0x0000000000000008 (RELASZ)             43992 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000006ffffff9 (RELACOUNT)          1750\n 0x0000000000000017 (JMPREL)             0xbe80\n 0x0000000000000002 (PLTRELSZ)           48 (bytes)\n 0x0000000000000003 (PLTGOT)             0xc0e68\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000006 (SYMTAB)             0x340\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000005 (STRTAB)             0xd7c\n 0x000000000000000a (STRSZ)              1317 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0xd60\n 0x0000000000000019 (INIT_ARRAY)         0xba028\n 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0xba020\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000000000000c (INIT)               0xb9fa8\n 0x000000000000000d (FINI)               0xb9fc0\n 0x000000006ffffff0 (VERSYM)             0xb50\n 0x000000006ffffffe (VERNEED)            0xbfc\n 0x000000006fffffff (VERNEEDNUM)         4\n 0x0000000000000000 (NULL)               0x0\n",
+  "finished_utc": "2026-10-13T18:48:17.014091+00:00"
+}

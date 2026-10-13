@@ -31,6 +31,17 @@ class AccessContract(unittest.TestCase):
         session = access.exchange(login)
         return db, access, session['token'], login
 
+    def test_local_existing_owner_mode_never_bootstraps(self):
+        db=self.catalog(version=8); access=Access(db,db.path)
+        with self.assertRaises(AccessError): access._local_owner_token(require_existing=True)
+        self.assertEqual(db.execute('SELECT count(*) FROM access_actors').fetchone()[0],0)
+        access._local_owner_token(initial=True)
+        login=access._local_owner_token(require_existing=True)
+        session=access.exchange(login)
+        with access.bind(session['token']):
+            access.require('admin','runtime_snapshots.create',owner_only=True)
+            access.logout()
+
     def test_missing_actor_wrong_catalog_nested_reset_and_thread_isolation(self):
         db, access, token, _ = self.owner()
         with self.assertRaises(AccessError):

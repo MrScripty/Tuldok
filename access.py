@@ -230,10 +230,12 @@ class Access:
              _json(sorted(scopes)), int(time.time()) + ttl, 0, 0, int(time.time())))
         return token, credential_id
 
-    def _local_owner_token(self, *, initial=False):
+    def _local_owner_token(self, *, initial=False, require_existing=False):
         """Explicit local administration only; never exposed by a transport route."""
         with self.lock, self.db.transaction():
             owners = self.db.execute("SELECT id FROM access_actors WHERE kind='owner'").fetchall()
+            if require_existing and not owners:
+                raise AccessError('An existing local owner is required; bootstrap explicitly first.', 'unavailable', 409)
             if initial and owners:
                 raise AccessError('Owner already exists; use local login renewal.', 'conflict', 409)
             if len(owners) > 1:

@@ -19,6 +19,9 @@ RUNTIME_LIMIT = 512 * 1024 * 1024
 TYPES = ('input', 'execute', 'output')
 PORTS = {'input': (None, 'data'), 'execute': ('data', 'artifacts'), 'output': ('artifacts', None)}
 TRUST = 'Trusted local code; filesystem and network are not sandboxed. Runtime installation must remain immutable for the attempt.'
+CPU_PROFILE = 'captured_cpu_python_v1'
+CPU_DESCRIPTOR = 'runtime-bootstrap/snapshot.json'
+CPU_BOOTSTRAP = 'runtime-bootstrap/recipe_process.py'
 HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py')
 IMPORTED_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in HOST_NAMES}
 
@@ -48,15 +51,21 @@ def decode_definition(raw):
         raise WorkbenchError('Recipe definition exceeds 64 KiB.')
     value = decode(raw)
     closed(value, ('schema_version', 'format', 'id', 'name', 'version', 'runtime', 'sources', 'entrypoint',
-                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources',))
+                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256'))
     if type(value['schema_version']) is not int or value['schema_version'] != 1 or value['format'] != 'external_recipe_v1':
         raise WorkbenchError('Only external_recipe_v1 is supported.', 'unsupported', 400)
     named(value['id'])
     bounded_int(value['version'], 1, 1, 'Recipe version')
     if not isinstance(value['name'], str) or not 1 <= len(value['name']) <= 120:
         raise WorkbenchError('Supply a bounded recipe name.')
-    if value['runtime'] != 'system_python':
-        raise WorkbenchError('Only the configured system_python runtime is qualified.', 'unsupported', 400)
+    if value['runtime'] not in ('system_python', CPU_PROFILE):
+        raise WorkbenchError('Unsupported recipe runtime profile.', 'unsupported', 400)
+    if value['runtime'] == CPU_PROFILE:
+        snapshot = value.get('runtime_snapshot_sha256')
+        if not isinstance(snapshot, str) or not SHA.fullmatch(snapshot):
+            raise WorkbenchError('Captured CPU recipes require a runtime snapshot SHA256.')
+    elif 'runtime_snapshot_sha256' in value:
+        raise WorkbenchError('System Python recipes cannot select a CPU snapshot.')
     sources = value['sources']
     if not isinstance(sources, list) or not 1 <= len(sources) <= 64:
         raise WorkbenchError('Declare 1–64 source files.')
@@ -98,8 +107,9 @@ def decode_definition(raw):
     for key, rule in value['inputs'].items():
         named(key); closed(rule, ('max_bytes',))
         bounded_int(rule['max_bytes'], 1, 40 * 1024 * 1024, 'Input bytes')
-    if not isinstance(value['arguments'], list) or len(value['arguments']) > 59:
-        raise WorkbenchError('Declare at most 59 argument tokens plus the fixed runtime entrypoint.')
+    argument_limit = 56 if value['runtime'] == CPU_PROFILE else 59
+    if not isinstance(value['arguments'], list) or len(value['arguments']) > argument_limit:
+        raise WorkbenchError('Recipe arguments exceed the runtime argument bound.')
     for token in value['arguments']:
         if not isinstance(token, dict) or len(token) != 1:
             raise WorkbenchError('Arguments are single typed tokens.')
@@ -442,6 +452,16 @@ def prepare(projects, graph, execution_sha256, profile=None):
             captured[native_policy_path(source)] = encode(policy).encode()
         if len(captured) > MAX_FILES or sum(map(len,captured.values())) > MAX_CAPTURE_BYTES:
             raise WorkbenchError('Generated native policies exceed the capture bound.')
+    cpu_snapshot = None
+    if definition['runtime'] == CPU_PROFILE:
+        import recipe_process
+        from runtime_snapshots import RuntimeSnapshots
+        cpu_snapshot = RuntimeSnapshots(projects.db, projects.access, projects.db.path).get(
+            definition['runtime_snapshot_sha256'], verify=True)
+        captured[CPU_DESCRIPTOR] = recipe_process.encoded(cpu_snapshot)
+        captured[CPU_BOOTSTRAP] = recipe_process.SOURCE
+        if len(captured) > MAX_FILES or sum(map(len,captured.values())) > MAX_CAPTURE_BYTES:
+            raise WorkbenchError('Generated CPU bootstrap exceeds the capture bound.')
     host = host_identity()
     material = {'schema_version': 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
                 'recipe': definition, 'parameters': values, 'inputs': inputs,
@@ -449,6 +469,7 @@ def prepare(projects, graph, execution_sha256, profile=None):
                 'runtime': runtime, 'host_files': host, 'permissions': {'filesystem':'trusted-local', 'network':'not_isolated'},
                 'environment': {'LANG':'C.UTF-8'}, 'resources': definition['resources']}
     if policies is not None: material['native_policies'] = policies
+    if cpu_snapshot is not None: material['cpu_snapshot'] = cpu_snapshot
     validate_material(material)
     return {'valid':True, 'status':'valid', 'material':material, 'material_sha256':digest(material), 'validation_token':digest(material),
             'parameter_definitions':definition['parameters'], 'outputs':definition['outputs'], 'runtime':runtime,
@@ -458,7 +479,7 @@ def prepare(projects, graph, execution_sha256, profile=None):
 def validate_material(material):
     """Cold structural custody checks; no filesystem access or current-code comparison."""
     closed(material, ('schema_version', 'catalog_id', 'project', 'graph_execution_sha256', 'recipe',
-                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies',))
+                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot'))
     if type(material['schema_version']) is not int or material['schema_version'] != 1 or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
         raise WorkbenchError('Invalid execution material identity.')
     def sha(value):
@@ -482,6 +503,23 @@ def validate_material(material):
             raise WorkbenchError('Input receipt belongs to another project snapshot.')
         expected['input/'+name] = item['measured_sha256']
     generated = validate_native_policies(material,definition)
+    if definition['runtime'] == CPU_PROFILE:
+        import recipe_process
+        try:
+            descriptor = recipe_process.validate_cpu_snapshot_descriptor(material.get('cpu_snapshot'))
+        except recipe_process.ProcessError as error:
+            raise WorkbenchError(str(error)) from None
+        if descriptor['catalog_id'] != material['catalog_id'] or descriptor['manifest_sha256'] != definition['runtime_snapshot_sha256']:
+            raise WorkbenchError('CPU snapshot differs from the approved catalog and recipe.')
+        generated[CPU_DESCRIPTOR] = recipe_process.encoded(descriptor)
+        # Historical bootstrap identity belongs to retained host material, never
+        # to the currently installed helper source during a cold read.
+        if not isinstance(material['host_files'],dict):
+            raise WorkbenchError('Invalid retained host closure.')
+        expected[CPU_BOOTSTRAP] = material['host_files'].get('recipe_process.py')
+        sha(expected[CPU_BOOTSTRAP])
+    elif 'cpu_snapshot' in material:
+        raise WorkbenchError('System Python material cannot contain a CPU snapshot.')
     expected.update({path:file_digest(raw) for path,raw in generated.items()})
     captures = material['captures']
     if not isinstance(captures, dict) or set(captures) != set(expected) or len(captures) > MAX_FILES:
@@ -489,7 +527,7 @@ def validate_material(material):
     total = 0
     for path, item in captures.items():
         relative_path(path); closed(item, ('bytes','sha256')); sha(item['sha256'])
-        limit = MAX_SOURCE_BYTES if path.startswith(('source/','native-policy/')) else definition['inputs'][path.split('/',1)[1]]['max_bytes']
+        limit = MAX_SOURCE_BYTES if path.startswith(('source/','native-policy/','runtime-bootstrap/')) else definition['inputs'][path.split('/',1)[1]]['max_bytes']
         bounded_int(item['bytes'],0,limit,'Capture bytes'); total += item['bytes']
         if path in generated and item['bytes'] != len(generated[path]): raise WorkbenchError('Generated native policy size differs.')
         if item['sha256'] != expected[path]: raise WorkbenchError('Captured digest contradicts source/input identity.')
@@ -522,6 +560,9 @@ def spec_for_material(material, staging):
     definition = material['recipe']; runtime = material['runtime']
     records = [dict(path=str(staging/relative), **record) for relative,record in sorted(material['captures'].items())]
     argv = [runtime['executable'], *runtime['flags'], str(staging/'source'/definition['entrypoint'])]
+    if definition['runtime'] == CPU_PROFILE:
+        argv = [runtime['executable'], *runtime['flags'], str(staging/CPU_BOOTSTRAP),
+                '--cpu-launch', str(staging/CPU_DESCRIPTOR), str(staging/'source'/definition['entrypoint'])]
     for token in definition['arguments']:
         kind, value = next(iter(token.items()))
         if kind == 'literal': arg = value
@@ -537,7 +578,8 @@ def spec_for_material(material, staging):
             'max_output_bytes':definition['resources']['max_output_bytes'], 'output_dir':str(output),'captured_files':records,
             'runtime_files':[dict(path=path,**record) for path,record in sorted(runtime['files'].items())],
             'trusted_install_owner_uid':runtime['trusted_install_owner_uid']}
-    if 'native_policies' in material: spec['native_loader_policy'] = NATIVE_POLICY
+    if 'native_policies' in material or 'cpu_snapshot' in material: spec['native_loader_policy'] = NATIVE_POLICY
+    if 'cpu_snapshot' in material: spec['cpu_snapshot'] = material['cpu_snapshot']
     return spec
 
 

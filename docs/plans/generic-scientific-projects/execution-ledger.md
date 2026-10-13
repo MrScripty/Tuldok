@@ -105,3 +105,32 @@ passes seed100/101, allarrays/slices, review/freeze, cancellation and restart;
 no-adapter actualstartup also passes. Restore qualification exposed/fixed retained
 absolute-path validation without rewriting receipt hashes. See P4verification.
 Commit/push/draft publication follows; exact-head hosted CI gates P5. No merge.
+
+## 2026-10-13 — P4 hosted qualification and P5a admission
+
+PR49 at c7c696b passed hosted UI38447405152 and lifecycle38447405078.
+Fresh main remains c522bf6; owner PR32/33 and the draft stack remain unmerged.
+Created feature/scientific-cpu-comparison-20261013 and admitted the original
+checkpoint CPU comparison, exact locked parallel build and captured runtime.
+
+The parallel native build and actual CPU runtime qualification passed. Root owns
+material/Run integration and publication; milestone_audit owns snapshot capture,
+mesh_ui the shared helper/bootstrap and runtime probe, recipe_design the optional
+adapter, and point_assets the real browser/oracle. mesh_review independently
+verified helper behavior and runtime evidence; volume_assets reviewed numerical
+adapter gates and planned the subsequent release-consuming fit. Failed bootstrap
+attempts remain drained and retained; they are not model acceptance. See
+[P5a admission](reports/p5a-admission.md) and
+[verification in progress](reports/p5a-verification.md).
+
+
+## 2026-10-13 — P5a actual model/UI qualification
+
+Original CPU comparison passed through a real approved graph/Run with the unchanged
+checkpoint and four lab scripts: 1,440 timed frames, all four accuracy replays,
+24 native launches and six hash-verified artifact downloads. Restart preserved
+exact bytes; the qualified configuration completed in 542.157760 seconds. Actual
+no-adapter generic startup also passed. Independent reviews found no remaining
+source or numerical-contract blocker. Full stable-source Python regression is
+running; draft publication records that pending gate explicitly. No fresh fitting,
+GPU, full retained-field evaluation or historical timing claim.

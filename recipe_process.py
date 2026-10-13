@@ -69,10 +69,236 @@ def absolute(value):
     return text(value) and Path(value).is_absolute() and '..' not in Path(value).parts
 
 
+CPU_PROFILE = 'captured_cpu_python_v1'
+CPU_MANIFEST_LIMIT = 16 * 1024 * 1024
+CPU_FILE_LIMIT = 512 * 1024 * 1024
+CPU_TOTAL_LIMIT = 2 * 1024 * 1024 * 1024
+CPU_FILE_COUNT = 40000
+CPU_READY_SECONDS = 60
+
+
+def _cpu_relative(value):
+    return (text(value, 1024) and not value.startswith('/') and '\\' not in value
+            and len(value.split('/')) <= 32
+            and all(part not in ('', '.', '..') for part in value.split('/')))
+
+
+def _cpu_version_packages(value):
+    if (type(value) is not dict or not {'numpy', 'torch'} <= set(value)
+            or len(value) > 256 or any(not text(k, 128) or not text(v, 128) for k, v in value.items())):
+        raise ProcessError('Invalid captured CPU package inventory.')
+
+
+def _cpu_launch(value):
+    keys = {'python', 'loader', 'home', 'stdlib', 'dynload', 'packages', 'library_dirs'}
+    if type(value) is not dict or set(value) != keys:
+        raise ProcessError('Invalid captured CPU launch layout.')
+    if any(not _cpu_relative(value[key]) for key in keys - {'library_dirs'}):
+        raise ProcessError('CPU launch paths must be contained relative paths.')
+    dirs = value['library_dirs']
+    if (type(dirs) is not list or not 1 <= len(dirs) <= 32
+            or not all(_cpu_relative(item) and ':' not in item and '$' not in item for item in dirs)
+            or len(set(dirs)) != len(dirs)):
+        raise ProcessError('Invalid captured loader search paths.')
+
+
+def validate_cpu_snapshot_descriptor(value):
+    """Pure bounded descriptor validation; cold receipts need no live runtime."""
+    keys = {'schema_version', 'profile', 'catalog_id', 'root', 'manifest_sha256',
+            'manifest_bytes', 'file_count', 'total_bytes', 'python_version', 'packages', 'launch'}
+    if (type(value) is not dict or set(value) != keys or type(value['schema_version']) is not int
+            or value['schema_version'] != 1 or value['profile'] != CPU_PROFILE):
+        raise ProcessError('Unsupported captured CPU descriptor.')
+    if type(value['catalog_id']) is not str or not ID.fullmatch(value['catalog_id']):
+        raise ProcessError('Invalid captured CPU catalog identity.')
+    if type(value['manifest_sha256']) is not str or not HASH.fullmatch(value['manifest_sha256']):
+        raise ProcessError('Invalid captured CPU manifest identity.')
+    root = value['root']
+    if (not absolute(root) or ':' in root or '$' in root or str(Path(root)) != root or Path(root).name != value['manifest_sha256']
+            or Path(root).parent.name != 'runtime-snapshots'):
+        raise ProcessError('CPU snapshot root must bind its manifest address.')
+    for key, limit in [('manifest_bytes', CPU_MANIFEST_LIMIT), ('file_count', CPU_FILE_COUNT), ('total_bytes', CPU_TOTAL_LIMIT)]:
+        if type(value[key]) is not int or not 1 <= value[key] <= limit:
+            raise ProcessError('Captured CPU descriptor exceeds its bound.')
+    if value['python_version'] != '3.12':
+        raise ProcessError('Unsupported captured Python version.')
+    _cpu_version_packages(value['packages']); _cpu_launch(value['launch'])
+    return decode(encoded(value))
+
+
+def validate_cpu_manifest(value):
+    """One canonical manifest authority shared by capture and launch."""
+    keys = {'schema_version', 'profile', 'python_version', 'packages', 'launch', 'files', 'total_bytes'}
+    if (type(value) is not dict or set(value) != keys or type(value['schema_version']) is not int
+            or value['schema_version'] != 1 or value['profile'] != CPU_PROFILE or value['python_version'] != '3.12'):
+        raise ProcessError('Unsupported captured CPU manifest.')
+    _cpu_version_packages(value['packages']); _cpu_launch(value['launch'])
+    files = value['files']
+    if type(files) is not list or not 1 <= len(files) <= CPU_FILE_COUNT:
+        raise ProcessError('Captured CPU file count exceeds its bound.')
+    seen = {}; total = 0
+    for item in files:
+        if type(item) is not dict or set(item) != {'path', 'bytes', 'sha256', 'mode', 'kind'}:
+            raise ProcessError('Invalid captured CPU file record.')
+        path = item['path']
+        if not _cpu_relative(path) or path == 'manifest.json' or path in seen:
+            raise ProcessError('Duplicate or escaping captured CPU file.')
+        if (type(item['bytes']) is not int or not 0 <= item['bytes'] <= CPU_FILE_LIMIT
+                or type(item['sha256']) is not str or not HASH.fullmatch(item['sha256'])
+                or type(item['mode']) is not int or item['mode'] not in (0o400, 0o500)
+                or item['kind'] not in ('elf', 'data')):
+            raise ProcessError('Invalid captured CPU file bounds, hash, mode or kind.')
+        total += item['bytes']; seen[path] = item
+    if type(value['total_bytes']) is not int or total != value['total_bytes'] or not 1 <= total <= CPU_TOTAL_LIMIT:
+        raise ProcessError('Captured CPU total bytes differ or exceed bound.')
+    if list(seen) != sorted(seen):
+        raise ProcessError('Captured CPU inventory must be canonically ordered.')
+    directories = set()
+    for path in seen:
+        parents = {str(parent) for parent in Path(path).parents if str(parent) != '.'}
+        if any(parent in seen for parent in parents):
+            raise ProcessError('Captured CPU file conflicts with directory path.')
+        directories.update(parents)
+        if len(directories) > CPU_FILE_COUNT:
+            raise ProcessError('Captured CPU directory count exceeds its bound.')
+    for key in ('python', 'loader'):
+        item = seen.get(value['launch'][key])
+        if not item or item['kind'] != 'elf' or item['mode'] != 0o500:
+            raise ProcessError('Captured Python and loader must be executable ELF files.')
+    for relative in [value['launch'][key] for key in ('home', 'stdlib', 'dynload', 'packages')] + value['launch']['library_dirs']:
+        if relative in seen or not any(path.startswith(relative + '/') for path in seen):
+            raise ProcessError('Captured CPU launch directory is absent.')
+    if len(encoded(value)) > CPU_MANIFEST_LIMIT:
+        raise ProcessError('Captured CPU manifest exceeds its byte bound.')
+    return decode(encoded(value))
+
+
+def _cpu_open_root(root):
+    """Walk every absolute component without following symlinks."""
+    fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for part in Path(root).parts[1:]:
+            next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd); fd = next_fd
+        info = os.fstat(fd)
+        if info.st_uid != os.getuid() or info.st_mode & 0o022:
+            raise ProcessError('Captured CPU root is not privately owned.', 'unavailable')
+        return fd
+    except BaseException:
+        os.close(fd); raise
+
+
+def _cpu_open_file(root_fd, relative):
+    fd = os.dup(root_fd)
+    try:
+        parts = relative.split('/')
+        for part in parts[:-1]:
+            next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd); fd = next_fd
+        return os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+    finally:
+        os.close(fd)
+
+
+def _cpu_check_deadline(deadline, checkpoint=None):
+    if checkpoint is not None: checkpoint()
+    if time.monotonic() > deadline:
+        raise ProcessError('CPU snapshot preparation deadline exceeded.', 'unavailable')
+
+
+def _cpu_stream_file(root_fd, item, deadline, checkpoint=None):
+    fd = _cpu_open_file(root_fd, item['path'])
+    with os.fdopen(fd, 'rb') as handle:
+        before = os.fstat(handle.fileno())
+        if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid()
+                or before.st_nlink != 1 or stat.S_IMODE(before.st_mode) != item['mode'] or before.st_size != item['bytes']):
+            raise ProcessError('Captured CPU file size, ownership or mode changed.', 'stale')
+        hashed = hashlib.sha256(); count = 0; magic = None
+        while True:
+            _cpu_check_deadline(deadline, checkpoint)
+            block = handle.read(1024 * 1024)
+            if not block: break
+            if magic is None: magic = block[:4]
+            count += len(block)
+            if count > item['bytes']: raise ProcessError('CPU file grew during verification.', 'stale')
+            hashed.update(block)
+        after = os.fstat(handle.fileno())
+        identity_keys = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode', 'st_uid', 'st_nlink')
+        if (any(getattr(before, key) != getattr(after, key) for key in identity_keys)
+                or count != item['bytes'] or hashed.hexdigest() != item['sha256']
+                or (magic == b'\x7fELF') != (item['kind'] == 'elf')):
+            raise ProcessError('Captured CPU file identity changed.', 'stale')
+
+
+def verify_cpu_snapshot(descriptor, *, checkpoint=None):
+    """Stream exact immutable snapshot bytes; never import its packages here."""
+    deadline = time.monotonic() + CPU_READY_SECONDS
+    descriptor = validate_cpu_snapshot_descriptor(descriptor)
+    try:
+        root_fd = _cpu_open_root(descriptor['root'])
+    except OSError as error:
+        raise ProcessError('Captured CPU root is missing or unsafe.', 'unavailable') from error
+    try:
+        fd = _cpu_open_file(root_fd, 'manifest.json')
+        with os.fdopen(fd, 'rb') as handle:
+            info = os.fstat(handle.fileno())
+            if (not stat.S_ISREG(info.st_mode) or info.st_size != descriptor['manifest_bytes']
+                    or info.st_uid != os.getuid() or info.st_nlink != 1 or stat.S_IMODE(info.st_mode) != 0o400):
+                raise ProcessError('Captured CPU manifest file changed.', 'stale')
+            raw = handle.read(CPU_MANIFEST_LIMIT + 1)
+        if len(raw) != descriptor['manifest_bytes'] or digest(raw) != descriptor['manifest_sha256']:
+            raise ProcessError('Captured CPU manifest hash changed.', 'stale')
+        manifest = validate_cpu_manifest(decode(raw))
+        if raw != encoded(manifest): raise ProcessError('CPU manifest is not canonical.', 'invalid')
+        for key in ('profile', 'python_version', 'packages', 'launch', 'total_bytes'):
+            if manifest[key] != descriptor[key]: raise ProcessError('CPU descriptor differs from manifest.', 'stale')
+        if len(manifest['files']) != descriptor['file_count']:
+            raise ProcessError('CPU descriptor file count differs.', 'stale')
+        expected = {item['path'] for item in manifest['files']}
+        expected_dirs = {str(parent) for path in expected for parent in Path(path).parents if str(parent) != '.'}
+        observed = set(); directory_count = 0
+        pending = ['']
+        while pending:
+            _cpu_check_deadline(deadline, checkpoint)
+            directory = pending.pop(); walk_fd = os.dup(root_fd)
+            try:
+                for part in directory.split('/') if directory else []:
+                    next_fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=walk_fd)
+                    os.close(walk_fd); walk_fd = next_fd
+                with os.scandir(walk_fd) as entries:
+                    for entry in entries:
+                        _cpu_check_deadline(deadline, checkpoint)
+                        relative = str(Path(directory) / entry.name)
+                        info = entry.stat(follow_symlinks=False)
+                        if stat.S_ISDIR(info.st_mode):
+                            directory_count += 1
+                            if (directory_count > CPU_FILE_COUNT or relative not in expected_dirs
+                                    or info.st_uid != os.getuid() or info.st_mode & 0o022):
+                                raise ProcessError('CPU snapshot contains unsafe or unlisted directories.', 'stale')
+                            pending.append(relative)
+                        elif stat.S_ISREG(info.st_mode):
+                            if relative == 'manifest.json': continue
+                            if relative not in expected:
+                                raise ProcessError('CPU snapshot contains unlisted files.', 'stale')
+                            observed.add(relative)
+                        else:
+                            raise ProcessError('CPU snapshot contains symlink or special file.', 'stale')
+            finally:
+                os.close(walk_fd)
+        if observed != expected: raise ProcessError('CPU snapshot file inventory changed.', 'stale')
+        for item in manifest['files']: _cpu_stream_file(root_fd, item, deadline, checkpoint)
+        _cpu_check_deadline(deadline, checkpoint)
+        return manifest
+    except OSError as error:
+        raise ProcessError('Captured CPU snapshot is missing, inaccessible or changed.', 'unavailable') from error
+    finally:
+        os.close(root_fd)
+
+
 def validate_spec(value):
     keys = {'schema_version','attempt_id','request_sha256','argv','env','cwd','stdin_base64',
             'wall_seconds','executable_sha256','max_output_bytes','output_dir','captured_files','runtime_files','trusted_install_owner_uid'}
-    if type(value) is not dict or set(value) - {'native_loader_policy'} != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
+    if type(value) is not dict or set(value) - {'native_loader_policy', 'cpu_snapshot'} != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
         raise ProcessError('Unsupported custody spec.')
     if not isinstance(value['attempt_id'], str) or not ID.fullmatch(value['attempt_id']):
         raise ProcessError('Invalid attempt identity.')
@@ -118,6 +344,20 @@ def validate_spec(value):
             raise ProcessError('Invalid captured file size.')
     if sum(item['bytes'] for item in files)>64*1024*1024 or sum(item['bytes'] for item in runtime)>512*1024*1024:
         raise ProcessError('Runtime/source closure exceeds its byte bound.')
+    if 'cpu_snapshot' in value:
+        descriptor = validate_cpu_snapshot_descriptor(value['cpu_snapshot'])
+        if 'native_loader_policy' not in value:
+            raise ProcessError('CPU snapshot requires the qualified loader policy.')
+        if (len(argv) < 8 or argv[1:4] != ['-I', '-S', '-B'] or argv[5] != '--cpu-launch'
+                or not absolute(argv[4]) or not absolute(argv[6]) or not absolute(argv[7])):
+            raise ProcessError('Captured CPU launch vector differs from reserved bootstrap.')
+        inventory = {item['path']: item for item in files}
+        desc_file = inventory.get(argv[6]); bootstrap_file = inventory.get(argv[4])
+        raw = encoded(descriptor)
+        if (not desc_file or desc_file['bytes'] != len(raw) or desc_file['sha256'] != digest(raw)
+                or not bootstrap_file or argv[7] not in inventory
+                or Path(argv[4]).name != 'recipe_process.py' or Path(argv[6]).name != 'snapshot.json'):
+            raise ProcessError('CPU bootstrap, descriptor and entry must be exact captured files.')
     if len(encoded(value)) > SPEC_LIMIT:
         raise ProcessError('Custody specification exceeds its bound.')
     return decode(encoded(value))
@@ -152,10 +392,13 @@ def verify_native_loader_policy(owner_uid):
         os.close(descriptor)
 
 
-def verify_captures(spec):
+def verify_captures(spec, *, checkpoint=None, include_cpu=True):
+    if 'cpu_snapshot' in spec and include_cpu:
+        verify_cpu_snapshot(spec['cpu_snapshot'], checkpoint=checkpoint)
     if 'native_loader_policy' in spec:
         verify_native_loader_policy(spec['trusted_install_owner_uid'])
     for item in spec['captured_files']+spec['runtime_files']:
+        if checkpoint is not None: checkpoint()
         raw = read_regular(item['path'], item['bytes'])
         if len(raw) != item['bytes'] or digest(raw) != item['sha256']:
             raise ProcessError('Captured input/source identity changed.', 'stale')
@@ -263,7 +506,7 @@ class Handle:
                     raise ProcessError('Terminal receipt differs from custodian event.')
                 self.terminal = True
             events.append(event)
-        if self.ready is None and not self.lost and time.monotonic()-self.started > READY_SECONDS:
+        if self.ready is None and not self.lost and time.monotonic()-self.started > (CPU_READY_SECONDS if 'cpu_snapshot' in self.spec else READY_SECONDS):
             self.close_control(wait=False)
             raise ProcessError('Custodian readiness deadline exceeded.', 'unavailable')
         self.process.poll()
@@ -410,12 +653,32 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
     for name in hashes: logs[name]=os.open(name+'.log',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600,dir_fd=directory_fd)
     selector=selectors.DefaultSelector();selector.register(channel,selectors.EVENT_READ,'control')
     leader=None;code=None;go=False;stopping=None;reason='not_started';drained=False
-    started=time.monotonic();deadline=started+READY_SECONDS
+    started=time.monotonic();deadline=started+(CPU_READY_SECONDS if 'cpu_snapshot' in spec else READY_SECONDS)
     def stop(why):
         nonlocal stopping,reason
         if stopping is None: stopping=time.monotonic();reason=why
+    class PreparationStopped(Exception):
+        pass
+    def preparation_checkpoint():
+        try:
+            message = _receive(channel)
+        except BlockingIOError:
+            return
+        except (OSError, ProcessError):
+            message = None
+        if message is None:
+            selector.unregister(channel)
+            stop('controller_lost')
+        elif (type(message) is dict and set(message) == {'type', 'reason'}
+              and message['type'] == 'cancel' and message['reason'] in ('cancelled', 'shutdown', 'protocol_error')):
+            stop(message['reason'])
+        else:
+            stop('protocol_error')
+        raise PreparationStopped()
     try:
-        verify_captures(spec)
+        # Parent launch already verified the complete CPU snapshot. Keep READY
+        # responsive; recheck it cancellably at GO, before any recipe fork.
+        verify_captures(spec, include_cpu=False)
         _packet(channel,dict(common,type='ready',helper=who))
         while True:
             now=time.monotonic()
@@ -450,7 +713,10 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                         stop(message['reason']);continue
                     expected={'type':'go','attempt_id':spec['attempt_id'],'request_sha256':spec['request_sha256'],'helper':who}
                     if message!=expected or go or stopping is not None:stop('protocol_error');continue
-                    verify_captures(spec)
+                    try:
+                        verify_captures(spec, checkpoint=preparation_checkpoint if 'cpu_snapshot' in spec else None)
+                    except PreparationStopped:
+                        continue
                     go=True;deadline=time.monotonic()+spec['wall_seconds']
                     input_fd=sealed('tuldok-stdin',base64.b64decode(spec['stdin_base64']))
                     pipes={name:os.pipe() for name in hashes}
@@ -511,7 +777,131 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
     channel.close()
 
 
+def _cpu_descriptor_file(path):
+    if not absolute(path): raise ProcessError('CPU descriptor path must be absolute.')
+    raw = read_regular(path, CPU_MANIFEST_LIMIT)
+    value = validate_cpu_snapshot_descriptor(decode(raw))
+    if raw != encoded(value): raise ProcessError('CPU descriptor must be canonical.')
+    return value
+
+
+def _cpu_origins(manifest, descriptor, bootstrap):
+    import sys
+    root = Path(descriptor['root'])
+    permitted = {str(root / item['path']) for item in manifest['files']}
+    virtual_modules = {}
+    virtual = {'torch.ops': ('torch._ops', '_Ops', '_ops.py'),
+               'torch.classes': ('torch._classes', '_Classes', '_classes.py')}
+    for name, module in list(sys.modules.items()):
+        location = getattr(module, '__file__', None)
+        if name in virtual:
+            defining_name, class_name, pseudo_file = virtual[name]
+            defining = sys.modules.get(defining_name)
+            if (defining is None or type(module) is not vars(defining).get(class_name)
+                    or location != pseudo_file or type(module).__module__ != defining_name):
+                raise ProcessError('Captured virtual module identity differs: ' + name, 'unavailable')
+            location = vars(defining).get('__file__')
+            if location not in permitted:
+                raise ProcessError('Captured virtual module definition differs: ' + name, 'unavailable')
+            virtual_modules[name] = {'pseudo_file': pseudo_file, 'defining_module': defining_name,
+                                     'defining_path': location, 'class': class_name}
+        if location is None: continue
+        path = str(Path(location).absolute())
+        if path != bootstrap and path not in permitted:
+            raise ProcessError('Python module originates outside captured runtime: ' + name, 'unavailable')
+    expected = [str(root / manifest['launch'][key]) for key in ('stdlib', 'dynload', 'packages')]
+    if sys.path != expected:
+        raise ProcessError('Captured Python import path changed.', 'unavailable')
+    return virtual_modules
+
+
+def _cpu_mappings(manifest, descriptor):
+    root = Path(descriptor['root'])
+    permitted = {str(root / item['path']) for item in manifest['files'] if item['kind'] == 'elf'}
+    observed = set()
+    for line in Path('/proc/self/maps').read_text().splitlines():
+        columns = line.split(maxsplit=5)
+        if len(columns) < 6 or columns[5].startswith('['): continue
+        path = columns[5]
+        if path not in permitted:
+            raise ProcessError('Native mapping originates outside captured runtime: ' + path[:512], 'unavailable')
+        observed.add(path)
+    for key in ('python', 'loader'):
+        if str(root / manifest['launch'][key]) not in observed:
+            raise ProcessError('Captured Python/loader mapping is absent.', 'unavailable')
+    return sorted(observed)
+
+
+def _cpu_launch_runtime(descriptor_path, entry, arguments):
+    descriptor = _cpu_descriptor_file(descriptor_path)
+    manifest = verify_cpu_snapshot(descriptor)
+    verify_native_loader_policy(os.stat('/usr').st_uid)
+    root = Path(descriptor['root']); launch = manifest['launch']
+    bootstrap = str(Path(__file__).absolute())
+    if not absolute(entry) or not absolute(bootstrap):
+        raise ProcessError('Captured CPU entry and bootstrap paths must be absolute.')
+    # Fresh profile-owned environment: C locale avoids host locale/gconv mmaps;
+    # Python UTF-8 mode retains deterministic Unicode filesystem/text behavior.
+    # No inherited loader, Python, site-hook or package-path overrides.
+    env = {'LANG': 'C', 'LC_ALL': 'C', 'PYTHONCOERCECLOCALE': '0', 'PYTHONUTF8': '1'}
+    env.update(PYTHONHOME=str(root / launch['home']), PYTHONNOUSERSITE='1',
+               PYTHONDONTWRITEBYTECODE='1', CUDA_VISIBLE_DEVICES='')
+    command = [str(root / launch['loader']), '--inhibit-cache', '--library-path',
+               ':'.join(str(root / item) for item in launch['library_dirs']),
+               '--glibc-hwcaps-mask', '', str(root / launch['python']), '-P', '-S', '-B',
+               bootstrap, '--cpu-child', descriptor_path, entry, *arguments]
+    os.execve(command[0], command, env)
+
+
+def _cpu_child(descriptor_path, entry, arguments):
+    import sys
+    import runpy
+    descriptor = _cpu_descriptor_file(descriptor_path)
+    manifest = verify_cpu_snapshot(descriptor)
+    root = Path(descriptor['root']); launch = manifest['launch']
+    if sys.version_info[:2] != (3, 12) or Path(sys.prefix) != root / launch['home']:
+        raise ProcessError('Captured Python bootstrap identity differs.', 'unavailable')
+    # Check already imported bootstrap modules before permitting package imports.
+    # -P -S excludes cwd, script directory, site hooks and user-site processing.
+    expected = [str(root / launch[key]) for key in ('stdlib', 'dynload', 'packages')]
+    initial = [str(root / launch['home'] / 'lib' / 'python312.zip'), *expected[:2]]
+    if sys.path != initial:
+        raise ProcessError('Captured Python initial path differs.', 'unavailable')
+    sys.path[:] = expected
+    bootstrap = str(Path(__file__).absolute())
+    _cpu_origins(manifest, descriptor, bootstrap)
+    _cpu_mappings(manifest, descriptor)
+    import numpy
+    import torch
+    if str(numpy.__version__) != manifest['packages']['numpy'] or str(torch.__version__) != manifest['packages']['torch']:
+        raise ProcessError('Captured CPU package versions differ.', 'unavailable')
+    if torch.version.cuda is not None:
+        raise ProcessError('Captured profile must be CPU-only.', 'unsupported')
+    virtual_modules = _cpu_origins(manifest, descriptor, bootstrap)
+    mappings = _cpu_mappings(manifest, descriptor)
+    evidence = {'tuldok_cpu_runtime': {'snapshot_sha256': descriptor['manifest_sha256'],
+        'python': sys.version, 'sys_path': list(sys.path), 'virtual_modules': virtual_modules,
+        'environment': {key: os.environ.get(key) for key in ('LANG', 'LC_ALL', 'PYTHONCOERCECLOCALE',
+            'PYTHONUTF8', 'PYTHONHOME', 'PYTHONNOUSERSITE', 'PYTHONDONTWRITEBYTECODE', 'CUDA_VISIBLE_DEVICES')},
+        'packages': {'numpy': str(numpy.__version__), 'torch': str(torch.__version__)},
+        'module_paths': {'numpy': numpy.__file__, 'torch': torch.__file__,
+                         'os': os.__file__, 'ctypes': ctypes.__file__}, 'mappings': mappings}}
+    line = encoded(evidence)
+    if len(line) > STREAM_LIMIT // 2:
+        raise ProcessError('Captured CPU initialization evidence exceeds its bound.', 'unsupported')
+    print(line.decode(), flush=True)
+    if not absolute(entry): raise ProcessError('Captured recipe entry must be absolute.')
+    sys.argv[:] = [entry, *arguments]
+    # Recipe source lookup starts only after the captured runtime qualification.
+    sys.path.insert(0, str(Path(entry).parent))
+    runpy.run_path(entry, run_name='__main__')
+
+
 if __name__=='__main__':
     import sys
-    if len(sys.argv)!=6 or sys.argv[1]!='--helper':raise SystemExit(2)
-    _helper(*(int(value) for value in sys.argv[2:]))
+    if len(sys.argv)==6 and sys.argv[1]=='--helper':
+        _helper(*(int(value) for value in sys.argv[2:]))
+    elif len(sys.argv)>=4 and sys.argv[1] in ('--cpu-launch', '--cpu-child'):
+        (_cpu_launch_runtime if sys.argv[1]=='--cpu-launch' else _cpu_child)(sys.argv[2], sys.argv[3], sys.argv[4:])
+    else:
+        raise SystemExit(2)

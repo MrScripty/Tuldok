@@ -206,3 +206,178 @@ class CustodyTests(unittest.TestCase):
         self.assertEqual(handle.poll(),[{'type':'lost','reason':'custodian_channel_closed'}])
         self.assertEqual(handle.poll(),[])
         self.assertTrue(handle.close_control()['drained'])
+
+
+class CpuSnapshotContractTests(unittest.TestCase):
+    """Authored tiny inventories prove custody checks, not package acceptance."""
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.base=Path(self.tmp.name)
+        contents={
+            'python/bin/python3.12':b'\x7fELFauthored interpreter, not executable',
+            'system/lib/ld-linux-x86-64.so.2':b'\x7fELFauthored loader, not executable',
+            'python/lib/python3.12/os.py':b'# authored stdlib fixture\n',
+            'python/lib/python3.12/lib-dynload/_fixture.so':b'\x7fELFauthored extension',
+            'packages/numpy/__init__.py':b'# authored package fixture\n',
+        }
+        self.manifest={'schema_version':1,'profile':custody.CPU_PROFILE,'python_version':'3.12',
+            'packages':{'numpy':'fixture','torch':'fixture'},
+            'launch':{'python':'python/bin/python3.12','loader':'system/lib/ld-linux-x86-64.so.2',
+                'home':'python','stdlib':'python/lib/python3.12','dynload':'python/lib/python3.12/lib-dynload',
+                'packages':'packages','library_dirs':['system/lib']},
+            'files':[{'path':name,'bytes':len(raw),'sha256':custody.digest(raw),
+                      'mode':0o500 if name in ('python/bin/python3.12','system/lib/ld-linux-x86-64.so.2') else 0o400,
+                      'kind':'elf' if raw.startswith(b'\x7fELF') else 'data'} for name,raw in sorted(contents.items())],
+            'total_bytes':sum(map(len,contents.values()))}
+        raw=custody.encoded(self.manifest);self.root=self.base/'runtime-snapshots'/custody.digest(raw)
+        self.root.mkdir(parents=True,mode=0o700)
+        for item in self.manifest['files']:
+            target=self.root/item['path'];target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(contents[item['path']]);target.chmod(item['mode'])
+        (self.root/'manifest.json').write_bytes(raw);(self.root/'manifest.json').chmod(0o400)
+        self.descriptor={'schema_version':1,'profile':custody.CPU_PROFILE,'catalog_id':'a'*32,
+            'root':str(self.root),'manifest_sha256':custody.digest(raw),'manifest_bytes':len(raw),
+            'file_count':len(contents),'total_bytes':self.manifest['total_bytes'],'python_version':'3.12',
+            'packages':self.manifest['packages'],'launch':self.manifest['launch']}
+
+    def test_virtual_torch_origins_are_exact_and_captured(self):
+        import sys
+        import types
+        defining=types.ModuleType('torch._ops')
+        defining.__file__=str(self.root/'packages/torch/_ops.py')
+        cls=type('_Ops',(types.ModuleType,),{'__module__':'torch._ops','__file__':'_ops.py'})
+        defining._Ops=cls
+        module=cls('torch.ops')
+        modules={'torch._ops':defining,'torch.ops':module}
+        manifest={**self.manifest,'files':[*self.manifest['files'],{'path':'packages/torch/_ops.py'}]}
+        paths=[str(self.root/manifest['launch'][key]) for key in ('stdlib','dynload','packages')]
+        def check():
+            with patch.object(sys,'modules',modules),patch.object(sys,'path',paths):
+                return custody._cpu_origins(manifest,self.descriptor,'/captured/bootstrap.py')
+        self.assertEqual(check()['torch.ops']['defining_path'],defining.__file__)
+        modules['other.ops']=modules.pop('torch.ops')
+        with self.assertRaises(custody.ProcessError):check()
+        modules['torch.ops']=modules.pop('other.ops')
+        modules['torch.ops']=types.ModuleType('torch.ops');modules['torch.ops'].__file__='_ops.py'
+        with self.assertRaises(custody.ProcessError):check()
+        modules['torch.ops']=module;module.__file__='other.py'
+        with self.assertRaises(custody.ProcessError):check()
+        module.__file__='_ops.py';defining.__file__='/outside/_ops.py'
+        with self.assertRaises(custody.ProcessError):check()
+
+    def test_canonical_roundtrip_without_live_packages(self):
+        self.assertEqual(custody.validate_cpu_snapshot_descriptor(self.descriptor),self.descriptor)
+        self.assertEqual(custody.verify_cpu_snapshot(self.descriptor),self.manifest)
+
+    def test_pure_bounds_paths_modes_and_descriptor_binding(self):
+        import copy
+        for field,value in [('file_count',40001),('total_bytes',custody.CPU_TOTAL_LIMIT+1),
+                            ('manifest_bytes',True),('root',str(self.base/'elsewhere')),('catalog_id','x')]:
+            altered=copy.deepcopy(self.descriptor);altered[field]=value
+            with self.subTest(field=field),self.assertRaises(custody.ProcessError):custody.validate_cpu_snapshot_descriptor(altered)
+        for field,value in [('path','../escape'),('mode',0o777),('bytes',custody.CPU_FILE_LIMIT+1),('kind','symlink')]:
+            altered=copy.deepcopy(self.manifest);altered['files'][0][field]=value
+            with self.subTest(field=field),self.assertRaises(custody.ProcessError):custody.validate_cpu_manifest(altered)
+        altered=copy.deepcopy(self.manifest);altered['launch']['library_dirs']=['system/lib:/usr/lib']
+        with self.assertRaises(custody.ProcessError):custody.validate_cpu_manifest(altered)
+        altered=copy.deepcopy(self.descriptor);altered['packages']['numpy']='changed'
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(altered)
+
+    def test_mutated_bytes_mode_missing_and_unlisted_refused(self):
+        target=self.root/'packages/numpy/__init__.py';raw=target.read_bytes()
+        target.chmod(0o600);target.write_bytes(b'X'*len(raw));target.chmod(0o400)
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+        target.chmod(0o600);target.write_bytes(raw)
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+        target.chmod(0o400);extra=self.root/'packages/unauthorized.py';extra.write_text('raise RuntimeError()')
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+        extra.unlink();target.unlink()
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+
+    def test_symlink_and_hardlink_file_custody_refused(self):
+        target=self.root/'packages/numpy/__init__.py';raw=target.read_bytes();target.unlink()
+        outside=self.base/'outside';outside.write_bytes(raw);outside.chmod(0o400);target.symlink_to(outside)
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+        target.unlink();os.link(outside,target)
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+
+    def test_manifest_change_and_kind_mismatch_refused(self):
+        target=self.root/'manifest.json';target.chmod(0o600);target.write_bytes(target.read_bytes()+b'\n');target.chmod(0o400)
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+
+    def cpu_spec(self):
+        executable=str(Path('/usr/bin/python3').resolve());entry=self.base/'recipe.py';entry.write_text('pass\n')
+        bootstrap=self.base/'recipe_process.py';bootstrap.write_bytes(custody.SOURCE)
+        descriptor=self.base/'snapshot.json';descriptor.write_bytes(custody.encoded(self.descriptor))
+        spec={'schema_version':1,'attempt_id':'b'*32,'request_sha256':'c'*64,
+            'argv':[executable,'-I','-S','-B',str(bootstrap),'--cpu-launch',str(descriptor),str(entry)],
+            'env':{},'cwd':str(self.base),'stdin_base64':'','wall_seconds':5,'executable_sha256':custody.digest(Path(executable).read_bytes()),
+            'max_output_bytes':1024,'output_dir':str(self.base),'runtime_files':[],
+            'trusted_install_owner_uid':os.stat('/usr').st_uid,'native_loader_policy':'glibc_x86_64_no_preload_v1',
+            'cpu_snapshot':self.descriptor,'captured_files':[{'path':str(path),'bytes':path.stat().st_size,'sha256':custody.digest(path.read_bytes())} for path in (bootstrap,descriptor,entry)]}
+        return spec
+
+    def test_cpu_launch_vector_requires_bound_descriptor(self):
+        spec=self.cpu_spec()
+        self.assertEqual(custody.validate_spec(spec),spec)
+        spec['captured_files'][1]['sha256']='d'*64
+        with self.assertRaises(custody.ProcessError):custody.validate_spec(spec)
+
+    def test_directory_and_preparation_budget_are_bounded(self):
+        (self.root/'empty-unlisted').mkdir()
+        with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
+        (self.root/'empty-unlisted').rmdir()
+        with patch.object(custody.time,'monotonic',side_effect=[0,61]):
+            with self.assertRaisesRegex(custody.ProcessError,'deadline'):
+                custody.verify_cpu_snapshot(self.descriptor)
+        import copy
+        altered=copy.deepcopy(self.manifest)
+        altered['files'][0]['path']='/'.join(['deep']*33)
+        with self.assertRaises(custody.ProcessError):custody.validate_cpu_manifest(altered)
+
+    def test_cancel_during_delayed_go_verification_drains_before_fork(self):
+        # Fault-injected verification latency, real helper/control/drain. The tiny
+        # authored ELF files never execute and do not qualify a CPU runtime.
+        injected=b"""
+_original_verify_cpu_snapshot = verify_cpu_snapshot
+def verify_cpu_snapshot(descriptor, *, checkpoint=None):
+    if checkpoint is not None:
+        (Path(descriptor['root']).parent.parent/'verification-entered').write_text('entered')
+        for _ in range(500):
+            checkpoint()
+            time.sleep(.01)
+    return _original_verify_cpu_snapshot(descriptor, checkpoint=checkpoint)
+
+"""
+        source=custody.SOURCE.replace(b"if __name__=='__main__':",injected+b"if __name__=='__main__':")
+        with patch.object(custody,'SOURCE',source):
+            handle=custody.launch(self.cpu_spec(),self.base/'custody')
+        try:
+            deadline=time.monotonic()+8
+            while not handle.ready and time.monotonic()<deadline:
+                handle.poll();time.sleep(.01)
+            self.assertIsNotNone(handle.ready);handle.go(handle.ready)
+            while not (self.base/'verification-entered').exists() and time.monotonic()<deadline:
+                handle.poll();time.sleep(.01)
+            self.assertTrue((self.base/'verification-entered').exists())
+            handle.cancel();events=[]
+            while not handle.terminal and time.monotonic()<deadline:
+                events.extend(handle.poll());time.sleep(.01)
+            self.assertTrue(handle.terminal)
+            self.assertFalse(any(event['type']=='started' for event in events))
+            receipt=custody.load_receipt(handle.directory/'receipt.json',handle.expected_identity)
+            self.assertEqual(receipt['outcome'],'cancelled');self.assertTrue(receipt['drained'])
+            self.assertIsNone(receipt['leader_returncode']);self.assertFalse(receipt['go_received'])
+        finally:
+            handle.close_control()
+
+    def test_cpu_launch_environment_is_fresh_unicode_capable_and_locale_closed(self):
+        descriptor=self.base/'snapshot.json';descriptor.write_bytes(custody.encoded(self.descriptor))
+        with patch.dict(os.environ,{'LD_PRELOAD':'host.so','PYTHONPATH':'/host','UNKNOWN_OVERRIDE':'x'},clear=True):
+            with patch.object(custody.os,'execve') as execute:
+                custody._cpu_launch_runtime(str(descriptor),str(self.base/'recipe-λ.py'),['λ'])
+        executable,argv,env=execute.call_args.args
+        self.assertEqual(env,{'LANG':'C','LC_ALL':'C','PYTHONCOERCECLOCALE':'0','PYTHONUTF8':'1',
+            'PYTHONHOME':str(self.root/'python'),'PYTHONNOUSERSITE':'1','PYTHONDONTWRITEBYTECODE':'1','CUDA_VISIBLE_DEVICES':''})
+        self.assertEqual(executable,str(self.root/self.manifest['launch']['loader']))
+        self.assertEqual(argv[-2:],[str(self.base/'recipe-λ.py'),'λ'])

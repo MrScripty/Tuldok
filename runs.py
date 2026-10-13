@@ -469,7 +469,8 @@ class Runs:
             if recipe_contract.host_identity() != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
-            ready_deadline = time.monotonic() + 12
+            preparation_seconds = recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in run['spec'] else recipe_process.READY_SECONDS
+            ready_deadline = time.monotonic() + preparation_seconds + 2
             custody_deadline = ready_deadline
             cancel_deadline = None
             terminal = False
@@ -492,7 +493,10 @@ class Runs:
                             self._save(run)
                         # No GO is sent when either transaction acknowledgement is unknown.
                         handle.go(handle.expected_identity['helper'])
-                        custody_deadline = time.monotonic() + run['spec']['wall_seconds'] + 15
+                        # CPU snapshots are reverified after GO before recipe
+                        # wall time starts. Keep that bounded preparation separate.
+                        recheck_seconds = preparation_seconds if 'cpu_snapshot' in run['spec'] else 0
+                        custody_deadline = time.monotonic() + recheck_seconds + run['spec']['wall_seconds'] + 15
                     elif event['type'] in ('terminal', 'lost'):
                         terminal = True
                 if terminal:
