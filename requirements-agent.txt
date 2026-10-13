@@ -1,0 +1,4 @@
+# Optional stdio agent bridge only; never app or scientific runtime dependencies.
+# Full resolved hashes and consumer qualification are recorded separately.
+mcp==1.30.0
+jsonschema==4.26.0

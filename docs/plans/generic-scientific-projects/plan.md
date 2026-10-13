@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5a qualified at draft PR50 commit05ea66e; P5b published at draft PR51 commit28c666f; isolated P5c source preparation admitted while final P5b gates run.
+**Current phase:** P5b qualified at PR51 head28c666f; P5c real autonomous evaluation is running on frozen PR52 sourced191e68. Independent P6 source preparation is admitted in its separate worktree.
 
-**Next slice:** Implement P5c direct Run-artifact inputs, bounded large-output execution and original autonomous evaluation; no real evaluation before all dependency and review gates pass. See [P5c admission](reports/p5c-admission.md).
+**Next slice:** Complete P5c actual scientific/download/restart and regression gates, then qualify P6. [P6 admission](reports/p6-admission.md) records the isolated preparation amendment and exact operation matrix.
 
 **Acceptance status:** `partial`
 
@@ -36,7 +36,7 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 | G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | satisfied | [Actual native and neutral custody workflows](reports/p2-verification.md) |
 | G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | satisfied | [P4 actual generation and no-adapter startup](reports/p4-verification.md) |
 | G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | pending | P5 lab verifier, numerical field comparison and new execution receipts |
-| G5 | Agent and UI clients use the same operations; stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
+| G5 | Agent and UI clients reach the same domain owners for the admitted bounded matrix and equivalent authority; owner-only review/grants remain separate. Stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
 | G6 | Admission is idempotent; cancel, crash and restart never duplicate work, publish partial success or silently leave descendants running | system | representative | automated | pending | P3 process-tree, storage-failure and lost-acknowledgement tests |
 | G7 | Existing imports/releases/runs retain identities and bytes, including Rheon v1/v2; explicit migration and complete PostgreSQL/artifact restore preserve old and new records | integration | representative | automated | pending | P2/P7 retained-history and restore workflow |
 | G8 | Desktop/narrow/keyboard UI supports open → generate → review/freeze → edit graph → train/evaluate → inspect results without explanatory clutter or false qualification labels | user-workflow | required-real | either | pending | P7 reviewed screenshots and actual-run browser receipt |
@@ -228,15 +228,17 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 ### P6: Agent domain interface
 
-**Goal:** An agent discovers and controls the qualified workflow through typed domain operations with the same outcomes as the UI.
+**Goal:** An agent discovers and controls the qualified workflow through the admitted typed operation matrix, with the same domain outcomes as equivalent authorized HTTP/UI actions. This does not delegate every UI privilege or legacy endpoint.
 
 **Allowed write set:** proposed `agent_api.py`, `docs/contracts/agent-operations.md`, versioned operation schemas and a thin local MCP adapter selected/pinned after transport review; existing API/access/domain owners only as needed; public HTTP/MCP integration tests and developer usage documentation.
 
-**Tasks:** Project/data/recipe discovery; queries and typed mutation tools; release preview/freeze; graph editing/preflight; idempotent submit/status/cancel/retry; provenance/artifact access; scoped credential setup/revocation. Tool descriptions identify side effects and approval requirements. Reuse shared validation/errors; no direct DB or file-management tools masquerading as domain operations.
+**Tasks:** Implement the admitted matrix: project/data/recipe discovery; bounded queries and typed draft mutations; canonical release preview/freeze; graph editing/preflight; exact-grant idempotent external submit/status/cancel; explicit scoped test exposure; provenance and bounded artifact segments with client whole-hash verification. Ordinary retry remains owner-only HTTP/UI; a new external attempt requires an explicit new submit and valid exact grant. Same-key acknowledgement reconciliation never creates a new attempt. Credential setup/revocation, human review and execution grants retain existing owner interfaces. Publish bounds and exclusions; reuse domain validation/errors without direct database or file-management tools.
 
-**Acceptance gate:** Complete G5; equivalent agent/UI workflow yields equivalent domain evidence; revision conflicts, lost acknowledgements, revoked credentials and human-review spoofing are exercised through both public transports. No new actor-specific privilege bypass.
+**Acceptance gate:** Complete G5 against the admitted matrix through a real workflow with separate owner review/grants. Compare domain evidence; exercise revisions, lost acknowledgements, revoked credentials, human-review spoofing, grant reuse, fresh external attempts, scoped test exposure and exact artifact reassembly. Excluded capabilities remain absent from MCP; existing HTTP authority is unchanged. No new actor-specific privilege bypass.
 
 **Status:** `Planned`
+
+**Preparation admission:** [P6 exact contract and sequencing](reports/p6-admission.md). Source preparation is active; objective acceptance remains pending.
 
 ### P7: Complete workflow and compatibility qualification
 

@@ -28,6 +28,7 @@ import spatial_assets
 import pipeline
 import projects
 import access
+import agent_api
 from access import authorized
 from http.cookies import SimpleCookie, CookieError
 import runs
@@ -572,6 +573,8 @@ def make_handler(dataset):
         def _get(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/agent/operations':
+                    return self.reply(agent_api.discovery())
                 if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
                     self.project_access()
                 if path.startswith('/api/workspace/'):
@@ -781,7 +784,7 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = projects.decode(raw_body) if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and '/import-data/' in path)) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = projects.decode(raw_body) if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
@@ -800,6 +803,8 @@ def make_handler(dataset):
                         admission = {key: value for key, value in body.items() if key != 'expected_sha256'}
                         return self.reply(dataset.workbench.scientific.admit_run_artifact(
                             parts[1], parts[3], body['expected_sha256'], admission), 201)
+                    if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifact-segment':
+                        return self.reply(dataset.runs.artifact_segment(parts[1], parts[3], body))
                     if parts == ['graphs']:
                         return self.reply(dataset.pipelines.create(body), 201)
                     if parts == ['graphs', 'external']:
