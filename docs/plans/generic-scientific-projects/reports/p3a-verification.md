@@ -72,3 +72,15 @@ is claimed. `/proc/.../children` is unavailable, so the revised probe used PPID
 scanning. An initial failed probe left a PID-1-owned zombie after its bounded
 child exited; revised cases fully reaped their children. Production lifecycle
 qualification is still P3b work, after P3a CI.
+
+## Hosted regression correction
+
+PR47 initial head4d3314a passed all14 workspace-UI steps and the full hosted Python
+suite, new authentication browser gate and scientific/project browser gates.
+Lifecycle run38431312561 then failed the legacy corner-studio viewport assertion:
+the new session bar added height above an existing fixed-height workspace. A
+scoped desktop CSS flex layout shares the viewport among session bar, header and
+main content. The complete legacy browser passes locally with Chromium after the
+fix, including its narrow-screen image-fit check and four local provider fixtures.
+GitHub log retrieval returned403; diagnosis used local reproduction, not an
+assumed failure cause. Final-head CI must repeat before P3b admission.

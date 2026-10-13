@@ -88,6 +88,7 @@ static/native_text_import.js
 static/pointclouds.js
 static/pumas-typed.js
 static/scientific-fields.js
+static/style.css
 static/sequence-batch.js
 static/volume-editor.js
 static/workbench.html
