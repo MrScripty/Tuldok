@@ -1,8 +1,9 @@
 import base64
+from postgres_helpers import install_failure_trigger
 import io
 import json
 import tempfile
-import sqlite3
+import psycopg
 import unittest
 import zipfile
 from pathlib import Path
@@ -104,8 +105,8 @@ class DatasetTests(unittest.TestCase):
     def test_legacy_corner_reference_is_preserved(self):
         row=self.add()
         old=label();old.pop('corner_reference')
-        with self.data.db:
-            self.data.db.execute('UPDATE samples SET annotation=? WHERE id=?',(json.dumps(old),row['id']))
+        with self.data.db.transaction():
+            self.data.db.execute('UPDATE samples SET annotation=%s WHERE id=%s',(json.dumps(old),row['id']))
         self.assertEqual(self.data.sample(row['id'])['annotation']['corner_reference'],'image')
         with self.data.export() as target, zipfile.ZipFile(target) as archive:
             self.assertEqual(json.loads(archive.read('labels.jsonl'))['annotation']['corner_reference'],'image')
@@ -143,8 +144,8 @@ class DatasetTests(unittest.TestCase):
 
     def test_delete_database_failure_restores_files(self):
         sample = self.add()
-        self.data.db.execute("CREATE TRIGGER refuse_delete BEFORE DELETE ON samples BEGIN SELECT RAISE(ABORT, 'fixture'); END")
-        with self.assertRaises(sqlite3.IntegrityError):
+        install_failure_trigger(self.data.db, 'samples', 'refuse_delete', 'fixture', event='DELETE')
+        with self.assertRaises(psycopg.IntegrityError):
             self.data.delete(sample['id'], {'revision': sample['revision']})
         self.assertIsNotNone(self.data.sample(sample['id']))
         self.assertTrue((self.data.path / 'images' / sample['id'] / 'source').is_file())
@@ -156,8 +157,8 @@ class DatasetTests(unittest.TestCase):
         staging.mkdir()
         for sample in (restore, remove):
             (self.data.path / 'images' / sample['id']).rename(staging / sample['id'])
-        with self.data.db:
-            self.data.db.execute('DELETE FROM samples WHERE id=?', (remove['id'],))
+        with self.data.db.transaction():
+            self.data.db.execute('DELETE FROM samples WHERE id=%s', (remove['id'],))
         reopened = Dataset(self.tmp.name)
         try:
             self.assertTrue((reopened.path / 'images' / restore['id'] / 'source').is_file())

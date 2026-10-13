@@ -1,0 +1,9 @@
+{
+  "source_commit": "5db224059162e2600bb4f05d754de167f4d752f3",
+  "original_release_sha256": "22d6857648d491afada77accbb6fd0a1218c462c60e5c234533e0df08392d84d",
+  "replacement_path_sha256": "6cbe2a30783f33005c6344bc033aca479db772c3ad4e574023d9dac6158d60f5",
+  "independent_scalar_original_train_mean_rms": 0.2006054927052682,
+  "trained_mean_rms": 0.20060549270526823,
+  "trained_from_original_verified_capture": true,
+  "artifact_manifest_present": true
+}

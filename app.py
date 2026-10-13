@@ -1,5 +1,6 @@
 """Tuldok: local image capture and corner-label dataset workspace."""
 import argparse
+import psycopg
 import ai
 import ai_codex
 import ai_http
@@ -23,13 +24,16 @@ import native_detection_import
 import rheon_sequences
 import sequence_batch_import
 import meshes
+import spatial_assets
+import pipeline
+import runs
 import base64
 import hashlib
 import io
 import json
 import math
 import shutil
-import sqlite3
+from metadata import Metadata, StorageError, CommitOutcomeUnknown
 import tempfile
 import threading
 import uuid
@@ -129,37 +133,36 @@ def validate_annotation(body):
 
 
 class Dataset:
-    def __init__(self, path):
+    def __init__(self, path, *, dsn=None):
         self.path = Path(path).resolve()
         self.path.mkdir(parents=True, exist_ok=True)
         (self.path / 'images').mkdir(exist_ok=True)
-        self.lock = threading.RLock()
         self.ai_lock = threading.Lock()
         self.image_requests = image_generation.ImageRequests()
-        self.db = sqlite3.connect(self.path / 'dataset.sqlite3', check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.execute('PRAGMA journal_mode=WAL')
-        self.db.execute("""CREATE TABLE IF NOT EXISTS samples (
-            id TEXT PRIMARY KEY, sha256 TEXT UNIQUE NOT NULL, filename TEXT NOT NULL,
-            width INTEGER NOT NULL, height INTEGER NOT NULL,
-            book_id TEXT NOT NULL, session_id TEXT NOT NULL, split TEXT NOT NULL,
-            created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-            revision INTEGER NOT NULL DEFAULT 1, annotation TEXT)""")
-        self.db.commit()
-        self.generation_jobs = synthetic.Jobs(self)
-        self._recover_deletions()
-        self.workbench = workbench.Workbench(self)
-        self.releases = dataset_releases.Releases(self.workbench)
-        self.selections = saved_selections.SavedSelections(self.workbench)
-        self.searches = saved_searches.SavedSearches(self.workbench)
-        self.caption_imports = caption_import.CaptionImports(self.workbench)
-        self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
-        self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
-        self.grounded = grounded_candidates.Proposals(self.workbench)
-        self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
-        self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
+        self.db = Metadata(self.path, dsn=dsn)
+        self.lock = self.db.lock
+        try:
+            self.generation_jobs = synthetic.Jobs(self)
+            with self.lock:
+                self._recover_deletions()
+            self.workbench = workbench.Workbench(self)
+            self.releases = dataset_releases.Releases(self.workbench)
+            self.selections = saved_selections.SavedSelections(self.workbench)
+            self.searches = saved_searches.SavedSearches(self.workbench)
+            self.caption_imports = caption_import.CaptionImports(self.workbench)
+            self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
+            self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
+            self.grounded = grounded_candidates.Proposals(self.workbench)
+            self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
+            self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
+            self.pipelines = pipeline.Pipelines(self)
+            self.runs = runs.Runs(self, self.pipelines)
+        except BaseException:
+            self.db.close()
+            raise
 
     def close(self):
+        self.runs.close()
         self.text_classification_proposals.close()
         self.caption_proposals.close()
         self.grounded.close()
@@ -188,18 +191,18 @@ class Dataset:
 
     def resolve_split(self, meta, exclude=''):
         key = 'book_id' if meta['book_id'] else 'session_id'
-        where = key + '=?' + (" AND book_id=''" if key == 'session_id' else '')
+        where = key + '=%s' + (" AND book_id=''" if key == 'session_id' else '')
         args = (meta[key], exclude)
         assigned = {r[0] for r in self.db.execute(
-            'SELECT DISTINCT split FROM samples WHERE ' + where + " AND id<>? AND split<>'unassigned'", args)}
+            'SELECT DISTINCT split FROM samples WHERE ' + where + " AND id<>%s AND split<>'unassigned'", args)}
         desired = meta['split']
         if assigned and desired != 'unassigned' and desired not in assigned:
             raise Conflict('This book/session already belongs to ' + next(iter(assigned)) + '. Keep the same split.')
         chosen = next(iter(assigned), desired)
         # Existing unassigned members move together. Each change invalidates stale editors.
         if chosen != 'unassigned':
-            self.db.execute("UPDATE samples SET split=?, revision=revision+1 WHERE " + where +
-                            " AND id<>? AND split='unassigned'", (chosen, *args))
+            self.db.execute("UPDATE samples SET split=%s, revision=revision+1 WHERE " + where +
+                            " AND id<>%s AND split='unassigned'", (chosen, *args))
         return chosen
 
     def add(self, body, generation=None, *, enrollment=None):
@@ -225,7 +228,7 @@ class Dataset:
         name = name.replace('\\', '/').rsplit('/', 1)[-1][:200]
         sample_id, timestamp = uuid.uuid4().hex, now()
         with self.lock:
-            if self.db.execute('SELECT id FROM samples WHERE sha256=?', (digest,)).fetchone():
+            if self.db.execute('SELECT id FROM samples WHERE sha256=%s', (digest,)).fetchone():
                 raise Conflict('This exact image is already in the dataset.')
             folder = self.path / 'images' / sample_id
             folder.mkdir()
@@ -235,9 +238,10 @@ class Dataset:
                 thumbnail = image.copy()
                 thumbnail.thumbnail((160, 120))
                 thumbnail.save(folder / 'thumb.jpg', 'JPEG', quality=85)
-                with self.db:
+                with self.db.transaction():
+                    self.db.on_rollback(lambda: shutil.rmtree(folder, ignore_errors=True))
                     split = self.resolve_split(meta)
-                    self.db.execute('INSERT INTO samples VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+                    self.db.execute('INSERT INTO samples VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                                     (sample_id, digest, name, image.width, image.height, meta['book_id'],
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
                     if generation is not None:
@@ -246,8 +250,10 @@ class Dataset:
                         # Imported Workbench source metadata shares acquisition's
                         # commit and original-file cleanup on admission failure.
                         self.workbench._enroll_import(sample_id, *enrollment)
+            except CommitOutcomeUnknown:
+                raise
             except Exception:
-                shutil.rmtree(folder)
+                shutil.rmtree(folder, ignore_errors=True)
                 raise
         return self.sample(sample_id)
 
@@ -258,20 +264,20 @@ class Dataset:
         for folder in staging.iterdir():
             if not folder.is_dir() or len(folder.name) != 32 or any(c not in '0123456789abcdef' for c in folder.name):
                 continue
-            if self.db.execute('SELECT 1 FROM samples WHERE id=?', (folder.name,)).fetchone():
+            if self.db.execute('SELECT 1 FROM samples WHERE id=%s', (folder.name,)).fetchone():
                 folder.rename(self.path / 'images' / folder.name)
             else:
                 shutil.rmtree(folder)
 
     def delete(self, sample_id, body):
         with self.lock:
-            row = self.db.execute('SELECT revision FROM samples WHERE id=?', (sample_id,)).fetchone()
+            row = self.db.execute('SELECT revision FROM samples WHERE id=%s', (sample_id,)).fetchone()
             if not row:
                 raise ValueError('Image not found. It may already have been deleted.')
             if type(body.get('revision')) is not int or body['revision'] != row['revision']:
                 raise Conflict('This image changed in another tab. Reload it before deleting.')
             # Enrol before moving bytes; retain lineage in the deletion transaction.
-            with self.db:
+            with self.db.transaction():
                 self.workbench._sync_images()
             folder = self.path / 'images' / sample_id
             staging = self.path / '.deleting-images'
@@ -280,38 +286,47 @@ class Dataset:
             # Rename first, then commit the row deletion. Startup restores staged
             # files if a crash occurred before commit, or removes them afterwards.
             folder.rename(staged)
+            cleanup_warning = []
+            def restore_files():
+                if staged.exists():
+                    staged.rename(folder)
+            def remove_files():
+                try:
+                    shutil.rmtree(staged)
+                except OSError:
+                    cleanup_warning.append('Image removed from the dataset. Remaining file cleanup will be retried when Tuldok restarts.')
             try:
-                with self.db:
+                with self.db.transaction():
+                    self.db.on_rollback(restore_files)
+                    self.db.on_commit(remove_files)
                     for record in self.db.execute('SELECT data FROM generation_entries').fetchall():
                         entry = json.loads(record[0])
                         if entry.get('sample_id') == sample_id:
                             entry.update(status='deleted', sample_id=None, deleted_at=now())
                             self.generation_jobs._entry(entry)
                     self.workbench.preserve_deleted_source(sample_id)
-                    self.db.execute('DELETE FROM samples WHERE id=?', (sample_id,))
-            except Exception:
-                staged.rename(folder)
+                    self.db.execute('DELETE FROM samples WHERE id=%s', (sample_id,))
+            except CommitOutcomeUnknown:
                 raise
-            warning = ''
-            try:
-                shutil.rmtree(staged)
-            except OSError:
-                warning = 'Image removed from the dataset. Remaining file cleanup will be retried when Tuldok restarts.'
-            return dict(self.generation_jobs.snapshot(), samples=self.rows(), deleted=sample_id, warning=warning)
+            except Exception:
+                restore_files()
+                raise
+            return dict(self.generation_jobs.snapshot(), samples=self.rows(), deleted=sample_id,
+                        warning=cleanup_warning[0] if cleanup_warning else '')
 
     def save(self, sample_id, body):
         annotation = validate_annotation(body.get('annotation', {}))
         meta = metadata(body)
         if annotation['book_present'] and not meta['book_id']:
             raise ValueError('Enter a book ID for images containing a book.')
-        with self.lock, self.db:
-            row = self.db.execute('SELECT revision FROM samples WHERE id=?', (sample_id,)).fetchone()
+        with self.lock, self.db.transaction():
+            row = self.db.execute('SELECT revision FROM samples WHERE id=%s', (sample_id,)).fetchone()
             if not row:
                 raise ValueError('Image not found.')
             if body.get('revision') != row['revision']:
                 raise Conflict('This image changed in another tab. Reload it before saving.')
             split = self.resolve_split(meta, sample_id)
-            self.db.execute('UPDATE samples SET annotation=?,book_id=?,session_id=?,split=?,updated_at=?,revision=revision+1 WHERE id=?',
+            self.db.execute('UPDATE samples SET annotation=%s,book_id=%s,session_id=%s,split=%s,updated_at=%s,revision=revision+1 WHERE id=%s',
                             (json.dumps(annotation), meta['book_id'], meta['session_id'], split, now(), sample_id))
         return self.sample(sample_id)
 
@@ -374,7 +389,7 @@ def make_handler(dataset):
             pass
 
         def reply(self, data, status=200, content_type='application/json'):
-            if content_type == 'application/json':
+            if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
             self.send_response(status)
             self.send_header('Content-Type', content_type)
@@ -390,6 +405,30 @@ def make_handler(dataset):
         def do_GET(self):
             path = urlsplit(self.path).path
             try:
+                if path.startswith('/api/workspace/'):
+                    parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['context']:
+                        return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
+                                           'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
+                    if parts == ['definitions']:
+                        return self.reply(dataset.pipelines.definitions())
+                    if parts == ['releases']:
+                        return self.reply(dataset.pipelines.releases())
+                    if parts == ['graphs']:
+                        return self.reply(dataset.pipelines.list())
+                    if len(parts) == 2 and parts[0] == 'graphs':
+                        return self.reply(dataset.pipelines.get(parts[1]))
+                    if parts == ['runs']:
+                        return self.reply(dataset.runs.list())
+                    if len(parts) == 2 and parts[0] == 'runs':
+                        return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'predictions':
+                        query = parse_qs(urlsplit(self.path).query)
+                        return self.reply(dataset.runs.predictions(parts[1], query.get('split', ['validation'])[-1]))
+                    if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifacts':
+                        data, media_type = dataset.runs.artifact(parts[1], parts[3])
+                        return self.reply(data, content_type=media_type)
+                    return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.list())
                 if path == '/api/workbench/searches':
@@ -431,6 +470,21 @@ def make_handler(dataset):
                     return self.reply(dataset.workbench.response_history(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/history/'):
                     return self.reply(dataset.workbench.history(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/pointcloud-inspection/'):
+                    return self.reply(dataset.workbench.pointclouds.inspect(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/volume-inspection/'):
+                    options = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+                    if set(options) - {'axis', 'index'} or any(len(values) != 1 for values in options.values()):
+                        raise workbench.WorkbenchError('Choose one volume axis and index.')
+                    return self.reply(dataset.workbench.volumes.inspect(path.rsplit('/', 1)[-1],
+                        axis=options.get('axis', ['z'])[0], index=int(options.get('index', ['0'])[0])))
+                if path.startswith('/api/workbench/audio-inspection/'):
+                    return self.reply(dataset.workbench.audio.inspect(path.rsplit('/', 1)[-1]))
+                if path.startswith('/api/workbench/mesh-release-validation/'):
+                    import mesh_release
+                    release_id = path.rsplit('/', 1)[-1]
+                    archive = dataset.releases.locate(release_id)
+                    return self.reply(mesh_release.validate_release(archive, expected_sha256=release_id))
                 if path.startswith('/api/workbench/mesh-inspection/'):
                     return self.reply(dataset.workbench.meshes.inspect(path.rsplit('/', 1)[-1]))
                 if path.startswith('/api/workbench/asset/'):
@@ -477,10 +531,32 @@ def make_handler(dataset):
                         shutil.copyfileobj(archive, self.wfile)
                     return
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
+                # Opt-in workspace shell keeps fixture and real service boundaries distinct.
+                assets.update({
+                    '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
+                    '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
+                    '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
+                    '/audio-editor.css': ('audio-editor.css', 'text/css'),
+                    '/meshes.css': ('meshes.css', 'text/css'),
+                    '/workspaces': ('workspaces.html', 'text/html'),
+                    '/workspaces.css': ('workspaces.css', 'text/css'),
+                    '/workspaces.js': ('workspaces.js', 'text/javascript'),
+                    '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
+                    '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
+                    '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
+                    '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
+                    '/runs-view.js': ('runs-view.js', 'text/javascript'),
+                    '/workspaces-data.js': ('workspaces-data.js', 'text/javascript'),
+                    '/workspaces-data.css': ('workspaces-data.css', 'text/css'),
+                })
                 if path in assets:
                     name, kind = assets[path]
                     return self.reply((ROOT / 'static' / name).read_bytes(), content_type=kind + '; charset=utf-8')
                 return self.reply({'error': 'Not found.'}, 404)
+            except psycopg.Error:
+                return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
+            except CommitOutcomeUnknown as error:
+                return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
             except workbench.WorkbenchError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except (ValueError, OSError) as error:
@@ -498,13 +574,38 @@ def make_handler(dataset):
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
+                if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
+                    limit = spatial_assets.MAX_REQUEST
+                if path.startswith('/api/workspace/'):
+                    limit = 256 * 1024
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
+                if path.startswith('/api/workspace/'):
+                    parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['graphs']:
+                        return self.reply(dataset.pipelines.create(body), 201)
+                    if len(parts) == 2 and parts[0] == 'graphs':
+                        return self.reply(dataset.pipelines.save(parts[1], body))
+                    if len(parts) == 3 and parts[0] == 'graphs':
+                        if parts[2] == 'clone':
+                            return self.reply(dataset.pipelines.clone(parts[1], body), 201)
+                        if parts[2] == 'validate':
+                            return self.reply(dataset.pipelines.validate(parts[1], body))
+                    if parts == ['runs']:
+                        return self.reply(dataset.runs.submit(body), 201)
+                    if len(parts) == 3 and parts[0] == 'runs':
+                        if parts[2] == 'cancel':
+                            return self.reply(dataset.runs.cancel(parts[1]))
+                        if parts[2] == 'retry':
+                            return self.reply(dataset.runs.retry(parts[1], body), 201)
+                        if parts[2] == 'expose-test':
+                            return self.reply(dataset.runs.expose_test(parts[1], body))
+                    return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.create(body), 201)
                 if path == '/api/workbench/searches':
@@ -539,6 +640,11 @@ def make_handler(dataset):
                     return self.reply(dataset.grounded.review(path.rsplit('/', 1)[-1], body))
                 if path == '/api/workbench/import':
                     return self.reply(dataset.workbench.import_asset(body), 201)
+                if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
+                    kind = 'pointcloud' if path.endswith('/pointcloud-import') else 'volume'
+                    return self.reply(spatial_assets.admit(dataset.workbench, kind, body), 201)
+                if path == '/api/workbench/audio-import':
+                    return self.reply(dataset.workbench.audio.admit(body), 201)
                 if path == '/api/workbench/mesh-import':
                     return self.reply(meshes.admit(dataset.workbench, body), 201)
                 if path == '/api/workbench/sequence-import':
@@ -616,6 +722,10 @@ def make_handler(dataset):
                 if path.startswith('/api/labels/'):
                     return self.reply(dataset.save(path.rsplit('/', 1)[-1], body))
                 return self.reply({'error': 'Not found.'}, 404)
+            except psycopg.Error:
+                return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
+            except CommitOutcomeUnknown as error:
+                return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
             except workbench.WorkbenchError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except Conflict as error:
@@ -633,7 +743,10 @@ def main():
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
     args = parser.parse_args()
-    dataset = Dataset(args.data)
+    try:
+        dataset = Dataset(args.data)
+    except StorageError as error:
+        parser.exit(2, str(error) + "\n")
     server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)
     try:

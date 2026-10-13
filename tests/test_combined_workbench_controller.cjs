@@ -13,8 +13,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 async function harness(){
  const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},requests=[];
  const response=(data,ok=true)=>({ok,json:async()=>data});
- const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,crypto:{randomUUID:crypto.randomUUID},confirm:()=>false,
-  document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(){}},
+ const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,setTimeout,clearTimeout,crypto:{randomUUID:crypto.randomUUID},confirm:()=>false,
+  document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{dispatchEvent(){return true;},addEventListener(){}},
   fetch:(url,options)=>url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise(resolve=>requests.push({url,options,resolve}))});
  const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..');
  for(const file of ['workbench.js','curation.js','rights-note.js','instruction-responses.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),context);

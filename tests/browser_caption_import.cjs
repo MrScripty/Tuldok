@@ -1,4 +1,4 @@
-// Authored native folder files -> actual HTTP/SQLite -> draft/review -> browser ZIP download.
+// Authored native folder files -> actual HTTP/PostgreSQL -> draft/review -> browser ZIP download.
 'use strict';
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
@@ -51,11 +51,11 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const partial=sourceFiles.filter(file=>file.relative!==assets[0]).map(file=>file.relative===assets[2]?{...file,data:Buffer.from('damaged PNG').toString('base64')}:file);
   partial.push(sourceFiles.find(file=>file.relative===assets[1]));await choose(partial);await start();await idle();
   assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Complete: 1 created, 3 rejected/);assert.equal((await api('records')).total,2);
-  const db=path.join(temporary,'data/dataset.sqlite3');
-  python("import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute(\"CREATE TRIGGER reject_caption BEFORE UPDATE OF annotation_json ON workbench_records BEGIN SELECT RAISE(ABORT,'controlled caption storage failure'); END\"); db.commit()",db);
+  const db=path.join(temporary,'data');
+  python("import sys; sys.path.insert(0,'tests'); from postgres_helpers import fixture_database, install_failure_trigger; db=fixture_database(sys.argv[1]); install_failure_trigger(db, 'workbench_records', 'reject_caption', 'controlled caption storage failure', event='UPDATE OF annotation_json'); db.close()",db);
   await choose(sourceFiles);await start();await idle();assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Paused.*1 uncertain.*3 not attempted/);assert.equal((await api('records')).total,2);assert.equal(fs.readdirSync(path.join(temporary,'data/images')).length,1);
   await click('caption-check');await until(()=>evaluate('document.getElementById("caption-status").textContent.includes("does not prove")'));await click('caption-dismiss');
-  python("import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute('DROP TRIGGER reject_caption'); db.commit()",db);
+  python("import sys; sys.path.insert(0,'tests'); from postgres_helpers import fixture_database, drop_failure_trigger; db=fixture_database(sys.argv[1]); drop_failure_trigger(db, 'workbench_records', 'reject_caption'); db.close()",db);
   await choose(sourceFiles);await evaluate('window.holdCaption=true;window.releaseCaption=null');await start();await until(()=>evaluate('!!window.releaseCaption'));
   await evaluate('document.getElementById("caption-form").dispatchEvent(new Event("submit",{cancelable:true}));document.getElementById("caption-stop").click()');await evaluate('window.releaseCaption()');await idle();
   assert.match(await evaluate('document.getElementById("caption-status").textContent'),/Stopped: 1 created.*3 not attempted/);assert.equal((await api('records')).total,3);
@@ -99,8 +99,8 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const alternate=python("import base64,io,sys; from PIL import Image,PngImagePlugin; out=io.BytesIO(); info=PngImagePlugin.PngInfo(); info.add_text('fixture','corner import after workbench opened'); image=Image.open(sys.argv[1]); image.save(out,'PNG',pnginfo=info); print(base64.b64encode(out.getvalue()).decode())",path.join(fixture,assets[0])).trim();
   const legacyResponse=await fetch(legacyBase+'/api/samples',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:alternate,filename:'later-corner.png',session_id:'later-corner',book_id:'',split:'unassigned'})});
   assert.equal(legacyResponse.status,201);const legacySample=await legacyResponse.json();
-  const legacyDb=path.join(legacyData,'dataset.sqlite3');
-  const legacySnapshot=()=>JSON.parse(python("import sqlite3,json,sys; db=sqlite3.connect(sys.argv[1]); print(json.dumps({table:db.execute('SELECT count(*) FROM '+table).fetchone()[0] for table in ('samples','workbench_records','workbench_history')}))",legacyDb));
+  const legacyDb=legacyData;
+  const legacySnapshot=()=>JSON.parse(python("import json,sys; sys.path.insert(0,'tests'); from postgres_helpers import fixture_database; db=fixture_database(sys.argv[1]); print(json.dumps({table:db.execute('SELECT count(*) FROM '+table).fetchone()[0] for table in ('samples','workbench_records','workbench_history')})); db.close()",legacyDb));
   assert.deepEqual(legacySnapshot(),{samples:1,workbench_records:0,workbench_history:0});
   await evaluate(`(()=>{const original=window.fetch;window.releaseLegacyCaption=null;window.legacyCaptionStatus=null;window.releaseLegacyRefresh=null;window.fetch=async(...args)=>{const url=String(args[0]);if(url.startsWith('/api/workbench/records?'))await new Promise(resolve=>window.releaseLegacyRefresh=resolve);const response=await original(...args);if(url.endsWith('/caption-import/row')){window.legacyCaptionStatus=response.status;await new Promise(resolve=>window.releaseLegacyCaption=resolve);}return response;};})()`);
   await choose(sourceFiles);await start();await until(()=>evaluate('!!window.releaseLegacyCaption'));

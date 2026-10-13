@@ -1,0 +1,47 @@
+{
+  "source_commit": "1959775933030a3639ad504143207d9d8d786f1d",
+  "dirty": false,
+  "command": "node tests/browser_workspace_audio_run.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "18 authored stereo WAV fixtures admitted and reviewed through ordinary API; current Data shows actual source",
+    "Data UI previews class coverage, freezes and downloads original WAV classification release",
+    "keyboard validation proves real frozen input while honestly refusing unavailable audio execution"
+  ],
+  "captures": [
+    {
+      "file": "catalog-audio-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real release and graph on authored CC0 PCM inputs; trainer unavailable",
+      "quality": 85
+    },
+    {
+      "file": "catalog-audio-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real release and graph on authored CC0 PCM inputs; trainer unavailable",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-audio-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real release and graph on authored CC0 PCM inputs; trainer unavailable",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-audio-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real release and graph on authored CC0 PCM inputs; trainer unavailable",
+      "quality": 85
+    }
+  ],
+  "release_id": "38c9be8944c8fcba4b92be9d39909bc274ca81847f0d6299ec3ecb3c53af7410",
+  "training": false,
+  "quality_claim": false,
+  "offline_canary": null,
+  "fixture_provenance": "18 CC0 mathematical stereo WAV fixtures; ordinary HTTP admission/review and browser release/graph controls"
+}

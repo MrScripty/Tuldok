@@ -1,0 +1,18 @@
+test_actual_supervisor_death_drains_audio_child_and_requires_restart (test_audio_training.AudioExecutionTests.test_actual_supervisor_death_drains_audio_child_and_requires_restart) ... ok
+test_actual_worker_cancel_drains_and_explicit_retry_is_fresh (test_audio_training.AudioExecutionTests.test_actual_worker_cancel_drains_and_explicit_retry_is_fresh) ... ok
+test_multiclass_json_reader_matches_actual_three_class_fit (test_audio_training.AudioExecutionTests.test_multiclass_json_reader_matches_actual_three_class_fit) ... ok
+test_nonconvergent_fit_has_no_published_model_or_artifact_manifest (test_audio_training.AudioExecutionTests.test_nonconvergent_fit_has_no_published_model_or_artifact_manifest) ... ok
+test_path_replaced_after_verification_cannot_replace_training_samples (test_audio_training.AudioExecutionTests.test_path_replaced_after_verification_cannot_replace_training_samples) ... ok
+test_real_fit_train_only_json_results_correction_exposure_and_reopen (test_audio_training.AudioExecutionTests.test_real_fit_train_only_json_results_correction_exposure_and_reopen) ... ok
+test_reopen_interrupted_queue_never_replays (test_audio_training.AudioExecutionTests.test_reopen_interrupted_queue_never_replays) ... ok
+test_independent_analytic_pcm_features_and_interval_boundaries (test_audio_training.AudioNumericTests.test_independent_analytic_pcm_features_and_interval_boundaries) ... ok
+test_draft_multiple_intervals_and_transcript_only_remain_ineligible (test_audio_training.AudioReleaseTests.test_draft_multiple_intervals_and_transcript_only_remain_ineligible) ... ok
+test_editable_graph_runtime_and_missing_runtime_refusal (test_audio_training.AudioReleaseTests.test_editable_graph_runtime_and_missing_runtime_refusal) ... ok
+test_originals_and_source_coordinates_survive_real_release (test_audio_training.AudioReleaseTests.test_originals_and_source_coordinates_survive_real_release) ... ok
+test_source_coordinate_hash_and_family_tampering_is_refused (test_audio_training.AudioReleaseTests.test_source_coordinate_hash_and_family_tampering_is_refused) ... ok
+test_unsafe_archive_and_jsonl_mapping_are_refused (test_audio_training.AudioReleaseTests.test_unsafe_archive_and_jsonl_mapping_are_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 53.897s
+
+OK

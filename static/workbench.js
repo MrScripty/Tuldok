@@ -95,13 +95,16 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'mesh' ? ['mesh_geometry'] : ['text_classification','text_entities','text_corpus']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'pointcloud' ? ['pointcloud_geometry'] : record.kind === 'volume' ? ['volume_grid'] : record.kind === 'mesh' ? ['mesh_geometry'] : record.kind === 'audio' ? ['audio_timed'] : ['text_classification','text_entities','text_corpus']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
   $('corpus-note').value = record.task === 'text_corpus' ? record.annotation?.note || '' : '';
   $('task').value = record.task; $('caption').value = record.annotation?.caption || ''; $('label').value = record.annotation?.label || 'object';
   if(typeof sequenceShown === 'function') sequenceShown(record);
   if(typeof meshShown === 'function') meshShown(record);
+  if(typeof pointcloudShown === 'function') pointcloudShown(record);
+  if(typeof volumeShown === 'function') volumeShown(record);
+  if(typeof audioShown === 'function') audioShown(record);
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
   $('record-provenance').textContent = `Saved evidence: ${record.review.replaceAll('_',' ')}. Source: ${JSON.stringify(record.provenance)}. Saving an edit requires a new review decision.`;
@@ -116,7 +119,7 @@ function showRecord(record) {
 function renderTargets() {
   const task = $('task').value;
   $('corpus-controls').hidden = task !== 'text_corpus';
-  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry';
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry' || task === 'pointcloud_geometry' || task === 'volume_grid' || task === 'audio_timed';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -174,7 +177,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'audio_timed' ? audioAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'pointcloud_geometry' ? {note:$('pointcloud-note').value} : task === 'volume_grid' ? {note:$('volume-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&
@@ -226,7 +229,7 @@ function invalidateRelease() {
   ++releaseEpoch; releasePreview = null;
   $('release-preview').replaceChildren();
   $('release-preview-status').textContent = selected.size ? 'Preview the saved selected revisions before exporting.' : 'Select records to preview a release.';
-  $('release-result').replaceChildren(); releaseButtons();
+  $('release-result').replaceChildren();window.dispatchEvent(new CustomEvent('tuldok:release-cleared')); releaseButtons();
 }
 function syncReleaseSelection() {
   const key = JSON.stringify(releaseBody());
@@ -245,7 +248,7 @@ function renderReleasePreview(result) {
     previewLine(root, `${a.unlabeled} unlabeled · ${a.empty_targets} empty targets · ${a.duplicate_content_records} exact duplicate records · ${a.unknown_rights} unknown rights`);
   }
   if(result.class_coverage) {
-    for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder} (index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
+    for(const item of result.class_coverage) previewLine(root, `${JSON.stringify(item.label)} → ${item.folder ? item.folder + " " : ""}(index ${item.index}): `+Object.entries(item.counts).map(([split,count])=>`${split}: ${count}`).join(' · '));
   }
   if(result.corpus_counts) {
     for(const [split, count] of Object.entries(result.corpus_counts)) previewLine(root, `${split}.txt: ${count.bytes} bytes · ${count.documents} documents · ${count.families} connected families (${count.document_bytes} document bytes + ${count.separator_bytes} separator bytes).`);
@@ -279,7 +282,7 @@ $('preview-release').addEventListener('click', async event=>{
   syncReleaseSelection();
   const body=releaseBody(), key=releaseKey, epoch=++releaseEpoch;
   releasePreview=null; releaseBusy=true; releaseButtons();
-  $('release-preview').replaceChildren();$('release-result').replaceChildren();
+  $('release-preview').replaceChildren();$('release-result').replaceChildren();window.dispatchEvent(new CustomEvent('tuldok:release-cleared'));
   $('release-preview-status').textContent='Checking saved selection, source bytes and connected lineage…';
   try {
     const result=await api('releases/preview',body);
@@ -295,12 +298,13 @@ $('release-form').addEventListener('submit',async event=>{
   syncReleaseSelection();
   if(!releasePreview?.eligible) { $('release-preview-status').textContent='Preview an eligible selection before exporting.';return; }
   const body={...releaseBody(),preview_token:releasePreview.preview_token ?? null}, key=releaseKey, epoch=releaseEpoch;
-  releaseBusy=true;releaseButtons();$('release-result').replaceChildren();
+  releaseBusy=true;releaseButtons();$('release-result').replaceChildren();window.dispatchEvent(new CustomEvent('tuldok:release-cleared'));
   try {
     const result=await api('releases',body);
     if(epoch!==releaseEpoch || key!==JSON.stringify(releaseBody())) return;
     const link=document.createElement('a');link.href=result.url;link.textContent=`Download ${result.records}-record frozen release`;link.download='';$('release-result').replaceChildren(link);
-    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+(['image_classification_v1','text_corpus_v1'].includes(result.format)?' export warnings; inspect manifest.json.':' small-image warnings; inspect manifest.json.') : ''));
+    if(body.format==='canonical_v1')window.dispatchEvent(new CustomEvent('tuldok:release-published',{detail:{id:result.id,url:result.url}}));
+    notice('Release frozen. '+JSON.stringify(result.split_report.actual_counts)+(result.warnings?.length ? ' '+result.warnings.length+' export warnings; inspect manifest.json.' : ''));
   } catch(error) {
     if(epoch===releaseEpoch && key===JSON.stringify(releaseBody())) {invalidateRelease();$('release-preview-status').textContent=error.message;notice(error.message,true);}
   } finally { releaseBusy=false;syncReleaseSelection(); }

@@ -1,0 +1,28 @@
+{
+  "source_sha": "83f53385a6812be4026302e7362a240b68ceb339",
+  "dirty": false,
+  "checks": [
+    "Empty real catalog renders honestly",
+    "Real file input imports once despite repeated submit and lost-ack delay",
+    "Browser independently decodes exact stereo source samples and duration",
+    "Keyboard creates source-frame transcript; chosen channel playback has exactly 4001 frames",
+    "Keyboard explicit human review persists exact typed interval and history",
+    "Frozen release contains byte-identical WAV and reviewed JSONL with exact provenance",
+    "Stale edit is refused; explicit reload restores current revision",
+    "Workspace reload retains durable reviewed record and exact timing",
+    "Discarding out-of-range audio input does not block existing text save, including after form re-enable",
+    "Pause during delayed interval preparation cannot resume playback",
+    "Failed late audio request cannot overwrite a newer editor notice",
+    "Catalog capability advertises only qualified WAV Data; execution and ASR remain unavailable",
+    "Native 200% Chromium zoom doubles pixel ratio/halves viewport; keyboard interval controls and layout remain usable"
+  ],
+  "captures": [
+    "audio-data-first-1440.jpg",
+    "audio-reviewed-1440.jpg",
+    "audio-reviewed-390.jpg",
+    "audio-native-200.jpg"
+  ],
+  "record_id": "128239f5436748fd8b824083719d2250",
+  "release_url": "/api/workbench/releases/086fe436b3d9c257859a70d1d056a0c22cb1c16eece776fbc7383003a6d60b98.zip",
+  "fixture_sha256": "52d48d8057e8e33e0a2938fd42e0a36f33754ee3811d57c2024b401cc6534b26"
+}

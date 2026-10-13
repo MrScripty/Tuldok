@@ -3,6 +3,7 @@ import base64
 import hashlib
 import io
 import json
+from postgres_helpers import database_snapshot
 from pathlib import Path
 import sys
 import tempfile
@@ -111,9 +112,9 @@ class ClassificationReleaseTests(unittest.TestCase):
 
     def test_deterministic_order_preview_and_frozen_bytes(self):
         rows = self.corpus()
-        before = '\n'.join(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         preview = self.dataset.releases.preview(self.body(rows))
-        self.assertEqual(before, '\n'.join(self.dataset.db.iterdump()), 'Preview is read-only')
+        self.assertEqual(before, database_snapshot(self.dataset.db), 'Preview is read-only')
         release = self.freeze(rows)
         frozen = self.dataset.releases.locate(release['id']).read_bytes()
         self.assertEqual(self.freeze(list(reversed(rows)))['id'], release['id'])
@@ -142,7 +143,7 @@ class ClassificationReleaseTests(unittest.TestCase):
         for annotation in ({'label': ['one', 'two']}, {'label': 'one', 'labels': ['two']}, {'labels': ['one']},
                            {'label': ' padded '}, {'label': ''}):
             with self.subTest(annotation=annotation):
-                self.dataset.db.execute('UPDATE workbench_records SET annotation_json=? WHERE id=?',
+                self.dataset.db.execute('UPDATE workbench_records SET annotation_json=%s WHERE id=%s',
                                         (encode(annotation), rows[0]['id']))
                 self.dataset.db.commit()
                 preview = self.dataset.releases.preview(self.body(rows))
@@ -156,8 +157,8 @@ class ClassificationReleaseTests(unittest.TestCase):
                 ('image_detection', {'boxes': []}, 'human_reviewed'),
                 ('image_classification', {'label': ['ambiguous', 'multiple']}, 'human_reviewed')):
             with self.subTest(task=task, review=review, annotation=annotation):
-                with self.dataset.db:
-                    self.dataset.db.execute('UPDATE workbench_records SET task=?,annotation_json=?,review=? WHERE id=?',
+                with self.dataset.db.transaction():
+                    self.dataset.db.execute('UPDATE workbench_records SET task=%s,annotation_json=%s,review=%s WHERE id=%s',
                                             (task, encode(annotation), review, invalid['id']))
                 with patch('dataset_releases.analyze', side_effect=AssertionError('Invalid target reached analytics')):
                     preview = self.dataset.releases.preview(self.body(rows))

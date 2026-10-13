@@ -1,9 +1,9 @@
 """Actual HTTP and SQL facts, including rollback-only legacy enrollment."""
+from postgres_helpers import database_snapshot, in_transaction
 import base64
 import io
 import hashlib
 import json
-import sqlite3
 import tempfile
 import threading
 import unittest
@@ -49,9 +49,7 @@ class CurationTests(unittest.TestCase):
     def ref(row): return {key:row[key] for key in ('id','revision','source_revision')}
 
     def state(self):
-        with sqlite3.connect(self.dataset.path/'dataset.sqlite3') as db:
-            tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
-            return {table: db.execute('SELECT * FROM '+table+' ORDER BY rowid').fetchall() for table in tables}
+        return database_snapshot(self.dataset.db)
 
     def image(self, tag, legacy=False):
         out = io.BytesIO(); info=PngImagePlugin.PngInfo(); info.add_text('fixture',tag)
@@ -71,7 +69,7 @@ class CurationTests(unittest.TestCase):
         status, second=self.request(dict(scope='filtered',category='unlabeled',filters=options,offset=40,limit=40,view_token=result['view_token']))
         self.assertEqual(status,200); self.assertEqual(len(second['items']),3)
         self.assertEqual({r['id'] for r in result['items']+second['items']},{r['id'] for r in rows})
-        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(self.state(),before); self.assertFalse(in_transaction(self.w.db))
 
     def test_duplicates_are_actual_scoped_pixel_members_and_legacy_reads_roll_back(self):
         a=self.image('a'); b=self.image('b',legacy=True)
@@ -80,7 +78,7 @@ class CurationTests(unittest.TestCase):
         self.assertEqual({r['duplicate_members'] for r in result['items']},{2})
         self.assertEqual(len({r['duplicate_hash'] for r in result['items']}),1)
         self.assertEqual(self.report('duplicates',filters={'group':'shared'})['total'],0)
-        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(self.state(),before); self.assertFalse(in_transaction(self.w.db))
         self.assertEqual(self.w.db.execute('SELECT COUNT(*) FROM workbench_records').fetchone()[0],1)
 
     def test_selected_current_facts_report_stale_deleted_missing_without_replacing_set(self):
@@ -98,13 +96,13 @@ class CurationTests(unittest.TestCase):
         byid={r['id']:r for r in result['items']}; self.assertEqual(byid[a['id']]['reference']['requested'],refs[0])
         self.assertEqual(byid[missing['id']]['reference']['current'],None)
         self.assertEqual(self.dataset.selections.load(saved['id'])['selection'],saved)
-        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(self.state(),before); self.assertFalse(in_transaction(self.w.db))
 
     def test_none_is_unlabeled_empty_negative_is_labeled_and_unknown_projection_is_existing_fact(self):
         a=self.text('none'); b=self.text('empty'); c=self.text('uppercase',rights='UNKNOWN')
         self.w.save(b['id'],dict(b,task='text_entities',annotation={'spans':[]},review='human_reviewed'))
-        with self.w.db:
-            self.w.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?',(encode({'rights':None}),a['id']))
+        with self.w.db.transaction():
+            self.w.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s',(encode({'rights':None}),a['id']))
         result=self.report();self.assertEqual({r['id'] for r in result['items']},{a['id'],c['id']})
         self.assertEqual(result['analysis']['empty_targets'],1)
         self.assertEqual({r['id'] for r in self.report('unknown_rights')['items']},{a['id'],b['id']})
@@ -128,7 +126,7 @@ class CurationTests(unittest.TestCase):
         import curation
         with patch.object(curation,'analyze',side_effect=ValueError('fixture failure')):
             with self.assertRaisesRegex(ValueError,'fixture failure'): curation.inspect(self.w,dict(scope='filtered',category='unlabeled'))
-        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(self.state(),before); self.assertFalse(in_transaction(self.w.db))
 
     def test_selected_scope_decodes_only_requested_records_and_enrolls_only_selected_legacy(self):
         rows=[self.text(str(i)) for i in range(36)]
@@ -146,12 +144,12 @@ class CurationTests(unittest.TestCase):
                          'Only the requested legacy image may be temporarily enrolled')
         self.assertEqual(result['analysis']['records'],2)
         self.assertEqual(result['reference_counts'],dict(stale=0,source_deleted=0,missing_record=1))
-        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(self.state(),before); self.assertFalse(in_transaction(self.w.db))
         import curation
         with patch.object(curation,'analyze',side_effect=ValueError('selected fixture failure')):
             with self.assertRaisesRegex(ValueError,'selected fixture failure'):
                 curation.inspect(self.w,dict(scope='selected',items=refs,category='references'))
-        self.assertEqual(self.state(),before); self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(self.state(),before); self.assertFalse(in_transaction(self.w.db))
 
     def test_freshness_streams_canonical_filtered_facts_without_full_json_encoding(self):
         for i in range(36):

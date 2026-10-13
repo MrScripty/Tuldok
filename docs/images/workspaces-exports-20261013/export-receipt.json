@@ -1,0 +1,60 @@
+{
+  "source_commit": "04b4586a39e8f8b00ebb642961413114626bbc10",
+  "dirty": true,
+  "command": "node tests/browser_workspace_export_run.cjs",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "Real export-only run without training interpreter; recipe choice, named clone, invalid-edge refusal, Unicode release and exact download",
+    "Reopened PostgreSQL-backed app preserves report, exact release and immutable old graph after later edits"
+  ],
+  "captures": [
+    {
+      "file": "pipeline-export-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real real frozen classification export; no training",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-export-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real real frozen classification export; no training",
+      "quality": 85
+    },
+    {
+      "file": "runs-export-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real real frozen classification export; no training",
+      "quality": 85
+    },
+    {
+      "file": "runs-export-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real real frozen classification export; no training",
+      "quality": 85
+    }
+  ],
+  "run_id": "d08a5740ede145acbac01600a962a20c",
+  "release_id": "68418ba36d6335ce0abf7d3881e7b19a937aa041750435b13435cefe64b6ed72",
+  "training": false,
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  }
+}

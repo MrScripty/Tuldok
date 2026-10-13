@@ -1,4 +1,5 @@
 """Frozen, self-contained releases with connected-source split allocation."""
+import audio_export
 import hashlib
 import json
 import os
@@ -11,6 +12,8 @@ from PIL import Image
 
 import image_classification_export as classification_export
 import text_corpus_export as corpus_export
+import text_classification_export as text_class_export
+import audio_classification_export as audio_class_export
 
 from workbench import WorkbenchError, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, analyze, encode, file_hash, rights_note, validate_annotation
 
@@ -166,13 +169,8 @@ class Releases:
     def preview(self, body):
         """Inspect the exact selection without persisting even lazy image enrollment."""
         workbench = self.workbench
-        with workbench.lock:
-            workbench.db.execute('SAVEPOINT release_preview')
-            try:
-                return self._prepare(body)['preview']
-            finally:
-                workbench.db.execute('ROLLBACK TO release_preview')
-                workbench.db.execute('RELEASE release_preview')
+        with workbench.lock, workbench.db.transaction(force_rollback=True):
+            return self._prepare(body)['preview']
 
     def _prepare(self, body):
         """Shared validation/allocation authority for preview and final export.
@@ -196,7 +194,7 @@ class Releases:
             if record_id is not None:
                 item['record_id'] = record_id
             preview['blockers'].append(item)
-        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT):
+        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT, text_class_export.FORMAT, audio_class_export.FORMAT):
             block(WorkbenchError('Unknown release format.'))
         try:
             rows = workbench.selection(body.get('items'))
@@ -204,13 +202,14 @@ class Releases:
             block(error)
             return {'preview': preview}
         preview['selected_count'] = len(rows)
-        if format_name == classification_export.FORMAT:
+        if format_name in (classification_export.FORMAT, text_class_export.FORMAT, audio_class_export.FORMAT):
+            projection = {text_class_export.FORMAT: text_class_export, audio_class_export.FORMAT: audio_class_export}.get(format_name, classification_export)
             if set(body) - {'format', 'items', 'ratios', 'seed', 'preview_token'}:
                 block(WorkbenchError('Unknown classification release fields.'))
                 return {'preview': preview}
             for row in rows:
                 try:
-                    classification_export.validate_records([row])
+                    projection.validate_records([row])
                 except WorkbenchError as error:
                     block(error, row['id'])
                     return {'preview': preview}
@@ -228,13 +227,19 @@ class Releases:
                 if format_name == classification_export.FORMAT:
                     if row['task'] != 'image_classification' or row['review'] != 'human_reviewed' or not row['source_available']:
                         raise WorkbenchError('Chapter 8 classification export requires available images with human-reviewed single-class annotations.')
+                elif format_name == text_class_export.FORMAT:
+                    text_class_export.validate_records([row])
+                elif format_name == audio_class_export.FORMAT:
+                    audio_class_export.validate_records([row])
                 elif format_name == CAPTION_FORMAT:
                     if row['task'] != 'image_caption' or row['review'] != 'human_reviewed' or not row['source_available']:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
-                if row['kind'] in ('sequence', 'mesh') and row['review'] != 'human_reviewed':
-                    raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Mesh export requires human-reviewed whole geometry records.')
+                if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume') and row['review'] != 'human_reviewed':
+                    raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Spatial export requires human-reviewed whole asset records.')
+                if row['kind'] == 'audio':
+                    audio_export.validate_record(row)
                 validate_annotation(row['task'], row['annotation'], row)
             except WorkbenchError as error:
                 block(error, row['id'])
@@ -280,9 +285,39 @@ class Releases:
             if preview['analysis']['duplicate_content_records']:
                 preview['warnings'].append('Exact decoded-pixel repeats are retained in the same connected split. Inspect repeated examples and contradictory labels before training; none are discarded.')
             preview['warnings'].append('Opaque class folders are model indices. Use manifest.json class_vocabulary to recover exact labels. The mapping is frozen per release, not shared automatically across releases.')
+        if format_name == text_class_export.FORMAT:
+            try:
+                vocabulary, coverage, blockers = text_class_export.inspect_projection(rows, preview['assignments'])
+                preview['class_vocabulary'], preview['class_coverage'] = vocabulary, coverage
+                for message in blockers:
+                    block(WorkbenchError(message))
+                if not preview['blockers']:
+                    prepared = {'preview': preview, 'rows': rows, 'roots': roots, 'groups': groups, 'snapshots': snapshots}
+                    if sum(len(data) for _, data in text_class_export.entries(prepared, body)) > text_class_export.MAX_PAYLOAD_BYTES:
+                        block(WorkbenchError('Frozen text assets and complete provenance exceed the 7 MiB payload bound.'))
+            except WorkbenchError as error:
+                block(error)
+        if format_name == audio_class_export.FORMAT:
+            try:
+                vocabulary, coverage, blockers = audio_class_export.inspect_projection(rows, preview['assignments'])
+                preview['class_vocabulary'], preview['class_coverage'] = vocabulary, coverage
+                for message in blockers:
+                    block(WorkbenchError(message))
+                if not preview['blockers']:
+                    prepared = dict(preview=preview, rows=rows, roots=roots, groups=groups, snapshots=snapshots)
+                    frozen = audio_class_export.manifest(prepared, body)
+                    if sum(len(data) for _, data in audio_class_export.metadata_entries(frozen)) > audio_class_export.MAX_METADATA_BYTES:
+                        block(WorkbenchError('Frozen audio metadata and complete provenance exceed 7 MiB.'))
+                preview['warnings'].append(audio_class_export.CONTRACT)
+            except WorkbenchError as error:
+                block(error)
         if format_name == 'canonical_v1':
+            if any(row['kind'] == 'audio' for row in rows):
+                preview['warnings'].append(audio_export.CONTRACT)
             if any(row['kind'] == 'mesh' for row in rows):
                 preview['warnings'].append('Static mesh assets retain raw PLY/sidecar bytes and declared units/frame/provenance; geometry inspection is not simulation or training qualification.')
+            if any(row['kind'] in ('pointcloud', 'volume') for row in rows):
+                preview['warnings'].append('Point clouds and volumes preserve original source bytes and declared physical coordinates; whole assets remain indivisible. Inspection does not qualify segmentation, simulation or training.')
             if any(row['kind'] == 'sequence' for row in rows):
                 preview['warnings'].append('Sequence assets are complete raw run.json/frames.jsonl ZIPs. MAC fields and accepted intervals stay intact; transport-only data has no qualified training consumer.')
             preview['warnings'].append('Canonical export projects detection to COCO; other tasks remain typed JSONL records, not one interchangeable training format.')
@@ -369,7 +404,7 @@ class Releases:
             return {'preview': preview}
 
     def _create_corpus(self, body):
-        with self.workbench.lock, self.workbench.db:
+        with self.workbench.lock, self.workbench.db.transaction():
             prepared = self._checked(body)
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:
@@ -589,7 +624,7 @@ class Releases:
 
     def _create_responses(self, body):
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
             try:
@@ -623,6 +658,12 @@ class Releases:
                     'split_report': preview['split_report']}
 
     def create(self, body):
+        with self.workbench.lock:
+            if self.workbench.db.in_transaction:
+                raise WorkbenchError('Freeze releases outside an enclosing metadata transaction.')
+            return self._create(body)
+
+    def _create(self, body):
         format_name = body.get('format', 'canonical_v1')
         if format_name == corpus_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
@@ -632,8 +673,16 @@ class Releases:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact responses before exporting.', 'conflict', 409)
             return self._create_responses(body)
-        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT):
+        if format_name not in ('canonical_v1', CAPTION_FORMAT, classification_export.FORMAT, text_class_export.FORMAT, audio_class_export.FORMAT):
             raise WorkbenchError('Unknown release format.')
+        if format_name == audio_class_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact audio classification selection before exporting.', 'conflict', 409)
+            return self._create_audio_classification(body)
+        if format_name == text_class_export.FORMAT:
+            if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
+                raise WorkbenchError('Preview the exact text classification selection before exporting.', 'conflict', 409)
+            return self._create_text_classification(body)
         if format_name == classification_export.FORMAT:
             if not isinstance(body.get('preview_token'), str) or not RELEASE_ID.fullmatch(body['preview_token']):
                 raise WorkbenchError('Preview the exact classification selection before exporting.', 'conflict', 409)
@@ -641,7 +690,7 @@ class Releases:
         if format_name == CAPTION_FORMAT:
             return self._create_captions(body)
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             rows = prepared['rows']
             assignments = prepared['preview']['assignments']
@@ -650,6 +699,8 @@ class Releases:
                         'coordinate_contract': 'Oriented image pixel-edge xywh; text spans are NFC/LF Unicode code-point [start,end). Sequence bundles preserve original named staggered fields and accepted intervals; each whole trajectory is indivisible. Static mesh bundles preserve native xyz/topology and declared units/frame; each whole mesh is indivisible.',
                         'limitations': ['Review status is evidence, not a quality guarantee.', 'Rights and semantic source independence require human judgment.'],
                         'records': []}
+            if any(row['kind'] in ('pointcloud', 'volume') for row in rows):
+                manifest['coordinate_contract'] += ' Point clouds preserve ordered points and declared frame; volumes preserve uint8 voxel values and voxel-center affine; whole spatial assets are indivisible.'
             vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
             categories = {label: i + 1 for i, label in enumerate(vocabulary)}
             coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': [{'id': i, 'name': label} for label, i in categories.items()]} for split in SPLITS}
@@ -661,9 +712,11 @@ class Releases:
                         for index, row in enumerate(rows, 1):
                             split = assignments[row['id']]
                             asset, _ = workbench.asset(row['id'])
-                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip'}[row['kind']]
+                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip', 'audio': '.wav', 'pointcloud': '.zip', 'volume': '.zip'}[row['kind']]
                             digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
+                            if row['kind'] == 'audio':
+                                record = audio_export.project(record)
                             manifest['records'].append(record)
                             if row['task'] == 'image_detection':
                                 coco[split]['images'].append({'id': index, 'file_name': filename, 'width': row['width'], 'height': row['height']})
@@ -691,7 +744,7 @@ class Releases:
     def _create_captions(self, body):
         """Freeze only reviewed captions into the pinned imagefolder contract."""
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             rows = prepared['rows']
             assignments = prepared['preview']['assignments']
@@ -741,7 +794,7 @@ class Releases:
     def _create_classification(self, body):
         """Publish every reviewed selected image through a trainer-specific view."""
         workbench = self.workbench
-        with workbench.lock, workbench.db:
+        with workbench.lock, workbench.db.transaction():
             prepared = self._checked(body)
             preview, rows = prepared['preview'], prepared['rows']
             vocabulary = preview['class_vocabulary']
@@ -792,3 +845,57 @@ class Releases:
                     'format': classification_export.FORMAT, 'records': len(rows),
                     'split_report': preview['split_report'], 'class_vocabulary': vocabulary,
                     'warnings': preview['warnings']}
+
+    def _create_text_classification(self, body):
+        """Publish the reviewed text projection through the existing release owner."""
+        with self.workbench.lock, self.workbench.db.transaction():
+            prepared = self._checked(body)
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        for name, contents in text_class_export.entries(prepared, body):
+                            archive.writestr(zipfile.ZipInfo(name), contents)
+                    target.flush()
+                    os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': text_class_export.FORMAT, 'records': len(prepared['rows']),
+                    'split_report': prepared['preview']['split_report'],
+                    'class_vocabulary': prepared['preview']['class_vocabulary'],
+                    'warnings': prepared['preview']['warnings']}
+
+
+    def _create_audio_classification(self, body):
+        """Publish byte-identical WAVs and reviewed source intervals atomically."""
+        with self.workbench.lock, self.workbench.db.transaction():
+            prepared = self._checked(body)
+            value = audio_class_export.manifest(prepared, body)
+            fd, temporary = tempfile.mkstemp(prefix='.building-', suffix='.zip', dir=self.path)
+            try:
+                with os.fdopen(fd, 'w+b') as target:
+                    with zipfile.ZipFile(target, 'w', zipfile.ZIP_STORED) as archive:
+                        for name, contents in audio_class_export.metadata_entries(value):
+                            archive.writestr(zipfile.ZipInfo(name), contents)
+                        for row in value['records']:
+                            source, _ = self.workbench.asset(row['id'])
+                            contents = source.read_bytes() if isinstance(source, Path) else source
+                            if hashlib.sha256(contents).hexdigest() != row['asset_sha256']:
+                                raise WorkbenchError('Audio source changed before publication.', 'conflict', 409)
+                            archive.writestr(zipfile.ZipInfo(row['asset']), contents)
+                    target.flush()
+                    os.fsync(target.fileno())
+                release_id = file_hash(Path(temporary))
+                os.replace(temporary, self.path / (release_id + '.zip'))
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
+            return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
+                    'format': audio_class_export.FORMAT, 'records': len(prepared['rows']),
+                    'split_report': prepared['preview']['split_report'],
+                    'class_vocabulary': prepared['preview']['class_vocabulary'],
+                    'warnings': prepared['preview']['warnings']}

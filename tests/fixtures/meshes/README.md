@@ -14,3 +14,10 @@ file bytes/SHA256. Definition authority: [original PLY format description](https
 The consumer only claims its [bounded profile](../../../docs/contracts/static-mesh.md).
 No third-party meshes were incorporated: the inspected tinyply README's
 software dedication does not explicitly establish rights to its mesh assets.
+
+`asymmetric-prism` is a newly authored six-vertex/eight-triangle prism: native
+XYZ coordinates `[0,0,0], [3,0,0], [0,0,1.5], [0,2,0], [3,2,0], [0,2,1.5]`,
+mixed float32 X/Z and float64 Y, centimetres and right-handed `authored-prism`
+frame with Z up. Its asymmetry makes rotation and axis projection observable.
+Expected coordinates, ordered topology and bounds are authored independently in
+`test_mesh_release.py`; the data is not an external producer or physics result.

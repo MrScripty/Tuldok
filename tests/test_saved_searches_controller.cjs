@@ -11,8 +11,8 @@ const nodes=new Map(),element=id=>{if(!nodes.has(id))nodes.set(id,new Element(id
 const events={},requests=[],recordQueries=[],page={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
 let holdQuery=false,holdList=false,list=[];
 const response=(data,ok=true)=>({ok,status:ok?200:409,json:async()=>data});
-const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,location:{hash:'#selection=kept'},confirm:()=>true,
-  document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(event,fn){(events[event]||=[]).push(fn);}},
+const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,setTimeout,clearTimeout,location:{hash:'#selection=kept'},confirm:()=>true,
+  document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{dispatchEvent(){return true;},addEventListener(event,fn){(events[event]||=[]).push(fn);}},
   fetch:(url,options)=>{
     if(url.endsWith('/grounded/jobs'))return Promise.resolve(response({jobs:[]}));
     if(url.includes('/records?')){recordQueries.push(url);if(!holdQuery)return Promise.resolve(response(page));}

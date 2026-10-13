@@ -3,13 +3,14 @@
 Constructor and accepted-state formula come directly from draft PR 20 fee7b4a's
 tools/test_dense3d_sequence_import.py. Provenance placeholders remain synthetic.
 """
+from postgres_helpers import database_snapshot, drop_failure_trigger, install_failure_trigger, observed_statements
 import base64
 import copy
 import hashlib
 import io
 import json
 from pathlib import Path
-import sqlite3
+import psycopg
 import struct
 import subprocess
 import sys
@@ -29,7 +30,6 @@ from dataset_releases import allocate, connected_components
 from fixtures.rheon_source_derived import synthetic_frames, synthetic_manifest
 import rheon_sequence_contract as contract
 import rheon_sequences as adapter
-from sequence_assets import migrate_records
 from workbench import WorkbenchError, encode
 
 
@@ -98,9 +98,9 @@ class Sequences(unittest.TestCase):
             self.assertNotIn('fields', entry)
         decoded = contract._fields(json.loads(self.raw.splitlines()[2]))
         self.assertEqual(decoded['tracer'][0], struct.unpack('<f', struct.pack('<f', 0.1000000015))[0])
-        reads = []; self.d.db.set_trace_callback(reads.append)
-        self.assertEqual(self.w.query({'kind': 'sequence'})['total'], 1)
-        self.assertFalse(any('SELECT bundle ' in sql for sql in reads)); self.d.db.set_trace_callback(None)
+        with observed_statements(self.d.db) as reads:
+            self.assertEqual(self.w.query({'kind': 'sequence'})['total'], 1)
+        self.assertFalse(any('SELECT bundle ' in sql for sql in reads))
         reviewed = self.review(row)
         corrected = self.w.correct_rights_note(row['id'], dict(revision=reviewed['revision'], source_revision=1, note='Synthetic fixture authored for tests.'))['record']
         self.assertEqual(corrected['review'], 'human_reviewed')
@@ -188,11 +188,11 @@ class Sequences(unittest.TestCase):
         before = self.snapshot()
         for table in ('workbench_sequence_assets', 'workbench_records', 'workbench_history'):
             with self.subTest(table=table):
-                self.d.db.execute(f"CREATE TRIGGER fail_insert BEFORE INSERT ON {table} BEGIN SELECT RAISE(ABORT,'controlled publication failure'); END")
+                install_failure_trigger(self.d.db, table, 'fail_insert', 'controlled publication failure')
                 self.d.db.commit()
-                with self.assertRaises(sqlite3.IntegrityError): self.add()
+                with self.assertRaises(psycopg.IntegrityError): self.add()
                 self.assertEqual(self.snapshot(), before)
-                self.d.db.execute('DROP TRIGGER fail_insert'); self.d.db.commit()
+                drop_failure_trigger(self.d.db, table, 'fail_insert'); self.d.db.commit()
         row = self.add(); before = self.snapshot()
         with self.assertRaises(WorkbenchError): self.add()
         self.assertEqual(self.snapshot(), before)
@@ -240,8 +240,8 @@ class Sequences(unittest.TestCase):
     def test_release_and_saved_selection_caps_precede_blob_reads(self):
         row = self.review(self.add()); items = self.selection([row])
         # Test cap enforcement without manufacturing huge BLOBs or simulations.
-        with self.d.db:
-            self.d.db.execute('UPDATE workbench_sequence_assets SET bundle_bytes=? WHERE id=?', (40 * 1024 * 1024 + 1, row['id']))
+        with self.d.db.transaction():
+            self.d.db.execute('UPDATE workbench_sequence_assets SET bundle_bytes=%s WHERE id=%s', (40 * 1024 * 1024 + 1, row['id']))
         with patch.object(self.w, 'asset', side_effect=AssertionError('BLOB must not be loaded')):
             preview = self.d.releases.preview(dict(items=items, ratios=dict(train=100, validation=0, test=0), seed=42))
             self.assertFalse(preview['eligible']); self.assertIn('40 MiB', preview['blockers'][0]['message'])
@@ -250,8 +250,8 @@ class Sequences(unittest.TestCase):
 
     def test_bundle_integrity_and_optimized_validation(self):
         row = self.add()
-        with self.d.db:
-            self.d.db.execute('UPDATE workbench_sequence_assets SET bundle=? WHERE id=?', (b'corrupt', row['id']))
+        with self.d.db.transaction():
+            self.d.db.execute('UPDATE workbench_sequence_assets SET bundle=%s WHERE id=%s', (b'corrupt', row['id']))
         with self.assertRaisesRegex(WorkbenchError, 'changed'): self.w.asset(row['id'])
         frames = synthetic_frames(); frames[3]['carrier_stamp']['version'] = '5'
         run, raw = fixture(frames)
@@ -315,41 +315,59 @@ class Sequences(unittest.TestCase):
         self.assertEqual(self.w.query({})['total'], 1)
 
 
-class SchemaMigration(unittest.TestCase):
-    def legacy(self, db):
-        db.execute('''CREATE TABLE workbench_records (
-            id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('image','text')),
-            name TEXT, text TEXT, original_text TEXT, content_hash TEXT NOT NULL, pixel_hash TEXT,
-            groups_json TEXT NOT NULL, parents_json TEXT NOT NULL, provenance_json TEXT NOT NULL,
-            task TEXT NOT NULL, annotation_json TEXT, review TEXT NOT NULL, revision INTEGER NOT NULL,
-            created_at TEXT NOT NULL, updated_at TEXT NOT NULL)''')
-        db.execute('CREATE INDEX workbench_content ON workbench_records(content_hash)')
-        db.execute('CREATE INDEX custom_name ON workbench_records(name)')
-        db.execute('INSERT INTO workbench_records VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                   ('a' * 32, 'text', 'Legacy', 'Original', 'Original', 'b' * 64, None,
-                    '["legacy"]', '[]', '{}', 'text_classification', '{"label":"old"}', 'human_reviewed', 7, 'created', 'updated'))
-        db.commit()
+class PostgreSQLSchema(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.data = Dataset(self.tmp.name)
+        self.addCleanup(self.data.close)
 
-    def test_exact_legacy_values_indexes_reopen_and_migration_failure_rollback(self):
-        db = sqlite3.connect(':memory:'); self.addCleanup(db.close); self.legacy(db)
-        before = db.execute('SELECT * FROM workbench_records').fetchall()
-        migrate_records(db); migrate_records(db)
-        self.assertEqual(db.execute('SELECT * FROM workbench_records').fetchall(), before)
-        self.assertEqual({r[1] for r in db.execute('PRAGMA index_list(workbench_records)')}, {'sqlite_autoindex_workbench_records_1', 'workbench_content', 'custom_name'})
-        db2 = sqlite3.connect(':memory:'); self.addCleanup(db2.close); self.legacy(db2)
-        db2.execute('CREATE TRIGGER refuse BEFORE INSERT ON workbench_records BEGIN SELECT RAISE(ABORT,"no"); END'); db2.commit()
-        original_schema = db2.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
-        with self.assertRaises(WorkbenchError): migrate_records(db2)
-        self.assertEqual(db2.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(), original_schema)
-        db2.execute('DROP TRIGGER refuse'); db2.commit()
-        # Authorizer fails after replacement-table creation; SAVEPOINT rolls back DDL.
-        def authorize(action, arg1, arg2, *args):
-            return sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_DROP_TABLE and arg1 == 'workbench_records' else sqlite3.SQLITE_OK
-        db2.set_authorizer(authorize)
-        with self.assertRaises(sqlite3.DatabaseError): migrate_records(db2)
-        db2.set_authorizer(None)
-        self.assertEqual(db2.execute('SELECT * FROM workbench_records').fetchall(), before)
-        self.assertIsNone(db2.execute("SELECT 1 FROM sqlite_master WHERE name='workbench_records_sequence'").fetchone())
+    def test_validation_is_idempotent_and_transactional_ddl_preserves_exact_rows(self):
+        row = self.data.workbench.import_asset(dict(kind='text', text='Exact café\r\n', groups=['schema-fixture']))
+        before = database_snapshot(self.data.db)
+        self.data.db.validate_schema()
+        self.data.db.validate_schema()
+        self.assertEqual(database_snapshot(self.data.db), before)
+        with self.assertRaisesRegex(RuntimeError, 'injected schema failure'):
+            with self.data.db.transaction():
+                self.data.db.execute('ALTER TABLE workbench_records ADD COLUMN abandoned TEXT')
+                self.data.db.execute('UPDATE workbench_records SET original_text=%s WHERE id=%s', ('temporary', row['id']))
+                raise RuntimeError('injected schema failure')
+        self.assertEqual(database_snapshot(self.data.db), before)
+        self.data.db.validate_schema()
+
+    def test_unknown_storage_contracts_fail_closed_without_repairing_them(self):
+        statements = (
+            'ALTER TABLE workbench_records ADD COLUMN surprise TEXT',
+            'ALTER TABLE workbench_records ALTER COLUMN revision TYPE TEXT USING revision::text',
+            'ALTER TABLE workbench_records ALTER COLUMN name SET NOT NULL',
+            "ALTER TABLE workbench_records ALTER COLUMN name SET DEFAULT 'surprise'",
+            'ALTER TABLE workbench_records ADD CONSTRAINT unexpected_unique UNIQUE(name)',
+            'ALTER TABLE workbench_records ADD CONSTRAINT unexpected_check CHECK(revision > 0)',
+            'ALTER TABLE workbench_mesh_assets DROP COLUMN bundle',
+            'ALTER TABLE workbench_sequence_assets DROP COLUMN bundle',
+        )
+        for statement in statements:
+            with self.subTest(statement=statement):
+                # Deliberately abort each fixture mutation after observing failure.
+                with self.assertRaisesRegex(RuntimeError, 'restore fixture'):
+                    with self.data.db.transaction():
+                        self.data.db.execute(statement)
+                        changed = database_snapshot(self.data.db)
+                        with self.assertRaises(ValueError):
+                            self.data.db.validate_schema()
+                        self.assertEqual(database_snapshot(self.data.db), changed)
+                        raise RuntimeError('restore fixture')
+        self.data.db.validate_schema()
+
+    def test_unknown_trigger_is_preserved_and_rejected(self):
+        install_failure_trigger(self.data.db, 'workbench_records', 'unexpected_trigger', 'unsupported')
+        before = database_snapshot(self.data.db)
+        with self.assertRaises(ValueError):
+            self.data.db.validate_schema()
+        self.assertEqual(database_snapshot(self.data.db), before)
+        drop_failure_trigger(self.data.db, 'workbench_records', 'unexpected_trigger')
+        self.data.db.validate_schema()
 
 
 if __name__ == '__main__':

@@ -174,7 +174,7 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(splits[unrelated['id']],'train')
         # A pre-fix deletion cannot have its latest relationships reconstructed.
         # Removing the fixture tombstone simulates that persisted migration state.
-        with self.dataset.db:self.dataset.db.execute('DELETE FROM workbench_deleted_sources WHERE id=?',(first['id'],))
+        with self.dataset.db.transaction():self.dataset.db.execute('DELETE FROM workbench_deleted_sources WHERE id=%s',(first['id'],))
         with self.assertRaises(WorkbenchError):self.release([child],dict(train=100,validation=0,test=0))
 
     def test_http_static_export_and_errors(self):

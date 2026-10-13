@@ -1,0 +1,269 @@
+{
+  "checked_at_utc": "2026-10-12T10:47:28Z",
+  "repository": "MrScripty/Tuldok",
+  "reviewed_head": "6d939359d3cef2464c2aff990dd58d50c4f8d791",
+  "main_head": "1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c",
+  "feature_head": "6d939359d3cef2464c2aff990dd58d50c4f8d791",
+  "open_prs": [
+    {
+      "number": 33,
+      "title": "ui: prioritize the dataset canvas and compact workbench tools",
+      "url": "https://github.com/MrScripty/Tuldok/pull/33",
+      "draft": true,
+      "head": "581fa5ca471186ed641ec4bf6d134ee1ba807d22",
+      "branch": "ui/compact-workbench-20261011",
+      "base": "1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c",
+      "files": [
+        ".github/workflows/tests.yml",
+        "app.py",
+        "docs/images/compact-workbench/image.jpg",
+        "docs/images/compact-workbench/mesh.jpg",
+        "docs/images/compact-workbench/text-narrow.jpg",
+        "docs/images/compact-workbench/text.jpg",
+        "docs/plans/compact-workbench/README.md",
+        "static/workbench-layout.js",
+        "static/workbench.css",
+        "static/workbench.html",
+        "static/workbench.js",
+        "tests/browser_caption_proposals.cjs",
+        "tests/browser_classification_preferences_integration.cjs",
+        "tests/browser_combined_workbench.cjs",
+        "tests/browser_metadata_filters.cjs",
+        "tests/browser_native_detection_import.cjs",
+        "tests/browser_native_text_import.cjs",
+        "tests/browser_pumas_gateways.cjs",
+        "tests/browser_pumas_typed.cjs",
+        "tests/browser_text_classification_proposals.cjs",
+        "tests/browser_workbench_layout.cjs",
+        "tests/test_workbench_controller.cjs",
+        "tests/workbench_layout_navigation.cjs"
+      ]
+    },
+    {
+      "number": 32,
+      "title": "docs: show actual dataset workbench screenshots",
+      "url": "https://github.com/MrScripty/Tuldok/pull/32",
+      "draft": true,
+      "head": "83b2df92d16acb80a03d1a5d19370489b464501a",
+      "branch": "docs/screenshots-main-20261011",
+      "base": "1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c",
+      "files": [
+        "README.md",
+        "docs/images/README.md",
+        "docs/images/dataset-workbench-image.jpg",
+        "docs/images/dataset-workbench-mesh.jpg",
+        "docs/images/dataset-workbench-text.jpg"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": 38181666802,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/38181666802",
+      "jobs": [
+        {
+          "id": 114595349909,
+          "head_sha": "6d939359d3cef2464c2aff990dd58d50c4f8d791",
+          "conclusion": "success",
+          "completed_at": "2026-10-11T22:56:29Z",
+          "step_counts": {
+            "success": 98,
+            "failure": 0,
+            "skipped": 0
+          },
+          "step_count": 98,
+          "failed_steps": [],
+          "selected_steps": [
+            {
+              "number": 7,
+              "name": "Run python -m venv build/workspace-training",
+              "conclusion": "success"
+            },
+            {
+              "number": 8,
+              "name": "Run build/workspace-training/bin/python -m pip install -r requirements-training.txt",
+              "conclusion": "success"
+            },
+            {
+              "number": 9,
+              "name": "Run python -m unittest discover -s tests",
+              "conclusion": "success"
+            },
+            {
+              "number": 89,
+              "name": "Run node tests/browser_pumas_typed.cjs",
+              "conclusion": "success"
+            },
+            {
+              "number": 90,
+              "name": "Run cc -shared -fPIC -O2 -Wall -Wextra -Werror -o build/qa/workspace-offline.so tests/fixtures/workspaces/offline_loopback.c -ldl",
+              "conclusion": "success"
+            },
+            {
+              "number": 91,
+              "name": "Run node tests/browser_workspace_recovery.cjs",
+              "conclusion": "success"
+            },
+            {
+              "number": 92,
+              "name": "Run node tests/browser_workspace_image_run.cjs",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 38181666836,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/38181666836",
+      "jobs": [
+        {
+          "id": 114595349921,
+          "head_sha": "6d939359d3cef2464c2aff990dd58d50c4f8d791",
+          "conclusion": "success",
+          "completed_at": "2026-10-11T22:46:00Z",
+          "step_counts": {
+            "success": 14,
+            "failure": 0,
+            "skipped": 0
+          },
+          "step_count": 14,
+          "failed_steps": [],
+          "selected_steps": [
+            {
+              "number": 7,
+              "name": "Run python -m unittest discover -s tests -p 'test_workspace_contracts.py'",
+              "conclusion": "success"
+            },
+            {
+              "number": 8,
+              "name": "Run node tests/browser_workspaces.cjs",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 38164151958,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/38164151958",
+      "jobs": [
+        {
+          "id": 114543086455,
+          "head_sha": "83b2df92d16acb80a03d1a5d19370489b464501a",
+          "conclusion": "failure",
+          "completed_at": "2026-10-11T18:38:51Z",
+          "step_counts": {
+            "success": 88,
+            "failure": 1,
+            "skipped": 2
+          },
+          "step_count": 91,
+          "failed_steps": [
+            {
+              "number": 86,
+              "name": "Run node tests/browser_pumas_typed.cjs",
+              "conclusion": "failure"
+            }
+          ],
+          "selected_steps": [
+            {
+              "number": 6,
+              "name": "Run python -m unittest discover -s tests",
+              "conclusion": "success"
+            },
+            {
+              "number": 86,
+              "name": "Run node tests/browser_pumas_typed.cjs",
+              "conclusion": "failure"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 38166806302,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/38166806302",
+      "jobs": [
+        {
+          "id": 114550943177,
+          "head_sha": "581fa5ca471186ed641ec4bf6d134ee1ba807d22",
+          "conclusion": "failure",
+          "completed_at": "2026-10-11T19:17:01Z",
+          "step_counts": {
+            "success": 90,
+            "failure": 1,
+            "skipped": 2
+          },
+          "step_count": 93,
+          "failed_steps": [
+            {
+              "number": 88,
+              "name": "Run node tests/browser_pumas_typed.cjs",
+              "conclusion": "failure"
+            }
+          ],
+          "selected_steps": [
+            {
+              "number": 6,
+              "name": "Run python -m unittest discover -s tests",
+              "conclusion": "success"
+            },
+            {
+              "number": 88,
+              "name": "Run node tests/browser_pumas_typed.cjs",
+              "conclusion": "failure"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "log_excerpts": [
+    {
+      "job_id": 114595349909,
+      "lines": [
+        "2026-10-11T22:50:39.9039209Z Ran 507 tests in 265.886s",
+        "2026-10-11T22:52:02.6430824Z PASS: 4 records; no exact pixel duplicates or cross-split group leakage",
+        "2026-10-11T22:52:24.9324867Z PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all four AI providers and unsaved suggestions",
+        "2026-10-11T22:55:49.9415474Z Actual Rheon fee7b4a Chromium boundary PASS: selected raw files, draft/unknown, accepted fields/hashes/provenance, explicit review/history, synthetic family split protection, byte-exact native fields in frozen whole-trajectory release, reload/narrow. No exporter or simulation invoked.",
+        "2026-10-11T22:55:55.7201956Z Typed classification draft, fixed selections, exact profile, held capabilities, grounded family/review, text-to-PNG and settings restore passed: source-derived HTTP fixture; not native Pumas",
+        "2026-10-11T22:55:57.0151130Z PASS: exposed test view on A \u2192 new submission B opens validation with completed controls. UI mocked transport only.",
+        "2026-10-11T22:55:57.0234210Z PASS: prediction-fetch failure preserves completed run details and controls with inline error.",
+        "2026-10-11T22:55:57.1849835Z PASS: damaged selected run retains list/warning, no metrics, and healthy run remains selectable.",
+        "2026-10-11T22:56:25.6307686Z PASS real image workspace gate: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-image-run/run-tOQxgm"
+      ]
+    },
+    {
+      "job_id": 114543086455,
+      "lines": [
+        "2026-10-11T18:33:41.9409058Z Ran 415 tests in 142.177s",
+        "2026-10-11T18:35:05.3705118Z PASS: 4 records; no exact pixel duplicates or cross-split group leakage",
+        "2026-10-11T18:35:26.3999069Z PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all four AI providers and unsaved suggestions",
+        "2026-10-11T18:38:27.4215541Z Actual Rheon fee7b4a Chromium boundary PASS: selected raw files, draft/unknown, accepted fields/hashes/provenance, explicit review/history, synthetic family split protection, byte-exact native fields in frozen whole-trajectory release, reload/narrow. No exporter or simulation invoked.",
+        "2026-10-11T18:38:45.8215571Z Error: Timed out",
+        "2026-10-11T18:38:45.8217855Z     at async /home/runner/work/Tuldok/Tuldok/tests/browser_pumas_typed.cjs:122:20"
+      ]
+    },
+    {
+      "job_id": 114550943177,
+      "lines": [
+        "2026-10-11T19:11:48.2449780Z Ran 415 tests in 142.228s",
+        "2026-10-11T19:13:13.3152977Z PASS: 4 records; no exact pixel duplicates or cross-split group leakage",
+        "2026-10-11T19:13:34.2212623Z PASS: camera, timer, labels, validation, corner dragging, split metadata, negatives, export, import, responsive layout, all four AI providers and unsaved suggestions",
+        "2026-10-11T19:16:38.9192434Z Actual Rheon fee7b4a Chromium boundary PASS: selected raw files, draft/unknown, accepted fields/hashes/provenance, explicit review/history, synthetic family split protection, byte-exact native fields in frozen whole-trajectory release, reload/narrow. No exporter or simulation invoked.",
+        "2026-10-11T19:16:57.4089517Z Error: Timed out",
+        "2026-10-11T19:16:57.4091864Z     at async /home/runner/work/Tuldok/Tuldok/tests/browser_pumas_typed.cjs:124:20"
+      ]
+    }
+  ],
+  "pumas_test": {
+    "pr32_equals_main": true,
+    "pr33_added_lines": [
+      "const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');",
+      "  await revealWorkbenchControl(evaluate, \"#text-classification-proposal-panel\");"
+    ],
+    "reviewed_sha256": "2280074da9ae31710ec79fe3bd498b6d44827e6aaf0a10b9f11f560603da600d",
+    "causal_limit": "Historical logs establish a matching semantic timeout; lack of caption busy/admission diagnostics prevents direct proof of historical timing. The current held-response reproducer proves the shared readiness hazard."
+  }
+}

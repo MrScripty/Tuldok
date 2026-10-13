@@ -48,7 +48,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const saved=await request('selections',{name:'Fixed diagnostic set',items:[ref(first),ref(a)]});
   await evaluate('refreshSavedSets('+JSON.stringify(saved.id)+')');await click('load-selection');await until(()=>evaluate('!savedLoadBusy && selected.size===2'));
   const pairs=await evaluate('releaseBody().items');
-  const snapshot=()=>{const {spawnSync}=require('node:child_process');const result=spawnSync('python3',['-c',`import sqlite3,json;db=sqlite3.connect(${JSON.stringify(path.join(temporary,'data','dataset.sqlite3'))});print(json.dumps({t:db.execute('SELECT * FROM '+t+' ORDER BY rowid').fetchall() for (t,) in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")}))`],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);return result.stdout;};
+  const snapshot=()=>{const {spawnSync}=require('node:child_process');const result=spawnSync('python3',['-c',"import json,sys; sys.path.insert(0,'tests'); from postgres_helpers import fixture_database,database_snapshot; db=fixture_database(sys.argv[1]); print(json.dumps(database_snapshot(db))); db.close()",path.join(temporary,'data')],{cwd:root,encoding:'utf8'});assert.equal(result.status,0,result.stderr);return result.stdout;};
   const before=snapshot();
   const diagnostic=async(category,scope='filtered')=>{await fill('curation-category',category);await fill('curation-scope',scope);await click('curation-refresh');await until(()=>evaluate('!!curationReport && !curationBusy'));return evaluate('curationReport');};
   let report=await diagnostic('unlabeled');assert.equal(report.total,44);assert.equal(report.items.length,40);

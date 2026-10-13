@@ -2,6 +2,7 @@
 import base64
 import io
 import json
+from postgres_helpers import database_snapshot, in_transaction
 from pathlib import Path
 import sys
 import tempfile
@@ -79,12 +80,12 @@ class ReleasePreviewTests(unittest.TestCase):
         stream = io.BytesIO(); Image.new('RGB', (16, 16), 'blue').save(stream, 'PNG')
         self.dataset.add({'image': base64.b64encode(stream.getvalue()).decode(), 'filename': 'legacy.png',
                           'session_id': 'legacy', 'book_id': '', 'split': 'unassigned'})
-        before = list(self.w.db.iterdump())
+        before = database_snapshot(self.w.db)
         source = {str(p.relative_to(self.dataset.path)): p.read_bytes() for p in self.dataset.path.rglob('*')
                   if p.is_file() and p.suffix != '.db' and '-wal' not in p.name and '-shm' not in p.name}
         with patch('dataset_releases.tempfile.mkstemp', side_effect=AssertionError('Preview must not stage ZIP')):
             self.assertTrue(self.r.preview(self.body([row]))['eligible'])
-        self.assertEqual(list(self.w.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.w.db), before)
         self.assertEqual(list(self.r.path.iterdir()), [])
         for name, data in source.items(): self.assertEqual((self.dataset.path/name).read_bytes(), data)
 
@@ -126,8 +127,8 @@ class ReleasePreviewTests(unittest.TestCase):
         self.assertEqual(set(family['selected_ids']), {first['id'], second['id']})
         self.blocked(self.body([first, second], ratios={'train': 50, 'validation': 50, 'test': 0}),
                      'invalid', 'Too few independent source groups')
-        with self.w.db:
-            self.w.db.execute('DELETE FROM workbench_deleted_sources WHERE id=?', (ancestor['id'],))
+        with self.w.db.transaction():
+            self.w.db.execute('DELETE FROM workbench_deleted_sources WHERE id=%s', (ancestor['id'],))
         self.blocked(self.body([first, second]), 'invalid', 'no retained source lineage')
 
     def test_new_bridge_invalidates_preview_but_unrelated_changes_do_not(self):
@@ -145,8 +146,8 @@ class ReleasePreviewTests(unittest.TestCase):
         source = self.image('source')
         row = self.text('child', parents=[source['id']])
         body = self.body([row]); token = self.r.preview(body)['preview_token']
-        with self.w.db:
-            self.w.db.execute("UPDATE samples SET split='train', revision=revision+1 WHERE id=?", (source['id'],))
+        with self.w.db.transaction():
+            self.w.db.execute("UPDATE samples SET split='train', revision=revision+1 WHERE id=%s", (source['id'],))
         preview = self.r.preview(body)
         self.assertTrue(preview['eligible'])
         self.assertEqual(preview['lineage'][0]['fixed_splits'], ['train'])
@@ -164,8 +165,8 @@ class ReleasePreviewTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkbenchError, 'Source bytes changed'):
             self.r.create(dict(body, preview_token=token))
         asset.write_bytes(data)
-        with self.w.db:
-            self.w.db.execute("UPDATE workbench_records SET pixel_hash='wrong' WHERE id=?", (row['id'],))
+        with self.w.db.transaction():
+            self.w.db.execute("UPDATE workbench_records SET pixel_hash='wrong' WHERE id=%s", (row['id'],))
         self.blocked(body, 'conflict', 'Source pixels changed')
         self.assertEqual(list(self.r.path.iterdir()), [])
 
@@ -208,8 +209,8 @@ class ReleasePreviewTests(unittest.TestCase):
         unrelated = self.image('unrelated', 'green')
         body = self.body([selected]); token = self.r.preview(body)['preview_token']
         self.dataset.delete(unrelated['id'], {'revision': unrelated['source_revision']})
-        with self.w.db:
-            self.w.db.execute('DELETE FROM workbench_deleted_sources WHERE id=?', (unrelated['id'],))
+        with self.w.db.transaction():
+            self.w.db.execute('DELETE FROM workbench_deleted_sources WHERE id=%s', (unrelated['id'],))
         self.assertEqual(self.r.preview(body)['preview_token'], token)
         self.dataset.delete(parent['id'], {'revision': parent['source_revision']})
         self.assertTrue(self.r.preview(body)['eligible'])
@@ -219,14 +220,14 @@ class ReleasePreviewTests(unittest.TestCase):
     def test_related_fixed_split_conflicts_and_zero_weight_block(self):
         first, second = self.image('first'), self.image('second', 'green')
         selected = self.text('child', parents=[first['id'], second['id']])
-        with self.w.db:
-            self.w.db.execute("UPDATE samples SET split='train' WHERE id=?", (first['id'],))
-            self.w.db.execute("UPDATE samples SET split='test' WHERE id=?", (second['id'],))
+        with self.w.db.transaction():
+            self.w.db.execute("UPDATE samples SET split='train' WHERE id=%s", (first['id'],))
+            self.w.db.execute("UPDATE samples SET split='test' WHERE id=%s", (second['id'],))
         other = self.text('independent')
         self.blocked(self.body([selected, other], ratios={'train': 50, 'validation': 0, 'test': 50}),
                      'invalid', 'conflicting existing splits')
-        with self.w.db:
-            self.w.db.execute("UPDATE samples SET split='test' WHERE id=?", (first['id'],))
+        with self.w.db.transaction():
+            self.w.db.execute("UPDATE samples SET split='test' WHERE id=%s", (first['id'],))
         self.blocked(self.body([selected]), 'invalid', 'zero requested weight')
 
     def test_archive_still_verifies_bytes_after_preview_and_preflight(self):
@@ -245,9 +246,9 @@ class ReleasePreviewTests(unittest.TestCase):
     def test_preview_preserves_outer_transaction(self):
         row = self.text('one')
         self.w.db.execute('BEGIN')
-        self.w.db.execute("UPDATE workbench_records SET name='pending rename' WHERE id=?", (row['id'],))
+        self.w.db.execute("UPDATE workbench_records SET name='pending rename' WHERE id=%s", (row['id'],))
         self.assertTrue(self.r.preview(self.body([row]))['eligible'])
-        self.assertTrue(self.w.db.in_transaction)
+        self.assertTrue(in_transaction(self.w.db))
         self.assertEqual(self.w._get(row['id'])['name'], 'pending rename')
         self.w.db.rollback()
         self.assertEqual(self.w._get(row['id'])['name'], 'one')
@@ -292,11 +293,11 @@ class ReleasePreviewTests(unittest.TestCase):
         self.assertEqual(len(list(self.r.path.iterdir())), 1)
 
     def test_preview_savepoint_cleanup_on_unexpected_failure(self):
-        row = self.text('one'); before = list(self.w.db.iterdump())
+        row = self.text('one'); before = database_snapshot(self.w.db)
         with patch.object(self.r, '_prepare', side_effect=RuntimeError('fixture')):
             with self.assertRaisesRegex(RuntimeError, 'fixture'): self.r.preview(self.body([row]))
-        self.assertEqual(list(self.w.db.iterdump()), before)
-        self.assertFalse(self.w.db.in_transaction)
+        self.assertEqual(database_snapshot(self.w.db), before)
+        self.assertFalse(in_transaction(self.w.db))
 
 
 if __name__ == '__main__': unittest.main()

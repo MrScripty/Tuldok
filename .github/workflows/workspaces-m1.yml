@@ -1,0 +1,56 @@
+name: M1 workspace interface
+on:
+  push:
+    branches: [ui/dataset-workspaces-m1-20261011, integration/workspaces-postgres-20261011, feature/workspace-image-runs-20261011]
+  pull_request:
+    paths:
+      - 'static/workspace*'
+      - 'static/pipeline-editor.js'
+      - 'static/runs-view.js'
+      - 'static/workbench.html'
+      - 'static/index.html'
+      - 'app.py'
+      - 'tests/*workspace*'
+      - 'tests/fixtures/workspaces/**'
+      - '.github/workflows/workspaces-m1.yml'
+permissions:
+  contents: read
+jobs:
+  workspace-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tuldok_test
+          POSTGRES_PASSWORD: isolated-ci-fixture
+          POSTGRES_DB: tuldok_test
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tuldok_test -d tuldok_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -p 'test_workspace_contracts.py'
+      - run: node tests/browser_workspaces.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-m1-screenshots
+          path: build/qa/workspaces/**
+          retention-days: 14

@@ -3,6 +3,7 @@ import base64
 import hashlib
 import io
 import json
+from postgres_helpers import database_snapshot
 from pathlib import Path
 import sys
 import tempfile
@@ -116,9 +117,9 @@ class CorpusReleaseTests(unittest.TestCase):
 
     def test_deterministic_readonly_preview_and_immutable_reopen(self):
         rows = self.corpus()
-        before = '\n'.join(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         result, preview = self.freeze(rows)
-        self.assertEqual(before, '\n'.join(self.dataset.db.iterdump()))
+        self.assertEqual(before, database_snapshot(self.dataset.db))
         data = self.dataset.releases.locate(result['id']).read_bytes()
         self.assertEqual(self.freeze(list(reversed(rows)))[0]['id'], result['id'])
         self.wb.correct_rights_note(rows[0]['id'], dict(revision=rows[0]['revision'], source_revision=1, note='Later correction'))
@@ -139,7 +140,7 @@ class CorpusReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkbenchError, 'explicit human'):
             self.wb.save(row['id'], dict(revision=row['revision'], source_revision=1, task='text_corpus',
                 annotation=row['annotation'], groups=row['groups'], review='programmatically_verified'), verified_provenance={'method': 'verifier'})
-        self.dataset.db.execute("UPDATE workbench_records SET review='programmatically_verified' WHERE id=?", (row['id'],))
+        self.dataset.db.execute("UPDATE workbench_records SET review='programmatically_verified' WHERE id=%s", (row['id'],))
         self.dataset.db.commit()
         self.blocked(self.corpus() + [row], 'explicit human review')
 
@@ -147,7 +148,7 @@ class CorpusReleaseTests(unittest.TestCase):
         rows = self.corpus()
         for note in ({'label': 'not approval'}, {'note': ''}, {'note': ' padded '}, {'note': ['bad']}, {'note': 'ok', 'extra': True}):
             with self.subTest(note=note):
-                self.dataset.db.execute('UPDATE workbench_records SET annotation_json=? WHERE id=?', (encode(note), rows[0]['id']))
+                self.dataset.db.execute('UPDATE workbench_records SET annotation_json=%s WHERE id=%s', (encode(note), rows[0]['id']))
                 self.dataset.db.commit()
                 with patch('dataset_releases.analyze', side_effect=AssertionError('Invalid annotation reached analytics')):
                     preview = self.dataset.releases.preview(self.body(rows))
@@ -156,7 +157,7 @@ class CorpusReleaseTests(unittest.TestCase):
 
     def test_groups_required(self):
         rows = self.corpus()
-        self.dataset.db.execute("UPDATE workbench_records SET groups_json='[]' WHERE id=?", (rows[0]['id'],))
+        self.dataset.db.execute("UPDATE workbench_records SET groups_json='[]' WHERE id=%s", (rows[0]['id'],))
         self.dataset.db.commit()
         self.blocked(rows, 'protected group')
 
@@ -186,9 +187,9 @@ class CorpusReleaseTests(unittest.TestCase):
         rows = self.corpus()
         parent_id = rows[0]['parents'][0]
         # Use the source owner's retained deletion lineage without deleting unrelated data.
-        with self.dataset.lock, self.dataset.db:
+        with self.dataset.lock, self.dataset.db.transaction():
             self.wb.preserve_deleted_source(parent_id)
-            self.dataset.db.execute('DELETE FROM samples WHERE id=?', (parent_id,))
+            self.dataset.db.execute('DELETE FROM samples WHERE id=%s', (parent_id,))
         result, preview = self.freeze(rows)
         self.assertEqual(preview['assignments'][rows[0]['id']], 'train')
         self.assertTrue(any(parent_id in family['deleted_ids'] for family in preview['lineage']))
@@ -197,16 +198,16 @@ class CorpusReleaseTests(unittest.TestCase):
 
     def test_unknown_deleted_parent_lineage_fails_closed(self):
         rows = self.corpus()
-        with self.dataset.db:
-            self.dataset.db.execute('DELETE FROM samples WHERE id=?', (rows[0]['parents'][0],))
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('DELETE FROM samples WHERE id=%s', (rows[0]['parents'][0],))
         self.blocked(rows, 'no retained source lineage')
 
     def test_exact_duplicates_remain_same_family(self):
         rows = self.corpus()
         # Existing import rejects exact copies. Emulate a retained legacy duplicate.
         duplicate = self.document(split='train')
-        with self.dataset.db:
-            self.dataset.db.execute('UPDATE workbench_records SET text=?,original_text=?,content_hash=? WHERE id=?',
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('UPDATE workbench_records SET text=%s,original_text=%s,content_hash=%s WHERE id=%s',
                 (rows[0]['text'], rows[0]['text'], rows[0]['content_hash'], duplicate['id']))
         duplicate = self.wb.get(duplicate['id'])
         result, preview = self.freeze(rows + [duplicate])
@@ -217,8 +218,8 @@ class CorpusReleaseTests(unittest.TestCase):
     def test_cross_split_duplicate_content_blocks(self):
         rows = self.corpus()
         rows.insert(1, self.document(split='validation'))
-        with self.dataset.db:
-            self.dataset.db.execute('UPDATE workbench_records SET text=?,original_text=?,content_hash=? WHERE id=?',
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('UPDATE workbench_records SET text=%s,original_text=%s,content_hash=%s WHERE id=%s',
                 (rows[0]['text'], rows[0]['text'], rows[0]['content_hash'], rows[-1]['id']))
         self.blocked(rows, 'conflicting existing splits')
 
@@ -278,11 +279,11 @@ class CorpusReleaseTests(unittest.TestCase):
 
     def test_changed_bytes_and_publication_failure_leave_no_partial(self):
         rows = self.corpus()
-        with self.dataset.db:
-            self.dataset.db.execute("UPDATE workbench_records SET text=text||'changed' WHERE id=?", (rows[0]['id'],))
+        with self.dataset.db.transaction():
+            self.dataset.db.execute("UPDATE workbench_records SET text=text||'changed' WHERE id=%s", (rows[0]['id'],))
         self.blocked(rows, 'Source bytes changed')
-        with self.dataset.db:
-            self.dataset.db.execute('UPDATE workbench_records SET text=? WHERE id=?', (rows[0]['text'], rows[0]['id']))
+        with self.dataset.db.transaction():
+            self.dataset.db.execute('UPDATE workbench_records SET text=%s WHERE id=%s', (rows[0]['text'], rows[0]['id']))
         body = self.body(rows)
         preview = self.dataset.releases.preview(body)
         with patch('dataset_releases.archive_asset', side_effect=OSError('test disk failure')):

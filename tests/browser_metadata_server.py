@@ -16,8 +16,8 @@ try:
         row = dataset.workbench.import_asset({'kind': 'text', 'name': name, 'text': 'Local retained fixture '+name,
                                               'groups': ['legacy-source']})
         origin = dict(row['provenance']); origin.pop('rights'); origin.update(note)
-        with dataset.lock, dataset.db:
-            dataset.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?', (encode(origin), row['id']))
+        with dataset.lock, dataset.db.transaction():
+            dataset.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s', (encode(origin), row['id']))
 finally:
     dataset.close()
 app.main()

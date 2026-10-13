@@ -1,5 +1,6 @@
 """Real owner/persistence/HTTP/frozen release behavior for explicit comparisons."""
 from concurrent.futures import ThreadPoolExecutor
+from postgres_helpers import drop_failure_trigger, install_failure_trigger
 import hashlib
 from http.server import ThreadingHTTPServer
 import json
@@ -221,10 +222,10 @@ class PreferenceTests(unittest.TestCase):
         row = self.p.save(self.body(parent, left, right, row))['judgment']; request = self.release(row)
         self.assertTrue(any('identical strings' in x for x in self.r.preview(request)['warnings']))
         with patch('dataset_releases.MAX_SELECTED_TEXT_BYTES', 1): self.assertFalse(self.r.preview(request)['eligible'])
-        self.w.db.execute("CREATE TRIGGER reject_preference_history BEFORE INSERT ON workbench_preference_history BEGIN SELECT RAISE(FAIL, 'history failure'); END")
-        import sqlite3
-        with self.assertRaises(sqlite3.IntegrityError): self.p.save(dict(self.body(parent, left, right, row), outcome='tie'))
-        self.w.db.execute('DROP TRIGGER reject_preference_history')
+        install_failure_trigger(self.w.db, 'workbench_preference_history', 'reject_preference_history', 'history failure')
+        import psycopg
+        with self.assertRaises(psycopg.IntegrityError): self.p.save(dict(self.body(parent, left, right, row), outcome='tie'))
+        drop_failure_trigger(self.w.db, 'workbench_preference_history', 'reject_preference_history')
         self.assertEqual(self.p._get(row['id']), row)
         with patch('preferences.MAX_SELECTED_TEXT_BYTES', 1):
             with self.assertRaises(WorkbenchError): self.p.competing([row])
@@ -266,8 +267,8 @@ class PreferenceTests(unittest.TestCase):
             self.assertFalse(members[images[0]['id']]['source_available'])
             self.assertEqual(members[images[0]['id']]['source_split'], 'test')
         self.assertFalse(reopened.releases.preview(dict(request, ratios=dict(train=100, validation=0, test=0)))['eligible'])
-        with reopened.lock, reopened.db:
-            reopened.db.execute('DELETE FROM workbench_deleted_sources WHERE id=?', (images[0]['id'],))
+        with reopened.lock, reopened.db.transaction():
+            reopened.db.execute('DELETE FROM workbench_deleted_sources WHERE id=%s', (images[0]['id'],))
         self.assertFalse(reopened.releases.preview(request)['eligible'])
 
     def test_impossible_family_split_and_readonly_preview(self):
@@ -300,7 +301,7 @@ class PreferenceTests(unittest.TestCase):
         deleted = call('preferences/delete', self.ref(row))['judgment']; self.assertTrue(deleted['deleted'])
         self.assertEqual(len(call('preference-history/'+row['id'])['history']), 2)
         # Source owner unavailable rather than silently dropping the selected unit.
-        with self.w.lock, self.w.db: self.w.db.execute('DELETE FROM workbench_records WHERE id=?', (parent['id'],))
+        with self.w.lock, self.w.db.transaction(): self.w.db.execute('DELETE FROM workbench_records WHERE id=%s', (parent['id'],))
         self.assertFalse(self.r.preview(self.release(row))['eligible'])
 
 

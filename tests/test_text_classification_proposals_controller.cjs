@@ -56,10 +56,10 @@ const listeners={},requests=[],timers=new Map();let timerId=0;
 const response=(data,ok=true,status=200)=>({ok,status,json:async()=>data});
 const empty={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
 const admissionStorage=new Map(),localStorage={getItem:key=>admissionStorage.get(key)??null,setItem:(key,value)=>admissionStorage.set(key,String(value)),removeItem:key=>admissionStorage.delete(key)};
-const context=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage,indexedDB:authorityFor(localStorage),navigator:{locks:serializedLocks()},confirm:()=>false,location:{hash:''},history:{pushState(){}},
+const context=vm.createContext({console,CustomEvent,URL,URLSearchParams,structuredClone,crypto,localStorage,indexedDB:authorityFor(localStorage),navigator:{locks:serializedLocks()},confirm:()=>false,location:{hash:''},history:{pushState(){}},
   setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id),
   document:{getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
-  window:{addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
+  window:{dispatchEvent(){return true;},addEventListener(name,fn){(listeners[name]||=[]).push(fn);}},
   fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(empty)):url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))});
 const root=process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..');
 for(const file of ['workbench.js','text-classification-proposals.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),context);
@@ -93,8 +93,8 @@ function serializedLocks() {
 
 function recoveryHarness(storage,locks=serializedLocks(),extra={}) {
   const dom=new Map(),queued=[],events={},get=id=>{if(!dom.has(id))dom.set(id,new Element(id));return dom.get(id);};
-  const sandbox=vm.createContext({console,URL,URLSearchParams,structuredClone,crypto,localStorage:storage,indexedDB:authorityFor(storage),navigator:locks?{locks}:{},location:{hash:''},history:{pushState(){}},confirm:()=>false,
-    setTimeout:()=>1,clearTimeout(){},document:{getElementById:get,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{addEventListener(name,fn){(events[name]||=[]).push(fn);}},
+  const sandbox=vm.createContext({console,CustomEvent,URL,URLSearchParams,structuredClone,crypto,localStorage:storage,indexedDB:authorityFor(storage),navigator:locks?{locks}:{},location:{hash:''},history:{pushState(){}},confirm:()=>false,
+    setTimeout:()=>1,clearTimeout(){},document:{getElementById:get,createElement:()=>new Element(),createElementNS:()=>new Element()},window:{dispatchEvent(){return true;},addEventListener(name,fn){(events[name]||=[]).push(fn);}},
     fetch:(url,options)=>url.includes('/records?')?Promise.resolve(response(empty)):url.endsWith('/grounded/jobs')?Promise.resolve(response({jobs:[]})):new Promise((resolve,reject)=>queued.push({url,options,resolve,reject})),...extra});
   for(const file of ['workbench.js','text-classification-proposals.js'])vm.runInContext(fs.readFileSync(path.join(root,'static',file),'utf8'),sandbox);
   const execute=code=>vm.runInContext(code,sandbox);

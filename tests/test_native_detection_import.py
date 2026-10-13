@@ -1,11 +1,12 @@
 """Actual unchanged native exporter fixtures; no authored COCO stand-in."""
 import base64
 import hashlib
+from postgres_helpers import database_snapshot
 from http.server import ThreadingHTTPServer
 import io
 import json
 from pathlib import Path
-import sqlite3
+import psycopg
 import struct
 import zlib
 import tempfile
@@ -90,7 +91,7 @@ class NativeDetectionImportTests(unittest.TestCase):
             return json.loads(archive.read('manifest.json'))['records']
 
     def snapshot(self):
-        return list(self.dataset.db.iterdump()), sorted(str(p.relative_to(self.dataset.path)) for p in (self.dataset.path/'images').rglob('*'))
+        return database_snapshot(self.dataset.db), sorted(str(p.relative_to(self.dataset.path)) for p in (self.dataset.path/'images').rglob('*'))
 
     def selection(self, rows):
         return dict(items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows],
@@ -204,8 +205,8 @@ class NativeDetectionImportTests(unittest.TestCase):
             lambda e: e.update({'manifest.json': b'\xff'}),
             lambda e: e.pop('test/coco.json'),
         ]
-        for mutate in mutations:
-            with self.subTest(mutation=mutate):
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
                 self.prepare(rewrite(self.raw, mutate), expected=400)
                 self.assertEqual(before, self.snapshot())
         self.prepare(self.raw[:80], expected=400)
@@ -249,7 +250,7 @@ class NativeDetectionImportTests(unittest.TestCase):
         self.admit(rows[0], expected=409); self.admit(rows[1], expected=409, marker=body['request_id'])
         self.assertEqual(before, self.snapshot())
         marker = uuid.uuid4().hex
-        with patch.object(self.dataset.workbench, '_history', side_effect=sqlite3.OperationalError('Injected history failure')):
+        with patch.object(self.dataset.workbench, '_history', side_effect=psycopg.OperationalError('Injected history failure')):
             self.admit(rows[1], expected=500, marker=marker)
         self.assertEqual(before, self.snapshot())
         self.assertEqual(self.request('import-result/'+marker), (200, {'found':False}))
@@ -271,7 +272,7 @@ class NativeDetectionImportTests(unittest.TestCase):
         image = Image.new('RGB', (4,4), 'yellow'); data = io.BytesIO(); image.save(data, 'PNG')
         existing = self.dataset.workbench.import_asset(dict(kind='image', image=base64.b64encode(data.getvalue()).decode(),
             groups=[origin['groups'][0]], rights='Owned'))
-        self.dataset.db.execute("UPDATE samples SET split='validation' WHERE id=?", (existing['id'],)); self.dataset.db.commit()
+        self.dataset.db.execute("UPDATE samples SET split='validation' WHERE id=%s", (existing['id'],)); self.dataset.db.commit()
         before = self.snapshot(); self.admit(self.prepare()['rows'][0], expected=409); self.assertEqual(before, self.snapshot())
         self.dataset.delete(existing['id'], {'revision':1})
         before = self.snapshot(); self.admit(self.prepare()['rows'][0], expected=409); self.assertEqual(before, self.snapshot())
@@ -297,10 +298,10 @@ class NativeDetectionImportTests(unittest.TestCase):
         image = Image.new('RGB', (4,4), 'green'); data = io.BytesIO(); image.save(data, 'PNG')
         existing = self.dataset.workbench.import_asset(dict(kind='image', image=base64.b64encode(data.getvalue()).decode(),
             groups=[origin['groups'][0]], rights='Existing permission'))
-        existing_source = tuple(self.dataset.db.execute('SELECT * FROM samples WHERE id=?', (existing['id'],)).fetchone())
+        existing_source = tuple(self.dataset.db.execute('SELECT * FROM samples WHERE id=%s', (existing['id'],)).fetchone())
         _, receipt = self.admit(self.prepare()['rows'][0])
         self.assertEqual(self.dataset.workbench.get(existing['id']), existing)
-        self.assertEqual(tuple(self.dataset.db.execute('SELECT * FROM samples WHERE id=?', (existing['id'],)).fetchone()), existing_source)
+        self.assertEqual(tuple(self.dataset.db.execute('SELECT * FROM samples WHERE id=%s', (existing['id'],)).fetchone()), existing_source)
         self.assertEqual(self.dataset.workbench.get(receipt['record_id'])['source_split'], 'train')
 
     def test_initial_detection_geometry_is_rechecked_by_atomic_owner(self):
