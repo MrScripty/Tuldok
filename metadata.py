@@ -19,8 +19,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 7
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7)
+SCHEMA_VERSION = 8
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -415,7 +415,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES_V7, 8: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -550,4 +550,14 @@ ACCESS_TABLES = {
         id TEXT PRIMARY KEY, catalog_id TEXT NOT NULL, actor_id TEXT NOT NULL, credential_id TEXT NOT NULL,
         kind TEXT NOT NULL, job_id TEXT NOT NULL, request_digest TEXT NOT NULL, effects_json TEXT NOT NULL, created_at BIGINT NOT NULL)''',
 }
-TABLES = {**TABLES_V6, **ACCESS_TABLES}
+TABLES_V7 = {**TABLES_V6, **ACCESS_TABLES}
+EXECUTION_APPROVAL_TABLES = {
+    'access_execution_grants': '''CREATE TABLE access_execution_grants (
+        id TEXT PRIMARY KEY, catalog_id TEXT NOT NULL, approver_actor_id TEXT NOT NULL,
+        approver_credential_id TEXT NOT NULL, consumer_actor_id TEXT NOT NULL, material_sha256 TEXT NOT NULL,
+        created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, revoked_at BIGINT)''',
+    'access_execution_consumptions': '''CREATE TABLE access_execution_consumptions (
+        grant_id TEXT PRIMARY KEY, run_id TEXT UNIQUE NOT NULL, admission_id TEXT UNIQUE NOT NULL,
+        consumer_credential_id TEXT NOT NULL, request_sha256 TEXT NOT NULL, consumed_at BIGINT NOT NULL)''',
+}
+TABLES = {**TABLES_V7, **EXECUTION_APPROVAL_TABLES}

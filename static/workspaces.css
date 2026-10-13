@@ -1038,3 +1038,5 @@ details > p {
 .project-evidence-output pre{max-height:480px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 .project-identity{margin-top:12px}
 @media(max-width:600px){.project-header{align-items:start;flex-direction:column}.project-reference>div{align-items:start}.project-references .badge{margin-left:0}}
+
+.external-stages{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.external-stages span{padding:10px;background:var(--surface,#edf2ef);border-radius:6px}.external-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}.external-fields input[type=checkbox]{width:auto}.check-row{display:flex;gap:8px;align-items:center}.check-row input{width:auto}.external-run-custody{margin:16px 0}.external-run-custody p,#external-material code{overflow-wrap:anywhere}

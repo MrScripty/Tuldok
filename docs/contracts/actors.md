@@ -10,8 +10,9 @@ The owner has inspect, edit, execute, cancel, freeze, approve-review,
 approve-execution, expose-holdout and admin scopes. An owner may issue an agent
 bearer with inspect plus selected edit, execute, cancel, freeze and
 expose-holdout scopes. Agents cannot issue credentials, approve human review or
-approve execution. Current execution starts remain owner-only even when an
-agent has execute; bounded approved agent execution is deferred to P3b.
+approve execution. Existing CPU, integrity and provider execution starts remain owner-only even
+when an agent has execute. The dedicated external-Run path below admits an
+agent only with a matching one-use material approval.
 
 ## Local owner login
 
@@ -71,3 +72,58 @@ revocation/expiry, concurrent one-use exchange, agent scope limits, denial
 rollback evidence, exact closed receipts, system restrictions, private CLI files
 and schema-6 upgrade/schema-7 backup restoration. This stage does not claim
 provider-process containment, approved agent execution or remote deployment.
+
+## One-use external execution approvals (schema 8)
+
+`require_external_submission()` checks a live credential with inspect and
+execute scopes. It does not grant execution itself. The existing general
+execute guards and `admit_job` remain owner-only. Only the dedicated external
+Runs owner may compose this check with approval consumption.
+
+`grant_execution(material_sha256, consumer_actor_id, ttl_seconds=600)` requires
+owner approve-execution authority and creates a new immutable grant identity.
+The consumer must be an actor in this catalog; TTL is 60–3,600 seconds. Runs
+first verifies the exact previously reviewed material digest, which covers the
+project/graph, captured source/runtime/input identities, parameters and declared
+permissions/resources. Runs retains matching material evidence. Access owns
+actor/digest binding and lifetime; it does not interpret recipe semantics.
+
+`revoke_execution(grant_id)` serializes against consumption by locking the
+grant row. Repeating revocation is harmless. A consumed grant cannot be
+revoked into reusable authority: cancel its admitted Run instead. Credential
+revocation and expiry still deny new submissions independently of grant state.
+
+`_consume_external_run(grant_id, material_sha256, run_id, request_sha256)`
+requires the caller's existing Run transaction. It locks the grant, checks
+exact catalog/actor/material, unrevoked/unexpired state and absence of prior
+consumption, then rechecks live credential authority after waiting for the
+lock. It atomically writes a consumption receipt, an existing-kind `runs`
+admission with only `runs.update` for this Run ID, and actor audit evidence.
+It returns the admission ID; the caller inserts the Run before committing.
+Rollback restores the unused grant. Unknown commit acknowledgement never
+refunds it or authorizes another attempt.
+
+Runs reconciles its existing request key against both consuming actor and exact
+request digest before consuming another grant. A matching committed attempt is
+returned even after grant expiry; changed actor/digest conflicts. Retry requires
+a fresh grant. Owner submit may create and consume its own approval in the
+same transaction only against the exact previously reviewed material digest.
+Workers use the retained closed admission and may finish bounded effects after
+credential revocation; they do not receive approval/admin or owner authority.
+
+Schema 8 adds `access_execution_grants` and immutable
+`access_execution_consumptions`, retaining the exact schema-7 definition.
+Complete backups retain unconsumed, revoked and consumed grants with original
+expiration and identity. Restoring a pre-consumption backup is a privileged
+catalog recovery operation, not a mechanism for refunding live approvals.
+
+Approval authorizes a launch; it does not establish a sandbox. Same-UID code
+retains effective filesystem/network authority unless separately restricted.
+Reviewed material must disclose those permissions. Source/runtime capture and
+verified descendant drainage establish their specific identity/lifecycle
+contracts, not filesystem or network confinement.
+
+`tests/test_execution_approvals.py` proves exact actor/material matching,
+legacy owner-only behavior, TTL/revocation, two-connection consume/revoke races,
+transaction rollback, lost commit acknowledgement with retained Run receipt,
+closed continuation and schema-7/8 migration/backup custody.

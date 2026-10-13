@@ -77,7 +77,7 @@ current record; saving/reviewing and freezing a new release leaves old results
 unchanged. Viewing test results records durable exposure; reused records or
 pixels cannot be presented as fresh holdout evidence.
 
-Fresh catalogs use schema 7. Existing PostgreSQL schema-1 through schema-6 catalogs require an
+Fresh catalogs use schema 8. Existing PostgreSQL schema-1 through schema-7 catalogs require an
 explicit stopped-writer backup and upgrade, never an automatic startup change:
 
 ```sh
@@ -91,6 +91,19 @@ finishes. See [workspace storage](docs/contracts/workspace-storage.md),
 [run lifecycle](docs/contracts/workspace-runs.md) and
 [CPU adapter](docs/contracts/workspace-image-training.md) for bounds and recovery.
 The original corner studio and classic Workbench remain available.
+
+## Approved local recipes
+
+A project can declare an exact local Python recipe with typed parameters, named
+inputs and bounded output files. In Pipeline, select its recipe, edit/save the
+graph, review preflight and approve the exact execution. Runs shows durable state,
+cancellation and verified output downloads. Owners can issue one-use approvals
+for explicitly scoped agents. These are trusted same-user programs with ordinary
+filesystem/network authority, not sandboxed plugins. Missing drainage after a
+custodian failure remains unknown and blocks further external execution until
+cessation is proven. See the [external recipe contract](docs/contracts/external-recipes.md)
+for runtime support, limits and recovery. Scientific generation/training remains
+separately qualified; neutral executable tests are not model acceptance.
 
 ## Text classification and WAV data
 

@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P2 qualified at published commit2476a7d; P3a scoped local actors admitted on feature/scoped-local-actors-20261013.
+**Current phase:** P3a qualified at published commit d3c0e09; P3b approved external recipes admitted on feature/approved-external-recipes-20261013.
 
-**Next slice:** P3a — shared actor authority and explicit current-client migration; P3b external process custody follows after this checkpoint.
+**Next slice:** P3b — exact material approval, captured external recipes and descendant custody; see the P3b admission report for the reviewed contract and write set.
 
 **Acceptance status:** `partial`
 
@@ -200,7 +200,7 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G5 shared service portion and G6. Use a real bounded executable for lifecycle tests, clearly labelled non-scientific; actual native lab probe decides admission of P4. No false success after cancellation or partial outputs; stale authorization and forged review denied across direct HTTP and UI.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ### P4: Optional Rheon generation controls
 

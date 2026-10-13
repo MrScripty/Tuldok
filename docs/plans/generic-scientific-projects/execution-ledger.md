@@ -73,3 +73,15 @@ is the acceptance gate before P3b implementation. No merge/deployment.
 
 An environment disconnect notice did not remove the workspace or stop tool access.
 Verified branch and pending sources at2476a7d before publication; work continued.
+
+## 2026-10-13 — P3a hosted qualification and P3b admission
+
+PR47 exact d3c0e09908643b1b05a307a4c573df1458b97b29 passed UI38433532851 and all129 lifecycle38433532949 steps. Workspace clean; no merge. Created feature/approved-external-recipes-20261013. Independent P3b design review accepted one existing queue, exact material approval, captured recipe bytes and a pinned subreaper helper with READY/GO barrier. Missing drainage after GO intent remains unknown and fences external work for the same boot. See [P3b admission](reports/p3b-admission.md) for API, effective authority, runtime assumptions and disjoint write inventory.
+
+## 2026-10-13 — P3b implementation and local qualification
+
+Implemented external graph/preflight, exact actor-bound approvals/schema8, captured runtime/source/input identity, and process custody through the existing Runs queue. Root owns Runs/API/publication, volume_assets Access/schema, milestone_audit host/Projects/Pipeline, recipe_design helper/native probe, mesh_ui UI, point_assets composed integration tests; mesh_review independently reviewed backend and UI.
+
+Full stable-source suite749 passes856.353s with2 optional-reader skips separately covered20 tests; all176 Python sources/tests unchanged. Focused approvals/storage50, host/retained28, helper11 and composed external15 pass. Existing31 JS checks and new external controller pass. Actual owner/agent desktop/narrow browser, cancellation/restart and exact downloads pass; project/recovery regressions pass. Native237-byte READY/STOP reaches exit0/ECHILD only, no simulation/model claim. Independent review findings fixed with regressions; no remaining local blocker. See [P3b verification](reports/p3b-verification.md).
+
+A further disconnect notice did not block tools or remove work; branch and test progress were checked directly. Fresh main remainsc522bf6; PR32/33 and38–47 preserved, all unmerged. Commit/push/draft publication follows; exact-head hosted lifecycle/UI qualify P4 admission. No merge or deployment.

@@ -284,6 +284,51 @@ class Projects:
         return raw, {'project_id': project_id, 'manifest_sha256': saved['manifest_sha256'],
                      'reference_id': reference_id, 'path': ref['path'], 'measured_sha256': digest}
 
+    @authorized('inspect', 'projects.read_recipe_reference')
+    def read_recipe_reference(self, project_id, reference_id, expected_sha256):
+        if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
+            raise WorkbenchError('Select the observed recipe SHA256.')
+        saved = self._saved(project_id)
+        if not self._bound(saved):
+            raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
+        ref = next((entry for entry in saved['manifest']['recipes'] if entry['id'] == reference_id), None)
+        if ref is None:
+            raise WorkbenchError('Recipe reference not found.', 'not_found', 404)
+        try:
+            raw = self._read(saved['root'], ref['path'], 65536)
+        except OSError:
+            raise WorkbenchError('Recipe definition cannot be safely read.', 'unavailable', 409) from None
+        measured = hashlib.sha256(raw).hexdigest()
+        if measured != expected_sha256 or ref.get('sha256', measured) != measured:
+            raise WorkbenchError('Recipe changed. Inspect its definition again.', 'stale', 409)
+        return raw, {'project_id': project_id, 'manifest_sha256': saved['manifest_sha256'],
+                     'reference_id': reference_id, 'path': ref['path'], 'measured_sha256': measured}
+
+    @authorized('inspect', 'projects.read_recipe_sources')
+    def read_recipe_sources(self, project_id, sources):
+        saved = self._saved(project_id)
+        if not self._bound(saved):
+            raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
+        if not isinstance(sources, list) or not 1 <= len(sources) <= 64:
+            raise WorkbenchError('Declare 1–64 bounded source files.')
+        result, total = {}, 0
+        for source in sources:
+            closed(source, ('path', 'sha256'))
+            path = relative_path(source['path'])
+            if path in result:
+                raise WorkbenchError('Repeated source path.')
+            try:
+                raw = self._read(saved['root'], path, FILE_LIMIT)
+            except OSError:
+                raise WorkbenchError('Recipe source cannot be safely read.', 'unavailable', 409) from None
+            total += len(raw)
+            if total > INSPECTION_LIMIT:
+                raise WorkbenchError('Source closure exceeds 64 MiB.')
+            if hashlib.sha256(raw).hexdigest() != source['sha256']:
+                raise WorkbenchError('Recipe source changed; update and review its definition.', 'stale', 409)
+            result[path] = raw
+        return result
+
     @authorized('inspect', 'projects.evidence')
     def evidence(self, project_id, reference_id):
         saved = self._saved(project_id)

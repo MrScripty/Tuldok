@@ -19,6 +19,7 @@ AGENT_SCOPES = SCOPES - {'approve-review', 'approve-execution', 'admin'}
 SESSION_TTL = 8 * 3600
 LOGIN_TTL = 600
 MAX_TOKEN_TTL = 30 * 86400
+MAX_APPROVAL_TTL = 3600
 _CURRENT = ContextVar('tuldok_actor', default=None)
 HASH = re.compile(r'^[a-f0-9]{64}$')
 
@@ -332,6 +333,103 @@ class Access:
              request_digest, _json(effects), int(time.time())))
         self.audit('access.admit_job', job_id, {'admission_id': admission_id, 'kind': kind, 'request_digest': request_digest, 'effects': effects})
         return admission_id
+
+    def require_external_submission(self):
+        """Check only the dedicated approved external-Run entrypoint.
+
+        This is not an execution grant: admission additionally requires atomic
+        consumption of an exact material/actor approval. Ordinary execute
+        guards and job admission remain owner-only.
+        """
+        try:
+            with self.lock:
+                context = self.require('inspect', 'runs.external_submit')
+                if context.mode != 'credential':
+                    raise AccessError('External submission requires a live credential.')
+                row = self._credential(context.credential_id)
+                if 'execute' not in json.loads(row['scopes_json']):
+                    raise AccessError('External submission requires execute scope.')
+                return context
+        except AccessError as error:
+            self.denial(error, 'runs.external_submit')
+            raise
+
+    @authorized('approve-execution', 'access.grant_execution', owner_only=True)
+    def grant_execution(self, material_sha256, consumer_actor_id, ttl_seconds=600):
+        """Approve an already reviewed material digest; Runs owns its meaning."""
+        if type(material_sha256) is not str or not HASH.fullmatch(material_sha256):
+            raise AccessError('Reviewed material digest must be SHA256.', 'invalid', 400)
+        _text(consumer_actor_id, 'Consuming actor ID')
+        if type(ttl_seconds) is not int or not 60 <= ttl_seconds <= MAX_APPROVAL_TTL:
+            raise AccessError('Approval lifetime must be 60 through 3600 seconds.', 'invalid', 400)
+        with self.lock, self.db.transaction():
+            context = self.require('approve-execution', 'access.grant_execution', owner_only=True)
+            if self.db.execute('SELECT id FROM access_actors WHERE id=%s', (consumer_actor_id,)).fetchone() is None:
+                raise AccessError('Consuming actor does not belong to this catalog.', 'unavailable', 404)
+            created = int(time.time())
+            grant = dict(id=uuid.uuid4().hex, catalog_id=self.catalog_id,
+                         approver_actor_id=context.actor_id, approver_credential_id=context.credential_id,
+                         consumer_actor_id=consumer_actor_id, material_sha256=material_sha256,
+                         created_at=created, expires_at=created + ttl_seconds, revoked_at=None)
+            self.db.execute('INSERT INTO access_execution_grants VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                            tuple(grant.values()))
+            self.audit('access.grant_execution', grant['id'], grant)
+            return grant
+
+    @authorized('approve-execution', 'access.revoke_execution', owner_only=True)
+    def revoke_execution(self, grant_id):
+        _text(grant_id, 'Approval ID')
+        with self.lock, self.db.transaction():
+            row = self.db.execute('SELECT * FROM access_execution_grants WHERE id=%s FOR UPDATE', (grant_id,)).fetchone()
+            if row is None or row['catalog_id'] != self.catalog_id:
+                raise AccessError('Execution approval is unavailable.', 'unavailable', 404)
+            if self.db.execute('SELECT grant_id FROM access_execution_consumptions WHERE grant_id=%s', (grant_id,)).fetchone():
+                raise AccessError('Approval was consumed; cancel the admitted Run instead.', 'conflict', 409)
+            grant = dict(row)
+            if grant['revoked_at'] is None:
+                grant['revoked_at'] = int(time.time())
+                self.db.execute('UPDATE access_execution_grants SET revoked_at=%s WHERE id=%s',
+                                (grant['revoked_at'], grant_id))
+                self.audit('access.revoke_execution', grant_id, {'material_sha256': grant['material_sha256']})
+            return grant
+
+    def _consume_external_run(self, grant_id, material_sha256, run_id, request_sha256):
+        """Consume once alongside the Run insertion in the caller's transaction.
+
+        Runs reconciles its actor/key/request receipt before this call. This
+        operation never refunds approvals or creates an alternate queue.
+        """
+        if not self.db.in_transaction:
+            raise RuntimeError('Execution approval consumption requires the Run transaction.')
+        _text(grant_id, 'Approval ID')
+        _text(run_id, 'Run ID')
+        if any(type(value) is not str or not HASH.fullmatch(value) for value in (material_sha256, request_sha256)):
+            raise AccessError('Material and request digests must be SHA256.', 'invalid', 400)
+        with self.lock:
+            context = self.require_external_submission()
+            grant = self.db.execute('SELECT * FROM access_execution_grants WHERE id=%s FOR UPDATE', (grant_id,)).fetchone()
+            if grant is None or grant['catalog_id'] != self.catalog_id:
+                raise AccessError('Execution approval is unavailable.', 'unavailable', 404)
+            if grant['consumer_actor_id'] != context.actor_id or grant['material_sha256'] != material_sha256:
+                raise AccessError('Execution approval does not match this actor and reviewed material.')
+            if grant['revoked_at'] is not None or grant['expires_at'] <= int(time.time()):
+                raise AccessError('Execution approval is revoked or expired.', 'stale', 409)
+            if self.db.execute('SELECT grant_id FROM access_execution_consumptions WHERE grant_id=%s', (grant_id,)).fetchone():
+                raise AccessError('Execution approval was already consumed.', 'conflict', 409)
+            # Recheck after the row lock: waiting for a competing consumer must
+            # not retain stale credential authority.
+            self.require_external_submission()
+            admission_id = uuid.uuid4().hex
+            effects = {'runs.update': [run_id]}
+            self.db.execute('INSERT INTO access_admissions VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                (admission_id, self.catalog_id, context.actor_id, context.credential_id, 'runs', run_id,
+                 request_sha256, _json(effects), int(time.time())))
+            self.db.execute('INSERT INTO access_execution_consumptions VALUES (%s,%s,%s,%s,%s,%s)',
+                (grant_id, run_id, admission_id, context.credential_id, request_sha256, int(time.time())))
+            self.audit('access.consume_execution', grant_id,
+                       {'run_id': run_id, 'admission_id': admission_id, 'material_sha256': material_sha256,
+                        'request_sha256': request_sha256})
+            return admission_id
 
     def require_job(self, kind, job_id, admission_id, request_digest):
         context = self._context()

@@ -25,7 +25,7 @@ class AccessContract(unittest.TestCase):
     catalog = metadata_tests.WorkspaceMetadata.catalog
 
     def owner(self, db=None):
-        db = db or self.catalog(version=7)
+        db = db or self.catalog(version=8)
         access = Access(db, db.path)
         login = access._local_owner_token(initial=True)
         session = access.exchange(login)
@@ -35,7 +35,7 @@ class AccessContract(unittest.TestCase):
         db, access, token, _ = self.owner()
         with self.assertRaises(AccessError):
             access.require('inspect', 'catalog.read')
-        second = self.catalog('second', 7)
+        second = self.catalog('second', 8)
         other = Access(second, second.path)
         second_token = other.exchange(other._local_owner_token())['token']
         with access.bind(token):
@@ -218,7 +218,7 @@ class AccessContract(unittest.TestCase):
         before = summaries(read_catalog(db))
         with self.assertRaises(StorageError):
             Metadata(db.path, create=False)
-        self.assertEqual(upgrade_catalog(db.path, quiesced=True)['schema_version'], 7)
+        self.assertEqual(upgrade_catalog(db.path, quiesced=True)['schema_version'], 8)
         db.close()
         db = Metadata(db.path, create=False)
         self.addCleanup(db.close)

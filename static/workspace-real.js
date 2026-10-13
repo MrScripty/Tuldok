@@ -26,6 +26,10 @@
     const memory = history.state?.realWorkspace || {};
     let graphId = memory.graphId || null, runId = memory.runId || null,
       pendingSubmission = memory.pendingSubmission || null;
+    const external = WorkspaceExternal({api,action,status,getGraph:()=>graph,getIntent:()=>loadGeneration,isDirty:()=>dirty(),
+      replaceGraph:document=>{if(!graphs.some(item=>item.id===document.id))graphs.push(document);adopt(document);},
+      changeGraph:change,render:renderPipeline,refresh:loadPipeline,
+      onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     function remember() {
       history.replaceState({ ...history.state, realWorkspace: { version: 1, graphId, runId, pendingSubmission } }, "");
     }
@@ -44,11 +48,12 @@
     function adopt(document) {
       graph = document; graphId = graph.id; saved = JSON.stringify(graph);
       graphs = graphs.map(item => item.id === graph.id ? copy(graph) : item);
-      validation = null; undo = []; redo = []; remember();
+      validation = null; external.invalidate(true); undo = []; redo = []; remember();
     }
     function change(fn, render = true) {
       undo.push(copy(graph)); if (undo.length > 40) undo.shift(); redo = [];
       fn(); validation = null;
+      if(external.isGraph(graph)){external.invalidate();if(render)renderPipeline();else external.dirtyChanged(pipelineRoot);return;}
       if (render) renderPipeline(); else {
         pipelineRoot.querySelector("#real-dirty").textContent = "Unsaved changes";
         pipelineRoot.querySelector("#real-validate").disabled = true;
@@ -145,6 +150,10 @@
     }
     function renderPipeline() {
       if (!definitions) return;
+      if(external.isGraph(graph)){
+        external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}});
+        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}return;
+      }
       const integrity = integrityKind(graph);
       const title = {...titles, train: trainingTitle(graph), ...(integrity ? {validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"} : {})};
       const eligible = releases.filter(r => r.status === "available"),
@@ -274,7 +283,7 @@
             rowsError = error.message;
           }
         }
-        if (detail?.state === "completed" && !integrityKind(detail.graph) && !detail.artifact_status) {
+        if (detail?.state === "completed" && !integrityKind(detail.graph) && !external.isGraph(detail.graph) && !detail.artifact_status) {
           try { rows = await api("runs/" + encoded(id) + "/predictions?split=" + split); }
           catch (error) { rowsError = error.message; }
         }
@@ -291,20 +300,20 @@
       }
     }
     function renderRuns() {
-      const integrity = integrityKind(run?.graph), metrics = integrity ? null : run?.metrics?.validation;
+      const integrity = integrityKind(run?.graph), externalRun=external.isGraph(run?.graph), metrics = integrity||externalRun ? null : run?.metrics?.validation;
       retainFocus(runsRoot, () => {
-        runsRoot.innerHTML = `<p class="callout"><strong>Real local runs.</strong> Results come from the frozen release and saved graph. Classification results and integrity reports retain their own scope and limitations.</p><p class="real-status" role="status"></p><div class="actions"><button id="real-runs-refresh">Refresh saved runs</button><a class="button" href="#pipeline">Open Pipeline</a></div>${!run ? '<div class="panel empty"><h2>No real runs yet</h2><p>Save and validate a recipe in Pipeline, then run it on the local CPU.</p></div>' : `<div class="runs-layout"><aside class="panel"><div class="panel-title"><h2>Runs</h2><span class="badge">${runs.length}</span></div><div class="run-list">${runs.map(r => `<button id="real-run-${r.id}" data-real-run="${r.id}" class="run-item" aria-current="${r.id === runId}"><span class="badge ${r.state === "completed" ? "green" : "amber"}">${esc(r.state)}</span><strong>${esc(r.graph.name)}</strong><small>Graph r${r.graph_revision} · attempt ${r.attempt}</small><small>${esc(r.created_at)}</small></button>`).join("")}</div></aside>
-        <article class="panel panel-pad"><div class="meta-row"><span id="real-run-state" class="badge ${run.state === "completed" ? "green" : "amber"}">${esc(run.state)}</span><span class="badge">${integrity ? `${integrity.name} integrity · no training` : "Real · CPU"}</span><span class="badge">${esc(short(run.id))}</span></div><h2 style="margin-top:14px">${esc(run.graph.name)}</h2><p class="muted">Frozen graph r${run.graph_revision} · attempt ${run.attempt} · release ${esc(short(run.release_id))}</p><div class="actions">${(run.input_artifacts || []).map(a => `<a class="button" href="${artifactURL(a.name)}" download>Download verified frozen export</a>`).join("")}</div>
+        runsRoot.innerHTML = `<p class="callout"><strong>Real local runs.</strong> Results retain their saved graph and exact admitted inputs. Classification, integrity and external execution receipts retain their own scope and limitations.</p><p class="real-status" role="status"></p><div class="actions"><button id="real-runs-refresh">Refresh saved runs</button><a class="button" href="#pipeline">Open Pipeline</a></div>${!run ? '<div class="panel empty"><h2>No real runs yet</h2><p>Save and validate a recipe in Pipeline, then run it on the local CPU.</p></div>' : `<div class="runs-layout"><aside class="panel"><div class="panel-title"><h2>Runs</h2><span class="badge">${runs.length}</span></div><div class="run-list">${runs.map(r => `<button id="real-run-${r.id}" data-real-run="${r.id}" class="run-item" aria-current="${r.id === runId}"><span class="badge ${r.state === "completed" ? "green" : "amber"}">${esc(r.state)}</span><strong>${esc(r.graph.name)}</strong><small>Graph r${r.graph_revision} · attempt ${r.attempt}</small><small>${esc(r.created_at)}</small></button>`).join("")}</div></aside>
+        <article class="panel panel-pad"><div class="meta-row"><span id="real-run-state" class="badge ${run.state === "completed" ? "green" : "amber"}">${esc(run.state)}</span><span class="badge">${externalRun ? "Trusted local executable" : integrity ? `${integrity.name} integrity · no training` : "Real · CPU"}</span><span class="badge">${esc(short(run.id))}</span></div><h2 style="margin-top:14px">${esc(run.graph.name)}</h2><p class="muted">Frozen graph r${run.graph_revision} · attempt ${run.attempt}${externalRun ? "" : " · release " + esc(short(run.release_id))}</p><div class="actions">${(run.input_artifacts || []).map(a => `<a class="button" href="${artifactURL(a.name)}" download>Download verified frozen export</a>`).join("")}</div>
         ${run.error ? `<p class="error-panel" role="alert">${esc(run.error.code)}: ${esc(run.error.message)}</p>` : ""}
         ${run.artifact_status?.status === "unavailable" ? `<p class="error-panel" role="alert">Published artifacts unavailable: ${esc(run.artifact_status.message)}. Saved run identity is retained.</p>` : ""}
         ${!terminal.has(run.state) ? `<div class="real-running"><span class="running-dot" aria-hidden="true"></span><div><strong>${esc(run.progress.stage || run.state)}</strong><p>Total work and remaining duration are unknown. Cancellation completes only after the worker has stopped.</p></div></div><button id="real-cancel" ${run.state === "cancelling" ? "disabled" : ""}>${run.state === "cancelling" ? "Waiting for worker to stop" : "Cancel run"}</button>` : ""}
-        ${["failed", "cancelled", "interrupted"].includes(run.state) ? `<button id="real-retry-run">Start a fresh ${integrity ? "validation" : "training"} attempt</button><p class="muted">Reuses verified frozen input.${integrity ? "" : " Partial checkpoints are never resumed."}</p>` : ""}
+        ${!externalRun && ["failed", "cancelled", "interrupted"].includes(run.state) ? `<button id="real-retry-run">Start a fresh ${integrity ? "validation" : "training"} attempt</button><p class="muted">Reuses verified frozen input.${integrity ? "" : " Partial checkpoints are never resumed."}</p>` : ""}
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
-        ${!integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
-        ${integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
+        ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
+        ${externalRun ? external.runHTML(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
-        <div class="run-columns"><section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section><section><h3>Verified artifacts</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small></li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">Every artifact read verifies its frozen hash.</p></section></div>
-        ${run.state === "completed" && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
+        <div class="run-columns"><section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section><section><h3>Verified artifacts</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small></li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">Every artifact read verifies its frozen hash.</p></section></div>
+        ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
         <details><summary>Frozen identity, source provenance and parameters</summary><pre>${esc(JSON.stringify({ dataset_id: run.dataset_id, run_id: run.id, release_sha256: run.release_sha256, graph_sha256: run.graph_sha256, graph: run.graph, adapter: run.adapter, runtime: run.runtime, parameters: run.parameters, prior_test_exposure: run.prior_test_exposure, current_test_exposure: run.current_test_exposure, test_exposure: run.test_exposure }, null, 2))}</pre></details></article></div>`}`;
       });
       if (notice) { const target = runsRoot.querySelector('.real-status'); target.textContent = notice; target.classList.toggle('error-panel', noticeError); }
@@ -347,6 +356,14 @@
     }
     return {
       isDirty: dirty,
+      async openGraph(id,isCurrent=()=>true){
+        if(dirty()&&!confirm("Discard unsaved recipe changes to open this graph?"))return false;
+        if(busy)throw Error("Finish the current Pipeline action before opening another graph.");
+        const previous=graph,previousState=JSON.stringify(graph);
+        const document=await api("graphs/"+encoded(id));
+        if(!isCurrent()||graph!==previous||JSON.stringify(graph)!==previousState)return false;
+        adopt(document);return true;
+      },
       identity: () => context?.dataset_id,
       async show(next) {
         view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);

@@ -540,6 +540,9 @@ def make_handler(dataset):
                     if path.startswith('/api/access/credentials/') and path.endswith('/revoke'):
                         self._access_body()
                         return self.reply(dataset.access.revoke(path.split('/')[-2]))
+                    if path.startswith('/api/access/execution-grants/') and path.endswith('/revoke'):
+                        projects.closed(self._access_body(), ())
+                        return self.reply(dataset.access.revoke_execution(path.split('/')[-2]))
                     return self._post()
             except access.AccessError as error:
                 return self._access_error(error)
@@ -561,6 +564,9 @@ def make_handler(dataset):
                         return self.reply(dataset.projects.get(parts[1]))
                     if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'evidence':
                         return self.reply(dataset.projects.evidence(parts[1], parts[3]))
+                    if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'recipes':
+                        query = parse_qs(urlsplit(self.path).query)
+                        return self.reply(dataset.pipelines.inspect_external_recipe(parts[1], parts[3], query.get('expected_sha256', [''])[-1]))
                     if parts == ['context']:
                         return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
                                            'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
@@ -707,6 +713,7 @@ def make_handler(dataset):
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
                     '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
+                    '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
@@ -766,6 +773,8 @@ def make_handler(dataset):
                         return self.reply(dataset.workbench.scientific.admit(raw, admission, origin), 201)
                     if parts == ['graphs']:
                         return self.reply(dataset.pipelines.create(body), 201)
+                    if parts == ['graphs', 'external']:
+                        return self.reply(dataset.pipelines.create_external(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':
                         return self.reply(dataset.pipelines.save(parts[1], body))
                     if len(parts) == 3 and parts[0] == 'graphs':
@@ -773,8 +782,15 @@ def make_handler(dataset):
                             return self.reply(dataset.pipelines.clone(parts[1], body), 201)
                         if parts[2] == 'validate':
                             return self.reply(dataset.pipelines.validate(parts[1], body))
+                        if parts[2] == 'preflight-external':
+                            projects.closed(body, ('revision',))
+                            return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)
+                    if parts == ['runs', 'approve-external']:
+                        return self.reply(dataset.runs.approve_external(body), 201)
+                    if parts == ['runs', 'submit-external']:
+                        return self.reply(dataset.runs.submit_external(body), 201)
                     if len(parts) == 3 and parts[0] == 'runs':
                         if parts[2] == 'cancel':
                             return self.reply(dataset.runs.cancel(parts[1]))

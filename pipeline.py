@@ -21,6 +21,7 @@ import image_training
 import text_training
 import audio_training
 import release_validation
+import recipe_contract
 
 ID = re.compile(r'^[a-f0-9]{32}$')
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -60,7 +61,8 @@ def decode_graph(value):
     closed(value, ('schema_version', 'mode', 'id', 'revision', 'name', 'recipe_version', 'nodes', 'edges'), ('layout', 'recipe'))
     if value['schema_version'] != 1 or type(value['schema_version']) is not int or value['mode'] != 'real':
         raise WorkbenchError('Only real graph schema 1 is supported; fixture graphs cannot execute.', 'unsupported', 400)
-    adapter_for_graph(value)
+    if value.get('recipe') != 'external_recipe':
+        adapter_for_graph(value)
     identifier(value['id'], 'Graph ID')
     if type(value['revision']) is not int or value['revision'] < 1 or value['recipe_version'] != 1 or type(value['recipe_version']) is not int:
         raise WorkbenchError('Invalid graph or recipe revision.')
@@ -193,6 +195,54 @@ class Pipelines:
         with self.lock:
             ids = [row[0] for row in self.db.execute('SELECT id FROM workspace_graphs ORDER BY id')]
             return [self._get(graph_id) for graph_id in ids]
+
+    @authorized('inspect', 'pipeline.inspect_external_recipe')
+    def inspect_external_recipe(self, project_id, reference_id, expected_sha256):
+        return recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
+
+    @authorized('edit', 'pipeline.create_external')
+    def create_external(self, body):
+        closed(body, ('name', 'project_id', 'recipe_id', 'expected_sha256', 'inputs'), ('parameters',))
+        inspected = self.inspect_external_recipe(body['project_id'], body['recipe_id'], body['expected_sha256'])
+        parameters = recipe_contract.validate_parameters(inspected['definition'], body.get('parameters', {}))
+        config = {key: body[key] for key in ('project_id', 'recipe_id', 'expected_sha256', 'inputs')}
+        graph = {'schema_version':1, 'mode':'real', 'recipe':'external_recipe', 'recipe_version':1,
+                 'id':uuid.uuid4().hex, 'revision':1, 'name':text_value(body['name'], 'Recipe name', 120),
+                 'nodes':[{'id':name,'type':name,'definition_version':1,
+                           'parameters':config if name == 'input' else parameters if name == 'execute' else {}}
+                          for name in recipe_contract.TYPES],
+                 'edges':[{'from':a,'output':recipe_contract.PORTS[a][1],'to':b,'input':recipe_contract.PORTS[b][0]}
+                          for a,b in zip(recipe_contract.TYPES,recipe_contract.TYPES[1:])], 'layout':{}}
+        graph = decode_graph(graph)
+        with self.lock, self.db.transaction():
+            self.db.execute('INSERT INTO workspace_graphs(id,revision,document) VALUES(%s,%s,%s)',
+                            (graph['id'], 1, encode(graph)))
+            self.access.audit('pipeline.create_external', graph['id'],
+                              {'revision':1,'document_sha256':digest(graph),'execution_sha256':execution_digest(graph)})
+        return graph
+
+    @authorized('inspect', 'pipeline.preflight_external')
+    def preflight_external(self, graph_id, revision):
+        graph = self.get(graph_id)
+        if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+        result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                    getattr(self.dataset, 'external_runtime_profile', None))
+        if self.get(graph_id) != graph:
+            raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
+        return result
+
+    @authorized('inspect', 'pipeline.capture_external')
+    def capture_external(self, graph_id, revision, expected_digest, staging):
+        self.access.require_external_submission()
+        graph = self.get(graph_id)
+        if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+        result, captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                   getattr(self.dataset, 'external_runtime_profile', None))
+        if expected_digest != result['material_sha256'] or self.get(graph_id) != graph:
+            raise WorkbenchError('Reviewed execution material changed. Preflight again.', 'stale', 409)
+        return dict(recipe_contract.capture(result, captured, staging), graph=graph)
 
     @authorized('edit', 'pipeline.create')
     def create(self, body):
@@ -396,6 +446,10 @@ class Pipelines:
     @authorized('inspect', 'pipeline.validate_graph', target=lambda graph: graph.get('id') if isinstance(graph, dict) else None)
     def validate_graph(self, graph):
         graph = decode_graph(graph)
+        if graph.get('recipe') == 'external_recipe':
+            result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                        getattr(self.dataset, 'external_runtime_profile', None))
+            return dict(result, errors=[], release=None)
         adapter = adapter_for_graph(graph)
         ports = ports_for_graph(graph)
         types = types_for_graph(graph)

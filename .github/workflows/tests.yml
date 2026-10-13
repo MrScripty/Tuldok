@@ -61,6 +61,11 @@ jobs:
       - run: node tests/browser_scientific_fields.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node --check static/workspace-external.js
+      - run: node tests/test_workspace_external_controller.cjs
+      - run: node tests/browser_workspace_external.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node --check static/workspace-projects.js
       - run: node tests/browser_workspace_project.cjs
         env:
