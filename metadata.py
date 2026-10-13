@@ -19,8 +19,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 3
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3)
+SCHEMA_VERSION = 4
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -415,7 +415,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -495,7 +495,7 @@ WORKSPACE_TABLES = {
 # Retained schema 2 is the exact M2 contract. Do not edit either old definition:
 # their DDL hashes identify existing catalogs and retained backup receipts.
 TABLES_V2 = {**TABLES_V1, **WORKSPACE_TABLES}
-TABLES = {
+TABLES_V3 = {
     **TABLES_V2,
     'workbench_records': """CREATE TABLE workbench_records (
                 id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('image','text','sequence','mesh','audio')),
@@ -505,4 +505,19 @@ TABLES = {
                 provenance_json TEXT NOT NULL, task TEXT NOT NULL,
                 annotation_json TEXT, review TEXT NOT NULL,
                 revision INTEGER NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""",
+}
+
+# Schema 3's exact DDL above remains an immutable backup/upgrade identity.
+SPATIAL_TABLES = {
+    'workbench_pointcloud_assets': """CREATE TABLE workbench_pointcloud_assets (
+    id TEXT PRIMARY KEY, bundle BYTEA NOT NULL, metadata_json TEXT NOT NULL,
+    bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))""",
+    'workbench_volume_assets': """CREATE TABLE workbench_volume_assets (
+    id TEXT PRIMARY KEY, bundle BYTEA NOT NULL, metadata_json TEXT NOT NULL,
+    bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))""",
+}
+TABLES = {
+    **TABLES_V3, **SPATIAL_TABLES,
+    'workbench_records': TABLES_V3['workbench_records'].replace(
+        "'sequence','mesh','audio'", "'sequence','mesh','audio','pointcloud','volume'"),
 }

@@ -27,6 +27,12 @@ jobs:
       TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
     steps:
       - uses: actions/checkout@v4
+      - name: Check out pinned schema3 source for retained-run qualification
+        uses: actions/checkout@v4
+        with:
+          ref: f1ecf7888a8dfa5b67ac8b087034226d533c682e
+          path: build/legacy-schema3
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -36,8 +42,12 @@ jobs:
       - name: Install independent WAV consumer
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python -m pip install -r requirements.txt
+      - run: python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json
       - run: python -m venv build/workspace-training
       - run: build/workspace-training/bin/python -m pip install -r requirements-training.txt
+      - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: python -m unittest discover -s tests
       - run: node --check static/workbench.js
       - run: node --check static/audio-editor.js
@@ -60,6 +70,9 @@ jobs:
       - run: PUMAS_TYPED_PREFIX=caption-proposal node tests/test_pumas_typed_controller.cjs
       - run: node --check static/pumas-gateways.js
       - run: node tests/test_pumas_gateways_controller.cjs
+      - run: node --check static/pointclouds.js
+      - run: node --check static/volume-editor.js
+      - run: node tests/test_spatial_controllers.cjs
       - run: node --check static/meshes.js
       - run: node tests/test_meshes_controller.cjs
       - run: node --check static/sequences.js
@@ -223,6 +236,11 @@ jobs:
       - run: node tests/browser_workspace_sequence_run.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_spatial.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_NATIVE_READER_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
       - uses: actions/upload-artifact@v4
         if: always()

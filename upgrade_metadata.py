@@ -1,16 +1,21 @@
-"""Explicit quiesced PostgreSQL schema 1 or 2 to 3 upgrade, without data rewriting."""
+"""Explicit quiesced PostgreSQL schema 1, 2 or 3 to 4 upgrade, without data rewriting."""
 import argparse
 import json
 
 import psycopg
 
-from metadata import (Metadata, SCHEMA_VERSION, StorageError, WORKSPACE_TABLES,
+from metadata import (Metadata, SCHEMA_VERSION, StorageError, WORKSPACE_TABLES, SPATIAL_TABLES,
                       definition_hash)
 
 # Accepted ordered transitions, with stable identities. The complete chain is
 # one transaction: no intermediate version is published if a later step fails.
 UPGRADES = {
     1: ('workspace-metadata-1-to-2', tuple(WORKSPACE_TABLES.values())),
+    3: ('spatial-metadata-3-to-4', (
+        'ALTER TABLE workbench_records DROP CONSTRAINT workbench_records_kind_check',
+        "ALTER TABLE workbench_records ADD CONSTRAINT workbench_records_kind_check CHECK(kind IN ('image','text','sequence','mesh','audio','pointcloud','volume'))",
+        *SPATIAL_TABLES.values(),
+    )),
     2: ('audio-metadata-2-to-3', (
         'ALTER TABLE workbench_records DROP CONSTRAINT workbench_records_kind_check',
         "ALTER TABLE workbench_records ADD CONSTRAINT workbench_records_kind_check CHECK(kind IN ('image','text','sequence','mesh','audio'))",
@@ -23,7 +28,7 @@ def upgrade_catalog(path, *, dsn=None, quiesced=False):
 
     Stop every old/new app and artifact writer before calling. The advisory lock
     coordinates cooperating commands; it is not a fence against a live old app.
-    Re-entry verifies current schema 3, including its independently known shape,
+    Re-entry verifies current schema 4, including its independently known shape,
     and performs no writes to domain rows, artifacts or the dataset manifest.
     """
     if not quiesced:
