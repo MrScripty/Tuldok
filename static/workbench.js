@@ -6,7 +6,7 @@ let selectionEpoch = 0;
 let page = null, offset = 0, current = null, targets = [], dirty = false, queryEpoch = 0, editorEpoch = 0;
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error', error); }
 async function api(path, body) {
-  const response = await fetch(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const response = await (globalThis.TuldokAuth?.fetch || fetch)(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   const result = await response.json();
   if (!response.ok) { const error=Error(result.error || 'Request failed.');error.status=response.status;throw error; }
   return result;

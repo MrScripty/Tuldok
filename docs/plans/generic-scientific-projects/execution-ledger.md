@@ -47,3 +47,29 @@ Implemented typed CZYX float sequence custody, pinned observation import, stage/
 Final stable-source suite is in progress; see [P2 verification](reports/p2-verification.md) for completed evidence and boundaries. No training/physics acceptance, merge or deployment. Read-only P3 preparation found existing Runs assumes childless trainers and cgroups are read-only; later external execution requires explicit descendant ownership qualification. P5 installedTorch2.8CPU differs from declaredPumas2.14 target, so actual runtime compatibility remains unqualified.
 
 P2 final stable source:696 tests passed in566.842s, three optional-reader skips independently covered by20 spatial and6 scientific-release tests without skips. Final source hash inventory unchanged. Plan validator/local links/Python-JavaScript syntax/whitespace pass. Ready to commit/push draft; hosted exact-head CI remains acceptance prerequisite before P3 implementation.
+
+## 2026-10-13 — P2 hosted qualification and P3a admission
+
+Draft PR46 exact2476a7d passed UI14/14 and lifecycle125/125 steps, including native-reader/browser and all retained Runs/export gates. Updated PR evidence, no merge. Created feature/scoped-local-actors-20261013. Independent review accepted splitting P3a explicit actor/client migration from P3b external custody, preserving owner-only existing execution first. Resolved startup reconciliation and durable one-job continuation authority; rejected implicit decorator-owned transactions because existing dispatch requires committed admission. Exact API/write assignments precede dependent edits.
+
+## 2026-10-13 — P3a local integration and review
+
+Implemented shared explicit actors, schema7, current-client migration, transactional
+review attribution and exact bounded continuations. Existing execution remains
+owner-only; P3b approval and descendant custody remain pending. Root integrated
+HTTP/Dataset/Runs, volume_assets owned Access/schema, milestone_audit domain and
+Pipeline guards, recipe_design existing worker owners, mesh_review Workbench,
+mesh_ui session UI/browser migration, point_assets explicit Python/CLI fixtures.
+Independent cross-owner review corrected transport audit gaps and mutation replay,
+removed a public internal split mutator, and preserved strict authorization errors.
+
+The full708-test run found18 issues (15 fixture migrations and3 compatibility
+defects); final31-test affected+Access+HTTP rerun passes, independent20 readers
+cover2 optional skips. Final real session browser and18-check workspace baseline
+pass;23 existing controller suites and new auth controller/helper checks pass.
+Plan-contract validation, syntax and whitespace checks pass. See
+[P3a verification](reports/p3a-verification.md). Exact-head hosted full regression
+is the acceptance gate before P3b implementation. No merge/deployment.
+
+An environment disconnect notice did not remove the workspace or stop tool access.
+Verified branch and pending sources at2476a7d before publication; work continued.

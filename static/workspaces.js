@@ -432,7 +432,7 @@ window.workspaceEscape = (value) =>
     $("retry-load").hidden = true;
     $("workspace-error").hidden = true;
     try {
-      const response = await fetch("/workspace-fixtures.json");
+      const response = await (globalThis.TuldokAuth?.fetch || fetch)("/workspace-fixtures.json");
       if (!response.ok)
         throw Error("Fixture request failed (" + response.status + ").");
       const data = await response.json();

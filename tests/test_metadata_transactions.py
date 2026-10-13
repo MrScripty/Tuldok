@@ -1,4 +1,5 @@
 """Real PostgreSQL transaction, independent connection and file publication tests."""
+from auth_helpers import bind_owner
 import base64
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -28,7 +29,7 @@ class MetadataTransactions(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.first = Dataset(self.tmp.name)
+        self.first = Dataset(self.tmp.name); self.actor = bind_owner(self, self.first)
         self.addCleanup(self.first.close)
 
     def second(self):
@@ -82,11 +83,12 @@ class MetadataTransactions(unittest.TestCase):
         body = dict(source_name='fixture.jsonl', row_number=1, request_id='a'*32,
                     line=json.dumps(dict(kind='text', text='Concurrent exact content', groups=['one'])))
         def admit(dataset):
-            barrier.wait(timeout=5)
-            try:
-                return bulk_import.import_row(dataset.workbench, body)
-            except WorkbenchError as error:
-                return error
+            with self.actor.bound(dataset):
+                barrier.wait(timeout=5)
+                try:
+                    return bulk_import.import_row(dataset.workbench, body)
+                except WorkbenchError as error:
+                    return error
         with ThreadPoolExecutor(max_workers=2) as executor:
             outcomes = list(executor.map(admit, [self.first, second]))
         self.assertEqual(sum(isinstance(item, dict) for item in outcomes), 1)
@@ -202,8 +204,8 @@ class MetadataTransactions(unittest.TestCase):
         self.first.db.connection.close()
         try:
             base = 'http://127.0.0.1:' + str(server.server_port)
-            requests = [urllib.request.Request(base+'/api/workbench/records'),
-                        urllib.request.Request(base+'/api/workbench/import',
+            requests = [self.actor.request(base+'/api/workbench/records'),
+                        self.actor.request(base+'/api/workbench/import',
                             data=json.dumps(dict(kind='text', text='outage', groups=['one'])).encode(),
                             headers={'Content-Type': 'application/json'})]
             for request in requests:

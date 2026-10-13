@@ -1,4 +1,5 @@
 """Bounded canonical_v1 classification ZIP ingestion; Workbench owns insertion."""
+from access import authorized
 import base64
 import hashlib
 import hmac
@@ -47,6 +48,7 @@ def valid_hash(value):
 
 class NativeTextImports:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self._key = secrets.token_bytes(32)
 
@@ -73,6 +75,7 @@ class NativeTextImports:
         except (ValueError, UnicodeError):
             raise WorkbenchError('Native text preparation changed or expired. Choose the archive again.') from None
 
+    @authorized('edit', 'native_text_import.prepare')
     def prepare(self, body):
         if set(body) != {'source_name', 'archive'}:
             raise WorkbenchError('Supply exactly one selected native release ZIP and its filename.')
@@ -204,6 +207,7 @@ class NativeTextImports:
             raise WorkbenchError('Text asset, exported text and canonical hashes must match exactly.')
         return {'text': row['text'], 'name': name, 'groups': groups, 'annotation': target}
 
+    @authorized('edit', 'native_text_import.admit')
     def admit(self, body):
         if set(body) != {'token', 'request_id'} or not isinstance(body['request_id'], str) or not REQUEST_ID.fullmatch(body['request_id']):
             raise WorkbenchError('Supply one prepared native text token and request marker.')
@@ -216,6 +220,7 @@ class NativeTextImports:
                     raise WorkbenchError('This import request marker was already admitted; inspect its saved result.', 'conflict', 409)
                 record = w._insert_text(payload['text'], payload['name'], payload['groups'], [], 'unknown',
                     provenance={'acquisition': context}, annotation=payload['annotation'])
+                self.access.audit('native_text_import.admit', record['id'], {'revision': record['revision'], 'source_sha256': record['source_sha256']})
                 receipt = result(record)
             return receipt
         except (OSError, psycopg.Error):

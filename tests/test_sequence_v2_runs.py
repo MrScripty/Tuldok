@@ -1,4 +1,5 @@
 """Authored v2 transport through PostgreSQL and Runs; no real-packet/physics claim."""
+from auth_helpers import bind_owner
 import base64
 import copy
 import hashlib
@@ -39,7 +40,7 @@ class SequenceV2Runs(unittest.TestCase):
     wait = test_mesh_runs.MeshRuns.wait
 
     def open_dataset(self, path='catalog'):
-        self.dataset = Dataset(self.root / path)
+        self.dataset = Dataset(self.root / path); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         return self.dataset
 

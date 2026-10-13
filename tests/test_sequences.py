@@ -3,6 +3,7 @@
 Constructor and accepted-state formula come directly from draft PR 20 fee7b4a's
 tools/test_dense3d_sequence_import.py. Provenance placeholders remain synthetic.
 """
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 from postgres_helpers import database_snapshot, drop_failure_trigger, install_failure_trigger, observed_statements
 import base64
 import copy
@@ -52,7 +53,7 @@ class Sequences(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.d = Dataset(self.tmp.name)
+        self.d = Dataset(self.tmp.name); self.actor = bind_owner(self, self.d)
         self.addCleanup(lambda: self.d.close())
         self.w = self.d.workbench
         self.run, self.raw = fixture()
@@ -107,7 +108,7 @@ class Sequences(unittest.TestCase):
         self.assertEqual(len(self.w.history(row['id'])), 3)
         self.assertEqual(self.w.history(row['id'])[-1], row)
         with self.assertRaises(WorkbenchError): self.review(row)
-        self.d.close(); self.d = Dataset(self.tmp.name); self.w = self.d.workbench
+        self.d.close(); self.d = Dataset(self.tmp.name); self.actor = bind_owner(self, self.d); self.w = self.d.workbench
         self.assertEqual(self.w.get(row['id']), corrected)
         self.assertEqual(self.w.asset(row['id'])[0], bundle)
 
@@ -294,22 +295,23 @@ class Sequences(unittest.TestCase):
         self.assertEqual(sum('token' in row for row in prepared['rows']), 1)
         self.assertEqual(sum('error' in row for row in prepared['rows']), 1)
         destination = Dataset(Path(self.tmp.name) / 'destination'); self.addCleanup(destination.close)
-        prepared = destination.native_text_imports.prepare(dict(source_name='mixed.zip',
-            archive=base64.b64encode(self.d.releases.locate(release['id']).read_bytes()).decode()))
-        token = next(row['token'] for row in prepared['rows'] if 'token' in row)
-        destination.native_text_imports.admit(dict(token=token, request_id=uuid.uuid4().hex))
-        self.assertEqual(destination.workbench.query({})['total'], 1)
-        self.assertEqual(destination.workbench.query({})['items'][0]['kind'], 'text')
+        source_archive = base64.b64encode(self.d.releases.locate(release['id']).read_bytes()).decode()
+        with ExplicitOwnerFixture.bootstrap(destination).bound(destination):
+            prepared = destination.native_text_imports.prepare(dict(source_name='mixed.zip', archive=source_archive))
+            token = next(row['token'] for row in prepared['rows'] if 'token' in row)
+            destination.native_text_imports.admit(dict(token=token, request_id=uuid.uuid4().hex))
+            self.assertEqual(destination.workbench.query({})['total'], 1)
+            self.assertEqual(destination.workbench.query({})['items'][0]['kind'], 'text')
 
     def test_http_admission_and_endpoint_request_bound(self):
         server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.d))
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
         url = f'http://127.0.0.1:{server.server_port}/api/workbench/sequence-import'
-        request = urllib.request.Request(url, json.dumps(body(self.run, self.raw)).encode(), {'Content-Type': 'application/json'})
+        request = self.actor.request(url, json.dumps(body(self.run, self.raw)).encode(), {'Content-Type': 'application/json'})
         with urllib.request.urlopen(request) as response:
             self.assertEqual(response.status, 201); self.assertEqual(json.load(response)['review'], 'draft')
-        oversized = urllib.request.Request(url, b'{}', {'Content-Type': 'application/json', 'Content-Length': str(adapter.MAX_REQUEST + 1)})
+        oversized = self.actor.request(url, b'{}', {'Content-Type': 'application/json', 'Content-Length': str(adapter.MAX_REQUEST + 1)})
         with self.assertRaises(urllib.error.HTTPError) as raised: urllib.request.urlopen(oversized)
         self.assertEqual(raised.exception.code, 400)
         self.assertEqual(self.w.query({})['total'], 1)
@@ -319,7 +321,7 @@ class PostgreSQLSchema(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.data = Dataset(self.tmp.name)
+        self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.addCleanup(self.data.close)
 
     def test_validation_is_idempotent_and_transactional_ddl_preserves_exact_rows(self):

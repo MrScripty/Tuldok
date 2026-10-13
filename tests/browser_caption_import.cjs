@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Authored native folder files -> actual HTTP/PostgreSQL -> draft/review -> browser ZIP download.
 'use strict';
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
@@ -18,6 +21,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>{if(process.env.CAPTION_IMPORT_DEBUG)process.stderr.write(data);});
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
   const seed=await api('import',{kind:'text',text:'Keep this draft editor intact.',name:'Existing editor',groups:['existing-source'],rights:'Authored'});
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
@@ -37,6 +41,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
   console.log('Caption import browser targets:',JSON.stringify(tabs.map(tab=>({type:tab.type,url:tab.url}))));
   console.log('Caption import browser version:',JSON.stringify(await send('Browser.getVersion')));
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   assert.ok(!(await send('Page.navigate',{url:base+'/workbench'})).errorText);
   await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   await evaluate('openRecord('+JSON.stringify(seed.id)+')');
@@ -94,6 +99,8 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const legacyServer=launch('python3',['-u','app.py','--port','0','--data',legacyData],{cwd:root,stdio:['ignore','pipe','pipe']});
   let legacyOutput='';legacyServer.stdout.on('data',data=>legacyOutput+=data);
   const legacyPort=await until(()=>legacyOutput.match(/127\.0\.0\.1:(\d+)/)?.[1]),legacyBase='http://127.0.0.1:'+legacyPort;
+  await fixtureAuth.register(legacyBase,legacyData,root);
+  await fixtureAuth.browser(send,legacyBase);
   const priorFrame=(await send('Page.getFrameTree')).frameTree.frame;
   await send('Page.navigate',{url:legacyBase+'/workbench'});await until(()=>tracker.reloaded(priorFrame));await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   const alternate=python("import base64,io,sys; from PIL import Image,PngImagePlugin; out=io.BytesIO(); info=PngImagePlugin.PngInfo(); info.add_text('fixture','corner import after workbench opened'); image=Image.open(sys.argv[1]); image.save(out,'PNG',pnginfo=info); print(base64.b64encode(out.getvalue()).decode())",path.join(fixture,assets[0])).trim();

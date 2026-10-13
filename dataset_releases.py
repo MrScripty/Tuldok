@@ -1,4 +1,5 @@
 """Frozen, self-contained releases with connected-source split allocation."""
+from access import authorized
 import audio_export
 import hashlib
 import json
@@ -154,10 +155,12 @@ def archive_asset(archive, asset, filename, expected_hash):
 
 class Releases:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self.path = workbench.dataset.path / 'releases'
         self.path.mkdir(exist_ok=True)
 
+    @authorized('inspect', 'dataset_releases.locate')
     def locate(self, release_id):
         if not isinstance(release_id, str) or not RELEASE_ID.fullmatch(release_id):
             raise WorkbenchError('Invalid release ID.')
@@ -166,6 +169,7 @@ class Releases:
             raise WorkbenchError('Release not found.', 'unavailable', 404)
         return path
 
+    @authorized('inspect', 'dataset_releases.preview')
     def preview(self, body):
         """Inspect the exact selection without persisting even lazy image enrollment."""
         workbench = self.workbench
@@ -441,6 +445,7 @@ class Releases:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
             preview = prepared['preview']
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': corpus_export.FORMAT, 'records': len(prepared['rows']),
                     'split_report': preview['split_report'], 'corpus_counts': preview['corpus_counts'],
@@ -656,11 +661,13 @@ class Releases:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
             preview = prepared['preview']
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': body['format'], 'records': preview['example_count'],
                     'example_count': preview['example_count'], 'unique_prompt_count': preview['unique_prompt_count'],
                     'split_report': preview['split_report']}
 
+    @authorized('freeze', 'dataset_releases.create')
     def create(self, body):
         with self.workbench.lock:
             if self.workbench.db.in_transaction:
@@ -747,6 +754,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip', 'records': len(rows), 'split_report': report}
 
     def _create_captions(self, body):
@@ -796,6 +804,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': CAPTION_FORMAT, 'records': len(rows), 'split_report': report, 'warnings': manifest['warnings']}
 
@@ -849,6 +858,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': classification_export.FORMAT, 'records': len(rows),
                     'split_report': preview['split_report'], 'class_vocabulary': vocabulary,
@@ -871,6 +881,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': text_class_export.FORMAT, 'records': len(prepared['rows']),
                     'split_report': prepared['preview']['split_report'],
@@ -902,6 +913,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': audio_class_export.FORMAT, 'records': len(prepared['rows']),
                     'split_report': prepared['preview']['split_report'],

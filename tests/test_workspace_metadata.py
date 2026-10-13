@@ -33,7 +33,7 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertEqual(len(TABLES_V1), 19)
         self.assertEqual(definition_hash(1),
                          '859a04c5ee618faae689885bee79054d5e92098e746d058fd2bcb599da4c80db')
-        self.assertEqual(SCHEMA_VERSION, 6)
+        self.assertEqual(SCHEMA_VERSION, 7)
         self.assertEqual(set(WORKSPACE_TABLES),
                          {'workspace_graphs', 'workspace_runs', 'workspace_exposures'})
 
@@ -53,6 +53,7 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertEqual(set(PROJECT_TABLES), {'workspace_projects'})
         self.assertEqual(UPGRADES[4], ('project-metadata-4-to-5', tuple(PROJECT_TABLES.values())))
         self.assertNotEqual(definition_hash(5), definition_hash(4))
+        self.assertEqual(definition_hash(6), 'e4ca8ba0b092834a3e7ba059f88fce223a66ad2f830ab7fb60c64fe6d1882cf5')
 
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL TULDOK_DATABASE_URL')
@@ -125,9 +126,12 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(read_sequences(reopened), sequences)
         self.assertTrue(all(current[name]['count'] == 0 for name in WORKSPACE_TABLES))
         self.assertEqual(reopened.dataset_id, identity)
-        self.assertEqual(reopened.schema_version, 6)
+        self.assertEqual(reopened.schema_version, 7)
         from app import Dataset
         dataset = Dataset(self.root / 'catalog')
+        from auth_helpers import bind_owner
+        bind_owner(self, dataset)
+        current = read_catalog(reopened)
         try:
             expected = json.loads((FIXTURE / 'expected.json').read_bytes())
             row = expected['record']
@@ -193,8 +197,8 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(metadata.path)
         result = upgrade_catalog(metadata.path, quiesced=True)
-        self.assertEqual(result['migration'], 'field-sequence-metadata-5-to-6')
-        self.assertEqual(result['schema_version'], 6)
+        self.assertEqual(result['migration'], 'access-metadata-6-to-7')
+        self.assertEqual(result['schema_version'], 7)
         current = Metadata(metadata.path, create=False)
         self.addCleanup(current.close)
         self.assertEqual(current.dataset_id, metadata.dataset_id)
@@ -372,7 +376,7 @@ class WorkspaceMetadata(unittest.TestCase):
                 upgrade_catalog(metadata.path, quiesced=True)
         reopened = Metadata(metadata.path, create=False)
         self.addCleanup(reopened.close)
-        self.assertEqual(reopened.schema_version, 6)
+        self.assertEqual(reopened.schema_version, 7)
         self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'already_current')
 
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
@@ -516,7 +520,7 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(metadata.path)
         result = upgrade_catalog(metadata.path, quiesced=True)
-        self.assertEqual((result['schema_version'], result['migration']), (6, 'field-sequence-metadata-5-to-6'))
+        self.assertEqual((result['schema_version'], result['migration']), (7, 'access-metadata-6-to-7'))
         current = Metadata(metadata.path, create=False)
         self.addCleanup(current.close)
         self.assertEqual(current.dataset_id, identity)
@@ -569,7 +573,7 @@ class WorkspaceMetadata(unittest.TestCase):
         self.addCleanup(old.close)
         self.assertEqual(summaries(read_catalog(old)), before)
         old.close()
-        self.assertEqual(upgrade_catalog(restored, quiesced=True)['schema_version'], 6)
+        self.assertEqual(upgrade_catalog(restored, quiesced=True)['schema_version'], 7)
         self.assertEqual(tree_manifest(backup), backup_files)
 
     def test_v5_backup_restore_preserves_exact_project_snapshot_and_history(self):

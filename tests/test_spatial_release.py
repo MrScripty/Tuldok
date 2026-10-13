@@ -1,4 +1,5 @@
 """Real spatial import/review/freeze with original-byte and coordinate custody."""
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import io
@@ -23,7 +24,7 @@ class SpatialRelease(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.dataset = Dataset(self.temporary.name)
+        self.dataset = Dataset(self.temporary.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
 

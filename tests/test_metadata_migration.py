@@ -1,4 +1,5 @@
 """Real SQLite snapshots and PostgreSQL transfer, recovery and byte-preservation proof."""
+from auth_helpers import bind_owner
 import json
 import os
 from pathlib import Path
@@ -267,7 +268,7 @@ class PostgreSQLTransfers(unittest.TestCase):
         from app import Dataset
         from workbench import WorkbenchError
         with patch('ai_http.request', side_effect=AssertionError('No provider replay')):
-            dataset = Dataset(self.root / 'dest')
+            dataset = Dataset(self.root / 'dest'); self.actor = bind_owner(self, dataset)
             try:
                 row = expected['record']; workbench = dataset.workbench
                 self.assertEqual(workbench.get(row['id']), row)
@@ -291,7 +292,7 @@ class PostgreSQLTransfers(unittest.TestCase):
                 self.assertEqual(file_hash(release), file_hash(FIXTURE / 'releases' / release.name))
             finally:
                 dataset.close()
-            dataset = Dataset(self.root / 'dest')
+            dataset = Dataset(self.root / 'dest'); self.actor = bind_owner(self, dataset)
             try:
                 self.assertEqual(dataset.workbench.get(row['id'])['revision'], row['revision'] + 1)
             finally:
@@ -403,7 +404,7 @@ class PostgreSQLTransfers(unittest.TestCase):
                 self.assertEqual(cli('backup_metadata.py', ['restore', self.root / 'pg-backup', self.root / 'restored'], environment), restored)
                 from app import Dataset
                 with patch.dict(os.environ, {'TULDOK_DATABASE_URL': restored_dsn}), patch('ai_http.request', side_effect=AssertionError('No provider replay')):
-                    dataset = Dataset(self.root / 'restored')
+                    dataset = Dataset(self.root / 'restored'); self.actor = bind_owner(self, dataset)
                     try:
                         expected = json.loads((FIXTURE / 'expected.json').read_bytes())
                         self.assertEqual(dataset.workbench.get(expected['record']['id']), expected['record'])

@@ -6,6 +6,7 @@ persists bounded attempts and applies a caption plus its receipt in one transact
 from workbench import encode_retained
 import base64
 import hashlib
+from access import AccessError, authorized
 import io
 import json
 import threading
@@ -116,11 +117,12 @@ def decode(data, source, request_id=None):
 class CaptionProposals:
     def __init__(self, workbench):
         self.workbench = workbench
+        self.access = workbench.dataset.access
         self.db, self.lock = workbench.db, workbench.lock
         self.worker, self.active_id = None, None
         self.stop = threading.Event()
         self.closed = False
-        with self.lock, self.db.transaction():
+        with self.access._reconcile(), self.lock, self.db.transaction():
             self.runtime_owner = self.db.claim_runtime('caption_proposals')
             if not self.runtime_owner:
                 return
@@ -131,6 +133,7 @@ class CaptionProposals:
                         job['provider_outcome'] = 'not_admitted' if job['status'] == 'preparing' else 'unknown'
                     job.update(status='interrupted', error='Server stopped; inspect this attempt. No automatic inference retry.')
                     self._save(job)
+                    self.access.audit('caption.reconcile', job['id'], {'status': job['status']})
 
     def _save(self, job):
         previous = self.db.execute('SELECT data FROM caption_proposals WHERE id=%s', (job['id'],)).fetchone()
@@ -146,10 +149,12 @@ class CaptionProposals:
             raise WorkbenchError('Caption request not found.', 'unavailable', 404)
         return json.loads(row[0])
 
+    @authorized('inspect', 'caption.get')
     def get(self, job_id):
         with self.lock:
             return self._get(job_id)
 
+    @authorized('inspect', 'caption.snapshot')
     def snapshot(self):
         with self.lock:
             # Project only the poll response; stored JSON remains byte-for-byte intact.
@@ -195,6 +200,7 @@ class CaptionProposals:
             raise WorkbenchError('Source image bytes are missing.', 'unavailable', 409) from None
         return record, image_bytes
 
+    @authorized('execute', 'caption.start', owner_only=True)
     def start(self, body):
         fields = {'request_id', 'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'seed'}
         if not isinstance(body, dict) or not fields <= body.keys() or body.keys() - fields - {'protocol', 'profile'}:
@@ -250,6 +256,10 @@ class CaptionProposals:
                 job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
                 if pumas.typed(config):
                     job['provider_outcome'] = 'not_admitted'
+                job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
+                job['admission_id'] = self.access.admit_job('caption', job['id'], job['request_digest'],
+                    {'caption.finish': [job['id']]})
+                self.access.audit('caption.start', job['id'], {'request_digest': job['request_digest']})
                 self._save(job)
             # Persistence has committed; this lock serializes startup and shutdown.
             self.stop.clear()
@@ -265,7 +275,21 @@ class CaptionProposals:
             return job
 
     def _run(self, job_id):
-        job = self.get(job_id)
+        with self.lock:
+            job = self._get(job_id)
+        request_digest = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
+        try:
+            with self.access._job('caption', job_id, job.get('admission_id'), request_digest):
+                self._run_admitted(job)
+        except AccessError:
+            with self.access._reconcile(), self.lock, self.db.transaction():
+                job.update(status='interrupted', error='Job admission is missing or differs from the retained request; no inference started.')
+                self._save(job)
+                self.access.audit('caption.interrupt', job_id)
+                self.active_id = None
+
+    def _run_admitted(self, job):
+        job_id = job['id']
         try:
             if pumas.typed(job['config']):
                 pumas_vision.prepare(job, payload(job), self.stop)
@@ -297,15 +321,18 @@ class CaptionProposals:
                 self._source(dict(source_id=job['source']['id'], revision=job['source']['revision'], source_revision=job['source']['source_revision']))
                 job.update(status='completed', annotation=annotation, reported_model=reported)
                 self._save(job)
+                self.access.audit('caption.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:
             with self.lock, self.db.transaction():
                 pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
+                self.access.audit('caption.finish', job_id, {'status': job['status']})
         finally:
             with self.lock:
                 self.active_id = None
 
+    @authorized('cancel', 'caption.cancel', target=lambda body: body.get('job_id') if isinstance(body, dict) else None)
     def cancel(self, body):
         if not isinstance(body, dict) or set(body) != {'job_id'}:
             raise WorkbenchError('Supply only the caption request ID.')
@@ -316,8 +343,10 @@ class CaptionProposals:
             self.stop.set()
             job.update(status='stopping', error='Cancellation requested; late output cannot be applied.')
             self._save(job)
+            self.access.audit('caption.cancel', job['id'])
             return {'cancelled': True, 'job': job}
 
+    @authorized('edit', 'caption.decide')
     def decide(self, job_id, body):
         if not isinstance(body, dict) or set(body) != {'revision', 'decision'} or body['decision'] not in ('reject', 'apply_draft'):
             raise WorkbenchError('Choose reject or apply_draft with the current proposal revision.')
@@ -347,6 +376,7 @@ class CaptionProposals:
             else:
                 job['status'] = 'rejected'
             self._save(job)
+            self.access.audit('caption.decide', job['id'], {'revision': job['revision'], 'decision': body['decision']})
             return {'job': job, 'record': record, 'changed': True}
 
     def close(self):

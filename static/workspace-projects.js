@@ -7,7 +7,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
   let entries=[], aliases=[], listGeneration=0, opening=false, openGeneration=0;
   const currentSource=()=>select.value;
   async function api(path, options={}) {
-    const response=await fetch('/api/workspace/projects'+path,options), value=await response.json();
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workspace/projects'+path,options), value=await response.json();
     if(!response.ok)throw Error(value.error||'Project inspection unavailable.');
     return value;
   }

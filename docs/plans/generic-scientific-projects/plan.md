@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P1 qualified at published commit 46384fca; P2 implemented and undergoing final qualification on feature/scientific-field-sequences-20261013.
+**Current phase:** P2 qualified at published commit2476a7d; P3a scoped local actors admitted on feature/scoped-local-actors-20261013.
 
-**Next slice:** P2 — lossless scientific field sequences, source custody, review and freeze.
+**Next slice:** P3a — shared actor authority and explicit current-client migration; P3b external process custody follows after this checkpoint.
 
 **Acceptance status:** `partial`
 
@@ -186,13 +186,15 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G2 and data portion of G7; independent cold read, exact bytes, geometry/time checks, malformed/oversize inputs, restore and retained-history tests. Actual sample unavailability leaves G2 pending while negative fixtures can proceed.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 ### P3: Authorized external recipe execution
 
+**Reviewed sub-stages:** P3a introduces shared local actors and explicitly migrates existing domain/HTTP/browser clients; existing execution remains owner-only. P3b adds material execution approvals and descendant-safe external recipes. Separate feature branches preserve runnable checkpoints. P3 remains unaccepted until both qualify. [P3a authority contract](reports/p3a-admission.md) governs implementation.
+
 **Goal:** Pipeline preflight and Runs execute/cancel a bounded real local process using the shared permission and lifecycle boundary.
 
-**Allowed write set:** proposed `access.py`, `recipe_process.py`, `docs/contracts/actors.md`, `docs/contracts/external-recipes.md`, corresponding unit/integration tests; existing `pipeline.py`, `runs.py`, `app.py`, metadata and artifact owners, all affected mutation endpoints, workspace UI/tests. Enumerate the complete privileged endpoint population before implementation.
+**Allowed write set:** `access.py`, `tests/auth_helpers.py`, `tests/auth_helpers.cjs`, `tests/test_access.py`, `static/auth.js`, `static/auth.css`; all current domain/HTTP/browser owners and their affected authentication fixture callers inventoried in the P3a admission report (exact paths recorded before editing); proposed `access.py`, `recipe_process.py`, `docs/contracts/actors.md`, `docs/contracts/external-recipes.md`, corresponding unit/integration tests; existing `pipeline.py`, `runs.py`, `app.py`, metadata and artifact owners, all affected mutation endpoints, workspace UI/tests. Enumerate the complete privileged endpoint population before implementation.
 
 **Tasks:** Owner session and agent credential scopes; domain admission checks; bound approvals to material inputs; structured process protocol; execution preflight; descendant/restart qualification; update existing callers without bypass; expose queued/running/cancelling/failed/unknown states and bounded structured diagnostics.
 

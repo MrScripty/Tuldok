@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -17,6 +20,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_pumas_typed_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/Tuldok: http:\/\/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
@@ -46,6 +50,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const source=await makeText('Typed source','The meeting is confirmed.');
   const fixed=await request('selections',{name:'Typed fixed set',items:[ref(source)]});
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   await evaluate('refreshSavedSets('+JSON.stringify(fixed.id)+')');await click('load-selection');await until(()=>evaluate('!savedLoadBusy && selected.size===1'));
   const selectedBefore=await evaluate('releaseBody().items');
@@ -89,7 +94,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   let row=await request('records/'+source.id);assert.equal(row.target_proposal.capability_observation.capabilities.profile,'controlled-text-cpu');
   const reviewed=await request('records/'+source.id,{revision:row.revision,source_revision:row.source_revision,task:'text_classification',annotation:row.annotation,groups:row.groups,review:'human_reviewed'});
   await evaluate('openRecord('+JSON.stringify(source.id)+')');
-  await fetch(base+'/test/pumas-control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:JSON.stringify({candidates:[{text:'The confirmed meeting will take place.',label:'positive',evidence:[{start:0,end:25,quote:source.text}]}]})})});
+  await fetch(base+'/api/test/pumas-control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:JSON.stringify({candidates:[{text:'The confirmed meeting will take place.',label:'positive',evidence:[{start:0,end:25,quote:source.text}]}]})})});
   await fill('grounded-protocol','pumas_typed_v1');await fill('grounded-url',gateway);await click('grounded-models');await until(()=>evaluate('document.getElementById("grounded-model").options.length===2'));
   await fill('grounded-model','controlled-text');await fill('grounded-count','1');await fill('grounded-instruction','Rewrite clearly.');
   await evaluate('document.getElementById("grounded-form").requestSubmit()');
@@ -126,7 +131,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const visionApplied=await until(async()=>{const row=await request('records/'+visionSource.id);return row.annotation?.caption==='A blue rectangle.'&&row;});
   assert.equal(visionApplied.review,'draft');assert.equal(visionApplied.target_proposal.producer_contract_source,JSON.parse(fs.readFileSync(path.join(root,'tests/fixtures/pumas-image-to-text-v1/source.json'),'utf8')).producer_commit);
   assert.deepEqual(visionApplied.groups,visionSource.groups);
-  await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'loss'})});
+  await fetch(base+'/api/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'loss'})});
   await evaluate('openRecord('+JSON.stringify(visionApplied.id)+')');
   await until(()=>evaluate('current?.revision === '+visionApplied.revision));
   const visionRace=await evaluate('({busy:captionProposalBusy,revision:current.revision,validForm:document.getElementById("caption-proposal-form").checkValidity()})');
@@ -146,7 +151,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const visionLost=await until(async()=> (await request('caption-proposals')).jobs.find(j=>j.id===visionLossRequest.request_id && j.status==='failed'));
   assert.equal(visionLost.provider_outcome,'unknown');
   await click('caption-proposal-refresh');await pause(150);
-  const visionControl=await(await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
+  const visionControl=await(await fetch(base+'/api/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
   assert.equal(visionControl.requests.length,2,'Refreshing an unknown outcome never replays inference');
   assert.equal(await evaluate('visionAdmissionRequests.length'),1,'Only the ready physical click admits the second request');
   await evaluate('window.fetch=visionApplyFetch');

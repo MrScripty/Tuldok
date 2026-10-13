@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Explicit real-model acceptance: PUMAS_GATEWAY, PUMAS_MODEL, TULDOK_IMAGE and TULDOK_EVIDENCE_DIR are required.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -15,6 +18,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/Tuldok: http:\/\/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   launch(process.env.BROWSER||'/opt/brave.com/brave/brave',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:'ignore'});
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
@@ -33,6 +37,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const source=fs.readFileSync(process.env.TULDOK_IMAGE);
   const imported=await fetch('http://127.0.0.1:'+port+'/api/samples',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:source.toString('base64'),filename:'book-regression.png',session_id:'release-acceptance',book_id:'regression-book',split:'unassigned'})});
   assert.equal(imported.status,201);const sample=await imported.json();
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:'http://127.0.0.1:'+port});
   await until(()=>evaluate('!!document.querySelector("#samples .sample")'));
   await evaluate('document.querySelector("#samples .sample").click()');

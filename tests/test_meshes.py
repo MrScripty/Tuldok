@@ -1,4 +1,5 @@
 """Actual authored ASCII PLY inputs; analytic oracles, no Rheon execution."""
+from auth_helpers import bind_owner
 from postgres_helpers import drop_failure_trigger, install_failure_trigger, observed_statements
 import base64
 import copy
@@ -47,7 +48,7 @@ def body(raw, sidecar, **options):
 class Meshes(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.d = Dataset(self.tmp.name); self.addCleanup(lambda: self.d.close()); self.w = self.d.workbench
+        self.d = Dataset(self.tmp.name); self.actor = bind_owner(self, self.d); self.addCleanup(lambda: self.d.close()); self.w = self.d.workbench
 
     def add(self, name='tetrahedron', **options):
         return meshes.admit(self.w, body(*fixture(name), **options))
@@ -88,7 +89,7 @@ class Meshes(unittest.TestCase):
         corrected = self.w.correct_rights_note(row['id'], dict(revision=2, source_revision=1, note='Authored fixture; inspect project terms.'))['record']
         self.assertEqual(corrected['review'], 'human_reviewed'); self.assertEqual(len(self.w.history(row['id'])), 3)
         with self.assertRaisesRegex(WorkbenchError, 'changed'): self.review(row)
-        self.d.close(); self.d = Dataset(self.tmp.name); self.w = self.d.workbench
+        self.d.close(); self.d = Dataset(self.tmp.name); self.actor = bind_owner(self, self.d); self.w = self.d.workbench
         self.assertEqual(self.w.get(row['id']), corrected); self.assertEqual(self.w.asset(row['id'])[0], bundle)
 
     def test_float_native_interpretation_and_equivalent_family_keeps_exact_raw(self):
@@ -257,7 +258,7 @@ class Meshes(unittest.TestCase):
         bundle=self.w.asset(seq['id'])[0];history=self.w.history(seq['id'])
         before_indexes = [tuple(row) for row in self.d.db.execute(
             'SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=current_schema() ORDER BY indexname')]
-        self.d.close();self.d=Dataset(self.tmp.name);self.w=self.d.workbench
+        self.d.close();self.d=Dataset(self.tmp.name); self.actor = bind_owner(self, self.d);self.w=self.d.workbench
         self.assertEqual(self.w.get(seq['id']),corrected);self.assertEqual(self.w.history(seq['id']),history)
         self.assertEqual(self.w.asset(seq['id'])[0],bundle);self.assertEqual(self.add()['review'],'draft')
         self.assertEqual([tuple(row) for row in self.d.db.execute(
@@ -278,17 +279,17 @@ class Meshes(unittest.TestCase):
         server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.d));thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
         base=f'http://127.0.0.1:{server.server_port}/api/workbench/'
-        request=urllib.request.Request(base+'mesh-import',json.dumps(body(*fixture())).encode(),{'Content-Type':'application/json'})
+        request=self.actor.request(base+'mesh-import',json.dumps(body(*fixture())).encode(),{'Content-Type':'application/json'})
         with urllib.request.urlopen(request) as response:self.assertEqual(response.status,201);row=json.load(response)
-        with urllib.request.urlopen(base+'mesh-inspection/'+row['id']) as response:self.assertEqual(json.load(response)['sample_count'],4)
-        request=urllib.request.Request(base+'mesh-import',b'{"files":{},"files":{}}',{'Content-Type':'application/json'})
+        with urllib.request.urlopen(self.actor.request(base+'mesh-inspection/'+row['id'])) as response:self.assertEqual(json.load(response)['sample_count'],4)
+        request=self.actor.request(base+'mesh-import',b'{"files":{},"files":{}}',{'Content-Type':'application/json'})
         with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
         self.assertEqual(error.exception.code,400);self.assertIn('duplicate',error.exception.read().decode())
         before=self.state()
-        request=urllib.request.Request(base+'mesh-import',b'{"unexpected":1e-99999999999999999999999999999}',{'Content-Type':'application/json'})
+        request=self.actor.request(base+'mesh-import',b'{"unexpected":1e-99999999999999999999999999999}',{'Content-Type':'application/json'})
         with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
         self.assertEqual(error.exception.code,400);self.assertEqual(json.loads(error.exception.read())['code'],'invalid');self.assertEqual(self.state(),before)
-        request=urllib.request.Request(base+'mesh-import',b'{}',{'Content-Type':'application/json','Content-Length':str(meshes.MAX_REQUEST+1)})
+        request=self.actor.request(base+'mesh-import',b'{}',{'Content-Type':'application/json','Content-Length':str(meshes.MAX_REQUEST+1)})
         with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
         self.assertEqual(error.exception.code,400);self.assertEqual(self.w.query({})['total'],1)
 

@@ -6,6 +6,7 @@ stays bounded. A response lost before completion is uncertain and never proves
 provider work stopped; lost requests are not retried.
 """
 import base64
+import copy
 import hashlib
 import http.client
 import io
@@ -16,6 +17,7 @@ import threading
 from urllib.parse import urlsplit
 
 from PIL import Image
+from access import AccessError, authorized
 import ai_http
 import pumas_operations as pumas
 from workbench import encode
@@ -171,18 +173,42 @@ class Operation:
 
 
 class ImageRequests:
-    def __init__(self):
+    def __init__(self, access):
+        self.access = access
         self.lock = threading.Lock()
         self.active = {}
 
+    @authorized('cancel', 'images.cancel')
     def cancel(self, request_id):
         with self.lock:
             operation = self.active.get(request_id)
         if operation:
             operation.cancel()
+        if operation:
+            with self.access.db.transaction():
+                self.access.audit('images.cancel', request_id)
         return {'cancelled': operation is not None}
 
+    @authorized('execute', 'images.generate', owner_only=True)
     def generate(self, body, client=None, cancel_event=None, on_admission=None):
+        # Synchronous provider dispatch still requires a committed owner admission.
+        body = copy.deepcopy(body)
+        _base, request_id, _payload = validate(body)
+        request_digest = hashlib.sha256(encode(body).encode()).hexdigest()
+        with self.access.db.lock:
+            if self.access.db.in_transaction:
+                raise ValueError('Image dispatch requires its own committed transaction.')
+            with self.access.db.transaction():
+                admission_id = self.access.admit_job('image_request', request_id, request_digest,
+                    {'images.generate_admitted': [request_id]})
+                self.access.audit('images.generate', request_id, {'request_digest': request_digest})
+        with self.access._job('image_request', request_id, admission_id, request_digest):
+            return self._generate_admitted(body, request_id, client, cancel_event, on_admission)
+
+    @authorized('execute', 'images.generate_admitted', target=lambda body, job_id, *args, **kwargs: job_id)
+    def _generate_admitted(self, body, job_id, client=None, cancel_event=None, on_admission=None):
+        if self.access.identity().get('mode') != 'job':
+            raise AccessError('Image continuation requires its exact admitted job.')
         base, request_id, payload = validate(body)
         operation = Operation()
         with self.lock:

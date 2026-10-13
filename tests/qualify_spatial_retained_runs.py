@@ -3,6 +3,7 @@
 Uses disposable catalogs only. The legacy checkout must be the exact pinned,
 unmodified source; no synthetic downgrade or mocked execution is accepted.
 """
+from auth_helpers import ExplicitOwnerFixture
 import argparse
 import hashlib
 import json
@@ -69,19 +70,20 @@ def drop_fixture_schema(identity):
 
 def verify(path, receipt, artifacts):
     dataset = Dataset(path)
-    try:
-        assert dataset.db.schema_version == SCHEMA_VERSION
-        assert dataset.db.dataset_id == receipt['dataset_id']
-        assert dataset.pipelines.get(receipt['graph']['id']) == receipt['graph']
-        assert dataset.runs.get(receipt['run']['id']) == receipt['run']
-        assert dataset.workbench.get(receipt['record']['id']) == receipt['record']
-        for name, expected in artifacts.items():
-            observed, _ = dataset.runs.artifact(receipt['run']['id'], name)
-            assert observed == expected, name
-        return {'schema_version': SCHEMA_VERSION, 'state': 'completed', 'run_id': receipt['run']['id'],
-                'artifacts': {name: fingerprint(raw) for name, raw in artifacts.items()}}
-    finally:
-        dataset.close()
+    with ExplicitOwnerFixture.bootstrap(dataset).bound(dataset):
+        try:
+            assert dataset.db.schema_version == SCHEMA_VERSION
+            assert dataset.db.dataset_id == receipt['dataset_id']
+            assert dataset.pipelines.get(receipt['graph']['id']) == receipt['graph']
+            assert dataset.runs.get(receipt['run']['id']) == receipt['run']
+            assert dataset.workbench.get(receipt['record']['id']) == receipt['record']
+            for name, expected in artifacts.items():
+                observed, _ = dataset.runs.artifact(receipt['run']['id'], name)
+                assert observed == expected, name
+            return {'schema_version': SCHEMA_VERSION, 'state': 'completed', 'run_id': receipt['run']['id'],
+                    'artifacts': {name: fingerprint(raw) for name, raw in artifacts.items()}}
+        finally:
+            dataset.close()
 
 
 def qualify(legacy_root):

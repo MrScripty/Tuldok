@@ -1,4 +1,5 @@
 """Local retained-metadata fixtures; no provider, external dataset or permission judgment."""
+from auth_helpers import ExplicitOwnerFixture
 import argparse
 import sys
 from pathlib import Path
@@ -11,13 +12,14 @@ parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('--data', required=True)
 args, _ = parser.parse_known_args()
 dataset = app.Dataset(args.data)
-try:
-    for name, note in [('legacy-missing-note', {}), ('legacy-null-note', {'rights': None})]:
-        row = dataset.workbench.import_asset({'kind': 'text', 'name': name, 'text': 'Local retained fixture '+name,
-                                              'groups': ['legacy-source']})
-        origin = dict(row['provenance']); origin.pop('rights'); origin.update(note)
-        with dataset.lock, dataset.db.transaction():
-            dataset.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s', (encode(origin), row['id']))
-finally:
-    dataset.close()
+with ExplicitOwnerFixture.bootstrap(dataset).bound(dataset):
+    try:
+        for name, note in [('legacy-missing-note', {}), ('legacy-null-note', {'rights': None})]:
+            row = dataset.workbench.import_asset({'kind': 'text', 'name': name, 'text': 'Local retained fixture '+name,
+                                                  'groups': ['legacy-source']})
+            origin = dict(row['provenance']); origin.pop('rights'); origin.update(note)
+            with dataset.lock, dataset.db.transaction():
+                dataset.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s', (encode(origin), row['id']))
+    finally:
+        dataset.close()
 app.main()

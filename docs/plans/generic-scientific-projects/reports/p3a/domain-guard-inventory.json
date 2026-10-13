@@ -1,0 +1,472 @@
+{
+  "projects.py": [
+    {
+      "method": "Projects.close",
+      "line": 108,
+      "guards": [],
+      "exception": "process lifecycle cleanup"
+    },
+    {
+      "method": "Projects.list",
+      "line": 171,
+      "guards": [
+        "authorized('inspect', 'projects.list')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Projects.open",
+      "line": 178,
+      "guards": [
+        "authorized('edit', 'projects.open')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Projects.get",
+      "line": 228,
+      "guards": [
+        "authorized('inspect', 'projects.get')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Projects.read_data_reference",
+      "line": 265,
+      "guards": [
+        "authorized('inspect', 'projects.read_data_reference')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Projects.evidence",
+      "line": 288,
+      "guards": [
+        "authorized('inspect', 'projects.evidence')"
+      ],
+      "exception": null
+    }
+  ],
+  "immutable_assets.py": [
+    {
+      "method": "ImmutableAssets.admit",
+      "line": 83,
+      "guards": [
+        "authorized('edit', 'immutable_assets.admit')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "ImmutableAssets.check_selection",
+      "line": 113,
+      "guards": [
+        "authorized('inspect', 'immutable_assets.check_selection')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "ImmutableAssets.metadata",
+      "line": 117,
+      "guards": [
+        "authorized('inspect', 'immutable_assets.metadata')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "ImmutableAssets.asset",
+      "line": 122,
+      "guards": [
+        "authorized('inspect', 'immutable_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)"
+      ],
+      "exception": null
+    }
+  ],
+  "audio_assets.py": [
+    {
+      "method": "AudioAssets.admit",
+      "line": 102,
+      "guards": [
+        "authorized('edit', 'audio_assets.admit')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "AudioAssets.metadata",
+      "line": 144,
+      "guards": [
+        "authorized('inspect', 'audio_assets.metadata')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "AudioAssets.asset",
+      "line": 151,
+      "guards": [
+        "authorized('inspect', 'audio_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)"
+      ],
+      "exception": null
+    },
+    {
+      "method": "AudioAssets.inspect",
+      "line": 167,
+      "guards": [
+        "authorized('inspect', 'audio_assets.inspect')"
+      ],
+      "exception": null
+    }
+  ],
+  "scientific_fields.py": [
+    {
+      "method": "ScientificAssets.admit",
+      "line": 282,
+      "guards": [
+        "authorized('edit', 'scientific_fields.admit')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "ScientificAssets.metadata",
+      "line": 344,
+      "guards": [
+        "authorized('inspect', 'scientific_fields.metadata')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "ScientificAssets.asset",
+      "line": 356,
+      "guards": [
+        "authorized('inspect', 'scientific_fields.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)"
+      ],
+      "exception": null
+    },
+    {
+      "method": "ScientificAssets.inspect",
+      "line": 363,
+      "guards": [
+        "authorized('inspect', 'scientific_fields.inspect')"
+      ],
+      "exception": null
+    }
+  ],
+  "sequence_assets.py": [
+    {
+      "method": "SequenceAssets.admit",
+      "line": 15,
+      "guards": [
+        "authorized('edit', 'sequence_assets.admit')"
+      ],
+      "exception": null
+    }
+  ],
+  "sequence_batch_import.py": [
+    {
+      "method": "find_result",
+      "line": 50,
+      "guard": "'Confirm committed acquisition, not current bytes, review or scientific validity.'"
+    },
+    {
+      "method": "import_item",
+      "line": 72,
+      "guard": "workbench.access.require('edit', 'sequence_batch_import.import_item')"
+    }
+  ],
+  "spatial_assets.py": [
+    {
+      "method": "admit",
+      "line": 40,
+      "guard": "workbench.access.require('edit', 'spatial_assets.admit')"
+    },
+    {
+      "method": "SpatialAssets.admit",
+      "line": 68,
+      "guards": [
+        "authorized('edit', 'spatial_assets.admit')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SpatialAssets.validated",
+      "line": 73,
+      "guards": [],
+      "exception": "pure validation of supplied bytes; no catalog reads or writes"
+    },
+    {
+      "method": "SpatialAssets.asset",
+      "line": 90,
+      "guards": [
+        "authorized('inspect', 'spatial_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SpatialAssets.inspect",
+      "line": 96,
+      "guards": [
+        "authorized('inspect', 'spatial_assets.inspect')"
+      ],
+      "exception": null
+    }
+  ],
+  "meshes.py": [
+    {
+      "method": "admit",
+      "line": 236,
+      "guard": "workbench.access.require('edit', 'meshes.admit')"
+    },
+    {
+      "method": "MeshAssets.admit",
+      "line": 251,
+      "guards": [
+        "authorized('edit', 'meshes.admit')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "MeshAssets.validated",
+      "line": 256,
+      "guards": [],
+      "exception": "pure validation of supplied bytes; no catalog reads or writes"
+    },
+    {
+      "method": "MeshAssets.asset",
+      "line": 273,
+      "guards": [
+        "authorized('inspect', 'meshes.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)"
+      ],
+      "exception": null
+    },
+    {
+      "method": "MeshAssets.inspect",
+      "line": 279,
+      "guards": [
+        "authorized('inspect', 'meshes.inspect')"
+      ],
+      "exception": null
+    }
+  ],
+  "dataset_releases.py": [
+    {
+      "method": "Releases.locate",
+      "line": 164,
+      "guards": [
+        "authorized('inspect', 'dataset_releases.locate')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Releases.preview",
+      "line": 173,
+      "guards": [
+        "authorized('inspect', 'dataset_releases.preview')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Releases.create",
+      "line": 671,
+      "guards": [
+        "authorized('freeze', 'dataset_releases.create')"
+      ],
+      "exception": null
+    }
+  ],
+  "dataset_recipes.py": [
+    {
+      "method": "generate",
+      "line": 66,
+      "guard": "workbench.access.require('edit', 'dataset_recipes.generate')"
+    }
+  ],
+  "preferences.py": [
+    {
+      "method": "Preferences.list",
+      "line": 51,
+      "guards": [
+        "authorized('inspect', 'preferences.list')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Preferences.history",
+      "line": 65,
+      "guards": [
+        "authorized('inspect', 'preferences.history')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Preferences.save",
+      "line": 72,
+      "guards": [
+        "authorized('edit', 'preferences.save', target=lambda body: body.get('id') if isinstance(body, dict) else None)"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Preferences.delete",
+      "line": 110,
+      "guards": [
+        "authorized('edit', 'preferences.delete', target=lambda body: body.get('id') if isinstance(body, dict) else None)"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Preferences.competing",
+      "line": 123,
+      "guards": [
+        "authorized('inspect', 'preferences.competing')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "Preferences.selection",
+      "line": 142,
+      "guards": [
+        "authorized('inspect', 'preferences.selection')"
+      ],
+      "exception": null
+    }
+  ],
+  "saved_selections.py": [
+    {
+      "method": "SavedSelections.list",
+      "line": 30,
+      "guards": [
+        "authorized('inspect', 'saved_selections.list')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SavedSelections.create",
+      "line": 37,
+      "guards": [
+        "authorized('edit', 'saved_selections.create')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SavedSelections.load",
+      "line": 72,
+      "guards": [
+        "authorized('inspect', 'saved_selections.load')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SavedSelections.mutate",
+      "line": 114,
+      "guards": [
+        "authorized('edit', 'saved_selections.mutate')"
+      ],
+      "exception": null
+    }
+  ],
+  "saved_searches.py": [
+    {
+      "method": "SavedSearches.get",
+      "line": 84,
+      "guards": [
+        "authorized('inspect', 'saved_searches.get')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SavedSearches.list",
+      "line": 89,
+      "guards": [
+        "authorized('inspect', 'saved_searches.list')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SavedSearches.create",
+      "line": 97,
+      "guards": [
+        "authorized('edit', 'saved_searches.create')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "SavedSearches.mutate",
+      "line": 112,
+      "guards": [
+        "authorized('edit', 'saved_searches.mutate')"
+      ],
+      "exception": null
+    }
+  ],
+  "native_text_import.py": [
+    {
+      "method": "NativeTextImports.prepare",
+      "line": 79,
+      "guards": [
+        "authorized('edit', 'native_text_import.prepare')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "NativeTextImports.admit",
+      "line": 211,
+      "guards": [
+        "authorized('edit', 'native_text_import.admit')"
+      ],
+      "exception": null
+    }
+  ],
+  "native_detection_import.py": [
+    {
+      "method": "NativeDetectionImports.prepare",
+      "line": 109,
+      "guards": [
+        "authorized('edit', 'native_detection_import.prepare')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "NativeDetectionImports.admit",
+      "line": 232,
+      "guards": [
+        "authorized('edit', 'native_detection_import.admit')"
+      ],
+      "exception": null
+    }
+  ],
+  "caption_import.py": [
+    {
+      "method": "CaptionImports.prepare",
+      "line": 146,
+      "guards": [
+        "authorized('edit', 'caption_import.prepare')"
+      ],
+      "exception": null
+    },
+    {
+      "method": "CaptionImports.admit",
+      "line": 262,
+      "guards": [
+        "authorized('edit', 'caption_import.admit')"
+      ],
+      "exception": null
+    }
+  ],
+  "bulk_import.py": [
+    {
+      "method": "find_result",
+      "line": 68,
+      "guard": "workbench.access.require('inspect', 'bulk_import.find_result', request_id)"
+    },
+    {
+      "method": "import_row",
+      "line": 88,
+      "guard": "workbench.access.require('edit', 'bulk_import.import_row')"
+    }
+  ],
+  "rheon_sequences.py": [
+    {
+      "method": "admit",
+      "line": 111,
+      "guard": "workbench.access.require('edit', 'rheon_sequences.admit')"
+    }
+  ]
+}

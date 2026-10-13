@@ -1,4 +1,5 @@
 """One native image_caption_v1 decoder; asset/target owners remain canonical."""
+from access import authorized
 import base64
 import hashlib
 import hmac
@@ -117,6 +118,7 @@ def origin_groups(family):
 
 class CaptionImports:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         # Process-local integrity only. Restart invalidates preparation; no corpus
         # registry, persistent job, external credential or authenticity claim.
@@ -140,6 +142,7 @@ class CaptionImports:
         except (ValueError, UnicodeError):
             invalid('Invalid or expired caption preparation envelope.')
 
+    @authorized('edit', 'caption_import.prepare')
     def prepare(self, body):
         if set(body) != {'manifest', 'metadata'} or not isinstance(body['metadata'], dict) or set(body['metadata']) != set(CAPTION_SPLITS.values()):
             invalid('Supply native manifest and exactly train/val/test metadata.')
@@ -255,6 +258,7 @@ class CaptionImports:
             invalid('Manifest and metadata do not contain the same exact asset set.')
         return {'format': CAPTION_FORMAT, 'rows': rows}
 
+    @authorized('edit', 'caption_import.admit')
     def admit(self, body):
         if set(body) != {'token', 'asset', 'image', 'request_id'}:
             invalid('Unsupported caption admission fields.')

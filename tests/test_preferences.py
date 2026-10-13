@@ -1,4 +1,5 @@
 """Real owner/persistence/HTTP/frozen release behavior for explicit comparisons."""
+from auth_helpers import bind_owner
 from concurrent.futures import ThreadPoolExecutor
 from postgres_helpers import drop_failure_trigger, install_failure_trigger
 import hashlib
@@ -22,7 +23,7 @@ from workbench import WorkbenchError
 class PreferenceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
-        self.d = Dataset(Path(self.temp.name)); self.addCleanup(lambda: self.d.close())
+        self.d = Dataset(Path(self.temp.name)); self.actor = bind_owner(self, self.d); self.addCleanup(lambda: self.d.close())
         self.w, self.p, self.r = self.d.workbench, self.d.workbench.preferences, self.d.releases
 
     def prompt(self, name='first', **options):
@@ -109,8 +110,9 @@ class PreferenceTests(unittest.TestCase):
     def test_concurrent_cas_and_answer_save_blocks_stale_judgment(self):
         parent, left, right, body, row = self.fixture()
         def update(outcome):
-            try: return self.p.save(dict(body, revision=1, outcome=outcome, rationale=outcome))['changed']
-            except WorkbenchError as error: return error.status
+            with self.actor.bound(self.d):
+                try: return self.p.save(dict(body, revision=1, outcome=outcome, rationale=outcome))['changed']
+                except WorkbenchError as error: return error.status
         with ThreadPoolExecutor(max_workers=2) as pool:
             outcomes = list(pool.map(update, ['left', 'tie']))
         self.assertEqual(sorted(outcomes, key=str), sorted([True, 409], key=str))
@@ -291,7 +293,7 @@ class PreferenceTests(unittest.TestCase):
         self.addCleanup(lambda: (server.shutdown(), server.server_close(), thread.join()))
         url = 'http://127.0.0.1:' + str(server.server_port) + '/api/workbench/'
         def call(route, payload=None):
-            request = urllib.request.Request(url+route, data=json.dumps(payload).encode() if payload is not None else None,
+            request = self.actor.request(url+route, data=json.dumps(payload).encode() if payload is not None else None,
                                             headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(request) as reply: return json.load(reply)
         self.assertEqual(call('records/'+parent['id']+'/preferences')['judgments'][0]['id'], row['id'])

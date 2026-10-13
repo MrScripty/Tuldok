@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Native Chromium gate: real local HTTP service, immutable download, no inference.
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
@@ -17,6 +20,7 @@ let ws,evaluate;
   let stdout='',stderr='';server.stdout.on('data',data=>stdout+=data);server.stderr.on('data',data=>stderr+=data);
   await until(()=>{if(server.exitCode!==null)throw Error(stderr);return /127\.0\.0\.1:(\d+)/.test(stdout);});
   const url='http://127.0.0.1:'+stdout.match(/127\.0\.0\.1:(\d+)/)[1];
+  await fixtureAuth.register(url,path.join(temporary,'data'),root);
   const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','pipe'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   let browserStderr='';browser.stderr.on('data',data=>browserStderr+=data);
   const port=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort')).catch(error=>{throw Error(error.message+'\n'+browserStderr);});
@@ -31,6 +35,7 @@ let ws,evaluate;
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   const preview=async()=>{await click('preview-release');await until(()=>evaluate('!releaseBusy'));};
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await fixtureAuth.browser(send,url);
   await send('Page.navigate',{url:url+'/workbench'});
   await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   await click('select-page');

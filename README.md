@@ -19,6 +19,15 @@ installer, with its `bin` directory on `PATH`. Initialize a private service once
     eval "$(.venv/bin/python scripts/local_postgres.py env)"
     .venv/bin/python app.py
 
+In another terminal with the same database environment, create a private one-time
+login file: `.venv/bin/python access.py login --data ./data --out /private/new-login-code`.
+Use an existing private directory and a new filename, then enter its code in the
+browser's Session dialog. Codes expire after ten minutes; sessions last eight
+hours. Localhost is not an authenticated identity. Existing catalogs require the
+explicit schema-7 upgrade before starting this version. See [actor access](docs/contracts/actors.md)
+for scoped agent credentials and [storage upgrades](docs/contracts/workspace-storage.md).
+Existing execution remains owner-only; agent execution approval is a later stage.
+
 The setup script uses a Unix socket under `~/.local/share/tuldok/postgres`,
 generates private credentials, and creates a database role without superuser,
 role-creation or database-creation permissions. It opens no TCP listener. Stop the
@@ -68,7 +77,7 @@ current record; saving/reviewing and freezing a new release leaves old results
 unchanged. Viewing test results records durable exposure; reused records or
 pixels cannot be presented as fresh holdout evidence.
 
-Fresh catalogs use schema 6. Existing PostgreSQL schema-1 through schema-5 catalogs require an
+Fresh catalogs use schema 7. Existing PostgreSQL schema-1 through schema-6 catalogs require an
 explicit stopped-writer backup and upgrade, never an automatic startup change:
 
 ```sh

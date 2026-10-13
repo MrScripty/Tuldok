@@ -1,4 +1,5 @@
 """Durable admission, one local worker, and verified immutable result custody."""
+from access import authorized
 import copy
 import hashlib
 import json
@@ -70,6 +71,7 @@ def _sync(path):
 class Runs:
     def __init__(self, dataset, pipelines):
         self.dataset, self.pipelines = dataset, pipelines
+        self.access = dataset.access
         self.db, self.lock = dataset.db, dataset.lock
         self.path = dataset.path / 'workspace-runs'
         self.path.mkdir(exist_ok=True)
@@ -103,6 +105,9 @@ class Runs:
 
     def _save(self, run):
         self.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (encode(run), run['id']))
+        action = 'runs.reconcile' if self.access.identity().get('mode') == 'system' else 'runs.update'
+        self.access.audit(action, run['id'], {'state': run['state'], 'request_sha256': run['request_sha256'],
+                                            'graph_sha256': run['graph_sha256'], 'release_sha256': run['release_sha256']})
 
     def _event(self, run, state, message):
         run['state'] = state
@@ -161,7 +166,7 @@ class Runs:
 
     def _public(self, run):
         hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase'}
+                  'worker_command', 'supervisor', 'process_phase', 'admission_id'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
         result['test_exposure'] = {'exposed': bool(run['exposure_events']), 'event_count': len(run['exposure_events'])}
         result['current_test_exposure'] = ({'exposed': False, 'events': []} if self._validation_run(run)
@@ -175,6 +180,7 @@ class Runs:
                                       'url': f"/api/workspace/runs/{run['id']}/artifacts/release.zip"}]
         return result
 
+    @authorized('inspect', 'runs.list')
     def list(self):
         with self.lock:
             rows = [self._load(row[0]) for row in self.db.execute('SELECT id FROM workspace_runs')]
@@ -191,6 +197,7 @@ class Runs:
             result.append(public)
         return result
 
+    @authorized('inspect', 'runs.get')
     def get(self, run_id):
         with self.lock:
             run = self._load(run_id)
@@ -225,6 +232,7 @@ class Runs:
         if sys.platform != 'linux':
             raise WorkbenchError('The qualified CPU worker lifecycle currently requires Linux.', 'unsupported', 400)
 
+    @authorized('execute', 'runs.submit', owner_only=True)
     def submit(self, body):
         key, request_hash = self._request(body, ('request_key', 'graph_id', 'graph_revision', 'validation_token'))
         with self.lock:
@@ -276,12 +284,21 @@ class Runs:
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
         if self._validation_run(run):
             run.update(result_kind='release_validation', validation_summary=copy.deepcopy(release['validation_summary']))
+        recipe = graph.get('recipe', 'image_classification')
+        effects = {'pipeline.inspect_release': [release['id']], 'dataset_releases.locate': [release['id']],
+                   'pipeline.probe': [recipe], 'pipeline.probe_native': [recipe],
+                   'pipeline.definition_identity': [recipe], 'pipeline.exposures': [None],
+                   'runs.update': [run_id]}
+        run['admission_id'] = self.access.admit_job('runs', run_id, request_hash, effects)
+        self.access.audit('runs.admit', run_id, {'request_sha256': request_hash,
+                         'graph_sha256': run['graph_sha256'], 'release_sha256': run['release_sha256']})
         self._event(run, 'queued', 'Frozen integrity attempt admitted.' if self._validation_run(run) else
                     'Real CPU attempt admitted. Training starts from scratch; no model download.')
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
         return run
 
+    @authorized('execute', 'runs.retry', owner_only=True)
     def retry(self, run_id, body):
         closed(body, ('request_key',))
         key, request_hash = self._request(dict(body, parent_run_id=run_id), ('request_key', 'parent_run_id'))
@@ -308,6 +325,7 @@ class Runs:
         self._start()
         return self._public(run)
 
+    @authorized('cancel', 'runs.cancel')
     def cancel(self, run_id):
         with self.lock, self.db.transaction():
             run = self._load(run_id)
@@ -344,10 +362,12 @@ class Runs:
                 self._wake.clear()
                 continue
             try:
-                self._execute(queued[0]['id'])
+                admitted = queued[0]
+                with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
+                    self._execute(admitted['id'])
             except Exception as error:
                 try:
-                    with self.lock, self.db.transaction():
+                    with self.access._reconcile(), self.lock, self.db.transaction():
                         run = self._load(queued[0]['id'])
                         if run['state'] in ACTIVE:
                             run['error'] = {'code': 'failed', 'message': 'Run supervisor could not complete this attempt.'}
@@ -363,6 +383,7 @@ class Runs:
         process = owner = None
         with self.lock, self.db.transaction():
             run = self._load(run_id)
+            self.access.require_job('runs', run_id, run.get('admission_id'), run['request_sha256'])
             if run['state'] != 'queued':
                 return
             self._event(run, 'running', 'Verifying frozen release and adapter before starting the CPU worker.')
@@ -807,6 +828,7 @@ class Runs:
             raise WorkbenchError('Published artifacts differ from the admitted result receipt.', 'unavailable', 409)
         return artifacts
 
+    @authorized('inspect', 'runs.artifact')
     def artifact(self, run_id, name):
         if name not in PAYLOADS | release_validation.PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown run artifact.', 'unavailable', 404)
@@ -829,6 +851,7 @@ class Runs:
             raise WorkbenchError('Artifact changed during read.', 'unavailable', 409)
         return contents, item['media_type']
 
+    @authorized('expose-holdout', 'runs.expose_test')
     def expose_test(self, run_id, body):
         closed(body, ('reason',))
         reason = text_value(body['reason'], 'Exposure reason', 500)
@@ -845,11 +868,13 @@ class Runs:
                     self.db.execute('INSERT INTO workspace_exposures(id,record_id,source_hash,reason,run_id,release_id,created_at) '
                                     'VALUES(%s,%s,%s,%s,%s,%s,%s)',
                                     (uuid.uuid4().hex, source['id'], source_content_hash(source), reason, run_id, run['release_id'], at))
+            self.access.audit('runs.expose_test', run_id, {'event_id': event_id, 'release_sha256': run['release_sha256'], 'reason': reason})
             run['exposure_events'].append({'id': event_id, 'created_at': at, 'reason': reason})
             self._save(run)
         return {'id': event_id, 'run_id': run_id, 'release_id': run['release_id'], 'created_at': at, 'reason': reason,
                 'test_exposure': {'exposed': True, 'event_count': len(run['exposure_events'])}}
 
+    @authorized('inspect', 'runs.predictions')
     def predictions(self, run_id, split='validation'):
         if split not in ('validation', 'test'):
             raise WorkbenchError('Choose validation or test predictions.')

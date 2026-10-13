@@ -1,4 +1,5 @@
 """Real project registration and read-only filesystem/HTTP inspection boundaries."""
+from auth_helpers import bind_owner
 import copy
 import hashlib
 from http.server import ThreadingHTTPServer
@@ -43,7 +44,7 @@ class ProjectsTests(unittest.TestCase):
                       'requirements': [{'id': 'python', 'label': 'Declared Python'},
                                        {'id': 'runtime', 'label': 'Runtime file', 'path': 'runtime.txt'}]}
         self.write_manifest()
-        self.dataset = Dataset(self.path / 'catalog', project_roots={'fixture': self.external})
+        self.dataset = Dataset(self.path / 'catalog', project_roots={'fixture': self.external}); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.owner = self.dataset.projects
 
@@ -58,7 +59,7 @@ class ProjectsTests(unittest.TestCase):
 
     def reopen(self, roots):
         self.dataset.close()
-        self.dataset = Dataset(self.path / 'catalog', project_roots=roots)
+        self.dataset = Dataset(self.path / 'catalog', project_roots=roots); self.actor = bind_owner(self, self.dataset)
         self.owner = self.dataset.projects
 
     def test_real_registration_reads_hashes_and_never_executes_or_mutates_sources(self):
@@ -346,7 +347,7 @@ class ProjectsTests(unittest.TestCase):
         base = 'http://127.0.0.1:' + str(server.server_port) + '/api/workspace/projects'
         def request(suffix='', body=None, raw=None):
             raw = json.dumps(body).encode() if body is not None else raw
-            with urllib.request.urlopen(urllib.request.Request(base+suffix, data=raw,
+            with urllib.request.urlopen(self.actor.request(base+suffix, data=raw,
                     headers={'Content-Type':'application/json'} if raw is not None else {})) as response:
                 return response.status, json.load(response)
         self.assertEqual(request()[1]['roots'], ['fixture'])
@@ -357,7 +358,7 @@ class ProjectsTests(unittest.TestCase):
         self.assertEqual(request(project+'/evidence/note')[1]['text'], self.files['note.md'].decode())
         for suffix, payload in (('', None), (project, None), (project+'/evidence/note', None),
                                 ('', json.dumps({'root':'fixture','manifest_path':'project.json'}).encode())):
-            hostile = urllib.request.Request(base+suffix, data=payload,
+            hostile = self.actor.request(base+suffix, data=payload,
                 headers={'Host':'attacker.example', 'Content-Type':'application/json'})
             with self.subTest(host='attacker.example', suffix=suffix, method=hostile.get_method()), self.assertRaises(urllib.error.HTTPError) as caught:
                 urllib.request.urlopen(hostile)

@@ -1,4 +1,5 @@
 """Bounded immutable asset storage; Dataset transaction owns record publication."""
+from access import authorized
 from contextlib import contextmanager, nullcontext
 import hashlib
 import json
@@ -71,12 +72,14 @@ def migrate_records(db):
 class ImmutableAssets:
     """Concrete facades select trusted table/task policy, adapters own file meaning."""
     def __init__(self, workbench, *, kind, task, maximum, default_name):
+        self.access = workbench.access
         if kind not in ('sequence', 'mesh', 'pointcloud', 'volume'):
             raise ValueError('Unsupported immutable asset owner.')
         self.workbench, self.kind, self.task = workbench, kind, task
         self.maximum, self.default_name = maximum, default_name
         self.table = 'workbench_' + kind + '_assets'
 
+    @authorized('edit', 'immutable_assets.admit')
     def admit(self, prepared, body, origin):
         w = self.workbench
         name = text_value(body.get('name', self.default_name), 'Name')
@@ -103,15 +106,19 @@ class ImmutableAssets:
                           origin, self.task, None, 'draft', 1, created, created))
             record = w._get(record_id)
             w._history(record)
+            self.access.audit('immutable_assets.admit', record_id, {'revision': record['revision'], 'source_sha256': digest})
             return record
 
+    @authorized('inspect', 'immutable_assets.check_selection')
     def check_selection(self, records):
         check_selection(records)
 
+    @authorized('inspect', 'immutable_assets.metadata')
     def metadata(self, record_id):
         row = self.workbench.db.execute(f'SELECT metadata_json,bundle_bytes FROM {self.table} WHERE id=%s', (record_id,)).fetchone()
         return None if row is None else dict(json.loads(row[0]), bundle_bytes=row[1])
 
+    @authorized('inspect', 'immutable_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         row = self.workbench.db.execute(f'SELECT bundle,bundle_bytes FROM {self.table} WHERE id=%s', (record['id'],)).fetchone()
         if row is None:

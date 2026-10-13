@@ -1,4 +1,5 @@
 """Bounded original PCM WAV assets; Workbench owns records, revisions and review."""
+from access import authorized
 import base64
 import hashlib
 import io
@@ -93,9 +94,11 @@ def validate_annotation(value, record):
 
 class AudioAssets:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self.path = workbench.dataset.path / 'audio'
 
+    @authorized('edit', 'audio_assets.admit')
     def admit(self, body):
         from immutable_assets import publish_file
         if type(body) is not dict or set(body) - {'wav', 'name', 'rights', 'groups', 'parents'}:
@@ -134,14 +137,17 @@ class AudioAssets:
                               encode(origin), TASK, None, 'draft', 1, created, created))
                 record = w._get(record_id)
                 w._history(record)
+                self.access.audit('audio_assets.admit', record_id, {'revision': record['revision'], 'source_sha256': digest})
         return record
 
+    @authorized('inspect', 'audio_assets.metadata')
     def metadata(self, record_id, provenance):
         meta = provenance.get('audio')
         if not isinstance(meta, dict) or meta.get('schema_version') != 1:
             invalid('stored source metadata is unavailable.', 'unavailable', 409)
         return dict(meta), (self.path / record_id / 'source.wav').is_file()
 
+    @authorized('inspect', 'audio_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         path = self.path / record['id'] / 'source.wav'
         try:
@@ -157,6 +163,7 @@ class AudioAssets:
             invalid('retained source metadata does not match the original WAV.', 'conflict', 409)
         return raw, 'audio/wav'
 
+    @authorized('inspect', 'audio_assets.inspect')
     def inspect(self, record_id):
         w = self.workbench
         with w.lock:

@@ -1,4 +1,5 @@
 """Trainer-specific projection, custody, split and immutable release regressions."""
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import io
@@ -27,7 +28,7 @@ class ClassificationReleaseTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='classification-export-')
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
         self.ordinal = 0
@@ -242,7 +243,7 @@ class ClassificationReleaseTests(unittest.TestCase):
         self.addCleanup(server.server_close)
         self.addCleanup(lambda: (server.shutdown(), thread.join()))
         def request(route, body=None):
-            req = urllib.request.Request(f'http://127.0.0.1:{server.server_port}' + route,
+            req = self.actor.request(f'http://127.0.0.1:{server.server_port}' + route,
                 data=json.dumps(body).encode() if body is not None else None,
                 headers={'Content-Type': 'application/json'})
             try:

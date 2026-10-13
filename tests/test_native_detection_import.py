@@ -1,4 +1,5 @@
 """Actual unchanged native exporter fixtures; no authored COCO stand-in."""
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 import base64
 import hashlib
 from postgres_helpers import database_snapshot
@@ -27,27 +28,28 @@ from test_native_text_import import rewrite
 
 def native_fixture(path, count=3, name_prefix='Source', book='', programmatic=False, ratios=None):
     source = Dataset(path)
-    rows = []
-    salt = hashlib.sha256(name_prefix.encode()).digest()
-    for number in range(count):
-        image = Image.new('RGB', (12, 8), ((salt[0] + number * 40) % 256, salt[1], salt[2]))
-        output = io.BytesIO(); exif = Image.Exif(); exif[274] = 6
-        image.save(output, 'PNG', exif=exif)
-        sample = source.add(dict(image=base64.b64encode(output.getvalue()).decode(), filename=f'{name_prefix} {number}.png',
-            book_id=book, session_id=f'{name_prefix}-session-{number}', split='unassigned'))
-        row = source.workbench.get(sample['id'])
-        target = {'boxes': [] if number == 0 else [dict(label='Book é', x=1, y=2, width=3.5, height=4)]}
-        review = 'programmatically_verified' if programmatic else 'human_reviewed'
-        verification = dict(method='authored_geometry_fixture', rights='Authored fixture') if programmatic else None
-        rows.append(source.workbench.save(row['id'], dict(row, annotation=target, review=review), verified_provenance=verification))
-    body = dict(items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows],
-        ratios=ratios or dict(train=100, validation=0, test=0), seed=7, format='canonical_v1')
-    preview = source.releases.preview(body)
-    assert preview['eligible'], preview
-    release = source.releases.create(dict(body, preview_token=preview['preview_token']))
-    raw = source.releases.locate(release['id']).read_bytes()
-    source.close()
-    return raw
+    with ExplicitOwnerFixture.bootstrap(source).bound(source):
+        rows = []
+        salt = hashlib.sha256(name_prefix.encode()).digest()
+        for number in range(count):
+            image = Image.new('RGB', (12, 8), ((salt[0] + number * 40) % 256, salt[1], salt[2]))
+            output = io.BytesIO(); exif = Image.Exif(); exif[274] = 6
+            image.save(output, 'PNG', exif=exif)
+            sample = source.add(dict(image=base64.b64encode(output.getvalue()).decode(), filename=f'{name_prefix} {number}.png',
+                book_id=book, session_id=f'{name_prefix}-session-{number}', split='unassigned'))
+            row = source.workbench.get(sample['id'])
+            target = {'boxes': [] if number == 0 else [dict(label='Book é', x=1, y=2, width=3.5, height=4)]}
+            review = 'programmatically_verified' if programmatic else 'human_reviewed'
+            verification = dict(method='authored_geometry_fixture', rights='Authored fixture') if programmatic else None
+            rows.append(source.workbench.save(row['id'], dict(row, annotation=target, review=review), verified_provenance=verification))
+        body = dict(items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows],
+            ratios=ratios or dict(train=100, validation=0, test=0), seed=7, format='canonical_v1')
+        preview = source.releases.preview(body)
+        assert preview['eligible'], preview
+        release = source.releases.create(dict(body, preview_token=preview['preview_token']))
+        raw = source.releases.locate(release['id']).read_bytes()
+        source.close()
+        return raw
 
 
 class NativeDetectionImportTests(unittest.TestCase):
@@ -55,7 +57,7 @@ class NativeDetectionImportTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name)
         self.raw = native_fixture(self.path/'source')
-        self.dataset = Dataset(self.path/'destination'); self.open_server(); self.addCleanup(self.close)
+        self.dataset = Dataset(self.path/'destination'); self.actor = bind_owner(self, self.dataset); self.open_server(); self.addCleanup(self.close)
 
     def open_server(self):
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
@@ -66,7 +68,7 @@ class NativeDetectionImportTests(unittest.TestCase):
         self.server.shutdown(); self.server.server_close(); self.dataset.close()
 
     def request(self, route, body=None):
-        req = urllib.request.Request(self.root+route, data=json.dumps(body).encode() if body is not None else None,
+        req = self.actor.request(self.root+route, data=json.dumps(body).encode() if body is not None else None,
             headers={'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(req) as response:
@@ -120,7 +122,7 @@ class NativeDetectionImportTests(unittest.TestCase):
             self.assertEqual(context['declared']['upstream'], dict(record=origin, original_status='unavailable'))
             self.assertEqual(self.dataset.workbench.history(row['id']), [row])
         self.assertFalse(self.dataset.releases.preview(self.selection(rows))['eligible'])
-        self.close(); self.dataset = Dataset(self.path/'destination'); self.open_server()
+        self.close(); self.dataset = Dataset(self.path/'destination'); self.actor = bind_owner(self, self.dataset); self.open_server()
         for body, receipt in admitted:
             self.assertEqual(self.request('import-result/'+body['request_id']), (200, dict(found=True, **receipt)))
         self.admit(prepared['rows'][0], expected=400)  # Restart expires all preparation.
@@ -332,7 +334,7 @@ class NativeDetectionImportTests(unittest.TestCase):
             for raw in (b'{"source_name":"a","source_name":"b"}', b'{"archive":1e999}',
                     b'{"archive":NaN}', b'{"archive":"\\ud800"}', b'['*1200+b']'*1200,
                     '{}'.encode('utf-16'), b'\xff'):
-                req = urllib.request.Request(self.root+route, data=raw, headers={'Content-Type':'application/json'})
+                req = self.actor.request(self.root+route, data=raw, headers={'Content-Type':'application/json'})
                 with self.assertRaises(urllib.error.HTTPError) as caught:
                     urllib.request.urlopen(req)
                 self.assertEqual(caught.exception.code, 400)

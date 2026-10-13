@@ -19,8 +19,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 6
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6)
+SCHEMA_VERSION = 7
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -415,7 +415,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -529,8 +529,25 @@ PROJECT_TABLES = {
 }
 TABLES_V5 = {**TABLES_V4, **PROJECT_TABLES}
 # The scientific source lives in the existing local artifact tree, not a new table.
-TABLES = {
+TABLES_V6 = {
     **TABLES_V5,
     'workbench_records': TABLES_V5['workbench_records'].replace(
         "'pointcloud','volume'", "'pointcloud','volume','field_sequence'"),
 }
+
+ACCESS_TABLES = {
+    'access_actors': '''CREATE TABLE access_actors (
+        id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('owner','agent')),
+        label TEXT NOT NULL, created_at BIGINT NOT NULL)''',
+    'access_credentials': '''CREATE TABLE access_credentials (
+        id TEXT PRIMARY KEY, actor_id TEXT NOT NULL, token_sha256 TEXT UNIQUE NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('login','session','bearer')), scopes_json TEXT NOT NULL,
+        expires_at BIGINT NOT NULL, revoked INTEGER NOT NULL CHECK(revoked IN (0,1)), consumed INTEGER NOT NULL CHECK(consumed IN (0,1)), created_at BIGINT NOT NULL)''',
+    'access_audit': '''CREATE TABLE access_audit (
+        id TEXT PRIMARY KEY, actor_id TEXT, credential_id TEXT, action TEXT NOT NULL,
+        target_json TEXT NOT NULL, details_json TEXT NOT NULL, result TEXT NOT NULL, created_at BIGINT NOT NULL)''',
+    'access_admissions': '''CREATE TABLE access_admissions (
+        id TEXT PRIMARY KEY, catalog_id TEXT NOT NULL, actor_id TEXT NOT NULL, credential_id TEXT NOT NULL,
+        kind TEXT NOT NULL, job_id TEXT NOT NULL, request_digest TEXT NOT NULL, effects_json TEXT NOT NULL, created_at BIGINT NOT NULL)''',
+}
+TABLES = {**TABLES_V6, **ACCESS_TABLES}

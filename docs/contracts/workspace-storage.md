@@ -49,8 +49,8 @@ upgrade.
 
 ## Upgrade an existing catalog
 
-Fresh catalogs use schema 6. Ordinary application startup **does not migrate**
-an existing schema-1 through schema-5 catalog. It refuses with instructions to run the
+Fresh catalogs use schema 7. Ordinary application startup **does not migrate**
+an existing schema-1 through schema-6 catalog. It refuses with instructions to run the
 explicit upgrade. Stop every application, provider/training worker and artifact writer;
 keep them stopped throughout backup, upgrade and verification. The catalog
 advisory lock coordinates cooperating commands, but cannot fence an old binary
@@ -66,7 +66,7 @@ python app.py --data ./dataset
 
 The backup destination must be new. Keep the complete backup and its receipt.
 The accepted transitions have stable identities `workspace-metadata-1-to-2`,
-`audio-metadata-2-to-3`, `spatial-metadata-3-to-4`, `project-metadata-4-to-5` and `field-sequence-metadata-5-to-6`. The command applies the ordered steps needed by the
+`audio-metadata-2-to-3`, `spatial-metadata-3-to-4`, `project-metadata-4-to-5`, `field-sequence-metadata-5-to-6` and `access-metadata-6-to-7`. The command applies the ordered steps needed by the
 recognized source, with the complete chain in one transaction. It verifies:
 
 1. The manifest, catalog identity, version ledger and exact retained definition.
@@ -83,26 +83,26 @@ recognized source, with the complete chain in one transaction. It verifies:
 All DDL and version ledger updates commit in one transaction under the existing
 dataset advisory lock. A failed second step rolls back the first step as well;
 the old kind constraint is never authoritatively absent. Only the known version-1,
-version-2, version-3, version-4 or version-5 definitions are eligible. Unknown versions, altered constraints,
+version-2, version-3, version-4, version-5 or version-6 definitions are eligible. Unknown versions, altered constraints,
 indexes, tables or triggers, malformed ledgers, missing catalogs and contradictory
 identities fail closed. No command
 refreshes a signature to bless unsupported drift. The manifest remains version 1;
 manifest and SQL schema versions are different contracts.
 
 The command prints the dataset identity, final migration name
-(`field-sequence-metadata-5-to-6`), final schema version, definition/structure hashes and
+(`access-metadata-6-to-7`), final schema version, definition/structure hashes and
 `upgraded` or `already_current`. A repeat on a
-known schema-6 catalog verifies its structure and leaves rows/files unchanged.
+known schema-7 catalog verifies its structure and leaves rows/files unchanged.
 Run one upgrade/transfer command at a time. A command failure rolls back its
 transaction. A lost commit acknowledgement is explicitly an unknown outcome:
 keep writers stopped, reopen, and rerun this same command to verify whether the
-catalog is still the known source version or already known schema 6. Never
+catalog is still the known source version or already known schema 7. Never
 manually change the ledger, delete a table or replay a training request to resolve it.
 
 ## Backup, restore and legacy imports
 
 The backup container remains `format_version: 1` and explicitly records
-`schema_version: 1`, `2`, `3`, `4`, `5` or `6`. `backup_metadata.py` accepts each recognized schema.
+`schema_version: 1`, `2`, `3`, `4`, `5`, `6` or `7`. `backup_metadata.py` accepts each recognized schema.
 Restore recreates **the exact backed-up schema version**, identity, rows,
 sequence states and ordinary files in an absent catalog/new directory. A retained
 schema-1, schema-2 or schema-3 backup remains restorable; upgrade that restored copy explicitly
@@ -115,11 +115,11 @@ specified in [local storage and recovery](local-storage.md).
 
 `Metadata(..., schema_version=1)`, `schema_version=2`, `schema_version=3` and `schema_version=None`
 are tooling entry points for exact old-version restoration and recognized-version inspection.
-Normal Dataset and Workbench callers omit that argument and require schema 6.
+Normal Dataset and Workbench callers omit that argument and require schema 7.
 Version selection never authorizes an unsupported definition or structural drift.
 
 Legacy SQLite preflight still recognizes only the original 19 owner tables.
-A new import creates schema 6 and leaves workspace/project tables empty.
+A new import creates schema 7 and leaves workspace/project tables empty.
 A retained schema-1 or schema-2 migration receipt remains byte-for-byte authoritative:
 an interrupted import continues at its receipt's version, and a completed import can be
 reconciled after an explicit upgrade only while its original rows/files still
@@ -128,7 +128,7 @@ never rewritten to imply that later workspace or audio writes belonged to the ol
 
 There is no automatic downgrade. Before any new writes, retain and restore the
 complete pre-upgrade backup to a separate destination/database if returning to
-the older binary is necessary. After new writes, retain the schema-6 catalog and
+the older binary is necessary. After new writes, retain the schema-7 catalog and
 artifacts and reconcile/export them under an explicit recovery decision; an old
 backup cannot represent those later writes.
 
@@ -193,3 +193,21 @@ It compares exact source ZIP bytes, metadata rows, history and unchanged backup
 files after reopen. The retained schema-3 real Run qualification now verifies
 upgrade and restore into schema 6 without changing any saved result bytes.
 These are storage and numerical-custody claims, not physics qualification.
+
+## Scoped actors (schema 7)
+
+Schema 7 adds `access_actors`, `access_credentials`, `access_audit` and
+`access_admissions`. The exact schema-6 definition remains
+`e4ca8ba0b092834a3e7ba059f88fce223a66ad2f830ab7fb60c64fe6d1882cf5`.
+The explicit quiesced `access-metadata-6-to-7` transition creates empty actor
+tables; it does not silently create an owner or authorize old callers. Actor
+and credential IDs, SHA256 token hashes, bounded scope JSON, expiration epochs,
+0/1 revocation/consumption flags, mutation evidence and closed job receipts use
+the existing lossless backup value types. Raw credentials are never stored.
+
+A complete schema-7 backup includes these rows. Restore preserves their original
+identity and expiration/revocation state, so retained credentials can remain
+valid until their original expiry; protect backups like the original catalog.
+Old schema-6 backups restore exactly as schema 6 and require explicit upgrade.
+The application owns append-only audit/admission behavior; direct database
+access remains local administrative authority. See [actors](actors.md).

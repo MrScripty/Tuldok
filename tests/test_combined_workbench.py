@@ -98,7 +98,7 @@ class CombinedWorkbenchTests(unittest.TestCase):
         self.assertTrue(preview['eligible'], preview)
         release = self.call('releases', dict(body, preview_token=preview['preview_token']))
         self.last_release_url = release['url']
-        with urllib.request.urlopen(self.root+release['url']) as response:
+        with urllib.request.urlopen(self.actor.request(self.root+release['url'])) as response:
             return response.read()
 
     def test_native_draft_rights_answers_fixed_pairs_and_both_actual_exports(self):
@@ -151,7 +151,7 @@ class CombinedWorkbenchTests(unittest.TestCase):
             self.assertEqual(row['annotation'], parent['annotation'])
             self.assertEqual(row['provenance']['rights_note_correction']['note'], 'Local note')
         self.assertEqual(self.call('records/'+parent['id']+'/responses')['responses'], answers)
-        with urllib.request.urlopen(self.root+instruction_url) as response:
+        with urllib.request.urlopen(self.actor.request(self.root+instruction_url)) as response:
             self.assertEqual(response.read(), instruction, 'The older frozen answer archive remains immutable')
 
     def test_response_review_is_not_parent_annotation_and_legacy_reports_roll_back_all_tables(self):

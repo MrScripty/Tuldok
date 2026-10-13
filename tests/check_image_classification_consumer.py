@@ -3,6 +3,7 @@
 No weights, datasets or models are downloaded. The six authored solid images
 test transport/reader compatibility only; their metrics do not measure quality.
 """
+from auth_helpers import ExplicitOwnerFixture
 import argparse
 import hashlib
 import importlib.metadata
@@ -42,17 +43,18 @@ def main():
     with tempfile.TemporaryDirectory(prefix='classifier-reader-', dir=args.output) as folder:
         folder = Path(folder)
         dataset = Dataset(str(folder / 'source'))
-        try:
-            rows = populate(dataset)
-            request = dict(format=projection.FORMAT, seed=42, ratios={'train': 34, 'validation': 33, 'test': 33},
-                           items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows])
-            preview = dataset.releases.preview(request)
-            assert preview['eligible'], preview
-            result = dataset.releases.create(dict(request, preview_token=preview['preview_token']))
-            archive_path = args.output / 'classification-consumer.zip'
-            shutil.copyfile(dataset.releases.locate(result['id']), archive_path)
-        finally:
-            dataset.close()
+        with ExplicitOwnerFixture.bootstrap(dataset).bound(dataset):
+            try:
+                rows = populate(dataset)
+                request = dict(format=projection.FORMAT, seed=42, ratios={'train': 34, 'validation': 33, 'test': 33},
+                               items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows])
+                preview = dataset.releases.preview(request)
+                assert preview['eligible'], preview
+                result = dataset.releases.create(dict(request, preview_token=preview['preview_token']))
+                archive_path = args.output / 'classification-consumer.zip'
+                shutil.copyfile(dataset.releases.locate(result['id']), archive_path)
+            finally:
+                dataset.close()
         data = folder / 'export'
         with zipfile.ZipFile(archive_path) as archive:
             archive.extractall(data)

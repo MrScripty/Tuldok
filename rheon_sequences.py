@@ -109,6 +109,7 @@ def prepare_files(files):
 
 
 def admit(workbench, body):
+    workbench.access.require('edit', 'rheon_sequences.admit')
     if type(body) is not dict or set(body) - {'files', 'name', 'groups', 'parents', 'rights'}:
         raise WorkbenchError('Supply supported sequence files and metadata.')
     return workbench.sequences.admit(prepare_files(body.get('files')), body)

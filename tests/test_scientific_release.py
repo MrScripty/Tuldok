@@ -1,4 +1,5 @@
 """Frozen generic fields: independent numerical oracle and immutable custody."""
+from auth_helpers import bind_owner
 import hashlib
 import io
 import json
@@ -76,7 +77,7 @@ class ScientificRelease(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.project_root = Path(self.temporary.name) / 'project'
         self.project_root.mkdir()
-        self.dataset = Dataset(Path(self.temporary.name) / 'catalog', project_roots={'fixture': self.project_root})
+        self.dataset = Dataset(Path(self.temporary.name) / 'catalog', project_roots={'fixture': self.project_root}); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
 

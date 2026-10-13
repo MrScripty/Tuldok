@@ -1,3 +1,5 @@
+from auth_helpers import bind_owner
+import tempfile
 import base64
 import json
 import socket
@@ -8,6 +10,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from app import Dataset
 import image_generation
 from fake_images import png, start
 
@@ -15,7 +18,10 @@ from fake_images import png, start
 class ImageGenerationTests(unittest.TestCase):
     def setUp(self):
         self.server, self.url, self.requests = start()
-        self.manager = image_generation.ImageRequests()
+        temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
+        self.dataset = Dataset(temporary.name); self.addCleanup(self.dataset.close)
+        self.actor = bind_owner(self, self.dataset)
+        self.manager = image_generation.ImageRequests(self.dataset.access)
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
@@ -105,10 +111,11 @@ class ImageGenerationTests(unittest.TestCase):
     def test_transport_closing_cancellation_reports_no_retry(self):
         errors = []
         def generate():
-            try:
-                self.manager.generate(self.body('slow'))
-            except ValueError as error:
-                errors.append(str(error))
+            with self.actor.bound(self.dataset):
+                try:
+                    self.manager.generate(self.body('slow'))
+                except ValueError as error:
+                    errors.append(str(error))
         worker = threading.Thread(target=generate)
         worker.start()
         wait_until = time.monotonic()+3
@@ -173,10 +180,11 @@ class ImageGenerationTests(unittest.TestCase):
     def test_cancel_closes_transport_and_allows_next_request_without_retry(self):
         errors = []
         def generate():
-            try:
-                self.manager.generate(self.body('slow'))
-            except ValueError as error:
-                errors.append(str(error))
+            with self.actor.bound(self.dataset):
+                try:
+                    self.manager.generate(self.body('slow'))
+                except ValueError as error:
+                    errors.append(str(error))
         worker = threading.Thread(target=generate)
         worker.start()
         wait_until = time.monotonic()+3

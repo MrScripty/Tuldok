@@ -60,7 +60,7 @@ function scientificShown(record) {
     const owns=()=>generation===scientificGeneration&&scientificController===controller&&current?.id===record.id&&current.content_hash===record.content_hash;
     $('scientific-canvas').hidden=true;$('scientific-status').textContent='Loading exact numeric slice…';$('scientific-probe').textContent='';$('scientific-coordinates').textContent='';
     try{
-      const response=await fetch('/api/workbench/records/'+record.id+'/scientific?'+new URLSearchParams(request),{signal:controller.signal}),raw=await response.json();
+      const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/records/'+record.id+'/scientific?'+new URLSearchParams(request),{signal:controller.signal}),raw=await response.json();
       if(!response.ok)throw Error(raw.error||'Scientific slice unavailable.');
       const value=decodeScientificSlice(raw,record,request);if(owns())drawScientificSlice(value);
     }catch(error){if(owns()&&error.name!=='AbortError')$('scientific-status').textContent=error.message;}

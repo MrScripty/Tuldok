@@ -1,4 +1,5 @@
 """Read-only project inspection; catalog registration never executes project code."""
+from access import authorized
 from contextlib import contextmanager
 import hashlib
 import json
@@ -88,6 +89,7 @@ class Projects:
     """One catalog's immutable project snapshots and explicitly configured root handles."""
 
     def __init__(self, dataset, roots=None):
+        self.access = dataset.access
         self.db, self.lock = dataset.db, dataset.lock
         self.roots = {}
         try:
@@ -165,12 +167,14 @@ class Projects:
     def _summary(saved):
         return {key: saved[key] for key in ('id', 'name', 'root', 'manifest_path', 'manifest_sha256')}
 
+    @authorized('inspect', 'projects.list')
     def list(self):
         with self.lock:
             rows = self.db.execute('SELECT document FROM workspace_projects ORDER BY id').fetchall()
         return {'mode': 'inspection', 'roots': sorted(self.roots),
                 'projects': [self._summary(json.loads(row[0])) for row in rows]}
 
+    @authorized('edit', 'projects.open')
     def open(self, body):
         closed(body, ('root', 'manifest_path'))
         root, path = body['root'], relative_path(body['manifest_path'])
@@ -191,6 +195,7 @@ class Projects:
                 raise WorkbenchError('This project ID already names a different snapshot or root. Keep the original or use a new project ID.', 'conflict', 409)
             if not existing:
                 self.db.execute('INSERT INTO workspace_projects VALUES (%s,%s)', (value['id'], document))
+                self.access.audit('projects.open', value['id'], {'manifest_sha256': saved['manifest_sha256']})
         return self.get(value['id'])
 
     def _bound(self, saved):
@@ -219,6 +224,7 @@ class Projects:
             result.update(status='unavailable', reason='File cannot be safely inspected or changed during inspection.')
         return result
 
+    @authorized('inspect', 'projects.get')
     def get(self, project_id):
         saved = self._saved(project_id)
         result = {**self._summary(saved), 'mode': 'inspection', 'execution': 'unsupported',
@@ -255,6 +261,7 @@ class Projects:
                 result[group].append(item)
         return result
 
+    @authorized('inspect', 'projects.read_data_reference')
     def read_data_reference(self, project_id, reference_id, expected_sha256, limit):
         """Capture a selected saved reference; source owners interpret its bytes."""
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
@@ -277,6 +284,7 @@ class Projects:
         return raw, {'project_id': project_id, 'manifest_sha256': saved['manifest_sha256'],
                      'reference_id': reference_id, 'path': ref['path'], 'measured_sha256': digest}
 
+    @authorized('inspect', 'projects.evidence')
     def evidence(self, project_id, reference_id):
         saved = self._saved(project_id)
         if not self._bound(saved):

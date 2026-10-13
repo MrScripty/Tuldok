@@ -14,6 +14,7 @@ from http.server import ThreadingHTTPServer
 import zipfile
 
 from app import Dataset, make_handler
+from auth_helpers import bind_owner
 from backup_metadata import backup_catalog, restore_catalog, read_catalog, summaries, tree_manifest
 from metadata import SCHEMA_VERSION, Metadata, StorageError, definition_hash, TABLES_V3, TABLES_V5, SPATIAL_TABLES
 from upgrade_metadata import upgrade_catalog, UPGRADES
@@ -44,6 +45,7 @@ class SpatialStorage(unittest.TestCase):
     def dataset(self, name='catalog'):
         dataset = Dataset(self.root / name)
         self.addCleanup(dataset.close)
+        bind_owner(self, dataset)
         return dataset
 
     def review(self, dataset, row):
@@ -61,17 +63,17 @@ class SpatialStorage(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(old.path)
         result = upgrade_catalog(old.path, quiesced=True)
-        self.assertEqual(result['migration'], 'field-sequence-metadata-5-to-6')
+        self.assertEqual(result['migration'], 'access-metadata-6-to-7')
         current = Metadata(old.path, create=False)
         self.addCleanup(current.close)
-        self.assertEqual(current.schema_version, 6)
-        self.assertEqual(summaries(read_catalog(current)), before)
+        self.assertEqual(current.schema_version, 7)
+        self.assertEqual(summaries({k:v for k,v in read_catalog(current).items() if k in before}), before)
         with current.transaction():
             current.execute("""INSERT INTO workbench_records
                 (id,kind,content_hash,groups_json,parents_json,provenance_json,task,review,revision,created_at,updated_at)
                 VALUES ('science','field_sequence','hash','[]','[]','{}','field_sequence_fields','draft',1,'now','now')""")
         backup = self.root / 'backup6'
-        self.assertEqual(backup_catalog(current.path, backup, quiesced=True)['schema_version'], 6)
+        self.assertEqual(backup_catalog(current.path, backup, quiesced=True)['schema_version'], 7)
 
     def test_failed_schema6_transition_rolls_back_exact_schema5(self):
         import psycopg
@@ -146,7 +148,7 @@ class SpatialStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             upgrade_catalog(path)
         result = upgrade_catalog(path, quiesced=True)
-        self.assertEqual(result['migration'], 'field-sequence-metadata-5-to-6')
+        self.assertEqual(result['migration'], 'access-metadata-6-to-7')
         current = Metadata(path, create=False)
         self.addCleanup(current.close)
         after = read_catalog(current)
@@ -190,7 +192,7 @@ class SpatialStorage(unittest.TestCase):
         dataset.close()
         backup = self.root / 'scientific-backup'
         receipt = backup_catalog(path, backup, quiesced=True)
-        self.assertEqual(receipt['schema_version'], 6)
+        self.assertEqual(receipt['schema_version'], 7)
         filename = 'field_sequence/' + row['id'] + '/source.zip'
         self.assertEqual(receipt['files'][filename]['sha256'], hashlib.sha256(raw).hexdigest())
         backup_files = tree_manifest(backup)
@@ -244,23 +246,24 @@ class SpatialStorage(unittest.TestCase):
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
         base = 'http://127.0.0.1:' + str(server.server_port)
+        owner = bind_owner(self, dataset)
         for kind in ('pointcloud','volume'):
-            request = urllib.request.Request(base + '/api/workbench/' + kind + '-import', data=json.dumps(body(kind)).encode(), headers={'Content-Type':'application/json'})
+            request = owner.request(base + '/api/workbench/' + kind + '-import', data=json.dumps(body(kind)).encode(), headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(request) as response:
                 self.assertEqual(response.status, 201)
                 row = json.load(response)
-            with urllib.request.urlopen(base + '/api/workbench/' + kind + '-inspection/' + row['id']) as response:
+            with urllib.request.urlopen(owner.request(base + '/api/workbench/' + kind + '-inspection/' + row['id'])) as response:
                 self.assertEqual(json.load(response)['content_hash'], row['content_hash'])
         for query in ('?axis=z&index=999', '?axis=nope', '?index=bad', '?axis=x&axis=y'):
             with self.assertRaises(urllib.error.HTTPError) as caught:
-                urllib.request.urlopen(base + '/api/workbench/volume-inspection/' + row['id'] + query)
+                urllib.request.urlopen(owner.request(base + '/api/workbench/volume-inspection/' + row['id'] + query))
             self.assertEqual(caught.exception.code, 400)
-        request = urllib.request.Request(base + '/api/workbench/volume-import', data=b'{"files":{},"files":{}}', headers={'Content-Type':'application/json'})
+        request = owner.request(base + '/api/workbench/volume-import', data=b'{"files":{},"files":{}}', headers={'Content-Type':'application/json'})
         with self.assertRaises(urllib.error.HTTPError) as caught:
             urllib.request.urlopen(request)
         self.assertEqual(caught.exception.code, 400)
 
-        request = urllib.request.Request(base + '/api/workbench/volume-import', data=b'{"nested":' + b'[' * 1200 + b'0' + b']' * 1200 + b'}', headers={'Content-Type':'application/json'})
+        request = owner.request(base + '/api/workbench/volume-import', data=b'{"nested":' + b'[' * 1200 + b'0' + b']' * 1200 + b'}', headers={'Content-Type':'application/json'})
         with self.assertRaises(urllib.error.HTTPError) as caught:
             urllib.request.urlopen(request)
         self.assertEqual(caught.exception.code, 400)

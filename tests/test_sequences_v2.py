@@ -1,4 +1,5 @@
 """Synthetic v2 transport refusal/custody proofs; NOT actual-packet acceptance."""
+from auth_helpers import bind_owner
 import base64
 import copy
 import hashlib
@@ -125,7 +126,7 @@ class ControlsCustody(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
 
     def test_batch_import_receipt_review_release_and_reopen_preserve_three_files(self):
@@ -152,7 +153,7 @@ class ControlsCustody(unittest.TestCase):
             with self.assertRaises(WorkbenchError):
                 sequence_release.validate_bytes(changed, hashlib.sha256(changed).hexdigest())
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(batch.find_result(self.dataset.workbench, request['request_id'])['controls_sha256'], receipt['controls_sha256'])
         bundle, _ = self.dataset.workbench.asset(row['id'])
         with zipfile.ZipFile(io.BytesIO(bundle)) as archive:
@@ -175,7 +176,7 @@ class ControlsCustody(unittest.TestCase):
         self.addCleanup(server.shutdown)
         base = 'http://127.0.0.1:' + str(server.server_port) + '/api/workbench/'
         def request(route, raw):
-            value = urllib.request.Request(base + route, raw, headers={'Content-Type': 'application/json'})
+            value = self.actor.request(base + route, raw, headers={'Content-Type': 'application/json'})
             try:
                 with urllib.request.urlopen(value, timeout=5) as response:
                     return response.status, json.load(response)

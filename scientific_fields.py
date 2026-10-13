@@ -1,4 +1,5 @@
 """Lossless bounded structured-grid fields; no producer execution or physics policy."""
+from access import authorized
 import ast
 from decimal import Decimal, InvalidOperation
 import hashlib
@@ -273,9 +274,11 @@ def parse_bundle(raw):
 
 class ScientificAssets:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self.path = workbench.dataset.path / 'field_sequence'
 
+    @authorized('edit', 'scientific_fields.admit')
     def admit(self, raw, body, source):
         from immutable_assets import publish_file
         if type(body) is not dict or set(body) - {'name','rights','groups','parents'}:
@@ -312,6 +315,7 @@ class ScientificAssets:
                      encode(origin),TASK,None,'draft',1,created,created))
                 record = w._get(record_id)
                 w._history(record)
+                self.access.audit('scientific_fields.admit', record_id, {'revision': record['revision'], 'source_sha256': digest})
         return record
 
     def _capture(self, record_id):
@@ -336,6 +340,7 @@ class ScientificAssets:
         except OSError:
             invalid('Original scientific bundle is unavailable.', 'unavailable', 404)
 
+    @authorized('inspect', 'scientific_fields.metadata')
     def metadata(self, record_id, provenance):
         meta = provenance.get('field_sequence')
         if type(meta) is not dict or meta.get('schema_version') != 1 or meta.get('format') != FORMAT:
@@ -347,12 +352,14 @@ class ScientificAssets:
             available = False
         return dict(meta), available
 
+    @authorized('inspect', 'scientific_fields.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         raw = self._capture(record['id'])
         if hashlib.sha256(raw).hexdigest() != record['content_hash'] or encode(parse_bundle(raw)) != encode(record['field_sequence']):
             invalid('Stored scientific bytes or metadata changed outside Tuldok.', 'conflict', 409)
         return raw, 'application/zip'
 
+    @authorized('inspect', 'scientific_fields.inspect')
     def inspect(self, record_id, frame=0, field=None, axis='z', index=0):
         w = self.workbench
         with w.lock:

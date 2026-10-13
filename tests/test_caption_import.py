@@ -1,4 +1,5 @@
 """Native caption admission through real HTTP/PostgreSQL/Pillow/frozen consumer."""
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 from postgres_helpers import drop_failure_trigger, in_transaction, independent_reader, install_failure_trigger
 import base64
 from concurrent.futures import ThreadPoolExecutor
@@ -33,7 +34,7 @@ class CaptionImportTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='caption-import-')
         self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name)
-        self.dataset = Dataset(self.path / 'dataset')
+        self.dataset = Dataset(self.path / 'dataset'); self.actor = bind_owner(self, self.dataset)
         self.open_server()
         self.addCleanup(self.close)
         self.source = dict(manifest=(FIXTURE / 'manifest.json').read_text(), metadata={
@@ -49,7 +50,7 @@ class CaptionImportTests(unittest.TestCase):
         self.server.shutdown(); self.server.server_close(); self.dataset.close()
 
     def request(self, route, body=None):
-        request = urllib.request.Request(self.root + route,
+        request = self.actor.request(self.root + route,
             data=json.dumps(body).encode() if body is not None else None,
             headers={'Content-Type': 'application/json'})
         try:
@@ -101,7 +102,7 @@ class CaptionImportTests(unittest.TestCase):
             admitted.append((body, record, origin))
         self.assertTrue(any(r['source_sha256'] != origin['source_sha256'] for _, r, origin in admitted))
         before = self.dataset.workbench._all()
-        self.close(); self.dataset = Dataset(self.path / 'dataset'); self.open_server()
+        self.close(); self.dataset = Dataset(self.path / 'dataset'); self.actor = bind_owner(self, self.dataset); self.open_server()
         self.assertEqual(self.dataset.workbench._all(), before)
         for body, record, _ in admitted:
             status, saved = self.request('/api/workbench/import-result/' + body['request_id'])
@@ -121,7 +122,7 @@ class CaptionImportTests(unittest.TestCase):
             next(item for item in release_body['items'] if item['id'] == record['id'])['revision'] = reviewed['revision']
         status, release = self.request('/api/workbench/releases', release_body)
         self.assertEqual(status, 201, release)
-        with urllib.request.urlopen(self.root + release['url']) as response: archive_bytes = response.read()
+        with urllib.request.urlopen(self.actor.request(self.root + release['url'])) as response: archive_bytes = response.read()
         self.assertEqual(hashlib.sha256(archive_bytes).hexdigest(), release['id'])
         destination = self.path / 'consumer'; destination.mkdir()
         with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive: archive.extractall(destination)
@@ -272,35 +273,37 @@ class CaptionImportTests(unittest.TestCase):
 
     def test_native_export_with_unselected_text_ancestor_preserves_foreign_lineage(self):
         producer = Dataset(self.path / 'producer')
-        try:
-            ancestor = producer.workbench.import_asset(dict(kind='text', text='Authored source notes.',
-                groups=['caption-source-notes'], rights='Authored'))
-            rows = []
-            for index, record in enumerate(self.manifest['records'][:3]):
-                row = producer.workbench.import_asset(dict(kind='image',
-                    image=base64.b64encode((FIXTURE / record['asset']).read_bytes()).decode(),
-                    groups=['producer-image-' + str(index)], parents=[ancestor['id']] if index == 0 else []))
-                rows.append(producer.workbench.save(row['id'], dict(revision=row['revision'],
-                    source_revision=row['source_revision'], task='image_caption', annotation=record['annotation'],
-                    groups=row['groups'], review='human_reviewed')))
-            release = producer.releases.create(dict(format='image_caption_v1', seed=42,
-                ratios={'train':34,'validation':33,'test':33},
-                items=[{key:row[key] for key in ('id','revision','source_revision')} for row in rows]))
-            with zipfile.ZipFile(producer.releases.locate(release['id'])) as archive:
-                source = dict(manifest=archive.read('manifest.json').decode(), metadata={
-                    split:archive.read(split+'/metadata.jsonl').decode() for split in ('train','val','test')})
-                prepared = self.prepare(source)
-                selected = next(item for item in prepared if item['asset'].endswith(rows[0]['id'] + '.png'))
-                body = dict(token=selected['token'], asset=selected['asset'], request_id=uuid.uuid4().hex,
-                            image=base64.b64encode(archive.read(selected['asset'])).decode())
-            status, receipt = self.request('/api/workbench/caption-import/row', body)
-            self.assertEqual(status,201,receipt)
-            imported = self.dataset.workbench.get(receipt['record_id'])
-            self.assertEqual(imported['parents'],[])
-            declared = imported['provenance']['acquisition']['declared']['protected_component']
-            self.assertIn(ancestor['id'], [member['id'] for member in declared])
-            self.assertIn('caption-origin:' + hashlib.sha256(('id:'+ancestor['id']).encode()).hexdigest(), imported['groups'])
-        finally: producer.close()
+        with ExplicitOwnerFixture.bootstrap(producer).bound(producer):
+            try:
+                ancestor = producer.workbench.import_asset(dict(kind='text', text='Authored source notes.',
+                    groups=['caption-source-notes'], rights='Authored'))
+                rows = []
+                for index, record in enumerate(self.manifest['records'][:3]):
+                    row = producer.workbench.import_asset(dict(kind='image',
+                        image=base64.b64encode((FIXTURE / record['asset']).read_bytes()).decode(),
+                        groups=['producer-image-' + str(index)], parents=[ancestor['id']] if index == 0 else []))
+                    rows.append(producer.workbench.save(row['id'], dict(revision=row['revision'],
+                        source_revision=row['source_revision'], task='image_caption', annotation=record['annotation'],
+                        groups=row['groups'], review='human_reviewed')))
+                release = producer.releases.create(dict(format='image_caption_v1', seed=42,
+                    ratios={'train':34,'validation':33,'test':33},
+                    items=[{key:row[key] for key in ('id','revision','source_revision')} for row in rows]))
+                with zipfile.ZipFile(producer.releases.locate(release['id'])) as archive:
+                    source = dict(manifest=archive.read('manifest.json').decode(), metadata={
+                        split:archive.read(split+'/metadata.jsonl').decode() for split in ('train','val','test')})
+                    prepared = self.prepare(source)
+                    selected = next(item for item in prepared if item['asset'].endswith(rows[0]['id'] + '.png'))
+                    body = dict(token=selected['token'], asset=selected['asset'], request_id=uuid.uuid4().hex,
+                                image=base64.b64encode(archive.read(selected['asset'])).decode())
+                status, receipt = self.request('/api/workbench/caption-import/row', body)
+                self.assertEqual(status,201,receipt)
+                with self.actor.bound(self.dataset):
+                    imported = self.dataset.workbench.get(receipt['record_id'])
+                self.assertEqual(imported['parents'],[])
+                declared = imported['provenance']['acquisition']['declared']['protected_component']
+                self.assertIn(ancestor['id'], [member['id'] for member in declared])
+                self.assertIn('caption-origin:' + hashlib.sha256(('id:'+ancestor['id']).encode()).hexdigest(), imported['groups'])
+            finally: producer.close()
 
     def test_unselected_lineage_and_context_bounds_fail_before_admission(self):
         family_key = next(key for key, family in self.manifest['protected_components'].items() if len(family)>1)

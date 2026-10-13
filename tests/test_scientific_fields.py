@@ -1,4 +1,5 @@
 """Strict native custody and real PostgreSQL project-to-field inspection."""
+from auth_helpers import bind_owner
 import copy
 import hashlib
 from http.server import ThreadingHTTPServer
@@ -117,6 +118,7 @@ class ScientificStorage(unittest.TestCase):
 
     def dataset(self, roots=None):
         result = Dataset(self.root/'catalog', project_roots=roots)
+        self.actor = bind_owner(self, result)
         self.addCleanup(result.close)
         return result
 
@@ -168,7 +170,7 @@ class ScientificStorage(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
         base='http://127.0.0.1:'+str(server.server_address[1])
         def request(path,body=None):
-            req=urllib.request.Request(base+path,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json'})
+            req=self.actor.request(base+path,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(req) as response: return json.load(response)
         request('/api/workspace/projects',dict(root='fixture',manifest_path='project.json'))
         route=f'/api/workspace/projects/{project_id}/import-data/fields'

@@ -8,7 +8,7 @@
     encoded = encodeURIComponent,
     terminal = new Set(["completed", "failed", "cancelled", "interrupted", "unknown"]);
   async function api(route, body) {
-    const response = await fetch("/api/workspace/" + route, body === undefined ? {} : {
+    const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, body === undefined ? {} : {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
     const value = await response.json();

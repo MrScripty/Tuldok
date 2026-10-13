@@ -74,7 +74,7 @@ $('bulk-form').addEventListener('submit',async event=>{
       if(bulkStopped){state='Stopped';break;}
       counts.attempted++;
       try{
-        const response=await fetch('/api/workbench/import-row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/import-row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         const result=await response.json();
         if(!response.ok){
           if([400,409].includes(response.status)){
@@ -104,7 +104,7 @@ $('bulk-check').addEventListener('click',async()=>{
   if(bulkRunning || !bulkPending)return;
   const pending=bulkPending;bulkRunning=true;bulkControls();
   try{
-    const response=await fetch('/api/workbench/import-result/'+pending.request_id);
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/import-result/'+pending.request_id);
     const result=await response.json();
     if(!response.ok)throw Error(result.error||'Result check failed.');
     if(!result.found){$('bulk-status').textContent='No saved result is visible yet. This does not prove the in-flight row stopped. Inspect the collection before retrying.';return;}

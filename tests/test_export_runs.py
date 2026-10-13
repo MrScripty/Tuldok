@@ -1,4 +1,5 @@
 """Actual PostgreSQL classification exports run without a training interpreter."""
+from auth_helpers import bind_owner, execute_admitted
 import copy
 import hashlib
 import json
@@ -70,7 +71,7 @@ class ExportRunChecks:
             self.dataset.runs.expose_test(run['id'], {'reason': 'No model exists'})
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workspace_exposures').fetchone()[0], 0)
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['artifacts'], result['artifacts'])
         self.assertEqual(json.loads(self.dataset.runs.artifact(run['id'], 'validation-report.json')[0]), report)
 
@@ -103,7 +104,7 @@ class ExportRunChecks:
             run = self.dataset.runs.submit(body)
         path = self.dataset.releases.locate(self.release['id'])
         path.write_bytes(path.read_bytes() + b'changed-after-admission')
-        self.dataset.runs._execute(run['id'])
+        execute_admitted(self.dataset, run['id'])
         result = self.dataset.runs.get(run['id'])
         self.assertEqual(result['state'], 'failed')
         self.assertEqual(result['artifacts'], [])
@@ -116,10 +117,11 @@ class ExportRunChecks:
         inspect = self.dataset.pipelines.inspect_release
         def cancel_after_read(*args, **kwargs):
             result = inspect(*args, **kwargs)
-            self.dataset.runs.cancel(run['id'])
+            with self.actor.bound(self.dataset):
+                self.dataset.runs.cancel(run['id'])
             return result
         with patch.object(self.dataset.pipelines, 'inspect_release', side_effect=cancel_after_read):
-            self.dataset.runs._execute(run['id'])
+            execute_admitted(self.dataset, run['id'])
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'cancelled')
         self.assertFalse((self.dataset.runs.path / run['id']).exists())
         retry = self.dataset.runs.retry(run['id'], {'request_key': self.kind + '-export-retry-0001'})

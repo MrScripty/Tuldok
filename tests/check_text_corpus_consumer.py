@@ -3,6 +3,7 @@
 Authored fixture data only. No network, weights or model downloads. Source hashes
 are pinned independently; tensor/shift assertions are not a replacement reader.
 """
+from auth_helpers import ExplicitOwnerFixture
 import argparse
 import ast
 import hashlib
@@ -44,17 +45,18 @@ def main():
     with tempfile.TemporaryDirectory(prefix='corpus-consumer-', dir=args.output) as temporary:
         folder = Path(temporary)
         dataset = Dataset(str(folder / 'source'))
-        try:
-            rows = populate(dataset)
-            request = dict(format=projection.FORMAT, seed=42, ratios=dict(train=67, validation=17, test=16),
-                           items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows])
-            preview = dataset.releases.preview(request)
-            assert preview['eligible'], preview
-            result = dataset.releases.create(dict(request, preview_token=preview['preview_token']))
-            archive_path = args.output / 'corpus-consumer.zip'
-            shutil.copyfile(dataset.releases.locate(result['id']), archive_path)
-        finally:
-            dataset.close()
+        with ExplicitOwnerFixture.bootstrap(dataset).bound(dataset):
+            try:
+                rows = populate(dataset)
+                request = dict(format=projection.FORMAT, seed=42, ratios=dict(train=67, validation=17, test=16),
+                               items=[{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows])
+                preview = dataset.releases.preview(request)
+                assert preview['eligible'], preview
+                result = dataset.releases.create(dict(request, preview_token=preview['preview_token']))
+                archive_path = args.output / 'corpus-consumer.zip'
+                shutil.copyfile(dataset.releases.locate(result['id']), archive_path)
+            finally:
+                dataset.close()
         data = folder / 'export'
         with zipfile.ZipFile(archive_path) as archive:
             archive.extractall(data)

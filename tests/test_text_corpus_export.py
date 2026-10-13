@@ -1,4 +1,5 @@
 """Exact corpus bytes, explicit review, whole-family allocation and immutable HTTP releases."""
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import io
@@ -27,7 +28,7 @@ class CorpusReleaseTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='corpus-export-')
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.wb = self.dataset.workbench
         self.ordinal = 0
@@ -118,8 +119,19 @@ class CorpusReleaseTests(unittest.TestCase):
     def test_deterministic_readonly_preview_and_immutable_reopen(self):
         rows = self.corpus()
         before = database_snapshot(self.dataset.db)
-        result, preview = self.freeze(rows)
-        self.assertEqual(before, database_snapshot(self.dataset.db))
+        body = self.body(rows)
+        preview = self.dataset.releases.preview(body)
+        self.assertTrue(preview['eligible'], preview)
+        self.assertEqual(before, database_snapshot(self.dataset.db), 'Preview remains exactly read-only')
+        audit_before = self.dataset.db.execute('SELECT count(*) FROM access_audit').fetchone()[0]
+        result = self.dataset.releases.create(dict(body, preview_token=preview['preview_token']))
+        unchanged = lambda rows: [row for row in rows if not row.startswith("('access_audit',")]
+        self.assertEqual(unchanged(before), unchanged(database_snapshot(self.dataset.db)))
+        self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM access_audit').fetchone()[0], audit_before + 1)
+        audit = self.dataset.db.execute('SELECT action,details_json FROM access_audit WHERE target_json=%s',
+            (json.dumps(result['id']),)).fetchall()
+        self.assertEqual([(row[0], json.loads(row[1])) for row in audit],
+            [('dataset_releases.create', {'release_sha256': result['id'], 'format': projection.FORMAT})])
         data = self.dataset.releases.locate(result['id']).read_bytes()
         self.assertEqual(self.freeze(list(reversed(rows)))[0]['id'], result['id'])
         self.wb.correct_rights_note(rows[0]['id'], dict(revision=rows[0]['revision'], source_revision=1, note='Later correction'))
@@ -297,7 +309,7 @@ class CorpusReleaseTests(unittest.TestCase):
         self.addCleanup(server.server_close)
         self.addCleanup(lambda: (server.shutdown(), thread.join()))
         def request(route, body=None):
-            req = urllib.request.Request(f'http://127.0.0.1:{server.server_port}' + route,
+            req = self.actor.request(f'http://127.0.0.1:{server.server_port}' + route,
                 data=json.dumps(body).encode() if body is not None else None, headers={'Content-Type': 'application/json'})
             try:
                 response = urllib.request.urlopen(req)

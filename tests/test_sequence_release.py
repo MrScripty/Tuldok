@@ -1,4 +1,5 @@
 """Actual retained producer bytes, full native contract and frozen custody checks."""
+from auth_helpers import bind_owner
 import hashlib
 import io
 import json
@@ -29,7 +30,7 @@ class SequenceRelease(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.dataset = Dataset(self.temporary.name)
+        self.dataset = Dataset(self.temporary.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
         self.sources = [(FIXTURE / name).read_bytes() for name in ('run.json', 'frames.jsonl')]

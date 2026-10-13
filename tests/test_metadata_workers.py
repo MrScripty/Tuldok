@@ -1,4 +1,5 @@
 """Real PostgreSQL worker ownership and publication failures; no provider inference."""
+from auth_helpers import bind_owner
 import base64
 from contextlib import contextmanager
 import io
@@ -56,6 +57,7 @@ class MetadataWorkerTests(unittest.TestCase):
 
     def open(self):
         data = Dataset(self.tmp.name)
+        self.actor = bind_owner(self, data)
         self.opened.append(data)
         return data
 
@@ -141,11 +143,12 @@ class MetadataWorkerTests(unittest.TestCase):
             barrier, results, errors = threading.Barrier(2), [], []
 
             def apply(owner):
-                try:
-                    barrier.wait(5)
-                    results.append(owner.decide(job['id'], dict(revision=job['revision'], decision='apply_draft')))
-                except BaseException as error:
-                    errors.append(error)
+                with self.actor.bound(self.data):
+                    try:
+                        barrier.wait(5)
+                        results.append(owner.decide(job['id'], dict(revision=job['revision'], decision='apply_draft')))
+                    except BaseException as error:
+                        errors.append(error)
 
             threads = [threading.Thread(target=apply, args=(data.caption_proposals,)) for data in (self.data, peer)]
             for thread in threads:
@@ -289,7 +292,7 @@ class MetadataWorkerTests(unittest.TestCase):
 
     def test_failed_generation_completion_restores_progress_and_removes_files(self):
         with rejected_write(self.data.db, 'generation_jobs', condition="NEW.data::json ->> 'completed' = '1'"), \
-                patch.object(self.data.image_requests, 'generate', return_value={'image': self.image(), 'metadata': {}}) as provider:
+                patch.object(self.data.image_requests, '_generate_admitted', return_value={'image': self.image(), 'metadata': {}}) as provider:
             self.data.generation_jobs.start(self.generation_body())
             self.data.generation_jobs.worker.join(5)
             self.assertFalse(self.data.generation_jobs.worker.is_alive())
