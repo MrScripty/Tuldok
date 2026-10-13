@@ -23,14 +23,14 @@ def definition(wrapper, native):
                           {'literal': '--grid'}, {'parameter': 'grid'}, {'literal': '--frames'}, {'parameter': 'frames'},
                           {'literal': '--seed'}, {'parameter': 'seed'}, {'literal': '--output'}, {'output_dir': True}],
             'parameters': {'grid': {'type': 'integer', 'min': 8, 'max': 32, 'default': 32},
-                           'frames': {'type': 'integer', 'min': 1, 'max': 2, 'default': 2},
+                           'frames': {'type': 'integer', 'min': 1, 'max': 8, 'default': 2},
                            'seed': {'type': 'integer', 'min': 0, 'max': 2147483647, 'default': 100}},
             'inputs': {'build_receipt': {'max_bytes': generate.DIAGNOSTIC_LIMIT}},
             'outputs': [{'path': name, 'role': role, 'max_bytes': limit, 'required': True} for name, role, limit in (
-                ('fields.zip', 'scientific_fields', 8*1024*1024), ('wire.bin', 'native_wire', generate.WIRE_LIMIT),
+                ('fields.zip', 'scientific_fields', 20*1024*1024), ('wire.bin', 'native_wire', generate.WIRE_LIMIT),
                 ('producer-receipt.json', 'producer_receipt', generate.DIAGNOSTIC_LIMIT),
                 ('native-diagnostics.txt', 'native_diagnostics', generate.DIAGNOSTIC_LIMIT))],
-            'environment': {}, 'resources': {'wall_seconds': 120, 'max_output_bytes': 16*1024*1024}}
+            'environment': {}, 'resources': {'wall_seconds': 120, 'max_output_bytes': 40*1024*1024}}
 
 
 def assemble(binary, receipt, destination):

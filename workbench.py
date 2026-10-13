@@ -9,7 +9,6 @@ import re
 import unicodedata
 import uuid
 
-from PIL import Image
 
 TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry', 'audio_timed', 'pointcloud_geometry', 'volume_grid', 'field_sequence_fields')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
@@ -173,6 +172,7 @@ class Workbench:
         self.preferences = Preferences(self)
 
     def _sync_images(self, record_id=None):
+        from PIL import Image
         # Enrol only new images. Hashing is streaming and never rewrites originals.
         query = '''SELECT s.* FROM samples s LEFT JOIN workbench_records w
             ON w.id=s.id WHERE w.id IS NULL'''

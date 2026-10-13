@@ -1,8 +1,8 @@
 # P5a verification — captured CPU comparison
 
 Candidate branch: `feature/scientific-cpu-comparison-20261013`, based on qualified
-PR49 `c7c696b`. The actual model/UI workflow passed; final full regression and hosted CI
-remain pending. No merge or deployment.
+PR49 `c7c696b`. The actual model/UI workflow and final full regression passed; both hosted checks
+passed at the published head. No merge or deployment.
 
 ## Runtime and native prerequisites
 
@@ -48,10 +48,16 @@ native mapping checks remain strict. Torch multiprocessing is not qualified.
 - 10 optional adapter tests pass with explicit real native inputs, including
   sealed READY/STOP and failure cleanup. No fixture is model acceptance.
 - 8 retained recipe-contract and 11 external Runs checks passed before the last
-  helper bootstrap refinements; the final full regression will supersede them.
+  helper bootstrap refinements; the final full regression supersedes them.
 - Affected JavaScript syntax/controller tests, Python syntax, plan contract and
   whitespace checks pass. Independent source/numerical review found no remaining
   blocker. No static type checker or Standards Engine certificate is claimed.
+
+Final full Python regression: **807 tests passed in 1,050.525 seconds**. Two
+optional in-process reader skips were separately covered by the qualified
+training-Python point-cloud/volume suite: **20 passed**, no skips. All 190 Python
+source hashes remained identical throughout the full suite; see
+[before/after inventory](p5a/python-suite-source-files.json).
 
 ## Actual model/UI qualification
 
@@ -97,7 +103,8 @@ was copied for this check.
 
 ## Publication and remaining scope
 
-Pending commit, push, draft PR and exact-head CI. P5a does not complete G4 or G8.
+Published as draft PR50 at `05ea66e4b14e7e23b2d153f98380d44686cb53ed`.
+Hosted UI38456049102 and lifecycle38456049347 both passed at that exact head. P5a does not complete G4 or G8.
 Fresh release-consuming fitting, autonomous evaluation, agent interface parity and
 final compatibility/UI/restore qualification remain. The independent A8 real-model
 proposal and original Rheon v2 packet gates remain open.

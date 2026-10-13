@@ -2,7 +2,6 @@
 import hashlib
 import json
 import re
-import psycopg
 
 from workbench import WorkbenchError, text_value
 
@@ -86,6 +85,7 @@ def find_result(workbench, request_id):
 
 
 def import_row(workbench, body):
+    import psycopg
     workbench.access.require('edit', 'bulk_import.import_row')
     if set(body) - {'source_name', 'row_number', 'line', 'request_id', 'image_name', 'image'}:
         raise WorkbenchError('Unsupported row admission fields.')

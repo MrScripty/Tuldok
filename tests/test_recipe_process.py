@@ -306,9 +306,11 @@ class CpuSnapshotContractTests(unittest.TestCase):
         with self.assertRaises(custody.ProcessError):custody.verify_cpu_snapshot(self.descriptor)
 
     def cpu_spec(self):
-        executable=str(Path('/usr/bin/python3').resolve());entry=self.base/'recipe.py';entry.write_text('pass\n')
-        bootstrap=self.base/'recipe_process.py';bootstrap.write_bytes(custody.SOURCE)
-        descriptor=self.base/'snapshot.json';descriptor.write_bytes(custody.encoded(self.descriptor))
+        executable=str(Path('/usr/bin/python3').resolve())
+        (self.base/'source').mkdir(exist_ok=True);(self.base/'runtime-bootstrap').mkdir(exist_ok=True)
+        entry=self.base/'source/recipe.py';entry.write_text('pass\n')
+        bootstrap=self.base/'runtime-bootstrap/recipe_process.py';bootstrap.write_bytes(custody.SOURCE)
+        descriptor=self.base/'runtime-bootstrap/snapshot.json';descriptor.write_bytes(custody.encoded(self.descriptor))
         spec={'schema_version':1,'attempt_id':'b'*32,'request_sha256':'c'*64,
             'argv':[executable,'-I','-S','-B',str(bootstrap),'--cpu-launch',str(descriptor),str(entry)],
             'env':{},'cwd':str(self.base),'stdin_base64':'','wall_seconds':5,'executable_sha256':custody.digest(Path(executable).read_bytes()),
@@ -316,6 +318,40 @@ class CpuSnapshotContractTests(unittest.TestCase):
             'trusted_install_owner_uid':os.stat('/usr').st_uid,'native_loader_policy':'glibc_x86_64_no_preload_v1',
             'cpu_snapshot':self.descriptor,'captured_files':[{'path':str(path),'bytes':path.stat().st_size,'sha256':custody.digest(path.read_bytes())} for path in (bootstrap,descriptor,entry)]}
         return spec
+
+    def test_cpu_capture_and_input_bounds_are_profile_specific(self):
+        import copy
+        spec=self.cpu_spec()
+        for index in range(6):
+            spec['captured_files'].append(dict(path=str(self.base/'input'/str(index)),bytes=40*1024*1024,sha256='d'*64))
+        self.assertEqual(custody.validate_spec(spec),spec)
+        over=copy.deepcopy(spec)
+        over['captured_files'].append(dict(path=str(self.base/'input/extra'),bytes=17*1024*1024,sha256='e'*64))
+        with self.assertRaisesRegex(custody.ProcessError,'input aggregate'):custody.validate_spec(over)
+        for path in ('input/nested/file','outside/file'):
+            bad=copy.deepcopy(spec);bad['captured_files'][3]['path']=str(self.base/path)
+            with self.assertRaises(custody.ProcessError):custody.validate_spec(bad)
+        over=copy.deepcopy(spec)
+        over['captured_files'].extend(dict(path=str(self.base/'source'/str(index)),bytes=40*1024*1024,sha256='f'*64) for index in range(3))
+        with self.assertRaisesRegex(custody.ProcessError,'closure exceeds'):custody.validate_spec(over)
+        legacy=copy.deepcopy(spec);del legacy['cpu_snapshot']
+        with self.assertRaisesRegex(custody.ProcessError,'closure exceeds'):custody.validate_spec(legacy)
+        invalid=copy.deepcopy(spec);invalid['cpu_snapshot']['profile']='invented'
+        with self.assertRaises(custody.ProcessError):custody.validate_spec(invalid)
+
+    def test_cpu_exact_aggregate_boundaries_and_per_input_limit(self):
+        spec=self.cpu_spec()
+        for index in range(7):
+            spec['captured_files'].append(dict(path=str(self.base/'input'/str(index)),
+                bytes=(40 if index<6 else 16)*1024*1024,sha256='d'*64))
+        remaining=320*1024*1024-sum(row['bytes'] for row in spec['captured_files'])
+        spec['captured_files'].append(dict(path=str(self.base/'source/filler'),bytes=remaining,sha256='e'*64))
+        self.assertEqual(custody.validate_spec(spec),spec)
+        spec['captured_files'][-1]['bytes']+=1
+        with self.assertRaisesRegex(custody.ProcessError,'closure exceeds'):custody.validate_spec(spec)
+        spec['captured_files'][-1]['bytes']-=1
+        spec['captured_files'][3]['bytes']+=1
+        with self.assertRaisesRegex(custody.ProcessError,'bounded named input'):custody.validate_spec(spec)
 
     def test_cpu_launch_vector_requires_bound_descriptor(self):
         spec=self.cpu_spec()

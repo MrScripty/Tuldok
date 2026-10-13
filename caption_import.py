@@ -7,9 +7,7 @@ import io
 import json
 import re
 import secrets
-import psycopg
 
-from PIL import Image
 
 from bulk_import import find_result, invalid_constant, leaf_name, result, unique_object
 from dataset_releases import CAPTION_CONSUMER, CAPTION_FORMAT, CAPTION_SPLITS, SPLITS, connected_components
@@ -260,6 +258,8 @@ class CaptionImports:
 
     @authorized('edit', 'caption_import.admit')
     def admit(self, body):
+        from PIL import Image
+        import psycopg
         if set(body) != {'token', 'asset', 'image', 'request_id'}:
             invalid('Unsupported caption admission fields.')
         if not isinstance(body['request_id'], str) or not IDENTIFIER.fullmatch(body['request_id']):

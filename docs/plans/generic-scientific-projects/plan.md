@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5a actual captured-runtime and frozen-checkpoint CPU comparison passed; final regression/publication pending on feature/scientific-cpu-comparison-20261013.
+**Current phase:** P5a qualified at draft PR50 commit05ea66e; P5b actual frozen-input CPU fit qualified locally; final regression and draft publication in progress.
 
-**Next slice:** Finish P5a regression/publication, then admit frozen-release training; see [P5a verification](reports/p5a-verification.md).
+**Next slice:** Finish P5b regression/publication, then admit P5c autonomous evaluation with completed-Run artifact inputs and durable full fields. See [P5b admission](reports/p5b-admission.md).
 
 **Acceptance status:** `partial`
 

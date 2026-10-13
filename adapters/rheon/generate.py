@@ -20,7 +20,7 @@ SOURCE_PINS = {'lab': 'e8a90bfef6b2955c502008ccc62443e29dd9f2ec',
                'Rheon': '2209012bc5f902693d0f695ec1c2d854126af317'}
 LIBRARY_DIRECTORY = '/usr/lib/x86_64-linux-gnu'
 LOADER_ARGUMENTS = ['--inhibit-cache', '--library-path', LIBRARY_DIRECTORY, '--glibc-hwcaps-mask', '']
-WIRE_LIMIT = 4 * 1024 * 1024
+WIRE_LIMIT = 12 * 1024 * 1024
 DIAGNOSTIC_LIMIT = 65536
 HASH = re.compile(r'^[a-f0-9]{64}$')
 
@@ -54,9 +54,9 @@ def closed(value, keys):
 
 
 def controls(grid, frames, seed):
-    for value, low, high in ((grid, 8, 32), (frames, 1, 2), (seed, 0, 2147483647)):
+    for value, low, high in ((grid, 8, 32), (frames, 1, 8), (seed, 0, 2147483647)):
         if type(value) is not int or not low <= value <= high:
-            raise ValueError('Supported controls: grid 8–32, frames 1–2, seed 0–2147483647; Jacobi only.')
+            raise ValueError('Supported controls: grid 8–32, frames 1–8, seed 0–2147483647; Jacobi only.')
     return {'grid': grid, 'frames': frames, 'seed': seed, 'method': 'jacobi'}
 
 
@@ -320,7 +320,8 @@ def generate(native_path, build_path, policy_path, grid, frames, seed, output):
     receipt_raw = encode(receipt)
     bundle = scientific_bundle(wire, request, build_raw, receipt_raw, policy_raw)
     outputs = {'fields.zip': bundle, 'wire.bin': wire, 'producer-receipt.json': receipt_raw, 'native-diagnostics.txt': diagnostics}
-    if sum(map(len, outputs.values())) > 16 * 1024 * 1024: raise ValueError('Output budget exceeded.')
+    if len(bundle) > 20 * 1024 * 1024: raise ValueError('Scientific bundle budget exceeded.')
+    if sum(map(len, outputs.values())) > 40 * 1024 * 1024: raise ValueError('Output budget exceeded.')
     for name, data in outputs.items():
         with (output/name).open('xb') as handle: handle.write(data); handle.flush(); os.fsync(handle.fileno())
     print(json.dumps({'stage': 'generated', 'frames': frames, 'fields': 6, 'bundle_bytes': len(bundle)}), flush=True)

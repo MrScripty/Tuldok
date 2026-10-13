@@ -14,6 +14,8 @@ NAME = re.compile(r'[A-Za-z][A-Za-z0-9_-]{0,63}')
 SHA = re.compile(r'[a-f0-9]{64}')
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
 MAX_CAPTURE_BYTES = 64 * 1024 * 1024
+CPU_INPUT_BYTES = 256 * 1024 * 1024
+CPU_CAPTURE_BYTES = 320 * 1024 * 1024
 MAX_FILES = 128
 RUNTIME_LIMIT = 512 * 1024 * 1024
 TYPES = ('input', 'execute', 'output')
@@ -423,7 +425,7 @@ def host_identity():
     return current
 
 
-def prepare(projects, graph, execution_sha256, profile=None):
+def prepare(projects, graph, execution_sha256, profile=None, *, releases=None):
     config, values = graph_parameters(graph)
     inspected = inspect_recipe(projects, config['project_id'], config['recipe_id'], config['expected_sha256'])
     definition = inspected['definition']; values = validate_parameters(definition, values)
@@ -433,10 +435,20 @@ def prepare(projects, graph, execution_sha256, profile=None):
     captured = {'source/' + path: raw for path, raw in sources.items()}
     inputs = {}
     for name, binding in config['inputs'].items():
-        closed(binding, ('reference_id', 'expected_sha256'))
-        raw, receipt = projects.read_data_reference(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
+        if isinstance(binding, dict) and binding.get('kind') == 'frozen_release':
+            closed(binding, ('kind', 'release_id', 'expected_sha256'))
+            if releases is None:
+                raise WorkbenchError('Frozen release input owner is unavailable.', 'unavailable', 409)
+            raw, receipt = releases.capture_input(binding['release_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
+        else:
+            closed(binding, ('reference_id', 'expected_sha256'))
+            raw, receipt = projects.read_data_reference(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
         captured['input/' + name] = raw; inputs[name] = receipt
-    if len(captured) > MAX_FILES or sum(map(len,captured.values())) > MAX_CAPTURE_BYTES:
+    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
+    input_limit = CPU_INPUT_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
+    if sum(len(raw) for path,raw in captured.items() if path.startswith('input/')) > input_limit:
+        raise WorkbenchError('Captured inputs exceed the runtime profile byte bound.')
+    if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
         raise WorkbenchError('Captured source and input files exceed the total bound.')
     try:
         runtime = runtime_identity(profile)
@@ -450,7 +462,7 @@ def prepare(projects, graph, execution_sha256, profile=None):
             raise WorkbenchError('Native runtime cannot be safely inspected.', 'unavailable',409) from None
         for source,policy in policies.items():
             captured[native_policy_path(source)] = encode(policy).encode()
-        if len(captured) > MAX_FILES or sum(map(len,captured.values())) > MAX_CAPTURE_BYTES:
+        if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
             raise WorkbenchError('Generated native policies exceed the capture bound.')
     cpu_snapshot = None
     if definition['runtime'] == CPU_PROFILE:
@@ -460,7 +472,7 @@ def prepare(projects, graph, execution_sha256, profile=None):
             definition['runtime_snapshot_sha256'], verify=True)
         captured[CPU_DESCRIPTOR] = recipe_process.encoded(cpu_snapshot)
         captured[CPU_BOOTSTRAP] = recipe_process.SOURCE
-        if len(captured) > MAX_FILES or sum(map(len,captured.values())) > MAX_CAPTURE_BYTES:
+        if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
             raise WorkbenchError('Generated CPU bootstrap exceeds the capture bound.')
     host = host_identity()
     material = {'schema_version': 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
@@ -498,9 +510,16 @@ def validate_material(material):
     if not isinstance(material['inputs'], dict) or set(material['inputs']) != set(definition['inputs']): raise WorkbenchError('Material input inventory differs.')
     expected = {'source/'+item['path']:item['sha256'] for item in definition['sources']}
     for name, item in material['inputs'].items():
-        receipt(item)
-        if (item['project_id'], item['manifest_sha256']) != (material['project']['project_id'], material['project']['manifest_sha256']):
-            raise WorkbenchError('Input receipt belongs to another project snapshot.')
+        if isinstance(item, dict) and item.get('kind') == 'frozen_release':
+            closed(item, ('kind','catalog_id','release_id','measured_sha256','bytes'))
+            sha(item['release_id']); sha(item['measured_sha256'])
+            if item['catalog_id'] != material['catalog_id'] or item['release_id'] != item['measured_sha256']:
+                raise WorkbenchError('Frozen input receipt belongs to another catalog or content identity.')
+            bounded_int(item['bytes'],1,definition['inputs'][name]['max_bytes'],'Frozen input bytes')
+        else:
+            receipt(item)
+            if (item['project_id'], item['manifest_sha256']) != (material['project']['project_id'], material['project']['manifest_sha256']):
+                raise WorkbenchError('Input receipt belongs to another project snapshot.')
         expected['input/'+name] = item['measured_sha256']
     generated = validate_native_policies(material,definition)
     if definition['runtime'] == CPU_PROFILE:
@@ -524,14 +543,22 @@ def validate_material(material):
     captures = material['captures']
     if not isinstance(captures, dict) or set(captures) != set(expected) or len(captures) > MAX_FILES:
         raise WorkbenchError('Captured inventory differs from the declared source and inputs.')
-    total = 0
+    total = 0; input_total = 0
     for path, item in captures.items():
         relative_path(path); closed(item, ('bytes','sha256')); sha(item['sha256'])
         limit = MAX_SOURCE_BYTES if path.startswith(('source/','native-policy/','runtime-bootstrap/')) else definition['inputs'][path.split('/',1)[1]]['max_bytes']
         bounded_int(item['bytes'],0,limit,'Capture bytes'); total += item['bytes']
+        if path.startswith('input/'):
+            input_total += item['bytes']
+            input_receipt = material['inputs'][path.split('/',1)[1]]
+            if input_receipt.get('kind') == 'frozen_release' and input_receipt['bytes'] != item['bytes']:
+                raise WorkbenchError('Frozen input receipt and captured size differ.')
         if path in generated and item['bytes'] != len(generated[path]): raise WorkbenchError('Generated native policy size differs.')
         if item['sha256'] != expected[path]: raise WorkbenchError('Captured digest contradicts source/input identity.')
-    if total > MAX_CAPTURE_BYTES: raise WorkbenchError('Captured material exceeds byte bound.')
+    capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
+    input_limit = CPU_INPUT_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
+    if total > capture_limit or input_total > input_limit:
+        raise WorkbenchError('Captured material exceeds runtime profile byte bound.')
     runtime = material['runtime']
     closed(runtime, ('profile','executable','executable_sha256','trusted_install_owner_uid','files','closure_sha256','assumption','flags'))
     if runtime['profile'] != 'system_python' or runtime['flags'] != ['-I','-S','-B'] or not isinstance(runtime['executable'],str) or not re.fullmatch(r'/usr/bin/python3\.\d+',runtime['executable']):

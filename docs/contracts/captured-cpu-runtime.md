@@ -56,6 +56,14 @@ The recipe runtime and `cpu_snapshot` identify the target runtime. The UI displa
 the target profile; the complete material remains available for review. Existing
 recipes gain no default snapshot fields.
 
+CPU recipes may capture at most 256 MiB of named inputs and 320 MiB across all
+captured source, input and generated files. Each input remains at most 40 MiB;
+source files remain at most 8 MiB and output limits remain 64 MiB. The complete
+validated CPU descriptor/bootstrap and reserved launch shape select this policy;
+an arbitrary descriptor field cannot enlarge a system-Python recipe. Legacy
+system-Python capture limits remain 64 MiB. These are byte bounds, not promises
+about resident memory while an optional reader expands or processes its inputs.
+
 ## Execution and evidence
 
 The parent verifies the snapshot before launching custody. The helper checks

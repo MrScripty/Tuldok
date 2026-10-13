@@ -227,7 +227,7 @@ class Pipelines:
         if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
             raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
         result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
-                                                    getattr(self.dataset, 'external_runtime_profile', None))
+                                                    getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases)
         if self.get(graph_id) != graph:
             raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
         return result
@@ -239,7 +239,7 @@ class Pipelines:
         if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
             raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
         result, captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
-                                                   getattr(self.dataset, 'external_runtime_profile', None))
+                                                   getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases)
         if expected_digest != result['material_sha256'] or self.get(graph_id) != graph:
             raise WorkbenchError('Reviewed execution material changed. Preflight again.', 'stale', 409)
         return dict(recipe_contract.capture(result, captured, staging), graph=graph)
@@ -448,7 +448,7 @@ class Pipelines:
         graph = decode_graph(graph)
         if graph.get('recipe') == 'external_recipe':
             result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
-                                                        getattr(self.dataset, 'external_runtime_profile', None))
+                                                        getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases)
             return dict(result, errors=[], release=None)
         adapter = adapter_for_graph(graph)
         ports = ports_for_graph(graph)

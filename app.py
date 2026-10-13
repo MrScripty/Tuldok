@@ -582,6 +582,8 @@ def make_handler(dataset):
                         return self.reply(dataset.runs.list())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'progress':
+                        return self.reply(dataset.runs.external_progress(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'predictions':
                         query = parse_qs(urlsplit(self.path).query)
                         return self.reply(dataset.runs.predictions(parts[1], query.get('split', ['validation'])[-1]))
@@ -589,6 +591,8 @@ def make_handler(dataset):
                         data, media_type = dataset.runs.artifact(parts[1], parts[3])
                         return self.reply(data, content_type=media_type)
                     return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
+                if path == '/api/workbench/releases/input-candidates':
+                    return self.reply(dataset.releases.input_candidates())
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.list())
                 if path == '/api/workbench/searches':

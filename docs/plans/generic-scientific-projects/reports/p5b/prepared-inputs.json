@@ -1,0 +1,237 @@
+{
+  "qualification": "Actual native trajectories, QA-authored owner inspection/review and six immutable pair releases; no end-user review or fitting acceptance implied",
+  "catalog": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog",
+  "records": [
+    {
+      "seed": 100,
+      "run_id": "3a0e69f8e71c4c7995d21c8157edc230",
+      "id": "10248a96cd884c97aba789c46f5b30e8",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "1c137295d187099956c0b96149e0cd1babaab893d2d7396e563593d8abc85028",
+      "groups": [
+        "field-sequence-source:1c137295d187099956c0b96149e0cd1babaab893d2d7396e563593d8abc85028",
+        "field-sequence-state:edf7cfc669180378e566a3b86a005a35fbfadea8bfe09c8c7d55b46b41785ef6",
+        "field-sequence-family:0a67a1962d4c00b4f68309bc3590194cca58a9845b1eb7ac494b082e0be20ad9"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/100/cold.json"
+    },
+    {
+      "seed": 101,
+      "run_id": "48dbf653056a4d45ae53c6842e7d3aa3",
+      "id": "9a12007586654e9190df16a9a6e0c3b2",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "b591b00b9b9c32f3fe595d03197881f7626adeb89db2cacb2712900f52efe0c0",
+      "groups": [
+        "field-sequence-source:b591b00b9b9c32f3fe595d03197881f7626adeb89db2cacb2712900f52efe0c0",
+        "field-sequence-state:19d02ab37cfbf76b20c7a89ec9bfd9d1b60f3d667fcbbcb8143da0bf83d49ff4",
+        "field-sequence-family:2b3e7ddf8325ace0a57f9d93f339106a84c7c9aefa45ac9cb6d4f2bd2301d812"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/101/cold.json"
+    },
+    {
+      "seed": 102,
+      "run_id": "ecd6685cbd034a2e9c4c870b68ddd3a4",
+      "id": "d7485bc75f45470c84a2fab66e2788df",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "334df086cd8cd6dc9689cf5faafd3631a2b0967b0b216c8a507c57083c2f5dee",
+      "groups": [
+        "field-sequence-source:334df086cd8cd6dc9689cf5faafd3631a2b0967b0b216c8a507c57083c2f5dee",
+        "field-sequence-state:905ae1f24a635548c0c8d7f14797a12d7c001ef09bb10ecc89eb17bca3aa6146",
+        "field-sequence-family:f271791cd416122d818a77231942e6384043dd29490eb8d3c146c8b3998235f0"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/102/cold.json"
+    },
+    {
+      "seed": 103,
+      "run_id": "8a22050ad7fc496db53e67d091de062a",
+      "id": "6a0ff276b3464a9d81c2c7c791f5179f",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "ea5653a7f628cf292b2bb8c86737e900d4dc711eb197eca8683a5a8344ea03b2",
+      "groups": [
+        "field-sequence-source:ea5653a7f628cf292b2bb8c86737e900d4dc711eb197eca8683a5a8344ea03b2",
+        "field-sequence-state:aab52ecdcab755475a3ac707d5cf8c82f15fcc969f68338c27e5d1de0275f7fc",
+        "field-sequence-family:e5c65c0e8457b849ead1264599343c463656abc26d2d1d99b2fdd1dfa6d05a16"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/103/cold.json"
+    },
+    {
+      "seed": 104,
+      "run_id": "8d2985a122b644fa96f3bafd3146edf5",
+      "id": "68a4b8417a8e4334b97ba309f9fd7c69",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "64620a51df29a223938c6db43a2450296e412e60dff944ba128df5f8e3df8605",
+      "groups": [
+        "field-sequence-source:64620a51df29a223938c6db43a2450296e412e60dff944ba128df5f8e3df8605",
+        "field-sequence-state:f4a1c881ba00dc2a97d370804559c6dedf7d6f3f72b7ebf4a53d6067968c2d90",
+        "field-sequence-family:5dc1a5941c252665f87e5a0a24b8cb7381556f0f13b2d1ada86a211d3bc9e433"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/104/cold.json"
+    },
+    {
+      "seed": 105,
+      "run_id": "c3f7594d311843ea8487427556c84810",
+      "id": "2965e02ece8e46b3b841dc078abaef77",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "c0b9c23b226ca261393aa741358ea3c03e476ce80bfae1dc956852730cee2948",
+      "groups": [
+        "field-sequence-source:c0b9c23b226ca261393aa741358ea3c03e476ce80bfae1dc956852730cee2948",
+        "field-sequence-state:13d7e5b08d8de08b4a7c4312715b8aee5a7f53c3a6e6eb2ba39cfe95365d0112",
+        "field-sequence-family:68a33cad9c8878c1ef2becd81f19bb615abf2c4759eff89a8302b5a9fabfafa1"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/105/cold.json"
+    },
+    {
+      "seed": 106,
+      "run_id": "e46bc5a79331428580dba01bb671d25b",
+      "id": "a6d37093fda84b86a4416e17337103e5",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "7ad4b8d7e5de6b4a3aec1539062661df7551f74f66f0fe92285802dad3e99cd9",
+      "groups": [
+        "field-sequence-source:7ad4b8d7e5de6b4a3aec1539062661df7551f74f66f0fe92285802dad3e99cd9",
+        "field-sequence-state:de7aa7afdb69419388ce9e59578bd83c3b38d8b9f7f512cbc422f6c0302e15e3",
+        "field-sequence-family:5550fc6af4fe534e52b3660b98ebbd5d370c7bb1e9ea3d4155dc4218df92640c"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/106/cold.json"
+    },
+    {
+      "seed": 107,
+      "run_id": "cea0a01e08c4488cbdba92f1662c7020",
+      "id": "3033b32664e64095ab011f44bcc730b6",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "c9ceee9e50861ee589b3e1c324d5dcb187cf4f79322fd12d208e450e86544cc1",
+      "groups": [
+        "field-sequence-source:c9ceee9e50861ee589b3e1c324d5dcb187cf4f79322fd12d208e450e86544cc1",
+        "field-sequence-state:6a6e522f6cf501ffbedf632ffd69fc10aafa3e09371a9aa11668bbc5116e2d7e",
+        "field-sequence-family:bb0d1048d567bc5f3b6fcb0f4403a1b7c73653f55ff33d94c29d77da4154cd39"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/107/cold.json"
+    },
+    {
+      "seed": 108,
+      "run_id": "80ad7f8474ae4e9384483b9463206ab2",
+      "id": "9189ed47d88a4bee8dd4f65b7e767b60",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "3043098224dc4fedf7ba737e0238b785fa136c02816ee1297a00ccd6524680bc",
+      "groups": [
+        "field-sequence-source:3043098224dc4fedf7ba737e0238b785fa136c02816ee1297a00ccd6524680bc",
+        "field-sequence-state:ecc76f664a1ec76b9815c4f5b57c490976c8a86bf0bd215fea5834d20c20121d",
+        "field-sequence-family:26747920012f322fb1e440944f2c0ac7560942d252455a516a075c0a95980c6b"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/108/cold.json"
+    },
+    {
+      "seed": 109,
+      "run_id": "d1700cfb1fb249e3b627a9cb1daadcec",
+      "id": "a361b032e4474d5bac7f28201ab6a2bf",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "93e4dd14ea507948ab329a08ae86282d4548422e59fa88d2644e439f1138db1d",
+      "groups": [
+        "field-sequence-source:93e4dd14ea507948ab329a08ae86282d4548422e59fa88d2644e439f1138db1d",
+        "field-sequence-state:4264e4ae411318dc4ad0caed76d05e26aa00d9b9d2b22ae84d907c9c98b03fd4",
+        "field-sequence-family:7190d738d0808b07e760f284ab8e649d723979c866d6ee0c1e93d6c74b4073f3"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/109/cold.json"
+    },
+    {
+      "seed": 110,
+      "run_id": "cf94711d8a2047c08a64c0219f474017",
+      "id": "b49013cfdbc7467bb2f87cabb67e5d1a",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "54f44df2fe839f283511d125a5000138070243552504df883b349455d63e46c3",
+      "groups": [
+        "field-sequence-source:54f44df2fe839f283511d125a5000138070243552504df883b349455d63e46c3",
+        "field-sequence-state:7c8527d714eea2c191431d222bfc58a6e9a0e99bd06d087da9b227157700d481",
+        "field-sequence-family:bd92c8c8351fbf8bac2647e3edfbffd504e4370cc556e09020c15b89d9754a4a"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/110/cold.json"
+    },
+    {
+      "seed": 111,
+      "run_id": "4a9a129e8405405ab12b866edd766e48",
+      "id": "3bd7a890512e4a678e6989829deb366e",
+      "revision": 2,
+      "source_revision": 1,
+      "content_hash": "dcd360f9f6c68c557e610385745f1f036447848aadb27126a68b729d273d667e",
+      "groups": [
+        "field-sequence-source:dcd360f9f6c68c557e610385745f1f036447848aadb27126a68b729d273d667e",
+        "field-sequence-state:33caf568c2a7bb3423059d0f4acaecd878efbe922fd423898ad5c39ab35ea033",
+        "field-sequence-family:cb1f7464bfb4267881034f4eefa6020e46b285a99b7d476bfdcf8f590a555247"
+      ],
+      "cold_path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/generation/111/cold.json"
+    }
+  ],
+  "releases": [
+    {
+      "id": "c21553baf38d2aa44a17eba441d039d9c6c22e863ec436c1e7e524ce923d0f14",
+      "url": "/api/workbench/releases/c21553baf38d2aa44a17eba441d039d9c6c22e863ec436c1e7e524ce923d0f14.zip",
+      "bytes": 34145326,
+      "path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/training-pair-0.zip",
+      "seeds": [
+        100,
+        101
+      ]
+    },
+    {
+      "id": "e3dbff795de37df43501fc26010635242f600d3c3e228188bd2e63dbf17066b6",
+      "url": "/api/workbench/releases/e3dbff795de37df43501fc26010635242f600d3c3e228188bd2e63dbf17066b6.zip",
+      "bytes": 34145202,
+      "path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/training-pair-1.zip",
+      "seeds": [
+        102,
+        103
+      ]
+    },
+    {
+      "id": "4e7bdc2b16554a6c73321bbd15329408a39f710a02ef34fc8b29507493bd8e0e",
+      "url": "/api/workbench/releases/4e7bdc2b16554a6c73321bbd15329408a39f710a02ef34fc8b29507493bd8e0e.zip",
+      "bytes": 34145306,
+      "path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/training-pair-2.zip",
+      "seeds": [
+        104,
+        105
+      ]
+    },
+    {
+      "id": "fd1e3412b8ce639ece6821f69f3981127d94052a88ab28649844d630b5038c4c",
+      "url": "/api/workbench/releases/fd1e3412b8ce639ece6821f69f3981127d94052a88ab28649844d630b5038c4c.zip",
+      "bytes": 34145280,
+      "path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/training-pair-3.zip",
+      "seeds": [
+        106,
+        107
+      ]
+    },
+    {
+      "id": "296f07e01ab0cf0dc428f9b680b0d02026705494847b9ee23845d46ce66ec893",
+      "url": "/api/workbench/releases/296f07e01ab0cf0dc428f9b680b0d02026705494847b9ee23845d46ce66ec893.zip",
+      "bytes": 34145150,
+      "path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/training-pair-4.zip",
+      "seeds": [
+        108,
+        109
+      ]
+    },
+    {
+      "id": "06e843c74f9cdda576a52859b736435eb6c8aee7f87b565de8dcc6625824c64b",
+      "url": "/api/workbench/releases/06e843c74f9cdda576a52859b736435eb6c8aee7f87b565de8dcc6625824c64b.zip",
+      "bytes": 34145328,
+      "path": "/workspace/Tuldok-p5b/build/qa/workspace-cpu-training/run-OgbEYN/training-pair-5.zip",
+      "seeds": [
+        110,
+        111
+      ]
+    }
+  ],
+  "source_commit": "05ea66e4b14e7e23b2d153f98380d44686cb53ed"
+}

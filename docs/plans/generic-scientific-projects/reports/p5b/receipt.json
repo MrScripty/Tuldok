@@ -1,0 +1,118 @@
+{
+  "source_commit": "05ea66e4b14e7e23b2d153f98380d44686cb53ed",
+  "dirty": true,
+  "qualification": "Actual fresh CPU closed-form fit using96 observations from12 whole native trajectories and6 QA-reviewed frozen releases",
+  "autonomous_evaluation_acceptance": false,
+  "gpu_acceptance": false,
+  "independent_end_user_review": false,
+  "checks": [
+    "Actual six-release approved CPU fit reports real closed-form/validation progress and hash-verified checkpoint metrics",
+    "Independent NumPy replay verifies exact frozen inputs, NPZ observations, full-spectrum fitted gains and checkpoint custody",
+    "Cold restart retains trained checkpoint, exact input identities, custody-verified diagnostics and result summary"
+  ],
+  "captures": [
+    {
+      "file": "training-pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual frozen-input CPU fit; QA-authored review, no GPU or autonomous evaluation acceptance"
+    },
+    {
+      "file": "training-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual frozen-input CPU fit; QA-authored review, no GPU or autonomous evaluation acceptance"
+    },
+    {
+      "file": "training-live-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual frozen-input CPU fit; QA-authored review, no GPU or autonomous evaluation acceptance"
+    },
+    {
+      "file": "training-live-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual frozen-input CPU fit; QA-authored review, no GPU or autonomous evaluation acceptance"
+    },
+    {
+      "file": "training-results-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual frozen-input CPU fit; QA-authored review, no GPU or autonomous evaluation acceptance"
+    },
+    {
+      "file": "training-results-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual frozen-input CPU fit; QA-authored review, no GPU or autonomous evaluation acceptance"
+    }
+  ],
+  "run_id": "11fc2be1aada490f9b67c11c190728f6",
+  "material_sha256": "05d485688a6471d5d01e103a965d7902280cafed61447c36abc2fdd57187fa61",
+  "runtime_snapshot_sha256": "cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7",
+  "cold": {
+    "qualification": "Independent NumPy replay of exact frozen training inputs and closed-form checkpoint gains; original producer validation reports retained separately",
+    "limitations": [
+      "QA-authored owner review, not independent end-user scientific acceptance.",
+      "No new holdout, GPU, general 3D or autonomous evaluation acceptance."
+    ],
+    "releases": [
+      {
+        "sha256": "c21553baf38d2aa44a17eba441d039d9c6c22e863ec436c1e7e524ce923d0f14",
+        "bytes": 34145326
+      },
+      {
+        "sha256": "e3dbff795de37df43501fc26010635242f600d3c3e228188bd2e63dbf17066b6",
+        "bytes": 34145202
+      },
+      {
+        "sha256": "4e7bdc2b16554a6c73321bbd15329408a39f710a02ef34fc8b29507493bd8e0e",
+        "bytes": 34145306
+      },
+      {
+        "sha256": "fd1e3412b8ce639ece6821f69f3981127d94052a88ab28649844d630b5038c4c",
+        "bytes": 34145280
+      },
+      {
+        "sha256": "296f07e01ab0cf0dc428f9b680b0d02026705494847b9ee23845d46ce66ec893",
+        "bytes": 34145150
+      },
+      {
+        "sha256": "06e843c74f9cdda576a52859b736435eb6c8aee7f87b565de8dcc6625824c64b",
+        "bytes": 34145328
+      }
+    ],
+    "records": 12,
+    "observations": 96,
+    "fitted_parameters": 32767,
+    "optimizer_steps": 0,
+    "ordered_input_array_sha256": {
+      "rhs": "55e610b8446e58da6d070675783e5eabb90c9d9bb289f205aae16d86894bd945",
+      "pressure": "343adc356891e1013f4fe3c5ab5ed3a4ba82249639abc958fed12abfc0dcff9e"
+    },
+    "model_sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8",
+    "training_npz_sha256": "3ca87734e4ebe41320328b130908dc88b85967dcc745f80f8c207cf29b539184",
+    "minimum_training_modal_energy": 2.6435572961144745e-8,
+    "training_mean_relative_pressure_l2": 1.602787159726027e-8,
+    "maximum_gain_relative_difference": 2.002450423477542e-14
+  },
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "browser": "Chrome/151.0.7922.173"
+}

@@ -134,3 +134,47 @@ no-adapter generic startup also passed. Independent reviews found no remaining
 source or numerical-contract blocker. Full stable-source Python regression is
 running; draft publication records that pending gate explicitly. No fresh fitting,
 GPU, full retained-field evaluation or historical timing claim.
+
+
+## 2026-10-13 — P5b isolated source preparation
+
+P5a actual runtime/model/UI/restart/no-adapter gates passed and draft PR50 was
+published at05ea66e. Full regression/CI remains on unchanged source. Independent
+P5b review admitted a separate source-preparation worktree after correcting the
+missing eight-frame producer extension and inconsistent progress-response budget.
+Actual dependent generation/model qualification and acceptance wait for P5a
+regression/CI success; propagate any fixes first. This explicit sequencing update
+preserves the parent dependency gate while allowing independent source work.
+See the bounded write ownership and acceptance in P5b admission.
+
+
+## 2026-10-13 — P5a final gate and P5b real preparation
+
+PR50 exact05ea66e passed807 local tests in1,050.525 seconds, with two optional
+reader skips separately covered by20 tests. All190 Python source hashes stayed
+unchanged. Hosted UI38456049102 and lifecycle38456049347 passed. P5a is qualified;
+fresh training and full autonomous evaluation remain open. P5b source review and
+focused checks passed; real eight-frame generation and preparation-only reviewed
+releases are now admitted with sources frozen during active Runs.
+
+### P5b actual preparation and fresh-fit admission
+
+Ten producer checks passed. Twelve native eight-frame trajectories were inspected
+and reviewed by the QA owner; 576 arrays matched retained native wire bytes. Six
+immutable training releases total 204,871,592 bytes. Root independently verified
+all six archive SHA-256 identities and per-input/aggregate bounds. The real browser
+resume now enters fresh fitting with the captured source closure unchanged.
+Preparation evidence: `build/qa/workspace-cpu-training/run-OgbEYN/prepared-inputs.json`.
+This is preparation acceptance only; fitting and validation are not yet qualified.
+
+### P5b fresh CPU fit qualified locally
+
+Run `11fc2be1aada490f9b67c11c190728f6` completed and drained in 64.748344 seconds.
+It consumed the six verified releases and fitted all 32,767 gains from 96 exact
+observations. Independent NumPy replay differs by at most 2.002450423477542e-14
+relative; both validation trajectories and the unit-gain physics rejection passed.
+All six HTTP artifact downloads and verified result evidence survived restart.
+The failed first attempt is preserved; the successful attempt used a fresh
+captured project after correcting only the pinned diagnostic prefix.
+See [P5b verification](reports/p5b-verification.md). Full regression and hosted
+CI remain pending; autonomous evaluation and backup/restore are separate gates.

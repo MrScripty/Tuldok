@@ -20,6 +20,48 @@ from test_mesh_release import change_manifest, rewrite
 from workbench import WorkbenchError, encode
 
 
+COLD_READER_FILES = (
+    'access.py', 'audio_assets.py', 'audio_classification_export.py', 'audio_export.py',
+    'bulk_import.py', 'canonical_release.py', 'caption_import.py', 'dataset_releases.py',
+    'image_classification_export.py', 'immutable_assets.py', 'meshes.py', 'native_text_import.py',
+    'recipe_process.py', 'scientific_fields.py', 'scientific_release.py',
+    'text_classification_export.py', 'text_corpus_export.py', 'workbench.py',
+)
+
+
+def captured_cold_reader(raw):
+    """Exact declared closure in a fresh stdlib-only interpreter; no live checkout."""
+    import shutil
+    with tempfile.TemporaryDirectory() as directory:
+        root=Path(directory);closure=root/'cold';closure.mkdir()
+        repository=Path(__file__).resolve().parents[1]
+        for name in COLD_READER_FILES:shutil.copyfile(repository/name,closure/name)
+        archive=root/'release.zip';archive.write_bytes(raw)
+        program = r"""
+import sys, json, importlib.abc
+from pathlib import Path
+class RefuseServerDependencies(importlib.abc.MetaPathFinder):
+ def find_spec(self, fullname, path=None, target=None):
+  if fullname.split('.')[0] in ('PIL','psycopg','app','metadata'):
+   raise ImportError('Server dependency forbidden in cold reader: '+fullname)
+sys.meta_path.insert(0,RefuseServerDependencies())
+closure=Path(sys.argv[1]);sys.path.insert(0,str(closure))
+import scientific_release
+value=scientific_release.validate_release(sys.argv[2],expected_sha256=sys.argv[3])
+for name in sys.argv[4:]:
+ module=sys.modules.get(name)
+ if module is not None:
+  assert Path(module.__file__).resolve().parent==closure
+assert all('site-packages' not in path for path in sys.path)
+print(json.dumps(value))
+"""
+        result=subprocess.run(['/usr/bin/python3','-I','-S','-B','-c',program,str(closure),str(archive),
+                               hashlib.sha256(raw).hexdigest(),*[Path(name).stem for name in COLD_READER_FILES]],
+                              cwd=root,capture_output=True,text=True,timeout=30)
+        if result.returncode:raise AssertionError(result.stderr)
+        return json.loads(result.stdout)
+
+
 def authored_bundle(source_id='authored-rotation'):
     """Independent tiny NPY writer; no production parser or producer format."""
     arrays = {}
@@ -80,6 +122,10 @@ class ScientificRelease(unittest.TestCase):
         self.dataset = Dataset(Path(self.temporary.name) / 'catalog', project_roots={'fixture': self.project_root}); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
+
+    def test_captured_project_reader_has_no_server_dependencies(self):
+        raw,_rows=self.freeze()
+        self.assertEqual(captured_cold_reader(raw),scientific_release.validate_bytes(raw))
 
     def freeze(self, related=False, large=False):
         self.source, self.manifest, self.arrays = large_authored_bundle() if large else authored_bundle()
@@ -273,6 +319,10 @@ class RunScientificRelease(unittest.TestCase):
         result = self.dataset.releases.create(dict(request,preview_token=preview['preview_token']))
         self.path = self.dataset.releases.locate(result['id'])
         return self.path.read_bytes()
+
+    def test_captured_run_reader_validates_receipt_without_server_dependencies(self):
+        raw=self.freeze_run()
+        self.assertEqual(captured_cold_reader(raw),scientific_release.validate_bytes(raw))
 
     def test_actual_run_source_freeze_cold_cli_preserves_exact_receipt_and_arrays(self):
         import base64

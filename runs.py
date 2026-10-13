@@ -415,6 +415,175 @@ class Runs:
                 raise WorkbenchError('Output changed while it was captured.', 'stale', 409)
             return raw
 
+    @staticmethod
+    def _progress_json(raw):
+        def pairs(items):
+            result = {}
+            for key, value in items:
+                if key in result:
+                    raise ValueError('Duplicate diagnostic field.')
+                result[key] = value
+            return result
+        return json.loads(raw, object_pairs_hook=pairs,
+                          parse_constant=lambda value: (_ for _ in ()).throw(ValueError('Nonfinite diagnostic.')))
+
+    @staticmethod
+    def _progress_text(value, limit, empty=False):
+        return (type(value) is str and (empty or bool(value.strip())) and len(value) <= limit
+                and not any(ord(c) < 32 or 127 <= ord(c) <= 159 or 0xD800 <= ord(c) <= 0xDFFF for c in value))
+
+    @classmethod
+    def _progress_event(cls, raw):
+        for line in reversed(raw.splitlines(keepends=True)):
+            if len(line) > 4096 or not line.endswith(b'\n'):
+                continue
+            try:
+                value = cls._progress_json(line)
+                if type(value) is not dict or set(value) != {'format', 'stage', 'completed', 'total', 'metrics'}:
+                    continue
+                if value['format'] != 'tuldok_progress_v1' or type(value['stage']) is not str or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', value['stage']):
+                    continue
+                if not (type(value['completed']) is int and type(value['total']) is int
+                        and 0 <= value['completed'] <= value['total'] <= 1000000):
+                    continue
+                metrics = value['metrics']
+                if type(metrics) is not dict or len(metrics) > 8 or any(
+                        not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', name)
+                        or type(number) not in (int, float) or not math.isfinite(number)
+                        for name, number in metrics.items()):
+                    continue
+                return value
+            except (ValueError, TypeError, OverflowError, RecursionError):
+                continue
+        return None
+
+    @staticmethod
+    def _diagnostic_directory(path):
+        """Resolve every owned-directory component without following symlinks."""
+        descriptor = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            for part in Path(path).absolute().parts[1:]:
+                following = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+                os.close(descriptor)
+                descriptor = following
+            if os.fstat(descriptor).st_uid != os.getuid():
+                raise ValueError('Diagnostic directory owner differs.')
+            return descriptor
+        except BaseException:
+            os.close(descriptor)
+            raise
+
+    @staticmethod
+    def _diagnostic_read(directory, name, limit, *, tail=False):
+        descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        try:
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid() or before.st_size > limit:
+                raise ValueError('Invalid diagnostic file.')
+            start = max(0, before.st_size - 8192) if tail else 0
+            raw = os.pread(descriptor, before.st_size - start, start)
+            after = os.fstat(descriptor)
+            current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            if ((before.st_dev, before.st_ino) != (current.st_dev, current.st_ino)
+                    or len(raw) != before.st_size - start or after.st_size < before.st_size
+                    or after.st_size > limit or (not tail and
+                    (before.st_size, before.st_mtime_ns, before.st_ctime_ns) !=
+                    (after.st_size, after.st_mtime_ns, after.st_ctime_ns))):
+                raise ValueError('Diagnostic changed during observation.')
+            return raw, start, before.st_size
+        finally:
+            os.close(descriptor)
+
+    def _external_result_summary(self, run):
+        if run['state'] != 'completed':
+            return None
+        rules = [rule for rule in run['outputs'] if rule['role'] == 'result_summary']
+        if not rules:
+            return None
+        try:
+            if len(rules) != 1 or rules[0]['max_bytes'] > 65536:
+                raise ValueError('Invalid result summary declaration.')
+            inventory = self._verified_artifacts(run)
+            item = next(item for item in inventory if item['name'] == rules[0]['path'] and item['role'] == 'result_summary')
+            raw, _media = self.artifact(run['id'], item['name'])
+            if len(raw) > 65536:
+                raise ValueError('Result summary is too large.')
+            value = self._progress_json(raw)
+            if type(value) is not dict or not {'format','title','metrics','scope'} <= set(value) or set(value) - {'format','title','metrics','scope','checkpoint'}:
+                raise ValueError('Invalid result summary fields.')
+            if value['format'] != 'tuldok_result_summary_v1' or not self._progress_text(value['title'], 120):
+                raise ValueError('Invalid result summary title.')
+            if type(value['metrics']) is not list or len(value['metrics']) > 24:
+                raise ValueError('Invalid metrics.')
+            names = set()
+            for metric in value['metrics']:
+                if (type(metric) is not dict or set(metric) != {'name','value','unit'}
+                        or not self._progress_text(metric['name'], 64) or metric['name'] in names
+                        or not self._progress_text(metric['unit'], 24, empty=True)
+                        or type(metric['value']) not in (int, float) or not math.isfinite(metric['value'])):
+                    raise ValueError('Invalid metric.')
+                names.add(metric['name'])
+            if type(value['scope']) is not list or len(value['scope']) > 8 or not all(self._progress_text(label, 160) for label in value['scope']):
+                raise ValueError('Invalid scope.')
+            if 'checkpoint' in value and not any(item['name'] == value['checkpoint'] and item['role'] == 'checkpoint' for item in inventory):
+                raise ValueError('Checkpoint is not a verified declared output.')
+            return {'status':'hash_verified','artifact_name':item['name'], 'sha256':item['sha256'], 'summary':value}
+        except (OSError, ValueError, TypeError, KeyError, StopIteration, OverflowError, RecursionError):
+            return {'status':'unavailable'}
+
+    @authorized('inspect', 'runs.external_progress')
+    def external_progress(self, run_id):
+        import recipe_process
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raise WorkbenchError('Progress diagnostics require an external Run.', 'unsupported', 400)
+        result = {'schema_version':1, 'run_id':run['id'], 'state':run['state'],
+                  'custody_phase':run['custody_phase'], 'evidence':'unavailable',
+                  'streams':{'stdout':None,'stderr':None}, 'progress':None,
+                  'result':self._external_result_summary(run)}
+        directory = None
+        try:
+            directory = self._diagnostic_directory(self._external_directory(run) / 'custody')
+            terminal = run['state'] in TERMINAL and run['state'] != 'unknown'
+            receipt = None
+            if terminal:
+                raw, _, _ = self._diagnostic_read(directory, 'receipt.json', 16384)
+                receipt = recipe_process.validate_receipt(raw, run['custody_identity'])
+                if not receipt['drained']:
+                    raise ValueError('Diagnostic custody has not drained.')
+                if run['state'] == 'completed':
+                    published = self._read_regular(self.path / run['id'] / 'custody-receipt.json', 16384)
+                    if hashlib.sha256(published).hexdigest() != run['custody_receipt_sha256'] or self._progress_json(published) != receipt:
+                        raise ValueError('Published custody differs.')
+            for name in ('stdout','stderr'):
+                raw, start, size = self._diagnostic_read(directory, name+'.log', recipe_process.STREAM_LIMIT, tail=not terminal)
+                if receipt and (len(raw) != receipt['streams'][name]['bytes'] or hashlib.sha256(raw).hexdigest() != receipt['streams'][name]['sha256']):
+                    raise ValueError('Stream receipt differs.')
+                if terminal:
+                    start = max(0, len(raw)-8192)
+                    raw = raw[start:]
+                if name == 'stdout':
+                    complete = raw.split(b'\n', 1)[1] if start and b'\n' in raw else b'' if start else raw
+                    result['progress'] = self._progress_event(complete)
+                text = raw.decode('utf-8', errors='replace')
+                text = ''.join(c if c in '\n\t' or (ord(c) >= 32 and not 127 <= ord(c) <= 159) else '\ufffd' for c in text)
+                result['streams'][name] = {'available_bytes':size,'start_byte':start,'text':text,'truncated':start > 0}
+            result['evidence'] = 'custody_verified' if receipt else 'live_unverified'
+        except FileNotFoundError:
+            result['evidence'] = 'pending' if run['state'] == 'queued' or run['custody_phase'] == 'prepared' and run['state'] in ACTIVE else 'unavailable'
+            result['streams'] = {'stdout':None,'stderr':None}
+            result['progress'] = None
+        except (OSError, ValueError, TypeError, KeyError, RecursionError):
+            result['streams'] = {'stdout':None,'stderr':None}
+            result['progress'] = None
+        finally:
+            if directory is not None:
+                os.close(directory)
+        if len(json.dumps(result).encode()) > 192 * 1024:
+            raise WorkbenchError('Progress response exceeds its encoded bound.', 'unavailable', 409)
+        return result
+
     def _publish_external(self, run, receipt):
         import recipe_contract
         source = Path(run['spec']['output_dir'])

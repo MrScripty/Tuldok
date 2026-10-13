@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import struct
 import subprocess
+import tempfile
+import sys
 
 if __package__:
     from . import generate
@@ -40,7 +42,14 @@ def exact(stream, size):
 class Transport:
     PIPE = subprocess.PIPE
 
-    def __init__(self, binary, policy_raw):
+    def __init__(self, binary, policy_raw, *, allowed_seeds=(900, 901, 902, 903), capture_diagnostics=False):
+        if type(allowed_seeds) is not tuple or allowed_seeds not in ((900, 901, 902, 903), (500, 501)):
+            raise ValueError('Unsupported reviewed native seed scope.')
+        if type(capture_diagnostics) is not bool:
+            raise ValueError('Invalid diagnostic capture flag.')
+        self.capture_diagnostics = capture_diagnostics
+        self.diagnostics = []
+        self.allowed_seeds = tuple(str(seed) for seed in allowed_seeds)
         self.binary = str(Path(binary))
         self.native, _ = generate.capture(binary, 8 * 1024 * 1024)
         self.policy, self.observed = generate.native_policy(policy_raw, self.native)
@@ -49,7 +58,7 @@ class Transport:
     def Popen(self, args, **kwargs):
         if (type(args) is not list or len(args) != 4 or args[0] != self.binary
                 or args[1] != '32' or args[2] not in ('jacobi', 'sgs', 'learned')
-                or args[3] not in ('900', '901', '902', '903')
+                or args[3] not in getattr(self, 'allowed_seeds', ('900', '901', '902', '903'))
                 or kwargs != {'stdin': subprocess.PIPE, 'stdout': subprocess.PIPE}):
             raise ValueError('Native launch differs from admitted CPU comparison.')
         if os.path.lexists('/etc/ld.so.preload'):
@@ -57,11 +66,37 @@ class Transport:
         native_fd = generate.seal('rheon-cpu-native', self.native)
         loader_fd = None
         process = None
+        diagnostic = None
         try:
             loader_fd = generate.seal('rheon-cpu-loader', self.observed[self.policy['loader']['path']][0])
             command = [f'/proc/self/fd/{loader_fd}', *self.policy['loader_arguments'],
                        f'/proc/self/fd/{native_fd}', *args[1:]]
+            if self.capture_diagnostics:
+                diagnostic = tempfile.TemporaryFile()
+                kwargs = dict(kwargs, stderr=diagnostic)
             process = subprocess.Popen(command, pass_fds=(native_fd, loader_fd), **kwargs)
+            if diagnostic is not None:
+                original_wait = process.wait
+                stream = diagnostic
+                captured = False
+                def wait_with_diagnostics(*wait_args, **wait_kwargs):
+                    nonlocal captured
+                    code = original_wait(*wait_args, **wait_kwargs)
+                    if not captured:
+                        captured = True
+                        stream.seek(0)
+                        raw = stream.read(65537)
+                        stream.close()
+                        if len(raw) > 65536:
+                            raise ValueError('Native diagnostics exceed bound.')
+                        self.diagnostics.append({'seed': int(args[3]), 'method': args[2],
+                                                 'exit_code': code, 'stderr_hex': raw.hex(),
+                                                 'stderr_sha256': generate.sha(raw)})
+                        if raw:
+                            sys.stderr.buffer.write(raw)
+                            sys.stderr.buffer.flush()
+                    return code
+                process.wait = wait_with_diagnostics
             header = exact(process.stdout, 4)
             length, = struct.unpack('<I', header)
             if length > 65536:
@@ -88,6 +123,8 @@ class Transport:
                 process.stdout.close()
             raise
         finally:
+            if diagnostic is not None and process is None:
+                diagnostic.close()
             os.close(native_fd)
             if loader_fd is not None:
                 os.close(loader_fd)

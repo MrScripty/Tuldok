@@ -72,6 +72,8 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await fill('#external-param-grid','33');await click('#external-save');await until(()=>text('#external-dirty').then(value=>value?.startsWith('Saved')));await click('#external-preflight');
   await until(()=>text('#real-pipeline-root .real-status').then(value=>/Invalid|bound/i.test(value||'')));
   assert.deepEqual(await api('/api/workspace/runs'),[]);
+  await fill('#external-param-grid','32');await fill('#external-param-frames','9');await click('#external-save');await until(()=>text('#external-dirty').then(value=>value?.startsWith('Saved')));await click('#external-preflight');
+  await until(()=>text('#real-pipeline-root .real-status').then(value=>/Invalid|bound/i.test(value||'')));assert.deepEqual(await api('/api/workspace/runs'),[]);await fill('#external-param-frames','2');
   await fill('#external-param-grid','32');await fill('#external-name','32³ · two frames · seed 100');await click('#external-save');await until(()=>text('#external-dirty').then(value=>value?.startsWith('Saved')));
   await click('#external-preflight');await until(()=>evaluate('!document.getElementById("external-reviewed").disabled'));
   assert.match(await text('#external-material'),/Material SHA256/);await captureWorkspace('native-pipeline-1440',1440,'#external-material');await captureWorkspace('native-pipeline-390',390,'#external-material');await click('#external-reviewed');await click('#external-submit');

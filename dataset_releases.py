@@ -1,15 +1,16 @@
 """Frozen, self-contained releases with connected-source split allocation."""
 from access import authorized
 import audio_export
+from contextlib import contextmanager
 import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 import zipfile
 from collections import Counter
 from pathlib import Path
-from PIL import Image
 
 import image_classification_export as classification_export
 import text_corpus_export as corpus_export
@@ -169,6 +170,80 @@ class Releases:
             raise WorkbenchError('Release not found.', 'unavailable', 404)
         return path
 
+    @contextmanager
+    def _input_directory(self):
+        """Anchor managed archive reads without following directory symlinks."""
+        descriptor = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            for part in self.path.absolute().parts[1:]:
+                child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+                os.close(descriptor)
+                descriptor = child
+            yield descriptor
+        finally:
+            os.close(descriptor)
+
+    @authorized('inspect', 'dataset_releases.input_candidates')
+    def input_candidates(self):
+        """Bounded availability hints; capture verifies the selected archive bytes."""
+        rows = []
+        try:
+            with self.workbench.lock, self._input_directory() as directory:
+                with os.scandir(directory) as entries:
+                    for entry in entries:
+                        if not entry.name.endswith('.zip') or not RELEASE_ID.fullmatch(entry.name[:-4]):
+                            continue
+                        release_id = entry.name[:-4]
+                        row = {'release_id':release_id, 'sha256':release_id, 'bytes':None,
+                               'status':'unavailable', 'reason':'Managed archive cannot be safely inspected.'}
+                        try:
+                            info = os.stat(entry.name, dir_fd=directory, follow_symlinks=False)
+                            if stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1:
+                                row['bytes'] = info.st_size
+                                if 0 < info.st_size <= MAX_SELECTED_TEXT_BYTES:
+                                    row.update(status='available', reason=None)
+                                else:
+                                    row.update(status='oversize', reason='Archive is empty or exceeds the 40 MiB input bound.')
+                        except OSError:
+                            pass
+                        rows.append(row)
+                        if len(rows) == 100:
+                            break
+        except OSError:
+            raise WorkbenchError('Managed releases cannot be safely inspected.', 'unavailable', 409) from None
+        return {'releases':sorted(rows, key=lambda row:row['release_id'])}
+
+    @authorized('inspect', 'dataset_releases.capture_input')
+    def capture_input(self, release_id, expected_sha256, max_bytes):
+        """Capture immutable frozen bytes, independently of mutable source records."""
+        if (not isinstance(release_id, str) or not RELEASE_ID.fullmatch(release_id)
+                or expected_sha256 != release_id):
+            raise WorkbenchError('Select the exact frozen release SHA256.')
+        if type(max_bytes) is not int or not 0 < max_bytes <= MAX_SELECTED_TEXT_BYTES:
+            raise WorkbenchError('Invalid frozen input byte bound.')
+        try:
+            with self.workbench.lock, self._input_directory() as directory:
+                descriptor = os.open(release_id + '.zip', os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+                with os.fdopen(descriptor, 'rb') as source:
+                    before = os.fstat(source.fileno())
+                    if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid() or before.st_nlink != 1
+                            or not 0 < before.st_size <= max_bytes):
+                        raise WorkbenchError('Frozen input is not an owned regular archive within its byte bound.')
+                    raw = source.read(max_bytes + 1)
+                    after = os.fstat(source.fileno())
+                    current = os.stat(release_id + '.zip', dir_fd=directory, follow_symlinks=False)
+                    identity = lambda info:(info.st_dev, info.st_ino, info.st_mode, info.st_uid,
+                                           info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                    if identity(before) != identity(after) or identity(after) != identity(current) or len(raw) != after.st_size:
+                        raise WorkbenchError('Frozen input changed during capture.', 'stale', 409)
+        except OSError:
+            raise WorkbenchError('Frozen input cannot be safely read.', 'unavailable', 409) from None
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != release_id:
+            raise WorkbenchError('Frozen input bytes differ from their content identity.', 'stale', 409)
+        return raw, {'kind':'frozen_release', 'catalog_id':self.workbench.db.dataset_id,
+                     'release_id':release_id, 'measured_sha256':digest, 'bytes':len(raw)}
+
     @authorized('inspect', 'dataset_releases.preview')
     def preview(self, body):
         """Inspect the exact selection without persisting even lazy image enrollment."""
@@ -253,6 +328,7 @@ class Releases:
                 if digest != row['content_hash']:
                     raise WorkbenchError('Source bytes changed outside Tuldok. Restore the original asset before release.', 'conflict', 409)
                 if row['kind'] == 'image':
+                    from PIL import Image
                     with Image.open(asset) as image:
                         if image.format != 'PNG' or image.getexif().get(274, 1) != 1:
                             raise WorkbenchError('Image assets must be normalized PNGs with EXIF orientation 1.')

@@ -1,0 +1,65 @@
+{
+  "id": "11fc2be1aada490f9b67c11c190728f6",
+  "state": "completed",
+  "created_at": "2026-10-13T20:02:04.137182+00:00",
+  "started_at": "2026-10-13T20:02:04.640050+00:00",
+  "finished_at": "2026-10-13T20:03:09.388394+00:00",
+  "custody_phase": "drained",
+  "material_sha256": "05d485688a6471d5d01e103a965d7902280cafed61447c36abc2fdd57187fa61",
+  "artifacts": [
+    {
+      "bytes": 129795,
+      "media_type": "application/octet-stream",
+      "name": "result.json",
+      "role": "training_result",
+      "sha256": "9b680ad1780fe276b5385805a06dcc3acb365f6b3475481af20e982e6495aa79",
+      "locked": false,
+      "url": "/api/workspace/runs/11fc2be1aada490f9b67c11c190728f6/artifacts/result.json"
+    },
+    {
+      "bytes": 272149,
+      "media_type": "application/octet-stream",
+      "name": "model.pt",
+      "role": "checkpoint",
+      "sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8",
+      "locked": false,
+      "url": "/api/workspace/runs/11fc2be1aada490f9b67c11c190728f6/artifacts/model.pt"
+    },
+    {
+      "bytes": 50332156,
+      "media_type": "application/octet-stream",
+      "name": "training.npz",
+      "role": "training_arrays",
+      "sha256": "3ca87734e4ebe41320328b130908dc88b85967dcc745f80f8c207cf29b539184",
+      "locked": false,
+      "url": "/api/workspace/runs/11fc2be1aada490f9b67c11c190728f6/artifacts/training.npz"
+    },
+    {
+      "bytes": 79042,
+      "media_type": "application/octet-stream",
+      "name": "freeze.json",
+      "role": "training_freeze",
+      "sha256": "020ac431def0540edca65b6009ee77ebf8a5eff414efd9cf7da38532ef711792",
+      "locked": false,
+      "url": "/api/workspace/runs/11fc2be1aada490f9b67c11c190728f6/artifacts/freeze.json"
+    },
+    {
+      "bytes": 611,
+      "media_type": "application/octet-stream",
+      "name": "result-summary.json",
+      "role": "result_summary",
+      "sha256": "ad89e6106e83a06a6ac68dd0eb950338cf05ffba768f3fd72558cb03348188ec",
+      "locked": false,
+      "url": "/api/workspace/runs/11fc2be1aada490f9b67c11c190728f6/artifacts/result-summary.json"
+    },
+    {
+      "bytes": 55329,
+      "media_type": "application/octet-stream",
+      "name": "input-receipt.json",
+      "role": "training_inputs",
+      "sha256": "1a8ec140ce18fee118ba9821353a2538b3caf8ab89b73a678bd8acdf03bed189",
+      "locked": false,
+      "url": "/api/workspace/runs/11fc2be1aada490f9b67c11c190728f6/artifacts/input-receipt.json"
+    }
+  ]
+}

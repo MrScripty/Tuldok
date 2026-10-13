@@ -49,6 +49,7 @@ jobs:
       - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
       - run: python -m unittest discover -s tests
       - run: node --check static/auth.js
       - run: node tests/test_auth_helpers.cjs

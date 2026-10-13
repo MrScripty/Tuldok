@@ -342,8 +342,6 @@ def validate_spec(value):
         seen.add(item['path'])
         if type(item['bytes']) is not int or not 0 <= item['bytes'] <= OUTPUT_LIMIT:
             raise ProcessError('Invalid captured file size.')
-    if sum(item['bytes'] for item in files)>64*1024*1024 or sum(item['bytes'] for item in runtime)>512*1024*1024:
-        raise ProcessError('Runtime/source closure exceeds its byte bound.')
     if 'cpu_snapshot' in value:
         descriptor = validate_cpu_snapshot_descriptor(value['cpu_snapshot'])
         if 'native_loader_policy' not in value:
@@ -358,6 +356,24 @@ def validate_spec(value):
                 or not bootstrap_file or argv[7] not in inventory
                 or Path(argv[4]).name != 'recipe_process.py' or Path(argv[6]).name != 'snapshot.json'):
             raise ProcessError('CPU bootstrap, descriptor and entry must be exact captured files.')
+    capture_limit = 64 * 1024 * 1024
+    if 'cpu_snapshot' in value:
+        # The complete descriptor/bootstrap contract above qualifies this profile.
+        capture_limit = 320 * 1024 * 1024
+        input_root = Path(value['cwd']) / 'input'
+        input_bytes = 0
+        for item in files:
+            relative = Path(item['path']).relative_to(Path(value['cwd'])) if Path(item['path']).is_relative_to(Path(value['cwd'])) else None
+            if relative is None or len(relative.parts) < 2 or relative.parts[0] not in ('source', 'input', 'native-policy', 'runtime-bootstrap'):
+                raise ProcessError('CPU capture must use its contained source/input/runtime layout.')
+            if relative.parts[0] == 'input':
+                if Path(item['path']).parent != input_root or item['bytes'] > 40 * 1024 * 1024:
+                    raise ProcessError('CPU input must be a bounded named input file.')
+                input_bytes += item['bytes']
+        if input_bytes > 256 * 1024 * 1024:
+            raise ProcessError('CPU input aggregate exceeds its byte bound.')
+    if sum(item['bytes'] for item in files) > capture_limit or sum(item['bytes'] for item in runtime) > 512 * 1024 * 1024:
+        raise ProcessError('Runtime/source closure exceeds its byte bound.')
     if len(encoded(value)) > SPEC_LIMIT:
         raise ProcessError('Custody specification exceeds its bound.')
     return decode(encoded(value))

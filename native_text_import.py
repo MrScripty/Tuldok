@@ -7,7 +7,6 @@ import io
 import json
 import re
 import secrets
-import psycopg
 import zipfile
 
 from bulk_import import MAX_ROW_BYTES, REQUEST_ID, find_result, invalid_constant, leaf_name, result, unique_object
@@ -209,6 +208,7 @@ class NativeTextImports:
 
     @authorized('edit', 'native_text_import.admit')
     def admit(self, body):
+        import psycopg
         if set(body) != {'token', 'request_id'} or not isinstance(body['request_id'], str) or not REQUEST_ID.fullmatch(body['request_id']):
             raise WorkbenchError('Supply one prepared native text token and request marker.')
         payload = self._open(body['token'])

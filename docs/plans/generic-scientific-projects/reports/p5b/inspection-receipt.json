@@ -1,0 +1,128 @@
+{
+  "qualification": "Read-only final UI and verified checkpoint download; no retraining",
+  "source_commit": "05ea66e4b14e7e23b2d153f98380d44686cb53ed",
+  "dirty": true,
+  "run_id": "11fc2be1aada490f9b67c11c190728f6",
+  "run_ids_unchanged": [
+    "0cc3ef6b5f9e460f873c8eda1ba3d525",
+    "11fc2be1aada490f9b67c11c190728f6",
+    "28a3dd42f3e64fab89136da1d7e5d8a0",
+    "3a0e69f8e71c4c7995d21c8157edc230",
+    "44272474e32544898feb39f651d997b9",
+    "48dbf653056a4d45ae53c6842e7d3aa3",
+    "4a9a129e8405405ab12b866edd766e48",
+    "80ad7f8474ae4e9384483b9463206ab2",
+    "8a22050ad7fc496db53e67d091de062a",
+    "8d2985a122b644fa96f3bafd3146edf5",
+    "a8298e4e255a46d4beef0ec9f73e38d0",
+    "ab46bb3b6e2944a0a0794776da0352f7",
+    "c3f7594d311843ea8487427556c84810",
+    "cea0a01e08c4488cbdba92f1662c7020",
+    "cf94711d8a2047c08a64c0219f474017",
+    "d1700cfb1fb249e3b627a9cb1daadcec",
+    "df53534ae6154ec8a4788f8378a8f004",
+    "e46bc5a79331428580dba01bb671d25b",
+    "ecd6685cbd034a2e9c4c870b68ddd3a4",
+    "ece8abe0a4024d1483048d91b7980cf0"
+  ],
+  "checkpoint_sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8",
+  "checkpoint_bytes": 272149,
+  "progress": {
+    "schema_version": 1,
+    "run_id": "11fc2be1aada490f9b67c11c190728f6",
+    "state": "completed",
+    "custody_phase": "drained",
+    "evidence": "custody_verified",
+    "streams": {
+      "stdout": {
+        "available_bytes": 8999,
+        "start_byte": 807,
+        "text": "qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy.libs/libscipy_openblas64_-f48b354e.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy/_core/_multiarray_umath.cpython-312-x86_64-linux-gnu.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy/linalg/_umath_linalg.cpython-312-x86_64-linux-gnu.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_C.cpython-312-x86_64-linux-gnu.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libc10.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libgomp.so.1\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libshm.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch_cpu.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch_global_deps.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch_python.so\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/bin/python3.12\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/ld-linux-x86-64.so.2\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libc.so.6\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libdl.so.2\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libgcc_s.so.1\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libm.so.6\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libpthread.so.0\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/librt.so.1\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libstdc++.so.6\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libutil.so.1\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libz.so.1\"],\"module_paths\":{\"ctypes\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/ctypes/__init__.py\",\"numpy\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy/__init__.py\",\"os\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/os.py\",\"torch\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/__init__.py\"},\"packages\":{\"numpy\":\"2.5.4\",\"torch\":\"2.8.0+cpu\"},\"python\":\"3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]\",\"snapshot_sha256\":\"cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7\",\"sys_path\":[\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/lib-dynload\",\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages\"],\"virtual_modules\":{\"torch.classes\":{\"class\":\"_Classes\",\"defining_module\":\"torch._classes\",\"defining_path\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_classes.py\",\"pseudo_file\":\"_classes.py\"},\"torch.ops\":{\"class\":\"_Ops\",\"defining_module\":\"torch._ops\",\"defining_path\":\"/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_ops.py\",\"pseudo_file\":\"_ops.py\"}}}}\n{\"completed\":0,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":0},\"stage\":\"loading\",\"total\":12}\n{\"completed\":1,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":8},\"stage\":\"loading\",\"total\":12}\n{\"completed\":2,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":16},\"stage\":\"loading\",\"total\":12}\n{\"completed\":3,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":24},\"stage\":\"loading\",\"total\":12}\n{\"completed\":4,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":32},\"stage\":\"loading\",\"total\":12}\n{\"completed\":5,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":40},\"stage\":\"loading\",\"total\":12}\n{\"completed\":6,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":48},\"stage\":\"loading\",\"total\":12}\n{\"completed\":7,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":56},\"stage\":\"loading\",\"total\":12}\n{\"completed\":8,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":64},\"stage\":\"loading\",\"total\":12}\n{\"completed\":9,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":72},\"stage\":\"loading\",\"total\":12}\n{\"completed\":10,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":80},\"stage\":\"loading\",\"total\":12}\n{\"completed\":11,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":88},\"stage\":\"loading\",\"total\":12}\n{\"completed\":12,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"frames\":96},\"stage\":\"loading\",\"total\":12}\n{\"completed\":0,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"fit\",\"total\":1}\n{\"completed\":1,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"training_mean_relative_pressure_l2\":1.6027872504127476e-08,\"training_wall_s\":0.21554462100175442},\"stage\":\"fit\",\"total\":1}\n{\"completed\":0,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"validation\",\"total\":2}\n{\"completed\":1,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"max_ai_divergence\":1.3113021850585938e-06,\"max_relative_tracer_l2\":3.3938350015675445e-08,\"max_relative_velocity_l2\":7.643819620027289e-08},\"stage\":\"validation\",\"total\":2}\n{\"completed\":2,\"format\":\"tuldok_progress_v1\",\"metrics\":{\"max_ai_divergence\":1.1920928955078125e-06,\"max_relative_tracer_l2\":3.492808281709091e-08,\"max_relative_velocity_l2\":7.668914751823363e-08},\"stage\":\"validation\",\"total\":2}\n{\"completed\":0,\"format\":\"tuldok_progress_v1\",\"metrics\":{},\"stage\":\"publishing\",\"total\":1}\n",
+        "truncated": true
+      },
+      "stderr": {
+        "available_bytes": 72,
+        "start_byte": 0,
+        "text": "trajectory probe: stored divergence 0.20241660624742508 exceeds 0.00001\n",
+        "truncated": false
+      }
+    },
+    "progress": {
+      "completed": 0,
+      "format": "tuldok_progress_v1",
+      "metrics": {},
+      "stage": "publishing",
+      "total": 1
+    },
+    "result": {
+      "status": "hash_verified",
+      "artifact_name": "result-summary.json",
+      "sha256": "ad89e6106e83a06a6ac68dd0eb950338cf05ffba768f3fd72558cb03348188ec",
+      "summary": {
+        "checkpoint": "model.pt",
+        "format": "tuldok_result_summary_v1",
+        "metrics": [
+          {
+            "name": "Training frames",
+            "unit": "frames",
+            "value": 96
+          },
+          {
+            "name": "Fitted parameters",
+            "unit": "parameters",
+            "value": 32767
+          },
+          {
+            "name": "Training relative pressure L2",
+            "unit": "",
+            "value": 1.6027872504127476e-8
+          },
+          {
+            "name": "Validation velocity relative L2",
+            "unit": "",
+            "value": 7.668914751823363e-8
+          }
+        ],
+        "scope": [
+          "Fresh CPU closed-form fit; zero optimizer steps.",
+          "Authored QA review; selected frozen training families only.",
+          "Validation seeds500/501; no autonomous test evaluation yet.",
+          "No historical CUDA or GPU acceptance."
+        ],
+        "title": "Frozen-field CPU fit"
+      }
+    }
+  },
+  "captures": [
+    {
+      "file": "inspection-results-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Read-only inspection of a previously completed actual training Run; no new execution"
+    },
+    {
+      "file": "inspection-results-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Read-only inspection of a previously completed actual training Run; no new execution"
+    }
+  ],
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "browser": "Chrome/151.0.7922.173"
+}
