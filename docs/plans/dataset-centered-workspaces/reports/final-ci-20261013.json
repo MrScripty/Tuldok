@@ -1,0 +1,74 @@
+[
+  {
+    "pr": 38,
+    "head": "904d5c03bf9fe7b10c3df77572a6b356e14a1fcd",
+    "run_id": 38378200476,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38378200476",
+    "conclusion": "success",
+    "successful_steps": 105,
+    "skipped_steps": []
+  },
+  {
+    "pr": 38,
+    "head": "904d5c03bf9fe7b10c3df77572a6b356e14a1fcd",
+    "run_id": 38378200545,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38378200545",
+    "conclusion": "success",
+    "successful_steps": 14,
+    "skipped_steps": []
+  },
+  {
+    "pr": 39,
+    "head": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+    "run_id": 38379348105,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38379348105",
+    "conclusion": "success",
+    "successful_steps": 106,
+    "skipped_steps": []
+  },
+  {
+    "pr": 39,
+    "head": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+    "run_id": 38379348074,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38379348074",
+    "conclusion": "success",
+    "successful_steps": 14,
+    "skipped_steps": []
+  },
+  {
+    "pr": 40,
+    "head": "146348c8218cc04407463b2915c93738def6a322",
+    "run_id": 38382850563,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38382850563",
+    "conclusion": "success",
+    "successful_steps": 116,
+    "skipped_steps": []
+  },
+  {
+    "pr": 40,
+    "head": "146348c8218cc04407463b2915c93738def6a322",
+    "run_id": 38382850558,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38382850558",
+    "conclusion": "success",
+    "successful_steps": 14,
+    "skipped_steps": []
+  },
+  {
+    "pr": 41,
+    "head": "4fd5ad4a36b105ec88eba875ba7d09d0468b2e0a",
+    "run_id": 38382852790,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38382852790",
+    "conclusion": "success",
+    "successful_steps": 118,
+    "skipped_steps": []
+  },
+  {
+    "pr": 41,
+    "head": "4fd5ad4a36b105ec88eba875ba7d09d0468b2e0a",
+    "run_id": 38382852986,
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/38382852986",
+    "conclusion": "success",
+    "successful_steps": 14,
+    "skipped_steps": []
+  }
+]

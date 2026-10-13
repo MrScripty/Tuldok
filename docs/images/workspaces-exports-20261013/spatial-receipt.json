@@ -1,0 +1,128 @@
+{
+  "source_commit": "04b4586a39e8f8b00ebb642961413114626bbc10",
+  "dirty": true,
+  "command": "node tests/browser_workspace_spatial.cjs",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "pointcloud real file import, keyboard inspection/review and whole-source freeze",
+    "volume real file import, keyboard inspection/review and whole-source freeze",
+    "late point projection cannot overwrite a newer dirty volume editor",
+    "independent plyfile/NumPy readers preserve native order/types/signed zero, all voxels and affine mapping",
+    "pointcloud edited/cloned graph, keyboard actual run and exact frozen downloads",
+    "volume edited/cloned graph, keyboard actual run and exact frozen downloads",
+    "both durable spatial runs and unchanged releases survive application restart"
+  ],
+  "captures": [
+    {
+      "file": "pointcloud-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "pointcloud-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "volume-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "volume-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "pointcloud-pipeline-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "pointcloud-runs-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "pointcloud-runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "volume-pipeline-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "volume-runs-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    },
+    {
+      "file": "volume-runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real authored spatial assets; native reader/coordinate evidence, no model or scientific qualification",
+      "quality": 85
+    }
+  ],
+  "native_check": {
+    "pointcloud": {
+      "reader": "plyfile",
+      "ordered_points": 3,
+      "signed_zero_preserved": true
+    },
+    "volume": {
+      "reader": "numpy allow_pickle=False",
+      "shape": [
+        2,
+        3,
+        4
+      ],
+      "all_values_exact": true,
+      "physical_mapping_verified": true
+    }
+  },
+  "run_ids": [
+    "4b10f13798c049c8a89260ce3afea10c",
+    "4b1810270ecc4e4c84947ba06b875ef1"
+  ],
+  "training": false,
+  "scientific_claim": false,
+  "fixture_provenance": "Authored ordered PLY points and oriented uint8 scalar ramp; independent native readers",
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  }
+}

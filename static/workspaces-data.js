@@ -205,14 +205,13 @@
     status.textContent = document.getElementById("notice").textContent;
     publish();
   });
-  observer.observe(document.getElementById("notice"), {
-    childList: true,
-    subtree: true,
-  });
-  observer.observe(document.getElementById("selection"), {
-    childList: true,
-    subtree: true,
-  });
+  // Independent editors settle asynchronously without changing the main notice.
+  // Observe their outcome surfaces, then read the owners' actual dirty state;
+  // a saved earlier revision can still have a newer unsaved draft.
+  for (const id of ["notice", "selection", "response-editor-status",
+    "preference-editor-status", "rights-note-status"]) {
+    observer.observe(document.getElementById(id), { childList: true, subtree: true });
+  }
   document.addEventListener("input", () => queueMicrotask(publish));
   document.addEventListener("change", () => queueMicrotask(publish));
   document.addEventListener(

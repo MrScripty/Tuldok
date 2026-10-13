@@ -2,7 +2,7 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
-Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Frozen mesh and bounded Rheon sequence releases also have three-stage validate/export recipes with durable integrity reports and unchanged release downloads. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Frozen mesh, ordered point-cloud, uint8 volume and bounded Rheon v1 sequence releases have three-stage validate/export recipes with durable integrity reports and unchanged release downloads. Classification releases also offer explicit validation/export without a training runtime. Saved recipes show draft and installed-definition differences; existing text/caption/response/preference editors remain in Data. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
 
 ## Run
 
@@ -839,3 +839,8 @@ personal or shared catalog. Browser subprocesses inherit the same environment.
 `.github/workflows/tests.yml` provisions PostgreSQL 17 and runs the lifecycle,
 controller, browser and existing consumer suites. Consumer suites use tiny CPU
 fixtures and do not download model weights or call paid inference providers.
+
+
+### Point-cloud and volume workflows
+
+In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.json`. The bounded profiles are [ordered ASCII PLY points](docs/contracts/point-cloud-data.md) and [uint8 NPY1 volumes](docs/contracts/volume-data.md). Inspect native points or index slices/physical coordinates, save human review, select whole assets and freeze a canonical release. In Pipeline, create and edit the corresponding validation/export recipe; Runs retains its integrity report and the unchanged release. Classification releases also offer validation/export without installing a trainer. Existing catalogs require the explicit schema4 upgrade described in the storage runbook; the application never silently migrates them. [Accepted workspace scope, evidence and limitations](docs/plans/dataset-centered-workspaces/reports/final-20261013.md).

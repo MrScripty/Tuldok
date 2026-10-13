@@ -56,6 +56,7 @@
         pipelineRoot.querySelector("#real-undo").disabled = false;
         pipelineRoot.querySelector("#real-redo").disabled = true;
         pipelineRoot.querySelector("#real-validation").textContent = "Save this revision, then validate it.";
+        pipelineRoot.querySelector("#real-differences").innerHTML = differencesHTML();
       }
     }
     async function action(fn) {
@@ -111,7 +112,10 @@
       evaluate: "Measure validation and test splits separately. Test results stay gated until deliberately exposed.",
       publish: "Publish the checkpoint, predictions, metrics and hashes only after successful verification.",
     };
-    const integrityKinds = {mesh_validate_export: {name: "Mesh", unit: "meshes", source: "native geometry"},
+    const integrityKinds = {image_validate_export: {name: "Image export", unit: "images", source: "classification records", classification: true},
+      text_validate_export: {name: "Text export", unit: "texts", source: "classification records", classification: true},
+      audio_validate_export: {name: "Audio export", unit: "WAV intervals", source: "classification records", classification: true},
+      mesh_validate_export: {name: "Mesh", unit: "meshes", source: "native geometry"},
       sequence_validate_export: {name: "Sequence", unit: "sequences", source: "native accepted-state frames"},
       pointcloud_validate_export: {name: "Point cloud", unit: "point clouds", source: "native point order and properties"},
       volume_validate_export: {name: "Volume", unit: "volumes", source: "native voxel arrays and declared affine"}};
@@ -119,6 +123,26 @@
     const audioRecipe = document => document?.recipe === "audio_classification";
     const sourceUnit = recipe => integrityKinds[recipe] ? integrityKinds[recipe].unit : recipe === "audio_classification" ? "WAV intervals" : recipe === "text_classification" ? "texts" : "images";
     const trainingTitle = document => audioRecipe(document) ? "Fit audio features + logistic regression" : document?.recipe === "text_classification" ? "Fit TF-IDF + Naive Bayes" : titles.train;
+    function differencesHTML() {
+      if (!graph) return "";
+      const original = JSON.parse(saved), installed = definitions.recipes?.find(item => item.id === (graph.recipe || "image_classification")), changes = [];
+      if (graph.name !== original.name) changes.push(`Name: ${original.name} → ${graph.name}`);
+      for (const node of graph.nodes) {
+        const previous = original.nodes.find(item => item.id === node.id);
+        if (JSON.stringify(previous?.parameters) !== JSON.stringify(node.parameters))
+          changes.push(`${node.type}: ${JSON.stringify(previous?.parameters || {})} → ${JSON.stringify(node.parameters)}`);
+      }
+      if (JSON.stringify(graph.edges) !== JSON.stringify(original.edges)) changes.push("Typed connections changed.");
+      const versions = graph.nodes.map(node => {
+        const current = installed?.nodes?.find(item => item.type === node.type);
+        return `${node.type}: saved v${original.nodes.find(item => item.id === node.id)?.definition_version ?? "unavailable"}, draft v${node.definition_version}, installed ${current ? "v" + current.definition_version : "unavailable"}`;
+      });
+      return `<p>${changes.length ? changes.map(esc).join("<br>") : "No changes from the saved recipe."}</p><p>Recipe: saved v${esc(original.recipe_version)}, draft v${esc(graph.recipe_version)}, installed ${installed?.recipe_version ? "v" + esc(installed.recipe_version) : "unavailable"}.</p><ul>${versions.map(item => `<li>${esc(item)}</li>`).join("")}</ul><p class="muted">No automatic upgrade. Unsupported definitions remain blocked by validation.</p>`;
+    }
+    function recipeChoices(release) {
+      return (release?.allowed_recipes || (release?.recipe ? [release.recipe] : [])).map(id =>
+        `<option value="${esc(id)}">${esc(integrityKinds[id] ? "Validate and export · " + integrityKinds[id].unit : "Train and evaluate · " + sourceUnit(id))}</option>`).join("");
+    }
     function renderPipeline() {
       if (!definitions) return;
       const integrity = integrityKind(graph);
@@ -128,20 +152,21 @@
       if (node) selectedNode = node.id;
       const releaseOptions = (selected) => releases.map(r => `<option value="${esc(r.id)}" ${r.id === selected ? "selected" : ""} ${r.status !== "available" ? "disabled" : ""}>${short(r.id)} · ${r.status === "available" ? r.records + " " + sourceUnit(r.recipe) : r.status}</option>`).join("");
       retainFocus(pipelineRoot, () => {
-        pipelineRoot.innerHTML = `<p class="callout"><strong>Real local workflows.</strong> Image, text and WAV classification; mesh, sequence, point cloud and volume integrity validation/export. Choose a frozen release and edit its recipe. ASR and 3D training are unavailable.</p>
+        pipelineRoot.innerHTML = `<p class="callout"><strong>Real local workflows.</strong> Image, text and WAV classification; mesh, sequence, point cloud and volume integrity validation/export. Choose training or validation/export from a frozen release. ASR and 3D training are unavailable.</p>
         <p class="real-status" role="status"></p>
         <div class="panel panel-pad real-library"><div><span class="eyebrow">SAVED RECIPES</span><h2>Saved recipes</h2><small>Catalog ${esc(short(context?.dataset_id))}</small></div>
         <label>Recipe<select id="real-graph-select"><option value="">Choose a recipe</option>${graphs.map(g => `<option value="${g.id}" ${g.id === graphId ? "selected" : ""}>${esc(g.name)} · r${g.revision}</option>`).join("")}</select></label>
         <button id="real-refresh">Refresh catalog</button></div>
-        <details class="panel panel-pad" ${graph ? "" : "open"}><summary>Create a recipe from a frozen release</summary><form id="real-create-form" class="real-create"><label>Name<input id="real-create-name" maxlength="120" required value="Local workflow"></label><label>Frozen release<select id="real-create-release" required>${eligible.length ? releaseOptions() : '<option value="">No eligible frozen release</option>'}</select></label><button class="primary" ${eligible.length ? "" : "disabled"}>Create recipe</button></form>${!eligible.length ? '<p>In Data, review and select records, then freeze a supported classification release or a single-subtype spatial canonical release. Then refresh here.</p><a href="#data">Open Data →</a>' : ""}${releases.filter(r => r.status !== "available").map(r => `<p class="muted">${esc(short(r.id))}: ${esc(r.message || r.status)}</p>`).join("")}</details>
-        ${graph ? `<div class="panel"><div class="panel-title"><div><span class="eyebrow">EDITABLE RECIPE · V1</span><h2>${esc(graph.name)}</h2></div><span class="badge ${dirty() ? "amber" : "green"}" id="real-dirty">${dirty() ? "Unsaved changes" : "Saved r" + graph.revision}</span></div>
+        <details class="panel panel-pad" ${graph ? "" : "open"}><summary>Create a recipe from a frozen release</summary><form id="real-create-form" class="real-create"><label>Name<input id="real-create-name" maxlength="120" required value="Local workflow"></label><label>Frozen release<select id="real-create-release" required>${eligible.length ? releaseOptions() : '<option value="">No eligible frozen release</option>'}</select></label><label>Operation<select id="real-create-recipe" required>${recipeChoices(eligible[0])}</select></label><button class="primary" ${eligible.length ? "" : "disabled"}>Create recipe</button></form>${!eligible.length ? '<p>In Data, review and select records, then freeze a supported classification release or a single-subtype spatial canonical release. Then refresh here.</p><a href="#data">Open Data →</a>' : ""}${releases.filter(r => r.status !== "available").map(r => `<p class="muted">${esc(short(r.id))}: ${esc(r.message || r.status)}</p>`).join("")}</details>
+        ${graph ? `<div class="panel"><div class="panel-title"><div><span class="eyebrow">EDITABLE RECIPE · V${esc(graph.recipe_version)}</span><h2>${esc(graph.name)}</h2></div><span class="badge ${dirty() ? "amber" : "green"}" id="real-dirty">${dirty() ? "Unsaved changes" : "Saved r" + graph.revision}</span></div>
         <div class="real-graph-layout"><div class="panel-pad"><div class="real-nodes" aria-label="Recipe nodes">${graph.nodes.map((n, i) => `<button id="real-node-${esc(n.id)}" data-node="${esc(n.id)}" aria-pressed="${n.id === selectedNode}"><span class="node-index">${i + 1}</span><span><strong>${esc(title[n.type] || n.type)}</strong><small>Definition v${n.definition_version}</small></span>${i < graph.nodes.length - 1 ? '<span aria-hidden="true">↓</span>' : ""}</button>`).join("")}</div>
         <details class="real-connections"><summary>Edit typed connections</summary>${expectedEdges().map((edge, i) => `<label><input type="checkbox" data-edge="${i}" ${graph.edges.some(e => edgeKey(e) === edgeKey(edge)) ? "checked" : ""}>${esc(edge.from)} → ${esc(edge.to)}<small>${esc(edge.output)}</small></label>`).join("")}<p class="muted">Disconnecting a stage creates an invalid draft. Save and validate to inspect server errors.</p></details></div>
-        <section class="panel-pad real-inspector"><span class="eyebrow">NODE INSPECTOR</span><h2>${esc(title[node.type] || node.type)}</h2><p>${esc(node.type === "train" && audioRecipe(graph) ? "Measure eight fixed features of the exact source channel and interval, then fit training-only scaling and logistic regression. Original WAVs stay unchanged. No ASR, resampling or downmix." : node.type === "train" && graph.recipe === "text_classification" ? "Fit vocabulary, IDF and Naive Bayes once on training text only. No pretrained model or downloads. Validation and test use that frozen transform." : (integrity ? {release: `Exact reviewed ${integrity.unit} from an immutable canonical release.`, validate: `Verify ${integrity.source}, hashes, units and selected-record family scope. No training or physics certification.`, publish: "Publish the integrity report and hashes; retain the unchanged frozen release."}[node.type] : explanations[node.type]) || "Unsupported node definition.")}</p>
+        <section class="panel-pad real-inspector"><span class="eyebrow">NODE INSPECTOR</span><h2>${esc(title[node.type] || node.type)}</h2><p>${esc(node.type === "train" && audioRecipe(graph) ? "Measure eight fixed features of the exact source channel and interval, then fit training-only scaling and logistic regression. Original WAVs stay unchanged. No ASR, resampling or downmix." : node.type === "train" && graph.recipe === "text_classification" ? "Fit vocabulary, IDF and Naive Bayes once on training text only. No pretrained model or downloads. Validation and test use that frozen transform." : (integrity ? {release: `Exact reviewed ${integrity.unit} from an immutable ${integrity.classification ? "classification" : "canonical"} release.`, validate: integrity.classification ? `Verify ${integrity.source}, hashes and protected-family scope. No training or model-quality qualification.` : `Verify ${integrity.source}, hashes, units and selected-record family scope. No training or physics certification.`, publish: "Publish the integrity report and hashes; retain the unchanged frozen release."}[node.type] : explanations[node.type]) || "Unsupported node definition.")}</p>
         <label>Recipe name<input id="real-name" value="${esc(graph.name)}" maxlength="120"></label>
         ${node.type === "train" ? Object.entries(node.parameters).map(([key, value]) => `<label>${esc(key.replaceAll("_", " "))}<input id="real-param-${esc(key)}" data-param="${esc(key)}" type="number" step="${recipeDefinition().parameter_bounds[key]?.type === "number" ? "any" : "1"}" min="${recipeDefinition().parameter_bounds[key]?.minimum ?? ""}" max="${recipeDefinition().parameter_bounds[key]?.maximum ?? ""}" value="${esc(value)}"></label>`).join("") : ""}
         ${node.type === "release" ? `<label>Frozen release<select id="real-release">${releaseOptions(node.parameters.release_id)}</select></label><p class="muted">${esc(node.parameters.release_id)}</p>` : ""}
         <p class="footnote">Changing a draft never changes an existing run. Recipe limits and release eligibility are checked by the server.</p></section></div>
+        <details class="panel-pad"><summary>Recipe changes and definitions</summary><div id="real-differences">${differencesHTML()}</div></details>
         <div class="panel-pad real-actions"><button id="real-undo" ${undo.length ? "" : "disabled"}>Undo</button><button id="real-redo" ${redo.length ? "" : "disabled"}>Redo</button><button id="real-reload">Reload saved</button><button id="real-clone">Clone saved recipe</button><button id="real-save">Save revision</button><button id="real-validate" ${dirty() ? "disabled" : ""}>Validate</button><button id="real-submit" class="primary" ${pendingSubmission || (!dirty() && validation?.valid) ? "" : "disabled"}>${pendingSubmission ? "Reconcile pending submission" : (integrity ? `Validate and export ${integrity.unit}` : "Run on local CPU")}</button></div>
         <div class="panel-pad" id="real-validation">${validation ? validationHTML() : 'Save this revision, then validate it.'}</div></div>` : ""}`;
       });
@@ -151,11 +176,14 @@
         if (dirty() && !confirm("Discard unsaved recipe edits and open another saved recipe?")) { event.target.value = graphId; return; }
         const chosen = graphs.find(g => g.id === event.target.value); if (chosen) { adopt(copy(chosen)); renderPipeline(); }
       };
+      pipelineRoot.querySelector("#real-create-release").onchange = event => {
+        pipelineRoot.querySelector("#real-create-recipe").innerHTML = recipeChoices(releases.find(item => item.id === event.target.value));
+      };
       pipelineRoot.querySelector("#real-create-form").onsubmit = event => {
         event.preventDefault();
         if (dirty() && !confirm("Discard unsaved recipe edits and create another recipe?")) return;
         const release_id = pipelineRoot.querySelector("#real-create-release").value;
-        const body = { name: pipelineRoot.querySelector("#real-create-name").value, release_id, recipe: releases.find(r => r.id === release_id)?.recipe || "image_classification" };
+        const body = { name: pipelineRoot.querySelector("#real-create-name").value, release_id, recipe: pipelineRoot.querySelector("#real-create-recipe").value };
         action(async () => { const result = await api("graphs", body); graphs.push(result); adopt(result); status("Recipe created. Inspect parameters, then validate."); });
       };
       if (!graph) return;
@@ -215,6 +243,7 @@
     }
     function integritySummaryHTML(document, summary) {
       if (!summary) return "";
+      if (integrityKind(document)?.classification) return `<section class="real-export-summary"><h3>Classification export integrity</h3><p>${esc(summary.record_count)} ${esc(sourceUnit(document.recipe))} · ${esc(JSON.stringify(summary.split_counts))}</p><p>${esc(summary.scope)}</p><details><summary>Frozen classes and format</summary><p>${esc(summary.format)}</p><pre>${esc(JSON.stringify(summary.class_vocabulary, null, 2))}</pre></details></section>`;
       if (document.recipe === "mesh_validate_export") return meshSummaryHTML(summary);
       if (document.recipe === "pointcloud_validate_export" || document.recipe === "volume_validate_export") {
         const points = document.recipe === "pointcloud_validate_export", rows = points ? summary.pointclouds : summary.volumes;

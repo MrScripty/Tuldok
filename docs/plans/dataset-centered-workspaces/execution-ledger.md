@@ -193,3 +193,13 @@ Sequence runnable checkpoint: strict canonical/native reader plus three-stage Pi
 ## 2026-10-13 — spatial integration checkpoint
 
 Mesh PR38 passed hosted lifecycle38378200476 and focused38378200545; stable local suite564passed. Sequence f1ecf78 pushed in PR39; final CI pending. Spatial native contracts, schema4 explicit evolution, real editor/import/review/release and shared graph/Run workflows are complete with34 independently reviewed focused tests and full two-subtype browser/native-reader proof. Retained prior-run migration and offline/full checks remain active. Added only qualification NumPy/plyfile dependencies; no app download behavior. See reports/spatial-20261013.md. Rheon v2 accepted-control metadata is currently unsupported: exact v1 parser rejects version2/extra keys. A published producer revision/schema/actual fixture is required before a separate adapter admission; current v1 recorded-data workflow remains unchanged.
+
+
+## 2026-10-13 — final task breadth integration
+
+Mesh904d5c0 and sequencef1ecf78 passed all hosted gates. Spatial e2129e7 published PR40 with native readers, offline browser and real prior completed-run upgrade/restore proof. Full regression found an exact canonical coordinate-contract compatibility defect; fix719c360 preserves the old string unless point/volume records occur, and30 native detection/text regressions plus spatial reopen passed. This was fixed, not waived. Export branch merged complete spatial work and adds explicit no-training classification recipes, compact version differences and embedded Data breadth. Independent integrated12+4+4 tests and three offline browser gates pass. Actual asynchronous preference-save regression found/fixed stale shell badge. Final integrated full suites/hostedCI remain required before acceptance. No main merge/deployment occurred.
+
+
+## 2026-10-13 — terminal bounded acceptance
+
+Integrated4fd5ad4 passed622 local Python tests (2 base-native skips independently covered by20 no-skip native tests), all JavaScript/controller checks, actual offline browser/consumer/restart gates, and real old-run schema3→4 backup/restore. PR38/39/40/41 exact heads passed lifecycle and workspace-ui jobs; final-ci-20261013.json records their head hashes, URLs and step counts. Independent final review found no actionable defects. M3/M4/M5 and A5/A7/A8 are now satisfied; all admitted milestones are Accepted. Final evidence/plan update changes documentation only and keeps ordinary checks enabled. Worktrees retained/protected for draft review; test service stops at handoff. Main/PR32/33 remain unchanged; no merge/deployment. See reports/final-20261013.md for bounds, follow-up owners and publication evidence.
