@@ -1,0 +1,555 @@
+{
+  "schema_version": 1,
+  "inventory_sha256": "f2694c36a9413e4d4fc69647420c8fa3acdaf9b01d4b6b00d35ea850e9e1edfd",
+  "started_utc": "2026-10-13T20:57:20.376537+00:00",
+  "run_id": "e731c9569b7d41f9a8f6cde438dcf9ac",
+  "status": "completed",
+  "outcomes": [
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-005.zip",
+      "outcome": "unlinked",
+      "sha256": "c85d97345a6c76021ff0e1566f534cf780affb511a76fbb9d28bd033dc039caf",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-001.zip",
+      "outcome": "unlinked",
+      "sha256": "18a63bcd9626c69a1dfcf5b7ffd7ee123bf00fb4d31eac27dafb7a6b13626f9b",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-004.zip",
+      "outcome": "unlinked",
+      "sha256": "919752793d3a1f6aafc38a3953848c25a84fd7a2a5e562020b942d9a7aa5a6a5",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/input-training-receipt.json",
+      "outcome": "unlinked",
+      "sha256": "1a8ec140ce18fee118ba9821353a2538b3caf8ab89b73a678bd8acdf03bed189",
+      "allocated_bytes": 57344
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-learned-902.json",
+      "outcome": "unlinked",
+      "sha256": "ba06ef06e1c1755e6f31581984c427ca90192ffbb8eb3412fbf4f2f58231313e",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-007.zip",
+      "outcome": "unlinked",
+      "sha256": "08d37d6e98a22d9c3ea39e061edab9b8b534e608f0c3bb819ee5e1d0307f7eb5",
+      "allocated_bytes": 17006592
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-004.zip",
+      "outcome": "unlinked",
+      "sha256": "f9c25aa72beadfea6904fd041db8d59290f0299d0f44413f8bea7f6b12d39258",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/jacobi-903.npz",
+      "outcome": "unlinked",
+      "sha256": "f5597ca3365f2a02cbbd976b8054f717fa7ca3ef23338a582a70866f01d465db",
+      "allocated_bytes": 86142976
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-003.zip",
+      "outcome": "unlinked",
+      "sha256": "c40f5d2f8cdbe5d5e1e746754cd4096c160726fd636b22c24774e1093254821d",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-000.zip",
+      "outcome": "unlinked",
+      "sha256": "df6a7518b9e94c7ebef1931523cc47aa78e7eb0e7e04360fbc072fd14a9d1fca",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-learned-903.json",
+      "outcome": "unlinked",
+      "sha256": "afc818bae639d20416f3483707bab64321cc14e2058c6b8b7f71d4107a4330da",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-003.zip",
+      "outcome": "unlinked",
+      "sha256": "134055955544ca4ab580ae8971ea2cb41cf2ade2d0dfa8267a2c1e4992a8aef5",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-001.zip",
+      "outcome": "unlinked",
+      "sha256": "086f880eb164a02f6161fd1c1a65581aec880242a343590f42fe3ed4a0cf35cf",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/jacobi-901.npz",
+      "outcome": "unlinked",
+      "sha256": "ffd3778ee236b93916103dc06bddb2cb6be1a808327af1eebb0c8439da536de1",
+      "allocated_bytes": 85909504
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-003.zip",
+      "outcome": "unlinked",
+      "sha256": "fc4055e6266efbde7e2192c8e72db044caf27a143706f2d35448a3f1ccad0b90",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/evaluation-receipt.json",
+      "outcome": "unlinked",
+      "sha256": "ab3fd0750bb649040d69e2f35d4410906f52df81f5ddad61392f4da55d69536d",
+      "allocated_bytes": 69632
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-006.zip",
+      "outcome": "unlinked",
+      "sha256": "eaa47a6d76ba48cb1d2d80c256ad73eb269e2120d2843ed279c3e1f6bb696067",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-002.zip",
+      "outcome": "unlinked",
+      "sha256": "2252330b357fc763d90e7cf999fd70eab94df447dd81e6d65f73b30f00c99c43",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-005.zip",
+      "outcome": "unlinked",
+      "sha256": "691faac897b82b0f1fb2718f3d318d3fbe0eadb20f77f46e16aad9254c0b611b",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-002.zip",
+      "outcome": "unlinked",
+      "sha256": "359cd9d978ce996c8df9bd7f9b8538635cbe2205dd22a6e36113dd94662ccca8",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-jacobi-900.json",
+      "outcome": "unlinked",
+      "sha256": "4861b4ebebf4ab7e0278bb23e259a01681d44167f195f9ea1827fdb008b50973",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-000.zip",
+      "outcome": "unlinked",
+      "sha256": "6dce275cd7809011cc2d383dbab7f18e8c6e41f6c2213cb6173d3e470fadb843",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/jacobi-900.npz",
+      "outcome": "unlinked",
+      "sha256": "8971667de0c1865c1d0ff21901f705c2ec131210efd09cf44e5683e8b73cebe9",
+      "allocated_bytes": 85843968
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-007.zip",
+      "outcome": "unlinked",
+      "sha256": "28dc62f068b75f79387dab2de16cfaff967c283b09849df46c59258229a1e7ca",
+      "allocated_bytes": 19103744
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-007.zip",
+      "outcome": "unlinked",
+      "sha256": "502942bc185abea57957a8b777ec74a11e56a2ea94a2e7ac9391504736ae67dc",
+      "allocated_bytes": 19103744
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-learned-901.json",
+      "outcome": "unlinked",
+      "sha256": "7924f3e0ca020d1beec5eb22e5fd6f37b235602cce633d00065564c3cab0815e",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/jacobi-902.npz",
+      "outcome": "unlinked",
+      "sha256": "957bd5b375006fc3b9dfc558c6f9840a79c16d384053a034c7e4e96d8506d1b1",
+      "allocated_bytes": 86011904
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-005.zip",
+      "outcome": "unlinked",
+      "sha256": "cdd10d23cd733e4252f5f14d3d2dfdff88b92c4ccc9e6c2626c519b7beb5049c",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-jacobi-901.json",
+      "outcome": "unlinked",
+      "sha256": "70570fe65db72920ea2ae57ef0088b04dc67138efe568533b75620a3d9c8a70f",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-003.zip",
+      "outcome": "unlinked",
+      "sha256": "a5d066fc08311420e580d5c103a35fb6b095edb8c0bba4607725bdfc8c69364d",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-004.zip",
+      "outcome": "unlinked",
+      "sha256": "13025bb221fd8aaba40b4ff01c878faa762bc4fa998ae00ad61644d3f7dc27ba",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/learned-903.npz",
+      "outcome": "unlinked",
+      "sha256": "a4f08bdb7aa798ff5383317ce526c3804d118319f03a5cb8abf6653ef77ebdf9",
+      "allocated_bytes": 86134784
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-000.zip",
+      "outcome": "unlinked",
+      "sha256": "b5d6782890e3d2449cb661d897eea9eaff918dc0cba68a5220abcabd27b525e7",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-006.zip",
+      "outcome": "unlinked",
+      "sha256": "3c8a8b68156e1e84979f26d0fbaa85fb6140ff6b996ca5e69c216cd81dc626df",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-007.zip",
+      "outcome": "unlinked",
+      "sha256": "ae4fdfdeef97c5ccbeb38eaaae80ed9750f54f4af04887d8ff9ccf2794af7f3c",
+      "allocated_bytes": 17006592
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-002.zip",
+      "outcome": "unlinked",
+      "sha256": "14f75deae38664fed79f7501aca008534f5f70c118c8a595a1aff38600c4545f",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-006.zip",
+      "outcome": "unlinked",
+      "sha256": "6e174f8054398e7bfecd46c41e83fc5e1bcb0e264ebedf050b6775e155cf1a3f",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-002.zip",
+      "outcome": "unlinked",
+      "sha256": "ca6964962f98f59d0a595b587eba080dcd46b83f9617e2f1ddd362c5f19844a9",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/result.json",
+      "outcome": "unlinked",
+      "sha256": "3fe9d71f42fc76d637f47e1a36438fca40250decaa2f71f0d0201cf6bfd8942f",
+      "allocated_bytes": 4472832
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-001.zip",
+      "outcome": "unlinked",
+      "sha256": "d2e32754adeab986863be46f74421e148bb40004561cca9ee543165b82309d91",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-002.zip",
+      "outcome": "unlinked",
+      "sha256": "1fa200c1dad5149b7fb5d4e8a0e9a16c9cf8f15044adfa865b004c6281847b74",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-004.zip",
+      "outcome": "unlinked",
+      "sha256": "bb713b2bf973434875a17eef686753169c0f2982cebfa65c6c5888ef13da85f4",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/learned-900.npz",
+      "outcome": "unlinked",
+      "sha256": "344580f8f84512984617e5a910f5a204d6cb5d1c83a0695348785fe2d6becaf5",
+      "allocated_bytes": 85835776
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/input-build-receipt.json",
+      "outcome": "unlinked",
+      "sha256": "4eb9f3b83c77261bf49ce4f2d5718b615d4d70aeb68513b9eface8ccf03e6620",
+      "allocated_bytes": 12288
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-005.zip",
+      "outcome": "unlinked",
+      "sha256": "d728b3e055d0be3da9c7d9494926031e463f4b14f6656342d2c6984f2a5ffc1e",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-001.zip",
+      "outcome": "unlinked",
+      "sha256": "d79917c35638345bfe982dd2acd3f480ceca2db5c45ce4ffe22fa753eed39d77",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-000.zip",
+      "outcome": "unlinked",
+      "sha256": "9bcc82440b714b5c5d6480e9eb28893aa0af9ecd0fc95e584283c61521367e3c",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-005.zip",
+      "outcome": "unlinked",
+      "sha256": "0c1e45e9cc4f9899b7169cb5d29e12d01956c39630c39bab9694d4705a1636a8",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-003.zip",
+      "outcome": "unlinked",
+      "sha256": "1066d47835a1000221e153a972e8180cecbb081bf563b1f0212400ddff4f138a",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-jacobi-902.json",
+      "outcome": "unlinked",
+      "sha256": "739b13f672e1d1102ea7594f0b8edb46778a8fa75b98995d9c465c945a348d9b",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-jacobi-903.json",
+      "outcome": "unlinked",
+      "sha256": "45cd56626186acce9317f1fdbfbb41fb8bb5e06e99f6068eae42ea4a5e4b169a",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/learned-902.npz",
+      "outcome": "unlinked",
+      "sha256": "ddcedf0df283117a67b31b365c792aab35a3289bb6d688cdd36cbefe48287041",
+      "allocated_bytes": 86003712
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/input-training-result.json",
+      "outcome": "unlinked",
+      "sha256": "9b680ad1780fe276b5385805a06dcc3acb365f6b3475481af20e982e6495aa79",
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/learned-901.npz",
+      "outcome": "unlinked",
+      "sha256": "6a1c9e757c29921f98def869e6e5b06425686bc09d9333a6713ea0143b2a3242",
+      "allocated_bytes": 85901312
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/input-model.pt",
+      "outcome": "unlinked",
+      "sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8",
+      "allocated_bytes": 274432
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-007.zip",
+      "outcome": "unlinked",
+      "sha256": "1439e013723b316a60fb6052c29a88815e130d967eed98579e77b0d1d6206083",
+      "allocated_bytes": 19103744
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-005.zip",
+      "outcome": "unlinked",
+      "sha256": "95939e804ff77f6cdaf6dac37749720cc75c575f350e7ca1c815dcbd66d8a501",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-001.zip",
+      "outcome": "unlinked",
+      "sha256": "fd3f075c499496d4a7002dee8b252657d9c3a7f90778551930b94dc90085e1fc",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/wire-learned-900.json",
+      "outcome": "unlinked",
+      "sha256": "d832693e6d70a762f7ede458728b9eac42f2218d4b011fa9b9e808250ec131e1",
+      "allocated_bytes": 8192
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/result-summary.json",
+      "outcome": "unlinked",
+      "sha256": "c644c5a13f2c18c01a313a5652527ac0eb4c6b6a83095afd0c6bb7c86b1cc9eb",
+      "allocated_bytes": 4096
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/input-freeze.json",
+      "outcome": "unlinked",
+      "sha256": "020ac431def0540edca65b6009ee77ebf8a5eff414efd9cf7da38532ef711792",
+      "allocated_bytes": 81920
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-006.zip",
+      "outcome": "unlinked",
+      "sha256": "8c925e834a3c023c7ce89a915351efb15b987139d64814db09640024199fe44e",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-001.zip",
+      "outcome": "unlinked",
+      "sha256": "09c551f504d877d581f29c197a54e5c1aedebe15f00a63dc2e5b228798fa8cdc",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-004.zip",
+      "outcome": "unlinked",
+      "sha256": "6775514b643b19d4c0d71ccc1a205fc5edaae6f01aaf70047ea296c1887e001f",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/viewport.json",
+      "outcome": "unlinked",
+      "sha256": "e3792ba4c01c3edab5bd95914f38b5f774469e1ff1d466a2ca57fdd1cbdf5910",
+      "allocated_bytes": 227983360
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-006.zip",
+      "outcome": "unlinked",
+      "sha256": "80a0f13109983036065b6e7c40fda511e89f76428444cda26cfa1501317cef58",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-004.zip",
+      "outcome": "unlinked",
+      "sha256": "f2246c2bcd898e912770603fc57209660b2c98d294fe052dd54e3508956c260e",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-002.zip",
+      "outcome": "unlinked",
+      "sha256": "4ee79d429bef709f356f8d52389d97b5addcc6860c804863fa906075f0b406e4",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-003.zip",
+      "outcome": "unlinked",
+      "sha256": "047facc98928c5ebbc2e5c8e9f09161d158080d25aca3bcf0a8a0e81d5409bdb",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-901-006.zip",
+      "outcome": "unlinked",
+      "sha256": "3d212492183657a2dc3a137be09b898754c47f52a8d3f42f27e243492d5c0c32",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-003.zip",
+      "outcome": "unlinked",
+      "sha256": "0c2b14a4505bbd6e837adb4416775662c08ef1709368911c9ab8c675fc052fbf",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-902-000.zip",
+      "outcome": "unlinked",
+      "sha256": "2cfe9b5acd6bef97833d936e04973654aa20f39fc3e33daa8cd7fdc417b7ccd1",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-007.zip",
+      "outcome": "unlinked",
+      "sha256": "fcba2ab4413d91185b4c26301b68e8aec31cc45d81f110be6c3f5e4bbb26407e",
+      "allocated_bytes": 19103744
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-005.zip",
+      "outcome": "unlinked",
+      "sha256": "4a09b9aa4aaba8d7b33a6771106ff8370d470869499d175894fe32bc28ba2186",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-006.zip",
+      "outcome": "unlinked",
+      "sha256": "5428e11b0da132bc555956c6bc41d19c3bf652b685ef4ab84e0d2dcc7aa310b9",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-004.zip",
+      "outcome": "unlinked",
+      "sha256": "252deb022b8ccebf96d4709d4c94b434b939c5796c934b7f34a58cde2dd6818b",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-005.zip",
+      "outcome": "unlinked",
+      "sha256": "b96d8c1999cb97696150f18e4e091a9f835c75950e58a533eb748afdf16ab4ac",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-007.zip",
+      "outcome": "unlinked",
+      "sha256": "13853b83eed50856e82e5fe4c09cc4bce6f30c7d726a0dc4513a0b5f7755ba5e",
+      "allocated_bytes": 17006592
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-006.zip",
+      "outcome": "unlinked",
+      "sha256": "e219285fd09203ba6da91df6364a637ec6835192c33fde5d06c4a3481dc38199",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-000.zip",
+      "outcome": "unlinked",
+      "sha256": "fdc55207dce9f1adc66a0f22b3028908145edbb49d96322c0eb9c9af3f7914fc",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-902-004.zip",
+      "outcome": "unlinked",
+      "sha256": "c7ae3b60bda9af8a026ce16356a48ef05795a9254b85bc861dfa0346a81e6a6b",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-001.zip",
+      "outcome": "unlinked",
+      "sha256": "10d063375a11e7d33a0faed38e9d14db17e16a8301b7365f67ea312eba4e460c",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-903-000.zip",
+      "outcome": "unlinked",
+      "sha256": "d27d9cb454b0d9104c3826c1d17d983b5e29d94bf26e73455be29803794c80d3",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-900-007.zip",
+      "outcome": "unlinked",
+      "sha256": "31d074f4cc05f7e0f2d0277c21a7b5a8649396729d94c35be663908ef160b239",
+      "allocated_bytes": 17006592
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-learned-900-002.zip",
+      "outcome": "unlinked",
+      "sha256": "e188d75883dca86a191cfe2d4eb466819c82c0122c1b34f66f2701ae01dbd551",
+      "allocated_bytes": 38199296
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-000.zip",
+      "outcome": "unlinked",
+      "sha256": "39b955b7056d1bcae07c422baae290fb928fde89f2c30ceae2dd5b9d139d9301",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-003.zip",
+      "outcome": "unlinked",
+      "sha256": "cff80c07449280d8588f6937b12503482f14c0a5ed5208187b8fd69524542cee",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-901-001.zip",
+      "outcome": "unlinked",
+      "sha256": "3ad9a7d3beca24b57ce2c379b738a9c3c79808b2f7e78ae093d9c69c60daf442",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output/fields-jacobi-903-002.zip",
+      "outcome": "unlinked",
+      "sha256": "b4dcba2bc94ffb3bc50b5954447346660d8b47f7c3645a1e6e3d964cd2fabf0c",
+      "allocated_bytes": 34004992
+    },
+    {
+      "path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/workspace-runs/.external-e731c9569b7d41f9a8f6cde438dcf9ac/output",
+      "outcome": "empty_directory_removed"
+    }
+  ],
+  "free_before": 1807646720,
+  "completed_utc": "2026-10-13T20:58:00.881653+00:00",
+  "published_artifacts_reverified": 89,
+  "run_document_unchanged": true,
+  "protected_catalog_fingerprint": "25a37d6d1b044973e4104ac71c50cf85923d565826021bf2c84aa2fbbc07a387",
+  "custody_receipt_sha256": "fdb010cb94b96951f183010c0b14e439387a77fe40ce3d9b37654bf5e6abd5e6",
+  "free_after": 4866490368,
+  "measured_free_delta": 3058843648
+}

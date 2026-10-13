@@ -483,3 +483,15 @@ Measured free space afterward was 8,301,801,472 bytes, 228,059,648 bytes above t
 8,073,741,824-byte admission guard. This is a checkpoint, not a disk reservation;
 recheck immediately before admission. Actual evaluation remains gated on P5b
 final regression/hosted checks and that fresh capacity observation.
+
+## Real evaluation admission
+
+P5b final regression passed: 838 base Python tests, all five optional skips
+covered by 32 qualified checks, and 56 JavaScript checks. Both exact-head hosted
+workflows passed at PR51 commit28c666f (UI38460254846, lifecycle38460254594).
+P5c source preparation is pushed at draft PR52 commitd191e68. Independent reviews
+and focused checks above passed. The source-only assembled evaluation project
+is ready. Admit the real browser evaluation against completed training Run
+`11fc2be1aada490f9b67c11c190728f6`, subject to immediate source/hash freshness and
+capacity checks; then freeze host/runtime/adapter source until terminal custody.
+No numerical protocol reduction or automatic unknown-attempt retry is allowed.

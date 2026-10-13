@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5b qualified at PR51 head28c666f; P5c real autonomous evaluation is running on frozen PR52 sourced191e68. Independent P6 source preparation is admitted in its separate worktree.
+**Current phase:** P5 qualified; P6 actual scientific MCP read passed and final test/CI qualification is active. See [P5c](reports/p5c-verification.md) and [P6](reports/p6-verification.md).
 
-**Next slice:** Complete P5c actual scientific/download/restart and regression gates, then qualify P6. [P6 admission](reports/p6-admission.md) records the isolated preparation amendment and exact operation matrix.
+**Next slice:** Finish P6 regression/CI and P7 complete PostgreSQL/artifact restore; acceptance remains partial.
 
 **Acceptance status:** `partial`
 
@@ -18,7 +18,7 @@ Open an existing scientific repository as a Tuldok project, acquire lossless dat
 
 Use `MrScripty/rheon-surrogate-lab` as the concrete complete acceptance workflow. Wrap its proven generation, modal pressure fitting and autonomous rollout evaluation scripts before considering algorithm replacement. This plan does not promise unrestricted scientific software execution or arbitrary 3D model support.
 
-The user approved publishing this plan and staged implementation on 2026-10-13. Commit/push and draft PR creation are authorized; merge and deployment are not. Start P1 after plan publication and progress to later stages only after their prerequisite gates qualify. G1 is qualified; remaining product gates require their staged evidence.
+The user approved publishing this plan and staged implementation on 2026-10-13. Commit/push and draft PR creation are authorized. The later explicit user instruction additionally authorizes merging qualified PRs in dependency order; deployment remains unapproved. Start P1 after plan publication and progress to later stages only after their prerequisite gates qualify. G1 is qualified; remaining product gates require their staged evidence.
 
 ## Roadmap continuation
 
@@ -35,9 +35,9 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 | G1 | Open/reopen a local project, inspect available/missing artifacts and runtime requirements, navigate all three workspaces without executing or modifying repository code | user-workflow | representative | automated | satisfied | [P1 observed workflow](reports/p1-verification.md) |
 | G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | satisfied | [Actual native and neutral custody workflows](reports/p2-verification.md) |
 | G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | satisfied | [P4 actual generation and no-adapter startup](reports/p4-verification.md) |
-| G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | pending | P5 lab verifier, numerical field comparison and new execution receipts |
+| G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | satisfied | [P5b training](reports/p5b-verification.md) and [P5c real evaluation/restart](reports/p5c-verification.md) |
 | G5 | Agent and UI clients reach the same domain owners for the admitted bounded matrix and equivalent authority; owner-only review/grants remain separate. Stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
-| G6 | Admission is idempotent; cancel, crash and restart never duplicate work, publish partial success or silently leave descendants running | system | representative | automated | pending | P3 process-tree, storage-failure and lost-acknowledgement tests |
+| G6 | Admission is idempotent; cancel, crash and restart never duplicate work, publish partial success or silently leave descendants running | system | representative | automated | satisfied | [P3 custody and fault tests](reports/p3b-verification.md), retained by final P5 regression |
 | G7 | Existing imports/releases/runs retain identities and bytes, including Rheon v1/v2; explicit migration and complete PostgreSQL/artifact restore preserve old and new records | integration | representative | automated | pending | P2/P7 retained-history and restore workflow |
 | G8 | Desktop/narrow/keyboard UI supports open → generate → review/freeze → edit graph → train/evaluate → inspect results without explanatory clutter or false qualification labels | user-workflow | required-real | either | pending | P7 reviewed screenshots and actual-run browser receipt |
 
@@ -116,7 +116,7 @@ Enforce at the service boundary reached by every transport, not only at MCP. Aud
 | Generic project inspection requires no lab runtime | P1 independence | Project owner | Open external manifest with missing runtime/data; observe no children or source writes | Local app/PostgreSQL/browser | Source-supported; product test pending |
 | Full lab arrays fit the proposed contract | P2 schema and limits | Data owner | Read representative actual NPZ captures in a separate process; inventory dtype/shape/centering/time and round-trip exact arrays | Actual lab capture bytes + NumPy | Actual two-frame native capture acquired; see P2 admission report |
 | Native process can be controlled by Runs | P3 execution boundary | Runs owner | Start bounded native probe, cancel during request/output, close pipe, kill supervisor, reconcile descendants | Linux, compatible Rust/Rheon binary | Not executed in planning |
-| CPU reproduction is available | P5 acceptance runtime | Lab owner | Inspect installed interpreter/package versions; load hash-verified checkpoint in isolated worker; execute documented CPU control | PyTorch runtime + native build + required inputs | P5a frozen-checkpoint CPU comparison qualified locally; fresh fitting/evaluation pending; do not auto-install |
+| CPU reproduction is available | P5 acceptance runtime | Lab owner | Inspect installed interpreter/package versions; load hash-verified checkpoint in isolated worker; execute documented CPU control | PyTorch runtime + native build + required inputs | P5a comparison, P5b fresh fitting and P5c autonomous evaluation qualified locally; no general hardware/model claim |
 | Prior performance numbers transfer | No design depends on this | Qualification owner | Separate matched-hardware benchmark with recorded protocol | Recorded GPU/CPU hardware | Not claimed |
 
 ## Evidence And Oracle Plan
@@ -224,7 +224,7 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G4 with real runtime/native solver and actual new outputs, protocol-specific lab verification (CPU correctness separated from CUDA/resource/timing claims as detailed in the evidence report), full-field independent checks, no teacher states in learned rollout, seed/family separation, checkpoint/runtime identity and restart inspection. CPU acceptance is distinct from CUDA acceptance and historical speedup reproduction. Missing runtime or bulk inputs is a named blocker, never substituted with fixtures.
 
-**Status:** `Active`
+**Status:** `Accepted`
 
 ### P6: Agent domain interface
 

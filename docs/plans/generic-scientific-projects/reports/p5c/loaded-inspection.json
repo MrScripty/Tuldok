@@ -1,0 +1,91 @@
+{
+  "qualification": "Read-only follow-up of same completed evaluation and existing reviewed Data record; no execution/import/review mutation",
+  "run_id": "e731c9569b7d41f9a8f6cde438dcf9ac",
+  "record_id": "9df813a605d746709eb0c245f16f4033",
+  "run_ids_unchanged": [
+    "0cc3ef6b5f9e460f873c8eda1ba3d525",
+    "11fc2be1aada490f9b67c11c190728f6",
+    "28a3dd42f3e64fab89136da1d7e5d8a0",
+    "3a0e69f8e71c4c7995d21c8157edc230",
+    "44272474e32544898feb39f651d997b9",
+    "48dbf653056a4d45ae53c6842e7d3aa3",
+    "4a9a129e8405405ab12b866edd766e48",
+    "80ad7f8474ae4e9384483b9463206ab2",
+    "8a22050ad7fc496db53e67d091de062a",
+    "8d2985a122b644fa96f3bafd3146edf5",
+    "a8298e4e255a46d4beef0ec9f73e38d0",
+    "ab46bb3b6e2944a0a0794776da0352f7",
+    "c3f7594d311843ea8487427556c84810",
+    "cea0a01e08c4488cbdba92f1662c7020",
+    "cf94711d8a2047c08a64c0219f474017",
+    "d1700cfb1fb249e3b627a9cb1daadcec",
+    "df53534ae6154ec8a4788f8378a8f004",
+    "e46bc5a79331428580dba01bb671d25b",
+    "e731c9569b7d41f9a8f6cde438dcf9ac",
+    "ecd6685cbd034a2e9c4c870b68ddd3a4",
+    "ece8abe0a4024d1483048d91b7980cf0"
+  ],
+  "record_ids_unchanged": [
+    "10248a96cd884c97aba789c46f5b30e8",
+    "2965e02ece8e46b3b841dc078abaef77",
+    "3033b32664e64095ab011f44bcc730b6",
+    "3bd7a890512e4a678e6989829deb366e",
+    "68a4b8417a8e4334b97ba309f9fd7c69",
+    "6a0ff276b3464a9d81c2c7c791f5179f",
+    "9189ed47d88a4bee8dd4f65b7e767b60",
+    "9a12007586654e9190df16a9a6e0c3b2",
+    "9df813a605d746709eb0c245f16f4033",
+    "a361b032e4474d5bac7f28201ab6a2bf",
+    "a6d37093fda84b86a4416e17337103e5",
+    "b49013cfdbc7467bb2f87cabb67e5d1a",
+    "d7485bc75f45470c84a2fab66e2788df"
+  ],
+  "record_exactly_unchanged": true,
+  "captures": [
+    {
+      "file": "inspection-summary-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual autonomous CPU evaluation; previously exposed seeds, no GPU or new holdout claim"
+    },
+    {
+      "file": "inspection-summary-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual autonomous CPU evaluation; previously exposed seeds, no GPU or new holdout claim"
+    },
+    {
+      "file": "inspection-loaded-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "status": "Frame 0 · time 0.016666666666666666 native time units (unspecified) · cell · <f8 · native units (unspecified). Producer-declared stage: solved pressure.",
+      "coordinates": "Z index 0; rows +y, columns +x. Sample origin (0.015625, 0.015625, 0.015625) native length units (unspecified); row step (0, 0.03125, 0), column step (0.03125, 0, 0). Display range -0.010797872884963856 to 0.005138123172933256; original floats stay unchanged.",
+      "review": "human_reviewed"
+    },
+    {
+      "file": "inspection-loaded-data-390.jpg",
+      "width": 390,
+      "height": 900,
+      "status": "Frame 0 · time 0.016666666666666666 native time units (unspecified) · cell · <f8 · native units (unspecified). Producer-declared stage: solved pressure.",
+      "coordinates": "Z index 0; rows +y, columns +x. Sample origin (0.015625, 0.015625, 0.015625) native length units (unspecified); row step (0, 0.03125, 0), column step (0.03125, 0, 0). Display range -0.010797872884963856 to 0.005138123172933256; original floats stay unchanged.",
+      "review": "human_reviewed"
+    }
+  ],
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  }
+}

@@ -58,8 +58,16 @@ Independent source review found no blocker. Focused generic contract/progress
 tests passed (26); producer tests passed (10, including real native eight-frame
 generation); training adapter checks passed (12 with the pinned assembly/runtime
 inputs); helper/import regressions passed (61). Plan validation and diff checks
-passed. Full final Python/JavaScript regression is running; hosted exact-head CI
-will be recorded after draft publication. Pending checks are not accepted gates.
+passed. Final regression passed: 838 Python tests in 1,155.485 seconds, with five optional
+skips covered by 32 qualified reader/training tests (zero skips). All 56 CI-listed
+JavaScript syntax/controller checks passed. The 196 Python source files remained
+unchanged throughout; after the authorized compact UI/harness changes settled,
+all 123 final JavaScript files remained unchanged during their checks.
+
+Both hosted workflows passed at exact PR51 head
+`28c666f115ca8fac7daf29096e91493ff7b0cc10`: interface run38460254846 and
+lifecycle run38460254594. Source inventories are retained alongside this report.
+P5b is qualified; P5c and P7 remain separate gates.
 
 ## Evidence and limits
 
