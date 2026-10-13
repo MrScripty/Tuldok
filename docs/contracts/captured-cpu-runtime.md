@@ -122,3 +122,12 @@ This extension does not enlarge captured input/source or diagnostic streams,
 alter cancellation/drain deadlines, enable network isolation, or qualify GPU/JIT.
 Actual recipes retain explicit smaller output budgets and require measured
 capacity admission. See the external recipe contract for custody and downloads.
+
+
+## Backup permission preservation
+
+Captured executable (`0500`) and data (`0400`) permissions survive new backups
+and restores. Historical byte receipts do not authenticate modes: qualify the
+actual snapshot at its restored root before claiming runtime acceptance.
+The canonical transfer, retry and partial-cleanup policy is in
+[local storage](local-storage.md#backup-permission-preservation).

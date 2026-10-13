@@ -53,6 +53,35 @@ class RuntimeSnapshotContract(unittest.TestCase):
         self.assertEqual((root/'packages/torch/__init__.py').stat().st_mode&0o777,0o400)
         self.assertFalse(list(owner.path.glob('.capture-*')))
 
+    def test_backup_restore_keeps_cold_runtime_modes_and_refuses_changed_completed_modes(self):
+        from backup_metadata import backup_catalog, restore_catalog, StorageTransferError
+        db, access, owner, config = self.fixture()
+        identity = owner.inspect(config)['inventory_sha256']
+        value = owner.create(config, identity, quiesced=True, reserve_bytes=0)
+        manifest = (Path(value['root']) / 'manifest.json').read_bytes()
+        backup = self.root / 'backup-runtime'
+        backup_catalog(db.path, backup, quiesced=True)
+        metadata_tests.WorkspaceMetadata.drop(self, db)
+        restored = self.root / 'restored-runtime'
+        restore_catalog(backup, restored)
+        restore_catalog(backup, restored)
+        restored_executable = restored / Path(value['root']).relative_to(db.path) / 'python/bin/python3.12'
+        restored_executable.chmod(0o400)
+        with self.assertRaises(StorageTransferError):
+            restore_catalog(backup, restored)
+        restored_executable.chmod(0o500)
+        current = Metadata(restored, create=False); self.addCleanup(current.close)
+        restored_access = Access(current, restored)
+        token = restored_access.exchange(restored_access._local_owner_token())['token']
+        with restored_access.bind(token):
+            actual = RuntimeSnapshots(current, restored_access, restored).get(identity)
+        self.assertEqual((Path(actual['root']) / 'manifest.json').read_bytes(), manifest)
+        executable = Path(actual['root']) / 'python/bin/python3.12'
+        self.assertEqual(executable.stat().st_mode & 0o777, 0o500)
+        executable.chmod(0o400)
+        with self.assertRaises(StorageTransferError):
+            restore_catalog(backup, restored)
+
     def test_unicode_nested_path_uses_shared_canonical_bytes(self):
         db,access,owner,config=self.fixture()
         (Path(config['site_packages'])/'torch'/'méta.txt').write_text('unicode entry')

@@ -229,3 +229,12 @@ does not interpret executable recipes or synthesize approval. Integer/text
 columns use the existing backup format; retained schema-7 backups restore
 exactly and must be explicitly upgraded. Complete schema-8 backups preserve
 approval state and identities; recovery does not implicitly refund approvals.
+
+
+## Backup permission preservation
+
+Complete PostgreSQL/artifact transfers preserve file and directory permissions
+without changing the retained byte receipt format or historical Run identities.
+Resumed and completed restores refuse contradictory permissions.
+The canonical transfer, retry and partial-cleanup policy is in
+[local storage](local-storage.md#backup-permission-preservation).

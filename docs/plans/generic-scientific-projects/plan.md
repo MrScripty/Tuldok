@@ -2,7 +2,7 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5b qualified at PR51 head28c666f; P5c real autonomous evaluation is running on frozen PR52 sourced191e68. Independent P6 source preparation is admitted in its separate worktree.
+**Current phase:** P7 isolated backup-owner source preparation admitted while P6 acceptance completes; see [P7 admission](reports/p7-admission.md). Prior checkpoint:  P5b qualified at PR51 head28c666f; P5c real autonomous evaluation is running on frozen PR52 sourced191e68. Independent P6 source preparation is admitted in its separate worktree.
 
 **Next slice:** Complete P5c actual scientific/download/restart and regression gates, then qualify P6. [P6 admission](reports/p6-admission.md) records the isolated preparation amendment and exact operation matrix.
 

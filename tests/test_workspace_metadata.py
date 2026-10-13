@@ -379,6 +379,76 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(reopened.schema_version, 8)
         self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'already_current')
 
+    def test_failed_backup_cleans_its_read_only_partial_without_changing_source(self):
+        from backup_metadata import tree_modes
+        metadata = self.catalog(version=8)
+        nested = metadata.path / 'readonly'; nested.mkdir()
+        (nested / 'data').write_bytes(b'fixture'); (nested / 'data').chmod(0o400)
+        nested.chmod(0o500)
+        before = tree_manifest(metadata.path); modes = tree_modes(metadata.path, before)
+        backup = self.root / 'failed-backup'
+        with patch('backup_metadata.write_json', side_effect=OSError('post-copy injected failure')):
+            with self.assertRaisesRegex(OSError, 'post-copy injected failure'):
+                backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertFalse(backup.exists())
+        self.assertFalse(list(self.root.glob('failed-backup.partial-*')))
+        self.assertEqual(tree_manifest(metadata.path), before)
+        self.assertEqual(tree_modes(metadata.path, before), modes)
+        nested.chmod(0o700)
+
+    def test_uncertain_partial_cleanup_preserves_original_error_and_external_modes(self):
+        metadata = self.catalog(version=8)
+        external = self.root / 'external'; external.mkdir(); external.chmod(0o500)
+        backup = self.root / 'uncertain-backup'
+        def replace(path, value):
+            partial = Path(path).parent
+            (partial / 'catalog').rename(partial / 'retained-catalog')
+            (partial / 'catalog').symlink_to(external, target_is_directory=True)
+            raise OSError('original post-copy failure')
+        with patch('backup_metadata.write_json', side_effect=replace):
+            with self.assertRaisesRegex(OSError, 'original post-copy failure') as caught:
+                backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertTrue(any('cleanup refused' in note for note in caught.exception.__notes__))
+        self.assertEqual(external.stat().st_mode & 0o777, 0o500)
+        self.assertEqual(len(list(self.root.glob('uncertain-backup.partial-*'))), 1)
+        external.chmod(0o700)
+
+    def test_backup_cleanup_never_deletes_replacement_root_contents(self):
+        import backup_metadata
+        metadata = self.catalog(version=8)
+        backup = self.root / 'replaced-backup'
+        original = backup_metadata._remove_partial_contents
+        replacement = []
+        def replace(descriptor):
+            partial = next(self.root.glob('replaced-backup.partial-*'))
+            partial.rename(self.root / 'retained-owned-partial')
+            partial.mkdir(); (partial / 'unrelated').write_bytes(b'preserve')
+            replacement.append(partial)
+            # Only intercept the root call; recursion uses the genuine implementation.
+            with patch('backup_metadata._remove_partial_contents', original):
+                original(descriptor)
+        with patch('backup_metadata.write_json', side_effect=OSError('original failure')):
+            with patch('backup_metadata._remove_partial_contents', side_effect=replace):
+                with self.assertRaisesRegex(OSError, 'original failure') as caught:
+                    backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual((replacement[0] / 'unrelated').read_bytes(), b'preserve')
+        self.assertTrue(any('identity changed' in note for note in caught.exception.__notes__))
+
+    def test_backup_partial_descriptor_acquisition_failure_closes_parent(self):
+        metadata = self.catalog(version=8)
+        original = os.open; parents = []
+        def fail(name, flags, *args, **kwargs):
+            if isinstance(name, str) and name.startswith('open-failure.partial-'):
+                parents.append(kwargs['dir_fd'])
+                raise OSError('injected descriptor acquisition failure')
+            return original(name, flags, *args, **kwargs)
+        with patch('backup_metadata.os.open', side_effect=fail):
+            with self.assertRaisesRegex(OSError, 'descriptor acquisition failure'):
+                backup_catalog(metadata.path, self.root / 'open-failure', quiesced=True)
+        self.assertEqual(len(parents), 1)
+        with self.assertRaises(OSError):
+            os.fstat(parents[0])
+
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
         metadata = self.historical_catalog()
         rows = summaries(read_catalog(metadata))
@@ -619,3 +689,71 @@ class WorkspaceMetadata(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TransferPermissions(unittest.TestCase):
+    def test_read_only_tree_and_retry_preserve_modes_and_byte_manifest(self):
+        from backup_metadata import copy_tree, tree_modes, StorageTransferError
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'source'; target = Path(temporary) / 'target'
+            (source / 'nested').mkdir(parents=True)
+            (source / 'nested/program').write_bytes(b'fixture executable')
+            (source / 'data').write_bytes(b'fixture data')
+            (source / 'nested/program').chmod(0o500); (source / 'data').chmod(0o400)
+            (source / 'nested').chmod(0o500); source.chmod(0o500)
+            expected = tree_manifest(source)
+            copy_tree(source, target, expected)
+            self.assertEqual(tree_manifest(target), expected)
+            self.assertEqual(tree_modes(target, expected), tree_modes(source, expected))
+            self.assertEqual((target / 'data').stat().st_nlink, 1)
+            copy_tree(source, target, expected)
+            (target / 'nested').chmod(0o550)
+            with self.assertRaisesRegex(StorageTransferError, 'directory permissions differ'):
+                copy_tree(source, target, expected)
+            (target / 'nested').chmod(0o500)
+            (target / 'data').chmod(0o600)
+            with self.assertRaisesRegex(StorageTransferError, 'permissions differ'):
+                copy_tree(source, target, expected)
+            target.chmod(0o700)
+            (target / 'data').unlink()
+            target.chmod(0o500)
+            with self.assertRaisesRegex(StorageTransferError, 'Read-only staging'):
+                copy_tree(source, target, expected)
+            for root in (source, target):
+                root.chmod(0o700); (root / 'nested').chmod(0o700)
+
+    def test_partial_cleanup_cannot_follow_replaced_intermediate_directory(self):
+        from backup_metadata import _remove_partial_contents
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / 'partial'; root.mkdir()
+            nested = root / 'catalog'; nested.mkdir()
+            external = Path(temporary) / 'external'; external.mkdir(); external.chmod(0o500)
+            descriptor = os.open(root, os.O_RDONLY | os.O_DIRECTORY)
+            original = os.open
+            def replace(name, flags, *args, **kwargs):
+                if name == 'catalog' and kwargs.get('dir_fd') == descriptor:
+                    nested.rename(root / 'retained-catalog')
+                    nested.symlink_to(external, target_is_directory=True)
+                return original(name, flags, *args, **kwargs)
+            try:
+                with patch('backup_metadata.os.open', side_effect=replace):
+                    with self.assertRaises(OSError):
+                        _remove_partial_contents(descriptor)
+                self.assertEqual(external.stat().st_mode & 0o777, 0o500)
+                self.assertTrue((root / 'retained-catalog').is_dir())
+            finally:
+                os.close(descriptor); external.chmod(0o700)
+
+    def test_source_mode_change_during_copy_refused(self):
+        from backup_metadata import copy_tree, StorageTransferError
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'source'; source.mkdir()
+            payload = source / 'payload'; payload.write_bytes(b'fixture'); payload.chmod(0o400)
+            expected = tree_manifest(source)
+            original = shutil.copyfileobj
+            def change(reader, writer):
+                original(reader, writer); payload.chmod(0o600)
+            with patch('backup_metadata.shutil.copyfileobj', side_effect=change):
+                with self.assertRaisesRegex(StorageTransferError, 'Source changed'):
+                    copy_tree(source, Path(temporary) / 'target', expected)
+            self.assertFalse((Path(temporary) / 'target/payload').exists())

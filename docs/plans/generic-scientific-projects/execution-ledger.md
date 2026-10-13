@@ -178,3 +178,14 @@ The failed first attempt is preserved; the successful attempt used a fresh
 captured project after correcting only the pinned diagnostic prefix.
 See [P5b verification](reports/p5b-verification.md). Full regression and hosted
 CI remain pending; autonomous evaluation and backup/restore are separate gates.
+
+## P7 isolated source checkpoint and merge authority
+
+P7 permission-preservation fix and explicit staged restore/browser procedures
+are implemented in an isolated feature branch. Focused tests and independent
+review passed; actual transfer and acceptance remain pending. See
+[verification](reports/p7-verification.md) and [admission](reports/p7-admission.md).
+The user's subsequent explicit instruction admits merging qualified Tuldok PRs,
+assessing owner32/33 and verifying integrated main. PRs38–42 were merged in
+dependency order with exact qualified trees retained. No incomplete/failing
+work or deployment is admitted by this new authority.
