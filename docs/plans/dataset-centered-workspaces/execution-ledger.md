@@ -181,3 +181,10 @@ Fetched main c522bf6; PR34–37 are merged and PR32/33 remain open separately. R
 Environment update: the available Docker runtime started the standard PostgreSQL17 CI image on loopback55432 without system package changes. Real local database/browser qualification is now available; the earlier local provisioning limitation is resolved through the project's existing containerized service approach.
 
 Mesh runnable checkpoint: implemented real three-stage mesh graph/run workflow; eight PostgreSQL tests independently passed, six retained Pipeline tests passed, and real Chromium flow passed with report/release byte equality and restart. Independent source review fixed loaded-source identity drift. Full configured Python/classification regressions and hosted CI remain pending; see reports/mesh-runs-20261013.md.
+
+
+## 2026-10-13 — mesh publication and sequence continuation
+
+Mesh code/review/checkpoint904d5c0 pushed as draft PR38. Whole-plan completion remains partial. Sequence worktree `/workspace/Tuldok-sequence`, branch `feature/workspace-sequence-runs-20261013`, was fast-forwarded from c522bf6 to the complete mesh proposal to preserve dependency ancestry. New reader/adapter/UI ownership is disjoint; root alone changes canonical plan/CI and owns integration. No main merge occurred. The worktree is retained under root ownership for sequence qualification and later maintainer review.
+
+Sequence runnable checkpoint: strict canonical/native reader plus three-stage Pipeline/Runs path implemented. Independent 11 reader +6 sequence run +8 mesh run +6 Pipeline tests passed; actual recorded-source Chromium flow and mesh regression passed. Full Python/offline hosted CI remains pending; no M5c-wide or model/physics acceptance is inferred.

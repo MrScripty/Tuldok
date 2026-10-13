@@ -159,7 +159,7 @@ class MeshRuns(unittest.TestCase):
             self.dataset.runs.submit(dict(body, validation_token='0' * 64))
         raw = test_mesh_release.rewrite(self.path.read_bytes(), lambda entries:
             test_mesh_release.change_manifest(entries, lambda manifest:
-                manifest['records'][0].update(kind='sequence')))
+                manifest['records'][0].update(kind='audio')))
         path = self.path.with_name(hashlib.sha256(raw).hexdigest() + '.zip')
         path.write_bytes(raw)
         with self.assertRaises(WorkbenchError) as caught:

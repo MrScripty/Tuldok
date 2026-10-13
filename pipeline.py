@@ -1,6 +1,6 @@
 """Versioned real recipes and their authoritative admission checks.
 
-This owns closed classification and mesh validation recipes, not a general graph engine.
+This owns closed classification, mesh and sequence validation recipes, not a general graph engine.
 Release custody and CPU adapter eligibility remain with their existing owners.
 """
 import copy
@@ -98,14 +98,20 @@ def decode_graph(value):
     return json.loads(serialized)
 
 
-ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation}
+ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation,
+            release_validation.SEQUENCE_RECIPE: release_validation}
 
 
 def adapter_for_graph(graph):
     recipe = graph.get('recipe', 'image_classification')
     if not isinstance(recipe, str) or recipe not in ADAPTERS:
-        raise WorkbenchError('Only the versioned classification and mesh validation recipes are supported.', 'unsupported', 400)
+        raise WorkbenchError('Only the versioned classification, mesh and sequence validation recipes are supported.', 'unsupported', 400)
     return ADAPTERS[recipe]
+
+
+def adapter_identity_for_graph(graph):
+    adapter = adapter_for_graph(graph)
+    return release_validation.adapter_identity(graph['recipe']) if adapter is release_validation else adapter.ADAPTER
 
 
 def types_for_graph(graph):
@@ -151,9 +157,10 @@ class Pipelines:
                     'recipe': list(types_for_graph({'recipe': recipe}))}
         image = definition('image_classification', image_training)
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
-                'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation)],
+                'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation),
+                            definition(release_validation.SEQUENCE_RECIPE, release_validation)],
                 'limitations': ['Closed image TinyCNN, text TF-IDF + MultinomialNB and audio feature logistic CPU recipes only.',
-                                'Audio execution classifies one reviewed interval per WAV. Mesh recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
+                                'Audio execution classifies one reviewed interval per WAV. Mesh and sequence recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')
@@ -236,12 +243,15 @@ class Pipelines:
                     raise WorkbenchError('Frozen manifest exceeds the supported bound.')
                 selection = image_training._json(raw, 'Release manifest')
                 format_name = selection.get('format')
-            if format_name is None and isinstance(selection.get('records'), list) and selection['records'] and all(
-                    isinstance(row, dict) and row.get('kind') == 'mesh' for row in selection['records']):
-                manifest, summary = release_validation.inspect_release(path, release_id)
+            records = selection.get('records')
+            kinds = {row.get('kind') for row in records if isinstance(row, dict) and isinstance(row.get('kind'), str)} if isinstance(records, list) else set()
+            integrity_recipe = ({'mesh': release_validation.RECIPE, 'sequence': release_validation.SEQUENCE_RECIPE}.get(next(iter(kinds)))
+                                if len(kinds) == 1 else None)
+            if format_name is None and integrity_recipe:
+                manifest, summary = release_validation.inspect_release(path, release_id, integrity_recipe)
                 result = {'id': release_id, 'sha256': release_id, 'format': 'canonical_v1',
-                          'recipe': release_validation.RECIPE, 'result_kind': 'release_validation',
-                          'records': summary['mesh_count'], 'split_counts': summary['split_counts'],
+                          'recipe': integrity_recipe, 'result_kind': 'release_validation',
+                          'records': len(manifest['records']), 'split_counts': summary['split_counts'],
                           'validation_summary': summary, 'prior_test_exposure': {'exposed': False, 'events': []},
                           'status': 'available'}
                 if private:
@@ -250,7 +260,7 @@ class Pipelines:
             recipe = {'image_classification_v1': 'image_classification',
                       'text_classification_v1': 'text_classification', 'audio_classification_v1': 'audio_classification'}.get(format_name)
             if recipe is None:
-                raise WorkbenchError('Choose a frozen classification release or a mesh-only canonical release.', 'unsupported', 409)
+                raise WorkbenchError('Choose a frozen classification release or a mesh-only/sequence-only canonical release.', 'unsupported', 409)
             manifest = ADAPTERS[recipe].inspect_release(path, release_id)
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None
@@ -297,7 +307,7 @@ class Pipelines:
         adapter = adapter_for_graph({'recipe': recipe})
         if adapter is release_validation:
             identity = self.definition_identity(recipe)
-            runtime = release_validation.runtime()
+            runtime = release_validation.runtime(recipe)
             if identity['definition_files'] != release_validation.IMPORTED_DEFINITION_FILES:
                 runtime.update(available=False, problems=[{'code': 'stale', 'message':
                     'Integrity definitions changed after application import. Restart the application before admission.'}])

@@ -6,7 +6,7 @@
 
 **Persistent task goal:** Complete all remaining Tuldok milestones and ensure implemented code complies with the adopted coding standards. Preserve runnable compact Data / editable Pipeline / Runs checkpoints, PostgreSQL metadata and local artifacts. Push feature branches and draft PRs; do not merge or deploy without separate approval. No native goal-setting mechanism is available in this runtime; this canonical plan retains the goal across checkpoints.
 
-**Next slice:** Add a real `mesh_validate_export` recipe connecting frozen mesh releases to editable Pipeline and durable Runs integrity-report/download evidence. See [remaining milestone admission](reports/remaining-admission-20261013.md). Continue afterward with remaining task exports, bounded point-cloud and volume subtypes, sequence workflow and final offline/restore qualification. Production ASR and general 3D training are explicit optional/out-of-scope capabilities of the documented milestones, not silently satisfied by these increments.
+**Next slice:** Complete `sequence_validate_export` using the retained actual Rheon transport-pilot bytes: strict frozen-release reader, editable graph, durable Runs report/download, native consumer and browser/reopen evidence. See [sequence admission](reports/sequence-admission-20261013.md). Mesh graph/run implementation is pushed in draft [PR38](https://github.com/MrScripty/Tuldok/pull/38); its full CI remains pending. Continue afterward with remaining task exports, bounded point-cloud and volume subtypes, and final offline/restore qualification. Production ASR and general 3D training remain optional/out-of-scope capabilities of the documented milestones.
 
 **Acceptance status:** `partial`
 
@@ -333,7 +333,7 @@ The maintainer/integration owner serializes shared schema, route, storage, CI, l
 
 ## Repository Isolation
 
-Current root branch is `feature/workspace-mesh-runs-20261013` in `/workspace/Tuldok`, based on verified main c522bf6. Root owns integration; the branch targets main as a draft PR and is retained pending review/merge approval. No task worktrees are created. The following older isolation details are historical. The current admission names separate audio and mesh proposal worktrees, root as serial integrator, independent draft PRs targeting main, and retained-resource handoff. No new main merge, deployment, force push or cleanup of older worktrees is authorized.
+Current sequence branch is `feature/workspace-sequence-runs-20261013` in `/workspace/Tuldok-sequence`, based on the complete mesh proposal904d5c0. Root owns serial integration and a stacked draft PR targeting the mesh feature branch while PR38 awaits review. Retain this worktree and branch for sequence qualification until a separately approved merge or explicit handoff disposition. `/workspace/Tuldok` remains the mesh PR38 checkout for its CI/evidence follow-through. The following older isolation details are historical. The current admission names separate audio and mesh proposal worktrees, root as serial integrator, independent draft PRs targeting main, and retained-resource handoff. No new main merge, deployment, force push or cleanup of older worktrees is authorized.
 
 Historical planning isolation follows:
 
