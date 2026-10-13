@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5 training and autonomous evaluation qualified. P5c actual scientific, restart, browser and final regression gates passed against PR52 source checkpoint d191e68; see [P5c verification](reports/p5c-verification.md).
+**Current phase:** P5 qualified; P6 actual scientific MCP read passed and final test/CI qualification is active. See [P5c](reports/p5c-verification.md) and [P6](reports/p6-verification.md).
 
-**Next slice:** Qualify P6 scoped agent operations and P7 complete database/artifact restore on separate feature branches. Neither milestone is accepted by P5 evidence.
+**Next slice:** Finish P6 regression/CI and P7 complete PostgreSQL/artifact restore; acceptance remains partial.
 
 **Acceptance status:** `partial`
 
@@ -18,7 +18,7 @@ Open an existing scientific repository as a Tuldok project, acquire lossless dat
 
 Use `MrScripty/rheon-surrogate-lab` as the concrete complete acceptance workflow. Wrap its proven generation, modal pressure fitting and autonomous rollout evaluation scripts before considering algorithm replacement. This plan does not promise unrestricted scientific software execution or arbitrary 3D model support.
 
-The user approved publishing this plan and staged implementation on 2026-10-13. Commit/push and draft PR creation are authorized; merge and deployment are not. Start P1 after plan publication and progress to later stages only after their prerequisite gates qualify. G1 is qualified; remaining product gates require their staged evidence.
+The user approved publishing this plan and staged implementation on 2026-10-13. Commit/push and draft PR creation are authorized. The later explicit user instruction additionally authorizes merging qualified PRs in dependency order; deployment remains unapproved. Start P1 after plan publication and progress to later stages only after their prerequisite gates qualify. G1 is qualified; remaining product gates require their staged evidence.
 
 ## Roadmap continuation
 
@@ -36,7 +36,7 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 | G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | satisfied | [Actual native and neutral custody workflows](reports/p2-verification.md) |
 | G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | satisfied | [P4 actual generation and no-adapter startup](reports/p4-verification.md) |
 | G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | satisfied | [P5b training](reports/p5b-verification.md) and [P5c real evaluation/restart](reports/p5c-verification.md) |
-| G5 | Agent and UI clients use the same operations; stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
+| G5 | Agent and UI clients reach the same domain owners for the admitted bounded matrix and equivalent authority; owner-only review/grants remain separate. Stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
 | G6 | Admission is idempotent; cancel, crash and restart never duplicate work, publish partial success or silently leave descendants running | system | representative | automated | satisfied | [P3 custody and fault tests](reports/p3b-verification.md), retained by final P5 regression |
 | G7 | Existing imports/releases/runs retain identities and bytes, including Rheon v1/v2; explicit migration and complete PostgreSQL/artifact restore preserve old and new records | integration | representative | automated | pending | P2/P7 retained-history and restore workflow |
 | G8 | Desktop/narrow/keyboard UI supports open → generate → review/freeze → edit graph → train/evaluate → inspect results without explanatory clutter or false qualification labels | user-workflow | required-real | either | pending | P7 reviewed screenshots and actual-run browser receipt |
@@ -228,15 +228,17 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 ### P6: Agent domain interface
 
-**Goal:** An agent discovers and controls the qualified workflow through typed domain operations with the same outcomes as the UI.
+**Goal:** An agent discovers and controls the qualified workflow through the admitted typed operation matrix, with the same domain outcomes as equivalent authorized HTTP/UI actions. This does not delegate every UI privilege or legacy endpoint.
 
 **Allowed write set:** proposed `agent_api.py`, `docs/contracts/agent-operations.md`, versioned operation schemas and a thin local MCP adapter selected/pinned after transport review; existing API/access/domain owners only as needed; public HTTP/MCP integration tests and developer usage documentation.
 
-**Tasks:** Project/data/recipe discovery; queries and typed mutation tools; release preview/freeze; graph editing/preflight; idempotent submit/status/cancel/retry; provenance/artifact access; scoped credential setup/revocation. Tool descriptions identify side effects and approval requirements. Reuse shared validation/errors; no direct DB or file-management tools masquerading as domain operations.
+**Tasks:** Implement the admitted matrix: project/data/recipe discovery; bounded queries and typed draft mutations; canonical release preview/freeze; graph editing/preflight; exact-grant idempotent external submit/status/cancel; explicit scoped test exposure; provenance and bounded artifact segments with client whole-hash verification. Ordinary retry remains owner-only HTTP/UI; a new external attempt requires an explicit new submit and valid exact grant. Same-key acknowledgement reconciliation never creates a new attempt. Credential setup/revocation, human review and execution grants retain existing owner interfaces. Publish bounds and exclusions; reuse domain validation/errors without direct database or file-management tools.
 
-**Acceptance gate:** Complete G5; equivalent agent/UI workflow yields equivalent domain evidence; revision conflicts, lost acknowledgements, revoked credentials and human-review spoofing are exercised through both public transports. No new actor-specific privilege bypass.
+**Acceptance gate:** Complete G5 against the admitted matrix through a real workflow with separate owner review/grants. Compare domain evidence; exercise revisions, lost acknowledgements, revoked credentials, human-review spoofing, grant reuse, fresh external attempts, scoped test exposure and exact artifact reassembly. Excluded capabilities remain absent from MCP; existing HTTP authority is unchanged. No new actor-specific privilege bypass.
 
 **Status:** `Planned`
+
+**Preparation admission:** [P6 exact contract and sequencing](reports/p6-admission.md). Source preparation is active; objective acceptance remains pending.
 
 ### P7: Complete workflow and compatibility qualification
 
