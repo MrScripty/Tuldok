@@ -98,3 +98,17 @@ artifact was removed. The cleanup reclaimed 3,087,097,856 allocated bytes.
 [cleanup receipt](p5c/evaluation-duplicate-cleanup-receipt.json), and
 [measured capacity](p5c/postcleanup-capacity.json) retain the scope and proof.
 This does not qualify P7 backup/restore.
+
+## Hosted browser follow-up
+
+The evidence-only head1c0cb6f lifecycle38474813909 passed full Python discovery
+but later failed browser_captions.cjs with CDP `Inspected target navigated or
+closed`; diagnostics still showed the new document loading. The script read DOM
+state immediately after navigation acknowledgement. It now uses the existing
+pageLoadTracker's changed-main-loader/load barrier for initial navigation and
+reload, preserving assertions and time bounds. Full native Chromium caption
+workflow and existing load/startup/auth regressions pass. A real Chromium timing
+trace measured six pre-load reads before the fix and zero afterward; the exact
+hosted error was not reproduced locally. This changes QA ordering only. The
+actual scientific runtime, algorithms and qualified artifacts are unchanged.
+Fresh hosted lifecycle acceptance remains required for the updated head.
