@@ -242,6 +242,14 @@ jobs:
           BROWSER: /usr/bin/google-chrome
           TULDOK_NATIVE_READER_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_export_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_breadth.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
       - uses: actions/upload-artifact@v4
         if: always()
         with:

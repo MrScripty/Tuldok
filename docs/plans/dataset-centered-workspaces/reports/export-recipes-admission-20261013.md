@@ -21,3 +21,5 @@ Composed-design review applicable: Releases still owns frozen identity and sourc
 ## Acceptance
 
 Actual PostgreSQL frozen classification release→selected export-only graph→edit/clone/save→validate without training interpreter→real report/download/reopen; invalid connections/stale graph/release/source changes remain rejected. Verify all three classification modalities, no model operations/exposure and unchanged prior training results. Compact desktop/narrow/keyboard browser gate plus embedded Data breadth actions and registered existing Unicode/consumer regressions. Independent review, full configured local tests and hosted offline lifecycle CI are required before milestone acceptance. Evidence placeholders cannot satisfy any of these gates.
+
+Adjacent UI write admission: after browser evidence showed the shell dirty badge lagging a completed async preference save, the UI owner may update the narrow workspaces-data.js status bridge and a meaningful regression. Existing task owners remain authoritative; do not duplicate dirty-state storage. Root serially merged complete spatial e2129e7 into this feature before final integrated qualification.

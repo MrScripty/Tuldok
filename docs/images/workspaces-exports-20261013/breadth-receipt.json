@@ -1,0 +1,119 @@
+{
+  "source_commit": "04b4586a39e8f8b00ebb642961413114626bbc10",
+  "dirty": true,
+  "command": "node tests/browser_workspace_breadth.cjs",
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "Embedded Unicode entity spans, keyboard review/history and retained draft through three workspaces",
+    "Embedded corpus import/review and existing byte-corpus export preserve Unicode",
+    "Embedded image caption editor/review and existing imagefolder export retain captions",
+    "Shell dirty badge stays pending through actual held save acknowledgement and clears from the editor outcome without further input",
+    "Embedded answer/preference forms preserve exact strings, human judgments and draft navigation; existing adapters export both",
+    "All embedded owners remain usable after reload; desktop and narrow shell have no horizontal overflow"
+  ],
+  "captures": [
+    {
+      "file": "entities-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "entities-390.jpg",
+      "width": 390,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "corpus-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "corpus-390.jpg",
+      "width": 390,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "captions-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "captions-390.jpg",
+      "width": 390,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "answers-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "answers-390.jpg",
+      "width": 390,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "preferences-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "preferences-390.jpg",
+      "width": 390,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "catalog-breadth-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    },
+    {
+      "file": "catalog-breadth-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real embedded existing Data task editors and exports; authored fixtures",
+      "quality": 85
+    }
+  ],
+  "fixture_provenance": "Authored local records; no model calls",
+  "qualification": "Shell integration and downloaded strings; pinned consumer suites retain independent qualification ownership."
+}

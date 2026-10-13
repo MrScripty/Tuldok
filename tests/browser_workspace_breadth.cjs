@@ -341,6 +341,7 @@ function launch(command, args, options) {
     await click('#response-new',true);await select('#response-entry-format','json',true);await fill('#response-completion',JSON.stringify(content),true);
     await select('#response-review','human_reviewed',true);await focus('#response-save',true);await key('Enter');
     await until(()=>frame('!responseBusy && !responseListBusy && !responseDirty'));
+    await until(()=>text('#catalog-status').then(value=>value==='Current Data owner ready.'),'Async answer save did not clear shell dirty badge');
     answers.push((await api('records/'+entity.id+'/responses')).responses.find(row=>row.completion===content));
     await click('#response-cancel',true);
   }
@@ -352,7 +353,15 @@ function launch(command, args, options) {
   await panel('#preferences-panel');await click('#preference-refresh',true);await until(()=>frame('!preferenceListBusy'));
   await click('#preference-new',true);await select('#preference-left',answers[0].id,true);await select('#preference-right',answers[1].id,true);await select('#preference-outcome','left',true);await fill('#preference-rationale','Compared exact Unicode and alternative response.',true);
   await nav('pipeline');await nav('data');assert.equal(await frame('preferenceDirty'),true);assert.match(await evaluate(`${element('#preference-rationale',true)}.value`),/Compared exact/);
-  await select('#preference-review','human_reviewed',true);await focus('#preference-save',true);await key('Enter');await until(()=>frame('!preferenceBusy && !preferenceListBusy && !preferenceDirty'));
+  await select('#preference-review','human_reviewed',true);
+  await until(()=>text('#catalog-status').then(value=>value==='Unsaved Data edits retained.'));
+  await frame(`window.breadthFetch=window.fetch;window.releaseJudgmentAck=null;window.fetch=async(...args)=>{const response=await breadthFetch(...args);if(String(args[0])==='/api/workbench/preferences'&&args[1]?.method==='POST')await new Promise(resolve=>releaseJudgmentAck=resolve);return response;}`);
+  await focus('#preference-save',true);await key('Enter');await until(()=>frame('!!releaseJudgmentAck'));
+  assert.equal(await text('#catalog-status'),'Unsaved Data edits retained.');
+  await frame('releaseJudgmentAck();window.fetch=breadthFetch');
+  await until(()=>frame('!preferenceBusy && !preferenceListBusy && !preferenceDirty'));
+  await until(()=>text('#catalog-status').then(value=>value==='Current Data owner ready.'),'Async judgment save did not clear shell dirty badge without another input');
+  check('Shell dirty badge stays pending through actual held save acknowledgement and clears from the editor outcome without further input');
   await captureData('preferences','#preferences-panel');
   await frame('document.querySelector("#preference-list input[type=checkbox]").click()');await tools('#preference-release-panel');await focus('#preference-preview',true);await key('Enter');await until(()=>frame('!preferenceReleaseBusy && !!preferencePreview'));assert.equal(await frame('preferencePreview.eligible'),true);
   await focus('#preference-freeze',true);await key('Enter');await until(()=>evaluate(`!!${element('#preference-release-result a',true)}`));
