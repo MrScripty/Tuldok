@@ -1,8 +1,36 @@
 # Tuldok
 
-A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
+A local dataset studio for importing, annotating and inspecting image, text,
+audio and bounded spatial datasets. The dataset workbench lives at `/workbench`;
+the book-corner studio remains available at `/` for capturing images, labeling
+four corners and exporting training data. Tuldok is a separate developer tool;
+it does not depend on Book-Be-Gone.
 
 Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Frozen mesh, ordered point-cloud, uint8 volume and bounded Rheon v1 sequence releases have three-stage validate/export recipes with durable integrity reports and unchanged release downloads. Classification releases also offer explicit validation/export without a training runtime. Saved recipes show draft and installed-definition differences; existing text/caption/response/preference editors remain in Data. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+
+## Dataset workbench · historical captures
+
+These screenshots show the running application with authored and built-in
+synthetic sample data, captured on 2026-10-11 from main commit
+[`1bb2c3a`](https://github.com/MrScripty/Tuldok/commit/1bb2c3ae9d08432c53ddf9d4bf77fa5f62ad318c).
+They are actual browser captures, not UI mockups or pretrained inference results.
+
+![Dataset workbench showing an authored sample text and its saved draft scheduling class](docs/images/dataset-workbench-text.jpg)
+
+*Text annotation: explicit source groups, draft targets and review controls.*
+
+![Image detection editor showing a built-in synthetic rectangle sample with bounding boxes and target coordinates](docs/images/dataset-workbench-image.jpg)
+
+*Offline image sample: the built-in rectangle recipe supplies detection targets.*
+
+![Static mesh inspector showing an authored tetrahedron in three orthographic wireframe projections](docs/images/dataset-workbench-mesh.jpg)
+
+*Bounded static mesh inspection: native units, coordinate frame and three projections.*
+
+These dated captures document the image/text/static-mesh workbench at that
+commit. They do not demonstrate the newer audio, Pipeline or Runs workflows
+described above, or pretrained inference. See [capture details](docs/images/README.md)
+for original sample sources, procedure and historical limitations.
 
 ## Run
 
@@ -35,7 +63,10 @@ unsupported schemas and legacy SQLite folders produce explicit startup errors.
 See [local storage and recovery](docs/contracts/local-storage.md) for legacy import,
 complete backup/restore, supported versions and preservation limits.
 
-Open http://127.0.0.1:8091. Change the port or data location with --port and --data. Camera access works on localhost; accessing a machine over the network requires HTTPS for browser camera access. Image import also works without camera access.
+Open http://127.0.0.1:8091/workspaces for Data / Pipeline / Runs,
+http://127.0.0.1:8091/workbench for the dataset editor, or
+http://127.0.0.1:8091/ for the book-corner studio. Change the port or data location
+with --port and --data. Camera access works on localhost; accessing a machine over the network requires HTTPS for browser camera access. Image import also works without camera access.
 
 ## Real image workflow in Workspaces
 
@@ -123,7 +154,7 @@ the workflow, not model quality. See the
 [audio training contract](docs/contracts/workspace-audio-training.md) and
 [first release/graph checkpoint](docs/images/workspaces-audio-runs-checkpoint/README.md).
 
-## Workflow
+## Book-corner workflow
 
 1. Set a book ID and recording session ID. Use a new session for a different lighting/background setup. Leave the book ID empty for no-book scenes.
 2. Start the camera and capture immediately or with the seven-second timer. Import JPEG, PNG, or WebP images individually or in batches.
