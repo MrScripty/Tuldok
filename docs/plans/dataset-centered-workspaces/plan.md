@@ -1,6 +1,6 @@
 # Plan: Dataset-centered Data, Pipeline, and Runs workspaces
 
-**Plan status:** `Active`
+**Plan status:** `Verifying`
 
 **Current phase:** Continue the remaining documented milestones from verified main `c522bf6b5eaf94d89811578c9e73aecfdba4ef9e` (2026-10-13). PR34–37 are merged; earlier pending-merge statements below are historical. Current open PR32/33 remain separate owner work.
 
