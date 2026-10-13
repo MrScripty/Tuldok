@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P5 qualified; P6 local agent/scientific parity gates passed and fresh hosted CI is active. P7 complete backup/probe passed and actual restore qualification is active. See [P5c](reports/p5c-verification.md), [P6](reports/p6-verification.md) and [P7](reports/p7-verification.md).
+**Current phase:** P5 and P6 are qualified. P7 actual scientific backup, separate-database restore, cold reads and public UI/artifact checks passed. The narrowly scoped catalog creation-permission refinement passed final affected tests and independent review. Final hosted regression and original legacy-v2 acceptance remain under verification. See [P5c](reports/p5c-verification.md), [P6](reports/p6-verification.md) and [P7](reports/p7-verification.md).
 
-**Next slice:** Finish P6 regression/CI and P7 complete PostgreSQL/artifact restore; acceptance remains partial.
+**Next slice:** Finish P7 hosted regression; verify integrated main. Original v2 packet access and A8 real image/text inference remain external blockers to the overall task.
 
 **Acceptance status:** `partial`
 
@@ -36,10 +36,10 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 | G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | satisfied | [Actual native and neutral custody workflows](reports/p2-verification.md) |
 | G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | satisfied | [P4 actual generation and no-adapter startup](reports/p4-verification.md) |
 | G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | satisfied | [P5b training](reports/p5b-verification.md) and [P5c real evaluation/restart](reports/p5c-verification.md) |
-| G5 | Agent and UI clients reach the same domain owners for the admitted bounded matrix and equivalent authority; owner-only review/grants remain separate. Stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
+| G5 | Agent and UI clients reach the same domain owners for the admitted bounded matrix and equivalent authority; owner-only review/grants remain separate. Stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | satisfied | [P6 real SDK parity, denial and final hosted regression](reports/p6-verification.md) |
 | G6 | Admission is idempotent; cancel, crash and restart never duplicate work, publish partial success or silently leave descendants running | system | representative | automated | satisfied | [P3 custody and fault tests](reports/p3b-verification.md), retained by final P5 regression |
-| G7 | Existing imports/releases/runs retain identities and bytes, including Rheon v1/v2; explicit migration and complete PostgreSQL/artifact restore preserve old and new records | integration | representative | automated | pending | P2/P7 retained-history and restore workflow |
-| G8 | Desktop/narrow/keyboard UI supports open → generate → review/freeze → edit graph → train/evaluate → inspect results without explanatory clutter or false qualification labels | user-workflow | required-real | either | pending | P7 reviewed screenshots and actual-run browser receipt |
+| G7 | Existing imports/releases/runs retain identities and bytes, including Rheon v1/v2; explicit migration and complete PostgreSQL/artifact restore preserve old and new records | integration | representative | automated | pending | [P7 actual scientific restore and retained fixture matrix](reports/p7-verification.md) passed; original legacy-v2 packet remains blocked |
+| G8 | Desktop/narrow/keyboard UI supports open → generate → review/freeze → edit graph → train/evaluate → inspect results without explanatory clutter or false qualification labels | user-workflow | required-real | either | satisfied | [P1 desktop/narrow/keyboard](reports/p1-verification.md), [P4 real generation/review](reports/p4-verification.md), [P5 real train/evaluate](reports/p5c-verification.md), [P7 restored UI](reports/p7-verification.md) |
 
 ## Scope
 
@@ -236,21 +236,21 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** Complete G5 against the admitted matrix through a real workflow with separate owner review/grants. Compare domain evidence; exercise revisions, lost acknowledgements, revoked credentials, human-review spoofing, grant reuse, fresh external attempts, scoped test exposure and exact artifact reassembly. Excluded capabilities remain absent from MCP; existing HTTP authority is unchanged. No new actor-specific privilege bypass.
 
-**Status:** `Planned`
+**Status:** `Accepted`
 
-**Preparation admission:** [P6 exact contract and sequencing](reports/p6-admission.md). Source preparation is active; objective acceptance remains pending.
+**Preparation admission:** [P6 exact contract and sequencing](reports/p6-admission.md). The admitted matrix passed actual SDK scientific parity and final local/hosted gates.
 
 ### P7: Complete workflow and compatibility qualification
 
 **Goal:** Deliver an installable local workflow with preserved old data, explicit limitations and meaningful real scientific acceptance.
 
-**Allowed write set:** existing CI configuration, deployment/dependency documentation, existing backup/upgrade and browser acceptance tests, scoped packaging needed by P1–P6, README and this plan's reports. Runtime fixes remain in the owning milestone's boundary and receive affected re-review.
+**Allowed write set:** existing CI configuration, deployment/dependency documentation, existing backup/upgrade, metadata initialization and browser acceptance tests, scoped packaging needed by P1–P6, README and this plan's reports. Runtime fixes remain in the owning milestone's boundary and receive affected re-review.
 
 **Tasks:** Fresh setup/reopen, full PostgreSQL/artifact restore, old+new results, offline operation after installation, full actual browser workflow, all relevant lint/static/type/unit/integration/UI checks supported by chosen technologies; independent architecture/security/scientific review and applicable hosted CI once publication is authorized.
 
 **Acceptance gate:** G1–G8 satisfied with linked evidence; no unqualified hardware/performance/model claims; all material review findings resolved. Separate outstanding dataset-workflows A8 and actual legacy-v2 packet qualification remain visible rather than hidden by this plan's completion.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ## Blockers
 

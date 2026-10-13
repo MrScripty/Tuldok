@@ -138,3 +138,22 @@ API-test patch the only change from the original full discovery inventory.
 `7b1de6a33f76b3cf08ad45a91af346bfbb5ff13840a459937d73b5f4120e979a`.
 The failed original900-test discovery remains recorded; fresh hosted full
 discovery on the patched source is the final regression acceptance gate.
+
+## Final hosted acceptance
+
+Both final checks passed at PR53 head
+`5c0e7f92914e5aeac6ec939e3a667fc85b22aa90`:
+[lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38478255351) and
+[workspace UI](https://github.com/MrScripty/Tuldok/actions/runs/38478255410).
+Hosted full discovery passed 900 tests in 672.693 seconds with 36 explicit
+skips. The separately recorded local optional environments cover the admitted
+reader, training, evaluation and SDK paths with zero skips. Hosted agent
+22-test and MCP 13-test modules also passed. The broader suite is not claimed
+to have zero skips. Independent review and final JavaScript/browser checks
+passed. This supersedes the pending full-regression status above and satisfies
+G5 for the explicitly admitted operation matrix.
+
+The later caption-browser change only waits for the loaded page before DOM
+reads; it changes no scientific or MCP production behavior. Actual scientific
+SDK evidence remains tied to source `b02004a`. Original v2 packet and A8
+real-model acceptance remain separate blockers to overall completion.

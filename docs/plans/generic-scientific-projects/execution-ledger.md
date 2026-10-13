@@ -239,3 +239,26 @@ The user's subsequent explicit instruction admits merging qualified Tuldok PRs,
 assessing owner32/33 and verifying integrated main. PRs38–42 were merged in
 dependency order with exact qualified trees retained. No incomplete/failing
 work or deployment is admitted by this new authority.
+
+## P6 hosted acceptance and P7 actual qualification
+
+PR52 `fb3a5a0` and PR53 `5c0e7f9` passed both final hosted checks. P6's
+patched full discovery passed 900 tests with 36 explicit skips; dedicated
+local optional qualification remains separately recorded. G5/P6 is accepted.
+
+P7's actual separate-database restore passed raw table/schema/sequence/tree
+parity, cold runtime and completed-artifact/release reads, and public
+Data/Pipeline/Run inspection at desktop and narrow widths. All 89 evaluation
+artifacts matched full authenticated HTTP hashes. The original database and
+verified backup remain unchanged; only the admitted task-created source tree
+was removed after recovery proofs. The first logout failure, exact session
+cleanup and fresh successful browser attempt remain recorded.
+
+Final review additionally admitted exclusive fresh-catalog permission
+initialization for private manifests/cross-umask restores. This refinement passed independent review and all 38 affected tests with
+zero skips and frozen source. P7 final hosted regression remains pending. PR32 owner screenshots
+and independent main CI trigger PR54 were qualified and merged, preserving
+owner image bytes. Integrated main is `f2751c3`; its UI check passed and its
+lifecycle check is queued. PR33 requires separate deliberate reconciliation.
+PR43 and its dependent stack remain unmerged while the actual original v2
+packet gate is blocked. A8 lacks a live supported model/runtime. No deployment.

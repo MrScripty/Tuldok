@@ -1,0 +1,113 @@
+{
+  "before_head": "12a90e8dfe8009b19745c208c7ef4c7490b7302f",
+  "before": {
+    "backup_metadata.py": "f593d7c94365429f538ef4f8700adb42e82fe8249231bd27189217e18eabeb57",
+    "metadata.py": "ec3f16778edacd62e79159e376bec1781b87f01773113cf2c4f395bb631a8af8",
+    "tests/test_workspace_metadata.py": "5ff58fdec3eaa89e0d47b54cc3948c553f39f955413b61d48d8bff4a43d0e81f"
+  },
+  "started_utc": "2026-10-13T23:15:52.068729+00:00",
+  "command": [
+    "/workspace/Tuldok/.venv/bin/python",
+    "-m",
+    "unittest",
+    "-v",
+    "test_workspace_metadata",
+    "test_runtime_snapshots.RuntimeSnapshotContract.test_backup_restore_keeps_cold_runtime_modes_and_refuses_changed_completed_modes"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 228.48974937400635,
+  "after": {
+    "backup_metadata.py": "f593d7c94365429f538ef4f8700adb42e82fe8249231bd27189217e18eabeb57",
+    "metadata.py": "ec3f16778edacd62e79159e376bec1781b87f01773113cf2c4f395bb631a8af8",
+    "tests/test_workspace_metadata.py": "5ff58fdec3eaa89e0d47b54cc3948c553f39f955413b61d48d8bff4a43d0e81f"
+  },
+  "changed_during_gates": [],
+  "log": "/tmp/tuldok-p7-final-mode-tests.log",
+  "log_sha256": "f3a733f1483c615ce1190ad519e09995b396776f971504f39cc64ed78cd1da63",
+  "finished_utc": "2026-10-13T23:19:40.558873+00:00",
+  "tests": 38,
+  "skipped": 0,
+  "unittest_seconds": 228.276,
+  "module_tests": 37,
+  "cold_runtime_test": 1,
+  "changed_functions": {
+    "backup_metadata.py": [
+      "restore_catalog"
+    ],
+    "metadata.py": [
+      "Metadata.__init__",
+      "Metadata._initialize",
+      "_publish_manifest"
+    ]
+  },
+  "unchanged_functions": {
+    "backup_metadata.py": [
+      "_remove_partial_contents",
+      "backup_catalog",
+      "canonical",
+      "copy_tree",
+      "digest",
+      "file_hash",
+      "main",
+      "pack",
+      "populate_catalog",
+      "read_catalog",
+      "read_sequences",
+      "restore_sequences",
+      "separate_paths",
+      "summaries",
+      "sync_directory",
+      "table_state",
+      "tree_manifest",
+      "tree_modes",
+      "unpack",
+      "write_json"
+    ],
+    "metadata.py": [
+      "CatalogLock.__enter__",
+      "CatalogLock.__exit__",
+      "CatalogLock.__init__",
+      "Metadata._search_path",
+      "Metadata._signature",
+      "Metadata.claim_runtime",
+      "Metadata.close",
+      "Metadata.commit",
+      "Metadata.execute",
+      "Metadata.expected_signature",
+      "Metadata.in_transaction",
+      "Metadata.on_commit",
+      "Metadata.on_rollback",
+      "Metadata.rollback",
+      "Metadata.tables",
+      "Metadata.transaction",
+      "Metadata.validate_schema",
+      "Row.__getitem__",
+      "Row.__new__",
+      "Row.keys",
+      "_key",
+      "_sync_directory",
+      "connection_info",
+      "definition_hash",
+      "row_factory",
+      "tables_for_version"
+    ]
+  },
+  "python": "Python 3.12.14",
+  "python310_grammar_parse": "passed for all three changed files",
+  "actual_source_catalog_backup_mutation": false,
+  "package_installs": false,
+  "permission_initialization_authority": "exclusive creation-held file descriptors in Metadata; no postconstructor file chmod",
+  "default_manifest_publication": "existing atomic os.replace unchanged",
+  "pending_retry": "only an absent marker is created after existing pending reservation/schema validation; existing lock is validated, never chmodded",
+  "remaining_safe_refusal_boundary": "A retained .tuldok.json.tmp from interrupted publication makes the exclusive creator refuse; its bytes, inode and permissions are preserved. No temporary sweep/repair.",
+  "new_mode_test_cases": [
+    "test_fresh_restore_refuses_preexisting_catalog_initialization_files",
+    "test_new_restore_never_repairs_same_owner_files_replaced_after_metadata_creation",
+    "test_private_manifest_restore_preserves_mode_and_refuses_changed_completed_mode",
+    "test_private_manifest_restore_retry_preserves_identity_and_refuses_changed_staging_mode",
+    "test_private_pending_restore_creates_missing_manifest_without_changing_existing_lock",
+    "test_private_pending_restore_preserves_stale_exclusive_manifest_temporary"
+  ],
+  "diff_check_exit_code": 0,
+  "after_head": "12a90e8dfe8009b19745c208c7ef4c7490b7302f"
+}

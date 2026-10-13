@@ -426,17 +426,47 @@ def restore_catalog(backup, destination, *, dsn=None):
             return marker
         finally:
             metadata.close()
+    staging_descriptor = None
     if staging.exists():
         if json.loads((staging / marker_name).read_bytes()) != marker:
             raise StorageTransferError('Restore staging directory belongs to another transfer.')
     else:
         staging.mkdir(parents=True, mode=0o700)
         write_json(staging / marker_name, marker)
+        staging_descriptor = os.open(staging, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     # The source manifest names an already existing schema. Create this catalog
     # before copying that manifest, so an existing schema is never reused.
-    existed = (staging / '.tuldok.json').exists()
-    metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity, schema_version=version)
+    metadata = None
     try:
+        existed = (staging / '.tuldok.json').exists()
+        initialization = {}
+        if staging_descriptor is not None:
+            if os.path.lexists(staging / '.tuldok.json'):
+                raise StorageTransferError('New restore catalog manifest already exists.')
+            held = os.fstat(staging_descriptor)
+            named = staging.lstat()
+            if (held.st_dev, held.st_ino, held.st_uid) != (named.st_dev, named.st_ino, os.getuid()):
+                raise StorageTransferError('New restore staging identity changed.')
+            modes = tree_modes(backup / 'catalog', receipt['files'])
+            initialization['initial_file_modes'] = {name: modes[name]
+                                                    for name in ('.tuldok.json', '.metadata-init.lock')}
+        elif not os.path.lexists(staging / '.tuldok.json') and os.path.lexists(staging / '.tuldok-initializing.json'):
+            modes = tree_modes(backup / 'catalog', receipt['files'])
+            lock = staging / '.metadata-init.lock'
+            current = lock.lstat()
+            if (not stat.S_ISREG(current.st_mode) or
+                    stat.S_IMODE(current.st_mode) != modes['.metadata-init.lock'] or
+                    file_hash(lock) != receipt['files']['.metadata-init.lock']['sha256']):
+                raise StorageTransferError('Pending restore lock bytes or permissions differ.')
+            # Metadata validates the pending identity/schema before publishing a
+            # newly created marker. The existing lock receives no permission change.
+            initialization['initial_file_modes'] = {'.tuldok.json': modes['.tuldok.json']}
+        metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity,
+                            schema_version=version, **initialization)
+        if staging_descriptor is not None:
+            named = staging.lstat()
+            if (held.st_dev, held.st_ino) != (named.st_dev, named.st_ino):
+                raise StorageTransferError('New restore staging identity changed.')
         with metadata.lock, metadata.transaction():
             current = read_catalog(metadata)
             if any(state['count'] for state in current.values()):
@@ -452,7 +482,10 @@ def restore_catalog(backup, destination, *, dsn=None):
         sync_directory(destination.parent)
         return marker
     finally:
-        metadata.close()
+        if metadata is not None:
+            metadata.close()
+        if staging_descriptor is not None:
+            os.close(staging_descriptor)
 
 
 def main():

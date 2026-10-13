@@ -136,3 +136,26 @@ Schedule tests after evaluation under root ownership; no concurrent heavy suite 
 ## Final evidence
 
 Bounded report: source commit/tool versions, safe absolute paths and UUID (no secrets), actual disk phases, permission-preservation fix revision, table/sequence/file digest summaries, backup receipt SHA, optional cleanup receipt, cold actual runtime verification, completed Run/release/checkpoint/full-field digests, restored UI/read results and exact compatibility receipts/blockers. Store long inventories privately with hashes/counts; do not dump credentials or raw DB rows into chat. This plan writes only this /tmp document.
+
+## Fresh catalog permission initialization refinement
+
+Final review observed that Metadata creates `.tuldok.json` and
+`.metadata-init.lock` before transfer. A private source manifest or a different
+creation umask can therefore contradict the exact-mode transfer guard in a
+valid new restore. Root admits a minimal owner change in `metadata.py`,
+`backup_metadata.py` and `tests/test_workspace_metadata.py` to apply validated
+source modes only to files exclusively created by this invocation. A resumed
+marker-bound staging directory may initialize an absent manifest after Metadata
+validates its existing pending reservation, identity and schema. Its existing
+lock and all existing file modes remain untouched.
+Creation identity must come from the creating owner; inspecting an existing
+name after construction does not prove ownership. Refuse preexisting fresh marker/lock files and never chmod a substituted
+file, hardlink or symlink. Keep the existing atomic manifest publication
+behavior; this refinement adds no stronger same-owner publication guarantee.
+Resumed staging and completed
+restores retain strict mode contradiction refusal. A leftover exclusive
+manifest temporary is refused; no general cleanup or overwrite is admitted
+to turn ambiguous partial state into apparent success. No receipt, schema or
+historical mode claim changes, and no actual restored catalog edits are
+admitted. Qualify private 0400/0600 manifests, 077-to-022 umask changes,
+interruption/retry and replaced-file refusal, then independent review.

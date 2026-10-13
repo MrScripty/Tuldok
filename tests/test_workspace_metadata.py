@@ -489,6 +489,174 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(parents[0])
 
+    def test_private_manifest_restore_preserves_mode_and_refuses_changed_completed_mode(self):
+        from backup_metadata import StorageTransferError, tree_modes
+        previous_umask = os.umask(0o022)
+        try:
+            for mode in (0o400, 0o600):
+                with self.subTest(mode=oct(mode)):
+                    metadata = self.catalog(name='private-' + oct(mode), version=8)
+                    (metadata.path / '.tuldok.json').chmod(mode)
+                    backup = self.root / ('backup-' + oct(mode))
+                    receipt = backup_catalog(metadata.path, backup, quiesced=True)
+                    before = tree_manifest(backup)
+                    self.drop(metadata)
+                    destination = self.root / ('restored-' + oct(mode))
+                    result = restore_catalog(backup, destination)
+                    self.assertEqual(restore_catalog(backup, destination), result)
+                    self.assertEqual(tree_modes(destination, receipt['files']),
+                                     tree_modes(backup / 'catalog', receipt['files']))
+                    manifest = destination / '.tuldok.json'
+                    manifest.chmod(0o644)
+                    with self.assertRaisesRegex(StorageTransferError, 'later writes'):
+                        restore_catalog(backup, destination)
+                    self.assertEqual(manifest.stat().st_mode & 0o777, 0o644)
+                    self.assertEqual(tree_manifest(backup), before)
+        finally:
+            os.umask(previous_umask)
+
+    def test_private_manifest_restore_retry_preserves_identity_and_refuses_changed_staging_mode(self):
+        import backup_metadata
+        previous_umask = os.umask(0o077)
+        try:
+            metadata = self.catalog(version=8)
+            (metadata.path / '.tuldok.json').chmod(0o400)
+            backup = self.root / 'private-retry-backup'
+            backup_catalog(metadata.path, backup, quiesced=True)
+            before = tree_manifest(backup)
+            self.drop(metadata)
+            os.umask(0o022)
+            destination = self.root / 'private-retry-restored'
+            with patch('backup_metadata.copy_tree', side_effect=OSError('injected pre-copy interruption')):
+                with self.assertRaisesRegex(OSError, 'pre-copy interruption'):
+                    restore_catalog(backup, destination)
+            staging = next(self.root.glob(destination.name + '.restore-*'))
+            manifest = staging / '.tuldok.json'
+            marker_bytes = manifest.read_bytes()
+            self.assertEqual(manifest.stat().st_mode & 0o777, 0o400)
+            lock = staging / '.metadata-init.lock'
+            self.assertEqual(lock.stat().st_mode & 0o777, 0o600)
+            lock.chmod(0o644)
+            with self.assertRaisesRegex(backup_metadata.StorageTransferError, 'permissions differ'):
+                restore_catalog(backup, destination)
+            self.assertEqual(lock.stat().st_mode & 0o777, 0o644)
+            lock.chmod(0o600)  # Fixture owner explicitly restores the admitted mode.
+            manifest.chmod(0o600)
+            with self.assertRaisesRegex(backup_metadata.StorageTransferError, 'permissions differ'):
+                restore_catalog(backup, destination)
+            self.assertEqual(manifest.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(manifest.read_bytes(), marker_bytes)
+            manifest.chmod(0o400)  # Fixture owner explicitly restores the admitted mode.
+            result = restore_catalog(backup, destination)
+            self.assertEqual(restore_catalog(backup, destination), result)
+            self.assertEqual((destination / '.tuldok.json').read_bytes(), marker_bytes)
+            self.assertEqual((destination / '.tuldok.json').stat().st_mode & 0o777, 0o400)
+            self.assertEqual((destination / '.metadata-init.lock').stat().st_mode & 0o777, 0o600)
+            self.assertEqual(tree_manifest(backup), before)
+        finally:
+            os.umask(previous_umask)
+
+    def test_new_restore_never_repairs_same_owner_files_replaced_after_metadata_creation(self):
+        from backup_metadata import StorageTransferError
+        for name in ('.tuldok.json', '.metadata-init.lock'):
+            with self.subTest(name=name):
+                metadata = self.catalog(name='replace-' + name, version=8)
+                backup = self.root / ('replace-backup-' + name)
+                backup_catalog(metadata.path, backup, quiesced=True)
+                self.drop(metadata)
+                replaced = []
+                def replace(path, *args, **kwargs):
+                    current = Metadata(path, *args, **kwargs)
+                    target = Path(path) / name
+                    value = target.read_bytes()
+                    target.unlink(); target.write_bytes(value); target.chmod(0o400)
+                    replaced.append((target, value, target.stat().st_ino))
+                    return current
+                with patch('metadata.Metadata', side_effect=replace):
+                    with self.assertRaisesRegex(StorageTransferError, 'permissions differ'):
+                        restore_catalog(backup, self.root / ('replace-restored-' + name))
+                target, value, inode = replaced[0]
+                self.assertEqual(target.stat().st_mode & 0o777, 0o400)
+                self.assertEqual(target.stat().st_ino, inode)
+                self.assertEqual(target.read_bytes(), value)
+
+    def test_fresh_restore_refuses_preexisting_catalog_initialization_files(self):
+        import backup_metadata
+        for name in ('.tuldok.json', '.metadata-init.lock'):
+            with self.subTest(name=name):
+                metadata = self.catalog(name='preexisting-' + name, version=8)
+                backup = self.root / ('preexisting-backup-' + name)
+                backup_catalog(metadata.path, backup, quiesced=True)
+                self.drop(metadata)
+                original = backup_metadata.write_json
+                foreign = []
+                def create(path, value):
+                    original(path, value)
+                    target = Path(path).parent / name
+                    target.write_bytes(b'preserve preexisting file'); target.chmod(0o400)
+                    foreign.append(target)
+                with patch('backup_metadata.write_json', side_effect=create):
+                    with self.assertRaisesRegex((StorageError, backup_metadata.StorageTransferError), 'already exist'):
+                        restore_catalog(backup, self.root / ('preexisting-restored-' + name))
+                self.assertEqual(foreign[0].stat().st_mode & 0o777, 0o400)
+                self.assertEqual(foreign[0].read_bytes(), b'preserve preexisting file')
+                foreign[0].unlink()  # The fixture's intentionally invalid manifest is not a catalog.
+
+    def test_private_pending_restore_creates_missing_manifest_without_changing_existing_lock(self):
+        from backup_metadata import StorageTransferError, digest
+        previous_umask = os.umask(0o077)
+        try:
+            metadata = self.catalog(version=8)
+            (metadata.path / '.tuldok.json').chmod(0o400)
+            backup = self.root / 'pending-private-backup'
+            receipt = backup_catalog(metadata.path, backup, quiesced=True)
+            self.drop(metadata); os.umask(0o022)
+            destination = self.root / 'pending-private-restored'
+            with patch('metadata._publish_manifest', side_effect=OSError('injected early publication interruption')):
+                with self.assertRaisesRegex(OSError, 'early publication interruption'):
+                    restore_catalog(backup, destination)
+            staging = next(self.root.glob(destination.name + '.restore-*'))
+            self.assertFalse(os.path.lexists(staging / '.tuldok.json'))
+            lock = staging / '.metadata-init.lock'
+            identity = lock.stat().st_ino
+            lock.chmod(0o644)
+            with self.assertRaisesRegex(StorageTransferError, 'lock bytes or permissions differ'):
+                restore_catalog(backup, destination)
+            self.assertEqual(lock.stat().st_mode & 0o777, 0o644)
+            lock.chmod(0o600)  # Fixture owner restores the mode; the tool never repairs it.
+            result = restore_catalog(backup, destination)
+            self.assertEqual(restore_catalog(backup, destination), result)
+            self.assertEqual((destination / '.metadata-init.lock').stat().st_ino, identity)
+            self.assertEqual((destination / '.metadata-init.lock').stat().st_mode & 0o777, 0o600)
+            self.assertEqual((destination / '.tuldok.json').stat().st_mode & 0o777, 0o400)
+            self.assertEqual(tree_manifest(destination, ('.restore-receipt-' + digest(receipt) + '.json',)),
+                             receipt['files'])
+        finally:
+            os.umask(previous_umask)
+
+    def test_private_pending_restore_preserves_stale_exclusive_manifest_temporary(self):
+        metadata = self.catalog(version=8)
+        (metadata.path / '.tuldok.json').chmod(0o400)
+        backup = self.root / 'stale-temporary-backup'
+        backup_catalog(metadata.path, backup, quiesced=True)
+        self.drop(metadata)
+        destination = self.root / 'stale-temporary-restored'
+        original = os.replace
+        def interrupt(source, target):
+            if Path(target).name == '.tuldok.json':
+                raise OSError('injected pre-rename interruption')
+            return original(source, target)
+        with patch('metadata.os.replace', side_effect=interrupt):
+            with self.assertRaisesRegex(OSError, 'pre-rename interruption'):
+                restore_catalog(backup, destination)
+        staging = next(self.root.glob(destination.name + '.restore-*'))
+        temporary = staging / '.tuldok.json.tmp'
+        before = (temporary.read_bytes(), temporary.stat().st_mode, temporary.stat().st_ino)
+        with self.assertRaises(FileExistsError):
+            restore_catalog(backup, destination)
+        self.assertEqual((temporary.read_bytes(), temporary.stat().st_mode, temporary.stat().st_ino), before)
+        self.assertFalse(os.path.lexists(staging / '.tuldok.json'))
+
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
         metadata = self.historical_catalog()
         rows = summaries(read_catalog(metadata))

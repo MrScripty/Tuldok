@@ -89,7 +89,9 @@ a Python3.10 compatibility gap in exception diagnostics. It now uses
 `sys.exc_info()[1]`, optional notes and an explicit CLI diagnostic preserving
 original exception identity/arguments. Nine affected tests passed8.431s,
 including legacy note capability and a tiny cold-runtime backup/restore.
-Copy/mode/receipt/restore functions remain byte-identical. The API availability
+At that compatibility-only checkpoint, copy/mode/receipt/restore functions
+remained byte-identical. The later creation-mode refinement below changes
+restore initialization separately. The API availability
 is documented in [Python sys](https://docs.python.org/3.11/library/sys.html#sys.exception)
 and [exceptions](https://docs.python.org/3.11/library/exceptions.html#BaseException.add_note).
 [Compatibility receipt](p7/python310-compat-receipt.json). Tests ran on3.12;
@@ -105,3 +107,44 @@ This closes the actual scientific transfer/read gates within their stated
 environment. Dataset-workflows A8 real positive model assistance and the
 original legacy-v2 packet remain separate external blockers; authored
 compatibility fixtures do not close their real-data/model acceptance.
+
+## Private manifest and creation-umask refinement
+
+A tiny independent reproduction found that Metadata creates its manifest and
+initialization lock before file transfer. With a 0400/0600 source manifest or
+a 077-to-022 creation-umask change, a valid restore could reach the strict copy
+guard with newly generated modes that differed from the source.
+
+The refinement applies validated source modes while Metadata still holds the
+file descriptors it exclusively created. It changes no existing file mode.
+Restore no longer performs permission changes on names inspected after
+Metadata construction. A fresh staging directory refuses preexisting
+initialization files. A validated interrupted initialization may assign the
+source mode to its newly created absent manifest; its existing lock is left
+untouched. Resumed and completed mode contradictions still fail. Default
+Metadata callers and atomic manifest publication retain their prior behavior.
+
+The first reviewed candidate applied modes after construction; review rejected
+its replacement-file race before publication. The final owner design removes
+that permission authority. Mid-publication ambiguity with a leftover exclusive
+manifest temporary remains a safe refusal, requiring explicit owner recovery;
+no temporary-file sweep or arbitrary overwrite is introduced.
+
+These tiny cases extend the transfer proof to private initialization modes.
+The actual multi-gigabyte scientific restore remains evidence for its stated
+owner revision and ordinary catalog initialization modes, with final affected
+checks and hosted regression recorded separately.
+
+Final affected regression passed 38 tests in 228.276 seconds with zero skips:
+the complete 37-test metadata module plus cold captured-runtime backup/restore.
+All three source/test hashes remained unchanged. Independent final review,
+Python 3.10 grammar/current-interpreter compilation, plan validation and
+`git diff --check` passed. Actual tests used Python 3.12.14.
+[Final mode receipt](p7/final-mode-receipt.json), SHA256
+`9de3696ddc47af73475cae2b3aea4f894c7cc719bf476716e78c404b7d7f50eb`.
+Only `restore_catalog`, `_publish_manifest`, `Metadata.__init__` and
+`Metadata._initialize` changed from the prior P7 head; backup/copy/receipt
+functions remained unchanged. No actual catalog, backup or installed package
+was modified during these final checks. Fresh hosted lifecycle/UI checks on
+the published refinement remain pending. The original v2 packet remains
+required for the plan's remaining G7 acceptance.
