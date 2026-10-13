@@ -1,4 +1,4 @@
-// Recorded actual Rheon bytes → frozen release → edited graph → integrity run/download/reopen.
+// Default: recorded actual Rheon v1. --authored-v2: synthetic transport only; no actual-packet/physics acceptance.
 "use strict";
 const assert = require("node:assert/strict"),
   fs = require("node:fs"),
@@ -9,8 +9,9 @@ const { pageLoadTracker } = require("./browser_page_load.cjs");
 const tracker = pageLoadTracker();
 const { waitForDebugger } = require("./browser_startup.cjs");
 const { qaDirectory, screenshotOptions } = require("./qa_artifacts.cjs");
+const authoredV2 = process.argv.includes("--authored-v2");
 const root = path.resolve(__dirname, ".."),
-  report = qaDirectory(root, "workspace-sequence-run"),
+  report = qaDirectory(root, authoredV2 ? "workspace-sequence-v2-authored" : "workspace-sequence-run"),
   temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tuldok-workspace-sequence-run-")),
   children = [];
 const errors = [],
@@ -209,7 +210,7 @@ function launch(command, args, options) {
     checks.push(name);
     console.log("PASS", name);
   };
-  async function screenshot(name, width, height) {
+  async function screenshot(name, width, height, frameSelector = null) {
     await send("Emulation.setDeviceMetricsOverride", {
       width,
       height,
@@ -221,7 +222,26 @@ function launch(command, args, options) {
       await evaluate(
         'document.getElementById("catalog-frame").contentWindow.scrollTo(0,0)',
       );
+    if (frameSelector) {
+      await evaluate(`(async()=>{
+        const iframe=document.getElementById('catalog-frame'), target=iframe.contentDocument.querySelector(${JSON.stringify(frameSelector)});
+        iframe.scrollIntoView({block:'start'});
+        target.scrollIntoView({block:'center'});
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const outer=iframe.getBoundingClientRect(), inner=target.getBoundingClientRect();
+        window.scrollBy(0,outer.top+inner.top-innerHeight/3);
+      })()`);
+    }
     await pause(60);
+    if (frameSelector) {
+      const visible = await evaluate(`(()=>{
+        const iframe=document.getElementById('catalog-frame'), outer=iframe.getBoundingClientRect(),
+          summary=iframe.contentDocument.getElementById('sequence-controls-summary').getBoundingClientRect();
+        return summary.height>0 && summary.top>=0 && summary.bottom<=iframe.contentWindow.innerHeight &&
+          outer.top+summary.top>=0 && outer.top+summary.bottom<=innerHeight;
+      })()`);
+      assert.ok(visible, 'Controls summary must be visible in both iframe and screenshot: '+name);
+    }
     assert.ok(
       await evaluate("document.documentElement.scrollWidth<=innerWidth+1"),
       "Whole-page overflow " + name,
@@ -236,7 +256,8 @@ function launch(command, args, options) {
       file: filename,
       width,
       height,
-      mode: "real native validation of recorded producer sequence bytes; no new producer or scientific qualification",
+      inspector: frameSelector,
+      mode: authoredV2 ? "Authored synthetic v2 transport; no actual-packet or physics acceptance" : "real native validation of recorded producer sequence bytes; no new producer or scientific qualification",
       quality: 85,
     });
   }
@@ -264,29 +285,61 @@ function launch(command, args, options) {
   await focus('#nav-data'); await key('Enter');
   await until(() => evaluate('!document.getElementById("view-data").hidden'));
   check('keyboard navigation reaches honest empty real runs and returns to retained Data');
-  const fixture = path.join(root, 'tests/fixtures/rheon_actual_fee7b4a');
+  const fixture = authoredV2 ? path.join(temporary, 'authored-v2') : path.join(root, 'tests/fixtures/rheon_actual_fee7b4a');
+  if (authoredV2) {
+    fs.mkdirSync(fixture);
+    execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'tests');from fixtures.rheon_controls_authored import fixture;p=Path(sys.argv[1]);[(p/name).write_bytes(raw) for name,raw in zip(('run.json','frames.jsonl','controls.json'),fixture())]",fixture],{cwd:root});
+  }
   const runBytes = fs.readFileSync(path.join(fixture,'run.json'));
   const framesBytes = fs.readFileSync(path.join(fixture,'frames.jsonl'));
-  const sourceManifest = JSON.parse(runBytes), producerReceipt = JSON.parse(fs.readFileSync(path.join(fixture,'producer-receipt.json')));
+  const controlsBytes = authoredV2 ? fs.readFileSync(path.join(fixture,'controls.json')) : null;
+  const sourceManifest = JSON.parse(runBytes), producerReceipt = authoredV2 ? null : JSON.parse(fs.readFileSync(path.join(fixture,'producer-receipt.json')));
   const sha = raw => require('node:crypto').createHash('sha256').update(raw).digest('hex');
-  assert.equal(sha(runBytes),producerReceipt.run_sha256);assert.equal(sha(framesBytes),producerReceipt.frames_sha256);
-  assert.equal(sourceManifest.provenance.source_commit,'fee7b4a139574f87b259796b1ba8698a41d31ac1');
-  assert.equal(sourceManifest.provenance.source_dirty,false);assert.equal(sourceManifest.frame_count,9);
-  assert.match(producerReceipt.basis,/actual producer execution/);
+  if (authoredV2) {
+    assert.equal(sourceManifest.version,2);assert.equal(sourceManifest.controls_sha256,sha(controlsBytes));
+    assert.match(JSON.parse(controlsBytes).provenance.source_note,/Authored synthetic/);
+  } else {
+    assert.equal(sha(runBytes),producerReceipt.run_sha256);assert.equal(sha(framesBytes),producerReceipt.frames_sha256);
+    assert.equal(sourceManifest.provenance.source_commit,'fee7b4a139574f87b259796b1ba8698a41d31ac1');
+    assert.equal(sourceManifest.provenance.source_dirty,false);assert.equal(sourceManifest.frame_count,9);
+    assert.match(producerReceipt.basis,/actual producer execution/);
+  }
   await click('.embed-toolbar button',true);
   await evaluate(`${element('#sequence-import-panel',true)}.open=true`);
   async function choose(selector,name,raw) {
     await evaluate(`(()=>{const bytes=Uint8Array.from(atob(${JSON.stringify(raw.toString('base64'))}),c=>c.charCodeAt(0));const transfer=new DataTransfer();transfer.items.add(new File([bytes],${JSON.stringify(name)}));${element(selector,true)}.files=transfer.files;})()`);
   }
   await choose('#sequence-run','run.json',runBytes);await choose('#sequence-frames','frames.jsonl',framesBytes);
-  await fill('#sequence-name','Recorded Rheon capped pilot',true);
+  await fill('#sequence-name',authoredV2 ? 'Authored synthetic v2 transport (not native packet)' : 'Recorded Rheon capped pilot',true);
+  if (authoredV2) {
+    await click('#sequence-import-form button',true);
+    await until(()=>evaluate(`${doc(true)}.defaultView.eval('sequenceImportBusy')===false`));
+    assert.match(await text('#sequence-import-status',true),/controls|version|invalid|exactly/i);
+    assert.equal((await(await fetch(base+'/api/workbench/records?kind=sequence')).json()).items.length,0);
+    await choose('#sequence-controls','controls.json',controlsBytes);
+    await choose('#sequence-run','run.json',fs.readFileSync(path.join(root,'tests/fixtures/rheon_actual_fee7b4a/run.json')));
+    await click('#sequence-import-form button',true);
+    await until(()=>evaluate(`${doc(true)}.defaultView.eval('sequenceImportBusy')===false`));
+    assert.match(await text('#sequence-import-status',true),/controls|version|invalid|exactly/i);
+    assert.equal((await(await fetch(base+'/api/workbench/records?kind=sequence')).json()).items.length,0);
+    await choose('#sequence-run','run.json',runBytes);
+    check('Authored v2 missing controls and mixed v1 manifest/controls refused before any record publication');
+  }
   await click('#sequence-import-form button',true);
   await until(()=>text('#sequence-import-status',true).then(t=>/9 frames, unreviewed/.test(t)));
   await key('Escape');
   const row=(await(await fetch(base+'/api/workbench/records?kind=sequence')).json()).items[0];
   await evaluate(`${doc(true)}.defaultView.TuldokWorkspaceData.openCurrentRecord(${JSON.stringify(row.id)})`);
   await until(()=>evaluate(`${element('#sequence-note',true)}!==null && !${element('#sequence-inspection',true)}.hidden`));
-  await fill('#sequence-note','Inspect retained native pilot bytes; no scientific or training qualification.',true);
+  if (authoredV2) {
+    assert.equal(row.sequence.manifest.version,2);
+    assert.equal(row.sequence.controls_sha256,sha(controlsBytes));
+    await until(()=>text('#sequence-controls-summary',true).then(t=>/Version 2.*8 accepted intervals/.test(t)));
+    await screenshot('authored-v2-data-1440',1440,900,'#sequence-controls-inspection');
+    await screenshot('authored-v2-data-390',390,844,'#sequence-controls-inspection');
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+  }
+  await fill('#sequence-note',authoredV2 ? 'Inspect authored v2 transport bytes only; no actual producer packet or physics qualification.' : 'Inspect retained native pilot bytes; no scientific or training qualification.',true);
   await select('#record-review','human_reviewed',true);
   await focus('#editor button:not([type="button"])',true);await key('Enter');
   await until(()=>text('#notice',true).then(async()=>{const current=await(await fetch(base+'/api/workbench/records/'+row.id)).json();return current.review==='human_reviewed';}));
@@ -303,16 +356,18 @@ function launch(command, args, options) {
   const download = await evaluate(`${doc(true)}.querySelector('#release-result a').href`), releaseId=/([a-f0-9]{64})/.exec(download)[1];
   const releaseResponse = await fetch(download); assert.equal(releaseResponse.status,200);
   const releaseBytes=Buffer.from(await releaseResponse.arrayBuffer());
-  fs.writeFileSync(path.join(report,'actual-sequence-release.zip'),releaseBytes);
+  const releasePath=path.join(report,authoredV2?'authored-v2-sequence-release.zip':'actual-sequence-release.zip');
+  fs.writeFileSync(releasePath,releaseBytes);
   await key('Escape');
   const nativeCheck=JSON.parse(execFileSync('python3',['-c',
-    "import sys,json,zipfile,io,struct;from pathlib import Path;import rheon_sequence_contract as c;import rheon_sequences as a;z=zipfile.ZipFile(sys.argv[1]);f=Path(sys.argv[2]);m=json.loads(z.read('manifest.json'));assert len(m['records'])==1;r=m['records'][0];assert r['kind']=='sequence' and r['review']=='human_reviewed';b=zipfile.ZipFile(io.BytesIO(z.read(r['asset'])));run=(f/'run.json').read_bytes();raw=(f/'frames.jsonl').read_bytes();assert b.read('run.json')==run and b.read('frames.jsonl')==raw;prepared=a.prepare(run,raw);assert r['sequence']['frame_index']==prepared['metadata']['frame_index'];inputs=[c._fields(c.parse(line)) for line in raw.splitlines()];outputs=[c._fields(c.parse(line)) for line in b.read('frames.jsonl').splitlines()];assert len(outputs)==9;assert all(struct.pack('<'+('f' if c.FIELD_TYPES[name]=='f32' else 'd'),x)==struct.pack('<'+('f' if c.FIELD_TYPES[name]=='f32' else 'd'),y) for i in range(9) for name in c.FIELD_TYPES for x,y in zip(inputs[i][name],outputs[i][name]));print(json.dumps({'frames':9,'native_field_bits_preserved':True,'raw_bytes_exact':True}))",
-    path.join(report,'actual-sequence-release.zip'),fixture],{cwd:root,encoding:'utf8'}));
+    "import sys,json,zipfile,io,struct;from pathlib import Path;import rheon_sequence_contract as c;import rheon_sequences as a;z=zipfile.ZipFile(sys.argv[1]);f=Path(sys.argv[2]);m=json.loads(z.read('manifest.json'));assert len(m['records'])==1;r=m['records'][0];assert r['kind']=='sequence' and r['review']=='human_reviewed';b=zipfile.ZipFile(io.BytesIO(z.read(r['asset'])));run=(f/'run.json').read_bytes();raw=(f/'frames.jsonl').read_bytes();assert b.read('run.json')==run and b.read('frames.jsonl')==raw;controls=(f/'controls.json').read_bytes() if (f/'controls.json').exists() else None;assert b.namelist()==(['run.json','frames.jsonl','controls.json'] if controls else ['run.json','frames.jsonl']);assert controls is None or b.read('controls.json')==controls;prepared=a.prepare(run,raw,controls) if controls else a.prepare(run,raw);assert r['sequence']['frame_index']==prepared['metadata']['frame_index'];inputs=[c._fields(c.parse(line)) for line in raw.splitlines()];outputs=[c._fields(c.parse(line)) for line in b.read('frames.jsonl').splitlines()];assert len(outputs)==9;assert all(struct.pack('<'+('f' if c.FIELD_TYPES[name]=='f32' else 'd'),x)==struct.pack('<'+('f' if c.FIELD_TYPES[name]=='f32' else 'd'),y) for i in range(9) for name in c.FIELD_TYPES for x,y in zip(inputs[i][name],outputs[i][name]));print(json.dumps({'frames':9,'native_field_bits_preserved':True,'raw_bytes_exact':True,'controls_bytes_exact':controls is not None,'controls_sha256':__import__('hashlib').sha256(controls).hexdigest() if controls else None}))",
+    releasePath,fixture],{cwd:root,encoding:'utf8'}));
   assert.equal(nativeCheck.native_field_bits_preserved,true);
-  check('actual recorded native sequence imported/reviewed/frozen through Data; raw files and all native field bits preserved');
+  check(authoredV2 ? 'Authored v2 imported/reviewed/frozen; all three original files preserved, not actual-packet acceptance' : 'actual recorded native sequence imported/reviewed/frozen through Data; raw files and all native field bits preserved');
+  if(authoredV2){assert.equal(nativeCheck.controls_bytes_exact,true);assert.equal(nativeCheck.controls_sha256,sha(controlsBytes));}
   await nav('pipeline');
   await until(() => evaluate('!!document.getElementById("real-create-form")'));
-  await fill('#real-create-name','Recorded sequence integrity');
+  await fill('#real-create-name',authoredV2?'Authored v2 transport integrity':'Recorded sequence integrity');
   await select('#real-create-release',releaseId);
   await click('#real-create-form button');
   await until(() => evaluate('!!document.getElementById("real-save")'));
@@ -362,6 +417,7 @@ function launch(command, args, options) {
   assert.equal(validationReport.validation_summary.frame_count,9);
   assert.equal(validationReport.validation_summary.family_scope,'selected_records_only');
   assert.ok(validationReport.validation_summary.limitations.length);
+  if(authoredV2){const summary=validationReport.validation_summary.sequences[0];assert.equal(summary.controls_sha256,sha(controlsBytes));assert.equal(summary.controls_summary.interval_count,8);assert.match(summary.controls_summary.provenance.source_note,/Authored synthetic/);}
   fs.writeFileSync(path.join(report,'validation-report.json'),JSON.stringify(validationReport,null,2));
   const frozenLink=links.find(a=>a.text==='Download verified frozen export');assert.ok(frozenLink);
   assert.deepEqual(Buffer.from(await(await fetch(frozenLink.href)).arrayBuffer()),releaseBytes);
@@ -385,11 +441,11 @@ function launch(command, args, options) {
   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({
     source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
     dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),
-    command:'node tests/browser_workspace_sequence_run.cjs',browser:(await send('Browser.getVersion')).product,
+    command:'node tests/browser_workspace_sequence_run.cjs'+(authoredV2?' --authored-v2':''),qualification:authoredV2?'Authored synthetic v2 transport only; not actual v2 packet or physics acceptance':'Recorded actual v1 transport only',actual_v2_packet_acceptance:false,browser:(await send('Browser.getVersion')).product,
     checks,captures,run_id:run.id,release_id:releaseId,training:false,physics_claim:false,
-    native_check:nativeCheck,producer_receipt:producerReceipt,offline_canary:offlineCanary,fixture_provenance:'Recorded actual Rheon fee7b4a capped pilot; no producer/simulation invoked',
+    native_check:nativeCheck,producer_receipt:producerReceipt,offline_canary:offlineCanary,fixture_provenance:authoredV2?'Authored synthetic v2 fixture; no actual producer packet, execution or physics acceptance':'Recorded actual Rheon fee7b4a capped pilot; no producer/simulation invoked',
   },null,2));
-  console.log('PASS real sequence workspace gate:',report);
+  console.log(authoredV2?'PASS authored v2 transport workspace gate (not actual packet/physics acceptance):':'PASS real sequence workspace gate:',report);
 })().catch(async error=>{
   console.error(error);
   console.error("Application stderr:", serverErrors);

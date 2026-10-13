@@ -70,20 +70,20 @@ def find_result(workbench, request_id):
 
 def import_item(workbench, body):
     allowed = {'files', 'request_id', 'batch_name', 'item_name', 'item_index', 'name', 'groups', 'parents', 'rights'}
-    if type(body) is not dict or set(body) - allowed or type(body.get('files')) is not dict or set(body['files']) != {'run.json', 'frames.jsonl'}:
-        raise WorkbenchError('Supply exactly one complete run.json / frames.jsonl pair and bounded item metadata.')
+    if type(body) is not dict or set(body) - allowed or type(body.get('files')) is not dict or set(body['files']) not in (rheon.V1_FILES, rheon.V2_FILES):
+        raise WorkbenchError('Supply one complete versioned trajectory file set and bounded item metadata.')
     request_id = marker(body.get('request_id'))
     batch_name, item_name = label(body.get('batch_name'), 'Batch label'), label(body.get('item_name'), 'Trajectory label')
     index = body.get('item_index')
     if type(index) is not int or not 1 <= index <= MAX_ITEMS:
         raise WorkbenchError('Trajectory index must be an integer from 1 through 32.')
     try:
-        run = rheon.decode_file(body['files']['run.json'], rheon.contract.MANIFEST_LIMIT, 'run.json')
-        frames = rheon.decode_file(body['files']['frames.jsonl'], rheon.contract.FRAMES_LIMIT, 'frames.jsonl')
-        prepared = rheon.prepare(run, frames)
+        prepared = rheon.prepare_files(body['files'])
         context = dict(format=FORMAT, request_id=request_id, batch_name=batch_name, item_name=item_name,
                        item_index=index, run_sha256=prepared['metadata']['run_sha256'],
                        frames_sha256=prepared['metadata']['manifest']['frames_sha256'])
+        if 'controls_sha256' in prepared['metadata']:
+            context['controls_sha256'] = prepared['metadata']['controls_sha256']
         metadata = {key: body[key] for key in ('name', 'groups', 'parents', 'rights') if key in body}
         metadata.setdefault('name', item_name)
         # Validation is outside the lock; marker check and atomic publication share it.

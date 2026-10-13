@@ -77,6 +77,7 @@ jobs:
       - run: node tests/test_meshes_controller.cjs
       - run: node --check static/sequences.js
       - run: node --check static/sequence-batch.js
+      - run: node tests/test_sequences_controller.cjs
       - run: node tests/test_sequence_batch_controller.cjs
       - run: node tests/test_curation_controller.cjs
       - run: node tests/test_browser_page_load.cjs
@@ -234,6 +235,10 @@ jobs:
           BROWSER: /usr/bin/google-chrome
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
       - run: node tests/browser_workspace_sequence_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_sequence_run.cjs --authored-v2
         env:
           BROWSER: /usr/bin/google-chrome
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so

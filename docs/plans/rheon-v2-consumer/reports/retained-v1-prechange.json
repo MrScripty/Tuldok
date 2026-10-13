@@ -1,0 +1,14 @@
+{
+  "schema_version": 4,
+  "state": "completed",
+  "run_id": "b46d5301e7a54b4da9b5328de278e3d2",
+  "artifacts": {
+    "validation-report.json": "ac86fec963b3c8fe961e457791ec3e92900bcb846b2a9a3061194a2c0d13f712",
+    "artifact-manifest.json": "456560f2e0e403d7b3daf6f176cf2edab0adc15bbf299d4fc0239341801f0654",
+    "release.zip": "d888fe67c0581fe6b2ebef6367043e05c1126c1960348c466c304b11187720aa"
+  },
+  "legacy_source": "cafe533a3289df773f1f5e4a8b21c65dc212e3b2",
+  "fixture": "Recorded actual fee7b4a v1; no new producer execution",
+  "claim": "Exact old-code v1 completed graph/run/record/report/artifacts survive reopening with v2 implementation",
+  "actual_v2_packet_acceptance": false
+}

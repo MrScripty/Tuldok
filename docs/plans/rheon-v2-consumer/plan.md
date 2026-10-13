@@ -1,10 +1,10 @@
 # Rheon producer-v2 consumer qualification
 
-**Plan status:** `Planned`
+**Plan status:** `Verifying`
 
-**Current phase:** Readiness and contract preparation; application implementation has not started.
+**Current phase:** Implemented adapter and fixture workflows under verification; actual-packet acceptance remains blocked.
 
-**Next slice:** Pin the existing v2 producer validator and prepare a bounded three-file consumer adapter, retaining v1, while recovering the recorded actual packet through supported Library transfer.
+**Next slice:** Finish published regression/CI qualification and recover the recorded actual packet through supported access before actual-packet acceptance.
 
 **Acceptance status:** `pending`
 
@@ -14,7 +14,7 @@
 
 ## Objective and admission
 
-Allow the existing completed Rheon producer-v2 fixed-case trajectory to pass through Tuldok Data → editable validation/export Pipeline → durable Runs without losing its original accepted-interval controls or confusing authored data with actual producer evidence. This is the next finite development milestone under the user's persistent all-remaining-work goal and follow-up instruction to prepare it. This change publishes the plan and audit only; it does not claim consumer implementation or qualify a new physics run.
+Allow the existing completed Rheon producer-v2 fixed-case trajectory to pass through Tuldok Data → editable validation/export Pipeline → durable Runs without losing its original accepted-interval controls or confusing authored data with actual producer evidence. This is the next finite development milestone under the user's persistent all-remaining-work goal and follow-up instruction to prepare it. The subsequent parent instruction explicitly admits implementation under the persistent development goal. This slice implements the versioned adapter and labelled-fixture gates; it cannot qualify a new physics run or claim actual-packet acceptance.
 
 The accepted M1–M5 workspace snapshot remains valid for its bounded contracts. It is not proof that every historical plan, proposed adapter, or future integration is complete. [The corrected audit](reports/readiness-20261013.md) distinguishes exclusions, conditional reuse and later work.
 
@@ -69,11 +69,11 @@ Use existing strict sequence release, database, graph/run and offline browser ha
 
 ## Milestone V2: Completed producer controls through the existing workspace
 
-**Status:** `Planned`
+**Status:** `Implemented`
 
 **Goal:** Satisfy V1–V5 for the recorded packet.
 
-**Allowed write set:** `rheon_sequences.py`, `rheon_sequence_contract.py` (preserve v1 semantics), a narrowly named v2 contract module, `sequence_assets.py`, `sequence_batch_import.py`, sequence release reader/metadata paths in their existing owners, `static/sequences.js`, existing sequence graph/run summary paths, focused sequence tests/fixtures/browser, and this plan. Expand exact adjacent filenames after tracing their existing owners, before editing; no unrelated changes.
+**Allowed write set:** `app.py` (both sequence routes share strict bounded JSON decoding), `rheon_sequences.py`, `rheon_sequence_contract.py` (preserve v1 semantics), `rheon_controls_contract.py` and `rheon_controls_sequence_contract.py` pinned from Rheon main, `sequence_assets.py`, `sequence_batch_import.py`, sequence release reader/metadata paths in their existing owners, `static/sequences.js`, `static/sequence-batch.js`, `static/workbench.html`, `static/workspace-real.js`, existing sequence graph/run summary paths, `tests/test_sequences_v2.py`, `tests/test_sequence_v2_runs.py`, `tests/fixtures/rheon_controls_authored.py`, sequence controller tests, `tests/browser_workspace_sequence_run.cjs`, `.github/workflows/tests.yml`, `README.md`, sequence contracts/source attribution and `docs/licenses/rheon-APACHE-2.0.txt`, and this plan. Expand exact adjacent filenames after tracing their existing owners, before editing; no unrelated changes.
 
 **Tasks:** Recover/pin evidence; implement explicit version dispatch and three-file custody; retain whole-trajectory families; add compact controls inspection; connect existing validation/export recipe; prove v1 retention and v2 actual workflow; independent review; push separate draft implementation PR with ordinary checks.
 
@@ -81,16 +81,18 @@ Use existing strict sequence release, database, graph/run and offline browser ha
 
 ## Blockers and re-plan triggers
 
-No blocker to contract preparation. Actual-packet V2/V4 acceptance is blocked on supported retrieval of the original frames and handoff receipt; exact evidence is in issues. No model/GPU requirement applies.
+Implementation and fixture preparation are complete; see [checkpoint evidence](reports/implementation-20261013.md). Actual-packet V2/V4 acceptance is blocked on supported retrieval of the original frames and handoff receipt; exact evidence is in issues. No model/GPU requirement applies.
 
 Replan if recovered hashes differ, native receipt is incomplete, producer validator rejects the packet, retained storage requires a migration, source-family semantics change, or new geometry/API/training scope is requested. Keep ordinary adapter repairs inside this slice.
 
 ## Repository isolation and review
 
-Root owns `/workspace/Tuldok-v2-readiness`, branch `plan/rheon-v2-readiness-20261013`, based on PR41 cafe533a3289df773f1f5e4a8b21c65dc212e3b2. Current publication writes only this plan directory and a narrow cross-link/correction in the workspace plan. Preserve PR38–41 refs and owner work. Retain this worktree for plan review under integration ownership; later disposition requires reachability verification. Independent auditor reviews scope/source findings and this plan without editing shared files.
+Root owns `/workspace/Tuldok-v2-readiness`, branch `plan/rheon-v2-readiness-20261013`, based on PR41 cafe533a3289df773f1f5e4a8b21c65dc212e3b2. Implementation uses the separately owned `/workspace/Tuldok-v2`, branch `feature/rheon-v2-consumer-20261013`, from PR42 ef4a56f. Root integrates docs/CI/source attribution; backend agent owns adapters, assets, batch/release readers and focused Python fixture/tests; UI agent owns sequence scripts/markup/controllers; integration-test agent owns v2 run tests and the existing browser harness. No overlapping writers. Independent reviewers are read-only. Retain both worktrees under root/integration ownership for draft review. Preserve PR38–41 refs and owner work. Retain this worktree for plan review under integration ownership; later disposition requires reachability verification. Independent auditor reviews scope/source findings and this plan without editing shared files.
 
 ## Final acceptance
 
-- Acceptance status: pending; planning publication is not V2 implementation.
+- Acceptance status: pending; actual-packet claims remain blocked on recorded bytes.
 - Deferred follow-ups: ASR production adapter, general 3D training product definition and native Pantograph adoption retain the distinct dispositions in the audit.
-- Final status: Planned.
+- Final status: Verifying; actual-packet acceptance blocked.
+
+The v2 producer numerical reader differs from the historical Tuldok v1 reader only in accepting the exporter’s appended Cargo message-format argument. Pin its exact version separately for v2 rather than silently broadening retained v1. This bounded duplication preserves two independently supported public versions; no competing runtime validation authority is added.
