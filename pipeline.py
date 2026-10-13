@@ -1,6 +1,6 @@
-"""Versioned real classification recipes and their authoritative admission checks.
+"""Versioned real recipes and their authoritative admission checks.
 
-This owns three closed classification recipes, not a general-purpose graph engine.
+This owns closed classification and mesh validation recipes, not a general graph engine.
 Release custody and CPU adapter eligibility remain with their existing owners.
 """
 import copy
@@ -19,6 +19,7 @@ from workbench import WorkbenchError, encode, text_value
 import image_training
 import text_training
 import audio_training
+import release_validation
 
 ID = re.compile(r'^[a-f0-9]{32}$')
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -97,17 +98,23 @@ def decode_graph(value):
     return json.loads(serialized)
 
 
-ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training}
+ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation}
 
 
 def adapter_for_graph(graph):
     recipe = graph.get('recipe', 'image_classification')
     if not isinstance(recipe, str) or recipe not in ADAPTERS:
-        raise WorkbenchError('Only the versioned image, text and audio classification recipes are supported.', 'unsupported', 400)
+        raise WorkbenchError('Only the versioned classification and mesh validation recipes are supported.', 'unsupported', 400)
     return ADAPTERS[recipe]
 
 
+def types_for_graph(graph):
+    return release_validation.TYPES if adapter_for_graph(graph) is release_validation else TYPES
+
+
 def ports_for_graph(graph):
+    if adapter_for_graph(graph) is release_validation:
+        return dict(release_validation.PORTS)
     ports = dict(PORTS)
     if adapter_for_graph(graph) is text_training:
         ports.update(validate=('frozen_release', 'text_export'), train=('text_export', 'trained_model'))
@@ -138,15 +145,15 @@ class Pipelines:
         def definition(recipe, adapter):
             ports = ports_for_graph({'recipe': recipe})
             return {'id': recipe, 'recipe_version': 1,
-                    'nodes': [{'type': name, 'definition_version': 1, 'input': ports[name][0], 'output': ports[name][1]} for name in TYPES],
+                    'nodes': [{'type': name, 'definition_version': 1, 'input': ports[name][0], 'output': ports[name][1]} for name in types_for_graph({'recipe': recipe})],
                     'parameter_bounds': adapter.PARAMETER_BOUNDS,
                     'default_parameters': {key: rule['default'] for key, rule in adapter.PARAMETER_BOUNDS.items()},
-                    'recipe': list(TYPES)}
+                    'recipe': list(types_for_graph({'recipe': recipe}))}
         image = definition('image_classification', image_training)
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
-                'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training)],
+                'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation)],
                 'limitations': ['Closed image TinyCNN, text TF-IDF + MultinomialNB and audio feature logistic CPU recipes only.',
-                                'Audio execution classifies one reviewed interval per WAV; ASR and 3D execution are unsupported.']}
+                                'Audio execution classifies one reviewed interval per WAV. Mesh recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')
@@ -175,6 +182,7 @@ class Pipelines:
         recipe = body.get('recipe', 'image_classification')
         adapter = adapter_for_graph({'recipe': recipe})
         ports = ports_for_graph({'recipe': recipe})
+        types = types_for_graph({'recipe': recipe})
         parameters = {key: rule['default'] for key, rule in adapter.PARAMETER_BOUNDS.items()}
         release_id = body['release_id']
         if not isinstance(release_id, str) or not HASH.fullmatch(release_id):
@@ -183,9 +191,9 @@ class Pipelines:
                  'id': uuid.uuid4().hex, 'revision': 1, 'name': text_value(body['name'], 'Recipe name', 120),
                  'nodes': [{'id': name, 'type': name, 'definition_version': 1,
                             'parameters': {'release_id': release_id} if name == 'release' else
-                            copy.deepcopy(parameters) if name == 'train' else {}} for name in TYPES],
+                            copy.deepcopy(parameters) if name == 'train' else {}} for name in types_for_graph({'recipe': recipe})],
                  'edges': [{'from': first, 'output': ports[first][1], 'to': second, 'input': ports[second][0]}
-                           for first, second in zip(TYPES, TYPES[1:])], 'layout': {}}
+                           for first, second in zip(types, types[1:])], 'layout': {}}
         if recipe != 'image_classification':
             graph['recipe'] = recipe
         with self.lock, self.db.transaction():
@@ -226,11 +234,23 @@ class Pipelines:
                     raw = handle.read(7 * 1024**2 + 1)
                 if len(raw) > 7 * 1024**2:
                     raise WorkbenchError('Frozen manifest exceeds the supported bound.')
-                format_name = image_training._json(raw, 'Release manifest').get('format')
+                selection = image_training._json(raw, 'Release manifest')
+                format_name = selection.get('format')
+            if format_name is None and isinstance(selection.get('records'), list) and selection['records'] and all(
+                    isinstance(row, dict) and row.get('kind') == 'mesh' for row in selection['records']):
+                manifest, summary = release_validation.inspect_release(path, release_id)
+                result = {'id': release_id, 'sha256': release_id, 'format': 'canonical_v1',
+                          'recipe': release_validation.RECIPE, 'result_kind': 'release_validation',
+                          'records': summary['mesh_count'], 'split_counts': summary['split_counts'],
+                          'validation_summary': summary, 'prior_test_exposure': {'exposed': False, 'events': []},
+                          'status': 'available'}
+                if private:
+                    result.update(manifest=manifest, path=str(path))
+                return result
             recipe = {'image_classification_v1': 'image_classification',
                       'text_classification_v1': 'text_classification', 'audio_classification_v1': 'audio_classification'}.get(format_name)
             if recipe is None:
-                raise WorkbenchError('Choose a frozen image_classification_v1, text_classification_v1 or audio_classification_v1 release.', 'unsupported', 409)
+                raise WorkbenchError('Choose a frozen classification release or a mesh-only canonical release.', 'unsupported', 409)
             manifest = ADAPTERS[recipe].inspect_release(path, release_id)
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None
@@ -275,6 +295,13 @@ class Pipelines:
 
     def probe(self, recipe='image_classification'):
         adapter = adapter_for_graph({'recipe': recipe})
+        if adapter is release_validation:
+            identity = self.definition_identity(recipe)
+            runtime = release_validation.runtime()
+            if identity['definition_files'] != release_validation.IMPORTED_DEFINITION_FILES:
+                runtime.update(available=False, problems=[{'code': 'stale', 'message':
+                    'Integrity definitions changed after application import. Restart the application before admission.'}])
+            return dict(runtime, **identity)
         worker_path = Path(adapter.__file__).resolve()
         executable = os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable
         try:
@@ -302,6 +329,9 @@ class Pipelines:
         names = ('image_training.py', 'image_classification_export.py', 'workbench.py') if adapter is image_training else ('text_training.py', 'text_classification_export.py', 'frozen_classification.py', 'image_training.py', 'workbench.py')
         if adapter is audio_training:
             names = ('audio_training.py', 'audio_classification_export.py', 'audio_assets.py', 'frozen_classification.py', 'image_training.py', 'workbench.py')
+        if adapter is release_validation:
+            files = release_validation.definition_files(self.source_path)
+            return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
         files = {name: hashlib.sha256((self.source_path / name).read_bytes()).hexdigest() for name in names}
         return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
 
@@ -309,6 +339,7 @@ class Pipelines:
         graph = decode_graph(graph)
         adapter = adapter_for_graph(graph)
         ports = ports_for_graph(graph)
+        types = types_for_graph(graph)
         errors = []
         def issue(path, message, code='invalid'):
             errors.append({'path': path, 'message': message, 'code': code})
@@ -316,21 +347,23 @@ class Pipelines:
         by_type = {}
         for index, node in enumerate(graph['nodes']):
             by_type.setdefault(node['type'], []).append(node)
-            if node['type'] not in TYPES:
-                issue(f'nodes/{index}/type', 'Only the fixed classification recipe can execute.', 'unsupported')
+            if node['type'] not in types:
+                issue(f'nodes/{index}/type', 'Only the selected closed recipe can execute.', 'unsupported')
             if node['definition_version'] != 1:
                 issue(f'nodes/{index}/definition_version', 'Node definition is unavailable.', 'stale')
-        if set(by_type) != set(TYPES) or any(len(items) != 1 for items in by_type.values()):
-            issue('nodes', 'Require exactly one release, validate, train, evaluate and publish node.')
+        if set(by_type) != set(types) or any(len(items) != 1 for items in by_type.values()):
+            issue('nodes', 'Require exactly one release, validate and publish node.' if adapter is release_validation else
+                  'Require exactly one release, validate, train, evaluate and publish node.')
         expected = []
         if not errors:
             expected = [{'from': by_type[a][0]['id'], 'output': ports[a][1],
-                         'to': by_type[b][0]['id'], 'input': ports[b][0]} for a, b in zip(TYPES, TYPES[1:])]
+                         'to': by_type[b][0]['id'], 'input': ports[b][0]} for a, b in zip(types, types[1:])]
         if sorted(map(encode, graph['edges'])) != sorted(map(encode, expected)):
-            issue('edges', 'Connect the five typed stages once in release → validate → train → evaluate → publish order.')
+            issue('edges', 'Connect the ' + ('three' if adapter is release_validation else 'five') +
+                  ' typed stages once in ' + ' → '.join(types) + ' order.')
         for index, node in enumerate(graph['nodes']):
             try:
-                if node['type'] == 'train':
+                if node['type'] == 'train' and 'train' in types:
                     adapter.validate_parameters(node['parameters'])
                 elif node['type'] == 'release':
                     closed(node['parameters'], ('release_id',))
@@ -350,7 +383,10 @@ class Pipelines:
                 issue('nodes/release', str(error), error.code)
             runtime = self.probe(graph.get('recipe', 'image_classification'))
             if not runtime['available']:
-                issue('nodes/train/runtime', 'Install the qualified local CPU training environment and set TULDOK_TRAINING_PYTHON.', 'unavailable')
+                issue('nodes/validate/runtime' if adapter is release_validation else 'nodes/train/runtime',
+                      'Integrity definitions changed after application import. Restart the application.' if adapter is release_validation else
+                      'Install the qualified local CPU training environment and set TULDOK_TRAINING_PYTHON.',
+                      'stale' if adapter is release_validation else 'unavailable')
         token = digest({'graph_id': graph['id'], 'revision': graph['revision'], 'execution_sha256': execution_digest(graph),
                         'release_sha256': release['sha256'], 'runtime': runtime}) if not errors else None
         return {'status': errors[0]['code'] if errors else 'valid', 'valid': not errors, 'errors': errors,

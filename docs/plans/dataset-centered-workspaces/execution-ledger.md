@@ -172,3 +172,12 @@ The exact0d4d69d hosted run38174382414 also failed Python discovery. Allowed job
 - Exact mesh4266a76 passed lifecycle38266637351 (543 Python/303.923s) and focused38266637380; exact audioccc9bf6 passed lifecycle38267098776 (550 Python/258.340s) and focused38267098643. Each full job completed103successful steps, zero skips/failures, original automatic attempt1. Independent review separately verified terminal status and unchanged PR heads.
 - Bounded A11/A12 are now satisfied. Earlier failed checkpoints remain recorded; corrected ordinary pushes qualified every previously skipped product gate. No runtime changed after the clean combined408/6f browser evidence. The [combined report](reports/audio-mesh-20261012.md) links exact CI, branch heads, screenshots and launch commands.
 - Main remains ee81555586ef96c56b78dde1858f3c5f689b27c1. PR36/37 remain separate open drafts; no main merge, deployment, personal-data migration or broader capability approval is implied. Whole-plan acceptance remains partial and broader M3/M4/M5 remain Active.
+
+
+## 2026-10-13 — remaining milestone continuation
+
+Fetched main c522bf6; PR34–37 are merged and PR32/33 remain open separately. Recorded the explicit persistent completion goal, reconciled remaining M3/M4/M5 scope and admitted the first mesh Pipeline/Runs slice. Adopted standards dcc56f26 were fetched and read; no repository AGENTS/application skills or native goal/Engine mechanism exist. PostgreSQL local provisioning is unavailable (filesystem permissions and configured package endpoint HTTP403); hosted CI is the existing real-service acceptance route. No code or milestone acceptance is claimed by this planning checkpoint.
+
+Environment update: the available Docker runtime started the standard PostgreSQL17 CI image on loopback55432 without system package changes. Real local database/browser qualification is now available; the earlier local provisioning limitation is resolved through the project's existing containerized service approach.
+
+Mesh runnable checkpoint: implemented real three-stage mesh graph/run workflow; eight PostgreSQL tests independently passed, six retained Pipeline tests passed, and real Chromium flow passed with report/release byte equality and restart. Independent source review fixed loaded-source identity drift. Full configured Python/classification regressions and hosted CI remain pending; see reports/mesh-runs-20261013.md.

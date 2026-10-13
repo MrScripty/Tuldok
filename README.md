@@ -2,7 +2,7 @@
 
 A local dataset studio for book-corner detection. Capture or import original images, label four corners, and export training data. Tuldok is a separate developer tool; it does not depend on Book-Be-Gone.
 
-Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
+Try the opt-in **Data / Pipeline / Runs** interface at **http://127.0.0.1:8091/workspaces**. The current Data editors remain available alongside isolated, clearly labelled interface fixtures. Current-catalog Pipeline and Runs support bounded CPU image, text and audio-interval classification. Data also supports PCM WAV import, playback, timed annotation, review and export. Frozen mesh releases also have a three-stage validate/export recipe with durable integrity reports and unchanged release downloads. ASR and general 3D training remain unavailable. See the [workspace plan](docs/plans/dataset-centered-workspaces/plan.md) and [M1 launch, boundary and verification evidence](docs/plans/dataset-centered-workspaces/reports/m1/implementation.md).
 
 ## Run
 
