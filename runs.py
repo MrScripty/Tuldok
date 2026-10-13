@@ -19,7 +19,7 @@ import audio_training
 import release_validation
 import psycopg
 from workbench import WorkbenchError, encode, timestamp, text_value
-from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, source_content_hash, training_environment
+from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment
 
 ACTIVE = ('queued', 'running', 'cancelling')
 TERMINAL = ('completed', 'failed', 'cancelled', 'interrupted', 'unknown')
@@ -95,7 +95,7 @@ class Runs:
                     or run['request_key'] != row['request_key'] or run['request_sha256'] != row['request_sha256']
                     or digest(run['graph']) != run['graph_document_sha256']
                     or execution_digest(run['graph']) != run['graph_sha256']
-                    or run['adapter'] != adapter_for_graph(run['graph']).ADAPTER):
+                    or run['adapter'] != adapter_identity_for_graph(run['graph'])):
                 raise ValueError('Invalid retained run identity.')
             return run
         except (ValueError, KeyError, TypeError):
@@ -276,7 +276,7 @@ class Runs:
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
         if self._validation_run(run):
             run.update(result_kind='release_validation', validation_summary=copy.deepcopy(release['validation_summary']))
-        self._event(run, 'queued', 'Frozen mesh integrity attempt admitted.' if self._validation_run(run) else
+        self._event(run, 'queued', 'Frozen integrity attempt admitted.' if self._validation_run(run) else
                     'Real CPU attempt admitted. Training starts from scratch; no model download.')
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
@@ -523,20 +523,20 @@ class Runs:
             for node in current['node_attempts']:
                 node['state'] = 'completed' if node['type'] == 'release' else 'running' if node['type'] == 'validate' else 'pending'
             self._save(current)
-        runtime = self.pipelines.probe(release_validation.RECIPE)
+        runtime = self.pipelines.probe(run['graph']['recipe'])
         if runtime != run['runtime']:
             raise WorkbenchError('Integrity definition changed after admission.', 'stale', 409)
         release = self.pipelines.inspect_release(run['release_id'], private=True)
         if release['validation_summary'] != run['validation_summary']:
-            raise WorkbenchError('Frozen mesh evidence changed after admission.', 'stale', 409)
+            raise WorkbenchError('Frozen integrity evidence changed after admission.', 'stale', 409)
         # Validate the definition again after reading, before publishing its result.
-        if self.pipelines.probe(release_validation.RECIPE) != runtime:
+        if self.pipelines.probe(run['graph']['recipe']) != runtime:
             raise WorkbenchError('Integrity definition changed during execution.', 'stale', 409)
         stage = self.path / ('.staging-' + run_id)
         stage.mkdir(mode=0o700)
         output = stage / 'output'
         output.mkdir(mode=0o700)
-        release_validation.write_report(output, self._identity(run), release['validation_summary'])
+        release_validation.write_report(output, self._identity(run), release['validation_summary'], run['graph']['recipe'])
         artifacts, metrics = self._verify_directory(run, output)
         for path in output.iterdir():
             with path.open('rb') as handle:
@@ -556,7 +556,7 @@ class Runs:
             current['artifacts'], current['metrics'] = artifacts, metrics
             for node in current['node_attempts']:
                 node['state'] = 'completed'
-            self._event(current, 'completed', 'Verified frozen mesh integrity report published; no training ran.')
+            self._event(current, 'completed', 'Verified frozen integrity report published; no training ran.')
             self._save(current)
 
     def _read_progress(self, process, run, progress):
@@ -658,7 +658,7 @@ class Runs:
 
     def _verify_directory(self, run, directory):
         if self._validation_run(run):
-            return release_validation.verify_directory(directory, self._identity(run), run['validation_summary'])
+            return release_validation.verify_directory(directory, self._identity(run), run['validation_summary'], run['graph']['recipe'])
         if directory.is_symlink() or not directory.is_dir():
             raise WorkbenchError('Published artifact directory is unavailable.', 'unavailable', 409)
         payload_names = self._payloads(run)

@@ -1,4 +1,4 @@
-"""Mesh-only frozen-release workflow; native integrity remains mesh_release's owner."""
+"""Closed mesh/sequence workflows; native integrity remains with subtype readers."""
 import ast
 import hashlib
 import io
@@ -7,9 +7,12 @@ import platform
 import zipfile
 
 import mesh_release
+import sequence_release
+import canonical_release
 from workbench import WorkbenchError, encode
 
 RECIPE = 'mesh_validate_export'
+SEQUENCE_RECIPE = 'sequence_validate_export'
 ADAPTER = {'id': RECIPE, 'version': 1}
 PARAMETER_BOUNDS = {}
 TYPES = ('release', 'validate', 'publish')
@@ -19,16 +22,24 @@ PORTS = {'release': (None, 'frozen_release'),
 PAYLOADS = {'validation-report.json'}
 
 
-def inspect_release(path, release_id):
+def adapter_identity(recipe=RECIPE):
+    if recipe not in (RECIPE, SEQUENCE_RECIPE):
+        raise WorkbenchError('Unsupported integrity recipe.', 'unsupported', 400)
+    return {'id': recipe, 'version': 1}
+
+
+def inspect_release(path, release_id, recipe=RECIPE):
     """Read once, validate exact captured bytes, then expose the validated manifest."""
+    adapter_identity(recipe)
+    reader = sequence_release if recipe == SEQUENCE_RECIPE else mesh_release
     try:
         with Path(path).open('rb') as source:
-            raw = source.read(mesh_release.MAX_RELEASE_BYTES + 1)
+            raw = source.read(canonical_release.MAX_RELEASE_BYTES + 1)
     except OSError:
-        raise WorkbenchError('Frozen mesh release is unavailable.', 'unavailable', 409) from None
-    summary = mesh_release.validate_bytes(raw, release_id)
+        raise WorkbenchError('Frozen release is unavailable.', 'unavailable', 409) from None
+    summary = reader.validate_bytes(raw, release_id)
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-        manifest = mesh_release.decode(archive.read('manifest.json'))
+        manifest = canonical_release.decode(archive.read('manifest.json'))
     return manifest, summary
 
 
@@ -52,41 +63,41 @@ def definition_files(source_path):
     return files
 
 
-def runtime():
-    return {'schema_version': 1, 'available': True, 'adapter': dict(ADAPTER),
+def runtime(recipe=RECIPE):
+    return {'schema_version': 1, 'available': True, 'adapter': adapter_identity(recipe),
             'runtime': {'python': platform.python_version(), 'execution': 'bounded_local_integrity'}, 'problems': []}
 
 
-def report(identity, summary):
-    return {'schema_version': 1, 'source_identity': identity, 'adapter': dict(ADAPTER),
+def report(identity, summary, recipe=RECIPE):
+    return {'schema_version': 1, 'source_identity': identity, 'adapter': adapter_identity(recipe),
             'validation_summary': summary}
 
 
-def write_report(directory, identity, summary):
-    contents = encode(report(identity, summary)).encode()
+def write_report(directory, identity, summary, recipe=RECIPE):
+    contents = encode(report(identity, summary, recipe)).encode()
     (directory / 'validation-report.json').write_bytes(contents)
     inventory = [{'name': 'validation-report.json', 'sha256': hashlib.sha256(contents).hexdigest(),
                   'bytes': len(contents), 'media_type': 'application/json', 'split': None}]
     (directory / 'artifact-manifest.json').write_text(encode(
-        {'schema_version': 1, 'source_identity': identity, 'adapter': dict(ADAPTER), 'artifacts': inventory}), encoding='utf-8')
+        {'schema_version': 1, 'source_identity': identity, 'adapter': adapter_identity(recipe), 'artifacts': inventory}), encoding='utf-8')
 
 
-def verify_directory(directory, identity, summary):
+def verify_directory(directory, identity, summary, recipe=RECIPE):
     """Closed report custody; the durable admission summary is the expected evidence."""
     try:
         paths = list(directory.iterdir())
         if directory.is_symlink() or {p.name for p in paths} != PAYLOADS | {'artifact-manifest.json'}:
             raise ValueError('Unexpected report directory.')
-        if any(p.is_symlink() or not p.is_file() or p.stat().st_size > mesh_release.MAX_METADATA_BYTES for p in paths):
+        if any(p.is_symlink() or not p.is_file() or p.stat().st_size > canonical_release.MAX_METADATA_BYTES for p in paths):
             raise ValueError('Report files exceed their bounds or are not regular files.')
         raw = (directory / 'validation-report.json').read_bytes()
-        if mesh_release.decode(raw) != report(identity, summary):
+        if canonical_release.decode(raw) != report(identity, summary, recipe):
             raise ValueError('Validation report differs from admitted evidence.')
         inventory = [{'name': 'validation-report.json', 'sha256': hashlib.sha256(raw).hexdigest(),
                       'bytes': len(raw), 'media_type': 'application/json', 'split': None}]
         manifest_raw = (directory / 'artifact-manifest.json').read_bytes()
-        expected = {'schema_version': 1, 'source_identity': identity, 'adapter': dict(ADAPTER), 'artifacts': inventory}
-        if mesh_release.decode(manifest_raw) != expected:
+        expected = {'schema_version': 1, 'source_identity': identity, 'adapter': adapter_identity(recipe), 'artifacts': inventory}
+        if canonical_release.decode(manifest_raw) != expected:
             raise ValueError('Artifact identity or inventory differs.')
         return inventory + [{'name': 'artifact-manifest.json', 'sha256': hashlib.sha256(manifest_raw).hexdigest(),
                              'bytes': len(manifest_raw), 'media_type': 'application/json', 'split': None}], None
