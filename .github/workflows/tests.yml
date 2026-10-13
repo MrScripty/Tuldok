@@ -216,6 +216,10 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_mesh_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
       - uses: actions/upload-artifact@v4
         if: always()
         with:

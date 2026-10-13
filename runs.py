@@ -16,6 +16,7 @@ import uuid
 import image_training
 import text_training
 import audio_training
+import release_validation
 import psycopg
 from workbench import WorkbenchError, encode, timestamp, text_value
 from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, source_content_hash, training_environment
@@ -163,7 +164,8 @@ class Runs:
                   'worker_command', 'supervisor', 'process_phase'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
         result['test_exposure'] = {'exposed': bool(run['exposure_events']), 'event_count': len(run['exposure_events'])}
-        result['current_test_exposure'] = self.pipelines.exposures(run['source_records'])
+        result['current_test_exposure'] = ({'exposed': False, 'events': []} if self._validation_run(run)
+                                           else self.pipelines.exposures(run['source_records']))
         result.pop('exposure_events', None)
         result['artifacts'] = [dict(item, locked=item['name'] in TEST_FILES and not result['test_exposure']['exposed'],
                                     url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}")
@@ -184,6 +186,7 @@ class Runs:
                     self._verified_artifacts(run)
                 except WorkbenchError as error:
                     public['metrics'] = None
+                    public.pop('validation_summary', None)
                     public['artifact_status'] = {'status': 'unavailable', 'message': str(error)}
             result.append(public)
         return result
@@ -253,7 +256,7 @@ class Runs:
         if queued >= 8:
             raise WorkbenchError('The local queue is full (8 attempts). Wait or cancel a queued attempt.', 'unavailable', 409)
         run_id = uuid.uuid4().hex
-        parameters = next(node['parameters'] for node in graph['nodes'] if node['type'] == 'train')
+        parameters = next((node['parameters'] for node in graph['nodes'] if node['type'] == 'train'), {})
         run = {'schema_version': 1, 'mode': 'real', 'id': run_id, 'dataset_id': self.db.dataset_id,
                'request_key': key, 'request_sha256': request_hash, 'state': 'queued',
                'created_at': timestamp(), 'started_at': None, 'finished_at': None,
@@ -271,7 +274,10 @@ class Runs:
                'exposure_events': [], 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
-        self._event(run, 'queued', 'Real CPU attempt admitted. Training starts from scratch; no model download.')
+        if self._validation_run(run):
+            run.update(result_kind='release_validation', validation_summary=copy.deepcopy(release['validation_summary']))
+        self._event(run, 'queued', 'Frozen mesh integrity attempt admitted.' if self._validation_run(run) else
+                    'Real CPU attempt admitted. Training starts from scratch; no model download.')
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
         return run
@@ -364,6 +370,9 @@ class Runs:
             run['progress']['stage'] = 'validate'
             self._save(run)
         try:
+            if self._validation_run(run):
+                self._execute_validation(run)
+                return
             release = self.pipelines.inspect_release(run['release_id'], private=True)
             runtime = self.pipelines.probe(run['graph'].get('recipe', 'image_classification'))
             if not runtime['available'] or runtime != run['runtime']:
@@ -491,6 +500,65 @@ class Runs:
             if process is not None and process.stdout is not None:
                 process.stdout.close()
 
+    @staticmethod
+    def _validation_run(run):
+        return adapter_for_graph(run['graph']) is release_validation
+
+    def _execute_validation(self, run):
+        """Bounded local reader, owned by the sole supervisor; never spawns children.
+
+        process_phase remains not_started: after application death no independent
+        worker can survive. Restart therefore interrupts rather than replays it.
+        Cancellation can arrive during native parsing and is observed before any
+        publication; the existing close() join keeps metadata alive until drain.
+        """
+        run_id = run['id']
+        with self.lock:
+            current = self._load(run_id)
+        if current['state'] == 'cancelling' or self._stop.is_set():
+            self._finish(run_id, 'cancelled', 'Cancelled before frozen integrity validation.')
+            return
+        with self.lock, self.db.transaction():
+            current = self._load(run_id)
+            for node in current['node_attempts']:
+                node['state'] = 'completed' if node['type'] == 'release' else 'running' if node['type'] == 'validate' else 'pending'
+            self._save(current)
+        runtime = self.pipelines.probe(release_validation.RECIPE)
+        if runtime != run['runtime']:
+            raise WorkbenchError('Integrity definition changed after admission.', 'stale', 409)
+        release = self.pipelines.inspect_release(run['release_id'], private=True)
+        if release['validation_summary'] != run['validation_summary']:
+            raise WorkbenchError('Frozen mesh evidence changed after admission.', 'stale', 409)
+        # Validate the definition again after reading, before publishing its result.
+        if self.pipelines.probe(release_validation.RECIPE) != runtime:
+            raise WorkbenchError('Integrity definition changed during execution.', 'stale', 409)
+        stage = self.path / ('.staging-' + run_id)
+        stage.mkdir(mode=0o700)
+        output = stage / 'output'
+        output.mkdir(mode=0o700)
+        release_validation.write_report(output, self._identity(run), release['validation_summary'])
+        artifacts, metrics = self._verify_directory(run, output)
+        for path in output.iterdir():
+            with path.open('rb') as handle:
+                os.fsync(handle.fileno())
+        _sync(output)
+        with self.lock, self.db.transaction():
+            current = self._load(run_id)
+            if current['state'] == 'cancelling' or self._stop.is_set():
+                for node in current['node_attempts']:
+                    if node['state'] == 'running':
+                        node['state'] = 'cancelled'
+                self._event(current, 'cancelled', 'Cancelled before integrity artifact publication.')
+                self._save(current)
+                return
+            os.rename(output, self.path / run_id)
+            _sync(self.path)
+            current['artifacts'], current['metrics'] = artifacts, metrics
+            for node in current['node_attempts']:
+                node['state'] = 'completed'
+            self._event(current, 'completed', 'Verified frozen mesh integrity report published; no training ran.')
+            self._save(current)
+
     def _read_progress(self, process, run, progress):
         """Only bounded adapter events become logs; raw worker text is never served."""
         while True:
@@ -579,6 +647,8 @@ class Runs:
         return run['parameters']['epochs'] if adapter_for_graph(run['graph']) is image_training else 1
 
     def _payloads(self, run):
+        if self._validation_run(run):
+            return release_validation.PAYLOADS
         return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
 
     def _reference_keys(self, run):
@@ -587,6 +657,8 @@ class Runs:
             'id', 'revision', 'source_revision', 'source_sha256', 'asset_sha256', 'exported_pixel_sha256')
 
     def _verify_directory(self, run, directory):
+        if self._validation_run(run):
+            return release_validation.verify_directory(directory, self._identity(run), run['validation_summary'])
         if directory.is_symlink() or not directory.is_dir():
             raise WorkbenchError('Published artifact directory is unavailable.', 'unavailable', 409)
         payload_names = self._payloads(run)
@@ -736,7 +808,7 @@ class Runs:
         return artifacts
 
     def artifact(self, run_id, name):
-        if name not in PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
+        if name not in PAYLOADS | release_validation.PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown run artifact.', 'unavailable', 404)
         with self.lock:
             run = self._load(run_id)
@@ -762,6 +834,8 @@ class Runs:
         reason = text_value(body['reason'], 'Exposure reason', 500)
         with self.lock:
             run = self._load(run_id)
+        if self._validation_run(run):
+            raise WorkbenchError('Integrity validation has no model test results to expose.', 'unsupported', 409)
         self._verified_artifacts(run)
         event_id, at = uuid.uuid4().hex, timestamp()
         with self.lock, self.db.transaction():

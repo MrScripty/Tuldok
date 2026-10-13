@@ -2,9 +2,11 @@
 
 **Plan status:** `Active`
 
-**Current phase:** Bounded audio execution and static-mesh inspection/validation are implemented, independently reviewed and locally qualified in separate draft PR37/PR36. Both exact feature heads passed all 103 lifecycle steps with zero skips/failures and focused UI CI. Main remains `ee81555586ef96c56b78dde1858f3c5f689b27c1`; no new main merge or deployment is authorized.
+**Current phase:** Continue the remaining documented milestones from verified main `c522bf6b5eaf94d89811578c9e73aecfdba4ef9e` (2026-10-13). PR34–37 are merged; earlier pending-merge statements below are historical. Current open PR32/33 remain separate owner work.
 
-**Next slice:** Maintainer review of the qualified separate draft PR37/PR36 and [combined qualification](reports/audio-mesh-20261012.md). Bounded A11/A12 are satisfied. Broader audio and 3D work needs its own next admission; the current task does not authorize merging either draft.
+**Persistent task goal:** Complete all remaining Tuldok milestones and ensure implemented code complies with the adopted coding standards. Preserve runnable compact Data / editable Pipeline / Runs checkpoints, PostgreSQL metadata and local artifacts. Push feature branches and draft PRs; do not merge or deploy without separate approval. No native goal-setting mechanism is available in this runtime; this canonical plan retains the goal across checkpoints.
+
+**Next slice:** Add a real `mesh_validate_export` recipe connecting frozen mesh releases to editable Pipeline and durable Runs integrity-report/download evidence. See [remaining milestone admission](reports/remaining-admission-20261013.md). Continue afterward with remaining task exports, bounded point-cloud and volume subtypes, sequence workflow and final offline/restore qualification. Production ASR and general 3D training are explicit optional/out-of-scope capabilities of the documented milestones, not silently satisfied by these increments.
 
 **Acceptance status:** `partial`
 
@@ -316,7 +318,7 @@ M1 source, screenshot and verification evidence: [implementation record](reports
 
 ## Concurrent Work
 
-Current authoritative assignments are the audio execution worker, static-mesh worker and independent reviewer in [the current admission](reports/audio-mesh-admission-20261012.md). Root alone edits the canonical plan and shared route/HTML/CI integration. The older role table below records the original staged design; it does not grant overlapping write authority for this increment.
+Current authoritative assignments and ownership are in [the 2026-10-13 admission](reports/remaining-admission-20261013.md). Root alone edits the canonical plan and shared route/HTML/CI integration. The older role table below records the original staged design; it does not grant overlapping write authority for this increment.
 
 The maintainer/integration owner serializes shared schema, route, storage, CI, lockfile and plan changes. Independent read-only research/review may run concurrently; no competing edits to this plan. Later modality branches can work concurrently after M2 only when their contract owners and shared integration changes are assigned explicitly.
 
@@ -331,7 +333,7 @@ The maintainer/integration owner serializes shared schema, route, storage, CI, l
 
 ## Repository Isolation
 
-Current root branch is `integration/workspace-audio-mesh-20261012` in `/workspace/Tuldok-audio-mesh-20261012`, based on verified main ee81555. The current admission names separate audio and mesh proposal worktrees, root as serial integrator, independent draft PRs targeting main, and retained-resource handoff. No new main merge, deployment, force push or cleanup of older worktrees is authorized.
+Current root branch is `feature/workspace-mesh-runs-20261013` in `/workspace/Tuldok`, based on verified main c522bf6. Root owns integration; the branch targets main as a draft PR and is retained pending review/merge approval. No task worktrees are created. The following older isolation details are historical. The current admission names separate audio and mesh proposal worktrees, root as serial integrator, independent draft PRs targeting main, and retained-resource handoff. No new main merge, deployment, force push or cleanup of older worktrees is authorized.
 
 Historical planning isolation follows:
 

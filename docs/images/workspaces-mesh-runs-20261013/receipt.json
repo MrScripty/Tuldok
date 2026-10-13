@@ -1,0 +1,49 @@
+{
+  "source_commit": "c522bf6b5eaf94d89811578c9e73aecfdba4ef9e",
+  "dirty": true,
+  "command": "node tests/browser_workspace_mesh_run.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "reviewed authored native PLY frozen through real Data release controls",
+    "edited and cloned three-stage graph survives reload; invalid connection blocked; keyboard submits actual native validation",
+    "Runs exposes verified integrity report and unchanged release, counts, units/scope/limitations without training or predictions",
+    "application restart retains exact completed report/release and does not replay submission"
+  ],
+  "captures": [
+    {
+      "file": "pipeline-mesh-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real native integrity validation on authored geometry; no training or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-mesh-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real native integrity validation on authored geometry; no training or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "runs-mesh-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real native integrity validation on authored geometry; no training or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "runs-mesh-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real native integrity validation on authored geometry; no training or physics claim",
+      "quality": 85
+    }
+  ],
+  "run_id": "f0159ca4d86e4758a29b42127ba875c4",
+  "release_id": "98651905d0995e4951c66168862ea2b4010ed6b7a33258a50b956582c2140a0c",
+  "training": false,
+  "physics_claim": false,
+  "offline_canary": null,
+  "fixture_provenance": "Project-authored asymmetric prism; real PLY, no physics producer"
+}
