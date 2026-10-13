@@ -1,6 +1,6 @@
 """Versioned real recipes and their authoritative admission checks.
 
-This owns closed classification, mesh and sequence validation recipes, not a general graph engine.
+This owns closed classification and whole-asset validation recipes, not a general graph engine.
 Release custody and CPU adapter eligibility remain with their existing owners.
 """
 import copy
@@ -99,13 +99,14 @@ def decode_graph(value):
 
 
 ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation,
-            release_validation.SEQUENCE_RECIPE: release_validation}
+            release_validation.SEQUENCE_RECIPE: release_validation,
+            release_validation.POINTCLOUD_RECIPE: release_validation, release_validation.VOLUME_RECIPE: release_validation}
 
 
 def adapter_for_graph(graph):
     recipe = graph.get('recipe', 'image_classification')
     if not isinstance(recipe, str) or recipe not in ADAPTERS:
-        raise WorkbenchError('Only the versioned classification, mesh and sequence validation recipes are supported.', 'unsupported', 400)
+        raise WorkbenchError('Only the versioned classification and whole-asset validation recipes are supported.', 'unsupported', 400)
     return ADAPTERS[recipe]
 
 
@@ -158,9 +159,11 @@ class Pipelines:
         image = definition('image_classification', image_training)
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
                 'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation),
-                            definition(release_validation.SEQUENCE_RECIPE, release_validation)],
+                            definition(release_validation.SEQUENCE_RECIPE, release_validation),
+                            definition(release_validation.POINTCLOUD_RECIPE, release_validation),
+                            definition(release_validation.VOLUME_RECIPE, release_validation)],
                 'limitations': ['Closed image TinyCNN, text TF-IDF + MultinomialNB and audio feature logistic CPU recipes only.',
-                                'Audio execution classifies one reviewed interval per WAV. Mesh and sequence recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
+                                'Audio execution classifies one reviewed interval per WAV. Mesh, sequence, point-cloud and volume recipes validate frozen integrity only; ASR and 3D training are unsupported.']}
 
     def _get(self, graph_id):
         identifier(graph_id, 'Graph ID')
@@ -245,7 +248,7 @@ class Pipelines:
                 format_name = selection.get('format')
             records = selection.get('records')
             kinds = {row.get('kind') for row in records if isinstance(row, dict) and isinstance(row.get('kind'), str)} if isinstance(records, list) else set()
-            integrity_recipe = ({'mesh': release_validation.RECIPE, 'sequence': release_validation.SEQUENCE_RECIPE}.get(next(iter(kinds)))
+            integrity_recipe = (release_validation.KINDS.get(next(iter(kinds)))
                                 if len(kinds) == 1 else None)
             if format_name is None and integrity_recipe:
                 manifest, summary = release_validation.inspect_release(path, release_id, integrity_recipe)
@@ -260,7 +263,7 @@ class Pipelines:
             recipe = {'image_classification_v1': 'image_classification',
                       'text_classification_v1': 'text_classification', 'audio_classification_v1': 'audio_classification'}.get(format_name)
             if recipe is None:
-                raise WorkbenchError('Choose a frozen classification release or a mesh-only/sequence-only canonical release.', 'unsupported', 409)
+                raise WorkbenchError('Choose a frozen classification release or a single-kind mesh, sequence, point-cloud or volume canonical release.', 'unsupported', 409)
             manifest = ADAPTERS[recipe].inspect_release(path, release_id)
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None

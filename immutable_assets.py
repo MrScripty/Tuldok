@@ -10,7 +10,7 @@ MAX_SELECTED_ASSET_BYTES = 40 * 1024 * 1024
 
 def check_selection(records):
     total = sum(row[row['kind']]['bundle_bytes'] for row in records
-                if row['kind'] in ('sequence', 'mesh') and row.get(row['kind']))
+                if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume') and row.get(row['kind']))
     total += sum(row['audio']['source_bytes'] for row in records if row['kind'] == 'audio')
     if total > MAX_SELECTED_ASSET_BYTES:
         raise WorkbenchError('Selected immutable assets exceed the synchronous 40 MiB bound.')
@@ -24,7 +24,7 @@ def migrate_records(db):
 class ImmutableAssets:
     """Concrete facades select trusted table/task policy, adapters own file meaning."""
     def __init__(self, workbench, *, kind, task, maximum, default_name):
-        if kind not in ('sequence', 'mesh'):
+        if kind not in ('sequence', 'mesh', 'pointcloud', 'volume'):
             raise ValueError('Unsupported immutable asset owner.')
         self.workbench, self.kind, self.task = workbench, kind, task
         self.maximum, self.default_name = maximum, default_name

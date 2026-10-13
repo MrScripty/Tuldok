@@ -1,0 +1,47 @@
+{
+  "format": "tuldok_volume_v1",
+  "volume_file": "volume.npy",
+  "volume_bytes": 152,
+  "volume_sha256": "5efdd6535378cedc52667767dbbe10010a55fa8ed8c3ff9b793d1fef9cbe9048",
+  "shape": [
+    2,
+    3,
+    4
+  ],
+  "dtype": "uint8",
+  "order": "C",
+  "value_semantics": "Authored scalar ramp; unsigned intensity with no medical meaning.",
+  "units": "mm",
+  "affine": [
+    [
+      0,
+      -3,
+      0,
+      10
+    ],
+    [
+      2,
+      0,
+      0,
+      -20
+    ],
+    [
+      0,
+      0,
+      5,
+      30
+    ],
+    [
+      0,
+      0,
+      0,
+      1
+    ]
+  ],
+  "provenance": {
+    "source": "Tuldok authored fixture",
+    "revision": "1",
+    "license": "CC0-1.0",
+    "description": "24 voxel analytic ramp with rotated anisotropic axes and translation."
+  }
+}

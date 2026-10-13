@@ -1,4 +1,4 @@
-"""Frozen canonical archive custody shared by mesh and sequence readers.
+"""Frozen canonical archive custody shared by whole-asset readers.
 
 Subtype readers retain native semantics and row policy. This owner checks the
 one existing canonical v1 envelope, projection and selected-family contract.
@@ -69,7 +69,7 @@ def archive(raw, maximum_entries, maximum_bytes):
 
 def validate_bytes(raw, expected_sha256, *, kind, validate_row):
     """Return custody and subtype summaries for one supported whole-asset kind."""
-    if kind not in ('mesh', 'sequence'):
+    if kind not in ('mesh', 'sequence', 'pointcloud', 'volume'):
         raise ValueError('Unsupported canonical release reader.')
     require(type(raw) is bytes and 0 < len(raw) <= MAX_RELEASE_BYTES, 'select a release of at most 64 MiB.')
     digest = sha(raw)

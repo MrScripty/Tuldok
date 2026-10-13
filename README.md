@@ -68,7 +68,7 @@ current record; saving/reviewing and freezing a new release leaves old results
 unchanged. Viewing test results records durable exposure; reused records or
 pixels cannot be presented as fresh holdout evidence.
 
-Fresh catalogs use schema 3. Existing PostgreSQL schema-1 or schema-2 catalogs require an
+Fresh catalogs use schema 4. Existing PostgreSQL schema-1, schema-2 or schema-3 catalogs require an
 explicit stopped-writer backup and upgrade, never an automatic startup change:
 
 ```sh
