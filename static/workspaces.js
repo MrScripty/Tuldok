@@ -36,6 +36,7 @@ window.workspaceEscape = (value) =>
     workspaceIntent++;if(navigation)catalogImportIntent++;
     $("catalog-frame").contentWindow?.TuldokWorkspaceData?.cancelRecordOpen?.();
   }
+  window.addEventListener("tuldok-session", () => invalidateCorrection());
   function renderCorrection(record = catalogContext?.record) {
     const banner = $("real-correction-context");
     banner.hidden = source !== "catalog" || !realCorrection || record?.id !== realCorrection.id;
@@ -48,6 +49,7 @@ window.workspaceEscape = (value) =>
     runsRoot: $("real-runs-root"),
     announce,
     openRun: () => { location.hash = "runs"; },
+    openImportedRecord: openCatalogRecord,
     openRecord: async (prediction) => {
       const bridge = $("catalog-frame").contentWindow?.TuldokWorkspaceData;
       if (!bridge) { announce("Open Data once to load the current catalog editor.", true); return; }

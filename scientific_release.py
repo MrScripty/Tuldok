@@ -7,7 +7,6 @@ It contains no producer-specific interpretation or physics qualification.
 import argparse
 import json
 from pathlib import Path
-import re
 import sys
 
 import canonical_release
@@ -55,20 +54,16 @@ def validate_row(row, release, used_ids):
     require(type(row['field_sequence']) is dict and encode(row['field_sequence']) == encode(metadata),
             'field-sequence metadata differs from exact source.')
     provenance = row['provenance']
-    require(provenance.get('method') == 'project_data_import'
+    require(provenance.get('method') in ('project_data_import', 'run_artifact_import')
             and type(provenance.get('field_sequence')) is dict
             and encode(provenance['field_sequence']) == encode(metadata)
             and provenance.get('source_sha256') == sha(raw),
             'field-sequence provenance differs from exact source.')
-    source = provenance.get('project_source')
-    require(type(source) is dict
-            and set(source) == {'project_id', 'manifest_sha256', 'reference_id', 'path', 'measured_sha256'},
-            'invalid declared project source receipt.')
-    require(type(source['project_id']) is str and re.fullmatch('[a-f0-9]{32}', source['project_id'])
-            and type(source['manifest_sha256']) is str and re.fullmatch('[a-f0-9]{64}', source['manifest_sha256'])
-            and source['measured_sha256'] == sha(raw), 'declared project source identity differs from retained bytes.')
-    scientific_fields.text(source['reference_id'], 64, 'Project reference')
-    scientific_fields.text(source['path'], 512, 'Project source path')
+    method = provenance['method']
+    source_key = 'project_source' if method == 'project_data_import' else 'run_source'
+    other_key = 'run_source' if method == 'project_data_import' else 'project_source'
+    require(other_key not in provenance, 'mixed project and Run source provenance is forbidden.')
+    scientific_fields.validate_source(method, provenance.get(source_key), raw)
     require(set(metadata['protected_groups']) <= set(row['groups']),
             'protected field source, state or family is missing.')
     result = {key: row[key] for key in ('id', 'name', 'revision', 'source_revision', 'split', 'review')}

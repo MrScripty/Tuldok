@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P3a qualified at published commit d3c0e09; P3b approved external recipes admitted on feature/approved-external-recipes-20261013.
+**Current phase:** P3 qualified at published commit 7d59060; P4 bounded native generation admitted on feature/native-scientific-generation-20261013.
 
-**Next slice:** P3b — exact material approval, captured external recipes and descendant custody; see the P3b admission report for the reviewed contract and write set.
+**Next slice:** P4 — optional native generation and verified Run artifact import into Data; see [P4 admission](reports/p4-admission.md) for reviewed contracts and exact write boundaries.
 
 **Acceptance status:** `partial`
 
@@ -34,7 +34,7 @@ The user approved publishing this plan and staged implementation on 2026-10-13. 
 | --- | --- | --- | --- | --- | --- | --- |
 | G1 | Open/reopen a local project, inspect available/missing artifacts and runtime requirements, navigate all three workspaces without executing or modifying repository code | user-workflow | representative | automated | satisfied | [P1 observed workflow](reports/p1-verification.md) |
 | G2 | Scientific fields preserve exact float bytes, dimensions, staggered placement, units, time and trajectory identity through import, freeze, download and cold read | contract | representative | automated | satisfied | [Actual native and neutral custody workflows](reports/p2-verification.md) |
-| G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | pending | P4 actual native generator plus no-adapter startup |
+| G3 | An optional Rheon adapter exposes bounded generation controls and produces real generic scientific data; removing it leaves generic project/data use intact | integration | required-real | automated | satisfied | [P4 actual generation and no-adapter startup](reports/p4-verification.md) |
 | G4 | Saved graph executes existing lab fitting and autonomous evaluation scripts; verified checkpoint, full-field comparisons and physics diagnostics survive restart with complete provenance | system | required-real | automated | pending | P5 lab verifier, numerical field comparison and new execution receipts |
 | G5 | Agent and UI clients use the same operations; stale requests, forged human review, unauthorized execution, path escape and approval reuse fail before side effects | contract | representative | automated | pending | P3/P6 public-interface denial and parity tests |
 | G6 | Admission is idempotent; cancel, crash and restart never duplicate work, publish partial success or silently leave descendants running | system | representative | automated | pending | P3 process-tree, storage-failure and lost-acknowledgement tests |
@@ -200,7 +200,7 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G5 shared service portion and G6. Use a real bounded executable for lifecycle tests, clearly labelled non-scientific; actual native lab probe decides admission of P4. No false success after cancellation or partial outputs; stale authorization and forged review denied across direct HTTP and UI.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 ### P4: Optional Rheon generation controls
 
@@ -212,7 +212,7 @@ Statuses below track the approved staged implementation. Before starting each mi
 
 **Acceptance gate:** G3 and P4 UI path. Real generated arrays pass cold generic and producer readers; invalid controls fail before spawn; removal of optional package leaves generic features operational. No fabricated native output or silent re-use of PR32's different fixed profile.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ### P5: Surrogate training and autonomous evaluation
 

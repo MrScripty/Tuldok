@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import struct
 import unittest
 from unittest.mock import patch
 import uuid
@@ -36,6 +37,36 @@ class ContractTests(unittest.TestCase):
         for name in ('../bad','nested/file','custody-receipt.json','artifact-manifest.json'):
             changed=copy.deepcopy(value); changed['outputs'][0]['path']=name
             with self.assertRaises(WorkbenchError): contract.decode_definition(json.dumps(changed).encode())
+
+    def test_strict_native_elf_rejects_headers_paths_and_loader_extensions(self):
+        raw=Path('/usr/bin/true').read_bytes()
+        needed=contract.strict_native_elf(raw,executable=True)
+        self.assertIn('libc.so.6',needed)
+        offset=struct.unpack_from('<Q',raw,32)[0]
+        size,count=struct.unpack_from('<HH',raw,54)
+        segments=[struct.unpack_from('<IIQQQQQQ',raw,offset+i*size) for i in range(count)]
+        dynamic=next(row[2] for row in segments if row[0]==2)
+        for tag in (15,29,0x6ffffefa,0x6ffffefb,0x6ffffefc,0x7ffffffd,0x7fffffff):
+            changed=bytearray(raw); struct.pack_into('<Q',changed,dynamic,tag)
+            with self.subTest(tag=tag), self.assertRaises(WorkbenchError):
+                contract.strict_native_elf(bytes(changed),executable=True)
+        for changed in (raw[:63],raw[:18]+b'\x00\x00'+raw[20:],raw[:32]+b'\xff'*8+raw[40:]):
+            with self.assertRaises(WorkbenchError): contract.strict_native_elf(changed,executable=True)
+        changed=raw.replace(b'libc.so.6\0',b'/tmp/x.so\0')
+        self.assertNotEqual(changed,raw)
+        with self.assertRaises(WorkbenchError): contract.strict_native_elf(changed,executable=True)
+        runtime=contract.runtime_identity()
+        original=Path.read_bytes
+        def malformed_dependency(path):
+            data=original(path)
+            if path.name=='libc.so.6':
+                off=struct.unpack_from('<Q',data,32)[0]; width,num=struct.unpack_from('<HH',data,54)
+                segment=next(struct.unpack_from('<IIQQQQQQ',data,off+i*width) for i in range(num)
+                             if struct.unpack_from('<I',data,off+i*width)[0]==2)
+                bad=bytearray(data); struct.pack_into('<Q',bad,segment[2],29); return bytes(bad)
+            return data
+        with patch.object(Path,'read_bytes',malformed_dependency), self.assertRaises(WorkbenchError):
+            contract.native_policies({'native_sources':['native.bin']},{'native.bin':raw},runtime)
 
     def test_real_runtime_closure_without_launch(self):
         with patch('subprocess.Popen',side_effect=AssertionError('Preflight launched a process')):
@@ -118,6 +149,8 @@ class RecipePipelineTests(unittest.TestCase):
             first=self.dataset.pipelines.preflight_external(graph['id'],1)
             capture=self.dataset.pipelines.capture_external(graph['id'],1,first['material_sha256'],self.root/'capture')
         self.assertEqual(first['material'],capture['material'])
+        self.assertNotIn('native_policies',first['material'])
+        self.assertNotIn('native_loader_policy',capture['spec'])
         self.assertEqual(first['material']['catalog_id'],self.dataset.db.dataset_id)
         for mutate in (
             lambda m: m['captures'].update({'../escape':{'bytes':0,'sha256':'a'*64}}),
@@ -154,6 +187,33 @@ class RecipePipelineTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):
             self.dataset.pipelines.capture_external(graph['id'],2,first['material_sha256'],self.root/'stale')
         self.assertFalse((self.root/'stale').exists())
+
+    def test_native_policy_is_captured_and_cold_bound_without_execution(self):
+        raw=Path('/usr/bin/true').read_bytes()
+        (self.project/'native.bin').write_bytes(raw)
+        value=copy.deepcopy(self.value)
+        value['sources'].append({'path':'native.bin','sha256':hashlib.sha256(raw).hexdigest()})
+        value['native_sources']=['native.bin']
+        value['arguments'].append({'native_policy':'native.bin'})
+        encoded=json.dumps(value).encode(); (self.project/'recipe.json').write_bytes(encoded)
+        body=dict(self.body,expected_sha256=hashlib.sha256(encoded).hexdigest())
+        with patch('subprocess.Popen',side_effect=AssertionError('Native preflight executed code')):
+            graph=self.dataset.pipelines.create_external(body)
+            preflight=self.dataset.pipelines.preflight_external(graph['id'],1)
+            captured=self.dataset.pipelines.capture_external(graph['id'],1,preflight['material_sha256'],self.root/'native-capture')
+        policy=preflight['material']['native_policies']['native.bin']
+        self.assertEqual(policy['source']['sha256'],hashlib.sha256(raw).hexdigest())
+        self.assertEqual(captured['spec']['native_loader_policy'],contract.NATIVE_POLICY)
+        policy_path=self.root/'native-capture'/contract.native_policy_path('native.bin')
+        self.assertEqual(policy_path.read_bytes(),contract.encode(policy).encode())
+        self.assertEqual(captured['spec']['argv'][-1],str(policy_path))
+        with patch.object(Path,'read_bytes',side_effect=AssertionError('Cold native material inspected runtime')):
+            contract.validate_spec(preflight['material'],captured['spec'],self.root/'native-capture')
+        for key,changed_value in (('loader_arguments',['--list']),('absent_paths',[]),('source',{'path':'native.bin','sha256':'a'*64})):
+            changed=copy.deepcopy(preflight['material']); changed['native_policies']['native.bin'][key]=changed_value
+            with self.assertRaises(WorkbenchError): contract.validate_material(changed)
+        bad_spec=copy.deepcopy(captured['spec']); bad_spec.pop('native_loader_policy')
+        with self.assertRaises(WorkbenchError): contract.validate_spec(preflight['material'],bad_spec,self.root/'native-capture')
 
     def test_source_and_input_drift_refuse_capture(self):
         graph=self.dataset.pipelines.create_external(self.body)

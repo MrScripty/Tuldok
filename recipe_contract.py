@@ -48,7 +48,7 @@ def decode_definition(raw):
         raise WorkbenchError('Recipe definition exceeds 64 KiB.')
     value = decode(raw)
     closed(value, ('schema_version', 'format', 'id', 'name', 'version', 'runtime', 'sources', 'entrypoint',
-                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'))
+                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources',))
     if type(value['schema_version']) is not int or value['schema_version'] != 1 or value['format'] != 'external_recipe_v1':
         raise WorkbenchError('Only external_recipe_v1 is supported.', 'unsupported', 400)
     named(value['id'])
@@ -69,6 +69,10 @@ def decode_definition(raw):
         paths.add(path)
     if not isinstance(value['entrypoint'], str) or value['entrypoint'] not in paths:
         raise WorkbenchError('Entrypoint must be one declared captured source.')
+    if 'native_sources' in value:
+        natives = value['native_sources']
+        if not isinstance(natives,list) or not 1 <= len(natives) <= 8 or any(not isinstance(item,str) or item not in paths for item in natives) or len(set(natives)) != len(natives):
+            raise WorkbenchError('Native sources must name 1–8 unique declared sources.')
     if not isinstance(value['parameters'], dict) or len(value['parameters']) > 32:
         raise WorkbenchError('Declare at most 32 typed parameters.')
     for key, rule in value['parameters'].items():
@@ -109,6 +113,8 @@ def decode_definition(raw):
             if not isinstance(arg, str) or arg not in value['inputs']: raise WorkbenchError('Unknown input argument.')
         elif kind == 'source':
             if not isinstance(arg, str) or arg not in paths: raise WorkbenchError('Unknown source argument.')
+        elif kind == 'native_policy':
+            if not isinstance(arg,str) or arg not in value.get('native_sources',[]): raise WorkbenchError('Native policy argument must select a declared native source.')
         elif kind != 'output_dir' or arg is not True:
             raise WorkbenchError('Unsupported argument token.')
     outputs = value['outputs']
@@ -233,6 +239,151 @@ def runtime_identity(profile=None):
             'assumption': TRUST, 'flags': ['-I', '-S', '-B']}
 
 
+NATIVE_POLICY = 'glibc_x86_64_no_preload_v1'
+NATIVE_LIBRARY = '/usr/lib/x86_64-linux-gnu'
+NATIVE_LOADER = NATIVE_LIBRARY + '/ld-linux-x86-64.so.2'
+NATIVE_ARGUMENTS = ['--inhibit-cache', '--library-path', NATIVE_LIBRARY, '--glibc-hwcaps-mask', '']
+
+
+def native_policy_path(source):
+    return 'native-policy/' + hashlib.sha256(source.encode()).hexdigest() + '.json'
+
+
+def strict_native_elf(raw, *, executable=False):
+    """Closed ELF64/x86-64 dynamic dependency policy, without loader execution."""
+    def fail():
+        raise WorkbenchError('Native ELF is malformed or outside the qualified loader policy.', 'unsupported', 400)
+    if type(raw) is not bytes or len(raw) < 64 or raw[:7] != b'\x7fELF\x02\x01\x01': fail()
+    etype, machine, version = struct.unpack_from('<HHI', raw,16)
+    offset = struct.unpack_from('<Q',raw,32)[0]
+    ehsize, size, count = struct.unpack_from('<HHH',raw,52)
+    if (etype != 3 or machine != 62 or version != 1 or ehsize != 64 or size != 56
+            or not 1 <= count <= 128 or offset < 64 or offset + count*size > len(raw)): fail()
+    segments = [struct.unpack_from('<IIQQQQQQ', raw, offset+i*size) for i in range(count)]
+    dynamic = []; interpreter = None; loads = []; dynamic_seen = False
+    for kind, _flags, pos, va, _pa, length, memory, _align in segments:
+        if pos + length > len(raw) or (kind == 1 and length > memory): fail()
+        if kind == 1: loads.append((pos,va,length))
+        if kind == 3:
+            if interpreter is not None or not 1 <= length <= 256: fail()
+            value = raw[pos:pos+length]
+            if value[-1:] != b'\0' or b'\0' in value[:-1]: fail()
+            try: interpreter = value[:-1].decode('ascii')
+            except UnicodeError: fail()
+            if interpreter not in ('/lib64/ld-linux-x86-64.so.2', NATIVE_LOADER): fail()
+        if kind == 2:
+            if dynamic_seen or length % 16 or not 16 <= length <= 65536: fail()
+            dynamic_seen = True
+            terminated = False
+            for at in range(pos,pos+length,16):
+                tag, value = struct.unpack_from('<QQ',raw,at)
+                if tag == 0:
+                    terminated = True; break
+                dynamic.append((tag,value))
+            if not terminated: fail()
+    if not loads or not dynamic or (executable and interpreter is None): fail()
+    # Dynamic configuration/audit/filter mechanisms can load undeclared code.
+    forbidden = {15,29,0x6ffffefa,0x6ffffefb,0x6ffffefc,0x7ffffffd,0x7fffffff}
+    if any(tag in forbidden for tag,_value in dynamic): fail()
+    tables = [value for tag,value in dynamic if tag == 5]
+    sizes = [value for tag,value in dynamic if tag == 10]
+    if len(tables) != 1 or len(sizes) != 1 or not 1 <= sizes[0] <= len(raw): fail()
+    matches = [pos+tables[0]-va for pos,va,length in loads if va <= tables[0] and tables[0]+sizes[0] <= va+length]
+    if len(matches) != 1: fail()
+    base = matches[0]; needed = []
+    for tag,value in dynamic:
+        if tag != 1: continue
+        if value >= sizes[0]: fail()
+        end = raw.find(b'\0',base+value,base+sizes[0])
+        if end < 0: fail()
+        try: name = raw[base+value:end].decode('ascii')
+        except UnicodeError: fail()
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}',name) or name in needed: fail()
+        needed.append(name)
+    if len(needed) > 64: fail()
+    return needed
+
+
+def native_policies(definition, sources, runtime):
+    """Capture every recursively required trusted native library into material."""
+    import recipe_process
+    recipe_process.verify_native_loader_policy(runtime['trusted_install_owner_uid'])
+    result = {}
+    for source in definition['native_sources']:
+        needed = strict_native_elf(sources[source], executable=True)
+        pending = [Path(NATIVE_LOADER), *(Path(NATIVE_LIBRARY)/name for name in needed)]
+        files = {}
+        while pending:
+            path = pending.pop().resolve(strict=True)
+            if str(path) in files: continue
+            if path.parent != Path(NATIVE_LIBRARY) or len(files) >= 64:
+                raise WorkbenchError('Native library closure escapes its finite trusted directory.')
+            for ancestor in (path,*path.parents):
+                if ancestor == Path('/'): break
+                info = ancestor.stat()
+                if info.st_uid != runtime['trusted_install_owner_uid'] or info.st_mode & 0o022:
+                    raise WorkbenchError('Native runtime owner or permissions differ from trusted installation.')
+                if ancestor == Path('/usr'): break
+            info = path.stat()
+            if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_SOURCE_BYTES:
+                raise WorkbenchError('Native library exceeds its regular-file bound.')
+            raw = path.read_bytes(); after = path.stat()
+            if (info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns) != (after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns):
+                raise WorkbenchError('Native runtime changed during preflight.', 'stale',409)
+            dependencies = strict_native_elf(raw)
+            files[str(path)] = {'bytes':len(raw),'sha256':file_digest(raw)}
+            pending.extend(Path(NATIVE_LIBRARY)/name for name in dependencies)
+        policy = {'schema_version':1,'policy':NATIVE_POLICY,'source':{'path':source,'sha256':file_digest(sources[source])},
+                  'loader':dict(path=NATIVE_LOADER,**files[NATIVE_LOADER]),'library_directory':NATIVE_LIBRARY,
+                  'loader_arguments':list(NATIVE_ARGUMENTS),
+                  'runtime_files':[dict(path=path,**record) for path,record in sorted(files.items())],
+                  'absent_paths':['/etc/ld.so.preload']}
+        result[source] = policy
+        runtime['files'].update(files)
+    runtime['files'] = dict(sorted(runtime['files'].items()))
+    runtime['closure_sha256'] = digest(runtime['files'])
+    return result
+
+
+def validate_native_policies(material, definition):
+    """Validate retained policy declarations with no live runtime dependency."""
+    policies = material.get('native_policies')
+    if 'native_sources' not in definition:
+        if 'native_policies' in material: raise WorkbenchError('Unexpected native policy material.')
+        return {}
+    if not isinstance(policies,dict) or set(policies) != set(definition['native_sources']):
+        raise WorkbenchError('Native source and policy inventories differ.')
+    runtime = material.get('runtime')
+    if not isinstance(runtime,dict) or not isinstance(runtime.get('files'),dict):
+        raise WorkbenchError('Invalid native runtime closure.')
+    sources = {item['path']:item['sha256'] for item in definition['sources']}
+    generated = {}
+    for source,policy in policies.items():
+        closed(policy, ('schema_version','policy','source','loader','library_directory','loader_arguments','runtime_files','absent_paths'))
+        if (type(policy['schema_version']) is not int or policy['schema_version'] != 1 or policy['policy'] != NATIVE_POLICY
+                or policy['source'] != {'path':source,'sha256':sources[source]}
+                or policy['library_directory'] != NATIVE_LIBRARY or policy['loader_arguments'] != NATIVE_ARGUMENTS
+                or policy['absent_paths'] != ['/etc/ld.so.preload']):
+            raise WorkbenchError('Native loader policy is inconsistent.')
+        rows = policy['runtime_files']
+        if not isinstance(rows,list) or not 1 <= len(rows) <= 64: raise WorkbenchError('Invalid native runtime inventory.')
+        seen = set()
+        for row in rows:
+            closed(row, ('path','bytes','sha256'))
+            path = row['path']
+            if not isinstance(path,str) or str(Path(path).parent) != NATIVE_LIBRARY or path in seen:
+                raise WorkbenchError('Native library path differs from policy.')
+            relative_path(path[1:]); seen.add(path)
+            expected = material['runtime']['files'].get(path)
+            if not isinstance(expected,dict) or set(expected) != {'bytes','sha256'} or encode(row) != encode(dict(path=path,**expected)):
+                raise WorkbenchError('Native library differs from retained runtime closure.')
+        loader = policy['loader']
+        if NATIVE_LOADER not in seen or loader != dict(path=NATIVE_LOADER,**material['runtime']['files'][NATIVE_LOADER]):
+            raise WorkbenchError('Native loader identity is inconsistent.')
+        generated[native_policy_path(source)] = encode(policy).encode()
+    return generated
+
+
 def graph_parameters(graph):
     nodes = graph['nodes']
     if len(nodes) != 3 or {n['type'] for n in nodes} != set(TYPES) or any(n['definition_version'] != 1 for n in nodes):
@@ -281,12 +432,24 @@ def prepare(projects, graph, execution_sha256, profile=None):
         runtime = runtime_identity(profile)
     except (OSError, struct.error, UnicodeError):
         raise WorkbenchError('Qualified system runtime cannot be safely inspected.', 'unavailable', 409) from None
+    policies = None
+    if 'native_sources' in definition:
+        try:
+            policies = native_policies(definition,sources,runtime)
+        except OSError:
+            raise WorkbenchError('Native runtime cannot be safely inspected.', 'unavailable',409) from None
+        for source,policy in policies.items():
+            captured[native_policy_path(source)] = encode(policy).encode()
+        if len(captured) > MAX_FILES or sum(map(len,captured.values())) > MAX_CAPTURE_BYTES:
+            raise WorkbenchError('Generated native policies exceed the capture bound.')
     host = host_identity()
     material = {'schema_version': 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
                 'recipe': definition, 'parameters': values, 'inputs': inputs,
                 'captures': {path: {'bytes':len(raw),'sha256':file_digest(raw)} for path,raw in sorted(captured.items())},
                 'runtime': runtime, 'host_files': host, 'permissions': {'filesystem':'trusted-local', 'network':'not_isolated'},
                 'environment': {'LANG':'C.UTF-8'}, 'resources': definition['resources']}
+    if policies is not None: material['native_policies'] = policies
+    validate_material(material)
     return {'valid':True, 'status':'valid', 'material':material, 'material_sha256':digest(material), 'validation_token':digest(material),
             'parameter_definitions':definition['parameters'], 'outputs':definition['outputs'], 'runtime':runtime,
             'graph_revision':graph['revision'], 'execution_sha256':execution_sha256}, captured
@@ -295,7 +458,7 @@ def prepare(projects, graph, execution_sha256, profile=None):
 def validate_material(material):
     """Cold structural custody checks; no filesystem access or current-code comparison."""
     closed(material, ('schema_version', 'catalog_id', 'project', 'graph_execution_sha256', 'recipe',
-                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'))
+                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies',))
     if type(material['schema_version']) is not int or material['schema_version'] != 1 or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
         raise WorkbenchError('Invalid execution material identity.')
     def sha(value):
@@ -318,14 +481,17 @@ def validate_material(material):
         if (item['project_id'], item['manifest_sha256']) != (material['project']['project_id'], material['project']['manifest_sha256']):
             raise WorkbenchError('Input receipt belongs to another project snapshot.')
         expected['input/'+name] = item['measured_sha256']
+    generated = validate_native_policies(material,definition)
+    expected.update({path:file_digest(raw) for path,raw in generated.items()})
     captures = material['captures']
     if not isinstance(captures, dict) or set(captures) != set(expected) or len(captures) > MAX_FILES:
         raise WorkbenchError('Captured inventory differs from the declared source and inputs.')
     total = 0
     for path, item in captures.items():
         relative_path(path); closed(item, ('bytes','sha256')); sha(item['sha256'])
-        limit = MAX_SOURCE_BYTES if path.startswith('source/') else definition['inputs'][path.split('/',1)[1]]['max_bytes']
+        limit = MAX_SOURCE_BYTES if path.startswith(('source/','native-policy/')) else definition['inputs'][path.split('/',1)[1]]['max_bytes']
         bounded_int(item['bytes'],0,limit,'Capture bytes'); total += item['bytes']
+        if path in generated and item['bytes'] != len(generated[path]): raise WorkbenchError('Generated native policy size differs.')
         if item['sha256'] != expected[path]: raise WorkbenchError('Captured digest contradicts source/input identity.')
     if total > MAX_CAPTURE_BYTES: raise WorkbenchError('Captured material exceeds byte bound.')
     runtime = material['runtime']
@@ -363,13 +529,16 @@ def spec_for_material(material, staging):
             item = material['parameters'][value]; arg = ('true' if item else 'false') if type(item) is bool else str(item)
         elif kind == 'input': arg = str(staging/'input'/value)
         elif kind == 'source': arg = str(staging/'source'/value)
+        elif kind == 'native_policy': arg = str(staging/native_policy_path(value))
         else: arg = str(output)
         argv.append(arg)
-    return {'schema_version':1,'argv':argv,'env':dict(material['environment']),'cwd':str(staging), 'stdin_base64':base64.b64encode(b'').decode(),
+    spec = {'schema_version':1,'argv':argv,'env':dict(material['environment']),'cwd':str(staging), 'stdin_base64':base64.b64encode(b'').decode(),
             'wall_seconds':definition['resources']['wall_seconds'], 'executable_sha256':runtime['executable_sha256'],
             'max_output_bytes':definition['resources']['max_output_bytes'], 'output_dir':str(output),'captured_files':records,
             'runtime_files':[dict(path=path,**record) for path,record in sorted(runtime['files'].items())],
             'trusted_install_owner_uid':runtime['trusted_install_owner_uid']}
+    if 'native_policies' in material: spec['native_loader_policy'] = NATIVE_POLICY
+    return spec
 
 
 def validate_spec(material, spec, staging):

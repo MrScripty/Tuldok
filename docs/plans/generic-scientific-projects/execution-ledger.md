@@ -85,3 +85,23 @@ Implemented external graph/preflight, exact actor-bound approvals/schema8, captu
 Full stable-source suite749 passes856.353s with2 optional-reader skips separately covered20 tests; all176 Python sources/tests unchanged. Focused approvals/storage50, host/retained28, helper11 and composed external15 pass. Existing31 JS checks and new external controller pass. Actual owner/agent desktop/narrow browser, cancellation/restart and exact downloads pass; project/recovery regressions pass. Native237-byte READY/STOP reaches exit0/ECHILD only, no simulation/model claim. Independent review findings fixed with regressions; no remaining local blocker. See [P3b verification](reports/p3b-verification.md).
 
 A further disconnect notice did not block tools or remove work; branch and test progress were checked directly. Fresh main remainsc522bf6; PR32/33 and38–47 preserved, all unmerged. Commit/push/draft publication follows; exact-head hosted lifecycle/UI qualify P4 admission. No merge or deployment.
+
+
+## 2026-10-13 — P3b hosted qualification and P4 admission
+
+PR48 exact7d59060 passed hosted UI38440828965 and lifecycle38440828870 (132 steps). All work is pushed; no merge or deployment. Fresh main remainsc522bf6. Created feature/native-scientific-generation-20261013. Independent review accepted bounded native closure and server-derived Run artifact provenance, preserving old Python-only material identities and project-source release bytes. P4 exact API/write ownership and acceptance are recorded in [admission](reports/p4-admission.md).
+
+
+## 2026-10-13 — P4 implementation and local qualification
+
+Implemented optional native closure/loader policy, the bounded Rheon adapter,
+server-derived Run artifact imports and compact Data navigation. Independent
+source review found no blocking issue. Full Python suite771 passes962.842s;
+two optional skips are separately covered20reader tests. All185runtime/unit-test
+sources stayed fixed; one standalone oracle refinement was independently used by
+the final real browser. Focused20host/helper,9adapter,6import/HTTP,9reader/restore,
+11retainedRun tests and affectedcontrollers pass. Actualnative browser6/6 gates
+passes seed100/101, allarrays/slices, review/freeze, cancellation and restart;
+no-adapter actualstartup also passes. Restore qualification exposed/fixed retained
+absolute-path validation without rewriting receipt hashes. See P4verification.
+Commit/push/draft publication follows; exact-head hosted CI gates P5. No merge.

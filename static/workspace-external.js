@@ -1,6 +1,6 @@
 'use strict';
 // External graph projection only. The existing Pipeline and Runs owners admit all work.
-window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,isDirty,replaceGraph,changeGraph,render,refresh,onRun}){
+window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,getRunId,isDirty,replaceGraph,changeGraph,render,refresh,onRun,onImported}){
   const esc=window.workspaceEscape,enc=encodeURIComponent,copy=value=>structuredClone(value);
   const isGraph=graph=>graph?.recipe==='external_recipe';
   let epoch=0,preflight=null,definitions={},reviewed=false,grant='',recipient='',grantReceipt=null;
@@ -70,9 +70,27 @@ window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,isDirty,
     const review=root.querySelector('#external-reviewed');if(review){review.checked=false;review.disabled=true;}
     const button=root.querySelector('#external-grant');if(button)button.disabled=true;
   }
+  function importable(run,artifact){return isGraph(run?.graph)&&run.state==='completed'&&run.artifact_status?.status!=='unavailable'&&artifact?.role==='scientific_fields'&&typeof artifact.name==='string'&&!artifact.locked&&/^[a-f0-9]{64}$/.test(artifact.sha256||'');}
+  function artifactActionHTML(run,artifact){
+    if(!importable(run,artifact))return '';
+    return `<button type="button" data-import-run-artifact="${esc(artifact.name)}" ${identity()?.scopes.includes('edit')?'':'disabled'}>Import into Data</button><small>Creates a draft. Review and freeze separately.</small>`;
+  }
+  async function importArtifact(run,artifact){
+    if(!importable(run,artifact))throw Error('Only verified scientific fields from a completed external run can be imported.');
+    if(!identity()?.scopes.includes('edit'))throw Error('Editing permission is required to import a draft.');
+    const origin=snapshot(),runId=run.id,name=artifact.name,expected=artifact.sha256;
+    let record;
+    try{record=await api('runs/'+enc(runId)+'/import-data/'+enc(name),{expected_sha256:expected});}
+    catch(error){throw Error(error.message+' If acknowledgement was lost, inspect Data for the existing content before retrying. This action never reruns the recipe.');}
+    if(!record||typeof record.id!=='string')throw Error('Import response unavailable. Inspect Data before retrying.');
+    if(current(origin)&&getRunId()===runId){
+      status('Imported draft '+record.id+'. Review and freeze remain separate.');
+      try{await onImported(record.id);}catch(error){status('Draft '+record.id+' was imported. '+error.message+' Open it from Data.');}
+    }else status('Draft '+record.id+' was imported. Current navigation and edits are retained; open it from Data.');
+  }
   function runHTML(run){return `<section class="external-run-custody"><h3>External execution custody</h3><p>${esc(run.custody_phase||'No confirmed custody phase')}</p><p>Approval ${esc(run.approval_id)} · actor ${esc(run.actor_id)}</p><p class="project-path">Material SHA256 ${esc(run.material_sha256)}</p>${run.state==='unknown'?'<p class="error-panel">Process cessation is unconfirmed. Same-boot execution may remain fenced; acknowledgement alone cannot clear custody.</p>':''}<p class="muted">${permissions} Completion is not scientific qualification.</p><details><summary>Approved material</summary><pre>${esc(JSON.stringify(run.material,null,2))}</pre></details></section>`;}
   window.addEventListener('tuldok-session',()=>{invalidate();if(isGraph(getGraph()))render();});
-  return {isGraph,invalidate,renderPipeline,dirtyChanged,runHTML};
+  return {isGraph,invalidate,renderPipeline,dirtyChanged,runHTML,artifactActionHTML,importArtifact};
 };
 
 window.WorkspaceExternalProject=function({onCreated,announce}){

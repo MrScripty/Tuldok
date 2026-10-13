@@ -18,7 +18,7 @@
     }
     return value;
   }
-  window.WorkspaceReal = function ({ pipelineRoot, runsRoot, announce, openRecord, openRun }) {
+  window.WorkspaceReal = function ({ pipelineRoot, runsRoot, announce, openRecord, openRun, openImportedRecord }) {
     let definitions, releases = [], graphs = [], graph = null, saved = "", selectedNode = "train",
       validation = null, busy = false, loadGeneration = 0, undo = [], redo = [],
       view = null, timer = null, runs = [], run = null, runGeneration = 0, notice = "", noticeError = false,
@@ -26,9 +26,10 @@
     const memory = history.state?.realWorkspace || {};
     let graphId = memory.graphId || null, runId = memory.runId || null,
       pendingSubmission = memory.pendingSubmission || null;
-    const external = WorkspaceExternal({api,action,status,getGraph:()=>graph,getIntent:()=>loadGeneration,isDirty:()=>dirty(),
+    const external = WorkspaceExternal({api,action,status,getGraph:()=>graph,getIntent:()=>loadGeneration,getRunId:()=>runId,isDirty:()=>dirty(),
       replaceGraph:document=>{if(!graphs.some(item=>item.id===document.id))graphs.push(document);adopt(document);},
       changeGraph:change,render:renderPipeline,refresh:loadPipeline,
+      onImported:openImportedRecord,
       onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     function remember() {
       history.replaceState({ ...history.state, realWorkspace: { version: 1, graphId, runId, pendingSubmission } }, "");
@@ -312,13 +313,17 @@
         ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
         ${externalRun ? external.runHTML(run) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
-        <div class="run-columns"><section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section><section><h3>Verified artifacts</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small></li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">Every artifact read verifies its frozen hash.</p></section></div>
+        <div class="run-columns"><section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section><section><h3>Verified artifacts</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">Every artifact read verifies its frozen hash.</p></section></div>
         ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
         <details><summary>Frozen identity, source provenance and parameters</summary><pre>${esc(JSON.stringify({ dataset_id: run.dataset_id, run_id: run.id, release_sha256: run.release_sha256, graph_sha256: run.graph_sha256, graph: run.graph, adapter: run.adapter, runtime: run.runtime, parameters: run.parameters, prior_test_exposure: run.prior_test_exposure, current_test_exposure: run.current_test_exposure, test_exposure: run.test_exposure }, null, 2))}</pre></details></article></div>`}`;
       });
       if (notice) { const target = runsRoot.querySelector('.real-status'); target.textContent = notice; target.classList.toggle('error-panel', noticeError); }
       runsRoot.querySelector("#real-runs-refresh").onclick = () => loadRuns();
       runsRoot.querySelectorAll("[data-real-run]").forEach(button => button.onclick = () => { split = "validation"; selectedCell = null; loadRuns(button.dataset.realRun); });
+      for(const button of runsRoot.querySelectorAll('[data-import-run-artifact]'))button.onclick=()=>{
+        const selected=run,artifact=selected.artifacts.find(item=>item.name===button.dataset.importRunArtifact);
+        action(()=>external.importArtifact(selected,artifact));
+      };
       runsRoot.querySelector("#real-cancel")?.addEventListener("click", () => action(async () => {
         run = await api("runs/" + encoded(run.id) + "/cancel", {}); status("Cancellation requested. Waiting for confirmed worker cessation."); await loadRuns(run.id, true);
       }));

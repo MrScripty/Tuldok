@@ -73,6 +73,32 @@ files remain unchanged. `asset(record)` verifies and returns captured bytes plus
 verifies complete ZIP identity. Symlinks, nonregular files, oversize sources, and
 changed captures are unavailable.
 
+Completed external Run artifacts have a separate source method:
+`admit_run_artifact(run_id, name, expected_sha256, body)`. The service requires
+edit and inspect permissions, calls `Runs.capture_artifact` itself, and accepts no
+caller-supplied provenance. HTTP exposes
+`POST /api/workspace/runs/:id/import-data/:name` with the expected hash and the
+same optional import metadata. Output role `scientific_fields` enables the UI
+action; the actual ZIP must still pass the full scientific parser.
+
+The `run_artifact_import` provenance contains `run_source`, never `project_source`.
+Its closed schema retains version, catalog/Run/attempt identities, request and
+material hashes, artifact name/role/size/hash, custody identity, custody receipt
+hash and canonical base64 of the original receipt (at most 16 KiB). Run/attempt,
+request and receipt identities must agree; custody must be completed and drained.
+Artifact size and hash must match the captured bundle. Frozen readers reuse these
+checks without opening the producer, live runtime or original execution paths.
+This is internally consistent retained execution evidence, not independent
+proof of historical database approvals or scientific correctness.
+
+Import creates a draft. Review and freeze remain separate permissioned operations.
+Cancelled, unknown, incomplete or changed results cannot import. Duplicate content
+returns a conflict and creates no second record. After a lost acknowledgement,
+inspect the existing catalog record by its content hash; do not rerun production.
+Rollback removes unpublished bytes; uncertain commit retains bytes and catalog
+state for reconciliation. Original `project_data_import` representations remain
+unchanged, and mixed provenance variants are rejected.
+
 `inspect(id, frame, field, axis, index)` returns a complete bounded orthogonal
 slice (maximum 129×129 scalars), original time/stage/units/dtype/centering, shape
 ZYX, and grid geometry. Z slices have Y rows/X columns, Y slices Z rows/X columns,

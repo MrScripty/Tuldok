@@ -1,6 +1,8 @@
 """Lossless bounded structured-grid fields; no producer execution or physics policy."""
 from access import authorized
 import ast
+import base64
+import binascii
 from decimal import Decimal, InvalidOperation
 import hashlib
 import io
@@ -272,6 +274,74 @@ def parse_bundle(raw):
         invalid('Malformed scientific bundle: ' + type(error).__name__)
 
 
+def validate_source(method, source, raw):
+    """Validate retained source declarations against captured scientific bytes.
+
+    Run evidence establishes internal custody relationships. It does not prove
+    historical database authority or reproduce the full approved material.
+    """
+    digest = hashlib.sha256(raw).hexdigest()
+    if method == 'project_data_import':
+        exact(source, ('project_id', 'manifest_sha256', 'reference_id', 'path', 'measured_sha256'), 'Project source')
+        if type(source['project_id']) is not str or not re.fullmatch('[a-f0-9]{32}', source['project_id']):
+            invalid('Invalid project source ID.')
+        for key in ('manifest_sha256', 'measured_sha256'):
+            if type(source[key]) is not str or not HASH.fullmatch(source[key]):
+                invalid('Invalid project source hash.')
+        text(source['reference_id'], 64, 'Project reference')
+        text(source['path'], 512, 'Project source path')
+    elif method == 'run_artifact_import':
+        import recipe_process
+        exact(source, ('schema_version', 'catalog_id', 'run_id', 'attempt_id',
+                       'request_sha256', 'material_sha256', 'artifact_name',
+                       'artifact_role', 'artifact_bytes', 'measured_sha256',
+                       'custody_receipt_sha256', 'custody_identity',
+                       'custody_receipt_base64'), 'Run source')
+        if type(source['schema_version']) is not int or source['schema_version'] != 1:
+            invalid('Unsupported Run source version.')
+        for key in ('catalog_id', 'run_id', 'attempt_id'):
+            if type(source[key]) is not str or not re.fullmatch('[a-f0-9]{32}', source[key]):
+                invalid('Invalid Run source identity.')
+        for key in ('request_sha256', 'material_sha256', 'measured_sha256', 'custody_receipt_sha256'):
+            if type(source[key]) is not str or not HASH.fullmatch(source[key]):
+                invalid('Invalid Run source hash.')
+        if (type(source['artifact_name']) is not str
+                or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', source['artifact_name'])
+                or source['artifact_name'] in ('artifact-manifest.json', 'custody-receipt.json')
+                or type(source['artifact_role']) is not str or not TOKEN.fullmatch(source['artifact_role'])):
+            invalid('Invalid Run artifact declaration.')
+        if type(source['artifact_bytes']) is not int or source['artifact_bytes'] != len(raw):
+            invalid('Run artifact size differs from captured bytes.')
+        identity = source['custody_identity']
+        exact(identity, ('attempt_id', 'request_sha256', 'spec_sha256', 'helper'), 'Custody identity')
+        if (source['run_id'] != source['attempt_id'] or source['attempt_id'] != identity['attempt_id']
+                or source['request_sha256'] != identity['request_sha256']
+                or type(identity['spec_sha256']) is not str or not HASH.fullmatch(identity['spec_sha256'])):
+            invalid('Run source and custody identities differ.')
+        encoded = source['custody_receipt_base64']
+        if type(encoded) is not str or not 1 <= len(encoded) <= 21848:
+            invalid('Invalid retained custody receipt encoding.')
+        try:
+            receipt_raw = base64.b64decode(encoded, validate=True)
+        except (ValueError, binascii.Error) as error:
+            raise WorkbenchError('Scientific fields: Invalid retained custody receipt encoding.') from error
+        if (not 0 < len(receipt_raw) <= 16384
+                or base64.b64encode(receipt_raw).decode('ascii') != encoded
+                or hashlib.sha256(receipt_raw).hexdigest() != source['custody_receipt_sha256']):
+            invalid('Retained custody receipt bytes differ.')
+        try:
+            receipt = recipe_process.validate_receipt(receipt_raw, identity)
+        except recipe_process.ProcessError as error:
+            raise WorkbenchError('Scientific fields: Invalid retained custody evidence.') from error
+        if receipt['outcome'] != 'completed' or not receipt['drained']:
+            invalid('Run source requires completed and drained custody.')
+    else:
+        invalid('Unsupported scientific source method.')
+    if source['measured_sha256'] != digest:
+        invalid('Captured bytes differ from their source receipt.', 'conflict', 409)
+    return dict(source)
+
+
 class ScientificAssets:
     def __init__(self, workbench):
         self.access = workbench.access
@@ -280,6 +350,14 @@ class ScientificAssets:
 
     @authorized('edit', 'scientific_fields.admit')
     def admit(self, raw, body, source):
+        return self._admit(raw, body, 'project_data_import', source)
+
+    @authorized('edit', 'scientific_fields.admit_run_artifact')
+    def admit_run_artifact(self, run_id, name, expected_sha256, body):
+        raw, source = self.workbench.dataset.runs.capture_artifact(run_id, name, expected_sha256)
+        return self._admit(raw, body, 'run_artifact_import', source)
+
+    def _admit(self, raw, body, method, source):
         from immutable_assets import publish_file
         if type(body) is not dict or set(body) - {'name','rights','groups','parents'}:
             invalid('Unexpected import metadata fields.')
@@ -289,19 +367,11 @@ class ScientificAssets:
         groups = strings(body.get('groups', []), 'Protected groups', maximum=27)
         parents = strings(body.get('parents', []), 'Parent IDs')
         groups = list(dict.fromkeys(groups + meta['protected_groups']))
-        exact(source, ('project_id','manifest_sha256','reference_id','path','measured_sha256'), 'Project source')
-        if type(source['project_id']) is not str or not re.fullmatch('[a-f0-9]{32}', source['project_id']):
-            invalid('Invalid project source ID.')
-        for key in ('manifest_sha256','measured_sha256'):
-            if type(source[key]) is not str or not HASH.fullmatch(source[key]):
-                invalid('Invalid project source hash.')
-        text(source['reference_id'], 64, 'Project reference')
-        text(source['path'], 512, 'Project source path')
+        source = validate_source(method, source, raw)
         digest = hashlib.sha256(raw).hexdigest()
-        if source['measured_sha256'] != digest:
-            invalid('Captured project bytes differ from their source receipt.', 'conflict', 409)
-        origin = {'method':'project_data_import','rights':rights,'field_sequence':meta,
-                  'source_sha256':digest,'project_source':dict(source)}
+        source_key = 'project_source' if method == 'project_data_import' else 'run_source'
+        origin = {'method':method,'rights':rights,'field_sequence':meta,
+                  'source_sha256':digest,source_key:source}
         record_id, created = uuid.uuid4().hex, timestamp()
         w = self.workbench
         with w.lock, w.db.transaction():

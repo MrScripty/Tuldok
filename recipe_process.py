@@ -72,13 +72,15 @@ def absolute(value):
 def validate_spec(value):
     keys = {'schema_version','attempt_id','request_sha256','argv','env','cwd','stdin_base64',
             'wall_seconds','executable_sha256','max_output_bytes','output_dir','captured_files','runtime_files','trusted_install_owner_uid'}
-    if type(value) is not dict or set(value) != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
+    if type(value) is not dict or set(value) - {'native_loader_policy'} != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
         raise ProcessError('Unsupported custody spec.')
     if not isinstance(value['attempt_id'], str) or not ID.fullmatch(value['attempt_id']):
         raise ProcessError('Invalid attempt identity.')
     for key in ('request_sha256','executable_sha256'):
         if type(value[key]) is not str or not HASH.fullmatch(value[key]):
             raise ProcessError('Invalid custody hash.')
+    if 'native_loader_policy' in value and value['native_loader_policy'] != 'glibc_x86_64_no_preload_v1':
+        raise ProcessError('Unsupported native loader policy.')
     argv, env = value['argv'], value['env']
     if type(argv) is not list or not 1 <= len(argv) <= 64 or not all(text(arg) for arg in argv) or not absolute(argv[0]):
         raise ProcessError('Invalid captured argument vector.')
@@ -134,7 +136,25 @@ def read_regular(path, maximum):
         return raw
 
 
+def verify_native_loader_policy(owner_uid):
+    """The one admitted native policy permits no global loader preload entry."""
+    descriptor = os.open('/etc', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        info = os.fstat(descriptor)
+        if info.st_uid != owner_uid or info.st_mode & 0o022:
+            raise ProcessError('Native loader configuration directory is not trusted.', 'unavailable')
+        try:
+            os.stat('ld.so.preload', dir_fd=descriptor, follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        raise ProcessError('Native loader requires absent /etc/ld.so.preload.', 'unavailable')
+    finally:
+        os.close(descriptor)
+
+
 def verify_captures(spec):
+    if 'native_loader_policy' in spec:
+        verify_native_loader_policy(spec['trusted_install_owner_uid'])
     for item in spec['captured_files']+spec['runtime_files']:
         raw = read_regular(item['path'], item['bytes'])
         if len(raw) != item['bytes'] or digest(raw) != item['sha256']:
@@ -310,9 +330,15 @@ def launch(spec, custody_dir):
 
 
 def load_receipt(path, expected_identity):
+    return validate_receipt(read_regular(path, 16384), expected_identity)
+
+
+def validate_receipt(raw, expected_identity):
+    """Validate retained exact receipt bytes without requiring a live filesystem."""
+    if type(raw) is not bytes or not 1 <= len(raw) <= 16384:
+        raise ProcessError('Custody receipt must contain 1–16384 bytes.')
     if type(expected_identity) is not dict or set(expected_identity) != {'attempt_id','request_sha256','spec_sha256','helper'} or not valid_identity(expected_identity['helper']):
         raise ProcessError('An exact READY identity is required to read a receipt.')
-    raw = read_regular(path,16384)
     value = decode(raw)
     fields = {'schema_version','attempt_id','request_sha256','spec_sha256','helper','go_received','spawn_closed',
               'drained','echild','outcome','reason','leader_returncode','streams'}

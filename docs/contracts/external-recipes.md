@@ -131,3 +131,28 @@ Existing Run list/get/cancel/artifact routes serve these attempts. Classificatio
 predictions and test-exposure operations do not apply. Schema 8 adds local grants
 and immutable consumption records; explicit quiesced upgrade and versioned
 backup/restore retain schemas 1–7.
+
+
+## Optional native dependencies
+
+An explicit `native_sources` list selects 1–8 paths already declared in `sources`.
+A `{native_policy: source_path}` argument refers to host-generated captured JSON.
+Omitting native declarations preserves existing definition/material/spec shapes.
+The initial policy is `glibc_x86_64_no_preload_v1`: bounded ELF64 little-endian
+x86-64 PIE with the qualified interpreter, recursive exact dependencies under
+`/usr/lib/x86_64-linux-gnu`, no RPATH/RUNPATH, audit, filter or auxiliary loading.
+The material binds loader/library identities and generated policy bytes. The
+helper checks the fixed trusted `/etc` directory and absence of any
+`/etc/ld.so.preload` entry at launch, READY and GO.
+
+The optional producer verifies and seals native and loader bytes, disables loader
+cache and hardware-capability substitutions, and checks actual mapped file
+identities before requesting work. This qualifies pinned trusted code; it is not
+an arbitrary dynamic-plugin or hostile-administrator sandbox. See the optional
+[Rheon producer](rheon-producer.md) for the bounded concrete workflow.
+
+Completed external artifacts can be captured with server-derived custody evidence
+for [scientific Data import](scientific-fields.md). Restore preserves the original
+absolute execution paths and spec hash as historical declarations. Artifact reads
+use the restored catalog's owned paths. Dispatch refuses a staging-path mismatch;
+restoration never replays a historical attempt.

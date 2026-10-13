@@ -24,9 +24,9 @@ login file: `.venv/bin/python access.py login --data ./data --out /private/new-l
 Use an existing private directory and a new filename, then enter its code in the
 browser's Session dialog. Codes expire after ten minutes; sessions last eight
 hours. Localhost is not an authenticated identity. Existing catalogs require the
-explicit schema-7 upgrade before starting this version. See [actor access](docs/contracts/actors.md)
+explicit schema-8 upgrade before starting this version. See [actor access](docs/contracts/actors.md)
 for scoped agent credentials and [storage upgrades](docs/contracts/workspace-storage.md).
-Existing execution remains owner-only; agent execution approval is a later stage.
+Existing CPU and integrity execution remains owner-only. Scoped agents can submit external recipes with an exact, one-use owner approval; see [external recipes](docs/contracts/external-recipes.md).
 
 The setup script uses a Unix socket under `~/.local/share/tuldok/postgres`,
 generates private credentials, and creates a database role without superuser,
@@ -882,4 +882,16 @@ Start with `python app.py --data ./catalog --project-root research=/absolute/res
 
 ## Scientific field sequences
 
-For a conforming [scientific field bundle](docs/contracts/scientific-fields.md), use **Import fields** on its project Data reference. Inspect frames, fields and index slices with physical coordinates, units and producer stage labels; save whole-trajectory review and freeze a canonical release. Original bundle and floating-point bytes remain unchanged. First-observed-state and declared-family grouping does not certify independent initial conditions. The cold reader `python scientific_release.py RELEASE.zip` verifies frozen custody; generation and training require later execution milestones.
+For a conforming [scientific field bundle](docs/contracts/scientific-fields.md), use **Import fields** on its project Data reference. Inspect frames, fields and index slices with physical coordinates, units and producer stage labels; save whole-trajectory review and freeze a canonical release. Original bundle and floating-point bytes remain unchanged. First-observed-state and declared-family grouping does not certify independent initial conditions. The cold reader `python scientific_release.py RELEASE.zip` verifies frozen custody; the optional [Rheon producer](adapters/rheon/README.md) adds bounded native generation, while training and autonomous evaluation remain later milestones.
+
+
+## Optional native generation
+
+The [Rheon adapter](adapters/rheon/README.md) assembles a project from an explicitly
+supplied qualified binary and original build receipt. Open that project, edit the
+bounded grid/frame/seed controls in Pipeline, review the exact execution material
+and submit. On a completed scientific artifact, **Import into Data** creates a
+draft for inspection, human review and freeze. Native bytes, loaded-library
+identity and the original custody receipt are retained. Initial support is Jacobi
+generation at grids 8–32 and one or two frames; this is not training, GPU or
+general physics acceptance. Generic projects and Data work without the adapter.

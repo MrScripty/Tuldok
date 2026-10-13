@@ -9,6 +9,7 @@ import signal
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 import uuid
 
 import recipe_process as custody
@@ -71,6 +72,25 @@ class CustodyTests(unittest.TestCase):
         self.assertEqual(receipt['streams']['stdout']['sha256'],hashlib.sha256(log).hexdigest())
         wrong=dict(handle.expected_identity,request_sha256='b'*64)
         with self.assertRaises(custody.ProcessError):custody.load_receipt(handle.directory/'receipt.json',wrong)
+
+    def test_native_policy_absence_is_closed_and_receipt_is_pure(self):
+        spec=self.spec(); spec['native_loader_policy']='glibc_x86_64_no_preload_v1'
+        self.assertEqual(custody.validate_spec(spec),spec)
+        with patch.object(custody.os,'stat',return_value=object()):
+            with self.assertRaises(custody.ProcessError): custody.verify_native_loader_policy(spec['trusted_install_owner_uid'])
+        with patch.object(custody.os,'stat',side_effect=FileNotFoundError):
+            custody.verify_native_loader_policy(spec['trusted_install_owner_uid'])
+        with patch.object(custody.os,'stat',side_effect=PermissionError):
+            with self.assertRaises(PermissionError): custody.verify_native_loader_policy(spec['trusted_install_owner_uid'])
+        bad=dict(spec,native_loader_policy='arbitrary-absence-path')
+        with self.assertRaises(custody.ProcessError): custody.validate_spec(bad)
+        handle=self.start(spec); handle.go(handle.ready); receipt=self.finish(handle)
+        raw=(handle.directory/'receipt.json').read_bytes()
+        with patch.object(Path,'read_bytes',side_effect=AssertionError('Pure receipt validation read disk')):
+            self.assertEqual(custody.validate_receipt(raw,handle.expected_identity),receipt)
+        for malformed in (b'',b'x'*16385,b'{"schema_version":1,"schema_version":1}',b'{"x":NaN}'):
+            with self.assertRaises((custody.ProcessError,ValueError)):
+                custody.validate_receipt(malformed,handle.expected_identity)
 
     def test_cancel_before_go_and_controller_loss(self):
         for reason in ('cancel','loss'):

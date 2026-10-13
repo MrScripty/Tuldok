@@ -1,5 +1,6 @@
 """Durable admission, one local worker, and verified immutable result custody."""
 from access import authorized
+import base64
 import copy
 import hashlib
 import json
@@ -107,7 +108,15 @@ class Runs:
             if self._external(run):
                 import recipe_contract
                 import recipe_process
-                recipe_contract.validate_spec(run['material'], run['spec'], self._external_directory(run))
+                # Absolute execution paths are historical evidence, not restore
+                # destinations. Never rewrite a spec bound by a custody receipt.
+                declared = run['spec']['cwd']
+                if (type(declared) is not str or not Path(declared).is_absolute()
+                        or '..' in Path(declared).parts or str(Path(declared)) != declared
+                        or Path(declared).name != '.external-' + run['id']
+                        or Path(declared).parent.name != 'workspace-runs'):
+                    raise ValueError('Invalid retained external staging location.')
+                recipe_contract.validate_spec(run['material'], run['spec'], declared)
                 if (run['graph'].get('recipe') != 'external_recipe'
                         or run['material']['catalog_id'] != self.db.dataset_id
                         or digest(run['material']) != run['material_sha256']
@@ -452,6 +461,8 @@ class Runs:
                 self.access.require_job('runs', run_id, run['admission_id'], run['request_sha256'])
                 if run['state'] != 'queued' or self._external_blocked:
                     return
+                if run['spec']['cwd'] != str(self._external_directory(run)):
+                    raise WorkbenchError('Restored execution paths cannot be dispatched. Approve a new attempt.', 'stale', 409)
                 self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
                 run['started_at'] = timestamp()
                 self._save(run)
@@ -1178,6 +1189,43 @@ class Runs:
         if artifacts != run['artifacts'] or metrics != run['metrics']:
             raise WorkbenchError('Published artifacts differ from the admitted result receipt.', 'unavailable', 409)
         return artifacts
+
+    @authorized('inspect', 'runs.capture_artifact')
+    def capture_artifact(self, run_id, name, expected_sha256):
+        """Capture a completed external artifact with server-derived custody evidence."""
+        import recipe_process
+        if type(expected_sha256) is not str or not re.fullmatch('[a-f0-9]{64}', expected_sha256):
+            raise WorkbenchError('Supply the expected artifact SHA256.')
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raise WorkbenchError('Scientific import requires a completed external Run.', 'unsupported', 400)
+        item = next((item for item in self._verified_artifacts(run) if item['name'] == name), None)
+        if item is None:
+            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+        if item['sha256'] != expected_sha256:
+            raise WorkbenchError('Artifact differs from the expected SHA256.', 'conflict', 409)
+        raw = self._read_regular(self.path / run_id / name, item['bytes'])
+        if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != expected_sha256:
+            raise WorkbenchError('Artifact changed during capture.', 'conflict', 409)
+        receipt_raw = self._read_regular(self.path / run_id / 'custody-receipt.json', 16384)
+        if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
+            raise WorkbenchError('Custody receipt changed during capture.', 'conflict', 409)
+        try:
+            receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
+        except recipe_process.ProcessError as error:
+            raise WorkbenchError('Retained custody receipt cannot be verified.', 'unavailable', 409) from error
+        if not receipt['drained'] or receipt['outcome'] != 'completed':
+            raise WorkbenchError('Run custody did not complete.', 'unavailable', 409)
+        source = {'schema_version': 1, 'catalog_id': run['dataset_id'],
+                  'run_id': run['id'], 'attempt_id': run['spec']['attempt_id'],
+                  'request_sha256': run['request_sha256'], 'material_sha256': run['material_sha256'],
+                  'artifact_name': item['name'], 'artifact_role': item['role'],
+                  'artifact_bytes': item['bytes'], 'measured_sha256': item['sha256'],
+                  'custody_receipt_sha256': run['custody_receipt_sha256'],
+                  'custody_identity': copy.deepcopy(run['custody_identity']),
+                  'custody_receipt_base64': base64.b64encode(receipt_raw).decode('ascii')}
+        return raw, source
 
     @authorized('inspect', 'runs.artifact')
     def artifact(self, run_id, name):
