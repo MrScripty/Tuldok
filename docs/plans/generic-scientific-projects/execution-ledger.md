@@ -179,6 +179,56 @@ captured project after correcting only the pinned diagnostic prefix.
 See [P5b verification](reports/p5b-verification.md). Full regression and hosted
 CI remain pending; autonomous evaluation and backup/restore are separate gates.
 
+### P5b final qualification and P5c actual admission
+
+PR51 head `28c666f115ca8fac7daf29096e91493ff7b0cc10` passed 838 local tests
+in 1,155.485 seconds; 32 dedicated reader/training checks cover the five optional
+suite skips. All 56 JavaScript checks passed. The recorded 196 Python and final
+123 JavaScript source inventories remained stable for their respective runs.
+Hosted UI run 38460254846 and lifecycle run 38460254594 both succeeded.
+
+P5c source checkpoint `d191e681011756d7d3204604a410fe5619b5c559` is preserved
+in draft PR52. Root verified all nine captured source identities and admitted
+actual Run `e731c9569b7d41f9a8f6cde438dcf9ac` with 8,266,240,000 free bytes,
+above the declared 8,073,741,824-byte guard. The Run consumes the fresh P5b
+checkpoint through typed completed-Run inputs. Source is frozen until terminal
+custody is known. Executor transport interruptions did not stop the original
+browser/server; read-only reconnection confirmed continued benchmark progress.
+No replacement Run was submitted. Accuracy, benchmark, independent field oracle,
+download/restart checks and final regression are separate acceptance obligations;
+an active evaluation is not acceptance. P6/P7 work is planning only at this point.
+
+### P5c actual scientific and restart gates passed
+
+Run `e731c9569b7d41f9a8f6cde438dcf9ac` completed/drained in 1,601.241886s.
+All four accuracy trajectories and all 60 original benchmark trajectories passed.
+Independent comparison covered 960 frames/5,760 arrays and original wire/NPZ/view
+values. All 89 artifacts (3,086,837,711 bytes) matched authenticated HTTP streams
+before and after restart. The representative imported/reviewed Data record also
+survived restart. See [P5c verification](reports/p5c-verification.md). Source
+checkpoint hosted CI succeeded; final local regression remains running. Root
+requested refreshed loaded-slice screenshots after the first capture showed a
+loading state. No Run, import or review is repeated for that screenshot fix.
+
+P6 independent source preparation proceeds only in `/workspace/Tuldok-p6`, based
+on the published P5c source checkpoint. Its exact contract/SDK decision is recorded
+in that branch's P6 admission. Package provisioning and neutral fixture tests
+started only after all actual benchmark work stopped. Dependent scientific
+workflow qualification remains gated on final P5c acceptance.
+
+### P5c final qualification and publication
+
+Actual scientific/download/restart gates and refreshed loaded Data screenshots
+passed. Final local base860 passes1226.890s; six optional skips are covered by
+dedicated point11/volume9/training12/evaluation9 with zero skips. All56 CI-listed
+JavaScript/syntax commands pass; all327 inventoried source files unchanged.
+G4 and G6 are satisfied within their stated environment/scope. P6/G5 and P7
+remain separate. Exact89 successful staging duplicates were removed only after
+verified durable publication; all89 published counterparts rehashed afterwards.
+Preserved old cleanup evidence under its original names and recorded this new
+cleanup separately. No failed staging, snapshot, source/input or custody removed.
+P6 source checkpoint b02004a is draftPR53; no merge/deployment.
+
 ## P7 isolated source checkpoint and merge authority
 
 P7 permission-preservation fix and explicit staged restore/browser procedures

@@ -2,6 +2,7 @@
 import base64
 from contextlib import contextmanager
 import hashlib
+import importlib.util
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
@@ -15,6 +16,8 @@ import unittest
 from unittest.mock import patch
 
 import agent_api as api
+
+HAS_JSONSCHEMA = importlib.util.find_spec('jsonschema') is not None
 
 TOKEN = 'test-agent-credential-abcdefghijklmnopqrstuvwxyz'
 CATALOG = 'a' * 32
@@ -51,6 +54,7 @@ class RegistryTests(unittest.TestCase):
         code = 'import sys;sys.path.insert(0,sys.argv[1]);import agent_api;agent_api.discovery();assert not any(x in sys.modules for x in ("jsonschema","app","workbench","mcp","psycopg"))'
         subprocess.run([sys.executable, '-I', '-S', '-c', code, str(Path(api.__file__).parent)], check=True, capture_output=True, timeout=10)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_all_operation_schemas_and_route_projections(self):
         api.validate_registry()
         operations = api.discovery()['operations']
@@ -72,6 +76,7 @@ class RegistryTests(unittest.TestCase):
         value['operations'].clear()
         self.assertTrue(api.discovery()['operations'])
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_draft_tasks_and_no_human_or_programmatic_review(self):
         for task, annotation in api.ANNOTATIONS.items():
             args = dict(record_id=CATALOG, revision=1, source_revision=1, task=task,
@@ -84,6 +89,7 @@ class RegistryTests(unittest.TestCase):
         for task in api.ANNOTATIONS:
             self.assertIn(repr(task), source)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_integer_unicode_nonfinite_and_closed_subobjects(self):
         for value in (True, -1):
             with self.assertRaises(api.AgentAPIError):
@@ -101,6 +107,7 @@ class RegistryTests(unittest.TestCase):
         for _ in range(api.DEPTH_LIMIT+2): nested = [nested]
         with self.assertRaises(api.AgentAPIError): api._finite(nested)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_bindings_known_graph_drafts_and_no_executable_topology_requirement(self):
         schema = api.operation('graphs.save')['inputSchema']
         body = sample(schema)
@@ -114,6 +121,7 @@ class RegistryTests(unittest.TestCase):
         create['inputs']['sample']['path'] = '/tmp/unowned'
         with self.assertRaises(api.AgentAPIError): api.validate_arguments('graphs.create_external', create)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_import_bytes_bound_is_aggregate(self):
         raw = base64.b64encode(b'a'*(api.INLINE_LIMIT//2+1)).decode()
         with self.assertRaises(api.AgentAPIError) as caught:
@@ -122,6 +130,7 @@ class RegistryTests(unittest.TestCase):
         for keys in [('run.json', 'frames.jsonl'), ('run.json', 'frames.jsonl', 'controls.json')]:
             api.validate_arguments('data.import_sequence', {'files': {k:'YQ==' for k in keys}, 'groups':['source']})
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_exposure_grant_and_projection(self):
         self.assertEqual(api.project_request('runs.expose_test', {'run_id': CATALOG, 'reason': 'explicit disclosure'}),
                          ('POST', '/api/workspace/runs/'+CATALOG+'/expose-test', {'reason':'explicit disclosure'}))
@@ -197,6 +206,7 @@ class ClientTests(unittest.TestCase):
             token.unlink(); token.symlink_to(config)
             with self.assertRaises(api.AgentAPIError): api.AgentClient.from_config(config)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_authenticated_discovery_proxy_ignored_and_one_mutation(self):
         with server() as (endpoint, calls), patch.dict(os.environ, {'http_proxy':'http://bad.invalid:1', 'HTTP_PROXY':'http://bad.invalid:1'}):
             client = api.AgentClient(endpoint, TOKEN, CATALOG)
@@ -206,6 +216,7 @@ class ClientTests(unittest.TestCase):
             self.assertEqual(sum(path=='/api/agent/operations' for _,path,_ in calls), 2)
             self.assertTrue(all(auth=='Bearer '+TOKEN for _,_,auth in calls))
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_framing_identity_registry_refusals(self):
         for mode in ('owner','mismatch','redirect','html','duplicate','compressed','chunked','truncated','huge','huge_digits'):
             with self.subTest(mode=mode), server(mode) as (endpoint,calls):
@@ -214,6 +225,7 @@ class ClientTests(unittest.TestCase):
                 self.assertNotIn(TOKEN, str(caught.exception))
                 self.assertFalse(any(method=='POST' for method,_,_ in calls))
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_unknown_commit_is_not_retried_or_secret_echoed(self):
         with server('unknown') as (endpoint,calls):
             result = api.AgentClient(endpoint,TOKEN,CATALOG).call('projects.open',{'root':'qa','manifest_path':'project.json'})
@@ -222,6 +234,7 @@ class ClientTests(unittest.TestCase):
             self.assertNotIn(TOKEN,json.dumps(result))
             self.assertEqual(sum(method=='POST' for method,_,_ in calls),1)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_absolute_header_deadline_includes_trickle(self):
         with server('trickle') as (endpoint,_calls):
             client = api.AgentClient(endpoint,TOKEN,CATALOG,timeout=.15)
@@ -232,6 +245,7 @@ class ClientTests(unittest.TestCase):
 
 
 class OutputTests(unittest.TestCase):
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_typed_error_and_success_shapes(self):
         for name in ('data.query', 'runs.list', 'projects.open', 'runs.artifact_chunk'):
             with self.assertRaises(api.AgentAPIError):
@@ -246,6 +260,7 @@ class OutputTests(unittest.TestCase):
                 self.assertNotIn(TOKEN,str(caught.exception))
                 self.assertEqual(sum(method=='POST' for method,_,_ in calls),1)
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_segment_reassembly_and_whole_hash_tamper(self):
         original=b'whole original artifact'
         expected=hashlib.sha256(original).hexdigest()
@@ -272,6 +287,7 @@ class OutputTests(unittest.TestCase):
 
 
 class ParityRegressionTests(unittest.TestCase):
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_image_forwards_exact_raw_base64(self):
         raw = base64.b64encode(b'original image bytes').decode()
         _, _, body = api.project_request('data.import_image', {'image':raw,'groups':['source']})
@@ -279,6 +295,7 @@ class ParityRegressionTests(unittest.TestCase):
         with self.assertRaises(api.AgentAPIError):
             api.validate_arguments('data.import_image', {'image':'data:image/png;base64,'+raw,'groups':['source']})
 
+    @unittest.skipUnless(HAS_JSONSCHEMA, 'Optional agent jsonschema dependency is not installed.')
     def test_revoked_discovery_preserves_http_status_and_code_without_mutation(self):
         with server('revoked') as (endpoint,calls):
             client=api.AgentClient(endpoint,TOKEN,CATALOG)

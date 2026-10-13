@@ -1,0 +1,18 @@
+{
+  "measured_utc": "2026-10-13T20:58:12.413284+00:00",
+  "catalog": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog",
+  "regular_files": 21537,
+  "directories": 1855,
+  "logical_bytes": 5281350158,
+  "allocated_bytes": 5342666752,
+  "catalog_device": 27,
+  "tmp_device": 33,
+  "free_bytes": 4845441024,
+  "tmp_free_bytes": 8939409408,
+  "additional_two_logical_copies_bytes": 10562700316,
+  "additional_two_allocated_copies_bytes": 10685333504,
+  "shortfall_before_reserve_bytes": 5839892480,
+  "cleanup_receipt": "/tmp/tuldok-p5c-evaluation-duplicate-cleanup-receipt.json",
+  "cleanup_receipt_sha256": "7ae891b834028df59f907bd632e79fd011de7e85b5cf6f7d233e827eb0ce956f",
+  "qualification": "Read-only sizing; PostgreSQL dump and temporary/reserve overhead additional; no backup or original-catalog deletion authorized."
+}
