@@ -1,10 +1,10 @@
 # Plan: Captured neural projects through the existing execution owner
 
-**Plan status:** `Blocked`
+**Plan status:** `Verifying`
 
-**Current phase:** Generic CLI qualified; lab neural acceptance awaits coordinated sources/data
+**Current phase:** Managed CNN execution qualified; final CI and independent review
 
-**Next slice:** Qualify the parent-coordinated lab neural training and fresh-process restore recipe.
+**Next slice:** Resolve independent review findings and verify the follow-up PR58 head.
 
 **Acceptance status:** `partial`
 
@@ -25,8 +25,9 @@ saved graph and Run in the existing UI. Keep physics code in rheon-surrogate-lab
 | --- | --- | --- | --- | --- | --- | --- |
 | A1 | CLI opens a project, creates/preflights a saved graph, submits exact owner-granted execution and reads its durable result through real HTTP | system | representative | automated | satisfied | [Production CLI/HTTP/custody tests](reports/verification.md) |
 | A2 | Verified CLI artifact download publishes only complete hash-verified bytes without replacing existing files | contract | representative | automated | satisfied | [Corruption/refusal and no-replacement tests](reports/verification.md) |
-| A3 | Lab-owned captured-data recipe performs actual neural optimization, persists splits and weights, and restores/evaluates them in a fresh process without live Rheon | system | required-real | automated | pending | Paired lab recipe and dataset qualification |
-| A4 | Existing graph/Run UI supports approved external execution and result projection; CLI graphs/Runs use the same saved owners | user-workflow | representative | automated | satisfied | [Unchanged real browser path, progress tests and same-owner CLI tests](reports/verification.md) |
+| A3 | Lab-owned captured-data recipe performs actual neural optimization, persists splits and weights, and restores/evaluates them in a fresh process without live Rheon | system | required-real | automated | satisfied | [Actual managed200Adam steps, exact checkpoint/restore and negative physics](reports/managed-cnn.md) |
+| A4 | Existing graph/Run UI supports approved external execution and result projection; CLI graphs/Runs use the same saved owners | user-workflow | representative | automated | satisfied | [Actual CLI-created CNN Runs desktop/narrow screenshots](reports/managed-cnn.md) |
+| A5 | Required final CI and independent source/standards review qualify the candidate checkpoint | release-artifact | representative | either | pending | Initial cdbe513CI passed; follow-up and independent review pending |
 
 ## Scope
 
@@ -56,13 +57,17 @@ saved graph and Run in the existing UI. Keep physics code in rheon-surrogate-lab
   authenticated AgentClient; optional agent dependencies remain separate from app.
 - Lab owns numerical reader, persisted split policy, model code and fresh-process
   restore. Tuldok owns captured bytes, permissions, lifecycle, artifacts and UI.
+- CNN optimizer/restore acceptance is separate from physics quality: actual
+  managed CNN results reproduced0/16native-qualified cases and remain diagnostic.
+  Parent-coordinated modal parity is separate and never counted as neural training.
 
 ### Assumptions
 
 - Existing AgentClient operations cover the CLI path; validate through a real
   server before expanding. Stop if registry parity or owner authority is missing.
-- Lab train_cpu.py at e8a90bf supplies a suitable NumPy CNN with analytic gradients
-  and Adam; lab owner must bind captured data and optional physics evaluation.
+- The published lab source d2b344fc reuses the inspected train_cpu.py NumPy CNN
+  with analytic gradients/Adam. Captured dataset/splits and the exact historical
+  checkpoint were reproduced; source wrappers bind the actual managed runtime.
   ModalPressure.fit reports zero optimizer steps and cannot satisfy A3.
 
 ## Binding Decisions
@@ -80,7 +85,7 @@ saved graph and Run in the existing UI. Keep physics code in rheon-surrogate-lab
 | --- | --- | --- | --- | --- | --- |
 | Current project/recipe contracts suffice | Schema preservation | Tuldok | Inspect generic production definitions and existing HTTP tests | Current main | Observed; no schema change required |
 | Real admission and artifact path | CLI composition | Tuldok | CLI subprocess → HTTP → PostgreSQL → custody → verified download | Disposable PostgreSQL17.11/local server | [Observed](reports/verification.md) |
-| Neural optimization and cold restore | Model acceptance | Lab/parent | Captured dataset → existing NumPy CNN → persisted weights/splits → separate restore process | Tested lab pin and captured data | pending |
+| Neural optimization and cold restore | Model acceptance | Lab/parent | Captured dataset → existing NumPy CNN → persisted weights/splits → separate restore process | Clean d2b344fc and captured NumPy2.3.5 runtime | [Observed; no physics quality acceptance](reports/managed-cnn.md) |
 
 ## Evidence And Oracle Plan
 
@@ -113,6 +118,7 @@ saved graph and Run in the existing UI. Keep physics code in rheon-surrogate-lab
 
 - `project_cli.py`
 - `tests/test_agent_project_cli.py` (included in existing optional agent CI selection)
+- `tests/qualify_project_cli.py` (explicit real-project qualification; no model or physics implementation)
 - `docs/contracts/project-cli.md`
 - `docs/plans/generic-neural-execution/`
 - `README.md` (CLI discoverability paragraph only)
@@ -121,7 +127,7 @@ saved graph and Run in the existing UI. Keep physics code in rheon-surrogate-lab
 
 - [x] Implement commands using existing AgentClient operations.
 - [x] Test real HTTP execution, exact authority and safe download publication.
-- [ ] Publish the draft PR with exact evidence and unresolved claims.
+- [x] Publish draft PR58 with exact evidence and unresolved claims.
 
 **Acceptance gate:** A1/A2/A4. Neutral fixtures establish generic custody/CLI/UI compatibility only.
 
@@ -132,26 +138,31 @@ saved graph and Run in the existing UI. Keep physics code in rheon-surrogate-lab
 **Goal:** Captured datasets produce real weights and persisted split evidence,
 then a separate lab recipe restores/evaluates them without live generation.
 
-**Allowed write set:** Generic tests/docs within the Milestone1 write set.
+**Allowed write set:** Generic tests/docs within the Milestone1 write set;
+ignored `build/qa/managed-project-runtime/` preparation and evidence.
 Physics-specific project/reader/model/wrapper sources stay exclusively lab-owned.
 
 **Tasks:**
 
-- [ ] Receive the parent-coordinated tested lab recipe/data pin.
-- [ ] Run captured-data neural optimization and fresh-process restore/evaluation.
-- [ ] Record actual numerical evidence, provenance and limits; retain draft status
+- [x] Capture/verify the existing CPU runtime and run the unchanged
+  `tests/qualify_captured_cpu_runtime.py` approved custody probe.
+- [ ] Receive independent review findings; CodeRabbit skips this draft by default.
+- [x] Receive the parent-coordinated tested lab recipe/data pin.
+- [x] Run captured-data neural optimization and fresh-process restore/evaluation.
+- [x] Record actual numerical evidence, provenance and limits; retain draft status
   until compatible acceptance is coordinated by the parent.
 
 **Acceptance gate:** A3. NumPy gradient/tiny optimization tests are supporting
 adapter-selection evidence; zero-step modal fitting is insufficient.
 
-**Status:** `Blocked`
+**Status:** `Verifying`
 
 ## Blockers
 
-- Paired lab recipe/data pin and parent-coordinated integration contract are pending.
-  No parent-thread message tool is exposed here; early contract findings are reported
-  in progress commentary and this durable plan.
+- Independent review findings are pending. PR58 exact-head lifecycle CI passed;
+  CodeRabbit's draft-skip receipt is not an independent review.
+- The follow-up qualification head requires final CI. No merge or release tag
+  is admitted by this lane; the parent coordinates the compatible checkpoint.
 
 ## Re-Plan Triggers
 
@@ -172,9 +183,14 @@ Tuldok lane owns feature branch `feat/generic-neural-project-execution` targetin
 main from d856a984535a430909761ed13ce42eadd55b0710. Publish a draft for parent review;
 parent owns integration and later retirement. No extra worktree was created.
 Read-only lab/standards clones remain available for qualification and inspection.
+The plan-created ignored clone at `build/qa/managed-project-runtime/lab-source`
+remains clean/detached at d2b344fc for evidence replay. Tuldok owns this temporary
+qualification resource; retain it with the captured catalog until the parent
+accepts the checkpoint, then remove only this owned generated resource if needed.
+No Git worktree registration was created or pruned.
 
 ## Final Acceptance
 
 - Acceptance status: `partial`
 - Deferred follow-ups: `none`
-- Final status: `Blocked`
+- Final status: `Verifying`
