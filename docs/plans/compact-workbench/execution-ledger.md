@@ -17,3 +17,10 @@
   spatial readers selected via the supported explicit interpreter variable.
   No skips, weakened assertions, pretrained downloads or training. Source-bound
   receipts and two visually inspected selected captures are in `reports/`.
+- 2026-10-14: candidate committed as merge `417af2f`, retaining exact parents
+  owner `581fa5c` and admitted main `f2751c3`; PR43 implementation ancestry is
+  absent. Worktree clean and staged source hashes matched the passing receipt.
+  Separate read-only review passed; its remaining browser condition is satisfied.
+  Local reconciliation is Accepted and final publication/hosted checks/merge are
+  handed to root. Worktree retained-protected through the named branch for that
+  final integration; no publication performed by the reconciliation worker.

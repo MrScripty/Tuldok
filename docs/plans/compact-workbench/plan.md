@@ -1,12 +1,12 @@
 # PR33 reconciliation
 
-**Plan status:** `Verifying`
+**Plan status:** `Accepted`
 
-**Current phase:** Composed layout verification
+**Current phase:** Local reconciliation accepted; serial publication handed to root
 
-**Next slice:** Complete affected browser gates and independent review, then hand off publication to root.
+**Next slice:** `none`
 
-**Acceptance status:** `partial`
+**Acceptance status:** `satisfied`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -28,7 +28,7 @@ in `/workspace/Tuldok-pr33-reconcile`; no rewritten owner history.
 | --- | --- | --- | --- | --- | --- | --- |
 | A1 | Current IDs/constraints/modalities/controllers retained; usable desktop/narrow canvas, native drawer/focus/disclosure workflows and original image coordinates | `user-workflow` | Chromium151, isolated authored fixtures, headless software graphics | `automated` | `satisfied` | [Source-bound layout receipt](reports/reconciliation-layout-receipt.json) |
 | A2 | Affected domain/controller/browser and embedded Data/Pipeline/Runs gates pass without weakened assertions | `integration` | Current-main PostgreSQL and actual Chromium; pinned existing CPU consumer | `automated` | `satisfied` | [35 browser gates,15 Python tests,11 controller suites](reports/reconciliation-checks.json) |
-| A3 | Independent review, focused syntax/diff and serial publication handoff preserve original owner history | `review` | Isolated original-descendant branch | `manual` | `pending` | Independent review in progress; root owns final publication/CI/merge |
+| A3 | Independent review, focused syntax/diff and serial publication handoff preserve original owner history | `review` | Isolated original-descendant branch | `manual` | `satisfied` | [Independent review](reports/independent-review-20261014.md); root receives the named branch for final publication/CI/merge |
 
 ## Binding Decisions
 
@@ -81,7 +81,7 @@ runtime, state store, or independently deployed contract is introduced.
 
 ### Reconcile and qualify the standalone workbench
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 Goal: restore the owner's standalone canvas-first
 layout while preserving all admitted-main control IDs, required/range/length
@@ -99,8 +99,9 @@ accessibility conformance.
 
 No current implementation/environment blockers. Isolated pinned consumer and
 the supported existing native-reader interpreter resolved both observed
-environment obstructions without weakening tests. Independent review and root
-publication handoff are the remaining local acceptance gate.
+environment obstructions without weakening tests. Independent review passed and
+root received the candidate/branch publication handoff. Hosted checks and merge
+remain a separate root-owned integration decision.
 
 ## Re-Plan Triggers
 
@@ -110,12 +111,14 @@ publication handoff are the remaining local acceptance gate.
 
 ## Final Acceptance
 
-- Acceptance status: `partial`
-- Final status: `Verifying`
+- Acceptance status: `satisfied`
+- Final status: `Accepted`
 - Publication and integration remain root-owned.
 
 Evidence: [ledger](execution-ledger.md), [issues](issues.md), owner
 [presentation/captures](README.md), [fresh verification](reports/reconciliation-20261014.md).
-Retain this task's clean worktree under the reconciliation owner
-until root integration/review completes; root then records reachable-head
-disposition and safe cleanup. Existing owner worktrees are outside that scope.
+Worktree outcome: `retained-protected`. Retain `/workspace/Tuldok-pr33-reconcile`
+for root publication/integration; its head is `retained-ref` through
+`reconcile/pr33-compact-workbench-20261014`, with commit disposition `retained`.
+Root owns next disposition and records the exact final head before safe cleanup.
+Existing owner worktrees are outside that scope.

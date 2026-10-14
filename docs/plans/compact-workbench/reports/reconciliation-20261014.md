@@ -80,6 +80,9 @@ Other screenshots/archives remain in ignored `build/qa/`.
 ## Handoff
 
 Root owns final publication, exact-head hosted checks and qualified merge.
+The [independent read-only review](independent-review-20261014.md) passed;
+all its remaining browser conditions have passed. This accepts the local
+reconciliation artifact and its root publication handoff.
 The isolated branch/worktree is retained for that review under the reconciliation
 owner; no owner branch is force-pushed and no owner worktree is changed or deleted.
 Root will record head reachability and cleanup disposition after integration.
