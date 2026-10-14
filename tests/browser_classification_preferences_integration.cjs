@@ -1,5 +1,6 @@
 // Combined native ownership checks; bounded synthetic HTTP, no real inference.
 'use strict';
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn,execFileSync}=require('node:child_process');
@@ -100,6 +101,7 @@ const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).diges
     assert.equal(dispatched.judgment_epoch,beforeSave.judgment_epoch+1,'Validated clean save advances its independent intent epoch');assertCleanOwner(settled,after);assert.equal(after.form_hidden,false);assert.equal(await run('preferencePreview'),null);assert.equal((await api('records/'+fixture.parent.id)).revision,fixture.parent.revision+1);
     if(outcome==='refusal')assert.match(after.status,/Draft retained/);else{assert.equal(after.editor.revision,2);assert.equal(after.review,'draft');}await click('preference-cancel');
   }
+  await revealWorkbenchControl(run, "#text-classification-proposal-panel");
   evidence.screenshots=[];
   await run('document.getElementById("text-classification-proposal-panel").open=true;document.getElementById("rights-note-panel").open=false;document.getElementById("responses-panel").open=false;document.getElementById("preferences-panel").open=true;');
   for(const viewport of [{width:1400,height:807},{width:390,height:844}]){

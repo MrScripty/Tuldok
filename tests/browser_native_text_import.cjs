@@ -1,5 +1,6 @@
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
@@ -114,6 +115,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await evaluate('history.back()');await until(()=>evaluate('selected.size===0'));
   await evaluate('history.forward()');await until(()=>evaluate('selected.size===3 && !savedLoadBusy'));
   const report=qaDirectory(root,'native-text-classification-import');fs.mkdirSync(report,{recursive:true});
+  await revealWorkbenchControl(evaluate, "#native-text-import-panel");
   await evaluate('document.getElementById("native-text-import-panel").open=true;document.getElementById("native-text-import-panel").scrollIntoView()');
   fs.writeFileSync(path.join(report,'native-text-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});

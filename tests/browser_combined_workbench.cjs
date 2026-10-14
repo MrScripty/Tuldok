@@ -1,5 +1,6 @@
 // Real composed controls, delayed actual HTTP, fixed pairs and both downloaded formats.
 'use strict';
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
@@ -41,6 +42,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const evidence={source_head:sourceIdentity[0],source_tree:sourceIdentity[1],source_state:sourceDiff?'working_tree':'committed',source_diff_sha256:crypto.createHash('sha256').update(sourceDiff).digest('hex'),steps:[],screenshots:[]};
   async function capture(name,selector){for(const narrow of [false,true]){
     await send('Emulation.setDeviceMetricsOverride',{width:narrow?390:1400,height:narrow?844:1000,deviceScaleFactor:1,mobile:false});
+    await revealWorkbenchControl(evaluate, selector);
     await pause(100);
     await evaluate('document.querySelector('+JSON.stringify(selector)+').scrollIntoView({block:"start"})');await pause(100);
     assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Combined layout must fit');

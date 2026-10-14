@@ -65,11 +65,15 @@ async function refresh(isCurrent = () => true) {
     const row = document.createElement('div'); row.className = 'record';
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(record.id); checkbox.setAttribute('aria-label','Select ' + record.name);
     checkbox.onchange = () => { checkbox.checked ? selected.set(record.id, record) : selected.delete(record.id); selection(true); };
-    const button = document.createElement('button'); button.textContent = record.name;
+    const button = document.createElement('button'); button.textContent = record.name; button.dataset.recordId = record.id;
+    if(typeof workbenchLayoutRecordShown === 'function' && current?.id === record.id) button.setAttribute('aria-current','true');
     const detail = document.createElement('small'); detail.textContent = `${record.task.replaceAll('_',' ')} · ${record.review.replaceAll('_',' ')} · revision ${record.revision}`; button.append(detail);
-    const metadata = document.createElement('small'); metadata.textContent = `Groups: ${record.groups.join(', ')} · Rights note: ${record.rights_note ?? 'unknown'}`; button.append(metadata);
+    const metadata = document.createElement('small'); metadata.className = 'record-metadata'; metadata.textContent = `Groups: ${record.groups.join(', ')} · Rights note: ${record.rights_note ?? 'unknown'}`;
+    const evidence = document.createElement('details'); evidence.className = 'record-source';
+    const summary = document.createElement('summary'); summary.textContent = 'Source & rights'; evidence.append(summary,metadata);
     button.onclick = () => openRecord(record.id).catch(error => notice(error.message, true));
-    row.append(checkbox, button); $('records').append(row);
+    const content = document.createElement('div'); content.className = 'record-content'; content.append(button,evidence);
+    row.append(checkbox, content); $('records').append(row);
   }
   const a = page.analysis;
   $('analysis').textContent = `${a.records} records · ${a.unlabeled} unlabeled · ${a.protected_groups} protected groups · ${a.duplicate_content_records} exact duplicates · ${a.unknown_rights} unknown rights. Labels: ${Object.entries(a.labels).map(([k,v])=>`${k} (${v})`).join(', ') || 'none'}. Exact matching only; balance is not coverage.`;
@@ -114,6 +118,7 @@ function showRecord(record) {
   if(typeof textClassificationProposalsShown === 'function') textClassificationProposalsShown(record);
   if(typeof showResponses === 'function') showResponses(record);
   if(typeof showPreferences === 'function') showPreferences(record);
+  if(typeof workbenchLayoutRecordShown === 'function') workbenchLayoutRecordShown(record);
   notice('Record loaded.');
 }
 function renderTargets() {
