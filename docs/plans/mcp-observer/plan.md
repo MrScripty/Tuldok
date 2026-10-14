@@ -1,12 +1,12 @@
 # Plan: Local MCP interaction observer
 
-**Plan status:** `Blocked`
+**Plan status:** `Active`
 
-**Current phase:** Reference qualification; preparatory investigation complete.
+**Current phase:** M1: qualified local reference adaptation and acceptance.
 
-**Next slice:** Inspect the parent-supplied qualified Coding-Standards #3 revision and acceptance evidence, then admit the narrow Tuldok adaptation.
+**Next slice:** Implement and qualify the optional SQLite observer at existing bridge boundaries.
 
-**Acceptance status:** `blocked`
+**Acceptance status:** `pending`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -63,7 +63,7 @@ or merge. Local test evidence and a source review are in scope.
 | Do not correlate by raw JSON-RPC ID alone | Observer adapter | Pending duplicate ID has a separate null-ID error; completed IDs can legally be reused |
 | A tool return does not establish delivery or domain task success | Observer adapter | Output encoding can substitute a bounded error; writes can fail or stop partway |
 | No raw request IDs, unknown method/tool text, dynamic argument keys, errors, paths, content or sensitive hashes in persistence/diagnostics | Observer privacy owner | These are attacker-controlled or sensitive; only closed structural categories/public registry identities are eligible |
-| Storage schema, queue/write budgets, retention, recovery, configuration and health contract await qualified reference | Parent + observer owner | Avoid a competing telemetry design before required reuse evidence |
+| Reuse qualified SQLite lifecycle/privacy with Tuldok-owned v1 schema and stage adapter; no queues or analytics | Observer owner | Reference local evidence admitted by parent; specific divergence documented |
 
 ## Objective Acceptance
 
@@ -72,12 +72,12 @@ Baseline checks support these claims but do not satisfy observer acceptance.
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence/design |
 | --- | --- | --- | --- | --- | --- | --- |
-| A1 | Cold initialize/list/call produces ordered correlated durable metadata with measured framing bytes and observer-disabled output parity | system | representative | automated | blocked | [Test design](reports/investigation.md) |
-| A2 | Invalid frames, admission/validation refusals, typed domain/transport errors and mutation delivery have exactly one interaction each | system | representative | automated | blocked | Same |
-| A3 | Restart/SIGKILL/interruption and partial/failed delivery retain incomplete/unknown outcomes without fabricated completion | system | representative | automated | blocked | Same |
-| A4 | Credentials, bodies, content, paths, arbitrary keys/errors/IDs and sensitive hashes cannot be recovered from SQLite or diagnostics | contract | representative | automated | blocked | Same |
-| A5 | Disabled/unavailable/locked/full storage preserves MCP output and domain result; bounded operator health describes degradation | system | representative | automated | blocked | Same |
-| A6 | Actual SQLite reopen/concurrency/retention/version migration or rejection/corrupt-record behavior meets the adopted store contract | integration | representative | automated | blocked | Same |
+| A1 | Cold initialize/list/call produces ordered correlated durable metadata with measured framing bytes and observer-disabled output parity | system | representative | automated | pending | [Test design](reports/investigation.md) |
+| A2 | Invalid frames, admission/validation refusals, typed domain/transport errors and mutation delivery have exactly one interaction each | system | representative | automated | pending | Same |
+| A3 | Restart/SIGKILL/interruption and partial/failed delivery retain incomplete/unknown outcomes without fabricated completion | system | representative | automated | pending | Same |
+| A4 | Credentials, bodies, content, paths, arbitrary keys/errors/IDs and sensitive hashes cannot be recovered from SQLite or diagnostics | contract | representative | automated | pending | Same |
+| A5 | Disabled/unavailable/locked/full storage preserves MCP output and domain result; bounded operator health describes degradation | system | representative | automated | pending | Same |
+| A6 | Actual SQLite reopen/concurrency/retention/version migration or rejection/corrupt-record behavior meets the adopted store contract | integration | representative | automated | pending | Same |
 | A7 | Existing agent/workflow/scoped authorization/external execution tests and public registry/envelopes remain intact | system | representative | automated | pending | [Baseline](reports/baseline.md) |
 | A8 | Independent GPT-6.1 Sol High source/privacy/lifecycle review resolves material findings | contract | representative | manual | pending | Review preparation and then implementation separately |
 
@@ -100,7 +100,7 @@ outcomes are in the [investigation](reports/investigation.md).
 
 **Applicability:** `applicable`
 
-Provisional composition only; repeat with the qualified reference before source adaptation.
+Reference composition inspected at 4887b7aff0ba84acd257da081135b7849cc9c79f. Reuse synchronous bounded transactions (20 ms busy timeout; no queue/background task), immutable begin and separate bounded stage/terminal evidence, secure deletion, exact owned schema admission, count/age/page quota retention and guarded fixed health. Omit reporting. Tuldok adds two concurrent active correlations (pending SDK request plus direct refusal), validation/dispatch/HTTP-return stages and explicit delivery status. Main configures optional absolute private database; health/retention CLI remains operator-only. See [reference admission](reports/reference-admission.md).
 
 - Independent concepts and dimensions: bridge observes protocol stages; observer owns safe
    projection, local SQLite transactions/lifecycle and operator health; HTTP/domain
@@ -147,7 +147,7 @@ No observer acceptance claim.
 
 ### M1: Qualified adaptation and acceptance
 
-**Status:** `Blocked` on qualified Coding-Standards #3 reference.
+**Status:** `Active`; parent follow-up admits implementation of this canonical plan.
 
 **Goal:** One complete optional observer capability, including operational controls,
 privacy/lifecycle documentation and direct acceptance tests.
@@ -160,9 +160,8 @@ operation when the reference is qualified; no additional publication authority.
 
 ## Blockers
 
-Missing qualified reference prevents selecting the persisted event/storage contract
-and final adaptation. Parent supplies a commit and acceptance evidence; inspect
-both before implementation.
+Reference hosted CI remains pending; local implementation/review evidence is admitted
+by parent, but is not merged or fully CI-qualified. Tuldok publication is prohibited.
 
 ## Re-Plan Triggers
 
@@ -178,10 +177,10 @@ task; target main, integration/publication owner parent/user. Retain it for bloc
 follow-up/review, synchronize only explicitly for material target changes, retire
 only after parent disposition. No new Tuldok worktree was created. No integration,
 publication or history rewrite is authorized. Final acceptance remains blocked;
-no adaptation or observer capability is claimed by this preparatory checkpoint.
+source adaptation is authorized locally by the parent follow-up.
 
 ## Final Acceptance
 
-- Acceptance status: `blocked`
-- Final status: `Blocked`
-- Deferred follow-ups: classifier-runtime baseline remains unqualified; adaptation awaits parent reference.
+- Acceptance status: `pending`
+- Final status: `Active`
+- Deferred follow-ups: reference hosted CI and classifier-runtime baseline remain explicit evidence limits.

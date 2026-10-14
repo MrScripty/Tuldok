@@ -88,6 +88,11 @@ python3.12 -m venv .venv-agent
 .venv-agent/bin/python mcp_stdio.py --config /private/tuldok-agent.json
 ```
 
+Optional operator-only local SQLite observations are disabled by default. See
+[observer configuration, privacy and recovery](docs/contracts/mcp-observer.md)
+for explicit opt-in and basic health/retention controls. This adds no MCP tools.
+
+
 The supplied dependency lock targets CPython 3.12 on Linux x86-64; it does not
 claim other interpreter/platform combinations. The app and training environments
 remain separate.

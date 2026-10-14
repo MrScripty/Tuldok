@@ -31,3 +31,24 @@
 - [GPT-6.1 Sol High preparatory review](reports/preparatory-review.md) closes all
   three material findings; added tests and delayed duplicate perturbation pass.
   M0 preparation accepted; M1 and objective acceptance remain blocked on reference.
+
+## Local reference admission and implementation checkpoint
+
+- Parent supplied exact locally qualified #3 reference4887b7af and authorizes
+  local continuation of this canonical plan. Read actual source and qualification
+  evidence; [reference admission](reports/reference-admission.md) distinguishes
+  local review from pending hosted CI. No reference fixture repair is imported.
+- Implemented optional observer and existing bridge adapter with separate begin,
+  validated/admitted/dispatch/returned/terminal evidence; fixed structural privacy,
+  private versioned SQLite, bounded synchronous writes, health and offline controls.
+  Source/domain registry and AgentClient authorization remain unchanged.
+- Environment health checked after parent-reported disconnect: shell, repository,
+  isolated Python and disposable PostgreSQL functional; no data loss observed.
+- Focused observer run21/21 passed; existing MCP16/16; actual unchanged and observed
+  full HTTP/SDK workflow2/2 passed. Added interrupted-schema-init test and deterministic
+  concurrent fixture cleanup; targeted3/3 passed. Broader/final verification and
+  independent source/hash review still pending at this checkpoint.
+- Independent review fixes: validate persisted policy before offline deletion;
+  split synthetic envelope status from available actual HTTP status; maintenance
+  never creates a missing path; admission rejects orphan/corrupt retained records.
+  No production activation/publication or unrelated source writes.
