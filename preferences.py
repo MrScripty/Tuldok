@@ -1,6 +1,8 @@
 """Explicit comparative judgments; responses and source records retain ownership."""
+from access import authorized
 from workbench import encode_retained
 import json
+import hashlib
 
 from workbench import WorkbenchError, IDENTIFIER, MAX_TEXT, MAX_SELECTED_TEXT_BYTES, encode, text_value, timestamp
 
@@ -10,6 +12,7 @@ SELECTION_FIELDS = BINDING_FIELDS | {'id', 'revision'}
 
 class Preferences:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.w = workbench
         self.db, self.lock = workbench.db, workbench.lock
 
@@ -44,6 +47,7 @@ class Preferences:
                 raise WorkbenchError('Stale judgment: prompt or answer changed. Deliberately rejudge and review current revisions.', 'conflict', 409)
         return parent, left, right
 
+    @authorized('inspect', 'preferences.list')
     def list(self, prompt_id):
         with self.lock:
             parent = self.w._get(prompt_id)
@@ -57,12 +61,14 @@ class Preferences:
                 result.append(dict(judgment, stale_warning=warning))
             return {'parent': parent, 'judgments': result, 'responses': self.w.responses(prompt_id)['responses']}
 
+    @authorized('inspect', 'preferences.history')
     def history(self, identity):
         with self.lock:
             self._get(identity)
             return {'history': [json.loads(row[0]) for row in self.db.execute(
                 'SELECT snapshot FROM workbench_preference_history WHERE id=%s ORDER BY revision', (identity,))]}
 
+    @authorized('edit', 'preferences.save', target=lambda body: body.get('id') if isinstance(body, dict) and isinstance(body.get('id'), str) else None)
     def save(self, body):
         self._shape(body, SELECTION_FIELDS | {'outcome', 'rationale', 'review'})
         if body['outcome'] not in ('left', 'right', 'tie', 'abstain'):
@@ -70,6 +76,8 @@ class Preferences:
         text_value(body['rationale'], 'Judgment rationale', 4000, empty=True)
         if body['review'] not in ('draft', 'human_reviewed'):
             raise WorkbenchError('Explicitly choose draft or human review of this judgment.')
+        if body['review'] == 'human_reviewed':
+            self.access.require('approve-review', 'preferences.approve_review', body['id'], owner_only=True)
         with self.lock, self.db.transaction():
             parent, left, right = self._bindings(body)
             row = self.db.execute('SELECT data FROM workbench_preferences WHERE id=%s', (body['id'],)).fetchone()
@@ -84,7 +92,7 @@ class Preferences:
             now = timestamp()
             judgment = dict(body, revision=body['revision'] + 1, deleted=False,
                             created_at=before['created_at'] if before else now, updated_at=now,
-                            provenance={'method': 'human_comparative_judgment'})
+                            provenance={'method': 'human_comparative_judgment' if body['review'] == 'human_reviewed' else 'draft_comparative_judgment'})
             self._persist(judgment, parent, left, right)
             return {'judgment': judgment, 'changed': True}
 
@@ -94,7 +102,11 @@ class Preferences:
                         (judgment['id'], judgment['prompt_id'], judgment['revision'], encode_retained(judgment)))
         self.db.execute('INSERT INTO workbench_preference_history (id, revision, snapshot) VALUES (%s,%s,%s)',
                         (judgment['id'], judgment['revision'], encode_retained({'judgment': judgment, 'parent': parent, 'left': left, 'right': right})))
+        self.access.audit('preferences.delete' if judgment['deleted'] else 'preferences.save', judgment['id'],
+            {'revision': judgment['revision'], 'review': judgment['review'],
+             'binding_sha256': hashlib.sha256(encode_retained({'judgment': judgment, 'parent': parent, 'left': left, 'right': right}).encode()).hexdigest()})
 
+    @authorized('edit', 'preferences.delete', target=lambda body: body.get('id') if isinstance(body, dict) and isinstance(body.get('id'), str) else None)
     def delete(self, body):
         self._shape(body, SELECTION_FIELDS)
         with self.lock, self.db.transaction():
@@ -107,6 +119,7 @@ class Preferences:
             self._persist(judgment, snapshot['parent'], snapshot['left'], snapshot['right'])
             return {'judgment': judgment, 'changed': True}
 
+    @authorized('inspect', 'preferences.competing')
     def competing(self, selected):
         """Only live reviewed judgments of selected exact bindings affect release proof."""
         def key(row):
@@ -125,6 +138,7 @@ class Preferences:
                 result.append(row)
         return sorted(result, key=lambda row: row['id'])
 
+    @authorized('inspect', 'preferences.selection')
     def selection(self, items):
         if not isinstance(items, list) or not 1 <= len(items) <= 5000:
             raise WorkbenchError('Select 1–5,000 explicit judgment revisions.')

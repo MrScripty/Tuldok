@@ -1,3 +1,4 @@
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import json
@@ -19,7 +20,7 @@ from workbench import WorkbenchError
 class GroundedTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
-        self.data=Dataset(self.tmp.name);self.addCleanup(lambda:self.data.close())
+        self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data);self.addCleanup(lambda:self.data.close())
         self.server,self.url,self.requests=start()
         self.addCleanup(self.server.server_close);self.addCleanup(self.server.shutdown)
         self.source=self.data.workbench.import_asset(dict(kind='text',text='Please cancel the café meeting 😀.',name='Request',groups=['customer-1'],rights='User-owned fixture'))
@@ -78,7 +79,7 @@ class GroundedTests(unittest.TestCase):
         self.assertIn('Content-Length',job['error'])
         self.assertEqual(job['candidates'],[])
         self.assertEqual(self.data.workbench.query({})['total'],1)
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.grounded.get(job['id'])['status'],'failed')
 
     def test_utf16_response_keeps_exact_bytes_and_hash_after_reopen(self):
@@ -91,7 +92,7 @@ class GroundedTests(unittest.TestCase):
             if mode=='utf16':self.assertIsNone(job['raw_response'])
             else:self.assertEqual(job['raw_response'].encode('utf-8'),raw)
             self.assertNotIn('raw_response_base64',self.data.grounded.snapshot()['jobs'][0])
-            self.data.close();self.data=Dataset(self.tmp.name)
+            self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
             self.assertEqual(self.data.grounded.get(job['id'])['raw_response_base64'],job['raw_response_base64'])
 
     def test_cancel_stalled_catalog_releases_worker_without_chat(self):
@@ -142,17 +143,17 @@ class GroundedTests(unittest.TestCase):
         self.data.grounded.worker.join(3);self.assertFalse(self.data.grounded.worker.is_alive())
         final=self.data.grounded.get(job['id']);self.assertEqual(final['status'],'cancelled');self.assertGreater(final['revision'],stopping['job']['revision'])
         self.assertEqual(final['candidates'],[])
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.grounded.get(job['id'])['status'],'cancelled')
         with self.data.lock,self.data.db.transaction():
             final['status']='generating';self.data.grounded._save(final)
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.grounded.get(job['id'])['status'],'interrupted')
         self.assertIsNone(self.data.grounded.worker)
 
     def test_admitted_identity_and_pending_candidates_survive_reopen(self):
         job=self.generate();record=self.data.grounded.review(job['id'],self.decision(job))['record']
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         restored=self.data.grounded.get(job['id'])
         self.assertEqual(restored['candidates'][0]['record_id'],record['id'])
         self.assertEqual(restored['candidates'][1]['status'],'pending_review')
@@ -174,7 +175,7 @@ class GroundedTests(unittest.TestCase):
         before=self.data.grounded.snapshot()
         self.assertEqual([candidate['status'] for candidate in rejected['candidates']],['admitted','rejected'])
         self.assertEqual(self.data.grounded.get(slow['id'])['status'],'cancelled')
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.grounded.snapshot(),before)
         restored=self.data.grounded.get(job['id'])
         self.assertEqual(restored['candidates'][0]['record_id'],record['id'])
@@ -200,7 +201,7 @@ class GroundedTests(unittest.TestCase):
         self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
         root=f'http://127.0.0.1:{server.server_port}/api/workbench/'
         def api(path,body=None):
-            request=urllib.request.Request((f'http://127.0.0.1:{server.server_port}'+path if path.startswith('/') else root+path),data=json.dumps(body).encode() if body is not None else None,
+            request=self.actor.request((f'http://127.0.0.1:{server.server_port}'+path if path.startswith('/') else root+path),data=json.dumps(body).encode() if body is not None else None,
                 headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(request) as response:return json.load(response)
         self.assertEqual(api('/api/generation/prompt-models',{'server_url':self.url})['models'],[{'id':'grounded-text-test','name':'grounded-text-test'}])

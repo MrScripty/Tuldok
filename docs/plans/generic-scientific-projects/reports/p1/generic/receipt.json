@@ -1,0 +1,79 @@
+{
+  "source_commit": "fd3f6a93b9c7f2d7d8056298a02d3f9b362e9b3c",
+  "dirty": true,
+  "command": "node tests/browser_workspace_project.cjs",
+  "qualification": "Generic synthetic project UI/lifecycle only",
+  "actual_lab_source": null,
+  "project_file_hashes": {
+    "alpha/data.json": "b4ce3cdbbc38a800a5c94cb5a19c63a20d66f7d66e2725ecd36b8e7c2f879a70",
+    "alpha/recipe.py": "acc0fb68b3a717a405510704c11f511272a5ba0f07663c9a7332611d4a865855",
+    "alpha/report.md": "eb5a076586c59eabfffed64cd4447ac0cb6800d17094666c17b7f5a96516f6e5",
+    "alpha.project.json": "dc7b3206f1a9a4a710f2bf181baa7f5b693a7dc1446bded9bd00a507f1152149",
+    "beta/data.txt": "37db6957d5b32141f37051d6ea915e32e7d84638a31abd5af8e8c0d180ac937e",
+    "beta/report.md": "1bbc8e85704e222c29f19d8a3edd0e0118b66969a08fc3568de5577b18fade38",
+    "beta.project.json": "a79cc0671db902a8c3b78f433e81fd213bfacb8a95928cbc933e7bacdb8533b3"
+  },
+  "checks": [
+    "Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct",
+    "Pipeline exposes nonexecutable references; Runs renders exact external evidence as text without a completion claim",
+    "Two projects with shared reference ID stay isolated; switching clears previous external evidence",
+    "Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted"
+  ],
+  "captures": [
+    {
+      "file": "project-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#project-data-root",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-data-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-data-root",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-pipeline-root",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#project-runs-root .project-evidence-output",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-evidence-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-runs-root .project-evidence-output",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    }
+  ],
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "execution_submitted": false,
+  "source_mutation": false,
+  "browser": "Chrome/151.0.7922.173"
+}

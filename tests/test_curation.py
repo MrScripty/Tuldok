@@ -1,4 +1,5 @@
 """Actual HTTP and SQL facts, including rollback-only legacy enrollment."""
+from auth_helpers import bind_owner
 from postgres_helpers import database_snapshot, in_transaction
 import base64
 import io
@@ -20,7 +21,7 @@ from workbench import encode
 class CurationTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name); self.w = self.dataset.workbench
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset); self.w = self.dataset.workbench
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
         self.addCleanup(self.close)
@@ -30,7 +31,7 @@ class CurationTests(unittest.TestCase):
         self.server.shutdown(); self.server.server_close(); self.dataset.close()
 
     def request(self, body):
-        req = urllib.request.Request(self.root+'/api/workbench/curation', data=json.dumps(body).encode(),
+        req = self.actor.request(self.root+'/api/workbench/curation', data=json.dumps(body).encode(),
                                      headers={'Content-Type':'application/json'})
         try:
             with urllib.request.urlopen(req) as response: return response.status, json.load(response)

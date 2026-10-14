@@ -1,14 +1,16 @@
 """Frozen, self-contained releases with connected-source split allocation."""
+from access import authorized
 import audio_export
+from contextlib import contextmanager
 import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 import zipfile
 from collections import Counter
 from pathlib import Path
-from PIL import Image
 
 import image_classification_export as classification_export
 import text_corpus_export as corpus_export
@@ -154,10 +156,12 @@ def archive_asset(archive, asset, filename, expected_hash):
 
 class Releases:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self.path = workbench.dataset.path / 'releases'
         self.path.mkdir(exist_ok=True)
 
+    @authorized('inspect', 'dataset_releases.locate')
     def locate(self, release_id):
         if not isinstance(release_id, str) or not RELEASE_ID.fullmatch(release_id):
             raise WorkbenchError('Invalid release ID.')
@@ -166,6 +170,81 @@ class Releases:
             raise WorkbenchError('Release not found.', 'unavailable', 404)
         return path
 
+    @contextmanager
+    def _input_directory(self):
+        """Anchor managed archive reads without following directory symlinks."""
+        descriptor = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            for part in self.path.absolute().parts[1:]:
+                child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+                os.close(descriptor)
+                descriptor = child
+            yield descriptor
+        finally:
+            os.close(descriptor)
+
+    @authorized('inspect', 'dataset_releases.input_candidates')
+    def input_candidates(self):
+        """Bounded availability hints; capture verifies the selected archive bytes."""
+        rows = []
+        try:
+            with self.workbench.lock, self._input_directory() as directory:
+                with os.scandir(directory) as entries:
+                    for entry in entries:
+                        if not entry.name.endswith('.zip') or not RELEASE_ID.fullmatch(entry.name[:-4]):
+                            continue
+                        release_id = entry.name[:-4]
+                        row = {'release_id':release_id, 'sha256':release_id, 'bytes':None,
+                               'status':'unavailable', 'reason':'Managed archive cannot be safely inspected.'}
+                        try:
+                            info = os.stat(entry.name, dir_fd=directory, follow_symlinks=False)
+                            if stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1:
+                                row['bytes'] = info.st_size
+                                if 0 < info.st_size <= MAX_SELECTED_TEXT_BYTES:
+                                    row.update(status='available', reason=None)
+                                else:
+                                    row.update(status='oversize', reason='Archive is empty or exceeds the 40 MiB input bound.')
+                        except OSError:
+                            pass
+                        rows.append(row)
+                        if len(rows) == 100:
+                            break
+        except OSError:
+            raise WorkbenchError('Managed releases cannot be safely inspected.', 'unavailable', 409) from None
+        return {'releases':sorted(rows, key=lambda row:row['release_id'])}
+
+    @authorized('inspect', 'dataset_releases.capture_input')
+    def capture_input(self, release_id, expected_sha256, max_bytes):
+        """Capture immutable frozen bytes, independently of mutable source records."""
+        if (not isinstance(release_id, str) or not RELEASE_ID.fullmatch(release_id)
+                or expected_sha256 != release_id):
+            raise WorkbenchError('Select the exact frozen release SHA256.')
+        if type(max_bytes) is not int or not 0 < max_bytes <= MAX_SELECTED_TEXT_BYTES:
+            raise WorkbenchError('Invalid frozen input byte bound.')
+        try:
+            with self.workbench.lock, self._input_directory() as directory:
+                descriptor = os.open(release_id + '.zip', os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+                with os.fdopen(descriptor, 'rb') as source:
+                    before = os.fstat(source.fileno())
+                    if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid() or before.st_nlink != 1
+                            or not 0 < before.st_size <= max_bytes):
+                        raise WorkbenchError('Frozen input is not an owned regular archive within its byte bound.')
+                    raw = source.read(max_bytes + 1)
+                    after = os.fstat(source.fileno())
+                    current = os.stat(release_id + '.zip', dir_fd=directory, follow_symlinks=False)
+                    identity = lambda info:(info.st_dev, info.st_ino, info.st_mode, info.st_uid,
+                                           info.st_nlink, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                    if identity(before) != identity(after) or identity(after) != identity(current) or len(raw) != after.st_size:
+                        raise WorkbenchError('Frozen input changed during capture.', 'stale', 409)
+        except OSError:
+            raise WorkbenchError('Frozen input cannot be safely read.', 'unavailable', 409) from None
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != release_id:
+            raise WorkbenchError('Frozen input bytes differ from their content identity.', 'stale', 409)
+        return raw, {'kind':'frozen_release', 'catalog_id':self.workbench.db.dataset_id,
+                     'release_id':release_id, 'measured_sha256':digest, 'bytes':len(raw)}
+
+    @authorized('inspect', 'dataset_releases.preview')
     def preview(self, body):
         """Inspect the exact selection without persisting even lazy image enrollment."""
         workbench = self.workbench
@@ -236,7 +315,7 @@ class Releases:
                         raise WorkbenchError('Caption export requires available images with human-reviewed image-caption annotations.')
                 elif not row['source_available'] or row['annotation'] is None or row['review'] == 'draft':
                     raise WorkbenchError('Every selected record needs an available source and reviewed or programmatically verified annotation.')
-                if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume') and row['review'] != 'human_reviewed':
+                if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume', 'field_sequence') and row['review'] != 'human_reviewed':
                     raise WorkbenchError('Sequence export requires human-reviewed whole trajectories.' if row['kind'] == 'sequence' else 'Spatial export requires human-reviewed whole asset records.')
                 if row['kind'] == 'audio':
                     audio_export.validate_record(row)
@@ -249,6 +328,7 @@ class Releases:
                 if digest != row['content_hash']:
                     raise WorkbenchError('Source bytes changed outside Tuldok. Restore the original asset before release.', 'conflict', 409)
                 if row['kind'] == 'image':
+                    from PIL import Image
                     with Image.open(asset) as image:
                         if image.format != 'PNG' or image.getexif().get(274, 1) != 1:
                             raise WorkbenchError('Image assets must be normalized PNGs with EXIF orientation 1.')
@@ -312,6 +392,10 @@ class Releases:
             except WorkbenchError as error:
                 block(error)
         if format_name == 'canonical_v1':
+            if any(row['kind'] == 'field_sequence' for row in rows):
+                if len(rows) > 64 or sum(len(encode(row).encode()) + 512 for row in rows) > 8 * 1024 * 1024 - 65536:
+                    block(WorkbenchError('Scientific releases permit at most 64 records and 8 MiB of frozen metadata.'))
+                preview['warnings'].append('Scientific fields retain exact arrays, grid placement, time and producer stages. Whole trajectories stay indivisible; first observed states and declared families do not certify independent initial conditions.')
             if any(row['kind'] == 'audio' for row in rows):
                 preview['warnings'].append(audio_export.CONTRACT)
             if any(row['kind'] == 'mesh' for row in rows):
@@ -437,6 +521,7 @@ class Releases:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
             preview = prepared['preview']
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': corpus_export.FORMAT, 'records': len(prepared['rows']),
                     'split_report': preview['split_report'], 'corpus_counts': preview['corpus_counts'],
@@ -652,11 +737,13 @@ class Releases:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
             preview = prepared['preview']
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': body['format'], 'records': preview['example_count'],
                     'example_count': preview['example_count'], 'unique_prompt_count': preview['unique_prompt_count'],
                     'split_report': preview['split_report']}
 
+    @authorized('freeze', 'dataset_releases.create')
     def create(self, body):
         with self.workbench.lock:
             if self.workbench.db.in_transaction:
@@ -701,6 +788,8 @@ class Releases:
                         'records': []}
             if any(row['kind'] in ('pointcloud', 'volume') for row in rows):
                 manifest['coordinate_contract'] += ' Point clouds preserve ordered points and declared frame; volumes preserve uint8 voxel values and voxel-center affine; whole spatial assets are indivisible.'
+            if any(row['kind'] == 'field_sequence' for row in rows):
+                manifest['coordinate_contract'] += ' Scientific field sequences preserve exact floating values, C-order ZYX arrays, declared grid transform, cell/face offsets, times and producer stages; each whole trajectory is indivisible. First-observed-state identity is not proof of initial-condition independence.'
             vocabulary = sorted({target['label'] for row in rows if row['task'] == 'image_detection' for target in row['annotation']['boxes']})
             categories = {label: i + 1 for i, label in enumerate(vocabulary)}
             coco = {split: {'info': {'description': 'Tuldok detection release', 'version': '1'}, 'licenses': [], 'images': [], 'annotations': [], 'categories': [{'id': i, 'name': label} for label, i in categories.items()]} for split in SPLITS}
@@ -712,7 +801,7 @@ class Releases:
                         for index, row in enumerate(rows, 1):
                             split = assignments[row['id']]
                             asset, _ = workbench.asset(row['id'])
-                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip', 'audio': '.wav', 'pointcloud': '.zip', 'volume': '.zip'}[row['kind']]
+                            filename = 'assets/' + row['id'] + {'image': '.png', 'text': '.txt', 'sequence': '.zip', 'mesh': '.zip', 'audio': '.wav', 'pointcloud': '.zip', 'volume': '.zip', 'field_sequence': '.zip'}[row['kind']]
                             digest = archive_asset(archive, asset, filename, row['content_hash'])
                             record = dict(row, split=split, asset=filename, asset_sha256=digest)
                             if row['kind'] == 'audio':
@@ -727,6 +816,8 @@ class Releases:
                             else:
                                 text_rows[split].append(record)
                         manifest['vocabulary'] = vocabulary
+                        if any(row['kind'] == 'field_sequence' for row in rows) and len(encode(manifest).encode()) > 8 * 1024 * 1024:
+                            raise WorkbenchError('Scientific release metadata exceeds 8 MiB.')
                         archive.writestr(zipfile.ZipInfo('manifest.json'), encode(manifest))
                         for split in SPLITS:
                             archive.writestr(zipfile.ZipInfo(split + '/coco.json'), encode(coco[split]))
@@ -739,6 +830,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip', 'records': len(rows), 'split_report': report}
 
     def _create_captions(self, body):
@@ -788,6 +880,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': CAPTION_FORMAT, 'records': len(rows), 'split_report': report, 'warnings': manifest['warnings']}
 
@@ -841,6 +934,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': classification_export.FORMAT, 'records': len(rows),
                     'split_report': preview['split_report'], 'class_vocabulary': vocabulary,
@@ -863,6 +957,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': text_class_export.FORMAT, 'records': len(prepared['rows']),
                     'split_report': prepared['preview']['split_report'],
@@ -894,6 +989,7 @@ class Releases:
             finally:
                 if os.path.exists(temporary):
                     os.unlink(temporary)
+            self.access.audit('dataset_releases.create', release_id, {'release_sha256': release_id, 'format': body.get('format', 'canonical_v1')})
             return {'id': release_id, 'url': '/api/workbench/releases/' + release_id + '.zip',
                     'format': audio_class_export.FORMAT, 'records': len(prepared['rows']),
                     'split_report': prepared['preview']['split_report'],

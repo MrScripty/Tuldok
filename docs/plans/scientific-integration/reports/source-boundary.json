@@ -1,0 +1,39 @@
+{
+  "qualified_source": "fb3a5a0",
+  "storage_source": "2a44442",
+  "unchanged_owners": {
+    "projects.py": "d147c6bae61068f5517fd15e3512311459cd4de3d6edfdd9ea984783470d432d",
+    "scientific_fields.py": "19b63cf1c65335b55a907c84312f0f9be70de1aa79522d96ec38d4862fa55338",
+    "scientific_release.py": "b419730e7cc00212632b3adcdf63997343b6fb9aecd07a6ad2cb6f5c1728fb60",
+    "recipe_process.py": "9bf5de04bef27a86ad239e05d9d105985d966a2b114350c3c8e3a92053b1a999",
+    "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+    "adapters/rheon/README.md": "eb0800d3cd60a1318a2ad73b6f361eabadf589acb7a33e0ac105bec9020bb329",
+    "adapters/rheon/cpu_compare.py": "e2e14eb6f354b88a0123bcdd710d4f990102efb97f7cdb584db4700e7f05ab97",
+    "adapters/rheon/cpu_project.py": "fe22a72b6dfc1b703c5407ba5691cef2117f6d5adeddf0d504f5c94270c003cf",
+    "adapters/rheon/cpu_train.py": "ea3c9524f5b1ec32e261865c1f24e06a2ff03ad97d1ba040ae7e69c48de39238",
+    "adapters/rheon/cpu_training_project.py": "484fc46f4c81002a213a9e39c50ca0f43bf60c7c0c030376ac5e81deab2080e1",
+    "adapters/rheon/evaluate.py": "ba212546b6bbe404ed88913647a8454c0f7413558e02e638aad7096eba4b2798",
+    "adapters/rheon/evaluation_project.py": "2409e7cd9ee3768b6f01dba03e03fdc6383b294357c276d07c0dbb1009f2aff3",
+    "adapters/rheon/generate.py": "c50277e7121de8153e8056e83e67b20aa610c335eabccd2b229ae475313f0d9c",
+    "adapters/rheon/native_transport.py": "4155a3467052b291cea0bd8a9018122796851c0fc8499d8866cca28a2fdf821c",
+    "adapters/rheon/project.py": "cb68c41ec431078a5cd6be1615176867bb386afc25eb247f4888958b0ed73ca7",
+    "backup_metadata.py": "f593d7c94365429f538ef4f8700adb42e82fe8249231bd27189217e18eabeb57",
+    "metadata.py": "ec3f16778edacd62e79159e376bec1781b87f01773113cf2c4f395bb631a8af8",
+    "tests/test_runtime_snapshots.py": "1506ed12cc80363adb481a8693c442d046b72b863d78e63660fcc88166a63b66",
+    "tests/test_workspace_metadata.py": "5ff58fdec3eaa89e0d47b54cc3948c553f39f955413b61d48d8bff4a43d0e81f"
+  },
+  "excluded_absent": [
+    "rheon_controls_contract.py",
+    "rheon_controls_sequence_contract.py",
+    "agent_api.py",
+    "agent_client.py",
+    "mcp_stdio.py",
+    "requirements-agent.txt",
+    "requirements-agent.lock",
+    "tests/test_sequences_v2.py",
+    "tests/test_sequence_v2_runs.py",
+    "tests/fixtures/rheon_controls_authored.py"
+  ],
+  "main_gallery": "exact",
+  "python310_grammar": "pass; no interpreter execution claimed"
+}

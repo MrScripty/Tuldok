@@ -69,7 +69,7 @@ def archive(raw, maximum_entries, maximum_bytes):
 
 def validate_bytes(raw, expected_sha256, *, kind, validate_row):
     """Return custody and subtype summaries for one supported whole-asset kind."""
-    if kind not in ('mesh', 'sequence', 'pointcloud', 'volume'):
+    if kind not in ('mesh', 'sequence', 'pointcloud', 'volume', 'field_sequence'):
         raise ValueError('Unsupported canonical release reader.')
     require(type(raw) is bytes and 0 < len(raw) <= MAX_RELEASE_BYTES, 'select a release of at most 64 MiB.')
     digest = sha(raw)
@@ -106,11 +106,12 @@ def validate_bytes(raw, expected_sha256, *, kind, validate_row):
                     and set(report['actual_counts']) <= set(SPLITS)
                     and all(type(n) is int and n >= 0 for n in report['actual_counts'].values())
                     and {split: report['actual_counts'].get(split, 0) for split in SPLITS} == counts, 'split report counts disagree with records.')
+            row_limit = MAX_METADATA_BYTES if kind == 'field_sequence' else MAX_ROW_BYTES
             for split in SPLITS:
                 raw_rows = release.read(split + '/records.jsonl')
                 require(not raw_rows or raw_rows.endswith(b'\n'), 'split JSONL must end with a newline.')
                 lines = raw_rows.splitlines()
-                require(all(0 < len(line) <= MAX_ROW_BYTES for line in lines), 'split JSONL row exceeds 256 KiB or is empty.')
+                require(all(0 < len(line) <= row_limit for line in lines), 'split JSONL row exceeds its subtype metadata bound or is empty.')
                 require([encode(decode(line)) for line in lines] == [encode(row) for row in rows if row['split'] == split], 'split JSONL differs from frozen manifest records.')
                 coco = decode(release.read(split + '/coco.json'))
                 require(type(coco) is dict and set(coco) == {'info', 'licenses', 'images', 'annotations', 'categories'}

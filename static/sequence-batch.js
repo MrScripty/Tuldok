@@ -109,7 +109,7 @@ $('sequence-batch-form').addEventListener('submit',async event=>{
       const item=sequenceBatchItem(offset+1,pair.item_name,'importing','Validating the whole bounded trajectory…');
       sequenceBatchFlight={...proof,counts,item};
       try {
-        const response=await fetch('/api/workbench/sequence-import-item',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/sequence-import-item',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         if(epoch!==sequenceBatchEpoch)return;
         const result=await response.json();
         if(epoch!==sequenceBatchEpoch)return;
@@ -142,7 +142,7 @@ $('sequence-batch-check').addEventListener('click',async()=>{
   const pending=sequenceBatchPending,epoch=++sequenceBatchEpoch;
   sequenceBatchRunning=true;sequenceBatchControls();
   try {
-    const response=await fetch('/api/workbench/sequence-import-result/'+pending.request_id);
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/sequence-import-result/'+pending.request_id);
     if(epoch!==sequenceBatchEpoch)return;
     const result=await response.json();
     if(epoch!==sequenceBatchEpoch)return;

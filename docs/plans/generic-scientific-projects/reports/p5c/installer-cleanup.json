@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "action": "remove_verified_installer_extraction",
+  "target": "/workspace/scratch/tuldok-science-probe/rust-1.92.0-x86_64-unknown-linux-gnu",
+  "allocated_bytes_observed": 1685254144,
+  "authorization": "Parent explicitly approved this exact extracted installer directory only.",
+  "archive_sha256": "d2ccef59dd9f7439f2c694948069f789a044dc1addcc0803613232af8f88ee0c",
+  "installed_and_extracted_rustc_sha256": "028fd60b0e0add5505c661cd3ccde91393d615c8729bd95d94ab1e91409b36a1",
+  "installed_and_extracted_cargo_sha256": "310fa46c7903259368c0df3dbb3f4f52759563f3c9ce53b500404b7741fb6860",
+  "reference_checks": {
+    "receipt_capture_qa_json": "No extraction path reference found in inspected build/capture receipts and QA root JSON.",
+    "installed_toolchain": "No symlinks outside install root; rustc/cargo exact hashes match extraction.",
+    "installation": "install.log records successful rustc/cargo/rust-std installation."
+  },
+  "preserved": [
+    "archive",
+    "archive checksum",
+    "verified-toolchain.sha256",
+    "install.log",
+    "toolchain",
+    "lab and Rheon sources",
+    "target binaries",
+    "build and capture receipts"
+  ],
+  "free_bytes_before": 6676639744,
+  "started_utc": "2026-10-13T20:02:31.113318+00:00",
+  "completed_utc": "2026-10-13T20:02:31.937642+00:00",
+  "target_absent": true,
+  "free_bytes_after": 8361893888,
+  "net_free_bytes_increase": 1685254144
+}

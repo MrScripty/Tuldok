@@ -1,4 +1,5 @@
 """Actual frozen fee7b4a pair + explicitly source-derived synthetic controls."""
+from auth_helpers import bind_owner
 from postgres_helpers import drop_failure_trigger, install_failure_trigger, observed_statements
 import base64
 import hashlib
@@ -51,7 +52,7 @@ class SequenceBatch(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.d = Dataset(self.temp.name)
+        self.d = Dataset(self.temp.name); self.actor = bind_owner(self, self.d)
         self.addCleanup(lambda: self.d.close())
         self.w = self.d.workbench
 
@@ -86,7 +87,7 @@ class SequenceBatch(unittest.TestCase):
         self.assertFalse(any('SELECT bundle' in sql for sql in statements))
         self.assertNotIn('sequence', result)
         self.assertNotIn('review', result)
-        self.d.close(); self.d = Dataset(self.temp.name); self.w = self.d.workbench
+        self.d.close(); self.d = Dataset(self.temp.name); self.actor = bind_owner(self, self.d); self.w = self.d.workbench
         self.assertEqual(batch.find_result(self.w, request['request_id']), dict(found=True, **result))
         self.assertEqual(self.w.asset(row['id'])[0], raw)
 
@@ -115,8 +116,9 @@ class SequenceBatch(unittest.TestCase):
         def prepared(*args):
             value = original(*args); barrier.wait(timeout=5); return value
         def worker(request):
-            try: outcomes.append(batch.import_item(self.w, request))
-            except WorkbenchError as error: outcomes.append(error.status)
+            with self.actor.bound(self.d):
+                try: outcomes.append(batch.import_item(self.w, request))
+                except WorkbenchError as error: outcomes.append(error.status)
         with patch.object(batch.rheon, 'prepare', side_effect=prepared):
             workers = [threading.Thread(target=worker, args=(request,)) for request in
                        (body(request_id=marker), body(*synthetic(), request_id=marker, item_name='source-derived'))]
@@ -212,7 +214,7 @@ class SequenceBatch(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(lambda: thread.join(3)); self.addCleanup(server.shutdown)
         base = 'http://127.0.0.1:' + str(server.server_port) + '/api/workbench/'
         def request(route, raw=None):
-            value = urllib.request.Request(base + route, raw, headers={'Content-Type': 'application/json'})
+            value = self.actor.request(base + route, raw, headers={'Content-Type': 'application/json'})
             try:
                 with urllib.request.urlopen(value, timeout=5) as response: return response.status, json.load(response)
             except urllib.error.HTTPError as response: return response.code, json.load(response)
@@ -221,6 +223,7 @@ class SequenceBatch(unittest.TestCase):
         # The size gate rejects headers before reading any oversized request body.
         connection = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=5)
         connection.putrequest('POST', '/api/workbench/sequence-import-item')
+        connection.putheader('Authorization', self.actor.headers['Authorization'])
         connection.putheader('Content-Type', 'application/json')
         connection.putheader('Content-Length', str(batch.rheon.MAX_REQUEST + 1))
         connection.endheaders()

@@ -1,4 +1,5 @@
 """Saved criteria against actual PostgreSQL/HTTP; fixed membership remains independent."""
+from auth_helpers import bind_owner
 from postgres_helpers import drop_failure_trigger, install_failure_trigger
 import json
 from pathlib import Path
@@ -22,7 +23,7 @@ class SavedSearchTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.w, self.s = self.dataset.workbench, self.dataset.searches
 
@@ -55,7 +56,7 @@ class SavedSearchTests(unittest.TestCase):
         self.w.save(first['id'], dict(first, annotation={'label': 'other'}, review='draft'))
         self.assertEqual(self.w.query(saved['criteria'])['total'], 1)
         self.assertFalse(self.dataset.selections.load(fixed['id'])['current'])
-        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.w, self.s = self.dataset.workbench, self.dataset.searches
+        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset); self.w, self.s = self.dataset.workbench, self.dataset.searches
         self.assertEqual(self.s.get(saved['id']), saved); self.assertEqual(self.w.query(saved['criteria'])['items'][0]['id'], second['id'])
 
     def test_exact_metadata_and_existing_query_normalization_equivalence(self):
@@ -99,7 +100,7 @@ class SavedSearchTests(unittest.TestCase):
                                                     annotation={'note': 'Inspected native spatial fixture.'}))
             self.assertEqual([item['id'] for item in self.w.query(saved[kind]['criteria'])['items']], [row['id']])
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.w, self.s = self.dataset.workbench, self.dataset.searches
         for kind, search in saved.items():
             self.assertEqual(self.s.get(search['id']), search)
@@ -150,7 +151,7 @@ class SavedSearchTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(lambda: (server.shutdown(), thread.join()))
         def request(route='', body=None, raw=None):
             if body is not None: raw = json.dumps(body).encode()
-            req = urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/workbench/searches'+route, data=raw, headers={'Content-Type': 'application/json'})
+            req = self.actor.request(f'http://127.0.0.1:{server.server_port}/api/workbench/searches'+route, data=raw, headers={'Content-Type': 'application/json'})
             try: response = urllib.request.urlopen(req)
             except urllib.error.HTTPError as error: response = error
             with response: return response.status, json.loads(response.read())

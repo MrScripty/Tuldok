@@ -1,4 +1,7 @@
-// Recorded actual Rheon bytes → frozen release → edited graph → integrity run/download/reopen.
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
+// Recorded actual Rheon v1 through authenticated workspaces; no new producer or physics acceptance.
 "use strict";
 const assert = require("node:assert/strict"),
   fs = require("node:fs"),
@@ -43,6 +46,7 @@ function launch(command, args, options) {
   server.stderr.on("data", (chunk) => (serverErrors += chunk));
   const port = await until(() => output.match(/127\.0\.0\.1:(\d+)/)?.[1]),
     base = "http://127.0.0.1:" + port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const browser = launch(
     process.env.BROWSER || "/usr/bin/chromium",
     [
@@ -255,6 +259,7 @@ function launch(command, args, options) {
 
   const offlineCanary = process.env.LD_PRELOAD ? JSON.parse(execFileSync("python3", ["-c", "import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"], {cwd:root,encoding:"utf8"})) : null;
   await send("DOM.enable");
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send("Page.navigate", { url: base + "/workspaces" });
   await until(() => evaluate('!!document.getElementById("fixture-label")'));
   await select("#dataset", "catalog");

@@ -1,4 +1,5 @@
 """Tuldok-owned strict ASCII triangle PLY profile; raw bytes remain authoritative."""
+from access import authorized
 import base64
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
@@ -233,6 +234,7 @@ def decode_file(value, cap, name):
 
 
 def admit(workbench, body):
+    workbench.access.require('edit', 'meshes.admit')
     if type(body) is not dict or set(body) - {'files', 'name', 'groups', 'parents', 'rights'}:
         invalid('import envelope fields do not match the profile.')
     exact(body.get('files'), ('mesh.ply', 'mesh.json'), 'selected files')
@@ -245,6 +247,7 @@ class MeshAssets(ImmutableAssets):
     def __init__(self, workbench):
         super().__init__(workbench, kind='mesh', task='mesh_geometry', maximum=BUNDLE_LIMIT, default_name='Static triangle mesh')
 
+    @authorized('edit', 'meshes.admit')
     def admit(self, prepared, body):
         value = prepared['metadata']
         return super().admit(prepared, body, {'method': 'mesh_import', 'format': 'tuldok_mesh_v1',
@@ -266,11 +269,13 @@ class MeshAssets(ImmutableAssets):
         except (WorkbenchError, zipfile.BadZipFile, KeyError, RuntimeError, UnicodeError) as error:
             raise WorkbenchError('Mesh source or metadata changed outside Tuldok.', 'conflict', 409) from error
 
+    @authorized('inspect', 'meshes.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         bundle, mime = super().asset(record)
         self.validated(record, bundle)
         return bundle, mime
 
+    @authorized('inspect', 'meshes.inspect')
     def inspect(self, record_id):
         with self.workbench.lock:
             record = self.workbench._get(record_id)

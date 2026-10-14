@@ -12,6 +12,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import stat
 import threading
 import uuid
 
@@ -19,8 +20,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 4
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4)
+SCHEMA_VERSION = 8
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -98,9 +99,21 @@ def _sync_directory(path):
         os.close(descriptor)
 
 
-def _publish_manifest(path, value):
+def _publish_manifest(path, value, *, initial_mode=None):
     temporary = path.with_suffix(path.suffix + '.tmp')
-    with temporary.open('w') as handle:
+    if initial_mode is None:
+        handle = temporary.open('w')
+    else:
+        if os.path.lexists(path):
+            raise StorageError('New catalog manifest already exists.')
+        handle = os.fdopen(os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                   0o666), 'w')
+    with handle:
+        if initial_mode is not None:
+            created = os.fstat(handle.fileno())
+            if not stat.S_ISREG(created.st_mode) or created.st_uid != os.getuid() or created.st_nlink != 1:
+                raise StorageError('New catalog manifest creation identity changed.')
+            os.fchmod(handle.fileno(), initial_mode)
         json.dump(value, handle)
         handle.flush()
         os.fsync(handle.fileno())
@@ -137,7 +150,7 @@ class CatalogLock:
 
 class Metadata:
     def __init__(self, path, dsn=None, *, create=True, dataset_id=None,
-                 schema_version=SCHEMA_VERSION):
+                 schema_version=SCHEMA_VERSION, initial_file_modes=None):
         # Version selection belongs to offline transfer/upgrade tools. Runtime
         # callers omit it and require the current schema, never auto-upgrade.
         if schema_version is not None and (type(schema_version) is not int or
@@ -146,13 +159,40 @@ class Metadata:
         path = Path(path).resolve()
         if create:
             path.mkdir(parents=True, exist_ok=True)
-        with (path / '.metadata-init.lock').open('a') as guard:
+        if initial_file_modes is not None:
+            if (not create or type(initial_file_modes) is not dict or
+                    set(initial_file_modes) not in ({MANIFEST}, {MANIFEST, '.metadata-init.lock'}) or
+                    any(type(mode) is not int or not 0 <= mode <= 0o7777
+                        for mode in initial_file_modes.values())):
+                raise StorageError('Unsupported new catalog file permissions.')
+            initial_file_modes = dict(initial_file_modes)
+            if '.metadata-init.lock' in initial_file_modes:
+                if any(os.path.lexists(path / name) for name in
+                       (MANIFEST, '.metadata-init.lock', '.tuldok-initializing.json')):
+                    raise StorageError('New catalog initialization files already exist.')
+                guard = os.fdopen(os.open(path / '.metadata-init.lock',
+                                         os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o666), 'w')
+            else:
+                if os.path.lexists(path / MANIFEST) or not os.path.lexists(path / '.tuldok-initializing.json'):
+                    raise StorageError('Missing supported pending catalog initialization.')
+                guard = os.fdopen(os.open(path / '.metadata-init.lock',
+                                         os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW), 'a')
+        else:
+            guard = (path / '.metadata-init.lock').open('a')
+        with guard:
+            if initial_file_modes is not None:
+                created = os.fstat(guard.fileno())
+                if not stat.S_ISREG(created.st_mode) or created.st_uid != os.getuid() or created.st_nlink != 1:
+                    raise StorageError('New catalog lock creation identity changed.')
+                if '.metadata-init.lock' in initial_file_modes:
+                    os.fchmod(guard.fileno(), initial_file_modes['.metadata-init.lock'])
+                    os.fsync(guard.fileno())
             fcntl.flock(guard, fcntl.LOCK_EX)
             self._initialize(path, dsn, create=create, dataset_id=dataset_id,
-                             schema_version=schema_version)
+                             schema_version=schema_version, initial_file_modes=initial_file_modes)
 
     def _initialize(self, path, dsn=None, *, create=True, dataset_id=None,
-                    schema_version=SCHEMA_VERSION):
+                    schema_version=SCHEMA_VERSION, initial_file_modes=None):
         self.path = Path(path).resolve()
         self.schema_version = SCHEMA_VERSION if schema_version is None else schema_version
         self.dsn = connection_info(dsn)
@@ -161,6 +201,9 @@ class Metadata:
         self._rollback = []
         self._commit = []
         self._runtime_claims = {}
+        if initial_file_modes is not None and (os.path.lexists(manifest) or
+                ('.metadata-init.lock' in initial_file_modes and os.path.lexists(pending))):
+            raise StorageError('New catalog initialization files already exist.')
         if manifest.exists():
             try:
                 value = json.loads(manifest.read_text())
@@ -244,7 +287,11 @@ class Metadata:
                     if any(self.execute(sql.SQL('SELECT 1 FROM {} LIMIT 1').format(sql.Identifier(table))).fetchone()
                            for table in self.tables):
                         raise StorageError('Interrupted catalog initialization contains unexpected application rows.')
-                    _publish_manifest(manifest, {'version': 1, 'dataset_id': identity})
+                    if initial_file_modes is None:
+                        _publish_manifest(manifest, {'version': 1, 'dataset_id': identity})
+                    else:
+                        _publish_manifest(manifest, {'version': 1, 'dataset_id': identity},
+                                          initial_mode=initial_file_modes[MANIFEST])
                 if pending.exists():
                     pending.unlink()
                     _sync_directory(self.path)
@@ -415,7 +462,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES_V7, 8: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -516,8 +563,48 @@ SPATIAL_TABLES = {
     id TEXT PRIMARY KEY, bundle BYTEA NOT NULL, metadata_json TEXT NOT NULL,
     bundle_bytes INTEGER NOT NULL CHECK(bundle_bytes > 0))""",
 }
-TABLES = {
+TABLES_V4 = {
     **TABLES_V3, **SPATIAL_TABLES,
     'workbench_records': TABLES_V3['workbench_records'].replace(
         "'sequence','mesh','audio'", "'sequence','mesh','audio','pointcloud','volume'"),
 }
+
+# Retained schema 4 remains exact for old catalogs, receipts and explicit upgrades.
+PROJECT_TABLES = {
+    'workspace_projects': '''CREATE TABLE workspace_projects (
+        id TEXT PRIMARY KEY, document TEXT NOT NULL)''',
+}
+TABLES_V5 = {**TABLES_V4, **PROJECT_TABLES}
+# The scientific source lives in the existing local artifact tree, not a new table.
+TABLES_V6 = {
+    **TABLES_V5,
+    'workbench_records': TABLES_V5['workbench_records'].replace(
+        "'pointcloud','volume'", "'pointcloud','volume','field_sequence'"),
+}
+
+ACCESS_TABLES = {
+    'access_actors': '''CREATE TABLE access_actors (
+        id TEXT PRIMARY KEY, kind TEXT NOT NULL CHECK(kind IN ('owner','agent')),
+        label TEXT NOT NULL, created_at BIGINT NOT NULL)''',
+    'access_credentials': '''CREATE TABLE access_credentials (
+        id TEXT PRIMARY KEY, actor_id TEXT NOT NULL, token_sha256 TEXT UNIQUE NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('login','session','bearer')), scopes_json TEXT NOT NULL,
+        expires_at BIGINT NOT NULL, revoked INTEGER NOT NULL CHECK(revoked IN (0,1)), consumed INTEGER NOT NULL CHECK(consumed IN (0,1)), created_at BIGINT NOT NULL)''',
+    'access_audit': '''CREATE TABLE access_audit (
+        id TEXT PRIMARY KEY, actor_id TEXT, credential_id TEXT, action TEXT NOT NULL,
+        target_json TEXT NOT NULL, details_json TEXT NOT NULL, result TEXT NOT NULL, created_at BIGINT NOT NULL)''',
+    'access_admissions': '''CREATE TABLE access_admissions (
+        id TEXT PRIMARY KEY, catalog_id TEXT NOT NULL, actor_id TEXT NOT NULL, credential_id TEXT NOT NULL,
+        kind TEXT NOT NULL, job_id TEXT NOT NULL, request_digest TEXT NOT NULL, effects_json TEXT NOT NULL, created_at BIGINT NOT NULL)''',
+}
+TABLES_V7 = {**TABLES_V6, **ACCESS_TABLES}
+EXECUTION_APPROVAL_TABLES = {
+    'access_execution_grants': '''CREATE TABLE access_execution_grants (
+        id TEXT PRIMARY KEY, catalog_id TEXT NOT NULL, approver_actor_id TEXT NOT NULL,
+        approver_credential_id TEXT NOT NULL, consumer_actor_id TEXT NOT NULL, material_sha256 TEXT NOT NULL,
+        created_at BIGINT NOT NULL, expires_at BIGINT NOT NULL, revoked_at BIGINT)''',
+    'access_execution_consumptions': '''CREATE TABLE access_execution_consumptions (
+        grant_id TEXT PRIMARY KEY, run_id TEXT UNIQUE NOT NULL, admission_id TEXT UNIQUE NOT NULL,
+        consumer_credential_id TEXT NOT NULL, request_sha256 TEXT NOT NULL, consumed_at BIGINT NOT NULL)''',
+}
+TABLES = {**TABLES_V7, **EXECUTION_APPROVAL_TABLES}

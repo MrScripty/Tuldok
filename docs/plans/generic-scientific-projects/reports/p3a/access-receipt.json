@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Anonymous legacy/current APIs denied; real one-time login consumed; cookie is HttpOnly and code cleared",
+    "Sign out and rejected mutation preserve draft; reauthentication does not replay mutation; deliberate retry commits",
+    "Real scoped agent identity cannot use owner human-review controls"
+  ],
+  "anonymous_denied": true,
+  "real_cli_login": true,
+  "no_mutation_replay": true
+}

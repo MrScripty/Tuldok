@@ -1,0 +1,61 @@
+{
+  "results": [
+    {
+      "command": [
+        "node",
+        "tests/test_sequence_batch_controller.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11
+    },
+    {
+      "command": [
+        "node",
+        "tests/browser_access.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 4.396
+    },
+    {
+      "command": [
+        "node",
+        "tests/browser_scientific_fields.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 7.021
+    },
+    {
+      "command": [
+        "node",
+        "tests/browser_workspace_project.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 4.714
+    },
+    {
+      "command": [
+        "node",
+        "tests/browser_workspace_external.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 15.892
+    },
+    {
+      "command": [
+        "node",
+        "tests/browser_workspace_sequence_run.cjs"
+      ],
+      "exit_code": 0,
+      "seconds": 9.469
+    }
+  ],
+  "all_pass": true,
+  "changed_source": [],
+  "log": "/tmp/tuldok-generic-browser-boundary-20261014.log",
+  "log_sha256": "6580a56cdbbe7b6e2d7d03742d8c218eec65e0d698a7d909340143702b120d19",
+  "prior_passes": [
+    "test_auth_controller.cjs",
+    "test_workspace_external_controller.cjs"
+  ],
+  "prior_attempt": "Wrong driver command named test_sequences_controller.cjs, introduced only in deferred PR43; absent from current main, not a product assertion failure."
+}

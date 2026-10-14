@@ -30,7 +30,7 @@ async function loadVolumeSlice(record,axis,index,generation) {
   const owns=()=>volumeRequests.get(axis)===controller&&generation===volumeGeneration&&current?.id===record.id&&current.content_hash===record.content_hash;
   $('volume-canvas-'+axis).hidden=true;$('volume-position-'+axis).textContent='Loading native index slice…';
   try{
-    const response=await fetch(`/api/workbench/volume-inspection/${record.id}?axis=${axis}&index=${index}`,{signal:controller.signal});const raw=await response.json();
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)(`/api/workbench/volume-inspection/${record.id}?axis=${axis}&index=${index}`,{signal:controller.signal});const raw=await response.json();
     if(!response.ok)throw Error(raw.error||'Volume slice unavailable.');
     const value=decodeVolumeSlice(raw,record,axis,index);if(owns())renderVolumeSlice(value);
   }catch(error){if(owns()&&error.name!=='AbortError')$('volume-position-'+axis).textContent=error.message;}

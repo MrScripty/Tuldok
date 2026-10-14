@@ -43,12 +43,12 @@ original_handler = app.make_handler
 
 def instrumented_handler(dataset):
     class Handler(original_handler(dataset)):
-        def do_GET(self):
-            if self.path == '/test/classification-dispatch':
+        def _get(self):
+            if self.path == '/api/test/classification-dispatch':
                 with admission_lock:
                     result = copy.deepcopy(admissions)
                 return self.reply({'admissions': result})
-            return super().do_GET()
+            return super()._get()
     return Handler
 
 

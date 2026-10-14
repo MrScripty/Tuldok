@@ -11,7 +11,7 @@ const clone=value=>JSON.parse(JSON.stringify(value));
 function notice(message){clearTimeout(noticeTimer);$('notice').textContent=message;$('notice').hidden=!message;if(message)noticeTimer=setTimeout(()=>notice(''),12000);}
 $('notice').onclick=()=>notice('');
 async function api(path,body){
-  const response=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const response=await (globalThis.TuldokAuth?.fetch || fetch)(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const value=await response.json();if(!response.ok)throw Error(value.error||'Request failed.');return value;
 }
 async function run(action){
@@ -333,7 +333,7 @@ $('import').onchange=()=>run(async()=>{
   if(failures.length)notice(success+' imported. '+failures.join(' · '));
 });
 $('export').onclick=()=>run(async()=>{
-  const response=await fetch('/api/export');
+  const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/export');
   if(!response.ok)throw Error((await response.json()).error);
   const url=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=url;a.download='tuldok-dataset.zip';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });

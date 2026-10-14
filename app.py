@@ -26,10 +26,15 @@ import sequence_batch_import
 import meshes
 import spatial_assets
 import pipeline
+import projects
+import access
+from access import authorized
+from http.cookies import SimpleCookie, CookieError
 import runs
 import base64
 import hashlib
 import io
+import ipaddress
 import json
 import math
 import shutil
@@ -133,42 +138,50 @@ def validate_annotation(body):
 
 
 class Dataset:
-    def __init__(self, path, *, dsn=None):
+    def __init__(self, path, *, dsn=None, project_roots=None):
         self.path = Path(path).resolve()
         self.path.mkdir(parents=True, exist_ok=True)
         (self.path / 'images').mkdir(exist_ok=True)
         self.ai_lock = threading.Lock()
-        self.image_requests = image_generation.ImageRequests()
         self.db = Metadata(self.path, dsn=dsn)
         self.lock = self.db.lock
+        self.access = access.Access(self.db, self.path)
+        self.image_requests = image_generation.ImageRequests(self.access)
         try:
-            self.generation_jobs = synthetic.Jobs(self)
-            with self.lock:
-                self._recover_deletions()
-            self.workbench = workbench.Workbench(self)
-            self.releases = dataset_releases.Releases(self.workbench)
-            self.selections = saved_selections.SavedSelections(self.workbench)
-            self.searches = saved_searches.SavedSearches(self.workbench)
-            self.caption_imports = caption_import.CaptionImports(self.workbench)
-            self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
-            self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
-            self.grounded = grounded_candidates.Proposals(self.workbench)
-            self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
-            self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
-            self.pipelines = pipeline.Pipelines(self)
-            self.runs = runs.Runs(self, self.pipelines)
+            with self.access._reconcile():
+                self.projects = projects.Projects(self, project_roots)
+                self.generation_jobs = synthetic.Jobs(self)
+                with self.lock:
+                    self._recover_deletions()
+                self.workbench = workbench.Workbench(self)
+                self.releases = dataset_releases.Releases(self.workbench)
+                self.selections = saved_selections.SavedSelections(self.workbench)
+                self.searches = saved_searches.SavedSearches(self.workbench)
+                self.caption_imports = caption_import.CaptionImports(self.workbench)
+                self.native_text_imports = native_text_import.NativeTextImports(self.workbench)
+                self.native_detection_imports = native_detection_import.NativeDetectionImports(self.workbench)
+                self.grounded = grounded_candidates.Proposals(self.workbench)
+                self.caption_proposals = caption_proposals.CaptionProposals(self.workbench)
+                self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
+                self.pipelines = pipeline.Pipelines(self)
+                self.runs = runs.Runs(self, self.pipelines)
         except BaseException:
+            if hasattr(self, 'projects'):
+                self.projects.close()
             self.db.close()
             raise
 
     def close(self):
-        self.runs.close()
-        self.text_classification_proposals.close()
-        self.caption_proposals.close()
-        self.grounded.close()
-        self.generation_jobs.close()
-        self.db.close()
+        with self.access._reconcile():
+            self.runs.close()
+            self.text_classification_proposals.close()
+            self.caption_proposals.close()
+            self.grounded.close()
+            self.generation_jobs.close()
+            self.projects.close()
+            self.db.close()
 
+    @authorized('inspect', 'dataset.rows')
     def rows(self):
         with self.lock:
             rows = [dict(r) for r in self.db.execute('SELECT * FROM samples ORDER BY created_at, id')]
@@ -186,10 +199,11 @@ class Dataset:
                     row['annotation'].setdefault('corner_reference', 'image')
             return rows
 
+    @authorized('inspect', 'dataset.sample')
     def sample(self, sample_id):
         return next((row for row in self.rows() if row['id'] == sample_id), None)
 
-    def resolve_split(self, meta, exclude=''):
+    def _resolve_split(self, meta, exclude=''):
         key = 'book_id' if meta['book_id'] else 'session_id'
         where = key + '=%s' + (" AND book_id=''" if key == 'session_id' else '')
         args = (meta[key], exclude)
@@ -206,6 +220,13 @@ class Dataset:
         return chosen
 
     def add(self, body, generation=None, *, enrollment=None):
+        if generation is None:
+            self.access.require('edit', 'dataset.add')
+        else:
+            entry, job, generated_metadata = generation
+            self.access.require_job('synthetic', job['id'], job.get('admission_id'),
+                                    self.generation_jobs._request_digest(job))
+            self.access.require('edit', 'dataset.add_generated', job['id'])
         meta = metadata(body)
         try:
             raw = base64.b64decode(body.get('image', ''), validate=True)
@@ -240,7 +261,7 @@ class Dataset:
                 thumbnail.save(folder / 'thumb.jpg', 'JPEG', quality=85)
                 with self.db.transaction():
                     self.db.on_rollback(lambda: shutil.rmtree(folder, ignore_errors=True))
-                    split = self.resolve_split(meta)
+                    split = self._resolve_split(meta)
                     self.db.execute('INSERT INTO samples VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                                     (sample_id, digest, name, image.width, image.height, meta['book_id'],
                                      meta['session_id'], split, timestamp, timestamp, 1, None))
@@ -250,12 +271,20 @@ class Dataset:
                         # Imported Workbench source metadata shares acquisition's
                         # commit and original-file cleanup on admission failure.
                         self.workbench._enroll_import(sample_id, *enrollment)
+                    self.access.audit('dataset.add_generated' if generation else 'dataset.add',
+                                      job['id'] if generation else sample_id,
+                                      {'sample_id': sample_id, 'revision': 1, 'source_sha256': digest})
+                    if generation is not None:
+                        # Return only this admitted publication, without catalog-wide reads.
+                        generated = dict(self.db.execute('SELECT * FROM samples WHERE id=%s', (sample_id,)).fetchone())
+                        generated['generation'] = {key: entry[key] for key in
+                            ('job_id', 'ordinal', 'prompt', 'metadata', 'model', 'width', 'height', 'requested_seed') if key in entry}
             except CommitOutcomeUnknown:
                 raise
             except Exception:
                 shutil.rmtree(folder, ignore_errors=True)
                 raise
-        return self.sample(sample_id)
+        return generated if generation is not None else self.sample(sample_id)
 
     def _recover_deletions(self):
         staging = self.path / '.deleting-images'
@@ -269,6 +298,7 @@ class Dataset:
             else:
                 shutil.rmtree(folder)
 
+    @authorized('edit', 'dataset.delete')
     def delete(self, sample_id, body):
         with self.lock:
             row = self.db.execute('SELECT revision FROM samples WHERE id=%s', (sample_id,)).fetchone()
@@ -306,6 +336,7 @@ class Dataset:
                             self.generation_jobs._entry(entry)
                     self.workbench.preserve_deleted_source(sample_id)
                     self.db.execute('DELETE FROM samples WHERE id=%s', (sample_id,))
+                    self.access.audit('dataset.delete', sample_id)
             except CommitOutcomeUnknown:
                 raise
             except Exception:
@@ -314,6 +345,7 @@ class Dataset:
             return dict(self.generation_jobs.snapshot(), samples=self.rows(), deleted=sample_id,
                         warning=cleanup_warning[0] if cleanup_warning else '')
 
+    @authorized('approve-review', 'dataset.save')
     def save(self, sample_id, body):
         annotation = validate_annotation(body.get('annotation', {}))
         meta = metadata(body)
@@ -325,11 +357,14 @@ class Dataset:
                 raise ValueError('Image not found.')
             if body.get('revision') != row['revision']:
                 raise Conflict('This image changed in another tab. Reload it before saving.')
-            split = self.resolve_split(meta, sample_id)
+            split = self._resolve_split(meta, sample_id)
             self.db.execute('UPDATE samples SET annotation=%s,book_id=%s,session_id=%s,split=%s,updated_at=%s,revision=revision+1 WHERE id=%s',
                             (json.dumps(annotation), meta['book_id'], meta['session_id'], split, now(), sample_id))
+            self.access.audit('dataset.save', sample_id, {'before_revision': body['revision'],
+                              'revision': body['revision'] + 1, 'annotation_sha256': hashlib.sha256(workbench.encode(annotation).encode()).hexdigest()})
         return self.sample(sample_id)
 
+    @authorized('execute', 'dataset.suggest', owner_only=True)
     def suggest(self, body):
         sample_id = body.get('sample_id')
         before = self.sample(sample_id)
@@ -352,6 +387,7 @@ class Dataset:
         finally:
             self.ai_lock.release()
 
+    @authorized('inspect', 'dataset.export')
     def export(self):
         with self.lock:
             return self._export()
@@ -388,7 +424,7 @@ def make_handler(dataset):
         def log_message(self, *_):
             pass
 
-        def reply(self, data, status=200, content_type='application/json'):
+        def reply(self, data, status=200, content_type='application/json', headers=()):
             if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
             self.send_response(status)
@@ -396,17 +432,159 @@ def make_handler(dataset):
             self.send_header('Content-Length', str(len(data)))
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
+            for key, value in headers:
+                self.send_header(key, value)
             self.end_headers()
             try:
                 self.wfile.write(data)
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
+        def reply_stream(self, stream, metadata):
+            # The owner has already verified a private spool before HTTP success.
+            self.send_response(200)
+            self.send_header('Content-Type', metadata['media_type'])
+            self.send_header('Content-Length', str(metadata['bytes']))
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.end_headers()
+            try:
+                while True:
+                    raw = stream.read(65536)
+                    if not raw:
+                        break
+                    self.wfile.write(raw)
+            except (OSError, ConnectionError):
+                # Headers are committed; never append a JSON error to payload.
+                self.close_connection = True
+
+        def project_access(self):
+            # This opt-in file inspection surface is local-only until actor authentication.
+            host = urlsplit('http://' + self.headers.get('Host', '')).hostname
+            if (host not in ('localhost', '127.0.0.1', '::1') or
+                    not ipaddress.ip_address(self.client_address[0]).is_loopback):
+                raise workbench.WorkbenchError('Project inspection requires a local loopback client and host.', 'forbidden', 403)
+
+        def _credential(self):
+            authorization = self.headers.get('Authorization')
+            if authorization is not None:
+                if self.headers.get('Cookie'):
+                    raise access.AccessError('Use one credential transport per request.', 'forbidden', 403)
+                parts = authorization.split(' ')
+                if len(parts) != 2 or parts[0].lower() != 'bearer' or not parts[1]:
+                    raise access.AccessError('Use an authenticated bearer credential.', 'unauthenticated', 401)
+                return parts[1], True
+            try:
+                cookies = SimpleCookie(self.headers.get('Cookie', ''))
+                token = cookies['tuldok_session'].value if 'tuldok_session' in cookies else ''
+            except CookieError:
+                token = ''
+            return token, False
+
+        def _same_origin(self, required):
+            origin = self.headers.get('Origin')
+            if (required and not origin) or (origin and origin != 'http://' + self.headers.get('Host', '')):
+                raise access.AccessError('A same-origin request is required.', 'forbidden', 403)
+
+        def _access_body(self):
+            if self.headers.get_content_type() != 'application/json':
+                raise access.AccessError('Send a JSON object.', 'invalid', 400)
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                if not 0 < length <= 16384:
+                    raise ValueError()
+                body = projects.decode(self.rfile.read(length))
+                if not isinstance(body, dict):
+                    raise ValueError()
+                return body
+            except (ValueError, workbench.WorkbenchError):
+                raise access.AccessError('Access requests require a bounded JSON object.', 'invalid', 400) from None
+
+        def _access_error(self, error):
+            try:
+                dataset.access.denial(error, 'http.request', urlsplit(self.path).path[:512], anonymous=True)
+            except CommitOutcomeUnknown:
+                return self.reply({'error': 'Commit outcome is unknown; inspect state before retrying.', 'code': 'commit_unknown'}, 503)
+            except psycopg.Error:
+                return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
+            return self.reply({'error': str(error), 'code': error.code}, error.status)
+
         def do_GET(self):
+            try:
+                if not urlsplit(self.path).path.startswith('/api/'):
+                    return self._get()
+                token, _bearer = self._credential()
+                with dataset.access.bind(token):
+                    dataset.access.require('inspect', 'http.inspect')
+                    try:
+                        self._same_origin(False)
+                    except access.AccessError as error:
+                        dataset.access.denial(error, 'http.get', urlsplit(self.path).path[:512])
+                        raise
+                    if urlsplit(self.path).path == '/api/access/session':
+                        return self.reply(dataset.access.identity())
+                    return self._get()
+            except access.AccessError as error:
+                return self._access_error(error)
+            except CommitOutcomeUnknown:
+                return self.reply({'error': 'Commit outcome is unknown; inspect state before retrying.', 'code': 'commit_unknown'}, 503)
+            except psycopg.Error:
+                return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
+
+        def do_POST(self):
+            try:
+                path = urlsplit(self.path).path
+                if path == '/api/access/session':
+                    self._same_origin(True)
+                    body = self._access_body()
+                    if set(body) != {'token'}:
+                        raise access.AccessError('Provide one sign-in token.', 'invalid', 400)
+                    result = dataset.access.exchange(body['token'])
+                    cookie = 'tuldok_session=' + result['token'] + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800'
+                    return self.reply(result['identity'], headers=[('Set-Cookie', cookie)])
+                token, bearer = self._credential()
+                with dataset.access.bind(token):
+                    try:
+                        self._same_origin(not bearer)
+                    except access.AccessError as error:
+                        dataset.access.denial(error, 'http.post', path)
+                        raise
+                    if path == '/api/access/logout':
+                        self._access_body()
+                        dataset.access.logout()
+                        return self.reply({'signed_out': True}, headers=[('Set-Cookie', 'tuldok_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0')])
+                    if path == '/api/access/credentials':
+                        return self.reply(dataset.access.issue(self._access_body()), 201)
+                    if path.startswith('/api/access/credentials/') and path.endswith('/revoke'):
+                        self._access_body()
+                        return self.reply(dataset.access.revoke(path.split('/')[-2]))
+                    if path.startswith('/api/access/execution-grants/') and path.endswith('/revoke'):
+                        projects.closed(self._access_body(), ())
+                        return self.reply(dataset.access.revoke_execution(path.split('/')[-2]))
+                    return self._post()
+            except access.AccessError as error:
+                return self._access_error(error)
+            except CommitOutcomeUnknown:
+                return self.reply({'error': 'Commit outcome is unknown; inspect state before retrying.', 'code': 'commit_unknown'}, 503)
+            except psycopg.Error:
+                return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
+
+        def _get(self):
             path = urlsplit(self.path).path
             try:
+                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                    self.project_access()
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['projects']:
+                        return self.reply(dataset.projects.list())
+                    if len(parts) == 2 and parts[0] == 'projects':
+                        return self.reply(dataset.projects.get(parts[1]))
+                    if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'evidence':
+                        return self.reply(dataset.projects.evidence(parts[1], parts[3]))
+                    if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'recipes':
+                        query = parse_qs(urlsplit(self.path).query)
+                        return self.reply(dataset.pipelines.inspect_external_recipe(parts[1], parts[3], query.get('expected_sha256', [''])[-1]))
                     if parts == ['context']:
                         return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
                                            'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
@@ -418,17 +596,23 @@ def make_handler(dataset):
                         return self.reply(dataset.pipelines.list())
                     if len(parts) == 2 and parts[0] == 'graphs':
                         return self.reply(dataset.pipelines.get(parts[1]))
+                    if parts == ['run-artifact-inputs']:
+                        return self.reply(dataset.runs.input_candidates())
                     if parts == ['runs']:
                         return self.reply(dataset.runs.list())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'progress':
+                        return self.reply(dataset.runs.external_progress(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'predictions':
                         query = parse_qs(urlsplit(self.path).query)
                         return self.reply(dataset.runs.predictions(parts[1], query.get('split', ['validation'])[-1]))
                     if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifacts':
-                        data, media_type = dataset.runs.artifact(parts[1], parts[3])
-                        return self.reply(data, content_type=media_type)
+                        with dataset.runs.open_artifact(parts[1], parts[3]) as (stream, metadata):
+                            return self.reply_stream(stream, metadata)
                     return self.reply({'error': 'Workspace route not found.', 'code': 'not_found'}, 404)
+                if path == '/api/workbench/releases/input-candidates':
+                    return self.reply(dataset.releases.input_candidates())
                 if path == '/api/workbench/selections':
                     return self.reply(dataset.selections.list())
                 if path == '/api/workbench/searches':
@@ -459,6 +643,13 @@ def make_handler(dataset):
                 if path == '/api/workbench/recipes':
                     return self.reply(dataset_recipes.RECIPES)
                 if path.startswith('/api/workbench/records/'):
+                    if path.endswith('/scientific'):
+                        options = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+                        if set(options) - {'frame', 'field', 'axis', 'index'} or any(len(values) != 1 for values in options.values()):
+                            raise workbench.WorkbenchError('Choose one frame, field, axis and slice index.')
+                        return self.reply(dataset.workbench.scientific.inspect(path.split('/')[-2],
+                            frame=int(options.get('frame', ['0'])[0]), field=options.get('field', [None])[0],
+                            axis=options.get('axis', ['z'])[0], index=int(options.get('index', ['0'])[0])))
                     if path.endswith('/preferences'):
                         return self.reply(dataset.workbench.preferences.list(path.split('/')[-2]))
                     if path.endswith('/responses'):
@@ -533,10 +724,14 @@ def make_handler(dataset):
                 assets = {'/native-detection-import.js': ('native_detection_import.js', 'text/javascript'), '/saved-searches.js': ('saved-searches.js', 'text/javascript'), '/sequence-batch.js': ('sequence-batch.js', 'text/javascript'), '/pumas-typed.js': ('pumas-typed.js', 'text/javascript'), '/pumas-gateways.js': ('pumas-gateways.js', 'text/javascript'), '/meshes.js': ('meshes.js', 'text/javascript'), '/sequences.js': ('sequences.js', 'text/javascript'), '/text-classification-proposals.js': ('text-classification-proposals.js', 'text/javascript'), '/caption-proposals.js': ('caption-proposals.js', 'text/javascript'), '/curation.js': ('curation.js', 'text/javascript'), '/caption-import.js': ('caption_import.js', 'text/javascript'), '/bulk-import.js': ('bulk_import.js', 'text/javascript'), '/saved-selections.js': ('saved-selections.js', 'text/javascript'), '/workbench': ('workbench.html', 'text/html'), '/workbench.js': ('workbench.js', 'text/javascript'), '/workbench.css': ('workbench.css', 'text/css'), '/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'), '/style.css': ('style.css', 'text/css'), '/rights-note.js': ('rights-note.js', 'text/javascript'), '/preferences.js': ('preferences.js', 'text/javascript'), '/instruction-responses.js': ('instruction-responses.js', 'text/javascript'), '/native-text-import.js': ('native_text_import.js', 'text/javascript')}
                 # Opt-in workspace shell keeps fixture and real service boundaries distinct.
                 assets.update({
+                    '/auth.js': ('auth.js', 'text/javascript'),
+                    '/auth.css': ('auth.css', 'text/css'),
+                    '/workspace-projects.js': ('workspace-projects.js', 'text/javascript'),
                     '/workbench-layout.js': ('workbench-layout.js', 'text/javascript'),
                     '/workbench-layout.css': ('workbench-layout.css', 'text/css'),
                     '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
                     '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
+                    '/scientific-fields.js': ('scientific-fields.js', 'text/javascript'),
                     '/audio-editor.js': ('audio-editor.js', 'text/javascript'),
                     '/audio-editor.css': ('audio-editor.css', 'text/css'),
                     '/meshes.css': ('meshes.css', 'text/css'),
@@ -544,6 +739,7 @@ def make_handler(dataset):
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
                     '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
+                    '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
@@ -559,12 +755,14 @@ def make_handler(dataset):
                 return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
             except CommitOutcomeUnknown as error:
                 return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
+            except access.AccessError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except workbench.WorkbenchError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except (ValueError, OSError) as error:
                 return self.reply({'error': str(error)}, 400)
 
-        def do_POST(self):
+        def _post(self):
             body = {}
             try:
                 # Same-origin JSON only; no cross-site form submissions.
@@ -575,6 +773,8 @@ def make_handler(dataset):
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
+                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                    self.project_access()
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
                 if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
                     limit = spatial_assets.MAX_REQUEST
@@ -583,14 +783,29 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path == '/api/workbench/sequence-import-item' else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = projects.decode(raw_body) if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and '/import-data/' in path)) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['projects']:
+                        return self.reply(dataset.projects.open(body), 201)
+                    if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'import-data':
+                        projects.closed(body, ('expected_sha256',), ('name', 'rights', 'groups', 'parents'))
+                        raw, origin = dataset.projects.read_data_reference(parts[1], parts[3],
+                            body['expected_sha256'], projects.DATA_LIMIT)
+                        admission = {key: value for key, value in body.items() if key != 'expected_sha256'}
+                        return self.reply(dataset.workbench.scientific.admit(raw, admission, origin), 201)
+                    if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'import-data':
+                        projects.closed(body, ('expected_sha256',), ('name', 'rights', 'groups', 'parents'))
+                        admission = {key: value for key, value in body.items() if key != 'expected_sha256'}
+                        return self.reply(dataset.workbench.scientific.admit_run_artifact(
+                            parts[1], parts[3], body['expected_sha256'], admission), 201)
                     if parts == ['graphs']:
                         return self.reply(dataset.pipelines.create(body), 201)
+                    if parts == ['graphs', 'external']:
+                        return self.reply(dataset.pipelines.create_external(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':
                         return self.reply(dataset.pipelines.save(parts[1], body))
                     if len(parts) == 3 and parts[0] == 'graphs':
@@ -598,8 +813,15 @@ def make_handler(dataset):
                             return self.reply(dataset.pipelines.clone(parts[1], body), 201)
                         if parts[2] == 'validate':
                             return self.reply(dataset.pipelines.validate(parts[1], body))
+                        if parts[2] == 'preflight-external':
+                            projects.closed(body, ('revision',))
+                            return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)
+                    if parts == ['runs', 'approve-external']:
+                        return self.reply(dataset.runs.approve_external(body), 201)
+                    if parts == ['runs', 'submit-external']:
+                        return self.reply(dataset.runs.submit_external(body), 201)
                     if len(parts) == 3 and parts[0] == 'runs':
                         if parts[2] == 'cancel':
                             return self.reply(dataset.runs.cancel(parts[1]))
@@ -691,6 +913,10 @@ def make_handler(dataset):
                     return self.reply(dataset.generation_jobs.cancel(body.get('job_id')))
                 if path == '/api/generation/jobs/resume':
                     return self.reply(dataset.generation_jobs.resume(body.get('job_id')))
+                if path in ('/api/generation/prompt-models', '/api/generation/typed-models', '/api/generation/typed-capabilities',
+                            '/api/ai/scan', '/api/generation/scan', '/api/generation/advertised-gateways',
+                            '/api/generation/inspect-gateway', '/api/generation/models', '/api/ai/models'):
+                    dataset.access.require('execute', 'providers.inspect', owner_only=True)
                 if path == '/api/generation/prompt-models':
                     return self.reply(ai_http.text_models(body.get('server_url')))
                 if path == '/api/generation/typed-models':
@@ -728,6 +954,8 @@ def make_handler(dataset):
                 return self.reply({'error': 'Local PostgreSQL is unavailable. Restart the service and reopen Tuldok; inspect saved results before retrying writes.', 'code': 'storage'}, 503)
             except CommitOutcomeUnknown as error:
                 return self.reply({'error': str(error), 'code': 'commit_unknown'}, 503)
+            except access.AccessError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except workbench.WorkbenchError as error:
                 return self.reply({'error': str(error), 'code': error.code}, error.status)
             except Conflict as error:
@@ -744,10 +972,18 @@ def main():
     parser.add_argument('--data', type=Path, default=ROOT / 'data')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
+    parser.add_argument('--project-root', action='append', default=[], metavar='ALIAS=PATH',
+                        help='Allow read-only project inspection beneath a local directory; repeat for multiple roots.')
     args = parser.parse_args()
+    roots = {}
+    for binding in args.project_root:
+        alias, separator, location = binding.partition('=')
+        if not separator or not location or alias in roots:
+            parser.error('Each project root needs a unique ALIAS=PATH.')
+        roots[alias] = location
     try:
-        dataset = Dataset(args.data)
-    except StorageError as error:
+        dataset = Dataset(args.data, project_roots=roots)
+    except (StorageError, workbench.WorkbenchError) as error:
         parser.exit(2, str(error) + "\n")
     server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)

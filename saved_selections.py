@@ -1,6 +1,8 @@
 """Named fixed membership, independent of filters, review and frozen releases."""
+from access import authorized
 from workbench import encode_retained
 import json
+import hashlib
 import uuid
 
 from workbench import IDENTIFIER, WorkbenchError, encode, file_hash, text_value, timestamp
@@ -8,6 +10,7 @@ from workbench import IDENTIFIER, WorkbenchError, encode, file_hash, text_value,
 
 class SavedSelections:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self.db, self.lock = workbench.db, workbench.lock
 
@@ -23,12 +26,14 @@ class SavedSelections:
         result['schema_version'] = 1
         return result
 
+    @authorized('inspect', 'saved_selections.list')
     def list(self):
         with self.lock:
             return {'selections': [dict(row, mode='fixed', schema_version=1) for row in self.db.execute(
                 '''SELECT id,name,revision,member_count,created_at,updated_at
                    FROM saved_selections ORDER BY updated_at DESC,id''')]}
 
+    @authorized('edit', 'saved_selections.create')
     def create(self, body):
         if set(body) != {'name', 'items'}:
             raise WorkbenchError('Save a name and exact record revision pairs; filters are not membership.')
@@ -60,8 +65,10 @@ class SavedSelections:
                 (id, name, revision, members_json, member_count, created_at, updated_at)
                 VALUES (%s,%s,%s,%s,%s,%s,%s)''',
                             (selection_id, name, 1, encode_retained(members), len(members), now, now))
+            self.access.audit('saved_selections.create', selection_id, {'revision': 1, 'content_sha256': hashlib.sha256(encode_retained(members).encode()).hexdigest()})
             return self._get(selection_id)
 
+    @authorized('inspect', 'saved_selections.load')
     def load(self, selection_id):
         """Keep every saved reference; current metadata never replaces a saved pair."""
         with self.lock, self.db.transaction():
@@ -103,6 +110,7 @@ class SavedSelections:
             return {'selection': saved, 'members': members,
                     'current': all(member['status'] == 'ok' for member in members)}
 
+    @authorized('edit', 'saved_selections.mutate')
     def mutate(self, selection_id, action, body):
         expected = {'revision', 'name'} if action == 'rename' else {'revision'}
         if action not in ('rename', 'delete') or set(body) != expected:
@@ -113,8 +121,10 @@ class SavedSelections:
                 raise WorkbenchError('Saved selection changed. Refresh before renaming or deleting.', 'conflict', 409)
             if action == 'delete':
                 self.db.execute('DELETE FROM saved_selections WHERE id=%s', (selection_id,))
+                self.access.audit('saved_selections.delete', selection_id, {'revision': body['revision'], 'retired_sha256': hashlib.sha256(encode_retained(saved).encode()).hexdigest()})
                 return {'deleted': selection_id}
             name = text_value(body.get('name'), 'Selection name', 120)
             self.db.execute('UPDATE saved_selections SET name=%s,revision=revision+1,updated_at=%s WHERE id=%s',
                             (name, timestamp(), selection_id))
+            self.access.audit('saved_selections.rename', selection_id, {'revision': body['revision'] + 1, 'name_sha256': hashlib.sha256(name.encode()).hexdigest()})
             return self._get(selection_id)

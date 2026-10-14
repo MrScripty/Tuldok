@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Real browser and Tuldok HTTP workflow against a controlled image gateway.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -14,6 +17,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_images_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/Tuldok: http:\/\/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const gateway=await until(()=>output.match(/FIXTURE_IMAGE_URL=(\S+)/)?.[1]);
   launch(process.env.BROWSER||'/opt/brave.com/brave/brave',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:'ignore'});
   const active=path.join(temporary,'browser','DevToolsActivePort');
@@ -34,6 +38,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   console.log('Browser version:',JSON.stringify(await send('Browser.getVersion')));
   const downloads=path.join(temporary,'downloads');fs.mkdirSync(downloads);
   await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:downloads});
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   const navigation=await send('Page.navigate',{url:'http://127.0.0.1:'+port});
   assert.equal(navigation.errorText,undefined,'Navigate to the real Tuldok fixture');
   await until(()=>evaluate('!!document.getElementById("capture-session")?.value&&!document.getElementById("generation-view").disabled'));

@@ -1,8 +1,13 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const loads=pageLoadTracker();
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-caption-browser-')),children=[];
 let ws, inspect;
 const errors=[];
@@ -14,6 +19,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
@@ -23,14 +29,20 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   ws=new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   let id=0;const pending=new Map();
-  ws.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
+  ws.onmessage=event=>{const message=JSON.parse(event.data);loads.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,body:document.body?.innerText.slice(0,1500),viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll("body *")].filter(e=>e.getBoundingClientRect().right>innerWidth || e.scrollWidth>e.clientWidth+1).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).slice(0,30)})');
   const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
-  await send('Page.enable');await send('Runtime.enable');
-  await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/workbench'});
+  await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
+  const initial=(await send('Page.getFrameTree')).frameTree.frame;
+  assert.ok(initial.loaderId,'Initial navigation needs the blank document loader identity');
+  const navigation=await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/workbench'});
+  assert.ok(!navigation.errorText,navigation.errorText);
+  // Navigation acknowledgement precedes document replacement; read only the loaded new document.
+  await until(()=>loads.reloaded(initial));
   await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   await fill('count',5);await evaluate('document.getElementById("generate-form").requestSubmit()');
   await until(()=>evaluate('document.getElementById("notice").textContent.includes("5 candidates created")'));
@@ -46,7 +58,10 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(await evaluate('document.getElementById("record-review").value'),'draft');
   await click('history');await until(()=>evaluate('!document.getElementById("history-output").hidden'));
   assert.ok((await evaluate('document.getElementById("history-output").textContent')).includes('image_caption'));
-  await send('Page.reload');await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
+  const previous=(await send('Page.getFrameTree')).frameTree.frame;
+  assert.ok(previous.loaderId,'The reopen check needs the old document loader identity');
+  await send('Page.reload');await until(()=>loads.reloaded(previous));
+  await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   await openName(names[0]);
   assert.equal(await evaluate('document.getElementById("task").value'),'image_caption');
   assert.equal(await evaluate('document.getElementById("caption").value'),'A dark canvas in a procedural rectangle test scene.');

@@ -1,0 +1,498 @@
+{
+  "source_commit": "46384fca492f72a3588cc79309a703d54cd3675b",
+  "dirty": true,
+  "qualification": "Actual saved native capture converted without element conversion; transport/UI/custody only",
+  "physics_acceptance": false,
+  "model_or_training_acceptance": false,
+  "checks": [
+    "Opening remains read-only; explicit import refuses stale observed hash before catalog writes, then imports exact bytes",
+    "All native fields and X/Y/Z planes retain time, stage, dtype and declared geometry",
+    "Wholeasset human inspection freezes canonical release; separate NumPy reader verifies exact recovered original payload and opaque sources",
+    "Held import refresh preserves a newer explicit clean-record selection instead of opening the newly imported record",
+    "Restart retains reviewed field record and exact release; original project bytes unchanged and no execution submitted"
+  ],
+  "captures": [
+    {
+      "file": "scientific-inspector-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Transport, inspection and custody only; no physics or model qualification"
+    },
+    {
+      "file": "scientific-inspector-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Transport, inspection and custody only; no physics or model qualification"
+    }
+  ],
+  "source_sha256": "1bc5df27448f1adec68ec59e75409b1addfe01e0604daedc12e62c86efaa63c7",
+  "cold": {
+    "scope": "Cold NumPy dtype/shape/element bytes, declared coordinates/time/stages and opaque source custody only",
+    "numpy": "2.5.4",
+    "bundle_sha256": "1bc5df27448f1adec68ec59e75409b1addfe01e0604daedc12e62c86efaa63c7",
+    "native_capture": true,
+    "model_or_training_acceptance": false,
+    "physics_acceptance": false,
+    "arrays": [
+      {
+        "frame": 0,
+        "field": "rhs",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "payload_sha256": "3cc118b9c270d56a77ece2d19735fe1774860e88b850db419a6211d12cb234ed",
+        "stage": "preprojection right-hand side for this accepted step",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "pressure",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "payload_sha256": "84cdbdbe5fe074e07024a1110c5c6e529940e87c0ebfb1a2dfe12e4fcfd1398b",
+        "stage": "solved pressure for this accepted step",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "velocity_x",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          33
+        ],
+        "payload_sha256": "d12eed953cdc887e7934ea22e2978e8b36008d2a4d25e7f754e290fa47918853",
+        "stage": "corrected accepted velocity",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "velocity_y",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          33,
+          32
+        ],
+        "payload_sha256": "6978a87f5f662c6e85eed79aeac5c5eb1fcb4eca4154421b9bad3286971e7359",
+        "stage": "corrected accepted velocity",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "velocity_z",
+        "dtype": "<f4",
+        "shape_zyx": [
+          33,
+          32,
+          32
+        ],
+        "payload_sha256": "ba6a73abf6f33871aa172973caca34015c8c77eb2d476a1b09bdf03e5ad5eeb8",
+        "stage": "corrected accepted velocity",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "tracer",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "payload_sha256": "0b0135ff3602dbfcdae83540f64327c4e80711775adca8ebd080254101442bb6",
+        "stage": "advected accepted tracer concentration",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 1,
+        "field": "rhs",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "payload_sha256": "88af5059f23cf8d392b6c77f4a14bb253f15d741aede2fc1a5e9001bf651964b",
+        "stage": "preprojection right-hand side for this accepted step",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "pressure",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "payload_sha256": "6817035021b488ac58f6e9f27e765493235885d450826d3ef5e62df4500fd651",
+        "stage": "solved pressure for this accepted step",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "velocity_x",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          33
+        ],
+        "payload_sha256": "c9020171f12ee53c7b11e320242847545edcc96675385441b9288ac12ab63c36",
+        "stage": "corrected accepted velocity",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "velocity_y",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          33,
+          32
+        ],
+        "payload_sha256": "5c476c8f91fac7bac551fb0fce85993b642a6497898aba312beb73d88b0605c3",
+        "stage": "corrected accepted velocity",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "velocity_z",
+        "dtype": "<f4",
+        "shape_zyx": [
+          33,
+          32,
+          32
+        ],
+        "payload_sha256": "f8326ebdf4bcdf94bdeff4ca21f46e265563749c1e06dc5c165e83ff1180ca6c",
+        "stage": "corrected accepted velocity",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "tracer",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "payload_sha256": "ac207aaf19329c53f9147f5163fff9047d924d7051cbb05101724e06fa373446",
+        "stage": "advected accepted tracer concentration",
+        "time": "0.03333333333333333"
+      }
+    ],
+    "original_sources_exact": true,
+    "grid": {
+      "shape_xyz": [
+        32,
+        32,
+        32
+      ],
+      "origin_xyz": [
+        0,
+        0,
+        0
+      ],
+      "spacing_xyz": [
+        0.03125,
+        0.03125,
+        0.03125
+      ],
+      "orientation": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "units": "native length units (unspecified)"
+    },
+    "independent_inspection_slices": 18
+  },
+  "frozenSummary": {
+    "schema_version": 1,
+    "validation": "field_sequence_release_integrity",
+    "release_sha256": "db06bf6beba5710ffd9ee55fe4b0fff19ed6be1aa193c7cab80db30af5e98b63",
+    "field_sequence_count": 1,
+    "frame_count": 2,
+    "split_counts": {
+      "train": 1,
+      "validation": 0,
+      "test": 0
+    },
+    "family_scope": "selected_records_only",
+    "limitations": [
+      "Family checks cover selected records only. Canonical v1 does not retain every omitted ancestor or bridge.",
+      "Review, rights, units, geometry, temporal meaning and provenance are frozen declarations, not independently certified claims.",
+      "Field integrity does not establish physical validity, independent trajectories, model quality or training suitability."
+    ],
+    "field_sequences": [
+      {
+        "id": "37e3d3224f8e40d5b11c23f86707f434",
+        "name": "Whole generic field sequence",
+        "revision": 2,
+        "source_revision": 1,
+        "split": "train",
+        "review": "human_reviewed",
+        "asset_sha256": "1bc5df27448f1adec68ec59e75409b1addfe01e0604daedc12e62c86efaa63c7",
+        "rights": "Test qualification custody only; no science acceptance",
+        "manifest": {
+          "format": "scientific_field_sequence_v1",
+          "schema_version": 1,
+          "grid": {
+            "shape_xyz": [
+              32,
+              32,
+              32
+            ],
+            "origin_xyz": [
+              0,
+              0,
+              0
+            ],
+            "spacing_xyz": [
+              0.03125,
+              0.03125,
+              0.03125
+            ],
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "units": "native length units (unspecified)"
+          },
+          "time_units": "native time units (unspecified)",
+          "fields": [
+            {
+              "id": "rhs",
+              "label": "rhs",
+              "dtype": "<f8",
+              "centering": "cell",
+              "units": "native RHS units (unspecified)",
+              "stage": "preprojection right-hand side for this accepted step"
+            },
+            {
+              "id": "pressure",
+              "label": "pressure",
+              "dtype": "<f8",
+              "centering": "cell",
+              "units": "native pressure units (unspecified)",
+              "stage": "solved pressure for this accepted step"
+            },
+            {
+              "id": "velocity_x",
+              "label": "velocity x",
+              "dtype": "<f4",
+              "centering": "face_x",
+              "units": "native velocity units (unspecified)",
+              "stage": "corrected accepted velocity"
+            },
+            {
+              "id": "velocity_y",
+              "label": "velocity y",
+              "dtype": "<f4",
+              "centering": "face_y",
+              "units": "native velocity units (unspecified)",
+              "stage": "corrected accepted velocity"
+            },
+            {
+              "id": "velocity_z",
+              "label": "velocity z",
+              "dtype": "<f4",
+              "centering": "face_z",
+              "units": "native velocity units (unspecified)",
+              "stage": "corrected accepted velocity"
+            },
+            {
+              "id": "tracer",
+              "label": "tracer",
+              "dtype": "<f4",
+              "centering": "cell",
+              "units": "native tracer units (unspecified)",
+              "stage": "advected accepted tracer concentration"
+            }
+          ],
+          "frames": [
+            {
+              "time": "0.016666666666666666",
+              "arrays": [
+                {
+                  "field": "rhs",
+                  "path": "arrays/000-rhs.npy",
+                  "bytes": 262272,
+                  "sha256": "dba7f3dfe644dc84d404efab25170164652127e912f85f1173e634e91fb12105"
+                },
+                {
+                  "field": "pressure",
+                  "path": "arrays/000-pressure.npy",
+                  "bytes": 262272,
+                  "sha256": "4b2525b59b9f0cc3a3a62e363b739f6b2146d44c055b33e67db23cb2a1c30d2b"
+                },
+                {
+                  "field": "velocity_x",
+                  "path": "arrays/000-velocity_x.npy",
+                  "bytes": 135296,
+                  "sha256": "d6d035aef1ecdc814b7238c9a507787991e0b4aedcd4f8a3919fd837cdfc62cd"
+                },
+                {
+                  "field": "velocity_y",
+                  "path": "arrays/000-velocity_y.npy",
+                  "bytes": 135296,
+                  "sha256": "0560d39a401daa09b077d96cc816d25d48ef7cb415f1c81ce55e4732913cd7ea"
+                },
+                {
+                  "field": "velocity_z",
+                  "path": "arrays/000-velocity_z.npy",
+                  "bytes": 135296,
+                  "sha256": "6fbf0e75ce20bbcbd9df7f42b4f14a042e0d80c0474ffc381d3ccc54653b46ec"
+                },
+                {
+                  "field": "tracer",
+                  "path": "arrays/000-tracer.npy",
+                  "bytes": 131200,
+                  "sha256": "d8ac9ddf670bc9dc5085dfb56f09f30863c1f215fcc3436b5458a32db40dc3ac"
+                }
+              ]
+            },
+            {
+              "time": "0.03333333333333333",
+              "arrays": [
+                {
+                  "field": "rhs",
+                  "path": "arrays/001-rhs.npy",
+                  "bytes": 262272,
+                  "sha256": "1dff9d30fe74e283e9805dc972495435a5fc43af5eceacd1cf89e043fc374c2e"
+                },
+                {
+                  "field": "pressure",
+                  "path": "arrays/001-pressure.npy",
+                  "bytes": 262272,
+                  "sha256": "2143406eceeb35536da060f665ad1c8a0e37ce95728d9031ec3fe52a0c9810ad"
+                },
+                {
+                  "field": "velocity_x",
+                  "path": "arrays/001-velocity_x.npy",
+                  "bytes": 135296,
+                  "sha256": "ad61a243d6efea1fc5587d6fa13038982a095c20158feec010721d47196ecd66"
+                },
+                {
+                  "field": "velocity_y",
+                  "path": "arrays/001-velocity_y.npy",
+                  "bytes": 135296,
+                  "sha256": "0376fcedf909f0e60cdb34bc74e252509d99367d4f2fc591ef0eeaa736ed4728"
+                },
+                {
+                  "field": "velocity_z",
+                  "path": "arrays/001-velocity_z.npy",
+                  "bytes": 135296,
+                  "sha256": "b089d9ea9fa618ee5beb9be8576972577307a886dd2f448c22f662b588de9703"
+                },
+                {
+                  "field": "tracer",
+                  "path": "arrays/001-tracer.npy",
+                  "bytes": 131200,
+                  "sha256": "240245f2928c098f8a0594d6bb5a0ecb21186a041e7402a98a788eea00cee20c"
+                }
+              ]
+            }
+          ],
+          "family": {
+            "namespace": "declared-native-probe",
+            "id": "32-jacobi-seed100"
+          },
+          "sources": [
+            {
+              "path": "sources/wire.bin",
+              "bytes": 2122648,
+              "sha256": "abe671cc217b2a3e6b7f23a7506a8406a35e6ec3358a6d6da3f690c865bfc684",
+              "description": "Opaque original capture evidence; no physics parsing by Tuldok core"
+            },
+            {
+              "path": "sources/decoded.json",
+              "bytes": 9582,
+              "sha256": "bd21b0def4dc77734b9e19230b8836b41a7b1650712bab9df6e76dfc1a068698",
+              "description": "Opaque original capture evidence; no physics parsing by Tuldok core"
+            },
+            {
+              "path": "sources/receipt.json",
+              "bytes": 19629,
+              "sha256": "332aa36d8ce02585be77fbd74f8a7dfcfe9a297a3054b5bb67461ee3556d1e40",
+              "description": "Opaque original capture evidence; no physics parsing by Tuldok core"
+            },
+            {
+              "path": "sources/cold-verification.json",
+              "bytes": 1042,
+              "sha256": "6fc90e2ee289e5defebc62cbad7f2a5eaf3941400a6cd99d6bd49d49f43111d9",
+              "description": "Opaque original capture evidence; no physics parsing by Tuldok core"
+            },
+            {
+              "path": "sources/stdin.bin",
+              "bytes": 3,
+              "sha256": "138793139d414148c3ea406f4b273bdfb394d17fab3636115815abdf639d433d",
+              "description": "Opaque original capture evidence; no physics parsing by Tuldok core"
+            }
+          ],
+          "provenance": {
+            "producer": "Saved native trajectory probe; test-only conversion",
+            "source_id": "332aa36d8ce02585be77fbd74f8a7dfcfe9a297a3054b5bb67461ee3556d1e40"
+          }
+        },
+        "frame_count": 2,
+        "field_count": 6,
+        "source_bytes": 4282705,
+        "first_observed_state_sha256": "edf7cfc669180378e566a3b86a005a35fbfadea8bfe09c8c7d55b46b41785ef6"
+      }
+    ]
+  },
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "browser": "Chrome/151.0.7922.173"
+}

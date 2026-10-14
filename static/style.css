@@ -32,3 +32,5 @@
 .workspace-bar{flex-wrap:wrap}
 
 button.danger{color:#9b352b;border-color:#d6b3ac}button.danger:hover:not(:disabled){background:#fae8e4}
+/* The session bar and header share the desktop viewport with the camera workspace. */
+@media(min-width:761px){body{display:flex;flex-direction:column;height:100dvh}body>header,body>.session-bar{flex:none}body>main{height:auto;flex:1}}

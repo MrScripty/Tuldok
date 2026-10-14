@@ -1,4 +1,5 @@
 """New queued HTTP input cannot masquerade as a legacy saved generation job."""
+from auth_helpers import bind_owner
 import json
 import tempfile
 import threading
@@ -18,7 +19,7 @@ class GenerationJobApiTests(unittest.TestCase):
         self.addCleanup(self.gateway.shutdown)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
@@ -31,7 +32,7 @@ class GenerationJobApiTests(unittest.TestCase):
                     count=1, strategy='repeat', seed=40, session_id='queued-http')
 
     def post(self, route, body):
-        request = urllib.request.Request(self.root + route, data=json.dumps(body).encode(),
+        request = self.actor.request(self.root + route, data=json.dumps(body).encode(),
                                          headers={'Content-Type': 'application/json'})
         with urllib.request.urlopen(request) as response:
             return response.status, json.load(response)

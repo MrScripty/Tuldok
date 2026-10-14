@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Recorded actual producer bytes. Never invokes an exporter or a simulation.
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
@@ -27,6 +30,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',chunk=>output+=chunk);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const request=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:response.status,result:await response.json()};};
   const api=async(route,body)=>{const response=await request(route,body);assert.ok(response.status<300,JSON.stringify(response));return response.result;};
   const seed=await api('import',{kind:'text',text:'Independent dirty editor is preserved during actual import.',name:'Existing editor',groups:['existing-source']});
@@ -41,6 +45,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const fill=(id,value)=>evaluate(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const choose=(id,name,contents)=>evaluate(`(()=>{const raw=Uint8Array.from(atob(${JSON.stringify(contents.toString('base64'))}),c=>c.charCodeAt(0)),dt=new DataTransfer();dt.items.add(new File([raw],${JSON.stringify(name)}));document.getElementById(${JSON.stringify(id)}).files=dt.files;})()`);
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   await evaluate('openRecord('+JSON.stringify(seed.id)+')');await fill('label','Retain unrelated unsaved target');
   await evaluate('document.querySelector(".record input").click();document.getElementById("sequence-import-panel").open=true');

@@ -24,6 +24,7 @@ jobs:
           --health-retries 12
     env:
       TULDOK_TRAINING_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
+      TULDOK_NATIVE_READER_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
       TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +49,29 @@ jobs:
       - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py
       - run: python -m unittest discover -s tests
+      - run: node --check static/auth.js
+      - run: node tests/test_auth_helpers.cjs
+      - run: node tests/test_auth_controller.cjs
+      - run: node tests/browser_access.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node --check static/scientific-fields.js
+      - run: build/workspace-training/bin/python tests/qualify_scientific_fields.py --output build/qa/scientific-neutral.zip --report build/qa/scientific-neutral.json
+      - run: node tests/browser_scientific_fields.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node --check static/workspace-external.js
+      - run: node tests/test_workspace_external_controller.cjs
+      - run: node tests/browser_workspace_external.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node --check static/workspace-projects.js
+      - run: node tests/browser_workspace_project.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node --check static/workbench.js
       - run: node --check static/audio-editor.js
       - run: node --check static/saved-selections.js

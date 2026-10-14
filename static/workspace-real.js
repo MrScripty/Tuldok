@@ -8,7 +8,7 @@
     encoded = encodeURIComponent,
     terminal = new Set(["completed", "failed", "cancelled", "interrupted", "unknown"]);
   async function api(route, body) {
-    const response = await fetch("/api/workspace/" + route, body === undefined ? {} : {
+    const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, body === undefined ? {} : {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
     const value = await response.json();
@@ -18,14 +18,19 @@
     }
     return value;
   }
-  window.WorkspaceReal = function ({ pipelineRoot, runsRoot, announce, openRecord, openRun }) {
+  window.WorkspaceReal = function ({ pipelineRoot, runsRoot, announce, openRecord, openRun, openImportedRecord }) {
     let definitions, releases = [], graphs = [], graph = null, saved = "", selectedNode = "train",
       validation = null, busy = false, loadGeneration = 0, undo = [], redo = [],
       view = null, timer = null, runs = [], run = null, runGeneration = 0, notice = "", noticeError = false,
-      predictions = null, predictionError = null, split = "validation", selectedCell = null, context = null;
+      runProgress = null, predictions = null, predictionError = null, split = "validation", selectedCell = null, context = null;
     const memory = history.state?.realWorkspace || {};
     let graphId = memory.graphId || null, runId = memory.runId || null,
       pendingSubmission = memory.pendingSubmission || null;
+    const external = WorkspaceExternal({api,action,status,getGraph:()=>graph,getIntent:()=>loadGeneration,getRunId:()=>runId,isDirty:()=>dirty(),
+      replaceGraph:document=>{if(!graphs.some(item=>item.id===document.id))graphs.push(document);adopt(document);},
+      changeGraph:change,render:renderPipeline,refresh:loadPipeline,
+      onImported:openImportedRecord,
+      onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     function remember() {
       history.replaceState({ ...history.state, realWorkspace: { version: 1, graphId, runId, pendingSubmission } }, "");
     }
@@ -44,11 +49,12 @@
     function adopt(document) {
       graph = document; graphId = graph.id; saved = JSON.stringify(graph);
       graphs = graphs.map(item => item.id === graph.id ? copy(graph) : item);
-      validation = null; undo = []; redo = []; remember();
+      validation = null; external.invalidate(true); undo = []; redo = []; remember();
     }
     function change(fn, render = true) {
       undo.push(copy(graph)); if (undo.length > 40) undo.shift(); redo = [];
       fn(); validation = null;
+      if(external.isGraph(graph)){external.invalidate();if(render)renderPipeline();else external.dirtyChanged(pipelineRoot);return;}
       if (render) renderPipeline(); else {
         pipelineRoot.querySelector("#real-dirty").textContent = "Unsaved changes";
         pipelineRoot.querySelector("#real-validate").disabled = true;
@@ -145,6 +151,10 @@
     }
     function renderPipeline() {
       if (!definitions) return;
+      if(external.isGraph(graph)){
+        external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}});
+        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}return;
+      }
       const integrity = integrityKind(graph);
       const title = {...titles, train: trainingTitle(graph), ...(integrity ? {validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"} : {})};
       const eligible = releases.filter(r => r.status === "available"),
@@ -257,12 +267,13 @@
     }
     function artifactURL(name) { return `/api/workspace/runs/${encoded(run.id)}/artifacts/${encoded(name)}`; }
     async function loadRuns(chosen = runId, quiet = false) {
-      const generation = ++runGeneration;
+      const generation = ++runGeneration,session=window.TuldokAuth?.identity()?.credential_id;
+      const current=()=>generation===runGeneration&&view==='runs'&&session===window.TuldokAuth?.identity()?.credential_id;
       if (!quiet) runsRoot.innerHTML = '<p class="real-status" role="status">Loading durable run receipts…</p>';
       try {
         const list = await api("runs");
         const id = list.some(r => r.id === chosen) ? chosen : list[0]?.id;
-        let detail = null, rows = null, rowsError = null;
+        let detail = null, rows = null, rowsError = null, progress = null;
         if (id) {
           try { detail = await api("runs/" + encoded(id)); }
           catch (error) {
@@ -274,45 +285,57 @@
             rowsError = error.message;
           }
         }
-        if (detail?.state === "completed" && !integrityKind(detail.graph) && !detail.artifact_status) {
+        if(detail&&external.isGraph(detail.graph)&&detail.artifact_status?.status!=='unavailable'){
+          try{progress=await api('runs/'+encoded(id)+'/progress');}
+          catch{progress=null;}
+        }
+        if (detail?.state === "completed" && !integrityKind(detail.graph) && !external.isGraph(detail.graph) && !detail.artifact_status) {
           try { rows = await api("runs/" + encoded(id) + "/predictions?split=" + split); }
           catch (error) { rowsError = error.message; }
         }
-        if (generation !== runGeneration || view !== "runs") return;
-        runs = list; run = detail; runId = id || null; predictions = rows; predictionError = rowsError; remember(); renderRuns();
+        if (!current()) return;
+        runs = list; run = detail; runProgress = progress; runId = id || null; predictions = rows; predictionError = rowsError; remember(); renderRuns();
       } catch (error) {
-        if (generation !== runGeneration || view !== "runs") return;
+        if (!current()) return;
         if (!quiet) runsRoot.innerHTML = `<div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));
       } finally {
-        clearTimeout(timer);
-        if (view === "runs" && run && !terminal.has(run.state)) timer = setTimeout(() => loadRuns(runId, true), 1800);
+        if(current())clearTimeout(timer);
+        if (current() && run && !terminal.has(run.state)) timer = setTimeout(() => loadRuns(runId, true), 1800);
       }
     }
     function renderRuns() {
-      const integrity = integrityKind(run?.graph), metrics = integrity ? null : run?.metrics?.validation;
+      const integrity = integrityKind(run?.graph), externalRun=external.isGraph(run?.graph), metrics = integrity||externalRun ? null : run?.metrics?.validation;
+      const openStreams=Array.from(runsRoot.querySelectorAll('details[data-external-stream][open]')).map(node=>node.dataset.externalStream);
+      const openDisclosures=Array.from(runsRoot.querySelectorAll('details[data-external-disclosure][open]')).map(node=>node.id);
       retainFocus(runsRoot, () => {
-        runsRoot.innerHTML = `<p class="callout"><strong>Real local runs.</strong> Results come from the frozen release and saved graph. Classification results and integrity reports retain their own scope and limitations.</p><p class="real-status" role="status"></p><div class="actions"><button id="real-runs-refresh">Refresh saved runs</button><a class="button" href="#pipeline">Open Pipeline</a></div>${!run ? '<div class="panel empty"><h2>No real runs yet</h2><p>Save and validate a recipe in Pipeline, then run it on the local CPU.</p></div>' : `<div class="runs-layout"><aside class="panel"><div class="panel-title"><h2>Runs</h2><span class="badge">${runs.length}</span></div><div class="run-list">${runs.map(r => `<button id="real-run-${r.id}" data-real-run="${r.id}" class="run-item" aria-current="${r.id === runId}"><span class="badge ${r.state === "completed" ? "green" : "amber"}">${esc(r.state)}</span><strong>${esc(r.graph.name)}</strong><small>Graph r${r.graph_revision} · attempt ${r.attempt}</small><small>${esc(r.created_at)}</small></button>`).join("")}</div></aside>
-        <article class="panel panel-pad"><div class="meta-row"><span id="real-run-state" class="badge ${run.state === "completed" ? "green" : "amber"}">${esc(run.state)}</span><span class="badge">${integrity ? `${integrity.name} integrity · no training` : "Real · CPU"}</span><span class="badge">${esc(short(run.id))}</span></div><h2 style="margin-top:14px">${esc(run.graph.name)}</h2><p class="muted">Frozen graph r${run.graph_revision} · attempt ${run.attempt} · release ${esc(short(run.release_id))}</p><div class="actions">${(run.input_artifacts || []).map(a => `<a class="button" href="${artifactURL(a.name)}" download>Download verified frozen export</a>`).join("")}</div>
+        runsRoot.innerHTML = `<p class="callout"><strong>Real local runs.</strong> Results retain their saved graph and exact admitted inputs. Classification, integrity and external execution receipts retain their own scope and limitations.</p><p class="real-status" role="status"></p><div class="actions"><button id="real-runs-refresh">Refresh saved runs</button><a class="button" href="#pipeline">Open Pipeline</a></div>${!run ? '<div class="panel empty"><h2>No real runs yet</h2><p>Save and validate a recipe in Pipeline, then run it on the local CPU.</p></div>' : `<div class="runs-layout"><aside class="panel"><div class="panel-title"><h2>Runs</h2><span class="badge">${runs.length}</span></div><div class="run-list">${runs.map(r => `<button id="real-run-${r.id}" data-real-run="${r.id}" class="run-item" aria-current="${r.id === runId}"><span class="badge ${r.state === "completed" ? "green" : "amber"}">${esc(r.state)}</span><strong>${esc(r.graph.name)}</strong><small>Graph r${r.graph_revision} · attempt ${r.attempt}</small><small>${esc(r.created_at)}</small></button>`).join("")}</div></aside>
+        <article class="panel panel-pad"><div class="meta-row"><span id="real-run-state" class="badge ${run.state === "completed" ? "green" : "amber"}">${esc(run.state)}</span><span class="badge">${externalRun ? "Trusted local executable" : integrity ? `${integrity.name} integrity · no training` : "Real · CPU"}</span><span class="badge">${esc(short(run.id))}</span></div><h2 style="margin-top:14px">${esc(run.graph.name)}</h2><p class="muted">Frozen graph r${run.graph_revision} · attempt ${run.attempt}${externalRun ? "" : " · release " + esc(short(run.release_id))}</p><div class="actions">${(run.input_artifacts || []).map(a => `<a class="button" href="${artifactURL(a.name)}" download>Download verified frozen export</a>`).join("")}</div>
         ${run.error ? `<p class="error-panel" role="alert">${esc(run.error.code)}: ${esc(run.error.message)}</p>` : ""}
         ${run.artifact_status?.status === "unavailable" ? `<p class="error-panel" role="alert">Published artifacts unavailable: ${esc(run.artifact_status.message)}. Saved run identity is retained.</p>` : ""}
-        ${!terminal.has(run.state) ? `<div class="real-running"><span class="running-dot" aria-hidden="true"></span><div><strong>${esc(run.progress.stage || run.state)}</strong><p>Total work and remaining duration are unknown. Cancellation completes only after the worker has stopped.</p></div></div><button id="real-cancel" ${run.state === "cancelling" ? "disabled" : ""}>${run.state === "cancelling" ? "Waiting for worker to stop" : "Cancel run"}</button>` : ""}
-        ${["failed", "cancelled", "interrupted"].includes(run.state) ? `<button id="real-retry-run">Start a fresh ${integrity ? "validation" : "training"} attempt</button><p class="muted">Reuses verified frozen input.${integrity ? "" : " Partial checkpoints are never resumed."}</p>` : ""}
+        ${!terminal.has(run.state) ? `<div class="real-running"><span class="running-dot" aria-hidden="true"></span><div><strong>${esc(run.progress.stage || run.state)}</strong><p>${externalRun?"Recipe-reported progress appears below when available. Remaining duration is unknown.":"Total work and remaining duration are unknown."} Cancellation completes only after the worker has stopped.</p></div></div><button id="real-cancel" ${run.state === "cancelling" ? "disabled" : ""}>${run.state === "cancelling" ? "Waiting for worker to stop" : "Cancel run"}</button>` : ""}
+        ${!externalRun && ["failed", "cancelled", "interrupted"].includes(run.state) ? `<button id="real-retry-run">Start a fresh ${integrity ? "validation" : "training"} attempt</button><p class="muted">Reuses verified frozen input.${integrity ? "" : " Partial checkpoints are never resumed."}</p>` : ""}
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
-        ${!integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
-        ${integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
+        ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
+        ${externalRun ? external.runHTML(run,runProgress) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
-        <div class="run-columns"><section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section><section><h3>Verified artifacts</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small></li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">Every artifact read verifies its frozen hash.</p></section></div>
-        ${run.state === "completed" && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
+        <div class="${externalRun?'':'run-columns'}">${!externalRun?`<section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section>`:`<details id="external-lifecycle-events" data-external-disclosure><summary>Run lifecycle events</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details>`}<section><h3>${run.artifact_status?.status==='receipt_verified'?'Recorded outputs; verified on download':'Verified artifacts'}</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">${run.artifact_status?.status==='receipt_verified'?'Output receipt verified. Payload bytes are checked individually when requested.':'Every artifact read verifies its frozen hash.'}</p></section></div>
+        ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
         <details><summary>Frozen identity, source provenance and parameters</summary><pre>${esc(JSON.stringify({ dataset_id: run.dataset_id, run_id: run.id, release_sha256: run.release_sha256, graph_sha256: run.graph_sha256, graph: run.graph, adapter: run.adapter, runtime: run.runtime, parameters: run.parameters, prior_test_exposure: run.prior_test_exposure, current_test_exposure: run.current_test_exposure, test_exposure: run.test_exposure }, null, 2))}</pre></details></article></div>`}`;
       });
       if (notice) { const target = runsRoot.querySelector('.real-status'); target.textContent = notice; target.classList.toggle('error-panel', noticeError); }
       runsRoot.querySelector("#real-runs-refresh").onclick = () => loadRuns();
       runsRoot.querySelectorAll("[data-real-run]").forEach(button => button.onclick = () => { split = "validation"; selectedCell = null; loadRuns(button.dataset.realRun); });
+      for(const button of runsRoot.querySelectorAll('[data-import-run-artifact]'))button.onclick=()=>{
+        const selected=run,artifact=selected.artifacts.find(item=>item.name===button.dataset.importRunArtifact);
+        action(()=>external.importArtifact(selected,artifact));
+      };
       runsRoot.querySelector("#real-cancel")?.addEventListener("click", () => action(async () => {
         run = await api("runs/" + encoded(run.id) + "/cancel", {}); status("Cancellation requested. Waiting for confirmed worker cessation."); await loadRuns(run.id, true);
       }));
+      for(const name of openStreams)runsRoot.querySelector('details[data-external-stream="'+name+'"]')?.setAttribute('open','');
+      for(const id of openDisclosures)runsRoot.querySelector('#'+CSS.escape(id))?.setAttribute('open','');
       runsRoot.querySelector("#real-retry-run")?.addEventListener("click", () => action(async () => {
         const receiptKey = "retry:" + run.id;
         const state = history.state?.realRetries || {};
@@ -345,8 +368,20 @@
         filtered = selectedCell ? rows.filter(r => `${r.truth_index}:${r.predicted_index}` === selectedCell) : rows;
       return `<p class="muted">Rows are frozen targets; columns are model predictions. Select a count to inspect exact examples.</p><div class="real-table-wrap"><table class="real-matrix"><thead><tr><th scope="col">Target / prediction</th>${vocabulary.map(v => `<th scope="col">${esc(v.label)}</th>`).join("")}</tr></thead><tbody>${vocabulary.map((v, a) => `<tr><th scope="row">${esc(v.label)}</th>${vocabulary.map((w, b) => `<td><button data-real-cell="${a}:${b}" aria-label="${esc(v.label)} predicted ${esc(w.label)}: ${counts[a][b]} examples" ${a !== b && counts[a][b] ? 'class="error-cell"' : ""}>${counts[a][b]}</button></td>`).join("")}</tr>`).join("")}</tbody></table></div><h3 id="real-examples-heading" tabindex="-1">${selectedCell ? "Selected cell" : "All " + split + " examples"} · ${filtered.length}</h3>${!filtered.length ? '<p>No examples in this cell.</p>' : filtered.map(p => `<div class="prediction"><strong>${esc(p.truth_label)} → ${esc(p.predicted_label)}</strong><p>${esc(short(p.id))} · source r${p.source_revision} · frozen annotation r${p.revision}</p>${p.start_frame !== undefined ? `<p class="audio-result-reference">Source channel ${p.channel + 1} (index ${p.channel}) · frames [${p.start_frame}, ${p.end_frame}) · ${p.sample_rate_hz} Hz<br><span class="muted">Original WAV ${esc(short(p.source_sha256))} · PCM ${esc(short(p.pcm_sha256))}</span></p>` : ""}<p class="muted">${p.current_record?.revision ? `Current annotation r${p.current_record.revision}${p.current_record.changed ? " · changed since this run" : ""}` : "Current record unavailable"}</p><button data-correct-record="${esc(p.id)}" ${p.current_record?.revision ? "" : "disabled"}>Open current record in Data →</button><p class="footnote">Editing creates a new current revision. This prediction and its frozen target remain unchanged.</p></div>`).join("")}`;
     }
+    window.addEventListener('tuldok-session',()=>{
+      ++runGeneration;clearTimeout(timer);runProgress=null;
+      if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
+    });
     return {
       isDirty: dirty,
+      async openGraph(id,isCurrent=()=>true){
+        if(dirty()&&!confirm("Discard unsaved recipe changes to open this graph?"))return false;
+        if(busy)throw Error("Finish the current Pipeline action before opening another graph.");
+        const previous=graph,previousState=JSON.stringify(graph);
+        const document=await api("graphs/"+encoded(id));
+        if(!isCurrent()||graph!==previous||JSON.stringify(graph)!==previousState)return false;
+        adopt(document);return true;
+      },
       identity: () => context?.dataset_id,
       async show(next) {
         view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);

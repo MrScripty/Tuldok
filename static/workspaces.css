@@ -1021,3 +1021,22 @@ details > p {
 .real-inspector>label { margin-top:0; }
 .real-inspector>h2,.real-inspector>p { margin:0; }
 @media(max-width:430px) { .real-inspector { grid-template-columns:1fr; } }
+
+/* Project inspection projects source references without execution controls. */
+#project-open-dialog{width:min(520px,calc(100vw - 32px));max-height:90vh;overflow:auto}
+#project-open-dialog label{display:block;margin:12px 0}
+#project-open-dialog input,#project-open-dialog select{width:100%;max-width:100%}
+.project-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.project-header>div{min-width:0}.project-header p{margin:6px 0;overflow-wrap:anywhere}
+.project-header h2{margin:4px 0}.project-header button{flex-shrink:0}
+[id^="project-"][id$="-root"]>.panel{margin-bottom:12px}
+.project-references{list-style:none;padding:0;margin:12px 0}
+.project-references>li{padding:12px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.project-reference>div{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.project-reference small{display:block;margin:5px 0}.project-reference button{margin:8px 0}
+.project-references .badge{margin-left:8px}.project-path{font-size:12px;overflow-wrap:anywhere}
+.project-evidence-output pre{max-height:480px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.project-identity{margin-top:12px}
+@media(max-width:600px){.project-header{align-items:start;flex-direction:column}.project-reference>div{align-items:start}.project-references .badge{margin-left:0}}
+
+.external-stages{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.external-stages span{padding:10px;background:var(--surface,#edf2ef);border-radius:6px}.external-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}.external-fields input[type=checkbox]{width:auto}.check-row{display:flex;gap:8px;align-items:center}.check-row input{width:auto}.external-run-custody{margin:16px 0}.external-run-custody p,#external-material code{overflow-wrap:anywhere}

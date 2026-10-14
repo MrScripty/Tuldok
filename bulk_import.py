@@ -2,7 +2,6 @@
 import hashlib
 import json
 import re
-import psycopg
 
 from workbench import WorkbenchError, text_value
 
@@ -66,6 +65,7 @@ def result(record):
 
 
 def find_result(workbench, request_id):
+    workbench.access.require('inspect', 'bulk_import.find_result', request_id)
     if not isinstance(request_id, str) or not REQUEST_ID.fullmatch(request_id):
         raise WorkbenchError('Invalid import request marker.')
     with workbench.lock:
@@ -85,6 +85,8 @@ def find_result(workbench, request_id):
 
 
 def import_row(workbench, body):
+    import psycopg
+    workbench.access.require('edit', 'bulk_import.import_row')
     if set(body) - {'source_name', 'row_number', 'line', 'request_id', 'image_name', 'image'}:
         raise WorkbenchError('Unsupported row admission fields.')
     source_name = leaf_name(body.get('source_name'), 'Manifest name')

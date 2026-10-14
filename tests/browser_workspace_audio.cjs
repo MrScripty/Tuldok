@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Authored PCM WAV through the real Data UI, PostgreSQL metadata and frozen export.
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
@@ -15,6 +18,7 @@ function launch(command,args,options){const child=spawn(command,args,options);ch
   const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const value=await response.json();assert.ok(response.ok,JSON.stringify(value));return value;};
   const browser=launch(process.env.BROWSER||'/usr/bin/chromium',[...(process.env.TULDOK_NATIVE_ZOOM?[]:['--headless']),'--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=0','--window-size=1440,1000','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
@@ -40,6 +44,7 @@ function launch(command,args,options){const child=spawn(command,args,options);ch
   const closeTools=()=>frame('document.querySelector("#embed-tools>button").click()');
   async function capture(name,width,height){await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});await frame('document.getElementById("audio-inspection").scrollIntoView({block:"start"})');await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'workspace fits viewport');assert.ok(await frame('document.documentElement.scrollWidth<=innerWidth'),'audio editor fits viewport');const filename=name+'.jpg';fs.writeFileSync(path.join(report,filename),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));captures.push(filename);}
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("fixture-label")'));
   await evaluate('document.getElementById("dataset").value="catalog";document.getElementById("dataset").dispatchEvent(new Event("change",{bubbles:true}))');
   await until(()=>evaluate('document.getElementById("catalog-frame")?.contentDocument?.getElementById("notice")?.textContent==="Collection ready."'));

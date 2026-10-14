@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
@@ -18,6 +21,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_text_classification_proposals_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
@@ -41,6 +45,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const modelPort=output.match(/CLASSIFICATION_MODEL_PORT=(\d+)/)[1],labels=['cancel','keep','café 😀'];
   const prefix='text-classification-proposal-',v='textClassificationProposal';
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   await evaluate('refreshSavedSets('+JSON.stringify(saved.id)+')');await click('load-selection');await until(()=>evaluate('!savedLoadBusy && selected.size===2'));
   const fixed=await evaluate('releaseBody().items');
@@ -246,7 +251,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   };
   const dispatchEvidence=[];
   const writeDispatch=()=>fs.writeFileSync(path.join(report,'cross-tab-dispatch-observation.json'),JSON.stringify({source_head:require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),runtime_sha256:digest(fs.readFileSync(path.join(root,'static/text-classification-proposals.js'))),cases:dispatchEvidence},null,2));
-  const ledger=async()=> (await(await fetch(base+'/test/classification-dispatch')).json()).admissions;
+  const ledger=async()=> (await(await fetch(base+'/api/test/classification-dispatch')).json()).admissions;
   for(const outcome of ['success','lost-ack']){
     const source=await makeText('Cross-tab '+outcome,'Exact cross-tab source '+outcome+'.'),baseline=await count();
     const a=await nativeTab();await a.configure(source,'dispatch-refusal-'+outcome);await a.run('dispatchHoldMode="after"');await a.submit();await until(()=>a.run('dispatchBarrier==="after"'));

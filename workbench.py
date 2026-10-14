@@ -1,6 +1,7 @@
 """Image/text dataset lifecycle, sharing Tuldok's existing image authority."""
 from collections import Counter
 from datetime import datetime, timezone
+from access import authorized
 import hashlib
 import json
 import math
@@ -8,9 +9,8 @@ import re
 import unicodedata
 import uuid
 
-from PIL import Image
 
-TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry', 'audio_timed', 'pointcloud_geometry', 'volume_grid')
+TASKS = ('image_detection', 'image_classification', 'image_caption', 'text_classification', 'text_entities', 'text_corpus', 'sequence_transport', 'mesh_geometry', 'audio_timed', 'pointcloud_geometry', 'volume_grid', 'field_sequence_fields')
 REVIEWS = ('draft', 'human_reviewed', 'programmatically_verified')
 MAX_TEXT = 200_000  # Code points per synchronous text import.
 MAX_SELECTED_TEXT_BYTES = 40 * 1024 * 1024  # Existing synchronous JSON envelope.
@@ -56,7 +56,7 @@ def query_criteria(options):
     kind, review, sort, task = (options.get(k, '') for k in ('kind', 'review', 'sort', 'task'))
     if any(not isinstance(value, str) for value in (kind, review, sort, task)):
         raise WorkbenchError('Filter and sort values must be strings.')
-    if kind not in ('', 'image', 'text', 'sequence', 'mesh', 'audio', 'pointcloud', 'volume') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
+    if kind not in ('', 'image', 'text', 'sequence', 'mesh', 'audio', 'pointcloud', 'volume', 'field_sequence') or review not in ('', *REVIEWS) or sort not in ('', 'newest', 'oldest', 'name', 'review'):
         raise WorkbenchError('Invalid filter or sort.')
     if task not in ('', *TASKS):
         raise WorkbenchError('Invalid task filter.')
@@ -88,7 +88,7 @@ def validate_annotation(task, value, record):
         if set(value) != {'note'}:
             raise WorkbenchError('Text corpus review requires exactly one note.')
         return {'note': text_value(value['note'], 'Corpus review note', 4000)}
-    if task in ('sequence_transport', 'mesh_geometry', 'pointcloud_geometry', 'volume_grid'):
+    if task in ('sequence_transport', 'mesh_geometry', 'pointcloud_geometry', 'volume_grid', 'field_sequence_fields'):
         if set(value) != {'note'}:
             raise WorkbenchError(record['kind'].title() + ' review requires exactly one note; fields stay immutable.')
         return {'note': text_value(value['note'], record['kind'].title() + ' review note', 4000, empty=True)}
@@ -152,6 +152,7 @@ class Workbench:
     """
     def __init__(self, dataset):
         self.dataset = dataset
+        self.access = dataset.access
         self.db, self.lock = dataset.db, dataset.lock
         from sequence_assets import SequenceAssets
         from meshes import MeshAssets
@@ -164,11 +165,14 @@ class Workbench:
                                  'pointcloud': self.pointclouds, 'volume': self.volumes}
         from audio_assets import AudioAssets
         self.audio = AudioAssets(self)
+        from scientific_fields import ScientificAssets
+        self.scientific = ScientificAssets(self)
 
         from preferences import Preferences
         self.preferences = Preferences(self)
 
     def _sync_images(self, record_id=None):
+        from PIL import Image
         # Enrol only new images. Hashing is streaming and never rewrites originals.
         query = '''SELECT s.* FROM samples s LEFT JOIN workbench_records w
             ON w.id=s.id WHERE w.id IS NULL'''
@@ -198,10 +202,20 @@ class Workbench:
                              'draft', 1, row['created_at'], row['created_at']))
             self._history(self._get(row['id']))
 
+    @authorized('edit', 'workbench.preserve_deleted_source')
     def preserve_deleted_source(self, record_id):
         """Called in Dataset's deletion transaction before removing source authority."""
+        before = self._get(record_id)
         self.db.execute('''INSERT INTO workbench_deleted_sources
             SELECT id, book_id, session_id, split FROM samples WHERE id=%s''', (record_id,))
+        self._audit_record('workbench.preserve_deleted_source', before)
+
+    def _audit_record(self, action, record, before=None):
+        evidence = {'revision': record['revision'], 'source_revision': record['source_revision'],
+                    'content_sha256': hashlib.sha256(encode_retained(record).encode()).hexdigest()}
+        if before is not None:
+            evidence.update(before_revision=before['revision'], before_source_revision=before['source_revision'])
+        self.access.audit(action, record['id'], evidence)
 
     def _get(self, record_id):
         row = self.db.execute('''SELECT w.*, s.filename AS image_name, s.width, s.height,
@@ -221,9 +235,10 @@ class Workbench:
                     result.update(dict(retained))
                     result['source_lineage_known'] = True
             result['name'] = result.pop('image_name') or '(source image deleted)'
-        elif result['kind'] == 'audio':
+        elif result['kind'] in ('audio', 'field_sequence'):
             result.pop('image_name')
-            result['audio'], result['source_available'] = self.audio.metadata(record_id, json.loads(result['provenance_json']))
+            owner = self.audio if result['kind'] == 'audio' else self.scientific
+            result[result['kind']], result['source_available'] = owner.metadata(record_id, json.loads(result['provenance_json']))
             result['source_lineage_known'] = True
             result['source_revision'] = 1
             result['source_split'] = 'unassigned'
@@ -256,6 +271,7 @@ class Workbench:
             result['corner_annotation'] = json.loads(result['corner_annotation'])
         return result
 
+    @authorized('inspect', 'workbench.get')
     def get(self, record_id):
         if not isinstance(record_id, str) or not IDENTIFIER.fullmatch(record_id):
             raise WorkbenchError('Invalid record ID.')
@@ -267,6 +283,7 @@ class Workbench:
         self.db.execute('INSERT INTO workbench_history VALUES (%s,%s,%s)',
                         (record['id'], record['revision'], encode_retained(record)))
 
+    @authorized('inspect', 'workbench.history')
     def history(self, record_id):
         self.get(record_id)
         with self.lock:
@@ -296,6 +313,7 @@ class Workbench:
         criteria['q'] = query
         return filtered, criteria
 
+    @authorized('inspect', 'workbench.query')
     def query(self, options):
         """Page metadata and excerpts. Asset bytes are never loaded for browsing."""
         try:
@@ -317,6 +335,7 @@ class Workbench:
             return {'items': page, 'total': len(filtered), 'offset': offset, 'limit': limit,
                     'analysis': summary, 'criteria': criteria}
 
+    @authorized('edit', 'workbench.import_asset')
     def import_asset(self, body, *, acquisition=None, annotation=None, annotation_task='image_caption', source_split='unassigned', source_session=None):
         kind = body.get('kind')
         groups = strings(body.get('groups', []), 'Protected groups')
@@ -348,6 +367,7 @@ class Workbench:
                                            provenance={'acquisition': acquisition} if acquisition is not None else None)
                 else:
                     raise WorkbenchError('Asset kind must be image or text.')
+                self._audit_record('workbench.import_asset', self._get(row['id']))
             # Receipt projection is after the owning commit. Failure to return it
             # cannot roll back an already admitted row or remove its image bytes.
             return self._get(row['id'])
@@ -393,12 +413,18 @@ class Workbench:
         self._history(record)
         return record
 
+    @authorized('edit', 'workbench.save')
     def save(self, record_id, body, *, verified_provenance=None):
         with self.lock, self.db.transaction():
             return self._save_annotation(record_id, body, verified_provenance=verified_provenance)
 
     def _save_annotation(self, record_id, body, *, verified_provenance=None, proposal_evidence=None):
         """Trusted caller owns the lock/transaction, including proposal linkage."""
+        self.access.require('edit', 'workbench.save', record_id)
+        if body.get('review') == 'human_reviewed':
+            self.access.require('approve-review', 'workbench.approve_review', record_id, owner_only=True)
+        if verified_provenance or body.get('review') == 'programmatically_verified':
+            self.access.require('execute', 'workbench.verify', record_id, owner_only=True)
         self._sync_images()
         before = self._get(record_id)
         for key in ('revision', 'source_revision'):
@@ -414,6 +440,12 @@ class Workbench:
         review = body.get('review')
         if task == 'text_corpus' and (review not in ('draft', 'human_reviewed') or verified_provenance):
             raise WorkbenchError('Text corpus data requires an explicit human review decision.')
+        if before['kind'] == 'field_sequence':
+            if not set(before['field_sequence']['protected_groups']) <= set(groups):
+                raise WorkbenchError('Keep the immutable source, first-observed-state and declared-family groups.')
+            if review not in ('draft', 'human_reviewed') or verified_provenance:
+                raise WorkbenchError('Scientific fields require an explicit human review decision.')
+            self.scientific.asset(before)
         if before['kind'] == 'audio':
             if not set(before['audio']['protected_groups']) <= set(groups):
                 raise WorkbenchError('Keep the immutable audio source and family protected groups.')
@@ -451,9 +483,12 @@ class Workbench:
             self.db.execute('DELETE FROM workbench_target_proposals WHERE id=%s', (record_id,))
         record = self._get(record_id)
         self._history(record)
+        self._audit_record('workbench.approve_review' if review == 'human_reviewed' else
+                           'workbench.verify' if verified_provenance else 'workbench.save', record, before)
         return record
 
 
+    @authorized('edit', 'workbench.correct_rights_note')
     def correct_rights_note(self, record_id, body):
         """One note correction, CAS-bound to record/source revisions; no annotation grant."""
         if not isinstance(record_id, str) or not IDENTIFIER.fullmatch(record_id):
@@ -478,6 +513,7 @@ class Workbench:
             self.db.execute('UPDATE workbench_records SET revision=revision+1,updated_at=%s WHERE id=%s', (timestamp(), record_id))
             record = self._get(record_id)
             self._history(record)
+            self._audit_record('workbench.correct_rights_note', record, before)
             return {'record': record, 'changed': True}
     def _response(self, response_id):
         row = self.db.execute('SELECT * FROM workbench_responses WHERE id=%s', (response_id,)).fetchone()
@@ -487,6 +523,7 @@ class Workbench:
         response['provenance'] = json.loads(response.pop('provenance_json'))
         return response
 
+    @authorized('inspect', 'workbench.responses')
     def responses(self, prompt_id):
         with self.lock:
             parent = self._get(prompt_id)
@@ -495,12 +532,14 @@ class Workbench:
             ids = self.db.execute('SELECT id FROM workbench_responses WHERE prompt_id=%s ORDER BY created_at,id', (prompt_id,))
             return {'parent': parent, 'responses': [self._response(row['id']) for row in ids]}
 
+    @authorized('inspect', 'workbench.response_history')
     def response_history(self, response_id):
         with self.lock:
             self._response(response_id)
             return {'history': [json.loads(row[0]) for row in self.db.execute(
                 'SELECT snapshot FROM workbench_response_history WHERE id=%s ORDER BY revision', (response_id,))]}
 
+    @authorized('edit', 'workbench.save_response')
     def save_response(self, body):
         """An independent target with immutable prompt identity and explicit CAS."""
         fields = {'id', 'prompt_id', 'revision', 'parent_revision', 'source_revision', 'completion', 'review'}
@@ -515,7 +554,10 @@ class Workbench:
         text_value(completion, 'Completion', MAX_TEXT)
         if body['review'] not in ('draft', 'human_reviewed'):
             raise WorkbenchError('Explicitly choose draft or review this exact completion.')
+        if body['review'] == 'human_reviewed':
+            self.access.require('approve-review', 'workbench.approve_response', body['id'], owner_only=True)
         with self.lock, self.db.transaction():
+            actor_kind = self.access.identity()['kind']
             parent = self._get(body['prompt_id'])
             if parent['kind'] != 'text' or not parent['source_available']:
                 raise WorkbenchError('Instruction responses require an available text prompt.')
@@ -530,20 +572,31 @@ class Workbench:
                     raise WorkbenchError('The response changed or belongs to another prompt. Reload before saving.', 'conflict', 409)
                 if before['completion'] == completion and before['review'] == body['review']:
                     return {'response': before, 'parent': parent, 'changed': False}
+                origin = dict(before['provenance'])
+                if before['completion'] != completion:
+                    origin['method'] = 'agent_authored' if actor_kind == 'agent' else 'human_authored'
                 self.db.execute('''UPDATE workbench_responses SET completion=%s,review=%s,revision=revision+1,
-                    updated_at=%s WHERE id=%s''', (completion, body['review'], created, body['id']))
+                    updated_at=%s,provenance_json=%s WHERE id=%s''',
+                    (completion, body['review'], created, encode_retained(origin), body['id']))
             else:
                 if body['revision'] != 0:
                     raise WorkbenchError('Response no longer exists.', 'unavailable', 409)
-                origin = {'method': 'human_authored', 'prompt_id': parent['id'],
+                origin = {'method': 'agent_authored' if actor_kind == 'agent' else 'human_authored', 'prompt_id': parent['id'],
                           'prompt_sha256': parent['content_hash'], 'source_sha256': parent['source_sha256']}
                 self.db.execute('INSERT INTO workbench_responses VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
                                 (body['id'], parent['id'], 1, completion, body['review'], encode_retained(origin), created, created))
             response = self._response(body['id'])
             self.db.execute('INSERT INTO workbench_response_history VALUES (%s,%s,%s)',
                             (response['id'], response['revision'], encode_retained({'response': response, 'parent': parent})))
+            self.access.audit('workbench.approve_response' if body['review'] == 'human_reviewed' else
+                              'workbench.save_response', response['id'],
+                              {'before_revision': body['revision'], 'revision': response['revision'],
+                               'prompt_id': parent['id'], 'parent_revision': parent['revision'],
+                               'source_revision': parent['source_revision'],
+                               'content_sha256': hashlib.sha256(encode_retained({'response': response, 'parent': parent}).encode()).hexdigest()})
             return {'response': response, 'parent': parent, 'changed': True}
 
+    @authorized('inspect', 'workbench.response_selection')
     def response_selection(self, items):
         if not isinstance(items, list) or not 1 <= len(items) <= 5000:
             raise WorkbenchError('Select 1–5,000 explicit response revisions per synchronous release.')
@@ -581,9 +634,12 @@ class Workbench:
         from immutable_assets import check_selection
         check_selection(records)
 
+    @authorized('inspect', 'workbench.asset')
     def asset(self, record_id):
         """Return a trusted source handle; the caller holds the shared lock while reading."""
         record = self._get(record_id)
+        if record['kind'] == 'field_sequence':
+            return self.scientific.asset(record)
         if record['kind'] == 'audio':
             return self.audio.asset(record)
         if record['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume'):
@@ -597,6 +653,7 @@ class Workbench:
             raise WorkbenchError('Source image unavailable.', 'unavailable', 404)
         return path, 'image/png'
 
+    @authorized('inspect', 'workbench.selection')
     def selection(self, items, *, max_snapshot_bytes=None):
         if not isinstance(items, list) or not 1 <= len(items) <= 5000:
             raise WorkbenchError('Select 1–5,000 records per synchronous release.')

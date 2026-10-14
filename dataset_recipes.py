@@ -64,6 +64,7 @@ def candidates(recipe, seed, count):
 
 
 def generate(workbench, body):
+    workbench.access.require('execute', 'dataset_recipes.generate', owner_only=True)
     recipe, seed, count = body.get('recipe'), body.get('seed'), body.get('count')
     # Validate the recipe and materialize only the bounded candidate metadata/bytes.
     batch = list(candidates(recipe, seed, count))

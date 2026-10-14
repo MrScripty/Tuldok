@@ -1,3 +1,4 @@
+from auth_helpers import bind_owner
 import base64
 from postgres_helpers import database_snapshot
 import hashlib
@@ -26,7 +27,7 @@ from workbench import WorkbenchError
 class CaptionProposalTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.data = Dataset(self.tmp.name); self.addCleanup(lambda: self.data.close())
+        self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data); self.addCleanup(lambda: self.data.close())
         self.server, self.url, self.requests = start()
         self.addCleanup(self.server.server_close); self.addCleanup(self.server.shutdown)
         self.row = self.image('blue')
@@ -81,7 +82,7 @@ class CaptionProposalTests(unittest.TestCase):
         state=self.state();again=self.decide(job)
         self.assertFalse(again['changed']);self.assertEqual(self.state(),state)
         self.assertEqual(json.loads(self.data.db.execute('SELECT snapshot FROM workbench_history WHERE id=%s AND revision=%s',(row['id'],row['revision'])).fetchone()[0])['target_proposal'],row['target_proposal'])
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['application']['revision'],row['revision'])
         self.assertEqual(self.data.workbench.get(row['id'])['target_proposal'],row['target_proposal'])
 
@@ -176,6 +177,8 @@ class CaptionProposalTests(unittest.TestCase):
         decode = json.loads
         decoded_sizes = []
         def projected_only(data, *args, **kwargs):
+            if not data.lstrip().startswith('{'):
+                return decode(data, *args, **kwargs)
             self.assertNotIn('"input_image_base64"', data,
                              'Polling must not materialize retained image payloads in Python')
             self.assertNotIn('"raw_response_base64"', data,
@@ -226,6 +229,8 @@ class CaptionProposalTests(unittest.TestCase):
                 errors.append(error)
         def outside_lock(data, *args, **kwargs):
             nonlocal started
+            if not data.lstrip().startswith('{'):
+                return decode(data, *args, **kwargs)
             self.assertFalse(observed.held, 'Status JSON decoding must occur after releasing the shared lock')
             if not started:
                 started = True
@@ -338,12 +343,12 @@ class CaptionProposalTests(unittest.TestCase):
             self.data.caption_proposals.cancel({'job_id':job['id']});release.set();self.data.caption_proposals.worker.join(3)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'cancelled')
         job=self.data.caption_proposals.start(self.config(instruction='slow'));self.wait(lambda:len(self.requests)>1)
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'cancelled')
         # Persist the state a killed process would have left, then exercise startup.
         with self.data.lock,self.data.db.transaction():
             interrupted=self.data.caption_proposals.get(job['id']);interrupted['status']='generating';self.data.caption_proposals._save(interrupted)
-        self.data.close();count=len(self.requests);self.data=Dataset(self.tmp.name)
+        self.data.close();count=len(self.requests);self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'interrupted');self.assertEqual(len(self.requests),count)
 
     def test_review_export_consumer_evidence_history_and_fixed_selection(self):
@@ -373,8 +378,9 @@ class CaptionProposalTests(unittest.TestCase):
     def test_concurrent_apply_produces_one_revision(self):
         job=self.generate();results=[];errors=[]
         def apply():
-            try:results.append(self.decide(job))
-            except Exception as error:errors.append(error)
+            with self.actor.bound(self.data):
+                try:results.append(self.decide(job))
+                except Exception as error:errors.append(error)
         threads=[threading.Thread(target=apply) for _ in range(2)]
         for thread in threads:thread.start()
         for thread in threads:thread.join(3)
@@ -386,7 +392,7 @@ class CaptionProposalTests(unittest.TestCase):
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         base=f'http://127.0.0.1:{server.server_port}/api/workbench/'
         def request(path,body=None):
-            req=urllib.request.Request(base+path,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json'})
+            req=self.actor.request(base+path,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(req,timeout=5) as response:return json.load(response)
         try:
             body=self.config();job=request('caption-proposals',body);self.data.caption_proposals.worker.join(3)
@@ -445,6 +451,6 @@ class CaptionProposalTests(unittest.TestCase):
         self.assertEqual(job['status'],'failed');self.assertIn('no inference ran',job['error'])
         self.assertIsNone(self.data.caption_proposals.worker);self.assertIsNone(self.data.caption_proposals.active_id)
         self.assertEqual(self.requests,[])
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'failed')
         self.assertEqual(self.generate()['status'],'completed')

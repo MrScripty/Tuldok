@@ -1,6 +1,8 @@
 """Named dynamic criteria; independent of fixed membership and review authority."""
+from access import authorized
 from workbench import encode_retained
 import json
+import hashlib
 import math
 import re
 import uuid
@@ -51,6 +53,7 @@ def criteria(value):
 
 class SavedSearches:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.db, self.lock = workbench.db, workbench.lock
 
     def _get(self, search_id):
@@ -77,10 +80,12 @@ class SavedSearches:
         result.update(mode='dynamic', schema_version=1)
         return result
 
+    @authorized('inspect', 'saved_searches.get')
     def get(self, search_id):
         with self.lock:
             return self._get(search_id)
 
+    @authorized('inspect', 'saved_searches.list')
     def list(self):
         with self.lock:
             ids = self.db.execute('SELECT id FROM saved_searches ORDER BY updated_at DESC,id LIMIT 101').fetchall()
@@ -88,6 +93,7 @@ class SavedSearches:
                 raise WorkbenchError('Saved-search storage exceeds the supported count.')
             return {'searches': [self._get(row[0]) for row in ids]}
 
+    @authorized('edit', 'saved_searches.create')
     def create(self, body):
         if not isinstance(body, dict) or set(body) != {'name', 'criteria'}:
             raise WorkbenchError('Save a name and entered metadata criteria only.')
@@ -99,8 +105,10 @@ class SavedSearches:
             search_id, created = uuid.uuid4().hex, timestamp()
             self.db.execute('INSERT INTO saved_searches VALUES (%s,%s,%s,%s,%s,%s)',
                             (search_id, name, 1, encode_retained(value), created, created))
+            self.access.audit('saved_searches.create', search_id, {'revision': 1, 'content_sha256': hashlib.sha256(encode_retained(value).encode()).hexdigest()})
             return self._get(search_id)
 
+    @authorized('edit', 'saved_searches.mutate')
     def mutate(self, search_id, action, body):
         expected = {'revision', 'name'} if action == 'rename' else {'revision'}
         if action not in ('rename', 'delete') or not isinstance(body, dict) or set(body) != expected:
@@ -111,8 +119,10 @@ class SavedSearches:
                 raise WorkbenchError('Saved search changed. Refresh before renaming or deleting.', 'conflict', 409)
             if action == 'delete':
                 self.db.execute('DELETE FROM saved_searches WHERE id=%s', (search_id,))
+                self.access.audit('saved_searches.delete', search_id, {'revision': body['revision'], 'retired_sha256': hashlib.sha256(encode_retained(before).encode()).hexdigest()})
                 return {'deleted': search_id}
             name = text_value(body['name'], 'Search name', 120)
             self.db.execute('UPDATE saved_searches SET name=%s,revision=revision+1,updated_at=%s WHERE id=%s',
                             (name, timestamp(), search_id))
+            self.access.audit('saved_searches.rename', search_id, {'revision': body['revision'] + 1, 'name_sha256': hashlib.sha256(name.encode()).hexdigest()})
             return self._get(search_id)

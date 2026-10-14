@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -14,6 +17,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_metadata_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
@@ -49,6 +53,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const endingRows=[];
   for(let i=0;i<exactValues.length;i++)endingRows.push(await text('Exact ending '+i,exactValues[i],[exactValues[i]],exactValues[i]));
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   const detection=await image('Detection source','red','image_detection',{boxes:[{label,x:0,y:0,width:4,height:4}]},['source-a-extra'],'UNKNOWN');
   await image('Caption source','blue','image_caption',{caption:'A vehicle & café in a caption.'},['caption'],'unknown');

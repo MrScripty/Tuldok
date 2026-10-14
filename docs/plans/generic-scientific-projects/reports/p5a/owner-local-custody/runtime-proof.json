@@ -1,0 +1,72 @@
+{
+  "source": "Explicit owner-local QA read of hash-bound custodian stdout; not HTTP download or agent API parity",
+  "tuldok_cpu_runtime": {
+    "environment": {
+      "CUDA_VISIBLE_DEVICES": "",
+      "LANG": "C",
+      "LC_ALL": "C",
+      "PYTHONCOERCECLOCALE": "0",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONHOME": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python",
+      "PYTHONNOUSERSITE": "1",
+      "PYTHONUTF8": "1"
+    },
+    "mappings": [
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy.libs/libgfortran-83c28eba-468e71e5.so.5.0.0",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy.libs/libquadmath-2284e583-a9307bba.so.0.0.0",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy.libs/libscipy_openblas64_-f48b354e.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy/_core/_multiarray_umath.cpython-312-x86_64-linux-gnu.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy/linalg/_umath_linalg.cpython-312-x86_64-linux-gnu.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_C.cpython-312-x86_64-linux-gnu.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libc10.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libgomp.so.1",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libshm.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch_cpu.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch_global_deps.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/lib/libtorch_python.so",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/bin/python3.12",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/ld-linux-x86-64.so.2",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libc.so.6",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libdl.so.2",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libgcc_s.so.1",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libm.so.6",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libpthread.so.0",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/librt.so.1",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libstdc++.so.6",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libutil.so.1",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/system/lib/libz.so.1"
+    ],
+    "module_paths": {
+      "ctypes": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/ctypes/__init__.py",
+      "numpy": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/numpy/__init__.py",
+      "os": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/os.py",
+      "torch": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/__init__.py"
+    },
+    "packages": {
+      "numpy": "2.5.4",
+      "torch": "2.8.0+cpu"
+    },
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "snapshot_sha256": "cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7",
+    "sys_path": [
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/python/lib/python3.12/lib-dynload",
+      "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages"
+    ],
+    "virtual_modules": {
+      "torch.classes": {
+        "class": "_Classes",
+        "defining_module": "torch._classes",
+        "defining_path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_classes.py",
+        "pseudo_file": "_classes.py"
+      },
+      "torch.ops": {
+        "class": "_Ops",
+        "defining_module": "torch._ops",
+        "defining_path": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog/runtime-snapshots/cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7/packages/torch/_ops.py",
+        "pseudo_file": "_ops.py"
+      }
+    }
+  }
+}

@@ -32,7 +32,7 @@ $('native-text-form').addEventListener('submit',async event=>{
   try{
     const source=await nativeTextArchive(file);
     if(nativeTextStopped){nativeTextSummary(counts,'Stopped before preparation');return;}
-    const response=await fetch('/api/workbench/native-text-import/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(source)});
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/native-text-import/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(source)});
     const prepared=await response.json();
     if(!response.ok)throw Error(prepared.error||'Native release preparation failed.');
     if(prepared.format!=='canonical_v1' || prepared.schema_version!==1 || prepared.input_basis!=='consumed_exported_text' || prepared.upstream_original!=='unavailable' || !/^[a-f0-9]{64}$/.test(prepared.archive_sha256) || !Array.isArray(prepared.rows) || !prepared.rows.length || prepared.rows.length>2000)throw Error('Invalid native classification preparation receipt.');
@@ -45,7 +45,7 @@ $('native-text-form').addEventListener('submit',async event=>{
       const proof={request_id:body.request_id,row_number:row.row_number,row_sha256:row.row_sha256};
       counts.attempted++;
       try{
-        const admission=await fetch('/api/workbench/native-text-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),receipt=await admission.json();
+        const admission=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/native-text-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),receipt=await admission.json();
         if(!admission.ok && [400,409].includes(admission.status)){
           counts.rejected++;nativeTextRow(row,'rejected',receipt.error||'Classification admission failed.');
         }else{
@@ -68,7 +68,7 @@ $('native-text-check').addEventListener('click',async()=>{
   if(nativeTextRunning || !nativeTextPending)return;
   const pending=nativeTextPending;nativeTextRunning=true;nativeTextControls();
   try{
-    const response=await fetch('/api/workbench/import-result/'+pending.request_id),receipt=await response.json();
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/import-result/'+pending.request_id),receipt=await response.json();
     if(!response.ok)throw Error(receipt.error||'Saved result lookup failed.');
     if(!receipt.found){$('native-text-status').textContent='No saved result is visible yet. This does not prove the in-flight record stopped. Inspect the collection before retrying.';return;}
     if(!bulkReceipt(receipt,pending) || receipt.kind!=='text')throw Error('Saved result does not match the pending classification row.');

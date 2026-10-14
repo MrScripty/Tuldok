@@ -1,0 +1,45 @@
+{
+  "source_commit": "c8ba1ad59e2089f37c4876998066d70cd81da4fc",
+  "qualification": "Neutral real process/descendant and artifact custody only; no scientific/model acceptance",
+  "checks": [
+    "Real keyboard-created edited graph, exact review, stale-byte refusal, descendant execution and exact artifact custody",
+    "Owner creates an exact-material one-use grant; separately authenticated agent executes it without owner review controls",
+    "Cloned graph cancellation waits for confirmed custody termination",
+    "Server restart retains exact completed run and downloadable original output"
+  ],
+  "captures": [
+    {
+      "file": "external-pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#external-material",
+      "qualification": "Neutral process execution only; no scientific qualification"
+    },
+    {
+      "file": "external-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#external-material",
+      "qualification": "Neutral process execution only; no scientific qualification"
+    },
+    {
+      "file": "external-runs-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": ".external-run-custody",
+      "qualification": "Neutral process execution only; no scientific qualification"
+    },
+    {
+      "file": "external-runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": ".external-run-custody",
+      "qualification": "Neutral process execution only; no scientific qualification"
+    }
+  ],
+  "run_id": "c2655e8848944df29326f5d1a901fbb0",
+  "input_sha256": "1e4e0965a0a773437c393cfcd99d6c3794d6092fb22ba929f8557e822f653b68",
+  "browser": "Chrome/151.0.7922.173",
+  "source_state": "Portability follow-up worktree based on source_commit; exact changed files pinned in source-files.json.",
+  "source_inventory_sha256": "514f6974e4b866b5ef1831e18a3c7d3b633342deb7fdb9b9cb88f26df8ebea1c"
+}

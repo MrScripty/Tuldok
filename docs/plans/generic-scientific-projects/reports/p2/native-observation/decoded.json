@@ -1,0 +1,337 @@
+{
+  "ready": {
+    "actual_divergence_limit": 1e-05,
+    "density": 1.25,
+    "dt": 0.016666666666666666,
+    "face_lengths": [
+      33792,
+      33792,
+      33792
+    ],
+    "method": "jacobi",
+    "n": 32,
+    "native_relative_residual": 1e-08,
+    "schema": "rheon-trajectory-v1",
+    "seed": 100,
+    "spacing": [
+      0.03125,
+      0.03125,
+      0.03125
+    ]
+  },
+  "frames": [
+    {
+      "report": {
+        "actual_divergence_max": 2.9802322387695312e-08,
+        "advection_ms": 36.578454,
+        "correction_ms": 3.6205,
+        "courant": 0.012171820551156998,
+        "frame": 1,
+        "iterations": 296,
+        "pressure_ms": 199.245475,
+        "relative_residual": 9.047536548105893e-09,
+        "time": 0.016666666666666666,
+        "total_ms": 250.967202,
+        "tracer_integral": 0.0003449921748130169,
+        "tracer_ms": 11.522012
+      },
+      "fields": {
+        "rhs": {
+          "file": "frame-01-rhs.bin",
+          "wire_offset": 585,
+          "bytes": 262144,
+          "sha256": "3cc118b9c270d56a77ece2d19735fe1774860e88b850db419a6211d12cb234ed",
+          "dtype": "<f8",
+          "shape_xyz": [
+            32,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "cell",
+          "meaning": "preprojection right-hand side for this accepted step",
+          "count": 32768,
+          "min": -0.0003779086910071783,
+          "max": 0.0004214733598928433
+        },
+        "pressure": {
+          "file": "frame-01-pressure.bin",
+          "wire_offset": 262729,
+          "bytes": 262144,
+          "sha256": "84cdbdbe5fe074e07024a1110c5c6e529940e87c0ebfb1a2dfe12e4fcfd1398b",
+          "dtype": "<f8",
+          "shape_xyz": [
+            32,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "cell",
+          "meaning": "solved pressure for this accepted step",
+          "count": 32768,
+          "min": -0.029611996817631006,
+          "max": 0.03737086494274213
+        },
+        "velocity_x": {
+          "file": "frame-01-velocity_x.bin",
+          "wire_offset": 524873,
+          "bytes": 135168,
+          "sha256": "d12eed953cdc887e7934ea22e2978e8b36008d2a4d25e7f754e290fa47918853",
+          "dtype": "<f4",
+          "shape_xyz": [
+            33,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            33
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "x-normal-face",
+          "meaning": "corrected accepted velocity",
+          "count": 33792,
+          "min": -0.0023259040899574757,
+          "max": 0.004381624050438404
+        },
+        "velocity_y": {
+          "file": "frame-01-velocity_y.bin",
+          "wire_offset": 660041,
+          "bytes": 135168,
+          "sha256": "6978a87f5f662c6e85eed79aeac5c5eb1fcb4eca4154421b9bad3286971e7359",
+          "dtype": "<f4",
+          "shape_xyz": [
+            32,
+            33,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            33,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "y-normal-face",
+          "meaning": "corrected accepted velocity",
+          "count": 33792,
+          "min": -0.0017381326761096716,
+          "max": 0.011315422132611275
+        },
+        "velocity_z": {
+          "file": "frame-01-velocity_z.bin",
+          "wire_offset": 795209,
+          "bytes": 135168,
+          "sha256": "ba6a73abf6f33871aa172973caca34015c8c77eb2d476a1b09bdf03e5ad5eeb8",
+          "dtype": "<f4",
+          "shape_xyz": [
+            32,
+            32,
+            33
+          ],
+          "reshape_zyx": [
+            33,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "z-normal-face",
+          "meaning": "corrected accepted velocity",
+          "count": 33792,
+          "min": -0.0019352704985067248,
+          "max": 0.007125117350369692
+        },
+        "tracer": {
+          "file": "frame-01-tracer.bin",
+          "wire_offset": 930377,
+          "bytes": 131072,
+          "sha256": "0b0135ff3602dbfcdae83540f64327c4e80711775adca8ebd080254101442bb6",
+          "dtype": "<f4",
+          "shape_xyz": [
+            32,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "cell",
+          "meaning": "advected accepted tracer concentration",
+          "count": 32768,
+          "min": 0.0,
+          "max": 0.129042387008667
+        }
+      }
+    },
+    {
+      "report": {
+        "actual_divergence_max": 5.960464477539063e-08,
+        "advection_ms": 36.728615,
+        "correction_ms": 3.679377,
+        "courant": 0.024014515181382496,
+        "frame": 2,
+        "iterations": 296,
+        "pressure_ms": 203.683075,
+        "relative_residual": 9.560440535409262e-09,
+        "time": 0.03333333333333333,
+        "total_ms": 254.983114,
+        "tracer_integral": 0.0006897932466234927,
+        "tracer_ms": 10.890866
+      },
+      "fields": {
+        "rhs": {
+          "file": "frame-02-rhs.bin",
+          "wire_offset": 1061784,
+          "bytes": 262144,
+          "sha256": "88af5059f23cf8d392b6c77f4a14bb253f15d741aede2fc1a5e9001bf651964b",
+          "dtype": "<f8",
+          "shape_xyz": [
+            32,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "cell",
+          "meaning": "preprojection right-hand side for this accepted step",
+          "count": 32768,
+          "min": -0.00039353492411464686,
+          "max": 0.00035077519896731246
+        },
+        "pressure": {
+          "file": "frame-02-pressure.bin",
+          "wire_offset": 1323928,
+          "bytes": 262144,
+          "sha256": "6817035021b488ac58f6e9f27e765493235885d450826d3ef5e62df4500fd651",
+          "dtype": "<f8",
+          "shape_xyz": [
+            32,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "cell",
+          "meaning": "solved pressure for this accepted step",
+          "count": 32768,
+          "min": -0.031181179772860834,
+          "max": 0.037409507132299846
+        },
+        "velocity_x": {
+          "file": "frame-02-velocity_x.bin",
+          "wire_offset": 1586072,
+          "bytes": 135168,
+          "sha256": "c9020171f12ee53c7b11e320242847545edcc96675385441b9288ac12ab63c36",
+          "dtype": "<f4",
+          "shape_xyz": [
+            33,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            33
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "x-normal-face",
+          "meaning": "corrected accepted velocity",
+          "count": 33792,
+          "min": -0.00404813839122653,
+          "max": 0.00773040484637022
+        },
+        "velocity_y": {
+          "file": "frame-02-velocity_y.bin",
+          "wire_offset": 1721240,
+          "bytes": 135168,
+          "sha256": "5c476c8f91fac7bac551fb0fce85993b642a6497898aba312beb73d88b0605c3",
+          "dtype": "<f4",
+          "shape_xyz": [
+            32,
+            33,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            33,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "y-normal-face",
+          "meaning": "corrected accepted velocity",
+          "count": 33792,
+          "min": -0.0029998421669006348,
+          "max": 0.02254790998995304
+        },
+        "velocity_z": {
+          "file": "frame-02-velocity_z.bin",
+          "wire_offset": 1856408,
+          "bytes": 135168,
+          "sha256": "f8326ebdf4bcdf94bdeff4ca21f46e265563749c1e06dc5c165e83ff1180ca6c",
+          "dtype": "<f4",
+          "shape_xyz": [
+            32,
+            32,
+            33
+          ],
+          "reshape_zyx": [
+            33,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "z-normal-face",
+          "meaning": "corrected accepted velocity",
+          "count": 33792,
+          "min": -0.003724386217072606,
+          "max": 0.014748901128768921
+        },
+        "tracer": {
+          "file": "frame-02-tracer.bin",
+          "wire_offset": 1991576,
+          "bytes": 131072,
+          "sha256": "ac207aaf19329c53f9147f5163fff9047d924d7051cbb05101724e06fa373446",
+          "dtype": "<f4",
+          "shape_xyz": [
+            32,
+            32,
+            32
+          ],
+          "reshape_zyx": [
+            32,
+            32,
+            32
+          ],
+          "order": "x-fastest; C order when reshaped ZYX",
+          "placement": "cell",
+          "meaning": "advected accepted tracer concentration",
+          "count": 32768,
+          "min": 0.0,
+          "max": 0.2581397593021393
+        }
+      }
+    }
+  ],
+  "decoded_bytes": 2122648
+}

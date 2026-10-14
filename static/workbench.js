@@ -6,7 +6,7 @@ let selectionEpoch = 0;
 let page = null, offset = 0, current = null, targets = [], dirty = false, queryEpoch = 0, editorEpoch = 0;
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error', error); }
 async function api(path, body) {
-  const response = await fetch(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const response = await (globalThis.TuldokAuth?.fetch || fetch)(path.startsWith('/') ? path : '/api/workbench/' + path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   const result = await response.json();
   if (!response.ok) { const error=Error(result.error || 'Request failed.');error.status=response.status;throw error; }
   return result;
@@ -99,7 +99,7 @@ function showRecord(record) {
   if(record.kind === 'image') $('asset-image').src = '/api/workbench/asset/' + record.id + '?revision=' + record.source_revision;
   $('asset-text').textContent = record.text || '';
   $('task').replaceChildren();
-  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'pointcloud' ? ['pointcloud_geometry'] : record.kind === 'volume' ? ['volume_grid'] : record.kind === 'mesh' ? ['mesh_geometry'] : record.kind === 'audio' ? ['audio_timed'] : ['text_classification','text_entities','text_corpus']) {
+  for(const task of record.kind === 'image' ? ['image_detection','image_classification','image_caption'] : record.kind === 'sequence' ? ['sequence_transport'] : record.kind === 'pointcloud' ? ['pointcloud_geometry'] : record.kind === 'field_sequence' ? ['field_sequence_fields'] : record.kind === 'volume' ? ['volume_grid'] : record.kind === 'mesh' ? ['mesh_geometry'] : record.kind === 'audio' ? ['audio_timed'] : ['text_classification','text_entities','text_corpus']) {
     const option = document.createElement('option'); option.value = task; option.textContent = task.replaceAll('_',' '); $('task').append(option);
   }
   $('corpus-note').value = record.task === 'text_corpus' ? record.annotation?.note || '' : '';
@@ -108,6 +108,7 @@ function showRecord(record) {
   if(typeof meshShown === 'function') meshShown(record);
   if(typeof pointcloudShown === 'function') pointcloudShown(record);
   if(typeof volumeShown === 'function') volumeShown(record);
+  if(typeof scientificShown === 'function') scientificShown(record);
   if(typeof audioShown === 'function') audioShown(record);
   targets = structuredClone(record.annotation?.boxes || record.annotation?.spans || []);
   $('groups').value = record.groups.join('\n'); $('record-review').value = record.review === 'human_reviewed' ? 'human_reviewed' : 'draft';
@@ -124,7 +125,7 @@ function showRecord(record) {
 function renderTargets() {
   const task = $('task').value;
   $('corpus-controls').hidden = task !== 'text_corpus';
-  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry' || task === 'pointcloud_geometry' || task === 'volume_grid' || task === 'audio_timed';
+  $('caption-controls').hidden = task !== 'image_caption'; $('label-control').hidden = task === 'text_corpus' || task === 'image_caption' || task === 'sequence_transport' || task === 'mesh_geometry' || task === 'pointcloud_geometry' || task === 'field_sequence_fields' || task === 'volume_grid' || task === 'audio_timed';
   $('classification-help').hidden = !task.endsWith('_classification'); $('detection-controls').hidden = task !== 'image_detection'; $('entity-controls').hidden = task !== 'text_entities';
   $('targets').replaceChildren();
   $('box-overlay').replaceChildren();
@@ -182,7 +183,7 @@ action('editor',async()=>{
   if(typeof preferenceDirty !== 'undefined' && (preferenceDirty || preferenceBusy)) throw Error('Save or cancel the judgment edit before saving the annotation.');
   const record=current, task=$('task').value, epoch=++editorEpoch, responseEpoch=responseIntentEpoch();
   const selectionAtSave=selectionEpoch, pairAtSave=selected.get(record.id);
-  const annotation=task === 'audio_timed' ? audioAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'pointcloud_geometry' ? {note:$('pointcloud-note').value} : task === 'volume_grid' ? {note:$('volume-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
+  const annotation=task === 'audio_timed' ? audioAnnotation() : task === 'text_corpus' ? {note:$('corpus-note').value} : task === 'pointcloud_geometry' ? {note:$('pointcloud-note').value} : task === 'field_sequence_fields' ? {note:$('scientific-note').value} : task === 'volume_grid' ? {note:$('volume-note').value} : task === 'mesh_geometry' ? {note:$('mesh-note').value} : task === 'sequence_transport' ? {note:$('sequence-note').value} : task === 'image_caption' ? {caption:$('caption').value} : task.endsWith('_classification')?{label:$('label').value}:{[task==='image_detection'?'boxes':'spans']:targets};
   const saved=await api('records/'+record.id,{revision:record.revision,source_revision:record.source_revision,task,annotation,groups:$('groups').value.split('\n').map(x=>x.trim()).filter(Boolean),review:$('record-review').value});
   // A later fixed-set open/reselection owns membership, even when IDs are unchanged.
   if(selectionAtSave===selectionEpoch && pairAtSave && selected.get(saved.id)===pairAtSave &&

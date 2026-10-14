@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
@@ -17,6 +20,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_caption_proposals_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',stderr='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>stderr+=data);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]);
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,HOME:temporary,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const active=path.join(temporary,'browser','DevToolsActivePort');
   const debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
@@ -43,6 +47,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const saved=await request('selections',{name:'Fixed caption set',items:rows.map(ref)});
   const modelPort=output.match(/CAPTION_MODEL_PORT=(\d+)/)[1];
   await send('Page.enable');await send('Runtime.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent === "Collection ready."'));
   await evaluate('refreshSavedSets('+JSON.stringify(saved.id)+')');await click('load-selection');await until(()=>evaluate('!savedLoadBusy && selected.size===3'));
   const fixed=await evaluate('releaseBody().items');

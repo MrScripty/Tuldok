@@ -1,5 +1,10 @@
 """Durable admission, one local worker, and verified immutable result custody."""
+from access import authorized
+import base64
 import copy
+from contextlib import contextmanager
+import io
+import tempfile
 import hashlib
 import json
 import math
@@ -7,6 +12,8 @@ import os
 from pathlib import Path
 import re
 import signal
+import shutil
+import stat
 import subprocess
 import sys
 import threading
@@ -18,6 +25,7 @@ import text_training
 import audio_training
 import release_validation
 import psycopg
+from metadata import CommitOutcomeUnknown
 from workbench import WorkbenchError, encode, timestamp, text_value
 from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment
 
@@ -28,6 +36,7 @@ PAYLOADS = {'metrics.json', 'test-metrics.json', 'predictions-validation.json',
 TEST_FILES = {'test-metrics.json', 'predictions-test.json'}
 REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$')
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
+_DOWNLOAD_PERMIT = threading.BoundedSemaphore(1)
 
 
 def process_identity(pid):
@@ -70,6 +79,7 @@ def _sync(path):
 class Runs:
     def __init__(self, dataset, pipelines):
         self.dataset, self.pipelines = dataset, pipelines
+        self.access = dataset.access
         self.db, self.lock = dataset.db, dataset.lock
         self.path = dataset.path / 'workspace-runs'
         self.path.mkdir(exist_ok=True)
@@ -77,6 +87,8 @@ class Runs:
         self._thread = None
         self._thread_lock = threading.Lock()
         self._blocked = False
+        self._external_blocked = False
+        self._confirmed_external = set()
         self._closed = False
         with self.lock:
             self.runtime_owner = self.db.claim_runtime('workspace_runs')
@@ -95,14 +107,54 @@ class Runs:
                     or run['request_key'] != row['request_key'] or run['request_sha256'] != row['request_sha256']
                     or digest(run['graph']) != run['graph_document_sha256']
                     or execution_digest(run['graph']) != run['graph_sha256']
-                    or run['adapter'] != adapter_identity_for_graph(run['graph'])):
+                    or (not self._external(run) and run['adapter'] != adapter_identity_for_graph(run['graph']))):
                 raise ValueError('Invalid retained run identity.')
+            if self._external(run):
+                import recipe_contract
+                import recipe_process
+                # Absolute execution paths are historical evidence, not restore
+                # destinations. Never rewrite a spec bound by a custody receipt.
+                declared = run['spec']['cwd']
+                if (type(declared) is not str or not Path(declared).is_absolute()
+                        or '..' in Path(declared).parts or str(Path(declared)) != declared
+                        or Path(declared).name != '.external-' + run['id']
+                        or Path(declared).parent.name != 'workspace-runs'):
+                    raise ValueError('Invalid retained external staging location.')
+                recipe_contract.validate_spec(run['material'], run['spec'], declared)
+                if (run['graph'].get('recipe') != 'external_recipe'
+                        or run['material']['catalog_id'] != self.db.dataset_id
+                        or digest(run['material']) != run['material_sha256']
+                        or run['material']['graph_execution_sha256'] != run['graph_sha256']
+                        or run['outputs'] != run['material']['recipe']['outputs']
+                        or run['spec']['attempt_id'] != run['id']
+                        or run['spec']['request_sha256'] != run['request_sha256']
+                        or run['custody_phase'] not in ('prepared', 'barrier_ready', 'go_intent', 'drained')):
+                    raise ValueError('Invalid external execution identity.')
+                identity = run.get('custody_identity')
+                if identity is not None and (identity.get('attempt_id') != run['id']
+                        or identity.get('request_sha256') != run['request_sha256']
+                        or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
+                    raise ValueError('Invalid external custodian identity.')
+            elif 'execution_kind' in run:
+                raise ValueError('Unknown execution kind.')
             return run
         except (ValueError, KeyError, TypeError):
             raise WorkbenchError('Stored run envelope is invalid; refusing to guess execution state.', 'unavailable', 409) from None
 
     def _save(self, run):
         self.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (encode(run), run['id']))
+        action = 'runs.reconcile' if self.access.identity().get('mode') == 'system' else 'runs.update'
+        evidence = {'state': run['state'], 'request_sha256': run['request_sha256'], 'graph_sha256': run['graph_sha256']}
+        if self._external(run):
+            evidence.update(material_sha256=run['material_sha256'], approval_id=run['approval_id'],
+                            custody_phase=run['custody_phase'], receipt_sha256=run.get('custody_receipt_sha256'))
+        else:
+            evidence['release_sha256'] = run['release_sha256']
+        self.access.audit(action, run['id'], evidence)
+
+    @staticmethod
+    def _external(run):
+        return run.get('execution_kind') == 'external_recipe'
 
     def _event(self, run, state, message):
         run['state'] = state
@@ -117,6 +169,13 @@ class Runs:
             for row in self.db.execute('SELECT id FROM workspace_runs'):
                 run = self._load(row[0])
                 if run['state'] not in (*ACTIVE, 'unknown'):
+                    continue
+                if self._external(run):
+                    state = self._external_recovery_state(run)
+                    self._external_blocked |= state == 'unknown'
+                    self._event(run, state, 'External descendant cessation is unconfirmed; external execution remains fenced for this host boot.' if state == 'unknown' else
+                                'Application restarted; this external attempt was not replayed. Review and approve a new attempt.')
+                    self._save(run)
                     continue
                 worker = run.get('worker')
                 if run['process_phase'] == 'not_started':
@@ -160,8 +219,18 @@ class Runs:
         return 'interrupted'
 
     def _public(self, run):
+        if self._external(run):
+            keys = ('schema_version', 'mode', 'id', 'dataset_id', 'request_key', 'state', 'created_at',
+                    'started_at', 'finished_at', 'graph', 'graph_revision', 'graph_sha256', 'parameters',
+                    'attempt', 'parent_run_id', 'events', 'error', 'progress', 'node_attempts',
+                    'quality_claim', 'execution_kind', 'result_kind', 'material', 'material_sha256',
+                    'approval_id', 'actor_id', 'custody_phase')
+            result = {key: copy.deepcopy(run[key]) for key in keys}
+            result['artifacts'] = [dict(item, locked=False,
+                url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
+            return result
         hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase'}
+                  'worker_command', 'supervisor', 'process_phase', 'admission_id'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
         result['test_exposure'] = {'exposed': bool(run['exposure_events']), 'event_count': len(run['exposure_events'])}
         result['current_test_exposure'] = ({'exposed': False, 'events': []} if self._validation_run(run)
@@ -175,6 +244,7 @@ class Runs:
                                       'url': f"/api/workspace/runs/{run['id']}/artifacts/release.zip"}]
         return result
 
+    @authorized('inspect', 'runs.list')
     def list(self):
         with self.lock:
             rows = [self._load(row[0]) for row in self.db.execute('SELECT id FROM workspace_runs')]
@@ -183,7 +253,9 @@ class Runs:
             public = self._public(run)
             if run['state'] == 'completed':
                 try:
-                    self._verified_artifacts(run)
+                    status = self._inspect_published(run)
+                    if status:
+                        public['artifact_status'] = status
                 except WorkbenchError as error:
                     public['metrics'] = None
                     public.pop('validation_summary', None)
@@ -191,13 +263,16 @@ class Runs:
             result.append(public)
         return result
 
+    @authorized('inspect', 'runs.get')
     def get(self, run_id):
         with self.lock:
             run = self._load(run_id)
+        public = self._public(run)
         if run['state'] == 'completed':
-            # A retained completed envelope never certifies missing or altered files.
-            self._verified_artifacts(run)
-        return self._public(run)
+            status = self._inspect_published(run)
+            if status:
+                public['artifact_status'] = status
+        return public
 
     def _request(self, body, required):
         closed(body, required)
@@ -225,6 +300,646 @@ class Runs:
         if sys.platform != 'linux':
             raise WorkbenchError('The qualified CPU worker lifecycle currently requires Linux.', 'unsupported', 400)
 
+    @authorized('approve-execution', 'runs.approve_external', owner_only=True)
+    def approve_external(self, body):
+        closed(body, ('graph_id', 'graph_revision', 'expected_digest', 'consumer_actor_id'), ('ttl_seconds',))
+        preflight = self.pipelines.preflight_external(body['graph_id'], body['graph_revision'])
+        if preflight['material_sha256'] != body['expected_digest']:
+            raise WorkbenchError('Execution material changed. Review the current preflight before approving.', 'stale', 409)
+        return self.access.grant_execution(body['expected_digest'], body['consumer_actor_id'], body.get('ttl_seconds', 600))
+
+    def _external_receipt(self, key, request_hash, actor_id):
+        row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()
+        if row is None:
+            return None
+        run = self._load(row['id'])
+        if (not self._external(run) or row['request_sha256'] != request_hash or run['actor_id'] != actor_id):
+            raise WorkbenchError('This submission key belongs to a different actor or request.', 'conflict', 409)
+        return self._public(run)
+
+    @authorized('inspect', 'runs.submit_external')
+    def submit_external(self, body):
+        """The sole agent execution exception consumes an exact owner grant."""
+        context = self.access.require_external_submission()
+        closed(body, ('request_key', 'graph_id', 'graph_revision', 'expected_digest'), ('approval_id',))
+        key, request_hash = self._request(body, tuple(body))
+        with self.lock:
+            receipt = self._external_receipt(key, request_hash, context.actor_id)
+        if receipt:
+            return self._reconcile_receipt(receipt)
+        self._available()
+        if self._external_blocked:
+            raise WorkbenchError('External descendant cessation is unknown for this host boot.', 'unavailable', 409)
+        run_id = uuid.uuid4().hex
+        staging = self.path / ('.external-' + run_id)
+        try:
+            captured = self.pipelines.capture_external(body['graph_id'], body['graph_revision'], body['expected_digest'], staging)
+            graph = captured['graph']
+            spec = dict(captured['spec'], attempt_id=run_id, request_sha256=request_hash)
+            with self.lock, self.db.transaction():
+                self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
+                receipt = self._external_receipt(key, request_hash, context.actor_id)
+                if receipt:
+                    self.db.on_commit(lambda: shutil.rmtree(staging, ignore_errors=True))
+                else:
+                    # Captured/validated resource policy owns this bound. Check
+                    # after both reconciliation opportunities, before consuming
+                    # approval or persisting admission; failure uses normal cleanup.
+                    if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
+                        required_bytes = 2 * spec['max_output_bytes'] + 1024**3
+                        try:
+                            available_bytes = shutil.disk_usage(self.path).free
+                        except OSError as error:
+                            raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
+                        if available_bytes < required_bytes:
+                            raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
+                    if self.pipelines._get(graph['id']) != graph:
+                        raise WorkbenchError('Graph changed during capture.', 'stale', 409)
+                    if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
+                        raise WorkbenchError('The local queue is full (8 attempts).', 'unavailable', 409)
+                    grant_id = body.get('approval_id')
+                    if grant_id is None:
+                        grant_id = self.access.grant_execution(body['expected_digest'], context.actor_id)['id']
+                    admission_id = self.access._consume_external_run(grant_id, body['expected_digest'], run_id, request_hash)
+                    run = {'schema_version': 1, 'mode': 'real', 'execution_kind': 'external_recipe',
+                           'result_kind': 'external_recipe', 'id': run_id, 'dataset_id': self.db.dataset_id,
+                           'request_key': key, 'request_sha256': request_hash, 'actor_id': context.actor_id,
+                           'admission_id': admission_id, 'approval_id': grant_id,
+                           'state': 'queued', 'created_at': timestamp(), 'started_at': None, 'finished_at': None,
+                           'graph': graph, 'graph_revision': graph['revision'], 'graph_sha256': execution_digest(graph),
+                           'graph_document_sha256': digest(graph), 'material': captured['material'],
+                           'material_sha256': captured['material_sha256'], 'spec': spec,
+                           'outputs': captured['outputs'], 'parameters': next(node['parameters'] for node in graph['nodes'] if node['type'] == 'execute'),
+                           'attempt': 1, 'parent_run_id': None, 'events': [], 'artifacts': [], 'metrics': None,
+                           'error': None, 'worker': None, 'custody_phase': 'prepared', 'custody_identity': None,
+                           'custody_receipt_sha256': None, 'quality_claim': False,
+                           'progress': {'stage': 'queued', 'completed': None, 'total': None},
+                           'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+                    self._event(run, 'queued', 'Exact owner-approved external recipe admitted.')
+                    self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
+                                    (run_id, key, request_hash, encode(run)))
+                    self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
+                                      'approval_id': grant_id, 'request_sha256': request_hash})
+        except CommitOutcomeUnknown:
+            # Neither delete captured files nor dispatch after ambiguous admission.
+            raise
+        except BaseException:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise
+        if receipt:
+            return self._reconcile_receipt(receipt)
+        with self.lock:
+            self._confirmed_external.add(run_id)
+        self._start()
+        return self._public(run)
+
+    def _external_directory(self, run):
+        return self.path / ('.external-' + run['id'])
+
+    def _external_drain_receipt(self, run):
+        import recipe_process
+        identity = run.get('custody_identity')
+        if not identity:
+            return None
+        try:
+            receipt = recipe_process.load_receipt(self._external_directory(run) / 'custody' / 'receipt.json', identity)
+            return receipt if receipt['drained'] else None
+        except (OSError, ValueError, KeyError):
+            return None
+
+    def _external_recovery_state(self, run):
+        if run['custody_phase'] in ('prepared', 'barrier_ready'):
+            return 'interrupted'
+        if self._external_drain_receipt(run):
+            return 'interrupted'
+        helper = (run.get('custody_identity') or {}).get('helper')
+        if helper:
+            try:
+                if Path('/proc/sys/kernel/random/boot_id').read_text().strip() != helper['boot_id']:
+                    return 'interrupted'
+            except (OSError, KeyError):
+                pass
+        return 'unknown'
+
+    @staticmethod
+    def _read_regular(path, limit):
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, 'rb') as stream:
+            before = os.fstat(stream.fileno())
+            if not stat.S_ISREG(before.st_mode) or before.st_size > limit:
+                raise WorkbenchError('Output is not a bounded regular file.', 'invalid', 409)
+            raw = stream.read(limit + 1)
+            after = os.fstat(stream.fileno())
+            if len(raw) > limit or (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+                raise WorkbenchError('Output changed while it was captured.', 'stale', 409)
+            return raw
+
+    @staticmethod
+    def _progress_json(raw):
+        def pairs(items):
+            result = {}
+            for key, value in items:
+                if key in result:
+                    raise ValueError('Duplicate diagnostic field.')
+                result[key] = value
+            return result
+        return json.loads(raw, object_pairs_hook=pairs,
+                          parse_constant=lambda value: (_ for _ in ()).throw(ValueError('Nonfinite diagnostic.')))
+
+    @staticmethod
+    def _progress_text(value, limit, empty=False):
+        return (type(value) is str and (empty or bool(value.strip())) and len(value) <= limit
+                and not any(ord(c) < 32 or 127 <= ord(c) <= 159 or 0xD800 <= ord(c) <= 0xDFFF for c in value))
+
+    @classmethod
+    def _progress_event(cls, raw):
+        for line in reversed(raw.splitlines(keepends=True)):
+            if len(line) > 4096 or not line.endswith(b'\n'):
+                continue
+            try:
+                value = cls._progress_json(line)
+                if type(value) is not dict or set(value) != {'format', 'stage', 'completed', 'total', 'metrics'}:
+                    continue
+                if value['format'] != 'tuldok_progress_v1' or type(value['stage']) is not str or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', value['stage']):
+                    continue
+                if not (type(value['completed']) is int and type(value['total']) is int
+                        and 0 <= value['completed'] <= value['total'] <= 1000000):
+                    continue
+                metrics = value['metrics']
+                if type(metrics) is not dict or len(metrics) > 8 or any(
+                        not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,63}', name)
+                        or type(number) not in (int, float) or not math.isfinite(number)
+                        for name, number in metrics.items()):
+                    continue
+                return value
+            except (ValueError, TypeError, OverflowError, RecursionError):
+                continue
+        return None
+
+    @staticmethod
+    def _diagnostic_directory(path):
+        """Resolve every owned-directory component without following symlinks."""
+        descriptor = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            for part in Path(path).absolute().parts[1:]:
+                following = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+                os.close(descriptor)
+                descriptor = following
+            if os.fstat(descriptor).st_uid != os.getuid():
+                raise ValueError('Diagnostic directory owner differs.')
+            return descriptor
+        except BaseException:
+            os.close(descriptor)
+            raise
+
+    @staticmethod
+    def _diagnostic_read(directory, name, limit, *, tail=False):
+        descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        try:
+            before = os.fstat(descriptor)
+            if not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid() or before.st_size > limit:
+                raise ValueError('Invalid diagnostic file.')
+            start = max(0, before.st_size - 8192) if tail else 0
+            raw = os.pread(descriptor, before.st_size - start, start)
+            after = os.fstat(descriptor)
+            current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            if ((before.st_dev, before.st_ino) != (current.st_dev, current.st_ino)
+                    or len(raw) != before.st_size - start or after.st_size < before.st_size
+                    or after.st_size > limit or (not tail and
+                    (before.st_size, before.st_mtime_ns, before.st_ctime_ns) !=
+                    (after.st_size, after.st_mtime_ns, after.st_ctime_ns))):
+                raise ValueError('Diagnostic changed during observation.')
+            return raw, start, before.st_size
+        finally:
+            os.close(descriptor)
+
+    def _external_result_summary(self, run):
+        if run['state'] != 'completed':
+            return None
+        rules = [rule for rule in run['outputs'] if rule['role'] == 'result_summary']
+        if not rules:
+            return None
+        try:
+            if len(rules) != 1 or rules[0]['max_bytes'] > 65536:
+                raise ValueError('Invalid result summary declaration.')
+            inventory = (self._external_inventory(run) if self._large_outputs(run)
+                         else self._verify_external_artifacts(run))
+            item = next(item for item in inventory if item['name'] == rules[0]['path'] and item['role'] == 'result_summary')
+            raw = self._external_bytes(run, item)
+            if len(raw) > 65536:
+                raise ValueError('Result summary is too large.')
+            value = self._progress_json(raw)
+            if type(value) is not dict or not {'format','title','metrics','scope'} <= set(value) or set(value) - {'format','title','metrics','scope','checkpoint'}:
+                raise ValueError('Invalid result summary fields.')
+            if value['format'] != 'tuldok_result_summary_v1' or not self._progress_text(value['title'], 120):
+                raise ValueError('Invalid result summary title.')
+            if type(value['metrics']) is not list or len(value['metrics']) > 24:
+                raise ValueError('Invalid metrics.')
+            names = set()
+            for metric in value['metrics']:
+                if (type(metric) is not dict or set(metric) != {'name','value','unit'}
+                        or not self._progress_text(metric['name'], 64) or metric['name'] in names
+                        or not self._progress_text(metric['unit'], 24, empty=True)
+                        or type(metric['value']) not in (int, float) or not math.isfinite(metric['value'])):
+                    raise ValueError('Invalid metric.')
+                names.add(metric['name'])
+            if type(value['scope']) is not list or len(value['scope']) > 8 or not all(self._progress_text(label, 160) for label in value['scope']):
+                raise ValueError('Invalid scope.')
+            if 'checkpoint' in value and not any(item['name'] == value['checkpoint'] and item['role'] == 'checkpoint' for item in inventory):
+                raise ValueError('Checkpoint is not a verified declared output.')
+            if 'checkpoint' in value:
+                checkpoint = next(entry for entry in inventory if entry['name'] == value['checkpoint'])
+                directory = self._diagnostic_directory(self.path / run['id'])
+                try:
+                    self._copy_verified(directory, checkpoint['name'], checkpoint)
+                finally:
+                    os.close(directory)
+            return {'status':'hash_verified','artifact_name':item['name'], 'sha256':item['sha256'], 'summary':value}
+        except (OSError, ValueError, TypeError, KeyError, StopIteration, OverflowError, RecursionError):
+            return {'status':'unavailable'}
+
+    @authorized('inspect', 'runs.external_progress')
+    def external_progress(self, run_id):
+        import recipe_process
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raise WorkbenchError('Progress diagnostics require an external Run.', 'unsupported', 400)
+        result = {'schema_version':1, 'run_id':run['id'], 'state':run['state'],
+                  'custody_phase':run['custody_phase'], 'evidence':'unavailable',
+                  'streams':{'stdout':None,'stderr':None}, 'progress':None,
+                  'result':self._external_result_summary(run)}
+        directory = None
+        try:
+            directory = self._diagnostic_directory(self._external_directory(run) / 'custody')
+            terminal = run['state'] in TERMINAL and run['state'] != 'unknown'
+            receipt = None
+            if terminal:
+                raw, _, _ = self._diagnostic_read(directory, 'receipt.json', 16384)
+                receipt = recipe_process.validate_receipt(raw, run['custody_identity'])
+                if not receipt['drained']:
+                    raise ValueError('Diagnostic custody has not drained.')
+                if run['state'] == 'completed':
+                    published = self._read_regular(self.path / run['id'] / 'custody-receipt.json', 16384)
+                    if hashlib.sha256(published).hexdigest() != run['custody_receipt_sha256'] or self._progress_json(published) != receipt:
+                        raise ValueError('Published custody differs.')
+            for name in ('stdout','stderr'):
+                raw, start, size = self._diagnostic_read(directory, name+'.log', recipe_process.STREAM_LIMIT, tail=not terminal)
+                if receipt and (len(raw) != receipt['streams'][name]['bytes'] or hashlib.sha256(raw).hexdigest() != receipt['streams'][name]['sha256']):
+                    raise ValueError('Stream receipt differs.')
+                if terminal:
+                    start = max(0, len(raw)-8192)
+                    raw = raw[start:]
+                if name == 'stdout':
+                    complete = raw.split(b'\n', 1)[1] if start and b'\n' in raw else b'' if start else raw
+                    result['progress'] = self._progress_event(complete)
+                text = raw.decode('utf-8', errors='replace')
+                text = ''.join(c if c in '\n\t' or (ord(c) >= 32 and not 127 <= ord(c) <= 159) else '\ufffd' for c in text)
+                result['streams'][name] = {'available_bytes':size,'start_byte':start,'text':text,'truncated':start > 0}
+            result['evidence'] = 'custody_verified' if receipt else 'live_unverified'
+        except FileNotFoundError:
+            result['evidence'] = 'pending' if run['state'] == 'queued' or run['custody_phase'] == 'prepared' and run['state'] in ACTIVE else 'unavailable'
+            result['streams'] = {'stdout':None,'stderr':None}
+            result['progress'] = None
+        except (OSError, ValueError, TypeError, KeyError, RecursionError):
+            result['streams'] = {'stdout':None,'stderr':None}
+            result['progress'] = None
+        finally:
+            if directory is not None:
+                os.close(directory)
+        if len(json.dumps(result).encode()) > 192 * 1024:
+            raise WorkbenchError('Progress response exceeds its encoded bound.', 'unavailable', 409)
+        return result
+
+    def _publish_external(self, run, receipt):
+        import recipe_contract
+        source = Path(run['spec']['output_dir'])
+        checked = recipe_contract.verify_outputs(source, run['outputs'], run['spec']['max_output_bytes'])
+        destination = self.path / run['id']
+        destination.mkdir(mode=0o700)
+        artifacts = []
+        total = 0
+        source_descriptor = self._diagnostic_directory(source)
+        try:
+            if shutil.disk_usage(self.path).free < sum(item['bytes'] for item in checked) + 512*1024*1024:
+                raise WorkbenchError('Insufficient space for artifact publication.', 'unavailable', 409)
+            for item in checked:
+                total += item['bytes']
+                if total > run['spec']['max_output_bytes']:
+                    raise WorkbenchError('Recipe outputs exceed their admitted bound.', 'invalid', 409)
+                try:
+                    with (destination / item['path']).open('xb') as output:
+                        self._copy_verified(source_descriptor, item['path'], item, output)
+                        output.flush()
+                        os.fsync(output.fileno())
+                except (OSError, ValueError) as error:
+                    raise WorkbenchError('Recipe output changed or could not be published.', 'unavailable', 409) from error
+                artifacts.append({'name':item['path'],'role':item['role'],'bytes':item['bytes'],
+                                  'sha256':item['sha256'],'media_type':item.get('media_type','application/octet-stream')})
+        finally:
+            os.close(source_descriptor)
+        receipt_raw = encode(receipt).encode()
+        manifest = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
+                    'request_sha256': run['request_sha256'], 'custody_receipt_sha256': hashlib.sha256(receipt_raw).hexdigest(),
+                    'artifacts': artifacts}
+        for name, raw in (('custody-receipt.json', receipt_raw), ('artifact-manifest.json', encode(manifest).encode())):
+            with (destination / name).open('xb') as output:
+                output.write(raw)
+                output.flush()
+                os.fsync(output.fileno())
+        _sync(destination)
+        _sync(self.path)
+        return artifacts, manifest['custody_receipt_sha256']
+
+    def _execute_external(self, run_id):
+        import recipe_process
+        import recipe_contract
+        handle = None
+        run = None
+        receipt = None
+        try:
+            with self.lock, self.db.transaction():
+                run = self._load(run_id)
+                self.access.require_job('runs', run_id, run['admission_id'], run['request_sha256'])
+                if run['state'] != 'queued' or self._external_blocked:
+                    return
+                if run['spec']['cwd'] != str(self._external_directory(run)):
+                    raise WorkbenchError('Restored execution paths cannot be dispatched. Approve a new attempt.', 'stale', 409)
+                self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
+                run['started_at'] = timestamp()
+                self._save(run)
+            if recipe_contract.host_identity() != run['material']['host_files']:
+                raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
+            handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
+            preparation_seconds = recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in run['spec'] else recipe_process.READY_SECONDS
+            ready_deadline = time.monotonic() + preparation_seconds + 2
+            custody_deadline = ready_deadline
+            cancel_deadline = None
+            terminal = False
+            while not terminal:
+                for event in handle.poll():
+                    if event['type'] == 'ready':
+                        with self.lock, self.db.transaction():
+                            run = self._load(run_id)
+                            run['custody_identity'] = copy.deepcopy(handle.expected_identity)
+                            run['worker'] = copy.deepcopy(handle.expected_identity['helper'])
+                            run['custody_phase'] = 'barrier_ready'
+                            self._save(run)
+                        with self.lock, self.db.transaction():
+                            run = self._load(run_id)
+                            if run['state'] == 'cancelling' or self._stop.is_set():
+                                handle.cancel('cancelled')
+                                continue
+                            run['custody_phase'] = 'go_intent'
+                            run['progress']['stage'] = 'execute'
+                            self._save(run)
+                        # No GO is sent when either transaction acknowledgement is unknown.
+                        handle.go(handle.expected_identity['helper'])
+                        # CPU snapshots are reverified after GO before recipe
+                        # wall time starts. Keep that bounded preparation separate.
+                        recheck_seconds = preparation_seconds if 'cpu_snapshot' in run['spec'] else 0
+                        custody_deadline = time.monotonic() + recheck_seconds + run['spec']['wall_seconds'] + 15
+                    elif event['type'] in ('terminal', 'lost'):
+                        terminal = True
+                if terminal:
+                    break
+                if self._stop.is_set():
+                    handle.cancel('cancelled')
+                    cancel_deadline = cancel_deadline or time.monotonic() + 12
+                with self.lock:
+                    current = self._load(run_id)
+                    if current['state'] == 'cancelling':
+                        handle.cancel('cancelled')
+                        cancel_deadline = cancel_deadline or time.monotonic() + 12
+                if handle.ready is None and time.monotonic() > ready_deadline:
+                    handle.cancel('cancelled')
+                if time.monotonic() > min(custody_deadline, cancel_deadline or custody_deadline):
+                    raise WorkbenchError('Custodian deadline elapsed without confirmed drainage.', 'unknown', 409)
+                time.sleep(.03)
+            with self.lock:
+                run = self._load(run_id)
+            receipt = self._external_drain_receipt(run)
+            if receipt is None:
+                raise WorkbenchError('External descendant drainage could not be established.', 'unknown', 409)
+            with self.lock, self.db.transaction():
+                run = self._load(run_id)
+                run['custody_phase'] = 'drained'
+                cancelled = run['state'] == 'cancelling' or self._stop.is_set() or receipt['outcome'] == 'cancelled'
+                if not cancelled and receipt['outcome'] == 'completed':
+                    artifacts, receipt_hash = self._publish_external(run, receipt)
+                    run['artifacts'], run['custody_receipt_sha256'] = artifacts, receipt_hash
+                    self._event(run, 'completed', 'All descendants drained; declared outputs verified and retained.')
+                    for node in run['node_attempts']:
+                        node['state'] = 'completed'
+                else:
+                    self._event(run, 'cancelled' if cancelled else 'failed', 'External process drained without successful publication.')
+                self._save(run)
+        finally:
+            if handle is not None:
+                # Independent of database availability. EOF asks the pinned helper
+                # to stop and drain; missing evidence remains unknown on reopen.
+                handle.close_control()
+
+    def _external_inventory(self, run):
+        import recipe_process
+        import recipe_contract
+        directory = self.path / run['id']
+        descriptor = None
+        try:
+            descriptor = self._diagnostic_directory(directory)
+            if run['state'] != 'completed':
+                raise ValueError('Only completed Runs publish artifacts.')
+            if directory.is_symlink() or not directory.is_dir():
+                raise ValueError('Invalid artifact directory.')
+            definition = recipe_contract.decode_definition(encode(run['material']['recipe']).encode())
+            allowed = {item['path']: item for item in definition['outputs']}
+            seen, total = set(), 0
+            for item in run['artifacts']:
+                if (set(item) != {'name', 'role', 'bytes', 'sha256', 'media_type'}
+                        or item['name'] not in allowed or item['name'] in seen):
+                    raise ValueError('Invalid artifact inventory.')
+                rule = allowed[item['name']]
+                if (item['role'] != rule['role'] or type(item['bytes']) is not int
+                        or not 0 <= item['bytes'] <= rule['max_bytes']
+                        or item['media_type'] != 'application/octet-stream'
+                        or not isinstance(item['sha256'], str) or not re.fullmatch('[a-f0-9]{64}', item['sha256'])):
+                    raise ValueError('Artifact differs from its approved contract.')
+                seen.add(item['name'])
+                total += item['bytes']
+            if (any(rule['required'] and name not in seen for name, rule in allowed.items())
+                    or total > definition['resources']['max_output_bytes']):
+                raise ValueError('Incomplete or excessive artifact inventory.')
+            receipt_raw, _, _ = self._diagnostic_read(descriptor, 'custody-receipt.json', 16384)
+            if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
+                raise ValueError('Custody receipt changed.')
+            receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
+            if not receipt['drained'] or receipt['outcome'] != 'completed':
+                raise ValueError('Custody did not complete.')
+            manifest_raw, _, _ = self._diagnostic_read(descriptor, 'artifact-manifest.json', 65536)
+            manifest = self._progress_json(manifest_raw)
+            expected = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
+                        'request_sha256': run['request_sha256'], 'custody_receipt_sha256': run['custody_receipt_sha256'],
+                        'artifacts': run['artifacts']}
+            if manifest != expected:
+                raise ValueError('Artifact manifest changed.')
+            if set(os.listdir(descriptor)) != {item['name'] for item in run['artifacts']} | {'artifact-manifest.json','custody-receipt.json'}:
+                raise ValueError('Published directory inventory differs.')
+            for item in run['artifacts']:
+                info = os.stat(item['name'], dir_fd=descriptor, follow_symlinks=False)
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size != item['bytes']:
+                    raise ValueError('Artifact inventory changed.')
+            return run['artifacts']
+        except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
+            raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+
+    def _verify_external_artifacts(self, run):
+        inventory = self._external_inventory(run)
+        directory = None
+        try:
+            directory = self._diagnostic_directory(self.path / run['id'])
+            for item in inventory:
+                self._copy_verified(directory, item['name'], item)
+            return inventory
+        except (OSError, ValueError) as error:
+            raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
+        finally:
+            if directory is not None:
+                os.close(directory)
+
+    @staticmethod
+    def _large_outputs(run):
+        return (run.get('execution_kind') == 'external_recipe' and
+                run['material']['recipe']['resources'].get('profile') == 'captured_cpu_large_outputs_v1')
+
+    def _inspect_published(self, run):
+        if self._external(run) and self._large_outputs(run):
+            self._external_inventory(run)
+            return {'status':'receipt_verified', 'payloads':'not_checked'}
+        self._verified_artifacts(run)
+        return None
+
+    @staticmethod
+    def _copy_verified(directory, name, item, output=None):
+        """Hash one exact regular payload, optionally copying with bounded memory."""
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        try:
+            before = os.fstat(fd)
+            if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+                    or before.st_uid != os.getuid() or before.st_size != item['bytes']):
+                raise ValueError('Artifact is not the declared regular file.')
+            total = 0
+            measured = hashlib.sha256()
+            while True:
+                raw = os.read(fd, min(65536, item['bytes'] - total + 1))
+                if not raw:
+                    break
+                total += len(raw)
+                if total > item['bytes']:
+                    raise ValueError('Artifact grew during verification.')
+                measured.update(raw)
+                if output is not None:
+                    if output.write(raw) != len(raw):
+                        raise OSError('Artifact copy made incomplete progress.')
+            after = os.fstat(fd)
+            current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            if (total != item['bytes'] or measured.hexdigest() != item['sha256']
+                    or (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns) !=
+                       (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns)
+                    or (before.st_dev,before.st_ino) != (current.st_dev,current.st_ino)):
+                raise ValueError('Artifact changed during verification.')
+        finally:
+            os.close(fd)
+
+    def _selected_external(self, run, name, *, max_bytes=None):
+        inventory = self._external_inventory(run)
+        item = next((item for item in inventory if item['name'] == name), None)
+        if item is None:
+            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+        if max_bytes is not None and item['bytes'] > max_bytes:
+            raise WorkbenchError('Artifact exceeds the declared input byte bound.', 'invalid', 409)
+        if not self._large_outputs(run):
+            self._verify_external_artifacts(run)
+        return item
+
+    def _external_bytes(self, run, item):
+        directory = None
+        try:
+            directory = self._diagnostic_directory(self.path / run['id'])
+            output = io.BytesIO()
+            self._copy_verified(directory, item['name'], item, output)
+            return output.getvalue()
+        except (OSError, ValueError) as error:
+            raise WorkbenchError('Selected artifact cannot be verified.', 'unavailable', 409) from error
+        finally:
+            if directory is not None:
+                os.close(directory)
+
+    @authorized('inspect', 'runs.input_candidates')
+    def input_candidates(self):
+        with self.lock:
+            rows = self.db.execute('SELECT id FROM workspace_runs ORDER BY id').fetchall()
+            completed = []
+            for row in rows:
+                run = self._load(row[0])
+                if self._external(run) and run['state'] == 'completed':
+                    completed.append(run)
+            completed = sorted(completed, key=lambda run:(run['created_at'],run['id']), reverse=True)[:100]
+        result = []
+        for run in completed:
+            entry = {'run_id':run['id'], 'state':'completed', 'status':'receipt_verified', 'reason':None, 'artifacts':[]}
+            try:
+                inventory = self._external_inventory(run)
+                entry['artifacts'] = [{'artifact_name':item['name'],'role':item['role'],'bytes':item['bytes'],
+                                       'sha256':item['sha256'],'status':'receipt_verified'}
+                                      for item in inventory if item['bytes'] <= 40*1024*1024]
+            except WorkbenchError:
+                entry.update(status='unavailable', reason='Completed artifact inventory cannot be verified.')
+            result.append(entry)
+        return {'runs':result}
+
+    @authorized('inspect', 'runs.open_artifact')
+    def open_artifact(self, run_id, name):
+        return self._open_artifact(run_id, name)
+
+    @contextmanager
+    def _open_artifact(self, run_id, name):
+        # Recheck at context entry: callers cannot retain an unentered context
+        # and use it after their credential has been revoked or unbound.
+        self.access.require('inspect', 'runs.open_artifact', run_id)
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raw, media_type = self.artifact(run_id, name)
+            with io.BytesIO(raw) as stream:
+                yield stream, {'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'media_type':media_type}
+            return
+        item = self._selected_external(run, name)
+        if not _DOWNLOAD_PERMIT.acquire(blocking=False):
+            raise WorkbenchError('Another artifact download is in progress.', 'unavailable', 503)
+        directory = None
+        try:
+            if shutil.disk_usage(self.path).free < item['bytes'] + 512*1024*1024:
+                raise WorkbenchError('Insufficient free space for a verified download.', 'unavailable', 409)
+            directory = self._diagnostic_directory(self.path / run['id'])
+            with tempfile.TemporaryFile(dir=self.path, mode='w+b') as stream:
+                try:
+                    self._copy_verified(directory, name, item, stream)
+                    stream.flush()
+                    stream.seek(0)
+                except (OSError, ValueError) as error:
+                    raise WorkbenchError('Selected artifact cannot be verified.', 'unavailable', 409) from error
+                yield stream, {key:item[key] for key in ('bytes','sha256','media_type')}
+        except OSError as error:
+            raise WorkbenchError('Verified download storage is unavailable.', 'unavailable', 409) from error
+        finally:
+            if directory is not None:
+                os.close(directory)
+            _DOWNLOAD_PERMIT.release()
+
+    @authorized('execute', 'runs.submit', owner_only=True)
     def submit(self, body):
         key, request_hash = self._request(body, ('request_key', 'graph_id', 'graph_revision', 'validation_token'))
         with self.lock:
@@ -248,6 +963,9 @@ class Runs:
         # A committed admission whose response/commit acknowledgment was lost
         # still needs its existing queue observed. This never admits a second run.
         if receipt['state'] == 'queued' and self.runtime_owner and not self._blocked and not self._closed and not self._stop.is_set():
+            if self._external(receipt):
+                with self.lock:
+                    self._confirmed_external.add(receipt['id'])
             self._start()
         return receipt
 
@@ -276,12 +994,21 @@ class Runs:
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
         if self._validation_run(run):
             run.update(result_kind='release_validation', validation_summary=copy.deepcopy(release['validation_summary']))
+        recipe = graph.get('recipe', 'image_classification')
+        effects = {'pipeline.inspect_release': [release['id']], 'dataset_releases.locate': [release['id']],
+                   'pipeline.probe': [recipe], 'pipeline.probe_native': [recipe],
+                   'pipeline.definition_identity': [recipe], 'pipeline.exposures': [None],
+                   'runs.update': [run_id]}
+        run['admission_id'] = self.access.admit_job('runs', run_id, request_hash, effects)
+        self.access.audit('runs.admit', run_id, {'request_sha256': request_hash,
+                         'graph_sha256': run['graph_sha256'], 'release_sha256': run['release_sha256']})
         self._event(run, 'queued', 'Frozen integrity attempt admitted.' if self._validation_run(run) else
                     'Real CPU attempt admitted. Training starts from scratch; no model download.')
         self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
                         (run_id, key, request_hash, encode(run)))
         return run
 
+    @authorized('execute', 'runs.retry', owner_only=True)
     def retry(self, run_id, body):
         closed(body, ('request_key',))
         key, request_hash = self._request(dict(body, parent_run_id=run_id), ('request_key', 'parent_run_id'))
@@ -291,6 +1018,8 @@ class Runs:
                 parent = self._load(run_id)
         if receipt:
             return self._reconcile_receipt(receipt)
+        if self._external(parent):
+            raise WorkbenchError('External retries require a fresh material preflight and execution approval.', 'unsupported', 409)
         self._available()
         if parent['state'] not in ('failed', 'cancelled', 'interrupted'):
             raise WorkbenchError('Only failed, cancelled or interrupted attempts can restart; unknown work requires reconciliation.', 'conflict', 409)
@@ -308,6 +1037,7 @@ class Runs:
         self._start()
         return self._public(run)
 
+    @authorized('cancel', 'runs.cancel')
     def cancel(self, run_id):
         with self.lock, self.db.transaction():
             run = self._load(run_id)
@@ -335,7 +1065,9 @@ class Runs:
             try:
                 with self.lock:
                     queued = [self._load(row[0]) for row in self.db.execute('SELECT id FROM workspace_runs')]
-                    queued = sorted((run for run in queued if run['state'] == 'queued'), key=lambda run: (run['created_at'], run['id']))
+                    queued = sorted((run for run in queued if run['state'] == 'queued' and
+                                    (not self._external(run) or (not self._external_blocked and run['id'] in self._confirmed_external))),
+                                    key=lambda run: (run['created_at'], run['id']))
             except psycopg.Error:
                 self._stop.set()
                 return
@@ -344,14 +1076,18 @@ class Runs:
                 self._wake.clear()
                 continue
             try:
-                self._execute(queued[0]['id'])
+                admitted = queued[0]
+                with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
+                    self._execute(admitted['id'])
             except Exception as error:
                 try:
-                    with self.lock, self.db.transaction():
+                    with self.access._reconcile(), self.lock, self.db.transaction():
                         run = self._load(queued[0]['id'])
                         if run['state'] in ACTIVE:
                             run['error'] = {'code': 'failed', 'message': 'Run supervisor could not complete this attempt.'}
-                            self._event(run, 'failed', run['error']['message'])
+                            state = self._external_recovery_state(run) if self._external(run) else 'failed'
+                            self._external_blocked |= state == 'unknown' and self._external(run)
+                            self._event(run, state, run['error']['message'])
                             self._save(run)
                 except psycopg.Error:
                     # _execute's finally owns child drainage even when persistence
@@ -360,9 +1096,14 @@ class Runs:
                     return
 
     def _execute(self, run_id):
+        with self.lock:
+            selected = self._load(run_id)
+        if self._external(selected):
+            return self._execute_external(run_id)
         process = owner = None
         with self.lock, self.db.transaction():
             run = self._load(run_id)
+            self.access.require_job('runs', run_id, run.get('admission_id'), run['request_sha256'])
             if run['state'] != 'queued':
                 return
             self._event(run, 'running', 'Verifying frozen release and adapter before starting the CPU worker.')
@@ -802,12 +1543,60 @@ class Runs:
     def _verified_artifacts(self, run):
         if run['state'] != 'completed':
             raise WorkbenchError('This attempt has no published results.', 'unavailable', 409)
+        if self._external(run):
+            return self._verify_external_artifacts(run)
         artifacts, metrics = self._verify_directory(run, self.path / run['id'])
         if artifacts != run['artifacts'] or metrics != run['metrics']:
             raise WorkbenchError('Published artifacts differ from the admitted result receipt.', 'unavailable', 409)
         return artifacts
 
+    @authorized('inspect', 'runs.capture_artifact')
+    def capture_artifact(self, run_id, name, expected_sha256, *, max_bytes=MAX_ARTIFACT_BYTES):
+        """Capture a completed external artifact with server-derived custody evidence."""
+        import recipe_process
+        if type(expected_sha256) is not str or not re.fullmatch('[a-f0-9]{64}', expected_sha256):
+            raise WorkbenchError('Supply the expected artifact SHA256.')
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raise WorkbenchError('Scientific import requires a completed external Run.', 'unsupported', 400)
+        if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
+            raise WorkbenchError('Invalid artifact input byte bound.')
+        item = self._selected_external(run, name, max_bytes=max_bytes)
+        if item['sha256'] != expected_sha256:
+            raise WorkbenchError('Artifact differs from the expected SHA256.', 'conflict', 409)
+        raw = self._external_bytes(run, item)
+        if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != expected_sha256:
+            raise WorkbenchError('Artifact changed during capture.', 'conflict', 409)
+        receipt_raw = self._read_regular(self.path / run_id / 'custody-receipt.json', 16384)
+        if hashlib.sha256(receipt_raw).hexdigest() != run['custody_receipt_sha256']:
+            raise WorkbenchError('Custody receipt changed during capture.', 'conflict', 409)
+        try:
+            receipt = recipe_process.validate_receipt(receipt_raw, run['custody_identity'])
+        except recipe_process.ProcessError as error:
+            raise WorkbenchError('Retained custody receipt cannot be verified.', 'unavailable', 409) from error
+        if not receipt['drained'] or receipt['outcome'] != 'completed':
+            raise WorkbenchError('Run custody did not complete.', 'unavailable', 409)
+        source = {'schema_version': 1, 'catalog_id': run['dataset_id'],
+                  'run_id': run['id'], 'attempt_id': run['spec']['attempt_id'],
+                  'request_sha256': run['request_sha256'], 'material_sha256': run['material_sha256'],
+                  'artifact_name': item['name'], 'artifact_role': item['role'],
+                  'artifact_bytes': item['bytes'], 'measured_sha256': item['sha256'],
+                  'custody_receipt_sha256': run['custody_receipt_sha256'],
+                  'custody_identity': copy.deepcopy(run['custody_identity']),
+                  'custody_receipt_base64': base64.b64encode(receipt_raw).decode('ascii')}
+        return raw, source
+
+    @authorized('inspect', 'runs.artifact')
     def artifact(self, run_id, name):
+        with self.lock:
+            run = self._load(run_id)
+        if self._external(run):
+            item = self._selected_external(run, name, max_bytes=MAX_ARTIFACT_BYTES)
+            raw = self._external_bytes(run, item)
+            if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
+                raise WorkbenchError('Artifact changed during read.', 'unavailable', 409)
+            return raw, item['media_type']
         if name not in PAYLOADS | release_validation.PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown run artifact.', 'unavailable', 404)
         with self.lock:
@@ -829,11 +1618,14 @@ class Runs:
             raise WorkbenchError('Artifact changed during read.', 'unavailable', 409)
         return contents, item['media_type']
 
+    @authorized('expose-holdout', 'runs.expose_test')
     def expose_test(self, run_id, body):
         closed(body, ('reason',))
         reason = text_value(body['reason'], 'Exposure reason', 500)
         with self.lock:
             run = self._load(run_id)
+        if self._external(run):
+            raise WorkbenchError('External recipes have no classification test exposure operation.', 'unsupported', 409)
         if self._validation_run(run):
             raise WorkbenchError('Integrity validation has no model test results to expose.', 'unsupported', 409)
         self._verified_artifacts(run)
@@ -845,11 +1637,13 @@ class Runs:
                     self.db.execute('INSERT INTO workspace_exposures(id,record_id,source_hash,reason,run_id,release_id,created_at) '
                                     'VALUES(%s,%s,%s,%s,%s,%s,%s)',
                                     (uuid.uuid4().hex, source['id'], source_content_hash(source), reason, run_id, run['release_id'], at))
+            self.access.audit('runs.expose_test', run_id, {'event_id': event_id, 'release_sha256': run['release_sha256'], 'reason': reason})
             run['exposure_events'].append({'id': event_id, 'created_at': at, 'reason': reason})
             self._save(run)
         return {'id': event_id, 'run_id': run_id, 'release_id': run['release_id'], 'created_at': at, 'reason': reason,
                 'test_exposure': {'exposed': True, 'event_count': len(run['exposure_events'])}}
 
+    @authorized('inspect', 'runs.predictions')
     def predictions(self, run_id, split='validation'):
         if split not in ('validation', 'test'):
             raise WorkbenchError('Choose validation or test predictions.')

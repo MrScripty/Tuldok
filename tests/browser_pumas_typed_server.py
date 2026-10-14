@@ -25,14 +25,14 @@ original=app.make_handler
 
 def make_handler(dataset):
  class Handler(original(dataset)):
-  def do_POST(self):
-   if self.path=='/test/pumas-control':
+  def _post(self):
+   if self.path=='/api/test/pumas-control':
     body=json.loads(self.rfile.read(int(self.headers['Content-Length'])));configure(body);return self.reply({'configured':True})
-   if self.path=='/test/pumas-vision':
+   if self.path=='/api/test/pumas-vision':
     body=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
     vision_state.update(mode=body.get('mode','success'))
     return self.reply({'configured':True,'requests':vision_state['requests']})
-   return super().do_POST()
+   return super()._post()
  return Handler
 app.make_handler=make_handler
 print('TYPED_GATEWAY='+url,flush=True);print('TYPED_ORIGIN='+origin,flush=True)

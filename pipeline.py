@@ -3,6 +3,7 @@
 This owns closed classification and whole-asset validation recipes, not a general graph engine.
 Release custody and CPU adapter eligibility remain with their existing owners.
 """
+from access import authorized
 import copy
 import hashlib
 import json
@@ -20,6 +21,7 @@ import image_training
 import text_training
 import audio_training
 import release_validation
+import recipe_contract
 
 ID = re.compile(r'^[a-f0-9]{32}$')
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -59,7 +61,8 @@ def decode_graph(value):
     closed(value, ('schema_version', 'mode', 'id', 'revision', 'name', 'recipe_version', 'nodes', 'edges'), ('layout', 'recipe'))
     if value['schema_version'] != 1 or type(value['schema_version']) is not int or value['mode'] != 'real':
         raise WorkbenchError('Only real graph schema 1 is supported; fixture graphs cannot execute.', 'unsupported', 400)
-    adapter_for_graph(value)
+    if value.get('recipe') != 'external_recipe':
+        adapter_for_graph(value)
     identifier(value['id'], 'Graph ID')
     if type(value['revision']) is not int or value['revision'] < 1 or value['recipe_version'] != 1 or type(value['recipe_version']) is not int:
         raise WorkbenchError('Invalid graph or recipe revision.')
@@ -146,9 +149,11 @@ def source_content_hash(row):
 
 class Pipelines:
     def __init__(self, dataset):
+        self.access = dataset.access
         self.dataset, self.db, self.lock = dataset, dataset.db, dataset.lock
         self.source_path = Path(__file__).resolve().parent
 
+    @authorized('inspect', 'pipeline.definitions')
     def definitions(self):
         def definition(recipe, adapter):
             ports = ports_for_graph({'recipe': recipe})
@@ -180,15 +185,66 @@ class Pipelines:
         except (ValueError, TypeError, KeyError) as error:
             raise WorkbenchError('Stored graph is invalid: ' + str(error), 'unavailable', 409) from None
 
+    @authorized('inspect', 'pipeline.get')
     def get(self, graph_id):
         with self.lock:
             return self._get(graph_id)
 
+    @authorized('inspect', 'pipeline.list')
     def list(self):
         with self.lock:
             ids = [row[0] for row in self.db.execute('SELECT id FROM workspace_graphs ORDER BY id')]
             return [self._get(graph_id) for graph_id in ids]
 
+    @authorized('inspect', 'pipeline.inspect_external_recipe')
+    def inspect_external_recipe(self, project_id, reference_id, expected_sha256):
+        return recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
+
+    @authorized('edit', 'pipeline.create_external')
+    def create_external(self, body):
+        closed(body, ('name', 'project_id', 'recipe_id', 'expected_sha256', 'inputs'), ('parameters',))
+        inspected = self.inspect_external_recipe(body['project_id'], body['recipe_id'], body['expected_sha256'])
+        parameters = recipe_contract.validate_parameters(inspected['definition'], body.get('parameters', {}))
+        config = {key: body[key] for key in ('project_id', 'recipe_id', 'expected_sha256', 'inputs')}
+        graph = {'schema_version':1, 'mode':'real', 'recipe':'external_recipe', 'recipe_version':1,
+                 'id':uuid.uuid4().hex, 'revision':1, 'name':text_value(body['name'], 'Recipe name', 120),
+                 'nodes':[{'id':name,'type':name,'definition_version':1,
+                           'parameters':config if name == 'input' else parameters if name == 'execute' else {}}
+                          for name in recipe_contract.TYPES],
+                 'edges':[{'from':a,'output':recipe_contract.PORTS[a][1],'to':b,'input':recipe_contract.PORTS[b][0]}
+                          for a,b in zip(recipe_contract.TYPES,recipe_contract.TYPES[1:])], 'layout':{}}
+        graph = decode_graph(graph)
+        with self.lock, self.db.transaction():
+            self.db.execute('INSERT INTO workspace_graphs(id,revision,document) VALUES(%s,%s,%s)',
+                            (graph['id'], 1, encode(graph)))
+            self.access.audit('pipeline.create_external', graph['id'],
+                              {'revision':1,'document_sha256':digest(graph),'execution_sha256':execution_digest(graph)})
+        return graph
+
+    @authorized('inspect', 'pipeline.preflight_external')
+    def preflight_external(self, graph_id, revision):
+        graph = self.get(graph_id)
+        if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+        result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                    getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
+        if self.get(graph_id) != graph:
+            raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
+        return result
+
+    @authorized('inspect', 'pipeline.capture_external')
+    def capture_external(self, graph_id, revision, expected_digest, staging):
+        self.access.require_external_submission()
+        graph = self.get(graph_id)
+        if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
+            raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
+        result, captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                   getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
+        if expected_digest != result['material_sha256'] or self.get(graph_id) != graph:
+            raise WorkbenchError('Reviewed execution material changed. Preflight again.', 'stale', 409)
+        return dict(recipe_contract.capture(result, captured, staging), graph=graph)
+
+    @authorized('edit', 'pipeline.create')
     def create(self, body):
         closed(body, ('name', 'release_id'), ('recipe',))
         recipe = body.get('recipe', 'image_classification')
@@ -211,8 +267,12 @@ class Pipelines:
         with self.lock, self.db.transaction():
             self.db.execute('INSERT INTO workspace_graphs(id,revision,document) VALUES(%s,%s,%s)',
                             (graph['id'], graph['revision'], encode(graph)))
+            self.access.audit('pipeline.create', graph['id'],
+                              {'revision': graph['revision'], 'document_sha256': digest(graph),
+                               'execution_sha256': execution_digest(graph)})
         return graph
 
+    @authorized('edit', 'pipeline.save')
     def save(self, graph_id, body):
         closed(body, ('revision', 'document'))
         graph = decode_graph(body['document'])
@@ -225,8 +285,12 @@ class Pipelines:
             graph['revision'] += 1
             self.db.execute('UPDATE workspace_graphs SET revision=%s,document=%s WHERE id=%s AND revision=%s',
                             (graph['revision'], encode(graph), graph_id, current['revision']))
+            self.access.audit('pipeline.save', graph_id,
+                              {'revision': graph['revision'], 'document_sha256': digest(graph),
+                               'execution_sha256': execution_digest(graph)})
         return graph
 
+    @authorized('edit', 'pipeline.clone')
     def clone(self, graph_id, body):
         closed(body, ('name',))
         with self.lock, self.db.transaction():
@@ -234,8 +298,12 @@ class Pipelines:
             graph.update(id=uuid.uuid4().hex, revision=1, name=text_value(body['name'], 'Recipe name', 120))
             self.db.execute('INSERT INTO workspace_graphs(id,revision,document) VALUES(%s,%s,%s)',
                             (graph['id'], 1, encode(graph)))
+            self.access.audit('pipeline.clone', graph['id'],
+                              {'source_graph_id': graph_id, 'revision': 1,
+                               'document_sha256': digest(graph), 'execution_sha256': execution_digest(graph)})
         return graph
 
+    @authorized('inspect', 'pipeline.inspect_release')
     def inspect_release(self, release_id, *, private=False, recipe=None):
         selected_recipe = recipe
         path = self.dataset.releases.locate(release_id)
@@ -306,6 +374,7 @@ class Pipelines:
             result['path'] = str(path)
         return result
 
+    @authorized('inspect', 'pipeline.exposures')
     def exposures(self, records):
         """Current reuse evidence is append-only and independent of a release snapshot."""
         with self.lock:
@@ -315,6 +384,7 @@ class Pipelines:
                 ([row['id'] for row in records], [source_content_hash(row) for row in records]))]
         return {'exposed': bool(exposures), 'events': exposures}
 
+    @authorized('inspect', 'pipeline.releases')
     def releases(self):
         result = []
         paths = sorted(self.dataset.releases.path.glob('*.zip'), key=lambda path: path.name)[:100]
@@ -325,6 +395,7 @@ class Pipelines:
                 result.append({'id': path.stem, 'status': error.code, 'message': str(error)})
         return result
 
+    @authorized('inspect', 'pipeline.probe', target=lambda recipe='image_classification': recipe)
     def probe(self, recipe='image_classification'):
         adapter = adapter_for_graph({'recipe': recipe})
         if adapter is release_validation:
@@ -334,6 +405,9 @@ class Pipelines:
                 runtime.update(available=False, problems=[{'code': 'stale', 'message':
                     'Integrity definitions changed after application import. Restart the application before admission.'}])
             return dict(runtime, **identity)
+        # A native interpreter launch is execution even when its command only
+        # reports runtime capability. Pure integrity recipes above never spawn.
+        self.access.require('execute', 'pipeline.probe_native', recipe)
         worker_path = Path(adapter.__file__).resolve()
         executable = os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable
         try:
@@ -354,6 +428,7 @@ class Pipelines:
         probe.update(self.definition_identity(recipe))
         return probe
 
+    @authorized('inspect', 'pipeline.definition_identity', target=lambda recipe='image_classification': recipe)
     def definition_identity(self, recipe='image_classification'):
         # The worker imports the existing frozen-export contract, which in turn
         # imports Workbench's annotation types. Pin that small actual import set.
@@ -364,11 +439,17 @@ class Pipelines:
         if adapter is release_validation:
             files = release_validation.definition_files(self.source_path)
             return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
+        names = (*names, 'access.py')
         files = {name: hashlib.sha256((self.source_path / name).read_bytes()).hexdigest() for name in names}
         return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
 
+    @authorized('inspect', 'pipeline.validate_graph', target=lambda graph: graph.get('id') if isinstance(graph, dict) else None)
     def validate_graph(self, graph):
         graph = decode_graph(graph)
+        if graph.get('recipe') == 'external_recipe':
+            result, _captured = recipe_contract.prepare(self.dataset.projects, graph, execution_digest(graph),
+                                                        getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
+            return dict(result, errors=[], release=None)
         adapter = adapter_for_graph(graph)
         ports = ports_for_graph(graph)
         types = types_for_graph(graph)
@@ -425,6 +506,7 @@ class Pipelines:
                 'validation_token': token, 'graph_revision': graph['revision'],
                 'execution_sha256': execution_digest(graph), 'release': release, 'runtime': runtime}
 
+    @authorized('inspect', 'pipeline.validate')
     def validate(self, graph_id, body):
         closed(body, ('revision',))
         graph = self.get(graph_id)
@@ -435,6 +517,7 @@ class Pipelines:
             raise WorkbenchError('Graph changed during validation.', 'stale', 409)
         return result
 
+    @authorized('inspect', 'pipeline.snapshot')
     def snapshot(self, graph_id, revision, validation_token):
         graph = self.get(graph_id)
         result = self.validate(graph_id, {'revision': revision})

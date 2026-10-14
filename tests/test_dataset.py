@@ -1,3 +1,4 @@
+from auth_helpers import bind_owner
 import base64
 from postgres_helpers import install_failure_trigger
 import io
@@ -30,7 +31,7 @@ class DatasetTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.data=Dataset(self.tmp.name)
+        self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.addCleanup(self.data.close)
 
     def add(self,color='beige',book='book-a',session='desk',split='unassigned'):

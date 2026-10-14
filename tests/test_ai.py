@@ -1,3 +1,4 @@
+from auth_helpers import bind_owner
 import base64
 import io
 import json
@@ -18,7 +19,7 @@ from fake_ai import start, RESULT
 class AITests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
-        self.data=Dataset(self.tmp.name);self.addCleanup(self.data.close)
+        self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data);self.addCleanup(self.data.close)
         image=io.BytesIO();Image.new('RGB',(200,100),'beige').save(image,'PNG')
         self.sample=self.data.add(dict(image=base64.b64encode(image.getvalue()).decode(),session_id='s',book_id='b'))
         self.server,self.url,self.requests=start();self.addCleanup(self.server.server_close);self.addCleanup(self.server.shutdown)

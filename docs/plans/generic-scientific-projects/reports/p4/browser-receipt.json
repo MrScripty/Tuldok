@@ -1,0 +1,898 @@
+{
+  "source_commit": "7d590605006f48f6c3f710b91a75ad4455d0a9d7",
+  "dirty": true,
+  "qualification": "Actual optional native generator through approved production Runs; exact field custody and bounded numerical observations",
+  "model_or_training_acceptance": false,
+  "general_physics_acceptance": false,
+  "gpu_or_performance_acceptance": false,
+  "checks": [
+    "Actual native approved generation completes; invalid grid and stale/tampered artifact imports refuse before Data writes",
+    "All six native fields and eighteen inspected planes match independent NumPy/wire bytes, MAC placement and diagnostics",
+    "Separate explicit human review and canonical freeze preserve the exact generated bundle and verifiable run provenance",
+    "A second native seed changes actual arrays and family; shorter frame count preserves original initial-condition family and frame bytes",
+    "Cancellation publishes no importable partial scientific artifact",
+    "Server restart retains approved Run, reviewed data, exact frozen release and unchanged project sources"
+  ],
+  "captures": [
+    {
+      "file": "native-pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual bounded native generation UI; no model/GPU acceptance"
+    },
+    {
+      "file": "native-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual bounded native generation UI; no model/GPU acceptance"
+    },
+    {
+      "file": "native-runs-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual bounded native generation UI; no model/GPU acceptance"
+    },
+    {
+      "file": "native-runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual bounded native generation UI; no model/GPU acceptance"
+    },
+    {
+      "file": "native-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual bounded native generation and custody; no model/GPU acceptance"
+    },
+    {
+      "file": "native-data-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual bounded native generation and custody; no model/GPU acceptance"
+    }
+  ],
+  "cancelled_run": {
+    "id": "5c7103d661af40c9a941e496f5c068ca",
+    "state": "cancelled",
+    "custody_phase": "drained",
+    "events": [
+      {
+        "at": "2026-10-13T18:15:23.174325+00:00",
+        "message": "Exact owner-approved external recipe admitted.",
+        "state": "queued"
+      },
+      {
+        "at": "2026-10-13T18:15:23.322932+00:00",
+        "message": "Starting the approved custodian; recipe waits behind its launch barrier.",
+        "state": "running"
+      },
+      {
+        "at": "2026-10-13T18:15:23.375371+00:00",
+        "message": "Cancellation requested; waiting for confirmed process-group cessation.",
+        "state": "cancelling"
+      },
+      {
+        "at": "2026-10-13T18:15:23.752463+00:00",
+        "message": "External process drained without successful publication.",
+        "state": "cancelled"
+      }
+    ]
+  },
+  "run_id": "82e605bd024346d2ae89cf6cef1465b2",
+  "record_id": "80790a28f790430fb6cf4c6dc4373b3c",
+  "build_receipt_sha256": "332aa36d8ce02585be77fbd74f8a7dfcfe9a297a3054b5bb67461ee3556d1e40",
+  "binary_sha256": "4e4e49f0e3febf5b11556c2a1daac3dc684e9fb9a9c3c742329d804a4913ceff",
+  "cold": {
+    "scope": "Actual native generation custody and bounded full-grid numerical observations",
+    "numpy": "2.5.4",
+    "bundle_sha256": "9ab28ba4dec22448478a136dcae634e0dcdc43c36866ef4d091770c5f4f68a2c",
+    "wire_sha256": "6b16244014dca96f81c2101149aa98e9692bb84d8b4de0671dbb13831ed1d4cb",
+    "grid": 32,
+    "frames": 2,
+    "seed": 100,
+    "family": {
+      "id": "f384aaff7ae7dd3481d063c6e8c2012bb878d32b839e4f4dd3abcfefd1a8c9e7",
+      "namespace": "rheon-trajectory-probe-scene-v1"
+    },
+    "arrays": [
+      {
+        "frame": 0,
+        "field": "rhs",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "centering": "cell",
+        "payload_sha256": "3cc118b9c270d56a77ece2d19735fe1774860e88b850db419a6211d12cb234ed",
+        "stage": "preprojection RHS",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "pressure",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "centering": "cell",
+        "payload_sha256": "84cdbdbe5fe074e07024a1110c5c6e529940e87c0ebfb1a2dfe12e4fcfd1398b",
+        "stage": "solved pressure",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "velocity_x",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          33
+        ],
+        "centering": "face_x",
+        "payload_sha256": "d12eed953cdc887e7934ea22e2978e8b36008d2a4d25e7f754e290fa47918853",
+        "stage": "corrected velocity",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "velocity_y",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          33,
+          32
+        ],
+        "centering": "face_y",
+        "payload_sha256": "6978a87f5f662c6e85eed79aeac5c5eb1fcb4eca4154421b9bad3286971e7359",
+        "stage": "corrected velocity",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "velocity_z",
+        "dtype": "<f4",
+        "shape_zyx": [
+          33,
+          32,
+          32
+        ],
+        "centering": "face_z",
+        "payload_sha256": "ba6a73abf6f33871aa172973caca34015c8c77eb2d476a1b09bdf03e5ad5eeb8",
+        "stage": "corrected velocity",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 0,
+        "field": "tracer",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "centering": "cell",
+        "payload_sha256": "0b0135ff3602dbfcdae83540f64327c4e80711775adca8ebd080254101442bb6",
+        "stage": "advected tracer",
+        "time": "0.016666666666666666"
+      },
+      {
+        "frame": 1,
+        "field": "rhs",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "centering": "cell",
+        "payload_sha256": "88af5059f23cf8d392b6c77f4a14bb253f15d741aede2fc1a5e9001bf651964b",
+        "stage": "preprojection RHS",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "pressure",
+        "dtype": "<f8",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "centering": "cell",
+        "payload_sha256": "6817035021b488ac58f6e9f27e765493235885d450826d3ef5e62df4500fd651",
+        "stage": "solved pressure",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "velocity_x",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          33
+        ],
+        "centering": "face_x",
+        "payload_sha256": "c9020171f12ee53c7b11e320242847545edcc96675385441b9288ac12ab63c36",
+        "stage": "corrected velocity",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "velocity_y",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          33,
+          32
+        ],
+        "centering": "face_y",
+        "payload_sha256": "5c476c8f91fac7bac551fb0fce85993b642a6497898aba312beb73d88b0605c3",
+        "stage": "corrected velocity",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "velocity_z",
+        "dtype": "<f4",
+        "shape_zyx": [
+          33,
+          32,
+          32
+        ],
+        "centering": "face_z",
+        "payload_sha256": "f8326ebdf4bcdf94bdeff4ca21f46e265563749c1e06dc5c165e83ff1180ca6c",
+        "stage": "corrected velocity",
+        "time": "0.03333333333333333"
+      },
+      {
+        "frame": 1,
+        "field": "tracer",
+        "dtype": "<f4",
+        "shape_zyx": [
+          32,
+          32,
+          32
+        ],
+        "centering": "cell",
+        "payload_sha256": "ac207aaf19329c53f9147f5163fff9047d924d7051cbb05101724e06fa373446",
+        "stage": "advected tracer",
+        "time": "0.03333333333333333"
+      }
+    ],
+    "diagnostics": [
+      {
+        "frame": 0,
+        "actual_divergence_max": 2.9802322387695312e-8,
+        "wall_normal_velocity_zero": true,
+        "tracer_integral": 0.00034499217481302226,
+        "tracer_integral_tolerance": {
+          "relative": 1e-12,
+          "absolute": 1e-15
+        }
+      },
+      {
+        "frame": 1,
+        "actual_divergence_max": 5.960464477539063e-8,
+        "wall_normal_velocity_zero": true,
+        "tracer_integral": 0.0006897932466234991,
+        "tracer_integral_tolerance": {
+          "relative": 1e-12,
+          "absolute": 1e-15
+        }
+      }
+    ],
+    "original_wire_exact": true,
+    "model_or_training_acceptance": false,
+    "general_physics_acceptance": false,
+    "gpu_or_performance_acceptance": false
+  },
+  "variants": [
+    {
+      "run": "317dae98ddcf4efd9109cb59aefa6a0b",
+      "record_id": "8320d52107864d8cb2b7f8af9fa8c689",
+      "groups": [
+        "field-sequence-source:7e8899fd2e665ff2c35c96b99a380d2e297b7d9ff67819d617e40430b110fcb1",
+        "field-sequence-state:19d02ab37cfbf76b20c7a89ec9bfd9d1b60f3d667fcbbcb8143da0bf83d49ff4",
+        "field-sequence-family:2b3e7ddf8325ace0a57f9d93f339106a84c7c9aefa45ac9cb6d4f2bd2301d812"
+      ],
+      "cold": {
+        "scope": "Actual native generation custody and bounded full-grid numerical observations",
+        "numpy": "2.5.4",
+        "bundle_sha256": "7e8899fd2e665ff2c35c96b99a380d2e297b7d9ff67819d617e40430b110fcb1",
+        "wire_sha256": "77e395a1c567700f55eecd81410560b366f973133c08b93e863078c47e96280b",
+        "grid": 32,
+        "frames": 2,
+        "seed": 101,
+        "family": {
+          "id": "b0d1e4fb94acb00dc98df3762dd6a4d567e92bc7a089ebeab9842ba37d1f00b9",
+          "namespace": "rheon-trajectory-probe-scene-v1"
+        },
+        "arrays": [
+          {
+            "frame": 0,
+            "field": "rhs",
+            "dtype": "<f8",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "5caecb5c7c384524a5872222b30a22bb78df39643f2775e760259dbf5018c229",
+            "stage": "preprojection RHS",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "pressure",
+            "dtype": "<f8",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "5db8e2b71f0fd8b9d0bb9a1543ee288324211b2da671687b8a4d724f9b62f566",
+            "stage": "solved pressure",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "velocity_x",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              32,
+              33
+            ],
+            "centering": "face_x",
+            "payload_sha256": "aff8ba8779da427c48ebfda01bef3ccba52c57b9b330b52c675158fcfb800b98",
+            "stage": "corrected velocity",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "velocity_y",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              33,
+              32
+            ],
+            "centering": "face_y",
+            "payload_sha256": "359739c05568b07b4722307d5fe95eb850f0c5dfadd48233a2a181c43b82e2fa",
+            "stage": "corrected velocity",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "velocity_z",
+            "dtype": "<f4",
+            "shape_zyx": [
+              33,
+              32,
+              32
+            ],
+            "centering": "face_z",
+            "payload_sha256": "f30acccce86da615e459114fd5f5af15706fc8161b29661de44a89850b21355e",
+            "stage": "corrected velocity",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "tracer",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "64ed93809e7838f5fea9c6cb62a378f8314020390e24d07c9ed6037ef0b81e51",
+            "stage": "advected tracer",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 1,
+            "field": "rhs",
+            "dtype": "<f8",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "53f3fb9e943607cb3515f42de7d6fb70a456c511847b544ae70453544d3a4ab5",
+            "stage": "preprojection RHS",
+            "time": "0.03333333333333333"
+          },
+          {
+            "frame": 1,
+            "field": "pressure",
+            "dtype": "<f8",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "cb57faa3667ba4734de1b8821ad0695455197f2f24ec3e9ed830065c15707c0b",
+            "stage": "solved pressure",
+            "time": "0.03333333333333333"
+          },
+          {
+            "frame": 1,
+            "field": "velocity_x",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              32,
+              33
+            ],
+            "centering": "face_x",
+            "payload_sha256": "374f2ec5f45e9d177aff9ef98b6e57052b784fca0581332bb7847d63a6344eff",
+            "stage": "corrected velocity",
+            "time": "0.03333333333333333"
+          },
+          {
+            "frame": 1,
+            "field": "velocity_y",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              33,
+              32
+            ],
+            "centering": "face_y",
+            "payload_sha256": "5611c95a57e87f93af3921134edda81a8d2d9a781897811ec448193327017712",
+            "stage": "corrected velocity",
+            "time": "0.03333333333333333"
+          },
+          {
+            "frame": 1,
+            "field": "velocity_z",
+            "dtype": "<f4",
+            "shape_zyx": [
+              33,
+              32,
+              32
+            ],
+            "centering": "face_z",
+            "payload_sha256": "9b275b5a9ec773b16a8edfb5e087ba02f12e819f1ee886e8acf0be7dcc644dce",
+            "stage": "corrected velocity",
+            "time": "0.03333333333333333"
+          },
+          {
+            "frame": 1,
+            "field": "tracer",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "36f9475c81e7d6e5643650c5e7d71a120c7f44de1ff4c7d30847af8012d161a1",
+            "stage": "advected tracer",
+            "time": "0.03333333333333333"
+          }
+        ],
+        "diagnostics": [
+          {
+            "frame": 0,
+            "actual_divergence_max": 2.9802322387695312e-8,
+            "wall_normal_velocity_zero": true,
+            "tracer_integral": 0.00034499559781935095,
+            "tracer_integral_tolerance": {
+              "relative": 1e-12,
+              "absolute": 1e-15
+            }
+          },
+          {
+            "frame": 1,
+            "actual_divergence_max": 4.7497451305389404e-8,
+            "wall_normal_velocity_zero": true,
+            "tracer_integral": 0.000689810759612555,
+            "tracer_integral_tolerance": {
+              "relative": 1e-12,
+              "absolute": 1e-15
+            }
+          }
+        ],
+        "original_wire_exact": true,
+        "model_or_training_acceptance": false,
+        "general_physics_acceptance": false,
+        "gpu_or_performance_acceptance": false
+      }
+    },
+    {
+      "run": "f993377a8e8c444fb71561f2bc2a26c5",
+      "record_id": "b125ab68fe784c06914c1ad2ce27f17d",
+      "groups": [
+        "field-sequence-source:428da3294e2032b3b212688c317cf14a03508a0704ecc1c5dfae841992118bf0",
+        "field-sequence-state:edf7cfc669180378e566a3b86a005a35fbfadea8bfe09c8c7d55b46b41785ef6",
+        "field-sequence-family:0a67a1962d4c00b4f68309bc3590194cca58a9845b1eb7ac494b082e0be20ad9"
+      ],
+      "cold": {
+        "scope": "Actual native generation custody and bounded full-grid numerical observations",
+        "numpy": "2.5.4",
+        "bundle_sha256": "428da3294e2032b3b212688c317cf14a03508a0704ecc1c5dfae841992118bf0",
+        "wire_sha256": "2a51443af7732bf3bb0f02d532d922e691cc2368322473be26659bdcb02d83c0",
+        "grid": 32,
+        "frames": 1,
+        "seed": 100,
+        "family": {
+          "id": "f384aaff7ae7dd3481d063c6e8c2012bb878d32b839e4f4dd3abcfefd1a8c9e7",
+          "namespace": "rheon-trajectory-probe-scene-v1"
+        },
+        "arrays": [
+          {
+            "frame": 0,
+            "field": "rhs",
+            "dtype": "<f8",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "3cc118b9c270d56a77ece2d19735fe1774860e88b850db419a6211d12cb234ed",
+            "stage": "preprojection RHS",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "pressure",
+            "dtype": "<f8",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "84cdbdbe5fe074e07024a1110c5c6e529940e87c0ebfb1a2dfe12e4fcfd1398b",
+            "stage": "solved pressure",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "velocity_x",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              32,
+              33
+            ],
+            "centering": "face_x",
+            "payload_sha256": "d12eed953cdc887e7934ea22e2978e8b36008d2a4d25e7f754e290fa47918853",
+            "stage": "corrected velocity",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "velocity_y",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              33,
+              32
+            ],
+            "centering": "face_y",
+            "payload_sha256": "6978a87f5f662c6e85eed79aeac5c5eb1fcb4eca4154421b9bad3286971e7359",
+            "stage": "corrected velocity",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "velocity_z",
+            "dtype": "<f4",
+            "shape_zyx": [
+              33,
+              32,
+              32
+            ],
+            "centering": "face_z",
+            "payload_sha256": "ba6a73abf6f33871aa172973caca34015c8c77eb2d476a1b09bdf03e5ad5eeb8",
+            "stage": "corrected velocity",
+            "time": "0.016666666666666666"
+          },
+          {
+            "frame": 0,
+            "field": "tracer",
+            "dtype": "<f4",
+            "shape_zyx": [
+              32,
+              32,
+              32
+            ],
+            "centering": "cell",
+            "payload_sha256": "0b0135ff3602dbfcdae83540f64327c4e80711775adca8ebd080254101442bb6",
+            "stage": "advected tracer",
+            "time": "0.016666666666666666"
+          }
+        ],
+        "diagnostics": [
+          {
+            "frame": 0,
+            "actual_divergence_max": 2.9802322387695312e-8,
+            "wall_normal_velocity_zero": true,
+            "tracer_integral": 0.00034499217481302226,
+            "tracer_integral_tolerance": {
+              "relative": 1e-12,
+              "absolute": 1e-15
+            }
+          }
+        ],
+        "original_wire_exact": true,
+        "model_or_training_acceptance": false,
+        "general_physics_acceptance": false,
+        "gpu_or_performance_acceptance": false
+      }
+    }
+  ],
+  "released": {
+    "schema_version": 1,
+    "validation": "field_sequence_release_integrity",
+    "release_sha256": "739b713957a0d801cf1b1aaf2a171a404af0d8669bb547ad7b2eb53295633f62",
+    "field_sequence_count": 1,
+    "frame_count": 2,
+    "split_counts": {
+      "train": 1,
+      "validation": 0,
+      "test": 0
+    },
+    "family_scope": "selected_records_only",
+    "limitations": [
+      "Family checks cover selected records only. Canonical v1 does not retain every omitted ancestor or bridge.",
+      "Review, rights, units, geometry, temporal meaning and provenance are frozen declarations, not independently certified claims.",
+      "Field integrity does not establish physical validity, independent trajectories, model quality or training suitability."
+    ],
+    "field_sequences": [
+      {
+        "id": "80790a28f790430fb6cf4c6dc4373b3c",
+        "name": "Scientific field sequence",
+        "revision": 2,
+        "source_revision": 1,
+        "split": "train",
+        "review": "human_reviewed",
+        "asset_sha256": "9ab28ba4dec22448478a136dcae634e0dcdc43c36866ef4d091770c5f4f68a2c",
+        "rights": "unknown",
+        "manifest": {
+          "family": {
+            "id": "f384aaff7ae7dd3481d063c6e8c2012bb878d32b839e4f4dd3abcfefd1a8c9e7",
+            "namespace": "rheon-trajectory-probe-scene-v1"
+          },
+          "fields": [
+            {
+              "centering": "cell",
+              "dtype": "<f8",
+              "id": "rhs",
+              "label": "rhs",
+              "stage": "preprojection RHS",
+              "units": "native units (unspecified)"
+            },
+            {
+              "centering": "cell",
+              "dtype": "<f8",
+              "id": "pressure",
+              "label": "pressure",
+              "stage": "solved pressure",
+              "units": "native units (unspecified)"
+            },
+            {
+              "centering": "face_x",
+              "dtype": "<f4",
+              "id": "velocity_x",
+              "label": "velocity x",
+              "stage": "corrected velocity",
+              "units": "native units (unspecified)"
+            },
+            {
+              "centering": "face_y",
+              "dtype": "<f4",
+              "id": "velocity_y",
+              "label": "velocity y",
+              "stage": "corrected velocity",
+              "units": "native units (unspecified)"
+            },
+            {
+              "centering": "face_z",
+              "dtype": "<f4",
+              "id": "velocity_z",
+              "label": "velocity z",
+              "stage": "corrected velocity",
+              "units": "native units (unspecified)"
+            },
+            {
+              "centering": "cell",
+              "dtype": "<f4",
+              "id": "tracer",
+              "label": "tracer",
+              "stage": "advected tracer",
+              "units": "native units (unspecified)"
+            }
+          ],
+          "format": "scientific_field_sequence_v1",
+          "frames": [
+            {
+              "arrays": [
+                {
+                  "bytes": 262272,
+                  "field": "rhs",
+                  "path": "arrays/000-rhs.npy",
+                  "sha256": "dba7f3dfe644dc84d404efab25170164652127e912f85f1173e634e91fb12105"
+                },
+                {
+                  "bytes": 262272,
+                  "field": "pressure",
+                  "path": "arrays/000-pressure.npy",
+                  "sha256": "4b2525b59b9f0cc3a3a62e363b739f6b2146d44c055b33e67db23cb2a1c30d2b"
+                },
+                {
+                  "bytes": 135296,
+                  "field": "velocity_x",
+                  "path": "arrays/000-velocity_x.npy",
+                  "sha256": "d6d035aef1ecdc814b7238c9a507787991e0b4aedcd4f8a3919fd837cdfc62cd"
+                },
+                {
+                  "bytes": 135296,
+                  "field": "velocity_y",
+                  "path": "arrays/000-velocity_y.npy",
+                  "sha256": "0560d39a401daa09b077d96cc816d25d48ef7cb415f1c81ce55e4732913cd7ea"
+                },
+                {
+                  "bytes": 135296,
+                  "field": "velocity_z",
+                  "path": "arrays/000-velocity_z.npy",
+                  "sha256": "6fbf0e75ce20bbcbd9df7f42b4f14a042e0d80c0474ffc381d3ccc54653b46ec"
+                },
+                {
+                  "bytes": 131200,
+                  "field": "tracer",
+                  "path": "arrays/000-tracer.npy",
+                  "sha256": "d8ac9ddf670bc9dc5085dfb56f09f30863c1f215fcc3436b5458a32db40dc3ac"
+                }
+              ],
+              "time": "0.016666666666666666"
+            },
+            {
+              "arrays": [
+                {
+                  "bytes": 262272,
+                  "field": "rhs",
+                  "path": "arrays/001-rhs.npy",
+                  "sha256": "1dff9d30fe74e283e9805dc972495435a5fc43af5eceacd1cf89e043fc374c2e"
+                },
+                {
+                  "bytes": 262272,
+                  "field": "pressure",
+                  "path": "arrays/001-pressure.npy",
+                  "sha256": "2143406eceeb35536da060f665ad1c8a0e37ce95728d9031ec3fe52a0c9810ad"
+                },
+                {
+                  "bytes": 135296,
+                  "field": "velocity_x",
+                  "path": "arrays/001-velocity_x.npy",
+                  "sha256": "ad61a243d6efea1fc5587d6fa13038982a095c20158feec010721d47196ecd66"
+                },
+                {
+                  "bytes": 135296,
+                  "field": "velocity_y",
+                  "path": "arrays/001-velocity_y.npy",
+                  "sha256": "0376fcedf909f0e60cdb34bc74e252509d99367d4f2fc591ef0eeaa736ed4728"
+                },
+                {
+                  "bytes": 135296,
+                  "field": "velocity_z",
+                  "path": "arrays/001-velocity_z.npy",
+                  "sha256": "b089d9ea9fa618ee5beb9be8576972577307a886dd2f448c22f662b588de9703"
+                },
+                {
+                  "bytes": 131200,
+                  "field": "tracer",
+                  "path": "arrays/001-tracer.npy",
+                  "sha256": "240245f2928c098f8a0594d6bb5a0ecb21186a041e7402a98a788eea00cee20c"
+                }
+              ],
+              "time": "0.03333333333333333"
+            }
+          ],
+          "grid": {
+            "orientation": [
+              [
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "origin_xyz": [
+              0,
+              0,
+              0
+            ],
+            "shape_xyz": [
+              32,
+              32,
+              32
+            ],
+            "spacing_xyz": [
+              0.03125,
+              0.03125,
+              0.03125
+            ],
+            "units": "native length units (unspecified)"
+          },
+          "provenance": {
+            "producer": "Optional Rheon trajectory adapter; Jacobi",
+            "source_id": "52b7ba08c30793257ae829502abf887c019b11e1f28c72c5385411742f0f85a0"
+          },
+          "schema_version": 1,
+          "sources": [
+            {
+              "bytes": 2122674,
+              "description": "Original producer/build evidence; retained exact bytes",
+              "path": "sources/wire.bin",
+              "sha256": "6b16244014dca96f81c2101149aa98e9692bb84d8b4de0671dbb13831ed1d4cb"
+            },
+            {
+              "bytes": 19629,
+              "description": "Original producer/build evidence; retained exact bytes",
+              "path": "sources/build-receipt.json",
+              "sha256": "332aa36d8ce02585be77fbd74f8a7dfcfe9a297a3054b5bb67461ee3556d1e40"
+            },
+            {
+              "bytes": 2174,
+              "description": "Original producer/build evidence; retained exact bytes",
+              "path": "sources/producer-receipt.json",
+              "sha256": "52b7ba08c30793257ae829502abf887c019b11e1f28c72c5385411742f0f85a0"
+            },
+            {
+              "bytes": 1116,
+              "description": "Original producer/build evidence; retained exact bytes",
+              "path": "sources/native-policy.json",
+              "sha256": "200e43243bb626b5746e012735a971ef58febbd514a4220def56872b62cc6fc7"
+            }
+          ],
+          "time_units": "native time units (unspecified)"
+        },
+        "frame_count": 2,
+        "field_count": 6,
+        "source_bytes": 4274958,
+        "first_observed_state_sha256": "edf7cfc669180378e566a3b86a005a35fbfadea8bfe09c8c7d55b46b41785ef6"
+      }
+    ]
+  },
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "browser": "Chrome/151.0.7922.173"
+}

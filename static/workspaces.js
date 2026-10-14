@@ -30,11 +30,13 @@ window.workspaceEscape = (value) =>
   let store = null,
     pipeline = null,
     runs = null;
+  let catalogImportIntent=0;
   let workspaceIntent = 0, fragmentIntent = null, realCorrection = null;
-  function invalidateCorrection() {
-    workspaceIntent++;
+  function invalidateCorrection(navigation=true) {
+    workspaceIntent++;if(navigation)catalogImportIntent++;
     $("catalog-frame").contentWindow?.TuldokWorkspaceData?.cancelRecordOpen?.();
   }
+  window.addEventListener("tuldok-session", () => invalidateCorrection());
   function renderCorrection(record = catalogContext?.record) {
     const banner = $("real-correction-context");
     banner.hidden = source !== "catalog" || !realCorrection || record?.id !== realCorrection.id;
@@ -47,6 +49,7 @@ window.workspaceEscape = (value) =>
     runsRoot: $("real-runs-root"),
     announce,
     openRun: () => { location.hash = "runs"; },
+    openImportedRecord: openCatalogRecord,
     openRecord: async (prediction) => {
       const bridge = $("catalog-frame").contentWindow?.TuldokWorkspaceData;
       if (!bridge) { announce("Open Data once to load the current catalog editor.", true); return; }
@@ -78,7 +81,7 @@ window.workspaceEscape = (value) =>
   // dataset identity. Live references are re-read and revision-checked on reload.
   const remembered = history.state?.workspace;
   if (remembered?.version === 1) {
-    if (["fixtures", "catalog"].includes(remembered.source))
+    if (["fixtures", "catalog"].includes(remembered.source) || (typeof remembered.source === "string" && remembered.source.startsWith("project:") && remembered.source.length > 8))
       source = remembered.source;
     if (typeof remembered.active === "string") active = remembered.active;
     if (Array.isArray(remembered.selected))
@@ -86,6 +89,36 @@ window.workspaceEscape = (value) =>
         remembered.selected.filter((id) => typeof id === "string"),
       );
     catalogContext = remembered.catalog || null;
+  }
+  if (source.startsWith("project:")) {
+    const option=document.createElement("option");option.value=source;option.textContent="Remembered project";$("dataset").append(option);$("dataset").value=source;
+  }
+  const projects = WorkspaceProjects({select:$("dataset"),
+    roots:{data:$("project-data-root"),pipeline:$("project-pipeline-root"),runs:$("project-runs-root")},
+    announce,switchSource,contextChanged:context,openCatalogRecord,openExternalGraph:async id=>{const intent=workspaceIntent;if(await real.openGraph(id,()=>intent===workspaceIntent)){switchSource("catalog");location.hash="pipeline";}else announce("Saved graph "+id+". Current workspace and recipe edits retained.");}});
+  async function openCatalogRecord(id) {
+    try {
+    switchSource("catalog");
+    location.hash="#data";
+    await new Promise(resolve=>setTimeout(resolve,0));
+    const importIntent=catalogImportIntent,deadline=Date.now()+10000;
+    while(importIntent===catalogImportIntent&&source==="catalog" && Date.now()<deadline) {
+      const bridge=$("catalog-frame").contentWindow?.TuldokWorkspaceData;
+      if(bridge&&catalogReady&&!restoringCatalog&&currentView==="data") {
+        const intent=workspaceIntent;
+        const result=await bridge.openImportedRecord(id);
+        if(intent!==workspaceIntent||source!=="catalog")return;
+        catalogRestoreNotice=null;
+        $("catalog-status").textContent=result.kind==="available"?"Imported scientific fields ready.":`Imported ${id}. ${result.message}`;
+        return;
+      }
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    announce(`Imported ${id}. Open it from the current catalog.`);
+    } catch(error) {
+      const message=`Imported ${id}. Catalog opening failed: ${error.message}`;
+      $("catalog-status").textContent=message;announce(message);
+    }
   }
   let restoringCatalog = false,
     catalogRestoreNotice = null;
@@ -126,6 +159,8 @@ window.workspaceEscape = (value) =>
     if (source === "fixtures")
       $("context").textContent =
         `fixture-dataset-v1 · ${selected.size} selected · ${draftDirty ? "unsaved fixture draft" : "authored CC0 examples"} · release fixture-release-v1`;
+    else if (source.startsWith("project:"))
+      $("context").textContent = projects.label() + " · inspection only · external references";
     else
       $("context").textContent = catalogContext
         ? `${catalogContext.selection.length} exact revisions selected · ${catalogContext.record?.name || "No active record"} · ${catalogContext.dirty ? "unsaved edits" : "saved state"}${real.identity() ? " · catalog " + real.identity().slice(0, 12) : " · current catalog handle"}`
@@ -162,6 +197,7 @@ window.workspaceEscape = (value) =>
         $("catalog-frame").src = "/workbench?workspace=1";
       return;
     }
+    if (source.startsWith("project:")) return;
     if (!fixtures || !store) return;
     const record = fixtures.records.find((r) => r.id === active);
     if (!record) {
@@ -243,6 +279,7 @@ window.workspaceEscape = (value) =>
     }
     invalidateCorrection();
     source = next;
+    if (source.startsWith("project:")) $("dataset").disabled = false;
     $("dataset").value = next;
     renderData();
     showView();
@@ -285,8 +322,11 @@ window.workspaceEscape = (value) =>
     $("real-pipeline-root").hidden = source !== "catalog";
     $("real-runs-root").hidden = source !== "catalog";
     real.show(source === "catalog" ? next : null);
+    projects.show(source, next);
     if (next === "runs" && source === "fixtures") runs?.render();
-    if (next !== "data" && source === "catalog")
+    if (source.startsWith("project:"))
+      announce("Project inspection · " + next + ". Execution is unsupported.");
+    else if (next !== "data" && source === "catalog")
       announce("Current catalog · real " + next + ". Source edits remain mounted in Data.");
     else
       announce(
@@ -354,9 +394,10 @@ window.workspaceEscape = (value) =>
         : "Current Data owner ready.");
     if (source === "catalog" && currentView === "data") context();
   });
-  let catalogLoadEpoch = 0;
+  let catalogLoadEpoch = 0, catalogReady = false;
   $("catalog-frame").addEventListener("load", async () => {
-    invalidateCorrection();
+    invalidateCorrection(false);
+    catalogReady=false;
     const epoch = ++catalogLoadEpoch;
     const bridge = $("catalog-frame").contentWindow?.TuldokWorkspaceData;
     if (!bridge) {
@@ -385,6 +426,7 @@ window.workspaceEscape = (value) =>
         }
       }
     }
+    if(epoch===catalogLoadEpoch)catalogReady=true;
   });
   async function load() {
     const epoch = ++loadEpoch;
@@ -392,7 +434,7 @@ window.workspaceEscape = (value) =>
     $("retry-load").hidden = true;
     $("workspace-error").hidden = true;
     try {
-      const response = await fetch("/workspace-fixtures.json");
+      const response = await (globalThis.TuldokAuth?.fetch || fetch)("/workspace-fixtures.json");
       if (!response.ok)
         throw Error("Fixture request failed (" + response.status + ").");
       const data = await response.json();
@@ -463,6 +505,7 @@ window.workspaceEscape = (value) =>
       $("workspace-error").textContent = error.message;
       $("workspace-error").hidden = false;
       $("retry-load").hidden = false;
+      if (source.startsWith("project:")) { $("dataset").disabled=false;renderData();showView(); }
       announce(
         "Workspace fixture loading failed. The classic workbench remains available.",
         true,
@@ -470,5 +513,6 @@ window.workspaceEscape = (value) =>
     }
   }
   $("retry-load").onclick = load;
+  projects.initialize();
   load();
 })();

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Tuldok · Dataset workspaces</title>
     <link rel="stylesheet" href="/workspaces.css" />
-  </head>
+  <link rel="stylesheet" href="/auth.css"><script src="/auth.js"></script></head>
   <body>
     <a class="skip" href="#workspace">Skip to workspace</a>
     <header class="topbar">
@@ -21,13 +21,14 @@
     </header>
     <div class="context-bar">
       <div>
-        <span class="eyebrow">DATASET</span
+        <span class="eyebrow">CONTEXT</span
         ><label class="sr-only" for="dataset">Dataset</label
         ><select id="dataset">
           <option value="fixtures">Interface fixtures</option>
           <option value="catalog">Current local catalog</option>
         </select>
       </div>
+      <button id="open-project" type="button">Open project</button>
       <div id="context" class="context-copy">Loading workspace…</div>
       <span class="badge amber">Local preview</span>
     </div>
@@ -50,6 +51,7 @@
           <p>Inspect records, keep their evidence, review deliberately.</p>
         </div>
         <div id="fixture-data"></div>
+        <div id="project-data-root" hidden></div>
         <div id="catalog-data" hidden>
           <p class="callout">
             Live catalog · imports and saves below use the existing Data owners.
@@ -74,6 +76,7 @@
         </div>
         <div id="pipeline-root"></div>
         <div id="real-pipeline-root" hidden></div>
+        <div id="project-pipeline-root" hidden></div>
       </section>
       <section id="view-runs" aria-labelledby="runs-heading" hidden>
         <div class="view-heading">
@@ -85,6 +88,7 @@
         </div>
         <div id="runs-root"></div>
         <div id="real-runs-root" hidden></div>
+        <div id="project-runs-root" hidden></div>
       </section>
     </main>
     <footer>
@@ -94,6 +98,27 @@
         local CPU runtime.</span
       >
     </footer>
+    <dialog id="project-open-dialog" aria-labelledby="project-open-title">
+      <div class="panel-title"><h2 id="project-open-title">Open project</h2><button id="project-open-close" type="button">Close</button></div>
+      <p>Inspect a manifest beneath a configured local root.</p>
+      <form id="project-open-form">
+        <label>Configured root<select id="project-root" required></select></label>
+        <label>Relative manifest path<input id="project-manifest" value="tuldok.project.json" maxlength="1024" required></label>
+        <div class="actions"><button id="project-open-submit" class="primary" disabled>Open for inspection</button><button id="project-roots-refresh" type="button">Refresh projects</button></div>
+      </form>
+      <p id="project-open-status" role="status">Loading configured roots…</p>
+    </dialog>
+    <dialog id="project-import-dialog" aria-labelledby="project-import-title">
+      <div class="panel-title"><h2 id="project-import-title">Import scientific fields</h2><button id="project-import-close" type="button">Close</button></div>
+      <p id="project-import-identity" class="project-path"></p>
+      <form id="project-import-form">
+        <label>Record name<input id="project-import-name" required maxlength="200"></label>
+        <label>Rights<input id="project-import-rights" value="unknown" required maxlength="1000"></label>
+        <label>Additional family group (optional)<input id="project-import-group" maxlength="200"></label>
+        <button id="project-import-submit" class="primary">Import fields</button>
+      </form>
+      <p id="project-import-status" role="status"></p>
+    </dialog>
     <dialog id="leave-dialog">
       <h2>Unsaved fixture edits</h2>
       <p>
@@ -110,7 +135,9 @@
     <script src="/workspace-service.js"></script>
     <script src="/pipeline-editor.js"></script>
     <script src="/runs-view.js"></script>
+    <script src="/workspace-external.js"></script>
     <script src="/workspace-real.js"></script>
+    <script src="/workspace-projects.js"></script>
     <script src="/workspaces.js"></script>
   </body>
 </html>

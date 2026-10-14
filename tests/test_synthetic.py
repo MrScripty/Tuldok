@@ -1,3 +1,4 @@
+from auth_helpers import bind_owner
 import base64
 import json
 import sys
@@ -16,7 +17,7 @@ import synthetic
 class SyntheticTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.jobs = self.dataset.generation_jobs
         self.addCleanup(self.temp.cleanup)
         self.addCleanup(lambda: self.dataset.close())
@@ -30,7 +31,7 @@ class SyntheticTests(unittest.TestCase):
         self.assertFalse(self.jobs.worker.is_alive())
         return self.jobs.snapshot()
 
-    def image(self, body, **kwargs):
+    def image(self, body, job_id=None, **kwargs):
         return dict(image=base64.b64encode(png(color='#%06x' % body.get('seed', 1))).decode(), metadata={'seed': body.get('seed')})
 
     def test_500_unique_prompts_are_batched_and_exist_before_first_render(self):
@@ -38,14 +39,15 @@ class SyntheticTests(unittest.TestCase):
         def prompts(config, offset, count, previous):
             batches.append((offset, count, len(previous)))
             return ['Book at location ' + str(i) for i in range(offset, offset + count)]
-        def render(body, **kwargs):
-            state = self.jobs.snapshot()
+        def render(body, job_id, **kwargs):
+            with self.actor.bound(self.dataset):
+                state = self.jobs.snapshot()
             self.assertEqual(len(state['entries']), 500)
             self.assertEqual(len({e['prompt'] for e in state['entries']}), 500)
             raise ValueError('Stop after checking preparation')
         config = self.config()
         config.update(strategy='varied', count=500, prompt_model='text-test')
-        with patch('synthetic.prompt_batch', side_effect=prompts), patch.object(self.dataset.image_requests, 'generate', side_effect=render):
+        with patch('synthetic.prompt_batch', side_effect=prompts), patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=render):
             self.jobs.start(config)
             state = self.wait()
         self.assertEqual(len(batches), 50)
@@ -53,12 +55,13 @@ class SyntheticTests(unittest.TestCase):
         self.assertEqual(state['jobs'][0]['status'], 'failed')
 
     def test_repeat_creates_one_pending_entry_then_links_images_and_labels(self):
-        def render(body, **kwargs):
-            entries = self.jobs.snapshot()['entries']
+        def render(body, job_id, **kwargs):
+            with self.actor.bound(self.dataset):
+                entries = self.jobs.snapshot()['entries']
             self.assertEqual(sum(not e['sample_id'] for e in entries), 1)
             self.assertEqual(body['prompt'], 'open books')
             return self.image(body)
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=render):
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=render):
             self.jobs.start(self.config(seed=20))
             state = self.wait()
         self.assertEqual(state['jobs'][0]['status'], 'completed')
@@ -74,21 +77,21 @@ class SyntheticTests(unittest.TestCase):
     def test_cancel_and_resume_does_not_regenerate_completed_images(self):
         started = threading.Event()
         calls = []
-        def render(body, cancel_event):
+        def render(body, job_id, cancel_event, **kwargs):
             calls.append(body['seed'])
             if body['seed'] == 21:
                 started.set()
                 cancel_event.wait(5)
                 raise ValueError('cancelled')
             return self.image(body)
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=render):
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=render):
             job = self.jobs.start(self.config(seed=20))
             self.assertTrue(started.wait(5))
             with self.assertRaises(ValueError):
                 self.jobs.start(self.config())
             self.jobs.cancel(job['id'])
             self.assertEqual(self.wait()['jobs'][0]['status'], 'cancelled')
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=self.image):
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=self.image):
             self.jobs.resume(job['id'])
             state = self.wait()
         self.assertEqual(state['jobs'][0]['completed'], 3)
@@ -104,15 +107,15 @@ class SyntheticTests(unittest.TestCase):
         self.assertEqual(len(state['entries']), 1)
         self.assertIn('duplicates', state['jobs'][0]['error'])
         self.dataset.close()
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.jobs = self.dataset.generation_jobs
         self.assertEqual(self.jobs.snapshot()['entries'], state['entries'])
-        with patch('synthetic.prompt_batch', return_value=['second', 'third']), patch.object(self.dataset.image_requests, 'generate', side_effect=ValueError('fixture stop')):
+        with patch('synthetic.prompt_batch', return_value=['second', 'third']), patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=ValueError('fixture stop')):
             self.jobs.resume(job['id'])
             self.assertEqual(len(self.wait()['entries']), 3)
 
     def test_server_interruption_preserves_completed_links_on_resume(self):
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=self.image):
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=self.image):
             job = self.jobs.start(self.config(seed=10))
             state = self.wait()
         first_ids = [e['sample_id'] for e in state['entries']]
@@ -121,10 +124,10 @@ class SyntheticTests(unittest.TestCase):
         with self.jobs.lock, self.jobs.db.transaction():
             self.jobs._save(job)
         self.dataset.close()
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.jobs = self.dataset.generation_jobs
         self.assertEqual(self.jobs.snapshot()['jobs'][0]['status'], 'interrupted')
-        with patch.object(self.dataset.image_requests, 'generate') as render:
+        with patch.object(self.dataset.image_requests, '_generate_admitted') as render:
             self.jobs.resume(job['id'])
             state = self.wait()
             render.assert_not_called()
@@ -132,7 +135,7 @@ class SyntheticTests(unittest.TestCase):
         self.assertEqual([e['sample_id'] for e in state['entries']], first_ids)
 
     def test_duplicate_images_stop_without_losing_saved_image_or_queue(self):
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=self.image):
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=self.image):
             self.jobs.start(self.config())
             state = self.wait()
         self.assertEqual(state['jobs'][0]['status'], 'failed')
@@ -143,19 +146,19 @@ class SyntheticTests(unittest.TestCase):
 
     def test_deleted_generated_image_is_not_recreated_on_resume(self):
         calls = []
-        def render(body, **kwargs):
+        def render(body, job_id, **kwargs):
             calls.append(body['seed'])
             if body['seed'] == 21:
                 raise ValueError('fixture stop')
             return self.image(body)
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=render):
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=render):
             job = self.jobs.start(self.config(seed=20))
             self.wait()
         sample = self.dataset.rows()[0]
         result = self.dataset.delete(sample['id'], {'revision': sample['revision']})
         self.assertEqual(result['entries'][0]['status'], 'deleted')
         self.assertIsNone(result['entries'][0]['sample_id'])
-        with patch.object(self.dataset.image_requests, 'generate', side_effect=self.image) as resumed:
+        with patch.object(self.dataset.image_requests, '_generate_admitted', side_effect=self.image) as resumed:
             self.jobs.resume(job['id'])
             state = self.wait()
             self.assertEqual([call.args[0]['seed'] for call in resumed.call_args_list], [21, 22])

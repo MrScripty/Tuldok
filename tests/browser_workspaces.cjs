@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Real Chromium interactions, no npm dependency, no model or training execution.
 "use strict";
 const assert = require("node:assert/strict"),
@@ -44,6 +47,7 @@ function launch(command, args, options) {
   server.stderr.on("data", (chunk) => (serverErrors += chunk));
   const port = await until(() => output.match(/127\.0\.0\.1:(\d+)/)?.[1]),
     base = "http://127.0.0.1:" + port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const browser = launch(
     process.env.BROWSER || "/usr/bin/chromium",
     [
@@ -264,6 +268,7 @@ function launch(command, args, options) {
   await send("Fetch.enable", {
     patterns: [{ urlPattern: "*workspace-fixtures.json" }],
   });
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send("Page.navigate", { url: base + "/workspaces" });
   await until(() => pausedRequest);
   assert.match(await text("#workspace-status"), /Loading/);

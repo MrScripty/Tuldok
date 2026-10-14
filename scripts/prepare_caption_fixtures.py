@@ -125,122 +125,126 @@ def main():
         temporary = Path(temporary)
         source = Dataset(temporary / 'source')
         target = Dataset(temporary / 'target')
-        try:
-            def add(color, *, parents=None, oriented=False):
-                row = source.workbench.import_asset(dict(kind='image',
-                    image=base64.b64encode(image_bytes(color, oriented)).decode('ascii'),
-                    name=color + '.png', groups=['authored-' + color], parents=parents or [],
-                    rights='Locally authored test image; fixture declaration'))
-                return save_caption(source, row, 'A ' + color + ' panel.' if color != 'red'
-                                    else 'A red panel — pula. 😀', 'human_reviewed')
-
-            deleted = add('purple')
-            first = add('red', parents=[deleted['id']], oriented=True)
-            second = add('orange', parents=[first['id']])
-            bridge = add('gray', parents=[second['id']])
-            rows = [first, second, add('green'), add('blue')]
-            source.delete(deleted['id'], {'revision': source.sample(deleted['id'])['revision']})
-            rows = [source.workbench.get(row['id']) for row in rows]
-            release = source.releases.create(release_body(rows))
-            assert source.releases.create(release_body(rows))['id'] == release['id']
-            positive = output / 'native-caption-release'
-            manifest = extract_authored_release(source, release, positive)
-            first_consumer = consumer(positive)
-            assert first_consumer['exit_code'] == 0, first_consumer
-            roots = connected_components([row for family in manifest['protected_components'].values() for row in family])
-            for group, family in manifest['protected_components'].items():
-                assert len({roots[row['id']] for row in family}) == 1
-                assert group == 'component:' + hashlib.sha256(encode(sorted(row['id'] for row in family)).encode()).hexdigest()
-            family = manifest['protected_components'][next(r for r in manifest['records'] if r['id'] == first['id'])['export_group']]
-            assert deleted['id'] in {r['id'] for r in family if not r['source_available']}
-            assert bridge['id'] in {r['id'] for r in family} and bridge['id'] not in {r['id'] for r in manifest['records']}
-
-            mappings, drafts = [], []
-            for record in manifest['records']:
-                _, projection, index = metadata(positive, record)
-                assert projection[index]['text'] == record['annotation']['caption']
-                assert projection[index]['group'] == record['export_group']
-                family = manifest['protected_components'][record['export_group']]
-                assert next(r for r in family if r['id'] == record['id']) == {key: record[key] for key in SNAPSHOT_KEYS}
-                raw = (positive / record['asset']).read_bytes()
-                observed_hash = hashlib.sha256(raw).hexdigest()
-                assert observed_hash == record['asset_sha256'] == record['content_hash']
-                groups = origin_tokens(family)
-                acquisition = {'format': 'image_caption_v1',
-                    'observed': {'asset_sha256': observed_hash},
-                    'declared': {'record': copy.deepcopy(record), 'protected_component': copy.deepcopy(family)}}
-                # Fixture rehearsal uses existing image owner with explicit split,
-                # then existing caption save. Future production admission MUST
-                # commit asset + caption + draft history in one owner transaction.
-                admitted = target.add(dict(image=base64.b64encode(raw).decode('ascii'),
-                    filename=record['id'] + '.png', session_id=groups[0], book_id='', split=record['split']),
-                    enrollment=(groups, [], 'unknown', acquisition))
-                draft = save_caption(target, target.workbench.get(admitted['id']), projection[index]['text'], 'draft')
-                assert draft['id'] != record['id'] and draft['review'] == 'draft' and draft['parents'] == []
-                assert draft['source_sha256'] == observed_hash
-                assert draft['pixel_hash'] == record['exported_pixel_sha256']
-                assert draft['source_split'] == record['split']
-                assert draft['provenance']['rights'] == 'unknown'
-                assert validate_annotation('image_caption', draft['annotation'], draft) == record['annotation']
-                mappings.append(dict(origin_record_id=record['id'], local_record_id=draft['id'],
-                    origin_source_sha256=record['source_sha256'], imported_source_sha256=draft['source_sha256'],
-                    origin_pixel_sha256=record['pixel_hash'], imported_pixel_sha256=draft['pixel_hash'],
-                    split=draft['source_split'], local_groups=groups,
-                    annotation=draft['annotation'], review=draft['review']))
-                drafts.append(draft)
-            assert any(m['origin_source_sha256'] != m['imported_source_sha256'] for m in mappings)
+        source_session = source.access.exchange(source.access._local_owner_token())['token']
+        target_session = target.access.exchange(target.access._local_owner_token())['token']
+        with source.access.bind(source_session):
             try:
-                target.releases.create(release_body(drafts))
-                raise AssertionError('Draft imported captions unexpectedly exported')
-            except WorkbenchError as error:
-                draft_blocker = str(error)
-                assert 'human-reviewed' in draft_blocker
-            # This is a test state transition, not a claim of actual human acceptance.
-            accepted = [save_caption(target, row, row['annotation']['caption'], 'human_reviewed') for row in drafts]
-            second_release = target.releases.create(release_body(accepted))
-            second_manifest = extract_authored_release(target, second_release, output / 'reexport-after-fixture-review')
-            second_consumer = consumer(output / 'reexport-after-fixture-review')
-            assert second_consumer['exit_code'] == 0, second_consumer
-            projection = lambda m: sorted((r['exported_pixel_sha256'], r['annotation']['caption'], r['split']) for r in m['records'])
-            assert projection(manifest) == projection(second_manifest)
+                def add(color, *, parents=None, oriented=False):
+                    row = source.workbench.import_asset(dict(kind='image',
+                        image=base64.b64encode(image_bytes(color, oriented)).decode('ascii'),
+                        name=color + '.png', groups=['authored-' + color], parents=parents or [],
+                        rights='Locally authored test image; fixture declaration'))
+                    return save_caption(source, row, 'A ' + color + ' panel.' if color != 'red'
+                                        else 'A red panel — pula. 😀', 'human_reviewed')
 
-            # Consumer is authoritative for training shape, not admission integrity.
-            chosen = next(record for record in manifest['records'] if record['id'] == first['id'])
-            def change_text(root, m, rows, i): rows[i]['text'] = ''
-            def extra_review(root, m, rows, i): rows[i]['review'] = 'human_reviewed'
-            def path_escape(root, m, rows, i):
-                shutil.move(root / chosen['asset'], root / 'escaped.png')
-                rows[i]['file_name'] = '../escaped.png'
-            def changed_hash(root, m, rows, i): m['records'][0]['asset_sha256'] = '0' * 64
-            def changed_caption(root, m, rows, i): rows[i]['text'] = 'Unrelated replacement caption.'
-            def too_long(root, m, rows, i): rows[i]['text'] = 'x' * 4001
-            def crossed_group(root, m, rows, i):
-                other = next(r for r in m['records'] if r['split'] != chosen['split'])
-                rows[i]['group'] = other['export_group']
-            cases = [negative_probe(positive, temporary, chosen, name, mutation, passed)
-                     for name, mutation, passed in (
-                         ('empty-caption', change_text, False),
-                         ('cross-split-group', crossed_group, False),
-                         ('forged-review-field', extra_review, True),
-                         ('path-escape', path_escape, True),
-                         ('manifest-hash-mismatch', changed_hash, True),
-                         ('manifest-caption-mismatch', changed_caption, True),
-                         ('caption-over-4000', too_long, True))]
-            report = dict(base_head='7c43e9b8fe6ff23d3e75d356361fe616c8365d9c',
-                consumer=CAPTION_CONSUMER, source_release_id=release['id'],
-                reexport_release_id=second_release['id'], selected_records=len(rows),
-                complete_family_members=len(manifest['protected_components'][chosen['export_group']]),
-                draft_release_blocker=draft_blocker,
-                source_consumer=first_consumer, reexport_consumer=second_consumer,
-                mappings=mappings, malformed_probes=cases,
-                limits='Existing-owner fixture rehearsal; no HTTP/browser/importer/atomic target admission acceptance')
-            write_json(output / 'rehearsal-results.json', report)
-            print(json.dumps({'fixture_root': str(output), 'records': len(rows),
-                              'malformed_probes': len(cases), 'consumer_runs_passed': 2,
-                              'draft_export_blocked': True}, indent=2))
-        finally:
-            target.close()
-            source.close()
+                deleted = add('purple')
+                first = add('red', parents=[deleted['id']], oriented=True)
+                second = add('orange', parents=[first['id']])
+                bridge = add('gray', parents=[second['id']])
+                rows = [first, second, add('green'), add('blue')]
+                source.delete(deleted['id'], {'revision': source.sample(deleted['id'])['revision']})
+                rows = [source.workbench.get(row['id']) for row in rows]
+                release = source.releases.create(release_body(rows))
+                assert source.releases.create(release_body(rows))['id'] == release['id']
+                positive = output / 'native-caption-release'
+                manifest = extract_authored_release(source, release, positive)
+                first_consumer = consumer(positive)
+                assert first_consumer['exit_code'] == 0, first_consumer
+                roots = connected_components([row for family in manifest['protected_components'].values() for row in family])
+                for group, family in manifest['protected_components'].items():
+                    assert len({roots[row['id']] for row in family}) == 1
+                    assert group == 'component:' + hashlib.sha256(encode(sorted(row['id'] for row in family)).encode()).hexdigest()
+                family = manifest['protected_components'][next(r for r in manifest['records'] if r['id'] == first['id'])['export_group']]
+                assert deleted['id'] in {r['id'] for r in family if not r['source_available']}
+                assert bridge['id'] in {r['id'] for r in family} and bridge['id'] not in {r['id'] for r in manifest['records']}
+
+                with target.access.bind(target_session):
+                    mappings, drafts = [], []
+                    for record in manifest['records']:
+                        _, projection, index = metadata(positive, record)
+                        assert projection[index]['text'] == record['annotation']['caption']
+                        assert projection[index]['group'] == record['export_group']
+                        family = manifest['protected_components'][record['export_group']]
+                        assert next(r for r in family if r['id'] == record['id']) == {key: record[key] for key in SNAPSHOT_KEYS}
+                        raw = (positive / record['asset']).read_bytes()
+                        observed_hash = hashlib.sha256(raw).hexdigest()
+                        assert observed_hash == record['asset_sha256'] == record['content_hash']
+                        groups = origin_tokens(family)
+                        acquisition = {'format': 'image_caption_v1',
+                            'observed': {'asset_sha256': observed_hash},
+                            'declared': {'record': copy.deepcopy(record), 'protected_component': copy.deepcopy(family)}}
+                        # Fixture rehearsal uses existing image owner with explicit split,
+                        # then existing caption save. Future production admission MUST
+                        # commit asset + caption + draft history in one owner transaction.
+                        admitted = target.add(dict(image=base64.b64encode(raw).decode('ascii'),
+                            filename=record['id'] + '.png', session_id=groups[0], book_id='', split=record['split']),
+                            enrollment=(groups, [], 'unknown', acquisition))
+                        draft = save_caption(target, target.workbench.get(admitted['id']), projection[index]['text'], 'draft')
+                        assert draft['id'] != record['id'] and draft['review'] == 'draft' and draft['parents'] == []
+                        assert draft['source_sha256'] == observed_hash
+                        assert draft['pixel_hash'] == record['exported_pixel_sha256']
+                        assert draft['source_split'] == record['split']
+                        assert draft['provenance']['rights'] == 'unknown'
+                        assert validate_annotation('image_caption', draft['annotation'], draft) == record['annotation']
+                        mappings.append(dict(origin_record_id=record['id'], local_record_id=draft['id'],
+                            origin_source_sha256=record['source_sha256'], imported_source_sha256=draft['source_sha256'],
+                            origin_pixel_sha256=record['pixel_hash'], imported_pixel_sha256=draft['pixel_hash'],
+                            split=draft['source_split'], local_groups=groups,
+                            annotation=draft['annotation'], review=draft['review']))
+                        drafts.append(draft)
+                    assert any(m['origin_source_sha256'] != m['imported_source_sha256'] for m in mappings)
+                    try:
+                        target.releases.create(release_body(drafts))
+                        raise AssertionError('Draft imported captions unexpectedly exported')
+                    except WorkbenchError as error:
+                        draft_blocker = str(error)
+                        assert 'human-reviewed' in draft_blocker
+                    # This is a test state transition, not a claim of actual human acceptance.
+                    accepted = [save_caption(target, row, row['annotation']['caption'], 'human_reviewed') for row in drafts]
+                    second_release = target.releases.create(release_body(accepted))
+                    second_manifest = extract_authored_release(target, second_release, output / 'reexport-after-fixture-review')
+                    second_consumer = consumer(output / 'reexport-after-fixture-review')
+                    assert second_consumer['exit_code'] == 0, second_consumer
+                    projection = lambda m: sorted((r['exported_pixel_sha256'], r['annotation']['caption'], r['split']) for r in m['records'])
+                    assert projection(manifest) == projection(second_manifest)
+
+                # Consumer is authoritative for training shape, not admission integrity.
+                chosen = next(record for record in manifest['records'] if record['id'] == first['id'])
+                def change_text(root, m, rows, i): rows[i]['text'] = ''
+                def extra_review(root, m, rows, i): rows[i]['review'] = 'human_reviewed'
+                def path_escape(root, m, rows, i):
+                    shutil.move(root / chosen['asset'], root / 'escaped.png')
+                    rows[i]['file_name'] = '../escaped.png'
+                def changed_hash(root, m, rows, i): m['records'][0]['asset_sha256'] = '0' * 64
+                def changed_caption(root, m, rows, i): rows[i]['text'] = 'Unrelated replacement caption.'
+                def too_long(root, m, rows, i): rows[i]['text'] = 'x' * 4001
+                def crossed_group(root, m, rows, i):
+                    other = next(r for r in m['records'] if r['split'] != chosen['split'])
+                    rows[i]['group'] = other['export_group']
+                cases = [negative_probe(positive, temporary, chosen, name, mutation, passed)
+                         for name, mutation, passed in (
+                             ('empty-caption', change_text, False),
+                             ('cross-split-group', crossed_group, False),
+                             ('forged-review-field', extra_review, True),
+                             ('path-escape', path_escape, True),
+                             ('manifest-hash-mismatch', changed_hash, True),
+                             ('manifest-caption-mismatch', changed_caption, True),
+                             ('caption-over-4000', too_long, True))]
+                report = dict(base_head='7c43e9b8fe6ff23d3e75d356361fe616c8365d9c',
+                    consumer=CAPTION_CONSUMER, source_release_id=release['id'],
+                    reexport_release_id=second_release['id'], selected_records=len(rows),
+                    complete_family_members=len(manifest['protected_components'][chosen['export_group']]),
+                    draft_release_blocker=draft_blocker,
+                    source_consumer=first_consumer, reexport_consumer=second_consumer,
+                    mappings=mappings, malformed_probes=cases,
+                    limits='Existing-owner fixture rehearsal; no HTTP/browser/importer/atomic target admission acceptance')
+                write_json(output / 'rehearsal-results.json', report)
+                print(json.dumps({'fixture_root': str(output), 'records': len(rows),
+                                  'malformed_probes': len(cases), 'consumer_runs_passed': 2,
+                                  'draft_export_blocked': True}, indent=2))
+            finally:
+                target.close()
+                source.close()
 
 
 if __name__ == '__main__':

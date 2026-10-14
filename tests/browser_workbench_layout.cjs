@@ -1,5 +1,7 @@
 // Real-browser layout interactions; supported server, synthetic sample data, JPEG85.
 'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,execFileSync}=require('node:child_process');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
@@ -15,6 +17,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',serverErrors='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  await fixtureAuth.register(base,path.join(temporary,'data'),root);
   const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
 
   const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
@@ -28,6 +31,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const fill=(id,value)=>evaluate(`(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const choose=(id,name,raw)=>evaluate(`(()=>{const raw=Uint8Array.from(atob(${JSON.stringify(raw.toString('base64'))}),c=>c.charCodeAt(0)),dt=new DataTransfer();dt.items.add(new File([raw],${JSON.stringify(name)}));document.getElementById(${JSON.stringify(id)}).files=dt.files;})()`);
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await fixtureAuth.browser(send,base);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   await send('Emulation.setDeviceMetricsOverride',{width:1600,height:1100,deviceScaleFactor:1,mobile:false});
   const click=async selector=>{
@@ -56,7 +60,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     if(JSON.stringify(scripts(raw))!==JSON.stringify(scripts(document))) failures.push('controller scripts');
     return failures;
   })()`),[],'All current controls, validation, kinds/tasks/export formats and controller scripts retained');
-  for(const id of ['audio-inspection','pointcloud-inspection','volume-inspection'])
+  for(const id of ['audio-inspection','pointcloud-inspection','volume-inspection','scientific-inspection'])
     assert.equal(await evaluate(`document.getElementById(${JSON.stringify(id)}).parentElement.className`),'source-pane');
   assert.equal(await evaluate('document.getElementById("workspace-tools").open'),false);
   assert.ok(await evaluate('[...document.getElementById("kind").options].some(o=>o.value==="image")'),'Image filter remains available');
@@ -152,7 +156,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await click('button[data-record-id="'+imported+'"]');await evaluate('document.querySelector(".editor").scrollIntoView()');await shot('text-narrow');
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
   const sourceHashes={};
-  for(const file of ['app.py','static/workbench.html','static/workbench.css','static/workbench.js','static/workbench-layout.js','static/workbench-layout.css','static/workspaces-data.js','static/workspaces-data.css','tests/browser_workbench_layout.cjs'])
+  for(const file of ['app.py','static/workbench.html','static/workbench.css','static/workbench.js','static/workbench-layout.js','static/workbench-layout.css','static/workspaces-data.js','static/workspaces-data.css','tests/auth_helpers.cjs','tests/browser_workbench_layout.cjs'])
     sourceHashes[file]=require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({
     result:'PASS',source_head:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
@@ -160,9 +164,9 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
     command:'node tests/browser_workbench_layout.cjs',browser:(await send('Browser.getVersion')).product,
     environment:{mode:'headless',graphics:'--disable-gpu software rendering',sandbox:'--no-sandbox verification only',isolation:'task-owned temporary browser profile and authored dataset',process_lifecycle:'tracked server/browser killed in finally; debugger startup bounded at 60 seconds'},
     viewports:[{width:1600,height:1100},{width:390,height:844}],
-    checks:['current controls/native constraints/kinds/tasks/export options/scripts retained','current audio/pointcloud/volume source surfaces retained','native Shift+Tab modal containment and Escape/focus restoration','repeated dialogs preserve draft/selection','status mirrored inside modal','collapsed invalid groups revealed without save','explicit review/save/release download','exact metadata Enter filter','saved state/current record markers','original-pixel image coordinates after scaling','mesh native import/projections','desktop and narrow content fit','no runtime errors'],
+    checks:['current controls/native constraints/kinds/tasks/export options/scripts retained','current audio/pointcloud/volume/scientific source surfaces retained','explicit authenticated owner fixture for browser and API calls','native Shift+Tab modal containment and Escape/focus restoration','repeated dialogs preserve draft/selection','status mirrored inside modal','collapsed invalid groups revealed without save','explicit review/save/release download','exact metadata Enter filter','saved state/current record markers','original-pixel image coordinates after scaling','mesh native import/projections','desktop and narrow content fit','no runtime errors'],
     captures:['text-desktop.jpg','export-desktop.jpg','image-desktop.jpg','mesh-desktop.jpg','mesh-narrow.jpg','import-narrow.jpg','text-narrow.jpg'],
-    qualification:'Standalone current-main UI with authored fixtures; no inference, training, scientific quality, assistive-technology or cross-browser conformance claim'
+    qualification:'Standalone authenticated composed UI with authored fixtures and current scientific controls; no inference, training, scientific quality, assistive-technology or cross-browser conformance claim'
   },null,2)+'\n');
   console.log('Compact workbench: native drawer clicks/Escape/focus, preserved draft and selection, import, hidden required-field validation, save, release download, offline generation, scaled image coordinates, mesh import/projections and desktop/narrow pixels passed. '+report);
 })().catch(error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

@@ -1,4 +1,5 @@
 """Storage/HTTP composition for two bounded spatial types; parsers own meaning."""
+from access import authorized
 import base64
 import io
 import json
@@ -37,6 +38,7 @@ def profile(kind):
 
 
 def admit(workbench, kind, body):
+    workbench.access.require('edit', 'spatial_assets.admit')
     parser, names, caps = profile(kind)
     if (type(body) is not dict or set(body) - {'files', 'name', 'rights', 'groups', 'parents'}
             or type(body.get('files')) is not dict or set(body['files']) != set(names)):
@@ -62,6 +64,7 @@ class SpatialAssets(ImmutableAssets):
         super().__init__(workbench, kind=kind, task='pointcloud_geometry' if kind == 'pointcloud' else 'volume_grid',
                          maximum=parser.BUNDLE_LIMIT, default_name='Point cloud' if kind == 'pointcloud' else 'Volume grid')
 
+    @authorized('edit', 'spatial_assets.admit')
     def admit(self, prepared, body):
         return super().admit(prepared, body, {'method': self.kind + '_import',
             'format': prepared['metadata']['manifest']['format'],
@@ -83,11 +86,13 @@ class SpatialAssets(ImmutableAssets):
         except (ValueError, zipfile.BadZipFile, KeyError, RuntimeError, UnicodeError):
             raise WorkbenchError('Spatial source or metadata changed outside Tuldok.', 'conflict', 409) from None
 
+    @authorized('inspect', 'spatial_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         bundle, mime = super().asset(record)
         self.validated(record, bundle)
         return bundle, mime
 
+    @authorized('inspect', 'spatial_assets.inspect')
     def inspect(self, record_id, *, axis='z', index=0):
         with self.workbench.lock:
             record = self.workbench._get(record_id)

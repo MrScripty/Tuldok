@@ -1,4 +1,5 @@
 """Independent answers, real persistence/HTTP, exact proof and frozen artifacts."""
+from auth_helpers import bind_owner
 from concurrent.futures import ThreadPoolExecutor
 from postgres_helpers import install_failure_trigger
 import hashlib
@@ -22,7 +23,7 @@ class InstructionResponsesTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name)
-        self.d = Dataset(self.path); self.addCleanup(lambda: self.d.close())
+        self.d = Dataset(self.path); self.actor = bind_owner(self, self.d); self.addCleanup(lambda: self.d.close())
         self.w, self.r = self.d.workbench, self.d.releases
 
     def prompt(self, name='prompt', groups=None, parents=None):
@@ -77,7 +78,7 @@ class InstructionResponsesTests(unittest.TestCase):
         self.assertEqual(self.w.history(parent['id']), history)
         snapshots = self.w.response_history(a['id'])['history']; self.assertEqual(len(snapshots), 2)
         self.assertEqual(snapshots[0]['response'], a); self.assertEqual(snapshots[1]['parent'], parent)
-        self.d.close(); self.d = Dataset(self.path); self.w, self.r = self.d.workbench, self.d.releases
+        self.d.close(); self.d = Dataset(self.path); self.actor = bind_owner(self, self.d); self.w, self.r = self.d.workbench, self.d.releases
         self.assertEqual(self.w._response(a['id']), changed); self.assertEqual(self.w.get(parent['id']), parent)
 
     def test_exact_unicode_and_shared_text_bound_no_trimming_or_normalization(self):
@@ -212,7 +213,7 @@ class InstructionResponsesTests(unittest.TestCase):
         server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.d))
         threading.Thread(target=server.serve_forever,daemon=True).start();self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
         def request(route,body=None):
-            req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/workbench/'+route,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json'})
+            req=self.actor.request(f'http://127.0.0.1:{server.server_port}/api/workbench/'+route,data=None if body is None else json.dumps(body).encode(),headers={'Content-Type':'application/json'})
             try:
                 with urllib.request.urlopen(req) as result:return result.status,json.load(result)
             except urllib.error.HTTPError as error:return error.code,json.load(error)
@@ -225,4 +226,4 @@ class InstructionResponsesTests(unittest.TestCase):
         current=result['responses'][0];status,saved=request('responses',self.payload(parent,response=current,completion='Changed',review='human_reviewed'));self.assertEqual(status,200)
         body=self.body([(parent,saved['response'])]);status,preview=request('releases/preview',body);self.assertEqual(status,200);self.assertTrue(preview['eligible'])
         status,release=request('releases',dict(body,preview_token=preview['preview_token']));self.assertEqual(status,201,release)
-        with urllib.request.urlopen(f'http://127.0.0.1:{server.server_port}'+release['url']) as download:self.assertEqual(hashlib.sha256(download.read()).hexdigest(),release['id'])
+        with urllib.request.urlopen(self.actor.request(f'http://127.0.0.1:{server.server_port}'+release['url'])) as download:self.assertEqual(hashlib.sha256(download.read()).hexdigest(),release['id'])

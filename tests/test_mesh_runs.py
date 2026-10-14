@@ -1,4 +1,5 @@
 """Real mesh recipe admission, report custody and local supervisor lifecycle."""
+from auth_helpers import bind_owner, execute_admitted
 import copy
 import hashlib
 import json
@@ -68,7 +69,7 @@ class MeshRuns(unittest.TestCase):
             self.dataset.runs.expose_test(run['id'], {'reason': 'Not applicable'})
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workspace_exposures').fetchone()[0], 0)
         self.dataset.close()
-        self.dataset = Dataset(self.temporary.name)
+        self.dataset = Dataset(self.temporary.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.assertEqual(self.dataset.runs.get(run['id'])['artifacts'], result['artifacts'])
         self.assertEqual(json.loads(self.dataset.runs.artifact(run['id'], 'validation-report.json')[0]), report)
@@ -93,10 +94,11 @@ class MeshRuns(unittest.TestCase):
         inspect = self.dataset.pipelines.inspect_release
         def cancel_after_inspect(*args, **kwargs):
             result = inspect(*args, **kwargs)
-            self.dataset.runs.cancel(run['id'])
+            with self.actor.bound(self.dataset):
+                self.dataset.runs.cancel(run['id'])
             return result
         with patch.object(self.dataset.pipelines, 'inspect_release', side_effect=cancel_after_inspect):
-            self.dataset.runs._execute(run['id'])
+            execute_admitted(self.dataset, run['id'])
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'cancelled')
         self.assertFalse((self.dataset.runs.path / run['id']).exists())
         retry = self.dataset.runs.retry(run['id'], {'request_key': 'mesh-retry-0001'})
@@ -111,7 +113,7 @@ class MeshRuns(unittest.TestCase):
             stored['state'] = 'running'
             self.dataset.runs._save(stored)
         self.dataset.close()
-        self.dataset = Dataset(self.temporary.name)
+        self.dataset = Dataset(self.temporary.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'interrupted')
         self.assertFalse((self.dataset.runs.path / run['id']).exists())
@@ -139,7 +141,7 @@ class MeshRuns(unittest.TestCase):
         probe = self.dataset.pipelines.probe(release_validation.RECIPE)
         probe['adapter_definition_sha256'] = '0' * 64
         with patch.object(self.dataset.pipelines, 'probe', return_value=probe):
-            self.dataset.runs._execute(run['id'])
+            execute_admitted(self.dataset, run['id'])
         result = self.dataset.runs.get(run['id'])
         self.assertEqual(result['state'], 'failed')
         self.assertEqual(result['error']['code'], 'stale')

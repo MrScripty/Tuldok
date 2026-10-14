@@ -1,4 +1,5 @@
 """Actual native ZIP -> HTTP admission -> review/selection/preview/frozen export."""
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 import base64
 import hashlib
 import http.client
@@ -24,18 +25,19 @@ from workbench import encode
 
 def native_fixture(path, texts=('Cafe\u0301\r\nSource one.', 'Source two.', 'Source three.'), name_prefix='Source'):
     source = Dataset(str(path))
-    rows = []
-    for number, text in enumerate(texts):
-        row = source.workbench.import_asset({'kind': 'text', 'text': text, 'name': f'{name_prefix} {number+1}',
-            'groups': [f'native-family-{number+1}'], 'rights': 'Owned upstream'})
-        rows.append(source.workbench.save(row['id'], dict(row, annotation={'label': f'class-{number+1}'}, review='human_reviewed')))
-    body = {'items': [{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows],
-        'ratios': {'train': 100, 'validation': 0, 'test': 0}, 'seed': 7, 'format': 'canonical_v1'}
-    preview = source.releases.preview(body)
-    release = source.releases.create(dict(body, preview_token=preview['preview_token']))
-    raw = source.releases.locate(release['id']).read_bytes()
-    source.close()
-    return raw
+    with ExplicitOwnerFixture.bootstrap(source).bound(source):
+        rows = []
+        for number, text in enumerate(texts):
+            row = source.workbench.import_asset({'kind': 'text', 'text': text, 'name': f'{name_prefix} {number+1}',
+                'groups': [f'native-family-{number+1}'], 'rights': 'Owned upstream'})
+            rows.append(source.workbench.save(row['id'], dict(row, annotation={'label': f'class-{number+1}'}, review='human_reviewed')))
+        body = {'items': [{key: row[key] for key in ('id', 'revision', 'source_revision')} for row in rows],
+            'ratios': {'train': 100, 'validation': 0, 'test': 0}, 'seed': 7, 'format': 'canonical_v1'}
+        preview = source.releases.preview(body)
+        release = source.releases.create(dict(body, preview_token=preview['preview_token']))
+        raw = source.releases.locate(release['id']).read_bytes()
+        source.close()
+        return raw
 
 
 def rewrite(raw, change):
@@ -55,7 +57,7 @@ class NativeTextImportTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name)
         self.raw = native_fixture(self.path/'source')
-        self.dataset = Dataset(str(self.path/'destination'))
+        self.dataset = Dataset(str(self.path/'destination')); self.actor = bind_owner(self, self.dataset)
         self.open_server()
         self.addCleanup(self.close)
 
@@ -69,7 +71,7 @@ class NativeTextImportTests(unittest.TestCase):
         self.server.shutdown(); self.server.server_close(); self.dataset.close()
 
     def request(self, route, body=None):
-        request = urllib.request.Request(self.root+'/api/workbench/'+route,
+        request = self.actor.request(self.root+'/api/workbench/'+route,
             data=json.dumps(body).encode() if body is not None else None, headers={'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(request) as response:
@@ -128,7 +130,7 @@ class NativeTextImportTests(unittest.TestCase):
         differing = [record['source_sha256'] != native['source_sha256'] for record, native in zip(records, native_rows)]
         self.assertTrue(any(differing), 'Never assign omitted upstream original hash to new input')
         self.assertFalse(self.dataset.releases.preview(self.selection(records))['eligible'])
-        self.close(); self.dataset = Dataset(str(self.path/'destination')); self.open_server()
+        self.close(); self.dataset = Dataset(str(self.path/'destination')); self.actor = bind_owner(self, self.dataset); self.open_server()
         for (body, receipt), old in zip(admitted, records):
             self.assertEqual(self.request('import-result/'+body['request_id']), (200, dict(found=True, **receipt)))
             self.assertEqual(self.dataset.workbench.get(old['id']), old)

@@ -1,4 +1,5 @@
 """Existing admission authority reused by the proposed structured bulk importer."""
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 from postgres_helpers import drop_failure_trigger, install_failure_trigger
 import base64
 import hashlib
@@ -16,7 +17,7 @@ class RealImportFoundationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         image = io.BytesIO()
         Image.new('RGB', (24, 18), '#467e9a').save(image, 'PNG')
@@ -43,25 +44,26 @@ class RealImportFoundationTests(unittest.TestCase):
                     # Each case uses fresh storage; duplicate rejection is tested separately.
                     with tempfile.TemporaryDirectory() as folder:
                         dataset = Dataset(folder)
-                        try:
-                            body = self.payload(kind)
-                            body.update(review=review, annotation={'label': 'approved'},
-                                        provenance={'method': 'verified', 'source_sha256': 'forged', 'verifier': 'caller'})
-                            record = dataset.workbench.import_asset(body)
-                            self.assertEqual(record['review'], 'draft')
-                            self.assertIsNone(record['annotation'])
-                            self.assertEqual(record['groups'], ['owned-source'])
-                            self.assertEqual(record['provenance']['method'], 'import')
-                            self.assertNotIn('verifier', record['provenance'])
-                            if kind == 'image':
-                                raw = (Path(folder) / 'images' / record['id'] / 'source').read_bytes()
-                                self.assertEqual(raw, self.image)
-                                self.assertEqual(record['provenance']['source_sha256'], hashlib.sha256(raw).hexdigest())
-                            else:
-                                self.assertEqual(dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=%s', (record['id'],)).fetchone()[0], 'cafe\u0301\r\n')
-                                self.assertEqual(record['text'], 'café\n')
-                        finally:
-                            dataset.close()
+                        with ExplicitOwnerFixture.bootstrap(dataset).bound(dataset):
+                            try:
+                                body = self.payload(kind)
+                                body.update(review=review, annotation={'label': 'approved'},
+                                            provenance={'method': 'verified', 'source_sha256': 'forged', 'verifier': 'caller'})
+                                record = dataset.workbench.import_asset(body)
+                                self.assertEqual(record['review'], 'draft')
+                                self.assertIsNone(record['annotation'])
+                                self.assertEqual(record['groups'], ['owned-source'])
+                                self.assertEqual(record['provenance']['method'], 'import')
+                                self.assertNotIn('verifier', record['provenance'])
+                                if kind == 'image':
+                                    raw = (Path(folder) / 'images' / record['id'] / 'source').read_bytes()
+                                    self.assertEqual(raw, self.image)
+                                    self.assertEqual(record['provenance']['source_sha256'], hashlib.sha256(raw).hexdigest())
+                                else:
+                                    self.assertEqual(dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=%s', (record['id'],)).fetchone()[0], 'cafe\u0301\r\n')
+                                    self.assertEqual(record['text'], 'café\n')
+                            finally:
+                                dataset.close()
 
     def test_repeated_import_cannot_overwrite_review_groups_or_source_provenance(self):
         for kind in ('image', 'text'):

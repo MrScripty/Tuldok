@@ -1,0 +1,15 @@
+# Selective scientific integration ledger
+
+2026-10-14: Main verified at `f2751c3`, both latest CI checks green. Original PR43–55 heads remain unchanged and their recorded checks are green; original-v2 actual V2/V4/V5 remain unqualified. Independent dependency audit found generic scientific owners operationally independent, with a concrete v2 dependency in P6's schema/parity admission. New supported archive transfer after environment restart still failed DNS, installing no bytes. Root admitted selective generic composition and independent owner PR33 reconciliation; no acceptance waiver or deployment.
+
+Source lineage: PR44 `fd3f6a9`, PR45 `46384fc`, PR46 `2476a7d`, PR47 `d3c0e09`, PR48 `7d59060`, PR49 `c7c696b`, PR50 `05ea66e`, PR51 `28c666f`, PR52 `fb3a5a0`; storage owner `633b816`, QA scope `f72fff3`, compatibility/actual evidence `12a90e8`, creation permissions `2a44442`. Their shared branches remain retained. Replacement integration commit and final checks will be recorded after qualification.
+
+The reconstructed generic component passed 95 v1 sequence/access/metadata/runtime tests in 297.357 seconds with no skips. Three controllers and five actual Chromium browser gates passed; source hashes stayed unchanged. The first UI driver named a test file introduced only by deferred PR43; that command-selection failure is retained, and no assertion was removed. Independent boundary review compared 224 code files, found only eight admitted source/CI resolutions, and retained all 368 original v1 assertion instances across nine files.
+
+Cold current-owner reads verified the captured runtime, all 17 completed external Runs, six immutable releases and the retained scientific view. Files, modes, Run state and identity sequences remained unchanged; only new authentication/audit rows changed and the QA credential was logged out. This is retained-result qualification, not another model/producer run or original pre-auth raw parity claim. No actual backup or owner artifacts were modified.
+
+PR33 final b0d0342 passed both hosted checks and was merged normally as 5cc0739. Its merge tree exactly matches the qualified head. The generic candidate now composes with that owner-preserving main layout, requiring fresh affected UI checks and final exact-head CI.
+
+The PR33/main composition preserves all generic and legacy control contracts. Independent review passed; real authenticated layout and unmodified embedded workspace browser gates passed. The one adapted new layout test uses the existing fixture authentication owner and retains all assertions. See reports/composition-review.md and composed-layout.json. Final exact-head CI remains required.
+
+All eight freshly composed Chromium workflows passed: access, scientific fields, project opening, approved external execution, legacy sequence Runs, captions, typed gateways and text classification. Logs remain in /tmp/tuldok-composed-*.log. Syntax checks and admitted plan validation pass. Commit this source composition and publish the exact head for full hosted lifecycle/UI qualification.

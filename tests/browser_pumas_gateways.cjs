@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Source-derived pinned PR51 payload; production decoder/routes and real Chromium, no Pumas inference.
 'use strict';
 const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
@@ -13,6 +16,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const server=launch('python3',['-u','tests/browser_pumas_gateways_server.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='',serverErrors='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
   const seed=await api('import',{kind:'text',text:'Independent editor stays intact.',name:'Existing editor',groups:['existing-source'],rights:'Authored'});
   const gatewayPort=await until(()=>output.match(/FIXTURE_PUMAS_PORT=(\d+)/)?.[1]),gateway='http://127.0.0.1:'+gatewayPort;
@@ -31,6 +35,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const idle=()=>until(()=>evaluate('!document.getElementById("pumas-gateway-scan").disabled'));
   const before=await api('records/'+seed.id),history=await api('history/'+seed.id);
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   await send('Page.navigate',{url:base+'/workbench'});await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   await evaluate('openRecord('+JSON.stringify(seed.id)+')');await fill('label','retain unsaved target');
   await evaluate('document.querySelector(".record input").click();document.getElementById("pumas-gateway-panel").open=true');
