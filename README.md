@@ -945,6 +945,12 @@ In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.js
 
 Start with `python app.py --data ./catalog --project-root research=/absolute/research`, then select **Open project** in `/workspaces`. A [project manifest](docs/contracts/projects.md) references files beneath that explicitly selected root. Data shows sources and missing requirements, Pipeline shows recipe references, and Runs shows external evidence. Opening performs inspection: no project code, model loading, runtime probing or training executes. Existing catalog workflows remain separate. Opening registers a snapshot in Tuldok; it does not modify the opened project.
 
+The optional [project CLI](docs/contracts/project-cli.md) opens projects, saves and
+preflights recipes, submits exact owner-granted executions and downloads complete
+hash-verified artifacts through the same authenticated operations. Saved graphs
+and Runs remain visible in the existing Pipeline/Runs UI. Model and physics
+training adapters belong to the opened project.
+
 ## Scientific field sequences
 
 For a conforming [scientific field bundle](docs/contracts/scientific-fields.md), use **Import fields** on its project Data reference. Inspect frames, fields and index slices with physical coordinates, units and producer stage labels; save whole-trajectory review and freeze a canonical release. Original bundle and floating-point bytes remain unchanged. First-observed-state and declared-family grouping does not certify independent initial conditions. The cold reader `python scientific_release.py RELEASE.zip` verifies frozen custody; the optional [Rheon producer](adapters/rheon/README.md) adds bounded native generation, while [captured CPU fitting](docs/contracts/rheon-cpu-training.md) and [autonomous evaluation](docs/contracts/rheon-evaluation.md) execute the qualified lab scripts.
