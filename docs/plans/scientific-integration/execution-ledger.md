@@ -1,0 +1,5 @@
+# Selective scientific integration ledger
+
+2026-10-14: Main verified at `f2751c3`, both latest CI checks green. Original PR43–55 heads remain unchanged and their recorded checks are green; original-v2 actual V2/V4/V5 remain unqualified. Independent dependency audit found generic scientific owners operationally independent, with a concrete v2 dependency in P6's schema/parity admission. New supported archive transfer after environment restart still failed DNS, installing no bytes. Root admitted selective generic composition and independent owner PR33 reconciliation; no acceptance waiver or deployment.
+
+Source lineage: PR44 `fd3f6a9`, PR45 `46384fc`, PR46 `2476a7d`, PR47 `d3c0e09`, PR48 `7d59060`, PR49 `c7c696b`, PR50 `05ea66e`, PR51 `28c666f`, PR52 `fb3a5a0`; storage owner `633b816`, QA scope `f72fff3`, compatibility/actual evidence `12a90e8`, creation permissions `2a44442`. Their shared branches remain retained. Replacement integration commit and final checks will be recorded after qualification.
