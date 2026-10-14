@@ -89,7 +89,7 @@ function meshShown(record) {
   // Geometry owns only its projection; note/review/selection remain editor-owned.
   (async()=>{
     try {
-      const response=await fetch('/api/workbench/mesh-inspection/'+record.id,{signal:controller.signal});
+      const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/mesh-inspection/'+record.id,{signal:controller.signal});
       const raw=await response.json();if(!response.ok)throw Error(raw.error||'Geometry inspection unavailable.');
       const value=decodeMeshInspection(raw,record);if(!owns())return;
       renderMeshInspection(value);
@@ -172,7 +172,7 @@ async function validateMeshRelease() {
   const owns=()=>generation===meshReleaseGeneration&&meshPublishedRelease?.id===release.id;
   $('mesh-validate-release').disabled=true;$('mesh-release-details').replaceChildren();$('mesh-release-status').textContent='Validating frozen mesh bytes and record projections…';
   try{
-    const response=await fetch('/api/workbench/mesh-release-validation/'+release.id,{signal:controller.signal});
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/mesh-release-validation/'+release.id,{signal:controller.signal});
     const raw=await response.json();if(!response.ok)throw Error(raw.error||'Mesh release validation unavailable.');
     const value=decodeMeshReleaseReport(raw,release);if(!owns())return;
     $('mesh-release-status').textContent=`Integrity verified: ${value.mesh_count} whole meshes · ${value.vertex_count} vertices · ${value.triangle_count} triangles. Selected-record family checks only.`;

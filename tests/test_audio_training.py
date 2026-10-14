@@ -1,4 +1,5 @@
 """Real frozen WAV classification, exact coordinates and durable run contract."""
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 import base64
 import copy
 import hashlib
@@ -29,7 +30,7 @@ class AudioCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='workspace-audio-classification-')
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.rows, self.originals = [], {}
         for index in range(18):
@@ -293,7 +294,7 @@ except t.TrainingError as error:print(json.dumps({'outcome':error.outcome,'messa
         self.dataset.workbench.save(current['id'], dict(revision=current['revision'],source_revision=current['source_revision'],
             task='audio_timed',annotation=annotation,groups=current['groups'],review='draft'))
         old_bytes = self.release_path.read_bytes()
-        self.dataset.close(); self.dataset = Dataset(self.tmp.name)
+        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'completed')
         reopened = self.dataset.runs.predictions(run['id'])
         self.assertEqual(reopened['rows'][0]['frozen_reference'],predictions['rows'][0]['frozen_reference'])
@@ -337,7 +338,7 @@ except t.TrainingError as error:print(json.dumps({'outcome':error.outcome,'messa
             run,_=self.submit('audio-interrupted-001')
         # Abrupt catalog-connection loss, without the graceful close that
         # deliberately cancels pending work. No worker was ever started.
-        self.dataset.db.close();self.dataset=Dataset(self.tmp.name)
+        self.dataset.db.close();self.dataset=Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'],'interrupted')
         self.assertEqual(len(self.dataset.runs.list()),1)
         self.assertIsNone(self.dataset.runs._thread)
@@ -346,7 +347,10 @@ except t.TrainingError as error:print(json.dumps({'outcome':error.outcome,'messa
         self.dataset.close()
         code = '''import json,os,sys,time
 from app import Dataset
-d=Dataset(sys.argv[1]);g=d.pipelines.get(sys.argv[2])
+sys.path.insert(0,'tests')
+from auth_helpers import ExplicitOwnerFixture
+d=Dataset(sys.argv[1]);actor=ExplicitOwnerFixture.bootstrap(d);binding=actor.bound(d);binding.__enter__()
+g=d.pipelines.get(sys.argv[2])
 v=d.pipelines.validate(g['id'],{'revision':g['revision']})
 assert v['valid'],v
 r=d.runs.submit(dict(request_key='audio-parent-death-001',graph_id=g['id'],graph_revision=g['revision'],validation_token=v['validation_token']))
@@ -367,7 +371,7 @@ raise RuntimeError('Audio child never became owned')
         while process_status(evidence['worker']) != 'ceased' and time.monotonic() < deadline:
             time.sleep(.02)
         self.assertEqual(process_status(evidence['worker']), 'ceased')
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         result = self.dataset.runs.get(evidence['run_id'])
         self.assertEqual(result['state'], 'interrupted', result)
         self.assertEqual(result['artifacts'], [])

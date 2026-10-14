@@ -1,0 +1,82 @@
+{
+  "qualification": "native_ready_stop_only",
+  "executable_sha256": "4e4e49f0e3febf5b11556c2a1daac3dc684e9fb9a9c3c742329d804a4913ceff",
+  "helper_sha256": "f73d0881c9c3d509616e11e783a65e2bce2b9eeb9afa467602b953c93d0298f5",
+  "runtime_closure_sha256": "418e458318bf71ed2739e98aab4778cfa9c91171b5982f803734823c6d1159dc",
+  "runtime_file_count": 1316,
+  "trusted_install_owner_uid": 65534,
+  "stdin_hex": "00",
+  "stdout_bytes": 237,
+  "ready": {
+    "actual_divergence_limit": 1e-05,
+    "density": 1.25,
+    "dt": 0.016666666666666666,
+    "face_lengths": [
+      576,
+      576,
+      576
+    ],
+    "method": "jacobi",
+    "n": 8,
+    "native_relative_residual": 1e-08,
+    "schema": "rheon-trajectory-v1",
+    "seed": 100,
+    "spacing": [
+      0.125,
+      0.125,
+      0.125
+    ]
+  },
+  "receipt": {
+    "attempt_id": "0f6af4bf1aeb41c2a784951653ac589e",
+    "drained": true,
+    "echild": true,
+    "go_received": true,
+    "helper": {
+      "boot_id": "14f8821d-b20e-4ebd-87a4-df441b737def",
+      "pid": 278976,
+      "start_ticks": "2845761"
+    },
+    "leader_returncode": 0,
+    "outcome": "completed",
+    "reason": "exited",
+    "request_sha256": "58e06d2e8604624cbc7a49f044781de2dba50ac3c2f0cb5d14c339d9e4b8b1a5",
+    "schema_version": 1,
+    "spawn_closed": true,
+    "spec_sha256": "76774eb4b3a87461fe6c83e6f28b9b52ec8fbb35baf169b08e64ac63d3e71657",
+    "streams": {
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 237,
+        "sha256": "1daa93f8bbd5bb5bd48ac394053139c64804d1eb7db51c2f23a7f4a5ef0f87f5"
+      }
+    }
+  },
+  "limitations": [
+    "No frames generated; no numerical or model acceptance.",
+    "Native direct dependency closure is included in the trusted system runtime inventory; this is local ready/stop qualification, not hosted or GPU qualification."
+  ],
+  "runtime_bytes": 64246348,
+  "full_evidence_sha256": "e88d1bd1e4a89c48a9b2eaa90ab82149cb45a67a1747667a21f91b7af29d44a3",
+  "native_dependencies": {
+    "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2": {
+      "bytes": 225672,
+      "sha256": "438c546d8e8cc48496bf3a95f753051afd9db66a629a74e31a9ded71586b56e0"
+    },
+    "/usr/lib/x86_64-linux-gnu/libc.so.6": {
+      "bytes": 1995216,
+      "sha256": "fa430b8f298f817a266046af84a77533185ad6fc4406c7d3787b5a0a0c207826"
+    },
+    "/usr/lib/x86_64-linux-gnu/libm.so.6": {
+      "bytes": 977112,
+      "sha256": "6d567d53e895273ca14a1f9dc164fc6c8d39aed2f60aa46a733c2784228915f3"
+    },
+    "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1": {
+      "bytes": 182856,
+      "sha256": "30c61ab012a4241bed033725a09b61f5fdd3bb7df95ee852d0b096520524c7af"
+    }
+  }
+}

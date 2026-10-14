@@ -49,6 +49,7 @@ def receipt(record):
 
 def find_result(workbench, request_id):
     """Confirm committed acquisition, not current bytes, review or scientific validity."""
+    workbench.access.require('inspect', 'sequence_batch_import.find_result', request_id)
     marker(request_id)
     with workbench.lock:
         matches = workbench.db.execute("""SELECT id FROM workbench_records WHERE kind='sequence' AND
@@ -69,6 +70,7 @@ def find_result(workbench, request_id):
 
 
 def import_item(workbench, body):
+    workbench.access.require('edit', 'sequence_batch_import.import_item')
     allowed = {'files', 'request_id', 'batch_name', 'item_name', 'item_index', 'name', 'groups', 'parents', 'rights'}
     if type(body) is not dict or set(body) - allowed or type(body.get('files')) is not dict or set(body['files']) != {'run.json', 'frames.jsonl'}:
         raise WorkbenchError('Supply exactly one complete run.json / frames.jsonl pair and bounded item metadata.')

@@ -1,5 +1,5 @@
 """Real PostgreSQL version evolution and lossless retained backup contracts."""
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 import io
 import json
 import os
@@ -20,7 +20,7 @@ from backup_metadata import (backup_catalog, populate_catalog, read_catalog,
                              read_sequences, restore_catalog, summaries,
                              table_state, tree_manifest)
 from metadata import (CommitOutcomeUnknown, Metadata, SCHEMA_VERSION, StorageError,
-                      TABLES_V1, TABLES_V2, WORKSPACE_TABLES, connection_info,
+                      TABLES_V1, TABLES_V2, TABLES_V3, TABLES_V4, PROJECT_TABLES, WORKSPACE_TABLES, connection_info,
                       definition_hash)
 from migrate_sqlite import migrate_sqlite, read_legacy
 from upgrade_metadata import UPGRADES, upgrade_catalog
@@ -33,7 +33,7 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertEqual(len(TABLES_V1), 19)
         self.assertEqual(definition_hash(1),
                          '859a04c5ee618faae689885bee79054d5e92098e746d058fd2bcb599da4c80db')
-        self.assertEqual(SCHEMA_VERSION, 4)
+        self.assertEqual(SCHEMA_VERSION, 8)
         self.assertEqual(set(WORKSPACE_TABLES),
                          {'workspace_graphs', 'workspace_runs', 'workspace_exposures'})
 
@@ -44,6 +44,16 @@ class WorkspaceSchemaContract(unittest.TestCase):
         self.assertNotEqual(definition_hash(3), definition_hash(2))
         self.assertEqual([UPGRADES[version][0] for version in (1, 2)],
                          ['workspace-metadata-1-to-2', 'audio-metadata-2-to-3'])
+
+    def test_retained_v3_v4_definitions_and_additive_v5_project_table(self):
+        self.assertEqual(len(TABLES_V3), 22)
+        self.assertEqual(definition_hash(3), '54fade5b56207edf7c9a33bfa9187f85b3e42ea779869314e7ab0fa8bdc242a4')
+        self.assertEqual(len(TABLES_V4), 24)
+        self.assertEqual(definition_hash(4), '52242c56f7b88144157b66d93b151d818cecf0b2219226d4aff5734e8a1adcef')
+        self.assertEqual(set(PROJECT_TABLES), {'workspace_projects'})
+        self.assertEqual(UPGRADES[4], ('project-metadata-4-to-5', tuple(PROJECT_TABLES.values())))
+        self.assertNotEqual(definition_hash(5), definition_hash(4))
+        self.assertEqual(definition_hash(6), 'e4ca8ba0b092834a3e7ba059f88fce223a66ad2f830ab7fb60c64fe6d1882cf5')
 
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL TULDOK_DATABASE_URL')
@@ -116,9 +126,12 @@ class WorkspaceMetadata(unittest.TestCase):
         self.assertEqual(read_sequences(reopened), sequences)
         self.assertTrue(all(current[name]['count'] == 0 for name in WORKSPACE_TABLES))
         self.assertEqual(reopened.dataset_id, identity)
-        self.assertEqual(reopened.schema_version, 4)
+        self.assertEqual(reopened.schema_version, 8)
         from app import Dataset
         dataset = Dataset(self.root / 'catalog')
+        from auth_helpers import bind_owner
+        bind_owner(self, dataset)
+        current = read_catalog(reopened)
         try:
             expected = json.loads((FIXTURE / 'expected.json').read_bytes())
             row = expected['record']
@@ -184,8 +197,8 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(metadata.path)
         result = upgrade_catalog(metadata.path, quiesced=True)
-        self.assertEqual(result['migration'], 'spatial-metadata-3-to-4')
-        self.assertEqual(result['schema_version'], 4)
+        self.assertEqual(result['migration'], 'execution-approvals-7-to-8')
+        self.assertEqual(result['schema_version'], 8)
         current = Metadata(metadata.path, create=False)
         self.addCleanup(current.close)
         self.assertEqual(current.dataset_id, metadata.dataset_id)
@@ -363,8 +376,286 @@ class WorkspaceMetadata(unittest.TestCase):
                 upgrade_catalog(metadata.path, quiesced=True)
         reopened = Metadata(metadata.path, create=False)
         self.addCleanup(reopened.close)
-        self.assertEqual(reopened.schema_version, 4)
+        self.assertEqual(reopened.schema_version, 8)
         self.assertEqual(upgrade_catalog(metadata.path, quiesced=True)['status'], 'already_current')
+
+    def test_failed_backup_cleans_its_read_only_partial_without_changing_source(self):
+        from backup_metadata import tree_modes
+        metadata = self.catalog(version=8)
+        nested = metadata.path / 'readonly'; nested.mkdir()
+        (nested / 'data').write_bytes(b'fixture'); (nested / 'data').chmod(0o400)
+        nested.chmod(0o500)
+        before = tree_manifest(metadata.path); modes = tree_modes(metadata.path, before)
+        backup = self.root / 'failed-backup'
+        with patch('backup_metadata.write_json', side_effect=OSError('post-copy injected failure')):
+            with self.assertRaisesRegex(OSError, 'post-copy injected failure'):
+                backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertFalse(backup.exists())
+        self.assertFalse(list(self.root.glob('failed-backup.partial-*')))
+        self.assertEqual(tree_manifest(metadata.path), before)
+        self.assertEqual(tree_modes(metadata.path, before), modes)
+        nested.chmod(0o700)
+
+    def test_uncertain_partial_cleanup_preserves_original_error_and_external_modes(self):
+        metadata = self.catalog(version=8)
+        external = self.root / 'external'; external.mkdir(); external.chmod(0o500)
+        backup = self.root / 'uncertain-backup'
+        def replace(path, value):
+            partial = Path(path).parent
+            (partial / 'catalog').rename(partial / 'retained-catalog')
+            (partial / 'catalog').symlink_to(external, target_is_directory=True)
+            raise OSError('original post-copy failure')
+        with patch('backup_metadata.write_json', side_effect=replace):
+            with self.assertRaisesRegex(OSError, 'original post-copy failure') as caught:
+                backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertIn('cleanup refused', caught.exception.backup_cleanup_diagnostic)
+        self.assertEqual(external.stat().st_mode & 0o777, 0o500)
+        self.assertEqual(len(list(self.root.glob('uncertain-backup.partial-*'))), 1)
+        external.chmod(0o700)
+
+    def test_backup_cleanup_never_deletes_replacement_root_contents(self):
+        import backup_metadata
+        metadata = self.catalog(version=8)
+        backup = self.root / 'replaced-backup'
+        original = backup_metadata._remove_partial_contents
+        replacement = []
+        def replace(descriptor):
+            partial = next(self.root.glob('replaced-backup.partial-*'))
+            partial.rename(self.root / 'retained-owned-partial')
+            partial.mkdir(); (partial / 'unrelated').write_bytes(b'preserve')
+            replacement.append(partial)
+            # Only intercept the root call; recursion uses the genuine implementation.
+            with patch('backup_metadata._remove_partial_contents', original):
+                original(descriptor)
+        with patch('backup_metadata.write_json', side_effect=OSError('original failure')):
+            with patch('backup_metadata._remove_partial_contents', side_effect=replace):
+                with self.assertRaisesRegex(OSError, 'original failure') as caught:
+                    backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual((replacement[0] / 'unrelated').read_bytes(), b'preserve')
+        self.assertIn('identity changed', caught.exception.backup_cleanup_diagnostic)
+
+    def test_cleanup_diagnostic_preserves_original_error_without_note_capability_and_reaches_cli(self):
+        import backup_metadata
+        class LegacyOSError(OSError):
+            add_note = None  # Python 3.10 exceptions have no note capability.
+        metadata = self.catalog(version=8)
+        before = tree_manifest(metadata.path)
+        for error_type in (OSError, LegacyOSError):
+            with self.subTest(error_type=error_type.__name__):
+                backup = self.root / ('diagnostic-' + error_type.__name__)
+                original_error = error_type('original post-copy failure')
+                original_args = original_error.args
+                with patch('backup_metadata.write_json', side_effect=original_error), \
+                        patch('backup_metadata._remove_partial_contents',
+                              side_effect=backup_metadata.StorageTransferError('injected custody refusal')):
+                    with self.assertRaises(error_type) as caught:
+                        backup_catalog(metadata.path, backup, quiesced=True)
+                self.assertIs(caught.exception, original_error)
+                self.assertEqual(original_error.args, original_args)
+                self.assertEqual(str(original_error), 'original post-copy failure')
+                partials = list(self.root.glob(backup.name + '.partial-*'))
+                self.assertEqual(len(partials), 1)
+                diagnostic = original_error.backup_cleanup_diagnostic
+                self.assertIn(str(partials[0]), diagnostic)
+                self.assertIn('injected custody refusal', diagnostic)
+                if callable(getattr(original_error, 'add_note', None)):
+                    self.assertIn(diagnostic, original_error.__notes__)
+                else:
+                    self.assertFalse(hasattr(original_error, '__notes__'))
+                stderr = io.StringIO()
+                with patch.object(sys, 'argv', ['backup_metadata.py', 'backup',
+                                               str(metadata.path), str(backup), '--quiesced']), \
+                        patch('backup_metadata.backup_catalog', side_effect=original_error), \
+                        redirect_stderr(stderr):
+                    with self.assertRaises(SystemExit) as exited:
+                        backup_metadata.main()
+                self.assertEqual(exited.exception.code, 1)
+                self.assertEqual(stderr.getvalue(), str(original_error) + '\n' + diagnostic + '\n')
+                self.assertEqual(original_error.args, original_args)
+                self.assertEqual(tree_manifest(metadata.path), before)
+
+    def test_backup_partial_descriptor_acquisition_failure_closes_parent(self):
+        metadata = self.catalog(version=8)
+        original = os.open; parents = []
+        def fail(name, flags, *args, **kwargs):
+            if isinstance(name, str) and name.startswith('open-failure.partial-'):
+                parents.append(kwargs['dir_fd'])
+                raise OSError('injected descriptor acquisition failure')
+            return original(name, flags, *args, **kwargs)
+        with patch('backup_metadata.os.open', side_effect=fail):
+            with self.assertRaisesRegex(OSError, 'descriptor acquisition failure'):
+                backup_catalog(metadata.path, self.root / 'open-failure', quiesced=True)
+        self.assertEqual(len(parents), 1)
+        with self.assertRaises(OSError):
+            os.fstat(parents[0])
+
+    def test_private_manifest_restore_preserves_mode_and_refuses_changed_completed_mode(self):
+        from backup_metadata import StorageTransferError, tree_modes
+        previous_umask = os.umask(0o022)
+        try:
+            for mode in (0o400, 0o600):
+                with self.subTest(mode=oct(mode)):
+                    metadata = self.catalog(name='private-' + oct(mode), version=8)
+                    (metadata.path / '.tuldok.json').chmod(mode)
+                    backup = self.root / ('backup-' + oct(mode))
+                    receipt = backup_catalog(metadata.path, backup, quiesced=True)
+                    before = tree_manifest(backup)
+                    self.drop(metadata)
+                    destination = self.root / ('restored-' + oct(mode))
+                    result = restore_catalog(backup, destination)
+                    self.assertEqual(restore_catalog(backup, destination), result)
+                    self.assertEqual(tree_modes(destination, receipt['files']),
+                                     tree_modes(backup / 'catalog', receipt['files']))
+                    manifest = destination / '.tuldok.json'
+                    manifest.chmod(0o644)
+                    with self.assertRaisesRegex(StorageTransferError, 'later writes'):
+                        restore_catalog(backup, destination)
+                    self.assertEqual(manifest.stat().st_mode & 0o777, 0o644)
+                    self.assertEqual(tree_manifest(backup), before)
+        finally:
+            os.umask(previous_umask)
+
+    def test_private_manifest_restore_retry_preserves_identity_and_refuses_changed_staging_mode(self):
+        import backup_metadata
+        previous_umask = os.umask(0o077)
+        try:
+            metadata = self.catalog(version=8)
+            (metadata.path / '.tuldok.json').chmod(0o400)
+            backup = self.root / 'private-retry-backup'
+            backup_catalog(metadata.path, backup, quiesced=True)
+            before = tree_manifest(backup)
+            self.drop(metadata)
+            os.umask(0o022)
+            destination = self.root / 'private-retry-restored'
+            with patch('backup_metadata.copy_tree', side_effect=OSError('injected pre-copy interruption')):
+                with self.assertRaisesRegex(OSError, 'pre-copy interruption'):
+                    restore_catalog(backup, destination)
+            staging = next(self.root.glob(destination.name + '.restore-*'))
+            manifest = staging / '.tuldok.json'
+            marker_bytes = manifest.read_bytes()
+            self.assertEqual(manifest.stat().st_mode & 0o777, 0o400)
+            lock = staging / '.metadata-init.lock'
+            self.assertEqual(lock.stat().st_mode & 0o777, 0o600)
+            lock.chmod(0o644)
+            with self.assertRaisesRegex(backup_metadata.StorageTransferError, 'permissions differ'):
+                restore_catalog(backup, destination)
+            self.assertEqual(lock.stat().st_mode & 0o777, 0o644)
+            lock.chmod(0o600)  # Fixture owner explicitly restores the admitted mode.
+            manifest.chmod(0o600)
+            with self.assertRaisesRegex(backup_metadata.StorageTransferError, 'permissions differ'):
+                restore_catalog(backup, destination)
+            self.assertEqual(manifest.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(manifest.read_bytes(), marker_bytes)
+            manifest.chmod(0o400)  # Fixture owner explicitly restores the admitted mode.
+            result = restore_catalog(backup, destination)
+            self.assertEqual(restore_catalog(backup, destination), result)
+            self.assertEqual((destination / '.tuldok.json').read_bytes(), marker_bytes)
+            self.assertEqual((destination / '.tuldok.json').stat().st_mode & 0o777, 0o400)
+            self.assertEqual((destination / '.metadata-init.lock').stat().st_mode & 0o777, 0o600)
+            self.assertEqual(tree_manifest(backup), before)
+        finally:
+            os.umask(previous_umask)
+
+    def test_new_restore_never_repairs_same_owner_files_replaced_after_metadata_creation(self):
+        from backup_metadata import StorageTransferError
+        for name in ('.tuldok.json', '.metadata-init.lock'):
+            with self.subTest(name=name):
+                metadata = self.catalog(name='replace-' + name, version=8)
+                backup = self.root / ('replace-backup-' + name)
+                backup_catalog(metadata.path, backup, quiesced=True)
+                self.drop(metadata)
+                replaced = []
+                def replace(path, *args, **kwargs):
+                    current = Metadata(path, *args, **kwargs)
+                    target = Path(path) / name
+                    value = target.read_bytes()
+                    target.unlink(); target.write_bytes(value); target.chmod(0o400)
+                    replaced.append((target, value, target.stat().st_ino))
+                    return current
+                with patch('metadata.Metadata', side_effect=replace):
+                    with self.assertRaisesRegex(StorageTransferError, 'permissions differ'):
+                        restore_catalog(backup, self.root / ('replace-restored-' + name))
+                target, value, inode = replaced[0]
+                self.assertEqual(target.stat().st_mode & 0o777, 0o400)
+                self.assertEqual(target.stat().st_ino, inode)
+                self.assertEqual(target.read_bytes(), value)
+
+    def test_fresh_restore_refuses_preexisting_catalog_initialization_files(self):
+        import backup_metadata
+        for name in ('.tuldok.json', '.metadata-init.lock'):
+            with self.subTest(name=name):
+                metadata = self.catalog(name='preexisting-' + name, version=8)
+                backup = self.root / ('preexisting-backup-' + name)
+                backup_catalog(metadata.path, backup, quiesced=True)
+                self.drop(metadata)
+                original = backup_metadata.write_json
+                foreign = []
+                def create(path, value):
+                    original(path, value)
+                    target = Path(path).parent / name
+                    target.write_bytes(b'preserve preexisting file'); target.chmod(0o400)
+                    foreign.append(target)
+                with patch('backup_metadata.write_json', side_effect=create):
+                    with self.assertRaisesRegex((StorageError, backup_metadata.StorageTransferError), 'already exist'):
+                        restore_catalog(backup, self.root / ('preexisting-restored-' + name))
+                self.assertEqual(foreign[0].stat().st_mode & 0o777, 0o400)
+                self.assertEqual(foreign[0].read_bytes(), b'preserve preexisting file')
+                foreign[0].unlink()  # The fixture's intentionally invalid manifest is not a catalog.
+
+    def test_private_pending_restore_creates_missing_manifest_without_changing_existing_lock(self):
+        from backup_metadata import StorageTransferError, digest
+        previous_umask = os.umask(0o077)
+        try:
+            metadata = self.catalog(version=8)
+            (metadata.path / '.tuldok.json').chmod(0o400)
+            backup = self.root / 'pending-private-backup'
+            receipt = backup_catalog(metadata.path, backup, quiesced=True)
+            self.drop(metadata); os.umask(0o022)
+            destination = self.root / 'pending-private-restored'
+            with patch('metadata._publish_manifest', side_effect=OSError('injected early publication interruption')):
+                with self.assertRaisesRegex(OSError, 'early publication interruption'):
+                    restore_catalog(backup, destination)
+            staging = next(self.root.glob(destination.name + '.restore-*'))
+            self.assertFalse(os.path.lexists(staging / '.tuldok.json'))
+            lock = staging / '.metadata-init.lock'
+            identity = lock.stat().st_ino
+            lock.chmod(0o644)
+            with self.assertRaisesRegex(StorageTransferError, 'lock bytes or permissions differ'):
+                restore_catalog(backup, destination)
+            self.assertEqual(lock.stat().st_mode & 0o777, 0o644)
+            lock.chmod(0o600)  # Fixture owner restores the mode; the tool never repairs it.
+            result = restore_catalog(backup, destination)
+            self.assertEqual(restore_catalog(backup, destination), result)
+            self.assertEqual((destination / '.metadata-init.lock').stat().st_ino, identity)
+            self.assertEqual((destination / '.metadata-init.lock').stat().st_mode & 0o777, 0o600)
+            self.assertEqual((destination / '.tuldok.json').stat().st_mode & 0o777, 0o400)
+            self.assertEqual(tree_manifest(destination, ('.restore-receipt-' + digest(receipt) + '.json',)),
+                             receipt['files'])
+        finally:
+            os.umask(previous_umask)
+
+    def test_private_pending_restore_preserves_stale_exclusive_manifest_temporary(self):
+        metadata = self.catalog(version=8)
+        (metadata.path / '.tuldok.json').chmod(0o400)
+        backup = self.root / 'stale-temporary-backup'
+        backup_catalog(metadata.path, backup, quiesced=True)
+        self.drop(metadata)
+        destination = self.root / 'stale-temporary-restored'
+        original = os.replace
+        def interrupt(source, target):
+            if Path(target).name == '.tuldok.json':
+                raise OSError('injected pre-rename interruption')
+            return original(source, target)
+        with patch('metadata.os.replace', side_effect=interrupt):
+            with self.assertRaisesRegex(OSError, 'pre-rename interruption'):
+                restore_catalog(backup, destination)
+        staging = next(self.root.glob(destination.name + '.restore-*'))
+        temporary = staging / '.tuldok.json.tmp'
+        before = (temporary.read_bytes(), temporary.stat().st_mode, temporary.stat().st_ino)
+        with self.assertRaises(FileExistsError):
+            restore_catalog(backup, destination)
+        self.assertEqual((temporary.read_bytes(), temporary.stat().st_mode, temporary.stat().st_ino), before)
+        self.assertFalse(os.path.lexists(staging / '.tuldok.json'))
 
     def test_v1_backup_restores_exact_v1_and_can_explicitly_upgrade_with_backup_unchanged(self):
         metadata = self.historical_catalog()
@@ -495,6 +786,101 @@ class WorkspaceMetadata(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'later writes'):
             migrate_sqlite(source, destination, backup, quiesced=True)
 
+    def test_v4_to_v5_preserves_history_and_only_explicitly_admits_projects(self):
+        metadata = self.historical_catalog(version=4)
+        self.workspace_rows(metadata)
+        self.audio_row(metadata)
+        rows = summaries(read_catalog(metadata))
+        files = tree_manifest(metadata.path)
+        identity = metadata.dataset_id
+        with self.assertRaisesRegex(StorageError, 'explicit upgrade'):
+            Metadata(metadata.path, create=False)
+        with self.assertRaisesRegex(StorageError, 'Stop all'):
+            upgrade_catalog(metadata.path)
+        result = upgrade_catalog(metadata.path, quiesced=True)
+        self.assertEqual((result['schema_version'], result['migration']), (8, 'execution-approvals-7-to-8'))
+        current = Metadata(metadata.path, create=False)
+        self.addCleanup(current.close)
+        self.assertEqual(current.dataset_id, identity)
+        self.assertEqual(summaries({name: value for name, value in read_catalog(current).items() if name in rows}), rows)
+        self.assertEqual(tree_manifest(current.path), files)
+        self.assertEqual(current.execute('SELECT count(*) FROM workspace_projects').fetchone()[0], 0)
+        self.assertEqual(upgrade_catalog(current.path, quiesced=True), dict(result, status='already_current'))
+
+    def test_project_upgrade_failure_rolls_back_schema_history_and_ledger(self):
+        for source in (1, 4):
+            for stage in ('create', 'proof', 'ledger'):
+                with self.subTest(source=source, stage=stage):
+                    metadata = self.catalog('project-rollback-' + str(source) + '-' + stage, source)
+                    before = summaries(read_catalog(metadata))
+                    signature = metadata._signature()
+                    ledger = metadata.execute('SELECT * FROM catalog_version').fetchall()
+                    execute, proof = Metadata.execute, Metadata.expected_signature
+                    def fail(owner, statement, parameters=None):
+                        result = execute(owner, statement, parameters)
+                        if stage == 'create' and statement == UPGRADES[4][1][0]:
+                            raise OSError('injected after project table creation')
+                        if stage == 'ledger' and isinstance(statement, str) and statement.startswith('UPDATE catalog_version') and parameters[0] == 5:
+                            raise OSError('injected after project ledger write')
+                        return result
+                    def fail_proof(owner, target):
+                        return 'wrong' if stage == 'proof' and target == 5 else proof(owner, target)
+                    with patch.object(Metadata, 'execute', fail), patch.object(Metadata, 'expected_signature', fail_proof):
+                        with self.assertRaises((StorageError, OSError)):
+                            upgrade_catalog(metadata.path, quiesced=True)
+                    self.assertEqual(metadata._signature(), signature)
+                    self.assertEqual(metadata.execute('SELECT * FROM catalog_version').fetchall(), ledger)
+                    self.assertEqual(summaries(read_catalog(metadata)), before)
+                    metadata.validate_schema()
+
+    def test_retained_v4_backup_restores_exact_old_schema_then_requires_upgrade(self):
+        metadata = self.historical_catalog(version=4)
+        self.workspace_rows(metadata)
+        before = summaries(read_catalog(metadata))
+        backup = self.root / 'backup-v4'
+        receipt = backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual(receipt['schema_version'], 4)
+        self.assertEqual(set(receipt['tables']), set(TABLES_V4))
+        backup_files = tree_manifest(backup)
+        self.drop(metadata)
+        restored = self.root / 'restored-v4'
+        restore_catalog(backup, restored)
+        with self.assertRaisesRegex(StorageError, 'explicit upgrade'):
+            Metadata(restored, create=False)
+        old = Metadata(restored, create=False, schema_version=4)
+        self.addCleanup(old.close)
+        self.assertEqual(summaries(read_catalog(old)), before)
+        old.close()
+        self.assertEqual(upgrade_catalog(restored, quiesced=True)['schema_version'], 8)
+        self.assertEqual(tree_manifest(backup), backup_files)
+
+    def test_v5_backup_restore_preserves_exact_project_snapshot_and_history(self):
+        metadata = self.historical_catalog(version=5)
+        self.workspace_rows(metadata)
+        document = ' { "id":"project-1", "root_alias":"local", "source":"project.json", "sha256":"snapshot", "manifest":{"name":"原本 e\u0301"} } '
+        with metadata.transaction():
+            metadata.execute('INSERT INTO workspace_projects VALUES (%s,%s)', ('project-1', document))
+        with self.assertRaises(psycopg.errors.UniqueViolation), metadata.transaction():
+            metadata.execute('INSERT INTO workspace_projects VALUES (%s,%s)', ('project-1', '{}'))
+        rows = summaries(read_catalog(metadata))
+        backup = self.root / 'backup-v5'
+        receipt = backup_catalog(metadata.path, backup, quiesced=True)
+        self.assertEqual(receipt['schema_version'], 5)
+        self.assertEqual(receipt['tables']['workspace_projects']['count'], 1)
+        backup_files = tree_manifest(backup)
+        self.drop(metadata)
+        restored = self.root / 'restored-v5'
+        restore_catalog(backup, restored)
+        current = Metadata(restored, create=False, schema_version=5)
+        self.addCleanup(current.close)
+        self.assertEqual(summaries(read_catalog(current)), rows)
+        self.assertEqual(current.execute('SELECT document FROM workspace_projects').fetchone()[0], document)
+        restore_catalog(backup, restored)
+        current.execute("UPDATE workspace_projects SET document='{}' WHERE id='project-1'")
+        with self.assertRaisesRegex(ValueError, 'later writes'):
+            restore_catalog(backup, restored)
+        self.assertEqual(tree_manifest(backup), backup_files)
+
     def test_upgrade_cli_reopens_catalog_and_never_runs_on_ordinary_startup(self):
         metadata = self.catalog()
         command = [sys.executable, str(Path(__file__).resolve().parents[1] / 'upgrade_metadata.py'), str(metadata.path)]
@@ -511,3 +897,71 @@ class WorkspaceMetadata(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TransferPermissions(unittest.TestCase):
+    def test_read_only_tree_and_retry_preserve_modes_and_byte_manifest(self):
+        from backup_metadata import copy_tree, tree_modes, StorageTransferError
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'source'; target = Path(temporary) / 'target'
+            (source / 'nested').mkdir(parents=True)
+            (source / 'nested/program').write_bytes(b'fixture executable')
+            (source / 'data').write_bytes(b'fixture data')
+            (source / 'nested/program').chmod(0o500); (source / 'data').chmod(0o400)
+            (source / 'nested').chmod(0o500); source.chmod(0o500)
+            expected = tree_manifest(source)
+            copy_tree(source, target, expected)
+            self.assertEqual(tree_manifest(target), expected)
+            self.assertEqual(tree_modes(target, expected), tree_modes(source, expected))
+            self.assertEqual((target / 'data').stat().st_nlink, 1)
+            copy_tree(source, target, expected)
+            (target / 'nested').chmod(0o550)
+            with self.assertRaisesRegex(StorageTransferError, 'directory permissions differ'):
+                copy_tree(source, target, expected)
+            (target / 'nested').chmod(0o500)
+            (target / 'data').chmod(0o600)
+            with self.assertRaisesRegex(StorageTransferError, 'permissions differ'):
+                copy_tree(source, target, expected)
+            target.chmod(0o700)
+            (target / 'data').unlink()
+            target.chmod(0o500)
+            with self.assertRaisesRegex(StorageTransferError, 'Read-only staging'):
+                copy_tree(source, target, expected)
+            for root in (source, target):
+                root.chmod(0o700); (root / 'nested').chmod(0o700)
+
+    def test_partial_cleanup_cannot_follow_replaced_intermediate_directory(self):
+        from backup_metadata import _remove_partial_contents
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / 'partial'; root.mkdir()
+            nested = root / 'catalog'; nested.mkdir()
+            external = Path(temporary) / 'external'; external.mkdir(); external.chmod(0o500)
+            descriptor = os.open(root, os.O_RDONLY | os.O_DIRECTORY)
+            original = os.open
+            def replace(name, flags, *args, **kwargs):
+                if name == 'catalog' and kwargs.get('dir_fd') == descriptor:
+                    nested.rename(root / 'retained-catalog')
+                    nested.symlink_to(external, target_is_directory=True)
+                return original(name, flags, *args, **kwargs)
+            try:
+                with patch('backup_metadata.os.open', side_effect=replace):
+                    with self.assertRaises(OSError):
+                        _remove_partial_contents(descriptor)
+                self.assertEqual(external.stat().st_mode & 0o777, 0o500)
+                self.assertTrue((root / 'retained-catalog').is_dir())
+            finally:
+                os.close(descriptor); external.chmod(0o700)
+
+    def test_source_mode_change_during_copy_refused(self):
+        from backup_metadata import copy_tree, StorageTransferError
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / 'source'; source.mkdir()
+            payload = source / 'payload'; payload.write_bytes(b'fixture'); payload.chmod(0o400)
+            expected = tree_manifest(source)
+            original = shutil.copyfileobj
+            def change(reader, writer):
+                original(reader, writer); payload.chmod(0o600)
+            with patch('backup_metadata.shutil.copyfileobj', side_effect=change):
+                with self.assertRaisesRegex(StorageTransferError, 'Source changed'):
+                    copy_tree(source, Path(temporary) / 'target', expected)
+            self.assertFalse((Path(temporary) / 'target/payload').exists())

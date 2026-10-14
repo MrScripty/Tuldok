@@ -6,6 +6,7 @@ of model-training-book/examples/diffusion/check_image_data.py at the recorded
 SHA-256. Set TULDOK_CAPTION_CONSUMER to execute a separate checkout; its bytes
 must match the same pin. All generated datasets and images live in /tmp.
 """
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import io
@@ -160,13 +161,13 @@ class CaptionReleaseTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='caption-release-', dir='/tmp')
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.workbench = self.dataset.workbench
 
     def reopen(self):
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.workbench = self.dataset.workbench
 
     def image(self, color, groups=None, parents=None, size=(512, 512),
@@ -520,7 +521,7 @@ class CaptionReleaseTests(unittest.TestCase):
     def test_generation_prompt_remains_provenance_not_caption(self):
         prompt = 'Generate a dramatic blue panel; this is not its caption.'
         result = {'image': base64.b64encode(image_bytes('blue')).decode('ascii'), 'metadata': {'seed': 7}}
-        with patch.object(self.dataset.image_requests, 'generate', return_value=result) as generate:
+        with patch.object(self.dataset.image_requests, '_generate_admitted', return_value=result) as generate:
             self.dataset.generation_jobs.start(dict(server_url='http://localhost:1234', model='fixture-image-model',
                 prompt=prompt, width=512, height=512, count=1, strategy='repeat', session_id='generated-panel', seed=7))
             self.dataset.generation_jobs.worker.join(10)

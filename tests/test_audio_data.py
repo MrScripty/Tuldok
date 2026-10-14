@@ -1,4 +1,5 @@
 """Source-frame WAV semantics and real PostgreSQL/filesystem review/export path."""
+from auth_helpers import bind_owner
 import base64
 import copy
 import hashlib
@@ -90,7 +91,7 @@ class AudioData(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name) / 'catalog'
-        self.dataset = Dataset(self.path)
+        self.dataset = Dataset(self.path); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.drop_schema)
         self.addCleanup(lambda: self.dataset.close())
         self.w = self.dataset.workbench
@@ -135,7 +136,7 @@ class AudioData(unittest.TestCase):
             with wave.open(io.BytesIO(original)) as reader:
                 reader.setpos(4000); samples = list(struct.iter_unpack('<hh',reader.readframes(4001)))
                 self.assertEqual(samples[0],(0,24576)); self.assertEqual(samples[-1],(-16384,0))
-        self.dataset.close(); self.dataset = Dataset(self.path); self.w = self.dataset.workbench
+        self.dataset.close(); self.dataset = Dataset(self.path); self.actor = bind_owner(self, self.dataset); self.w = self.dataset.workbench
         reloaded = self.w.get(row['id']); self.assertEqual(reloaded,corrected)
         self.assertEqual(self.w.asset(row['id']), (FIXTURE.read_bytes(),'audio/wav'))
         self.review(reloaded,annotation={'segments':[segment(label='new label')]},review='draft')

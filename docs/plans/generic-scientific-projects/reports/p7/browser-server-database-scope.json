@@ -1,0 +1,9 @@
+{
+  "catalog": "/workspace/scratch/tuldok-cpu-qualification/restored-catalog-20261013",
+  "dataset_id": "d4856fe9eec74aea8b007cca029b3248",
+  "schema_version": 8,
+  "database_identity_sha256": "dfd04b365914b1acb1ca39124091e3042f99089ec028b539ad0f932bfd822f2b",
+  "actual_app_sessions": 1,
+  "actual_app_sessions_exclusively_restore_database": true,
+  "verified_before_owner_login": true
+}

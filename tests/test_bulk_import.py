@@ -1,4 +1,5 @@
 """Native manifest admission traverses actual HTTP, PostgreSQL and original assets."""
+from auth_helpers import bind_owner
 from postgres_helpers import database_snapshot, in_transaction, install_failure_trigger
 import base64
 import hashlib
@@ -23,7 +24,7 @@ class BulkImportTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.open_server()
         self.addCleanup(self.close)
         stream = io.BytesIO()
@@ -43,7 +44,7 @@ class BulkImportTests(unittest.TestCase):
         self.dataset.close()
 
     def request(self, route, body=None):
-        request = urllib.request.Request(self.root + route,
+        request = self.actor.request(self.root + route,
             data=json.dumps(body).encode() if body is not None else None,
             headers={'Content-Type': 'application/json'})
         try:
@@ -84,7 +85,7 @@ class BulkImportTests(unittest.TestCase):
         self.assertEqual(record['provenance']['source_sha256'], hashlib.sha256(self.raw).hexdigest())
         before = [self.dataset.workbench.get(result['record_id']) for result in (text, image)]
         self.close()
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.open_server()
         for body, result, old in zip((text_body, image_body), (text, image), before):
             status, found = self.request('/api/workbench/import-result/' + body['request_id'])

@@ -1,0 +1,14 @@
+{
+  "qualification": "Source-only immutable evaluation assembly; no native/model execution",
+  "project_id": "a32555aabdee479ab94a9cb4159f5a73",
+  "recipe_sha256": "777fccef814adfeb7afcf599cb56e31faf361b4c6afbd3e80b5b899c87ce271b",
+  "sources": 9,
+  "outputs": 89,
+  "scientific_chunks": 64,
+  "resources": {
+    "max_output_bytes": 3500000000,
+    "profile": "captured_cpu_large_outputs_v1",
+    "wall_seconds": 2400
+  },
+  "runtime_snapshot_sha256": "cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7"
+}

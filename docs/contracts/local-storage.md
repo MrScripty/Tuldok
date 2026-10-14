@@ -227,3 +227,30 @@ complete backup, never automatically deleted. Deletion staging is reconciled
 against committed metadata on reopen. Nested deletion defers physical removal
 until the outermost commit. Release publication and worker dispatch refuse an
 enclosing transaction so they cannot publish or execute uncommitted intent.
+
+
+## Backup permission preservation
+
+The existing PostgreSQL backup and restore owner preserves ordinary file
+permission bits, including captured runtime executables (`0500`) and data
+(`0400`). It applies directory permissions after copying children, with the
+catalog root last. Source identity and permissions must remain stable during
+copying. Resumed files must match both bytes and permissions; a missing file
+inside read-only staging is refused without widening directory permissions.
+Writable staging directories are intermediate construction state; existing
+read-only directories must already match source permissions. A completed restore
+retry compares all permissions against the retained backup. On backup failure,
+only the invocation-owned private partial backup directories are made removable
+for cleanup through retained directory descriptors and no-follow child opens.
+Source and resumable restore directories are never widened. If private-partial
+identity or traversal is uncertain, cleanup stops, retains the partial and adds
+a diagnostic note to the original error rather than masking that failure.
+The operator must preserve refused staging for diagnosis; the transfer never
+repairs source files or rewrites runtime manifests.
+
+The version-1 byte manifest and receipt format are unchanged. Permissions are
+copied from the ordinary backup files, not authenticated by the historical byte
+receipt. Older backups made without permission preservation cannot establish
+original permissions or usable captured runtimes. Cold runtime verification is
+required before claiming runtime restore acceptance; synthetic executable
+fixtures do not qualify a real model or runtime installation.

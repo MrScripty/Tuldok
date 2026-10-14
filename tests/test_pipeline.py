@@ -1,4 +1,5 @@
 """Real PostgreSQL graph identity, editable drafts and admission contracts."""
+from auth_helpers import bind_owner
 import base64
 import copy
 import hashlib
@@ -23,7 +24,7 @@ class WorkspaceCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='workspace-contract-')
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.pipelines = self.dataset.pipelines
         self.rows = []
@@ -71,7 +72,7 @@ class PipelineTests(WorkspaceCase):
         self.assertEqual(clone['revision'], 1)
         self.assertEqual(execution_digest(clone), original)
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.pipelines.get(saved['id']), saved)
 
     def test_invalid_disconnected_and_fixture_graphs_never_admit(self):

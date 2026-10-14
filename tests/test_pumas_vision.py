@@ -1,4 +1,5 @@
 """Application acceptance of source-derived vision fixtures and actual DTO schema pins, not inference."""
+from auth_helpers import bind_owner
 import base64
 import copy
 import hashlib
@@ -114,7 +115,7 @@ class VisionBoundaryTests(unittest.TestCase):
 class VisionApplicationTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
-        self.data=Dataset(self.tmp.name);self.addCleanup(lambda:self.data.close())
+        self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data);self.addCleanup(lambda:self.data.close())
         self.server,self.url,self.state=start()
         self.addCleanup(self.server.server_close);self.addCleanup(self.server.shutdown);self.addCleanup(self.state['release'].set)
         self.row=self.data.workbench.import_asset({'kind':'image','name':'Blue','image':image()['data_base64'],
@@ -144,7 +145,7 @@ class VisionApplicationTests(unittest.TestCase):
         self.assertEqual(applied['review'],'draft');self.assertEqual(applied['target_proposal']['producer_contract_source'],vision.SOURCE_COMMIT)
         self.assertNotIn('canonical_request',applied['target_proposal'])
         self.assertEqual(applied['groups'],self.row['groups']);self.assertEqual(applied['provenance'],self.row['provenance'])
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.data.workbench.get(self.row['id'])['target_proposal'],applied['target_proposal'])
     def test_build_selection_and_unavailability_refuse_without_post(self):
         for mode in ('missing_build','unavailable','wrong_profile','wrong_model'):
@@ -170,7 +171,7 @@ class VisionApplicationTests(unittest.TestCase):
         self.data.caption_proposals.cancel({'job_id':job['id']});worker.join(3)
         self.assertFalse(worker.is_alive());self.assertIsNone(self.data.caption_proposals.active_id)
         job=self.data.caption_proposals.get(job['id']);self.assertEqual(job['status'],'cancelled');self.assertEqual(job['provider_outcome'],'unknown')
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.data.caption_proposals.start(body);self.assertEqual(len(self.state['requests']),1)
         self.assertEqual(pumas.models(self.url)['models'][0]['id'],'controlled-vision')
         self.state['release'].set();self.state['mode']='success'
@@ -181,7 +182,7 @@ class VisionApplicationTests(unittest.TestCase):
         with self.data.lock,self.data.db.transaction():
             job.update(status='generating',provider_outcome='not_admitted')
             self.data.caption_proposals._save(job)
-        self.data.close();self.data=Dataset(self.tmp.name)
+        self.data.close();self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         retained=self.data.caption_proposals.get(job['id'])
         self.assertEqual(retained['status'],'interrupted');self.assertEqual(retained['provider_outcome'],'unknown')
         self.data.caption_proposals.start(body);self.assertEqual(len(self.state['requests']),1)

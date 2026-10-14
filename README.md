@@ -47,6 +47,15 @@ installer, with its `bin` directory on `PATH`. Initialize a private service once
     eval "$(.venv/bin/python scripts/local_postgres.py env)"
     .venv/bin/python app.py
 
+In another terminal with the same database environment, create a private one-time
+login file: `.venv/bin/python access.py login --data ./data --out /private/new-login-code`.
+Use an existing private directory and a new filename, then enter its code in the
+browser's Session dialog. Codes expire after ten minutes; sessions last eight
+hours. Localhost is not an authenticated identity. Existing catalogs require the
+explicit schema-8 upgrade before starting this version. See [actor access](docs/contracts/actors.md)
+for scoped agent credentials and [storage upgrades](docs/contracts/workspace-storage.md).
+Existing CPU and integrity execution remains owner-only. Scoped agents can submit external recipes with an exact, one-use owner approval; see [external recipes](docs/contracts/external-recipes.md).
+
 The setup script uses a Unix socket under `~/.local/share/tuldok/postgres`,
 generates private credentials, and creates a database role without superuser,
 role-creation or database-creation permissions. It opens no TCP listener. Stop the
@@ -99,7 +108,7 @@ current record; saving/reviewing and freezing a new release leaves old results
 unchanged. Viewing test results records durable exposure; reused records or
 pixels cannot be presented as fresh holdout evidence.
 
-Fresh catalogs use schema 4. Existing PostgreSQL schema-1, schema-2 or schema-3 catalogs require an
+Fresh catalogs use schema 8. Existing PostgreSQL schema-1 through schema-7 catalogs require an
 explicit stopped-writer backup and upgrade, never an automatic startup change:
 
 ```sh
@@ -113,6 +122,19 @@ finishes. See [workspace storage](docs/contracts/workspace-storage.md),
 [run lifecycle](docs/contracts/workspace-runs.md) and
 [CPU adapter](docs/contracts/workspace-image-training.md) for bounds and recovery.
 The original corner studio and classic Workbench remain available.
+
+## Approved local recipes
+
+A project can declare an exact local Python recipe with typed parameters, named
+inputs and bounded output files. In Pipeline, select its recipe, edit/save the
+graph, review preflight and approve the exact execution. Runs shows durable state,
+cancellation and verified output downloads. Owners can issue one-use approvals
+for explicitly scoped agents. These are trusted same-user programs with ordinary
+filesystem/network authority, not sandboxed plugins. Missing drainage after a
+custodian failure remains unknown and blocks further external execution until
+cessation is proven. See the [external recipe contract](docs/contracts/external-recipes.md)
+for runtime support, limits and recovery. Scientific generation/training remains
+separately qualified; neutral executable tests are not model acceptance.
 
 ## Text classification and WAV data
 
@@ -874,4 +896,24 @@ fixtures and do not download model weights or call paid inference providers.
 
 ### Point-cloud and volume workflows
 
-In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.json`. The bounded profiles are [ordered ASCII PLY points](docs/contracts/point-cloud-data.md) and [uint8 NPY1 volumes](docs/contracts/volume-data.md). Inspect native points or index slices/physical coordinates, save human review, select whole assets and freeze a canonical release. In Pipeline, create and edit the corresponding validation/export recipe; Runs retains its integrity report and the unchanged release. Classification releases also offer validation/export without installing a trainer. Existing catalogs require the explicit schema4 upgrade described in the storage runbook; the application never silently migrates them. [Accepted workspace scope, evidence and limitations](docs/plans/dataset-centered-workspaces/reports/final-20261013.md).
+In Data, import `points.ply` with `points.json`, or `volume.npy` with `volume.json`. The bounded profiles are [ordered ASCII PLY points](docs/contracts/point-cloud-data.md) and [uint8 NPY1 volumes](docs/contracts/volume-data.md). Inspect native points or index slices/physical coordinates, save human review, select whole assets and freeze a canonical release. In Pipeline, create and edit the corresponding validation/export recipe; Runs retains its integrity report and the unchanged release. Classification releases also offer validation/export without installing a trainer. Existing catalogs require the explicit schema8 upgrade described in the storage runbook; the application never silently migrates them. [Accepted workspace scope, evidence and limitations](docs/plans/dataset-centered-workspaces/reports/final-20261013.md).
+
+## Open a local project
+
+Start with `python app.py --data ./catalog --project-root research=/absolute/research`, then select **Open project** in `/workspaces`. A [project manifest](docs/contracts/projects.md) references files beneath that explicitly selected root. Data shows sources and missing requirements, Pipeline shows recipe references, and Runs shows external evidence. Opening performs inspection: no project code, model loading, runtime probing or training executes. Existing catalog workflows remain separate. Opening registers a snapshot in Tuldok; it does not modify the opened project.
+
+## Scientific field sequences
+
+For a conforming [scientific field bundle](docs/contracts/scientific-fields.md), use **Import fields** on its project Data reference. Inspect frames, fields and index slices with physical coordinates, units and producer stage labels; save whole-trajectory review and freeze a canonical release. Original bundle and floating-point bytes remain unchanged. First-observed-state and declared-family grouping does not certify independent initial conditions. The cold reader `python scientific_release.py RELEASE.zip` verifies frozen custody; the optional [Rheon producer](adapters/rheon/README.md) adds bounded native generation, while [captured CPU fitting](docs/contracts/rheon-cpu-training.md) and [autonomous evaluation](docs/contracts/rheon-evaluation.md) execute the qualified lab scripts.
+
+
+## Optional native generation
+
+The [Rheon adapter](adapters/rheon/README.md) assembles a project from an explicitly
+supplied qualified binary and original build receipt. Open that project, edit the
+bounded grid/frame/seed controls in Pipeline, review the exact execution material
+and submit. On a completed scientific artifact, **Import into Data** creates a
+draft for inspection, human review and freeze. Native bytes, loaded-library
+identity and the original custody receipt are retained. Initial support is Jacobi
+generation at grids 8–32 and one or two frames; this is not training, GPU or
+general physics acceptance. Generic projects and Data work without the adapter.

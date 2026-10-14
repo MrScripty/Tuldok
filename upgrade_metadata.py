@@ -1,15 +1,22 @@
-"""Explicit quiesced PostgreSQL schema 1, 2 or 3 to 4 upgrade, without data rewriting."""
+"""Explicit quiesced PostgreSQL schema 1–7 to 8 upgrade, without data rewriting."""
 import argparse
 import json
 
 import psycopg
 
-from metadata import (Metadata, SCHEMA_VERSION, StorageError, WORKSPACE_TABLES, SPATIAL_TABLES,
+from metadata import (Metadata, SCHEMA_VERSION, StorageError, WORKSPACE_TABLES, SPATIAL_TABLES, PROJECT_TABLES, ACCESS_TABLES, EXECUTION_APPROVAL_TABLES,
                       definition_hash)
 
 # Accepted ordered transitions, with stable identities. The complete chain is
 # one transaction: no intermediate version is published if a later step fails.
 UPGRADES = {
+    7: ('execution-approvals-7-to-8', tuple(EXECUTION_APPROVAL_TABLES.values())),
+    6: ('access-metadata-6-to-7', tuple(ACCESS_TABLES.values())),
+    5: ('field-sequence-metadata-5-to-6', (
+        'ALTER TABLE workbench_records DROP CONSTRAINT workbench_records_kind_check',
+        "ALTER TABLE workbench_records ADD CONSTRAINT workbench_records_kind_check CHECK(kind IN ('image','text','sequence','mesh','audio','pointcloud','volume','field_sequence'))",
+    )),
+    4: ('project-metadata-4-to-5', tuple(PROJECT_TABLES.values())),
     1: ('workspace-metadata-1-to-2', tuple(WORKSPACE_TABLES.values())),
     3: ('spatial-metadata-3-to-4', (
         'ALTER TABLE workbench_records DROP CONSTRAINT workbench_records_kind_check',
@@ -28,7 +35,7 @@ def upgrade_catalog(path, *, dsn=None, quiesced=False):
 
     Stop every old/new app and artifact writer before calling. The advisory lock
     coordinates cooperating commands; it is not a fence against a live old app.
-    Re-entry verifies current schema 4, including its independently known shape,
+    Re-entry verifies current schema 8, including its independently known shape,
     and performs no writes to domain rows, artifacts or the dataset manifest.
     """
     if not quiesced:

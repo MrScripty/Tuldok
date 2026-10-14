@@ -31,6 +31,7 @@ else if(route==='runs'&&options?.method==='POST'){list=[b,a];value=b;}else if(ro
 else if(route==='runs/'+a.id)value=a;else if(route==='runs/'+b.id)value=b;
 else if(route.includes('/predictions')){if(route.includes(b.id)&&route.endsWith('split=test')){status=409;value={code:'conflict',error:'Record an explicit test-set exposure first.'}}else value={class_vocabulary:[{label:'circle'}],rows:[]};}
 else value={};return {ok:status===200,status,json:async()=>structuredClone(value)}};`);
+await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-external.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-real.js'),'utf8'));
 await ev(`window.real=WorkspaceReal({pipelineRoot:document.getElementById('p'),runsRoot:document.getElementById('r'),announce:s=>notes.push(s),openRecord:()=>{},openRun:()=>real.show('runs')});real.show('runs')`);
 if(!await ev(`!!document.getElementById('real-test-predictions')`))throw Error(await ev(`document.getElementById('r').innerText`));

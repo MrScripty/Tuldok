@@ -1,4 +1,5 @@
 """Synthetic HTTP classification contracts; no model downloads or inference."""
+from auth_helpers import bind_owner
 from postgres_helpers import database_snapshot
 import base64
 import hashlib
@@ -22,7 +23,7 @@ from workbench import WorkbenchError
 class TextClassificationProposalTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.data = Dataset(self.tmp.name); self.addCleanup(lambda: self.data.close())
+        self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data); self.addCleanup(lambda: self.data.close())
         self.server, self.url, self.requests = start()
         self.addCleanup(self.server.server_close); self.addCleanup(self.server.shutdown)
         self.row = self.data.workbench.import_asset(dict(kind='text', name='Request', text='Please cancel the café meeting 😀.\nKeep exact source.', groups=['authored-1'], rights='Authored synthetic fixture'))
@@ -78,7 +79,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         self.assertEqual(row['target_proposal']['job_id'], job['id'])
         state = self.state(); again = self.decide(job)
         self.assertFalse(again['changed']); self.assertEqual(self.state(), state)
-        self.data.close(); self.data = Dataset(self.tmp.name)
+        self.data.close(); self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.owner.get(job['id'])['application']['revision'], row['revision'])
         self.assertEqual(self.data.workbench.get(row['id'])['target_proposal'], row['target_proposal'])
         self.assertFalse(self.decide(job)['changed'])
@@ -123,7 +124,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError): self.decide(job)
         self.assertEqual(self.data.workbench.get(self.row['id']), before)
         self.assertTrue(self.decide(job, 'reject')['changed']); self.assertFalse(self.decide(job, 'reject')['changed'])
-        self.data.close(); self.data = Dataset(self.tmp.name)
+        self.data.close(); self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.owner.get(job['id'])['status'], 'rejected'); self.assertEqual(self.data.workbench.get(self.row['id']), before)
 
     def test_exact_labels_are_validated_before_admission_and_apply(self):
@@ -177,8 +178,9 @@ class TextClassificationProposalTests(unittest.TestCase):
         self.assertEqual(self.state(), state)
         results, errors = [], []
         def apply():
-            try: results.append(self.decide(job))
-            except Exception as error: errors.append(error)
+            with self.actor.bound(self.data):
+                try: results.append(self.decide(job))
+                except Exception as error: errors.append(error)
         workers = [threading.Thread(target=apply) for _ in range(2)]
         for worker in workers: worker.start()
         for worker in workers: worker.join(3); self.assertFalse(worker.is_alive())
@@ -205,7 +207,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         self.assertEqual(self.owner.get(job['id'])['status'], 'cancelled')
         with self.data.lock, self.data.db.transaction():
             interrupted = self.owner.get(job['id']); interrupted['status']='generating'; self.owner._save(interrupted)
-        count = len(self.requests); self.data.close(); self.data = Dataset(self.tmp.name)
+        count = len(self.requests); self.data.close(); self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         self.assertEqual(self.owner.get(job['id'])['status'], 'interrupted'); self.assertEqual(len(self.requests), count)
         self.assertEqual(self.generate()['status'], 'completed')
 
@@ -235,6 +237,8 @@ class TextClassificationProposalTests(unittest.TestCase):
                 owner._save(job); ids.append(job['id'])
         before = self.state(); decode = json.loads; sizes = []
         def projected(data, *args, **kwargs):
+            if not data.lstrip().startswith('{'):
+                return decode(data, *args, **kwargs)
             self.assertNotIn('"raw_response_base64"', data)
             self.assertNotIn(full_text[:1000], data)
             sizes.append(len(data)); return decode(data, *args, **kwargs)
@@ -259,7 +263,7 @@ class TextClassificationProposalTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
         root = f'http://127.0.0.1:{server.server_port}/api/workbench/text-classification-proposals'
         def api(path='', body=None):
-            request = urllib.request.Request(root+path, data=json.dumps(body).encode() if body is not None else None, headers={'Content-Type':'application/json'})
+            request = self.actor.request(root+path, data=json.dumps(body).encode() if body is not None else None, headers={'Content-Type':'application/json'})
             with urllib.request.urlopen(request) as response: return json.load(response)
         body = self.config()
         with self.assertRaises(urllib.error.HTTPError) as early: api('/'+body['request_id'])

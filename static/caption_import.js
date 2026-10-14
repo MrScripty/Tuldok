@@ -46,7 +46,7 @@ $('caption-form').addEventListener('submit',async event=>{
   try{
     const paths=captionFiles(files),source=await captionSources(paths);
     if(captionStopped){captionSummary(counts,'Stopped before preparation');return;}
-    const prepared=await fetch('/api/workbench/caption-import/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(source)});
+    const prepared=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/caption-import/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(source)});
     const contract=await prepared.json();
     if(!prepared.ok)throw Error(contract.error||'Native caption preparation failed.');
     if(contract.format!=='image_caption_v1' || !Array.isArray(contract.rows) || !contract.rows.length || contract.rows.length>1000)throw Error('Invalid native preparation receipt.');
@@ -64,7 +64,7 @@ $('caption-form').addEventListener('submit',async event=>{
       if(captionStopped){state='Stopped';break;}
       counts.attempted++;
       try{
-        const response=await fetch('/api/workbench/caption-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),receipt=await response.json();
+        const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/caption-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),receipt=await response.json();
         if(!response.ok && [400,409].includes(response.status)){
           counts.rejected++;captionRow(row,'rejected',receipt.error||'Caption admission failed.');
         }else{
@@ -87,7 +87,7 @@ $('caption-check').addEventListener('click',async()=>{
   if(captionRunning || !captionPending)return;
   const pending=captionPending;captionRunning=true;captionControls();
   try{
-    const response=await fetch('/api/workbench/import-result/'+pending.request_id),receipt=await response.json();
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/import-result/'+pending.request_id),receipt=await response.json();
     if(!response.ok)throw Error(receipt.error||'Saved result lookup failed.');
     if(!receipt.found){$('caption-status').textContent='No saved result is visible yet. This does not prove the in-flight row stopped. Inspect the collection before retrying.';return;}
     if(!bulkReceipt(receipt,pending) || receipt.kind!=='image')throw Error('Saved result does not match the pending caption row.');

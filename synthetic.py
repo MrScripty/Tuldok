@@ -1,5 +1,8 @@
 """Persistent synthetic dataset jobs; one worker owns sequential Pumas requests."""
 import json
+import copy
+import hashlib
+from access import AccessError, authorized
 import threading
 import time
 import uuid
@@ -104,12 +107,13 @@ def validate(body):
 class Jobs:
     def __init__(self, dataset):
         self.dataset = dataset
+        self.access = dataset.access
         self.lock = dataset.lock
         self.db = dataset.db
         self.worker = None
         self.stop = threading.Event()
         self.request_id = None
-        with self.lock, self.db.transaction():
+        with self.access._reconcile(), self.lock, self.db.transaction():
             self.runtime_owner = self.db.claim_runtime('generation_jobs')
             if not self.runtime_owner:
                 return
@@ -133,6 +137,7 @@ class Jobs:
                                 self._entry(entry)
                         job['error'] = 'Server stopped. Inspect retained attempts; uncertain image work cannot replay.'
                     self._save(job)
+                    self.access.audit('synthetic.reconcile', job['id'], {'status': job['status']})
 
     def _jobs(self):
         return [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_jobs ORDER BY ordinal')]
@@ -165,6 +170,8 @@ class Jobs:
 
     def record_output(self, sample_id, entry, job, metadata):
         """Called only inside Dataset.add's sample-insert transaction and lock."""
+        self.access.require_job('synthetic', job['id'], job.get('admission_id'), self._request_digest(job))
+        self.access.require('edit', 'dataset.add_generated', job['id'])
         previous_entry, previous_job = dict(entry), dict(job)
 
         def restore_progress():
@@ -180,10 +187,12 @@ class Jobs:
         job['completed'] += 1
         self._save(job)
 
+    @authorized('inspect', 'synthetic.snapshot')
     def snapshot(self):
         with self.lock:
             return {'jobs': self._jobs(), 'entries': [json.loads(r[0]) for r in self.db.execute('SELECT data FROM generation_entries ORDER BY storage_order')]}
 
+    @authorized('execute', 'synthetic.start', owner_only=True)
     def start(self, body):
         # Validate everything before starting billable work or persisting a job.
         from app import metadata
@@ -194,6 +203,7 @@ class Jobs:
             with self.db.transaction():
                 self._idle()
                 job = dict(id=uuid.uuid4().hex, config=config, meta=meta, status='preparing', error='', completed=0)
+                self._admit(job, 'synthetic.start')
                 self._save(job)
             # Dispatch only after durable admission, including a successful commit.
             self._launch(job)
@@ -207,6 +217,7 @@ class Jobs:
         if any(job['status'] in ACTIVE for job in self._jobs()):
             raise ValueError('A generation job is already starting.')
 
+    @authorized('execute', 'synthetic.resume', owner_only=True)
     def resume(self, job_id):
         with self.lock:
             if self.db.in_transaction:
@@ -220,13 +231,25 @@ class Jobs:
                 if pumas.typed(job['config']) and any(e.get('provider_outcome') == 'unknown' for e in self._entries(job_id)):
                     raise ValueError('An image attempt has an unknown provider outcome. Inspect it; this queue cannot replay it.')
                 job.update(status='preparing', error='')
+                self._admit(job, 'synthetic.resume')
                 self._save(job)
             self._launch(job)
         return job
 
+    @staticmethod
+    def _request_digest(job):
+        return hashlib.sha256(json.dumps({'config': job['config'], 'meta': job['meta']},
+            sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+
+    def _admit(self, job, action):
+        job['request_digest'] = self._request_digest(job)
+        job['admission_id'] = self.access.admit_job('synthetic', job['id'], job['request_digest'],
+            {'dataset.add_generated': [job['id']], 'images.generate_admitted': [job['id']], 'synthetic.finish': [job['id']]})
+        self.access.audit(action, job['id'], {'request_digest': job['request_digest']})
+
     def _launch(self, job):
         self.stop.clear()
-        self.worker = threading.Thread(target=self._run, args=(job,), daemon=True)
+        self.worker = threading.Thread(target=self._run, args=(copy.deepcopy(job),), daemon=True)
         try:
             self.worker.start()
         except RuntimeError:
@@ -235,6 +258,7 @@ class Jobs:
                 job.update(status='failed', error='Could not start the generation worker; no inference ran. Resume explicitly.')
                 self._save(job)
 
+    @authorized('cancel', 'synthetic.cancel')
     def cancel(self, job_id):
         with self.lock, self.db.transaction():
             if not self.runtime_owner:
@@ -245,6 +269,7 @@ class Jobs:
             self.stop.set()
             job['status'] = 'stopping'
             self._save(job)
+            self.access.audit('synthetic.cancel', job_id)
             if self.request_id:
                 self.dataset.image_requests.cancel(self.request_id)
         return {'cancelled': True}
@@ -252,7 +277,8 @@ class Jobs:
     def close(self):
         self.stop.set()
         if self.request_id:
-            self.dataset.image_requests.cancel(self.request_id)
+            with self.access._reconcile():
+                self.dataset.image_requests.cancel(self.request_id)
         if self.worker:
             self.worker.join()
 
@@ -261,6 +287,16 @@ class Jobs:
             raise ValueError('Generation stopped. Resume to continue.')
 
     def _run(self, job):
+        try:
+            with self.access._job('synthetic', job['id'], job.get('admission_id'), self._request_digest(job)):
+                self._run_admitted(job)
+        except AccessError:
+            with self.access._reconcile(), self.lock, self.db.transaction():
+                job.update(status='interrupted', error='Job admission is missing or differs from the retained request; no inference started.')
+                self._save(job)
+                self.access.audit('synthetic.interrupt', job['id'])
+
+    def _run_admitted(self, job):
         config = job['config']
         try:
             with self.lock:
@@ -317,7 +353,7 @@ class Jobs:
                             raise pumas.OperationError('Cancelled before image provider admission.')
                         entry['attempt_evidence'] = evidence
                         self._entry(entry)
-                result = self.dataset.image_requests.generate(body, cancel_event=self.stop,
+                result = self.dataset.image_requests._generate_admitted(body, job['id'], cancel_event=self.stop,
                     **({'on_admission': retain_admission} if pumas.typed(config) else {}))
                 # Queue link and sample insert commit together, including across restarts.
                 with self.lock:
@@ -346,6 +382,7 @@ class Jobs:
             with self.lock, self.db.transaction():
                 self.request_id = None
                 self._save(job)
+                self.access.audit('synthetic.finish', job['id'], {'status': job['status'], 'completed': job['completed']})
 
     @staticmethod
     def _new_entry(job, ordinal, prompt):

@@ -1,4 +1,5 @@
 """Local seeded service for the classifier export browser gate."""
+from auth_helpers import ExplicitOwnerFixture
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -9,8 +10,9 @@ from image_classification_fixture import populate
 if __name__ == '__main__':
     folder = sys.argv[sys.argv.index('--data') + 1]
     dataset = Dataset(folder)
-    try:
-        populate(dataset)
-    finally:
-        dataset.close()
+    with ExplicitOwnerFixture.bootstrap(dataset).bound(dataset):
+        try:
+            populate(dataset)
+        finally:
+            dataset.close()
     main()

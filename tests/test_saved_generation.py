@@ -1,4 +1,5 @@
 """Restart/resume actual on-disk PR3 size-only queues through the numeric gateway."""
+from auth_helpers import bind_owner
 import base64
 import json
 import tempfile
@@ -17,7 +18,7 @@ class SavedGenerationTests(unittest.TestCase):
         self.addCleanup(self.server.shutdown)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
 
     def legacy_job(self, size='512x768', **changes):
@@ -46,7 +47,7 @@ class SavedGenerationTests(unittest.TestCase):
 
     def restart(self):
         self.dataset.close()
-        self.dataset = Dataset(self.temp.name)
+        self.dataset = Dataset(self.temp.name); self.actor = bind_owner(self, self.dataset)
 
     def resume(self, job):
         self.dataset.generation_jobs.resume(job['id'])
@@ -61,8 +62,15 @@ class SavedGenerationTests(unittest.TestCase):
         job = self.legacy_job()
         first = self.legacy_entry(job, 0)
         raw = png((512, 768), '#000028')
-        self.dataset.add(dict(job['meta'], image=base64.b64encode(raw).decode(), filename='old-output.png'),
-                         generation=(first, job, {'seed': 40, 'duration_seconds': .01}))
+        # Author the retained output through an explicitly bounded fixture job.
+        # The retained configuration and entry still use legacy size-only fields.
+        digest = self.dataset.generation_jobs._request_digest(job)
+        with self.dataset.db.transaction():
+            job['admission_id'] = self.dataset.access.admit_job('synthetic', job['id'], digest,
+                {'dataset.add_generated': [job['id']], 'synthetic.finish': [job['id']]})
+        with self.dataset.access._job('synthetic', job['id'], job['admission_id'], digest):
+            self.dataset.add(dict(job['meta'], image=base64.b64encode(raw).decode(), filename='old-output.png'),
+                             generation=(first, job, {'seed': 40, 'duration_seconds': .01}))
         pending = self.legacy_entry(job, 1)
         with self.dataset.db.transaction():
             self.dataset.generation_jobs._entry(pending)

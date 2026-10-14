@@ -1,4 +1,5 @@
 """Exact-selection preflight, read-only snapshots, and freshness-bound exports."""
+from auth_helpers import bind_owner
 import base64
 import io
 import json
@@ -25,7 +26,7 @@ class ReleasePreviewTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.w = self.dataset.workbench
         self.r = self.dataset.releases
@@ -272,7 +273,7 @@ class ReleasePreviewTests(unittest.TestCase):
         self.addCleanup(server.shutdown)
         root = f'http://127.0.0.1:{server.server_port}'
         def post(route, payload):
-            request = urllib.request.Request(root+route, data=json.dumps(payload).encode(),
+            request = self.actor.request(root+route, data=json.dumps(payload).encode(),
                                              headers={'Content-Type': 'application/json'})
             with urllib.request.urlopen(request) as response:
                 return response.status, json.load(response)
@@ -281,7 +282,7 @@ class ReleasePreviewTests(unittest.TestCase):
         self.assertEqual(list(self.r.path.iterdir()), [])
         status, release = post('/api/workbench/releases', dict(body, preview_token=preview['preview_token']))
         self.assertEqual(status, 201)
-        with urllib.request.urlopen(root+release['url']) as response:
+        with urllib.request.urlopen(self.actor.request(root+release['url'])) as response:
             self.assertEqual(response.status, 200); self.assertTrue(response.read().startswith(b'PK'))
         with self.assertRaises(urllib.error.HTTPError) as stale:
             post('/api/workbench/releases', dict(body, seed=8, preview_token=preview['preview_token']))

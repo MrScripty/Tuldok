@@ -1,4 +1,5 @@
 """Exact current-field filtering through real storage and HTTP, without permission inference."""
+from auth_helpers import bind_owner
 from postgres_helpers import table_names
 import base64
 import io
@@ -24,7 +25,7 @@ from workbench import WorkbenchError, encode
 class MetadataFilterTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name); self.addCleanup(lambda: self.dataset.close())
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset); self.addCleanup(lambda: self.dataset.close())
         self.w = self.dataset.workbench
 
     def text(self, name, label=None, groups=None, rights='unknown', parents=None):
@@ -146,7 +147,7 @@ class MetadataFilterTests(unittest.TestCase):
     def test_current_metadata_queries_survive_reopen_without_schema_or_state_changes(self):
         row = self.text('reopen', 'é😀', ['case-sensitive'], 'Fixture rights note')
         tables = table_names(self.w.db)
-        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.w = self.dataset.workbench
+        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset); self.w = self.dataset.workbench
         before = database_snapshot(self.w.db)
         self.assertEqual(self.ids(label='é😀', group='case-sensitive', rights='Fixture rights note'), {row['id']})
         self.assertEqual(database_snapshot(self.w.db), before)
@@ -159,12 +160,12 @@ class MetadataFilterTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
         options = dict(label='cat & café +😀', group='group &😀', rights='Owner note: ? & + permission unverified')
         url = f'http://127.0.0.1:{server.server_port}/api/workbench/records?'
-        with urllib.request.urlopen(url+urllib.parse.urlencode(options)) as response:
+        with urllib.request.urlopen(self.actor.request(url+urllib.parse.urlencode(options))) as response:
             result = json.load(response)
         self.assertEqual(result['total'], 1); self.assertEqual(result['items'][0]['id'], row['id'])
         self.assertEqual(result['items'][0]['rights_note'], options['rights'])
         with self.assertRaises(urllib.error.HTTPError) as caught:
-            urllib.request.urlopen(url+urllib.parse.urlencode({'label': 'x'*81}))
+            urllib.request.urlopen(self.actor.request(url+urllib.parse.urlencode({'label': 'x'*81})))
         self.assertEqual(caught.exception.code, 400)
         self.assertEqual(json.load(caught.exception)['code'], 'invalid')
 
@@ -180,7 +181,7 @@ class MetadataFilterTests(unittest.TestCase):
             with self.subTest(codepoints=[ord(c) for c in value]):
                 criteria = dict(label=value, group=value, rights=value)
                 self.assertEqual(self.ids(**criteria), {row['id']})
-                with urllib.request.urlopen(url+urllib.parse.urlencode(criteria)) as response:
+                with urllib.request.urlopen(self.actor.request(url+urllib.parse.urlencode(criteria))) as response:
                     result = json.load(response)
                 self.assertEqual([r['id'] for r in result['items']], [row['id']])
                 self.assertEqual(result['items'][0]['rights_note'], value)

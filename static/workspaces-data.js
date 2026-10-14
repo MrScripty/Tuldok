@@ -146,7 +146,14 @@
     publish();
     return { kind: "available", record: { id: record.id, revision: record.revision, source_revision: record.source_revision } };
   }
-  window.TuldokWorkspaceData = { snapshot, restoreContext, openCurrentRecord,
+  async function openImportedRecord(id) {
+    const generation=++correctionGeneration,editor=editorEpoch,selectionIntent=selectionEpoch,responseIntent=responseIntentEpoch();
+    await refresh();
+    if(generation!==correctionGeneration||editor!==editorEpoch||selectionIntent!==selectionEpoch||responseIntent!==responseIntentEpoch())
+      return {kind:"invalid",message:"Data changed while the imported record loaded. Your current work is retained."};
+    return openCurrentRecord(id);
+  }
+  window.TuldokWorkspaceData = { snapshot, restoreContext, openCurrentRecord, openImportedRecord,
     cancelRecordOpen: () => { correctionGeneration++; } };
   const publish = () =>
     window.parent.postMessage(

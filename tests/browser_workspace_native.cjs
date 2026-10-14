@@ -1,0 +1,123 @@
+'use strict';
+// Actual optional native adapter through production approval/Run/Data owners.
+// Required native artifacts are explicit; there is no authored-data fallback.
+const fixtureAuth=require('./auth_helpers.cjs').authenticatedFixture(),fetch=fixtureAuth.fetch;
+const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),crypto=require('node:crypto');
+const {spawn,execFileSync}=require('node:child_process');
+const {pageLoadTracker}=require('./browser_page_load.cjs');
+const {waitForDebugger}=require('./browser_startup.cjs');
+const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
+const root=path.resolve(__dirname,'..'),report=qaDirectory(root,'workspace-native-generation');
+function option(name,environment){const index=process.argv.indexOf(name);return index<0?process.env[environment]:process.argv[index+1];}
+const binary=option('--binary','TULDOK_NATIVE_BINARY'),buildReceipt=option('--build-receipt','TULDOK_NATIVE_BUILD_RECEIPT');
+assert.ok(binary&&buildReceipt,'Actual --binary and --build-receipt are required; no fixture fallback');
+const numpy=process.env.TULDOK_TRAINING_PYTHON||process.env.NUMPY_PYTHON||'/workspace/Tuldok/.venv-training/bin/python';
+const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-native-browser-')),projectRoot=path.join(temporary,'project');
+execFileSync('python3',['adapters/rheon/project.py','--binary',binary,'--build-receipt',buildReceipt,'--destination',projectRoot],{cwd:root});
+const project=JSON.parse(fs.readFileSync(path.join(projectRoot,'project.json')));
+const sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');
+const originalFiles=Object.fromEntries(fs.readdirSync(projectRoot).filter(name=>fs.statSync(path.join(projectRoot,name)).isFile()).map(name=>[name,sha(fs.readFileSync(path.join(projectRoot,name)))]));
+const inspections=[],captures=[],checks=[],requests=[],errors=[],children=[],tracker=pageLoadTracker();const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws,send,evaluate,serverErrors='';
+async function until(fn,message='Timed out'){for(let i=0;i<600;i++){const value=await fn();if(value)return value;await pause(100);}throw Error(message);}
+function launch(command,args,options){const child=spawn(command,args,options);children.push(child);return child;}
+const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(temporary,'data'),'--project-root','sample='+projectRoot];
+(async()=>{
+  let server=launch('python3',serverArgs(0),{cwd:root,stdio:['ignore','pipe','pipe']});
+  let output='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
+  const port=await until(()=>{if(server.exitCode!==null)throw Error('Project server exited: '+serverErrors);return output.match(/127\.0\.0\.1:(\d+)/)?.[1];});
+  const base='http://127.0.0.1:'+port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
+  const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1440,900','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
+  const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');assert.ok(target);
+  ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  let next=0;const pending=new Map();
+  send=(method,params={})=>new Promise((resolve,reject)=>{const id=++next,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},20000);pending.set(id,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});ws.send(JSON.stringify({id,method,params}));});
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Network.requestWillBeSent')requests.push({url:message.params.request.url,method:message.params.request.method});};
+  evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
+  const doc=frame=>frame?'document.getElementById("catalog-frame").contentDocument':'document';
+  const element=(selector,frame=false)=>`${doc(frame)}.querySelector(${JSON.stringify(selector)})`,text=(selector,frame=false)=>evaluate(`${element(selector,frame)}?.textContent`);
+  async function click(selector,frame=false){
+    const box=await until(()=>evaluate(`(async()=>{const e=${element(selector,frame)};if(!e||e.disabled||!e.getClientRects().length)return null;${frame?'document.getElementById("catalog-frame").scrollIntoView({block:"start"});':''}e.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const b=e.getBoundingClientRect(),x=b.x+b.width/2,y=b.y+b.height/2,hit=${doc(frame)}.elementFromPoint(x,y),f=${frame?'document.getElementById("catalog-frame").getBoundingClientRect()':'{x:0,y:0}'};return hit&&(hit===e||e.contains(hit))?{x:x+f.x,y:y+f.y}:null})()`),'Click target unavailable '+selector);
+    for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...box});
+  }
+  async function key(key,code=key,modifiers=0){for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code,modifiers,windowsVirtualKeyCode:{Enter:13,Escape:27,Tab:9,a:65}[key]||0,...(type==='keyDown'&&key==='Enter'?{text:'\r',unmodifiedText:'\r'}:{})});}
+  async function fill(selector,value,frame=false){await click(selector,frame);await key('a','KeyA',2);await send('Input.insertText',{text:value});}
+  const select=(selector,value,frame=false)=>evaluate(`(()=>{const e=${element(selector,frame)};e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  async function nav(view){await evaluate(`document.getElementById('nav-${view}').focus()`);await key('Enter');await until(()=>evaluate(`!document.getElementById('view-${view}').hidden && !document.getElementById('project-${view}-root').hidden`));await until(()=>text(`#project-${view}-root`).then(value=>value?.includes('PROJECT · INSPECTION ONLY')));}
+  async function capture(name,width){
+    await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+    await evaluate(`(async()=>{const iframe=document.getElementById('catalog-frame');iframe.scrollIntoView({block:'start'});iframe.contentDocument.getElementById('scientific-inspection').scrollIntoView({block:'start'});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));window.scrollBy(0,iframe.getBoundingClientRect().top);})()`);
+    await pause(100);assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'Outer overflow');
+    assert.ok(await evaluate(`${doc(true)}.documentElement.scrollWidth<=${doc(true)}.defaultView.innerWidth+1`),'Inspector overflow');
+    const file=name+'.jpg';fs.writeFileSync(path.join(report,file),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));captures.push({file,width,height:900,qualification:'Actual bounded native generation and custody; no model/GPU acceptance'});
+  }
+  const check=value=>{checks.push(value);console.log('PASS',value);};
+  async function reload(){const previous=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload');await until(()=>tracker.reloaded(previous),'Main document reload not observed');}
+  async function openProject(manifest,name,id){await click('#open-project');await until(()=>evaluate('document.getElementById("project-open-dialog").open && !document.getElementById("project-open-submit").disabled'));await select('#project-root','sample');await fill('#project-manifest',manifest);await evaluate('document.getElementById("project-open-submit").focus()');await key('Enter');await until(()=>evaluate('document.getElementById("dataset").value==='+JSON.stringify('project:'+id)));await nav('data');assert.match(await text('#project-data-root'),new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));}
+  await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');await send('Network.enable');
+  const offlineCanary=process.env.LD_PRELOAD?JSON.parse(execFileSync('python3',['-c',"import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"],{cwd:root,encoding:'utf8'})):null;
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
+  await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("open-project")'));
+  async function captureWorkspace(name,width,selector){await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate(`${element(selector)}.scrollIntoView({block:'start'})`);await pause(100);assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'));const file=name+'.jpg';fs.writeFileSync(path.join(report,file),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));captures.push({file,width,height:900,qualification:'Actual bounded native generation UI; no model/GPU acceptance'});}
+  async function api(route,body){const response=await fetch(base+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const value=await response.json();assert.ok(response.ok,JSON.stringify({route,status:response.status,value}));return value;}
+  async function artifact(run,name){const item=run.artifacts.find(item=>item.name===name);assert.ok(item,name);const response=await fetch(base+item.url);assert.equal(response.status,200);const bytes=Buffer.from(await response.arrayBuffer());assert.equal(sha(bytes),item.sha256);return bytes;}
+  async function completed(id){return until(async()=>{const run=await api('/api/workspace/runs/'+id);assert.ok(!['failed','unknown','cancelled','interrupted'].includes(run.state),JSON.stringify({state:run.state,error:run.error,events:run.events}));return run.state==='completed'?run:null;},'Actual native generation did not complete');}
+  async function cold(run,label,seed,frames,observations){const directory=path.join(report,label);fs.mkdirSync(directory);for(const name of ['fields.zip','wire.bin','producer-receipt.json','native-diagnostics.txt'])fs.writeFileSync(path.join(directory,name),await artifact(run,name));const args=['tests/qualify_native_generation.py','--bundle',path.join(directory,'fields.zip'),'--wire',path.join(directory,'wire.bin'),'--seed',String(seed),'--frames',String(frames),'--report',path.join(directory,'cold.json')];if(observations){const file=path.join(directory,'inspections.json');fs.writeFileSync(file,'['+observations.join(',')+']');args.push('--inspections',file);}return JSON.parse(execFileSync(numpy,args,{cwd:root,encoding:'utf8'}));}
+  async function submittedGraph(graph){const preflight=await api('/api/workspace/graphs/'+graph.id+'/preflight-external',{revision:graph.revision});return api('/api/workspace/runs/submit-external',{request_key:'native-'+crypto.randomBytes(16).toString('hex'),graph_id:graph.id,graph_revision:graph.revision,expected_digest:preflight.material_sha256});}
+  await openProject('project.json',project.name,project.id);await nav('pipeline');
+  await click('[data-project-recipe="generate"]');await until(()=>evaluate('!!document.querySelector("[data-external-input=build_receipt]")'));
+  await select('[data-external-input="build_receipt"]','build_receipt');await fill('#external-create-name','Actual native 32³ fields');
+  await evaluate('document.getElementById("external-create-submit").focus()');await key('Enter');await until(()=>evaluate('!!document.getElementById("external-preflight")'));
+  await fill('#external-param-grid','33');await click('#external-save');await until(()=>text('#external-dirty').then(value=>value?.startsWith('Saved')));await click('#external-preflight');
+  await until(()=>text('#real-pipeline-root .real-status').then(value=>/Invalid|bound/i.test(value||'')));
+  assert.deepEqual(await api('/api/workspace/runs'),[]);
+  await fill('#external-param-grid','32');await fill('#external-param-frames','9');await click('#external-save');await until(()=>text('#external-dirty').then(value=>value?.startsWith('Saved')));await click('#external-preflight');
+  await until(()=>text('#real-pipeline-root .real-status').then(value=>/Invalid|bound/i.test(value||'')));assert.deepEqual(await api('/api/workspace/runs'),[]);await fill('#external-param-frames','2');
+  await fill('#external-param-grid','32');await fill('#external-name','32³ · two frames · seed 100');await click('#external-save');await until(()=>text('#external-dirty').then(value=>value?.startsWith('Saved')));
+  await click('#external-preflight');await until(()=>evaluate('!document.getElementById("external-reviewed").disabled'));
+  assert.match(await text('#external-material'),/Material SHA256/);await captureWorkspace('native-pipeline-1440',1440,'#external-material');await captureWorkspace('native-pipeline-390',390,'#external-material');await click('#external-reviewed');await click('#external-submit');
+  await until(()=>text('#real-run-state').then(value=>value==='completed'),'Native generation UI never completed');
+  const primary=(await api('/api/workspace/runs'))[0],primaryDetail=await completed(primary.id),fields=await artifact(primaryDetail,'fields.zip');
+  assert.equal(primaryDetail.quality_claim,false);assert.equal(primaryDetail.material.parameters.grid,32);assert.equal(primaryDetail.material.parameters.frames,2);assert.equal(primaryDetail.material.parameters.seed,100);
+  await captureWorkspace('native-runs-390',390,'.external-run-custody');await captureWorkspace('native-runs-1440',1440,'.external-run-custody');
+  const bundleArtifact=primaryDetail.artifacts.find(item=>item.name==='fields.zip');
+  const bad=await fetch(base+'/api/workspace/runs/'+primary.id+'/import-data/fields.zip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expected_sha256:'0'.repeat(64)})});assert.equal(bad.status,409);
+  const retainedPath=path.join(temporary,'data','workspace-runs',primary.id,'fields.zip');fs.writeFileSync(retainedPath,Buffer.concat([fields,Buffer.from('tamper')]));
+  try{const drift=await fetch(base+'/api/workspace/runs/'+primary.id+'/import-data/fields.zip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expected_sha256:bundleArtifact.sha256})});assert.equal(drift.status,409);}finally{fs.writeFileSync(retainedPath,fields);}
+  assert.equal((await api('/api/workbench/records')).items.length,0);
+  check('Actual native approved generation completes; invalid grid and stale/tampered artifact imports refuse before Data writes');
+  await click('[data-import-run-artifact="fields.zip"]');await until(()=>evaluate(`${doc(true)}?.getElementById('scientific-inspection')?.hidden===false`));
+  await until(()=>text('#scientific-status',true).then(value=>value?.includes('Producer-declared stage:')));
+  const record=(await api('/api/workbench/records')).items[0];assert.equal(record.review,'draft');assert.equal(record.content_hash,bundleArtifact.sha256);assert.equal(record.provenance.method,'run_artifact_import');
+  const manifest=record.field_sequence.manifest;
+  assert.equal(manifest.fields.length,6);assert.equal(manifest.frames.length,2);
+  for(const field of manifest.fields){await select('#scientific-field',field.id,true);await select('#scientific-frame','1',true);for(const axis of ['x','y','z']){await select('#scientific-axis',axis,true);await until(()=>text('#scientific-status',true).then(value=>value?.includes(field.stage)&&value.includes(manifest.frames[1].time)));await until(()=>text('#scientific-coordinates',true).then(value=>value?.startsWith(axis.toUpperCase()+' index')));const observed=await(await fetch(base+'/api/workbench/records/'+record.id+'/scientific?'+new URLSearchParams({frame:1,field:field.id,axis,index:0}))).text();inspections.push(observed);assert.match(await text('#scientific-probe',true),/physical/);}}
+  await select('#scientific-field','pressure',true);await select('#scientific-frame','0',true);await select('#scientific-axis','z',true);
+  await capture('native-data-1440',1440);await capture('native-data-390',390);
+  const firstCold=await cold(primaryDetail,'seed100-two-frames',100,2,inspections);assert.equal(firstCold.arrays.length,12);
+  check('All six native fields and eighteen inspected planes match independent NumPy/wire bytes, MAC placement and diagnostics');
+  await send('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+  await fill('#scientific-note','Reviewed actual bounded native generation and exact field custody; no model, GPU or general physics acceptance.',true);await select('#record-review','human_reviewed',true);
+  await evaluate(`${element('#editor button:not([type="button"])',true)}.focus()`);await key('Enter');await until(async()=>(await api('/api/workbench/records/'+record.id)).review==='human_reviewed');
+  await until(()=>text('#records',true).then(value=>value?.includes('revision 2')));await click('#select-page',true);await click('.embed-toolbar button',true);await evaluate(`${element('#release-form',true)}.closest('details').open=true`);
+  await fill('#train','100',true);await fill('#validation','0',true);await fill('#test','0',true);await click('#preview-release',true);await until(()=>evaluate(`${element('#freeze-release',true)}?.disabled===false`));await click('#freeze-release',true);await until(()=>evaluate(`!!${doc(true)}.querySelector('#release-result a')`));
+  const download=await evaluate(`${doc(true)}.querySelector('#release-result a').href`),frozen=Buffer.from(await(await fetch(download)).arrayBuffer()),releasePath=path.join(report,'native-release.zip'),recovered=path.join(report,'recovered.zip');fs.writeFileSync(releasePath,frozen);
+  const released=JSON.parse(execFileSync('python3',['-c',"import json,sys,zipfile;from pathlib import Path;from scientific_release import validate_release;r=validate_release(Path(sys.argv[1]));z=zipfile.ZipFile(sys.argv[1]);m=json.loads(z.read('manifest.json'));assert len(m['records'])==1;row=m['records'][0];assert row['review']=='human_reviewed';Path(sys.argv[2]).write_bytes(z.read(row['asset']));print(json.dumps(r))",releasePath,recovered],{cwd:root,encoding:'utf8'}));assert.deepEqual(fs.readFileSync(recovered),fields);
+  const frozenCold=JSON.parse(execFileSync(numpy,['tests/qualify_native_generation.py','--bundle',recovered,'--wire',path.join(report,'seed100-two-frames','wire.bin')],{cwd:root,encoding:'utf8'}));assert.equal(frozenCold.bundle_sha256,firstCold.bundle_sha256);
+  check('Separate explicit human review and canonical freeze preserve the exact generated bundle and verifiable run provenance');
+  const variants=[];
+  for(const [seed,frames] of [[101,2],[100,1]]){let graph=await api('/api/workspace/graphs/'+primaryDetail.graph.id+'/clone',{name:`Native seed ${seed}, ${frames} frames`});graph.nodes.find(node=>node.type==='execute').parameters={grid:32,seed,frames};graph=await api('/api/workspace/graphs/'+graph.id,{revision:graph.revision,document:graph});const result=await completed((await submittedGraph(graph)).id);const output=result.artifacts.find(item=>item.name==='fields.zip');const imported=await api('/api/workspace/runs/'+result.id+'/import-data/fields.zip',{expected_sha256:output.sha256,name:`Native seed ${seed}, ${frames} frames`});assert.equal(imported.review,'draft');variants.push({run:result.id,record_id:imported.id,groups:imported.groups,cold:await cold(result,`seed${seed}-${frames}-frames`,seed,frames)});}
+  assert.notDeepEqual(variants[0].cold.family,firstCold.family);assert.deepEqual(variants[1].cold.family,firstCold.family);const protectedFamily=record.groups.filter(value=>value.startsWith('field-sequence-family:'));assert.equal(protectedFamily.length,1);assert.ok(variants[1].groups.includes(protectedFamily[0]));assert.ok(!variants[0].groups.includes(protectedFamily[0]));
+  for(const original of firstCold.arrays.filter(item=>item.frame===0)){assert.equal(variants[1].cold.arrays.find(item=>item.field===original.field).payload_sha256,original.payload_sha256);}
+  assert.ok(firstCold.arrays.some((item,index)=>item.payload_sha256!==variants[0].cold.arrays[index].payload_sha256));
+  check('A second native seed changes actual arrays and family; shorter frame count preserves original initial-condition family and frame bytes');
+  let cancelGraph=await api('/api/workspace/graphs/'+primaryDetail.graph.id+'/clone',{name:'Cancelled native request'});cancelGraph.nodes.find(node=>node.type==='execute').parameters.seed=102;cancelGraph=await api('/api/workspace/graphs/'+cancelGraph.id,{revision:cancelGraph.revision,document:cancelGraph});const cancelRun=await submittedGraph(cancelGraph);await api('/api/workspace/runs/'+cancelRun.id+'/cancel',{});
+  const cancelled=await until(async()=>{const value=await api('/api/workspace/runs/'+cancelRun.id);return value.state==='cancelled'?value:null;});const refused=await fetch(base+'/api/workspace/runs/'+cancelRun.id+'/import-data/fields.zip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expected_sha256:bundleArtifact.sha256})});assert.equal(refused.status,409);assert.equal((await api('/api/workbench/records')).items.length,3);
+  check('Cancellation publishes no importable partial scientific artifact');
+  server.kill('SIGINT');await until(()=>server.exitCode!==null);server=launch('python3',serverArgs(port),{cwd:root,stdio:['ignore','pipe','pipe']});let reopened='';server.stdout.on('data',chunk=>reopened+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);await until(()=>reopened.includes('Tuldok:'));await reload();await until(()=>text('#scientific-status',true).then(value=>value?.includes('Producer-declared stage:')));
+  assert.deepEqual(Buffer.from(await(await fetch(download)).arrayBuffer()),frozen);assert.deepEqual(await artifact(await api('/api/workspace/runs/'+primary.id),'fields.zip'),fields);assert.equal((await api('/api/workbench/records/'+record.id)).review,'human_reviewed');
+  for(const [name,hash] of Object.entries(originalFiles))assert.equal(sha(fs.readFileSync(path.join(projectRoot,name))),hash);
+  assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);check('Server restart retains approved Run, reviewed data, exact frozen release and unchanged project sources');
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),qualification:'Actual optional native generator through approved production Runs; exact field custody and bounded numerical observations',model_or_training_acceptance:false,general_physics_acceptance:false,gpu_or_performance_acceptance:false,checks,captures,cancelled_run:{id:cancelled.id,state:cancelled.state,custody_phase:cancelled.custody_phase,events:cancelled.events},run_id:primary.id,record_id:record.id,build_receipt_sha256:sha(fs.readFileSync(buildReceipt)),binary_sha256:sha(fs.readFileSync(binary)),cold:firstCold,variants,released,offline_canary:offlineCanary,browser:(await send('Browser.getVersion')).product},null,2));console.log('PASS native generation browser:',report);
+})().catch(async error=>{console.error(error);console.error('Application stderr:',serverErrors);if(evaluate)try{console.error(await evaluate('JSON.stringify({url:location.href,body:document.body.innerText.slice(-6000),frame:document.getElementById("catalog-frame")?.contentDocument?.body.innerText.slice(-4000)})'));}catch{}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())child.kill('SIGTERM');});

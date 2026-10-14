@@ -1,0 +1,70 @@
+{
+  "access.py": {
+    "bytes": 27243,
+    "sha256": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4"
+  },
+  "runtime_snapshots.py": {
+    "bytes": 22094,
+    "sha256": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e"
+  },
+  "recipe_contract.py": {
+    "bytes": 40379,
+    "sha256": "c59180b3468e9a4891a7dfae9676f1d77a6a9af461260dd9020d042251292c50"
+  },
+  "recipe_process.py": {
+    "bytes": 48820,
+    "sha256": "72f3e292305cedeff136eb2a2592668113eaeb2c1c658d9933ca85865eb8fa39"
+  },
+  "runs.py": {
+    "bytes": 80981,
+    "sha256": "a6c1d9f91503179e1e722d17ed7c9c3b0b9e9540e4afb6ee979d177c10235562"
+  },
+  "static/workspace-external.js": {
+    "bytes": 21140,
+    "sha256": "a28436e15312f5f67203dc6c2d2c618421b46ace42bd32cad4000df3794c06d2"
+  },
+  "tests/browser_workspace_cpu.cjs": {
+    "bytes": 17628,
+    "sha256": "6911c8b4f568cedcd9691fbe53d2837ba344fb08f423406e9ddaf4114457557c"
+  },
+  "tests/qualify_captured_cpu_runtime.py": {
+    "bytes": 14113,
+    "sha256": "36198b4d7935d31997e4ec5ed48b96a1aaefd4f284c1f737e1b00c840cd386e2"
+  },
+  "tests/qualify_cpu_comparison.py": {
+    "bytes": 9225,
+    "sha256": "ccf1d67354b3898fe6eb2f142c5c5e7665318f218df193259d43843366b436ed"
+  },
+  "tests/test_cpu_recipe_contract.py": {
+    "bytes": 6583,
+    "sha256": "1a45b1e6f4f58d3a2002686aed4f04afc7f8736cd618641769bb5e6f8c762ec5"
+  },
+  "tests/test_runtime_snapshots.py": {
+    "bytes": 9566,
+    "sha256": "4a932759b55d641a6aeb329430b43460c0f1afea3a4d3cd2a3f1c3051ab376d0"
+  },
+  "tests/test_access.py": {
+    "bytes": 13230,
+    "sha256": "31a480dfec02e54db48f7a324714a6b101c34193129a71827bcd61e725d813ea"
+  },
+  "tests/test_recipe_process.py": {
+    "bytes": 23976,
+    "sha256": "a3884c8af0f50c3a69238f7b8a8a4a7e84ea67a8fbc75772e8b1a2da3059a9bb"
+  },
+  "tests/test_rheon_cpu_adapter.py": {
+    "bytes": 11048,
+    "sha256": "5e278f8d0060b9d1009ac89650a7f7ce635adb9cdae5a82960f1d3360a79b1f7"
+  },
+  "adapters/rheon/cpu_compare.py": {
+    "bytes": 11992,
+    "sha256": "e2e14eb6f354b88a0123bcdd710d4f990102efb97f7cdb584db4700e7f05ab97"
+  },
+  "adapters/rheon/cpu_project.py": {
+    "bytes": 5317,
+    "sha256": "fe22a72b6dfc1b703c5407ba5691cef2117f6d5adeddf0d504f5c94270c003cf"
+  },
+  "adapters/rheon/native_transport.py": {
+    "bytes": 3794,
+    "sha256": "642bfab52028053561d20c4a6522bf131cb452ef4f69e55efa0786324c0c9d55"
+  }
+}

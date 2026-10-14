@@ -1,4 +1,5 @@
 """PR54 exact contract fixtures, HTTP failure boundaries and existing owners."""
+from auth_helpers import bind_owner
 import copy
 import hashlib
 import json
@@ -19,7 +20,7 @@ from workbench import WorkbenchError, encode
 class TypedTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
-        self.data = Dataset(self.tmp.name); self.addCleanup(lambda: self.data.close())
+        self.data = Dataset(self.tmp.name); self.actor = bind_owner(self, self.data); self.addCleanup(lambda: self.data.close())
         self.server, self.url, self.state = start()
         self.addCleanup(self.server.server_close); self.addCleanup(self.server.shutdown)
         self.row = self.data.workbench.import_asset({'kind':'text','name':'Positive','text':'The meeting is confirmed.',
@@ -101,27 +102,37 @@ class TypedTests(unittest.TestCase):
     def test_malformed_png_returns_http400_without_admission_or_replay(self):
         from http.server import ThreadingHTTPServer
         from urllib.error import HTTPError
-        from urllib.request import Request, urlopen
+        from urllib.request import urlopen
         from app import make_handler
         server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.data))
         self.addCleanup(server.server_close); self.addCleanup(server.shutdown)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         url = 'http://127.0.0.1:' + str(server.server_port) + '/api/generation/generate'
-        before = database_snapshot(self.data.db)
+        # Dispatch retains only its real admission/audit even if returned PNG is malformed.
+        def domain_state():
+            return [row for row in database_snapshot(self.data.db)
+                    if not row.startswith(("('access_admissions',", "('access_audit',"))]
+        before = domain_state()
         self.state['mode'] = 'malformed_png'
         body = self.image()
-        request = Request(url, encode(body).encode(), {'Content-Type': 'application/json'})
+        request = self.actor.request(url, encode(body).encode(), {'Content-Type': 'application/json'})
         with self.assertRaises(HTTPError) as rejected:
             urlopen(request, timeout=3)
         self.assertEqual(rejected.exception.code, 400)
         error = json.loads(rejected.exception.read())
         self.assertIn('invalid PNG', error['error'])
-        self.assertEqual(database_snapshot(self.data.db), before)
+        self.assertEqual(domain_state(), before)
+        receipt = self.data.db.execute("SELECT request_digest,effects_json FROM access_admissions WHERE kind='image_request' AND job_id=%s", (body['request_id'],)).fetchall()
+        self.assertEqual(len(receipt), 1)
+        self.assertEqual(receipt[0][0], hashlib.sha256(encode(body).encode()).hexdigest())
+        self.assertEqual(json.loads(receipt[0][1]), {'images.generate_admitted': [body['request_id']]})
+        actions = {row[0] for row in self.data.db.execute('SELECT action FROM access_audit WHERE target_json=%s', (encode(body['request_id']),))}
+        self.assertEqual(actions, {'access.admit_job', 'images.generate'})
         self.assertEqual(len(self.state['requests']), 1)
         self.assertFalse(self.data.image_requests.active)
         self.assertFalse(self.data.db.execute('SELECT id FROM samples').fetchall())
         self.state['mode'] = 'success'
-        request = Request(url, encode(self.image()).encode(), {'Content-Type': 'application/json'})
+        request = self.actor.request(url, encode(self.image()).encode(), {'Content-Type': 'application/json'})
         with urlopen(request, timeout=3) as response:
             self.assertEqual(response.status, 200)
             self.assertEqual(json.loads(response.read())['width'], 16)
@@ -141,7 +152,7 @@ class TypedTests(unittest.TestCase):
         job=dict(id=uuid.uuid4().hex,config=synthetic.validate(config),meta={},status='generating',error='',completed=0)
         entry=owner._new_entry(job,0,config['prompt']); entry.update(status='generating',request_id='retained-attempt')
         with self.data.lock,self.data.db.transaction(): owner._save(job); owner._entry(entry)
-        self.data.close(); self.data=Dataset(self.tmp.name)
+        self.data.close(); self.data=Dataset(self.tmp.name); self.actor = bind_owner(self, self.data)
         saved=self.data.generation_jobs.snapshot()['entries'][0]
         self.assertEqual(saved['request_id'],'retained-attempt'); self.assertEqual(saved['provider_outcome'],'unknown')
         with self.assertRaises(ValueError): self.data.generation_jobs.resume(job['id'])
@@ -150,10 +161,11 @@ class TypedTests(unittest.TestCase):
         owner=self.data.generation_jobs
         image=self.data.image_requests.generate(self.image())
         def cancelled_generate(*args,**kwargs):
-            active=next(job for job in owner.snapshot()['jobs'] if job['status']=='generating')
-            self.assertTrue(owner.cancel(active['id'])['cancelled'])
+            with self.actor.bound(self.data):
+                active=next(job for job in owner.snapshot()['jobs'] if job['status']=='generating')
+                self.assertTrue(owner.cancel(active['id'])['cancelled'])
             return image
-        with patch.object(self.data.image_requests,'generate',side_effect=cancelled_generate):
+        with patch.object(self.data.image_requests,'_generate_admitted',side_effect=cancelled_generate):
             job=owner.start(dict(self.image(),count=1,strategy='repeat',session_id='fixture-family',split='unassigned'))
             owner.worker.join(3)
         self.assertEqual(owner.snapshot()['jobs'][0]['status'],'cancelled')

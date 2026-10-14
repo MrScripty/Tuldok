@@ -6,6 +6,7 @@ Existing ai_http owns HTTP; Workbench owns all admitted assets and annotations.
 from workbench import encode_retained
 import base64
 import hashlib
+from access import AccessError, authorized
 import json
 import threading
 import time
@@ -121,10 +122,11 @@ def decode(data, source, count, typed_request_id=None):
 class Proposals:
     def __init__(self, workbench):
         self.workbench = workbench
+        self.access = workbench.dataset.access
         self.db, self.lock = workbench.db, workbench.lock
         self.worker, self.active_id = None, None
         self.stop = threading.Event()
-        with self.lock, self.db.transaction():
+        with self.access._reconcile(), self.lock, self.db.transaction():
             self.runtime_owner = self.db.claim_runtime('grounded_jobs')
             if not self.runtime_owner:
                 return
@@ -134,6 +136,7 @@ class Proposals:
                     if pumas.typed(job['config']): job['provider_outcome'] = 'unknown'
                     job.update(status='interrupted', error='Server stopped; no automatic retry. Start a new request after inspecting this attempt.')
                     self._save(job)
+                    self.access.audit('grounded.reconcile', job['id'], {'status': job['status']})
 
     def _save(self, job):
         previous = self.db.execute('SELECT data FROM grounded_jobs WHERE id=%s', (job['id'],)).fetchone()
@@ -149,12 +152,14 @@ class Proposals:
             raise WorkbenchError('Proposal request not found.', 'unavailable', 404)
         return json.loads(row[0])
 
+    @authorized('inspect', 'grounded.get')
     def get(self, job_id):
         if not isinstance(job_id, str):
             raise WorkbenchError('Invalid proposal request ID.')
         with self.lock:
             return self._get(job_id)
 
+    @authorized('inspect', 'grounded.snapshot')
     def snapshot(self):
         with self.lock:
             jobs = [json.loads(row[0]) for row in self.db.execute('SELECT data FROM grounded_jobs ORDER BY ordinal DESC LIMIT 50')]
@@ -178,6 +183,7 @@ class Proposals:
             raise WorkbenchError('Select a source of at most 20,000 code points; it will not be silently truncated.')
         return source
 
+    @authorized('execute', 'grounded.start', owner_only=True)
     def start(self, body):
         fields = {'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'count', 'seed'}
         if not isinstance(body, dict) or set(body) not in (fields, fields | {'protocol', 'profile'}):
@@ -205,6 +211,10 @@ class Proposals:
                        'verification': 'Schema and exact source quotes only; class/factual preservation requires human review.'}
                 job['config'].update(mode)
                 job['canonical_request_sha256'] = hashlib.sha256(encode(request_payload(job)).encode()).hexdigest()
+                job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': request_payload(job)}).encode()).hexdigest()
+                job['admission_id'] = self.access.admit_job('grounded', job['id'], job['request_digest'],
+                    {'grounded.finish': [job['id']]})
+                self.access.audit('grounded.start', job['id'], {'request_digest': job['request_digest']})
                 self._save(job)
             self.stop.clear(); self.active_id = job['id']
             self.worker = threading.Thread(target=self._run, args=(job['id'],), daemon=True)
@@ -218,7 +228,21 @@ class Proposals:
             return job
 
     def _run(self, job_id):
-        job = self.get(job_id)
+        with self.lock:
+            job = self._get(job_id)
+        request_digest = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': request_payload(job)}).encode()).hexdigest()
+        try:
+            with self.access._job('grounded', job_id, job.get('admission_id'), request_digest):
+                self._run_admitted(job)
+        except AccessError:
+            with self.access._reconcile(), self.lock, self.db.transaction():
+                job.update(status='interrupted', error='Job admission is missing or differs from the retained request; no inference started.')
+                self._save(job)
+                self.access.audit('grounded.interrupt', job_id)
+                self.active_id = None
+
+    def _run_admitted(self, job):
+        job_id = job['id']
         try:
             if pumas.typed(job['config']):
                 pumas.prepare_chat(job, 6000)
@@ -254,15 +278,18 @@ class Proposals:
                 self._source({'source_id': job['source']['id'], 'revision': job['source']['revision'], 'source_revision': job['source']['source_revision']})
                 job.update(status='completed', candidates=candidates)
                 self._save(job)
+                self.access.audit('grounded.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:
             with self.lock, self.db.transaction():
                 pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
+                self.access.audit('grounded.finish', job_id, {'status': job['status']})
         finally:
             with self.lock:
                 self.active_id = None
 
+    @authorized('cancel', 'grounded.cancel')
     def cancel(self, job_id):
         with self.lock, self.db.transaction():
             job = self._get(job_id)
@@ -271,8 +298,10 @@ class Proposals:
             self.stop.set()
             job.update(status='stopping', error='Cancellation requested; late output will not be admitted.')
             self._save(job)
+            self.access.audit('grounded.cancel', job['id'])
             return {'cancelled': True, 'job': job}
 
+    @authorized('edit', 'grounded.review')
     def review(self, job_id, body):
         if set(body) != {'revision', 'candidate_id', 'decision', 'note'} or body['decision'] not in ('reject', 'admit_draft'):
             raise WorkbenchError('Choose reject or admit_draft with the current proposal revision and a review note.')
@@ -313,6 +342,7 @@ class Proposals:
                 candidate['status'] = 'rejected'
             candidate['review_note'] = note
             self._save(job)
+            self.access.audit('grounded.review', job['id'], {'revision': job['revision'], 'decision': body['decision']})
             return {'job': job, 'record': record}
 
     def close(self):

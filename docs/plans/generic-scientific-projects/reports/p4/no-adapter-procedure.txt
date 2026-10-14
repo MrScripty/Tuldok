@@ -1,0 +1,59 @@
+"""Disposable real HTTP qualification; no optional adapter or producer execution."""
+import hashlib,json,os,pathlib,shutil,subprocess,tempfile,time,urllib.request,http.cookiejar
+ROOT=pathlib.Path('/workspace/Tuldok-v2'); PY='/workspace/Tuldok/.venv/bin/python'
+DEST=pathlib.Path(tempfile.mkdtemp(prefix='tuldok-p4-no-adapter-')); CODE=DEST/'application'; CODE.mkdir()
+def sha(raw): return hashlib.sha256(raw).hexdigest()
+inventory={}
+for source in sorted(ROOT.glob('*.py')):
+    raw=source.read_bytes();(CODE/source.name).write_bytes(raw);inventory[source.name]=sha(raw)
+shutil.copytree(ROOT/'static',CODE/'static')
+for source in sorted((CODE/'static').rglob('*')):
+    if source.is_file(): inventory[str(source.relative_to(CODE))]=sha(source.read_bytes())
+assert not (CODE/'adapters').exists()
+project=DEST/'project';project.mkdir()
+env=dict(os.environ);env.pop('PYTHONPATH',None);env.pop('PYTHONHOME',None)
+subprocess.run([PY,str(ROOT/'tests/qualify_scientific_fields.py'),'--output',str(project/'fields.zip'),'--build-only'],env=env,check=True,capture_output=True)
+raw=(project/'fields.zip').read_bytes();manifest={'schema_version':1,'id':'f'*32,'name':'Generic startup without optional adapter','data':[{'id':'fields','label':'Authored generic fields','path':'fields.zip','sha256':sha(raw)}],'recipes':[],'evidence':[],'requirements':[]}
+(project/'project.json').write_text(json.dumps(manifest))
+launcher="import importlib.util,pathlib,sys; assert importlib.util.find_spec('adapters') is None; import app; assert pathlib.Path(app.__file__).resolve().parent == pathlib.Path.cwd(); assert not any(n == 'adapters' or n.startswith('adapters.') for n in sys.modules); print('OPTIONAL_ADAPTER_ABSENT_CONFIRMED',flush=True); app.main()"
+log=(DEST/'server.log').open('w+');server=subprocess.Popen([PY,'-u','-c',launcher,'--port','0','--data',str(DEST/'catalog'),'--project-root','generic='+str(project)],cwd=CODE,env=env,stdout=log,stderr=subprocess.STDOUT)
+receipt={'qualification':'Actual application source snapshot with adapters physically absent; generic authored field import/inspection. No producer execution, mocks or scientific qualification.','snapshot_root':str(CODE),'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'snapshot_file_hashes':inventory,'adapter_exists':False,'checks':[]}
+try:
+    import re
+    for _ in range(200):
+        log.flush();output=(DEST/'server.log').read_text();match=re.search(r'Tuldok: (http://127.0.0.1:\d+)',output)
+        if match: break
+        if server.poll() is not None: raise RuntimeError(output)
+        time.sleep(.1)
+    else: raise RuntimeError('Startup timed out')
+    base=match.group(1);assert 'OPTIONAL_ADAPTER_ABSENT_CONFIRMED' in output
+    jar=http.cookiejar.CookieJar();opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+    def request(route,body=None):
+        headers={'Origin':base};data=None
+        if body is not None: headers['Content-Type']='application/json';data=json.dumps(body).encode()
+        with opener.open(urllib.request.Request(base+route,data=data,headers=headers),timeout=30) as response:
+            raw=response.read();ctype=response.headers.get('Content-Type','');return response.status,json.loads(raw) if 'json' in ctype else raw
+    login=DEST/'owner-code';subprocess.run([PY,'access.py','login','--data',str(DEST/'catalog'),'--out',str(login)],cwd=CODE,env=env,check=True,capture_output=True)
+    token=login.read_text().strip();login.unlink();status,identity=request('/api/access/session',{'token':token});token=None;assert status==200 and identity['kind']=='owner'
+    assert any('HttpOnly' in cookie._rest for cookie in jar)
+    receipt['checks'].append('Normal owner CLI issuance and real HttpOnly session exchange succeeded without adapters.')
+    for route in ['/workspaces','/workbench','/workspace-external.js','/scientific-fields.js']:
+        status,payload=request(route);assert status==200 and payload;receipt['checks'].append(route+' served from copied static sources.')
+    status,opened=request('/api/workspace/projects',{'root':'generic','manifest_path':'project.json'});assert status==201 and opened['id']==manifest['id']
+    status,detail=request('/api/workspace/projects/'+manifest['id']);assert detail['data'][0]['observed_sha256']==sha(raw)
+    status,record=request('/api/workspace/projects/'+manifest['id']+'/import-data/fields',{'expected_sha256':sha(raw)});assert status==201 and record['kind']=='field_sequence' and record['review']=='draft'
+    status,rows=request('/api/workbench/records');assert len(rows['items'])==1
+    field=record['field_sequence']['manifest']['fields'][0]['id']
+    status,inspection=request('/api/workbench/records/'+record['id']+'/scientific?frame=0&field='+field+'&axis=z&index=0');assert status==200 and inspection['field']==field and inspection['values'] and len(inspection['physical_origin'])==3
+    assert request('/api/workspace/runs')[1]==[]
+    receipt['checks'].extend(['Generic project hash inspection succeeded.','Authored generic scientific bundle imported as draft through production admission.','Data record list and exact scientific slice/physical coordinates inspected through production HTTP.','Runs list remains empty; no producer or recipe executed.'])
+    receipt.update(record_id=record['id'],bundle_sha256=sha(raw),slice_sha256=sha(json.dumps(inspection,sort_keys=True).encode()),field=field)
+    assert not (CODE/'adapters').exists()
+    for name,digest in inventory.items(): assert sha((CODE/name).read_bytes())==digest
+    receipt['checks'].append('Copied source/static bytes unchanged; optional adapters directory remains absent.')
+    (DEST/'receipt.json').write_text(json.dumps(receipt,indent=2));print('PASS no-adapter generic startup:',DEST);print(json.dumps(receipt['checks'],indent=2))
+finally:
+    server.send_signal(__import__('signal').SIGINT)
+    try: server.wait(timeout=15)
+    except subprocess.TimeoutExpired: server.terminate();server.wait(timeout=5)
+    log.close()

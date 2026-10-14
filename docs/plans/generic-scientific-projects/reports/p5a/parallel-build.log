@@ -1,0 +1,9 @@
+   Compiling crossbeam-utils v0.8.23
+   Compiling crossbeam-epoch v0.9.21
+   Compiling crossbeam-deque v0.8.8
+   Compiling rayon-core v1.13.0
+   Compiling either v1.19.0
+   Compiling rayon v1.11.0
+   Compiling rheon v0.1.0 (/workspace/scratch/tuldok-science-probe/Rheon)
+   Compiling rheon-trajectory-parallel v0.1.0 (/workspace/scratch/tuldok-science-probe/lab/probes/trajectory-parallel)
+    Finished `release` profile [optimized] target(s) in 8.58s

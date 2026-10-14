@@ -68,7 +68,8 @@ def prepare(run_raw, frames_raw):
 
 
 def admit(workbench, body):
-    if set(body) - {'files', 'name', 'groups', 'parents', 'rights'} or type(body.get('files')) is not dict or set(body['files']) != {'run.json', 'frames.jsonl'}:
+    workbench.access.require('edit', 'rheon_sequences.admit')
+    if type(body) is not dict or set(body) - {'files', 'name', 'groups', 'parents', 'rights'} or type(body.get('files')) is not dict or set(body['files']) != {'run.json', 'frames.jsonl'}:
         raise WorkbenchError('Supply exactly run.json and frames.jsonl plus sequence metadata.')
     run_raw = decode_file(body['files']['run.json'], contract.MANIFEST_LIMIT, 'run.json')
     frames_raw = decode_file(body['files']['frames.jsonl'], contract.FRAMES_LIMIT, 'frames.jsonl')

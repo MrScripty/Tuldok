@@ -1,4 +1,5 @@
 """Durable receipts, real process cessation, immutable outputs and holdout custody."""
+from auth_helpers import bind_owner
 import copy
 from contextlib import contextmanager
 import json
@@ -146,7 +147,7 @@ class RunTests(WorkspaceCase):
             self.dataset.close()
             self.assertFalse(self.dataset.runs._thread.is_alive())
             self.assertIsNone(process_identity(worker['pid']))
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'interrupted')
 
     def test_unknown_attempt_fences_already_queued_work(self):
@@ -186,7 +187,7 @@ class RunTests(WorkspaceCase):
     def test_restart_does_not_replay_queue_or_signal_reused_pid(self):
         run = self.submit_queued()
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         with self.dataset.lock, self.dataset.db.transaction():
             retained = self.dataset.runs._load(run['id'])
             retained['state'] = 'running'
@@ -194,7 +195,7 @@ class RunTests(WorkspaceCase):
             retained['worker'] = dict(process_identity(os.getpid()), start_ticks='not-the-original-process')
             self.dataset.runs._save(retained)
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'interrupted')
         self.assertIsNone(self.dataset.runs._thread)
         self.assertFalse((self.dataset.runs.path / run['id']).exists())
@@ -202,7 +203,7 @@ class RunTests(WorkspaceCase):
     def test_recovery_keeps_observed_live_prior_process_unknown(self):
         run = self.submit_queued()
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         with self.dataset.lock, self.dataset.db.transaction():
             retained = self.dataset.runs._load(run['id'])
             retained['state'] = 'running'
@@ -210,7 +211,7 @@ class RunTests(WorkspaceCase):
             retained['worker'] = process_identity(os.getpid())
             self.dataset.runs._save(retained)
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'unknown')
         with self.assertRaises(WorkbenchError):
             self.dataset.runs.retry(run['id'], {'request_key': 'retry-unknown-request'})
@@ -226,7 +227,7 @@ class RunTests(WorkspaceCase):
             self.dataset.runs._save(retained)
         for _ in range(2):
             self.dataset.close()
-            self.dataset = Dataset(self.tmp.name)
+            self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
             self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'interrupted')
             self.assertFalse(self.dataset.runs._blocked)
 
@@ -251,13 +252,13 @@ class RunTests(WorkspaceCase):
                             supervisor=dict(process_identity(os.getpid()), boot_id='previous-boot'))
             self.dataset.runs._save(retained)
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'unknown')
         self.assertTrue(self.dataset.runs._blocked)
         self.assertIsNone(child.poll(), 'Recovery must never signal a remembered/discovered PID.')
         cleanup()
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.get(run['id'])['state'], 'interrupted')
         self.assertFalse(self.dataset.runs._blocked)
 
@@ -301,7 +302,7 @@ class RealCPURunTests(WorkspaceCase):
         self.assertEqual(len(release['prior_test_exposure']['events']), 2)
         frozen = self.dataset.runs.artifact(run['id'], 'metrics.json')[0]
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.assertEqual(self.dataset.runs.artifact(run['id'], 'metrics.json')[0], frozen)
         self.assertEqual(self.dataset.runs.submit(body)['id'], run['id'])
         self.assertTrue(self.dataset.runs.get(run['id'])['test_exposure']['exposed'])

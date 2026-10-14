@@ -1,4 +1,5 @@
 """Actual retained Rheon producer bytes through real graph/run/export custody."""
+from auth_helpers import bind_owner
 import copy
 import hashlib
 import io
@@ -71,7 +72,7 @@ class SequenceRuns(unittest.TestCase):
             self.dataset.runs.expose_test(run['id'], {'reason': 'No model evaluation'})
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workspace_exposures').fetchone()[0], 0)
         self.dataset.close()
-        self.dataset = Dataset(self.temporary.name)
+        self.dataset = Dataset(self.temporary.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.assertEqual(self.dataset.runs.get(run['id'])['validation_summary'], summary)
         self.assertEqual(self.dataset.runs.artifact(run['id'], 'validation-report.json')[0], raw_report)

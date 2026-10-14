@@ -1,4 +1,5 @@
 """Reconciled native detection changes the actual corpus family proof, not targets."""
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import io
@@ -25,7 +26,7 @@ class DetectionStackTests(unittest.TestCase):
         with zipfile.ZipFile(io.BytesIO(self.raw)) as archive:
             self.origin = json.loads(archive.read('manifest.json'))['records'][0]
         self.link = 'native-text-origin:'+hashlib.sha256(self.origin['id'].encode()).hexdigest()
-        self.dataset = Dataset(self.path/'destination'); self.addCleanup(self.dataset.close)
+        self.dataset = Dataset(self.path/'destination'); self.actor = bind_owner(self, self.dataset); self.addCleanup(self.dataset.close)
         self.w = self.dataset.workbench
         self.documents = []
         for index in range(3):

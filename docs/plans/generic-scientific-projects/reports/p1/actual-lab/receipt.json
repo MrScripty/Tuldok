@@ -1,0 +1,91 @@
+{
+  "source_commit": "fd3f6a93b9c7f2d7d8056298a02d3f9b362e9b3c",
+  "dirty": true,
+  "command": "node tests/browser_workspace_project.cjs --lab-root <actual-checkout>",
+  "qualification": "Inspection of exact copies of actual lab files only; no new training, execution or scientific verification",
+  "actual_lab_source": {
+    "commit": "e8a90bfef6b2955c502008ccc62443e29dd9f2ec",
+    "files": {
+      "experiments/trajectory-v2/freeze.json": "7132acb88fc8a0725c33f4d1d3534a2732c72a4e260b014538a6cf32c95b0aba",
+      "experiments/trajectory-v2/model.pt": "25533a2fbaa5ab0f5fb574dc6307a2b8d6a686deb7db867d0d03338d4d70d5a9",
+      "scripts/trajectory_experiment.py": "e1fd053f693730d39ded6a7ee50fd6e562bef37b2171bb7ed26acb770605e2f6",
+      "README.md": "cac636f10eebf862201eb472e4a592408091a0ead45c05a2d17681e96d05a16b",
+      "experiments/trajectory-v2/result.json": "abe2b6fa3e63ac38fd9ab3e397f682204a351d894f73b08fe21a7931cca5bb76"
+    }
+  },
+  "project_file_hashes": {
+    "alpha.project.json": "3d16d9076dc38f2b05f586fd2b8e6a2e3b8a7bd2c2dee577c3d7e68bc12861e0",
+    "beta/data.txt": "37db6957d5b32141f37051d6ea915e32e7d84638a31abd5af8e8c0d180ac937e",
+    "beta/report.md": "1bbc8e85704e222c29f19d8a3edd0e0118b66969a08fc3568de5577b18fade38",
+    "beta.project.json": "a79cc0671db902a8c3b78f433e81fd213bfacb8a95928cbc933e7bacdb8533b3",
+    "copied/README.md": "cac636f10eebf862201eb472e4a592408091a0ead45c05a2d17681e96d05a16b",
+    "copied/experiments/trajectory-v2/freeze.json": "7132acb88fc8a0725c33f4d1d3534a2732c72a4e260b014538a6cf32c95b0aba",
+    "copied/experiments/trajectory-v2/model.pt": "25533a2fbaa5ab0f5fb574dc6307a2b8d6a686deb7db867d0d03338d4d70d5a9",
+    "copied/experiments/trajectory-v2/result.json": "abe2b6fa3e63ac38fd9ab3e397f682204a351d894f73b08fe21a7931cca5bb76",
+    "copied/scripts/trajectory_experiment.py": "e1fd053f693730d39ded6a7ee50fd6e562bef37b2171bb7ed26acb770605e2f6"
+  },
+  "checks": [
+    "Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct",
+    "Actual copied 4MiB result is hash-inspected but bounded text preview is refused honestly",
+    "Pipeline exposes nonexecutable references; Runs renders exact external evidence as text without a completion claim",
+    "Two projects with shared reference ID stay isolated; switching clears previous external evidence",
+    "Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted"
+  ],
+  "captures": [
+    {
+      "file": "project-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#project-data-root",
+      "qualification": "Copied actual source inspection only; no execution or scientific verification"
+    },
+    {
+      "file": "project-data-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-data-root",
+      "qualification": "Copied actual source inspection only; no execution or scientific verification"
+    },
+    {
+      "file": "project-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-pipeline-root",
+      "qualification": "Copied actual source inspection only; no execution or scientific verification"
+    },
+    {
+      "file": "project-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#project-runs-root .project-evidence-output",
+      "qualification": "Copied actual source inspection only; no execution or scientific verification"
+    },
+    {
+      "file": "project-evidence-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-runs-root .project-evidence-output",
+      "qualification": "Copied actual source inspection only; no execution or scientific verification"
+    }
+  ],
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "execution_submitted": false,
+  "source_mutation": false,
+  "browser": "Chrome/151.0.7922.173"
+}

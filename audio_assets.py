@@ -1,8 +1,8 @@
 """Bounded original PCM WAV assets; Workbench owns records, revisions and review."""
+from access import authorized
 import base64
 import hashlib
 import io
-import os
 import struct
 import uuid
 import wave
@@ -92,21 +92,15 @@ def validate_annotation(value, record):
     return {'segments': result}
 
 
-def _sync_directory(path):
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
-
-
 class AudioAssets:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self.path = workbench.dataset.path / 'audio'
 
+    @authorized('edit', 'audio_assets.admit')
     def admit(self, body):
-        from metadata import CommitOutcomeUnknown
+        from immutable_assets import publish_file
         if type(body) is not dict or set(body) - {'wav', 'name', 'rights', 'groups', 'parents'}:
             invalid('import expects wav, name, rights, groups and optional parents.')
         encoded = body.get('wav')
@@ -132,43 +126,28 @@ class AudioAssets:
         record_id, created = uuid.uuid4().hex, timestamp()
         folder = self.path / record_id
         w = self.workbench
-        def discard():
-            if folder.exists():
-                (folder / 'source.wav').unlink(missing_ok=True)
-                folder.rmdir()
-        try:
-            with w.lock, w.db.transaction():
-                for parent in parents:
-                    w._get(parent)
-                if w.db.execute("SELECT 1 FROM workbench_records WHERE kind='audio' AND content_hash=%s", (digest,)).fetchone():
-                    invalid('this original WAV already exists; open its existing record.', 'conflict', 409)
-                self.path.mkdir(exist_ok=True)
-                folder.mkdir()
-                # Successful savepoints pass custody to their outer transaction.
-                w.db.on_rollback(discard)
-                with (folder / 'source.wav').open('xb') as target:
-                    target.write(raw); target.flush(); os.fsync(target.fileno())
-                _sync_directory(folder); _sync_directory(self.path); _sync_directory(self.path.parent)
+        with w.lock, w.db.transaction():
+            for parent in parents:
+                w._get(parent)
+            if w.db.execute("SELECT 1 FROM workbench_records WHERE kind='audio' AND content_hash=%s", (digest,)).fetchone():
+                invalid('this original WAV already exists; open its existing record.', 'conflict', 409)
+            with publish_file(w.db, folder, 'source.wav', raw):
                 w.db.execute('INSERT INTO workbench_records VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                              (record_id, 'audio', name, None, None, digest, None, encode(groups), encode(parents),
                               encode(origin), TASK, None, 'draft', 1, created, created))
                 record = w._get(record_id)
                 w._history(record)
-        except CommitOutcomeUnknown:
-            # A lost PostgreSQL commit acknowledgement may already have published this reference.
-            # Retain its bytes; the existing catalog reconciliation owns the next action.
-            raise
-        except Exception:
-            discard()
-            raise
+                self.access.audit('audio_assets.admit', record_id, {'revision': record['revision'], 'source_sha256': digest})
         return record
 
+    @authorized('inspect', 'audio_assets.metadata')
     def metadata(self, record_id, provenance):
         meta = provenance.get('audio')
         if not isinstance(meta, dict) or meta.get('schema_version') != 1:
             invalid('stored source metadata is unavailable.', 'unavailable', 409)
         return dict(meta), (self.path / record_id / 'source.wav').is_file()
 
+    @authorized('inspect', 'audio_assets.asset', target=lambda record: record.get('id') if isinstance(record, dict) else None)
     def asset(self, record):
         path = self.path / record['id'] / 'source.wav'
         try:
@@ -184,6 +163,7 @@ class AudioAssets:
             invalid('retained source metadata does not match the original WAV.', 'conflict', 409)
         return raw, 'audio/wav'
 
+    @authorized('inspect', 'audio_assets.inspect')
     def inspect(self, record_id):
         w = self.workbench
         with w.lock:

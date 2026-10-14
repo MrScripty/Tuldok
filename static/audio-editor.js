@@ -92,7 +92,7 @@ function audioShown(record) {
   $('audio-status').textContent = 'Loading source-channel waveform…';
   (async () => {
     try {
-      const response = await fetch('/api/workbench/audio-inspection/' + record.id, {signal:controller.signal}), raw = await response.json();
+      const response = await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/audio-inspection/' + record.id, {signal:controller.signal}), raw = await response.json();
       if (!response.ok) throw Error(raw.error || 'Audio inspection unavailable.');
       const value = decodeAudioInspection(raw, record); if (!owns()) return;
       audioInspection = value; audioDraw(); $('audio-status').textContent = 'Original bytes retained. Waveform peaks summarize source frames; no transcript is inferred.';
@@ -119,7 +119,7 @@ action('audio-play-interval', async () => {
   const context = audioContext || new AudioContext({sampleRate:record.audio.sample_rate_hz}); audioContext = context;
   try {
   await context.resume();
-  const response = await fetch('/api/workbench/asset/' + record.id);
+  const response = await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/asset/' + record.id);
   if (!response.ok) throw Error('Original audio unavailable.');
   const buffer = await context.decodeAudioData(await response.arrayBuffer());
   if (generation !== audioGeneration || playback !== audioPlaybackGeneration) return;

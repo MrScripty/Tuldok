@@ -1,4 +1,5 @@
 """Note-only correction traverses HTTP, CAS, PostgreSQL and frozen source/history contracts."""
+from auth_helpers import bind_owner, ExplicitOwnerFixture
 from postgres_helpers import database_snapshot, in_transaction
 import base64
 import hashlib
@@ -20,7 +21,7 @@ from workbench import encode, rights_note
 class RightsNoteTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
-        self.dataset=Dataset(self.tmp.name);self.w=self.dataset.workbench
+        self.dataset=Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset);self.w=self.dataset.workbench
         self.server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset))
         threading.Thread(target=self.server.serve_forever,daemon=True).start();self.addCleanup(self.close)
         self.root=f'http://127.0.0.1:{self.server.server_port}'
@@ -32,7 +33,7 @@ class RightsNoteTests(unittest.TestCase):
 
     def request(self,row,note,**extra):
         body=dict(revision=row['revision'],source_revision=row['source_revision'],note=note,**extra)
-        req=urllib.request.Request(self.root+'/api/workbench/rights/'+row['id'],data=json.dumps(body).encode(),headers={'Content-Type':'application/json'})
+        req=self.actor.request(self.root+'/api/workbench/rights/'+row['id'],data=json.dumps(body).encode(),headers={'Content-Type':'application/json'})
         try:
             with urllib.request.urlopen(req) as response:return response.status,json.load(response)
         except urllib.error.HTTPError as error:
@@ -204,15 +205,16 @@ class RightsNoteTests(unittest.TestCase):
         self.assertFalse(self.dataset.releases.preview(body)['eligible']);self.assertEqual(archive.read_bytes(),frozen)
         # Existing strict native caption parser accepts the unchanged record shape and nested origin evidence.
         target=Dataset(Path(self.tmp.name)/'roundtrip')
-        try:
-            with zipfile.ZipFile(archive) as zip:
-                origin=dict(manifest=zip.read('manifest.json').decode(),metadata={split:zip.read(split+'/metadata.jsonl').decode() for split in ('train','val','test')})
-                for item in target.caption_imports.prepare(origin)['rows']:
-                    admitted=target.caption_imports.admit(dict(token=item['token'],asset=item['asset'],request_id=uuid.uuid4().hex,image=base64.b64encode(zip.read(item['asset'])).decode()))
-                    admitted=target.workbench.get(admitted['record_id'])
-                    self.assertEqual(admitted['review'],'draft');self.assertEqual(rights_note(admitted),'unknown')
-                self.assertEqual(target.workbench.query({'task':'image_caption'})['total'],4)
-        finally:target.close()
+        with ExplicitOwnerFixture.bootstrap(target).bound(target):
+            try:
+                with zipfile.ZipFile(archive) as zip:
+                    origin=dict(manifest=zip.read('manifest.json').decode(),metadata={split:zip.read(split+'/metadata.jsonl').decode() for split in ('train','val','test')})
+                    for item in target.caption_imports.prepare(origin)['rows']:
+                        admitted=target.caption_imports.admit(dict(token=item['token'],asset=item['asset'],request_id=uuid.uuid4().hex,image=base64.b64encode(zip.read(item['asset'])).decode()))
+                        admitted=target.workbench.get(admitted['record_id'])
+                        self.assertEqual(admitted['review'],'draft');self.assertEqual(rights_note(admitted),'unknown')
+                    self.assertEqual(target.workbench.query({'task':'image_caption'})['total'],4)
+            finally:target.close()
 
 
     def test_feff_and_python_only_whitespace_untouched_noops_preserve_exact_origin(self):

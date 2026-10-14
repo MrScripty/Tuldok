@@ -1,4 +1,5 @@
 """Consume only the existing detection-only canonical_v1 ZIP export contract."""
+from access import authorized
 import base64
 import hashlib
 import hmac
@@ -82,6 +83,7 @@ def png(raw, row):
 
 class NativeDetectionImports:
     def __init__(self, workbench):
+        self.access = workbench.access
         self.workbench = workbench
         self._key = secrets.token_bytes(32)
 
@@ -103,6 +105,7 @@ class NativeDetectionImports:
         except ValueError:
             raise WorkbenchError('Detection preparation changed or expired. Choose the archive again.') from None
 
+    @authorized('edit', 'native_detection_import.prepare')
     def prepare(self, body):
         if set(body) != {'source_name', 'archive'}:
             raise WorkbenchError('Supply one selected native detection ZIP and its filename.')
@@ -225,6 +228,7 @@ class NativeDetectionImports:
         except (zipfile.BadZipFile, EOFError, KeyError, RuntimeError, OSError, NotImplementedError):
             raise WorkbenchError('Native detection ZIP is damaged or incomplete.') from None
 
+    @authorized('edit', 'native_detection_import.admit')
     def admit(self, body):
         if set(body) != {'token', 'request_id'} or not isinstance(body['request_id'], str) or not REQUEST_ID.fullmatch(body['request_id']):
             raise WorkbenchError('Supply one prepared detection row and request marker.')

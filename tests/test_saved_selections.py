@@ -1,4 +1,5 @@
 """Real PostgreSQL/HTTP fixed-membership contracts and release consumer checks."""
+from auth_helpers import bind_owner
 import base64
 import io
 import json
@@ -23,7 +24,7 @@ class SavedSelectionTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.w, self.s = self.dataset.workbench, self.dataset.selections
 
@@ -60,7 +61,7 @@ class SavedSelectionTests(unittest.TestCase):
             self.assertEqual([m['status'] for m in result['members']], ['ok', 'ok'])
         self.save(text, name='Another set')
         self.assertEqual(len(self.s.list()['selections']), 2)
-        self.dataset.close(); self.dataset = Dataset(self.tmp.name)
+        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.w, self.s = self.dataset.workbench, self.dataset.selections
         self.assertEqual(self.s.load(saved['id'])['selection'], saved)
         self.assertEqual({rid: self.w.get(rid) for rid in before}, before)
@@ -178,7 +179,7 @@ class SavedSelectionTests(unittest.TestCase):
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
         def request(path='', body=None):
-            req = urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/workbench/selections'+path,
+            req = self.actor.request(f'http://127.0.0.1:{server.server_port}/api/workbench/selections'+path,
                 data=None if body is None else json.dumps(body).encode(), headers={'Content-Type': 'application/json'})
             with urllib.request.urlopen(req) as response: return response.status, json.load(response)
         status, saved = request(body={'name': 'HTTP set', 'items': [self.ref(row)]})

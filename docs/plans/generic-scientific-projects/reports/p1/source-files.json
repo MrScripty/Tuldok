@@ -1,0 +1,15 @@
+{
+  "projects.py": "0206fc4b39c5d0b754f40504496f30a3c876bc4dc9dc200b41dcea55445d0f1b",
+  "app.py": "51a484d33ff2d6d197442b18e0472d9eb83823e5d645a0b34ff486b62cfb000e",
+  "metadata.py": "074aff9bc4db7917d0764faf86c7794b0e7781d0522cbf502c25860212ac8985",
+  "upgrade_metadata.py": "62250ff2ce17f9a4e180f2795e78ac80a5b31d240c793cd0cb47dbf8adf90c63",
+  "static/workspace-projects.js": "29cd6447c2d67467c3139c5994ae117edb7099df0bd2b1eeeae33d607531152c",
+  "static/workspaces.js": "1ff5b05332792fe396f947653f4eb024ad1aef0cb4eb9892b77b22980d6fa30a",
+  "static/workspaces.html": "43a62a80c4031b959210611692004ba94f1e5393b0f2f21df1bd77555e51b93b",
+  "static/workspaces.css": "a4912a5702edb54e7a7f7cb8ca0c9f6d587974c6e2b6167466076d75de9b32b3",
+  "tests/test_projects.py": "5e8684683d43c75fc693d1ccfc6dc5d9ae94302d5a74c12d26dec9ca0f9c9264",
+  "tests/test_workspace_metadata.py": "6935818e9d2c9d35f675559997eb51e2c00862b034a99d3d85b032e0929a30ab",
+  "tests/test_spatial_storage.py": "5f06bc189f9b49ea470b46334978b19d464f5f9aba588505bde8302de62d58a7",
+  "tests/qualify_spatial_retained_runs.py": "3df98866035b5d02e51d048bdc4a80a31b4418ee32be74e7e806a9b19c75b2ab",
+  "tests/browser_workspace_project.cjs": "7e1b04e157d035e36491f1fb785a4a82d9c4a249c58260f10d186fbe8c800de0"
+}

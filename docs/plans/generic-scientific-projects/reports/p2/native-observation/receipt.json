@@ -1,0 +1,254 @@
+{
+  "scope": "New real native two-frame observation; not historical reproduction, training, model inference, or benchmark",
+  "command": [
+    "/workspace/scratch/tuldok-science-probe/target/release/rheon-trajectory-probe",
+    "32",
+    "jacobi",
+    "100"
+  ],
+  "stdin_hex": "020200",
+  "returncode": 0,
+  "observation_elapsed_seconds": 0.5242058389994781,
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "source": {
+    "lab": {
+      "commit": "e8a90bfef6b2955c502008ccc62443e29dd9f2ec",
+      "tree": "deb79c7c491768a22427bb77198b3b670ddc8be1",
+      "files": {
+        "Cargo.lock": "7c3eacd020b33741800ad2a4152f5207d895bb856625181668399517f8ab6bcd",
+        "Cargo.toml": "ce06c774c339dd573208a276e87acafe9c07e176b65a85598981b769fd5cd0e4",
+        "build.rs": "24df3d38bc37e1f0198037a6ceed7641effc9e4541cd1fd2f369c2f774747ba8",
+        "probes/trajectory-parallel/Cargo.lock": "6e75b61a8b16dce290081b47c9d0cdb9d21a96c4d53b0385898bc05001307e98",
+        "probes/trajectory-parallel/Cargo.toml": "e809dc69ddea7426c6d5e74dd328a535bd6fa3f5eea628077d09d52603e3ead8",
+        "probes/trajectory/Cargo.lock": "11a86f9b853ec70be01d6c617d45c2a55145453636f9f04cdc5783b24998cd86",
+        "probes/trajectory/Cargo.toml": "8079e3ff1d2744bd2d78a1d94340941aad054cf95834d49878e3f08f177d5812",
+        "probes/trajectory/src/main.rs": "d44949066d7f5cc2759b6ed7947f35b612c0f1c69097a313d7033c40aaddd02b",
+        "probes/warmstart/Cargo.lock": "a9a1e8c88b3b66aa272c972820e9a57a020708205055a1f202961cedd2f8174e",
+        "probes/warmstart/Cargo.toml": "3dae59a9ac494053e487a2a85e1e3e28af01e58b6c2303ec26904329c1ca0a4d",
+        "probes/warmstart/build.rs": "5529ac79585ede92728f1b66ff7e009a5b2efee2b70232f4bb16c8966ca58a09",
+        "probes/warmstart/src/main.rs": "01830f368bab6886f7f5adcd2f17e2d774cf6552432564c957db1a43dd5cbe14",
+        "rust-toolchain.toml": "09ff66fa19e0cb8bbad00b6032e28f1cf77b0a37a73013648177b35297f98800",
+        "src/dataset.rs": "2696d1b7e9b186b5ee6cf6289687ccc5b041d5d38fcd31ff17771df736f025e4",
+        "src/diagnostics.rs": "24cec62942f4a829c5f7cb8659d6b9b8b9ccae56568d0fecbbb3732db5e219cc",
+        "src/experiment.rs": "63b961029bdf5688f99c5dd2e663b3107772e2d1d877512113ca63b060a0dc94",
+        "src/lib.rs": "4b21fdef73414c00b64104ef376a5d484bdec074730c066c8937bb3c0b8093bf",
+        "src/main.rs": "65c3f80ad1898e9550cf7ec12d371d25fa6c19903e6ffb089667a18843f59df6",
+        "tests/contracts.rs": "ba0ce81a5b763110c41f36c01f3280a08a73850cab8ae0cff8f1820776a54816"
+      }
+    },
+    "Rheon": {
+      "commit": "2209012bc5f902693d0f695ec1c2d854126af317",
+      "tree": "e30b7135eabad4827ee6e21c75715af0f5408d78",
+      "files": {
+        "Cargo.lock": "b6da773967a1aea1db3fe0a26e3e7e990a68f701777a9f261fdb4cf883ca6d7a",
+        "Cargo.toml": "06b3d18e53cabd2c927ec9a64382db4af618bd33c7a872065f0671577dfa1d62",
+        "evidence/coupled-terminal-main/baseline-probe-source.rs": "8c47def3bd74d2c12f3035f046fb25a9e3ea01884e54f6de956fe8e768c3356b",
+        "evidence/extruded-third-velocity/native-trials/first-export-source.rs": "7b493980de835d69f1c367137d14f37636564f90f9fdb80df1a02ad403bff08b",
+        "evidence/hit-reconstruction/exact-red-witness.rs": "8ce5176f109fdfa7eb12eb4d4fafcc77eb77b32d71240bb1bb0ad9a8fb9fa878",
+        "evidence/pressure-divergence-restart/probe-pr3.rs": "0f7781786a40fcece2b7b01af4e5ad386d9e8e457870e923533d33c5b9d4c1d0",
+        "evidence/pressure-divergence-restart/probe.rs": "5be8fe73716fed669cb09e46339f0aa3c0f0b188e206d1551adbcf1a66c267e4",
+        "evidence/translated-viscous-flow/trials/baseline-source/examples__translated_viscous.rs": "cd21ba55572510da15203f2c0b0cfc268a3289248759222b967f20ad51b82c3c",
+        "evidence/translated-viscous-flow/trials/baseline-source/src__lib.rs": "8f194e2204315c81d907f0ae454b2bd91358ea950f9bd4685ae66225b6222134",
+        "evidence/translated-viscous-flow/trials/baseline-source/src__translated_viscous.rs": "4702f4e42ab31c3122fa7b1fd332370a43d33d4fd6fd98ec3d52abb97e28fed7",
+        "evidence/translated-viscous-flow/trials/baseline-source/tests__translated_viscous_contract.rs": "c122407674f191512ba27668d2af5c9e35a0cceb1ece911a3efdfe0c30bcc06d",
+        "examples/aligned_strain.rs": "11910f4536bbb0057bd7462864f4d2af07d37dcd02103f41d1b93674dcca4547",
+        "examples/box_flux.rs": "0f4f642e746644eaaa7fa3742bd3f6e89ef6e8e952a9e3c1bf0830824eada212",
+        "examples/box_flux_step.rs": "8aa8c3e1168671605a75e96b7cdb17ed01abde9a6cf57300a8664a2fd6698d0e",
+        "examples/column_interface.rs": "ad55a5c74a7a857c79b06b4ac44025cce1c11782533499bfca3028a6b1b2af2e",
+        "examples/column_mac.rs": "b9e6d8e4e3d34fe12b04af40ab5dd9f98fe4ffe16aaad669cf00ab74dd6a81cf",
+        "examples/column_momentum.rs": "803835cd8c22e58e9087d635cb07e9ac02aaebedcfaff70405ded71e866046f8",
+        "examples/column_no_slip.rs": "88316856dd6d08453807e67b36035ab848c556435cb55d61222b7bb73abd1ac8",
+        "examples/column_poiseuille.rs": "d44c8a14e2418c4b04ae9e030117fc08389ab8c701df62313941c816573c26ec",
+        "examples/column_shear.rs": "2fc9fc6797580365b4c86be0c2de5cb63d22ea062165f85e4a1c1322b121967c",
+        "examples/column_wall_shear.rs": "49c22a359ac4d512e2b564704e062483173a5dcc31af7d5a2bc409b2da18d72d",
+        "examples/coupled_discrete.rs": "01f09d383328da2af3a094d819fcfff75272ca6c812d8bd66516fbd855caa3b0",
+        "examples/coupled_discrete_identity.rs": "17d07a49f71cdb198706d7569bb222fbcfdf62d25342b9c07c35fe6edc80e7ed",
+        "examples/coupled_layout_probe.rs": "d33838f8f533c9cdb2bb6e9fb6938fcfcac0b24c948da77f521b26f632cf02da",
+        "examples/dense3d_sequence.rs": "47a4adc4446a8e084c1fd580f3b08c36a3552d573336f9e7d7b5689c07b50d94",
+        "examples/extruded_third.rs": "bac7303bda410e3856b6fcd7a9511ab5ebb7ebc8355b72978b66fa8f79cd3ebc",
+        "examples/fitted_height.rs": "563fd60664a956e2e7049765b70c7752c04c4191d4788e8917042128efce899a",
+        "examples/fitted_pressure_path.rs": "44144d68df4ac6ccbfcd1432f07216a3cbd45f36e77e2f949dce99e4bcc6fd2a",
+        "examples/fixed_bottom_ale.rs": "8faec9c41e38e793fad09512632891415959b228d01e0cd8dceb46c84c649089",
+        "examples/forced_smoke.rs": "945462fcc489b492e6df08bf82f396b4f9b6fce4ee96efbc69969b2309c0bcf9",
+        "examples/free_surface.rs": "24f5d252fe6fb2350c94a773c92482a65a5ebd1f6f8672d4e67fd85b770cded8",
+        "examples/liquid_step.rs": "ea38303027b9c88e5ba8d5f3d7e78f1de7032ce7349795fde6eade97c0c1d777",
+        "examples/liquid_volume.rs": "5875c7ee5f2fc803a26779e6a824c0844c4ddceefec18648a08edea0fde2168e",
+        "examples/material_bounce_lab.rs": "8ef3f4dc9db690dea5021ede9ba35c98a349cf2845b7b47f9beca1f83d9ed984",
+        "examples/obstacle_flow.rs": "c153dc8e97f5bb6c7e662a63ee6c76a255356b3cda7b13ea3847d80fbbbb0254",
+        "examples/scheduling_lab.rs": "170db497caa9d8a6101c4966c5b59ebff9f152116a016fdda2b877739106ff6f",
+        "examples/static_obstacle.rs": "d6a6b832d9016335310211df215f19621ea01fd6aaded21bf02583d1c0187a66",
+        "examples/surface_queries.rs": "863cf617e25af715d8a1dc873a51067ec43b7d191d5cd94f2717c5712eef2be7",
+        "examples/tracer_barrier.rs": "48501413c3f16d2ffe3c38e2340e5b4d30f3a22454aea1af486f7462bd3cc811",
+        "examples/translated_viscous.rs": "599188c4f022da4690ac42fa1ffc1f216bb1775dad5f252daa7c42e1ceece62f",
+        "examples/translating_surface.rs": "b02d9021321929f4f70bc0fe8566a77a0c27680c45bdc26d969be560105b3462",
+        "examples/viscosity.rs": "2e947a838c36a30a51e0640216c8cf956e4cfcd7d70978552a22161d5da6752d",
+        "rust-toolchain.toml": "09ff66fa19e0cb8bbad00b6032e28f1cf77b0a37a73013648177b35297f98800",
+        "src/advection.rs": "0163a872c314b2b3bb7f732348aafdbfa7b162dceea74807b7e7e3eb60ab0849",
+        "src/aligned_strain.rs": "1541bc444d1b098c5a59a221b7068538b013362db46ed66e37eb4931ad425e4f",
+        "src/bin/desktop/history.rs": "206b3917fa56920a168563c4ad942235b0b29c67f703f9783775a8bdc9e5784d",
+        "src/bin/desktop/settings.rs": "d66735427fc8b6be57d93812d30fb4b8c357419acd70b7b0564aa48216bb2660",
+        "src/bin/desktop/viewport.rs": "a96d99bbe8b61c7c8d108ba3eeaeea849be64d3c46eebb6fb5811de1a19e80c8",
+        "src/bin/rheon-desktop.rs": "d8666343a57194be097110573b1663767c68b3a1ab8bd0d67b4623c312c23ca4",
+        "src/bin/rheon.rs": "93f662452c3d9208bc130d17a4266f65981228f621566dade274a90b899a5547",
+        "src/box_flux.rs": "554b3cdc916e7527bbfdbd6a54b8cf7e27549c3c661015b259c8b2d18784bbb0",
+        "src/box_flux_step.rs": "e2ef3afcd8adffe0f79c0030eb56e5bb55943775e474a1dab2a7fe78ac38441b",
+        "src/collision.rs": "101c91ced5efc250f3a12bc47d5bbf04b812096caf8580c0229362e959839115",
+        "src/column_mac.rs": "40b86c5bab2d458c8b31b1f8def21c5f715acecb37813fb57417f7fe363aca84",
+        "src/column_momentum.rs": "373f63ac001fe8e9f8017a912033b3cc431169c6e4c86c2e6b514ee945f1f9b0",
+        "src/column_shear.rs": "bd2a20a11f927c2a886b524a4a45791100f9c3e8119b7648153b7775cb6a3299",
+        "src/column_surface.rs": "cd58d4d7d1c3d94092374ebd65fd191e3cf58f7ae68caeaf30ca15d36df666e0",
+        "src/coupled_discrete.rs": "b296021b8dd2f763b6eeab1e49e78bf06ec2ec801ac9595441e9e3920235d8e7",
+        "src/dense3d_sequence.rs": "90e9249fd82cc829a84cea9162d680971e660bfc6c32619355b353d17b25a431",
+        "src/emitter.rs": "cd30d73dc6532c1af7017816b364af532c8c00ca0b1f40fbef90324d135451e2",
+        "src/export.rs": "afe2b79d11f1b8c0ccd16dcaae51a22c8d35ba2e7a23c362729fe907b208f0d3",
+        "src/fitted_height.rs": "0181db7ffbad932b7e3492ce1a8e260736389e4ded3472c81fe2697861f6777a",
+        "src/fixed_bottom_ale.rs": "3cc724d376d115fccd8b6c658d7f26b6436f4d13d105a5ae8416fd9c04b17a47",
+        "src/forces.rs": "c5585940330096890016ff68f25645aa12cdaec2b796a8b234c138e88dd892bb",
+        "src/free_surface.rs": "f43fd9a71da6aac985dfcfb6cc471318227c1727d6e0dad8e2a5feb5b3728a8e",
+        "src/geometry.rs": "882ff1af358417a18c00ed8058a9138362d019c6bcc97c0687959d819cc76af2",
+        "src/lib.rs": "0cf223a96606280e56e27c7a5b7f82250edbd663f50adb4e2b42dfd737d8a085",
+        "src/liquid_step.rs": "00f190f64f58ee40eddb2a85f9b8e01e74a7137ba6b0842b5f2de9abc458183c",
+        "src/liquid_volume.rs": "24623038f62261ce6a17b034e9b6d82c5f0aba02dd0df7aad174c885ed2a8c96",
+        "src/material.rs": "49874ff972f16a972d706236b34e62f83e994c57e39b642c6d94a1a6f4b7fb66",
+        "src/motion.rs": "8ab9f26199f36d76cb2f5e4cb58d40905205f0d6fc90988549f7e389c489a3ea",
+        "src/observation.rs": "2c6d4cd75cdb0f2d560d0f79df4e53914e10f340de0740b939311d8cc35d5dee",
+        "src/obstacle_pressure.rs": "b45262632483ce08773924b407eeffbe99bd62663094ce6fd71b24d132026b07",
+        "src/obstacle_shear.rs": "745da07d5e949276a2e0cb7ac4bdde4aedf557bf6189d5a51581d8ce79b1dc1f",
+        "src/operator.rs": "cd98684d5204908e5344b2628a8f93ea2a55a90c6678e03a71f2d75ab1f2be38",
+        "src/parallel.rs": "ee5420673a59ae4fb247b3542878e74902f7a87056744d4303fb400be074677e",
+        "src/particle_fluid.rs": "014d194ce9e622ce56620c8b06558051f678785e7ae6682c62ac5debf49f4480",
+        "src/pressure.rs": "39ddb79dd3de196e83545679e556c0cd8ce9afae9db9282161f54b8f22f713a5",
+        "src/sampling.rs": "6bf158f71f795078b5a88a5662ec2169693508e555f0f98d539657873aaabbcf",
+        "src/scheduling.rs": "d6f4662c499415a16f91096fec7e03f73668bd6b0ae1668b014d9d00bee6403b",
+        "src/sgs.rs": "9208311eb376febbfcdb0664bbcc7614771ada7abed841620485bfe4b2a2a35b",
+        "src/simulation.rs": "cd4e28c228e386d2d49492cd1ad0a6a90bdc70322e4055329efb5d63eae0a7fc",
+        "src/static_obstacle.rs": "df50f3761fd7258ca42026ba852d2c326a1a5efa42daa4021967b799493b1080",
+        "src/tracer_barrier.rs": "1007f35400b5e1b3206653b9f9ccaafbc169617ad896aec54f94fc792eba2fae",
+        "src/translated_viscous.rs": "6fa240053738411bb93b3e365def39fdc8a93597cd0c0523dcd1af39cbc68163",
+        "src/viscosity.rs": "3cb7643d321fa94957fafdc101abf0ee9ef273f99c9a512938124e72f32178aa",
+        "tests/advection_contract.rs": "2e6c78e51d457bfe0cda4972dbfec5677e9e3a5e4f42a8647aec8aa1f4b73f2d",
+        "tests/aligned_strain_contract.rs": "d2270f86bd04c36501b59f01772656bda264d2c70b8613429701a268a305da16",
+        "tests/box_flux_contract.rs": "d3a23e9ae3973044183d22c5dbc9b2a00c2d0d731cae1777426337310949133d",
+        "tests/box_flux_step_contract.rs": "4adc5ddf0e878cffc3e70b47bcb0f98cad07aef4489a41f9fa7d1695304bd94f",
+        "tests/cli_contract.rs": "5eaaa71ff975102bea4585c7b79768397b5a5c9d87953282a880dd7eb2fe2b8a",
+        "tests/collision_contract.rs": "8625b6a0d01271b90f17fd22b0ea4f5d0869827fad6537720fb631ce565367ac",
+        "tests/column_mac_contract.rs": "3fc23b6ff935696bb96082e824cc1a5c2cfe32821559074f6ec00b3b8000afdf",
+        "tests/column_momentum_contract.rs": "4ea859692dc437e98bdce6fc3fdfb55a8821ffc52699c8a7596ddc7d75e8aec7",
+        "tests/column_shear_contract.rs": "466dab4d7dd6cfa464de3428da8b0b9aadfb3a2699810ca302e9bec90db62f12",
+        "tests/column_surface_contract.rs": "515f39b3bf06fe23c1115201cefa1d4f1d69660ce4298daf3d4b7e16f5844759",
+        "tests/coupled_discrete_contract.rs": "3a730e8dbeaf8fd81a19eee5717b4719f62af83e42c395691535a1ed6f1a0116",
+        "tests/dense3d_controls_contract.rs": "678058ce656cde9d0b8c5f3ac9de4da5a81ca3f76d5003c1954ff3929d964625",
+        "tests/dense3d_sequence_contract.rs": "016ba99a4a234ced02a1613d5cc4af6072f3e070f185bf8ad25ca73202b128a7",
+        "tests/emitter_contract.rs": "9288b53744ff31fb4e338be13d8b4e9e68ea58aec2e78a15d5aa8850da0a9d4d",
+        "tests/export_contract.rs": "299ace3dc49a9990b52cd2ee55c974769c3acda5fc9ce43331fdb0cbfd34c070",
+        "tests/extruded_third_contract.rs": "19968c75c9dd95c1c19cc2a4f6a605d4a047bc20290562fe693fc7e8b628fbe2",
+        "tests/fitted_height_contract.rs": "391e6d3c992442a5a3a2e38f4d1304a20602047808831bd873567b1d8224a61f",
+        "tests/fixed_bottom_ale_contract.rs": "006968122943cd48290f302cdc33115d7c40058d992f8f38df1d5fbf28f57289",
+        "tests/forces_contract.rs": "b8a5da48feab2eef82cc1600945cc30ff15082c0b447d8b5eb0c635821cf27eb",
+        "tests/free_surface_contract.rs": "8f9584c26f7a816bb53f15bb70ddec168c0949adf9ad7847ad2edcfb0af40e9d",
+        "tests/geometry_contract.rs": "5b44f1c75958abf3073e6c168ebc44a3951f72052db0c31b1a2b4a49a7d16cf8",
+        "tests/implementation_contract.rs": "e8b3b88536bd5d38dfda7d1454e916277e5314bbb9410bda81630faffe76c621",
+        "tests/liquid_scale_division_contract.rs": "dede02f6a5fc9eff67d87814b1845bfc6295c7a22098121217fee70822a4c3fb",
+        "tests/liquid_step_contract.rs": "e1aa67f673de131f97a1be651221db3f74a8beeed105076532ceeac2b92b5b12",
+        "tests/liquid_volume_contract.rs": "9eac2c3feedf24efd3e34f1651ead5ea14f036dbfb238af829650d5b77006ec2",
+        "tests/material_contract.rs": "c5a1e89205b6cb65df69a1c10fa905f85d5efa6bc11c591211d509cb40161257",
+        "tests/observation_contract.rs": "54a89d2df244839dec1931cde92117cf1bb832ffb0b6eb2ca32ca9ec28a8f7ed",
+        "tests/obstacle_flow_contract.rs": "7e5318ca45b6932818accfc748cc70ae6cf1719f6047c2d2f9343eb8cedcd020",
+        "tests/operator_contract.rs": "b0ea207c02df69aed1f5f3eb6abda8fdeb245b271c325b383c3748d945c5095e",
+        "tests/parallel_contract.rs": "b91c7c87698c1a7b1d3b92c7b252781d96616df37c8a6ef391d4229a251668f2",
+        "tests/pressure_contract.rs": "f343f7f23965d963df8d734d624c63b12acaf165936ba2635e1b71816ee16c91",
+        "tests/sampling_contract.rs": "3e99ff52088aa37d4043453a57c82bbe6de0da84e990796df76a3453f1ae004d",
+        "tests/simulation_contract.rs": "f81fb0696307aa07abba0d8b44316430aeab19317c57d38db3222cdc9e33ddc6",
+        "tests/static_obstacle_contract.rs": "fcc7546886b865ada1641dd7ee3549534f2273d908c19047d886c49a048157de",
+        "tests/tracer_barrier_contract.rs": "433edf41b549171f3a3c412e6d9233345f4ca8f45e6f5ebe5468638d3db9aca8",
+        "tests/translated_viscous_contract.rs": "d6fda116af1ae38a3e9216b97136562c144bfe1a5269734d002c3117c9b65e79",
+        "tests/translation_contract.rs": "e1fd504cb399b313bbb1df752f79e72cb51556c5af6d85dbb91cb5c690fb5c8d",
+        "tests/viscosity_contract.rs": "b716ef20283784d9a61bc95702c97c30c8e7d00c80f95530c46d27e667586c9d"
+      }
+    }
+  },
+  "binary_sha256": "4e4e49f0e3febf5b11556c2a1daac3dc684e9fb9a9c3c742329d804a4913ceff",
+  "rustc": "rustc 1.92.0 (ded5c06cf 2025-12-08)\nbinary: rustc\ncommit-hash: ded5c06cf21d2b93bffd5d884aa6e96934ee4234\ncommit-date: 2025-12-08\nhost: x86_64-unknown-linux-gnu\nrelease: 1.92.0\nLLVM version: 21.1.3",
+  "cargo": "cargo 1.92.0 (344c4567c 2025-10-21)",
+  "build": {
+    "command": "cargo build --release --locked --manifest-path probes/trajectory/Cargo.toml",
+    "cwd": "/workspace/scratch/tuldok-science-probe/lab",
+    "cargo_home": "/workspace/scratch/tuldok-science-probe/cargo-home",
+    "target_dir": "/workspace/scratch/tuldok-science-probe/target",
+    "log_sha256": "c82e64e0cbc3f3781597698bbc4a79caa879b481750c80b81bc3876509df5784"
+  },
+  "toolchain_source": "https://static.rust-lang.org/dist/rust-1.92.0-x86_64-unknown-linux-gnu.tar.xz",
+  "toolchain_archive_sha256": "d2ccef59dd9f7439f2c694948069f789a044dc1addcc0803613232af8f88ee0c  rust-1.92.0-x86_64-unknown-linux-gnu.tar.xz",
+  "helper_sha256": "7930ee493125543bceadbba3973306eaa0ae3801fcf03f86bb79e0f62ee78102",
+  "artifacts": {
+    "decoded.json": {
+      "bytes": 9582,
+      "sha256": "bd21b0def4dc77734b9e19230b8836b41a7b1650712bab9df6e76dfc1a068698"
+    },
+    "frame-01-pressure.bin": {
+      "bytes": 262144,
+      "sha256": "84cdbdbe5fe074e07024a1110c5c6e529940e87c0ebfb1a2dfe12e4fcfd1398b"
+    },
+    "frame-01-rhs.bin": {
+      "bytes": 262144,
+      "sha256": "3cc118b9c270d56a77ece2d19735fe1774860e88b850db419a6211d12cb234ed"
+    },
+    "frame-01-tracer.bin": {
+      "bytes": 131072,
+      "sha256": "0b0135ff3602dbfcdae83540f64327c4e80711775adca8ebd080254101442bb6"
+    },
+    "frame-01-velocity_x.bin": {
+      "bytes": 135168,
+      "sha256": "d12eed953cdc887e7934ea22e2978e8b36008d2a4d25e7f754e290fa47918853"
+    },
+    "frame-01-velocity_y.bin": {
+      "bytes": 135168,
+      "sha256": "6978a87f5f662c6e85eed79aeac5c5eb1fcb4eca4154421b9bad3286971e7359"
+    },
+    "frame-01-velocity_z.bin": {
+      "bytes": 135168,
+      "sha256": "ba6a73abf6f33871aa172973caca34015c8c77eb2d476a1b09bdf03e5ad5eeb8"
+    },
+    "frame-02-pressure.bin": {
+      "bytes": 262144,
+      "sha256": "6817035021b488ac58f6e9f27e765493235885d450826d3ef5e62df4500fd651"
+    },
+    "frame-02-rhs.bin": {
+      "bytes": 262144,
+      "sha256": "88af5059f23cf8d392b6c77f4a14bb253f15d741aede2fc1a5e9001bf651964b"
+    },
+    "frame-02-tracer.bin": {
+      "bytes": 131072,
+      "sha256": "ac207aaf19329c53f9147f5163fff9047d924d7051cbb05101724e06fa373446"
+    },
+    "frame-02-velocity_x.bin": {
+      "bytes": 135168,
+      "sha256": "c9020171f12ee53c7b11e320242847545edcc96675385441b9288ac12ab63c36"
+    },
+    "frame-02-velocity_y.bin": {
+      "bytes": 135168,
+      "sha256": "5c476c8f91fac7bac551fb0fce85993b642a6497898aba312beb73d88b0605c3"
+    },
+    "frame-02-velocity_z.bin": {
+      "bytes": 135168,
+      "sha256": "f8326ebdf4bcdf94bdeff4ca21f46e265563749c1e06dc5c165e83ff1180ca6c"
+    },
+    "stderr.bin": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdin.bin": {
+      "bytes": 3,
+      "sha256": "138793139d414148c3ea406f4b273bdfb394d17fab3636115815abdf639d433d"
+    },
+    "wire.bin": {
+      "bytes": 2122648,
+      "sha256": "abe671cc217b2a3e6b7f23a7506a8406a35e6ec3358a6d6da3f690c865bfc684"
+    }
+  },
+  "limits": [
+    "No native historical binary identity or benchmark reproduction claimed",
+    "No learned pressure, general physics, split independence, or production adapter qualification",
+    "Field placement and temporal meaning are source-derived; raw slices preserve numerical bytes"
+  ]
+}

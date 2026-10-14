@@ -1,0 +1,20 @@
+{
+  "allowed_action": "After fresh source quiescence/full parity, remove only the exact task-created QA source filesystem tree; retain verified backup and original database/schema. Restore to the named new path and already provisioned separate database.",
+  "authorized_by": "task integration root under persistent completion/restore instruction",
+  "backup": "/tmp/tuldok-p7-scientific-restore-qualification/full-backup",
+  "backup_receipt_sha256": "cea2a452a4c1478ab54ffd3866a85b7111da8b08ecdb9f603c0eb96483a1389c",
+  "baseline_sha256": "9ddac55275f6022e1d6c138822b3f3f27eb8cbf37a3df0eee294a2b3777cbddb",
+  "dataset_id": "d4856fe9eec74aea8b007cca029b3248",
+  "destination": "/workspace/scratch/tuldok-cpu-qualification/restored-catalog-20261013",
+  "excluded": "No other directory, owner worktree, original database/schema, backup, failed custody evidence inside retained backup, or runtime installation deletion.",
+  "failure_policy": "Preserve backup/original DB/marker-bound restore staging; stop and report uncertain state. No blind replacement or DROP SCHEMA.",
+  "format": "tuldok-p7-source-disposition-admission-v1",
+  "recovery_checkpoint_sha256": "5ec61fec2cb3aaf52664570d5320455a4ca5be50877c120f785c63948847d64f",
+  "source": "/workspace/scratch/tuldok-cpu-qualification/qualified-catalog",
+  "source_root_identity": {
+    "device": 27,
+    "inode": 1210551,
+    "mode": 448,
+    "uid": 1000
+  }
+}

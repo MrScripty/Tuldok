@@ -54,7 +54,7 @@ function pointcloudShown(record) {
   const owns=()=>generation===pointcloudGeneration&&current?.id===record.id&&current.content_hash===record.content_hash;
   $('pointcloud-preview-status').textContent='Loading bounded point inspection…';
   (async()=>{try {
-    const response=await fetch('/api/workbench/pointcloud-inspection/'+record.id,{signal:controller.signal});const raw=await response.json();
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/pointcloud-inspection/'+record.id,{signal:controller.signal});const raw=await response.json();
     if(!response.ok)throw Error(raw.error||'Point inspection unavailable.');
     const value=decodePointcloudInspection(raw,record);if(!owns())return;renderPointcloud(value);
     $('pointcloud-preview-status').textContent=`Showing first ${value.sample_count} of ${value.point_count} points in original order. Native XYZ: ${value.units}, ${value.coordinate_system.frame}, ${value.coordinate_system.handedness}-handed, ${value.coordinate_system.up_axis} up. Display rotation only; original values, colors and normals stay unchanged.`;

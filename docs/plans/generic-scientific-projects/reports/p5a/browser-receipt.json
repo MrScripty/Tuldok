@@ -1,0 +1,121 @@
+{
+  "source_commit": "c7c696bda48cc2917253ffbcf4d01f763196eecc",
+  "dirty": true,
+  "qualification": "Fresh frozen-checkpoint CPU correctness/backend comparison through actual approved Run",
+  "previously_exposed_seeds": [
+    900,
+    901,
+    902,
+    903
+  ],
+  "fresh_training_acceptance": false,
+  "gpu_acceptance": false,
+  "full_accuracy_fields_retained": false,
+  "checks": [
+    "Actual approved CPU graph completes all original methods, frames and exposed seeds",
+    "Owner-local QA custody logs retain exact hash-bound CPU bootstrap module and mapping evidence",
+    "Independent cold audit verifies original checkpoint/source bytes, complete reports, medians and strict accuracy thresholds",
+    "Server restart preserves exact completed comparison artifacts and caller-owned project inputs"
+  ],
+  "captures": [
+    {
+      "file": "cpu-pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual frozen-checkpoint CPU comparison; exposed seeds, no retraining/GPU acceptance"
+    },
+    {
+      "file": "cpu-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual frozen-checkpoint CPU comparison; exposed seeds, no retraining/GPU acceptance"
+    },
+    {
+      "file": "cpu-runs-390.jpg",
+      "width": 390,
+      "height": 900,
+      "qualification": "Actual frozen-checkpoint CPU comparison; exposed seeds, no retraining/GPU acceptance"
+    },
+    {
+      "file": "cpu-runs-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "qualification": "Actual frozen-checkpoint CPU comparison; exposed seeds, no retraining/GPU acceptance"
+    }
+  ],
+  "run_id": "0cc3ef6b5f9e460f873c8eda1ba3d525",
+  "material_sha256": "abb1b223cbcb86b55a39f6e02d42b6c2cff64d6409d66cb41f2c596ffb254a52",
+  "runtime_snapshot_sha256": "cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7",
+  "local_qa_evidence": {
+    "directory": "owner-local-custody",
+    "custody_receipt_sha256": "89d1062ee70ea2a47eb1006b271280d0e8e48fb567b6b0c52be4dd68ff649318",
+    "http_download_acceptance": false
+  },
+  "cold": {
+    "qualification": "Independent retained-report arithmetic and exact input/output custody audit of actual CPU comparison",
+    "limitations": [
+      "Previously exposed seeds 900–903; no retraining or GPU acceptance.",
+      "Full velocity/tracer norms were computed by the original producer in memory; this cold audit recomputes report maxima, not absent field arrays.",
+      "Native integrity launch overhead is included; no historical timing reproduction claim."
+    ],
+    "artifact_sha256": {
+      "comparison-freeze.json": "5bda3d3f9aaeeca9636c8e60307845c0fe483bdad66844b6959bb57d4d3f1076",
+      "timing.json": "0ceda1dcd4d1faf29c20930e987b7b7dbd3f9ddd6c6015bf9986408ef9f78b1b",
+      "result.json": "d8cd19061749c53b54bd024a525ac319ebbe2330d8a08bdb62ae1511c2189448",
+      "input-model.pt": "25533a2fbaa5ab0f5fb574dc6307a2b8d6a686deb7db867d0d03338d4d70d5a9",
+      "input-freeze.json": "7132acb88fc8a0725c33f4d1d3534a2732c72a4e260b014538a6cf32c95b0aba",
+      "comparison-receipt.json": "d5ccb93643716e5653753bb92434e26016131d705ca3e0ffe2967e010144216a"
+    },
+    "torch": "2.8.0+cpu",
+    "threads": 8,
+    "repetitions": 1,
+    "timed_trajectories": 12,
+    "timed_frames": 1440,
+    "accuracy_replays": 4,
+    "native_launches": 24,
+    "median_120_frame_wall_ms": {
+      "jacobi": 35357.278365998354,
+      "sgs": 25729.378062998876,
+      "learned": 4699.447435497859
+    },
+    "max_relative_residual": 9.987588478738668e-9,
+    "max_divergence": 0.000001430511474609375,
+    "max_courant": 0.4683016538619995,
+    "accuracy_maxima": {
+      "900:jacobi:velocity": 8.287529608746873e-8,
+      "900:jacobi:tracer": 4.881945563597801e-8,
+      "900:sgs:velocity": 8.554606404046589e-8,
+      "900:sgs:tracer": 5.004190007866501e-8,
+      "901:jacobi:velocity": 8.885706621137449e-8,
+      "901:jacobi:tracer": 5.886900925254406e-8,
+      "901:sgs:velocity": 9.00478467319294e-8,
+      "901:sgs:tracer": 5.908868728450394e-8,
+      "902:jacobi:velocity": 8.43263175826526e-8,
+      "902:jacobi:tracer": 5.219647297987591e-8,
+      "902:sgs:velocity": 8.148838940891793e-8,
+      "902:sgs:tracer": 4.292791785600593e-8,
+      "903:jacobi:velocity": 8.229298707876792e-8,
+      "903:jacobi:tracer": 4.629560023953615e-8,
+      "903:sgs:velocity": 8.495464706555917e-8,
+      "903:sgs:tracer": 4.8583669586920674e-8
+    }
+  },
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "browser": "Chrome/151.0.7922.173"
+}

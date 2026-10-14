@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       output.hidden=false;output.textContent='Inspecting selected model capabilities…';
       try {
         if(get('protocol').value!=='pumas_typed_v1')throw Error('Choose Pumas typed v1 to inspect its selected-model contract.');
-        const response=await fetch('/api/generation/typed-capabilities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/generation/typed-capabilities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         const value=await response.json();
         if(!response.ok)throw Error(value.error||'Capability observation failed.');
         if(!current())return;

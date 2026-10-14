@@ -3,6 +3,7 @@
 TULDOK_TRAINING_PYTHON selects the separately installed runtime. The real epoch
 test is skipped explicitly when absent; the M2 qualification job must set it.
 """
+from auth_helpers import bind_owner
 import hashlib
 import json
 import math
@@ -89,7 +90,7 @@ class FrozenReleaseTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory(prefix='image-training-')
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.dataset = Dataset(self.root / 'data')
+        self.dataset = Dataset(self.root / 'data'); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.records = populate(self.dataset)
         request = dict(format='image_classification_v1', seed=42,

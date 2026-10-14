@@ -2,6 +2,7 @@
 from workbench import encode_retained
 import base64
 import hashlib
+from access import AccessError, authorized
 import json
 import threading
 import time
@@ -107,11 +108,12 @@ def decode(data, labels, typed_request_id=None):
 class TextClassificationProposals:
     def __init__(self, workbench):
         self.workbench = workbench
+        self.access = workbench.dataset.access
         self.db, self.lock = workbench.db, workbench.lock
         self.worker, self.active_id = None, None
         self.stop = threading.Event()
         self.closed = False
-        with self.lock, self.db.transaction():
+        with self.access._reconcile(), self.lock, self.db.transaction():
             self.runtime_owner = self.db.claim_runtime('text_classification_proposals')
             if not self.runtime_owner:
                 return
@@ -121,6 +123,7 @@ class TextClassificationProposals:
                     if pumas.typed(job['config']): job['provider_outcome'] = 'unknown'
                     job.update(status='interrupted', error='Server stopped; inspect this attempt. No automatic inference retry.')
                     self._save(job)
+                    self.access.audit('text_classification.reconcile', job['id'], {'status': job['status']})
 
     def _save(self, job):
         previous = self.db.execute('SELECT data FROM text_classification_proposals WHERE id=%s', (job['id'],)).fetchone()
@@ -136,10 +139,12 @@ class TextClassificationProposals:
             raise WorkbenchError('Classification request not found.', 'unavailable', 404)
         return json.loads(row[0])
 
+    @authorized('inspect', 'text_classification.get')
     def get(self, job_id):
         with self.lock:
             return self._get(job_id)
 
+    @authorized('inspect', 'text_classification.snapshot')
     def snapshot(self):
         with self.lock:
             # Retain escaped Unicode that PostgreSQL JSON processing cannot decode.
@@ -179,6 +184,7 @@ class TextClassificationProposals:
             raise WorkbenchError('Text or target changed. Reload before applying a classification.', 'conflict', 409)
         return record
 
+    @authorized('execute', 'text_classification.start', owner_only=True)
     def start(self, body):
         fields = {'request_id', 'source_id', 'revision', 'source_revision', 'server_url', 'model', 'instruction', 'seed', 'labels'}
         if not isinstance(body, dict) or set(body) not in (fields, fields | {'protocol', 'profile'}):
@@ -228,6 +234,10 @@ class TextClassificationProposals:
                        'verification': 'Exact offered label or abstention shape only; semantic correctness requires human review.',
                        'application': None}
                 job['canonical_request_sha256'] = hashlib.sha256(encode(payload(job)).encode()).hexdigest()
+                job['request_digest'] = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
+                job['admission_id'] = self.access.admit_job('text_classification', job['id'], job['request_digest'],
+                    {'text_classification.finish': [job['id']]})
+                self.access.audit('text_classification.start', job['id'], {'request_digest': job['request_digest']})
                 self._save(job)
             self.stop.clear()
             self.active_id = job['id']
@@ -242,7 +252,21 @@ class TextClassificationProposals:
             return job
 
     def _run(self, job_id):
-        job = self.get(job_id)
+        with self.lock:
+            job = self._get(job_id)
+        request_digest = hashlib.sha256(encode({'config': job['config'], 'source': job['source'], 'payload': payload(job)}).encode()).hexdigest()
+        try:
+            with self.access._job('text_classification', job_id, job.get('admission_id'), request_digest):
+                self._run_admitted(job)
+        except AccessError:
+            with self.access._reconcile(), self.lock, self.db.transaction():
+                job.update(status='interrupted', error='Job admission is missing or differs from the retained request; no inference started.')
+                self._save(job)
+                self.access.audit('text_classification.interrupt', job_id)
+                self.active_id = None
+
+    def _run_admitted(self, job):
+        job_id = job['id']
         try:
             if pumas.typed(job['config']):
                 pumas.prepare_chat(job, 2000)
@@ -272,15 +296,18 @@ class TextClassificationProposals:
                                   source_revision=job['source']['source_revision']), captured=job['source'])
                 job.update(status='abstained' if annotation is None else 'completed', annotation=annotation, reported_model=reported)
                 self._save(job)
+                self.access.audit('text_classification.finish', job_id, {'status': job['status'], 'response_sha256': job.get('response_sha256')})
         except Exception as error:
             with self.lock, self.db.transaction():
                 pumas.failure_evidence(job, error)
                 job.update(status='cancelled' if self.stop.is_set() else 'failed', error=str(error)[:800])
                 self._save(job)
+                self.access.audit('text_classification.finish', job_id, {'status': job['status']})
         finally:
             with self.lock:
                 self.active_id = None
 
+    @authorized('cancel', 'text_classification.cancel', target=lambda body: body.get('job_id') if isinstance(body, dict) else None)
     def cancel(self, body):
         if not isinstance(body, dict) or set(body) != {'job_id'}:
             raise WorkbenchError('Supply only the classification request ID.')
@@ -291,8 +318,10 @@ class TextClassificationProposals:
             self.stop.set()
             job.update(status='stopping', error='Cancellation requested; late output cannot be applied.')
             self._save(job)
+            self.access.audit('text_classification.cancel', job['id'])
             return {'cancelled': True, 'job': job}
 
+    @authorized('edit', 'text_classification.decide')
     def decide(self, job_id, body):
         if (not isinstance(body, dict) or set(body) not in ({'revision', 'decision'}, {'revision', 'decision', 'labels'})
                 or body['decision'] not in ('reject', 'apply_draft')):
@@ -332,6 +361,7 @@ class TextClassificationProposals:
             else:
                 job['status'] = 'rejected'
             self._save(job)
+            self.access.audit('text_classification.decide', job['id'], {'revision': job['revision'], 'decision': body['decision']})
             return {'job': job, 'record': record, 'changed': True}
 
     def close(self):

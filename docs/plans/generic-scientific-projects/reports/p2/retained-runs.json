@@ -1,0 +1,36 @@
+{
+  "legacy_commit": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+  "legacy_schema": 3,
+  "execution": "real mesh integrity, no training",
+  "upgrade": {
+    "schema_version": 6,
+    "state": "completed",
+    "run_id": "7dcedff0b8544ab182ddc5e91485b73e",
+    "artifacts": {
+      "validation-report.json": "2e7430127fc9c6e39171aad12ff31d3a67784de5113f6c12a0f3df70ddd37cc7",
+      "artifact-manifest.json": "d03d5378f7a98d4fdcff993e7632ce7d861fc735fba18428daff0c67ca5da6e0",
+      "release.zip": "e555331d4cbfa8fce8ab0f1113f852c8e9071ce291cce99a60783ffe1327d3c0"
+    }
+  },
+  "current_schema_restore": {
+    "schema_version": 6,
+    "state": "completed",
+    "run_id": "7dcedff0b8544ab182ddc5e91485b73e",
+    "artifacts": {
+      "validation-report.json": "2e7430127fc9c6e39171aad12ff31d3a67784de5113f6c12a0f3df70ddd37cc7",
+      "artifact-manifest.json": "d03d5378f7a98d4fdcff993e7632ce7d861fc735fba18428daff0c67ca5da6e0",
+      "release.zip": "e555331d4cbfa8fce8ab0f1113f852c8e9071ce291cce99a60783ffe1327d3c0"
+    }
+  },
+  "schema3_restore_then_upgrade": {
+    "schema_version": 6,
+    "state": "completed",
+    "run_id": "7dcedff0b8544ab182ddc5e91485b73e",
+    "artifacts": {
+      "validation-report.json": "2e7430127fc9c6e39171aad12ff31d3a67784de5113f6c12a0f3df70ddd37cc7",
+      "artifact-manifest.json": "d03d5378f7a98d4fdcff993e7632ce7d861fc735fba18428daff0c67ca5da6e0",
+      "release.zip": "e555331d4cbfa8fce8ab0f1113f852c8e9071ce291cce99a60783ffe1327d3c0"
+    }
+  },
+  "original_backups_unchanged": true
+}

@@ -1,4 +1,5 @@
 """Rheon whole-sequence facade over shared immutable asset publication."""
+from access import authorized
 from immutable_assets import ImmutableAssets, MAX_SELECTED_ASSET_BYTES, migrate_records
 
 MAX_SELECTED_SEQUENCE_BYTES = MAX_SELECTED_ASSET_BYTES
@@ -10,6 +11,7 @@ class SequenceAssets(ImmutableAssets):
         super().__init__(workbench, kind='sequence', task='sequence_transport',
                          maximum=MAX_BUNDLE_BYTES, default_name='Rheon transport sequence')
 
+    @authorized('edit', 'sequence_assets.admit')
     def admit(self, prepared, body, *, acquisition=None):
         metadata = prepared['metadata']
         origin = {'method': 'simulation_import', 'adapter': metadata['adapter'],

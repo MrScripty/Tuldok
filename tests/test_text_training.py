@@ -1,4 +1,5 @@
 """Real text export/reader/trainer and durable graph/run custody contracts."""
+from auth_helpers import bind_owner
 import copy
 import base64
 import hashlib
@@ -24,7 +25,7 @@ class TextCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='workspace-text-contract-')
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.rows = []
         for index in range(18):
@@ -285,7 +286,7 @@ class TextExecutionTests(TextCase):
         self.dataset.workbench.save(source['id'], dict(revision=source['revision'], source_revision=source['source_revision'],
             task=source['task'], annotation={'label': 'corrected draft'}, groups=source['groups'], review='draft'))
         self.dataset.close()
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         restored = self.dataset.runs.get(run['id'])
         self.assertEqual(restored['state'], 'completed')
         self.assertEqual(len(self.dataset.runs.list()), 1)

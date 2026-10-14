@@ -53,7 +53,7 @@ $('native-detection-form').addEventListener('submit',async event=>{
     if(buffer.byteLength!==size)throw Error('Selected archive size changed during reading.');
     const bytes=new Uint8Array(buffer),parts=[];
     for(let offset=0;offset<bytes.length;offset+=16384)parts.push(String.fromCharCode(...bytes.subarray(offset,offset+16384)));
-    const response=await fetch('/api/workbench/native-detection-import/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_name:name,archive:btoa(parts.join(''))})});
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/native-detection-import/prepare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source_name:name,archive:btoa(parts.join(''))})});
     if(epoch!==detectionEpoch)return;
     const prepared=await response.json();
     if(epoch!==detectionEpoch)return;
@@ -75,7 +75,7 @@ $('native-detection-form').addEventListener('submit',async event=>{
       counts.attempted++;const item=detectionRow(row.row_number,'importing','Validating native image and initial boxes…');
       detectionFlight={...proof,counts,item};
       try{
-        const admission=await fetch('/api/workbench/native-detection-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const admission=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/native-detection-import/row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         if(epoch!==detectionEpoch)return;
         const receipt=await admission.json();if(epoch!==detectionEpoch)return;
         if(!admission.ok){
@@ -101,7 +101,7 @@ $('native-detection-check').addEventListener('click',async()=>{
   if(detectionRunning || !detectionPending)return;
   const pending=detectionPending,epoch=++detectionEpoch;detectionRunning=true;detectionControls();
   try{
-    const response=await fetch('/api/workbench/import-result/'+pending.request_id);
+    const response=await (globalThis.TuldokAuth?.fetch || fetch)('/api/workbench/import-result/'+pending.request_id);
     if(epoch!==detectionEpoch)return;
     const receipt=await response.json();if(epoch!==detectionEpoch)return;
     if(!response.ok)throw Error(receipt.error||'Saved result lookup failed.');

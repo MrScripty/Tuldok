@@ -1,3 +1,6 @@
+'use strict';
+const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const fetch = fixtureAuth.fetch;
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
@@ -14,6 +17,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const server=launch('python3',['-u','app.py','--port','0','--data',path.join(temporary,'data')],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',data=>output+=data);server.stderr.on('data',data=>{if(process.env.BULK_BROWSER_DEBUG)process.stderr.write(data);});
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
+  await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
   const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
   launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','inherit'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
   const active=path.join(temporary,'browser','DevToolsActivePort');
@@ -30,6 +34,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');
   console.log('Preference browser targets:',JSON.stringify(tabs.map(tab=>({type:tab.type,url:tab.url}))));
   console.log('Preference browser version:',JSON.stringify(await send('Browser.getVersion')));
+  await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   assert.ok(!(await send('Page.navigate',{url:base+'/workbench'})).errorText);
   await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');

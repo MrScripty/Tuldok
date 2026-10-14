@@ -1,4 +1,5 @@
 """Real frozen exports with independent authored geometry and archive mutations."""
+from auth_helpers import bind_owner
 import copy
 import hashlib
 import io
@@ -40,7 +41,7 @@ class MeshRelease(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.dataset = Dataset(self.temporary.name)
+        self.dataset = Dataset(self.temporary.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(self.dataset.close)
         self.workbench = self.dataset.workbench
 

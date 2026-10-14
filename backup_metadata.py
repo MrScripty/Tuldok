@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import sys
 import tempfile
 import uuid
 
@@ -95,10 +96,34 @@ def separate_paths(*paths):
     return paths
 
 
+def tree_modes(path, expected):
+    """Transient permission evidence; the retained byte receipt stays unchanged."""
+    path = Path(path)
+    result = {}
+    for name, kind in [('', 'directory')] + [(n, e['kind']) for n, e in expected.items()]:
+        relative = Path(name)
+        if name and (relative.is_absolute() or '..' in relative.parts or name != relative.as_posix()):
+            raise StorageTransferError('Unsafe artifact path in receipt.')
+        value = (path / name).lstat()
+        valid = stat.S_ISDIR(value.st_mode) if kind == 'directory' else stat.S_ISREG(value.st_mode)
+        if not valid:
+            raise StorageTransferError('Unsupported permission source: ' + name)
+        result[name] = stat.S_IMODE(value.st_mode)
+    return result
+
+
 def copy_tree(source, target, expected):
-    """Copy missing bytes into an owned staging directory; refuse changed bytes."""
+    """Preserve bytes and permissions, refusing changed or contradictory staging."""
     source, target = Path(source), Path(target)
+    modes = tree_modes(source, expected)
     target.mkdir(parents=True, exist_ok=True)
+    for name, mode in modes.items():
+        directory = target / name
+        if (name == '' or expected[name]['kind'] == 'directory') and directory.exists():
+            actual = directory.lstat().st_mode
+            if (not stat.S_ISDIR(actual) or
+                    (not actual & stat.S_IWUSR and stat.S_IMODE(actual) != mode)):
+                raise StorageTransferError('Read-only staging directory permissions differ: ' + name)
     for name, entry in expected.items():
         relative = Path(name)
         if relative.is_absolute() or '..' in relative.parts or name != relative.as_posix():
@@ -111,24 +136,52 @@ def copy_tree(source, target, expected):
         else:
             target_file.parent.mkdir(parents=True, exist_ok=True)
             if target_file.exists():
-                if not target_file.is_file() or file_hash(target_file) != entry['sha256']:
-                    raise StorageTransferError('Staged artifact differs from backup: ' + name)
+                if (not target_file.is_file() or file_hash(target_file) != entry['sha256']
+                        or stat.S_IMODE(target_file.stat().st_mode) != modes[name]):
+                    raise StorageTransferError('Staged artifact bytes or permissions differ: ' + name)
             else:
-                # A partial copy is never given the final artifact name.
+                # Never widen read-only staging permissions to force a retry.
+                if not target_file.parent.stat().st_mode & stat.S_IWUSR:
+                    raise StorageTransferError('Read-only staging cannot accept missing artifact: ' + name)
                 temporary = target.parent / ('.tuldok-transfer-' + uuid.uuid4().hex)
                 try:
-                    with source_file.open('rb') as reader, temporary.open('xb') as writer:
+                    before = source_file.lstat()
+                    descriptor = os.open(source_file, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                    with os.fdopen(descriptor, 'rb') as reader, temporary.open('xb') as writer:
+                        opened = os.fstat(reader.fileno())
+                        if (not stat.S_ISREG(opened.st_mode) or before != opened
+                                or stat.S_IMODE(opened.st_mode) != modes[name]):
+                            raise StorageTransferError('Source identity or permissions changed: ' + name)
                         shutil.copyfileobj(reader, writer)
                         writer.flush()
+                        os.fchmod(writer.fileno(), modes[name])
                         os.fsync(writer.fileno())
+                        after = os.fstat(reader.fileno())
+                        if (before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns, before.st_mode) != (
+                                after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns, after.st_mode):
+                            raise StorageTransferError('Source changed during copy: ' + name)
+                    current = source_file.lstat()
+                    if (current.st_dev, current.st_ino, current.st_mode, current.st_ctime_ns) != (
+                            before.st_dev, before.st_ino, before.st_mode, before.st_ctime_ns):
+                        raise StorageTransferError('Source changed during copy: ' + name)
                     if temporary.stat().st_size != entry['bytes'] or file_hash(temporary) != entry['sha256']:
                         raise StorageTransferError('Artifact changed during copy: ' + name)
                     os.rename(temporary, target_file)
                 finally:
                     temporary.unlink(missing_ok=True)
-    for directory in sorted((p for p in target.rglob('*') if p.is_dir()), reverse=True):
-        sync_directory(directory)
-    sync_directory(target)
+    if tree_modes(source, expected) != modes:
+        raise StorageTransferError('Source permissions changed during copy.')
+    directories = [name for name, entry in expected.items() if entry['kind'] == 'directory']
+    for name in sorted(directories, key=lambda n: len(Path(n).parts), reverse=True) + ['']:
+        directory = target / name
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fchmod(descriptor, modes[name])
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+    if tree_modes(target, expected) != modes:
+        raise StorageTransferError('Copied permissions differ from source.')
 
 
 def pack(value):
@@ -226,6 +279,41 @@ def populate_catalog(metadata, tables):
         raise StorageTransferError('Restored PostgreSQL row/hash reconciliation failed.')
 
 
+def _remove_partial_contents(descriptor):
+    """Delete only entries reached from the retained invocation-owned handle."""
+    current = os.fstat(descriptor)
+    if not stat.S_ISDIR(current.st_mode) or current.st_uid != os.getuid():
+        raise StorageTransferError('Private partial backup ownership changed.')
+    os.fchmod(descriptor, stat.S_IMODE(current.st_mode) | 0o700)
+    with os.scandir(descriptor) as entries:
+        for entry in entries:
+            before = entry.stat(follow_symlinks=False)
+            if stat.S_ISLNK(before.st_mode) or before.st_uid != os.getuid():
+                raise StorageTransferError('Private partial backup custody changed; retained.')
+            if stat.S_ISDIR(before.st_mode):
+                child = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                                dir_fd=descriptor)
+                try:
+                    opened = os.fstat(child)
+                    if (before.st_dev, before.st_ino, before.st_uid) != (
+                            opened.st_dev, opened.st_ino, os.getuid()):
+                        raise StorageTransferError('Private partial backup identity changed; retained.')
+                    _remove_partial_contents(child)
+                    named = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
+                    if (named.st_dev, named.st_ino) != (opened.st_dev, opened.st_ino):
+                        raise StorageTransferError('Private partial backup identity changed; retained.')
+                    os.rmdir(entry.name, dir_fd=descriptor)
+                finally:
+                    os.close(child)
+            elif stat.S_ISREG(before.st_mode):
+                named = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
+                if (named.st_dev, named.st_ino) != (before.st_dev, before.st_ino):
+                    raise StorageTransferError('Private partial backup identity changed; retained.')
+                os.unlink(entry.name, dir_fd=descriptor)
+            else:
+                raise StorageTransferError('Private partial backup contains special files; retained.')
+
+
 def backup_catalog(path, backup, *, dsn=None, quiesced=False):
     """Create a complete immutable backup after the caller stops every writer."""
     from metadata import Metadata
@@ -236,14 +324,22 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
         raise StorageTransferError('Backup destination already exists; never overwrite a backup.')
     backup.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=backup.name + '.partial-', dir=backup.parent))
-    metadata = Metadata(path, dsn=dsn, create=False, schema_version=None)
+    parent_descriptor = partial_descriptor = None
+    partial_identity = None
+    metadata = None
     try:
+        parent_descriptor = os.open(backup.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        partial_descriptor = os.open(temporary.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                                     dir_fd=parent_descriptor)
+        partial_identity = os.fstat(partial_descriptor)
+        metadata = Metadata(path, dsn=dsn, create=False, schema_version=None)
         with metadata.lock, metadata.transaction():
             before = tree_manifest(path)
             tables = read_catalog(metadata)
             sequences = read_sequences(metadata)
             copy_tree(path, temporary / 'catalog', before)
-            if before != tree_manifest(path) or before != tree_manifest(temporary / 'catalog'):
+            if (before != tree_manifest(path) or before != tree_manifest(temporary / 'catalog')
+                    or tree_modes(path, before) != tree_modes(temporary / 'catalog', before)):
                 raise StorageTransferError('Artifacts changed during backup. Keep all writers stopped.')
             write_json(temporary / 'metadata.json', {'format_version': FORMAT_VERSION,
                        'schema_version': metadata.schema_version, 'dataset_id': metadata.dataset_id, 'tables': tables,
@@ -261,9 +357,39 @@ def backup_catalog(path, backup, *, dsn=None, quiesced=False):
         sync_directory(backup.parent)
         return receipt
     finally:
-        metadata.close()
-        if temporary.exists():
-            shutil.rmtree(temporary)
+        original_error = sys.exc_info()[1]
+        try:
+            if metadata is not None:
+                metadata.close()
+            if partial_identity is None:
+                raise StorageTransferError('Private partial backup identity unavailable; retained.')
+            try:
+                named = os.stat(temporary.name, dir_fd=parent_descriptor, follow_symlinks=False)
+            except FileNotFoundError:
+                named = None
+            if named is not None:
+                if (named.st_dev, named.st_ino, named.st_uid) != (
+                        partial_identity.st_dev, partial_identity.st_ino, os.getuid()):
+                    raise StorageTransferError('Private partial backup identity changed; retained.')
+                _remove_partial_contents(partial_descriptor)
+                named = os.stat(temporary.name, dir_fd=parent_descriptor, follow_symlinks=False)
+                if (named.st_dev, named.st_ino) != (partial_identity.st_dev, partial_identity.st_ino):
+                    raise StorageTransferError('Private partial backup identity changed; retained.')
+                os.rmdir(temporary.name, dir_fd=parent_descriptor)
+        except (OSError, StorageTransferError) as cleanup_error:
+            if original_error is None:
+                raise
+            diagnostic = ('Partial backup cleanup refused; preserve for diagnosis: '
+                          + str(temporary) + ': ' + str(cleanup_error))
+            original_error.backup_cleanup_diagnostic = diagnostic
+            add_note = getattr(original_error, 'add_note', None)
+            if callable(add_note):
+                add_note(diagnostic)
+        finally:
+            if partial_descriptor is not None:
+                os.close(partial_descriptor)
+            if parent_descriptor is not None:
+                os.close(parent_descriptor)
 
 
 def restore_catalog(backup, destination, *, dsn=None):
@@ -294,22 +420,53 @@ def restore_catalog(backup, destination, *, dsn=None):
         metadata = Metadata(destination, dsn=dsn, create=False, dataset_id=identity, schema_version=version)
         try:
             with metadata.lock, metadata.transaction():
-                if summaries(read_catalog(metadata)) != receipt['tables'] or read_sequences(metadata) != receipt['sequences'] or tree_manifest(destination, (marker_name,)) != receipt['files']:
+                if (summaries(read_catalog(metadata)) != receipt['tables'] or read_sequences(metadata) != receipt['sequences'] or tree_manifest(destination, (marker_name,)) != receipt['files']
+                        or tree_modes(destination, receipt['files']) != tree_modes(backup / 'catalog', receipt['files'])):
                     raise StorageTransferError('Restored catalog has changed; refusing to overwrite later writes.')
             return marker
         finally:
             metadata.close()
+    staging_descriptor = None
     if staging.exists():
         if json.loads((staging / marker_name).read_bytes()) != marker:
             raise StorageTransferError('Restore staging directory belongs to another transfer.')
     else:
         staging.mkdir(parents=True, mode=0o700)
         write_json(staging / marker_name, marker)
+        staging_descriptor = os.open(staging, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     # The source manifest names an already existing schema. Create this catalog
     # before copying that manifest, so an existing schema is never reused.
-    existed = (staging / '.tuldok.json').exists()
-    metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity, schema_version=version)
+    metadata = None
     try:
+        existed = (staging / '.tuldok.json').exists()
+        initialization = {}
+        if staging_descriptor is not None:
+            if os.path.lexists(staging / '.tuldok.json'):
+                raise StorageTransferError('New restore catalog manifest already exists.')
+            held = os.fstat(staging_descriptor)
+            named = staging.lstat()
+            if (held.st_dev, held.st_ino, held.st_uid) != (named.st_dev, named.st_ino, os.getuid()):
+                raise StorageTransferError('New restore staging identity changed.')
+            modes = tree_modes(backup / 'catalog', receipt['files'])
+            initialization['initial_file_modes'] = {name: modes[name]
+                                                    for name in ('.tuldok.json', '.metadata-init.lock')}
+        elif not os.path.lexists(staging / '.tuldok.json') and os.path.lexists(staging / '.tuldok-initializing.json'):
+            modes = tree_modes(backup / 'catalog', receipt['files'])
+            lock = staging / '.metadata-init.lock'
+            current = lock.lstat()
+            if (not stat.S_ISREG(current.st_mode) or
+                    stat.S_IMODE(current.st_mode) != modes['.metadata-init.lock'] or
+                    file_hash(lock) != receipt['files']['.metadata-init.lock']['sha256']):
+                raise StorageTransferError('Pending restore lock bytes or permissions differ.')
+            # Metadata validates the pending identity/schema before publishing a
+            # newly created marker. The existing lock receives no permission change.
+            initialization['initial_file_modes'] = {'.tuldok.json': modes['.tuldok.json']}
+        metadata = Metadata(staging, dsn=dsn, create=not existed, dataset_id=identity,
+                            schema_version=version, **initialization)
+        if staging_descriptor is not None:
+            named = staging.lstat()
+            if (held.st_dev, held.st_ino) != (named.st_dev, named.st_ino):
+                raise StorageTransferError('New restore staging identity changed.')
         with metadata.lock, metadata.transaction():
             current = read_catalog(metadata)
             if any(state['count'] for state in current.values()):
@@ -325,7 +482,10 @@ def restore_catalog(backup, destination, *, dsn=None):
         sync_directory(destination.parent)
         return marker
     finally:
-        metadata.close()
+        if metadata is not None:
+            metadata.close()
+        if staging_descriptor is not None:
+            os.close(staging_descriptor)
 
 
 def main():
@@ -341,7 +501,11 @@ def main():
         result = (backup_catalog(args.catalog, args.backup, quiesced=args.quiesced)
                   if args.command == 'backup' else restore_catalog(args.backup, args.destination))
     except (StorageTransferError, OSError, ValueError) as error:
-        parser.exit(1, str(error) + '\n')
+        message = str(error)
+        diagnostic = getattr(error, 'backup_cleanup_diagnostic', None)
+        if diagnostic:
+            message += '\n' + diagnostic
+        parser.exit(1, message + '\n')
     print(json.dumps(result, indent=2))
 
 

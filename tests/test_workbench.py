@@ -1,3 +1,4 @@
+from auth_helpers import bind_owner
 import base64
 import hashlib
 import io
@@ -20,7 +21,7 @@ class WorkbenchTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.dataset = Dataset(self.tmp.name)
+        self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset)
         self.addCleanup(lambda: self.dataset.close())
         self.workbench = self.dataset.workbench
 
@@ -42,7 +43,7 @@ class WorkbenchTests(unittest.TestCase):
         self.assertEqual(saved['revision'], 2)
         with self.assertRaises(WorkbenchError): self.review(row)
         with self.assertRaises(WorkbenchError): self.text('Hello 😀 café\n')
-        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.workbench = self.dataset.workbench
+        self.dataset.close(); self.dataset = Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset); self.workbench = self.dataset.workbench
         self.assertEqual(len(self.workbench.history(row['id'])), 2)
         self.assertEqual(self.workbench.get(row['id'])['annotation'], saved['annotation'])
 
@@ -131,7 +132,7 @@ class WorkbenchTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):self.release(rows)
         sample=self.dataset.sample(rows[0]['id']); self.dataset.delete(sample['id'], {'revision':sample['revision']})
         self.assertEqual(path.read_bytes(),original)
-        self.dataset.close(); self.dataset=Dataset(self.tmp.name); self.workbench=self.dataset.workbench
+        self.dataset.close(); self.dataset=Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset); self.workbench=self.dataset.workbench
         self.assertEqual(self.dataset.releases.locate(release['id']).read_bytes(),original)
         with self.assertRaises(WorkbenchError):self.release([rows[0]])
         (Path(self.tmp.name)/'images'/rows[1]['id']/'image.png').write_bytes(b'tampered')
@@ -159,7 +160,7 @@ class WorkbenchTests(unittest.TestCase):
                 annotation=dict(book_present=False,crop_suitable=False,corners=[])))
         sample=self.dataset.sample(first['id'])
         self.dataset.delete(first['id'],dict(revision=sample['revision']))
-        self.dataset.close();self.dataset=Dataset(self.tmp.name);self.workbench=self.dataset.workbench
+        self.dataset.close();self.dataset=Dataset(self.tmp.name); self.actor = bind_owner(self, self.dataset);self.workbench=self.dataset.workbench
         retained=self.workbench.get(first['id'])
         self.assertFalse(retained['source_available']);self.assertTrue(retained['source_lineage_known'])
         self.assertEqual((retained['book_id'],retained['source_split']),('shared-book','test'))
@@ -183,8 +184,8 @@ class WorkbenchTests(unittest.TestCase):
         self.addCleanup(server.server_close);self.addCleanup(server.shutdown)
         root=f'http://127.0.0.1:{server.server_port}'
         for route in ('/workbench','/workbench.js','/workbench.css'):
-            with urllib.request.urlopen(root+route) as response:self.assertEqual(response.status,200)
+            with urllib.request.urlopen(self.actor.request(root+route)) as response:self.assertEqual(response.status,200)
         release=self.release([self.review(self.text())])
-        with urllib.request.urlopen(root+release['url']) as response:self.assertTrue(response.read().startswith(b'PK'))
-        with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(root+'/api/workbench/releases/invalid.zip')
+        with urllib.request.urlopen(self.actor.request(root+release['url'])) as response:self.assertTrue(response.read().startswith(b'PK'))
+        with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(self.actor.request(root+'/api/workbench/releases/invalid.zip'))
         self.assertEqual(error.exception.code,400)

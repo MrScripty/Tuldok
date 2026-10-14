@@ -1,0 +1,773 @@
+{
+  "scope": "Actual native generation custody and bounded full-grid numerical observations",
+  "numpy": "2.5.4",
+  "bundle_sha256": "54f44df2fe839f283511d125a5000138070243552504df883b349455d63e46c3",
+  "wire_sha256": "d0fc71906b63ed46038380f1ac09f211e48b4a44d4ce86dfd47210f9eaa2c259",
+  "grid": 32,
+  "frames": 8,
+  "seed": 110,
+  "family": {
+    "id": "e8cd5190133bea2d8691b179d4fda7bb56810023cfc815c7ab73408ff45a12b6",
+    "namespace": "rheon-trajectory-probe-scene-v1"
+  },
+  "arrays": [
+    {
+      "frame": 0,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "db68baf3023a41d2d77e72942098d646e5797aa952cd7101c03b7ea01a9cf39d",
+      "stage": "preprojection RHS",
+      "time": "0.016666666666666666"
+    },
+    {
+      "frame": 0,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "ecd032e99fdecae9c9076bec50c374a011f25d32e8e56c734d9701ee388d0e05",
+      "stage": "solved pressure",
+      "time": "0.016666666666666666"
+    },
+    {
+      "frame": 0,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "5b298e34d2aba7f9642384ecfbf7ff478e9e0ad0ef705d55230761eb13ff244c",
+      "stage": "corrected velocity",
+      "time": "0.016666666666666666"
+    },
+    {
+      "frame": 0,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "2ae492e82de715bddee9f401f3d2cfb5d4c2da5c9e94b209978d606823d6842d",
+      "stage": "corrected velocity",
+      "time": "0.016666666666666666"
+    },
+    {
+      "frame": 0,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "4061767e5e1571956b79069d82c46615d667e4740c86dfb05b7c3bdb76a77143",
+      "stage": "corrected velocity",
+      "time": "0.016666666666666666"
+    },
+    {
+      "frame": 0,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "b420b54e771ca6155740541fea64a6fefaa57ee048d9652613c44cab2512a93d",
+      "stage": "advected tracer",
+      "time": "0.016666666666666666"
+    },
+    {
+      "frame": 1,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "fbdaaeb079682eb0a558307a75c14546273a56cd41a6977983aac7add0111dc3",
+      "stage": "preprojection RHS",
+      "time": "0.03333333333333333"
+    },
+    {
+      "frame": 1,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "dc42582a990a13f6a8edf20cd9310ea5215c919fee73ed4a1d4b8e29c4075a6e",
+      "stage": "solved pressure",
+      "time": "0.03333333333333333"
+    },
+    {
+      "frame": 1,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "fc7a94be6e36bf6b83b49e492f62316e1b13ff85bf5484a11104d057f6fcc55e",
+      "stage": "corrected velocity",
+      "time": "0.03333333333333333"
+    },
+    {
+      "frame": 1,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "c2a81623fda09174be10f8d32febea53a53e902f0b9a64e52d0ff9f358676017",
+      "stage": "corrected velocity",
+      "time": "0.03333333333333333"
+    },
+    {
+      "frame": 1,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "3351014ac6262df827021dafac811cb82698ca95c390d18b5b7fe922ba684ec7",
+      "stage": "corrected velocity",
+      "time": "0.03333333333333333"
+    },
+    {
+      "frame": 1,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "2a371a4167bd56be3a7543aa30050566fa528e2d0358c67b47c1e169a76f2e83",
+      "stage": "advected tracer",
+      "time": "0.03333333333333333"
+    },
+    {
+      "frame": 2,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "c4d8674ee5009b68726a21d767f852b73d75cc0aaa693161609a7d861ffae13b",
+      "stage": "preprojection RHS",
+      "time": "0.05"
+    },
+    {
+      "frame": 2,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "ceb945b7b268bc524870d8a35f90c0e5e05fbee9e7eb5a2289e3c118f3139648",
+      "stage": "solved pressure",
+      "time": "0.05"
+    },
+    {
+      "frame": 2,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "d9637b4863000f0808b21b0a96a963ce6b249e1a66f511f48c216e813b470cc9",
+      "stage": "corrected velocity",
+      "time": "0.05"
+    },
+    {
+      "frame": 2,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "803a667fbd3504dfd444a3a4fa507ee60c56dcded9484614c619ff5f603305d6",
+      "stage": "corrected velocity",
+      "time": "0.05"
+    },
+    {
+      "frame": 2,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "46c04c4763a182b6bd3338101c5f3376a037d2df4017dbbacb8a38ebc40a470a",
+      "stage": "corrected velocity",
+      "time": "0.05"
+    },
+    {
+      "frame": 2,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "36409ba495b6d1582ea490d617f9489dbcd99c4f7ad890e6f8f536bb7c770333",
+      "stage": "advected tracer",
+      "time": "0.05"
+    },
+    {
+      "frame": 3,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "3d98f544c333940dfeb0d3a9c3f37e8cdc8ae6f8360688162255a937ab6c3283",
+      "stage": "preprojection RHS",
+      "time": "0.06666666666666667"
+    },
+    {
+      "frame": 3,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "d0dee656dea1d9a60a16b20f74f251b7d5beb21a62b2a9d86b7071b3ec460765",
+      "stage": "solved pressure",
+      "time": "0.06666666666666667"
+    },
+    {
+      "frame": 3,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "82fe77eec79b9c02969d6c3a2ba3911a8fd3c277e10d6cb9af873c159e73cead",
+      "stage": "corrected velocity",
+      "time": "0.06666666666666667"
+    },
+    {
+      "frame": 3,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "592f7bcf7f9c2439265c5fffa53dffe7f7737e986b4566c39b52af29cd8dfb54",
+      "stage": "corrected velocity",
+      "time": "0.06666666666666667"
+    },
+    {
+      "frame": 3,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "113c16c185d80ec9a3b35ccde58b243086fa3d003040391bc0fe6b3f9e0e4bec",
+      "stage": "corrected velocity",
+      "time": "0.06666666666666667"
+    },
+    {
+      "frame": 3,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "e5de2cbb3fcf20e769ee7a3e962634c3798c323d8a66363a25136e9cbf59c4ef",
+      "stage": "advected tracer",
+      "time": "0.06666666666666667"
+    },
+    {
+      "frame": 4,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "a49c26766e38fa4702458cbc0c7bce65c4359fdaa96d7ca83e12f37674d9f1e1",
+      "stage": "preprojection RHS",
+      "time": "0.08333333333333333"
+    },
+    {
+      "frame": 4,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "dffcf74abdcd12eae98753b506a3c6d4e019b3f2c56268a8331c35cfb6b4ee82",
+      "stage": "solved pressure",
+      "time": "0.08333333333333333"
+    },
+    {
+      "frame": 4,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "e3e6dc64b5e607151fa29dc7aaf8385d5c6ee98df16e53a434025ddadc941f09",
+      "stage": "corrected velocity",
+      "time": "0.08333333333333333"
+    },
+    {
+      "frame": 4,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "7dbd9db205aa23d975ad1d8f3750c2189babace6d824b1e925f8b664efd98e39",
+      "stage": "corrected velocity",
+      "time": "0.08333333333333333"
+    },
+    {
+      "frame": 4,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "5291479eda56b741dd3f57f974803d30cc8e80eac2f5344b4bcde02ff402c8ee",
+      "stage": "corrected velocity",
+      "time": "0.08333333333333333"
+    },
+    {
+      "frame": 4,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "12f75027249d4ad3307daabf5dff72cef35f54f6fcfc9dd00bce5dc752849710",
+      "stage": "advected tracer",
+      "time": "0.08333333333333333"
+    },
+    {
+      "frame": 5,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "7632d196b252ff5e66edaedf1efa40c8ca03adffe60c97237ba5afb9cb199bf8",
+      "stage": "preprojection RHS",
+      "time": "0.1"
+    },
+    {
+      "frame": 5,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "ae0a6b0e81ece36b9de3131601808f265335183273bf8cd112aff25da6d88ce2",
+      "stage": "solved pressure",
+      "time": "0.1"
+    },
+    {
+      "frame": 5,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "078f0fa5f1b7c199b63879d1c35e421adf3086266ed87260cb49e7841f106214",
+      "stage": "corrected velocity",
+      "time": "0.1"
+    },
+    {
+      "frame": 5,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "cb408acc1cc1ef47ac0e23eb932f857527df287b97c4de932ad03ff14590a1dc",
+      "stage": "corrected velocity",
+      "time": "0.1"
+    },
+    {
+      "frame": 5,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "609fc79f91910da8e75642b78e5194e1f974dcbdd91e1ed4b2cb58c768afe34a",
+      "stage": "corrected velocity",
+      "time": "0.1"
+    },
+    {
+      "frame": 5,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "9a5e7990e16254e37ea73c78711ec9cab2a633a348962b3fd0041eddeccf7a60",
+      "stage": "advected tracer",
+      "time": "0.1"
+    },
+    {
+      "frame": 6,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "09c492dcc7d6726e798b9ea0f63b85f76837834799d861443d977db9405d32be",
+      "stage": "preprojection RHS",
+      "time": "0.11666666666666667"
+    },
+    {
+      "frame": 6,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "4e0bb9ef483c89562d3452d7eceb14af30567b04b977082087ca407843801f9f",
+      "stage": "solved pressure",
+      "time": "0.11666666666666667"
+    },
+    {
+      "frame": 6,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "757b23ddc96d5cc0ed8894917e61df52683ed129a739cb983d032b6325d117e4",
+      "stage": "corrected velocity",
+      "time": "0.11666666666666667"
+    },
+    {
+      "frame": 6,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "8f8a52efa66300e4f8304008a51b31f1cea1e8ca947bf1a82c35345a873c4710",
+      "stage": "corrected velocity",
+      "time": "0.11666666666666667"
+    },
+    {
+      "frame": 6,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "746835cd9a80ae5aa8df1914feb6628bfe64111ce10e722c9d1320d0110ef9ed",
+      "stage": "corrected velocity",
+      "time": "0.11666666666666667"
+    },
+    {
+      "frame": 6,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "1d215327a5f33d65b425146110201294aac22f50450d06ca25aa812a0ada92a6",
+      "stage": "advected tracer",
+      "time": "0.11666666666666667"
+    },
+    {
+      "frame": 7,
+      "field": "rhs",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "629bc8a21ff7b243955c673573610460effe950e809512e2ec99a54254750ba8",
+      "stage": "preprojection RHS",
+      "time": "0.13333333333333333"
+    },
+    {
+      "frame": 7,
+      "field": "pressure",
+      "dtype": "<f8",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "4f72f52218c7cb07bc527a33a5fe95cbceeb710e7af6c4607aa65a9a82ae4525",
+      "stage": "solved pressure",
+      "time": "0.13333333333333333"
+    },
+    {
+      "frame": 7,
+      "field": "velocity_x",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        33
+      ],
+      "centering": "face_x",
+      "payload_sha256": "c522eeb64e7519f2cf53d1030c3edb23bf099cdc5252f3ceea5e5e8b06201e54",
+      "stage": "corrected velocity",
+      "time": "0.13333333333333333"
+    },
+    {
+      "frame": 7,
+      "field": "velocity_y",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        33,
+        32
+      ],
+      "centering": "face_y",
+      "payload_sha256": "379e3d327f032f94ce053a0f783523f025dd2cea8e2ea5b13982b914d15be199",
+      "stage": "corrected velocity",
+      "time": "0.13333333333333333"
+    },
+    {
+      "frame": 7,
+      "field": "velocity_z",
+      "dtype": "<f4",
+      "shape_zyx": [
+        33,
+        32,
+        32
+      ],
+      "centering": "face_z",
+      "payload_sha256": "9ece99f92ae950ef1b9eb6c3e06839c27a011411576a57a424dd12d0c618b21f",
+      "stage": "corrected velocity",
+      "time": "0.13333333333333333"
+    },
+    {
+      "frame": 7,
+      "field": "tracer",
+      "dtype": "<f4",
+      "shape_zyx": [
+        32,
+        32,
+        32
+      ],
+      "centering": "cell",
+      "payload_sha256": "0eb28e33cf3c1d2943bb0822ca2ce926e270088da842c9b6bb16d0a249b5f098",
+      "stage": "advected tracer",
+      "time": "0.13333333333333333"
+    }
+  ],
+  "diagnostics": [
+    {
+      "frame": 0,
+      "actual_divergence_max": 2.9802322387695312e-08,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.00034498593422386875,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 1,
+      "actual_divergence_max": 5.960464477539063e-08,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.0006897732328789581,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 2,
+      "actual_divergence_max": 1.1920928955078125e-07,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.0010342321255264223,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 3,
+      "actual_divergence_max": 1.1920928955078125e-07,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.0013782406736533998,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 4,
+      "actual_divergence_max": 1.1920928955078125e-07,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.001721680132340546,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 5,
+      "actual_divergence_max": 1.7881393432617188e-07,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.002064440636180012,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 6,
+      "actual_divergence_max": 1.7881393432617188e-07,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.0024064213156583486,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    },
+    {
+      "frame": 7,
+      "actual_divergence_max": 2.384185791015625e-07,
+      "wall_normal_velocity_zero": true,
+      "tracer_integral": 0.0027475241323610027,
+      "tracer_integral_tolerance": {
+        "relative": 1e-12,
+        "absolute": 1e-15
+      }
+    }
+  ],
+  "original_wire_exact": true,
+  "model_or_training_acceptance": false,
+  "general_physics_acceptance": false,
+  "gpu_or_performance_acceptance": false
+}
