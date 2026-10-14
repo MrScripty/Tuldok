@@ -1,6 +1,7 @@
 'use strict';
 const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
 const fetch = fixtureAuth.fetch;
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -190,6 +191,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await open(rows[0].id);await refresh();assert.equal((await request('caption-proposals')).jobs.length,count,'Browser navigation must not restart inference');
   await send('Page.reload');await until(()=>evaluate('document.getElementById("notice")?.textContent==="Collection ready."'));await open(rows[0].id);await refresh();
   assert.equal((await request('caption-proposals')).jobs.length,count);assert.equal(await evaluate('current.target_proposal.job_id'),job.id);
+  await revealWorkbenchControl(evaluate, "#caption-proposal-panel");
   await evaluate('document.getElementById("caption-proposal-panel").open=true;document.getElementById("caption-proposal-panel").scrollIntoView();');
   const desktop=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'caption-proposals-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});

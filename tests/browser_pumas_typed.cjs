@@ -1,6 +1,7 @@
 'use strict';
 const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
 const fetch = fixtureAuth.fetch;
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -101,6 +102,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const grounded=await until(async()=> (await request('grounded/jobs')).jobs.find(j=>j.status==='completed'));
   const admitted=await request('grounded/review/'+grounded.id,{revision:grounded.revision,candidate_id:grounded.candidates[0].id,decision:'admit_draft',note:'Controlled source checked; separate annotation review remains.'});
   assert.equal(admitted.record.review,'draft');assert.deepEqual(admitted.record.parents,[source.id]);assert.deepEqual(admitted.record.groups,source.groups);
+  await revealWorkbenchControl(evaluate, "#text-classification-proposal-panel");
   await evaluate('document.getElementById("text-classification-proposal-panel").open=true;document.getElementById("text-classification-proposal-panel").scrollIntoView({block:"start"})');
   const screenshot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-text-review.jpg'),Buffer.from(screenshot.data,'base64'));
   // PR65 consumer adoption uses a source-derived vision gateway, never model inference.

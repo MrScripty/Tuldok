@@ -578,6 +578,8 @@ function launch(command, args, options) {
   check(
     "real catalog keyboard import/save/review and retained draft/selection through all workspaces",
   );
+  assert.equal(await evaluate('document.getElementById("catalog-frame").contentDocument.documentElement.classList.contains("compact-workbench")'),false,'Embedded Data keeps its own presentation owner');
+  assert.equal(await evaluate('document.getElementById("catalog-frame").contentDocument.querySelectorAll(".record button[aria-current]").length'),0,'Standalone current-record markers never leak into embedded Data');
   await screenshot("catalog-1440", 1440, 900);
   await screenshot("catalog-390", 390, 844);
   assert.ok(

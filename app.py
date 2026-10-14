@@ -727,6 +727,8 @@ def make_handler(dataset):
                     '/auth.js': ('auth.js', 'text/javascript'),
                     '/auth.css': ('auth.css', 'text/css'),
                     '/workspace-projects.js': ('workspace-projects.js', 'text/javascript'),
+                    '/workbench-layout.js': ('workbench-layout.js', 'text/javascript'),
+                    '/workbench-layout.css': ('workbench-layout.css', 'text/css'),
                     '/pointclouds.js': ('pointclouds.js', 'text/javascript'),
                     '/volume-editor.js': ('volume-editor.js', 'text/javascript'),
                     '/scientific-fields.js': ('scientific-fields.js', 'text/javascript'),

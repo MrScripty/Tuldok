@@ -5,11 +5,11 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 class Element {
-  constructor(id='') { this.id=id; this.value=''; this.dataset={}; this.listeners={}; this.children=[]; this.files=[]; this.classList={toggle(){}}; }
+  constructor(id='') { this.id=id; this.value=''; this.dataset={}; this.attributes={}; this.listeners={}; this.children=[]; this.files=[]; this.classList={toggle(){}}; }
   addEventListener(event,fn) { (this.listeners[event] ||= []).push(fn); }
   replaceChildren(...children) { this.children=children; }
   append(...children) { this.children.push(...children); }
-  setAttribute() {}
+  setAttribute(name,value) { this.attributes[name]=String(value); }
   matches(selector) { return selector==='form' && ['editor','import-form','filters','generate-form','release-form'].includes(this.id); }
   querySelectorAll() { return []; }
   async dispatch(event) { for(const fn of this.listeners[event] || []) await fn({preventDefault(){},currentTarget:this}); }
@@ -31,6 +31,17 @@ const resolve=(suffix,data,ok=true)=>{const index=requests.findIndex(request=>re
 async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)'); }
 (async()=>{
   await Promise.resolve();
+  // Embedded Data has no standalone layout hook. Refreshing a restored current
+  // record then opening another must never leave a stale standalone marker.
+  page.items=[record('a'),record('b')];
+  await startAt('a');
+  await run('refresh()');
+  const embeddedButtons=element('records').children.map(row=>row.children[1].children[0]);
+  assert.ok(embeddedButtons.every(button=>!Object.hasOwn(button.attributes,'aria-current')));
+  await startAt('b');
+  assert.equal(run('current.id'),'b');
+  assert.ok(embeddedButtons.every(button=>!Object.hasOwn(button.attributes,'aria-current')),'Embedded navigation cannot retain a marker owned by an absent layout');
+  page.items=[];await run('refresh()');
   await startAt('a');
   const navigation=run('openRecord("b")');
   element('label').value='unsaved edit';await element('editor').dispatch('input');
@@ -130,7 +141,7 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
   assert.equal(element('label-filter').value,'new criterion');
   assert.equal(run('[...selected.keys()].join()'),'fixed');assert.equal(run('selected.get("fixed").revision'),1);
   assert.equal(run('releasePreview===proof'),true,'Filtering grants no proof and preserves an existing exact proof');
-  assert.ok(element('records').children[0].children[1].children[1].textContent.includes('Rights note: unknown'));
+  assert.ok(element('records').children[0].children[1].children[1].children[1].textContent.includes('Rights note: unknown'));
   element('exact-filter-format').value='json';
   for(const value of ['ordinary', 'left\nright', 'left\rright', 'left\r\nright', 'literal\\n and "quotes"', 'valid 😀 pair']) {
     for(const key of ['label','group','rights']) element(key+'-filter').value=JSON.stringify(value);

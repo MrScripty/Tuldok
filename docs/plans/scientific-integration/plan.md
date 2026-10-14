@@ -2,7 +2,7 @@
 
 **Plan status:** `Active`
 
-**Current phase:** Independent selective-source review, 95 boundary tests, current-owner cold reads and initial UI gates passed. PR33 is qualified and merged; composing its layout before final publication/CI.
+**Current phase:** Independent selective-source review, 95 boundary tests, current-owner cold reads and composed authenticated layout/workflow gates passed. Publishing the exact combined head for full hosted lifecycle/UI CI.
 
 **Next slice:** Integrate qualified generic project/scientific/execution/training/evaluation and storage components without original-v2 implementation ancestry; qualify the new composition.
 

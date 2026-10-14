@@ -1,6 +1,7 @@
 'use strict';
 const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
 const fetch = fixtureAuth.fetch;
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 // Native browser smoke test. No npm dependencies.
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict');
@@ -191,6 +192,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await start(exactGuidance);await until(()=>evaluate(v+'Jobs.some(j=>j.source.id==='+JSON.stringify(validationSource.id)+'&&j.config.instruction.length===2000&&j.status==="completed")'));
   assert.equal((await evaluate('validationPostedBodies')).length,2);assert.equal(await count(),beforeValidationInference+2);assert.equal((await evaluate('validationPostedBodies'))[1].instruction,exactGuidance,'Valid 2000-character guidance is preserved exactly');
   fs.writeFileSync(path.join(report,'native-validation-observation.json'),JSON.stringify({url_code_points:2072,rejected_url:rejectedLongURL,rejected_guidance:rejectedLongGuidance,accepted_url:shortValidationURL,accepted_guidance_code_points:2000,accepted_guidance_sha256:digest(Buffer.from(exactGuidance)),explicit_posts:await evaluate('validationPostedBodies'),before_inference:beforeValidationInference,after_inference:await count()},null,2));
+  await revealWorkbenchControl(evaluate, "#" + prefix + "panel");
   await evaluate('document.getElementById('+JSON.stringify(prefix+'panel')+').open=true;document.getElementById('+JSON.stringify(prefix+'panel')+').scrollIntoView()');
   let shot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'classification-desktop.jpg'),Buffer.from(shot.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Narrow classification layout must not overflow');

@@ -3,6 +3,7 @@ const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
 const fetch = fixtureAuth.fetch;
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn,spawnSync}=require('node:child_process'),crypto=require('node:crypto');
@@ -161,6 +162,7 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   const crossFeature={old_preview_status:stale.status,old_proof:oldProof,fresh_proof:freshProof,linked_detection_id:linked.id,corpus_selected_pairs:corpusBody.items,dirty_note_retained:true,raw_corpus_bytes_verified:true,old_native_release_unchanged:true};
   fs.copyFileSync(path.join(temporary,'linked.zip'),path.join(report,'linked-exporter-source.zip'));
   fs.copyFileSync(path.join(temporary,'frozen.zip'),path.join(report,'frozen.zip'));fs.copyFileSync(path.join(temporary,'source.zip'),path.join(report,'actual-exporter-source.zip'));
+  await revealWorkbenchControl(evaluate, "#native-detection-import-panel");
   await evaluate('document.getElementById("native-detection-import-panel").open=true;document.getElementById("native-detection-import-panel").scrollIntoView()');
   fs.writeFileSync(path.join(report,'native-detection-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});

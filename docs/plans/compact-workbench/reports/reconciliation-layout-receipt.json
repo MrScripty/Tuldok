@@ -1,0 +1,60 @@
+{
+  "result": "PASS",
+  "source_head": "581fa5ca471186ed641ec4bf6d134ee1ba807d22",
+  "dirty": true,
+  "source_hashes": {
+    "app.py": "97ae00a68a062796317ffb2ff131334018e99511f99d69083125b7039bd660f0",
+    "static/workbench.html": "ec213a2a6ac96b37a59d2f8f69ff29a06773f41acd07ef2288afac77eee454d7",
+    "static/workbench.css": "a00ec106b48ac8a0c14e907128acfec1f062858390d52539b03fc77083e59eeb",
+    "static/workbench.js": "ccfc74aa2c011c2cc03c4a8a1aa0baf1f7f8c36d69f9a9bafb1ac0e218a1b200",
+    "static/workbench-layout.js": "da0bc85d8c5e14db95eb161d2142c4c75a9d79f49a9e4da9ce3066b11b568d03",
+    "static/workbench-layout.css": "7c5ab2b939ade04c44b4d028d29bc08da70e05881c744cca78bbe72214da0268",
+    "static/workspaces-data.js": "2a8ebd70141192d6cb6ca6100f863a0706b38305cf75564db5a0ae4a37991e2a",
+    "static/workspaces-data.css": "9f6151c17baf04b589ab997a3063435b1d035a397a92a48b0badf2911f08091a",
+    "tests/browser_workbench_layout.cjs": "325c904c4e98dd8ec2687916cd4ffcdf140b95cb4f53675f701cf0024873d8af"
+  },
+  "command": "node tests/browser_workbench_layout.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "environment": {
+    "mode": "headless",
+    "graphics": "--disable-gpu software rendering",
+    "sandbox": "--no-sandbox verification only",
+    "isolation": "task-owned temporary browser profile and authored dataset",
+    "process_lifecycle": "tracked server/browser killed in finally; debugger startup bounded at 60 seconds"
+  },
+  "viewports": [
+    {
+      "width": 1600,
+      "height": 1100
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "checks": [
+    "current controls/native constraints/kinds/tasks/export options/scripts retained",
+    "current audio/pointcloud/volume source surfaces retained",
+    "native Shift+Tab modal containment and Escape/focus restoration",
+    "repeated dialogs preserve draft/selection",
+    "status mirrored inside modal",
+    "collapsed invalid groups revealed without save",
+    "explicit review/save/release download",
+    "exact metadata Enter filter",
+    "saved state/current record markers",
+    "original-pixel image coordinates after scaling",
+    "mesh native import/projections",
+    "desktop and narrow content fit",
+    "no runtime errors"
+  ],
+  "captures": [
+    "text-desktop.jpg",
+    "export-desktop.jpg",
+    "image-desktop.jpg",
+    "mesh-desktop.jpg",
+    "mesh-narrow.jpg",
+    "import-narrow.jpg",
+    "text-narrow.jpg"
+  ],
+  "qualification": "Standalone current-main UI with authored fixtures; no inference, training, scientific quality, assistive-technology or cross-browser conformance claim"
+}

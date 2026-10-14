@@ -1,0 +1,248 @@
+{
+  "admitted_base": "f2751c3224ed0280ba285262698d15144a8fed9f",
+  "owner_head": "581fa5ca471186ed641ec4bf6d134ee1ba807d22",
+  "mode": "uncommitted original-descendant merge; source hashes bind exact tested code",
+  "existing_browser_suites": [
+    {
+      "command": "node tests/browser_workbench.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_workbench.log",
+      "log_sha256": "b93da16f9cd562b9cdb51690247da0f1cd9d54f49a27d4c38c4bdec5faa5f87b"
+    },
+    {
+      "command": "node tests/browser_meshes.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_meshes.log",
+      "log_sha256": "4b039afe79b0d67d0cdfd87a2a18045db52a24239738dcb8a1d7ff8d61d2bdc7"
+    },
+    {
+      "command": "node tests/browser_sequences.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_sequences.log",
+      "log_sha256": "d15ac02a410dbcc1f9a24e107c9a572c722b96074eca15462f271d63b64ef03c"
+    },
+    {
+      "command": "node tests/browser_bulk_import.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_bulk_import.log",
+      "log_sha256": "fa6b016f51d67c75b03ac8014b77ec77319c42ed872fc3854812a1d284279c4c"
+    },
+    {
+      "command": "node tests/browser_rights_note.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_rights_note.log",
+      "log_sha256": "abd611c242c39ec36568ac1b28f46e3b26b82a62e9a053bd35766dc6de496b3f"
+    },
+    {
+      "command": "node tests/browser_metadata_filters.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_metadata_filters.log",
+      "log_sha256": "d27429eb8cbf0fc4fa814404785d1e86d6de9ccbf4721c5c16ce75a4aac2c148"
+    },
+    {
+      "command": "node tests/browser_saved_selections.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_saved_selections.log",
+      "log_sha256": "c6b5fa4edbee6d1abd8220ecf5c032da5cc1645f2d1084a0fce5926c401eeae7"
+    },
+    {
+      "command": "node tests/browser_captions.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_captions.log",
+      "log_sha256": "bca852fb32c38c1479bb4bd6e9b39c7f7cf0e55e886bdb2b54fa83d0d9920771"
+    },
+    {
+      "command": "node tests/browser_caption_proposals.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_caption_proposals.log",
+      "log_sha256": "3d2596c3ddcf104ffa308ce6687d972feba5258e2c8b6a0a9ef56a94b817b8ce"
+    },
+    {
+      "command": "node tests/browser_text_classification_proposals.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_text_classification_proposals.log",
+      "log_sha256": "d8b2a41c521c502fddac1322584d7a2558795bdde984632b0f79e70dd62cf734"
+    },
+    {
+      "command": "node tests/browser_classification_preferences_integration.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_classification_preferences_integration.log",
+      "log_sha256": "956aff06635b082e2fd1758c2d28153743a07772c6a0355b44e137e42f8e86c4"
+    },
+    {
+      "command": "node tests/browser_combined_workbench.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_combined_workbench.log",
+      "log_sha256": "58842dec95766eee7276abf7e090003ff74d2575e9104ffcfcef00bc67c3a8ff"
+    },
+    {
+      "command": "node tests/browser_native_detection_import.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_native_detection_import.log",
+      "log_sha256": "f52f8b222ee5770a73df2fbd82152d743e3e2793523be33454d759466a777c87"
+    },
+    {
+      "command": "node tests/browser_native_text_import.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_native_text_import.log",
+      "log_sha256": "ee253d364d89db5549d2a6be34b6aad5b4ca14082c538129dfa8d09c66b56cbb"
+    },
+    {
+      "command": "node tests/browser_pumas_gateways.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_pumas_gateways.log",
+      "log_sha256": "30d0993acc11a93f13043c41b02f95dbf32f30a120fbf67ce53fd17c88d3d8e4"
+    },
+    {
+      "command": "node tests/browser_pumas_typed.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_pumas_typed.log",
+      "log_sha256": "8a824e95f276301e107c82c5debdb312bb54a434749160da14b42d8a5d6ea016"
+    },
+    {
+      "command": "node tests/browser_workspace_recovery.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_workspace_recovery.log",
+      "log_sha256": "3722c4cb2ddd57d9a6fac6890e229c05b3ecdeb5406a96a2b0f1fdbee52c9702"
+    },
+    {
+      "command": "node tests/browser_workspace_audio.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_workspace_audio.log",
+      "log_sha256": "65f57d80d6bfd807614f5e782838ee96e1f6793c9a84d904bf07b04db747e2ed"
+    },
+    {
+      "command": "node tests/browser_workspace_mesh.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_workspace_mesh.log",
+      "log_sha256": "b9c4520c9e7f2f5464dd263b4d79ff663381aad4188c9313df71663920f4ad97"
+    },
+    {
+      "command": "node tests/browser_workspace_spatial.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_workspace_spatial.log",
+      "log_sha256": "4963b5d384e6df8b16e609e14ead2f6725571329faded28b015cd478688879e6"
+    },
+    {
+      "command": "node tests/browser_workspaces.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_workspaces.log",
+      "log_sha256": "7e201544545b97d1267b0dd4c6846259e99187e07c3b0785ffffc895d9ef8f80"
+    },
+    {
+      "command": "node tests/browser_grounded.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_grounded.log",
+      "log_sha256": "49cb9a483bcba66599c3b6a2976a58ae43b3ccf15c9f2df9a12fd41b97bb6728"
+    },
+    {
+      "command": "node tests/browser_release_preview.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_release_preview.log",
+      "log_sha256": "2bae39344ebdca925df582e664686571e91b60e0d5e50b5e18531f201110e30e"
+    },
+    {
+      "command": "node tests/browser_saved_searches.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_saved_searches.log",
+      "log_sha256": "f5357c30e202627456f7e22e5e177f3895b89097267a26300b3853abbbd04421"
+    },
+    {
+      "command": "node tests/browser_saved_selection_intent.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_saved_selection_intent.log",
+      "log_sha256": "e1ee4f711281a6310fa560215220fa760e6ceb5725b9e13ec329e4b69de4ba8b"
+    },
+    {
+      "command": "node tests/browser_curation.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_curation.log",
+      "log_sha256": "2f5f41ccb5850a35ad64ba3d371aa58361c65d81739ecd9b4574cdef8db7ea1b"
+    },
+    {
+      "command": "node tests/browser_caption_import.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_caption_import.log",
+      "log_sha256": "5bcd59666badf72396d029a690ae319767eb64cda29a7824af12187bbcf17231"
+    },
+    {
+      "command": "node tests/browser_caption_dataset_integration.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_caption_dataset_integration.log",
+      "log_sha256": "ddf9800be324f3a88c34d5e1c9508778e0d03bb2e9f89986f6d8b81c8a4e6579"
+    },
+    {
+      "command": "node tests/browser_dataset_integration.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_dataset_integration.log",
+      "log_sha256": "e3126cf1311665bd23340cb3c5d20be8cd4bbc21d4d531714855989f7879cfd5"
+    },
+    {
+      "command": "node tests/browser_instruction_responses.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_instruction_responses.log",
+      "log_sha256": "a94d7571dd7c21fd274b372bd4f621346c638490f530ca204258d78deccbeaf8"
+    },
+    {
+      "command": "node tests/browser_preferences.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_preferences.log",
+      "log_sha256": "de530f0b882568223eb2fa442a9bb1b4171d08e04b75db2a7d94a207db5575e7"
+    },
+    {
+      "command": "node tests/browser_image_classification_export.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_image_classification_export.log",
+      "log_sha256": "db42ea90f1291f28b74294aab32181ffa6f8c6d8e5440269ecbeb8c44919b62f"
+    },
+    {
+      "command": "node tests/browser_text_corpus_export.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_text_corpus_export.log",
+      "log_sha256": "cb8f52c0107dad5c76de8f480899e24e3329699e68104b68ab160a125d2d3fe7"
+    },
+    {
+      "command": "node tests/browser_sequence_batch.cjs",
+      "result": "PASS",
+      "log": "/tmp/tuldok-pr33-browser_sequence_batch.log",
+      "log_sha256": "af9c0e85b023fcf4ece1c6f75a4df81cf28ba2cc5ba97d6f78708c0e031fb95b"
+    }
+  ],
+  "new_layout": "reconciliation-layout-receipt.json",
+  "python_suites": [
+    {
+      "command": "python -m unittest discover -s tests -p test_workbench.py",
+      "tests": 10,
+      "result": "PASS"
+    },
+    {
+      "command": "python -m unittest discover -s tests -p test_combined_workbench.py",
+      "tests": 5,
+      "result": "PASS"
+    }
+  ],
+  "controller_suites": {
+    "count": 11,
+    "result": "PASS",
+    "commands": [
+      "node tests/test_workbench_controller.cjs",
+      "node tests/test_combined_workbench_controller.cjs",
+      "node tests/test_caption_proposals_controller.cjs",
+      "node tests/test_text_classification_proposals_controller.cjs",
+      "node tests/test_meshes_controller.cjs",
+      "node tests/test_saved_selections_controller.cjs",
+      "node tests/test_saved_searches_controller.cjs",
+      "node tests/test_curation_controller.cjs",
+      "node tests/test_rights_note_controller.cjs",
+      "node tests/test_preferences_controller.cjs",
+      "node tests/test_spatial_controllers.cjs"
+    ]
+  },
+  "plan_validator": "adopted standards_verifier.checks.plan_contract.validate_plan PASS",
+  "source_syntax_and_diff": "PASS",
+  "environment_resolutions": [
+    "Pinned instruction/preference consumer installed only in /tmp/tuldok-pr33-consumer, reading existing CPUtorch runtime; unchanged consumer source/pin checks passed. No pretrained download/training.",
+    "Independent spatial NumPy2.5.4/plyfile1.1.3 readers selected from existing .venv-training via supported TULDOK_NATIVE_READER_PYTHON."
+  ],
+  "local_qualifications": "Chromium headless software graphics, current-main PostgreSQL, authored fixtures; no P3 auth/v2/scientific/model-quality/assistive-tech or other-browser acceptance"
+}

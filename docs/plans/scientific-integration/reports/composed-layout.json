@@ -1,0 +1,62 @@
+{
+  "result": "PASS",
+  "source_head": "f5976f516c77bc56be4611d0b420c353a5a67a21",
+  "dirty": true,
+  "source_hashes": {
+    "app.py": "e71ff2a944f28286fa68dad6672c7ef4f5a8efc5eaba91bbb0a076900301a4e2",
+    "static/workbench.html": "2e7234abdceb8d4e4c1a2d74196fc2d8d51900982cb28dd05dd7d701ade00e1c",
+    "static/workbench.css": "669aab1c0c8d680c60848ae96ec1925151ea663238d4412d45862ef60112391e",
+    "static/workbench.js": "167a48d39b0831ba814c31321f0f936d969e9b322c71b11a25a3f24ca9fe889b",
+    "static/workbench-layout.js": "da0bc85d8c5e14db95eb161d2142c4c75a9d79f49a9e4da9ce3066b11b568d03",
+    "static/workbench-layout.css": "7c5ab2b939ade04c44b4d028d29bc08da70e05881c744cca78bbe72214da0268",
+    "static/workspaces-data.js": "da2807d18da4ef4c366bb178d30b336d0b9896fd349b76dd97183e7237022dd7",
+    "static/workspaces-data.css": "9f6151c17baf04b589ab997a3063435b1d035a397a92a48b0badf2911f08091a",
+    "tests/auth_helpers.cjs": "363ae493c121f2cc5e804c3774d6ee4c2078ccc936db1c37ddf749cf9b4e1a15",
+    "tests/browser_workbench_layout.cjs": "a7e79f9ad14acb9f743b11350ce0159b66faf1e238147d979d379380b3ff9431"
+  },
+  "command": "node tests/browser_workbench_layout.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "environment": {
+    "mode": "headless",
+    "graphics": "--disable-gpu software rendering",
+    "sandbox": "--no-sandbox verification only",
+    "isolation": "task-owned temporary browser profile and authored dataset",
+    "process_lifecycle": "tracked server/browser killed in finally; debugger startup bounded at 60 seconds"
+  },
+  "viewports": [
+    {
+      "width": 1600,
+      "height": 1100
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "checks": [
+    "current controls/native constraints/kinds/tasks/export options/scripts retained",
+    "current audio/pointcloud/volume/scientific source surfaces retained",
+    "explicit authenticated owner fixture for browser and API calls",
+    "native Shift+Tab modal containment and Escape/focus restoration",
+    "repeated dialogs preserve draft/selection",
+    "status mirrored inside modal",
+    "collapsed invalid groups revealed without save",
+    "explicit review/save/release download",
+    "exact metadata Enter filter",
+    "saved state/current record markers",
+    "original-pixel image coordinates after scaling",
+    "mesh native import/projections",
+    "desktop and narrow content fit",
+    "no runtime errors"
+  ],
+  "captures": [
+    "text-desktop.jpg",
+    "export-desktop.jpg",
+    "image-desktop.jpg",
+    "mesh-desktop.jpg",
+    "mesh-narrow.jpg",
+    "import-narrow.jpg",
+    "text-narrow.jpg"
+  ],
+  "qualification": "Standalone authenticated composed UI with authored fixtures and current scientific controls; no inference, training, scientific quality, assistive-technology or cross-browser conformance claim"
+}

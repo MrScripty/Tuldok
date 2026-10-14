@@ -3,6 +3,7 @@ const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
 const fetch = fixtureAuth.fetch;
 // Source-derived pinned PR51 payload; production decoder/routes and real Chromium, no Pumas inference.
 'use strict';
+const {revealWorkbenchControl}=require('./workbench_layout_navigation.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {spawn}=require('node:child_process');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
@@ -91,6 +92,7 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await click('pumas-gateway-scan');await idle();await fill('pumas-gateway-choice',gateway);await fill('pumas-gateway-target','rewrite');await click('pumas-gateway-use');await idle();
   assert.equal(await evaluate('document.getElementById("grounded-url").value'),gateway);
   assert.deepEqual(await editor(),editorBefore);
+  await revealWorkbenchControl(evaluate, "#pumas-gateway-panel");
   await evaluate('document.querySelector("#pumas-gateway-panel details").open=true;document.getElementById("pumas-gateway-panel").scrollIntoView()');
   fs.writeFileSync(path.join(report,'gateway-desktop.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});
