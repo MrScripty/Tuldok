@@ -1,0 +1,7 @@
+Verified real MCP artifact: input-model.pt 272149 bytes
+Verified real MCP artifact: fields-learned-900-000.zip 38196421 bytes
+Traceback (most recent call last):
+  File "/tmp/tuldok-generic-mcp-cold-read-20261014.py", line 53, in <module>
+    assert set(changed)<= {'access_audit','access_credentials'}, changed
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ['access_actors', 'access_audit', 'access_credentials']

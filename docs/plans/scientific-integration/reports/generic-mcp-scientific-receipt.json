@@ -1,0 +1,1602 @@
+{
+  "actor_id": "60749b83c2f443a8b1ec9254cb6e69ef",
+  "calls": [
+    {
+      "operation": "identity.get",
+      "status": 200
+    },
+    {
+      "operation": "context.get",
+      "status": 200
+    },
+    {
+      "operation": "projects.list",
+      "status": 200
+    },
+    {
+      "operation": "projects.get",
+      "status": 200
+    },
+    {
+      "operation": "recipes.inspect",
+      "status": 200
+    },
+    {
+      "operation": "runs.list",
+      "status": 200
+    },
+    {
+      "operation": "graphs.list",
+      "status": 200
+    },
+    {
+      "operation": "data.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.get",
+      "status": 200
+    },
+    {
+      "operation": "graphs.get",
+      "status": 200
+    },
+    {
+      "operation": "runs.progress",
+      "status": 200
+    },
+    {
+      "operation": "data.scientific",
+      "status": 200
+    },
+    {
+      "operation": "runs.artifact_chunk",
+      "status": 200
+    },
+    {
+      "operation": "runs.artifact_chunk",
+      "status": 200
+    },
+    {
+      "operation": "runs.artifact_chunk",
+      "status": 200
+    },
+    {
+      "operation": "runs.artifact_chunk",
+      "status": 200
+    },
+    {
+      "operation": "runs.artifact_chunk",
+      "status": 200
+    },
+    {
+      "operation": "runs.artifact_chunk",
+      "status": 200
+    },
+    {
+      "operation": "runs.list",
+      "status": 200
+    },
+    {
+      "operation": "graphs.list",
+      "status": 200
+    },
+    {
+      "operation": "data.get",
+      "status": 200
+    }
+  ],
+  "catalog_id": "d4856fe9eec74aea8b007cca029b3248",
+  "changed_tables": [
+    "access_actors",
+    "access_audit",
+    "access_credentials"
+  ],
+  "context": {
+    "dataset_id": "d4856fe9eec74aea8b007cca029b3248",
+    "execution": "optional_local_cpu",
+    "mode": "real",
+    "recipe": "image_classification_v1",
+    "version": 1
+  },
+  "driver_sha256": "e01b0f0ca588e2cb12dbffb347af6b22af7bf6822598837286306bfff3d2d4b1",
+  "elapsed_seconds": 45.15563624500646,
+  "existing_actor_rows_unchanged": true,
+  "files_modes_runs_identity_sequences_unchanged": true,
+  "graph": {
+    "edges": [
+      {
+        "from": "input",
+        "input": "data",
+        "output": "data",
+        "to": "execute"
+      },
+      {
+        "from": "execute",
+        "input": "artifacts",
+        "output": "artifacts",
+        "to": "output"
+      }
+    ],
+    "id": "d812191ec20f48379ece4369329c3784",
+    "layout": {},
+    "mode": "real",
+    "name": "Autonomous CPU evaluation \u00b7 exposed seeds 900\u2013903",
+    "nodes": [
+      {
+        "definition_version": 1,
+        "id": "input",
+        "parameters": {
+          "expected_sha256": "777fccef814adfeb7afcf599cb56e31faf361b4c6afbd3e80b5b899c87ce271b",
+          "inputs": {
+            "build_receipt": {
+              "expected_sha256": "4eb9f3b83c77261bf49ce4f2d5718b615d4d70aeb68513b9eface8ccf03e6620",
+              "reference_id": "build_receipt"
+            },
+            "checkpoint": {
+              "artifact_name": "model.pt",
+              "expected_sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8",
+              "kind": "run_artifact",
+              "run_id": "11fc2be1aada490f9b67c11c190728f6"
+            },
+            "freeze": {
+              "artifact_name": "freeze.json",
+              "expected_sha256": "020ac431def0540edca65b6009ee77ebf8a5eff414efd9cf7da38532ef711792",
+              "kind": "run_artifact",
+              "run_id": "11fc2be1aada490f9b67c11c190728f6"
+            },
+            "training_inputs": {
+              "artifact_name": "input-receipt.json",
+              "expected_sha256": "1a8ec140ce18fee118ba9821353a2538b3caf8ab89b73a678bd8acdf03bed189",
+              "kind": "run_artifact",
+              "run_id": "11fc2be1aada490f9b67c11c190728f6"
+            },
+            "training_result": {
+              "artifact_name": "result.json",
+              "expected_sha256": "9b680ad1780fe276b5385805a06dcc3acb365f6b3475481af20e982e6495aa79",
+              "kind": "run_artifact",
+              "run_id": "11fc2be1aada490f9b67c11c190728f6"
+            }
+          },
+          "project_id": "a32555aabdee479ab94a9cb4159f5a73",
+          "recipe_id": "evaluate"
+        },
+        "type": "input"
+      },
+      {
+        "definition_version": 1,
+        "id": "execute",
+        "parameters": {},
+        "type": "execute"
+      },
+      {
+        "definition_version": 1,
+        "id": "output",
+        "parameters": {},
+        "type": "output"
+      }
+    ],
+    "recipe": "external_recipe",
+    "recipe_version": 1,
+    "revision": 1,
+    "schema_version": 1
+  },
+  "inspect_credential_revoked": true,
+  "new_actor_is_exact_explicit_qa_agent": true,
+  "new_model_execution": false,
+  "new_scientific_acceptance": false,
+  "project": {
+    "data": [
+      {
+        "bytes": 10805,
+        "id": "build_receipt",
+        "integrity": "verified",
+        "label": "Parallel build evidence",
+        "observed_sha256": "4eb9f3b83c77261bf49ce4f2d5718b615d4d70aeb68513b9eface8ccf03e6620",
+        "path": "build-receipt.json",
+        "sha256": "4eb9f3b83c77261bf49ce4f2d5718b615d4d70aeb68513b9eface8ccf03e6620",
+        "status": "available"
+      }
+    ],
+    "evidence": [],
+    "execution": "unsupported",
+    "id": "a32555aabdee479ab94a9cb4159f5a73",
+    "manifest_path": "project.json",
+    "manifest_sha256": "2c62475bb274ac92205fc4f79f899dccd52a775332f7ea069b332b8cb30f9ad6",
+    "manifest_status": "unchanged",
+    "mode": "inspection",
+    "name": "Rheon autonomous CPU evaluation",
+    "recipes": [
+      {
+        "bytes": 11150,
+        "id": "evaluate",
+        "integrity": "verified",
+        "label": "Evaluate completed training checkpoint",
+        "observed_sha256": "777fccef814adfeb7afcf599cb56e31faf361b4c6afbd3e80b5b899c87ce271b",
+        "path": "recipe.json",
+        "sha256": "777fccef814adfeb7afcf599cb56e31faf361b4c6afbd3e80b5b899c87ce271b",
+        "status": "available"
+      }
+    ],
+    "requirements": [
+      {
+        "id": "completed-training",
+        "label": "Bind four verified artifacts from one completed training Run",
+        "reason": "Declared requirement; no runtime probe is executed.",
+        "status": "unverified"
+      }
+    ],
+    "root": "sample"
+  },
+  "projects": {
+    "mode": "inspection",
+    "projects": [
+      {
+        "id": "11004efb19804e34bc342e0d2a1c22ef",
+        "manifest_path": "project.json",
+        "manifest_sha256": "b8a52afef4eea5696859e4897cc2e4517de4e8130570edf7cc03e0d1a3319c28",
+        "name": "Authored CPU qualification; no historical model",
+        "root": "qualification"
+      },
+      {
+        "id": "2bb9ea2692a844e085017f273fece2a4",
+        "manifest_path": "project.json",
+        "manifest_sha256": "a6d479f6cc7fbbd811a36c7e958af566d0269a975683c76c208203b3222a5d24",
+        "name": "Rheon frozen-field CPU training",
+        "root": "sample"
+      },
+      {
+        "id": "93f681779a064eedba4b64d81d6ce3df",
+        "manifest_path": "project.json",
+        "manifest_sha256": "edc99ade95700991d2753a62663fee82af45460f1180b60595277113a5aea096",
+        "name": "Authored CPU qualification; no historical model",
+        "root": "qualification"
+      },
+      {
+        "id": "a32555aabdee479ab94a9cb4159f5a73",
+        "manifest_path": "project.json",
+        "manifest_sha256": "2c62475bb274ac92205fc4f79f899dccd52a775332f7ea069b332b8cb30f9ad6",
+        "name": "Rheon autonomous CPU evaluation",
+        "root": "sample"
+      },
+      {
+        "id": "d26f1f282e1d4fd9a07a0ed5f49a49cc",
+        "manifest_path": "project.json",
+        "manifest_sha256": "7ffddd2045d580980a064b17d3f84bc3253b3ed37f94f7a59086c0c6018cb4c5",
+        "name": "Authored CPU qualification; no historical model",
+        "root": "qualification"
+      },
+      {
+        "id": "dfbccc62dbb0404e98cd56b3cf05e373",
+        "manifest_path": "project.json",
+        "manifest_sha256": "9686d0baa9bec97277bbb58a51f569a2655196f62bd18e99fb46531f87813f5f",
+        "name": "Rheon bounded field generation",
+        "root": "generator"
+      },
+      {
+        "id": "e8820cf8038f437095747d2533d75125",
+        "manifest_path": "project.json",
+        "manifest_sha256": "1ab7c1efb9e3e0ca3ec080bb4e71ada5bb3798efeef936984f2cdb9dd683b4fe",
+        "name": "Rheon frozen-field CPU training",
+        "root": "sample"
+      },
+      {
+        "id": "eb159f6356594672bdfdb9e93c495f64",
+        "manifest_path": "project.json",
+        "manifest_sha256": "282dd38cbe8dfb7987af381d28d992364623139aacf7af51aabb4427ec4814c1",
+        "name": "Rheon CPU checkpoint comparison",
+        "root": "sample"
+      }
+    ],
+    "roots": [
+      "sample"
+    ]
+  },
+  "protocol_version": "2025-06-18",
+  "qa_owner_logged_out": true,
+  "qualification": "Actual official SDK stdio agent \u2192 authenticated HTTP \u2192 existing scientific owners; byte parity only",
+  "recipe": {
+    "definition": {
+      "arguments": [
+        {
+          "literal": "--checkpoint"
+        },
+        {
+          "input": "checkpoint"
+        },
+        {
+          "literal": "--freeze"
+        },
+        {
+          "input": "freeze"
+        },
+        {
+          "literal": "--training-inputs"
+        },
+        {
+          "input": "training_inputs"
+        },
+        {
+          "literal": "--training-result"
+        },
+        {
+          "input": "training_result"
+        },
+        {
+          "literal": "--build-receipt"
+        },
+        {
+          "input": "build_receipt"
+        },
+        {
+          "literal": "--native-policy"
+        },
+        {
+          "native_policy": "lab/target/release/rheon-trajectory-parallel"
+        },
+        {
+          "literal": "--input-evidence"
+        },
+        {
+          "input_evidence": true
+        },
+        {
+          "literal": "--runtime-snapshot-sha256"
+        },
+        {
+          "literal": "cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7"
+        },
+        {
+          "literal": "--output"
+        },
+        {
+          "output_dir": true
+        }
+      ],
+      "entrypoint": "evaluate.py",
+      "environment": {},
+      "format": "external_recipe_v1",
+      "id": "rheon-autonomous-evaluation",
+      "inputs": {
+        "build_receipt": {
+          "max_bytes": 1048576
+        },
+        "checkpoint": {
+          "max_bytes": 1048576
+        },
+        "freeze": {
+          "max_bytes": 2097152
+        },
+        "training_inputs": {
+          "max_bytes": 2097152
+        },
+        "training_result": {
+          "max_bytes": 4194304
+        }
+      },
+      "name": "Rheon autonomous CPU evaluation",
+      "native_sources": [
+        "lab/target/release/rheon-trajectory-parallel"
+      ],
+      "outputs": [
+        {
+          "max_bytes": 134217728,
+          "path": "jacobi-900.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-jacobi-900.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-900-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "jacobi-901.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-jacobi-901.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-901-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "jacobi-902.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-jacobi-902.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-902-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "jacobi-903.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-jacobi-903.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-jacobi-903-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "learned-900.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-learned-900.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-900-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "learned-901.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-learned-901.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-901-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "learned-902.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-learned-902.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-902-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 134217728,
+          "path": "learned-903.npz",
+          "required": true,
+          "role": "evaluation_arrays"
+        },
+        {
+          "max_bytes": 262144,
+          "path": "wire-learned-903.json",
+          "required": true,
+          "role": "native_wire_index"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-000.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-001.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-002.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-003.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-004.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-005.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-006.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 41943040,
+          "path": "fields-learned-903-007.zip",
+          "required": true,
+          "role": "scientific_fields"
+        },
+        {
+          "max_bytes": 335544320,
+          "path": "viewport.json",
+          "required": true,
+          "role": "evaluation_viewport"
+        },
+        {
+          "max_bytes": 33554432,
+          "path": "result.json",
+          "required": true,
+          "role": "evaluation_result"
+        },
+        {
+          "max_bytes": 8388608,
+          "path": "evaluation-receipt.json",
+          "required": true,
+          "role": "evaluation_receipt"
+        },
+        {
+          "max_bytes": 1048576,
+          "path": "input-model.pt",
+          "required": true,
+          "role": "checkpoint"
+        },
+        {
+          "max_bytes": 2097152,
+          "path": "input-freeze.json",
+          "required": true,
+          "role": "source_freeze"
+        },
+        {
+          "max_bytes": 2097152,
+          "path": "input-training-receipt.json",
+          "required": true,
+          "role": "training_inputs"
+        },
+        {
+          "max_bytes": 4194304,
+          "path": "input-training-result.json",
+          "required": true,
+          "role": "training_result"
+        },
+        {
+          "max_bytes": 1048576,
+          "path": "input-build-receipt.json",
+          "required": true,
+          "role": "source_build"
+        },
+        {
+          "max_bytes": 65536,
+          "path": "result-summary.json",
+          "required": true,
+          "role": "result_summary"
+        }
+      ],
+      "parameters": {},
+      "resources": {
+        "max_output_bytes": 3500000000,
+        "profile": "captured_cpu_large_outputs_v1",
+        "wall_seconds": 2400
+      },
+      "runtime": "captured_cpu_python_v1",
+      "runtime_snapshot_sha256": "cc54ef199fc192b70f702e85dda70bfc8697bf3220373ae9f031afd8b237f0a7",
+      "schema_version": 1,
+      "sources": [
+        {
+          "path": "cpu_compare.py",
+          "sha256": "e2e14eb6f354b88a0123bcdd710d4f990102efb97f7cdb584db4700e7f05ab97"
+        },
+        {
+          "path": "evaluate.py",
+          "sha256": "ba212546b6bbe404ed88913647a8454c0f7413558e02e638aad7096eba4b2798"
+        },
+        {
+          "path": "generate.py",
+          "sha256": "c50277e7121de8153e8056e83e67b20aa610c335eabccd2b229ae475313f0d9c"
+        },
+        {
+          "path": "lab/scripts/trajectory_cpu.py",
+          "sha256": "f8479f2667fd91fe83bf6c2d66fd1fb9cd9b60d960615b25f528ccac700ba039"
+        },
+        {
+          "path": "lab/scripts/trajectory_experiment.py",
+          "sha256": "e1fd053f693730d39ded6a7ee50fd6e562bef37b2171bb7ed26acb770605e2f6"
+        },
+        {
+          "path": "lab/scripts/trajectory_model.py",
+          "sha256": "83e93e75bbe05a8dfc8e8dc416b333d6d2e2614613ba45b4f77f99bb94f9a0b4"
+        },
+        {
+          "path": "lab/scripts/verify_parallel_results.py",
+          "sha256": "9d4bd626bbd4352102c11765a47040a37e729a15d5074211f5e60b5bc9ab31ad"
+        },
+        {
+          "path": "lab/target/release/rheon-trajectory-parallel",
+          "sha256": "583c939548d68ec7b25cf60bb9434ca1416f28ab6c06b3cad68a1aaf10b344db"
+        },
+        {
+          "path": "native_transport.py",
+          "sha256": "4155a3467052b291cea0bd8a9018122796851c0fc8499d8866cca28a2fdf821c"
+        }
+      ],
+      "version": 1
+    },
+    "inputs": {
+      "build_receipt": {
+        "max_bytes": 1048576
+      },
+      "checkpoint": {
+        "max_bytes": 1048576
+      },
+      "freeze": {
+        "max_bytes": 2097152
+      },
+      "training_inputs": {
+        "max_bytes": 2097152
+      },
+      "training_result": {
+        "max_bytes": 4194304
+      }
+    },
+    "outputs": [
+      {
+        "max_bytes": 134217728,
+        "path": "jacobi-900.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-jacobi-900.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-900-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "jacobi-901.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-jacobi-901.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-901-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "jacobi-902.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-jacobi-902.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-902-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "jacobi-903.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-jacobi-903.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-jacobi-903-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "learned-900.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-learned-900.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-900-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "learned-901.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-learned-901.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-901-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "learned-902.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-learned-902.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-902-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 134217728,
+        "path": "learned-903.npz",
+        "required": true,
+        "role": "evaluation_arrays"
+      },
+      {
+        "max_bytes": 262144,
+        "path": "wire-learned-903.json",
+        "required": true,
+        "role": "native_wire_index"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-000.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-001.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-002.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-003.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-004.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-005.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-006.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 41943040,
+        "path": "fields-learned-903-007.zip",
+        "required": true,
+        "role": "scientific_fields"
+      },
+      {
+        "max_bytes": 335544320,
+        "path": "viewport.json",
+        "required": true,
+        "role": "evaluation_viewport"
+      },
+      {
+        "max_bytes": 33554432,
+        "path": "result.json",
+        "required": true,
+        "role": "evaluation_result"
+      },
+      {
+        "max_bytes": 8388608,
+        "path": "evaluation-receipt.json",
+        "required": true,
+        "role": "evaluation_receipt"
+      },
+      {
+        "max_bytes": 1048576,
+        "path": "input-model.pt",
+        "required": true,
+        "role": "checkpoint"
+      },
+      {
+        "max_bytes": 2097152,
+        "path": "input-freeze.json",
+        "required": true,
+        "role": "source_freeze"
+      },
+      {
+        "max_bytes": 2097152,
+        "path": "input-training-receipt.json",
+        "required": true,
+        "role": "training_inputs"
+      },
+      {
+        "max_bytes": 4194304,
+        "path": "input-training-result.json",
+        "required": true,
+        "role": "training_result"
+      },
+      {
+        "max_bytes": 1048576,
+        "path": "input-build-receipt.json",
+        "required": true,
+        "role": "source_build"
+      },
+      {
+        "max_bytes": 65536,
+        "path": "result-summary.json",
+        "required": true,
+        "role": "result_summary"
+      }
+    ],
+    "parameter_definitions": {},
+    "receipt": {
+      "manifest_sha256": "2c62475bb274ac92205fc4f79f899dccd52a775332f7ea069b332b8cb30f9ad6",
+      "measured_sha256": "777fccef814adfeb7afcf599cb56e31faf361b4c6afbd3e80b5b899c87ce271b",
+      "path": "recipe.json",
+      "project_id": "a32555aabdee479ab94a9cb4159f5a73",
+      "reference_id": "evaluate"
+    },
+    "runtime": "captured_cpu_python_v1"
+  },
+  "record_id": "9df813a605d746709eb0c245f16f4033",
+  "reviewed_record_exactly_unchanged": true,
+  "run_and_graph_lists_unchanged": true,
+  "run_id": "e731c9569b7d41f9a8f6cde438dcf9ac",
+  "scope": "Generic MCP component; actual retained scientific transport/custody only, not new model acceptance. Current before/after state, not original pre-auth parity.",
+  "scopes": [
+    "inspect"
+  ],
+  "source_commit": "f0761e89d0f18a914d026549953766e4474c246b",
+  "source_dirty": true,
+  "source_hashes": {
+    "agent_api.py": "820ec62f22d49aa5834c05858d865bcf109529689a54bdc06ebc3e186c955dd2",
+    "app.py": "1f4aa63351ef6bc4afc513ce2f46b7955b2dce390c8969db81f14adcee2badf5",
+    "mcp_stdio.py": "9c4144cbb50d1144b3989ef8d71ac47e5a57e595cdf94253a5611feea1671362",
+    "requirements-agent.lock": "bfe34b7377e3a2527eec8635b4cf28ce1d74a555f0d192d7585d76f8f5124380",
+    "runs.py": "ac32ef18e55390a19267e703835730294972608006094e47eb4c22f21548da79",
+    "tests/qualify_agent_scientific.py": "da48fbc0c5e02992f911c54608ab5487014027c222bbf247bad8867db932c15e"
+  },
+  "status": "passed",
+  "training_run_id": "11fc2be1aada490f9b67c11c190728f6",
+  "transferred_artifacts": [
+    {
+      "bytes": 272149,
+      "name": "input-model.pt",
+      "segments": [
+        {
+          "bytes": 272149,
+          "offset": 0,
+          "sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8"
+        }
+      ],
+      "sha256": "e08e85d991d2734383d14501d6dcfdaccb45dfd53370d883c26b44e84255f5f8",
+      "verification": "complete_reassembled_hash_matches_prior_HTTP"
+    },
+    {
+      "bytes": 38196421,
+      "name": "fields-learned-900-000.zip",
+      "segments": [
+        {
+          "bytes": 8388608,
+          "offset": 0,
+          "sha256": "f6213c91a4c33e301b7be33e233dbc1066b1b3532f3c7123d13143784be44e68"
+        },
+        {
+          "bytes": 8388608,
+          "offset": 8388608,
+          "sha256": "fbe4897fd3cfb70bd305ed60067a57af87aae1fb8d6bb14a976f4533b5414d13"
+        },
+        {
+          "bytes": 8388608,
+          "offset": 16777216,
+          "sha256": "277e385f5cf3f99d38fb79a7423989809e687542204888b0252217945883029c"
+        },
+        {
+          "bytes": 8388608,
+          "offset": 25165824,
+          "sha256": "25af36c4d671262964a682e05c15aa0fff398f7f9f7fe312995129a06a98b495"
+        },
+        {
+          "bytes": 4641989,
+          "offset": 33554432,
+          "sha256": "a6832ce770dc5fd363fa297ddbb04121df3f624ccf049c031d04e0b425dba67c"
+        }
+      ],
+      "sha256": "b5d6782890e3d2449cb661d897eea9eaff918dc0cba68a5220abcabd27b525e7",
+      "verification": "complete_reassembled_hash_matches_prior_HTTP"
+    }
+  ],
+  "typed_slice_exact_prior_HTTP_match": true
+}

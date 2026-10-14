@@ -2,7 +2,7 @@
 
 **Plan status:** `Active`
 
-**Current phase:** Independent selective-source review, 95 boundary tests, current-owner cold reads and composed authenticated layout/workflow gates passed. Publishing the exact combined head for full hosted lifecycle/UI CI.
+**Current phase:** Independent selective-source review, 95 boundary tests, current-owner cold reads and composed authenticated layout/workflow gates passed. PR56 awaits final exact-head hosted lifecycle/UI CI. I-B source, 41 optional tests, SDK-absent discovery, independent review and actual retained scientific official-SDK reads passed; publish its separate dependent draft for final CI.
 
 **Next slice:** Integrate qualified generic project/scientific/execution/training/evaluation and storage components without original-v2 implementation ancestry; qualify the new composition.
 
@@ -26,6 +26,7 @@ The user's 2026-10-14 resume instruction explicitly authorizes correct-order int
 | I2 | Original-v2 remains unshipped and honestly blocked; existing v1 stays compatible and all deferred v2 assertions remain intact in original branches | contract | representative | automated | pending | Source/test lineage comparison and v1 public workflows |
 | I3 | Real scientific source/oracle evidence remains attributable to unchanged algorithms; current owners cold-read retained results without a replacement model run | system | required-real | automated | pending | Exact worker/source comparison and retained cold reads |
 | I4 | Generic restore preserves modes, schema, identities and actual qualified artifact history; original-v2 G7 remains pending | integration | representative | automated | pending | Existing full actual restore plus affected final owner tests |
+| I6 | Generic MCP uses typed existing owners with scoped authority and exact retained scientific SDK artifact parity, while full original v2 extension stays pending | integration | representative | automated | pending | Generic MCP source comparison,41 optional tests, independent review and actual retained SDK receipt; final CI pending |
 | I5 | Exact proposed heads pass independent review and applicable lint/syntax/unit/integration/browser CI; integrated main is verified | system | representative | automated | pending | New exact-head CI and final main runs |
 
 ## Scope
@@ -80,9 +81,17 @@ Retain existing actual P4 generation, P5b fit and P5c autonomous evaluation rece
 
 ### I-B: Generic MCP scope split
 
-**Status:** `Planned`
+**Status:** `Active`
 
-Before implementation, publish an explicit component admission splitting generic operations from the retained v2 extension. Keep full original P6/G7 pending. Preserve each original v2 assertion in the deferred source; independently qualify generic SDK parity, authority and real scientific reads. No silent schema/test deletion.
+Admission 2026-10-14 precedes implementation. Reconstruct PR53 `fb3a5a0..5c0e7f9` on the qualified generic core. Ship the same generic registry, fixed-loopback HTTP client, optional official SDK stdio adapter and artifact-segment owner. The sequence input supports main's two-file v1 only. Retain every original three-file/v2 assertion unchanged on original PR43/53 branches; whole original P6/G7 remain pending. This separately named generic component is not full original P6 acceptance.
+
+**Allowed write set:** `agent_api.py`, `mcp_stdio.py`, `requirements-agent.txt`, `requirements-agent.lock`, `docs/contracts/agent-operations.md`, `tests/test_agent_api.py`, `tests/test_agent_domain_parity.py`, `tests/test_agent_http.py`, `tests/test_agent_workflow.py`, `tests/test_artifact_segments.py`, `tests/test_mcp_stdio.py`, `tests/qualify_agent_scientific.py`; exact independent discovery/strict-decoder/artifact-segment hunks in `app.py`, generic artifact-segment method in `runs.py`, isolated optional SDK CI gate, `.gitignore` optional env entry, README component instructions and this plan/reports. Do not wholesale replace composed app, current CI or UI.
+
+**Declared scope changes:** remove only unsupported triple-file oneOf variant in the generic registry, triple-file tuple in the aggregate-size test, and authored-v2 fixture import/native append in parity. Preserve v1 and every other original assertion. Add explicit three-file rejection before any HTTP dispatch, with no side effect, and a source comparison receipt naming the original retained assertions. No new controls-v2 dependency enters this component.
+
+**Acceptance:** optional dependency closure stays exactly pinned and reviewed; app/discovery work without SDK; SDK registry/transport/parity/authority/segments tests pass, with no silent skips in dedicated optional/runtime qualification. Tiny authored classifier tests are fixture regressions, not A8 actual model acceptance. Current MCP cold-reads actual retained scientific artifacts using the official SDK, no producer/model rerun or state rewrite, token revocation afterward. Independent source review plus exact-head lifecycle/UI CI is required. Historical full P6 receipt remains attributable to its original scope and cannot by itself qualify this split.
+
+Private branch `integration/generic-scoped-mcp-20261014`, worktree `/workspace/Tuldok-generic-mcp`, base generic component `a1f3e10`; final publication bases on PR56 and targets main only after PR56 qualification/integration. No force push, merge bypass or deployment.
 
 ### I-C: Qualified merge and final main
 

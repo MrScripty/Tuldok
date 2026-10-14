@@ -1,5 +1,6 @@
 .venv/
 .venv-training/
+.venv-agent/
 __pycache__/
 *.pyc
 data/

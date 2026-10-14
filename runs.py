@@ -36,6 +36,7 @@ PAYLOADS = {'metrics.json', 'test-metrics.json', 'predictions-validation.json',
 TEST_FILES = {'test-metrics.json', 'predictions-test.json'}
 REQUEST_KEY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$')
 MAX_ARTIFACT_BYTES = 64 * 1024 * 1024
+MAX_ARTIFACT_SEGMENT_BYTES = 8 * 1024 * 1024
 _DOWNLOAD_PERMIT = threading.BoundedSemaphore(1)
 
 
@@ -1586,6 +1587,77 @@ class Runs:
                   'custody_identity': copy.deepcopy(run['custody_identity']),
                   'custody_receipt_base64': base64.b64encode(receipt_raw).decode('ascii')}
         return raw, source
+
+    @authorized('inspect', 'runs.artifact_segment')
+    def artifact_segment(self, run_id, name, body):
+        """Read a bounded segment; only the client can verify the whole digest.
+
+        This new, explicitly weaker read contract does not change artifact(),
+        open_artifact() or capture_artifact() and never spools/hashes all payloads.
+        Every call rechecks credentials and retained completed custody.
+        """
+        closed(body, ('expected_sha256', 'offset', 'max_bytes'))
+        expected = body['expected_sha256']
+        offset, maximum = body['offset'], body['max_bytes']
+        if type(expected) is not str or not re.fullmatch(r'[a-f0-9]{64}', expected):
+            raise WorkbenchError('Supply the expected whole-artifact SHA256.')
+        if type(offset) is not int or offset < 0:
+            raise WorkbenchError('Artifact segment offset must be a nonnegative integer.')
+        if type(maximum) is not int or not 1 <= maximum <= MAX_ARTIFACT_SEGMENT_BYTES:
+            raise WorkbenchError('Artifact segment max_bytes must be 1 through 8 MiB.')
+        if type(name) is not str or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', name):
+            raise WorkbenchError('Artifact segment requires a declared flat output name.')
+        with self.lock:
+            run = self._load(run_id)
+        if not self._external(run):
+            raise WorkbenchError('Artifact segments support completed external Runs only.', 'unsupported', 400)
+        inventory = self._external_inventory(run)
+        item = next((item for item in inventory if item['name'] == name), None)
+        if item is None:
+            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+        if item['sha256'] != expected:
+            raise WorkbenchError('Artifact differs from the expected whole SHA256.', 'conflict', 409)
+        if offset > item['bytes']:
+            raise WorkbenchError('Artifact segment offset exceeds the artifact length.')
+        directory = descriptor = None
+        try:
+            directory = self._diagnostic_directory(self.path / run_id)
+            directory_identity = os.fstat(directory)
+            descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+            before = os.fstat(descriptor)
+            if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid()
+                    or before.st_nlink != 1 or before.st_size != item['bytes']):
+                raise ValueError('Artifact segment source differs from declared inventory.')
+            count = min(maximum, item['bytes'] - offset)
+            raw = os.pread(descriptor, count, offset)
+            after = os.fstat(descriptor)
+            current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            keys = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode', 'st_uid', 'st_nlink')
+            if (len(raw) != count or any(getattr(before, key) != getattr(after, key) for key in keys)
+                    or any(getattr(after, key) != getattr(current, key) for key in keys)):
+                raise ValueError('Artifact changed during segment read.')
+            current_directory = self._diagnostic_directory(self.path / run_id)
+            try:
+                current_identity = os.fstat(current_directory)
+                if (directory_identity.st_dev, directory_identity.st_ino) != (current_identity.st_dev, current_identity.st_ino):
+                    raise ValueError('Artifact directory changed during segment read.')
+            finally:
+                os.close(current_directory)
+        except (OSError, ValueError) as error:
+            raise WorkbenchError('Artifact segment is unavailable or changed during read.', 'unavailable', 409) from error
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+            if directory is not None:
+                os.close(directory)
+        next_offset = offset + len(raw)
+        return {'run_id':run_id, 'name':name, 'expected_sha256':expected,
+                'total_bytes':item['bytes'], 'media_type':item['media_type'],
+                'offset':offset, 'bytes':len(raw), 'next_offset':next_offset,
+                'eof':next_offset == item['bytes'],
+                'segment_sha256':hashlib.sha256(raw).hexdigest(),
+                'data_base64':base64.b64encode(raw).decode('ascii'),
+                'verification':'segment_read_whole_hash_unverified'}
 
     @authorized('inspect', 'runs.artifact')
     def artifact(self, run_id, name):
