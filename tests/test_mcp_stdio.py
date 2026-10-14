@@ -10,6 +10,7 @@ from pathlib import Path
 import select
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 
@@ -23,6 +24,13 @@ import os, time, anyio
 from mcp_stdio import serve
 class AuthoredClient:
     def call(self, name, arguments):
+        gate = os.environ.get('TULDOK_TEST_GATE')
+        if gate:
+            deadline = time.monotonic() + 10
+            while not os.path.exists(gate):
+                if time.monotonic() >= deadline:
+                    raise RuntimeError('Authored test gate deadline')
+                time.sleep(0.01)
         time.sleep(float(os.environ.get('TULDOK_TEST_DELAY', '0')))
         if os.environ.get('TULDOK_TEST_FAIL'):
             raise RuntimeError('SECRET_AUTH_TOKEN_MUST_NOT_LEAK')
@@ -203,6 +211,43 @@ class SDKProcessTests(unittest.TestCase):
         self.assertEqual(busy['error']['code'], -32000)
         self.assertEqual(failed['result']['structuredContent']['result']['code'], 'bridge_failure')
         self.assertNotIn('SECRET_AUTH', json.dumps(results))
+
+    def test_duplicate_pending_id_refusal_does_not_consume_original_reply(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        gate = Path(directory.name) / 'release'
+        process = self.start(TULDOK_TEST_GATE=str(gate))
+        self.ready(process)
+        self.send(process, request('tools/call', 2, {'name': 'context_get', 'arguments': {}}))
+        self.send(process, request('ping', 2))
+        refusal = self.read(process)
+        self.assertEqual(refusal, {'jsonrpc': '2.0', 'id': None, 'error': {
+            'code': -32600, 'message': 'Request ID is already in use'}})
+        gate.touch()
+        completed = self.read(process)
+        self.assertEqual(completed['id'], 2)
+        self.assertEqual(completed['result']['structuredContent']['status'], 200)
+        self.send(process, request('ping', 3))
+        self.assertEqual(self.read(process), {'jsonrpc': '2.0', 'id': 3, 'result': {}})
+
+    def test_completed_request_id_can_be_reused_for_a_distinct_call(self):
+        process = self.start()
+        self.ready(process)
+        for _ in range(2):
+            self.send(process, request('tools/call', 2, {'name': 'context_get', 'arguments': {}}))
+            completed = self.read(process)
+            self.assertEqual(completed['id'], 2)
+            self.assertEqual(completed['result']['structuredContent']['status'], 200)
+
+    def test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic(self):
+        process = self.start()
+        process.stdin.write(b'{"private_path":"/private/ISSUE59_SENTINEL"')
+        process.stdin.close()
+        self.assertEqual(self.read(process), {'jsonrpc': '2.0', 'id': None, 'error': {
+            'code': -32700, 'message': 'Incomplete JSON line at EOF'}})
+        self.assertEqual(process.wait(timeout=8), 0)
+        self.assertEqual(process.stdout.read(), b'')
+        self.assertEqual(process.stderr.read(), b'')
 
     def test_eof_and_oversized_line_are_bounded(self):
         process = self.start()
