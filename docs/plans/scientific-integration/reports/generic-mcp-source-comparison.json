@@ -1,0 +1,158 @@
+{
+  "admission": "f0761e89d0f18a914d026549953766e4474c246b",
+  "qualified_source": "5c0e7f92914e5aeac6ec939e3a667fc85b22aa90",
+  "current": {
+    "agent_api.py": {
+      "sha256": "820ec62f22d49aa5834c05858d865bcf109529689a54bdc06ebc3e186c955dd2",
+      "original_sha256": "951e9540d31c8a4f4e8646dcbcb85dcd32460647f3e7d28d353224f5af1c6c7b",
+      "byte_identical": false
+    },
+    "mcp_stdio.py": {
+      "sha256": "9c4144cbb50d1144b3989ef8d71ac47e5a57e595cdf94253a5611feea1671362",
+      "original_sha256": "9c4144cbb50d1144b3989ef8d71ac47e5a57e595cdf94253a5611feea1671362",
+      "byte_identical": true
+    },
+    "requirements-agent.txt": {
+      "sha256": "93f8ae3864fde3f4f0b6edbaa92c32d4c305ebff11c7027b7eebf92337e96b98",
+      "original_sha256": "93f8ae3864fde3f4f0b6edbaa92c32d4c305ebff11c7027b7eebf92337e96b98",
+      "byte_identical": true
+    },
+    "requirements-agent.lock": {
+      "sha256": "bfe34b7377e3a2527eec8635b4cf28ce1d74a555f0d192d7585d76f8f5124380",
+      "original_sha256": "bfe34b7377e3a2527eec8635b4cf28ce1d74a555f0d192d7585d76f8f5124380",
+      "byte_identical": true
+    },
+    "docs/contracts/agent-operations.md": {
+      "sha256": "7bb416db981d6df7f18e99ccb03f150be76ac27ff3162b09de7743b3b072ed5f",
+      "original_sha256": "7dd7bdefb50d2ecbd174f8a2b82b786b4584fcb53656fa7757e199be356b59de",
+      "byte_identical": false
+    },
+    "tests/test_agent_api.py": {
+      "sha256": "76cf77a5fbf5b04071ab5732f3c2a142b2e6242f10aa809cdf70597becf70e47",
+      "original_sha256": "e457f2c6b1ec5f29632d8b626a03403ae04010f9b080717ddeae1269b92266ad",
+      "byte_identical": false
+    },
+    "tests/test_agent_domain_parity.py": {
+      "sha256": "0b7f7242c123fad7d52d81889f7e6c487f18f03c02d2a7599821c20ec5373c42",
+      "original_sha256": "7bfdb3259c653ce42a57f1eb6dc11f59209c64b2e3f38ecf9c434d2d900833d0",
+      "byte_identical": false
+    },
+    "tests/test_agent_http.py": {
+      "sha256": "77ccbd8fc846a832cc3d5e26f5e69fa6c332a1dca9c26add8886f796fe74c210",
+      "original_sha256": "77ccbd8fc846a832cc3d5e26f5e69fa6c332a1dca9c26add8886f796fe74c210",
+      "byte_identical": true
+    },
+    "tests/test_agent_workflow.py": {
+      "sha256": "8746878106344a3e28ec199f7280b0c9b3c7f9205b41da84801314083c30a597",
+      "original_sha256": "8746878106344a3e28ec199f7280b0c9b3c7f9205b41da84801314083c30a597",
+      "byte_identical": true
+    },
+    "tests/test_artifact_segments.py": {
+      "sha256": "f4f231c9eb1d2b3e9f478a4b9ee8139f286b3f009290d87f5433a3f97ed3eb6d",
+      "original_sha256": "f4f231c9eb1d2b3e9f478a4b9ee8139f286b3f009290d87f5433a3f97ed3eb6d",
+      "byte_identical": true
+    },
+    "tests/test_mcp_stdio.py": {
+      "sha256": "8098c7a1485e7e31b2240dc6790b26e0eaaf481753087b0407fff0cd2b85b91a",
+      "original_sha256": "8098c7a1485e7e31b2240dc6790b26e0eaaf481753087b0407fff0cd2b85b91a",
+      "byte_identical": true
+    },
+    "tests/qualify_agent_scientific.py": {
+      "sha256": "da48fbc0c5e02992f911c54608ab5487014027c222bbf247bad8867db932c15e",
+      "original_sha256": "da48fbc0c5e02992f911c54608ab5487014027c222bbf247bad8867db932c15e",
+      "byte_identical": true
+    },
+    "app.py": {
+      "sha256": "1f4aa63351ef6bc4afc513ce2f46b7955b2dce390c8969db81f14adcee2badf5",
+      "admitted_base_sha256": "e71ff2a944f28286fa68dad6672c7ef4f5a8efc5eaba91bbb0a076900301a4e2",
+      "mode": "exact independent app/segment/ignore hunks or isolated SDK CI insertion; composed owner otherwise retained"
+    },
+    "runs.py": {
+      "sha256": "ac32ef18e55390a19267e703835730294972608006094e47eb4c22f21548da79",
+      "admitted_base_sha256": "dd1b0c0efb82d32d8144a68ce6a05727f18fe578cabbb0ba2bf60b78a0e334f2",
+      "mode": "exact independent app/segment/ignore hunks or isolated SDK CI insertion; composed owner otherwise retained"
+    },
+    ".github/workflows/tests.yml": {
+      "sha256": "b2b5207aab3895fd462090d314140f7e1b090a793a1714914fac0a1b545a966f",
+      "admitted_base_sha256": "73a55eed662b0464d1234b67ca97a8a46ae8a0cb37e53e855947343cf0921e3a",
+      "mode": "exact independent app/segment/ignore hunks or isolated SDK CI insertion; composed owner otherwise retained"
+    },
+    ".gitignore": {
+      "sha256": "ee8d81da67edcb1831ca5f4508a5b79539c1af0c666f180e32f4fb459340a96c",
+      "admitted_base_sha256": "7e4e1f2277bacfde6faba8da25157cd03762d98f16242756d68b655fbbb72630",
+      "mode": "exact independent app/segment/ignore hunks or isolated SDK CI insertion; composed owner otherwise retained"
+    }
+  },
+  "assertion_preservation": {
+    "tests/test_agent_api.py": {
+      "original_assertions": 56,
+      "current_assertions": 61,
+      "all_original_assertion_nodes_retained": true
+    },
+    "tests/test_agent_domain_parity.py": {
+      "original_assertions": 21,
+      "current_assertions": 21,
+      "all_original_assertion_nodes_retained": true
+    },
+    "tests/test_agent_http.py": {
+      "original_assertions": 36,
+      "current_assertions": 36,
+      "all_original_assertion_nodes_retained": true
+    },
+    "tests/test_agent_workflow.py": {
+      "original_assertions": 49,
+      "current_assertions": 49,
+      "all_original_assertion_nodes_retained": true
+    },
+    "tests/test_artifact_segments.py": {
+      "original_assertions": 35,
+      "current_assertions": 35,
+      "all_original_assertion_nodes_retained": true
+    },
+    "tests/test_mcp_stdio.py": {
+      "original_assertions": 47,
+      "current_assertions": 47,
+      "all_original_assertion_nodes_retained": true
+    }
+  },
+  "optional_installed_versions": {
+    "mcp": "1.30.0",
+    "jsonschema": "4.26.0",
+    "anyio": "4.15.1"
+  },
+  "declared_exclusions": [
+    "agent registry triple-file schema tuple",
+    "aggregate-size test triple-file tuple",
+    "parity controls_fixture import and its native append"
+  ],
+  "new_safety": [
+    "Explicit unsupported exact-three-file request before HTTP bootstrap or mutation; both aliases tested"
+  ],
+  "segment_owner_ast_identical": true,
+  "focused_checks": {
+    "optional_agent": {
+      "tests": 23,
+      "seconds": 46.518,
+      "skips": 0,
+      "result": "PASS"
+    },
+    "official_sdk_stdio": {
+      "tests": 13,
+      "seconds": 7.848,
+      "skips": 0,
+      "result": "PASS"
+    },
+    "artifact_segments": {
+      "tests": 5,
+      "seconds": 10.472,
+      "skips": 0,
+      "result": "PASS"
+    },
+    "base_sdk_absent_authenticated_app_discovery": {
+      "tests": 1,
+      "skips": 0,
+      "result": "PASS"
+    }
+  },
+  "scope_precision": "Python exact-three-file request raises AgentAPIError unsupported/status400; official SDK stdio prevalidation maps to JSON-RPC -32602; neither dispatches HTTP."
+}

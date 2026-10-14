@@ -2,7 +2,7 @@
 
 **Plan status:** `Active`
 
-**Current phase:** Independent selective-source review, 95 boundary tests, current-owner cold reads and composed authenticated layout/workflow gates passed. PR56 publishes the exact combined head for full hosted lifecycle/UI CI; I-B generic MCP admission is now explicit on its isolated branch.
+**Current phase:** Independent selective-source review, 95 boundary tests, current-owner cold reads and composed authenticated layout/workflow gates passed. PR56 awaits final exact-head hosted lifecycle/UI CI. I-B source, 41 optional tests, SDK-absent discovery, independent review and actual retained scientific official-SDK reads passed; publish its separate dependent draft for final CI.
 
 **Next slice:** Integrate qualified generic project/scientific/execution/training/evaluation and storage components without original-v2 implementation ancestry; qualify the new composition.
 
@@ -26,6 +26,7 @@ The user's 2026-10-14 resume instruction explicitly authorizes correct-order int
 | I2 | Original-v2 remains unshipped and honestly blocked; existing v1 stays compatible and all deferred v2 assertions remain intact in original branches | contract | representative | automated | pending | Source/test lineage comparison and v1 public workflows |
 | I3 | Real scientific source/oracle evidence remains attributable to unchanged algorithms; current owners cold-read retained results without a replacement model run | system | required-real | automated | pending | Exact worker/source comparison and retained cold reads |
 | I4 | Generic restore preserves modes, schema, identities and actual qualified artifact history; original-v2 G7 remains pending | integration | representative | automated | pending | Existing full actual restore plus affected final owner tests |
+| I6 | Generic MCP uses typed existing owners with scoped authority and exact retained scientific SDK artifact parity, while full original v2 extension stays pending | integration | representative | automated | pending | Generic MCP source comparison,41 optional tests, independent review and actual retained SDK receipt; final CI pending |
 | I5 | Exact proposed heads pass independent review and applicable lint/syntax/unit/integration/browser CI; integrated main is verified | system | representative | automated | pending | New exact-head CI and final main runs |
 
 ## Scope

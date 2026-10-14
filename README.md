@@ -77,6 +77,49 @@ http://127.0.0.1:8091/workbench for the dataset editor, or
 http://127.0.0.1:8091/ for the book-corner studio. Change the port or data location
 with --port and --data. Camera access works on localhost; accessing a machine over the network requires HTTPS for browser camera access. Image import also works without camera access.
 
+## Local agent connection
+
+The optional MCP stdio bridge connects to an already running Tuldok server on a
+numeric loopback address. Install its separate dependencies explicitly:
+
+```sh
+python3.12 -m venv .venv-agent
+.venv-agent/bin/python -m pip install --require-hashes -r requirements-agent.lock
+.venv-agent/bin/python mcp_stdio.py --config /private/tuldok-agent.json
+```
+
+The supplied dependency lock targets CPython 3.12 on Linux x86-64; it does not
+claim other interpreter/platform combinations. The app and training environments
+remain separate.
+
+Use a private configuration file with `endpoint`, `catalog_id` and `token_file`:
+
+```json
+{
+  "endpoint": "http://127.0.0.1:8091",
+  "catalog_id": "YOUR_CATALOG_ID",
+  "token_file": "/private/tuldok-agent-token"
+}
+```
+
+The token file must contain an owner-issued **agent** credential and be readable
+only by its owner. Keep tokens out of command arguments and MCP configuration
+shared with others. Obtain catalog identity from the authenticated workspace
+context. The bridge checks that identity, credential kind and operation-registry
+digest before use; it never creates a server, catalog or credential.
+
+The generic connection supports the current two-file sequence profile. The
+producer-specific controls-v2 extension remains deferred with its original
+acceptance tests; this is not full original P6 acceptance.
+
+See [agent operations](docs/contracts/agent-operations.md) for credential setup,
+the supported tool matrix, request limits and examples. Human review and exact
+execution grants remain owner actions. Tools can save drafts, freeze approved
+data, edit graphs and submit explicitly approved external Runs. Artifact segments
+require the client to verify the reassembled whole-file hash before use; ordinary
+verified HTTP downloads remain available. Ending the MCP connection does not
+cancel an admitted Run. Use its scoped cancellation operation when required.
+
 ## Real image workflow in Workspaces
 
 [Real workflow screenshots](docs/images/workspaces-m2/README.md) show Data,

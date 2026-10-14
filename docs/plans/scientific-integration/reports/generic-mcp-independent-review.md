@@ -1,0 +1,9 @@
+# Independent generic MCP review
+
+2026-10-14, read-only GPT-6.1 Sol High reviewer integration_gate_audit_sol: PASS, no blocking defect found.
+
+All 244 unittest assertion calls remain across six modules; five were added. All 27 bare asserts in the unchanged scientific qualifier remain. Combined: 271 original, 276 current, zero lost. Only three admitted registry/schema/parity locations changed their declared scope; every original v2 case remains intact in original PR43/53 refs. Generic SDK transport, artifact segments, the remaining focused tests and scientific qualifier match original PR53. All 29 locked versions/hashes match the retained resolution. Composed PR33 UI and generic science owners are unchanged; application and CI edits are exact admitted seams.
+
+Reviewed SHA256: agent_api.py: 820ec62f22d49aa5834c05858d865bcf109529689a54bdc06ebc3e186c955dd2, mcp_stdio.py: 9c4144cbb50d1144b3989ef8d71ac47e5a57e595cdf94253a5611feea1671362, lock: bfe34b7377e3a2527eec8635b4cf28ce1d74a555f0d192d7585d76f8f5124380, app.py: 1f4aa63351ef6bc4afc513ce2f46b7955b2dce390c8969db81f14adcee2badf5. Final contract: 7bb416db981d6df7f18e99ccb03f150be76ac27ff3162b09de7743b3b072ed5f distinguishes Python client 400 from stdio-32602; protocol unchanged.
+
+Read-only driver review: snapshots preserve all non-authority data/science state, files, modes, schema, custody, runtime manifests, Runs and identity sequences. Existing actor rows remain exact and the new actor is exactly the issued QA agent. Agent credentials are revoked and the owner logs out. Credentials/audit tables are allowlisted authority changes, not individually claimed immutable rows. First failed QA allowlist omitted expected actor creation; preserved failure, corrected precise check and repeated retained reads without producer/model execution. Final actual receipt and hosted CI separately decide acceptance.
