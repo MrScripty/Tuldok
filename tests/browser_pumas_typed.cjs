@@ -30,8 +30,14 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   ws.onmessage=event=>{const message=JSON.parse(event.data);pageLoads.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);};
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
-  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,classificationStatus:document.getElementById("text-classification-proposal-status")?.textContent,classificationModels:document.getElementById("text-classification-proposal-model")?.options.length,scriptType:typeof refreshTextClassificationProposals,body:document.body?.innerText.slice(0,1500),viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll("body *")].filter(e=>e.getBoundingClientRect().right>innerWidth || e.scrollWidth>e.clientWidth+1).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).slice(0,30)})');
+  inspect=()=>evaluate('JSON.stringify({url:location.href,ready:document.readyState,notice:document.getElementById("notice")?.textContent,classificationStatus:document.getElementById("text-classification-proposal-status")?.textContent,classificationModels:document.getElementById("text-classification-proposal-model")?.options.length,captionStatus:document.getElementById("caption-proposal-status")?.textContent,captionBusy:typeof captionProposalBusy!=="undefined"&&captionProposalBusy,captionPending:typeof captionProposalPendingRequest!=="undefined"&&captionProposalPendingRequest,captionAdmission:typeof captionProposalAdmissionRequest!=="undefined"&&captionProposalAdmissionRequest,captionSubmitDisabled:document.getElementById("caption-proposal-submit")?.disabled,scriptType:typeof refreshTextClassificationProposals,body:document.body?.innerText.slice(0,1500),viewport:innerWidth,documentWidth:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll("body *")].filter(e=>e.getBoundingClientRect().right>innerWidth || e.scrollWidth>e.clientWidth+1).map(e=>({tag:e.tagName,id:e.id,class:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).slice(0,30)})');
   const click=id=>evaluate('document.getElementById('+JSON.stringify(id)+').click()');
+  const pointerClick=async id=>{
+    const point=await evaluate('(async()=>{const e=document.getElementById('+JSON.stringify(id)+');e.scrollIntoView({block:"center"});await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));const r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;return {x,y,ready:!e.disabled&&r.width>0&&r.height>0&&e.contains(document.elementFromPoint(x,y))};})()');
+    assert.ok(point.ready,'Expected an enabled, visible, hit-testable button: '+id);
+    await send('Input.dispatchMouseEvent',{type:'mousePressed',x:point.x,y:point.y,button:'left',clickCount:1});
+    await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:point.x,y:point.y,button:'left',clickCount:1});
+  };
   const fill=(id,value)=>evaluate('(()=>{const e=document.getElementById('+JSON.stringify(id)+');e.value='+JSON.stringify(value)+';e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}));})()');
   const base='http://127.0.0.1:'+port,ref=row=>({id:row.id,revision:row.revision,source_revision:row.source_revision});
   const request=async(path,body)=>{const r=await fetch(base+'/api/workbench/'+path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();assert.ok(r.ok,JSON.stringify(data));return data;};
@@ -113,19 +119,39 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.equal(visionExact.canonical_request.semantic_task,'image_to_text');assert.equal(visionExact.canonical_request.profile,'vision-cpu');
   assert.equal(visionExact.config.seed,null);assert.equal(visionExact.reported_model,null);assert.ok(!visionJob.canonical_request);
   await evaluate('refreshCaptionProposals()');
+  await until(()=>evaluate('!captionProposalBusy && !captionProposalPendingRequest && !document.getElementById("caption-proposal-submit").disabled'));
+  // The saved row can be visible before Apply's acknowledgement and refreshes
+  // finish. Hold that real response to reproduce the former readiness race.
+  await evaluate('window.visionApplyFetch=fetch;window.visionApplyRelease=null;window.visionAdmissionRequests=[];window.fetch=async(...args)=>{if(args[0]==="/api/workbench/caption-proposals"&&args[1]?.method==="POST")visionAdmissionRequests.push(JSON.parse(args[1].body));const response=await visionApplyFetch(...args);if(args[0]==='+JSON.stringify('/api/workbench/caption-proposals/decide/'+visionJob.id)+'&&args[1]?.method==="POST")await new Promise(resolve=>visionApplyRelease=resolve);return response;};');
   await evaluate('[...document.querySelectorAll("#caption-proposal-jobs button")].find(b=>b.textContent==="Apply as draft").click()');
+  await until(()=>evaluate('!!visionApplyRelease'));
   const visionApplied=await until(async()=>{const row=await request('records/'+visionSource.id);return row.annotation?.caption==='A blue rectangle.'&&row;});
   assert.equal(visionApplied.review,'draft');assert.equal(visionApplied.target_proposal.producer_contract_source,JSON.parse(fs.readFileSync(path.join(root,'tests/fixtures/pumas-image-to-text-v1/source.json'),'utf8')).producer_commit);
   assert.deepEqual(visionApplied.groups,visionSource.groups);
   await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'loss'})});
   await evaluate('openRecord('+JSON.stringify(visionApplied.id)+')');
   await until(()=>evaluate('current?.revision === '+visionApplied.revision));
+  const visionRace=await evaluate('({busy:captionProposalBusy,revision:current.revision,validForm:document.getElementById("caption-proposal-form").checkValidity()})');
+  assert.equal(visionRace.busy,true,'A visible saved revision does not complete the Apply action');
+  assert.equal(visionRace.revision,visionApplied.revision);assert.equal(visionRace.validForm,true);
+  // Reproduce the old submit exactly: the controller correctly ignores it while
+  // Apply still owns the action. The eventual inference assertion must not use it.
   await evaluate('document.getElementById("caption-proposal-form").requestSubmit()');
-  const visionLost=await until(async()=> (await request('caption-proposals')).jobs.find(j=>j.source.id===visionSource.id && j.status==='failed'));
+  assert.equal(await evaluate('visionAdmissionRequests.length'),0,'Busy Apply must not admit another caption request');
+  assert.equal((await request('caption-proposals')).jobs.filter(j=>j.source.id===visionSource.id).length,1);
+  await evaluate('visionApplyRelease()');
+  await until(()=>evaluate('!captionProposalBusy && !captionProposalAdmissionRequest && !captionProposalPendingRequest && !document.getElementById("caption-proposal-submit").disabled && !document.getElementById("editor").dataset.busy && !hasUnsavedEdits() && current?.id==='+JSON.stringify(visionApplied.id)+' && current.revision==='+visionApplied.revision));
+  await pointerClick('caption-proposal-submit');
+  await until(()=>evaluate('visionAdmissionRequests.length===1'));
+  const visionLossRequest=await evaluate('visionAdmissionRequests[0]');
+  assert.equal(visionLossRequest.source_id,visionApplied.id);assert.equal(visionLossRequest.revision,visionApplied.revision);
+  const visionLost=await until(async()=> (await request('caption-proposals')).jobs.find(j=>j.id===visionLossRequest.request_id && j.status==='failed'));
   assert.equal(visionLost.provider_outcome,'unknown');
   await click('caption-proposal-refresh');await pause(150);
   const visionControl=await(await fetch(base+'/test/pumas-vision',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).json();
   assert.equal(visionControl.requests.length,2,'Refreshing an unknown outcome never replays inference');
+  assert.equal(await evaluate('visionAdmissionRequests.length'),1,'Only the ready physical click admits the second request');
+  await evaluate('window.fetch=visionApplyFetch');
   const visionShot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-vision-caption.jpg'),Buffer.from(visionShot.data,'base64'));
   await send('Page.navigate',{url:base+'/'});await until(()=>evaluate('typeof pumasTypedSettings === "function" && document.getElementById("generate")'));
   const studioReady=()=>evaluate('!!document.getElementById("generation-refresh")?.onclick && !document.getElementById("generation-refresh").disabled');
@@ -146,6 +172,6 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Typed metadata must fit the image studio viewport');
   const imageShot=await send('Page.captureScreenshot',screenshotOptions);fs.writeFileSync(path.join(report,'typed-image-batch.jpg'),Buffer.from(imageShot.data,'base64'));
   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({origin,gateway,manifest,classification:job,grounded,admitted_record:admitted.record,
-    vision:{origin:'Source-derived PR65 HTTP fixture; not native/model qualification',gateway:visionGateway,manifest:visionManifest,job:visionExact,applied:visionApplied,lost:visionLost},batch,entry,errors},null,2));
+    vision:{origin:'Source-derived PR65 HTTP fixture; not native/model qualification',gateway:visionGateway,manifest:visionManifest,job:visionExact,applied:visionApplied,lost:visionLost,apply_readiness_race:{...visionRace,ignored_busy_admissions:0,ready_admissions:1,request_id:visionLossRequest.request_id}},batch,entry,errors},null,2));
   assert.deepEqual(errors,[]);console.log('Typed classification draft, fixed selections, exact profile, held capabilities, grounded family/review, text-to-PNG and settings restore passed: '+origin);
 })().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const socket of extraSockets)socket.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

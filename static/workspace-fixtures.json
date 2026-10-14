@@ -1,0 +1,321 @@
+{
+  "version": 1,
+  "mode": "fixture",
+  "dataset_id": "fixture-dataset-v1",
+  "release_id": "fixture-release-v1",
+  "records": [
+    {
+      "id": "fixture-image",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "image",
+      "name": "Shapes / blue square",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "image_classification_v1",
+      "content_hash": "55fabdbf139c334815e1c20589b6625384d713696d68180c7d7184c777fd0679",
+      "representation": {
+        "width": 128,
+        "height": 128,
+        "class": "square"
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"class\":\"square\",\"height\":128,\"width\":128}"
+      },
+      "review": "draft"
+    },
+    {
+      "id": "fixture-text",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "text",
+      "name": "A short field note",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "text_entities_v1",
+      "content_hash": "8c68d5b843e156b46779b98061d4f5dd19fba4f45a733e1f284040841e44c86f",
+      "representation": {
+        "text": "Blue square. Café 😀",
+        "spans": [
+          {
+            "start": 13,
+            "end": 17,
+            "label": "word"
+          }
+        ]
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"spans\":[{\"end\":17,\"label\":\"word\",\"start\":13}],\"text\":\"Blue square. Café 😀\"}"
+      },
+      "review": "draft"
+    },
+    {
+      "id": "fixture-audio",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "audio",
+      "name": "Two synthetic pulses",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "audio_pcm_v1",
+      "content_hash": "190eb3151c619a74bf08705b5c037368fa4314724e00b1dd6a42b2604f705cc5",
+      "representation": {
+        "sample_rate": 8000,
+        "channels": 2,
+        "frame_count": 800,
+        "interval": [
+          0,
+          400
+        ],
+        "channel": 0,
+        "transcript": null
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"channel\":0,\"channels\":2,\"frame_count\":800,\"interval\":[0,400],\"sample_rate\":8000,\"transcript\":null}"
+      },
+      "review": "draft"
+    },
+    {
+      "id": "fixture-mesh",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "mesh",
+      "name": "Authored tetrahedron",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "mesh_ascii_ply_v1",
+      "content_hash": "01a3a7d6da0caa68ae4dce751dac18d13708b48cefbdae27bf4d9af62610050e",
+      "representation": {
+        "vertices": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "faces": [
+          [
+            0,
+            2,
+            1
+          ],
+          [
+            0,
+            1,
+            3
+          ],
+          [
+            0,
+            3,
+            2
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "units": "m",
+        "frame": "right-handed XYZ"
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"faces\":[[0,2,1],[0,1,3],[0,3,2],[1,2,3]],\"frame\":\"right-handed XYZ\",\"units\":\"m\",\"vertices\":[[0,0,0],[1,0,0],[0,1,0],[0,0,1]]}"
+      },
+      "review": "draft"
+    },
+    {
+      "id": "fixture-point_cloud",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "point_cloud",
+      "name": "Four indexed points",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "point_cloud_fixture_v1",
+      "content_hash": "e8259e50fa72a03380eaa013dada6b627101760bf4bc9441980389d450fb738e",
+      "representation": {
+        "points": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "point_count": 4,
+        "units": "m",
+        "frame": "right-handed XYZ"
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"frame\":\"right-handed XYZ\",\"point_count\":4,\"points\":[[0,0,0],[1,0,0],[0,1,0],[0,0,1]],\"units\":\"m\"}"
+      },
+      "review": "draft"
+    },
+    {
+      "id": "fixture-volume",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "volume",
+      "name": "Anisotropic grid",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "volume_fixture_v1",
+      "content_hash": "9670d4834dcacd7f3794d613473d067a536ffc1cfbcdbebd1bf1e4583adacd8e",
+      "representation": {
+        "shape": [
+          2,
+          2,
+          2
+        ],
+        "values": [
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          0,
+          1
+        ],
+        "dtype": "uint8",
+        "spacing": [
+          1,
+          2,
+          3
+        ],
+        "affine": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1
+          ]
+        ],
+        "units": "mm"
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"affine\":[[1,0,0,0],[0,2,0,0],[0,0,3,0],[0,0,0,1]],\"dtype\":\"uint8\",\"shape\":[2,2,2],\"spacing\":[1,2,3],\"units\":\"mm\",\"values\":[0,1,1,0,1,0,0,1]}"
+      },
+      "review": "draft"
+    },
+    {
+      "id": "fixture-sequence",
+      "dataset_id": "fixture-dataset-v1",
+      "mode": "fixture",
+      "kind": "sequence",
+      "name": "Three authored frames",
+      "source_revision": 1,
+      "annotation_revision": 1,
+      "schema": "sequence_fixture_v1",
+      "content_hash": "3e31b307e7531205557134bf9945702b17bca18828dfa0f7167c5a3b6d727f6f",
+      "representation": {
+        "times": [
+          0,
+          0.5,
+          1
+        ],
+        "time_unit": "s",
+        "entity_ids": [
+          "particle-1"
+        ],
+        "positions": [
+          [
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0,
+              0
+            ]
+          ]
+        ],
+        "units": "m",
+        "family": "fixture-whole-trajectory"
+      },
+      "rights_note": "Authored demonstration data; CC0-1.0.",
+      "provenance": {
+        "source": "Tuldok M1 authored fixture",
+        "license": "CC0-1.0",
+        "original_representation": "{\"entity_ids\":[\"particle-1\"],\"family\":\"fixture-whole-trajectory\",\"positions\":[[[0,0,0]],[[1,0,0]],[[2,0,0]]],\"time_unit\":\"s\",\"times\":[0,0.5,1],\"units\":\"m\"}"
+      },
+      "review": "draft"
+    }
+  ]
+}

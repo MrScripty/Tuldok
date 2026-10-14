@@ -87,8 +87,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const archive=await fetch(release);assert.equal(archive.status,200);
   const zipPath=path.join(temporary,'captions.zip');fs.writeFileSync(zipPath,Buffer.from(await archive.arrayBuffer()));
   const {execFileSync}=require('node:child_process');
-  execFileSync('python3',['-c',`import json,zipfile;z=zipfile.ZipFile(${JSON.stringify(zipPath)});m=json.loads(z.read('manifest.json'));assert m['format']=='image_caption_v1';assert len(m['records'])==4;assert set(m['split_mapping'].values())=={'train','val','test'};[(lambda rows: (len(rows)>0 or (_ for _ in ()).throw(AssertionError('Empty split'))))([json.loads(x) for x in z.read(s+'/metadata.jsonl').splitlines()]) for s in ('train','val','test')]`]);
-  assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('small-image warnings'));
+  execFileSync('python3',['-c',`import json,zipfile;z=zipfile.ZipFile(${JSON.stringify(zipPath)});m=json.loads(z.read('manifest.json'));assert m['format']=='image_caption_v1';assert len(m['records'])==4;assert len(m['warnings'])==4;assert all(w.startswith('Small image:') for w in m['warnings']);assert set(m['split_mapping'].values())=={'train','val','test'};[(lambda rows: (len(rows)>0 or (_ for _ in ()).throw(AssertionError('Empty split'))))([json.loads(x) for x in z.read(s+'/metadata.jsonl').splitlines()]) for s in ('train','val','test')]`]);
+  assert.ok((await evaluate('document.getElementById("notice").textContent')).includes('4 export warnings; inspect manifest.json.'));
   const desktop=await send('Page.captureScreenshot',screenshotOptions);
   fs.writeFileSync(path.join(qaDirectory(root,'image-caption-exports'),'captions-desktop.jpg'),Buffer.from(desktop.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:false});

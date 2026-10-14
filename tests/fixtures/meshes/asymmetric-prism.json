@@ -1,0 +1,18 @@
+{
+  "format": "tuldok_mesh_v1",
+  "geometry_file": "mesh.ply",
+  "geometry_bytes": 328,
+  "geometry_sha256": "4d7248dfa2befb74168749843884d3db16d6f1f6783fb941be3d1dbc6c3f3485",
+  "units": "cm",
+  "coordinate_system": {
+    "frame": "authored-prism",
+    "handedness": "right",
+    "up_axis": "z"
+  },
+  "provenance": {
+    "source": "Tuldok project-authored analytic fixture",
+    "revision": "asymmetric-prism-v1",
+    "license": "Project terms",
+    "description": "Six vertices and eight triangles, mixed float/double properties. Inspection evidence only; no simulation or training qualification."
+  }
+}

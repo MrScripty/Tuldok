@@ -1,0 +1,149 @@
+{
+  "source_commit": "83f53385a6812be4026302e7362a240b68ceb339",
+  "dirty": false,
+  "command": "node tests/browser_workspace_image_run.cjs",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "invalid held-out class coverage blocks release before training",
+    "fixed split preview, exact reviewed source release and immutable ZIP download",
+    "real Pipeline loading, late-response navigation fence and explicit error retry",
+    "real HTTP stale validation rejects before admission and explicit reload/revalidation recovers",
+    "actual trainer parameter edit/save/reload, disconnected graph refusal, keyboard validation and runtime preview",
+    "lost committed response retains exact receipt; explicit reconciliation returns the same single run",
+    "native Chromium 200% menu zoom verified by doubled device ratio and halved CSS viewport; no horizontal overflow",
+    "one admitted real child completed; verified checkpoint, validation metrics and exact predictions; test access remains locked",
+    "late correction response cannot override newer Pipeline navigation or the active Data record",
+    "result correction saves a new reviewed revision/release while old release bytes and frozen predictions remain unchanged",
+    "explicit test inspection is durable; later releases containing the records/pixels are marked exposed/reused",
+    "application restart retains exact run, immutable inputs/predictions and durable test exposure without replay"
+  ],
+  "captures": [
+    {
+      "file": "catalog-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "catalog-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-real-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "running-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-real-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-real-1024.jpg",
+      "width": 1024,
+      "height": 768,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "results-real-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "pipeline-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85
+    },
+    {
+      "file": "data-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85
+    },
+    {
+      "file": "runs-native-200.jpg",
+      "native_browser_zoom": 200,
+      "unzoomed": {
+        "width": 1440,
+        "ratio": 1
+      },
+      "zoomed": {
+        "width": 720,
+        "ratio": 2
+      },
+      "quality": 85
+    },
+    {
+      "file": "catalog-correction-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    }
+  ],
+  "run_id": "36a82a2ff267465d90c4ad69fa7a9496",
+  "release_id": "b00061379d72e74d24e044819481bdef8bd0262a8523ecf98ef97b0273766fd8",
+  "training": true,
+  "quality_claim": false,
+  "offline_canary": {
+    "qualification": "ordinary libc loopback-only transport",
+    "checks": [
+      "connect denied 192.0.2.1",
+      "sendto denied 192.0.2.1",
+      "connect denied 2001:db8::1",
+      "sendto denied 2001:db8::1",
+      "resolution denied 192.0.2.1",
+      "resolution denied 2001:db8::1",
+      "resolution denied external-test.invalid",
+      "tcp local 127.0.0.1",
+      "udp local 127.0.0.1",
+      "tcp local ::1",
+      "udp local ::1",
+      "unix local"
+    ]
+  },
+  "outbound_transport": "libc loopback-only injection (not a direct-syscall security sandbox)",
+  "fixture_provenance": "12 CC0 authored independent images imported through ordinary Data UI"
+}

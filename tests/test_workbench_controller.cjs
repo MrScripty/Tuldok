@@ -5,23 +5,23 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 class Element {
-  constructor(id='') { this.id=id; this.value=''; this.dataset={}; this.listeners={}; this.children=[]; this.files=[]; this.classList={toggle(){}}; }
+  constructor(id='') { this.id=id; this.value=''; this.dataset={}; this.attributes={}; this.listeners={}; this.children=[]; this.files=[]; this.classList={toggle(){}}; }
   addEventListener(event,fn) { (this.listeners[event] ||= []).push(fn); }
   replaceChildren(...children) { this.children=children; }
   append(...children) { this.children.push(...children); }
-  setAttribute() {}
+  setAttribute(name,value) { this.attributes[name]=String(value); }
   matches(selector) { return selector==='form' && ['editor','import-form','filters','generate-form','release-form'].includes(this.id); }
   querySelectorAll() { return []; }
   async dispatch(event) { for(const fn of this.listeners[event] || []) await fn({preventDefault(){},currentTarget:this}); }
 }
 const elements=new Map();
 const element=id=>{if(!elements.has(id)) elements.set(id,new Element(id));return elements.get(id);};
-const requests=[];
+const requests=[], publishedEvents=[];
 const response=data=>({ok:true,json:async()=>data});
 const page={items:[],total:0,analysis:{records:0,unlabeled:0,protected_groups:0,duplicate_content_records:0,unknown_rights:0,labels:{}}};
-const context=vm.createContext({console,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>true,
+const context=vm.createContext({console,CustomEvent,URLSearchParams,structuredClone,setTimeout,clearTimeout,confirm:()=>true,
   document:{querySelectorAll:()=>[],getElementById:element,createElement:()=>new Element(),createElementNS:()=>new Element()},
-  window:{addEventListener(){}},
+  window:{dispatchEvent(event){publishedEvents.push(event);return true;},addEventListener(){}},
   fetch:(url,options)=>url.endsWith('/grounded/jobs')&&!options?.method?Promise.resolve(response({jobs:[]})):url.includes('/records?')?Promise.resolve(response(page)):new Promise(resolve=>requests.push({url,options,resolve}))
 });
 vm.runInContext(fs.readFileSync(path.join(process.env.TULDOK_SOURCE_ROOT||path.resolve(__dirname,'..'),'static/workbench.js'),'utf8'),context);
@@ -31,6 +31,17 @@ const resolve=(suffix,data,ok=true)=>{const index=requests.findIndex(request=>re
 async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)'); }
 (async()=>{
   await Promise.resolve();
+  // Embedded Data has no standalone layout hook. Refreshing a restored current
+  // record then opening another must never leave a stale standalone marker.
+  page.items=[record('a'),record('b')];
+  await startAt('a');
+  await run('refresh()');
+  const embeddedButtons=element('records').children.map(row=>row.children[1].children[0]);
+  assert.ok(embeddedButtons.every(button=>!Object.hasOwn(button.attributes,'aria-current')));
+  await startAt('b');
+  assert.equal(run('current.id'),'b');
+  assert.ok(embeddedButtons.every(button=>!Object.hasOwn(button.attributes,'aria-current')),'Embedded navigation cannot retain a marker owned by an absent layout');
+  page.items=[];await run('refresh()');
   await startAt('a');
   const navigation=run('openRecord("b")');
   element('label').value='unsaved edit';await element('editor').dispatch('input');
@@ -107,9 +118,13 @@ async function startAt(id) { context.fixture=record(id);run('showRecord(fixture)
   resolve('/releases/preview',{...eligible,preview_token:'b'.repeat(64)});await refreshed;
   assert.equal(run('releaseBusy'),false);assert.equal(run('releasePreview.preview_token'),'b'.repeat(64));assert.equal(element('freeze-release').disabled,false);
   const finalExport=element('release-form').dispatch('submit');assert.equal(JSON.parse(requests[0].options.body).preview_token,'b'.repeat(64));
-  resolve('/releases',{url:'/current.zip',records:2,split_report:{actual_counts:{train:2}}});await finalExport;
+  resolve('/releases',{id:'c'.repeat(64),url:'/current.zip',records:2,split_report:{actual_counts:{train:2}}});await finalExport;
   assert.equal(element('release-result').children[0].href,'/current.zip');
+  const publication=publishedEvents.filter(event=>event.type==='tuldok:release-published');
+  assert.equal(publication.length,1,'Only the current committed release publishes a validation handle');
+  assert.equal(publication[0].detail.id,'c'.repeat(64));assert.equal(publication[0].detail.url,'/current.zip');
   run('selected.clear();selection()');assert.equal(element('preview-release').disabled,true);assert.equal(element('release-result').children.length,0);
+  assert.equal(publishedEvents.at(-1).type,'tuldok:release-cleared','Selection changes retire the validation handle');
   assert.equal(requests.length,0);
   // Explicit metadata criteria travel independently of exact selected pairs and proof.
   const queries=[];context.fetch=(url,options)=>new Promise(resolve=>queries.push({url,options,resolve}));

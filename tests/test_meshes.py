@@ -1,4 +1,5 @@
 """Actual authored ASCII PLY inputs; analytic oracles, no Rheon execution."""
+from postgres_helpers import drop_failure_trigger, install_failure_trigger, observed_statements
 import base64
 import copy
 from decimal import Decimal, localcontext
@@ -6,7 +7,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
-import sqlite3
+import psycopg
 import struct
 import tempfile
 import threading
@@ -21,13 +22,9 @@ from PIL import Image
 from app import Dataset, make_handler
 from caption_import import snapshot, SNAPSHOT_KEYS
 from dataset_releases import allocate, connected_components
-from immutable_assets import migrate_records
 import meshes
 import rheon_sequences
 from test_sequences import fixture as sequence_fixture, body as sequence_body
-import test_sequences
-from types import SimpleNamespace
-from workbench import Workbench
 from workbench import WorkbenchError, encode
 
 FIXTURES = Path(__file__).parent / 'fixtures' / 'meshes'
@@ -84,9 +81,9 @@ class Meshes(unittest.TestCase):
         self.assertTrue(normal['mesh']['provided_normals'])
         preview = self.w.meshes.inspect(normal['id'])
         self.assertEqual(preview['triangles'], [[[0.,0.,0.],[2.,0.,0.],[2.,2.,0.]], [[0.,0.,0.],[2.,2.,0.],[0.,2.,0.]]])
-        reads = []; self.d.db.set_trace_callback(reads.append)
-        self.assertEqual(self.w.query({'kind': 'mesh', 'task': 'mesh_geometry'})['total'], 2)
-        self.assertFalse(any('SELECT bundle' in sql for sql in reads)); self.d.db.set_trace_callback(None)
+        with observed_statements(self.d.db) as reads:
+            self.assertEqual(self.w.query({'kind': 'mesh', 'task': 'mesh_geometry'})['total'], 2)
+        self.assertFalse(any('SELECT bundle' in sql for sql in reads))
         reviewed = self.review(row)
         corrected = self.w.correct_rights_note(row['id'], dict(revision=2, source_revision=1, note='Authored fixture; inspect project terms.'))['record']
         self.assertEqual(corrected['review'], 'human_reviewed'); self.assertEqual(len(self.w.history(row['id'])), 3)
@@ -196,10 +193,10 @@ class Meshes(unittest.TestCase):
     def test_atomic_failures_duplicate_invalid_parent_preserve_all_state(self):
         before = self.state()
         for table in ('workbench_mesh_assets','workbench_records','workbench_history'):
-            self.d.db.execute(f"CREATE TRIGGER fail BEFORE INSERT ON {table} BEGIN SELECT RAISE(ABORT,'controlled failure'); END");self.d.db.commit()
-            with self.assertRaises(sqlite3.IntegrityError): self.add()
+            install_failure_trigger(self.d.db, table, 'fail', 'controlled failure');self.d.db.commit()
+            with self.assertRaises(psycopg.IntegrityError): self.add()
             self.assertEqual(self.state(),before)
-            self.d.db.execute('DROP TRIGGER fail');self.d.db.commit()
+            drop_failure_trigger(self.d.db, table, 'fail');self.d.db.commit()
         row=self.add();before=self.state()
         with self.assertRaisesRegex(WorkbenchError,'already exists'):self.add()
         with self.assertRaisesRegex(WorkbenchError,'not found'):self.add('open-surface',parents=['0'*32])
@@ -230,7 +227,7 @@ class Meshes(unittest.TestCase):
             self.assertEqual(len(archive.read('train/records.jsonl').splitlines()),3)
         imported=self.d.native_text_imports.prepare(dict(source_name='mixed.zip',archive=base64.b64encode(self.d.releases.locate(release['id']).read_bytes()).decode()))
         self.assertEqual(sum('token' in r for r in imported['rows']),1)
-        with self.d.db:self.d.db.execute('UPDATE workbench_mesh_assets SET metadata_json=? WHERE id=?',(encode(dict(mesh['mesh'],triangle_count=8)),mesh['id']))
+        with self.d.db.transaction():self.d.db.execute('UPDATE workbench_mesh_assets SET metadata_json=%s WHERE id=%s',(encode(dict(mesh['mesh'],triangle_count=8)),mesh['id']))
         with self.assertRaisesRegex(WorkbenchError,'metadata changed'):self.w.asset(mesh['id'])
         self.assertFalse(self.d.releases.preview(dict(request,items=self.selection([mesh])))['eligible'])
         frozen=self.d.releases.locate(release['id']).read_bytes();self.assertTrue(frozen.startswith(b'PK'))
@@ -253,29 +250,25 @@ class Meshes(unittest.TestCase):
             bad={key:mesh[key] for key in SNAPSHOT_KEYS};bad['source_sha256']='0'*64
             with self.assertRaisesRegex(WorkbenchError,'mesh source snapshot'):snapshot(bad)
 
-    def test_reopen_prior_sequence_database_preserves_all_bytes_history_rights_and_indexes(self):
+    def test_reopen_sequence_preserves_all_bytes_history_rights_and_indexes(self):
         seq=rheon_sequences.admit(self.w,sequence_body(*sequence_fixture()))
         seq=self.w.save(seq['id'],dict(seq,annotation={'note':'Human transport check'},review='human_reviewed'))
         corrected=self.w.correct_rights_note(seq['id'],dict(revision=2,source_revision=1,note='Declared fixture permission'))['record']
         bundle=self.w.asset(seq['id'])[0];history=self.w.history(seq['id'])
-        with self.d.db:
-            sql=self.d.db.execute("SELECT sql FROM sqlite_master WHERE name='workbench_records'").fetchone()[0]
-            indexes=[r[0] for r in self.d.db.execute("SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name='workbench_records' AND sql IS NOT NULL")]
-            self.d.db.execute(sql.replace('workbench_records','previous_records',1).replace("'sequence','mesh'","'sequence'"))
-            self.d.db.execute('INSERT INTO previous_records SELECT * FROM workbench_records')
-            self.d.db.execute('DROP TABLE workbench_records');self.d.db.execute('ALTER TABLE previous_records RENAME TO workbench_records')
-            for statement in indexes:self.d.db.execute(statement)
-            self.d.db.execute('DROP TABLE workbench_mesh_assets')
+        before_indexes = [tuple(row) for row in self.d.db.execute(
+            'SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=current_schema() ORDER BY indexname')]
         self.d.close();self.d=Dataset(self.tmp.name);self.w=self.d.workbench
         self.assertEqual(self.w.get(seq['id']),corrected);self.assertEqual(self.w.history(seq['id']),history)
         self.assertEqual(self.w.asset(seq['id'])[0],bundle);self.assertEqual(self.add()['review'],'draft')
+        self.assertEqual([tuple(row) for row in self.d.db.execute(
+            'SELECT indexname,indexdef FROM pg_indexes WHERE schemaname=current_schema() ORDER BY indexname')], before_indexes)
 
     def test_shared_mesh_sequence_saved_release_cap_precedes_blob_reads(self):
         mesh=self.review(self.add());seq=rheon_sequences.admit(self.w,sequence_body(*sequence_fixture()))
         seq=self.w.save(seq['id'],dict(seq,annotation={'note':'Human review'},review='human_reviewed'))
-        with self.d.db:
+        with self.d.db.transaction():
             for table,row in (('workbench_mesh_assets',mesh),('workbench_sequence_assets',seq)):
-                self.d.db.execute('UPDATE '+table+' SET bundle_bytes=? WHERE id=?',(21*1024*1024,row['id']))
+                self.d.db.execute('UPDATE '+table+' SET bundle_bytes=%s WHERE id=%s',(21*1024*1024,row['id']))
         items=self.selection([mesh,seq]);request=dict(items=items,ratios=dict(train=100,validation=0,test=0),seed=1)
         with patch.object(self.w,'asset',side_effect=AssertionError('no BLOB reads')):
             self.assertFalse(self.d.releases.preview(request)['eligible'])
@@ -307,48 +300,3 @@ class Meshes(unittest.TestCase):
         row=meshes.admit(self.w,body(*fixture(raw=('\n'.join(lines)+'\n').encode())));preview=self.w.meshes.inspect(row['id'])
         self.assertEqual((preview['sample_count'],preview['triangle_count']),(512,513));self.assertEqual(preview['bounds']['max'],[1025.,1.,0.])
         self.assertEqual(preview['triangles'][-1][1][0],1023.)
-
-
-class MeshMigration(unittest.TestCase):
-    def test_original_and_sequence_schema_rows_indexes_atomic_idempotence_and_setup_rollback(self):
-        for old in ("('image','text')","('image','text','sequence')"):
-            with self.subTest(old=old):
-                db=sqlite3.connect(':memory:');self.addCleanup(db.close);test_sequences.SchemaMigration().legacy(db)
-                sql=db.execute("SELECT sql FROM sqlite_master WHERE name='workbench_records'").fetchone()[0]
-                if 'sequence' in old:
-                    db.execute('ALTER TABLE workbench_records RENAME TO old_records');db.execute(sql.replace("('image','text')",old));db.execute('INSERT INTO workbench_records SELECT * FROM old_records');db.execute('DROP TABLE old_records');db.execute('CREATE INDEX custom_name ON workbench_records(name)');db.commit()
-                before=db.execute('SELECT * FROM workbench_records').fetchall();schema=db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
-                db.set_authorizer(lambda action,a,b,*rest:sqlite3.SQLITE_DENY if action==sqlite3.SQLITE_DROP_TABLE and a=='workbench_records' else sqlite3.SQLITE_OK)
-                with self.assertRaises(sqlite3.DatabaseError):migrate_records(db)
-                db.set_authorizer(None);self.assertEqual(db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),schema)
-                migrate_records(db);migrate_records(db);self.assertEqual(db.execute('SELECT * FROM workbench_records').fetchall(),before)
-                self.assertTrue(db.execute("SELECT 1 FROM sqlite_master WHERE name='custom_name'").fetchone())
-        for target in (False,True):
-            for change in (('revision INTEGER NOT NULL','revision TEXT NOT NULL'),('name TEXT','name TEXT NOT NULL'),('name TEXT','name TEXT DEFAULT \'surprise\''),('name TEXT','name TEXT UNIQUE'),('revision INTEGER NOT NULL','revision INTEGER NOT NULL CHECK(revision > 0)')):
-                with self.subTest(target=target,change=change):
-                    changed=sqlite3.connect(':memory:');self.addCleanup(changed.close);test_sequences.SchemaMigration().legacy(changed)
-                    if target:migrate_records(changed)
-                    sql=changed.execute("SELECT sql FROM sqlite_master WHERE name='workbench_records'").fetchone()[0]
-                    changed.execute('DROP TABLE workbench_records');changed.execute(sql.replace(*change));changed.commit()
-                    before=changed.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
-                    with self.assertRaisesRegex(WorkbenchError,'Unsupported Workbench'):migrate_records(changed)
-                    self.assertEqual(changed.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),before)
-        for table in ('workbench_mesh_assets','workbench_sequence_assets'):
-            db=sqlite3.connect(':memory:');self.addCleanup(db.close);test_sequences.SchemaMigration().legacy(db)
-            db.execute('CREATE TABLE '+table+' (id TEXT PRIMARY KEY,bundle BLOB)');db.commit()
-            before=db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
-            with self.assertRaisesRegex(WorkbenchError,'asset table schema'):
-                Workbench(SimpleNamespace(db=db,lock=threading.RLock()))
-            self.assertEqual(db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),before)
-        # Existing target schema still verifies columns and migration-time triggers.
-        db=sqlite3.connect(':memory:');self.addCleanup(db.close);test_sequences.SchemaMigration().legacy(db);migrate_records(db)
-        db.execute('ALTER TABLE workbench_records ADD COLUMN surprise TEXT')
-        with self.assertRaisesRegex(WorkbenchError,'columns'):migrate_records(db)
-        db=sqlite3.connect(':memory:');self.addCleanup(db.close);test_sequences.SchemaMigration().legacy(db)
-        before=db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall()
-        rows=db.execute('SELECT * FROM workbench_records').fetchall()
-        with patch('meshes.MeshAssets',side_effect=RuntimeError('controlled setup failure')):
-            with self.assertRaisesRegex(RuntimeError,'controlled setup failure'):
-                Workbench(SimpleNamespace(db=db,lock=threading.RLock()))
-        self.assertEqual(db.execute('SELECT name,sql FROM sqlite_master ORDER BY name').fetchall(),before)
-        self.assertEqual(db.execute('SELECT * FROM workbench_records').fetchall(),rows)

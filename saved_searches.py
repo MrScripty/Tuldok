@@ -1,4 +1,5 @@
 """Named dynamic criteria; independent of fixed membership and review authority."""
+from workbench import encode_retained
 import json
 import math
 import re
@@ -10,9 +11,7 @@ from workbench import IDENTIFIER, WorkbenchError, encode, query_criteria, text_v
 MAX_SEARCHES = 100
 MAX_REQUEST = 32 * 1024
 CRITERIA = {'q', 'kind', 'review', 'sort', 'task', 'label', 'group', 'rights'}
-SCHEMA = '''CREATE TABLE saved_searches (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, revision INTEGER NOT NULL,
-    criteria_json TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)'''
+
 
 
 def parse_request(raw):
@@ -53,25 +52,11 @@ def criteria(value):
 class SavedSearches:
     def __init__(self, workbench):
         self.db, self.lock = workbench.db, workbench.lock
-        with self.lock, self.db:
-            existing = self.db.execute("SELECT sql FROM sqlite_master WHERE name='saved_searches'").fetchone()
-            if existing is None:
-                self.db.execute(SCHEMA)
-            else:
-                normalized = lambda sql: re.sub(r'\s+', ' ', sql or '').strip().casefold()
-                if normalized(existing[0]) != normalized(SCHEMA):
-                    raise WorkbenchError('Unsupported saved-search storage schema.')
-            if self.db.execute("SELECT 1 FROM sqlite_master WHERE type='trigger' AND tbl_name='saved_searches'").fetchone():
-                raise WorkbenchError('Unsupported saved-search storage trigger.')
-            columns = [row['name'] for row in self.db.execute('PRAGMA table_info(saved_searches)')]
-            indexes = self.db.execute('PRAGMA index_list(saved_searches)').fetchall()
-            if columns != ['id', 'name', 'revision', 'criteria_json', 'created_at', 'updated_at'] or len(indexes) != 1 or indexes[0]['origin'] != 'pk' or indexes[0]['partial']:
-                raise WorkbenchError('Unsupported saved-search storage columns or indexes.')
 
     def _get(self, search_id):
         if not isinstance(search_id, str) or not IDENTIFIER.fullmatch(search_id):
             raise WorkbenchError('Invalid saved search ID.')
-        row = self.db.execute('SELECT * FROM saved_searches WHERE id=?', (search_id,)).fetchone()
+        row = self.db.execute('SELECT * FROM saved_searches WHERE id=%s', (search_id,)).fetchone()
         if row is None:
             raise WorkbenchError('Saved search not found.', 'unavailable', 404)
         result = dict(row)
@@ -108,26 +93,26 @@ class SavedSearches:
             raise WorkbenchError('Save a name and entered metadata criteria only.')
         name = text_value(body['name'], 'Search name', 120)
         value = criteria(body['criteria'])
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             if self.db.execute('SELECT count(*) FROM saved_searches').fetchone()[0] >= MAX_SEARCHES:
                 raise WorkbenchError('At most 100 saved searches; delete one before saving another.')
             search_id, created = uuid.uuid4().hex, timestamp()
-            self.db.execute('INSERT INTO saved_searches VALUES (?,?,?,?,?,?)',
-                            (search_id, name, 1, encode(value), created, created))
+            self.db.execute('INSERT INTO saved_searches VALUES (%s,%s,%s,%s,%s,%s)',
+                            (search_id, name, 1, encode_retained(value), created, created))
             return self._get(search_id)
 
     def mutate(self, search_id, action, body):
         expected = {'revision', 'name'} if action == 'rename' else {'revision'}
         if action not in ('rename', 'delete') or not isinstance(body, dict) or set(body) != expected:
             raise WorkbenchError('Invalid saved search action.')
-        with self.lock, self.db:
+        with self.lock, self.db.transaction():
             before = self._get(search_id)
             if type(body['revision']) is not int or body['revision'] != before['revision']:
                 raise WorkbenchError('Saved search changed. Refresh before renaming or deleting.', 'conflict', 409)
             if action == 'delete':
-                self.db.execute('DELETE FROM saved_searches WHERE id=?', (search_id,))
+                self.db.execute('DELETE FROM saved_searches WHERE id=%s', (search_id,))
                 return {'deleted': search_id}
             name = text_value(body['name'], 'Search name', 120)
-            self.db.execute('UPDATE saved_searches SET name=?,revision=revision+1,updated_at=? WHERE id=?',
+            self.db.execute('UPDATE saved_searches SET name=%s,revision=revision+1,updated_at=%s WHERE id=%s',
                             (name, timestamp(), search_id))
             return self._get(search_id)

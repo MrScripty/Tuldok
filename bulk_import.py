@@ -2,7 +2,7 @@
 import hashlib
 import json
 import re
-import sqlite3
+import psycopg
 
 from workbench import WorkbenchError, text_value
 
@@ -69,8 +69,16 @@ def find_result(workbench, request_id):
     if not isinstance(request_id, str) or not REQUEST_ID.fullmatch(request_id):
         raise WorkbenchError('Invalid import request marker.')
     with workbench.lock:
-        matches = workbench.db.execute("SELECT id FROM workbench_records WHERE json_extract(provenance_json, '$.acquisition.request_id')=?",
-                                       (request_id,)).fetchall()
+        # PostgreSQL decodes every Unicode escape while extracting JSON paths,
+        # including legacy NUL/surrogate evidence unrelated to the request marker.
+        matches = workbench.db.execute("""SELECT id FROM workbench_records WHERE
+            CASE WHEN strpos(provenance_json, %s)>0 THEN false
+            ELSE provenance_json::json #>> '{acquisition,request_id}'=%s END""",
+            (r'\u', request_id)).fetchall()
+        for row in workbench.db.execute('SELECT id,provenance_json FROM workbench_records WHERE strpos(provenance_json, %s)>0', (r'\u',)):
+            acquisition = json.loads(row[1]).get('acquisition')
+            if isinstance(acquisition, dict) and acquisition.get('request_id') == request_id:
+                matches.append(row)
         if len(matches) > 1:
             raise WorkbenchError('Import marker is ambiguous; inspect the collection.', 'conflict', 409)
         return dict(found=True, **result(workbench._get(matches[0][0]))) if matches else {'found': False}
@@ -107,5 +115,5 @@ def import_row(workbench, body):
         if error.status == 404:
             raise WorkbenchError('A declared parent record was not found.') from None
         raise
-    except (OSError, sqlite3.Error):
+    except (OSError, psycopg.Error):
         raise WorkbenchError('Import stopped because storage failed. Inspect the collection before retrying.', 'storage', 500) from None

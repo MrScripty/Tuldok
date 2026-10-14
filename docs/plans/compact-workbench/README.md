@@ -1,6 +1,6 @@
 # Compact dataset workbench
 
-The default workspace now puts a practical collection pane beside the source
+The standalone dataset workbench puts a practical collection pane beside the source
 canvas and annotation inspector. Import, generation, export and collection
 management occupy toolbar drawers instead of a permanent third column. Exact
 filters, source/rights evidence and detailed help remain available through
@@ -15,15 +15,24 @@ its metadata on demand. Images use the available canvas width while box
 coordinates remain in original-image pixels. Narrow screens stack source and
 inspector with natural document scrolling.
 
-No application routes, model protocol, data contracts or new modalities changed;
-`app.py` only registers the presentation script as a static asset. All previous
-control IDs and native validation constraints are retained. The existing malformed
-Images filter option was corrected while restructuring the markup. The HTML is
-split across lines for review instead of its previous eight long lines.
+The reconciled presentation moves current controls into these surfaces without
+cloning them. `app.py` registers the presentation script and its scoped stylesheet.
+Current control IDs, native validation constraints, imports, export formats and
+controller scripts are retained. The malformed Images filter option is corrected.
+The current HTML remains the authoritative source for every supported modality;
+its existing formatting is retained. Embedded workspace Data keeps its existing
+drawer and context/edit ownership in `workspaces-data.js`.
+
+Current reconciliation admission and gates are owned by [the plan](plan.md);
+[fresh composed-code verification](reports/reconciliation-20261014.md) records
+the current browser evidence.
+The captured owner images and original validation below are historical evidence
+from PR33's original implementation; fresh composed-head verification is recorded
+separately and does not imply scientific or model-quality acceptance.
 
 ## Actual browser captures
 
-Captured from source commit `24a91eee4071e02909b2400f0150be6537e2937f`, using
+Historical owner captures from source commit `24a91eee4071e02909b2400f0150be6537e2937f`, using
 `python3 -u app.py --port 0 --data /workspace/tuldok-ui-captures/data` and
 `/workbench`. Chromium 151.0.7922.173, device scale 1, JPEG quality 85. Desktop
 viewport: 1600 × 1100; narrow viewport: 390 × 844. These are unedited browser
@@ -48,7 +57,7 @@ The separate documentation PR #32 and its original assets are untouched.
 
 ## Validation
 
-Passed locally:
+Passed locally for the historical owner implementation:
 
 - `node tests/browser_workbench_layout.cjs`: native clicks, repeated drawer open/
   close, Escape/focus return, preserved drafts and selections, text import, native
@@ -69,7 +78,8 @@ Remaining scope: desktop collection and source areas scroll independently; narro
 screens stack the inspector below the source. Dense provenance and provider forms
 remain available inside their panels. Mesh support is static projections and
 bounded geometry inspection; sequence support is transport metadata inspection.
-Audio and real pretrained inference are not added or qualified. Only Chromium
+That historical implementation did not add audio or qualify pretrained inference.
+The reconciliation retains current-main audio controls. Only Chromium
 was exercised locally; native dialog behavior in other browsers is unqualified.
 
 The pre-existing documentation PR32 CI at `83b2df9` completed with failure in

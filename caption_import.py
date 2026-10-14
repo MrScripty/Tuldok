@@ -6,7 +6,7 @@ import io
 import json
 import re
 import secrets
-import sqlite3
+import psycopg
 
 from PIL import Image
 
@@ -62,7 +62,7 @@ def snapshot(row):
         invalid('Invalid protected source snapshot fields.')
     if not isinstance(row['id'], str) or not IDENTIFIER.fullmatch(row['id']):
         invalid('Invalid origin source ID.')
-    if row['kind'] not in ('image', 'text', 'sequence', 'mesh') or type(row['revision']) is not int or row['revision'] < 1:
+    if row['kind'] not in ('image', 'text', 'sequence', 'mesh', 'pointcloud', 'volume') or type(row['revision']) is not int or row['revision'] < 1:
         invalid('Invalid origin kind or revision.')
     if type(row['source_available']) is not bool or row['source_lineage_known'] is not True:
         invalid('Protected source lineage must be known, including deleted members.')
@@ -89,7 +89,7 @@ def snapshot(row):
         invalid('Invalid retained book/session links.')
     if row['kind'] == 'text' and (row['book_id'] is not None or row['session_id'] is not None or not is_hash(row['content_hash']) or not is_hash(row['source_sha256']) or row['pixel_hash'] is not None):
         invalid('Invalid protected text source snapshot.')
-    if row['kind'] in ('sequence', 'mesh') and (row['book_id'] is not None or row['session_id'] is not None
+    if row['kind'] in ('sequence', 'mesh', 'pointcloud', 'volume') and (row['book_id'] is not None or row['session_id'] is not None
             or not is_hash(row['content_hash']) or row['source_sha256'] != row['content_hash']
             or row['pixel_hash'] is not None or type(row['source_revision']) is not int
             or row['source_revision'] != 1 or row['source_split'] != 'unassigned'):
@@ -287,30 +287,32 @@ class CaptionImports:
         context['observed']['asset_sha256'] = digest(raw)
         context['observed']['pixel_sha256'] = pixel_hash
         try:
-            with self.workbench.lock, self.workbench.db:
-                if find_result(self.workbench, body['request_id'])['found']:
-                    raise WorkbenchError('This import marker was already admitted; inspect its saved result.', 'conflict', 409)
-                # Corner-studio acquisitions can arrive after the workbench was
-                # opened. Enroll them before checking derived pixel identity;
-                # a rejection rolls this lazy metadata/history back as well.
-                universe = self.workbench._all()
-                if self.workbench.db.execute('SELECT 1 FROM workbench_records WHERE id=? OR pixel_hash=?', (origin['id'], pixel_hash)).fetchone():
-                    raise WorkbenchError('This source identity or exact image pixels already exist; existing records are unchanged.', 'conflict', 409)
-                # A new acquisition session prevents Dataset's existing session
-                # split propagation from updating older unassigned assets.
-                session = 'caption-import:' + body['request_id']
-                if self.workbench.db.execute("SELECT 1 FROM samples WHERE book_id='' AND session_id=?", (session,)).fetchone():
-                    raise WorkbenchError('Import acquisition session already exists; existing records are unchanged.', 'conflict', 409)
-                candidate = dict(id='caption-candidate:' + body['request_id'], kind='image',
-                    groups=groups, parents=[], content_hash=digest(raw), pixel_hash=pixel_hash,
-                    book_id='', session_id=session, source_available=True, source_lineage_known=True)
-                roots = connected_components([*universe, candidate])
-                related = [row for row in universe if roots[row['id']] == roots[candidate['id']]]
-                if any(not row['source_lineage_known'] or row['source_split'] in SPLITS and row['source_split'] != origin['split'] for row in related):
-                    raise WorkbenchError('Existing protected lineage has an unknown or conflicting source split.', 'conflict', 409)
+            with self.workbench.lock:
+                # Keep preflight writes private; admission owns its commit and receipt.
+                with self.workbench.db.transaction(force_rollback=True):
+                    if find_result(self.workbench, body['request_id'])['found']:
+                        raise WorkbenchError('This import marker was already admitted; inspect its saved result.', 'conflict', 409)
+                    # Corner-studio acquisitions can arrive after the workbench was
+                    # opened. Enroll them before checking derived pixel identity;
+                    # a rejection rolls this lazy metadata/history back as well.
+                    universe = self.workbench._all()
+                    if self.workbench.db.execute('SELECT 1 FROM workbench_records WHERE id=%s OR pixel_hash=%s', (origin['id'], pixel_hash)).fetchone():
+                        raise WorkbenchError('This source identity or exact image pixels already exist; existing records are unchanged.', 'conflict', 409)
+                    # A new acquisition session prevents Dataset's existing session
+                    # split propagation from updating older unassigned assets.
+                    session = 'caption-import:' + body['request_id']
+                    if self.workbench.db.execute("SELECT 1 FROM samples WHERE book_id='' AND session_id=%s", (session,)).fetchone():
+                        raise WorkbenchError('Import acquisition session already exists; existing records are unchanged.', 'conflict', 409)
+                    candidate = dict(id='caption-candidate:' + body['request_id'], kind='image',
+                        groups=groups, parents=[], content_hash=digest(raw), pixel_hash=pixel_hash,
+                        book_id='', session_id=session, source_available=True, source_lineage_known=True)
+                    roots = connected_components([*universe, candidate])
+                    related = [row for row in universe if roots[row['id']] == roots[candidate['id']]]
+                    if any(not row['source_lineage_known'] or row['source_split'] in SPLITS and row['source_split'] != origin['split'] for row in related):
+                        raise WorkbenchError('Existing protected lineage has an unknown or conflicting source split.', 'conflict', 409)
                 row = self.workbench.import_asset(dict(kind='image', image=body['image'],
                     name=origin['id'] + '.png', groups=groups, parents=[], rights='unknown'),
                     acquisition=context, annotation=origin['annotation'], source_split=origin['split'], source_session=session)
                 return result(row)
-        except (OSError, sqlite3.Error):
+        except (OSError, psycopg.Error):
             raise WorkbenchError('Caption import storage failed. Inspect the saved result before retrying.', 'storage', 500) from None

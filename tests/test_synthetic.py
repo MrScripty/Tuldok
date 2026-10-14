@@ -118,7 +118,7 @@ class SyntheticTests(unittest.TestCase):
         first_ids = [e['sample_id'] for e in state['entries']]
         # Simulate a restart after the final image committed but before final job status.
         job.update(status='generating')
-        with self.jobs.lock, self.jobs.db:
+        with self.jobs.lock, self.jobs.db.transaction():
             self.jobs._save(job)
         self.dataset.close()
         self.dataset = Dataset(self.temp.name)

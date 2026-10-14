@@ -1,0 +1,3 @@
+# Independent native readers for qualification only; not application dependencies.
+numpy==2.5.4
+plyfile==1.1.3

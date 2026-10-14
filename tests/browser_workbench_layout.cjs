@@ -1,9 +1,10 @@
 // Real-browser layout interactions; supported server, synthetic sample data, JPEG85.
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
-const {spawn,spawnSync}=require('node:child_process');
+const {spawn,execFileSync}=require('node:child_process');
 const {qaDirectory,screenshotOptions}=require('./qa_artifacts.cjs');
 const {pageLoadTracker}=require('./browser_page_load.cjs');
+const {waitForDebugger}=require('./browser_startup.cjs');
 const root=path.resolve(process.env.TULDOK_SOURCE_ROOT||path.join(__dirname,'..')),report=qaDirectory(root,'workbench-layout'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'tuldok-layout-')),children=[];
 const errors=[],tracker=pageLoadTracker(),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws;
 async function until(fn){for(let i=0;i<150;i++){const result=await fn();if(result)return result;await pause(100);}throw Error('Timed out');}
@@ -16,8 +17,8 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const port=await until(()=>output.match(/127\.0\.0\.1:(\d+)/)?.[1]),base='http://127.0.0.1:'+port;
   const api=async(route,body)=>{const response=await fetch(base+'/api/workbench/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();assert.ok(response.ok,JSON.stringify(result));return result;};
 
-  launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
-  const active=path.join(temporary,'browser','DevToolsActivePort'),debugPort=await until(()=>fs.existsSync(active)&&fs.readFileSync(active,'utf8').split('\n')[0]);
+  const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1400,950','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');
   assert.ok(target);ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   let id=0;const pending=new Map();
@@ -37,18 +38,49 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   const escape=async()=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});};
   const shot=async name=>{await pause(150);fs.writeFileSync(path.join(report,name+'.jpg'),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));};
   assert.equal(await evaluate('document.querySelectorAll("[id]").length === new Set([...document.querySelectorAll("[id]")].map(e=>e.id)).size'),true,'Unique control IDs');
+  // The served markup remains authoritative for every current modality and
+  // native validation constraint; layout must preserve those actual controls.
+  assert.deepEqual(await evaluate(`(async()=>{
+    const raw=new DOMParser().parseFromString(await(await fetch('/workbench')).text(),'text/html'), failures=[];
+    for(const original of raw.querySelectorAll('[id]')) {
+      const live=document.getElementById(original.id);
+      if(!live){failures.push('Missing '+original.id);continue;}
+      for(const name of ['required','min','max','maxlength','pattern','accept','multiple','webkitdirectory'])
+        if(original.getAttribute(name)!==live.getAttribute(name)) failures.push(original.id+': '+name);
+    }
+    for(const id of ['kind','task-filter','release-format']) {
+      const options=node=>[...node.options].map(option=>[option.value,option.textContent]);
+      if(JSON.stringify(options(raw.getElementById(id)))!==JSON.stringify(options(document.getElementById(id)))) failures.push(id+': options');
+    }
+    const scripts=doc=>[...doc.querySelectorAll('script[src]')].map(node=>node.getAttribute('src'));
+    if(JSON.stringify(scripts(raw))!==JSON.stringify(scripts(document))) failures.push('controller scripts');
+    return failures;
+  })()`),[],'All current controls, validation, kinds/tasks/export formats and controller scripts retained');
+  for(const id of ['audio-inspection','pointcloud-inspection','volume-inspection'])
+    assert.equal(await evaluate(`document.getElementById(${JSON.stringify(id)}).parentElement.className`),'source-pane');
   assert.equal(await evaluate('document.getElementById("workspace-tools").open'),false);
   assert.ok(await evaluate('[...document.getElementById("kind").options].some(o=>o.value==="image")'),'Image filter remains available');
   await click('[data-workspace-panel="import"]');
   assert.equal(await evaluate('document.getElementById("workspace-tools").open'),true);
+  assert.equal(await evaluate('document.getElementById("workspace-tools").getAttribute("aria-labelledby")'),'workspace-tools-title');
+  // Keyboard traversal stays inside the native modal, then Escape restores the
+  // toolbar trigger. No manually implemented focus trap replaces the browser.
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,modifiers:8});
+  assert.ok(await evaluate('document.getElementById("workspace-tools").contains(document.activeElement)'),'Shift+Tab contained by native modal');
   await fill('import-name','SAMPLE · Layout workshop request');await fill('import-group','sample-layout');await fill('rights','Authored non-sensitive sample');
   await fill('import-text','SAMPLE DATA — authored for layout verification. Please schedule a dataset annotation workshop for next Tuesday.');
   // Closing never clears partially entered import forms.
   await escape();await until(()=>evaluate('!document.getElementById("workspace-tools").open'));
   assert.equal(await evaluate('document.activeElement.dataset.workspacePanel'),'import');
-  await click('[data-workspace-panel="import"]');assert.equal(await evaluate('document.getElementById("import-group").value'),'sample-layout');
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  assert.equal(await evaluate('document.getElementById("workspace-tools").open'),true,'Native Enter reopens the focused drawer trigger');
+  assert.equal(await evaluate('document.getElementById("import-group").value'),'sample-layout');
   await click('#import-form button');await until(()=>evaluate('document.getElementById("notice").textContent==="Record imported."'));
   const imported=await evaluate('current.id');
+  assert.equal(await evaluate('document.querySelector(".record button[aria-current=true]").dataset.recordId'),imported);
+  assert.match(await evaluate('document.getElementById("record-state").textContent'),/Saved: draft · revision 1/);
   assert.equal(await evaluate('document.getElementById("workspace-tools-status").textContent'),'Record imported.');
   await click('#workspace-tools-close');await until(()=>evaluate('!document.getElementById("workspace-tools").open'));
   await fill('label','scheduling');
@@ -71,7 +103,11 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await until(()=>evaluate('document.getElementById("notice").textContent==="Annotation saved."'));
   assert.equal((await api('records/'+imported)).annotation.label,'scheduling');
   await click('#record-evidence > summary');
-  await click('#advanced-filters > summary');await fill('label-filter','scheduling');
+  await evaluate('document.querySelector("#advanced-filters > summary").focus()');
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  assert.equal(await evaluate('document.getElementById("advanced-filters").open'),true,'Native keyboard disclosure exposes exact criteria');
+  await fill('label-filter','scheduling');
   await evaluate('document.getElementById("label-filter").focus()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
@@ -115,5 +151,18 @@ function launch(command,args,options={}){const child=spawn(command,args,options)
   await shot('import-narrow');await escape();await until(()=>evaluate('!document.getElementById("workspace-tools").open'));
   await click('button[data-record-id="'+imported+'"]');await evaluate('document.querySelector(".editor").scrollIntoView()');await shot('text-narrow');
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
+  const sourceHashes={};
+  for(const file of ['app.py','static/workbench.html','static/workbench.css','static/workbench.js','static/workbench-layout.js','static/workbench-layout.css','static/workspaces-data.js','static/workspaces-data.css','tests/browser_workbench_layout.cjs'])
+    sourceHashes[file]=require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({
+    result:'PASS',source_head:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+    dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),source_hashes:sourceHashes,
+    command:'node tests/browser_workbench_layout.cjs',browser:(await send('Browser.getVersion')).product,
+    environment:{mode:'headless',graphics:'--disable-gpu software rendering',sandbox:'--no-sandbox verification only',isolation:'task-owned temporary browser profile and authored dataset',process_lifecycle:'tracked server/browser killed in finally; debugger startup bounded at 60 seconds'},
+    viewports:[{width:1600,height:1100},{width:390,height:844}],
+    checks:['current controls/native constraints/kinds/tasks/export options/scripts retained','current audio/pointcloud/volume source surfaces retained','native Shift+Tab modal containment and Escape/focus restoration','repeated dialogs preserve draft/selection','status mirrored inside modal','collapsed invalid groups revealed without save','explicit review/save/release download','exact metadata Enter filter','saved state/current record markers','original-pixel image coordinates after scaling','mesh native import/projections','desktop and narrow content fit','no runtime errors'],
+    captures:['text-desktop.jpg','export-desktop.jpg','image-desktop.jpg','mesh-desktop.jpg','mesh-narrow.jpg','import-narrow.jpg','text-narrow.jpg'],
+    qualification:'Standalone current-main UI with authored fixtures; no inference, training, scientific quality, assistive-technology or cross-browser conformance claim'
+  },null,2)+'\n');
   console.log('Compact workbench: native drawer clicks/Escape/focus, preserved draft and selection, import, hidden required-field validation, save, release download, offline generation, scaled image coordinates, mesh import/projections and desktop/narrow pixels passed. '+report);
 })().catch(error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});

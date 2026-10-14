@@ -1,0 +1,10 @@
+{
+  "source": "Actual local Chromium/PostgreSQL browser capture; authored geometry, no training",
+  "files": {
+    "pipeline-mesh-1440.jpg": "90cbbe3e58e7f0ab689c10904165ae4bfa50f310eae7e1210da282461b051281",
+    "pipeline-mesh-390.jpg": "7fcad402025c6531ed0ee2b3a9d502a54ae992082d492e419f47392c45985514",
+    "runs-mesh-1440.jpg": "82d6c388d7c9aa254ecd206d12029459858de399ee0af06ea0a3e5719c95378e",
+    "runs-mesh-390.jpg": "50f852227141acc3548680a7e0c253d9f28c5d9f529f3f1ee1e4a15932cee2f7",
+    "receipt.json": "bbe0c5cdc0230e8e22c5618fcdf7ad25700b0a161f5d6221c30c19eb2ff81e65"
+  }
+}

@@ -1,4 +1,4 @@
-"""Real SQLite/HTTP fixed-membership contracts and release consumer checks."""
+"""Real PostgreSQL/HTTP fixed-membership contracts and release consumer checks."""
 import base64
 import io
 import json
@@ -108,8 +108,8 @@ class SavedSelectionTests(unittest.TestCase):
 
     def test_missing_record_and_deleted_source_are_distinct_and_not_substituted(self):
         text, image = self.text(), self.image(); saved = self.save(text, image)
-        with self.w.lock, self.w.db:
-            self.w.db.execute('DELETE FROM workbench_records WHERE id=?', (text['id'],))
+        with self.w.lock, self.w.db.transaction():
+            self.w.db.execute('DELETE FROM workbench_records WHERE id=%s', (text['id'],))
         self.dataset.delete(image['id'], {'revision': image['source_revision']})
         loaded = self.s.load(saved['id'])
         states = {m['item']['id']: m['status'] for m in loaded['members']}

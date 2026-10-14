@@ -4,8 +4,9 @@ import hashlib
 import http.client
 import io
 import json
+from postgres_helpers import database_snapshot
 from pathlib import Path
-import sqlite3
+import psycopg
 import socket
 import tempfile
 import threading
@@ -93,9 +94,9 @@ class NativeTextImportTests(unittest.TestCase):
             'ratios': {'train': 100, 'validation': 0, 'test': 0}, 'seed': 7, 'format': 'canonical_v1'}
 
     def test_real_roundtrip_provenance_restart_review_selection_preview_export(self):
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         prepared = self.prepare()
-        self.assertEqual(list(self.dataset.db.iterdump()), before, 'Preparation is read-only')
+        self.assertEqual(database_snapshot(self.dataset.db), before, 'Preparation is read-only')
         with zipfile.ZipFile(io.BytesIO(self.raw)) as archive:
             native_rows = [json.loads(line) for line in archive.read('train/records.jsonl').splitlines()]
             manifest_hash = hashlib.sha256(archive.read('manifest.json')).hexdigest()
@@ -107,7 +108,7 @@ class NativeTextImportTests(unittest.TestCase):
             self.assertEqual((record['revision'], record['review'], record['task']), (1, 'draft', 'text_classification'))
             self.assertEqual(record['annotation'], origin['annotation'])
             self.assertEqual(record['text'], origin['text'])
-            original = self.dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=?', (record['id'],)).fetchone()[0]
+            original = self.dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=%s', (record['id'],)).fetchone()[0]
             self.assertEqual(original, origin['text'])
             self.assertEqual(record['source_sha256'], hashlib.sha256(original.encode()).hexdigest())
             self.assertEqual(record['provenance']['rights'], 'unknown')
@@ -174,15 +175,15 @@ class NativeTextImportTests(unittest.TestCase):
         body, receipt = self.admit(prepared['rows'][0])
         row = self.dataset.workbench.get(receipt['record_id'])
         row = self.dataset.workbench.save(row['id'], dict(row, annotation={'label': 'human change'}, review='human_reviewed'))
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         self.admit(prepared['rows'][0], 409, body['request_id'])
         self.admit(prepared['rows'][0], 409)
-        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.dataset.db), before)
         self.admit(prepared['rows'][1])
 
     def test_atomic_history_failure_rolls_back_record_and_marker(self):
         prepared = self.prepare(); marker = uuid.uuid4().hex
-        with patch.object(self.dataset.workbench, '_history', side_effect=sqlite3.OperationalError('injected history failure')):
+        with patch.object(self.dataset.workbench, '_history', side_effect=psycopg.OperationalError('injected history failure')):
             self.admit(prepared['rows'][0], 500, marker)
         self.assertEqual(self.dataset.workbench.query({})['total'], 0)
         self.assertEqual(self.request('import-result/'+marker), (200, {'found': False}))
@@ -260,7 +261,7 @@ class NativeTextImportTests(unittest.TestCase):
             lines[0] = json.dumps(row, ensure_ascii=True).replace(json.dumps(marker), literal).encode()
             entries['train/records.jsonl'] = b'\n'.join(lines)+b'\n'
         raw = rewrite(self.raw, corrupt)
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         prepared = self.prepare(raw)
         self.assertEqual(len(prepared['rows']), 3)
         rejected, *valid = prepared['rows']
@@ -268,7 +269,7 @@ class NativeTextImportTests(unittest.TestCase):
         self.assertNotIn('token', rejected)
         self.assertEqual([row['row_number'] for row in valid], [2, 3])
         self.assertTrue(all('token' in row and 'error' not in row for row in valid))
-        self.assertEqual(list(self.dataset.db.iterdump()), before, 'Preparation rejects one row without writes')
+        self.assertEqual(database_snapshot(self.dataset.db), before, 'Preparation rejects one row without writes')
         for row in valid:
             _, receipt = self.admit(row)
             record = self.dataset.workbench.get(receipt['record_id'])
@@ -299,14 +300,14 @@ class NativeTextImportTests(unittest.TestCase):
             for path in original.namelist():
                 if path != 'train/records.jsonl':
                     self.assertEqual(original.read(path), altered.read(path))
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         prepared = self.prepare(raw)
         self.assertIn('bounded numbers', prepared['rows'][0]['error'])
         self.assertNotIn('token', prepared['rows'][0])
         valid = [row for row in prepared['rows'] if 'token' in row]
         self.assertEqual([row['row_number'] for row in valid], [2, 3])
         self.assertEqual(len(prepared['rows']), 4, 'Absent origin is also reported without replacement')
-        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.dataset.db), before)
         for row in valid: self.admit(row)
         self.assertEqual(self.dataset.workbench.query({})['total'], 2)
         self.assertEqual(self.dataset.db.execute('SELECT COUNT(*) FROM workbench_history').fetchone()[0], 2)
@@ -317,13 +318,13 @@ class NativeTextImportTests(unittest.TestCase):
             manifest['seed'] = 'oversized-integer-fixture'
             entries['manifest.json'] = json.dumps(manifest).replace('"oversized-integer-fixture"', '9' * 5000).encode()
         raw = rewrite(self.raw, corrupt)
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         status, error = self.request('native-text-import/prepare',
             {'source_name': 'native.zip', 'archive': base64.b64encode(raw).decode()})
         self.assertEqual(status, 400)
         self.assertIn('bounded numbers', error['error'])
         self.assertNotIn('rows', error)
-        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.dataset.db), before)
 
     def test_declared_parent_relationships_preserve_groups_without_local_parent_or_split_authority(self):
         def parents(entries):

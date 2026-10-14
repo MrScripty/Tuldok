@@ -1,24 +1,56 @@
 name: Dataset lifecycle tests
 on:
   push:
-    branches: [develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals]
+    branches: [main, develop/dataset-workflows, feature/grounded-text-candidates, feature/image-caption-exports, feature/selected-release-preview-20261006, feature/saved-dataset-selections-20261006, fix/saved-selection-intent-20261006, feature/explicit-metadata-filters-20261006, feature/bulk-real-import-20261006, integration/dataset-candidate-20261006, feature/annotated-caption-import-20261006, integration/dataset-caption-stage-20261006, feature/curation-diagnostics-20261006, feature/rights-note-correction-20261006, feature/instruction-responses-20261007, feature/labeled-text-import-20261007, feature/text-classification-proposals, feature/local-postgres-metadata-20261011, integration/workspaces-postgres-20261011, feature/workspace-image-runs-20261011]
   pull_request:
 permissions:
   contents: read
 jobs:
   lifecycle:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tuldok_test
+          POSTGRES_PASSWORD: isolated-ci-fixture
+          POSTGRES_DB: tuldok_test
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tuldok_test -d tuldok_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TULDOK_TRAINING_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
+      TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
     steps:
       - uses: actions/checkout@v4
+      - name: Check out pinned schema3 source for retained-run qualification
+        uses: actions/checkout@v4
+        with:
+          ref: f1ecf7888a8dfa5b67ac8b087034226d533c682e
+          path: build/legacy-schema3
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Install independent WAV consumer
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: python -m pip install -r requirements.txt
+      - run: python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json
+      - run: python -m venv build/workspace-training
+      - run: build/workspace-training/bin/python -m pip install -r requirements-training.txt
+      - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
+      - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: python -m unittest discover -s tests
       - run: node --check static/workbench.js
+      - run: node --check static/audio-editor.js
       - run: node --check static/saved-selections.js
       - run: node --check static/saved-searches.js
       - run: node tests/test_saved_searches_controller.cjs
@@ -38,6 +70,9 @@ jobs:
       - run: PUMAS_TYPED_PREFIX=caption-proposal node tests/test_pumas_typed_controller.cjs
       - run: node --check static/pumas-gateways.js
       - run: node tests/test_pumas_gateways_controller.cjs
+      - run: node --check static/pointclouds.js
+      - run: node --check static/volume-editor.js
+      - run: node tests/test_spatial_controllers.cjs
       - run: node --check static/meshes.js
       - run: node tests/test_meshes_controller.cjs
       - run: node --check static/sequences.js
@@ -163,6 +198,9 @@ jobs:
       - run: node tests/browser_meshes.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_workspace_mesh.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_sequences.cjs
         env:
           BROWSER: /usr/bin/google-chrome
@@ -175,6 +213,47 @@ jobs:
       - run: node tests/browser_pumas_typed.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: cc -shared -fPIC -O2 -Wall -Wextra -Werror -o build/qa/workspace-offline.so tests/fixtures/workspaces/offline_loopback.c -ldl
+      - run: node tests/browser_workspace_recovery.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - run: node tests/browser_workspace_image_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_text.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_audio.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_audio_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_mesh_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_sequence_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_spatial.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_NATIVE_READER_PYTHON: ${{ github.workspace }}/build/workspace-training/bin/python
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_export_run.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - run: node tests/browser_workspace_breadth.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
       - uses: actions/upload-artifact@v4
         if: always()
         with:

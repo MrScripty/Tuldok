@@ -1,4 +1,5 @@
-"""Native manifest admission traverses actual HTTP, SQLite and original assets."""
+"""Native manifest admission traverses actual HTTP, PostgreSQL and original assets."""
+from postgres_helpers import database_snapshot, in_transaction, install_failure_trigger
 import base64
 import hashlib
 import io
@@ -72,7 +73,7 @@ class BulkImportTests(unittest.TestCase):
     def test_mixed_sources_keep_originals_provenance_and_draft_review_after_restart(self):
         text_body, text = self.admit(self.row(text='cafe\u0301\r\n', name='Real note'))
         image_body, image = self.admit(self.row('image', file='oriented.jpg', parents=[text['record_id']]), number=2)
-        original = self.dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=?', (text['record_id'],)).fetchone()[0]
+        original = self.dataset.db.execute('SELECT original_text FROM workbench_records WHERE id=%s', (text['record_id'],)).fetchone()[0]
         self.assertEqual(original, 'cafe\u0301\r\n')
         self.assertEqual(self.dataset.workbench.get(text['record_id'])['text'], 'café\n')
         source = Path(self.temp.name) / 'images' / image['record_id'] / 'source'
@@ -180,9 +181,8 @@ class BulkImportTests(unittest.TestCase):
         self.assertEqual(self.dataset.workbench.query({})['total'], 1)
 
     def test_storage_failure_is_fatal_and_atomic_not_a_bad_user_row(self):
-        with self.dataset.db:
-            self.dataset.db.execute('''CREATE TRIGGER reject_bulk_metadata BEFORE UPDATE OF groups_json ON workbench_records
-                BEGIN SELECT RAISE(ABORT, 'injected storage failure'); END''')
+        with self.dataset.db.transaction():
+            install_failure_trigger(self.dataset.db, 'workbench_records', 'reject_bulk_metadata', 'injected storage failure', event='UPDATE OF groups_json')
         body = self.payload(self.row('image', file='photo.jpg'))
         status, error = self.request('/api/workbench/import-row', body)
         self.assertEqual(status, 500)
@@ -194,22 +194,22 @@ class BulkImportTests(unittest.TestCase):
 
     def test_result_lookup_is_read_only_and_absence_is_not_completion(self):
         marker = uuid.uuid4().hex
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         self.assertEqual(self.request('/api/workbench/import-result/' + marker), (200, {'found': False}))
-        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.dataset.db), before)
         self.assertEqual(self.request('/api/workbench/import-result/not-a-marker')[0], 400)
         body, result = self.admit(self.row(text='confirmed row'))
-        before = list(self.dataset.db.iterdump())
+        before = database_snapshot(self.dataset.db)
         for _ in range(2):
             self.assertEqual(self.request('/api/workbench/import-result/' + body['request_id']), (200, dict(found=True, **result)))
-        self.assertEqual(list(self.dataset.db.iterdump()), before)
+        self.assertEqual(database_snapshot(self.dataset.db), before)
 
     def test_post_commit_read_failure_returns_error_but_saved_result_confirms_admission(self):
         body = self.payload(self.row('image', file='photo.jpg'))
         original = self.dataset.workbench._get
         def fail_after_commit(record_id):
-            if not self.dataset.db.in_transaction:
-                # Actual SQLite read failure at the existing post-commit return
+            if not in_transaction(self.dataset.db):
+                # Actual PostgreSQL read failure at the existing post-commit return
                 # boundary, after original bytes and enrollment have committed.
                 self.dataset.db.execute('SELECT missing_response_column FROM samples')
             return original(record_id)

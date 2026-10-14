@@ -1,0 +1,82 @@
+[
+  {
+    "record_id": "fixture-image",
+    "field": "width",
+    "value": 0,
+    "expected": "image_dimensions"
+  },
+  {
+    "record_id": "fixture-text",
+    "field": "spans",
+    "value": [
+      {
+        "start": 0,
+        "end": 999,
+        "label": "bad"
+      }
+    ],
+    "expected": "text_span"
+  },
+  {
+    "record_id": "fixture-audio",
+    "field": "interval",
+    "value": [
+      0,
+      801
+    ],
+    "expected": "audio_interval"
+  },
+  {
+    "record_id": "fixture-mesh",
+    "field": "faces",
+    "value": [
+      [
+        0,
+        1,
+        9
+      ]
+    ],
+    "expected": "mesh_index"
+  },
+  {
+    "record_id": "fixture-point_cloud",
+    "field": "point_count",
+    "value": 5,
+    "expected": "point_count"
+  },
+  {
+    "record_id": "fixture-volume",
+    "field": "shape",
+    "value": [
+      2,
+      2,
+      3
+    ],
+    "expected": "volume_shape"
+  },
+  {
+    "record_id": "fixture-volume",
+    "field": "affine",
+    "value": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "expected": "volume_affine"
+  },
+  {
+    "record_id": "fixture-sequence",
+    "field": "times",
+    "value": [
+      0,
+      1,
+      0.5
+    ],
+    "expected": "sequence_times"
+  }
+]

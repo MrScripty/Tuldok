@@ -1,11 +1,12 @@
 """Actual frozen fee7b4a pair + explicitly source-derived synthetic controls."""
+from postgres_helpers import drop_failure_trigger, install_failure_trigger, observed_statements
 import base64
 import hashlib
 import http.client
 import io
 import json
 from pathlib import Path
-import sqlite3
+import psycopg
 import tempfile
 import threading
 import unittest
@@ -80,10 +81,8 @@ class SequenceBatch(unittest.TestCase):
                 self.assertEqual(bundle.read(name), (ACTUAL / name).read_bytes())
         for name, key in [('run.json', 'run_sha256'), ('frames.jsonl', 'frames_sha256')]:
             self.assertEqual(result[key], hashlib.sha256((ACTUAL / name).read_bytes()).hexdigest())
-        statements = []
-        self.d.db.set_trace_callback(statements.append)
-        self.assertEqual(batch.find_result(self.w, request['request_id']), dict(found=True, **result))
-        self.d.db.set_trace_callback(None)
+        with observed_statements(self.d.db) as statements:
+            self.assertEqual(batch.find_result(self.w, request['request_id']), dict(found=True, **result))
         self.assertFalse(any('SELECT bundle' in sql for sql in statements))
         self.assertNotIn('sequence', result)
         self.assertNotIn('review', result)
@@ -134,7 +133,7 @@ class SequenceBatch(unittest.TestCase):
         before = self.snapshot()
         for table in ('workbench_sequence_assets', 'workbench_records', 'workbench_history'):
             request = body(*synthetic(), item_index=2, item_name='synthetic')
-            self.d.db.execute(f"CREATE TRIGGER fail_batch BEFORE INSERT ON {table} BEGIN SELECT RAISE(ABORT,'injected batch failure'); END")
+            install_failure_trigger(self.d.db, table, 'fail_batch', 'injected batch failure')
             self.d.db.commit()
             try:
                 with self.assertRaises(WorkbenchError) as error: batch.import_item(self.w, request)
@@ -142,7 +141,7 @@ class SequenceBatch(unittest.TestCase):
                 self.assertEqual(self.snapshot(), before)
                 self.assertEqual(batch.find_result(self.w, request['request_id']), {'found': False})
             finally:
-                self.d.db.execute('DROP TRIGGER fail_batch'); self.d.db.commit()
+                drop_failure_trigger(self.d.db, table, 'fail_batch'); self.d.db.commit()
         with patch.object(batch.rheon, 'prepare', side_effect=OSError('injected storage failure')):
             with self.assertRaises(WorkbenchError) as error: batch.import_item(self.w, body())
             self.assertEqual(error.exception.status, 500)
@@ -179,7 +178,7 @@ class SequenceBatch(unittest.TestCase):
         request = body(); result = batch.import_item(self.w, request)
         second = batch.import_item(self.w, body(*synthetic(), item_name='synthetic'))
         context = self.w.get(result['record_id'])['provenance']
-        self.d.db.execute('UPDATE workbench_records SET provenance_json=? WHERE id=?', (json.dumps(context), second['record_id']))
+        self.d.db.execute('UPDATE workbench_records SET provenance_json=%s WHERE id=%s', (json.dumps(context), second['record_id']))
         self.d.db.commit()
         with self.assertRaises(WorkbenchError) as error: batch.find_result(self.w, request['request_id'])
         self.assertEqual(error.exception.status, 409)
@@ -230,7 +229,7 @@ class SequenceBatch(unittest.TestCase):
         item = body(); status, result = request('sequence-import-item', json.dumps(item).encode())
         self.assertEqual(status, 201)
         self.assertEqual(request('sequence-import-result/' + item['request_id'])[1], dict(found=True, **result))
-        with patch.object(self.w, '_history', side_effect=sqlite3.OperationalError('injected')):
+        with patch.object(self.w, '_history', side_effect=psycopg.OperationalError('injected')):
             next_item = body(*synthetic(), item_name='source-derived')
             self.assertEqual(request('sequence-import-item', json.dumps(next_item).encode())[0], 500)
         self.assertEqual(request('sequence-import-result/' + next_item['request_id'])[1], {'found': False})

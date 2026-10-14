@@ -1,4 +1,5 @@
 import base64
+from postgres_helpers import database_snapshot
 import hashlib
 import io
 import json
@@ -49,8 +50,7 @@ class CaptionProposalTests(unittest.TestCase):
         return self.data.caption_proposals.decide(job['id'], {'revision': job['revision'], 'decision': decision})
 
     def state(self):
-        return [list(self.data.db.execute('SELECT * FROM '+name+' ORDER BY rowid')) for name in
-                ('workbench_records', 'workbench_history', 'workbench_target_proposals', 'caption_proposals')]
+        return database_snapshot(self.data.db)
 
     def wait(self, predicate):
         end=time.monotonic()+3
@@ -80,7 +80,7 @@ class CaptionProposalTests(unittest.TestCase):
         self.assertEqual(row['target_proposal']['job_id'],job['id'])
         state=self.state();again=self.decide(job)
         self.assertFalse(again['changed']);self.assertEqual(self.state(),state)
-        self.assertEqual(json.loads(self.data.db.execute('SELECT snapshot FROM workbench_history WHERE id=? AND revision=?',(row['id'],row['revision'])).fetchone()[0])['target_proposal'],row['target_proposal'])
+        self.assertEqual(json.loads(self.data.db.execute('SELECT snapshot FROM workbench_history WHERE id=%s AND revision=%s',(row['id'],row['revision'])).fetchone()[0])['target_proposal'],row['target_proposal'])
         self.data.close();self.data=Dataset(self.tmp.name)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['application']['revision'],row['revision'])
         self.assertEqual(self.data.workbench.get(row['id'])['target_proposal'],row['target_proposal'])
@@ -131,7 +131,7 @@ class CaptionProposalTests(unittest.TestCase):
         original = self.generate()
         statuses = ('preparing', 'generating', 'stopping', 'completed', 'failed',
                     'cancelled', 'interrupted', 'applied', 'rejected')
-        with owner.lock, owner.db:
+        with owner.lock, owner.db.transaction():
             for index in range(51):
                 job = dict(original, id=uuid.uuid4().hex, status=statuses[index % len(statuses)],
                            extension={'unicode': 'é\n雪', 'input_image_base64': 'nested metadata'},
@@ -143,7 +143,7 @@ class CaptionProposalTests(unittest.TestCase):
                 owner._save(job)
         before = self.state()
         full = [json.loads(row[0]) for row in owner.db.execute(
-            'SELECT data FROM caption_proposals ORDER BY rowid DESC LIMIT 50')]
+            'SELECT data FROM caption_proposals ORDER BY ordinal DESC LIMIT 50')]
         expected = [{key: value for key, value in job.items()
                      if key not in ('input_image_base64', 'raw_response_base64')} for job in full]
         self.assertEqual(len(expected), 50)
@@ -160,7 +160,7 @@ class CaptionProposalTests(unittest.TestCase):
         image = base64.b64encode(bytes(MAX_IMAGE)).decode('ascii')
         response = base64.b64encode(b'R' * MAX_OUTPUT).decode('ascii')
         ids = []
-        with owner.lock, owner.db:
+        with owner.lock, owner.db.transaction():
             for index in range(51):
                 job = dict(id=uuid.uuid4().hex, status='completed', source=self.row,
                            annotation={'caption': 'Controlled large evidence'},
@@ -171,7 +171,7 @@ class CaptionProposalTests(unittest.TestCase):
                 ids.append(job['id'])
         def retained_hashes():
             return [(row[0], hashlib.sha256(row[1].encode()).hexdigest()) for row in
-                    owner.db.execute('SELECT id, data FROM caption_proposals ORDER BY rowid')]
+                    owner.db.execute('SELECT id, data FROM caption_proposals ORDER BY ordinal')]
         before = retained_hashes()
         decode = json.loads
         decoded_sizes = []
@@ -195,7 +195,7 @@ class CaptionProposalTests(unittest.TestCase):
     def test_poll_capture_is_atomic_and_decoding_releases_shared_lock(self):
         owner = self.data.caption_proposals
         first = self.generate()
-        with owner.lock, owner.db:
+        with owner.lock, owner.db.transaction():
             second = dict(first, id=uuid.uuid4().hex)
             owner._save(second)
         captured = [second, first]
@@ -204,13 +204,14 @@ class CaptionProposalTests(unittest.TestCase):
         rows = [(json.dumps(job), job['id']) for job in changed]
         shared_lock = owner.lock
         class ObservedLock:
+            mutex = shared_lock.mutex
             held = False
             def __enter__(self):
-                shared_lock.acquire()
+                shared_lock.__enter__()
                 self.held = True
             def __exit__(self, *args):
                 self.held = False
-                shared_lock.release()
+                shared_lock.__exit__(*args)
         observed = ObservedLock()
         owner.lock = observed
         decode = json.loads
@@ -218,8 +219,9 @@ class CaptionProposalTests(unittest.TestCase):
         started = False
         def update():
             try:
-                with shared_lock, owner.db:
-                    owner.db.executemany('UPDATE caption_proposals SET data=? WHERE id=?', rows)
+                with shared_lock, owner.db.transaction():
+                    with owner.db.connection.cursor() as cursor:
+                        cursor.executemany('UPDATE caption_proposals SET data=%s WHERE id=%s', rows)
             except Exception as error:
                 errors.append(error)
         def outside_lock(data, *args, **kwargs):
@@ -339,7 +341,7 @@ class CaptionProposalTests(unittest.TestCase):
         self.data.close();self.data=Dataset(self.tmp.name)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'cancelled')
         # Persist the state a killed process would have left, then exercise startup.
-        with self.data.lock,self.data.db:
+        with self.data.lock,self.data.db.transaction():
             interrupted=self.data.caption_proposals.get(job['id']);interrupted['status']='generating';self.data.caption_proposals._save(interrupted)
         self.data.close();count=len(self.requests);self.data=Dataset(self.tmp.name)
         self.assertEqual(self.data.caption_proposals.get(job['id'])['status'],'interrupted');self.assertEqual(len(self.requests),count)

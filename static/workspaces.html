@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tuldok · Dataset workspaces</title>
+    <link rel="stylesheet" href="/workspaces.css" />
+  </head>
+  <body>
+    <a class="skip" href="#workspace">Skip to workspace</a>
+    <header class="topbar">
+      <a class="brand" href="/workspaces"
+        ><span class="brand-mark">t.</span>Tuldok
+        <span class="muted">/ Workspaces</span></a
+      >
+      <div class="top-links">
+        <span class="local">● Local</span
+        ><a href="/workbench">Classic workbench ↗</a
+        ><a href="/">Corner studio ↗</a>
+      </div>
+    </header>
+    <div class="context-bar">
+      <div>
+        <span class="eyebrow">DATASET</span
+        ><label class="sr-only" for="dataset">Dataset</label
+        ><select id="dataset">
+          <option value="fixtures">Interface fixtures</option>
+          <option value="catalog">Current local catalog</option>
+        </select>
+      </div>
+      <div id="context" class="context-copy">Loading workspace…</div>
+      <span class="badge amber">Local preview</span>
+    </div>
+    <nav class="workspace-nav" aria-label="Workspaces">
+      <a href="#data" id="nav-data"><span>01</span> Data</a
+      ><a href="#pipeline" id="nav-pipeline"><span>02</span> Pipeline</a
+      ><a href="#runs" id="nav-runs"><span>03</span> Runs</a
+      ><span class="nav-note">Inspect → compose → understand</span>
+    </nav>
+    <main id="workspace" tabindex="-1">
+      <p id="workspace-status" role="status">Loading authored fixtures…</p>
+      <div id="workspace-error" class="error-panel" role="alert" hidden></div>
+      <button id="retry-load" hidden>Retry loading</button>
+      <section id="view-data" aria-labelledby="data-heading" hidden>
+        <div class="view-heading">
+          <div>
+            <span class="eyebrow">YOUR SOURCE OF TRUTH</span>
+            <h1 id="data-heading" tabindex="-1">Data</h1>
+          </div>
+          <p>Inspect records, keep their evidence, review deliberately.</p>
+        </div>
+        <div id="fixture-data"></div>
+        <div id="catalog-data" hidden>
+          <p class="callout">
+            Live catalog · imports and saves below use the existing Data owners.
+            Review and rights evidence remain separate. Switching workspaces
+            preserves this editor.
+          </p>
+          <p id="catalog-status" role="status">Loading current catalog…</p>
+          <p id="real-correction-context" class="callout" hidden></p>
+          <iframe
+            id="catalog-frame"
+            title="Current catalog — existing import, record editor, review and releases"
+          ></iframe>
+        </div>
+      </section>
+      <section id="view-pipeline" aria-labelledby="pipeline-heading" hidden>
+        <div class="view-heading">
+          <div>
+            <span class="eyebrow">REPRODUCIBLE INTENT</span>
+            <h1 id="pipeline-heading" tabindex="-1">Pipeline</h1>
+          </div>
+          <p>Edit the graph. Inspect each boundary.</p>
+        </div>
+        <div id="pipeline-root"></div>
+        <div id="real-pipeline-root" hidden></div>
+      </section>
+      <section id="view-runs" aria-labelledby="runs-heading" hidden>
+        <div class="view-heading">
+          <div>
+            <span class="eyebrow">EVIDENCE, AT EACH STEP</span>
+            <h1 id="runs-heading" tabindex="-1">Runs</h1>
+          </div>
+          <p>Trace results back to the exact source.</p>
+        </div>
+        <div id="runs-root"></div>
+        <div id="real-runs-root" hidden></div>
+      </section>
+    </main>
+    <footer>
+      <span>Tuldok · Dataset-centered workspaces</span
+      ><span
+        >Fixtures are isolated examples. Current catalog runs use an optional
+        local CPU runtime.</span
+      >
+    </footer>
+    <dialog id="leave-dialog">
+      <h2>Unsaved fixture edits</h2>
+      <p>
+        Switching datasets would hide your current draft. Save it first, or
+        explicitly discard it.
+      </p>
+      <div class="actions">
+        <button id="keep-editing">Keep editing</button
+        ><button id="discard-editing" class="danger">
+          Discard fixture edits and switch
+        </button>
+      </div>
+    </dialog>
+    <script src="/workspace-service.js"></script>
+    <script src="/pipeline-editor.js"></script>
+    <script src="/runs-view.js"></script>
+    <script src="/workspace-real.js"></script>
+    <script src="/workspaces.js"></script>
+  </body>
+</html>

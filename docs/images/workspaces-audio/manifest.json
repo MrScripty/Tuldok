@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "source_sha": "2d5b8217967c6564b1b7089aef04be0b48c8c28a",
+  "source_dirty": false,
+  "branch": "feature/workspace-audio-data-20261012",
+  "browser_receipt": "build/qa/workspace-audio/run-STgbvr/receipt.json",
+  "fixture_sha256": "52d48d8057e8e33e0a2938fd42e0a36f33754ee3811d57c2024b401cc6534b26",
+  "record_id": "59c243ac6d4f451ea8d7e04b7420128b",
+  "release_url": "/api/workbench/releases/7e0bbc60c61844cefe5263eca63ee8f2c7d894274266c1fd4567a90e1ba8c25f.zip",
+  "checks": [
+    "Empty real catalog renders honestly",
+    "Real file input imports once despite repeated submit and lost-ack delay",
+    "Browser independently decodes exact stereo source samples and duration",
+    "Keyboard creates source-frame transcript; chosen channel playback has exactly 4001 frames",
+    "Keyboard explicit human review persists exact typed interval and history",
+    "Frozen release contains byte-identical WAV and reviewed JSONL with exact provenance",
+    "Stale edit is refused; explicit reload restores current revision",
+    "Workspace reload retains durable reviewed record and exact timing",
+    "Discarding out-of-range audio input does not block existing text save, including after form re-enable",
+    "Pause during delayed interval preparation cannot resume playback",
+    "Failed late audio request cannot overwrite a newer editor notice",
+    "Catalog capability advertises only qualified WAV Data; execution and ASR remain unavailable",
+    "Native 200% Chromium zoom doubles pixel ratio/halves viewport; keyboard interval controls and layout remain usable"
+  ],
+  "images": [
+    {
+      "file": "audio-data-first-1440.jpg",
+      "sha256": "ace8782dc749e017116e182b38d771b8cb6c72debb87d740e54f85b4fd3da94c",
+      "bytes": 139136,
+      "width": 1440,
+      "height": 1000,
+      "jpeg_quality": 85,
+      "native_browser_zoom": 100
+    },
+    {
+      "file": "audio-reviewed-1440.jpg",
+      "sha256": "b3928986dff1fcb70c553c243e06678a54eb3aff5aac8201745718e7d5b4822f",
+      "bytes": 135989,
+      "width": 1440,
+      "height": 1000,
+      "jpeg_quality": 85,
+      "native_browser_zoom": 100
+    },
+    {
+      "file": "audio-reviewed-390.jpg",
+      "sha256": "4dd17b931a686a22f685403177299b2dc5ecf17f9e490b4ede086b24a142de4e",
+      "bytes": 55280,
+      "width": 390,
+      "height": 844,
+      "jpeg_quality": 85,
+      "native_browser_zoom": 100
+    },
+    {
+      "file": "audio-native-200.jpg",
+      "sha256": "6b65c67e5c372a26831cddf10cc9ebd2624552078695f0edfe7588250a28fca5",
+      "bytes": 89021,
+      "width": 1440,
+      "height": 857,
+      "jpeg_quality": 85,
+      "native_browser_zoom": 200
+    }
+  ],
+  "scope": "Real WAV Data import/playback/timed human review/frozen export on authored impulses; no audio Pipeline/Runs/ASR/training qualification."
+}

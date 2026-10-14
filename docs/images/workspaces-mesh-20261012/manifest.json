@@ -1,0 +1,56 @@
+{
+  "source_commit": "0685d91afd195e64c5f4b1793f0a28be3d470d1d",
+  "source_dirty": false,
+  "early_source_commit": "2344b819c21a92bb32a1dfbc386b030888400212",
+  "early_source_dirty": true,
+  "images": [
+    {
+      "path": "early/mesh-desktop.jpg",
+      "sha256": "827d476c9b153d481f4312cb5cfa3228c08c108c79300d20278978722c9251d7",
+      "bytes": 177020,
+      "width": 1400,
+      "height": 807,
+      "original_jpeg_quality": 85
+    },
+    {
+      "path": "early/mesh-narrow.jpg",
+      "sha256": "ea92acc1e076bc1baeb01042d095f7a1e73ed22fcd4387fdb3c3110dabe4ec31",
+      "bytes": 57886,
+      "width": 390,
+      "height": 844,
+      "original_jpeg_quality": 85
+    },
+    {
+      "path": "mesh-desktop.jpg",
+      "sha256": "7062fc8cb48e2b40b55117cdb800c07f2cd114769e2f68de0f4cd9502138ada8",
+      "bytes": 150763,
+      "width": 1440,
+      "height": 1000,
+      "original_jpeg_quality": 85
+    },
+    {
+      "path": "mesh-narrow.jpg",
+      "sha256": "2aeb1169f321dae7cb1ec523bfb6dc87c7ec2381263e94893e10335eca0ee35a",
+      "bytes": 56707,
+      "width": 390,
+      "height": 844,
+      "original_jpeg_quality": 85
+    },
+    {
+      "path": "mesh-native-200.jpg",
+      "sha256": "28f7af4c5240dd53ebd9dda86110748ef45b3bc0c662df2516ac4feb4ce0086d",
+      "bytes": 107997,
+      "width": 1400,
+      "height": 807,
+      "original_jpeg_quality": 85
+    },
+    {
+      "path": "mesh-release.jpg",
+      "sha256": "ee92bea45623e0dbe2e81b4830a16aa1a6ce778cd2d620fce9e6ef9fe1194102",
+      "bytes": 92571,
+      "width": 1400,
+      "height": 807,
+      "original_jpeg_quality": 85
+    }
+  ]
+}
