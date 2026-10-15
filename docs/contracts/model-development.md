@@ -223,3 +223,62 @@ schema1 external Run source receipts retain their exact custody contract.
 Transitive current permissions and protected-population disclosure are checked
 again on derived access; a captured source receipt alone cannot authorize a
 package export, import, query, segment read, or derivative summary.
+
+## Candidate package and fresh inference (P5)
+
+`candidate_packages.py` implements the exact `inference_package_v1` body from D2.
+The checkpoint descriptor includes its exact weights Blob. Its immutable candidate
+bytes bind the selected Run, checkpoint and evaluation; the retained published
+ModelMaterial binds every source import and each specification/preprocessing/output
+policy. An inventory entry alone cannot replace those cross-file identities.
+
+The classifier package includes only explicitly selected validation PNG probes,
+expected probabilities, fixed probe membership, fitted transform, model and task
+contracts, source closure, runtime contract, decision/evaluation/lineage and rights
+inventory. Training and holdout records remain permissioned references. Unknown
+or mixed protected populations are unsupported for this profile. Every included
+material has an explicit rights disposition. Unknown rights allow the owner's
+local/private workflow and deny redistribution; no permissive license is inferred.
+
+Preparation selects an existing configured Projects root and a new flat directory.
+The owner helpers prepare a declared packaging or captured CPU verifier graph,
+its captured operation model and an exact member Trial. Preparation returns the
+proposed Trial/material without granting execution or starting a process. Repeated
+actor/request keys return the same durable receipt. Existing `studies.approve`
+and `studies.admit` provide exact material approval, conservative budget charging,
+Run custody, reconciliation and cancellation. No second runner or implicit retry
+is added. Package source Run inputs remain explicit captured bindings so every
+current derived accessor can reauthorize their transitive populations.
+
+The verifier requires an existing approved `captured_cpu_python_v1` snapshot.
+Its runtime contract uses the RuntimeSnapshots owner, including exact Python,
+packages, transitive native files and notices. The fresh consumer reconstructs
+the declared TinyCNN topology independently, applies PIL bilinear RGB resize and
+CHW float32 division by255, loads weights-only state with strict keys and compares
+fixed probabilities under evaluator-owned `atol=1e-6`, `rtol=1e-5`. It imports no
+training adapter, live checkout, model cache or torchvision implementation. It
+independently recounts confusion, accuracy and macro F1. Physical validity and
+training resume remain separate unsupported claims.
+
+Candidate decision, `package_complete` and `fresh_verified` are distinct states.
+Construction reports `verification_pending`; only a separately completed admitted
+verifier Run supplies fresh verification. Inspection and state queries decode
+bounded data and never execute captured code. State collection is scoped to the
+candidate and bounded; unsupported collection size returns a typed outcome.
+
+The standalone checkpoint is:
+
+```
+python tests/qualify_candidate_package.py --package /tmp/export/package.zip \
+  --runtime /catalog/runtime-snapshots/SHA/python/bin/python3.12 \
+  --expected-sha256 PUBLISHED_PACKAGE_SHA --mask-path /original/checkout \
+  --mask-path /original/model-cache --output /tmp/fresh-inference-qa
+```
+
+The qualifier first verifies the entire downloaded artifact against the published
+SHA, then starts the approved runtime through its captured bootstrap in a private
+working directory. `--mask-path` requires bubblewrap and separately verifies the
+named original directories are empty in the consumer filesystem. A sibling
+`package-result.json` may provide the expected published SHA when the explicit
+argument is omitted. The qualifier does not reinterpret public redistribution
+rights or a diagnostic candidate as a quality qualification.
