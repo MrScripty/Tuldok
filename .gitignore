@@ -4,6 +4,9 @@
 __pycache__/
 *.pyc
 data/
+# Local catalogs, generated runs, runtime snapshots and migration backups.
+/data-*/
+/workspace-data/
 *.zip
 .pytest_cache/
 /test-results/rights-note/
