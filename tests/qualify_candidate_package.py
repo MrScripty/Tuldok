@@ -138,7 +138,7 @@ def qualify_production(catalog, snapshot_descriptor, output, fixture_path=None):
         dataset.close()
 
 
-def qualify_field_production(catalog, snapshot_descriptor, output, study_id, candidate_id):
+def qualify_field_production(catalog, snapshot_descriptor, output, study_id, candidate_id, limits=None):
     """Two real charged attempts from an existing authorized scientific selection.
 
     The producer Run/candidate must already exist; this never fabricates evidence,
@@ -166,6 +166,20 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
         assert source['state'] == 'completed'
         assert call(dataset.runs.model_evidence, source['id'], {}, contract_version=2)['state'] == 'verified'
         before = call(dataset.studies.get, study_id)['charged']['attempt_slots']
+        budget_amendment = None
+        if limits is not None:
+            # Explicit caller-owned finite qualification amendment, never a
+            # budget retry/fallback or reuse of the producer's execution grant.
+            assert limits['attempt_slots'] == before + 2
+            reconciled = call(dataset.studies.reconcile, study_id)
+            assert all(row['state'] == 'settled' for row in reconciled['reservations'])
+            original = current()
+            stopped = call(dataset.studies.stop, study_id, {'request_key': out.name + '-close-before-budget', 'revision': original['revision']})
+            closed_study = current()
+            save_body = {'revision': closed_study['revision'], 'name': closed_study['name'], 'limits': limits, 'policy': closed_study['policy']}
+            saved = call(dataset.studies.save, study_id, save_body)
+            budget_amendment = {'original_study': original, 'stop_response': stopped, 'save_body': save_body, 'save_response': saved}
+            (out / 'budget-amendment.json').write_bytes(p.encoded(budget_amendment))
         def admit(trial, key):
             state = current()
             if not state['open']:
@@ -211,6 +225,7 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
             'source_run_id': source['id'], 'source_evaluation_sha256': candidate['candidate']['evaluation_sha256'],
             'package_run_id': package_run['id'], 'verifier_run_id': verifier['id'], 'package_sha256': package['sha256'],
             'runtime_snapshot': descriptor, 'charged_before': before, 'charged': totals, 'fresh_verification': receipt,
+            'budget_amendment': budget_amendment,
             'scope': 'Actual retained-source package reconstruction only; independent numerical/physical acceptance remains separate.'}
         (out / 'receipt.json').write_bytes(p.encoded(result)); return result
     finally:
@@ -226,6 +241,7 @@ def main():
     parser.add_argument('--snapshot-descriptor', type=Path)
     parser.add_argument('--source-study')
     parser.add_argument('--source-candidate')
+    parser.add_argument('--field-limits', type=Path, help='Explicit finite limits JSON; close/save through the Study owner before the two package attempts.')
     parser.add_argument('--runtime', type=Path)
     parser.add_argument('--expected-sha256')
     parser.add_argument('--expected-profile', choices=('classifier', 'scalar_a'),
@@ -239,7 +255,8 @@ def main():
         if args.source_study is not None or args.source_candidate is not None:
             if args.source_study is None or args.source_candidate is None:
                 parser.error('--source-study and --source-candidate must be supplied together.')
-            receipt = qualify_field_production(args.production_catalog, args.snapshot_descriptor, args.output, args.source_study, args.source_candidate)
+            limits = candidate_packages.decode(args.field_limits.read_bytes()) if args.field_limits is not None else None
+            receipt = qualify_field_production(args.production_catalog, args.snapshot_descriptor, args.output, args.source_study, args.source_candidate, limits)
         else:
             receipt = qualify_production(args.production_catalog, args.snapshot_descriptor, args.output)
         print(json.dumps({'verified': True, 'receipt': str(args.output / 'receipt.json'), 'study_id': receipt['study_id']}))
