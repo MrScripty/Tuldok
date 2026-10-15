@@ -32,8 +32,9 @@ Source capture includes the exact SDK `tuldok_extension_sdk/__init__.py` and
 and notice. Provider and recipe both select already prepared CPU runtime
 `50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d`, with no runtime
 fallback. There are 26 declared outputs, within the current 32-output envelope.
-Architecture and preprocessing/output policies are author exact. Only declared
-configuration schema/defaults may be edited in the model workflow.
+Architecture and preprocessing/output policies are author exact. The selected
+Model declares no parameters, so its resolved `configuration` is `{}`. Trainer
+learning rate and update count remain separate recipe/Trainer controls.
 
 The SDK writes field groups in checkpoint order, then `policy.fields` order
 (raw, corrected). Exact policy contracts, output bindings and artifact identities
@@ -47,7 +48,7 @@ python -m tuldok_extension_sdk validate examples/extensions/field-surrogate-b-in
 python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v
 ```
 
-These prove inert declaration validity and local numerical behavior. Eight tests
+These prove inert declaration validity and local numerical behavior. Nine tests
 compare NumPy updates/replay with independent stdlib equations, demonstrate
 train-only fitting and explicit boundary enforcement, reject missing/nonbinary
 inputs and malformed native arrays, and check exact source closure/dataflow.
@@ -70,7 +71,7 @@ python cold_oracle.py --fixture fixture.json --artifacts DOWNLOADED_ARTIFACTS \
 ```
 
 The exact native identity and source-closure rules follow
-`docs/contracts/extension-field-identities.md` at contract commit `d6396a5`.
+`docs/contracts/extension-field-identities.md` at contract commit `4ec09a2`.
 Candidate input identities hash ordered input field IDs and SHA256s of native
 little-endian float64 payloads, excluding NPY headers. The policy contains exact
 `field_targets` rows in candidate then field order, and candidate target identity
@@ -91,6 +92,8 @@ unchanged. Its new exact source hash changes provider/recipe/Project identities;
 adapter/evaluator/field-source hashes all use the SDK digest of the complete
 recipe source inventory sorted by path, retaining exact `{path, sha256}` entries.
 File sizes, the recipe itself and automatic Model binding entries are excluded.
+Metric population identity hashes canonical-sorted frozen-reference objects only;
+preprocessing identity separately hashes the full preprocessing policy.
 Mathematical source, oracle and fixture remain unchanged. This unadmitted
 package has no prior material or grant to reuse.
 

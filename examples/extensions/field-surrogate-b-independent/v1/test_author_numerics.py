@@ -82,7 +82,7 @@ class IndependentBNumericalTests(unittest.TestCase):
             oracle.npy(encode(values)+struct.pack('<d', 0), (4, 4, 4))
 
     def test_native_probe_and_distinct_targets_match_published_identity_contract(self):
-        from tuldok_extension_sdk.evidence import digest
+        from tuldok_extension_sdk.evidence import canonical, digest
         recipe = json.loads((ROOT/'recipe.json').read_text())
         policy = recipe['model_evidence']
         case = self.fixture['cases'][-1]
@@ -99,7 +99,7 @@ class IndependentBNumericalTests(unittest.TestCase):
         for field in policy['fields']:
             self.assertEqual(field['contract']['inputs'], policy['fields'][0]['contract']['inputs'])
         for metric in policy['metric_definitions']:
-            self.assertEqual(metric['population_sha256'], digest(policy['probe']['candidates']))
+            self.assertEqual(metric['population_sha256'], digest(sorted([row['frozen_reference'] for row in policy['probe']['candidates']], key=canonical)))
         file = io.BytesIO()
         np.save(file, np.asarray(case['initial'], dtype='<f8').reshape(4, 4, 4), allow_pickle=False)
         self.assertNotEqual(input_identities[0]['payload_sha256'], hashlib.sha256(file.getvalue()).hexdigest())
@@ -127,6 +127,24 @@ class IndependentBNumericalTests(unittest.TestCase):
         changed = copy.deepcopy(recipe['sources'])
         changed[0]['sha256'] = '0'*64
         self.assertNotEqual(expected, digest(sorted(changed, key=lambda item: item['path'])))
+
+    def test_metric_population_preprocessing_and_model_configuration_use_public_contract(self):
+        from tuldok_extension_sdk.evidence import canonical, digest
+        recipe = json.loads((ROOT/'recipe.json').read_text())
+        policy = recipe['model_evidence']
+        model = json.loads((ROOT/'model.json').read_text())
+        references = sorted([row['frozen_reference'] for row in policy['probe']['candidates']], key=canonical)
+        for metric in policy['metric_definitions']:
+            self.assertEqual(metric['population_sha256'], digest(references))
+            self.assertEqual(metric['preprocessing_sha256'], digest(policy['preprocessing_policy']))
+            self.assertNotEqual(metric['population_sha256'], digest(policy['probe']['candidates']))
+        self.assertNotIn('parameters', model)
+        self.assertNotIn('defaults', model)
+        self.assertEqual(policy['model_specification']['configuration'], {})
+        trainer = json.loads((ROOT/'trainer.json').read_text())
+        self.assertEqual(trainer['defaults'], {'learning_rate': .1, 'updates': 64})
+        self.assertEqual(recipe['parameters']['learning_rate']['default'], .1)
+        self.assertEqual(recipe['parameters']['updates']['default'], 64)
 
     def test_source_closure_exact_five_roles_ports_stage_dataflow_and_frozen_oracle(self):
         extension = json.loads((ROOT/'extension.json').read_text())

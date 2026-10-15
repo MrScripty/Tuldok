@@ -12,7 +12,7 @@
     {
       "command": "python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v",
       "state": "passed",
-      "tests": 8,
+      "tests": 9,
       "evidence_kind": "local numerical/closed-package tests; not actual Run"
     },
     {
@@ -40,8 +40,8 @@
     "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
     "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
     "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
-    "recipe.json": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e",
-    "project.json": "ef1965e9c7817dec2cce6882c5a4725dade23cec2f801f36a61640d33e1296a8"
+    "recipe.json": "7d089b3fe85191e5dbb3c222899e8b9629f4889708a10b854c533b73b0796416",
+    "project.json": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887"
   },
   "write_set": "examples/extensions/field-surrogate-b-independent/v1/",
   "constraints": {
@@ -73,8 +73,8 @@
   },
   "identity_contract": {
     "path": "docs/contracts/extension-field-identities.md",
-    "commit": "d6396a5",
-    "sha256": "027e67658298183d98eb8085da999d1f584fc372498d5f8af25769cf22e48a3d",
+    "commit": "4ec09a2",
+    "sha256": "3631ff6994907c637a19ac2af461b746f296bef0adbc4e7719cd82245454f71c",
     "state": "applied",
     "payload_encoding": "struct.pack little-endian float64; excludes NPY header",
     "input_order": [
@@ -119,5 +119,13 @@
       "metric_definitions[*].evaluator_sha256"
     ],
     "source_inventory_unchanged": true
+  },
+  "metric_and_model_contract": {
+    "population_sha256": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800",
+    "population_rule": "SDK digest of canonical-sorted frozen_reference objects only",
+    "preprocessing_sha256": "905f89c429cbadae20edf269a0fb212f21e1894b99506cc95ebf615142099d86",
+    "model_configuration": {},
+    "model_parameter_declaration": "none; trainer controls stay separate",
+    "owner_compatibility_recheck": "pending fresh public owner check; no actual Run"
   }
 }
