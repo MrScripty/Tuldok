@@ -138,6 +138,17 @@ P2 merge06d397b is the clean union; no P2 application file changed. Actual compo
 Study32/0skip88.009s and all extension33/0skip9.834s pass, including SDK static
 validation and the original retained-reader witnesses. Independent review confirms
 the15 SDK additions and schema/canonical/test owners exactly match accepted main.
+Pre-SDK CI run38797538902 passed the explicit agent53, MCP17 and Study32 stages,
+then failed one of1042 base-suite cases (42 optional skips). Its capacity fixture
+changed only the captured spec to a large CPU policy while approved material
+still declared ordinary system Python. The new admission binding correctly refused
+this contradiction as conflict before disk/grant/Run effects. Production validation
+is unchanged. The fixture now constructs a complete declared large CPU capture
+using the existing authored static snapshot descriptor (no installed snapshot,
+child, GB allocation or model qualification), then injects only low disk. All six
+actual artifact cases pass0skip12.719s, preserving unavailable/no-grant/no-Run/cleanup
+and legacy/reconciliation assertions. This failed CI receipt is diagnostic, not
+acceptance; optional skips establish no absent hardware/domain capability.
 Run exact-head CI and recheck the composition before merging. P2 stays Verifying/I2 pending until then.
 Source identities are retained in [P2 fingerprints](p2-source-fingerprints.json).
 P3 implements and qualifies actual classifier template edits, automatic recurrent

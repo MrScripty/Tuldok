@@ -142,3 +142,16 @@
 - Actual composed Study32/0skip88.009s and extension33/0skip9.834s pass. Existing
   initial221-case evidence is unchanged and the subset rerun is counted separately.
   New published-head CI is required before I2 closes. README67 remains unmerged.
+
+## 2026-10-15 — P2 full-suite capacity fixture diagnosis
+
+- Pre-SDK CI38797538902 passed dedicated agent53/MCP17/Study32 stages but failed
+  one of1042 base cases (42 optional skips): an inherited capacity test injected
+  a large spec contradicting its ordinary approved material. Independent review
+  confirms new validate_spec correctly refuses that contradiction before effects.
+- Preserve the production material/spec fence. The bounded artifact-test addition
+  builds a genuine declared CPU large-profile capture with the existing authored
+  descriptor fixture and injects only low disk. All original capacity/grant/Run/
+  cleanup and legacy receipt assertions remain. Six actual cases pass0skip12.719s.
+- Refresh evidence/source fingerprints and run new exact-head CI. No failed or
+  skipped case is counted as acceptance; I2 remains pending.

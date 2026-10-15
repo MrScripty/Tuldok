@@ -156,6 +156,10 @@ the current-schema backup expectation when composed with main; project-format
 legacy/retained-reader checks stay exact. It reuses AgentClient,
 private configuration, exact schemas and existing authority; no arbitrary route,
 new RPC owner or owner-credential support.
+`tests/test_external_artifacts.py` receives a bounded fixture correction: construct
+the declared CPU large-profile material/spec through ordinary capture before
+injecting low disk space. The new spec/material binding remains enforced; all
+capacity, grant, Run, cleanup and legacy reconciliation assertions remain.
 
 **Preserved/replaced semantics:** No second recipe owner or supervisor; quiesced explicit migration/backup.
 
