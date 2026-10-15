@@ -516,6 +516,19 @@ _EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
 _exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
 _exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
 _CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+# One-fit recipes are independently versioned from the already selected image
+# contract. Retain exact v1/v2 pins for clients deployed before this slice.
+_one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
+_one_fit_create['inputSchema']['properties']['recipe']['enum'].extend(
+    ['text_classification_model_v2','audio_classification_model_v2'])
+_CONTRACTS['graphs.create'][3]=_one_fit_create
+_one_fit_save=copy.deepcopy(_CONTRACTS['graphs.save'][2])
+for _recipe in ('text_classification','audio_classification'):
+    _one_fit_graph=next(copy.deepcopy(item) for item in graph_schema()['oneOf']
+                        if item['properties']['recipe']==const(_recipe))
+    _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
+    _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
+_CONTRACTS['graphs.save'][3]=_one_fit_save
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256

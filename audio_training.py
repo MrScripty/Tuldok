@@ -24,6 +24,8 @@ from image_training import TrainingError, HASH, IDENTIFIER, _json, _invalid, gua
 from workbench import WorkbenchError, encode
 
 ADAPTER = {'name': 'audio_features_logistic_cpu', 'version': 1}
+MODEL_ADAPTER = dict(ADAPTER, version=2)
+MODEL_RECIPE = 'audio_classification_model_v2'
 PARAMETER_BOUNDS = {'C': {'minimum': 0.01, 'maximum': 100, 'default': 1, 'type': 'number'}}
 FEATURE_NAMES = ['mean', 'rms', 'zero_crossing_fraction', 'spectral_centroid_nyquist',
                  'power_0_25', 'power_25_50', 'power_50_75', 'power_75_100']
@@ -161,7 +163,7 @@ def inspect_release(path, expected_sha256):
     return _read_release(path, expected_sha256)[0]
 
 
-def probe_runtime():
+def probe_runtime(model_aware=False):
     runtime, problems = {'python': platform.python_version(), 'device': 'cpu', 'threads': 1}, []
     if sys.platform != 'linux':
         problems.append({'code': 'unsupported', 'message': 'The supervised audio adapter requires Linux.'})
@@ -183,7 +185,7 @@ def probe_runtime():
                 problems.append({'code': 'unavailable', 'message': 'CPU math libraries must be limited to one thread.'})
         except Exception:
             problems.append({'code': 'unavailable', 'message': 'The pinned local audio runtime could not load.'})
-    return {'schema_version': 1, 'available': not problems, 'adapter': dict(ADAPTER), 'runtime': runtime, 'problems': problems}
+    return {'schema_version': 1, 'available': not problems, 'adapter': dict(MODEL_ADAPTER if model_aware else ADAPTER), 'runtime': runtime, 'problems': problems}
 
 
 def extract_features(raw, start_frame, end_frame, channel):
@@ -422,17 +424,24 @@ def main():
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--probe', action='store_true')
     action.add_argument('--job', type=Path)
+    action.add_argument('--verify-evidence', type=Path)
+    parser.add_argument('--model-aware', action='store_true')
     args = parser.parse_args()
     try:
         if args.probe:
-            result = probe_runtime()
+            result = probe_runtime(args.model_aware)
             print(json.dumps(result, allow_nan=False), flush=True)
             return 0 if result['available'] else 2
-        with args.job.open('rb') as handle:
+        with (args.verify_evidence or args.job).open('rb') as handle:
             raw = handle.read(MAX_JOB_BYTES + 1)
         if len(raw) > MAX_JOB_BYTES:
             _invalid('Training job exceeds 16 KiB.')
-        train(_json(raw, 'Audio training job'))
+        job = _json(raw, 'Audio training job')
+        if args.verify_evidence:
+            guard_parent(job['parent_pid'])
+            verify_evidence(job['output_dir'], job)
+        else:
+            train(job)
         return 0
     except TrainingError as error:
         _emit('failed', outcome=error.outcome, message=str(error)[:400])

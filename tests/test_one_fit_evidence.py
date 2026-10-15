@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import sys
 import re
+import unittest
 import zipfile
 
 from test_text_training import TextCase
@@ -16,6 +17,20 @@ from test_audio_training import AudioCase
 import audio_training
 import text_training
 import one_fit_evidence as evidence
+
+
+class ContractIsolationTests(unittest.TestCase):
+    def test_editing_template_projection_cannot_change_the_task_transform(self):
+        for adapter in (text_training, audio_training):
+            parameters = {name: rule['default'] for name, rule in adapter.PARAMETER_BOUNDS.items()}
+            owner = evidence.contract(adapter)
+            original = copy.deepcopy(adapter.TRANSFORM)
+            projected = owner.model_definition(parameters)
+            projected['preprocessing_policy']['fit_scope'] = 'validation'
+            projected['output_policy']['class_order'] = 'reversed'
+            self.assertEqual(adapter.TRANSFORM, original)
+            self.assertEqual(owner.model_definition(parameters)['preprocessing_policy'], original)
+            self.assertEqual(owner.OUTPUT_POLICY['class_order'], 'frozen_vocabulary')
 
 
 class OneFitChecks:
@@ -29,10 +44,13 @@ class OneFitChecks:
                         parameters=self.parameters, parent_pid=os.getpid())
         if version == 2:
             catalog = self.dataset.db.dataset_id
+            owner = evidence.contract(self.training)
+            profile = owner.profile(catalog, 'd' * 64, self.parameters,
+                                    sum(row['split'] == 'validation' for row in self.manifest['records']))
             self.job.update(adapter=dict(self.training.ADAPTER, version=2), evidence=dict(catalog_id=catalog,
-                 material_sha256='c' * 64, model_sha256='d' * 64,
-                 task=dict(kind='task', catalog_id=catalog, id=self.task, revision=2, sha256='e' * 64),
-                 profile_sha256='f' * 64, selection_policy_sha256='1' * 64, output_policy_sha256='2' * 64))
+                 material_sha256='c' * 64, adapter_sha256='e'*64, model_sha256='d' * 64,
+                 task=owner.task_ref(catalog), profile_sha256=evidence.digest(profile),
+                 selection_policy_sha256=evidence.digest(profile['probe_selection']), output_policy_sha256=evidence.digest(evidence.OUTPUT_POLICY)))
         path = Path(self.tmp.name) / ('job-' + str(version) + '.json')
         path.write_text(json.dumps(self.job))
         env = dict(os.environ)
@@ -106,32 +124,14 @@ class OneFitChecks:
         # either adapter or any live checkout code. Only frozen JSON and a
         # compatible numerical runtime are needed, not the original release.
         _, inputs = self.frozen()
-        script = '''
-import json, sys
-from pathlib import Path
-import numpy as np
-from scipy.special import expit, logsumexp
-m=json.loads(Path(sys.argv[1]).read_bytes()); x=json.loads(sys.argv[2])
-if 'vocabulary' in m:
- from sklearn.feature_extraction.text import TfidfVectorizer
- t=m['transform']
- v=TfidfVectorizer(vocabulary=m['vocabulary'], max_features=m['parameters']['max_features'],
-   lowercase=t['lowercase'], token_pattern=t['token_pattern'], ngram_range=tuple(t['ngram_range']),
-   norm=t['norm'], use_idf=t['use_idf'], smooth_idf=t['smooth_idf'], sublinear_tf=t['sublinear_tf'])
- v.idf_=np.array(m['idf'])
- s=v.transform(x)@np.array(m['feature_log_prob']).T+np.array(m['class_log_prior'])
- p=np.exp(s-logsumexp(s,axis=1)[:,None])
-else:
- s=((np.array(x)-np.array(m['mean']))/np.array(m['scale']))@np.array(m['coefficients']).T+np.array(m['intercepts'])
- if s.shape[1]==1:
-  q=expit(s[:,0]); p=np.column_stack((1-q,q))
- else:
-  p=np.exp(s-logsumexp(s,axis=1)[:,None])
-assert 'text_training' not in sys.modules and 'audio_training' not in sys.modules
-print(json.dumps(p.tolist()))
-'''
-        child = subprocess.run([os.environ.get('TULDOK_TRAINING_PYTHON', sys.executable), '-I', '-c', script,
-                                str(self.output / 'model.json'), json.dumps(inputs)], cwd=self.tmp.name,
+        cold = Path(self.tmp.name) / 'independent'
+        cold.mkdir()
+        oracle = Path(__file__).parent / 'fixtures/model_development/one_fit_inference.py'
+        (cold / 'infer.py').write_bytes(oracle.read_bytes())
+        (cold / 'model.json').write_bytes((self.output / 'model.json').read_bytes())
+        (cold / 'inputs.json').write_text(json.dumps({'inputs': inputs}))
+        child = subprocess.run([os.environ.get('TULDOK_TRAINING_PYTHON', sys.executable), '-I', str(cold / 'infer.py'),
+                                str(cold / 'model.json'), str(cold / 'inputs.json')], cwd=cold,
                                capture_output=True, text=True, timeout=20)
         self.assertEqual(child.returncode, 0, child.stderr)
         import numpy as np
@@ -152,6 +152,24 @@ print(json.dumps(p.tolist()))
         with self.assertRaisesRegex(self.training.TrainingError, 'differs'):
             self.verify()
         self.write('checkpoint-fit-0001.json', checkpoint)
+        # Rebind the exact new bytes so the oracle isolates the boolean clock,
+        # rather than accidentally testing a stale hash at an earlier boundary.
+        original_index = self.read('checkpoints.json')
+        original_manifest = self.read('model-evidence.json')
+        changed = copy.deepcopy(checkpoint)
+        changed['clocks']['fit_pass'] = True
+        self.write('checkpoint-fit-0001.json', changed)
+        index = copy.deepcopy(original_index)
+        index['entries'][0]['checkpoint'] = evidence._ref(self.output / 'checkpoint-fit-0001.json')
+        self.write('checkpoints.json', index)
+        manifest = copy.deepcopy(original_manifest)
+        manifest['checkpoints'] = evidence._ref(self.output / 'checkpoints.json')
+        self.write('model-evidence.json', manifest)
+        with self.assertRaisesRegex(self.training.TrainingError, 'descriptor/index binding'):
+            self.verify()
+        self.write('checkpoint-fit-0001.json', checkpoint)
+        self.write('checkpoints.json', original_index)
+        self.write('model-evidence.json', original_manifest)
         saved = self.read('model.json')
         if self.training is text_training:
             saved['feature_log_prob'][0][0] -= .1
