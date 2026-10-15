@@ -22,10 +22,11 @@ name is unchanged and version is integer `2`; unknown versions fail before fit.
 is a D2 reference with `kind`, `catalog_id`, `id`, `revision`, `sha256`, revision
 `2` and ID `text_classification` or `audio_classification`. These are selected
 immutable owner identities, never inferred from live drafts. Pipeline pins
-this helper in its source closure and resolves all output caps before launch.
+this helper and the shared `model_evidence.py` bounded decoder in its source
+closure and resolves all output caps before launch.
 Negotiated graph-create/save contract **3** adds these recipes. Contracts 1 and
-2 keep their exact existing schemas and digests; no selected contract or an old
-contract cannot admit a new one-fit graph variant. Ordinary five-stage graph
+2 keep their exact existing schemas and digests. New one-fit graph variants
+require contract 3; older or absent selections fail before mutation. Ordinary five-stage graph
 documents retain recipe version 1; the distinct recipe/adapter IDs select new
 semantics without rewriting retained graphs.
 

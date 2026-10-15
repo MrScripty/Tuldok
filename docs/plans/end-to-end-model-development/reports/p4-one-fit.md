@@ -17,8 +17,8 @@ artifacts. Readiness is scoped to these task/runtime contracts.
 
 | Actual task | Checkpoints | Validation probes | Retained bytes | CPU peak RSS | Qualification elapsed | Independent inference maximum error |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Text | 1 | 5 | 28,326 | 118,018,048 bytes | 19.42 seconds | 0 |
-| Audio | 1 | 5 | 32,587 | 126,152,704 bytes | 19.01 seconds | 2.78e-17 |
+| Text | 1 | 5 | 28,346 | 117,960,704 bytes | 20.72 seconds | 0 |
+| Audio | 1 | 5 | 32,412 | 124,571,648 bytes | 19.18 seconds | 1.11e-16 |
 
 Each driver cold-reopened the catalog and compared its evidence, then copied
 only `model.json`, validation inputs and the independent test oracle into a
@@ -28,7 +28,7 @@ frozen inference; it does not promise a general inference package or transfer
 training-data distribution rights. Source fixture, source generator when
 applicable, oracle and actual adapter/runtime identities are retained.
 
-Focused evidence includes 10 actual one-fit producer tests, 7 generic field
+Focused evidence includes 11 one-fit producer/contract tests, 7 generic field
 contract tests, 2 real HTTP Study/Run tests and the image model-evidence
 regression suite. Existing text/audio suites also passed (14/13 tests). Graph
 contract 3 adds the new recipe variants; exact prior contract-2 hashes and
