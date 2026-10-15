@@ -58,6 +58,19 @@ must match its own `field_targets` row. Its stage, grid, units and gauge must
 also match the exact declared field contract. An aggregate target hash cannot
 authorize swapping raw/corrected references or relabeling their stages.
 
+The adapter identity is the digest of the **complete declared recipe source
+inventory**, sorted by `path`. Use each exact `{path, sha256}` entry from
+`recipe.sources`; do not add file sizes, the recipe itself, or the automatic
+Model binding inventory. This same closure digest is required in
+`model_evidence.adapter_sha256`, every field contract's `source_sha256`, and
+every metric's `evaluator_sha256`. Hashing only the numerical producer does not
+identify the captured evaluator/source closure. Keep the recipe outside its own
+source inventory to avoid a self-hash cycle.
+
+```python
+adapter_sha256 = digest(sorted(recipe["sources"], key=lambda item: item["path"]))
+```
+
 The SDK writer emits field groups in checkpoint order, then policy `fields`
 order; each group's cases follow the resolved probe members. The field's exact
 contract and `field_outputs` binding identify each group. Do not add an
