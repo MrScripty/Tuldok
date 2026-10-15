@@ -194,3 +194,12 @@ The common manifest/index/clock/checkpoint/probe grammar follows
 Structured model evidence and comparison queries expose the same verified bytes
 to humans and agents. A v1 Run reports unavailable historical evidence honestly.
 Candidate packaging/fresh-consumer qualification remains a separate P5 gate.
+
+`studies.select_candidate` retains an immutable `candidate_v1` from an actual
+Study reservation, a verified checkpoint, the exact emitted metric definition
+and the captured selection policy. Concurrent identical request keys reconcile
+one receipt. Candidate reads recheck current authority, task evidence and policy.
+The current classifier evaluator supplies diagnostics only: a successful fit is
+not a model-quality threshold. Required numerical acceptance and mean-replicate
+selection remain unsupported; export cannot upgrade that decision.
+
