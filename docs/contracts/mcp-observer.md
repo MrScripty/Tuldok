@@ -188,3 +188,116 @@ revalidates framing, registry identity, redaction, status provenance, concurrent
 refusal and delivery semantics. Engine reports/analytics, discovery vocabulary
 and observer-v3 replay are excluded. [Reference admission](../plans/mcp-observer/reports/reference-admission.md)
 and the plan's final verification report own the exact local evidence/limits.
+
+## Shared interface observation v2
+
+P6 adds the explicitly selected `interface_observation_v2` contract. Existing v1
+stores, reader defaults and `--observe-database` remain supported unchanged. No
+store is upgraded, no installation enables recording automatically, and no agent
+operation, argument schema, response or authority changes to enable observation.
+Select a **fresh** private absolute database path with `--observe-v2-database` on
+`app.py`, `project_cli.py` or `mcp_stdio.py`. The operator must provision the same
+private POSIX directory and storage lifecycle described above. Retention options
+have the same defaults/ranges; retention options alone never activate recording.
+MCP rejects simultaneous v1/v2 selection with a fixed diagnostic and continues
+without recording. Invalid optional observer configuration fails open.
+
+```sh
+python app.py --observe-v2-database /operator/private-observations/http-v2.sqlite
+python project_cli.py --config /operator/private/agent.json \
+  --observe-v2-database /operator/private-observations/cli-v2.sqlite \
+  call --operation context.get --arguments /operator/private/arguments.json
+python mcp_stdio.py --config /operator/private/agent.json \
+  --observe-v2-database /operator/private-observations/mcp-v2.sqlite
+python mcp_observer.py --database /operator/private-observations/http-v2.sqlite --schema-version 2
+```
+
+The separately invoked reader returns only integrity, version and aggregate
+start/terminal/unfinished counts. `--retain --schema-version 2` performs offline
+retention under the persisted policy and exclusive process lock. Reader version
+selection is exact; v1 readers reject v2 and v2 readers reject v1 without changing
+bytes. Preserve and rotate a previous store; never replace refused state.
+
+V2 keeps the v1 policy/session/interaction/event tables with exactly these deltas:
+`sessions.boundary` is `mcp|http|cli`; `interactions.contract_version` and
+`contract_digest` describe the exact **locally known public** selected contract.
+Unnegotiated legacy and local aggregate operations have null contract selection.
+Input/output schema digests still identify installed schema code. Source closure
+identity covers installed `app.py`, `project_cli.py`, `agent_api.py`,
+`mcp_stdio.py` and `mcp_observer.py`, never catalog or user material. The existing
+`TOBS` application identity remains; `user_version=2` and exact DDL distinguish
+stores. HTTP methods are `GET|POST`, CLI methods `call|status|download`, and MCP
+methods retain the installed closed list. Other CLI subcommands use `call`.
+Unknown routes, names and methods become fixed markers. V2 byte counters permit
+up to 1 GiB so existing large HTTP imports/artifact streams are represented;
+v1 retains its original 32 MiB status counter bound.
+
+The shared sink projects before any buffering or SQLite binding. It retains no
+raw routes/queries/headers, arguments/results, request IDs, actor/catalog/Run IDs,
+material/grant/artifact hashes, nested keys or error text. Its active state holds
+only generated observation identities and monotonic start instants. It serializes
+shared HTTP writer access with one local lock and a cross-thread SQLite connection;
+at most 256 starts are active in one v2 process. Capacity drops observation alone.
+MCP's admission profile still bounds its actual simultaneous requests/refusals.
+No background queue, telemetry worker, retry or network exporter exists.
+
+Witnessed seams have deliberately bounded meanings:
+
+- HTTP begins before route/authentication admission. `validated/admitted/dispatch`
+  precede routing to the handler after current authentication/framing checks, and
+  after JSON/selected-body validation for POST bodies. They are transport/handler
+  admission, not domain transaction admission. Refusals may have no such stages.
+  `returned` follows result projection and encoding, before response headers.
+  `request_bytes` counts consumed body bytes (zero when no body was consumed),
+  excluding request-line and headers. `response_bytes` counts body bytes accepted
+  by the actual socket `send` loop, excluding headers. Header-write failure leaves
+  byte count unknown; a partial body write retains the known prefix count.
+- CLI begins at command entry after argument parsing. For ordinary operation
+  calls, AgentClient records validated arguments, selected compatibility and the
+  actual dispatch immediately before its HTTP request. Output return and terminal
+  stages surround the actual ASCII JSON stdout/stderr write loop; output byte
+  counts include the newline. The download wrapper witnesses its own local
+  adapter dispatch; verified artifact custody still belongs to the existing
+  artifact verifier. A download does not log each artifact segment as another CLI
+  interaction. CLI argument-file size is not inferred as transmitted wire bytes;
+  request bytes remain zero when that measurement is unavailable.
+- MCP keeps its existing request/admission/dispatch/return/final framed-byte seams,
+  with v2 public contract selection from the installed negotiated client. Protocol
+  refusals and framing errors remain independently observable without raw IDs.
+
+A successful terminal means all measured output bytes were accepted by the local
+kernel/stream, never client receipt, a domain commit, Run completion or model
+quality. An exception before output, partial write, process death or storage
+failure can leave incomplete or unmatched starts. Orderly recorder close records
+unknown/incomplete terminals where storage permits. Reopen does not complete old
+starts. A broken health stream is guarded independently of domain results.
+Required Access/Run/exposure audit remains under its existing transaction owner;
+passive recording cannot replace it, trigger a retry or roll back its result.
+Authoritative lifecycle inspection remains separately authorized Runs/study reads,
+without copying protected identities into the passive store.
+
+`tests/test_interface_observation.py` exercises actual HTTP handlers, AgentClient,
+CLI output and real MCP SDK processes with authored domain owners, storage failure
+matrices, privacy, retention and delivery failures. Existing authenticated domain
+HTTP/CLI tests separately qualify ordinary behavior. These transport observations
+do not replace H1–H7 model workflow acceptance or required transactional-audit tests.
+Local overhead measurements are reported with their exact environment in the P6
+qualification report; no complete census or zero-latency guarantee is made.
+
+## Bounded MCP output buffering
+
+The MCP writer requests up to 1 MiB capacity for its owned stdout FIFO when the
+host supports `F_GETPIPE_SZ/F_SETPIPE_SZ`. This avoids premature backpressure on
+the already supported 8 MiB artifact segment's duplicated JSON text/structured
+frame while the official SDK assembles a newline. One active SDK request and the
+existing output lock retain one active writer. The request adds at most 960 KiB
+capacity over the qualified host's 64 KiB pipe; kernel page allocation is demand
+based. An inherited larger pipe is preserved, not enlarged again. No global OS
+setting or installed SDK code changes.
+
+Unsupported or refused resizing leaves the inherited pipe and ordinary writer
+behavior. The five-second write deadline, 32 MiB frame bound, byte counts and
+unknown/incomplete terminal on stalled or broken delivery remain unchanged.
+Capacity is a bounded local resource, not a client-receipt or throughput guarantee.
+This wire-compatible change applies to both recorder versions and disabled
+recording; optional telemetry is not responsible for making a transfer succeed.
