@@ -8,6 +8,7 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+import uuid
 from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -137,21 +138,41 @@ class ExternalArtifactTests(ExternalCase):
         self.assertEqual((self.dataset.runs.path/run['id']/'artifact-manifest.json').read_bytes(), before)
 
     def test_large_admission_capacity_refuses_before_grant_consumption_and_cleans_capture(self):
-        # Inject only the already-validated capture boundary to exercise the
-        # admission guard without constructing a CPU snapshot or allocating GBs.
-        grant = self.approve()
-        body = self.body(approval=grant)
-        original = self.dataset.pipelines.capture_external
-        def large_capture(*args, **kwargs):
-            captured = original(*args, **kwargs)
-            captured['spec']['resource_profile'] = 'captured_cpu_large_outputs_v1'
-            captured['spec']['max_output_bytes'] = 3500000000
-            return captured
+        # Keep the legacy receipt case independent. The capacity case must bind
+        # a complete valid large material/spec, rather than mutating only spec
+        # after capture (the admission seam correctly refuses that contradiction).
+        body = self.body(approval=self.approve())
+        import recipe_contract
+        from test_cpu_recipe_contract import CpuRecipeContract
+        definition = dict(self.definition, runtime=recipe_contract.CPU_PROFILE,
+                          runtime_snapshot_sha256='a'*64,
+                          resources={'profile':recipe_contract.LARGE_OUTPUT_PROFILE,
+                                     'wall_seconds':10,'max_output_bytes':3500000000})
+        raw = json.dumps(definition).encode()
+        manifest = dict(self.manifest,id=uuid.uuid4().hex,
+                        recipes=[{'id':'neutral','label':'Large capacity contract fixture',
+                                  'path':'large-recipe.json','sha256':hashlib.sha256(raw).hexdigest()}])
+        (self.project_path/'large-recipe.json').write_bytes(raw)
+        (self.project_path/'large-project.json').write_text(json.dumps(manifest))
+        descriptor = CpuRecipeContract.descriptor(self)
+        # This existing authored descriptor qualifies contract/admission only;
+        # there is no installed snapshot, allocation, child or numerical claim.
+        with self.owner.bound(self.dataset),patch('runtime_snapshots.RuntimeSnapshots.get',return_value=descriptor):
+            self.dataset.projects.open({'root':'fixture','manifest_path':'large-project.json'})
+            graph = self.dataset.pipelines.create_external(dict(self.graph_body(),project_id=manifest['id'],
+                                                                 expected_sha256=hashlib.sha256(raw).hexdigest()))
+            preflight = self.dataset.pipelines.preflight_external(graph['id'],graph['revision'])
+            grant = self.dataset.runs.approve_external({'graph_id':graph['id'],'graph_revision':graph['revision'],
+                'expected_digest':preflight['material_sha256'],'consumer_actor_id':self.agent['identity']['actor_id']})
+        large_body = {'request_key':'capacity-'+uuid.uuid4().hex,'graph_id':graph['id'],'graph_revision':graph['revision'],
+                      'expected_digest':preflight['material_sha256'],'approval_id':grant['id']}
         disk = type('Disk', (), {'free':8073741823})()  # one byte under 2D+1GiB
-        with self.dataset.access.bind(self.agent['token']), patch.object(self.dataset.pipelines, 'capture_external', side_effect=large_capture), patch('runs.shutil.disk_usage', return_value=disk), patch.object(self.dataset.runs, '_start') as start, patch.object(self.dataset.access, '_consume_external_run', wraps=self.dataset.access._consume_external_run) as consume:
+        with self.dataset.access.bind(self.agent['token']), patch('runtime_snapshots.RuntimeSnapshots.get',return_value=descriptor), patch('runs.shutil.disk_usage', return_value=disk) as capacity, patch.object(self.dataset.runs, '_start') as start, patch.object(self.dataset.access, '_consume_external_run', wraps=self.dataset.access._consume_external_run) as consume:
             with self.assertRaises(WorkbenchError) as caught:
-                self.dataset.runs.submit_external(body)
+                self.dataset.runs.submit_external(large_body)
             self.assertEqual(caught.exception.code, 'unavailable')
+            self.assertIn('Insufficient storage for declared outputs',str(caught.exception))
+            capacity.assert_called_once_with(self.dataset.runs.path)
             start.assert_not_called()
             consume.assert_not_called()
         with self.owner.bound(self.dataset):

@@ -20,8 +20,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 8
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
+SCHEMA_VERSION = 9
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -320,9 +320,8 @@ class Metadata:
             committed = []
             self._commit.append(committed)
             body_failed = False
-            transaction = None
             try:
-                with self.connection.transaction(force_rollback=force_rollback) as transaction:
+                with self.connection.transaction(force_rollback=force_rollback):
                     try:
                         yield self
                     except BaseException:
@@ -336,9 +335,9 @@ class Metadata:
                     for callback in reversed(callbacks):
                         callback()
                     raise
-                if len(self._rollback) == 1 and transaction is not None and transaction.status == transaction.Status.COMMITTED:
-                    for callback in committed:
-                        callback()
+                # psycopg3.3.6 marks its enum COMMITTED before sending COMMIT.
+                # Only normal scope completion proves acknowledged commit; the
+                # enum cannot authorize cleanup/publication or a worker wake.
                 raise CommitOutcomeUnknown(
                     'PostgreSQL commit acknowledgement was lost. Files were retained; reopen and inspect the saved result before retrying.') from error
             else:
@@ -462,7 +461,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES_V7, 8: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES_V7, 8: TABLES_V8, 9: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -607,4 +606,46 @@ EXECUTION_APPROVAL_TABLES = {
         grant_id TEXT PRIMARY KEY, run_id TEXT UNIQUE NOT NULL, admission_id TEXT UNIQUE NOT NULL,
         consumer_credential_id TEXT NOT NULL, request_sha256 TEXT NOT NULL, consumed_at BIGINT NOT NULL)''',
 }
-TABLES = {**TABLES_V7, **EXECUTION_APPROVAL_TABLES}
+TABLES_V8 = {**TABLES_V7, **EXECUTION_APPROVAL_TABLES}
+
+
+# Additive schema9; every prior definition remains byte-exact.
+MODEL_DEVELOPMENT_TABLES = {
+    'workspace_recipe_drafts': """CREATE TABLE workspace_recipe_drafts (
+        id TEXT PRIMARY KEY, revision BIGINT NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
+        document TEXT NOT NULL)""",
+    'model_definition_drafts': """CREATE TABLE model_definition_drafts (
+        id TEXT PRIMARY KEY, revision BIGINT NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
+        document TEXT NOT NULL)""",
+    'model_materials': """CREATE TABLE model_materials (
+        id TEXT NOT NULL, revision BIGINT NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
+        sha256 TEXT UNIQUE NOT NULL, document TEXT NOT NULL, PRIMARY KEY(id,revision))""",
+    'workspace_recipe_materials': """CREATE TABLE workspace_recipe_materials (
+        sha256 TEXT PRIMARY KEY, recipe_id TEXT NOT NULL, recipe_revision BIGINT NOT NULL CHECK(recipe_revision BETWEEN 1 AND 9007199254740991),
+        document TEXT NOT NULL)""",
+    'model_selection_policies': """CREATE TABLE model_selection_policies (
+        id TEXT NOT NULL, revision BIGINT NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
+        sha256 TEXT UNIQUE NOT NULL, document TEXT NOT NULL, PRIMARY KEY(id,revision))""",
+    'model_studies': """CREATE TABLE model_studies (
+        id TEXT PRIMARY KEY, revision BIGINT NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
+        admission_epoch BIGINT NOT NULL CHECK(admission_epoch BETWEEN 0 AND 9007199254740991), document TEXT NOT NULL)""",
+    'model_trials': """CREATE TABLE model_trials (
+        id TEXT PRIMARY KEY, study_id TEXT NOT NULL REFERENCES model_studies(id),
+        material_sha256 TEXT NOT NULL REFERENCES workspace_recipe_materials(sha256),
+        replicate BIGINT NOT NULL CHECK(replicate BETWEEN 0 AND 9007199254740991), document TEXT NOT NULL,
+        UNIQUE(study_id,material_sha256,replicate))""",
+    'model_study_memberships': """CREATE TABLE model_study_memberships (
+        study_id TEXT NOT NULL REFERENCES model_studies(id), revision BIGINT NOT NULL CHECK(revision BETWEEN 1 AND 9007199254740991),
+        document TEXT NOT NULL, PRIMARY KEY(study_id,revision))""",
+    'model_attempt_reservations': """CREATE TABLE model_attempt_reservations (
+        id TEXT PRIMARY KEY, study_id TEXT NOT NULL REFERENCES model_studies(id), actor_id TEXT NOT NULL,
+        request_key TEXT NOT NULL, request_sha256 TEXT NOT NULL, trial_id TEXT NOT NULL REFERENCES model_trials(id),
+        run_id TEXT UNIQUE NOT NULL REFERENCES workspace_runs(id), document TEXT NOT NULL, UNIQUE(study_id,request_key))""",
+    'model_candidates': """CREATE TABLE model_candidates (
+        id TEXT PRIMARY KEY, study_id TEXT NOT NULL REFERENCES model_studies(id),
+        trial_id TEXT NOT NULL REFERENCES model_trials(id), run_id TEXT NOT NULL REFERENCES workspace_runs(id), document TEXT NOT NULL)""",
+    'model_operation_receipts': """CREATE TABLE model_operation_receipts (
+        actor_id TEXT NOT NULL, operation_id TEXT NOT NULL, request_key TEXT NOT NULL, request_sha256 TEXT NOT NULL,
+        document TEXT NOT NULL, PRIMARY KEY(actor_id,operation_id,request_key))""",
+}
+TABLES = {**TABLES_V8, **MODEL_DEVELOPMENT_TABLES}

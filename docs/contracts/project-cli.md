@@ -129,3 +129,15 @@ split mismatches, and reports reproduced predictions and actual metrics. It must
 never refit on holdout or silently regenerate splits. Generic process fixtures
 do not establish neural optimization, pressure quality, native physics acceptance,
 GPU use or remote execution.
+
+## Registered model-development calls
+
+`python project_cli.py --config PRIVATE_CONFIG call --operation models.get --arguments model.json`
+uses the same installed registry, exact capability selection and bounded JSON
+argument reader. For example, `model.json` contains `{"model_id":"OPAQUE_ID"}`.
+`recipes.material` accepts `{"ref":RETAINED_MATERIAL_REF}` and `studies.get`
+accepts `{"study_id":"OPAQUE_ID"}`. All print the same domain result available
+through selected HTTP and structured MCP. No project code executes on inspection.
+Only locally registered operations are callable; this is not an arbitrary URL or
+route dispatcher. Existing AgentClient requires an active agent credential, and
+owner-only study control still requires authenticated owner HTTP actions.
