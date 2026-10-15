@@ -60,14 +60,14 @@ cold owner/HTTP query, common UI or E2 acceptance.
 ## P5/E4 author contract handoff
 
 Task ID `example.scalar-a:task`, revision2; profile ID
-`example.scalar-a:field-profile`, revision1 (exact authored recipe.json is the
+`example.scalar-a.fixed-validation`, revision1 (exact authored recipe.json is the
 source of truth). Weights are data-only little-endian float64 NPY `[scale,offset]`;
 transform.npy is train-only float64 `[mean,std]`. Checkpoint descriptors separately
 bind clocks and opaque weights; never use the weights hash as checkpoint identity.
 
-Retained input is `probe-input-initial.npy`, reference `reference-probe-a.npy`;
+Retained input is `input-initial.npy`, reference `reference.npy`;
 checkpoint prediction/weights names are declared explicitly in recipe.json's
-field_outputs and outputs. Scalar field `prediction` is standalone cell float64,
+field_outputs and outputs. Field stage ID `raw`, output field `prediction`, is standalone cell float64,
 4x4x4, dimensionless, identity gauge, post_train_mapping stage; no physical-time or
 protected task population is declared. Original fixture membership remains2train,
 1validation. Actual16/32/48/64 cadence is required. The model specification owns
