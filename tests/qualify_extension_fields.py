@@ -92,7 +92,8 @@ def main(args):
             with urlopen(request,timeout=360) as response:status=response.status;value=json.loads(response.read())
         except HTTPError as error:status=error.code;value=json.loads(error.read())
         write(f'http-{sequence:03d}-{operation}.json',{'status':status,'result':value})
-        require(status==(200 if expect is None else expect),f'{operation} HTTP{status}: '+str(value)[:1500])
+        require((200<=status<300) if expect is None else status==expect, f'{operation} HTTP{status}: '+str(value)[:1500])
+        if expect is None:agent_api.validate_output(operation,{'status':status,'result':value},version)
         return value
     def evidence(run_id,selectors=None,expect=None):
         return http('runs.model_evidence',{} if selectors is None else selectors,
