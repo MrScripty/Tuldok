@@ -37,6 +37,15 @@ SCALAR_A_CONTRACT_SHA256 = '468e3e15ad5aa88ce3e43deaeb7c5487bd16a77651b8328a618c
 SCALAR_A_SOURCE_SHA256 = 'cdfdf92c798538afcbf974e16dd9686b3bac7837f001c300ac422bb9395d98eb'
 SCALAR_A_NOTICE_SHA256 = '6d60e9f2a605434edd38842f1b5248953b98b0f002fe3abe94c6688ad77429b6'
 SCALAR_A_TASK_FORMAT = 'package_scalar_a_task_v1'
+SCALAR_A_ADAPTERS = {
+    SCALAR_A_CONTRACT_SHA256: {'revision': 1, 'source_sha256': SCALAR_A_SOURCE_SHA256,
+        'recipe_sha256': '90ce14a7bfcb1079f376ca93858ec90d1ebcc11533e54ec476639a44e006a644',
+        'runtime_snapshot_sha256': None, 'directory': 'inference-v1'},
+    '9588ee2632a90dc647e65b4f2b6289ef78338de29ec3f16480f02f6ea02f7dd8': {
+        'revision': 2, 'source_sha256': 'b77face4f2e51345a565216fc5139271aa02bd17577ac099706393b3149acc2c',
+        'recipe_sha256': '4cebb6b2083e48e32234f7ba9f29ca6c7684c51d8d90ed028e37535c9d233508',
+        'runtime_snapshot_sha256': '50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d',
+        'directory': 'inference-v2-private-qa'}}
 
 
 class PackageError(ValueError):
@@ -361,12 +370,17 @@ def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
     closed(task, ('format', 'contract', 'context', 'probe', 'field_index', 'profile'))
     for key in ('contract', 'context', 'probe', 'field_index', 'profile'):
         ref(task[key])
-    require(task['contract']['name'] == 'inference-contract.json'
-            and task['contract']['sha256'] == SCALAR_A_CONTRACT_SHA256
-            and sha(files.get('infer.py', b'')) == SCALAR_A_SOURCE_SHA256
+    nomination = SCALAR_A_ADAPTERS.get(task['contract']['sha256'])
+    require(nomination is not None and task['contract']['name'] == 'inference-contract.json'
+            and sha(files.get('infer.py', b'')) == nomination['source_sha256']
             and sha(files.get('inference-NOTICE.txt', b'')) == SCALAR_A_NOTICE_SHA256,
             'Unqualified scalar A inference entry/contract/notice.', 'unsupported')
     contract = decode(files['inference-contract.json']); policy = contract['policy']
+    require(contract['adapter'] == {'id': 'example.scalar-a:inference', 'revision': nomination['revision']}
+            and contract['source_authority']['recipe_sha256'] == nomination['recipe_sha256'], 'Scalar A nomination identity differs.', 'unsupported')
+    if nomination['runtime_snapshot_sha256'] is not None:
+        require(decode(files[manifest['runtime']['contract']['name']])['snapshot']['manifest_sha256'] == nomination['runtime_snapshot_sha256'],
+                'Scalar A private QA nomination requires its exact selected captured runtime.', 'unsupported')
     context = decode(files[task['context']['name']]); static = context['static']; authored = static['policy']
     require(encoded(decode(files['recipe.json'])['model_evidence']) == encoded(authored),
             'Scalar A admitted policy differs from its captured recipe definition.')
@@ -492,6 +506,7 @@ def _infer_scalar_a(manifest, files, package_sha256, snapshot_sha256):
     """Execute the exact frozen author adapter after normal admitted runtime checks."""
     require(manifest['inference_entry']['sha256'] == sha(Path(__file__).read_bytes()), 'Consumer implementation differs.')
     contract = decode(files['inference-contract.json'])
+    nomination = SCALAR_A_ADAPTERS[sha(files['inference-contract.json'])]
     descriptor = decode(files[manifest['checkpoint']['name']]); fitted = decode(files[manifest['transforms'][1]['name']])
     initial = decode(files[manifest['probes']['name']])['rows'][0]['input']
     expected = decode(files[manifest['expected_outputs']['name']])['rows'][0]
@@ -514,8 +529,9 @@ def _infer_scalar_a(manifest, files, package_sha256, snapshot_sha256):
     return {'format': 'fresh_field_inference_verification_v1', 'package_sha256': package_sha256,
         'candidate': manifest['candidate'], 'checkpoint_sha256': manifest['checkpoint']['sha256'],
         'weights_sha256': descriptor['weights']['sha256'], 'runtime_snapshot_sha256': snapshot_sha256,
-        'consumer_sha256': manifest['inference_entry']['sha256'], 'adapter_sha256': SCALAR_A_SOURCE_SHA256,
-        'contract_sha256': SCALAR_A_CONTRACT_SHA256, 'expected_outputs_sha256': manifest['expected_outputs']['sha256'],
+        'consumer_sha256': manifest['inference_entry']['sha256'], 'adapter_sha256': nomination['source_sha256'],
+        'adapter_revision': nomination['revision'], 'contract_sha256': sha(files['inference-contract.json']),
+        'expected_outputs_sha256': manifest['expected_outputs']['sha256'],
         'probes_sha256': manifest['probes']['sha256'], 'verified': True, 'numerical_acceptance': 'not_evaluated',
         'implementation': 'captured_author_adapter_v1', 'reconstruction': tolerance,
         'outputs': [{'ordinal': 0, 'field_id': 'raw', **{key: contract['policy']['field_contract']['output'][key]
@@ -827,7 +843,10 @@ def scalar_a_closure(candidate, artifact_bytes, sources, runtime, published_mode
     blobs['package-model-definition.json'] = encoded({'format': 'package_scalar_a_model_v1', **policies})
     blobs['transform-policy.json'] = published_model['preprocessing_policy']
     if inference_files is None:
-        root = Path(__file__).parent / 'examples/extensions/field-surrogate/inference-v1'
+        matches = [row for row in SCALAR_A_ADAPTERS.values() if row['recipe_sha256'] == sha(sources['recipe.json'])]
+        require(len(matches) == 1, 'Scalar A source recipe has no explicitly nominated inference adapter.', 'unsupported')
+        root = Path(__file__).parent / 'examples/extensions/field-surrogate' / matches[0]['directory']
+        require(root.is_dir(), 'Nominated scalar A inference closure is not installed.', 'unavailable')
         inference_files = {name: (root / name).read_bytes() for name in ('infer.py', 'contract.json', 'NOTICE.txt')}
     require(set(inference_files) == {'infer.py', 'contract.json', 'NOTICE.txt'}, 'Scalar A frozen adapter closure differs.')
     blobs['infer.py'] = inference_files['infer.py']; blobs['inference-contract.json'] = inference_files['contract.json']

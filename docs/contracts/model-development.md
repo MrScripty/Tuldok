@@ -333,7 +333,11 @@ each run freezes its own full inventory before ordinary capture and inference.
 the unchanged `inference_package_v1` envelope. It accepts only the nominated
 `example.scalar-a:task` revision2 / fixed-validation profile revision2, source
 authority057c8ab, author inference source `cdfdf92c...95d98eb` and whole contract
-`468e3e15...78717fe`. Other field tasks, source variants, gauges and adapter
+`468e3e15...78717fe`. A second literal nomination accepts adapter revision2,
+contract `9588ee26...02f7dd8`, source `b77face4...49acc2c` and recipe
+`4cebb6b2...d233508` only with captured runtime `50502c0b...0ffe3d` and the
+separate author-owned `inference-v2-private-qa` source directory. The original
+nomination stays intact. Other field tasks, source variants, gauges and adapter
 entrypoints remain unsupported. The classifier task and its v1 receipt retain
 their existing contracts.
 
@@ -366,6 +370,11 @@ For an existing real producer candidate with an approved registered runtime,
 `--production-catalog`, `--snapshot-descriptor`, `--source-study` and
 `--source-candidate` prepare and admit two ordinary charged package/verifier
 attempts, download the package through HTTP and retain the new receipt.
+`--field-limits` names an explicit finite budget JSON when the original Study
+needs two additional attempts. After confirming all children have ceased, the
+qualifier uses ordinary owner stop/save, retains the original limits and actual
+amendment response, opens a new epoch and obtains new exact package/verifier
+grants. It never changes a budget after failed admission or reuses a source grant.
 The authored `test_scalar_candidate_packages.py` states are boundary fixtures;
 they are not completed Runs or E4 acceptance. Actual E4 producer/package evidence
 and any separately nominated runtime/source variant remain required.
