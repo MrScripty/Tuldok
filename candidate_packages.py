@@ -456,7 +456,10 @@ def _validate_canonical_a_sources(manifest, files, task, contract, policy, recip
             and encoded(snapshot['evidence_context']) == encoded(static), 'Canonical retained execution capture differs.')
     require(composition['trainer']['id'] == 'external_model_evidence_recipe_v1'
             and composition['trainer']['sha256'] == _canonical_digest(recipe)
-            and composition['runtime']['sha256'] == runtime['manifest_sha256'], 'Canonical source trainer/runtime composition differs.')
+            and encoded(execution['cpu_snapshot']) == encoded(runtime)
+            and composition['runtime'] == {'kind': 'runtime', 'catalog_id': static['catalog_id'],
+                'id': _canonical_digest(runtime), 'sha256': _canonical_digest(runtime)},
+            'Canonical source trainer/runtime descriptor composition differs.')
     captures = {item['path']: item['blob'] for item in snapshot['capture_paths']}
     require(len(captures) == len(snapshot['capture_paths']) == len(composition['captures'])
             and sorted(captures.values(), key=lambda item: item['name']) == sorted(composition['captures'], key=lambda item: item['name']),
