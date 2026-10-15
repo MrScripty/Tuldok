@@ -1,10 +1,10 @@
 # Plan: Implement project-scoped model extensions
 
-**Plan status:** `Planned`
+**Plan status:** `Verifying`
 
-**Current phase:** E1 — inert extension inspection (not started)
+**Current phase:** E1 — inert extension inspection (implemented; serial integration/CI pending)
 
-**Next slice:** E1 — only after separate implementation authorization and fresh source/prerequisite verification.
+**Next slice:** Complete E1 lead-owned integration/CI; then E2 after accepted P1–P3 and P4 generic evidence.
 
 **Acceptance status:** `partial`
 
@@ -28,12 +28,14 @@ material, authorize a normal Run, and inspect its automatically retained evidenc
 in the compact dark workspace. An authorized agent can do the same work through
 the same owners and structured evidence, without UI interpretation or logger setup.
 
-This operation created and locally committed **documentation only**. M0 is
-Accepted; E1–E4 below are implementation proposals with acceptance
-gates, not permission to edit application code, run training, install dependencies,
-migrate a catalog or deploy. Their `Planned` state records the requested planning
-direction; starting any slice requires explicit selection of this canonical plan
-and that slice after source/prerequisite revalidation. Product claims stay pending.
+M0 created and reviewed documentation only. The 2026-10-15 implementation
+delegation explicitly selected E1–E4 and authorized implementation, tests, separate
+branches and draft PRs. The lead thread `01a13f2b-3678-73df-8bce-2f57a04de00b`
+owns shared integration and **all merges**. E1 is implemented in an isolated
+feature branch; [E1 evidence](reports/e1-implementation.md) records actual checks
+and remaining integration gates. Executable E2 still requires accepted P1–P3 and
+P4 generic evidence; E4 needs P5. Exact runtime review/grants remain independent
+of implementation authorization. No product gate is closed from design alone.
 
 Canonical intended repository path: `docs/plans/extension-system/plan.md`.
 The [research recommendation](reports/research.md) and
@@ -392,14 +394,14 @@ contracts; compatibility needs executable imports; enablement needs a second
 authority; a schema keyword cannot be enforced consistently in host/SDK; old-binary/store
   use requires an enforced gate rather than the selected operator restriction.
 
-**Status:** `Planned`
+**Status:** `Verifying`
 
 ### E2: Run and inspect one captured CPU extension
 
 **Goal:** One real extension A uses normal model/recipe/admission/custody/evidence
 owners and automatic views, with no extension numerics imported into the host.
 
-**Prerequisites:** E1; separate slice authorization; accepted implementations of
+**Prerequisites:** E1; current delegation authorizes implementation; accepted implementations of
 PR62 P1 (negotiated operations), P2 (model/material/admission), P3 (useful classifier
 vertical) and P4's generic field evidence/query contract. P4 may leave optional
 Rheon physics unavailable. This slice must not silently implement those prerequisites
@@ -472,7 +474,7 @@ without live state; a new execution/security/runtime mode is required.
 **Goal:** An independent author builds version B through the documented contract,
 without application-owner edits, and can validate a package without the app stack.
 
-**Prerequisites:** E2 accepted real path; separately authorized slice. Contract
+**Prerequisites:** E2 accepted real path; current delegation authorizes implementation. Contract
 stabilization follows real A feedback, not a hypothetical generic SDK first.
 
 **Allowed write set:** new `tuldok_extension_sdk/__init__.py`,
@@ -655,12 +657,14 @@ packaging; unknown rights deny affected export without inventing a license.
 
 - No blocker to preparing/reviewing this documentation. Live Coding Standards MCP
   is unavailable; adopted source/template review is explicitly disclosed.
-- M0 documentation review/checks/local commit are complete. No push or PR is
-  authorized; source/runtime/product prerequisites remain future slice gates.
-- E2–E4 depend on unimplemented PR62 production seams and a real qualified CPU
-  environment; their product gates cannot be run or marked satisfied in M0.
-- Application implementation, execution, install/migration and deployment need
-  separate scope/authority. No unrequested background monitor is created.
+- M0 documentation is merged through PR63 at main `d788e08`. E1 code and real
+  inspection checks are complete locally; lead serial integration/CI remain.
+  [Current E1 report](reports/e1-implementation.md) owns exact evidence.
+- E2–E4 remain blocked on accepted PR62 production seams and actual runtime
+  qualification. E1 fixtures do not satisfy their numerical/product gates.
+- Implementation/draft PR authority is explicit in the current delegation.
+  No new runtime execution/install, production migration, deployment or monitor
+  is authorized by static discovery. Runtime admission retains normal grants.
 
 ## Re-Plan Triggers
 
@@ -682,6 +686,12 @@ review before implementation continues; missing authority never becomes a fallba
 
 ## Concurrent Work
 
+Current implementation: the lead owns all merges/shared application integration.
+The extension worker owns its isolated E1 branch and supplies exact shared-file
+patches for serial lead integration. An independent GPT-6.1 Sol High reviewer is
+read-only. No other local worker changes are edited. The following M0 record is
+historical.
+
 One documentation integration owner owns this canonical plan and all lifecycle
 changes. Research and independent review are read-only inputs; they do not create
 competing mutable plan proposals or application authority. The parent supplied the reviewed draft/research; the primary executor writes only
@@ -691,6 +701,12 @@ review work only after assigning non-overlapping primary write sets. Shared cont
 schema, fixtures, Pipeline/Run/Access and active plan writes remain serial.
 
 ## Repository Isolation
+
+Current implementation branch: `feat/extension-e1-manifest-catalog`, based on
+PR63 `f3f2d2b`, worktree `/workspace/Tuldok-extension-e1`. Latest verified main
+is `d788e08` (PR62/PR63 merged). Branch/PR and worktree remain retained for lead
+integration and any dependent work; no independent merge/cleanup occurs. The
+following paragraph records the original M0 local-only authority.
 
 The user selected dedicated local branch `docs/extension-system-plan` based on
 PR62 head `f99182c03da1e070081718ef6829eaeac3c82640`. Primary agent owns serial
@@ -702,12 +718,13 @@ authorized. Later product branch/integration choices belong to their admitted sl
 ## Final Acceptance
 
 - Acceptance status: `partial`
-- Deferred follow-ups: E1–E4 product implementation/qualification after explicit
-  admission; PR62 P1–P5 prerequisites; separately qualified GPU/strong isolation/
+- Deferred follow-ups: E1 serial integration/CI, E2–E4 implementation/qualification
+  under the current delegation after PR62 P1–P5 prerequisites; separately qualified GPU/strong isolation/
   hard quotas/custom UI/transport or public distribution only on concrete need.
-- Final status: `Planned`
+- Final status: `Verifying`
 
 M0 is Accepted after independent review, reproduced checks and verified local
-material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`. E1 has not started;
-X1–X5 remain pending. This is a Planned implementation handoff, not an implemented
-or qualified extension system and not authority to start product execution.
+material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`. E1 now has real
+inspection evidence and awaits lead integration/CI; X1–X5 full product gates
+remain pending. The current authorized E1 implementation is inspection-only
+and does not qualify executable extensions or authorize product execution.

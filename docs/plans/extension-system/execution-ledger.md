@@ -1,5 +1,19 @@
 # Extension-system execution ledger
 
+## 2026-10-15 — Lead integration with P1
+
+- Integration lead stacked E1 head eb681de with P1
+  4431f40f8c5a32276017476d7901b520ca101d79 for combined validation before merge.
+  The two app.py conflicts retain both authenticated capabilities/selected-body
+  guards and explicit owner-only project-snapshot routes/strict parsing.
+- Private PostgreSQL17.11 and exact hash-locked MCP1.30 environment: all24
+  extension cases and22 negotiation cases pass with zero skips. The latter
+  includes retained/upgraded HTTP/CLI/MCP matrices and the full8MiB segment.
+  This is integration evidence, not E2 numerical or E4 inference acceptance.
+- Updated PR64 is stacked on P1 PR66; no merge until the composed head passes CI.
+  SDK PR65 and E branches remain retained. Lead owns shared integration/merges;
+  extension worker owns isolated producer/runtime prerequisites and64/65CI.
+
 ## 2026-10-15 — Supplied native M0 draft (historical author record)
 
 - User requested an implementation plan and commit; this operation is documentation
@@ -75,3 +89,38 @@ started/accepted by creating this documentation.
   strict authored whitespace, narrowly preserved source EOF, research hashes and
   allowed staged/range scope. No push, PR, merge, installation, training or data
   change. Parent receives final observed HEAD after the local evidence commit.
+
+## E1 authorized implementation — 2026-10-15
+
+- User selected E1–E4 with implementation/test/draft-PR authority; lead owns all
+  shared integration and merges. Revalidated PR63 f3f2d2b, PR62 f99182c and latest
+  main d788e08. Separate worktree/branch preserves unrelated local work.
+- Implemented static canonical schemas, exact project v2 catalog, optional locked
+  validator, owner-only explicit HTTP inspection and shared-component UI. No new
+  agent operation, extension numerical import, runtime qualification or Run path.
+- Real PostgreSQL/HTTP and 1440/390 browser/keyboard/stale-response checks pass;
+  fresh validator-only tests and old-reader/pre-v2 backup/restore witness pass.
+  Independent Sol High review identified and verified the recorded fixes.
+  [E1 implementation report](reports/e1-implementation.md) owns commands and limits.
+- Small app.py route patch is handed to the lead for serial integration. Dedicated
+  extension CI is an affected write-set addition; existing checks are unchanged.
+  E1 remains Verifying pending exact-head CI/lead integration. Compact dark styling
+  remains a shared P3 visual concern; current baseline styles are reused honestly.
+- E2/P1–P4 prerequisites and E4/P5 are still unaccepted; no fixture-only activation.
+  Retain the branch/worktree protected for lead integration and dependent work.
+
+## 2026-10-15 — composed E1 CI corrections
+
+- P1 PR66 merged as8673509; PR64 now targets main. Retained the serial app.py
+  integration at7856add and imported only the worker-owned tests/fixtures from
+  SDK06d6744. SDK/producer branches and README draft67 remain separate.
+- Lifecycle CI exposed a shallow-history dependency in the actual old-reader
+  counterexample. The retained18396-byte Projects fixture is byte-identical to
+  f99182c source, SHAd147c6bae61068f5517fd15e3512311459cd4de3d6edfdd9ea984783470d432d;
+  the test asserts identity before executing the unchanged counterexample.
+- Catalog CI clicked a parser-created control before its real handlers bound.
+  The corrected browser witness deliberately pauses the initialization script,
+  proves the handler is absent, then awaits actual handlers before one user click.
+  It preserves all catalog/keyboard/reload/isolation assertions and retains failure
+  diagnostics. Local actual Chromium catalog passes at1440/390 and all9 real HTTP
+  tests pass0skip against PostgreSQL. Corrected-head CI remains a merge gate.
