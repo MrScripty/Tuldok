@@ -417,3 +417,20 @@ The proposed lightweight source editor and deferred editable topology support
 remain reversible recommendations for design review. Live Coding Standards MCP
 consultation was unavailable; adopted source and retained routing are supporting
 guidance, not an Engine approval or new standards adoption.
+
+
+## D4 reconciliation of the D1 recommendation
+
+The D1 review/next-stage text above is historical. D2 selected concrete contracts;
+D3 selected the compact contextual walkthrough and bounded unsupported runtime
+disposition; D4 completes scheduling, migration and implementation ownership.
+[Final composed review](design-review.md), [workflow design](workflow-design.md),
+[handoff](implementation-handoff.md) and [architecture decision](../../../decisions/model-development-architecture.md)
+now carry that continuation. Pipeline remains the sole editable recipe owner;
+no later stage introduced another supervisor, configuration owner or universal
+graph editor. Input/output fields and workflow stages evolve through explicit
+adapter/model/schema versions; authored trajectory evidence supplies no inferred
+pressure-model capability. Built-in owner-only launch and exact external grants
+remain distinct. New model-aware capture and optional scientific integrations stay
+unavailable until their actual producer/runtime/access gates pass. Design closure
+does not upgrade the historical D1/D2 or authored prototype into product acceptance.

@@ -1,12 +1,12 @@
 # Plan: Design the end-to-end model development architecture
 
-**Plan status:** `Active`
+**Plan status:** `Accepted`
 
-**Current phase:** D3 — Automatic visualization and resource design
+**Current phase:** Completed — D1–D4 architecture design
 
-**Next slice:** D3 — Prototype linked human/agent evidence inspection and specify capture/resource defaults with claim-matched observations or explicit unsupported dispositions.
+**Next slice:** None within this design plan. Future implementation begins with separately scoped P1 in the handoff; PR62 remains unmerged.
 
-**Acceptance status:** `partial`
+**Acceptance status:** `satisfied`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -30,7 +30,8 @@ This plan governs **architecture design**, including bounded design-selection
 observations. Its output is a reviewable design and implementation handoff.
 It does not authorize production feature implementation, training on user data,
 dependency installation, catalog migration or deployment. The user separately
-authorized this D1 documentation branch, commit, push and PR; no auto-merge.
+authorized D1–D4 documentation completion on this branch, commit, push and PR;
+no auto-merge.
 The seven-module sketch in the conversation is a candidate to test, not a
 mandated module count or a completed architecture admission.
 
@@ -45,11 +46,11 @@ remain pending until their later implementation is verified.
 | A0 | Source-backed baseline distinguishes current owners, retained contracts, branch-only capabilities and software precedents; MCP guidance is routed from explicit facts. | focused | not-applicable | either | satisfied | [Ownership](reports/current-ownership.md), [evaluation assessment](reports/automatic-evaluation-design.md), [MCP record](reports/standards-routing.md) |
 | A1 | One complete journey and its correction/tuning loop have unambiguous state owners, small interfaces, model-authoring choices and a composed-design review covering representative changes and deletion. | focused | not-applicable | manual | satisfied | [D1 decisions, worked journeys and independent Sol review](reports/architecture-design.md) |
 | A2 | Proposed persisted/process/public contracts specify identities, metric meaning, capabilities, lifecycle, failure, access, compatibility and cold reconstruction; all actual consumers have dispositions. | contract | not-applicable | either | satisfied | [D2 contracts and consumers](reports/evidence-contract-design.md), [worked observations/review](reports/design-observations.md) |
-| A3 | A local browser walkthrough demonstrates the proposed automatic views, linked checkpoint/example/time selection, missing evidence, correction and keyboard/narrow-screen behavior; it is clearly a design prototype. | user-workflow | representative | either | pending | D3 design walkthrough in local Chromium; no production-training claim |
-| A4 | Decision-changing assumptions about capture, scientific interpretation, runtime and resource budgets have proportionate real observations, or a bounded unsupported/deferred disposition that leaves the selected design valid. | integration | required-real | either | pending | D2/D3 observation reports with exact inputs, procedures and limits |
-| A5 | Final design resolves or explicitly excludes material choices, assigns migration/dependency/authorization owners, and supplies dependency-ordered production slices with exact write sets and claim-matched verification. | focused | not-applicable | manual | pending | D4 handoff and design review findings/dispositions |
-| A6 | An operation matrix and worked agent journey cover dataset work, model definition, experiments, training, structured evaluation, tuning and export; discovery, authorization, bounded reads and recovery have explicit contracts. | contract | not-applicable | either | pending | D1/D2 matrix and D3 agent acceptance procedure in the [agent requirements](reports/agent-interfaces-observability.md) |
-| A7 | Observability is automatic and agent-transparent across the supported interfaces, with explicit owners, privacy, lifecycle, cost and failure contracts; optional observation and required transactional audit remain distinct. | contract | not-applicable | either | pending | D2 observation contract, D3 comparison/failure procedures and D4 implementation handoff; [requirements and reference evidence](reports/agent-interfaces-observability.md) |
+| A3 | A local browser walkthrough demonstrates the proposed automatic views, linked checkpoint/example/time selection, missing evidence, correction and keyboard/narrow-screen behavior; it is clearly a design prototype. | user-workflow | representative | either | satisfied | [153 browser assertions and screenshots](reports/workflow-design.md#d3-prototype-and-review-results); authored design only |
+| A4 | Decision-changing assumptions about capture, scientific interpretation, runtime and resource budgets have proportionate real observations, or a bounded unsupported/deferred disposition that leaves the selected design valid. | integration | required-real | either | satisfied | [Actual bounded observations and unavailable-producer disposition](reports/design-observations.md#d3-bounded-resource-and-scientific-meaning-observations); capture/time/RSS and physics remain unqualified |
+| A5 | Final design resolves or explicitly excludes material choices, assigns migration/dependency/authorization owners, and supplies dependency-ordered production slices with exact write sets and claim-matched verification. | focused | not-applicable | manual | satisfied | [Exact P1–P6 handoff](reports/implementation-handoff.md), [independent final review](reports/design-review.md); implementation pending |
+| A6 | An operation matrix and worked agent journey cover dataset work, model definition, experiments, training, structured evaluation, tuning and export; discovery, authorization, bounded reads and recovery have explicit contracts. | contract | not-applicable | either | satisfied | [Operation matrix/contracts](reports/agent-interfaces-observability.md), [complete headless procedure](reports/workflow-design.md#headless-agent-product-acceptance-procedure); product run pending |
+| A7 | Observability is automatic and agent-transparent across the supported interfaces, with explicit owners, privacy, lifecycle, cost and failure contracts; optional observation and required transactional audit remain distinct. | contract | not-applicable | either | satisfied | [Observation/audit contract](reports/agent-interfaces-observability.md), [unchanged-client procedures](reports/workflow-design.md#unchanged-client-observation-and-mandatory-audit-procedures), [P6 gate](reports/implementation-handoff.md#p6-wider-observation-and-final-integrated-qualification); v2 unimplemented |
 
 ## Scope
 
@@ -114,7 +115,7 @@ remain pending until their later implementation is verified.
   recording and
   adds no per-agent/per-run logging obligation.
 - No applicable `AGENTS.md` or callable Coding Standards MCP is available in the
-  D1/D2 environment. Read the retained MCP snapshot/template record in
+  D1–D4 environment. Read the retained MCP snapshot/template record in
   [standards-routing.md](reports/standards-routing.md) and adopted `dcc56f26`
   source guidance through read-only GitHub retrieval. Historical pins and prior
   consultation evidence are preserved; this is not a fresh Engine certification.
@@ -124,7 +125,9 @@ remain pending until their later implementation is verified.
   credentials, user data, Rheon and the
   surrogate lab remain untouched. Source/model edits in the report are worked
   design examples, not application implementation or a training campaign.
-- Primary agent is the single documentation writer/integration owner.
+- Primary agent is the documentation integration owner. D3 explicitly delegated
+  disjoint prototype/screenshots and observation-report writes to GPT-6.1 Sol
+  workers; independent reviewers remained read-only.
   Parent-coordinated read-only workers advise evidence and trial authority; an
   independent GPT-6.1 Sol reviewer checks the composed result. No concurrent local
   implementation is reported. Branch `docs/model-development-d1` isolates this
@@ -177,12 +180,12 @@ the decisions produced by D1–D4.
 | Assumption or claim | Decision affected | Owner | Executable procedure | Required environment | Status/evidence |
 | --- | --- | --- | --- | --- | --- |
 | Current owner/consumer inventory | Placement and reuse | Design lead | Inspect source and trace five representative changes through current entrypoints. | Current checkout and retained contracts | [Observed](reports/current-ownership.md) |
-| Supported tasks can provide evaluation without per-run wiring | Producer/evidence/view interface | Adapter and evaluation designers | Trace a real classifier and scientific producer's emissions into retained artifacts and a checked view; prototype only the missing contract seam in disposable state. | Existing qualified CPU artifacts/runtime where required | Pending D2/D3; unsupported generic outputs do not block unrelated design |
-| Probe capture cost fits an explicit budget | Cadence, retention and cancellation | Runtime/evidence designers | Measure bounded capture on the selected actual workload; count all scalar/array/checkpoint and temporary bytes, evaluation time and memory; compare with training budget. | Selected local CPU; CUDA only if separately qualified | Pending D3; stop when the cadence/retention decision is discriminated |
+| Supported tasks can provide evaluation without per-run wiring | Producer/evidence/view interface | Adapter and evaluation designers | Trace a real classifier and scientific producer's emissions into retained artifacts and a checked view; prototype only the missing contract seam in disposable state. | Existing qualified CPU artifacts/runtime where required | D2 source/decoder observations and D3 explicit unavailable producer gate; [bounded disposition](reports/design-observations.md). No recurring producer qualification claimed |
+| Probe capture cost fits an explicit budget | Cadence, retention and cancellation | Runtime/evidence designers | Measure bounded capture on the selected actual workload; count all scalar/array/checkpoint and temporary bytes, evaluation time and memory; compare with training budget. | Selected local CPU; CUDA only if separately qualified | D3 actual source-count/array observations; Torch capture/time/RSS unavailable, so proposed profile stays unqualified until P3 actual-producer gate |
 | Meaningful model authoring can remain comprehensible | First model-authoring interface | Product/design lead | Walk through changing a classifier width/head, scientific model inputs and preprocessing, and a custom model; compare templates/config/graphs/code with the same tasks. | Local design artifacts; actual model metadata where needed | Observed D1: [same-edit comparison](reports/architecture-design.md#model-authoring-comparison-using-the-same-real-edits); no graph framework required |
-| Scientific comparisons preserve actual meaning | Alignment, metrics and adapter scope | Domain evaluator designer | Audit actual grid/time/centering/stage/unit/mask/gauge/operator evidence; compare fixed slices and values including a tenfold-amplitude counterexample. | Actual declared field evidence; native runtime only for operator claims | Pending D2/D3; no physical-quality claim from array parsing |
-| Tuning can be automated within authority and budget | Trial orchestration and access contract | Experiment and access designers | Enumerate a finite study's concrete child material; separately model adaptive proposals, approval, cancellation and unknown child outcomes. | Current access/Run contracts; disposable real-store probe only if design depends on it | D1 finite mode selected; D2 identity/permissions/aggregate budget/cancel proofs pending; D4 detailed scheduling |
-| Agents need no observability work and retain ordinary operation semantics | Interface instrumentation and audit placement | Interface/diagnostics designers with domain owners | Design a headless journey and compare observation disabled, healthy and failed; trace request return, domain commitment, asynchronous completion and delivery separately. Audit redaction before persistence and actual retention/latency costs. | Current MCP observer source, Chrema host-hook contract; disposable real transport/store only where decision-changing | References inspected; D2/D3 design and any measurements pending; no whole-workflow observation claim |
+| Scientific comparisons preserve actual meaning | Alignment, metrics and adapter scope | Domain evaluator designer | Audit actual grid/time/centering/stage/unit/mask/gauge/operator evidence; compare fixed slices and values including a tenfold-amplitude counterexample. | Actual declared field evidence; native runtime only for operator claims | D2 semantics/source audit plus D3 shared-scale counterexample; no new physical-quality qualification |
+| Tuning can be automated within authority and budget | Trial orchestration and access contract | Experiment and access designers | Enumerate a finite study's concrete child material; separately model adaptive proposals, approval, cancellation and unknown child outcomes. | Current access/Run contracts; disposable real-store probe only if design depends on it | D1 finite mode, D2 exact invariants and D4 one-child scheduling selected; real transactional/race/cancellation proof remains P2 implementation acceptance |
+| Agents need no observability work and retain ordinary operation semantics | Interface instrumentation and audit placement | Interface/diagnostics designers with domain owners | Design a headless journey and compare observation disabled, healthy and failed; trace request return, domain commitment, asynchronous completion and delivery separately. Audit redaction before persistence and actual retention/latency costs. | Current MCP observer source, Chrema host-hook contract; disposable real transport/store only where decision-changing | D2 contract, D3 actual disposable existing-recorder measurements and unchanged-client procedures; no v2/whole-workflow qualification claim |
 
 Unchanged existing test failures do not prove new behavior. If a future observation
 cannot reach the deciding point, isolate that obstruction or leave its claim
@@ -366,24 +369,24 @@ and authored local prototypes/screenshots in
 
 **Tasks:**
 
-- [ ] Prototype linked curve/checkpoint/example and field/time/plane/scale
+- [x] Prototype linked curve/checkpoint/example and field/time/plane/scale
   selection, frozen evidence/current correction, comparison, missing/partial/
   incompatible evidence and explicitly gated test inspection.
-- [ ] Resolve how capabilities select views automatically and how required,
+- [x] Resolve how capabilities select views automatically and how required,
   optional, not-applicable, scheduled and budget-skipped observations appear.
-- [ ] Specify meaningful default probes/cadence/checkpoint retention, disk and
+- [x] Specify meaningful default probes/cadence/checkpoint retention, disk and
   memory limits, expanded array bounds, compute costs and stop/cancel behavior.
   Measure only observations that can change these choices.
-- [ ] Review the local prototype in a real browser at desktop/narrow widths and
+- [x] Review the local prototype in a real browser at desktop/narrow widths and
   with keyboard/numeric alternatives. Label all authored values and simulated
   interactions; the prototype is not a trained-model demonstration.
-- [ ] Write eventual real-product acceptance procedures for automatic image
+- [x] Write eventual real-product acceptance procedures for automatic image
   checkpoint probes, text/audio one-fit results, scientific shared-scale errors,
   correction/new-release comparison and custom unsupported capabilities.
-- [ ] Specify a complete headless agent acceptance journey using discoverable
+- [x] Specify a complete headless agent acceptance journey using discoverable
   real interfaces, structured checkpoint/error/probe/field evidence and safe
   tuning/cancel/recovery. Require no screenshot interpretation or telemetry work.
-- [ ] Specify unchanged-client comparisons with passive recording healthy,
+- [x] Specify unchanged-client comparisons with passive recording healthy,
   disabled and unavailable; include refusals, unknown outcomes, partial delivery,
   cancellation/restart, redaction and storage exhaustion. Required audit failure
   follows its domain transaction contract, not optional-observer behavior.
@@ -401,7 +404,12 @@ semantics; actual product verification remains pending implementation.
 **Re-plan condition:** The automatic profile is unaffordable, needs unprovided
 semantics, cannot preserve required access, or fails the intended user task.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [Workflow, 153 browser assertions and screenshots](reports/workflow-design.md),
+[actual observations and bounded unavailable disposition](reports/design-observations.md).
+Independent final review findings resolved; A3/A4 design gate satisfied without
+claiming real producer qualification. Product procedures remain pending.
 
 ### D4: Tuning, runtime, candidate and implementation handoff
 
@@ -417,24 +425,24 @@ have selected its material tradeoffs.
 
 **Tasks:**
 
-- [ ] Complete detailed finite-trial runtime scheduling, queue admission fairness,
+- [x] Complete detailed finite-trial runtime scheduling, queue admission fairness,
   reservation reconciliation and recovery using D2's selected identities,
   permissions, total-budget and cancellation invariants through existing Runs.
   Adaptive search/prospective grants remain deferred unless explicitly re-scoped.
-- [ ] Design runtime capability/provisioning and candidate/export responsibilities;
+- [x] Design runtime capability/provisioning and candidate/export responsibilities;
   distinguish CPU/GPU support, installed assets, reproducible inference,
   optional resume state, package completeness and numerical acceptance. Specify
   actual export→fresh-consumer fixed-probe inference verification with an independent
   expected-output/tolerance owner; no live project checkout or hidden defaults.
-- [ ] Complete reuse/dependency/license choices only for required capabilities;
+- [x] Complete reuse/dependency/license choices only for required capabilities;
   otherwise record a deferred selection owner and trigger.
-- [ ] Produce exact future production write sets, contract/migration cutovers,
+- [x] Produce exact future production write sets, contract/migration cutovers,
   consumer dispositions and claim-matched real verification for a first useful
   vertical implementation and its dependency-ordered expansions.
-- [ ] Include agent-facing contracts, existing observer integration/cutover,
+- [x] Include agent-facing contracts, existing observer integration/cutover,
   operator provisioning/inspection, required audit transactions and measured
   overhead/retention verification in those slices. Explicitly resolve I11/I12.
-- [ ] Review all composed-design probes, scope decisions and outstanding issues;
+- [x] Review all composed-design probes, scope decisions and outstanding issues;
   explain the final design back to the user. Record accepted versus proposed
   durable decisions without upgrading this design plan into feature authorization.
 
@@ -449,11 +457,16 @@ identified operation and acceptance plan, not a consequence of a completed diagr
 **Re-plan condition:** Tuning authority, runtime feasibility, dependency choice
 or compatibility requires a materially different composition or product promise.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [Implementation handoff](reports/implementation-handoff.md),
+[final composed review](reports/design-review.md),
+[selected decision](../../decisions/model-development-architecture.md).
+A5–A7 design gate satisfied; exact future product checks remain pending.
 
 ## Blockers
 
-- No D1 product decision is blocked on user input. Coding Standards MCP is unavailable
+- No remaining architecture-design decision is blocked on user input. Coding Standards MCP is unavailable
   here; retained routing and adopted source guidance support this documentation
   review without claiming a live MCP consultation.
 - A required future observation that cannot run blocks only its dependent design
@@ -479,11 +492,11 @@ because another file belongs to an already bounded owner.
 
 ## Concurrent Work
 
-Primary agent serially owns the active stage's allowed documentation files. Parent-coordinated
-read-only workers supplied D1 authoring/negotiation and D2 evidence/trial findings;
-no local edits were delegated to them. The independent reviewer reads the composed
-active-stage artifacts and sources without writing. Earlier report authorship remains in
-the ledger; those investigations do not imply current concurrent application work.
+Primary agent owns integration and status decisions. User explicitly authorized
+parallel D3 work: one GPT-6.1 Sol writer owned only prototype/screenshots; another
+owned only the observation report. Independent GPT-6.1 Sol final review was
+read-only. Parent-coordinated D1/D2 read-only findings remain in the ledger.
+No worker changed application, lab/Rheon or user data. No Astra was used.
 
 ## Repository Isolation
 
@@ -496,17 +509,27 @@ No worktree was created or historical branch/worktree cleanup authorized.
 
 ## Final Acceptance
 
-- Acceptance status: `partial`
-- Deferred follow-ups: Future product implementation, deployment and execution
-  require their own concrete scope. Design choices remain tracked in issues.
-- Final status: `Active`
+- Acceptance status: `satisfied`
+- Deferred follow-ups: Actual P1–P6 product implementation/qualification; P3 pinned
+  CPU producer capture/time/RSS before new profile activation; P4 optional scientific
+  bridge/physics/protected access; P5 package/fresh inference; P6 wider observation.
+  GPU/hard quotas/adaptive/resume/public redistribution remain excluded capabilities
+  with owners/triggers in the final review. No production acceptance is implied.
+- Final status: `Accepted`
+
+A0–A7 are satisfied for **architecture design only**. D1–D4 are complete and
+independently reviewed; the PR remains unmerged.
 
 ## Sources And Review Aids
 
 - [Local visual overview](reports/design-overview.html)
 - [D1 selected architecture and worked journeys](reports/architecture-design.md)
 - [D2 concrete evidence, compatibility and trial contracts](reports/evidence-contract-design.md)
-- [D2 bounded observations and remaining proof](reports/design-observations.md)
+- [D2/D3 bounded observations and unsupported dispositions](reports/design-observations.md)
+- [D3 workflow, prototype and product acceptance procedures](reports/workflow-design.md)
+- [D4 implementation handoff](reports/implementation-handoff.md)
+- [Final composed-design review](reports/design-review.md)
+- [Selected architecture decision](../../decisions/model-development-architecture.md)
 - [Current ownership and five change scenarios](reports/current-ownership.md)
 - [Automatic evaluation and reuse alternatives](reports/automatic-evaluation-design.md)
 - [Agent interfaces and transparent observability requirements](reports/agent-interfaces-observability.md)

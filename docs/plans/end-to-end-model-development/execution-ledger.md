@@ -182,3 +182,81 @@
   proof. D3 is the single next stage. No product implementation, telemetry-v2
   deployment, generic package inference or protected-scientific test support is
   claimed. D2 commit/push follows staged verification; PR62 remains unmerged.
+
+## 2026-10-15 — D3/D4 complete architecture design
+
+- User authorized continuous completion of D3/D4 and the existing architecture
+  design plan. Continued on PR62 / `docs/model-development-d1` after D2 `e407cb1`;
+  existing commits preserved. No application implementation, lab/Rheon source,
+  user data, migration, runtime provisioning or training campaign was performed.
+- Explicitly authorized parallel GPT-6.1 Sol work used disjoint write sets:
+  `d3_walkthrough` owned only prototype/screenshots; `d3_resource_observation`
+  owned only `reports/design-observations.md`. Primary agent integrated other
+  permitted documents. `d3_d4_final_review` reviewed read-only. No Astra used.
+- Built the self-contained compact dark contextual walkthrough for classification,
+  standalone pressure and a separately labelled authored trajectory. It exercises
+  linked checkpoint/example/field/plane/slice/time, shared scales, immutable frozen
+  targets/current corrections, review/freeze, authority/budget and candidate states.
+  Authored values and simulated actions do not connect to a catalog or prove
+  real producer, grant, disclosure, export or numerical qualification.
+- Actual source/count and NumPy encoding/array-reduction observations plus actual
+  disposable existing-recorder SQLite healthy/lock/full/retention behavior are
+  recorded with inputs/source hashes/procedures and limits. These were private
+  inert diagnostic fixtures, not application observer activation. No per-agent
+  logging obligation was introduced. Peak process memory is confounded by loaded
+  libraries and is explicitly not recorder incremental RSS.
+- The pinned Torch/torchvision runtime and real recurring producer are unavailable.
+  Candidate probe/checkpoint/byte allocations stay UNQUALIFIED; registration of
+  new automatic capability is blocked until P3 actual CPU producer capture/time/
+  RSS/serialization/cold-inference qualification. Scientific bridge/recurring
+  producer/test mode likewise remains unavailable until P4 domain/access gates.
+  A4 uses its explicit design-valid bounded unsupported alternative, never mock
+  measurements as required-real producer evidence. No dependency installation or
+  training was used to manufacture that evidence.
+- Tooling provenance: browser tests use preinstalled Node24.19, Playwright1.62.1
+  and installed Chromium151. Prototype writer downloaded Prettier3.6.2 solely for
+  one-shot formatting through `/tmp/d3-npm-cache`; no repository package/lockfile,
+  application/runtime dependency or external HTML asset was added. This formatter
+  download is disclosed rather than calling the whole stage download-free.
+- D4 handoff specifies one Runs CPU child, bounded FIFO admission, finite total
+  reservations/stop/recovery, separately provisioned runtime, closure/fresh-consumer
+  acceptance, selected dependency/notice ownership, conditional schema9 evolution,
+  stopped-writer backup/restore and strict-client inventory cutover. P1–P6 specify
+  exact future production write sets and runnable/viewable checkpoints. Drivers
+  absent today are clearly future code. No implementation authority is inferred.
+- Independent final review found no architecture or A4 blocker. It requested
+  contextual prototype fixes for built-in owner-only starts, pressure steps-only
+  options and trajectory's distinct unavailable model/trial capability, plus exact
+  optional wrapper assembler/contract/test paths in P4. Corrections and final
+  recheck/browser/documentation results are recorded below before acceptance.
+
+
+### D3/D4 final review and acceptance
+
+- Final independent GPT-6.1 Sol recheck reports no remaining design blockers after
+  original contextual fixes, cross-task state isolation and pressure's separately
+  labelled future package example. Exact final prototype SHA-256 and detailed
+  findings/dispositions are in `reports/design-review.md`.
+- Final browser source produced11 retained screenshots. Author and integrator
+  separately ran the same153 assertions (91+12+32+18); all pass, zero script errors.
+  Same assertions rerun are not two independent oracles. Desktop1440/narrow390 and
+  all15 task/context combinations pass. Integrator rerun screenshots stayed `/tmp`.
+  Final temporary servers stopped. No correction-turn downloads occurred.
+- Passed original adopted upstream plan validator, local targets/anchors/table/
+  fence/overview structure, allowed D3/D4 documentation scope, seven unchanged D2
+  authored cases, prototype inline-script/asset/Node syntax, actual overview browser
+  smoke and full-file whitespace. Final counts and staged review are recorded at
+  publication. Structural and authored checks never certify feature behavior.
+- A0–A7 are satisfied for DESIGN ONLY, D1–D4 and overall plan Accepted. A4 uses its
+  expressly allowed design-valid unsupported disposition: actual Torch capture/
+  time/RSS/serialization and optional pressure producer/physics remain unqualified.
+  No automatic capability may be enabled until its future real gate passes.
+- Refetched main remains f58880df. Existing D1/D2 commits preserved; D2 hosted
+  lifecycle run38727225805 succeeded on e407cb1. This prior result is not the new
+  commit's CI. Final D3/D4 commit/push/PR update follows final staged checks; no
+  auto-merge, branch deletion or implementation is authorized by design closure.
+
+- Final documentation counts:16 Markdown files,270 local targets,129 anchors;
+  all pass. Initial Accepted projection included explanatory suffixes that the
+  adopted checker rejects; retained exact canonical status lines and moved prose
+  below them, then reran the original function successfully.

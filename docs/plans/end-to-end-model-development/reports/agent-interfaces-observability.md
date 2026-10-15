@@ -412,3 +412,37 @@ failure must not be confused with that mandatory transaction. D4 assigns exact
 source seams, v2 DDL/projection qualification and installation/rotation handoff.
 A6/A7 remain pending D3 procedures and D4 implementation handoff; no product
 workflow or whole-transport observation acceptance is claimed in D2.
+
+## D3/D4 acceptance and delivery disposition
+
+The complete [headless procedure](workflow-design.md#headless-agent-product-acceptance-procedure)
+and [unchanged-client/mandatory-audit procedure](workflow-design.md#unchanged-client-observation-and-mandatory-audit-procedures)
+now define A6/A7's eventual real-interface acceptance: exact discovery/compatibility,
+current human review/grant gates, bounded numeric checkpoint/probe/field reads,
+correction/new release, finite trial/stop/reopen/unknown outcome and candidate
+package/fresh inference. No screenshot interpretation, filesystem-layout knowledge,
+telemetry calls or trace arguments are required of ordinary agents.
+
+The [handoff](implementation-handoff.md) gives exact proposed source/test/contract
+write sets and dependency ordering. P1 owns negotiation/legacy cutover; P2 immutable
+material and atomic studies; P3 actual classifier evidence; P4 optional field/
+one-fit adapters; P5 package/fresh consumer; P6 actual transport observation and
+operator provisioning/measurement. These are future production slices, not
+implemented capabilities in this documentation branch.
+
+Existing MCP recording was measured only in a private disposable diagnostic
+fixture with inert responses. The [observation record](design-observations.md#actual-optional-observer-diagnostic-and-retention)
+reports real SQLite costs/retention/lock/full behavior and limits. It does not
+qualify proposed v2 HTTP/CLI/MCP seams, observe real agent work or activate an
+installation. P6 requires unchanged-client boundary tests, actual overhead/temporary
+storage/health measurements and explicit operator-selected fresh private store.
+Default remains disabled unless selected by operator. Required audit still rolls
+back its transaction on failure; evaluation evidence retains its own numerical/
+custody/required-completeness rules.
+
+I11/I12 are resolved **for design** by the operation contracts, complete procedures
+and exact handoff. Product agent parity/whole-boundary observation remains unverified
+until those slices pass their actual gates. Missing supported capability is exposed
+at its owner; no new schema/tool advertisement is permitted merely because its
+contract was documented. Runtime/capture/rights/test-protection gaps must remain
+unsupported rather than bypass authority or leak mixed artifacts.

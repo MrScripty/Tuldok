@@ -1,214 +1,59 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <title>Tuldok · D1–D2 model development design</title>
-  <style>
-    :root { color-scheme: light dark; --bg:#f2f5f5; --paper:#fff; --ink:#142a32; --muted:#4e626b; --line:#cbd8dc; --accent:#006b66; --tint:#e6f4f1; --blue:#2455a3; --blue-tint:#eef3ff; --amber:#805300; --amber-tint:#fff5db; --shadow:0 12px 34px #142a3209; }
-    @media (prefers-color-scheme:dark) { :root { --bg:#10191e; --paper:#17252c; --ink:#e3edf0; --muted:#afc1ca; --line:#3c535d; --accent:#75d6c4; --tint:#193e39; --blue:#a7c5ff; --blue-tint:#202f4b; --amber:#f4d382; --amber-tint:#3e341e; --shadow:none; } }
-    * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    a { color:var(--blue); text-underline-offset:.18em; }
-    a:hover { text-decoration-thickness:2px; }
-    a:focus-visible, summary:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
-    .skip { position:absolute; top:-100px; left:1rem; background:var(--paper); padding:.5rem; }
-    .skip:focus { top:1rem; }
-    .wrap { max-width:1240px; margin:auto; padding:0 32px; }
-    header { background:var(--paper); border-bottom:1px solid var(--line); padding:34px 0 38px; }
-    .eyebrow { color:var(--accent); letter-spacing:.12em; font-size:.75rem; font-weight:750; text-transform:uppercase; }
-    h1 { font-size:clamp(2rem,4vw,3.25rem); line-height:1.12; letter-spacing:-.045em; max-width:900px; margin:14px 0 18px; }
-    h2 { font-size:1.55rem; line-height:1.25; margin:0 0 12px; letter-spacing:-.025em; }
-    h3 { font-size:1.05rem; line-height:1.35; margin:0 0 9px; }
-    p { margin:0 0 14px; }
-    .intro { max-width:850px; color:var(--muted); font-size:1.1rem; }
-    .meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin-top:20px; font-size:.9rem; }
-    .badge { display:inline-block; padding:3px 9px; border:1px solid currentColor; border-radius:5px; font-size:.72rem; font-weight:700; letter-spacing:.03em; }
-    .requirement { color:var(--accent); background:var(--tint); }
-    .candidate { color:var(--blue); background:var(--blue-tint); }
-    .open { color:var(--amber); background:var(--amber-tint); }
-    main { padding-top:34px; padding-bottom:48px; }
-    section { margin-bottom:32px; }
-    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:25px; box-shadow:var(--shadow); }
-    .section-top { display:flex; align-items:baseline; justify-content:space-between; gap:15px; margin-bottom:17px; }
-    .section-top h2 { margin:0; }
-    .small, .note { color:var(--muted); font-size:.88rem; }
-    .requirements { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-    .requirement-card { padding:16px; background:var(--tint); border-radius:8px; border-top:3px solid var(--accent); }
-    .requirement-card p { font-size:.92rem; margin:0; }
-    .workflow { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(4,1fr); gap:14px; counter-reset:step; }
-    .workflow li { border:1px solid var(--line); border-radius:8px; padding:17px; position:relative; }
-    .workflow li::before { counter-increment:step; content:counter(step, decimal-leading-zero); display:block; color:var(--accent); font-size:.8rem; font-weight:750; margin-bottom:12px; }
-    .workflow p { color:var(--muted); font-size:.9rem; margin:0; }
-    .workflow .eval { border:2px solid var(--accent); padding:16px; background:var(--tint); }
-    .loop { margin-top:16px; padding:13px 16px; border-left:3px solid var(--accent); background:var(--tint); font-size:.95rem; }
-    .loop p { margin:0; }
-    .columns { display:grid; grid-template-columns:1.2fr 1fr; gap:22px; }
-    .owner { padding:18px; background:var(--blue-tint); border:1px solid var(--blue); border-radius:8px; }
-    .owner p:last-child { margin:0; }
-    .handoff { display:flex; align-items:center; gap:10px; margin:16px 0; font-size:.87rem; }
-    .handoff span { flex:1; text-align:center; border:1px solid var(--line); padding:10px 5px; border-radius:6px; }
-    .handoff b { font-weight:500; color:var(--muted); }
-    ul { padding-left:1.2rem; margin:10px 0 0; }
-    li { margin-bottom:7px; }
-    .table-scroll { overflow-x:auto; }
-    table { border-collapse:collapse; width:100%; min-width:560px; font-size:.93rem; }
-    th, td { padding:13px 14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
-    th { font-size:.79rem; text-transform:uppercase; letter-spacing:.045em; color:var(--muted); }
-    td:first-child { font-weight:650; width:22%; }
-    tr:last-child td { border:0; }
-    .gate { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }
-    .gate article { padding:17px; border:1px solid var(--line); border-radius:8px; }
-    .gate p { color:var(--muted); font-size:.93rem; margin:0; }
-    .phase-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-    details { border:1px solid var(--line); background:var(--paper); border-radius:8px; }
-    summary { cursor:pointer; padding:17px; font-weight:650; }
-    summary span { color:var(--accent); margin-right:8px; }
-    .detail-body { padding:0 18px 18px; font-size:.93rem; }
-    .detail-body p:last-child { margin-bottom:0; }
-    .questions { margin:0; }
-    .questions li { margin-bottom:12px; }
-    .questions li:last-child { margin-bottom:0; }
-    footer { border-top:1px solid var(--line); padding:23px 0 32px; font-size:.88rem; color:var(--muted); }
-    footer ul { display:flex; flex-wrap:wrap; list-style:none; gap:10px 22px; padding:0; margin:10px 0 0; }
-    @media(max-width:950px) { .requirements,.workflow { grid-template-columns:repeat(2,1fr); } .columns { grid-template-columns:1fr; } }
-    @media(max-width:600px) { .wrap { padding:0 18px; } header { padding-top:25px; } .panel { padding:19px; } .requirements,.workflow,.gate,.phase-grid { grid-template-columns:1fr; } .section-top { display:block; } .section-top .badge { margin-top:10px; } .handoff { flex-wrap:wrap; } .handoff span { min-width:100px; } }
-    @media print { body { background:white; color:black; font-size:10pt; } :root { --paper:white; --ink:black; --muted:#333; --line:#aaa; --accent:#075a51; --tint:#f2f7f6; --blue:#204977; --blue-tint:#f4f6fa; } .wrap { max-width:none; padding:0; } header { padding-top:0; } .panel { box-shadow:none; break-inside:avoid; } details { break-inside:avoid; } a { color:inherit; } .skip { display:none; } }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tuldok · model development design</title>
+<style>
+:root{color-scheme:dark;--bg:#111619;--panel:#1b2328;--line:#34434a;--ink:#edf3f5;--muted:#a7bac3;--mint:#a6e9c9;--amber:#ffd29a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}main,header,footer{max-width:1080px;margin:auto;padding:24px}header{padding-top:38px}h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:12px 0}h2{font-size:1.12rem;margin:0 0 10px}h3{font-size:1rem;margin:0 0 4px}p{margin:6px 0 14px}a{color:var(--mint);text-underline-offset:3px}a:focus-visible{outline:3px solid var(--amber);outline-offset:5px}.skip{position:absolute;top:-60px;left:20px;padding:8px;background:var(--panel)}.skip:focus{top:8px}.eyebrow,.badge{font-size:.76rem;letter-spacing:.06em;text-transform:uppercase}.eyebrow{color:var(--mint)}.muted,small{color:var(--muted)}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.button{background:var(--mint);color:#10251b;padding:10px 16px;border-radius:7px;text-decoration:none;font-weight:700}.badge{padding:4px 8px;border:1px solid var(--line);border-radius:5px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.panel{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:20px}.wide{grid-column:1/-1}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}.flow span{padding:7px 11px;border:1px solid var(--line);border-radius:6px}.flow b{color:var(--muted)}ul{padding-left:20px;margin:8px 0}li{margin:6px 0}.links{display:flex;flex-wrap:wrap;gap:10px 20px}footer{border-top:1px solid var(--line);font-size:.86rem}small{display:block}.status{color:var(--amber)}@media(max-width:620px){header,main,footer{padding:18px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.panel{padding:16px}.flow b{display:none}}@media print{body{background:white;color:black}.panel{background:white;border-color:#777}a{color:#174c38}.muted,small{color:#333}}
+</style>
 </head>
 <body>
-  <a class="skip" href="#main">Skip to architecture overview</a>
-  <header>
-    <div class="wrap">
-      <div class="eyebrow">Tuldok / D2 contract design / 15 October 2026</div>
-      <h1>One workspace, from dataset to model candidate.</h1>
-      <p class="intro">Design the connected process first. Task-aware evaluation should arrive with training, so users can understand results, correct data, tune models, and preserve the evidence behind each decision.</p>
-      <div class="meta"><span class="badge open">D1–D2 reviewed · D3 next · provisional visual</span><a href="../plan.md">Canonical design plan →</a><span>No application behavior is implemented by this document.</span></div>
-    </div>
-  </header>
-  <main class="wrap" id="main">
-    <section aria-labelledby="requirements-title">
-      <div class="section-top"><h2 id="requirements-title">What the user has asked for</h2><span class="badge requirement">Requirements</span></div>
-      <div class="requirements">
-        <article class="requirement-card"><h3>End to end in Tuldok</h3><p>Build and annotate datasets, train models, evaluate outcomes, and return to improve them.</p></article>
-        <article class="requirement-card"><h3>Define the model</h3><p>Architecture and training choices belong in the workflow alongside dataset choices.</p></article>
-        <article class="requirement-card"><h3>Views without extra setup</h3><p>Supported tasks and trainers automatically provide applicable evaluation tools.</p></article>
-        <article class="requirement-card"><h3>Tune with evidence</h3><p>Compare candidates and configurations, inspect errors, and iterate reproducibly.</p></article>
-      </div>
-    </section>
-
-    <section class="panel" aria-labelledby="workflow-title">
-      <div class="section-top"><h2 id="workflow-title">The selected D1 journey</h2><span class="badge candidate">Candidate design</span></div>
-      <p class="note">Read steps 01–08 in order. These are conceptual responsibilities; they do not require eight new services or screens.</p>
-      <ol class="workflow">
-        <li><h3>Build the dataset</h3><p>Import, generate, annotate, review, and retain family and provenance information.</p></li>
-        <li><h3>Freeze a release</h3><p>Record exact samples, annotations, split assignments, transformations, and exposure policy.</p></li>
-        <li><h3>Define task and model</h3><p>Use template forms and typed configuration, or captured project source. Keep computation meaning separate from workflow stages.</p></li>
-        <li><h3>Prepare finite trials</h3><p>Pin exact Pipeline material; resolve validation probes, selection criteria and aggregate budget. Exact authorization remains required.</p></li>
-        <li><h3>Execute through Runs</h3><p>Admit training and evaluation attempts through the existing execution owner.</p></li>
-        <li class="eval"><h3>Evaluate automatically</h3><p>Open curves, fixed-example comparisons, task metrics, and declared domain checks as evidence arrives.</p></li>
-        <li><h3>Compare and select</h3><p>Inspect comparable trials, failures, validation criteria, and separate acceptance outcomes.</p></li>
-        <li><h3>Package a candidate</h3><p>Retain checkpoint, model and preprocessing definitions, output meaning, lineage, and evaluation evidence.</p></li>
-      </ol>
-      <div class="loop"><p><strong>Two return paths:</strong> evaluation → dataset corrections → new frozen release; evaluation → model/settings changes → new experiment revision or trial. Historical evidence continues to reference its original inputs.</p></div>
-    </section>
-
-    <section class="columns" aria-label="Ownership and automatic evaluation">
-      <article class="panel">
-        <div class="section-top"><h2>One recipe owner, one execution custodian</h2><span class="badge candidate">Selected D1 design</span></div>
-        <div class="owner"><h3>Pipeline edits; experiments pin; Runs executes</h3><p>Pipeline alone owns editable execution recipes. Experiments retain exact recipe material and own trial membership, total budget and selection. Runs keeps admission, dispatch, cancellation and verified artifact custody.</p></div>
-        <div class="handoff" aria-label="Proposed handoff: experiment intent to Runs to verified evidence"><span>Experiment intent</span><b aria-hidden="true">→</b><span>Runs</span><b aria-hidden="true">→</b><span>Verified evidence</span></div>
-        <p class="small">Evaluation replay, tuning trials, and candidate verification must use the same owned execution path. D2 must specify retained pre-admission recipe snapshots and atomic study attachment; a bare reference to an overwritten draft cannot preserve a trial.</p>
-      </article>
-      <article class="panel">
-        <h2>Automatic means integrated once</h2>
-        <p>A task definition declares semantics, applicable metrics, and views. A trainer adapter emits the corresponding observations and retained evidence.</p>
-        <ul>
-          <li><strong>User chooses:</strong> task, dataset, model, and budget.</li>
-          <li><strong>Tuldok resolves:</strong> compatible defaults, fixed validation probes, capture cadence, and viewers.</li>
-          <li><strong>UI explains:</strong> pending, available, unsupported, failed, or omitted evidence.</li>
-        </ul>
-        <p class="small" style="margin-top:14px;margin-bottom:0">Arbitrary custom code still requires an integration contract. Missing gradients, predictions, or physical semantics cannot be inferred from a final metric file.</p>
-      </article>
-    </section>
-
-    <section class="panel" aria-labelledby="agent-title">
-      <div class="section-top"><h2 id="agent-title">Compatible agent operations, automatic observation</h2><span class="badge candidate">Required direction</span></div>
-      <p>Authorized agents complete the supported dataset-to-candidate workflow through discoverable interfaces. Metrics, checkpoint comparisons, error slices, probe predictions and bounded field values are available as structured evidence.</p>
-      <p>Clients negotiate exact supported per-operation contracts. New operations preserve unrelated compatible calls; incompatible mutations fail before domain entry. Current whole-registry equality needs a D2 migration and consumer disposition.</p>
-      <p>Observation runs behind ordinary operations: no extra logging tools, tracing arguments or per-run setup. Operators inspect permitted records separately. Interface observations, required domain audits and model-evaluation evidence keep their own owners and failure rules.</p>
-      <p class="note">The MCP observer is integrated at main f58880df; reuse it first. D2 resolves transport coverage, operator policy, privacy, retention and overhead. Optional recording failure preserves domain outcomes; required audit failure follows its transaction contract. This is design direction, not activated collection.</p>
-      <a href="agent-interfaces-observability.md">Agent operation matrix, observation requirements and source evidence</a>
-    </section>
-
-    <section class="panel" aria-labelledby="state-title">
-      <div class="section-top"><h2 id="state-title">Preserve four different kinds of state</h2><span class="badge candidate">Contract design</span></div>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th scope="col">State</th><th scope="col">Purpose</th><th scope="col">Required distinction</th></tr></thead>
-          <tbody>
-            <tr><td>Editable drafts</td><td>Annotations, architecture choices, experiment settings, and review work.</td><td>Changing a draft cannot rewrite what an older run consumed.</td></tr>
-            <tr><td>Frozen definitions</td><td>Dataset releases, task/model versions, resolved trial recipes, and evaluation protocols.</td><td>Stable identities make lineage and comparable evaluation possible.</td></tr>
-            <tr><td>Live observations</td><td>Progress, current metrics, and execution feedback during a run.</td><td>Live status is not itself a complete or verified historical record.</td></tr>
-            <tr><td>Verified artifacts</td><td>Histories, checkpoints, predictions, metric results, and candidate packages.</td><td>Readers check schema and custody; scientific validity depends on declared evaluators and evidence.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="gate">
-        <article><h3>Validation probes: visible during development</h3><p>Fixed cases support checkpoint comparison, debugging, model selection, and tuning. Record their identity, selection policy, inference settings, units, coordinates, and shared scales.</p></article>
-        <article><h3>Test evaluation: separately gated</h3><p>Protected test families must remain outside routine tuning and probe galleries. Record access and exposure; a displayed failure may become a regression case but must not silently remain an untouched holdout.</p></article>
-      </div>
-    </section>
-
-    <section aria-labelledby="phases-title">
-      <div class="section-top"><h2 id="phases-title">Design phase checkpoints</h2><span class="badge open">Proposed sequence</span></div>
-      <p class="note">Expand a phase to inspect its decision evidence. These controls describe design checkpoints, not implementation progress. Canonical phase names and acceptance criteria live in the plan.</p>
-      <div class="phase-grid">
-        <details open><summary><span>D1</span>Owner and task-path design</summary><div class="detail-body"><p><strong>Selected:</strong> Pipeline recipe authority, template/configuration plus captured source, finite exact trials and compatible per-operation discovery.</p><p><strong>Evidence:</strong> worked classifier and pressure-CNN paths, authoring edits, owner/change/deletion review and explicit current gaps. <a href="architecture-design.md">Read D1 design and independent review</a>.</p></div></details>
-        <details open><summary><span>D2</span>Reviewed contracts and cold evidence</summary><div class="detail-body"><p><strong>Produce:</strong> versioned identity/evidence contracts, finite-trial permission and aggregate-budget/cancellation invariants, compatibility migration and cold readback.</p><p><strong>Check:</strong> immutable recipe snapshots, atomic study attachment/reservation, scientific release bridge, honest missing history and current exposure policy before generic interface freeze.</p></div></details>
-        <details open><summary><span>D3</span>Automatic capture and UI demonstration</summary><div class="detail-body"><p><strong>Produce:</strong> a bounded walkthrough showing task-aware default views and linked checkpoint/example selection, plus capture, retention, and resource budgets.</p><p><strong>Check:</strong> an ordinary user gets useful evaluation without configuring charts or callbacks; omitted evidence and unsuccessful model acceptance remain clear.</p></div></details>
-        <details open><summary><span>D4</span>Tuning, runtime, and evolution handoff</summary><div class="detail-body"><p><strong>Produce:</strong> detailed runtime scheduling under D2 invariants, runtime qualification, closed candidate packages, fresh-consumer inference acceptance and implementation slices.</p><p><strong>Check:</strong> failed trials and repeated seeds are represented, tuning obeys exposure policy, and the handoff avoids a competing scheduler or speculative infrastructure.</p></div></details>
-      </div>
-    </section>
-
-    <section class="panel" aria-labelledby="vertical-title">
-      <div class="section-top"><h2 id="vertical-title">Two worked paths before generic interfaces freeze</h2><span class="badge candidate">Design examples</span></div>
-      <div class="gate">
-        <article><h3>Existing image classifier</h3><p>Review/freeze → TinyCNN widths 16/32/64 to 24/48/96 → exact recipe → authorized Run → automatic fixed validation probes → human/agent errors → corrected release or finite next trial → candidate package. Current v1 has fixed architecture and only best-checkpoint predictions; new authoring and probe contracts are still proposed.</p></article>
-        <article><h3>Captured pressure CNN</h3><p>Review/freeze fields → captured model/input/gauge edits → exact external grant → Adam training → checkpoint/field evidence → structured physics/error inspection → authorized next trial → diagnostic or qualified candidate. Prior training and restore evidence is real; physics qualification remained 0/16. The canonical-release bridge and recurring probes are still pending.</p></article>
-      </div>
-      <p class="note" style="margin-top:17px">Text/audio show one fit; optional ModalPressure reports zero optimizer updates. Rheon and the lab keep numerical ownership. No application, lab source, user data or telemetry settings change in D1.</p>
-    </section>
-
-    <section class="panel" aria-labelledby="open-title">
-      <div class="section-top"><h2 id="open-title">D2 contracts and remaining D3–D4 proof</h2><span class="badge open">Pending design and product proof</span></div>
-      <ul class="questions">
-        <li><strong>D2 foundations specified:</strong> immutable material and trial/attempt/replicate identity, atomic preparation/attachment, exact authority and stop-before-cancel epochs. Runs needs an outer-commit admission seam; reservation is accounting, not CPU/GPU/memory containment.</li>
-        <li><strong>Compatibility selected:</strong> exact per-operation contracts with pre-domain checks, plus a frozen 56-operation legacy projection for supported strict clients. Inventory-owned retirement; no schema-subsumption engine.</li>
-        <li><strong>Evidence contracts specified:</strong> versioned manifest/checkpoint/probe/field binding and bounded queries; retained v1 history stays absent. Standalone pressure fields have no invented physical frames. Scientific protected modes stay unavailable until every accessor protects mixed artifacts.</li>
-        <li><strong>D3 still pending — interaction and costs:</strong> actual linked views, browser/keyboard/narrow-screen walkthrough and measured capture/retention/time/memory bounds.</li>
-        <li><strong>Candidate closure:</strong> weights, model/source, transforms/fitted statistics, schemas/runtime, lineage/evidence and access. Later fresh-consumer fixed-probe inference must work without a live project checkout.</li>
-        <li><strong>D4 handoff:</strong> detailed scheduling, runtime/dependency qualification, migrations and implementation slices. Adaptive prospective grants and a universal editable graph are deferred.</li>
-      </ul>
-      <p class="note" style="margin-top:17px;margin-bottom:0">This is a provisional discussion visual of selected D1 recommendations. The canonical plan and D1 report own decisions. D2 contract review findings are resolved; D3 interaction and measured-cost work remains. Document rendering was checked at desktop and narrow widths; this is not a product prototype or proof of training/package acceptance.</p>
-    </section>
-  </main>
-  <footer>
-    <div class="wrap">
-      <strong>Evidence and canonical text</strong>
-      <ul>
-        <li><a href="../plan.md">Architecture design plan</a></li>
-        <li><a href="architecture-design.md">D1 decisions, sources and review</a></li>
-        <li><a href="evidence-contract-design.md">D2 contracts</a></li>
-        <li><a href="design-observations.md">D2 observations and limits</a></li>
-        <li><a href="../../training-evaluation/reports/paper-review.md">Paper review</a></li>
-        <li><a href="../../training-evaluation/reports/paper-methodology-review.md">Methodology review</a></li>
-        <li><a href="../../training-evaluation/reports/software-precedents.md">Software precedents</a></li>
-        <li><a href="../../training-evaluation/reports/primary-sources.md">Supporting sources</a></li>
-      </ul>
-      <p style="margin-top:14px;margin-bottom:0">Local, self-contained discovery artifact. No external assets, hosted publishing, or application dependencies.</p>
-    </div>
-  </footer>
+<a class="skip" href="#main">Skip to design overview</a>
+<header>
+<div class="eyebrow">Tuldok · architecture design · 15 October 2026</div>
+<h1>Dataset to candidate.<br>One connected workflow.</h1>
+<p class="muted">Compact controls. Exact evidence. Explicit authority.</p>
+<div class="toolbar"><a class="button" href="prototypes/model-development.html">Open interactive walkthrough</a><a href="../plan.md">Canonical plan</a><span class="badge">Design only · no product changes</span></div>
+</header>
+<main id="main">
+<div class="grid">
+<section class="panel wide" aria-labelledby="journey-title">
+<h2 id="journey-title">The selected journey</h2>
+<div class="flow"><span>Review &amp; freeze</span><b>→</b><span>Model &amp; recipe</span><b>→</b><span>Authorized Run</span><b>→</b><span>Inspect evidence</span><b>→</b><span>Correct / next trial</span><b>→</b><span>Package &amp; verify</span></div>
+<small>Classifier and optional field-adapter paths share custody and queries. Task semantics remain versioned and adapter-owned.</small>
+</section>
+<section class="panel" aria-labelledby="ownership-title">
+<h2 id="ownership-title">One configuration owner</h2>
+<p><strong>Pipeline edits.</strong> Experiments pin immutable material. Runs owns execution and verified bytes.</p>
+<p class="muted">Templates/configuration plus captured source. Computation and workflow graphs have different meanings.</p>
+<a href="architecture-design.md">D1 choices and alternatives</a>
+</section>
+<section class="panel" aria-labelledby="contracts-title">
+<h2 id="contracts-title">Evidence with meaning</h2>
+<p>Checkpoint + fixed probe + frozen input + transform + metric contract.</p>
+<p class="muted">Bounded structured queries. Shared field scales. Honest one-fit, absent history and incompatible comparisons.</p>
+<a href="evidence-contract-design.md">D2 concrete contracts</a>
+</section>
+<section class="panel" aria-labelledby="interaction-title">
+<h2 id="interaction-title">Context-specific controls</h2>
+<p>Checkpoint/example, field/stage, plane/slice and declared physical time. Keyboard and numeric alternatives.</p>
+<p class="muted">Standalone pressure cases have no physical timeline. Changing inputs, outputs or stages creates new semantics.</p>
+<a href="workflow-design.md">D3 interaction and acceptance procedures</a>
+</section>
+<section class="panel" aria-labelledby="authority-title">
+<h2 id="authority-title">Exact finite authority</h2>
+<p>One transaction reserves budget, checks current authority and consumes any required exact grant, admits the Run and records mandatory audit.</p>
+<p class="muted">Stop closes admission first. Unknown outcomes stay fenced. Compatible operations survive additive discovery.</p>
+<a href="agent-interfaces-observability.md">Agent and observation contracts</a>
+</section>
+<section class="panel wide" aria-labelledby="evidence-title">
+<h2 id="evidence-title">What was actually verified</h2>
+<p>Browser walkthrough and authored interaction checks; actual bounded array-formatting and private disposable MCP-observer measurements.</p>
+<p class="status">Pinned Torch is unavailable here. New recurring producer profiles stay unavailable until actual capture/time/RSS/cold-inference qualification. Authored values are never training or physics evidence.</p>
+<div class="links"><a href="design-observations.md">Measurements and limits</a><a href="implementation-handoff.md">D4 implementation slices and gates</a><a href="design-review.md">Independent final design review</a></div>
+</section>
+</div>
+</main>
+<footer><p>Provisional visual linked to the canonical plan. No logger setup for ordinary agents; passive observation remains operator opt-in and separate from transactional audit and evaluation evidence.</p><div class="links"><a href="../../../decisions/model-development-architecture.md">Architecture decision</a><a href="../execution-ledger.md">Execution ledger</a><a href="../issues.md">Issues</a></div></footer>
 </body>
 </html>

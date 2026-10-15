@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Model development · D3 design walkthrough</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101416;
+        --panel: #191f23;
+        --line: #323d44;
+        --text: #e8eef0;
+        --muted: #9caeb7;
+        --mint: #a5edc9;
+        --orange: #ffc38b;
+        --red: #ff9eaa;
+        --blue: #8fc7ed;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      select,
+      input {
+        color: var(--text);
+        background: #222c32;
+        border: 1px solid #4d616d;
+        border-radius: 7px;
+        padding: 9px 12px;
+        min-height: 42px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--mint);
+        background: #2b3b40;
+      }
+      button:disabled {
+        opacity: 0.48;
+        cursor: not-allowed;
+      }
+      button.primary {
+        color: #102019;
+        background: var(--mint);
+        border-color: var(--mint);
+        font-weight: 650;
+      }
+      button[aria-pressed="true"],
+      button[aria-current="page"] {
+        border-color: var(--mint);
+        color: var(--mint);
+        background: #23362e;
+      }
+      :focus-visible {
+        outline: 3px solid #ffc38b;
+        outline-offset: 3px;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 23px;
+        letter-spacing: -0.5px;
+      }
+      h2 {
+        font-size: 20px;
+        letter-spacing: -0.3px;
+      }
+      h3 {
+        font-size: 15px;
+      }
+      small,
+      .small {
+        font-size: 12px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--mint);
+        font-weight: 700;
+      }
+      .top {
+        border-bottom: 1px solid var(--line);
+        padding: 22px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .top label {
+        display: grid;
+        gap: 4px;
+      }
+      .notice {
+        padding: 9px 32px;
+        background: #25241f;
+        color: #dac9ac;
+        font-size: 12px;
+        border-bottom: 1px solid #494334;
+      }
+      .shell {
+        max-width: 1500px;
+        margin: auto;
+        padding: 24px 32px 40px;
+      }
+      .nav {
+        display: flex;
+        gap: 6px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 18px;
+        margin-bottom: 24px;
+      }
+      .nav button {
+        background: transparent;
+        border-color: transparent;
+        white-space: nowrap;
+      }
+      .nav button[aria-current="page"] {
+        border-color: var(--mint);
+        background: #23362e;
+      }
+      .heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .toolbar {
+        display: flex;
+        gap: 14px;
+        align-items: end;
+        flex-wrap: wrap;
+        padding: 16px;
+        background: #151b1f;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        margin-bottom: 18px;
+      }
+      .toolbar label,
+      .control {
+        display: grid;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .toolbar select {
+        min-width: 135px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+        gap: 18px;
+      }
+      .equal {
+        grid-template-columns: 1fr 1fr;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 22px;
+        min-width: 0;
+      }
+      .panel > h3 {
+        margin-bottom: 14px;
+      }
+      .panelheader {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .badge {
+        font-size: 11px;
+        letter-spacing: 0.3px;
+        border: 1px solid #47635a;
+        background: #24352e;
+        border-radius: 5px;
+        padding: 4px 8px;
+        color: var(--mint);
+        white-space: nowrap;
+      }
+      .badge.warn {
+        color: var(--orange);
+        background: #382e24;
+        border-color: #665039;
+      }
+      .badge.bad {
+        color: var(--red);
+        background: #3a282d;
+        border-color: #6e4852;
+      }
+      .badge.neutral {
+        color: var(--muted);
+        background: #252c31;
+        border-color: #49535b;
+      }
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+      .metric {
+        font-size: 30px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+        letter-spacing: -0.8px;
+      }
+      .stats {
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        margin: 18px 0;
+      }
+      .stats > div {
+        display: grid;
+        gap: 4px;
+      }
+      .note {
+        border-left: 3px solid var(--orange);
+        padding: 10px 14px;
+        background: #282722;
+        color: #e2d3bd;
+        font-size: 13px;
+        margin-top: 16px;
+      }
+      .goodnote {
+        border-left-color: var(--mint);
+        background: #20302a;
+        color: #c5e6d5;
+      }
+      .curve {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 245px;
+      }
+      .epochbuttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .epochbuttons button {
+        flex: 1;
+        padding: 8px;
+        min-width: 80px;
+      }
+      .metadata {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+        font-size: 12px;
+      }
+      .metadata dt {
+        color: var(--muted);
+      }
+      .metadata dd {
+        margin: 3px 0 0;
+        overflow-wrap: anywhere;
+      }
+      .example {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin: 15px 0;
+      }
+      .thumbnail {
+        width: 100px;
+        height: 100px;
+        flex: none;
+        border: 1px solid #46616a;
+        border-radius: 9px;
+        background: #22363c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .thumbnail svg {
+        width: 88px;
+        height: 88px;
+      }
+      .bars {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0;
+      }
+      .barlabel {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+      }
+      .track {
+        height: 7px;
+        border-radius: 4px;
+        background: #303e45;
+        margin-top: 4px;
+      }
+      .fill {
+        background: var(--mint);
+        height: 100%;
+        border-radius: 4px;
+      }
+      .fill.wrong {
+        background: var(--orange);
+      }
+      .separator {
+        border-top: 1px solid var(--line);
+        margin: 18px 0;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .field figure {
+        margin: 0;
+      }
+      .field svg {
+        width: 100%;
+        display: block;
+        aspect-ratio: 1;
+        border: 1px solid #53606b;
+        border-radius: 5px;
+        margin: 8px 0;
+      }
+      .scale {
+        height: 8px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #243b69, #5490b2, #efdf9a, #e27762);
+      }
+      .scale.error {
+        background: linear-gradient(90deg, #1b2633, #a66cba, #ffc190);
+      }
+      .ends {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .scientific-controls {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .scientific-controls label {
+        display: grid;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      input[type="number"] {
+        width: 100%;
+      }
+      input[type="range"] {
+        width: 100%;
+        padding: 0;
+        accent-color: var(--mint);
+      }
+      .tablewrap {
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--line);
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .empty {
+        text-align: center;
+        min-height: 270px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        border: 1px dashed #52616c;
+        background: #151b1f;
+        border-radius: 10px;
+        padding: 28px;
+      }
+      .empty h3 {
+        font-size: 20px;
+      }
+      .empty p {
+        max-width: 560px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .code {
+        font:
+          12px/1.6 ui-monospace,
+          monospace;
+        overflow-wrap: anywhere;
+        background: #10171b;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 16px;
+        white-space: pre-wrap;
+      }
+      .flow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+      }
+      .flow span {
+        color: var(--muted);
+      }
+      .flow button {
+        flex: 1;
+        min-width: 110px;
+      }
+      .pillrow {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .pillrow span {
+        border: 1px solid var(--line);
+        padding: 6px 9px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+      .ledger {
+        display: grid;
+        gap: 14px;
+      }
+      .ledger div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 12px;
+      }
+      .statusline {
+        padding: 10px 0;
+        font-size: 13px;
+        color: var(--mint);
+        min-height: 35px;
+      }
+      footer {
+        margin-top: 26px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .numbers {
+        font-variant-numeric: tabular-nums;
+      }
+      .wide {
+        grid-column: 1/-1;
+      }
+      .gateactions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .model-layout {
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr);
+        gap: 18px;
+      }
+      .localnav {
+        display: grid;
+        align-content: start;
+        gap: 7px;
+      }
+      .localnav button {
+        text-align: left;
+      }
+      .mono {
+        font-family: ui-monospace, monospace;
+        font-size: 12px;
+      }
+      .progress {
+        height: 9px;
+        background: #31404a;
+        border-radius: 7px;
+        margin: 12px 0;
+      }
+      .progress span {
+        display: block;
+        width: 50%;
+        height: 100%;
+        background: var(--mint);
+        border-radius: 7px;
+      }
+      button.link {
+        border: 0;
+        background: transparent;
+        color: var(--mint);
+        padding: 0;
+        min-height: 32px;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .splitline {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .sr-only {
+        position: absolute;
+        clip: rect(0, 0, 0, 0);
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+      @media (max-width: 800px) {
+        .grid,
+        .equal {
+          grid-template-columns: 1fr;
+        }
+        .metadata {
+          grid-template-columns: 1fr 1fr;
+        }
+        .top {
+          align-items: start;
+        }
+        .fields {
+          gap: 9px;
+        }
+        .scientific-controls {
+          grid-template-columns: 1fr 1fr;
+        }
+        .model-layout {
+          grid-template-columns: 1fr;
+        }
+        .localnav {
+          display: flex;
+          flex-wrap: wrap;
+        }
+        .localnav button {
+          flex: 1;
+        }
+      }
+      @media (max-width: 480px) {
+        body {
+          font-size: 14px;
+        }
+        .top {
+          padding: 18px;
+          display: grid;
+          gap: 16px;
+        }
+        .top label {
+          width: 100%;
+        }
+        .top select {
+          max-width: 100%;
+          width: 100%;
+        }
+        .notice {
+          padding: 10px 18px;
+        }
+        .shell {
+          padding: 18px;
+        }
+        .nav {
+          overflow-x: auto;
+          gap: 0;
+          margin-bottom: 18px;
+        }
+        .nav button {
+          font-size: 13px;
+          padding: 8px 10px;
+        }
+        .heading {
+          align-items: start;
+        }
+        .heading .badge {
+          white-space: normal;
+          max-width: 135px;
+        }
+        .toolbar {
+          padding: 12px;
+          gap: 12px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+        .toolbar select {
+          min-width: 0;
+          width: 100%;
+        }
+        .panel {
+          padding: 16px;
+        }
+        .metadata {
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .stats {
+          gap: 22px;
+        }
+        .metric {
+          font-size: 26px;
+        }
+        .fields {
+          grid-template-columns: 1fr 1fr;
+        }
+        .fields .field:last-child {
+          grid-column: 1/-1;
+          max-width: 165px;
+        }
+        .field h3 {
+          font-size: 13px;
+        }
+        .scientific-controls {
+          gap: 10px;
+        }
+        .example {
+          gap: 12px;
+        }
+        .thumbnail {
+          width: 85px;
+          height: 85px;
+        }
+        .flow {
+          gap: 6px;
+        }
+        .flow button {
+          min-width: 80px;
+          padding: 7px;
+        }
+        .flow span {
+          display: none;
+        }
+        .panelheader {
+          align-items: start;
+        }
+        .localnav button {
+          font-size: 12px;
+          padding: 8px;
+        }
+        .code {
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <div class="eyebrow">Tuldok / model development</div>
+        <h1>From evidence to next decision</h1>
+      </div>
+      <label class="small muted" for="task"
+        >Task context<select id="task">
+          <option value="classifier">Image classifier · TinyCNN</option>
+          <option value="pressure">Standalone pressure CNN</option>
+          <option value="trajectory">Trajectory field · authored task</option>
+        </select></label
+      >
+    </header>
+    <div class="notice">
+      <strong>D3 DESIGN WALKTHROUGH</strong> · All data, identities, actions and
+      values are authored simulations. No training, disclosure, grants or
+      exports occur in Tuldok.
+    </div>
+    <main class="shell">
+      <nav class="nav" aria-label="Development workflow">
+        <button id="nav-data" data-view="data">1 Dataset</button
+        ><button id="nav-model" data-view="model">2 Model & recipe</button
+        ><button id="nav-evidence" data-view="evidence" aria-current="page">
+          3 Evidence</button
+        ><button id="nav-trial" data-view="trial">4 Next trial</button
+        ><button id="nav-candidate" data-view="candidate">5 Candidate</button>
+      </nav>
+      <div id="content"></div>
+      <div
+        id="announcement"
+        class="statusline"
+        role="status"
+        aria-live="polite"
+      ></div>
+      <footer>
+        Design scope: proposed human interaction over the D1/D2 owners. No
+        backend integration, producer validation, numerical qualification or
+        production capability is demonstrated. Switching tasks starts an independent demo session; same-task edits retain spent authority and budget.
+      </footer>
+    </main>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const state = {
+        view: "evidence",
+        task: "classifier",
+        checkpoint: 2,
+        example: "probe-07",
+        split: "validation",
+        evidence: "complete",
+        classifierDisclosed: false,
+        frame: 1,
+        plane: "xy",
+        slice: 3,
+        field: "pressure",
+        amplitude: "normal",
+        corrected: false,
+        reviewed: false,
+        released: false,
+        modelSection: "input",
+        modelEdits: {
+          input: "baseline",
+          compute: "baseline",
+          output: "baseline",
+        },
+        modelEdit: "baseline",
+        modelPublished: false,
+        stage: "train",
+        stageChanged: false,
+        trialGranted: false,
+        ownerReviewed: false,
+        trialAdmitted: false,
+        admittedTrialMaterial: "",
+        packageUsed: false,
+        candidate: false,
+        packageGrant: false,
+        packaged: false,
+      };
+      const initialState = JSON.parse(JSON.stringify(state));
+      window.walkthroughState = state;
+      const cp = () =>
+        state.task === "classifier"
+          ? `epoch ${state.checkpoint}`
+          : `update ${[0, 50, 100, 200][state.checkpoint]}`;
+      const badge = (t, c = "") => `<span class="badge ${c}">${t}</span>`;
+      const button = (id, t, extra = "") =>
+        `<button id="${id}" ${extra}>${t}</button>`;
+      const option = (value, text, selected) =>
+        `<option value="${value}"${selected === value ? " selected" : ""}>${text}</option>`;
+      const taskName = () =>
+        state.task === "classifier"
+          ? "TinyCNN · image classification"
+          : state.task === "pressure"
+            ? "Pressure CNN · captured adapter"
+            : "Trajectory field · authored task";
+      function announce(t) {
+        $("announcement").textContent = t;
+      }
+      function render() {
+        const focused = document.activeElement?.id;
+        document.querySelectorAll("[data-view]").forEach((b) => {
+          b.removeAttribute("aria-current");
+          if (b.dataset.view === state.view)
+            b.setAttribute("aria-current", "page");
+        });
+        $("content").innerHTML = {
+          evidence: renderEvidence,
+          data: renderData,
+          model: renderModel,
+          trial: renderTrial,
+          candidate: renderCandidate,
+        }[state.view]();
+        bind();
+        if (focused && $(focused) && !$(focused).disabled)
+          $(focused).focus({ preventScroll: true });
+      }
+      function heading(title, right = "") {
+        return `<div class="heading"><div><div class="eyebrow">${taskName()}</div><h2>${title}</h2></div>${right}</div>`;
+      }
+      function evidenceToolbar() {
+        return `<div class="toolbar"><label for="checkpoint">Checkpoint<select id="checkpoint">${[1, 2, 3].map((n) => option(String(n), state.task === "classifier" ? `Epoch ${n} · ck-${n}` : `Update ${[0, 50, 100, 200][n]} · ck-${n}`, String(state.checkpoint))).join("")}</select></label><label for="split">Population<select id="split">${option("validation", "Validation", state.split)}${option("test", "Protected test", state.split)}</select></label><label for="evidence-state">Evidence scenario<select id="evidence-state">${[
+          ["complete", "Complete · verified"],
+          ["missing", "Missing required"],
+          ["partial", "Partial · live"],
+          ["budget-skipped", "Budget-skipped · optional"],
+          ["incompatible", "Incompatible pairing"],
+          ["historical", "Historical v1"],
+        ]
+          .map(([v, t]) => option(v, t, state.evidence))
+          .join(
+            "",
+          )}</select></label><div class="small muted">Frozen release <strong class="numbers">R1</strong><br>Exact weights <strong class="numbers">w-${state.task}-${state.checkpoint}</strong></div></div>`;
+      }
+      function gate() {
+        if (state.split !== "test") return "";
+        if (state.task !== "classifier")
+          return `<div id="access-gate" class="empty">${badge("Unsupported protected scientific test", "bad")}<h3>Scientific test access is unavailable</h3><p>D2 excludes test from scientific training and query inventory until transitive family exposure is implemented and qualified. A UI action cannot unlock it.</p>${button("return-validation", "Return to validation", 'class="primary"')}<p class="small">No values, counts, scales, thumbnails or exports are derived.</p></div>`;
+        if (!state.classifierDisclosed)
+          return `<div id="access-gate" class="empty">${badge("Protected · owner action required", "warn")}<h3>Disclose protected classifier test?</h3><p>Owner simulation: record whole protected-family exposure before returning any derived evidence. This disclosure persists across checkpoints; test is no longer untouched.</p><div class="gateactions">${button("disclose-test", "Simulate owner disclosure", 'class="primary"')}${button("return-validation", "Return to validation")}</div><p class="small">Until then: no predictions, metrics, counts, scales or previews.</p></div>`;
+        return "";
+      }
+      function unavailable() {
+        const scenarios = {
+          missing: [
+            "Missing required evidence",
+            "Checkpoint prediction artifact is absent. Publication fails; no candidate or zero-filled curve.",
+            "bad",
+          ],
+          partial: [
+            "Partial · live, unverified",
+            "Attempt is running. Bounded progress is available; no immutable checkpoint evidence is published.",
+            "warn",
+          ],
+          "budget-skipped": [
+            "Optional probe capture skipped",
+            "The resolved profile omitted this optional probe within its budget. Required evidence remains intact; this view has no substitute values.",
+            "warn",
+          ],
+          incompatible: [
+            "Incompatible pairing",
+            "Target meaning or gauge differs. No paired errors or delta is computed; choose compatible evidence.",
+            "bad",
+          ],
+          historical: [
+            "Historical v1 · unsupported history",
+            "Only selected-checkpoint final classifier predictions survive in v1. Epoch probes were never retained; reopening cannot reconstruct them.",
+            "neutral",
+          ],
+        };
+        if (state.evidence === "complete") return "";
+        const [title, reason, tone] = scenarios[state.evidence];
+        return `<div id="evidence-unavailable" class="empty">${badge(state.evidence, tone)}<h3>${title}</h3><p>${reason}</p>${state.evidence === "partial" ? '<div class="mono">Run status: running · progress only · publication pending</div>' : ""}${state.evidence === "historical" && state.task === "classifier" ? button("show-retained", "Inspect retained selected prediction") : ""}${button("restore-evidence", "Use complete authored evidence", 'class="primary"')}</div>`;
+      }
+      function renderEvidence() {
+        const blocked = gate();
+        return (
+          heading(
+            "Inspect a fixed case",
+            badge(
+              state.split === "test" &&
+                state.classifierDisclosed &&
+                state.task === "classifier"
+                ? "Test exposed · simulated"
+                : "Validation review",
+              state.split === "test" ? "warn" : "",
+            ),
+          ) +
+          evidenceToolbar() +
+          (blocked ||
+            unavailable() ||
+            (state.task === "classifier"
+              ? classifierEvidence()
+              : scientificEvidence()))
+        );
+      }
+      function curve() {
+        const points = [
+            [55, 49],
+            [225, 100],
+            [395, 126],
+          ],
+          ys = [0.84, 0.52, 0.36];
+        return `<svg class="curve" viewBox="0 0 450 180" role="img" aria-label="Authored validation loss decreases from 0.84 to 0.52 to 0.36. Selected epoch ${state.checkpoint}. Use epoch buttons below."><path d="M45 20V145H420" stroke="#53636e" fill="none"/><path d="M45 55H420M45 100H420" stroke="#303f46" stroke-dasharray="3 5"/><text x="3" y="54" fill="#9caeb7" font-size="11">0.8</text><text x="3" y="103" fill="#9caeb7" font-size="11">0.5</text><text x="3" y="146" fill="#9caeb7" font-size="11">0.2</text><polyline points="55,49 225,100 395,126" stroke="#a5edc9" stroke-width="3" fill="none"/>${points.map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${state.checkpoint === i + 1 ? 8 : 4}" fill="${state.checkpoint === i + 1 ? "#ffc38b" : "#a5edc9"}"/><text x="${x}" y="166" fill="#9caeb7" text-anchor="middle" font-size="11">Epoch ${i + 1}</text>`).join("")}</svg><div class="epochbuttons" aria-label="Select curve checkpoint">${ys.map((v, i) => `<button id="curve-epoch-${i + 1}" data-checkpoint="${i + 1}" aria-pressed="${state.checkpoint === i + 1}">Epoch ${i + 1}<br><span class="small">${v.toFixed(2)} loss</span></button>`).join("")}</div>`;
+      }
+      function thumbnail() {
+        return `<div class="thumbnail"><svg viewBox="0 0 96 96" role="img" aria-label="Authored schematic image of a gull, not a dataset image"><path d="M8 66Q30 30 46 51Q66 25 89 45Q63 43 48 70Q35 52 8 66Z" fill="#d6e5e5"/><path d="M44 59L68 57L54 65" fill="#ffc38b"/><circle cx="57" cy="54" r="2" fill="#14242c"/><path d="M10 80H88M20 87H72" stroke="#597e91" stroke-width="2"/></svg></div>`;
+      }
+      function classifierEvidence() {
+        const test = state.split === "test";
+        const loss = [0, 0.84, 0.52, 0.36][state.checkpoint],
+          p =
+            state.example === "probe-07"
+              ? [0, 0.39, 0.68, 0.83][state.checkpoint]
+              : [0, 0.55, 0.61, 0.72][state.checkpoint];
+        return `<div id="derived-evidence" class="grid"><section class="panel"><div class="panelheader"><h3>${test ? "Owner-disclosed test snapshot" : "Validation loss / end of epoch"}</h3>${badge("Verified · authored")}</div>${test ? '<p class="muted small">Separate authored evaluation of exact selected weights after simulated owner disclosure. Test is exposed and excluded from tuning and selection.</p>' : curve()}<div class="stats">${test ? "" : `<div><span class="muted small">Selected loss</span><strong id="selected-loss" class="metric">${loss.toFixed(2)}</strong></div>`}<div><span class="muted small">Checkpoint</span><strong class="metric">${state.checkpoint} / 3</strong></div></div><p class="small muted">${test ? "No automatic test history is implied. This simulation discloses only the requested evaluation." : "Minimum validation loss is the frozen selection criterion. Click an epoch to inspect the same probe."}</p></section><section class="panel"><div class="panelheader"><h3>Fixed example</h3>${badge(state.example, "neutral")}</div><label class="control" for="example">${test ? "Disclosed test example" : "Validation probe"}<select id="example">${option("probe-07", "probe-07 · gull", state.example)}${option("probe-12", "probe-12 · gull at shore", state.example)}</select></label><div class="example">${thumbnail()}<div><div class="eyebrow">Frozen target</div><strong>gull</strong><div class="small muted">source annotation a4 · R1</div><div class="small muted">Schematic image · authored</div></div></div><div class="bars">${[
+          ["gull", p],
+          ["tern", (1 - p) * 0.72],
+          ["other", (1 - p) * 0.28],
+        ]
+          .map(
+            ([label, value]) =>
+              `<div><div class="barlabel"><span>${label}</span><strong>${(value * 100).toFixed(1)}%</strong></div><div class="track"><div class="fill ${label !== "gull" ? "wrong" : ""}" style="width:${value * 100}%"></div></div></div>`,
+          )
+          .join(
+            "",
+          )}</div><div class="splitline"><span id="prediction-context" class="small muted">${cp()} · ${state.example}</span>${button("inspect-source", "Inspect source →", 'class="link"')}</div></section></div><dl class="metadata"><div><dt>Binding</dt><dd>R1 / M1 / ck-${state.checkpoint} / w-classifier-${state.checkpoint}</dd></div><div><dt>Probe & class order</dt><dd>fixed-validation-v1 · gull, tern, other</dd></div><div><dt>Completeness & custody</dt><dd>Complete required matrix · simulated verified snapshot E1</dd></div></dl>${state.split === "test" ? '<div class="note">Owner-simulated exposure recorded. This test population is exposed; selection and next-trial decisions still use validation only.</div>' : ""}`;
+      }
+      function scientificEvidence() {
+        const trajectory = state.task === "trajectory";
+        const high = state.amplitude === "tenfold",
+          unit = trajectory
+            ? state.field === "velocity"
+              ? "m/s"
+              : "Pa"
+            : "native units unspecified";
+        const max = high ? 20 : 2,
+          errmax = high ? 18 : 0.5;
+        return `<div id="derived-evidence" class="stack"><section class="panel"><div class="panelheader"><div><h3>Bounded field comparison</h3><p class="small muted">${trajectory ? "Authored trajectory contract · physical-time frames" : "Standalone pressure CNN · optimizer updates only"}</p></div>${badge(high ? "Amplitude mismatch" : "Authored values", high ? "bad" : "")}</div><div class="scientific-controls"><label for="field">Field<select id="field"><option value="pressure">Pressure</option>${trajectory ? option("velocity", "Velocity x", state.field) : ""}</select></label>${trajectory ? `<label for="frame">Frame<select id="frame">${[0, 1, 2].map((n) => option(String(n), `${n} · t = ${(n * 0.125).toFixed(3)} s`, String(state.frame))).join("")}</select></label>` : `<div class="control">Physical time<div id="no-physical-time" class="small">Not applicable<br>Independent pressure cases</div></div>`}<label for="plane">Plane<select id="plane">${["xy", "xz", "yz"].map((p) => option(p, p.toUpperCase(), state.plane)).join("")}</select></label><label for="slice-number">Slice index · 0–7<input id="slice-number" type="number" min="0" max="7" step="1" value="${state.slice}"></label></div><div class="row"><label class="control" for="slice-range" style="flex:1">Slice position<input id="slice-range" type="range" min="0" max="7" step="1" value="${state.slice}"></label><label class="control" for="amplitude">Prediction case<select id="amplitude">${option("normal", "Ordinary error", state.amplitude)}${option("tenfold", "10× wrong amplitude", state.amplitude)}</select></label></div><div class="separator"></div><div class="fields">${["reference", "prediction", "error"].map((kind) => `<div class="field"><h3>${kind === "reference" ? "Reference" : kind === "prediction" ? "Prediction" : "Absolute error"}</h3>${fieldSvg(kind, max, errmax)}<div class="scale ${kind === "error" ? "error" : ""}"></div><div class="ends"><span>${kind === "error" ? "0" : -max}</span><span>${kind === "error" ? errmax : max} ${unit}</span></div><p class="small muted">${kind === "error" ? "Separate error scale" : "Shared reference / prediction scale"}</p></div>`).join("")}</div><div class="stats"><div><span class="small muted">Relative L2 · valid cells</span><strong id="relative-l2" class="metric">${high ? "9.000" : (0.3 - state.checkpoint * 0.06).toFixed(3)}</strong></div><div><span class="small muted">Model clock</span><strong class="metric">${cp()}</strong></div>${trajectory ? `<div><span class="small muted">Physical clock</span><strong id="physical-time" class="metric">${(state.frame * 0.125).toFixed(3)} s</strong></div>` : ""}</div>${high ? '<div id="amplitude-warning" class="note">Prediction = 10 × reference. Relative L2 = 9.000. Shared scaling exposes the amplitude difference; physical acceptance is not established.</div>' : ""}<div class="small muted">${state.field === "velocity" ? "Velocity x · m/s · face-x placement · no pressure gauge" : "Pressure · cell-centered · cell-zero gauge"} · stage: ${trajectory ? "post-projection" : "independent solve"} · mask: all valid · no resampling</div></section><section class="panel"><div class="panelheader"><h3>Numeric slice · first five valid cells</h3><span id="slice-context" class="small muted">${state.plane.toUpperCase()} / ${state.slice}${trajectory ? ` / frame ${state.frame}` : ""} / ck-${state.checkpoint}</span></div><div class="tablewrap"><table id="numeric-slice"><thead><tr><th>Cell</th><th>Reference</th><th>Prediction</th><th>|Error|</th></tr></thead><tbody>${Array.from(
+          { length: 5 },
+          (_, i) => {
+            const v = cell(i + 1, 4),
+              p = v * (high ? 10 : 1 + 0.3 - state.checkpoint * 0.06);
+            return `<tr><td>(${coords(i + 1, 4).join(", ")})</td><td>${v.toFixed(4)}</td><td>${p.toFixed(4)}</td><td>${Math.abs(p - v).toFixed(4)}</td></tr>`;
+          },
+        ).join(
+          "",
+        )}</tbody></table></div><p class="small muted" style="margin-top:12px">Grid 8³ · origin (0,0,0) · spacing (1,1,1) · float32 · ${trajectory ? "authored units and time contract" : "units unspecified by native adapter"}. Numeric values are generated for the design demonstration.</p></section></div><dl class="metadata"><div><dt>Checkpoint & probe</dt><dd>ck-${state.checkpoint} / w-${state.task}-${state.checkpoint} / fixed-case-04</dd></div><div><dt>Evidence</dt><dd>Complete · simulated immutable snapshot</dd></div><div><dt>Domain acceptance</dt><dd>Not evaluated · diagnostic only</dd></div></dl>`;
+      }
+      function coords(a, b) {
+        return state.plane === "xy"
+          ? [a, b, state.slice]
+          : state.plane === "xz"
+            ? [a, state.slice, b]
+            : [state.slice, a, b];
+      }
+      function cell(a, b) {
+        const [x, y, z] = coords(a, b);
+        // Authored trajectory: frames are 0.125 s apart; phase rate is 1.6 rad/s.
+        const physicalSeconds = state.task === "trajectory" ? state.frame * 0.125 : 0;
+        const t = physicalSeconds * 1.6;
+        return (
+          0.5 *
+          (Math.sin(x * 0.55 + t) -
+            Math.sin(t) +
+            Math.cos(y * 0.45) -
+            1 +
+            Math.sin(z * 0.35)) *
+          (state.field === "velocity" ? 0.6 : 1)
+        );
+      }
+      function fieldSvg(kind, max, errmax) {
+        let rects = "";
+        const factor =
+          state.amplitude === "tenfold" ? 10 : 1.3 - state.checkpoint * 0.06;
+        for (let y = 0; y < 8; y++)
+          for (let x = 0; x < 8; x++) {
+            const ref = cell(x, y),
+              val =
+                kind === "reference"
+                  ? ref
+                  : kind === "prediction"
+                    ? ref * factor
+                    : Math.abs(ref * factor - ref);
+            const t = kind === "error" ? val / errmax : (val + max) / (2 * max);
+            const color =
+              kind === "error"
+                ? mix([27, 38, 51], [255, 193, 144], t)
+                : t < 0.5
+                  ? mix([36, 59, 105], [239, 223, 154], t * 2)
+                  : mix([239, 223, 154], [226, 119, 98], (t - 0.5) * 2);
+            rects += `<rect x="${x * 20}" y="${y * 20}" width="20" height="20" fill="${color}"/>`;
+          }
+        return `<svg viewBox="0 0 160 160" role="img" aria-label="${kind} field on shared ${kind === "error" ? "error" : "reference and prediction"} scale; numeric values in table below">${rects}</svg>`;
+      }
+      function mix(a, b, t) {
+        t = Math.max(0, Math.min(1, t));
+        return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
+      }
+      function renderData() {
+        return (
+          heading(
+            "Correct the source, retain the evidence",
+            badge(
+              state.released
+                ? "New release R2 · simulated"
+                : "Frozen release R1",
+              state.released ? "" : "neutral",
+            ),
+          ) +
+          `<div class="grid equal"><section class="panel"><div class="panelheader"><h3>Frozen evaluation target</h3>${badge("Immutable", "neutral")}</div><div class="example">${thumbnail()}<div><strong>probe-07 / gull</strong><div class="small muted">R1 · annotation a4 · family coastal-02</div></div></div><div class="code">target: gull\ninput: image-v1\nvalidation_membership: pop-A\ncheckpoint: ck-${state.checkpoint}</div><div class="note goodnote">A source correction never rewrites this checkpoint, its target or its original release.</div></section><section class="panel"><div class="panelheader"><h3>Current Workbench record</h3>${badge(state.reviewed ? "Human review simulated" : state.corrected ? "Draft correction" : "Current a4", state.corrected && !state.reviewed ? "warn" : "neutral")}</div><label class="control" for="correct-label">Current label<select id="correct-label" ${state.reviewed ? "disabled" : ""}>${option("gull", "gull", state.corrected ? "tern" : "gull")}${option("tern", "tern", state.corrected ? "tern" : "gull")}</select></label><div class="stats"><div><span class="small muted">Current annotation</span><strong class="metric">${state.corrected ? "a5" : "a4"}</strong></div><div><span class="small muted">Frozen annotation</span><strong class="metric">a4</strong></div></div><div class="row">${button("review-correction", "Simulate qualified human review", state.corrected && !state.reviewed ? 'class="primary"' : "disabled")}${button("freeze-release", "Simulate preview & freeze R2", state.reviewed && !state.released ? 'class="primary"' : "disabled")}</div><p class="small muted" style="margin-top:14px">Workbench owns annotation; Releases owns the reviewed immutable freeze. These are separate simulated decisions.</p></section><section class="panel wide"><div class="panelheader"><h3>Comparison admission</h3>${badge(state.released ? "Incompatible for paired delta" : "Compatible population", state.released ? "bad" : "")}</div><p id="membership-status">${state.released ? "R2 has target/membership identity pop-B. R1 stays pop-A. Use labelled side-by-side review; paired deltas are disabled." : "R1 and the unchanged next trial share pop-A and the frozen target semantics."}</p><div class="row" style="margin-top:16px">${button("paired-compare", "Paired comparison", state.released ? "disabled" : "")}${button("side-by-side", "Side-by-side identities")}${button("data-to-trial", "Prepare next trial →", 'class="primary"')}</div><div id="comparison-result" class="small muted" style="margin-top:12px"></div></section></div>`
+        );
+      }
+      function renderModel() {
+        if (state.task === "trajectory") return heading("Model editing unavailable", badge("Authored view only", "neutral")) + `<section id="trajectory-model-unavailable" class="empty"><h3>No authored model schema</h3><p>The trajectory task demonstrates field/frame/time inspection only. It declares no trainable model, encoder, normalization, loader, architecture options or editable workflow.</p>${button("trajectory-to-evidence", "Return to authored field evidence", 'class="primary"')}</section>`;
+        const sci = state.task !== "classifier",
+          edit = state.modelEdits[state.modelSection] || "baseline";
+        return (
+          heading(
+            "Edit meaning before execution",
+            badge(
+              state.modelPublished
+                ? "M2 published · simulated"
+                : state.modelEdit === "baseline"
+                  ? "Model M1"
+                  : "Draft M2",
+              edit === "baseline" ? "neutral" : "warn",
+            ),
+          ) +
+          `<div class="model-layout"><div class="localnav" aria-label="Model editing context">${[
+            ["input", "Input schema"],
+            ["compute", "Computation"],
+            ["output", "Output schema"],
+            ["workflow", "Workflow stages"],
+          ]
+            .map(
+              ([v, t]) =>
+                `<button id="model-${v}" data-model-section="${v}" aria-pressed="${state.modelSection === v}">${t}</button>`,
+            )
+            .join(
+              "",
+            )}</div><section class="panel">${state.modelSection === "workflow" ? workflowPanel() : `<div class="panelheader"><h3>${{ input: "Model input contract", compute: "Model computation", output: "Model output contract" }[state.modelSection]}</h3>${badge("Inert model editing", "neutral")}</div><div class="toolbar"><label for="model-edit">${{ input: "Input option", compute: "Architecture option", output: "Output interpretation" }[state.modelSection]}<select id="model-edit">${option("baseline", "Keep qualified baseline", edit)}${option("change", sci ? (state.modelSection === "input" ? "RHS only · 27 features" : state.modelSection === "compute" ? "Hidden width 32" : "Change pressure gauge") : state.modelSection === "input" ? "Grayscale 96 × 96" : state.modelSection === "compute" ? "Widths 24 / 48 / 96" : "Changed frozen class order", edit)}</select></label>${button("publish-model", "Simulate publish revision", edit === "change" && !sci && state.modelEdits.output !== "change" && !state.modelPublished ? 'class="primary"' : "disabled")}</div><div class="code">${sci ? "RHS + x/y/z → 3³ encoder / 108 features\n→ tanh hidden[16] → pressure / cell-zero gauge\ntrain-only RHS mean/std + pressure RMS inversion" : "RGB 96×96 → conv[16] → conv[32] → conv[64]\n→ pooled features → frozen-class head[3]\nclass order: gull, tern, other"}</div><div id="model-consequence" class="note ${edit === "baseline" ? "goodnote" : ""}">${edit === "baseline" ? "This schema keeps its baseline policy. The read-only summary describes baseline M1; viewing and editing execute no code." : sci ? "Unsupported by the captured baseline. Revise and qualify source, initializer, loader and shape/gauge contract together. Publication and checkpoint reuse are blocked." : `New model M2 and compatible task/adapter revision required. ${state.modelSection === "input" ? "Input channels and transform change." : state.modelSection === "output" ? "Class order must derive from a compatible frozen vocabulary. Publication is blocked until a matching release is bound; no free reordering." : "Final head input must follow width 96."} Old checkpoints and grants cannot transfer; Pipeline material must be revalidated.`}</div><p class="small muted" style="margin-top:14px">Form options illustrate proposed template capabilities. Current fixed v1 source does not gain these fields. No editable topology or code execution on inspection.</p>`}</section></div>`
+        );
+      }
+      function workflowPanel() {
+        return `<div class="panelheader"><h3>Pipeline execution workflow</h3>${badge("Recipe r1", "neutral")}</div><p class="small muted">Select a stage for its schema toolbar. These stages are execution steps; model computation stays in M1.</p><div class="flow">${["prepare", "train", "evaluate"].map((v, i) => `${i ? "<span>→</span>" : ""}<button id="stage-${v}" data-stage="${v}" aria-pressed="${state.stage === v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div><div class="toolbar"><label for="stage-schema">${state.stage} stage schema<select id="stage-schema">${option("v1", "Keep captured stage v1", state.stageChanged ? "v2" : "v1")}${option("v2", "Propose changed schema v2", state.stageChanged ? "v2" : "v1")}</select></label></div><div class="code">${{ prepare: state.task === "pressure" ? "input: captured NPZ + persisted split receipt\noutput: existing captured wrapper input; generic canonical-release bridge unavailable pending qualification" : "input: frozen release R1\noutput: verified captured adapter input", train: `input: ${state.task === "pressure" ? "captured NPZ/splits + pressure source + captured CPU" : "R1 + model M1 + runtime CPU"}\nparameters: ${state.task === "pressure" ? "steps: 200 (captured wrapper supports steps only)" : "LR 0.001 / seed 42 / epochs: 3"}\noutput: ${state.task === "pressure" ? "selected final artifacts; recurring checkpoint integration unavailable pending qualification" : "declared checkpoints and evidence"}`, evaluate: "input: exact checkpoint + fixed validation probe\noutput: typed metrics and bounded predictions" }[state.stage]}</div><div class="note ${state.stageChanged ? "" : "goodnote"}">${state.stageChanged ? "New recipe revision required. Changed stage schema must negotiate a compatible adapter contract before preparation. Unsupported v2 blocks admission; no grant consumed." : "Pipeline is the only editable recipe authority. Experiment pins exact material; layout edits do not change executable identity."}</div>`;
+      }
+      function nextTrialMaterial() {
+        return state.task === "classifier"
+          ? `classifier / ${state.released ? "R2 / pop-B" : "R1 / pop-A"} / ${state.modelPublished ? "M2" : "M1"} / LR 0.0003 / seed42 / P2 r1`
+          : "pressure / captured-NPZ-v1 / persisted-splits-v1 / captured-source-M1 / steps300 / P2 r1";
+      }
+      function renderTrial() {
+        if (state.task === "trajectory") return heading("Training unavailable", badge("Authored view only", "neutral")) + `<section id="trajectory-trial-unavailable" class="empty"><h3>No training integration is declared</h3><p>This separate authored trajectory task demonstrates physical-time evidence controls. It has no model, trainer, trial parameters or execution permission flow.</p>${button("trajectory-to-evidence", "Return to authored field evidence", 'class="primary"')}</section>`;
+        const classifier = state.task === "classifier";
+        const preflightBlocked = state.stageChanged || (state.modelEdit === "change" && !state.modelPublished);
+        const ready = classifier ? state.ownerReviewed : state.trialGranted;
+        const authority = classifier
+          ? button("owner-review-trial", "Simulate owner human review", !preflightBlocked && !state.ownerReviewed && !state.trialAdmitted ? 'class="primary"' : "disabled")
+          : button("grant-trial", "Simulate owner exact one-use grant", !preflightBlocked && !state.trialGranted && !state.trialAdmitted ? 'class="primary"' : "disabled");
+        const material = classifier
+          ? `Pipeline recipe: P2 / r1\nrelease: ${state.released ? "R2 / pop-B" : "R1 / pop-A"}\nmodel: ${state.modelPublished ? "M2" : "M1"}\nlearning rate: 0.001 → 0.0003\nseed: 42 · one enumerated trial\nprofile: validation-only / fixed probes\nmaterial: ${nextTrialMaterial()}`
+          : `Captured external recipe: P2 / r1\ninput receipt: simulated captured NPZ + persisted splits\nmodel: captured pressure source M1\nsupported parameter: steps 200 → 300\noutput: selected final artifacts\nmaterial: ${nextTrialMaterial()}`;
+        const message = state.trialAdmitted
+          ? `Receipt sim-receipt-T2 committed · Run sim-run-T2 queued · ${state.admittedTrialMaterial.startsWith("classifier") ? "owner-only built-in start simulated" : "external exact grant consumed once"}. Request acceptance is not training completion.`
+          : preflightBlocked ? "Preflight blocked: changed model or stage schema requires qualification and compatible immutable material. No start or admission."
+          : ready ? classifier ? "Owner human review recorded for exact material. Only the owner can perform this built-in start; an agent cannot launch it." : "External grant binds this actor and exact captured T2 material once. No Run exists yet."
+          : classifier ? "Built-in classifier start is owner-only. An agent may propose and monitor; no external execution grant delegates this built-in start." : "Captured external wrapper supports steps only. Owner exact grant is required for its consuming agent; discovery grants no authority.";
+        return heading("One exact next trial", badge(state.trialAdmitted ? "Queued · simulated" : ready ? classifier ? "Owner reviewed · simulated" : "Exact grant · simulated" : "Owner decision required", state.trialAdmitted ? "" : "warn")) +
+          `<div class="grid"><section class="panel"><div class="panelheader"><h3>${state.trialAdmitted ? "Current draft · T2 already admitted" : "Finite proposal T2"}</h3>${badge("No adaptive search", "neutral")}</div>${state.trialAdmitted ? `<div class="note goodnote">Admitted T2 stays pinned to ${state.admittedTrialMaterial}. Edits below do not rewrite that attempt or restore spent authority.</div>` : ""}<div class="code">${material}</div>${classifier ? `<div class="note ${state.released ? "" : "goodnote"}">${state.released ? "Changed target/membership: labelled side-by-side only. No paired delta against R1." : "Same validation population and semantics: eligible for paired comparison after complete evidence."}</div>` : `<div id="pressure-integration-status" class="note">Canonical-release bridge and automatic recurring checkpoint/probe integration: unavailable pending qualification. The current captured NPZ wrapper exposes steps only. This simulation illustrates that existing external admission boundary and does not claim generic frozen-release support.</div>`}<div class="row" style="margin-top:18px">${authority}${button("admit-trial", classifier ? "Simulate owner built-in start" : "Simulate external admission", !preflightBlocked && ready && !state.trialAdmitted ? 'class="primary"' : "disabled")}</div><div id="trial-state" class="statusline">${message}</div></section><aside class="panel"><h3>Study envelope</h3><div class="ledger"><div><span>Attempt slots · incl. packaging</span><strong>${1 + Number(state.trialAdmitted) + Number(state.packageUsed)} / 3</strong></div><div><span>Charged wall ceiling</span><strong>${20 + (state.packageUsed ? 10 : 0)} min</strong></div><div><span>Reserved next ceiling</span><strong>${state.trialAdmitted ? "10" : "0"} min</strong></div><div><span>Aggregate ceiling</span><strong>40 min</strong></div><div><span>Capture ceiling</span><strong>128 MiB</strong></div><div><span>Concurrent attempt limit</span><strong>1</strong></div></div><div class="progress"><span style="width:${(20 + (state.trialAdmitted ? 10 : 0) + (state.packageUsed ? 10 : 0)) / 40 * 100}%"></span></div><p class="small muted">Authored envelope includes T1, one exact next trial T2 and one packaging attempt. Wall ceiling sums admitted worst-case durations; it is not GPU time. Owner authority, capacity and budget checks remain separate.</p></aside></div>`;
+      }
+      function renderCandidate() {
+        if (state.task === "trajectory") return heading("Candidate export unavailable", badge("Authored view only", "neutral")) + `<section id="trajectory-candidate-unavailable" class="empty"><h3>No inference package is declared</h3><p>The authored trajectory is a field-inspection example with no model or trainer. It cannot select weights, request a packaging grant or claim an inference closure.</p>${button("trajectory-to-evidence", "Return to authored field evidence", 'class="primary"')}</section>`;
+        return (
+          heading(
+            "Select, package, then verify",
+            badge(
+              state.packaged
+                ? "Verification pending"
+                : state.candidate
+                  ? "Selected · simulated"
+                  : "No candidate selected",
+              state.packaged ? "warn" : "neutral",
+            ),
+          ) +
+          `<div class="grid"><section class="panel"><h3>Exact candidate decision</h3>${state.task === "pressure" ? `<div id="pressure-candidate-status" class="note">Future authored contract illustration: canonical-release bridge, automatic checkpoint/probe capture and generic candidate export are unavailable pending qualification. The steps-only captured-NPZ trial does not produce this proposed package or generic E1 evidence.</div>` : ""}<div class="code">${state.task === "pressure" ? "proposed lineage: future release F-R1 / future validation F-pop\nproposed evidence: authored future F-E1 (not current NPZ trial output)" : "release: R1 · validation population pop-A"}\ncheckpoint: ck-${state.checkpoint} / w-${state.task}-${state.checkpoint}\ncriterion: ${state.task === "classifier" ? "minimum validation loss (ck-3)" : "explicit diagnostic checkpoint review"}\nevidence: ${state.task === "pressure" ? "authored proposed snapshot F-E1; producer unavailable" : "complete required snapshot E1"}\nqualification: ${state.task === "classifier" ? "design example only" : "diagnostic only · physics not evaluated"}</div><p class="small muted" style="margin:14px 0">Selection requires complete verified validation evidence.${state.task === "classifier" ? " Frozen minimum-loss policy admits epoch 3 only." : ""} Test disclosure grants no selection authority.</p>${button("select-candidate", state.task === "pressure" ? "Simulate proposed future selection" : "Simulate select this checkpoint", !state.candidate && state.evidence === "complete" && state.split === "validation" && (state.task !== "classifier" || state.checkpoint === 3) ? 'class="primary"' : "disabled")}<div class="separator"></div><h3>Inference package</h3><div class="pillrow" style="margin:14px 0">${["Exact weights", "Model & source", "Fitted transforms", "Class order / gauge", "Runtime contract", "Lineage & licenses"].map((t) => `<span>${t}</span>`).join("")}</div><div class="row">${button("grant-package", "Simulate owner packaging grant", state.candidate && !state.packageGrant && !state.packageUsed ? "" : "disabled")}${button("build-package", state.task === "pressure" ? "Simulate proposed future export" : "Simulate package export", state.packageGrant && !state.packageUsed ? 'class="primary"' : "disabled")}</div><div id="package-state" class="statusline">${state.packaged ? "Package-complete for inference dependencies · sim-package-01 · verification_pending. Simulated packaging settles 10 min and one attempt in the same study. No executable package was built or downloaded." : state.packageGrant ? "Prepared packaging trial pinned to candidate. Exact one-use grant simulated; packaging has a 10 min / 32 MiB / one-attempt ceiling in the same study budget." : state.packageUsed ? "Finite packaging attempt already spent on an earlier exact candidate. Changing the selection does not refund its budget or grant." : "Packaging is a separately prepared and authorized captured Run, not a permission inherited from candidate selection."}</div></section><aside class="panel"><h3>Fresh-consumer acceptance</h3><div class="ledger"><div><span>Selection</span><strong>${state.candidate ? "Recorded (simulated)" : "Pending"}</strong></div><div><span>Package closure</span><strong>${state.packaged ? "Complete (simulated)" : "Pending"}</strong></div><div><span>Permitted probes</span><strong>Not included</strong></div><div><span>Fresh inference</span><strong>Not run</strong></div><div><span>Physical acceptance</span><strong>Not evaluated</strong></div></div><div class="note">Verification pending: permitted fixed probes and expected outputs are absent. A hash or an export does not prove restored inference.</div><p class="small muted" style="margin-top:14px">Later: an authorized fresh Run consumes the actual whole-hash package, compatible runtime and probes, without a live checkout or model cache.</p></aside></div>`
+        );
+      }
+      function invalidate() {
+        state.trialGranted = false;
+        state.ownerReviewed = false;
+        state.candidate = false;
+        state.packageGrant = false;
+        state.packaged = false;
+      }
+      function bind() {
+        const on = (id, event, fn) => {
+          const el = $(id);
+          if (el) el.addEventListener(event, fn);
+        };
+        on("checkpoint", "change", (e) => {
+          state.checkpoint = Number(e.target.value);
+          state.candidate = false;
+          state.packageGrant = false;
+          state.packaged = false;
+          render();
+          announce(
+            "Checkpoint changed. Selected probe, field, frame, plane and slice are preserved.",
+          );
+        });
+        document.querySelectorAll("[data-checkpoint]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.checkpoint = Number(b.dataset.checkpoint);
+              state.candidate = false;
+              state.packageGrant = false;
+              state.packaged = false;
+              render();
+              $("curve-epoch-" + state.checkpoint).focus();
+              announce(
+                "Curve and fixed-example prediction now use " + cp() + ".",
+              );
+            }),
+        );
+        on("split", "change", (e) => {
+          state.split = e.target.value;
+          render();
+          announce(
+            "Population changed; current access checked before derived views.",
+          );
+        });
+        on("evidence-state", "change", (e) => {
+          state.evidence = e.target.value;
+          state.candidate = false;
+          state.packageGrant = false;
+          state.packaged = false;
+          render();
+          announce("Evidence scenario: " + state.evidence + ".");
+        });
+        on("example", "change", (e) => {
+          state.example = e.target.value;
+          render();
+          announce("Fixed example changed.");
+        });
+        on("disclose-test", "click", () => {
+          state.classifierDisclosed = true;
+          render();
+          announce(
+            "SIMULATION: owner whole-family test exposure recorded before derived evidence.",
+          );
+        });
+        on("return-validation", "click", () => {
+          state.split = "validation";
+          render();
+          announce("Validation selected.");
+        });
+        on("restore-evidence", "click", () => {
+          state.evidence = "complete";
+          render();
+          announce("Complete authored evidence selected.");
+        });
+        on("show-retained", "click", () => {
+          announce(
+            "Historical retained selection: final gull prediction 0.83 at selected checkpoint only. No historical epoch curve exists.",
+          );
+        });
+        on("inspect-source", "click", () => {
+          state.view = "data";
+          render();
+          announce("Frozen source linked to current Workbench record.");
+        });
+        for (const id of ["field", "frame", "plane", "amplitude"])
+          on(id, "change", (e) => {
+            state[id] =
+              id === "frame" ? Number(e.target.value) : e.target.value;
+            render();
+            announce("Field window updated; checkpoint unchanged.");
+          });
+        for (const id of ["slice-number", "slice-range"])
+          on(id, "change", (e) => {
+            let n = Number(e.target.value);
+            if (!Number.isInteger(n) || n < 0 || n > 7) {
+              e.target.value = state.slice;
+              announce("Slice must be an integer from 0 to 7.");
+              return;
+            }
+            state.slice = n;
+            render();
+            announce("Slice " + n + " selected.");
+          });
+        on("correct-label", "change", (e) => {
+          state.corrected = e.target.value === "tern";
+          state.reviewed = false;
+          state.released = false;
+          invalidate();
+          render();
+          announce(
+            state.corrected
+              ? "Simulated current annotation a5. Frozen R1 target remains gull."
+              : "Current label restored to gull.",
+          );
+        });
+        on("review-correction", "click", () => {
+          state.reviewed = true;
+          render();
+          announce(
+            "SIMULATION: qualified human review recorded for current annotation a5.",
+          );
+        });
+        on("freeze-release", "click", () => {
+          state.released = true;
+          invalidate();
+          render();
+          announce(
+            "SIMULATION: exact preview reviewed and R2 frozen. Changed membership disables paired comparison.",
+          );
+        });
+        on("paired-compare", "click", () => {
+          $("comparison-result").textContent =
+            "Pairing admitted on identical pop-A; new trial evidence is not yet produced. No delta is invented.";
+        });
+        on("side-by-side", "click", () => {
+          $("comparison-result").textContent = state.released
+            ? "Left: R1 / a4 / gull / pop-A. Right: R2 / a5 / tern / pop-B. No paired delta."
+            : "Both references bind R1 / a4 / gull / pop-A.";
+        });
+        on("data-to-trial", "click", () => {
+          state.view = "trial";
+          render();
+        });
+        document.querySelectorAll("[data-model-section]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.modelSection = b.dataset.modelSection;
+              render();
+              $("model-" + state.modelSection).focus();
+            }),
+        );
+        on("model-edit", "change", (e) => {
+          state.modelEdits[state.modelSection] = e.target.value;
+          state.modelEdit = Object.values(state.modelEdits).includes("change")
+            ? "change"
+            : "baseline";
+          state.modelPublished = false;
+          invalidate();
+          render();
+          announce(
+            "Draft edited without executing code. Dependent material requires revalidation.",
+          );
+        });
+        on("publish-model", "click", () => {
+          state.modelPublished = true;
+          invalidate();
+          render();
+          announce(
+            "SIMULATION: new model M2 published; existing material and grants remain pinned to M1.",
+          );
+        });
+        document.querySelectorAll("[data-stage]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.stage = b.dataset.stage;
+              render();
+              $("stage-" + state.stage).focus();
+            }),
+        );
+        on("stage-schema", "change", (e) => {
+          state.stageChanged = e.target.value === "v2";
+          invalidate();
+          render();
+          announce(
+            "Stage schema changed; new recipe revision and compatible contract required.",
+          );
+        });
+        on("trajectory-to-evidence", "click", () => {state.view = "evidence"; render();});
+        on("owner-review-trial", "click", () => {
+          state.ownerReviewed = true;
+          render();
+          announce("SIMULATION: owner human reviewed exact classifier material; built-in start remains owner-only.");
+        });
+        on("grant-trial", "click", () => {
+          state.trialGranted = true;
+          render();
+          announce("SIMULATION: owner grant created for exact T2 only.");
+        });
+        on("admit-trial", "click", () => {
+          state.trialAdmitted = true;
+          state.admittedTrialMaterial = nextTrialMaterial();
+          state.trialGranted = false;
+          state.ownerReviewed = false;
+          render();
+          announce(
+            state.task === "classifier" ? "SIMULATION: owner-only built-in start receipt committed and worst-case budget reserved. No worker started." : "SIMULATION: external admission receipt committed, exact grant consumed and worst-case budget reserved. No worker started.",
+          );
+        });
+        on("select-candidate", "click", () => {
+          state.candidate = true;
+          render();
+          announce(
+            "SIMULATION: exact checkpoint candidate selected from validation.",
+          );
+        });
+        on("grant-package", "click", () => {
+          state.packageGrant = true;
+          render();
+          announce(
+            "SIMULATION: separate owner grant for pinned packaging material.",
+          );
+        });
+        on("build-package", "click", () => {
+          state.packaged = true;
+          state.packageUsed = true;
+          state.packageGrant = false;
+          render();
+          announce(
+            "SIMULATION: inference closure complete; fresh-consumer verification pending.",
+          );
+        });
+      }
+      document.querySelectorAll("[data-view]").forEach((b) =>
+        b.addEventListener("click", () => {
+          state.view = b.dataset.view;
+          render();
+          announce("Opened " + b.textContent + ".");
+        }),
+      );
+      $("task").addEventListener("change", (e) => {
+        const nextTask = e.target.value;
+        if (nextTask === state.task) return;
+        const view = state.view;
+        Object.assign(state, JSON.parse(JSON.stringify(initialState)), { task: nextTask, view });
+        render();
+        announce("Independent task demo session reset: prior task approvals, admissions, packaging and source edits do not carry over. All values remain authored simulations.");
+      });
+      render();
+    </script>
+  </body>
+</html>
