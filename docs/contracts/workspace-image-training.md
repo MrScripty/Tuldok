@@ -185,3 +185,54 @@ verify weights changed from initialization. Without that optional runtime the
 one-epoch test is explicitly skipped; such a run cannot qualify real M2 training.
 The parent run-service/browser gates own cancellation, application restart,
 test exposure, publication, and the complete user workflow.
+
+## Model-aware TinyCNN v2
+
+The distinct `image_classification_model_v2` recipe selects `tinycnn_cpu` adapter
+version2 and job schema2. Historical image recipes, job schema1 and their closed
+five-payload artifact inventory retain their original meaning. V2 accepts the
+existing four optimizer parameters plus exactly three integer channel `widths`
+(each4–64), `input_size`32/64/96 and `head:"linear"`. It initializes from scratch,
+uses the frozen class vocabulary and retains every actual end-of-epoch state.
+There is no arbitrary topology, pretrained download, GPU or resume capability.
+
+The template `tinycnn_v2` is inert Model Definitions material. Its specification,
+RGB resize/tensor policy and frozen-vocabulary probability output policy must
+match the saved recipe. Publication captures the actual adapter import closure;
+preparation refuses changed source, model policies or runtime. The resolved
+`tinycnn_epoch_full_validation_v1` profile captures each admitted epoch, retains
+the selected state within the existing snapshot budget and ranks the complete
+validation membership using `sha256_rank_v1`, seed0 independent of training seed.
+No test example is a probe. The largest five-epoch inventory is30 files including
+the outer manifest, within the32-file/64MiB result profile.
+
+V2 automatically emits the D2 `model_evidence_v1` envelope, fixed probe manifest,
+checkpoint index, exact `checkpoint_state_v1` descriptors, fitted-transform
+manifest, metric definitions, scalar observations and each epoch's weights and
+probe predictions. A descriptor hashes the run/model/weights/transform/actual
+clock binding; equal weight bytes at distinct clocks remain distinct checkpoints.
+Optimizer updates are counted at the actual `optimizer.step()` call; epoch,
+physical time and wall elapsed time keep their separate meanings. Transform
+statistics are an explicit empty manifest because preprocessing is not fitted.
+
+After training child drainage, the owner verifies exact inventory, byte hashes,
+source/model/profile bindings, full frozen validation coverage, finite probability
+vectors, actual clock increments and validation-loss checkpoint selection. An
+additional pinned CPU subprocess reconstructs every retained checkpoint against
+its exact frozen validation inputs. Only successful reconstruction and confirmed
+process cessation permit atomic publication. Queries never deserialize weights.
+
+Run the actual owner/HTTP/study/Run qualification with the separately provisioned
+CPU interpreter:
+
+```bash
+TULDOK_TRAINING_PYTHON=/qualified/cpu/python python tests/qualify_model_development.py \
+  --task image --fixture tests/fixtures/model_development --output /tmp/new-model-qa
+```
+
+The output directory must be absent. The driver records actual two-epoch training,
+checkpoint/probe custody, bytes, elapsed time/RSS, cold reopen, independent fixed
+inference and a correction→new-release→new-trial comparison. Authored RGB patterns
+prove bounded workflow mechanics; they do not establish useful model quality.
+The1440/390 keyboard browser checkpoint is separately reported, never inferred
+from backend qualification.
