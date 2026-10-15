@@ -4,8 +4,12 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
+import shutil
 import unittest
 from unittest.mock import patch
 import warnings
@@ -14,6 +18,8 @@ import zipfile
 from app import Dataset
 from auth_helpers import bind_owner
 import extension_canonical_fixture as fixture
+import extension_bindings
+from workbench import WorkbenchError
 from prepare_extension_canonical_project import prepare, PACKAGE, ORIGINAL
 
 
@@ -49,6 +55,49 @@ class CanonicalAuthorTests(unittest.TestCase):
         for name in ('evidence.py','__init__.py'):
             self.assertEqual((PACKAGE/'tuldok_extension_sdk'/name).read_bytes(),(Path(__file__).resolve().parents[1]/'tuldok_extension_sdk'/name).read_bytes())
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],0)
+
+    def test_new_package_validates_from_copied_kit_without_app_database_or_numerical_startup(self):
+        destination=self.root/'authored';prepare(self.result,destination)
+        kit=self.root/'validator-kit';kit.mkdir();root=Path(__file__).resolve().parents[1]
+        shutil.copyfile(root/'extension_contract.py',kit/'extension_contract.py')
+        shutil.copytree(root/'extension_schemas',kit/'extension_schemas')
+        shutil.copytree(root/'tuldok_extension_sdk',kit/'tuldok_extension_sdk',ignore=shutil.ignore_patterns('__pycache__'))
+        code="""import json,subprocess,sys
+from tuldok_extension_sdk.manifest import validate
+def forbidden(*args,**kwargs):raise AssertionError('Inert validation launched a process')
+subprocess.Popen=forbidden
+result=validate(sys.argv[1])
+assert result['packages'][0]['state']=='valid'
+assert all(row['state']=='valid' for row in result['packages'][0]['contributions'])
+assert not any(name in sys.modules for name in ('app','projects','psycopg','numpy','torch'))
+print(json.dumps({'state':'valid','contributions':len(result['packages'][0]['contributions']),'application_or_numerical_startup':False}))
+"""
+        environment={key:value for key,value in os.environ.items() if key!='PYTHONPATH' and not key.startswith('TULDOK_')}
+        completed=subprocess.run([os.environ.get('TULDOK_EXTENSION_VALIDATOR_PYTHON',sys.executable),'-c',code,str(destination)],
+            cwd=kit,env=environment,text=True,capture_output=True,timeout=30,check=True)
+        self.assertEqual(json.loads(completed.stdout),dict(state='valid',contributions=5,application_or_numerical_startup=False))
+
+    def test_actual_new_project_binding_and_declared_model_controls_are_compatible_without_runtime(self):
+        destination=self.root/'authored';result=prepare(self.result,destination)
+        reopened=Dataset(self.root/'catalog',project_roots={'canonical-fixture':self.root/'source','author':destination})
+        self.addCleanup(reopened.close)
+        with self.owner.bound(reopened),patch('subprocess.Popen',side_effect=AssertionError('Binding must remain inert')):
+            saved=reopened.projects.open_snapshot(dict(root='author',manifest_path='project.json'))
+            references=extension_bindings.selection_references(result['binding_selection'])
+            captured=extension_bindings.resolve(reopened.projects,saved['id'],saved['manifest_sha256'],references)
+            binding=captured['binding'];recipe=result['recipe'];parameters=dict(learning_rate=0.1,updates=64)
+            selected=extension_bindings.validate_configuration(binding,recipe,parameters)
+            self.assertEqual(set(selected),{'task','model','trainer','evaluator','view'})
+            extension_bindings.validate_provider_requirements(binding,captured['blobs'],recipe)
+            self.assertEqual(extension_bindings.validate_captured(binding,captured['blobs']),binding)
+            configured=copy.deepcopy(recipe['model_evidence']['model_specification'])
+            configured['configuration']=dict(initial_scale=0.125,initial_offset=-0.25)
+            extension_bindings.validate_configuration(binding,recipe,parameters,specification=configured)
+            configured['configuration']['initial_scale']=2
+            with self.assertRaises(WorkbenchError):extension_bindings.validate_configuration(binding,recipe,parameters,specification=configured)
+            self.assertEqual(reopened.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],0)
+            for table in ('model_definition_drafts','model_materials'):
+                self.assertEqual(reopened.db.execute('SELECT count(*) FROM '+table).fetchone()[0],0)
 
     def test_independent_stdlib_consumer_binds_actual_source_and_refuses_changed_native(self):
         destination=self.root/'authored';result=prepare(self.result,destination)

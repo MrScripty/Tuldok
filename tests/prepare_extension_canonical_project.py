@@ -81,6 +81,12 @@ def prepare(result, destination, *, runtime_sha256=RUNTIME_SHA):
         provenance=dict(input='provenance',sha256=sha(provenance_raw)),contract=result['receipt']['contract'],members=members,
         mapping=dict(inputs=[dict(source_field_id='initial',model_field_id='initial')],target=dict(source_field_id='reference')))
     policy['canonical']=canonical
+    old_targets={row['frozen_reference']['member_id']:row['target_sha256'] for row in policy['probe']['candidates']}
+    policy['field_targets']=[dict(member_id=member['case_id'],field_id=field['id'],payload_sha256=old_targets[member['case_id']])
+        for member in members if member['split']=='validation' for field in policy['fields']]
+    for candidate in policy['probe']['candidates']:
+        candidate['target_sha256']=evidence.digest([dict(field_id=row['field_id'],payload_sha256=row['payload_sha256'])
+            for row in policy['field_targets'] if row['member_id']==candidate['frozen_reference']['member_id']])
     for ref in [*policy['fit_members'],*[row['frozen_reference'] for row in policy['probe']['candidates']]]:
         ref.update(input='canonical',sha256=release_sha)
     recipe['inputs']=dict(canonical=dict(max_bytes=1048576),derivation=dict(max_bytes=65536),provenance=dict(max_bytes=65536))

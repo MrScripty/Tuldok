@@ -48,7 +48,7 @@ def verify_frozen_sources(project):
     for name,sha in FROZEN_SOURCES.items():
         require(hashlib.sha256((project/name).read_bytes()).hexdigest()==sha,'Reviewed canonical source differs: '+name)
     require(hashlib.sha256((ROOT/'tests/prepare_extension_canonical_project.py').read_bytes()).hexdigest()==
-            '0be234d75ff8cd1071f809034b9067ffc48f56f3f94b1381099f1a6231a83634','Reviewed canonical author compiler differs')
+            '82c54cf64ee3f2749784e0e60780762e33768cd13f0f25d6f252d0349ae3685c','Reviewed canonical author compiler differs')
 
 
 def verify_accounting(selection,material,run,context,state):

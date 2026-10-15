@@ -24,7 +24,11 @@ class CanonicalPolicyTests(unittest.TestCase):
         self.addCleanup(self.dataset.close); self.owner = bind_owner(self, self.dataset)
         result = fixture.build_canonical_fixture(self.dataset, project)
         self.definition = json.loads((PACKAGE/'recipe.json').read_bytes())
+        self.definition.update(schema_version=3,format='external_model_evidence_recipe_v2')
         self.policy = self.definition['model_evidence']; self.policy['format'] = canonical.POLICY_FORMAT
+        member=self.policy['probe']['candidates'][0]
+        self.policy['field_targets']=[dict(member_id=member['frozen_reference']['member_id'],field_id=self.policy['fields'][0]['id'],payload_sha256=member['target_sha256'])]
+        member['target_sha256']=evidence.digest([{key:row[key] for key in ('field_id','payload_sha256')} for row in self.policy['field_targets']])
         del self.definition['inputs']['fixture']
         self.definition['inputs'].update(canonical={'max_bytes':1048576}, derivation={'max_bytes':65536}, provenance={'max_bytes':65536})
         derivation = copy.deepcopy(result['receipt']['derivation']); self.outputs = {}
@@ -160,3 +164,22 @@ class CanonicalPolicyTests(unittest.TestCase):
                                     ('fitted-transform.json',dict(state=dict(name=source_name)))]:
                 outputs=dict(self.outputs);outputs[target]=evidence.canonical(document)
                 with self.subTest(source=source_name,target=target),self.assertRaises(WorkbenchError):self.verify(outputs)
+
+    def test_schema3_target_map_is_explicit_ordered_complete_and_matches_actual_source(self):
+        original=copy.deepcopy(self.policy)
+        for mutate in (lambda:self.policy.pop('field_targets'),lambda:self.policy.update(field_targets=[]),
+                       lambda:self.policy['field_targets'].append(copy.deepcopy(self.policy['field_targets'][0])),
+                       lambda:self.policy['field_targets'][0].update(field_id='unknown'),
+                       lambda:self.policy['field_targets'][0].update(payload_sha256='f'*64),
+                       lambda:self.policy['probe']['candidates'][0].update(target_sha256=original['field_targets'][0]['payload_sha256'])):
+            mutate()
+            with self.assertRaises(WorkbenchError):self.verify()
+            self.policy.clear();self.policy.update(copy.deepcopy(original));self.value=self.policy['canonical']
+        self.policy['field_targets'][0]['payload_sha256']='f'*64
+        self.policy['probe']['candidates'][0]['target_sha256']=evidence.digest([dict(field_id=row['field_id'],payload_sha256=row['payload_sha256']) for row in self.policy['field_targets']])
+        with self.assertRaises(WorkbenchError):self.verify()
+        self.policy.clear();self.policy.update(copy.deepcopy(original));self.value=self.policy['canonical']
+        self.definition['schema_version']=3.0
+        with self.assertRaises(WorkbenchError):self.verify()
+        self.definition.update(schema_version=2,format='external_model_evidence_recipe_v1')
+        with self.assertRaises(WorkbenchError):self.verify()

@@ -37,6 +37,8 @@ def validate_declaration(value, policy, definition):
     """Validate the closed declaration without reading providers or a runtime."""
     evidence.require(type(policy) is dict and type(definition) is dict, 'Canonical policy/recipe must be dictionaries.')
     evidence.closed(value, ('format', 'release', 'derivation', 'provenance', 'contract', 'members', 'mapping'), 'Canonical inputs')
+    evidence.require(type(definition.get('schema_version')) is int and definition['schema_version'] == 3 and definition.get('format') == 'external_model_evidence_recipe_v2',
+                     'Canonical inputs require the catalog-bound schema3 recipe.', 'unsupported')
     evidence.require(value['format'] == FORMAT and policy['format'] == POLICY_FORMAT,
                      'Canonical inputs require the explicit new policy version.', 'unsupported')
     names = set()
@@ -91,6 +93,19 @@ def validate_declaration(value, policy, definition):
                      evidence.identical([row['frozen_reference'] for row in policy['probe']['candidates']],
                                         [expected(row) for row in members if row['split'] == 'validation']),
                      'Canonical fit/probe references differ from exact ordered frozen members.')
+    targets = policy['field_targets']
+    evidence.require(type(targets) is list and len(targets) == len(validation) * len(policy['fields']),
+                     'Canonical schema3 requires complete ordered per-field target identities.')
+    expected_targets = [(case_id, field['id']) for case_id in validation for field in policy['fields']]
+    for row, expected_target in zip(targets, expected_targets, strict=True):
+        evidence.closed(row, ('member_id', 'field_id', 'payload_sha256'), 'Canonical field target')
+        evidence.require((row['member_id'], row['field_id']) == expected_target, 'Canonical field target order/membership differs.')
+        evidence.sha(row['payload_sha256'])
+    for candidate in policy['probe']['candidates']:
+        expected_hash = evidence.digest([dict(field_id=row['field_id'], payload_sha256=row['payload_sha256'])
+            for row in targets if row['member_id'] == candidate['frozen_reference']['member_id']])
+        evidence.require(candidate['target_sha256'] == expected_hash,
+                         'Canonical schema3 aggregate target identity differs from ordered field targets.')
     mapping = value['mapping']; evidence.closed(mapping, ('inputs', 'target'), 'Canonical field role mapping')
     evidence.require(type(mapping['inputs']) is list and len(mapping['inputs']) == len(contract['inputs']),
                      'Every canonical input field needs an explicit model role.')
@@ -219,7 +234,7 @@ def validate_captured(value, policy, definition, material, captured, *, outputs=
                                          for role in value['mapping']['inputs']])
         target = by_field[value['mapping']['target']['source_field_id']]
         evidence.require(evidence.identical(probe_inputs[case_id], expected_inputs) and candidate['input_sha256'] == expected_hash and
-                         candidate['target_sha256'] == target['payload_sha256'] and
+                         all(row['payload_sha256'] == target['payload_sha256'] for row in policy['field_targets'] if row['member_id'] == case_id) and
                          all(row['reference'] == target['output']['name'] for row in policy['field_outputs'] if row['member_id'] == case_id),
                          'Canonical validation input/target bindings differ from retained model probe fields.')
     if outputs is not None:

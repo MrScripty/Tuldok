@@ -73,9 +73,17 @@ references against their declared distinct roles. No source-native proof can
 also serve opaque model state, checkpoint JSON or common evidence. This uses
 policy/recipe roles and generic D2 references, with no A filename convention.
 
-The shared schema3 `field_targets` repair is independently owned by p2. A
+The shared schema3 `field_targets` repair is independently owned by p2.
+The canonical helper/compiler now implement the announced shape, while shared
+activation remains separate. A
 canonical common-policy parser must preserve that explicit bound-only key while
 checking the additional canonical declaration; never project it away to force
-old authored grammar. Its composite target identity must remain distinct from
-the old schema2 direct payload identity. The canonical author compiler will
-align to the accepted schema3 map before new material capture.
+old authored grammar. Its composite target identity remains distinct from the old schema2 direct
+payload identity. Canonical mode requires recipe schema3/format
+`external_model_evidence_recipe_v2`: ordered `field_targets` rows name every
+validation member × declared field exactly once, with closed keys `member_id`,
+`field_id`, `payload_sha256`. A member's aggregate target SHA is the canonical
+digest of its ordered `[{field_id, payload_sha256}]` list in policy field order.
+Each mapped target must then equal the exact source-native reference payload
+SHA, even if a caller rehashes the aggregate. The generic `probe_v1` member
+shape remains unchanged. No schema2 direct target is reinterpreted.
