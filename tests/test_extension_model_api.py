@@ -34,6 +34,7 @@ class FieldOperationContractTests(unittest.TestCase):
             grid=dict(shape_xyz=[1,1,1],origin_xyz=vector,spacing_xyz=[1,1,1],
                       orientation=[[1,0,0],[0,1,0],[0,0,1]],units='m'),
             stage='post_train_mapping',units='dimensionless',dtype='<f8',centering='cell',
+            gauge_policy_sha256=sha,gauge_policy={'kind':'identity'},time_units='not_applicable',
             prediction=[[0.0]],reference=[[0.0]],row_axis='y',column_axis='x',
             physical_origin=vector,physical_row_step=[0,1,0],physical_column_step=[1,0,0])
         for body in (result,dict(result,checkpoint={}),dict(result,checkpoint={},field=field)):

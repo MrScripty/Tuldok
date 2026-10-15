@@ -546,6 +546,7 @@ _field_matrix=array(array({'type':'number'},128,1),128,1)
 _field_slice=obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
     'axis':{'enum':['x','y','z']},'index':integer(0,127),'shape_zyx':_field_shape,'grid':_field_grid,
     'stage':text(160),'units':text(80),'dtype':const('<f8'),'centering':const('cell'),
+    'gauge_policy_sha256':SHA,'gauge_policy':_EVIDENCE_DOCUMENT,'time_units':const('not_applicable'),
     'prediction':_field_matrix,'reference':_field_matrix,
     'row_axis':{'enum':['x','y','z']},'column_axis':{'enum':['x','y','z']},
     'physical_origin':_field_vector,'physical_row_step':_field_vector,'physical_column_step':_field_vector})
