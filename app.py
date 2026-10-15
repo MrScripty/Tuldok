@@ -968,6 +968,9 @@ def make_handler(dataset):
                             return self.reply(dataset.runs.model_evidence(parts[1],body))
                         if parts[2] == 'compare-model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.compare_model_evidence')
+                            if self._contract_selection[1]==2:
+                                choices={key:value for key,value in body.items() if key!='other_run_id'}
+                                return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id'],choices))
                             projects.closed(body,('other_run_id',))
                             return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id']))
                         if parts[2] == 'cancel':
