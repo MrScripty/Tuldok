@@ -346,6 +346,33 @@ class ContextCaptureTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+class RuntimeNominationTests(unittest.TestCase):
+    def test_explicit_new_qa_runtime_rehashes_declarations_and_preserves_numerical_sources(self):
+        from qualify_extension_fields import nominate_runtime_project,RUNTIME_SHA
+        with tempfile.TemporaryDirectory() as temporary:
+            project=Path(temporary)/'project';shutil.copytree(PACKAGE,project)
+            original={name:(project/name).read_bytes() for name in ('producer.py','evidence_writer.py','fixture.json','cold_oracle.py')}
+            before=json.loads((project/'project.json').read_bytes());selected='b'*64
+            result=nominate_runtime_project(project,selected)
+            definition=recipe_contract.decode_definition((project/'recipe.json').read_bytes())
+            registration=json.loads((project/'project.json').read_bytes());manifest=json.loads((project/'extension.json').read_bytes())
+            self.assertNotEqual(registration['id'],before['id'])
+            self.assertEqual(result['original_snapshot_sha256'],RUNTIME_SHA)
+            self.assertEqual(result['nominated_snapshot_sha256'],selected)
+            self.assertEqual(definition['runtime_snapshot_sha256'],selected)
+            self.assertEqual(manifest['runtime']['snapshot_sha256'],selected)
+            self.assertEqual(registration['recipes'][0]['sha256'],hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest())
+            for name,raw in original.items():self.assertEqual((project/name).read_bytes(),raw)
+            for item in definition['sources']:self.assertEqual(hashlib.sha256((project/item['path']).read_bytes()).hexdigest(),item['sha256'])
+            closure=evidence.digest(sorted(definition['sources'],key=lambda item:item['path']))
+            self.assertEqual(definition['model_evidence']['adapter_sha256'],closure)
+            self.assertTrue(all(item['evaluator_sha256']==closure for item in definition['model_evidence']['metric_definitions']))
+            self.assertEqual(len(definition['outputs']),27)
+            self.assertIn('runtime-nomination.json',{item['path'] for item in definition['sources']})
+            for invalid in ('','b'*63,'B'*64,'../runtime'):
+                with self.subTest(invalid=invalid),self.assertRaises(RuntimeError):nominate_runtime_project(project,invalid)
+
+
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'),'Requires disposable PostgreSQL')
 class RetainedExtensionRecordTests(unittest.TestCase):
     def test_actual_preflight_rejects_unused_run_input_before_capture_or_runtime(self):

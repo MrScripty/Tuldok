@@ -34,23 +34,76 @@ def require(value,reason):
     if not value:raise RuntimeError(reason)
 
 
+def nominate_runtime_project(project, expected_sha):
+    """Author a NEW named QA declaration; preserve all numerical source bytes."""
+    require(type(expected_sha) is str and len(expected_sha)==64 and all(c in '0123456789abcdef' for c in expected_sha),
+            'Nominate an exact lowercase runtime snapshot SHA256')
+    extension=json.loads((project/'extension.json').read_bytes())
+    recipe=json.loads((project/'recipe.json').read_bytes())
+    registration=json.loads((project/'project.json').read_bytes())
+    original_extension=hashlib.sha256((project/'extension.json').read_bytes()).hexdigest()
+    original_recipe=hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest()
+    registration['id']=uuid.uuid4().hex
+    registration['name']='Private QA scalar A runtime '+expected_sha[:12]
+    extension['label']='Private QA scalar A runtime '+expected_sha[:12]
+    extension['runtime']['snapshot_sha256']=expected_sha
+    def save(name,value):
+        (project/name).write_text(json.dumps(value,indent=2,allow_nan=False)+'\n')
+    save('extension.json',extension)
+    nomination={'format':'explicit_private_runtime_nomination_v1','project_id':registration['id'],
+        'original_snapshot_sha256':RUNTIME_SHA,'nominated_snapshot_sha256':expected_sha,
+        'original_extension_sha256':original_extension,'original_recipe_sha256':original_recipe,
+        'fixture_sha256':FIXTURE_SHA,'numerical_sources_unchanged':True,
+        'authority':'New named QA project; requires actual exact runtime capture, new Model/composition and owner grant'}
+    save('runtime-nomination.json',nomination)
+    recipe['runtime_snapshot_sha256']=expected_sha
+    recipe['id']='scalar-a-evidence-v2-qa-'+expected_sha[:12]
+    recipe['name']='Private QA scalar A runtime '+expected_sha[:12]
+    recipe['sources'].append({'path':'runtime-nomination.json','sha256':hashlib.sha256((project/'runtime-nomination.json').read_bytes()).hexdigest()})
+    for item in recipe['sources']:item['sha256']=hashlib.sha256((project/item['path']).read_bytes()).hexdigest()
+    closure=digest(sorted(recipe['sources'],key=lambda item:item['path']))
+    recipe['model_evidence']['adapter_sha256']=closure
+    for field in recipe['model_evidence']['fields']:field['contract']['source_sha256']=closure
+    for metric in recipe['model_evidence']['metric_definitions']:metric['evaluator_sha256']=closure
+    save('recipe.json',recipe)
+    registration['recipes'][0]['sha256']=hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest()
+    registration['recipes'][0]['label']='Explicit QA nominated CPU '+expected_sha[:12]
+    save('project.json',registration)
+    return nomination
+
+
 def main(args):
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
     package=ROOT/'examples/extensions/field-surrogate/v2'
     for name,sha in (('fixture.json',FIXTURE_SHA),('cold_oracle.py',ORACLE_SHA)):
         require(hashlib.sha256((package/name).read_bytes()).hexdigest()==sha,'Frozen '+name+' differs')
+    require(type(args.expected_runtime_sha256) is str and len(args.expected_runtime_sha256)==64 and
+            all(c in '0123456789abcdef' for c in args.expected_runtime_sha256),'Exact expected runtime SHA256 required')
+    nominated=args.expected_runtime_sha256!=RUNTIME_SHA
     project=args.project.resolve() if args.project is not None else output/'project'
-    if args.project is None:shutil.copytree(package,project)
+    if args.project is None:
+        shutil.copytree(package,project)
+        if nominated:nominate_runtime_project(project,args.expected_runtime_sha256)
     else:
         expected=json.loads((package/'recipe.json').read_bytes())
-        for name in ['project.json','recipe.json','fixture.json',*[row['path'] for row in expected['sources']]]:
+        names=['fixture.json','producer.py','evidence_writer.py','task.json','NOTICE.txt','cold_oracle.py'] if nominated else ['project.json','recipe.json','fixture.json',*[row['path'] for row in expected['sources']]]
+        for name in names:
             require((project/name).read_bytes()==(package/name).read_bytes(),'Existing exact project differs: '+name)
     recipe=json.loads((project/'recipe.json').read_bytes());policy=recipe['model_evidence']
+    require(recipe['runtime_snapshot_sha256']==args.expected_runtime_sha256 and
+            json.loads((project/'extension.json').read_bytes())['runtime']['snapshot_sha256']==args.expected_runtime_sha256,
+            'Project must declare the exact explicitly nominated runtime')
+    if nominated:
+        nomination=json.loads((project/'runtime-nomination.json').read_bytes())
+        require(nomination['original_snapshot_sha256']==RUNTIME_SHA and nomination['nominated_snapshot_sha256']==args.expected_runtime_sha256,
+                'Existing project has no exact runtime nomination receipt')
     dataset=server=worker=owner=credential=None;endpoint=config=None;sequence=0
     report={'state':'in_progress','scope':'Actual A CPU/Study/custody/cold scientific state; UI/agent field projection pending',
         'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'oracle_sha256':ORACLE_SHA,'fixture_sha256':FIXTURE_SHA,'checks':[],
+        'expected_runtime_sha256':args.expected_runtime_sha256,'runtime_nomination':'explicit_new_QA_project' if nominated else 'original_default',
+        'catalog_path':str(args.catalog.resolve()),'project_roots':{'extension-a':str(project)},
         'physical_acceptance':'not_established','product_acceptance':'not_established'}
     def write(name,value):
         path=output/name
@@ -115,8 +168,8 @@ def main(args):
         with dataset.access.bind(owner['token']):
             snapshots=RuntimeSnapshots(dataset.db,dataset.access,dataset.path)
             inventory=snapshots.inspect(json.loads(args.runtime_config.read_bytes()))
-            require(inventory['inventory_sha256']==RUNTIME_SHA,'Actual runtime differs from reviewed snapshot')
-            report['runtime']=snapshots.create(json.loads(args.runtime_config.read_bytes()),RUNTIME_SHA,quiesced=True)
+            require(inventory['inventory_sha256']==args.expected_runtime_sha256,'Actual runtime differs from reviewed snapshot')
+            report['runtime']=snapshots.create(json.loads(args.runtime_config.read_bytes()),args.expected_runtime_sha256,quiesced=True)
             credential=dataset.access.issue({'label':'Explicit extension A CPU qualification','scopes':['inspect','edit','execute','cancel']})
         private('agent-token.private',credential['token'])
         def configure(name):return private(name,json.dumps({'endpoint':endpoint,'catalog_id':report['catalog_id'],'token_file':str(output/'agent-token.private')}))
@@ -325,8 +378,92 @@ def qualify_retained_negatives(args):
         dataset.close()
 
 
+def qualify_public_fields(args):
+    """Inspect a real retained Run through selected HTTP and production agent CLI."""
+    original=json.loads(args.existing_receipt.read_bytes());output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
+    dataset=Dataset(args.catalog.resolve(),project_roots={'extension-a':args.project.resolve()})
+    owner=dataset.access.exchange(dataset.access._local_owner_token(require_existing=True));credential=None
+    headers=[];base=make_handler(dataset)
+    class ObservedHandler(base):
+        def do_POST(self):
+            headers.append({'path':self.path,'selection':self.headers.get(agent_api.CONTRACT_HEADER)})
+            return super().do_POST()
+    server=ThreadingHTTPServer(('127.0.0.1',0),ObservedHandler)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();endpoint=f'http://127.0.0.1:{server.server_port}'
+    sequence=0
+    def save(name,value):
+        path=output/name;path.write_text(json.dumps(value,indent=2,allow_nan=False)+'\n');return path
+    def private(name,value):
+        path=output/name;fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+        with os.fdopen(fd,'w') as handle:handle.write(value)
+        return path
+    def query(body,version=2,expected=200):
+        nonlocal sequence
+        request=Request(endpoint+f'/api/workspace/runs/{original["run_id"]}/model-evidence',method='POST',data=agent_api.encoded(body),
+            headers={'Authorization':'Bearer '+owner['token'],'Content-Type':'application/json',
+                     agent_api.CONTRACT_HEADER:agent_api.selected_header('runs.model_evidence',version)})
+        try:
+            with urlopen(request,timeout=60) as response:status=response.status;value=json.loads(response.read())
+        except HTTPError as error:status=error.code;value=json.loads(error.read())
+        require(status==expected,'Unexpected selected field HTTP'+str(status)+': '+str(value)[:1000])
+        agent_api.validate_output('runs.model_evidence',{'status':status,'result':value},version)
+        sequence+=1;save(f'owner-{sequence:02d}-v{version}.json',{'body':body,'status':status,'result':value});return value
+    try:
+        with dataset.access.bind(owner['token']):
+            run=dataset.runs.get(original['run_id']);before=dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0]
+            credential=dataset.access.issue({'label':'Read-only actual field contract2 co-test','scopes':['inspect']})
+        token=private('token.private',credential['token'])
+        config=private('config.private',json.dumps({'endpoint':endpoint,'catalog_id':original['catalog_id'],'token_file':str(token)}))
+        def cli(body):
+            nonlocal sequence
+            sequence+=1;path=save(f'agent-{sequence:02d}-arguments.json',dict(body,run_id=run['id']))
+            result=subprocess.run([sys.executable,str(ROOT/'project_cli.py'),'--config',str(config),'call',
+                '--operation','runs.model_evidence','--arguments',str(path)],capture_output=True,text=True,timeout=120)
+            require(credential['token'] not in result.stdout+result.stderr,'Agent credential disclosure')
+            require(result.returncode==0,'Actual agent field call refused: '+result.stderr[:1000])
+            value=json.loads(result.stdout);save(f'agent-{sequence:02d}-result.json',value);return value
+        require(query({},1)['state']=='unsupported','Classifier v1 meaning changed for external evidence')
+        public=query({});require(public['state']=='verified' and cli({})==public,'Index HTTP/agent parity differs')
+        requests=[]
+        for entry in public['checkpoint_index']['entries']:
+            for field in public['fields']:
+                if field['checkpoint_sha256']!=entry['checkpoint']['sha256']:continue
+                for axis in ('x','y','z'):
+                    body={'checkpoint_sha256':entry['checkpoint']['sha256'],'member_ordinal':field['member_ordinal'],
+                        'field_id':field['field_id'],'axis':axis,'index':field['shape_zyx']['zyx'.index(axis)]-1,'split':'validation'}
+                    current=query(body);require(cli(body)==current,'Exact selected field HTTP/agent parity differs')
+                    require(current['field']['checkpoint_sha256']==body['checkpoint_sha256'] and current['field']['axis']==axis,
+                            'Wrong field context replaced selection')
+                    requests.append(body)
+        query({'split':'test'},expected=400)
+        query(dict(requests[0],checkpoint_sha256='f'*64),expected=409)
+        query(dict(requests[0],run_id='f'*32),expected=400)
+        with dataset.access.bind(owner['token']):
+            require(dataset.runs.get(run['id'])==run,'Read-only field inspection changed the Run')
+            require(dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0]==before,'Field inspection admitted a Run')
+        require(all(row['path'].endswith('/model-evidence') for row in headers),'Unexpected mutation route')
+        require(sum(row['selection']==agent_api.selected_header('runs.model_evidence',2) for row in headers)>=2*len(requests),
+                'Production agent did not actually select contract2')
+        receipt={'state':'passed','scope':'Actual selected HTTP and production read-only agent contract2 parity on retained A; no producer replay',
+            'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+            'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'run_id':run['id'],
+            'catalog_id':original['catalog_id'],'contract2_sha256':agent_api.contract('runs.model_evidence',2)['sha256'],
+            'exact_requests':requests,'request_headers':headers,'run_count_before':before,'run_count_after':before,
+            'v1_state':'unsupported','selected_test_state':'400 invalid','wrong_checkpoint_state':'409 stale',
+            'physical_acceptance':'not_established','canonical_release_derivation':'unsupported in authored-only mode'}
+        save('receipt.json',receipt);print('PASS actual selected HTTP/agent field parity',output,flush=True)
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+        with dataset.access.bind(owner['token']):
+            if credential is not None:dataset.access.revoke(credential['identity']['credential_id'])
+            dataset.access.logout()
+        dataset.close()
+
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--public-only',action='store_true',help='Co-test selected HTTP and agent fields for an existing real receipt; never admit')
+    parser.add_argument('--expected-runtime-sha256',default=RUNTIME_SHA,help='Explicit exact nomination; nondefault authors a new named QA project and new hashes, never a fallback')
     parser.add_argument('--existing-receipt',type=Path,help='Run only retained fault negatives against a prior real qualification receipt')
     parser.add_argument('--project',type=Path)
     parser.add_argument('--require-public-fields',action='store_true')
@@ -335,5 +472,5 @@ if __name__=='__main__':
     arguments=parser.parse_args()
     if arguments.existing_receipt is not None:
         if arguments.project is None:parser.error('--existing-receipt requires --project')
-        qualify_retained_negatives(arguments)
+        (qualify_public_fields if arguments.public_only else qualify_retained_negatives)(arguments)
     else:main(arguments)
