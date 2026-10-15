@@ -159,6 +159,41 @@ class _CLI:
         return self._run(['download', '--run-id', run_id, '--name', item['name'], '--expected-sha256', item['sha256'], '--out', str(destination)])
 
 
+def _external_graph_selector(graph):
+    """Read the public external graph wire shape without application imports."""
+    import re
+    from .evidence import canonical, closed, identifier, natural, require, sha
+    required = {'schema_version', 'mode', 'id', 'revision', 'name', 'recipe', 'recipe_version', 'nodes', 'edges'}
+    require(type(graph) is dict and required <= set(graph) <= required | {'layout'}, 'External graph fields differ.')
+    require(graph['mode'] == 'real' and graph['recipe'] == 'external_recipe', 'Conformance requires a real external recipe graph.', 'unsupported')
+    for key in ('schema_version', 'recipe_version'):
+        natural(graph[key], key, 1, 1)
+    nodes = graph['nodes']
+    require(type(nodes) is list and len(nodes) == 3, 'External graph requires three unambiguous nodes.')
+    typed = {}; identifiers = set()
+    for node in nodes:
+        closed(node, ('id', 'type', 'definition_version', 'parameters'), 'External node')
+        require(type(node['id']) is str and re.fullmatch('[A-Za-z][A-Za-z0-9_-]{0,39}', node['id'])
+                and node['id'] not in identifiers, 'External node IDs must be valid and unique.')
+        require(type(node['type']) is str and node['type'] in ('input', 'execute', 'output')
+                and node['type'] not in typed, 'External node roles must be unambiguous.')
+        natural(node['definition_version'], 'External node version', 1, 1)
+        require(type(node['parameters']) is dict, 'External node parameters must be an object.')
+        identifiers.add(node['id']); typed[node['type']] = node
+    edges = graph['edges']
+    expected = [{'from': typed['input']['id'], 'output': 'data', 'to': typed['execute']['id'], 'input': 'data'},
+                {'from': typed['execute']['id'], 'output': 'artifacts', 'to': typed['output']['id'], 'input': 'artifacts'}]
+    require(type(edges) is list and len(edges) == 2 and
+            sorted(canonical(edge) for edge in edges) == sorted(canonical(edge) for edge in expected)
+            and typed['output']['parameters'] == {}, 'External graph connections or output parameters differ.')
+    selector = typed['input']['parameters']
+    closed(selector, ('project_id', 'recipe_id', 'expected_sha256', 'inputs'), 'External input selector')
+    identifier(selector['project_id']); sha(selector['expected_sha256'])
+    require(type(selector['recipe_id']) is str and 1 <= len(selector['recipe_id']) <= 64
+            and type(selector['inputs']) is dict, 'External source selector differs.')
+    return {key: selector[key] for key in ('project_id', 'recipe_id', 'expected_sha256')}
+
+
 def _conformance(selection, client, output):
     """One admission and read-only observation; no creation/approval/retry owner."""
     import hashlib
@@ -182,7 +217,10 @@ def _conformance(selection, client, output):
     model = client.call('models.material', {'ref': material['model']})
     require(same(model['ref'], material['model']) and model['material']['task']['sha256'] == expected['task_sha256'], 'Expected Task differs.', 'stale')
     graph = client.call('graphs.get', {'graph_id': expected['graph_id']})
-    require(graph['id'] == expected['graph_id'] and same(graph['revision'], expected['graph_revision']) and graph['project_id'] == selection['project_id'], 'Expected project/current graph differs.', 'stale')
+    require(type(graph) is dict and graph.get('id') == expected['graph_id'] and same(graph.get('revision'), expected['graph_revision']), 'Expected current graph identity/revision differs.', 'stale')
+    selector = _external_graph_selector(graph)
+    require(selector['project_id'] == selection['project_id'] and model['material'].get('kind') == 'captured_source'
+            and same(selector, model['material'].get('source_selector')), 'Expected project/captured recipe selector differs.', 'stale')
     body = {key: selection[key] for key in ('study_id', 'trial_id', 'revision', 'admission_epoch', 'approval_id', 'request_key')}
     client.admission = True
     admitted = client.call('studies.admit', body)

@@ -63,6 +63,20 @@ class SDKConformanceTests(unittest.TestCase):
         definition,model,composition,run,old_writer=authored_fixture(old)
         context=copy.deepcopy(run['extension_context']);static=context['static'];catalog=static['catalog_id']
         graph_id='4'*32;study_id='5'*32;trial_id='6'*32;approval_id='7'*32;actor='8'*32;project='9'*32
+        selector = dict(project_id=project, recipe_id='scalar-a-canonical-v3', expected_sha256='a'*64)
+        model['material'].update(kind='captured_source', source_selector=selector)
+        # Actual graphs.get wire shape from the failed canonical A01 response,
+        # with identities redacted. There is no top-level project_id.
+        graph = dict(schema_version=1, mode='real', recipe='external_recipe', recipe_version=1,
+            id=graph_id, revision=1, name='Representative public canonical graph', layout={},
+            nodes=[dict(id='input', type='input', definition_version=1, parameters=dict(selector, inputs={
+                'canonical':dict(kind='frozen_release', release_id='c'*64, expected_sha256='c'*64),
+                'derivation':dict(reference_id='derivation', expected_sha256='d'*64),
+                'provenance':dict(reference_id='provenance', expected_sha256='e'*64)})),
+                dict(id='execute', type='execute', definition_version=1, parameters=dict(learning_rate=.1, updates=64)),
+                dict(id='output', type='output', definition_version=1, parameters={})],
+            edges=[{'from':'input','output':'data','to':'execute','input':'data'},
+                   {'from':'execute','output':'artifacts','to':'output','input':'artifacts'}])
         material=dict(format='recipe_material_v1',catalog_id=catalog,recipe_id=graph_id,recipe_revision=1,
             recipe_document=dict(name='recipe.json',sha256='a'*64,bytes=1,media_type='application/json'),
             executable_sha256=static['execution_material_sha256'],model=static['model'],data=[],
@@ -100,7 +114,7 @@ class SDKConformanceTests(unittest.TestCase):
             'studies.get':dict(study=dict(id=study_id,revision=3,admission_epoch=1,open=True,state='open',trial_ids=[trial_id])),
             'studies.trial':dict(id=trial_id,study_id=study_id,material=ref),
             'recipes.material':dict(ref=ref,material=material),'models.material':model,
-            'graphs.get':dict(id=graph_id,revision=1,project_id=project),
+            'graphs.get':graph,
             'studies.admit':dict(reservation=reservation,run=current),'runs.get':current,'runs.model_evidence':public})
         self.output=self.root/'download';self.output.mkdir()
 
@@ -114,6 +128,69 @@ class SDKConformanceTests(unittest.TestCase):
         self.assertEqual(client.calls.count('studies.admit'),1)
         self.assertFalse(set(client.calls)&{'studies.continue','studies.create','studies.approve','runs.submit_external'})
         for name,raw in self.fixture['blobs'].items():self.assertEqual((self.output/name).read_bytes(),raw)
+
+    def test_representative_graph_is_valid_in_the_real_public_graph_owner(self):
+        from pipeline import decode_graph
+        from recipe_contract import graph_parameters
+        graph = decode_graph(copy.deepcopy(self.fixture['calls']['graphs.get']))
+        config, parameters = graph_parameters(graph)
+        self.assertNotIn('project_id', graph)
+        self.assertEqual({key: config[key] for key in ('project_id', 'recipe_id', 'expected_sha256')},
+                         self.fixture['calls']['models.material']['material']['source_selector'])
+        self.assertEqual(parameters, {'learning_rate': .1, 'updates': 64})
+
+    def test_graph_identity_shape_ambiguity_and_selector_drift_never_admit(self):
+        mutations = [
+            lambda g: g.update(id='0'*32), lambda g: g.update(revision=True),
+            lambda g: g.update(recipe='image_classification_model_v2'), lambda g: g.update(mode='fixture'),
+            lambda g: g.update(schema_version=True), lambda g: g.update(recipe_version=2),
+            lambda g: g['nodes'].pop(0), lambda g: g['nodes'].append(copy.deepcopy(g['nodes'][0])),
+            lambda g: g['nodes'][1].update(type='input'), lambda g: g['nodes'][1].update(id='input'),
+            lambda g: g['nodes'][0].update(definition_version=True),
+            lambda g: g['nodes'][0]['parameters'].update(project_id='0'*32),
+            lambda g: g['nodes'][0]['parameters'].update(recipe_id='another-recipe'),
+            lambda g: g['nodes'][0]['parameters'].update(expected_sha256='f'*64),
+            lambda g: g['nodes'][0]['parameters'].update(inputs=[]),
+            lambda g: g['nodes'][0]['parameters'].pop('project_id'),
+            lambda g: g.update(project_id=self.selection['project_id']),
+            lambda g: g['edges'][0].update(to='output'),
+            lambda g: g.update(nodes=None),
+        ]
+        for mutation in mutations:
+            fixture = copy.deepcopy(self.fixture); mutation(fixture['calls']['graphs.get'])
+            client = RepresentativeTransport(fixture)
+            with self.subTest(mutation=mutation), self.assertRaises(sdk.EvidenceError) as caught:
+                self.execute(client)
+            self.assertIn(caught.exception.state, ('invalid', 'unsupported', 'stale'))
+            self.assertNotIn('studies.admit', client.calls)
+            self.assertFalse(client.admission)
+        fixture = copy.deepcopy(self.fixture)
+        fixture['calls']['graphs.get'] = dict(id=self.selection['expected']['graph_id'], revision=1,
+                                            project_id=self.selection['project_id'])
+        client = RepresentativeTransport(fixture)
+        with self.assertRaises(sdk.EvidenceError): self.execute(client)
+        self.assertNotIn('studies.admit', client.calls)
+
+    def test_source_selector_must_match_published_model_before_admission(self):
+        for change in (lambda m: m.pop('source_selector'), lambda m: m.update(kind='template'),
+                       lambda m: m['source_selector'].update(expected_sha256='f'*64)):
+            fixture = copy.deepcopy(self.fixture); change(fixture['calls']['models.material']['material'])
+            client = RepresentativeTransport(fixture)
+            with self.subTest(change=change), self.assertRaises(sdk.EvidenceError) as caught:
+                self.execute(client)
+            self.assertEqual(caught.exception.state, 'stale')
+            self.assertNotIn('studies.admit', client.calls)
+
+    def test_valid_reordered_and_renamed_node_ids_keep_the_same_selector(self):
+        graph = self.fixture['calls']['graphs.get']
+        names = {'input':'source', 'execute':'fit', 'output':'evidence'}
+        for node in graph['nodes']: node['id'] = names[node['id']]
+        for edge in graph['edges']:
+            edge['from'] = names[edge['from']]; edge['to'] = names[edge['to']]
+        graph['nodes'].reverse(); graph['edges'].reverse()
+        client = RepresentativeTransport(self.fixture)
+        self.assertEqual(self.execute(client)['state'], 'passed')
+        self.assertEqual(client.calls.count('studies.admit'), 1)
 
     def test_missing_grant_expected_identity_and_coerced_revision_refuse_before_dispatch(self):
         for change in (lambda s:s.pop('approval_id'),lambda s:s['expected'].pop('runtime_sha256'),lambda s:s.update(revision=True),lambda s:s.update(request_key='')):
