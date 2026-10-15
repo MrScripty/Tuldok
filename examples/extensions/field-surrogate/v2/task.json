@@ -1,0 +1,70 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.scalar-a:task",
+  "version": "2.0.0",
+  "kind": "task",
+  "label": "Authored dimensionless standalone scalar mapping",
+  "requires": [],
+  "ports": [
+    {
+      "id": "initial",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-a:scalar-field",
+        "version": "2.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "target",
+      "direction": "target",
+      "contract": {
+        "id": "example.scalar-a:scalar-field",
+        "version": "2.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "prediction",
+      "direction": "output",
+      "contract": {
+        "id": "example.scalar-a:scalar-field",
+        "version": "2.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    }
+  ],
+  "stages": [
+    {
+      "id": "train",
+      "version": "2.0.0",
+      "inputs": [
+        "initial",
+        "target"
+      ],
+      "outputs": [
+        "prediction"
+      ],
+      "clock": "optimizer_update",
+      "failure_policy": "fail"
+    }
+  ]
+}

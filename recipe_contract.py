@@ -27,7 +27,13 @@ INPUT_EVIDENCE = 'runtime-bootstrap/input-evidence.json'
 CPU_DESCRIPTOR = 'runtime-bootstrap/snapshot.json'
 CPU_BOOTSTRAP = 'runtime-bootstrap/recipe_process.py'
 HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py')
+EVIDENCE_HOST_NAMES = (*HOST_NAMES, 'extension_evidence.py', 'field_evidence.py', 'scientific_fields.py', 'scientific_release.py')
+EVIDENCE_FORMAT = 'external_model_evidence_recipe_v1'
+EVIDENCE_CONTEXT = 'runtime-bootstrap/model-evidence-context.json'
+EVIDENCE_CONTEXT_LIMIT = 64 * 1024
 IMPORTED_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in HOST_NAMES}
+IMPORTED_EVIDENCE_HOST_FILES = ({name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in EVIDENCE_HOST_NAMES}
+    if all((Path(__file__).resolve().parent/name).is_file() for name in EVIDENCE_HOST_NAMES) else None)
 
 
 def digest(value):
@@ -55,9 +61,14 @@ def decode_definition(raw):
         raise WorkbenchError('Recipe definition exceeds 64 KiB.')
     value = decode(raw)
     closed(value, ('schema_version', 'format', 'id', 'name', 'version', 'runtime', 'sources', 'entrypoint',
-                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256'))
-    if type(value['schema_version']) is not int or value['schema_version'] != 1 or value['format'] != 'external_recipe_v1':
-        raise WorkbenchError('Only external_recipe_v1 is supported.', 'unsupported', 400)
+                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','model_evidence'))
+    evidence = type(value['schema_version']) is int and value['schema_version'] == 2 and value['format'] == EVIDENCE_FORMAT
+    if not evidence and (type(value['schema_version']) is not int or value['schema_version'] != 1 or value['format'] != 'external_recipe_v1'):
+        raise WorkbenchError('Unsupported explicit external recipe version.', 'unsupported', 400)
+    if evidence != ('model_evidence' in value):
+        raise WorkbenchError('Model evidence policy requires its explicit recipe version.', 'unsupported', 400)
+    if evidence and (value['runtime'] != CPU_PROFILE or 'native_sources' in value):
+        raise WorkbenchError('Initial model evidence requires captured CPU Python without native sources.', 'unsupported', 400)
     named(value['id'])
     bounded_int(value['version'], 1, 1, 'Recipe version')
     if not isinstance(value['name'], str) or not 1 <= len(value['name']) <= 120:
@@ -129,6 +140,8 @@ def decode_definition(raw):
             if not isinstance(arg, str) or arg not in paths: raise WorkbenchError('Unknown source argument.')
         elif kind == 'native_policy':
             if not isinstance(arg,str) or arg not in value.get('native_sources',[]): raise WorkbenchError('Native policy argument must select a declared native source.')
+        elif kind == 'model_evidence_context':
+            if not evidence or arg is not True:raise WorkbenchError('Model context requires its explicit recipe version.')
         elif kind not in ('output_dir', 'input_evidence') or arg is not True:
             raise WorkbenchError('Unsupported argument token.')
     closed(value['resources'], ('wall_seconds', 'max_output_bytes'), ('profile',))
@@ -151,6 +164,14 @@ def decode_definition(raw):
         raise WorkbenchError('Initial runtime admits no project environment overrides.', 'unsupported', 400)
     bounded_int(value['resources']['wall_seconds'], 1, 2400 if large else 600, 'Wall seconds')
     bounded_int(value['resources']['max_output_bytes'], 1, 4 * 1024**3 if large else MAX_CAPTURE_BYTES, 'Output bytes')
+    if evidence:
+        if value['arguments'].count({'model_evidence_context':True}) != 1:
+            raise WorkbenchError('Declare exactly one model-evidence context argument.')
+        import extension_evidence
+        extension_evidence.validate_policy(value['model_evidence'], value)
+        context_output=next((item for item in outputs if item['path']=='execution-context.json'),None)
+        if context_output is None or context_output['required'] is not True or context_output['max_bytes'] != EVIDENCE_CONTEXT_LIMIT:
+            raise WorkbenchError('Declare the exact bounded required context output.')
     return value
 
 
@@ -421,11 +442,14 @@ def inspect_recipe(projects, project_id, reference_id, expected_sha256):
             'inputs': definition['inputs'], 'outputs': definition['outputs'], 'runtime': definition['runtime']}
 
 
-def host_identity():
+def host_identity(*, evidence=False):
     import recipe_process
     root = Path(__file__).resolve().parent
-    current = {name: file_digest((root/name).read_bytes()) for name in HOST_NAMES}
-    if current != IMPORTED_HOST_FILES or file_digest(recipe_process.SOURCE) != current['recipe_process.py']:
+    imported = IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
+    if imported is None:
+        raise WorkbenchError('Canonical field evidence dependency is unavailable; restart after explicit provisioning.', 'unavailable', 409)
+    current = {name: file_digest((root/name).read_bytes()) for name in (EVIDENCE_HOST_NAMES if evidence else HOST_NAMES)}
+    if current != imported or file_digest(recipe_process.SOURCE) != current['recipe_process.py']:
         raise WorkbenchError('Execution host changed after import. Restart before preflight or execution.', 'stale', 409)
     return current
 
@@ -488,8 +512,11 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         captured[CPU_BOOTSTRAP] = recipe_process.SOURCE
         if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
             raise WorkbenchError('Generated CPU bootstrap exceeds the capture bound.')
-    host = host_identity()
-    material = {'schema_version': 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
+    evidence = definition['format'] == EVIDENCE_FORMAT
+    if evidence and (len(captured)>=MAX_FILES or sum(map(len,captured.values()))+EVIDENCE_CONTEXT_LIMIT>CPU_CAPTURE_BYTES):
+        raise WorkbenchError('Capture must reserve one bounded generated context file.')
+    host = host_identity(evidence=evidence)
+    material = {'schema_version': 2 if evidence else 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
                 'recipe': definition, 'parameters': values, 'inputs': inputs,
                 'captures': {path: {'bytes':len(raw),'sha256':file_digest(raw)} for path,raw in sorted(captured.items())},
                 'runtime': runtime, 'host_files': host, 'permissions': {'filesystem':'trusted-local', 'network':'not_isolated'},
@@ -506,7 +533,7 @@ def validate_material(material):
     """Cold structural custody checks; no filesystem access or current-code comparison."""
     closed(material, ('schema_version', 'catalog_id', 'project', 'graph_execution_sha256', 'recipe',
                       'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot'))
-    if type(material['schema_version']) is not int or material['schema_version'] != 1 or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
+    if type(material['schema_version']) is not int or material['schema_version'] not in (1,2) or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
         raise WorkbenchError('Invalid execution material identity.')
     def sha(value):
         if not isinstance(value, str) or not SHA.fullmatch(value): raise WorkbenchError('Invalid material SHA256.')
@@ -517,6 +544,10 @@ def validate_material(material):
         relative_path(value['path']); sha(value['manifest_sha256']); sha(value['measured_sha256'])
     sha(material['graph_execution_sha256']); receipt(material['project'])
     definition = decode_definition(encode(material['recipe']).encode())
+    evidence = definition['format'] == EVIDENCE_FORMAT
+    if material['schema_version'] != (2 if evidence else 1):raise WorkbenchError('Recipe/material version differs.')
+    if evidence and (len(material['captures'])>=MAX_FILES or sum(item['bytes'] for item in material['captures'].values())+EVIDENCE_CONTEXT_LIMIT>CPU_CAPTURE_BYTES):
+        raise WorkbenchError('Material leaves no generated context capacity.')
     if encode(validate_parameters(definition, material['parameters'])) != encode(material['parameters']):
         raise WorkbenchError('Retained parameters must include every typed value.')
     if material['resources'] != definition['resources'] or material['environment'] != {'LANG':'C.UTF-8'} or material['permissions'] != {'filesystem':'trusted-local', 'network':'not_isolated'}:
@@ -606,12 +637,12 @@ def validate_material(material):
         bounded_int(item['bytes'],0,64*1024*1024,'Runtime file bytes'); total += item['bytes']
     if total > RUNTIME_LIMIT or runtime['executable'] not in files or files[runtime['executable']]['sha256'] != runtime['executable_sha256'] or digest(files) != runtime['closure_sha256']:
         raise WorkbenchError('Runtime closure identity is inconsistent.')
-    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
+    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(EVIDENCE_HOST_NAMES if evidence else HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
     for value in material['host_files'].values(): sha(value)
     return material
 
 
-def spec_for_material(material, staging):
+def spec_for_material(material, staging, *, context=None):
     """Pure reconstruction: retained approvals never depend on current source/runtime."""
     validate_material(material)
     staging = Path(staging).absolute()
@@ -631,6 +662,7 @@ def spec_for_material(material, staging):
         elif kind == 'source': arg = str(staging/'source'/value)
         elif kind == 'native_policy': arg = str(staging/native_policy_path(value))
         elif kind == 'input_evidence': arg = str(staging/INPUT_EVIDENCE)
+        elif kind == 'model_evidence_context': arg = str(staging/EVIDENCE_CONTEXT)
         else: arg = str(output)
         argv.append(arg)
     spec = {'schema_version':1,'argv':argv,'env':dict(material['environment']),'cwd':str(staging), 'stdin_base64':base64.b64encode(b'').decode(),
@@ -641,11 +673,23 @@ def spec_for_material(material, staging):
     if 'native_policies' in material or 'cpu_snapshot' in material: spec['native_loader_policy'] = NATIVE_POLICY
     if 'cpu_snapshot' in material: spec['cpu_snapshot'] = material['cpu_snapshot']
     if 'profile' in definition['resources']: spec['resource_profile'] = definition['resources']['profile']
+    if definition['format'] == EVIDENCE_FORMAT:
+        spec['schema_version']=2
+        spec['model_evidence_context']=None
+        if context is not None:
+            import extension_evidence
+            raw=extension_evidence.canonical(extension_evidence.checked(context))
+            ref={'path':str(staging/EVIDENCE_CONTEXT),'bytes':len(raw),'sha256':file_digest(raw)}
+            spec['model_evidence_context']=ref
+            spec['captured_files'].append(ref)
+    elif context is not None:raise WorkbenchError('Legacy recipes cannot receive model context.')
     return spec
 
 
-def validate_spec(material, spec, staging):
-    expected = spec_for_material(material, staging)
+def validate_spec(material, spec, staging, *, context=None):
+    if material['recipe']['format'] == EVIDENCE_FORMAT and context is None:
+        raise WorkbenchError('Final model-evidence specification requires authoritative attempt context.')
+    expected = spec_for_material(material, staging, context=context)
     actual = {key:value for key,value in spec.items() if key not in ('attempt_id', 'request_sha256')}
     if encode(actual) != encode(expected):
         raise WorkbenchError('Execution specification differs from the approved material.', 'conflict', 409)
