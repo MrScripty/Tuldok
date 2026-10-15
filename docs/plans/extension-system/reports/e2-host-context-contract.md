@@ -75,9 +75,9 @@ architecture and field names only; learning_rate and fixed64 updates are typed
 recipe parameters. Last-checkpoint selection is diagnostic until a separate
 accepted Study selection policy says otherwise.
 
-Published captured Model source mapping must include exactly the five recipe
-sources: producer.py, evidence_writer.py, task.json, extension.json and NOTICE.txt,
-with their exact import paths/Blob hashes. The independent oracle is deliberately
+Published captured Model source mapping includes the selected recipe.json and
+the five declared recipe sources: producer.py, evidence_writer.py, task.json, extension.json and NOTICE.txt,
+with their exact import paths/Blob hashes (six mappings total). The independent oracle is deliberately
 outside producer capture. No A inference-entry/package reconstruction module is
 yet frozen. P5 must not invent an executable hook or treat this proposal as E4
 acceptance; reconstruction and its independent tolerances will be frozen before

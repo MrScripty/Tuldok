@@ -39,7 +39,12 @@ def main(args):
     package=ROOT/'examples/extensions/field-surrogate/v2'
     for name,sha in (('fixture.json',FIXTURE_SHA),('cold_oracle.py',ORACLE_SHA)):
         require(hashlib.sha256((package/name).read_bytes()).hexdigest()==sha,'Frozen '+name+' differs')
-    project=output/'project';shutil.copytree(package,project)
+    project=args.project.resolve() if args.project is not None else output/'project'
+    if args.project is None:shutil.copytree(package,project)
+    else:
+        expected=json.loads((package/'recipe.json').read_bytes())
+        for name in ['project.json','recipe.json','fixture.json',*[row['path'] for row in expected['sources']]]:
+            require((project/name).read_bytes()==(package/name).read_bytes(),'Existing exact project differs: '+name)
     recipe=json.loads((project/'recipe.json').read_bytes());policy=recipe['model_evidence']
     dataset=server=worker=owner=credential=None;endpoint=config=None;sequence=0
     report={'state':'in_progress','scope':'Actual A CPU/Study/custody/cold scientific state; UI/agent field projection pending',
@@ -172,7 +177,7 @@ def main(args):
             query={'checkpoint_sha256':selected_sha,'member_ordinal':0,'field_id':'raw','axis':'z','index':1}
             field=evidence(run['id'],query);write('field.json',field)
             require(field['field']['shape_zyx']==[4,4,4],'Native field shape differs')
-            evidence(run['id'],dict(query,split='test'),expect=409)
+            evidence(run['id'],dict(query,split='test'),expect=400)
             evidence(run['id'],dict(query,checkpoint_sha256='f'*64),expect=409)
         else:
             require(public is None or public['state']=='unsupported','Unexpected evidence outcome')
@@ -202,9 +207,132 @@ def main(args):
         stop()
 
 
+def qualify_retained_negatives(args):
+    """Fault only task-owned source/retained files, restore in finally; no new Run."""
+    from workbench import WorkbenchError
+    base=args.existing_receipt.resolve().parent
+    original=json.loads(args.existing_receipt.read_bytes())
+    output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
+    dataset=Dataset(args.catalog.resolve(),project_roots={'extension-a':args.project.resolve()})
+    owner=dataset.access.exchange(dataset.access._local_owner_token(require_existing=True))
+    server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(dataset))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    endpoint=f'http://127.0.0.1:{server.server_port}';checks=[];sequence=0
+    def counts():
+        with dataset.lock:
+            return {table:dataset.db.execute('SELECT count(*) FROM '+table).fetchone()[0] for table in
+                    ('workspace_runs','access_execution_consumptions','access_execution_grants','model_attempt_reservations')}
+    def http(operation,body,expected=None):
+        nonlocal sequence
+        method,path,data=agent_api.project_request(operation,body,1)
+        request=Request(endpoint+path,method=method,data=None if data is None else agent_api.encoded(data),
+            headers={'Authorization':'Bearer '+owner['token'],'Content-Type':'application/json',
+                     agent_api.CONTRACT_HEADER:agent_api.selected_header(operation)})
+        try:
+            with urlopen(request,timeout=360) as response:status=response.status;value=json.loads(response.read())
+        except HTTPError as error:status=error.code;value=json.loads(error.read())
+        sequence+=1;(output/f'{sequence:02d}-{operation}.json').write_text(json.dumps({'status':status,'result':value},indent=2)+'\n')
+        require((200<=status<300) if expected is None else status==expected,operation+' unexpected HTTP'+str(status)+': '+str(value)[:1000])
+        agent_api.validate_output(operation,{'status':status,'result':value},1)
+        return value
+    def refused(label,action):
+        try:action()
+        except WorkbenchError as error:
+            require(error.code in ('unavailable','unsupported','stale','invalid','conflict'),label+' unexpected refusal')
+            checks.append({'check':label,'state':'refused','code':error.code});return
+        raise RuntimeError(label+' unexpectedly succeeded')
+    def fault(path,raw,action):
+        before=path.read_bytes();mode=path.stat().st_mode&0o777
+        try:
+            path.chmod(0o600);path.write_bytes(raw);path.chmod(mode);action()
+        finally:
+            path.chmod(0o600);path.write_bytes(before);path.chmod(mode)
+    try:
+        with dataset.access.bind(owner['token']):
+            run=dataset.runs.get(original['run_id']);baseline=counts()
+            require(run['state']=='completed' and run['custody_phase']=='drained','Expected retained completed Run')
+            graph=run['graph'];material=dataset.pipelines.recipe_material(original['material'],verify=True)
+            def unchanged(label):require(counts()==baseline,label+' changed admission/grant/reservation counts')
+            current=dataset.pipelines.preflight_external(graph['id'],graph['revision'])
+            http('runs.submit_external',{'request_key':'plain-model-evidence-'+uuid.uuid4().hex,
+                'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':current['material_sha256']},expected=409)
+            unchanged('Legacy submission refusal');checks.append({'check':'New variant refuses executable-only legacy submission before implicit grant/Run/reservation','state':'passed'})
+            source=args.project.resolve()/'producer.py'
+            def source_fault():
+                http('graphs.preflight_external',{'graph_id':graph['id'],'revision':graph['revision']},expected=409)
+                unchanged('Source drift refusal')
+            fault(source,source.read_bytes()+b'\n# exact captured source drift negative\n',source_fault)
+            checks.append({'check':'Actual changed project source refuses retained-material preflight without admission effects','state':'passed'})
+            profile=dataset.pipelines.material_path/original['material']['sha256']/'profile.json'
+            bad=json.loads(profile.read_bytes());bad['capture']['interval']+=1
+            def profile_fault():
+                http('recipes.material',{'ref':original['material']},expected=409)
+                http('runs.get',{'run_id':run['id']},expected=409)
+                unchanged('Profile tamper refusal')
+            fault(profile,agent_api.encoded(bad),profile_fault)
+            checks.append({'check':'Changed retained profile refuses material and actual cold Run reads','state':'passed'})
+            name='execution-context.json';item=next(item for item in run['artifacts'] if item['name']==name)
+            path=dataset.runs.path/run['id']/name;raw=path.read_bytes().replace(run['id'].encode(),b'f'*32)
+            require(len(raw)==item['bytes'] and raw!=path.read_bytes(),'Context corruption fixture is not same-length distinct bytes')
+            def context_fault():
+                refused('whole artifact',lambda:dataset.runs.artifact(run['id'],name))
+                def stream():
+                    with dataset.runs.open_artifact(run['id'],name):pass
+                refused('stream artifact',stream)
+                refused('artifact segment',lambda:dataset.runs.artifact_segment(run['id'],name,{'expected_sha256':item['sha256'],'offset':0,'max_bytes':1024}))
+                refused('artifact capture',lambda:dataset.runs.capture_artifact(run['id'],name,item['sha256']))
+                refused('model evidence query',lambda:dataset.runs.model_evidence(run['id'],{},contract_version=2))
+                entry=next(row for row in dataset.runs.input_candidates()['runs'] if row['run_id']==run['id'])
+                require(entry['status']=='unavailable' and entry['artifacts']==[],'Invalid scientific output leaked through input inventory')
+                checks.append({'check':'Run input inventory','state':'unavailable; no artifacts'})
+                http('runs.artifact_chunk',{'run_id':run['id'],'name':name,'expected_sha256':item['sha256'],'offset':0,'max_bytes':1024},expected=409)
+                unchanged('Wrong context refusal')
+            fault(path,raw,context_fault)
+            refused('scientific test selector',lambda:dataset.runs.model_evidence(run['id'],{'split':'test'},contract_version=2))
+            # Wrong Task is a separately published inert Model, never a forged Run.
+            policy=json.loads((args.project.resolve()/'recipe.json').read_bytes())['model_evidence']
+            published=dataset.models.material(original['model'],verify=True)
+            wrong=http('models.create',{'name':'Actual mismatched Task negative','kind':'captured_source',
+                'task':dict(published['material']['task'],id='example.scalar-a:wrong-task'),
+                'specification':policy['model_specification'],'preprocessing_policy':policy['preprocessing_policy'],
+                'output_policy':policy['output_policy'],'source_selector':published['material']['source_selector']})
+            wrong=http('models.publish',{'model_id':wrong['id'],'revision':wrong['revision']})
+            study=http('studies.create',{'name':'Bounded mismatched Task preparation negative',
+                'limits':{'attempt_slots':1,'admitted_wall_seconds':600,'retained_bytes':100*1024**2,'peak_staging_bytes':100*1024**2},
+                'policy':{'format':'selection_policy_v1','metric_definition_sha256':digest(policy['metric_definitions'][0]),
+                    'checkpoint_rule':'last','replicate_reduce':'individual','required_capabilities':policy['profile']['required_capabilities'],
+                    'numerical_acceptance':'diagnostic','tie_break':'trial_id'}})
+            http('studies.prepare_trial',{'study_id':study['id'],'request_key':'wrong-task-'+uuid.uuid4().hex,
+                'revision':study['revision'],'graph_id':graph['id'],'graph_revision':graph['revision'],'model':wrong['ref'],'replicate':0},expected=409)
+            unchanged('Mismatched Task preparation')
+            checks.append({'check':'Actual published wrong-Task Model refuses normal HTTP Study preparation before grant/reservation/Run','state':'passed'})
+            require(dataset.runs.get(run['id'])==run,'Restored Run meaning changed')
+            require(dataset.pipelines.recipe_material(original['material'],verify=True)==material,'Restored material changed')
+            require(dataset.runs.model_evidence(run['id'],{},contract_version=2)['state']=='verified','Restored evidence did not verify')
+            for item in run['artifacts']:
+                current=dataset.runs.artifact(run['id'],item['name'])[0]
+                require(hashlib.sha256(current).hexdigest()==item['sha256'] and current==(base/'artifacts'/item['name']).read_bytes(),'Negative cleanup changed retained artifact')
+            unchanged('Final cleanup')
+            receipt={'state':'passed','scope':'Actual retained source/context/profile/Task/legacy-admission negatives; no new execution or public contract2/UI claim',
+                'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+                'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'run_id':run['id'],
+                'counts_before':baseline,'counts_after':counts(),'checks':checks,'all_original_artifacts_restored':True}
+            (output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print('PASS actual retained negatives',output,flush=True)
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+        with dataset.access.bind(owner['token']):dataset.access.logout()
+        dataset.close()
+
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--existing-receipt',type=Path,help='Run only retained fault negatives against a prior real qualification receipt')
+    parser.add_argument('--project',type=Path)
     parser.add_argument('--require-public-fields',action='store_true')
     parser.add_argument('--catalog',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--runtime-config',type=Path,required=True);parser.add_argument('--oracle-python',type=Path,required=True)
-    main(parser.parse_args())
+    arguments=parser.parse_args()
+    if arguments.existing_receipt is not None:
+        if arguments.project is None:parser.error('--existing-receipt requires --project')
+        qualify_retained_negatives(arguments)
+    else:main(arguments)
