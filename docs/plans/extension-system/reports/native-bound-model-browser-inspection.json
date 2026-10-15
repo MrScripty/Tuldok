@@ -1,0 +1,207 @@
+{
+  "source_commit": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+  "source_sha256": {
+    "static/workspace-service.js": "a03e9d4c216bb7ff6719eef4db889a367ec02604cc427b228813f7a3ca398d04",
+    "static/workspace-projects.js": "cc4a0242607ff0b835d18125272b56cfdd46fc820e4c120c79cfa96bc602434f",
+    "static/workspace-real.js": "9d7f59f928298d9fd1e851f7823b265eccee3c6a499de8a61f71d838d1a7eb77",
+    "static/workspaces.js": "720c86f6f24daffea35a9f232788b308357e085426a40fb92bf17a0b415322f3",
+    "static/workspaces.css": "9f3a91ee6138b3ce958130c55484b7fc5d9f57da68662c0bd3dd786d18c0ad10",
+    "tests/browser_extension_model_author.cjs": "d51a8da82d45f3c60b42c9861a49af0240ace7e6e3f3da33e43b89b8968d0cd5"
+  },
+  "command": "node tests/browser_extension_model_author.cjs --inspect-only",
+  "browser": "Chrome/151.0.7922.173",
+  "source_receipt": "/workspace/tuldok-bound-model-browser-qa/browser-review-source.json",
+  "catalog_path": "/workspace/tuldok-bound-model-browser-qa/catalog",
+  "study_id": "f7b7b82dcbda493ba0f5533b9186394e",
+  "trial_id": "d019a89ceb1e45afaa755cf6d0a598e0",
+  "configuration": {
+    "width": 3
+  },
+  "trainer_parameters": {
+    "learning_rate": 0.2,
+    "updates": 64
+  },
+  "material_sha256": "959b8212d25aad4265cba5f99eb5021dc4fe9309d8ca02895d975abc760672d5",
+  "limits": {
+    "attempt_slots": 3,
+    "admitted_wall_seconds": 10800,
+    "retained_bytes": 1073741824,
+    "peak_staging_bytes": 2147483648
+  },
+  "requests": [
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/models",
+      "body": {
+        "name": "Native bound model review only; no Run",
+        "task": {
+          "catalog_id": "6a3eb7889f8b471f89c5b5eeb42f1d6f",
+          "id": "example.scalar-a:task",
+          "kind": "task",
+          "revision": 2,
+          "sha256": "58dc817defb4982089ef43ea1133a29a696c2f25abc0164e3a1b4f770c8f4141"
+        },
+        "kind": "captured_source",
+        "specification": {
+          "configuration": {
+            "width": 3
+          },
+          "format": "authored_affine_scalar_v2",
+          "input_fields": [
+            "initial"
+          ],
+          "output_fields": [
+            "prediction"
+          ],
+          "trainable_parameters": [
+            "scale",
+            "offset"
+          ]
+        },
+        "source_selector": {
+          "project_id": "bf3ecc60255c496ca1ab080d9ad42533",
+          "recipe_id": "train",
+          "expected_sha256": "f5f0d394a5e9218bddc2a52164b07519fa22ca2c16913059c962745315178df3"
+        },
+        "preprocessing_policy": {
+          "fields": [
+            "initial"
+          ],
+          "fit_members": [
+            "train-0",
+            "train-1"
+          ],
+          "fit_scope": "train",
+          "kind": "population_standardization"
+        },
+        "output_policy": {
+          "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+          "kind": "standalone_scalar",
+          "stage": "post_train_mapping",
+          "units": "dimensionless"
+        }
+      }
+    },
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/models/1b932ffa6db84b9bb130ce55f7125826/publish",
+      "body": {
+        "revision": 1,
+        "reconcile_capture": true
+      }
+    },
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/graphs/external",
+      "body": {
+        "name": "Native bound model review only; no Run",
+        "project_id": "bf3ecc60255c496ca1ab080d9ad42533",
+        "recipe_id": "train",
+        "expected_sha256": "f5f0d394a5e9218bddc2a52164b07519fa22ca2c16913059c962745315178df3",
+        "inputs": {
+          "fixture": {
+            "reference_id": "fixture",
+            "expected_sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f"
+          }
+        },
+        "parameters": {
+          "learning_rate": 0.2,
+          "updates": 64
+        }
+      }
+    },
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/graphs/d1d4aeea5de4472c8c61d0a6df6276cf/preflight-external",
+      "body": {
+        "revision": 1
+      }
+    },
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/studies",
+      "body": {
+        "name": "Native bound model review only; no Run",
+        "limits": {
+          "attempt_slots": 3,
+          "admitted_wall_seconds": 10800,
+          "retained_bytes": 1073741824,
+          "peak_staging_bytes": 2147483648
+        },
+        "policy": {
+          "checkpoint_rule": "last",
+          "format": "selection_policy_v1",
+          "metric_definition_sha256": "c6260167ee7ad9779e873bbf076fa7d195fdbaef2e7e646300faa1444395834d",
+          "numerical_acceptance": "diagnostic",
+          "replicate_reduce": "individual",
+          "required_capabilities": [
+            "checkpoints",
+            "fixed_validation_predictions",
+            "scalar_history",
+            "field_pairs"
+          ],
+          "tie_break": "trial_id"
+        }
+      }
+    },
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/studies/f7b7b82dcbda493ba0f5533b9186394e/prepare-trial",
+      "body": {
+        "request_key": "15680d9e-d423-47b3-90e2-ed0f8cd24cba",
+        "revision": 1,
+        "graph_id": "d1d4aeea5de4472c8c61d0a6df6276cf",
+        "graph_revision": 1,
+        "model": {
+          "catalog_id": "6a3eb7889f8b471f89c5b5eeb42f1d6f",
+          "id": "1b932ffa6db84b9bb130ce55f7125826",
+          "kind": "model",
+          "revision": 1,
+          "sha256": "ca1e485afab921866b264a91ca73449cba27b2c91716d7c9f3618e87a17b065f"
+        },
+        "replicate": 0,
+        "reconcile_capture": true
+      }
+    },
+    {
+      "url": "http://127.0.0.1:42965/api/workspace/recipe-material",
+      "body": {
+        "ref": {
+          "catalog_id": "6a3eb7889f8b471f89c5b5eeb42f1d6f",
+          "id": "959b8212d25aad4265cba5f99eb5021dc4fe9309d8ca02895d975abc760672d5",
+          "kind": "recipe_material",
+          "sha256": "959b8212d25aad4265cba5f99eb5021dc4fe9309d8ca02895d975abc760672d5"
+        }
+      }
+    }
+  ],
+  "captures": [
+    {
+      "file": "native-configuration-1440.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "native-configuration-390.jpg",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "exact-review-1440.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "exact-review-390.jpg",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "dark-exact-review-1440.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "dark-exact-review-390.jpg",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "producer_execution": false,
+  "quality_claim": false,
+  "scope": "Actual HTTP/native immutable composition inspection and review only; approval/admission/producer/field acceptance pending"
+}

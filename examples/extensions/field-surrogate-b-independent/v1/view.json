@@ -1,0 +1,22 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.scalar-b-independent:view",
+  "version": "1.0.0",
+  "kind": "view",
+  "label": "Independent B view",
+  "requires": [
+    {
+      "id": "example.scalar-b-independent:task",
+      "version": "1.0.0",
+      "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+    }
+  ],
+  "view": {
+    "primitive": "orthogonal_slices",
+    "query": {
+      "id": "tuldok:runs.model_evidence",
+      "version": "2.0.0"
+    },
+    "label": "Raw and boundary-enforced B fields"
+  }
+}

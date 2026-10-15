@@ -1,0 +1,145 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.scalar-b-independent:task",
+  "version": "1.0.0",
+  "kind": "task",
+  "label": "Independent B source-driven scalar and explicit boundary enforcement",
+  "requires": [],
+  "ports": [
+    {
+      "id": "initial",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "source",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "boundary_mask",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-b-independent:boundary-mask",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "raw_target",
+      "direction": "target",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "corrected_target",
+      "direction": "target",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "raw",
+      "direction": "output",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "corrected",
+      "direction": "output",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    }
+  ],
+  "stages": [
+    {
+      "id": "raw_inference",
+      "version": "1.0.0",
+      "inputs": [
+        "initial",
+        "source",
+        "raw_target"
+      ],
+      "outputs": [
+        "raw"
+      ],
+      "clock": "optimizer_update",
+      "failure_policy": "fail"
+    },
+    {
+      "id": "boundary_enforcement",
+      "version": "1.0.0",
+      "inputs": [
+        "raw",
+        "boundary_mask",
+        "corrected_target"
+      ],
+      "outputs": [
+        "corrected"
+      ],
+      "clock": "optimizer_update",
+      "failure_policy": "fail"
+    }
+  ]
+}

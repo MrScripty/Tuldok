@@ -32,6 +32,10 @@ EVIDENCE_FORMAT = 'external_model_evidence_recipe_v1'
 BOUND_EVIDENCE_FORMAT = 'external_model_evidence_recipe_v2'
 BOUND_EVIDENCE_HOST_NAMES = (*EVIDENCE_HOST_NAMES, 'extension_bindings.py', 'extension_contract.py', 'agent_api.py',
     *(f'extension_schemas/{name}-v1.json' for name in ('extension','contribution','parameter')))
+CANONICAL_POLICY_FORMAT = 'extension_field_policy_v2'
+CANONICAL_EVIDENCE_HOST_NAMES = (*BOUND_EVIDENCE_HOST_NAMES, 'extension_canonical.py',
+    'canonical_release.py', 'meshes.py', 'dataset_releases.py', 'caption_import.py',
+    'native_text_import.py', 'bulk_import.py', 'workbench.py')
 EVIDENCE_CONTEXT = 'runtime-bootstrap/model-evidence-context.json'
 EVIDENCE_CONTEXT_LIMIT = 64 * 1024
 IMPORTED_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in HOST_NAMES}
@@ -39,11 +43,18 @@ IMPORTED_EVIDENCE_HOST_FILES = ({name: hashlib.sha256((Path(__file__).resolve().
     if all((Path(__file__).resolve().parent/name).is_file() for name in EVIDENCE_HOST_NAMES) else None)
 
 IMPORTED_BOUND_EVIDENCE_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in BOUND_EVIDENCE_HOST_NAMES}
+IMPORTED_CANONICAL_EVIDENCE_HOST_FILES = ({name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in CANONICAL_EVIDENCE_HOST_NAMES}
+    if all((Path(__file__).resolve().parent/name).is_file() for name in CANONICAL_EVIDENCE_HOST_NAMES) else None)
 
 
 def is_bound_evidence(value):
     return (type(value) is dict and type(value.get('schema_version')) is int
             and value['schema_version'] == 3 and value.get('format') == BOUND_EVIDENCE_FORMAT)
+
+
+def is_canonical_evidence(value):
+    return (is_bound_evidence(value) and type(value.get('model_evidence')) is dict
+            and value['model_evidence'].get('format') == CANONICAL_POLICY_FORMAT)
 
 
 def is_evidence(value):
@@ -545,13 +556,43 @@ def validate_bound_captures(material, captured):
             {path[len('source/'):]:raw for path,raw in captured.items() if path.startswith('source/')})
 
 
-def host_identity(*, evidence=False, bound=False):
+
+def captured_inputs(material, captured):
+    """Return the exact private input-byte map; never publish source payloads."""
+    if (type(material) is not dict or type(captured) is not dict or type(material.get('inputs')) is not dict
+            or type(material.get('captures')) is not dict):
+        raise WorkbenchError('Captured input inventory is invalid.','unavailable',409)
+    expected={'input/'+name for name in material['inputs']}
+    if any(type(path) is not str for path in captured) or {path for path in captured if path.startswith('input/')}!=expected:
+        raise WorkbenchError('Captured input membership differs.','unavailable',409)
+    result={}
+    for path in sorted(expected):
+        raw=captured[path];item=material['captures'].get(path)
+        if (type(raw) is not bytes or type(item) is not dict or set(item)!={'bytes','sha256'}
+                or type(item['bytes']) is not int or item['bytes']!=len(raw) or item['sha256']!=file_digest(raw)):
+            raise WorkbenchError('Captured input bytes differ from retained identity.','unavailable',409)
+        result[path]=raw
+    return result
+
+
+def validate_canonical_captures(material, captured, *, outputs=None):
+    if not is_canonical_evidence(material['recipe']):return
+    try:import extension_canonical
+    except ImportError:
+        raise WorkbenchError('Canonical extension evidence dependency is unavailable.','unavailable',409) from None
+    inputs=captured_inputs(material,captured)
+    recipe=material['recipe'];policy=recipe['model_evidence']
+    extension_canonical.validate_captured(policy['canonical'],policy,recipe,material,inputs,outputs=outputs)
+    return inputs
+
+
+def host_identity(*, evidence=False, bound=False, canonical=False):
     import recipe_process
     root = Path(__file__).resolve().parent
-    imported = IMPORTED_BOUND_EVIDENCE_HOST_FILES if bound else IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
+    imported = IMPORTED_CANONICAL_EVIDENCE_HOST_FILES if canonical else IMPORTED_BOUND_EVIDENCE_HOST_FILES if bound else IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
     if imported is None:
         raise WorkbenchError('Canonical field evidence dependency is unavailable; restart after explicit provisioning.', 'unavailable', 409)
-    current = {name: file_digest((root/name).read_bytes()) for name in (BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES)}
+    current = {name: file_digest((root/name).read_bytes()) for name in (CANONICAL_EVIDENCE_HOST_NAMES if canonical else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES)}
     if current != imported or file_digest(recipe_process.SOURCE) != current['recipe_process.py']:
         raise WorkbenchError('Execution host changed after import. Restart before preflight or execution.', 'stale', 409)
     return current
@@ -559,10 +600,10 @@ def host_identity(*, evidence=False, bound=False):
 
 
 def recipe_host_identity(definition):
-    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition))
+    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition),canonical=is_canonical_evidence(definition))
 
 
-def revalidate_bound_material(projects, material, captured, profile=None):
+def revalidate_bound_material(projects, material, captured, profile=None, *, releases=None):
     """Recheck an owner-prepared immutable capture for an exact grant consumer.
 
     Current Project bytes are compared privately against this exact retained
@@ -576,6 +617,8 @@ def revalidate_bound_material(projects, material, captured, profile=None):
     if encode(measured)!=encode(material['captures']):
         raise WorkbenchError('Retained execution capture differs.','unavailable',409)
     validate_bound_captures(material,captured)
+    validate_canonical_captures(material,captured)
+    canonical=is_canonical_evidence(material['recipe'])
     # Exact retained composition has already been authorized and checked by
     # Pipeline. This private nondisclosing comparison grants no ambient Project
     # reads to its agent consumer, while preserving source freshness on new work.
@@ -599,6 +642,13 @@ def revalidate_bound_material(projects, material, captured, profile=None):
                 encode(decode_definition(raw))!=encode(material['recipe'])):
             raise WorkbenchError('Current recipe definition differs.')
         for name,receipt in material['inputs'].items():
+            if canonical and name==material['recipe']['model_evidence']['canonical']['release']['input']:
+                if releases is None:raise WorkbenchError('Current frozen Release owner is unavailable.')
+                raw,current_receipt=releases.capture_input(receipt['release_id'],receipt['measured_sha256'],
+                    material['recipe']['inputs'][name]['max_bytes'])
+                if raw!=captured['input/'+name] or encode(current_receipt)!=encode(receipt):
+                    raise WorkbenchError('Current frozen Release differs.')
+                continue
             if 'kind' in receipt:raise WorkbenchError('Bound field inputs require Project references.')
             ref=next((item for item in saved['manifest']['data'] if item['id']==receipt['reference_id']),None)
             if ref is None or ref['path']!=receipt['path']:raise WorkbenchError('Current input reference differs.')
@@ -623,6 +673,10 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
     inspected = inspect_recipe(projects, config['project_id'], config['recipe_id'], config['expected_sha256'])
     definition = inspected['definition']; values = validate_parameters(definition, values)
     bound = is_bound_evidence(definition)
+    canonical=is_canonical_evidence(definition)
+    if canonical:
+        import extension_canonical
+        extension_canonical.validate_bindings(definition['model_evidence']['canonical'],config['inputs'])
     sources = bound_sources(projects, inspected) if bound else projects.read_recipe_sources(config['project_id'], definition['sources'])
     if bound:
         import extension_bindings
@@ -634,7 +688,7 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
     captured = {'source/' + path: raw for path, raw in sources.items()}
     inputs = {}
     for name, binding in config['inputs'].items():
-        if bound and isinstance(binding,dict) and 'kind' in binding:
+        if bound and not canonical and isinstance(binding,dict) and 'kind' in binding:
             raise WorkbenchError('Bound field evidence requires authored Project inputs.','unsupported',400)
         if isinstance(binding, dict) and binding.get('kind') == 'run_artifact':
             closed(binding, ('kind', 'run_id', 'artifact_name', 'expected_sha256'))
@@ -653,6 +707,10 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
             reader = projects.read_snapshot_data_reference if bound else projects.read_data_reference
             raw, receipt = reader(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
         captured['input/' + name] = raw; inputs[name] = receipt
+    if canonical:
+        prefix={'catalog_id':projects.db.dataset_id,'recipe':definition,'inputs':inputs,
+                'captures':{path:{'bytes':len(raw),'sha256':file_digest(raw)} for path,raw in captured.items()}}
+        validate_canonical_captures(prefix,captured)
     if {'input_evidence': True} in definition['arguments']:
         captured[INPUT_EVIDENCE] = encode(inputs).encode()
     capture_limit = CPU_CAPTURE_BYTES if definition['runtime'] == CPU_PROFILE else MAX_CAPTURE_BYTES
@@ -767,8 +825,16 @@ def validate_material(material):
             if (item['project_id'], item['manifest_sha256']) != (material['project']['project_id'], material['project']['manifest_sha256']):
                 raise WorkbenchError('Input receipt belongs to another project snapshot.')
         expected['input/'+name] = item['measured_sha256']
-    if evidence and any(type(item) is not dict or 'kind' in item for item in material['inputs'].values()):
-        raise WorkbenchError('Authored model evidence cannot retain unsupported input kinds.','unsupported',409)
+    if evidence:
+        canonical=is_canonical_evidence(definition)
+        release=definition['model_evidence']['canonical']['release'] if canonical else None
+        for name,item in material['inputs'].items():
+            if canonical and name==release['input']:
+                if (item.get('kind')!='frozen_release' or item['release_id']!=release['sha256']
+                        or item['measured_sha256']!=release['sha256']):
+                    raise WorkbenchError('Canonical evidence requires its exact named frozen Release.','unsupported',409)
+            elif type(item) is not dict or 'kind' in item:
+                raise WorkbenchError('Authored model evidence cannot retain unsupported input kinds.','unsupported',409)
     generated = validate_native_policies(material,definition)
     if {'input_evidence': True} in definition['arguments']:
         generated[INPUT_EVIDENCE] = encode(material['inputs']).encode()
@@ -824,7 +890,7 @@ def validate_material(material):
         bounded_int(item['bytes'],0,64*1024*1024,'Runtime file bytes'); total += item['bytes']
     if total > RUNTIME_LIMIT or runtime['executable'] not in files or files[runtime['executable']]['sha256'] != runtime['executable_sha256'] or digest(files) != runtime['closure_sha256']:
         raise WorkbenchError('Runtime closure identity is inconsistent.')
-    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
+    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(CANONICAL_EVIDENCE_HOST_NAMES if is_canonical_evidence(definition) else BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
     for value in material['host_files'].values(): sha(value)
     return material
 
@@ -891,6 +957,7 @@ def _sync_directory(path):
 
 def capture(preflight, captured, staging):
     validate_bound_captures(preflight['material'], captured)
+    validate_canonical_captures(preflight['material'],captured)
     staging = Path(staging).absolute()
     # The Runs owner supplies an existing private attempt parent, never a client path.
     staging.mkdir(mode=0o700, exist_ok=False)

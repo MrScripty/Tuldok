@@ -81,6 +81,11 @@ new semantic policy changes remain host/adapter-owned contract work.
 
 ## Explicit authorized conformance
 
+For native field producers, follow the exact
+[probe input and per-field target identity rules](../docs/contracts/extension-field-identities.md).
+The bound multi-output recipe uses native payload hashes and ordered target
+identities; complete NPY file hashes belong to artifact Blobs instead.
+
 First use the existing owner workflow to create/open the finite Study, prepare
 its trial, review the exact composition and runtime, and issue an execution grant
 to the intended agent. The agent needs current `inspect,execute` scopes. Scope
