@@ -254,7 +254,7 @@ function launch(command, args, options) {
       file: filename,
       width,
       height,
-      mode: "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      mode: "actual retained authored field evidence; private QA rights, no quality or physics claim",
       quality: 85,
     });
   }
