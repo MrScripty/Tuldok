@@ -225,15 +225,21 @@ every historical server/client forever.
 
 `Current` below is source-backed current capability, not an assertion of full
 agent parity. `Proposed` marks the first supported interface to design, never an
-invented existing tool. Current MCP and `project_cli.py call` share AgentClient's
-registered operations. Existing HTTP/browser-only owner actions remain explicit
-human gates. Model, study, evaluation and candidate additions should use the same
-registry/projection pattern, with HTTP plus MCP/CLI first; no separate agent owner.
+invented existing tool. This matrix describes the D1 application baseline
+`f58880df`, even when later code adds interfaces. MCP projects AgentClient's
+registered operations. At that baseline, `project_cli.py` exposes only `open`,
+`inspect`, `recipe`, `prepare`, `preflight`, `submit`, `status`, `cancel` and
+`download`; it has no generic `call` command. Its AgentClient performs discovery
+internally, but the CLI does not expose every registered operation. Existing
+HTTP/browser-only owner actions remain explicit human gates. Model, study,
+evaluation and candidate additions should use the same registry/projection
+pattern, with HTTP plus MCP/CLI first; that CLI parity is proposed, not baseline
+coverage. No separate agent owner.
 
 | Stage / semantic operation | Owner | Current actual interface and gap | Proposed supported projection / authority and observation |
 | --- | --- | --- | --- |
-| Discover/session/preflight | Agent registry, Access, Pipeline/runtime owners | HTTP `/api/agent/operations`, session/context; `graphs.validate`, `graphs.preflight_external`; MCP tool schemas and CLI discovery. Whole-registry equality today. | Negotiated operation compatibility plus task/model/profile/runtime and effective permissions. Return separate supported/compatible/authorized/available states. Interface observes validation/dispatch/return; domain preflight stays inert. |
-| Import/inspect/edit data | Workbench and asset owners | Registered `data.query`, `data.get`, `data.save_draft`, typed import and scientific/media reads through MCP/HTTP/CLI. Some generation/provider operations explicitly excluded. | Keep supported imports/edits; surface unsupported modes rather than hidden filesystem steps. Inspect/edit scope, checked annotation/source revisions, bounded payloads. Passive projection excludes bodies/paths/IDs. |
+| Discover/session/preflight | Agent registry, Access, Pipeline/runtime owners | HTTP `/api/agent/operations`, session/context; `graphs.validate`, `graphs.preflight_external`; MCP tool schemas; discovery is internal to the fixed-command CLI client. Whole-registry equality at the D1 baseline. | Negotiated operation compatibility plus task/model/profile/runtime and effective permissions. Return separate supported/compatible/authorized/available states. Interface observes validation/dispatch/return; domain preflight stays inert. |
+| Import/inspect/edit data | Workbench and asset owners | Registered `data.query`, `data.get`, `data.save_draft`, typed import and scientific/media reads through MCP/HTTP. The fixed-command CLI has no data import/edit commands. Some generation/provider operations explicitly excluded. | Keep supported imports/edits; surface unsupported modes rather than hidden filesystem steps. Inspect/edit scope, checked annotation/source revisions, bounded payloads. Passive projection excludes bodies/paths/IDs. |
 | Human review | Workbench/Access | Review is owner-only via domain HTTP/browser; agent registry excludes owner review. | Agent requests a review gate/status; owner acts. Never expose approve-review as an agent mutation. Required review/audit stays transactional. |
 | Preview/freeze | Releases | `releases.preview`, `releases.freeze`; current registry freezes `canonical_v1` only. Other scientific/classifier format support in owner/UI is not automatically agent parity. | D2 admits explicit negotiated format operations to the same Releases owner. Freeze scope, exact preview/revisions/family rules. No new release registry or human-review bypass. |
 | Define model | Model-definition responsibility / captured Projects | Current project inspection and `recipes.inspect` can describe captured code; no first-class model draft operations. | Proposed discover/create/save/resolve/inspect/capture with expected draft revision and frozen data compatibility. HTTP/MCP/CLI. Code import/metadata inspection is inert; execution requires a Run. |
