@@ -259,6 +259,8 @@ class Runs:
 
     def _public(self, run):
         if self._external(run):
+            from candidate_packages import authorize_transitive_inputs
+            authorize_transitive_inputs(self,run)
             keys = ('schema_version', 'mode', 'id', 'dataset_id', 'request_key', 'state', 'created_at',
                     'started_at', 'finished_at', 'graph', 'graph_revision', 'graph_sha256', 'parameters',
                     'attempt', 'parent_run_id', 'events', 'error', 'progress', 'node_attempts',
@@ -665,6 +667,8 @@ class Runs:
             run = self._load(run_id)
         if not self._external(run):
             raise WorkbenchError('Progress diagnostics require an external Run.', 'unsupported', 400)
+        from candidate_packages import authorize_transitive_inputs
+        authorize_transitive_inputs(self,run)
         result = {'schema_version':1, 'run_id':run['id'], 'state':run['state'],
                   'custody_phase':run['custody_phase'], 'evidence':'unavailable',
                   'streams':{'stdout':None,'stderr':None}, 'progress':None,
@@ -843,6 +847,8 @@ class Runs:
     def _external_inventory(self, run):
         import recipe_process
         import recipe_contract
+        from candidate_packages import authorize_transitive_inputs
+        authorize_transitive_inputs(self,run)
         directory = self.path / run['id']
         descriptor = None
         try:

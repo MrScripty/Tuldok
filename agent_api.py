@@ -434,6 +434,25 @@ model_operation('studies.select_candidate','POST','/api/workspace/studies/{study
     scopes=('inspect','edit'),mutation=True)
 model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
     {'candidate_id':ID},output=_CANDIDATE_RESULT)
+_PACKAGE_PREPARE_FIELDS={'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'candidate_id':ID,
+    'root':REF,'directory':ARTIFACT,'runtime_snapshot_sha256':SHA}
+_PACKAGE_PREPARED_FIELDS={'state':const('prepared'),'candidate_id':ID,'trial':_TRIAL,
+    'graph':_GRAPH,'model':MODEL_REF,'runtime_snapshot_sha256':SHA}
+for _action in ('package','verifier'):
+    _fields=dict(_PACKAGE_PREPARE_FIELDS);_result=dict(_PACKAGE_PREPARED_FIELDS)
+    if _action=='verifier':
+        _fields.update(package_run_id=ID,package_sha256=SHA)
+        _result.update(package_run_id=ID,package_sha256=SHA)
+    _name='studies.prepare_'+_action
+    model_operation(_name,'POST','/api/workspace/studies/{study_id}/prepare-'+_action,
+                    _fields,output=obj(_result),scopes=('inspect','edit'),mutation=True)
+    _OWNER_OPERATION_IDS.add(_name);_MODEL_RECEIPT_IDS.add(_name)
+model_operation('studies.package_state','GET','/api/workspace/candidates/{candidate_id}/package-state',
+    {'candidate_id':ID},output=obj({'candidate':_CANDIDATE_RESULT,
+        'state':{'enum':['selected','package_complete','fresh_verified']},
+        'packages':array(obj({'run_id':ID,'sha256':SHA,'bytes':SAFE_POS,'artifact_name':const('package.zip'),
+                              'url':text(512)}),100),
+        'verifications':array(obj({'run_id':ID,'receipt':{'type':'object','maxProperties':64}}),100)}))
 # Model evidence has a task-owned decoder. The public projection binds the
 # complete result variant while retaining its bounded, versioned domain bodies.
 _EVIDENCE_DOCUMENT={'type':'object','maxProperties':128}

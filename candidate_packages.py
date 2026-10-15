@@ -583,7 +583,14 @@ def authorize_transitive_inputs(runs, run, *, seen=None):
     seen = seen | {run['id']}
     if not runs._external(run):
         return
-    for item in run['material']['inputs'].values():
+    authorize_material_inputs(runs,run['material'],seen=seen)
+
+
+def authorize_material_inputs(runs,material,*,seen=None):
+    """Reauthorize an exact retained input material without inventing a Run."""
+    from workbench import WorkbenchError
+    seen=set() if seen is None else seen
+    for item in material['inputs'].values():
         if item.get('kind') != 'run_artifact':
             continue
         source = item['source']; source_id = source['run_id']; name = source['artifact_name']
