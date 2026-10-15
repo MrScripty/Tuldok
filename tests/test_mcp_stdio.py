@@ -20,9 +20,20 @@ import mcp_stdio as bridge
 
 SDK_AVAILABLE = all(importlib.util.find_spec(name) for name in ('mcp', 'anyio', 'jsonschema'))
 CHILD = r'''
-import os, time, anyio
+import os, time, anyio, copy
+import agent_api
 from mcp_stdio import serve
+if os.environ.get('TULDOK_TEST_NEW_VERSION'):
+    operation=copy.deepcopy(agent_api._CONTRACTS['context.get'][1])
+    operation['inputSchema']={'type':'object','properties':{'future':{'type':'boolean'}},
+                              'required':['future'],'additionalProperties':False}
+    agent_api._CONTRACTS['context.get'][2]=operation
 class AuthoredClient:
+    def selected_contracts(self):
+        return ({'context.get':1} if os.environ.get('TULDOK_TEST_CONTEXT_ONLY') else
+                {name:1 for name in agent_api._CONTRACTS})
+    def tool_definitions(self):
+        return agent_api.tool_definitions(self.selected_contracts())
     def call(self, name, arguments):
         gate = os.environ.get('TULDOK_TEST_GATE')
         if gate:
@@ -173,6 +184,19 @@ class SDKProcessTests(unittest.TestCase):
                 process.stdin.close()
                 self.assertEqual(process.wait(timeout=8), 0)
                 self.assertEqual(process.stderr.read(), b'')
+
+    def test_selected_tools_and_older_selected_schema_are_used_by_real_sdk(self):
+        process=self.start(TULDOK_TEST_CONTEXT_ONLY='1',TULDOK_TEST_NEW_VERSION='1')
+        self.ready(process)
+        self.send(process,request('tools/list',2))
+        tools=self.read(process)['result']['tools']
+        self.assertEqual([item['name'] for item in tools],['context_get'])
+        self.send(process,request('tools/call',3,{'name':'context_get','arguments':{}}))
+        result=self.read(process)['result']
+        self.assertEqual(result['structuredContent']['status'],200)
+        self.assertFalse(result['isError'])
+        self.send(process,request('tools/call',4,{'name':'projects_open','arguments':{}}))
+        self.assertEqual(self.read(process)['error']['code'],-32602)
 
     def test_invalid_schema_is_protocol_error_and_never_dispatched(self):
         process = self.start()

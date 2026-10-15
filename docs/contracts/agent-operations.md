@@ -1,4 +1,4 @@
-# Generic scoped local agent operations v1
+# Generic scoped local agent operations
 
 This independently admitted component preserves PR53's generic operations and
 optional SDK transport. Sequence import supports main's two-file v1 only. The
@@ -6,10 +6,10 @@ original three-file variant and its assertions remain on the original PR43/53
 branches; whole original P6/G7 acceptance remains pending. This component is not
 full original P6 acceptance.
 
-`agent_api.discovery()` is the versioned operation registry. Its deterministic
+`agent_api.discovery()` is the frozen f588 v1 compatibility projection. Its deterministic
 SHA256 binds schemas, route projections, scope descriptions and limits. The
 application exposes it at authenticated `GET /api/agent/operations` without
-importing optional packages. MCP uses the same definitions with fixed underscore
+importing optional packages. New clients negotiate per-operation contracts below. MCP uses fixed underscore
 names; dotted operation IDs remain stable registry identifiers. These schemas
 bound transport input; current HTTP/domain owners decide source custody,
 permissions, revisions, family independence and execution eligibility.
@@ -22,7 +22,8 @@ Endpoint must be explicit `http://127.0.0.1:PORT` or `http://[::1]:PORT`.
 Configuration and token files must be owned regular files, private to the current
 user, without symlinks or hard links. Token path is absolute; credential contents
 are never CLI arguments or logs. Bootstrap requires a live agent credential and
-matching catalog and registry. Mutations recheck authenticated discovery. Its HTTP authorization failures keep
+matching catalog, then negotiates compatible operations. Legacy-mode mutations
+recheck exact authenticated discovery. Its HTTP authorization failures keep
 the original validated status/code/message; registry_mismatch is reserved for a
 successful discovery response whose registry differs. No
 redirects, proxies, host discovery, arbitrary URLs, shell, catalog connection,
@@ -79,7 +80,7 @@ asset/release downloads. Project evidence DOES have its existing HTTP route;
 
 ## Limits and errors
 
-Optional schema validation uses the standard pinned jsonschema
+Schema validation uses the base pinned jsonschema4.26.0
 Draft202012Validator, with no custom type checker or external schema retrieval.
 Standard integer schemas reject bool but admit integral floats. Existing domain
 owners may require actual Python integers and reject those floats; the bridge
@@ -96,7 +97,8 @@ at most5 seconds or remaining deadline. This deliberately supersedes any draft
 claim of a5-second complete header phase. Every call closes its own socket/timer.
 
 HTTP receive bound16 MiB and MCP encoded response bound32 MiB are client limits,
-not existing global server caps. Large list/detail responses can exceed them and
+with the HTTP bound also enforced for selected-contract responses, not existing
+global headerless server caps. Large list/detail responses can exceed them and
 are explicitly refused. Framing requires one Content-Length, JSON identity
 encoding, no compression, chunked encoding or redirects. Execution errors retain
 bounded safe HTTP status/code/message, returned as `{status,result}`. Unknown tools and registry argument-schema errors return JSON-RPC -32602
@@ -126,6 +128,70 @@ Historical full PR53 HTTP/MCP, benchmark and scientific evidence belongs to its
 original source scope. Fresh generic-component tests, official-SDK retained
 scientific cold reads and final composition CI are separate acceptance gates
 owned by the scientific-integration plan.
+
+## Per-operation capability negotiation
+
+Authenticated `GET /api/agent/capabilities` returns a closed
+`agent_capabilities_v1` envelope: `envelope_version:1`, current `catalog_id`,
+`operations`, and `limits`. The manifest is at most1MiB, at most256 operations,
+and at most4 locally implemented contracts per operation. Each operation has
+`id`, `availability` (`available`, `unsupported`, `unavailable`) and `contracts`.
+Each contract has `version`, `sha256`, `input_schema`, `output_schema`, `scopes`,
+`authority`, `effects`, `retry` and `bounds`. Bounds name request/response bytes,
+inline decoded bytes and JSON depth as positive safe integers. Schema fragments
+must validate as closed locally interpreted Draft202012 schemas without references;
+even ignored unknown operations must have valid bounded declarations. Discovery
+does not confer permission or claim an installed model/runtime capability.
+
+`AgentClient` selects the highest exact locally implemented ID/version/contract
+intersection. A valid unknown addition is ignored. A mismatched known operation
+is unavailable independently; compatible operations remain usable. Malformed
+envelopes, duplicate IDs/versions, external references and catalog/authentication
+failures refuse bootstrap. No schema-subsumption solver or remote route/code load
+exists. The digest binds schemas, method/path/query/injected fields, binary
+projection, MCP name, scopes, effects, retry and bounds; schema documentation
+prose is excluded. A changed semantic meaning requires a new operation version.
+
+Selected HTTP calls carry one internal header:
+`Tuldok-Operation-Contract: operation_id/version/sha256`. The server checks
+method/path/header identity, strict JSON, complete selected schema, query fields,
+injected fields and canonical projection before domain entry. Duplicate headers,
+query keys, JSON fields, unsupported framing or a discovery/dispatch contract
+race refuse without a domain mutation or execution-grant consumption. Current
+credentials, scopes, CAS, exact grants and exposure policy remain owner checks.
+Selected JSON response schema and actual encoded16MiB size are checked before
+delivery. `contract_output`502 after a mutation can leave a committed result;
+inspect durable state and reconcile its receipt before another attempt.
+
+New-only registered routes require selection. Retained headerless routes keep
+their existing wider HTTP grammar. A new branch sharing any retained route
+template (including static paths overlapping an old placeholder) must call
+`require_selection(selection, new_operation_id)` before its domain owner; a
+legacy operation's header cannot authorize the new variant. P1 advertises no new
+product operation. Later operation additions must test this dispatch obligation.
+
+Only a definite missing negotiation route/method permits fallback:404 with
+`route_not_found`, the exact old404 `Not found.` response without a code, or405
+with `method_not_allowed`. Fallback then requires exact frozen v1 discovery.
+Authentication/server errors, ambiguous404 or malformed capabilities never
+trigger fallback. The frozen56-operation digest is
+`cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8`.
+Legacy HTTP16MiB/MCP32MiB limits and grammar remain unchanged; negotiated manifest
+and request caps are1MiB and response cap16MiB. The16MiB choice preserves an
+existing8MiB artifact segment's11,184,812 base64 characters. Retire the projection
+only through an explicit supported-installation inventory and owned cutover.
+
+MCP lists and validates only the selected contracts via
+`AgentClient.selected_contracts()`/`tool_definitions()`; CLI calls use the same
+client. Neither retries automatically. Receipt reconciliation uses the original
+actor, exact body and request key. Before a future submit version changes meaning,
+its durable receipt must bind that selected semantic contract; P1 supports only
+the original submit meaning and claims no cross-version replay.
+
+The actual retained f588 client and HTTP-handler source fixtures are tested
+against both old and new peers. New CLI/MCP lost-ack tests execute a neutral
+byte-copy Run through actual PostgreSQL, Access and custody owners. These tests
+qualify transport/reconciliation, not model training or scientific correctness.
 
 Output schemas check each operation's success top-level kind and identity fields,
 and distinguish HTTP error envelopes from successful results. Nested scientific
