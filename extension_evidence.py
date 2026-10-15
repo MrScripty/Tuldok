@@ -128,12 +128,14 @@ def clocks(value, clock):
 
 @boundary
 def validate_policy(value, definition):
-    """Closed authored declarations selected only by the explicit schema2 recipe."""
+    """Closed authored policy; target semantics follow the explicit recipe version."""
     value=checked(value)
-    closed(value,('format','task','adapter_sha256','profile','probe','fit_members','fields','field_outputs',
-                  'metric_definitions','model_specification','preprocessing_policy','output_policy','probe_inputs'),'Policy')
-    require(value['format']==POLICY_FORMAT,'Unsupported policy.','unsupported')
     import recipe_contract
+    bound=recipe_contract.is_bound_evidence(definition)
+    closed(value,('format','task','adapter_sha256','profile','probe','fit_members','fields','field_outputs',
+                  'metric_definitions','model_specification','preprocessing_policy','output_policy','probe_inputs',
+                  *(['field_targets'] if bound else [])),'Policy')
+    require(value['format']==POLICY_FORMAT,'Unsupported policy.','unsupported')
     require(recipe_contract.is_evidence(definition),'Policy requires the selected model-evidence recipe.','unsupported')
     require(value['adapter_sha256']==digest(sorted(definition['sources'],key=lambda item:item['path'])),'Adapter source closure differs.')
     task=value['task'];closed(task,('id','revision','definition'),'Task declaration')
@@ -189,6 +191,22 @@ def validate_policy(value, definition):
         require(output['dtype']=='<f8' and output['centering']=='cell' and
                 output['shape_zyx']==scientific_fields.shape_for(field['geometry'],output),'Initial field pair requires exact float64 cell geometry.','unsupported')
         require(math.prod(output['shape_zyx'])*8+4096<=limits['shard_bytes'],'Field array cannot fit the admitted shard bound.','unsupported')
+    if bound:
+        targets=value['field_targets']
+        require(type(targets) is list and len(targets)==len(candidates)*len(fields),
+                'Every bound probe member/field requires its exact target payload identity.')
+        position=0
+        for member in candidates:
+            member_id=member['frozen_reference']['member_id'];identity=[]
+            for field in fields:
+                target=targets[position];position+=1
+                closed(target,('member_id','field_id','payload_sha256'),'Field target')
+                sha(target['payload_sha256'])
+                require(target['member_id']==member_id and target['field_id']==field['id'],
+                        'Field target order/membership differs from declared probe members and fields.')
+                identity.append({'field_id':field['id'],'payload_sha256':target['payload_sha256']})
+            require(member['target_sha256']==digest(identity),
+                    'Bound probe target identity differs from its ordered field target payloads.')
     require(all(identical(item['contract']['inputs'],fields[0]['contract']['inputs']) and identical(item['geometry'],fields[0]['geometry']) for item in fields),
             'All field stages must bind the same explicit probe input fields.')
     outputs={item['path']:item for item in definition['outputs']}
@@ -488,9 +506,7 @@ def verify(directory, run, admitted_context):
                 pair={key:output[key] for key in ('dtype','shape_zyx','centering','stage','units','gauge_policy_sha256')}
                 pair.update(geometry=field['geometry'],prediction=row['predicted'],reference=row['reference'],mask=None)
                 field_evidence.validate_pair(pair,field['contract'],payloads)
-                reference_payload,_=scientific_fields.npy_payload(payloads[row['reference']['name']],output,field['geometry'])
-                require(hashlib.sha256(reference_payload).hexdigest()==member['target_sha256'],
-                        'Retained reference payload differs from admitted target identity.')
+                verify_target_payload(run['material']['recipe'],policy,member,field,payloads[row['reference']['name']])
                 key=(checkpoint_sha,member['ordinal'],field['id']);arrays[key]={'pair':pair,'prediction':payloads[row['predicted']['name']],'reference':payloads[row['reference']['name']],
                                                                                'gauge_policy':field['gauge_policy']}
                 field_records.append({'checkpoint_sha256':checkpoint_sha,'member_ordinal':member['ordinal'],'field_id':field['id'],'stage':output['stage'],'shape_zyx':output['shape_zyx'],'units':output['units']})
@@ -499,6 +515,27 @@ def verify(directory, run, admitted_context):
             'observations':observations,'model_definition':policy['model_specification'],'fields':field_records,
             'metric_definition_hashes':{item['id']:digest(item) for item in policy['metric_definitions']},
             'checkpoints':[item['descriptor'] for item in checkpoints.values()], '_arrays':arrays}
+
+
+@boundary
+def verify_target_payload(definition, policy, member, field, raw):
+    """Check one finite reference payload against the explicit recipe semantics.
+
+    Schema2 retains its direct target SHA. Schema3 binds every field separately
+    and pins their ordered aggregate in the unchanged probe member shape.
+    """
+    import recipe_contract
+    import scientific_fields
+    payload,_=scientific_fields.npy_payload(raw,field['contract']['output'],field['geometry'])
+    expected=member['target_sha256']
+    if recipe_contract.is_bound_evidence(definition):
+        key=(member['frozen_reference']['member_id'],field['id'])
+        targets={(item['member_id'],item['field_id']):item['payload_sha256'] for item in policy['field_targets']}
+        expected=targets.get(key)
+        require(expected is not None,'Required field target identity is missing.')
+    measured=hashlib.sha256(payload).hexdigest()
+    require(measured==expected,'Retained reference payload differs from admitted target identity.')
+    return measured
 
 
 @boundary
