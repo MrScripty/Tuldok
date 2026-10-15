@@ -53,3 +53,15 @@ this host witness. The authored input fixture is not a canonical Workbench Relea
 no record/Release identity or lossless derivation is invented. That derivation,
 remaining actual negative cases, E3 package-local B and E4 P5 export/fresh consumer/
 retention gates remain open. This receipt cannot mark X2 or E2 accepted.
+
+Actual retained-negative follow-up on a55a321 passed through the same completed
+Run, with no new admission: selected HTTP executable-only submission, actual
+provider source drift, retained profile corruption, published context corruption
+across whole/stream/segment/capture/query/input-candidate accessors, direct test
+selector and a newly published wrong-Task Model in normal HTTP Study preparation.
+Original Run/grant-consumption/grant/reservation counts remained1/1/1/1. Every
+original artifact and material was restored and reverified. Exact receipt:
+examples/e2-a-retained-negatives.json. These tests do not substitute for the
+main-owned selected field2/UI or canonical Release gates. New focused suite23
+passed with actual PostgreSQL and no skips, including all-input receipt rejection
+before capture/runtime and classifier-v2 validation selector normalization.
