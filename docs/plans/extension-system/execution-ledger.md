@@ -108,3 +108,19 @@ started/accepted by creating this documentation.
   remains a shared P3 visual concern; current baseline styles are reused honestly.
 - E2/P1–P4 prerequisites and E4/P5 are still unaccepted; no fixture-only activation.
   Retain the branch/worktree protected for lead integration and dependent work.
+
+## 2026-10-15 — composed E1 CI corrections
+
+- P1 PR66 merged as8673509; PR64 now targets main. Retained the serial app.py
+  integration at7856add and imported only the worker-owned tests/fixtures from
+  SDK06d6744. SDK/producer branches and README draft67 remain separate.
+- Lifecycle CI exposed a shallow-history dependency in the actual old-reader
+  counterexample. The retained18396-byte Projects fixture is byte-identical to
+  f99182c source, SHAd147c6bae61068f5517fd15e3512311459cd4de3d6edfdd9ea984783470d432d;
+  the test asserts identity before executing the unchanged counterexample.
+- Catalog CI clicked a parser-created control before its real handlers bound.
+  The corrected browser witness deliberately pauses the initialization script,
+  proves the handler is absent, then awaits actual handlers before one user click.
+  It preserves all catalog/keyboard/reload/isolation assertions and retains failure
+  diagnostics. Local actual Chromium catalog passes at1440/390 and all9 real HTTP
+  tests pass0skip against PostgreSQL. Corrected-head CI remains a merge gate.
