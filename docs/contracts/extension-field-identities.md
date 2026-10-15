@@ -71,6 +71,27 @@ source inventory to avoid a self-hash cycle.
 adapter_sha256 = digest(sorted(recipe["sources"], key=lambda item: item["path"]))
 ```
 
+Metric population identity uses only the exact frozen references, not the
+complete probe candidates (which also carry input/target identity envelopes).
+Preprocessing identity separately hashes the complete declared preprocessing
+policy. Every declared metric must carry these same identities:
+
+```python
+from tuldok_extension_sdk.evidence import canonical
+population_sha256 = digest(sorted(
+    [candidate["frozen_reference"] for candidate in policy["probe"]["candidates"]],
+    key=canonical,
+))
+preprocessing_sha256 = digest(policy["preprocessing_policy"])
+```
+
+For bound Models, `model_specification.configuration` contains actual resolved
+Model parameter **values**, validated against the selected Model contribution's
+`parameters` and `defaults`. It is `{}` when that contribution declares no Model
+parameters. Do not put a parameter schema or defaults descriptor in this value.
+Trainer controls such as learning rate and update count stay in the Trainer
+contribution and recipe parameters; they are separate from Model configuration.
+
 The SDK writer emits field groups in checkpoint order, then policy `fields`
 order; each group's cases follow the resolved probe members. The field's exact
 contract and `field_outputs` binding identify each group. Do not add an
