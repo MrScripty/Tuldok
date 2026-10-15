@@ -17,7 +17,7 @@
     },
     {
       "path": "tuldok_extension_sdk/evidence.py",
-      "sha256": "d26d441226d83ec9c1616dbde750b4279a63ca39c44361224107cb42094b243e"
+      "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23"
     },
     {
       "path": "task.json",
@@ -41,7 +41,7 @@
     },
     {
       "path": "extension.json",
-      "sha256": "b2f6fa8e4ccabca5cd16040292b3c2eb844e320268ace330bad92bb31bf6aa24"
+      "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
     },
     {
       "path": "NOTICE.txt",

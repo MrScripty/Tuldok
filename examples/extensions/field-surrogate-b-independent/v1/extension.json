@@ -28,8 +28,8 @@
     },
     {
       "path": "tuldok_extension_sdk/evidence.py",
-      "sha256": "d26d441226d83ec9c1616dbde750b4279a63ca39c44361224107cb42094b243e",
-      "bytes": 23065
+      "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+      "bytes": 23066
     }
   ],
   "host_contracts": [

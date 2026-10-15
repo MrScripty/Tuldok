@@ -104,6 +104,15 @@ class IndependentBNumericalTests(unittest.TestCase):
         np.save(file, np.asarray(case['initial'], dtype='<f8').reshape(4, 4, 4), allow_pickle=False)
         self.assertNotEqual(input_identities[0]['payload_sha256'], hashlib.sha256(file.getvalue()).hexdigest())
 
+    def test_recaptured_sdk_canonical_json_is_utf8_and_preserves_ascii(self):
+        import tuldok_extension_sdk.evidence as evidence
+        self.assertEqual(Path(evidence.__file__).resolve(), (ROOT/'tuldok_extension_sdk/evidence.py').resolve())
+        self.assertEqual(evidence.canonical({'units': 'µm', 'label': 'Tuldok é'}),
+                         '{"label":"Tuldok é","units":"µm"}'.encode('utf-8'))
+        self.assertEqual(evidence.canonical({'z': 2, 'a': 'scalar'}), b'{"a":"scalar","z":2}')
+        self.assertEqual(hashlib.sha256((ROOT/'tuldok_extension_sdk/evidence.py').read_bytes()).hexdigest(),
+                         '94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23')
+
     def test_source_closure_exact_five_roles_ports_stage_dataflow_and_frozen_oracle(self):
         extension = json.loads((ROOT/'extension.json').read_text())
         recipe = json.loads((ROOT/'recipe.json').read_text())

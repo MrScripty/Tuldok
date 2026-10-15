@@ -15,7 +15,7 @@
       "id": "train",
       "label": "B source and boundary evidence",
       "path": "recipe.json",
-      "sha256": "79cc8270708466fc9ab37d35a4295bc3bbc8dbd5ed9578ae3b829cacd3c818c6"
+      "sha256": "88d72d41c6be925d9248ba1cf4f1a7ba46366f70e744653e41092dc44cc7f9e3"
     }
   ],
   "evidence": [],
@@ -25,7 +25,7 @@
       "id": "independent-b",
       "label": "Independent B five contribution package",
       "path": "extension.json",
-      "sha256": "b2f6fa8e4ccabca5cd16040292b3c2eb844e320268ace330bad92bb31bf6aa24"
+      "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
     }
   ]
 }

@@ -47,7 +47,7 @@ python -m tuldok_extension_sdk validate examples/extensions/field-surrogate-b-in
 python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v
 ```
 
-These prove inert declaration validity and local numerical behavior. Six tests
+These prove inert declaration validity and local numerical behavior. Seven tests
 compare NumPy updates/replay with independent stdlib equations, demonstrate
 train-only fitting and explicit boundary enforcement, reject missing/nonbinary
 inputs and malformed native arrays, and check exact source closure/dataflow.
@@ -70,7 +70,8 @@ python cold_oracle.py --fixture fixture.json --artifacts DOWNLOADED_ARTIFACTS \
 ```
 
 The exact native identity rules follow
-`docs/contracts/extension-field-identities.md` at contract commit `647cf2f`.
+`docs/contracts/extension-field-identities.md`, first published at `647cf2f`
+and corrected with the reviewed SDK UTF-8 canonicalization change `8e70f1e`.
 Candidate input identities hash ordered input field IDs and SHA256s of native
 little-endian float64 payloads, excluding NPY headers. The policy contains exact
 `field_targets` rows in candidate then field order, and candidate target identity
@@ -84,6 +85,13 @@ must prepare the finite Study normally, review the complete composition, grant
 that exact material and provide the public CLI/agent fixture. SDK conformance
 must then admit only that selected trial, download all retained artifacts and
 pass the independent cold oracle. No actual Run or E3 acceptance is claimed here.
+
+The own-package SDK evidence helper was recaptured from reviewed `8e70f1e`:
+canonical JSON emits UTF-8 with unescaped Unicode. ASCII probe identities stay
+unchanged. Its new exact source hash changes provider/recipe/Project identities;
+producer-only adapter/evaluator/field-source hashes remain the frozen producer
+SHA. Mathematical source, oracle and fixture remain unchanged. This unadmitted
+package has no prior material or grant to reuse.
 
 Exact author/source hashes, commands, constraints and pending evidence are in
 `author-report.json`. Private local QA rights do not imply redistribution rights.
