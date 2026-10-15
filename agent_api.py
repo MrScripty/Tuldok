@@ -423,6 +423,17 @@ for _op in _OPERATIONS:
         _op['query']=['offset','limit','revision']
 _OWNER_OPERATION_IDS={'studies.create','studies.save','studies.continue','studies.approve'}
 _MODEL_RECEIPT_IDS={'studies.prepare_trial','studies.continue','studies.admit','studies.stop'}
+_MODEL_RECEIPT_IDS.add('studies.select_candidate')
+_CANDIDATE=obj({'format':const('candidate_v1'),'id':ID,'study_id':ID,'trial_id':ID,'run_id':ID,
+    'checkpoint_sha256':SHA,'evaluation_sha256':SHA,'policy':POLICY_REF,
+    'decision':{'enum':['qualified','diagnostic']},'limitations':array(text(500),64)})
+_CANDIDATE_RESULT=obj({'ref':material_ref('candidate'),'candidate':_CANDIDATE,'run_id':ID,'checkpoint':_BLOB})
+model_operation('studies.select_candidate','POST','/api/workspace/studies/{study_id}/select-candidate',
+    {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'trial_id':ID,'run_id':ID,'checkpoint_sha256':SHA},
+    ['study_id','request_key','revision','trial_id','run_id'],output=_CANDIDATE_RESULT,
+    scopes=('inspect','edit'),mutation=True)
+model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
+    {'candidate_id':ID},output=_CANDIDATE_RESULT)
 # Model evidence has a task-owned decoder. The public projection binds the
 # complete result variant while retaining its bounded, versioned domain bodies.
 _EVIDENCE_DOCUMENT={'type':'object','maxProperties':128}

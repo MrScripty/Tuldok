@@ -455,3 +455,113 @@ class Experiments:
         # Epoch closure has acknowledged commit before any child cancellation.
         for run_id in receipt['run_ids']:self.dataset.runs.cancel(run_id)
         return {'receipt':receipt,'status':self.reconcile(study_id)}
+
+    @authorized('edit','studies.select_candidate')
+    def select_candidate(self,study_id,body):
+        """Retain an exact diagnostic/qualified decision, separately from export."""
+        closed(body,('request_key','revision','trial_id','run_id'),('checkpoint_sha256',))
+        request_key(body['request_key']);identifier(body['trial_id']);identifier(body['run_id'])
+        actor=self.access._context().actor_id;request_sha=digest({'study_id':study_id,'body':body})
+        with self.lock:
+            prior=self._receipt(actor,'studies.select_candidate',body['request_key'],request_sha)
+            if prior:return prior
+            study=self._study(study_id);self._expected(study,body)
+            policy=self.policy(study['policy']);trial=self.trial(body['trial_id'])
+            if trial['study_id']!=study_id:raise WorkbenchError('Trial belongs to another study.')
+            reservation=self.db.execute('SELECT * FROM model_attempt_reservations WHERE run_id=%s',(body['run_id'],)).fetchone()
+            if reservation is None or self._reservation(reservation)['trial_id']!=trial['id']:
+                raise WorkbenchError('Run does not belong to the selected trial.')
+        # Runs verifies retained bytes and task semantics outside a write transaction.
+        evidence=self.dataset.runs.model_evidence(body['run_id'],{})
+        if evidence['state']!='verified':raise WorkbenchError('Candidate requires verified model evidence.','unsupported',409)
+        if evidence['manifest']['producer']['material_sha256']!=trial['material']['sha256']:
+            raise WorkbenchError('Candidate evidence differs from its trial material.','unavailable',409)
+        checkpoint=self._candidate_checkpoint(evidence,policy,body.get('checkpoint_sha256'))
+        with self.lock,self.db.transaction():
+            self.access.require('edit','studies.select_candidate',study_id)
+            prior=self._receipt(actor,'studies.select_candidate',body['request_key'],request_sha)
+            if prior:return prior
+            study=self._study(study_id);self._expected(study,body)
+            run=self.dataset.runs._load(body['run_id'])
+            if run['state']!='completed':raise WorkbenchError('Candidate Run is not completed.','conflict',409)
+            metrics=next((item for item in run['artifacts'] if item['name']=='metrics.json'),None)
+            if metrics is None:raise WorkbenchError('Candidate evaluation artifact is unavailable.','unavailable',409)
+            candidate={'format':'candidate_v1','id':uuid.uuid4().hex,'study_id':study_id,
+                'trial_id':trial['id'],'run_id':run['id'],'checkpoint_sha256':checkpoint['sha256'],
+                'evaluation_sha256':metrics['sha256'],'policy':study['policy'],'decision':'diagnostic',
+                'limitations':['Validation diagnostics only; no quality threshold or physical acceptance is qualified.']}
+            self.db.execute('INSERT INTO model_candidates VALUES(%s,%s,%s,%s,%s)',
+                (candidate['id'],study_id,trial['id'],run['id'],encode(candidate)))
+            self.access.audit('studies.select_candidate',candidate['id'],{'study_id':study_id,'run_id':run['id'],
+                'checkpoint_sha256':checkpoint['sha256'],'decision':candidate['decision']})
+            self._write(study,'studies.candidate_selected',{'candidate_id':candidate['id']})
+            result=self._candidate_result(candidate,checkpoint)
+            self._save_receipt(actor,'studies.select_candidate',body['request_key'],request_sha,result)
+        return result
+
+    def _candidate_checkpoint(self,evidence,policy,requested):
+        if policy['replicate_reduce']!='individual':
+            raise WorkbenchError('Mean-replicate candidate selection is not qualified.','unsupported',409)
+        import model_evidence
+        definitions=evidence['metric_definitions']
+        matches=[item for item in definitions if model_evidence.digest(item)==policy['metric_definition_sha256']]
+        if len(matches)!=1:raise WorkbenchError('Selection metric differs from the retained evaluator definition.','incompatible',409)
+        coverage=evidence['manifest']['coverage']
+        available=set(coverage['required']+coverage['optional'])-{item['capability'] for item in coverage['omitted']}
+        if not set(policy['required_capabilities'])<=available:
+            raise WorkbenchError('Candidate lacks required evidence capabilities.','unsupported',409)
+        entries=evidence['checkpoint_index']['entries']
+        rule=policy['checkpoint_rule']
+        if rule=='explicit':
+            chosen=[item for item in entries if item['checkpoint']['sha256']==requested]
+        else:
+            chosen=[item for item in entries if item['selected']] if rule=='selected' else entries[-1:]
+            if requested is not None and (len(chosen)!=1 or chosen[0]['checkpoint']['sha256']!=requested):
+                raise WorkbenchError('Explicit checkpoint contradicts the selection policy.')
+        if len(chosen)!=1:raise WorkbenchError('Selection requires one retained checkpoint.')
+        checkpoint=chosen[0]['checkpoint']
+        observed=[item for item in evidence['observations'] if item['checkpoint_sha256']==checkpoint['sha256']
+                  and item['metric_id']==matches[0]['id'] and item['state']=='observed']
+        if len(observed)!=1:raise WorkbenchError('Selection requires a defined metric at this checkpoint.','unavailable',409)
+        # A successful classifier fit supplies diagnostics, never an invented
+        # model-quality threshold or physical acceptance result.
+        if policy['numerical_acceptance']=='required':
+            raise WorkbenchError('This evaluator has no qualified numerical acceptance criterion.','unsupported',409)
+        return checkpoint
+
+    def _candidate_result(self,value,checkpoint):
+        return {'ref':{'kind':'candidate','catalog_id':self.db.dataset_id,'id':value['id'],'sha256':digest(value)},
+                'candidate':value,'run_id':value['run_id'],'checkpoint':checkpoint}
+
+    @authorized('inspect','studies.candidate')
+    def candidate(self,candidate_id):
+        identifier(candidate_id)
+        with self.lock:
+            row=self.db.execute('SELECT * FROM model_candidates WHERE id=%s',(candidate_id,)).fetchone()
+            if row is None:raise WorkbenchError('Candidate not found.','not_found',404)
+            value=retained_json(row['document'])
+            closed(value,('format','id','study_id','trial_id','run_id','checkpoint_sha256','evaluation_sha256',
+                          'policy','decision','limitations'))
+            if (value['format']!='candidate_v1' or any(value[key]!=row[key] for key in ('id','study_id','trial_id','run_id'))
+                    or value['decision']!='diagnostic'):
+                raise WorkbenchError('Stored candidate identity differs.','unavailable',409)
+            if (type(value['checkpoint_sha256']) is not str or not SHA.fullmatch(value['checkpoint_sha256'])
+                    or type(value['evaluation_sha256']) is not str or not SHA.fullmatch(value['evaluation_sha256'])
+                    or type(value['limitations']) is not list or len(value['limitations'])>64):
+                raise WorkbenchError('Stored candidate evidence identity differs.','unavailable',409)
+            for item in value['limitations']:text(item,'Candidate limitation',500)
+            reference(value['policy'],'selection_policy',self.db.dataset_id);policy=self.policy(value['policy'])
+            trial=self.trial(value['trial_id'])
+            if trial['study_id']!=value['study_id']:raise WorkbenchError('Candidate trial differs.','unavailable',409)
+            reservation=self.db.execute('SELECT * FROM model_attempt_reservations WHERE run_id=%s',(value['run_id'],)).fetchone()
+            if reservation is None or self._reservation(reservation)['trial_id']!=trial['id']:
+                raise WorkbenchError('Candidate Run association differs.','unavailable',409)
+        evidence=self.dataset.runs.model_evidence(value['run_id'],{'checkpoint_sha256':value['checkpoint_sha256']})
+        if evidence['state']!='verified':raise WorkbenchError('Candidate evidence is unavailable.','unavailable',409)
+        if evidence['manifest']['producer']['material_sha256']!=trial['material']['sha256']:
+            raise WorkbenchError('Candidate evidence material differs.','unavailable',409)
+        checkpoint=self._candidate_checkpoint(evidence,policy,value['checkpoint_sha256'])
+        run=self.dataset.runs.get(value['run_id'])
+        if not any(item['name']=='metrics.json' and item['sha256']==value['evaluation_sha256'] for item in run['artifacts']):
+            raise WorkbenchError('Candidate evaluation identity differs.','unavailable',409)
+        return self._candidate_result(value,checkpoint)
