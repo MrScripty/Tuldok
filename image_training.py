@@ -16,6 +16,7 @@ from pathlib import Path, PurePosixPath
 import platform
 import re
 import signal
+import shutil
 import stat
 import sys
 import tempfile
@@ -23,6 +24,8 @@ import time
 import zipfile
 
 ADAPTER = {'name': 'tinycnn_cpu', 'version': 1}
+MODEL_ADAPTER = {'name': 'tinycnn_cpu', 'version': 2}
+MODEL_RECIPE = 'image_classification_model_v2'
 PARAMETER_BOUNDS = {
     'epochs': {'minimum': 1, 'maximum': 5, 'default': 1, 'type': 'integer'},
     'batch_size': {'minimum': 1, 'maximum': 16, 'default': 8, 'type': 'integer'},
@@ -80,12 +83,47 @@ def validate_parameters(value):
     return dict(value)
 
 
+
+def validate_architecture(value):
+    if (type(value) is not dict or set(value) != {'widths', 'input_size', 'head'}
+            or type(value['widths']) is not list or len(value['widths']) != 3
+            or any(type(width) is not int or not 4 <= width <= 64 for width in value['widths'])
+            or type(value['input_size']) is not int or value['input_size'] not in (32, 64, 96)
+            or value['head'] != 'linear'):
+        _invalid('TinyCNN v2 requires three integer widths4–64, input_size32/64/96 and head linear.')
+    return dict(value, widths=list(value['widths']))
+
+
+def validate_model_parameters(value):
+    if type(value) is not dict or set(value) != set(PARAMETER_BOUNDS) | {'widths', 'input_size', 'head'}:
+        _invalid('Supply exactly epochs, batch_size, learning_rate, seed, widths, input_size and head.')
+    return {**validate_parameters({key:value[key] for key in PARAMETER_BOUNDS}),
+            **validate_architecture({key:value[key] for key in ('widths', 'input_size', 'head')})}
+
+
+def transform_for_parameters(parameters):
+    if 'input_size' not in parameters:
+        return dict(TRANSFORM)
+    return dict(TRANSFORM, version=2, size=[parameters['input_size']] * 2)
+
+
+def build_model(torch, widths, class_count):
+    """Owned reconstructable TinyCNN topology; no imported project source."""
+    nn = torch.nn
+    a, b, c = widths
+    return nn.Sequential(nn.Conv2d(3, a, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+                         nn.Conv2d(a, b, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+                         nn.Conv2d(b, c, 3, padding=1), nn.ReLU(),
+                         nn.AdaptiveAvgPool2d(1), nn.Flatten(), nn.Linear(c, class_count))
+
 def _checked_job(value):
     fields = {'schema_version', 'dataset_id', 'run_id', 'graph_sha256', 'release_id',
               'release_sha256', 'release_path', 'output_dir', 'parameters', 'parent_pid'}
+    if isinstance(value, dict) and value.get('schema_version') == 2:
+        fields.add('evidence_context')
     if not isinstance(value, dict) or set(value) != fields:
         _invalid('Training job must contain exactly the version 1 job fields.')
-    if type(value['schema_version']) is not int or value['schema_version'] != 1:
+    if type(value['schema_version']) is not int or value['schema_version'] not in (1, 2):
         raise TrainingError('unsupported', 'Only training job schema version 1 is supported.')
     for key in ('dataset_id', 'run_id'):
         if not isinstance(value[key], str) or not IDENTIFIER.fullmatch(value[key]):
@@ -101,7 +139,7 @@ def _checked_job(value):
             _invalid(f'{key} must be an absolute path supplied by the run owner.')
     if type(value['parent_pid']) is not int or value['parent_pid'] < 1:
         _invalid('parent_pid must identify the owning local process.')
-    return dict(value, parameters=validate_parameters(value['parameters']))
+    return dict(value, parameters=(validate_model_parameters if value['schema_version'] == 2 else validate_parameters)(value['parameters']))
 
 
 def _read_release(path, expected_sha256):
@@ -242,7 +280,7 @@ def inspect_release(path, expected_sha256):
     return _read_release(path, expected_sha256)[0]
 
 
-def probe_runtime():
+def probe_runtime(model_aware=False):
     runtime, problems = {'python': platform.python_version(), 'device': 'cpu', 'threads': 1}, []
     if sys.platform != 'linux':
         problems.append({'code': 'unsupported', 'message': 'The supervised CPU adapter currently requires Linux.'})
@@ -264,7 +302,7 @@ def probe_runtime():
             torch.zeros(1).add_(1)
         except Exception:
             problems.append({'code': 'unavailable', 'message': 'Pinned CPU training dependencies could not load.'})
-    return {'schema_version': 1, 'available': not problems, 'adapter': dict(ADAPTER),
+    return {'schema_version': 1, 'available': not problems, 'adapter': dict(MODEL_ADAPTER if model_aware else ADAPTER),
             'runtime': runtime, 'problems': problems}
 
 
@@ -301,7 +339,8 @@ def train(job):
     guard_parent(job['parent_pid'])
     started = time.monotonic()
     manifest, assets = _read_release(job['release_path'], job['release_sha256'])
-    readiness = probe_runtime()
+    model_aware = job['schema_version'] == 2
+    readiness = probe_runtime(model_aware)
     if not readiness['available']:
         raise TrainingError('unavailable', '; '.join(item['message'] for item in readiness['problems']))
     import torch
@@ -320,7 +359,11 @@ def train(job):
     torch.manual_seed(params['seed'])
     torch.use_deterministic_algorithms(True)
     identity = {key: job[key] for key in ('dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256')}
-    envelope = {'schema_version': 1, 'adapter': dict(ADAPTER), 'source_identity': identity}
+    envelope = {'schema_version': 1, 'adapter': dict(MODEL_ADAPTER if model_aware else ADAPTER), 'source_identity': identity}
+    transform = transform_for_parameters(params)
+    checkpoints = []
+    context = job.get('evidence_context')
+    updates = 0
     vocabulary, mapping = manifest['class_vocabulary'], manifest['class_to_idx']
     by_asset = {row['asset']: row for row in manifest['records']}
     history, best_loss, best_epoch = [], math.inf, None
@@ -331,7 +374,7 @@ def train(job):
             destination = root.joinpath(*PurePosixPath(name).parts)
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(raw)
-        preprocessing = transforms.Compose([transforms.Resize((96, 96)), transforms.ToTensor()])
+        preprocessing = transforms.Compose([transforms.Resize(tuple(transform['size'])), transforms.ToTensor()])
         data = {split: datasets.ImageFolder(root / folder, transform=preprocessing)
                 for split, folder in manifest['split_mapping'].items()}
         for split, source in data.items():
@@ -343,16 +386,13 @@ def train(job):
         loaders = {split: DataLoader(source, batch_size=params['batch_size'], shuffle=split == 'train',
                                       num_workers=0, generator=torch.Generator().manual_seed(params['seed']))
                    for split, source in data.items()}
-        model = nn.Sequential(nn.Conv2d(3, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
-                              nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
-                              nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
-                              nn.AdaptiveAvgPool2d(1), nn.Flatten(), nn.Linear(64, len(vocabulary)))
+        model = build_model(torch, params.get('widths', [16, 32, 64]), len(vocabulary))
         optimizer = torch.optim.AdamW(model.parameters(), lr=params['learning_rate'], weight_decay=0.0001)
 
         @torch.no_grad()
-        def evaluate(split, include_rows=False):
+        def evaluate(split, include_rows=False, include_logits=False):
             model.eval()
-            truth, predicted, scores, loss_sum = [], [], [], 0.0
+            truth, predicted, scores, raw_logits, loss_sum = [], [], [], [], 0.0
             for x, y in loaders[split]:
                 logits = model(x)
                 loss_sum += float(nn.functional.cross_entropy(logits, y)) * len(x)
@@ -360,6 +400,7 @@ def train(job):
                 predicted.extend(logits.argmax(1).tolist())
                 if include_rows:
                     scores.extend(logits.softmax(1).tolist())
+                    raw_logits.extend(logits.tolist())
             metrics = {'split': split, 'examples': len(truth), 'loss': loss_sum / len(truth),
                        'accuracy': float(accuracy_score(truth, predicted)),
                        'macro_f1': float(f1_score(truth, predicted, average='macro',
@@ -376,6 +417,8 @@ def train(job):
                                  'split': split, 'truth_label': vocabulary[target]['label'], 'truth_index': target,
                                  'predicted_label': vocabulary[prediction]['label'], 'predicted_index': prediction,
                                  'probabilities': probability})
+                    if include_logits:
+                        rows[-1]['logits'] = raw_logits[len(rows)-1]
             return metrics, rows
 
         _emit('started', epochs=params['epochs'])
@@ -389,15 +432,25 @@ def train(job):
                     raise TrainingError('failed', 'Training produced a nonfinite loss.')
                 loss.backward()
                 optimizer.step()
+                updates += 1
                 training_loss += float(loss.detach()) * len(x)
-            validation, _ = evaluate('validation')
+            validation, probe_rows = evaluate('validation', model_aware, model_aware)
             history.append({'epoch': epoch, 'training_loss': training_loss / len(data['train']), 'validation': validation})
             if validation['loss'] < best_loss:
                 best_loss, best_epoch = validation['loss'], epoch
                 torch.save({**envelope, 'state_dict': model.state_dict(), 'class_vocabulary': vocabulary,
-                            'class_to_idx': mapping, 'parameters': params, 'transform': TRANSFORM,
+                            'class_to_idx': mapping, 'parameters': params, 'transform': transform,
                             'epoch': epoch}, output / 'checkpoint.pt')
+            if model_aware:
+                from model_evidence import capture_epoch
+                checkpoint = {**envelope, 'state_dict': model.state_dict(), 'class_vocabulary': vocabulary,
+                              'class_to_idx': mapping, 'parameters': params, 'transform': transform, 'epoch': epoch}
+                checkpoints.append(capture_epoch(output, checkpoint, validation, probe_rows, manifest, torch, context,
+                    {'optimizer_update': updates, 'epoch': epoch, 'fit_pass': None, 'physical_time': None,
+                     'wall_elapsed_ms': int((time.monotonic()-started)*1000)}))
             _emit('epoch', epoch=epoch, epochs=params['epochs'], validation=validation)
+        if model_aware:
+            shutil.copyfile(output / f'weights-epoch-{best_epoch:04d}.pt', output / 'checkpoint.pt')
         saved = torch.load(output / 'checkpoint.pt', map_location='cpu', weights_only=True)
         model.load_state_dict(saved['state_dict'])
         validation, validation_rows = evaluate('validation', True)
@@ -406,17 +459,25 @@ def train(job):
         test, test_rows = evaluate('test', True)
         runtime = dict(readiness['runtime'], elapsed_seconds=time.monotonic() - started,
                        peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)
-        _write_json(output / 'metrics.json', {**envelope, 'parameters': params, 'transform': TRANSFORM,
+        _write_json(output / 'metrics.json', {**envelope, 'parameters': params, 'transform': transform,
                     'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'validation': validation,
                     'history': history, 'best_epoch': best_epoch, 'runtime': runtime})
         _write_json(output / 'test-metrics.json', {**envelope, 'split': 'test', 'metrics': test})
         for split, rows in (('validation', validation_rows), ('test', test_rows)):
             _write_json(output / f'predictions-{split}.json', {**envelope, 'split': split,
                         'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'rows': rows})
+    if model_aware:
+        from model_evidence import finish_capture
+        finish_capture(output, envelope, checkpoints, best_epoch, context)
     artifacts = []
-    for name, split in (('metrics.json', 'validation'), ('test-metrics.json', 'test'),
+    entries = [('metrics.json', 'validation'), ('test-metrics.json', 'test'),
                         ('predictions-validation.json', 'validation'), ('predictions-test.json', 'test'),
-                        ('checkpoint.pt', None)):
+                        ('checkpoint.pt', None)]
+    if model_aware:
+        from model_evidence import payload_names
+        entries.extend((name, 'validation' if name.startswith('probes-') else None)
+                       for name in sorted(payload_names(params['epochs']) - {item[0] for item in entries}))
+    for name, split in entries:
         with (output / name).open('rb') as handle:
             raw = handle.read()
             os.fsync(handle.fileno())
@@ -432,12 +493,18 @@ def main():
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--probe', action='store_true')
     action.add_argument('--job', type=Path)
+    action.add_argument('--verify-evidence', type=Path)
+    parser.add_argument('--model-aware', action='store_true')
     args = parser.parse_args()
     try:
         if args.probe:
-            result = probe_runtime()
+            result = probe_runtime(args.model_aware)
             print(json.dumps(result, allow_nan=False), flush=True)
             return 0 if result['available'] else 2
+        if args.verify_evidence:
+            from model_evidence import replay_checkpoints
+            replay_checkpoints(args.verify_evidence)
+            return 0
         with args.job.open('rb') as handle:
             raw = handle.read(MAX_JOB_BYTES + 1)
         if len(raw) > MAX_JOB_BYTES:

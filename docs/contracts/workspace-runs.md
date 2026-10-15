@@ -155,3 +155,30 @@ merely by these local unit tests.
 The [text](workspace-text-training.md) and [audio](workspace-audio-training.md)
 recipe contracts define their versioned release/adapter/model meanings. No SQL/schema migration or second run supervisor
 is introduced. Retained M2 image receipts, artifacts and exposure remain readable.
+
+## Automatic model evidence
+
+`model_evidence(run_id, {checkpoint_sha256?})` is an inert inspect operation over
+verified published bytes. Its result contains the common manifest, checkpoint
+index, probe membership, metric definitions, scalar observations and model
+specification. An exact descriptor hash additionally selects its checkpoint and
+prediction shard; a foreign hash is rejected. Old adapters return explicit
+`unsupported` instead of inventing historical checkpoints. There is no test split
+selector; existing holdout exposure controls remain authoritative.
+
+`compare_model_evidence(run_id, other_run_id)` admits comparison only with equal
+task meaning, input/output policy, class vocabulary/order, exact frozen validation
+membership and metric definitions. A corrected training annotation can produce a
+new immutable release while preserving compatible validation membership. Changed
+validation targets, source revision, class order or preprocessing are incompatible
+and produce reasons without comparative metric values. Current record editing
+continues through Workbench; retained inputs and prior evidence stay immutable.
+
+Built-in model-aware trials use the same owner-only Runs admission, finite Study
+reservation transaction, eight-attempt queue and one worker. A membership/budget
+or external execution grant cannot launch a built-in trainer as an agent. The
+supervisor captures and checks the new evidence automatically; users configure
+neither logging nor manual artifact imports. Runtime installation is separate
+existing capacity. Conservative Study accounting reserves750 seconds per attempt
+and the full64MiB output envelope plus capture/publication duplication; it is an
+admission limit, not an OS sandbox or hard aggregate resource quota.

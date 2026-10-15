@@ -103,7 +103,7 @@ def decode_graph(value):
     return json.loads(serialized)
 
 
-ADAPTERS = {'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation,
+ADAPTERS = {image_training.MODEL_RECIPE: image_training, 'image_classification': image_training, 'text_classification': text_training, 'audio_classification': audio_training, release_validation.RECIPE: release_validation,
             release_validation.SEQUENCE_RECIPE: release_validation,
             release_validation.POINTCLOUD_RECIPE: release_validation, release_validation.VOLUME_RECIPE: release_validation,
             **{recipe: release_validation for recipe in release_validation.CLASSIFICATION_RECIPES}}
@@ -118,7 +118,8 @@ def adapter_for_graph(graph):
 
 def adapter_identity_for_graph(graph):
     adapter = adapter_for_graph(graph)
-    return release_validation.adapter_identity(graph['recipe']) if adapter is release_validation else adapter.ADAPTER
+    return (release_validation.adapter_identity(graph['recipe']) if adapter is release_validation else
+            image_training.MODEL_ADAPTER if graph.get('recipe') == image_training.MODEL_RECIPE else adapter.ADAPTER)
 
 
 def types_for_graph(graph):
@@ -163,12 +164,22 @@ class Pipelines:
             ports = ports_for_graph({'recipe': recipe})
             return {'id': recipe, 'recipe_version': 1,
                     'nodes': [{'type': name, 'definition_version': 1, 'input': ports[name][0], 'output': ports[name][1]} for name in types_for_graph({'recipe': recipe})],
-                    'parameter_bounds': adapter.PARAMETER_BOUNDS,
+                    'parameter_bounds': copy.deepcopy(adapter.PARAMETER_BOUNDS),
                     'default_parameters': {key: rule['default'] for key, rule in adapter.PARAMETER_BOUNDS.items()},
                     'recipe': list(types_for_graph({'recipe': recipe}))}
         image = definition('image_classification', image_training)
+        model = definition(image_training.MODEL_RECIPE, image_training)
+        model['default_parameters'].update(widths=[16,32,64], input_size=96, head='linear')
+        model['parameter_bounds'].update(widths={'type':'integer_array','length':3,'minimum':4,'maximum':64,'default':[16,32,64]},
+            input_size={'type':'integer','enum':[32,64,96],'default':96}, head={'type':'string','enum':['linear'],'default':'linear'})
+        # The recipe definition owns the complete inert model creation default.
+        from model_evidence import task_ref, OUTPUT_POLICY, model_definition, digest as evidence_digest
+        defaults = model_definition(model['default_parameters'])
+        model['model_template'] = {'name':'TinyCNN v2','task':task_ref(self.db.dataset_id),'kind':'template',
+            'specification':defaults['specification'],'source_selector':None,
+            'preprocessing_policy':defaults['preprocessing_policy'],'output_policy':OUTPUT_POLICY}
         return {'schema_version': 1, 'mode': 'real', **{key: value for key, value in image.items() if key != 'id'},
-                'recipes': [image, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation),
+                'recipes': [image, model, definition('text_classification', text_training), definition('audio_classification', audio_training), definition(release_validation.RECIPE, release_validation),
                             definition(release_validation.SEQUENCE_RECIPE, release_validation),
                             definition(release_validation.POINTCLOUD_RECIPE, release_validation),
                             definition(release_validation.VOLUME_RECIPE, release_validation),
@@ -256,6 +267,8 @@ class Pipelines:
         ports = ports_for_graph({'recipe': recipe})
         types = types_for_graph({'recipe': recipe})
         parameters = {key: rule['default'] for key, rule in adapter.PARAMETER_BOUNDS.items()}
+        if recipe == image_training.MODEL_RECIPE:
+            parameters.update(widths=[16,32,64], input_size=96, head='linear')
         release_id = body['release_id']
         if not isinstance(release_id, str) or not HASH.fullmatch(release_id):
             raise WorkbenchError('Choose a frozen classification release.')
@@ -343,6 +356,7 @@ class Pipelines:
                 raise WorkbenchError('Choose a frozen classification release or a single-kind mesh, sequence, point-cloud or volume canonical release.', 'unsupported', 409)
             export_recipe = recipe.replace('_classification', '_validate_export')
             allowed_recipes = [recipe, export_recipe]
+            if recipe == 'image_classification': allowed_recipes.append(image_training.MODEL_RECIPE)
             if selected_recipe is not None and selected_recipe not in allowed_recipes:
                 raise WorkbenchError('Frozen release task differs from this saved recipe.', 'unsupported', 409)
             if selected_recipe == export_recipe:
@@ -356,6 +370,7 @@ class Pipelines:
                     result.update(manifest=manifest, path=str(path))
                 return result
             manifest = ADAPTERS[recipe].inspect_release(path, release_id)
+            if selected_recipe == image_training.MODEL_RECIPE: recipe = selected_recipe
         except image_training.TrainingError as error:
             raise WorkbenchError(str(error), error.outcome, 409) from None
         except WorkbenchError:
@@ -415,19 +430,19 @@ class Pipelines:
         worker_path = Path(adapter.__file__).resolve()
         executable = os.environ.get('TULDOK_TRAINING_PYTHON') or sys.executable
         try:
-            response = subprocess.run([executable, str(worker_path), '--probe'], capture_output=True,
+            response = subprocess.run([executable, str(worker_path), '--probe', *(['--model-aware'] if recipe == image_training.MODEL_RECIPE else [])], capture_output=True,
                                       timeout=45, check=False, env=training_environment())
             if len(response.stdout) > 32768:
                 raise ValueError('Oversized runtime response.')
             probe = json.loads(response.stdout)
             if (not isinstance(probe, dict) or probe.get('schema_version') != 1 or
-                    type(probe.get('available')) is not bool or probe.get('adapter') != adapter.ADAPTER
+                    type(probe.get('available')) is not bool or probe.get('adapter') != adapter_identity_for_graph({'recipe':recipe})
                     or not isinstance(probe.get('runtime'), dict) or not isinstance(probe.get('problems'), list)):
                 raise ValueError('Malformed runtime response.')
             if response.returncode and probe['available']:
                 raise ValueError('Runtime probe failed.')
         except (OSError, ValueError, subprocess.TimeoutExpired):
-            probe = {'schema_version': 1, 'available': False, 'adapter': dict(adapter.ADAPTER),
+            probe = {'schema_version': 1, 'available': False, 'adapter': dict(adapter_identity_for_graph({'recipe':recipe})),
                      'runtime': {}, 'problems': [{'code': 'unavailable', 'message': 'Local training runtime probe failed.'}]}
         probe.update(self.definition_identity(recipe))
         return probe
@@ -444,6 +459,7 @@ class Pipelines:
             files = release_validation.definition_files(self.source_path)
             return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
         names = (*names, 'access.py')
+        if recipe == image_training.MODEL_RECIPE: names = (*names, 'model_evidence.py')
         files = {name: hashlib.sha256((self.source_path / name).read_bytes()).hexdigest() for name in names}
         return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
 
@@ -481,7 +497,7 @@ class Pipelines:
         for index, node in enumerate(graph['nodes']):
             try:
                 if node['type'] == 'train' and 'train' in types:
-                    adapter.validate_parameters(node['parameters'])
+                    (image_training.validate_model_parameters if graph.get('recipe') == image_training.MODEL_RECIPE else adapter.validate_parameters)(node['parameters'])
                 elif node['type'] == 'release':
                     closed(node['parameters'], ('release_id',))
                     if not isinstance(node['parameters']['release_id'], str) or not HASH.fullmatch(node['parameters']['release_id']):
@@ -506,9 +522,19 @@ class Pipelines:
                       'stale' if adapter is release_validation else 'unavailable')
         token = digest({'graph_id': graph['id'], 'revision': graph['revision'], 'execution_sha256': execution_digest(graph),
                         'release_sha256': release['sha256'], 'runtime': runtime}) if not errors else None
-        return {'status': errors[0]['code'] if errors else 'valid', 'valid': not errors, 'errors': errors,
+        result = {'status': errors[0]['code'] if errors else 'valid', 'valid': not errors, 'errors': errors,
                 'validation_token': token, 'graph_revision': graph['revision'],
                 'execution_sha256': execution_digest(graph), 'release': release, 'runtime': runtime}
+        if graph.get('recipe') == image_training.MODEL_RECIPE and not errors:
+            import model_evidence
+            private=self.inspect_release(release['id'],private=True,recipe=image_training.MODEL_RECIPE)
+            parameters=by_type['train'][0]['parameters']
+            context={'adapter_sha256':runtime['adapter_definition_sha256'],'model_definition':model_evidence.model_definition(parameters)}
+            definition=model_evidence.metric_definitions(context,private['manifest'])[0]
+            result['selection_policy']={'format':'selection_policy_v1','metric_definition_sha256':model_evidence.digest(definition),
+                'checkpoint_rule':'selected','replicate_reduce':'individual','required_capabilities':['checkpoints','fixed_validation_predictions','scalar_history'],
+                'numerical_acceptance':'diagnostic','tie_break':'trial_id'}
+        return result
 
     @authorized('inspect', 'pipeline.validate')
     def validate(self, graph_id, body):
@@ -610,6 +636,101 @@ class Pipelines:
                             (value['revision'], encode(value), recipe_id))
             self.access.audit('recipes.save', recipe_id, {'revision':value['revision'], 'document_sha256':digest(value)})
         return value
+
+    def model_template(self, draft):
+        """Validate the inert TinyCNN model specification and capture its source."""
+        from model_evidence import OUTPUT_POLICY, task_ref
+        specification = draft['specification']
+        if type(specification) is not dict or specification.get('template') != 'tinycnn_v2':
+            raise WorkbenchError('Only the qualified tinycnn_v2 template is supported.', 'unsupported', 409)
+        try:
+            architecture = image_training.validate_architecture({key:value for key,value in specification.items() if key != 'template'})
+        except image_training.TrainingError as error:
+            raise WorkbenchError(str(error), error.code, 400) from None
+        if (draft['task'] != task_ref(self.db.dataset_id)
+                or draft['preprocessing_policy'] != image_training.transform_for_parameters(architecture)
+                or draft['output_policy'] != OUTPUT_POLICY):
+            raise WorkbenchError('TinyCNN task, preprocessing or output policy differs.', 'unsupported', 409)
+        names = self.definition_identity(image_training.MODEL_RECIPE)['definition_files']
+        return 'image_training.py', {name:(self.source_path/name).read_bytes() for name in names}
+
+    @authorized('edit', 'recipes.prepare_builtin_material')
+    def prepare_builtin_material(self, graph_id, revision, model_ref, *, reconcile_capture=False):
+        from model_definitions import blob, read_owned_blob, retained_json
+        from model_evidence import profile, model_definition, task_ref
+        from metadata import _sync_directory
+        graph = self.get(graph_id)
+        if graph['revision'] != revision or graph.get('recipe') != image_training.MODEL_RECIPE:
+            raise WorkbenchError('Exact model-aware image recipe is unavailable.', 'stale', 409)
+        if reconcile_capture:
+            raise WorkbenchError('Built-in orphan capture reconciliation is unsupported.', 'unsupported', 409)
+        validation = self.validate_graph(graph)
+        if not validation['valid']:
+            error = validation['errors'][0]; raise WorkbenchError(error['message'], error['code'], 409)
+        model = self.dataset.models.material(model_ref, verify=True)
+        model_body = model['material']
+        definition = model_definition(next(node['parameters'] for node in graph['nodes'] if node['type']=='train'))
+        if model_body['kind'] != 'template' or model_body['task'] != task_ref(self.db.dataset_id):
+            raise WorkbenchError('Recipe requires the published TinyCNN template.', 'unsupported', 409)
+        for key in ('specification','preprocessing_policy','output_policy'):
+            raw=read_owned_blob(self.dataset.models.path,model_ref['sha256'],model_body[key],1024**2)
+            if retained_json(raw.decode()) != definition[key]:
+                raise WorkbenchError('Published model policies differ from recipe parameters.', 'stale', 409)
+        files=validation['runtime']['definition_files']
+        captured={name:(self.source_path/name).read_bytes() for name in files}
+        if any(hashlib.sha256(raw).hexdigest()!=files[name] for name,raw in captured.items()):
+            raise WorkbenchError('Adapter source changed during preparation.', 'stale', 409)
+        model_files={item['import_path']:item['blob']['sha256'] for item in model_body['source_closure']}
+        if model_files != files: raise WorkbenchError('Published model source differs from current adapter.', 'stale', 409)
+        resolved=profile(self.db.dataset_id,model_ref['sha256'],definition['parameters'],validation['release']['split_counts']['validation'])
+        capture_paths=[];payloads={}
+        for number,(name,raw) in enumerate(sorted(captured.items())):
+            item=blob(raw,f'capture-{number:04d}.bin','application/octet-stream')
+            payloads[item['name']]=raw;capture_paths.append({'path':name,'blob':item})
+        snapshot={'format':'builtin_recipe_snapshot_v1','graph':graph,'validation':validation,'model_definition':definition,'capture_paths':capture_paths}
+        payloads.update({'recipe.json':encode(snapshot).encode(),'profile.json':encode(resolved).encode()})
+        capture_bytes=sum(map(len,payloads.values()))
+        model_bytes=sum(item['blob']['bytes'] for item in model_body['source_closure'])+sum(model_body[key]['bytes'] for key in ('specification','preprocessing_policy','output_policy'))
+        output_bytes=64*1024**2
+        envelope={'attempt_slots':1,'admitted_wall_seconds':750,'retained_bytes':capture_bytes+model_bytes+output_bytes+256*1024,
+                  'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+256*1024}
+        material={'format':'recipe_material_v1','catalog_id':self.db.dataset_id,'recipe_id':graph_id,'recipe_revision':revision,
+            'recipe_document':blob(payloads['recipe.json'],'recipe.json'),'executable_sha256':validation['execution_sha256'],
+            'model':model_ref,'data':[{'kind':'release','catalog_id':self.db.dataset_id,'id':validation['release']['id'],'sha256':validation['release']['sha256']}],
+            'trainer':{'kind':'trainer','catalog_id':self.db.dataset_id,'id':'tinycnn_cpu_v2','revision':2,'sha256':digest(image_training.MODEL_ADAPTER)},
+            'evaluation_profile':resolved['definition'],'resolved_profile':blob(payloads['profile.json'],'profile.json'),
+            'runtime':{'kind':'runtime','catalog_id':self.db.dataset_id,'id':digest(validation['runtime']),'sha256':digest(validation['runtime'])},
+            'captures':[item['blob'] for item in capture_paths],'resource_envelope':envelope}
+        sha=digest(material);document={'ref':{'kind':'recipe_material','catalog_id':self.db.dataset_id,'id':sha,'sha256':sha},'material':material}
+        staging=Path(tempfile.mkdtemp(prefix='.recipe-',dir=self.material_path))
+        try:
+            for name,raw in payloads.items():
+                with (staging/name).open('xb') as handle:
+                    handle.write(raw);handle.flush();os.fchmod(handle.fileno(),0o400);os.fsync(handle.fileno())
+            _sync_directory(staging)
+            return {'document':document,'staging':staging,'graph':graph,'orphan':None,'reconcile_capture':False}
+        except BaseException:
+            shutil.rmtree(staging,ignore_errors=True);raise
+
+    def _prepare_builtin_recipe_material(self, value):
+        from model_definitions import read_owned_blob, retained_json
+        material=value['material'];sha=value['ref']['sha256']
+        snapshot=retained_json(read_owned_blob(self.material_path,sha,material['recipe_document'],2*1024**2).decode(),2*1024**2)
+        closed(snapshot,('format','graph','validation','model_definition','capture_paths'))
+        if snapshot['format']!='builtin_recipe_snapshot_v1':raise WorkbenchError('Invalid built-in recipe snapshot.')
+        graph=decode_graph(snapshot['graph']);validation=self.validate_graph(graph)
+        if (graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision']
+                or validation!=snapshot['validation'] or not validation['valid']
+                or validation['execution_sha256']!=material['executable_sha256']):
+            raise WorkbenchError('Retained built-in execution changed.', 'stale', 409)
+        captured={item['path']:read_owned_blob(self.material_path,sha,item['blob'],recipe_contract.CPU_CAPTURE_BYTES) for item in snapshot['capture_paths']}
+        expected=self.definition_identity(image_training.MODEL_RECIPE)['definition_files']
+        if {name:hashlib.sha256(raw).hexdigest() for name,raw in captured.items()}!=expected:
+            raise WorkbenchError('Retained adapter source differs.', 'stale', 409)
+        return {'kind':'builtin','graph':graph,'validation':validation,
+                'release':self.inspect_release(validation['release']['id'],private=True,recipe=image_training.MODEL_RECIPE),
+                'composition':value,'model_definition':snapshot['model_definition']}
+
 
     @authorized('edit', 'recipes.prepare_external_material')
     def prepare_external_material(self, graph_id, revision, model_ref, *, reconcile_capture=False):
@@ -742,7 +863,7 @@ class Pipelines:
         identifier(material['recipe_id']);natural(material['recipe_revision'],'Recipe revision',1)
         for key,kind in (('model','model'),('trainer','trainer'),('evaluation_profile','profile'),('runtime','runtime')):
             reference(material[key],kind,self.db.dataset_id)
-        if material['data']!=[] or type(material['captures']) is not list or not 1<=len(material['captures'])<=recipe_contract.MAX_FILES:
+        if (material['data'] != [] and (len(material['data']) != 1 or material['trainer']['id'] != 'tinycnn_cpu_v2')) or type(material['captures']) is not list or not 1<=len(material['captures'])<=recipe_contract.MAX_FILES:
             raise WorkbenchError('Unsupported external material inventory.','unavailable',409)
         envelope=material['resource_envelope'];closed(envelope,('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes'))
         for number in envelope.values():natural(number,'Resource envelope',1)
@@ -767,6 +888,7 @@ class Pipelines:
         """Revalidate source/runtime against retained bytes, never the current graph."""
         from model_definitions import read_owned_blob,retained_json
         value=self.recipe_material(ref,verify=True);material=value['material']
+        if material['trainer']['id']=='tinycnn_cpu_v2':return self._prepare_builtin_recipe_material(value)
         raw=read_owned_blob(self.material_path,ref['sha256'],material['recipe_document'],2*1024**2)
         snapshot=retained_json(raw.decode(),2*1024**2)
         closed(snapshot,('format','graph','preflight','capture_paths'))
@@ -793,11 +915,15 @@ class Pipelines:
 
     @authorized('inspect', 'recipes.preflight_material')
     def preflight_recipe_material(self, ref):
-        preflight,_retained,graph=self._prepare_recipe_material(ref)
+        prepared=self._prepare_recipe_material(ref)
+        if type(prepared) is dict:return prepared
+        preflight,_retained,graph=prepared
         return dict(preflight,graph=graph)
 
     @authorized('inspect', 'recipes.capture_material')
     def capture_recipe_material(self, ref, staging):
-        preflight,retained,graph=self._prepare_recipe_material(ref)
+        prepared=self._prepare_recipe_material(ref)
+        if type(prepared) is dict:return prepared
+        preflight,retained,graph=prepared
         result=recipe_contract.capture(preflight,retained,staging)
         return dict(result,graph=graph)

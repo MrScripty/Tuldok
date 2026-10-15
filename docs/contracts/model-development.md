@@ -166,3 +166,30 @@ identities. It is distinct from the graph execution digest retained inside that
 preflight and the Run. Snapshot validation closes graph→preflight→composition;
 Runs checks the same exact preflight SHA at admission and cold reopen. An internally
 consistent replacement runtime/spec cannot ride an earlier composition approval.
+
+## Automatic classifier vertical (P3)
+
+`image_classification_model_v2` adds the qualified TinyCNN template and automatic
+D2 evidence without changing the legacy image recipe. Pipeline definitions expose
+an inert `model_template` creation body. After saving typed architecture parameters,
+`graphs.validate` resolves the exact frozen release, source/runtime and
+`selection_policy`: its MetricDefinition digest binds validation membership,
+class order, evaluator and preprocessing. A release-independent placeholder digest
+cannot select a candidate. Model publication remains inert and template sources
+are captured by the same Model Definitions custody owner.
+
+`studies.prepare_trial` selects built-in or external preparation from the exact
+saved graph. Built-in material retains model, frozen data release, resolved profile,
+runtime and adapter sources with its conservative envelope. Study admission and
+reservation remain one transaction and wake the existing Runs owner only after a
+normally acknowledged commit. Built-in execution retains current owner-only
+authority; delegated inspect/edit access and external source grants do not widen it.
+Studies never create a second runner, implicit retry or scheduler.
+
+Automatic classifier evidence is task-owned and published only after complete
+artifact verification and actual per-checkpoint CPU inference reconstruction.
+The common manifest/index/clock/checkpoint/probe grammar follows
+[evidence-contract-design.md](../plans/end-to-end-model-development/reports/evidence-contract-design.md).
+Structured model evidence and comparison queries expose the same verified bytes
+to humans and agents. A v1 Run reports unavailable historical evidence honestly.
+Candidate packaging/fresh-consumer qualification remains a separate P5 gate.
