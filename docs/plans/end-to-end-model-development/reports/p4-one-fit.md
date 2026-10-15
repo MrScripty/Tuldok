@@ -58,3 +58,12 @@ numerical primitives, including vocabulary frequency ties and near-constant
 scaler features. Rebuilt wrong-stat snapshots, boolean clocks, non-integer Blob
 lengths and singleton boolean field shapes are rejected. The one-fit loss
 definition explicitly names sklearn float64-epsilon probability clipping.
+
+Independent review passed all 24 focused one-fit, generic field and actual
+HTTP Study tests against frozen source `10e1c9a` (0 skips). After merging
+current P3 backend `5b9e890`, the graph HTTP contract suite passed again,
+preserving exact image contract 2 and one-fit contract 3. The unchanged
+[retained-run qualifier](p4-retained-qualification.json) executed pinned
+legacy source `f1ecf788` and verified the real completed schema-3 run through
+upgrade, current backup/restore and legacy backup/restore then upgrade. All
+retained artifact bytes matched and both original backups remained unchanged.
