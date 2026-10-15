@@ -1972,25 +1972,19 @@ class Runs:
                 row['current_record'] = {'id': row['id'], 'status': 'unavailable'}
         return result
 
-    @authorized('inspect', 'runs.extension_model_evidence')
-    def extension_model_evidence(self,run_id,body=None):
-        """Domain projection for the main-owned explicit scientific API version."""
-        with self.lock:run=self._load(run_id)
-        if not self._extension(run):
-            return {'state':'unsupported','reason':'This Run did not capture external field evidence.'}
-        self._external_inventory(run)
-        import extension_evidence
-        return extension_evidence.query(extension_evidence.verify(self.path/run_id,run,self._extension_context(run)),body)
-
     @authorized('inspect', 'runs.model_evidence')
-    def model_evidence(self, run_id, body=None):
+    def model_evidence(self, run_id, body=None, *, contract_version=None):
         body={} if body is None else body
         with self.lock:run=self._load(run_id)
-        # Existing selected v1 has classifier response semantics. Main owns the
-        # explicit scientific selected projection; never broaden v1 implicitly.
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2)):
+            raise WorkbenchError('Unsupported model evidence query contract.','unsupported',409)
         if self._extension(run):
-            closed(body,(),('checkpoint_sha256',))
-            return {'state':'unsupported','reason':'Scientific field evidence requires its explicit selected query contract.'}
+            self._external_inventory(run)
+            if contract_version==1:
+                closed(body,(),('checkpoint_sha256',))
+                return {'state':'unsupported','reason':'Scientific field evidence requires its explicit selected query contract.'}
+            import extension_evidence
+            return extension_evidence.query(extension_evidence.verify(self.path/run_id,run,self._extension_context(run)),body)
         closed(body,(),('checkpoint_sha256',))
         selected=body.get('checkpoint_sha256')
         if selected is not None and (type(selected) is not str or not re.fullmatch('[a-f0-9]{64}',selected)):

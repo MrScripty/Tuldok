@@ -80,14 +80,14 @@ def main(args):
         sequence+=1;path=write(f'call-{sequence:03d}-{operation}-input.json',body)
         value=cli('call','--operation',operation,'--arguments',path)
         write(f'call-{sequence:03d}-{operation}-output.json',value);return value
-    def http(operation,body,*,path_override=None,expect=None):
+    def http(operation,body,*,path_override=None,expect=None,version=1):
         nonlocal sequence
         sequence+=1
         if path_override is None:method,path,data=agent_api.project_request(operation,body,1)
         else:method,path,data='POST',path_override,body
         request=Request(endpoint+path,method=method,data=None if data is None else agent_api.encoded(data),
             headers={'Authorization':'Bearer '+owner['token'],'Content-Type':'application/json',
-                     agent_api.CONTRACT_HEADER:agent_api.selected_header(operation)})
+                     agent_api.CONTRACT_HEADER:agent_api.selected_header(operation,version)})
         try:
             with urlopen(request,timeout=360) as response:status=response.status;value=json.loads(response.read())
         except HTTPError as error:status=error.code;value=json.loads(error.read())
@@ -96,7 +96,7 @@ def main(args):
         return value
     def evidence(run_id,selectors=None,expect=None):
         return http('runs.model_evidence',{} if selectors is None else selectors,
-                    path_override=f'/api/workspace/runs/{run_id}/model-evidence',expect=expect)
+                    path_override=f'/api/workspace/runs/{run_id}/model-evidence',expect=expect,version=2)
     def download(run,name):
         target=output/name;target.mkdir();receipts=[]
         for item in run['artifacts']:
@@ -160,9 +160,12 @@ def main(args):
             capture_output=True,text=True,timeout=30)
         require(oracle.returncode==0,'Frozen independent consumer refused: '+oracle.stdout[:1500]+oracle.stderr[:1500])
         report['oracle']=json.loads((output/'oracle.json').read_bytes())
-        public=evidence(run['id']);write('evidence.json',public);field=None
-        report['selected_field_state']=public['state']
-        if public['state']=='verified':
+        try:agent_api.contract('runs.model_evidence',2);field_contract=True
+        except agent_api.AgentAPIError:field_contract=False
+        public=evidence(run['id']) if field_contract else None;field=None
+        if public is not None:write('evidence.json',public)
+        report['selected_field_state']=public['state'] if public is not None else 'unavailable; selected contract2 not composed'
+        if public is not None and public['state']=='verified':
             require([row['clocks']['optimizer_update'] for row in public['checkpoint_index']['entries']]==[16,32,48,64],'Actual checkpoints missing')
             selected_sha=public['checkpoint_index']['entries'][-1]['checkpoint']['sha256']
             query={'checkpoint_sha256':selected_sha,'member_ordinal':0,'field_id':'raw','axis':'z','index':1}
@@ -171,7 +174,7 @@ def main(args):
             evidence(run['id'],dict(query,split='test'),expect=409)
             evidence(run['id'],dict(query,checkpoint_sha256='f'*64),expect=409)
         else:
-            require(public['state']=='unsupported','Unexpected evidence outcome')
+            require(public is None or public['state']=='unsupported','Unexpected evidence outcome')
             require(not args.require_public_fields,'Main-owned explicit public field projection is unavailable; actual oracle evidence retained')
         duplicate=call('studies.admit',body)
         require(duplicate['run']['id']==run['id'] and duplicate['reservation']['id']==admitted['reservation']['id'],'Exact receipt changed')
@@ -182,7 +185,7 @@ def main(args):
         require(cli('status','--run-id',run['id'])==run,'Cold Run changed')
         require(call('recipes.material',{'ref':trial['material']})==material,'Cold material changed')
         require(call('models.material',{'ref':published['ref']})==published,'Cold Model changed')
-        require(evidence(run['id'])==public,'Cold evidence meaning changed')
+        if public is not None:require(evidence(run['id'])==public,'Cold evidence meaning changed')
         if field is not None:require(evidence(run['id'],query)==field,'Cold field query changed')
         require(call('studies.get',{'study_id':study['id']})==state,'Cold Study/accounting changed')
         report['cold_downloads']=download(run,'cold-artifacts')

@@ -449,6 +449,7 @@ def verify(directory, run, admitted_context):
     return {'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
             'manifest':manifest,'checkpoint_index':index,'probe':static['probe'],'metric_definitions':policy['metric_definitions'],
             'observations':observations,'model_definition':policy['model_specification'],'fields':field_records,
+            'metric_definition_hashes':{item['id']:digest(item) for item in policy['metric_definitions']},
             'checkpoints':[item['descriptor'] for item in checkpoints.values()], '_arrays':arrays}
 
 

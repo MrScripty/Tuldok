@@ -60,7 +60,7 @@ cold owner/HTTP query, common UI or E2 acceptance.
 ## P5/E4 author contract handoff
 
 Task ID `example.scalar-a:task`, revision2; profile ID
-`example.scalar-a.fixed-validation`, revision1 (exact authored recipe.json is the
+`example.scalar-a.fixed-validation`, revision2 (exact authored recipe.json is the
 source of truth). Weights are data-only little-endian float64 NPY `[scale,offset]`;
 transform.npy is train-only float64 `[mean,std]`. Checkpoint descriptors separately
 bind clocks and opaque weights; never use the weights hash as checkpoint identity.
@@ -82,3 +82,20 @@ outside producer capture. No A inference-entry/package reconstruction module is
 yet frozen. P5 must not invent an executable hook or treat this proposal as E4
 acceptance; reconstruction and its independent tolerances will be frozen before
 any fresh package consumer. B is not yet authored. Rights are private QA only.
+
+## Selected projection allocation and provenance scope
+
+Main's accepted contract2 uses the existing selected HTTP route and a trusted
+`contract_version` keyword into Runs.model_evidence. Existing selected v1 keeps
+its closed classifier semantics and returns unsupported for the new extension.
+The internal owner query (None) and explicit version2 use the exact field decoder;
+all current input/inventory/context guards precede that projection. The public
+result includes authoritative metric_definition_hashes computed from definitions.
+
+A's train/validation provenance is its exact captured, newly authored project
+fixture/member references, not a canonical Workbench scientific Release. Canonical
+Release import/review/freeze/lossless derivation is unsupported in this initial
+adapter and remains a distinct E2 acceptance gate. No Release/record identity is
+invented, no historical fixture is relabeled and host owners gain no normalization,
+reshaping or physical operators. This proposal and actual source qualification
+cannot close canonical-release derivation or full E2 acceptance.
