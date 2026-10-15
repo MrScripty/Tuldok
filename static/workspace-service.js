@@ -1101,3 +1101,271 @@
     };
   };
 })();
+
+// Bounded native controls for an inert contribution's declared parameter schema.
+(() => {
+  if(typeof window==='undefined')return;
+  const esc=value=>window.workspaceEscape(value);
+  window.WorkspaceTypedParameters=function({schema,value,prefix}){
+    let state=structuredClone(value),bindings=[],actions=[],count=0;
+    const own=(value,key)=>value!==null&&typeof value==='object'&&Object.hasOwn(value,key);
+    const at=path=>path.reduce((value,key)=>own(value,key)?value[key]:undefined,state);
+    function set(path,value){if(!path.length){state=value;return;}let parent=state;for(const key of path.slice(0,-1))parent=parent[key];parent[path.at(-1)]=value;}
+    function remove(path){let parent=state;for(const key of path.slice(0,-1))parent=parent[key];delete parent[path.at(-1)];}
+    function blank(rule){if(rule.type==='object')return Object.fromEntries((rule.required||[]).map(key=>[key,blank(rule.properties[key])]));if(rule.type==='array')return Array.from({length:rule.minItems||0},()=>blank(rule.items));return undefined;}
+    function validate(rule,value,label,depth=0){
+      if(depth>8)throw Error('This configuration exceeds the native editor depth bound.');
+      if(rule.enum&&!rule.enum.some(item=>item===value))throw Error('Choose '+label+'.');
+      if(rule.type==='object'){
+        if(!value||typeof value!=='object'||Array.isArray(value)||rule.additionalProperties!==false||!rule.properties)throw Error(label+' requires a closed object.');
+        if(Object.keys(value).some(key=>!own(rule.properties,key)))throw Error(label+' contains undeclared fields.');
+        for(const key of rule.required||[])if(!own(value,key))throw Error('Complete '+label+' · '+key+'.');
+        for(const key of Object.keys(value))validate(rule.properties[key],value[key],label+' · '+key,depth+1);
+      }else if(rule.type==='array'){
+        if(!Array.isArray(value)||!Number.isInteger(rule.maxItems)||rule.maxItems>64||value.length<(rule.minItems||0)||value.length>rule.maxItems)throw Error(label+' has an invalid item count.');
+        value.forEach((item,index)=>validate(rule.items,item,label+' '+(index+1),depth+1));
+      }else if(rule.type==='number'||rule.type==='integer'){
+        if(!Number.isFinite(value)||(rule.type==='integer'&&!Number.isSafeInteger(value))||(rule.minimum!==undefined&&value<rule.minimum)||(rule.maximum!==undefined&&value>rule.maximum))throw Error('Enter a valid '+label+'.');
+      }else if(rule.type==='string'){
+        if(typeof value!=='string'||value.length<(rule.minLength||0)||value.length>(rule.maxLength??4096))throw Error('Enter a valid '+label+'.');
+      }else if(rule.type==='boolean'){if(typeof value!=='boolean')throw Error('Choose '+label+'.');}
+      else throw Error('This parameter type is unavailable in the native editor.');
+    }
+    function node(rule,path,label,depth=0){
+      if(depth>8||++count>256)throw Error('This configuration exceeds the native editor size bound.');
+      const current=at(path),title=rule.title||label,hint=rule.description?`<small>${esc(rule.description)}</small>`:'';
+      if(rule.type==='object'){
+        if(rule.additionalProperties!==false||!rule.properties||Object.keys(rule.properties).length>64)throw Error('Only bounded closed parameter objects are supported.');
+        return `<fieldset class="author-parameters"><legend>${esc(title)}</legend>${hint}${Object.entries(rule.properties).map(([key,child])=>{
+          if(!/^[a-z][a-z0-9_.-]{0,63}$/.test(key))throw Error('Unsupported declared parameter name.');
+          const childPath=[...path,key],required=(rule.required||[]).includes(key);
+          if(required)return node(child,childPath,key.replaceAll('_',' '),depth+1);
+          const id=prefix+'-optional-'+bindings.length;bindings.push({id,kind:'optional',path:childPath,rule:child});
+          return `<div><label class="check-row"><input id="${id}" type="checkbox" ${own(current,key)?'checked':''}>Include ${esc(child.title||key)}</label>${own(current,key)?node(child,childPath,key.replaceAll('_',' '),depth+1):''}</div>`;
+        }).join('')}</fieldset>`;
+      }
+      if(rule.type==='array'){
+        if(!Number.isInteger(rule.maxItems)||rule.maxItems>64||rule.maxItems<0||!rule.items)throw Error('Only explicitly bounded parameter arrays are supported.');
+        const items=Array.isArray(current)?current:[],group=prefix+'-array-'+actions.length;
+        const add=group+'-add';actions.push({id:add,run:()=>set(path,[...at(path),blank(rule.items)])});
+        return `<fieldset class="author-parameters"><legend>${esc(title)}</legend>${hint}${items.map((item,index)=>{
+          const id=group+'-remove-'+index;actions.push({id,run:()=>set(path,at(path).filter((value,i)=>i!==index))});
+          return `<div class="author-array-item">${node(rule.items,[...path,index],title+' '+(index+1),depth+1)}<button id="${id}" type="button" ${items.length<=(rule.minItems||0)?'disabled':''}>Remove ${esc(title)} ${index+1}</button></div>`;
+        }).join('')}<button id="${add}" type="button" ${items.length>=rule.maxItems?'disabled':''}>Add ${esc(title)} item</button><small>${rule.minItems||0}–${rule.maxItems} items.</small></fieldset>`;
+      }
+      const id=prefix+'-value-'+bindings.length;bindings.push({id,kind:'value',path,rule,label:title});
+      let control;
+      if(rule.enum){control=`<select id="${id}" required><option value="">Choose ${esc(title)}</option>${rule.enum.map((item,index)=>`<option value="${index}" ${item===current?'selected':''}>${esc(item)}</option>`).join('')}</select>`;}
+      else if(rule.type==='boolean')control=`<input id="${id}" type="checkbox" ${current===true?'checked':''}>`;
+      else if(['integer','number','string'].includes(rule.type))control=`<input id="${id}" type="${rule.type==='string'?'text':'number'}" required value="${esc(current??'')}" ${rule.minimum!==undefined?`min="${esc(rule.minimum)}"`:''} ${rule.maximum!==undefined?`max="${esc(rule.maximum)}"`:''} ${rule.type==='string'?`minlength="${rule.minLength||0}" maxlength="${rule.maxLength??4096}"`:`step="${rule.type==='integer'?'1':'any'}"`}>`;
+      else throw Error('This declared parameter type is unavailable in the native editor.');
+      return `<label class="${rule.type==='boolean'?'check-row':''}">${esc(title)}${control}${hint}</label>`;
+    }
+    function read(root,check=true){
+      if(root)for(const binding of bindings){
+        if(binding.kind!=='value')continue;
+        const input=root.querySelector('#'+binding.id);if(!input)throw Error('Configuration control is unavailable.');
+        const raw=input.value;let value;
+        if(binding.rule.enum){if(raw===''&&check)throw Error('Choose '+binding.label+'.');value=raw===''?undefined:binding.rule.enum[Number(raw)];}
+        else if(binding.rule.type==='boolean')value=input.checked;
+        else if(binding.rule.type==='string')value=raw;
+        else value=raw.trim()===''?undefined:Number(raw);
+        set(binding.path,value);
+      }
+      if(check)validate(schema,state,'configuration');return structuredClone(state);
+    }
+    return {
+      html(label){bindings=[];actions=[];count=0;return node(schema,[],label);},
+      read,
+      bind(root,rerender,onError){
+        for(const action of actions)root.querySelector('#'+action.id)?.addEventListener('click',()=>{try{read(root,false);action.run();rerender();}catch(error){onError(error.message);}});
+        for(const binding of bindings.filter(item=>item.kind==='optional'))root.querySelector('#'+binding.id)?.addEventListener('change',event=>{
+          try{read(root,false);if(event.target.checked)set(binding.path,blank(binding.rule));else remove(binding.path);rerender();}catch(error){onError(error.message);}
+        });
+      },
+    };
+  };
+})();
+
+// Human preparation of the explicitly bound model recipe variant. No project code is loaded here.
+(() => {
+  if(typeof window==='undefined')return;
+  const pins=/* AUTHOR_CONTRACTS_START */ {
+    "recipes.inspect/2":"be0cfb596b3ae741e2903be57413684bac28e9fa3c59987086fde49e514284ea",
+    "models.create":"693d1514f44e92bb6c6635427db822acfc079a6e438d5d721630087157d1b8d5",
+    "models.publish":"bb84c1fd72b3617135a8246353db797bba270430121fbae6f9d46cdbfdd26235",
+    "graphs.create_external":"219f3c28bcb73e6d5445bdbd9b97e563bde3bd90487796b4680f36e02d338ffa",
+    "graphs.preflight_external":"81515fd903aefd3ab717a8a9b7cfb937726a312b1fa4808bec8a06ae03094125",
+    "studies.create":"8c4b35bbd1c2b7c6825787b40e40b2b3d22f58118ccaf1ef5f0d9bc12edb38f1",
+    "studies.prepare_trial":"516f89e4a03cafee9d50ac3910d1906fb34d51d3b21e8271a4be45075ea3778a",
+    "recipes.material":"d3ded92c05a1e3d7d88392355e4c61b480b63e55cf763774e2823462774c2870",
+    "studies.get":"12080dea124eb9e763ec495e070211b60a219c47cab9488218383a7d3919533d",
+    "studies.continue":"44237f86e49135203613b40a7bf6fe0960581ed7c3f128150b9576a07b491008",
+    "studies.approve":"5ed2d9db58231f14c164a76f1c64157260902d2cd86f5e86433f29fc00f4f408",
+    "studies.admit":"9c80abdfc50d56de88ada0141ba6c3b503cc07a395b0ceb930fa29169bd182ed"
+  } /* AUTHOR_CONTRACTS_END */;
+  window.WorkspaceExtensionAuthorContracts=pins;
+  const esc=value=>window.workspaceEscape(value),enc=encodeURIComponent,copy=value=>structuredClone(value);
+  const exactRef=(left,right)=>!!left&&!!right&&['kind','catalog_id','id','sha256'].every(key=>left[key]===right[key]);
+  const rejected=error=>[400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code);
+  const uncertain=error=>!error.status||error.status>=500||['commit_outcome_unknown','commit_unknown','outcome_unknown','unknown'].includes(error.code);
+  const identity=()=>window.TuldokAuth?.identity(),owner=()=>identity()?.kind==='owner';
+  async function request(operation,route,body,version=1){
+    const pin=pins[version===1?operation:operation+'/'+version];if(!pin)throw Error('This preparation operation is unavailable.');
+    const response=await (window.TuldokAuth?.fetch||fetch)('/api/workspace/'+route,{headers:{'Content-Type':'application/json','Tuldok-Operation-Contract':operation+'/'+version+'/'+pin},...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)})});
+    const value=await response.json();if(!response.ok){const error=Error(value.error||'Bound recipe operation unavailable.');error.status=response.status;error.code=value.code;throw error;}return value;
+  }
+  window.WorkspaceExtensionModelAuthor=function({announce,onRun,send=request}){
+    let generation=0,busy=null,project=null,reference=null,inspected=null,roles=null,job=null,foreign=false,key='',status='',failed=false,reviewed=false,modelEditor=null,trainerEditor=null,draft=null;
+    const dialog=document.createElement('dialog');dialog.id='extension-model-dialog';dialog.setAttribute('aria-labelledby','extension-model-title');document.body.append(dialog);
+    const save=value=>{history.replaceState({...history.state,extensionModelTrials:{...history.state?.extensionModelTrials,[value.key]:value}},'');};
+    const currentScope=()=>{const epoch=generation,credential=identity()?.credential_id;return ()=>epoch===generation&&credential===identity()?.credential_id&&dialog.open;};
+    const note=(text,error=false)=>{status=text;failed=error;if(dialog.open)render();announce(text,error);};
+    function cancel(){generation++;if(dialog.open)dialog.close();if(busy&&!job?.run)announce('An exact preparation or admission may still finish. Reopen this recipe with the original owner to inspect its saved request.');}
+    window.addEventListener('tuldok-session',()=>{cancel();job=null;inspected=null;roles=null;reviewed=false;});
+    dialog.addEventListener('cancel',cancel);
+    function binding(value){
+      const definition=value.definition,bound=value.extension_binding,selection=definition?.extension_selection?.selections;
+      if(project.schema_version!==2||definition?.schema_version!==3||definition?.format!=='external_model_evidence_recipe_v2'||bound?.format!=='tuldok_extension_binding_v1'||bound.project?.id!==project.id||bound.project.manifest_sha256!==project.manifest_sha256||!selection||!value.model_task||!value.selection_policy)throw Error('Only the explicitly bound model recipe is supported here. This project recipe remains inspection-only.');
+      const result={};
+      for(const role of ['task','model','trainer','evaluator','view']){
+        const selected=selection[role],matches=bound.contributions.filter(item=>item.kind===role&&['id','version','sha256'].every(name=>item[name]===selected?.[name]));
+        if(matches.length!==1||!bound.selections.some(item=>['id','version','sha256'].every(name=>item[name]===selected?.[name])))throw Error('The exact '+role+' contribution is unavailable.');
+        result[role]=matches[0];
+      }
+      if(!definition.model_evidence?.model_specification?.configuration||typeof definition.model_evidence.model_specification.configuration!=='object'||Array.isArray(definition.model_evidence.model_specification.configuration))throw Error('The bound model has no explicit configuration object.');
+      return result;
+    }
+    function trainerSchema(){
+      const properties={};
+      for(const [name,rule] of Object.entries(inspected.parameter_definitions)){
+        const declared=roles.trainer.definition.parameters?.properties?.[name]||{};
+        const value={...declared,type:rule.type,title:declared.title||name.replaceAll('_',' ')};
+        if(rule.min!==undefined)value.minimum=Math.max(rule.min,value.minimum??-Infinity);
+        if(rule.max!==undefined)value.maximum=Math.min(rule.max,value.maximum??Infinity);
+        if(rule.max_length!==undefined)value.maxLength=Math.min(rule.max_length,value.maxLength??4096);
+        if(rule.enum)value.enum=rule.enum.filter(item=>!declared.enum||declared.enum.includes(item));
+        properties[name]=value;
+      }
+      return {type:'object',properties,required:Object.keys(properties),additionalProperties:false};
+    }
+    function captureDraft(){
+      if(job||!draft)return;
+      const name=dialog.querySelector('#extension-model-name');if(!name)return;draft.name=name.value;
+      for(const node of dialog.querySelectorAll('[data-author-input]'))draft.inputs[node.dataset.authorInput]=node.value;
+      for(const id of ['attempts','wall','retained','staging'])draft.budget[id]=dialog.querySelector('#extension-budget-'+id).value;
+    }
+    function providerDeclaration(provider){return provider&&Array.isArray(provider.effects)&&provider.runtime?.profile==='captured_cpu_python_v1'&&provider.resources?provider:null;}
+    function hasReview(j){return Object.values(roles||{}).every(item=>providerDeclaration(item.provider))&& j?.preflight?.valid===true&&typeof j.preflight.material?.permissions?.filesystem==='string'&&typeof j.preflight.material.permissions.network==='string'&&!!j?.composition&&exactRef(j.composition.ref,j.trial?.material)&&exactRef(j.composition.material?.model,j.material?.ref)&&j.composition.material.recipe_id===j.graph?.id&&j.composition.material.recipe_revision===j.graph?.revision&&!!j.composition.material.resource_envelope;}
+    function makeEditors(){
+      const config=job?.configuration||inspected.definition.model_evidence.model_specification.configuration;
+      modelEditor=roles.model.definition.parameters?window.WorkspaceTypedParameters({schema:roles.model.definition.parameters,value:config,prefix:'extension-model'}):null;
+      if(!modelEditor&&Object.keys(config).length)throw Error('This model does not declare editable configuration parameters.');
+      trainerEditor=window.WorkspaceTypedParameters({schema:trainerSchema(),value:job?.parameters||Object.fromEntries(Object.entries(inspected.parameter_definitions).map(([name,rule])=>[name,rule.default])),prefix:'extension-trainer'});
+    }
+    function inputChoices(name){
+      const policy=inspected.definition.model_evidence,required=new Set([...policy.fit_members,...policy.probe.candidates.map(item=>item.frozen_reference)].filter(item=>item.input===name).map(item=>item.sha256));
+      return project.data.filter(item=>item.status==='available'&&item.integrity!=='mismatch'&&/^[a-f0-9]{64}$/.test(item.observed_sha256||'')&&(!required.size||required.has(item.observed_sha256))&&item.bytes<=inspected.inputs[name].max_bytes);
+    }
+    function contributionsHTML(){
+      return `<ul class="author-contributions">${Object.entries(roles).map(([role,item])=>`<li><strong>${esc(role)} · ${esc(item.definition.label)}</strong><p>${esc(item.id)} @ ${esc(item.version)} · ${esc(item.provider?.id||item.provider?.reference_id)}</p><small class="field-hash">${esc(item.sha256)}</small></li>`).join('')}</ul>`;
+    }
+    function providersHTML(){
+      const providers=[...new Map(Object.values(roles).map(item=>[item.provider.reference_id,item.provider])).values()];
+      return `<section><h3>Provider declarations</h3><p>These are hash-bound provider declarations. Effective process permissions are shown separately below.</p><ul>${providers.map(provider=>{
+        const item=providerDeclaration(provider);
+        return `<li><strong>${esc(provider.id)} @ ${esc(provider.version)}</strong>${item?`<p>Declared effects: ${esc(item.effects.join(', ')||'none')}. Declared runtime: ${esc(item.runtime.profile)} · <span class="field-hash">${esc(item.runtime.snapshot_sha256??'Snapshot hash not declared')}</span></p><p>Declared limits: ${item.resources.wall_seconds} wall seconds; ${item.resources.source_bytes} source bytes; ${item.resources.output_bytes} output bytes.</p>`:'<p>Declared effects, runtime and limits are unavailable in this bound inspection. Reinspect the recipe before approval.</p>'}</li>`;
+      }).join('')}</ul></section>`;
+    }
+    function reviewHTML(){
+      if(!hasReview(job))return '<p class="callout">The exact trial composition must be loaded before approval.</p><button id="extension-review-reconcile" type="button" '+(busy||!owner()?'disabled':'')+'>Load exact trial review</button>';
+      const material=job.composition.material,policy=inspected.definition.model_evidence;
+      return `<section class="author-review">${providersHTML()}<h3 id="extension-review-heading" tabindex="-1">Review this exact finite trial</h3><p>Trial ${esc(job.trial.id)} · composition SHA256 <span class="field-hash">${esc(job.trial.material.sha256)}</span></p><p>Model material ${esc(job.material.ref.sha256)} · recipe r${esc(job.graph.revision)}. The Study retains a diagnostic last-checkpoint policy; no numerical or physical acceptance threshold is qualified.</p><dl><div><dt>Runtime</dt><dd>${esc(inspected.runtime)} · <span class="field-hash">${esc(inspected.definition.runtime_snapshot_sha256||material?.runtime?.sha256)}</span></dd></div><div><dt>Finite requested budget</dt><dd>${job.limits.attempt_slots} attempts · ${job.limits.admitted_wall_seconds} wall seconds · ${job.limits.retained_bytes} retained bytes · ${job.limits.peak_staging_bytes} staging bytes</dd></div><div><dt>Effective process permissions</dt><dd>Filesystem: ${esc(job.preflight?.material?.permissions?.filesystem)} · network: ${esc(job.preflight?.material?.permissions?.network)}</dd></div><div><dt>Exact input membership</dt><dd>${policy.fit_members.length} training members; ${policy.probe.candidates.length} fixed validation members. Test and a physical timeline are unsupported.</dd></div></dl><p class="callout">Trusted local code runs with the service user’s filesystem and network access. This is not a sandbox. Limits do not guarantee aggregate resource isolation. Approval authorizes this exact material for the current owner. Process completion and retained diagnostics do not establish scientific correctness.</p><details><summary>Captured sources, data and declared limits</summary><ul>${inspected.extension_binding.inventory.map(item=>`<li>${esc(item.path)} · ${item.bytes} bytes · <span class="field-hash">${esc(item.sha256)}</span></li>`).join('')}</ul><pre>${esc(JSON.stringify({inputs:job.inputs,captured_sources:job.preflight?.material?.captures,resources:inspected.definition.resources,fit_members:policy.fit_members,validation_members:policy.probe.candidates,resource_envelope:material?.resource_envelope},null,2))}</pre></details>${job.run?`<p>Admitted Run ${esc(job.run.id)}</p><button id="extension-open-run" type="button">Inspect admitted Run →</button>`:job.approval?`<p>Exact one-use approval ${esc(job.approval.id)}</p><button id="extension-admit" class="primary" type="button" ${busy||!owner()?'disabled':''}>${job.admission?'Reconcile exact Study admission':'Start approved finite trial'}</button>`:`<label class="check-row"><input id="extension-reviewed" type="checkbox" ${reviewed?'checked':''} ${busy||!owner()||job.approvalUnknown?'disabled':''}>I reviewed this exact model, input membership, runtime, sources, permissions and finite budget.</label><button id="extension-approve" type="button" ${busy||!owner()||!reviewed||job.approvalUnknown?'disabled':''}>Approve this exact Study trial</button>${job.approvalUnknown?'<p class="error-panel">Approval acknowledgement is unresolved. Inspect execution grants before issuing another approval; this interface will not create a replacement grant.</p>':''}`}</section>`;
+    }
+    function render(){
+      if(!dialog.open)return;
+      const focus=dialog.contains(document.activeElement)?document.activeElement.id:null;
+      let form='';
+      if(inspected&&roles){
+        try{
+          form=`${contributionsHTML()}<p>Project snapshot ${esc(inspected.extension_binding.project.manifest_sha256)}. Opening and inspection run no contribution code.</p><form id="extension-model-form"><fieldset ${busy||job||foreign||!owner()?'disabled':''}><legend>Model and training configuration</legend><label>Name<input id="extension-model-name" maxlength="120" required value="${esc(job?.name??draft.name)}"></label>${modelEditor?modelEditor.html('Model configuration'):'<p>No editable model configuration parameters are declared.</p>'}${trainerEditor.html('Trainer controls')}<fieldset class="author-parameters"><legend>Exact authored project inputs</legend>${Object.keys(inspected.inputs).map(name=>`<label>${esc(name)}<select data-author-input="${esc(name)}" required><option value="">Choose a matching captured input</option>${inputChoices(name).map(item=>`<option value="${esc(item.id)}" ${(job?.inputs?.[name]?.reference_id??draft.inputs[name])===item.id?'selected':''}>${esc(item.label)} · ${esc(item.observed_sha256.slice(0,12))}</option>`).join('')}</select></label>`).join('')}</fieldset><fieldset class="author-parameters"><legend>Finite Study budget</legend><div class="model-fields">${[['attempts','Attempt slots',3],['wall','Admitted wall seconds',10800],['retained','Retained MiB',1024],['staging','Peak staging MiB',2048]].map(([id,label,value])=>`<label>${label}<input id="extension-budget-${id}" type="number" min="1" step="1" max="${id==='retained'||id==='staging'?Math.floor(Number.MAX_SAFE_INTEGER/1048576):Number.MAX_SAFE_INTEGER}" required value="${job?(id==='attempts'?job.limits.attempt_slots:id==='wall'?job.limits.admitted_wall_seconds:id==='retained'?job.limits.retained_bytes/1048576:job.limits.peak_staging_bytes/1048576):draft.budget[id]}"></label>`).join('')}</div></fieldset></fieldset>${foreign?'<p class="error-panel">Another actor has unresolved preparation for this recipe. Reconcile it in that actor’s session before creating a replacement.</p>':!owner()?'<p>The current owner session is required to prepare and approve a local model trial.</p>':!job?.trial?`<button id="extension-prepare" class="primary" ${busy||job?.creationUnknown?'disabled':''}>${job?'Reconcile exact preparation':'Prepare immutable finite trial'}</button>`:''}</form><details><summary>Declared ordered stages</summary><ol>${(roles.trainer.definition.stages||roles.task.definition.stages||[]).map(stage=>`<li>${esc(stage.id)} @ ${esc(stage.version)} · ${esc(stage.clock||'declared stage')}</li>`).join('')}</ol><p>Only the selected declared stages and the registered native field view are available. No stage callback is loaded by the interface.</p></details>${job?.creationUnknown?`<p class="error-panel">${esc(job.creationUnknown)} creation acknowledgement is unresolved. Inspect saved ${esc(job.creationUnknown)} records before another creation; the original preparation remains retained.</p>`:''}${job?.trial?reviewHTML():''}`;
+        }catch(error){form=`<p class="error-panel">${esc(error.message)} No configuration is submitted.</p>`;}
+      }
+      dialog.innerHTML=`<div class="panel-title"><h2 id="extension-model-title">Prepare a bound model trial</h2><button id="extension-model-close" type="button">Close</button></div><p>${esc(reference?.label)} · ${esc(project?.name)}</p><p class="author-status ${failed?'error-panel':''}" role="status">${esc(status)}</p>${form}`;
+      dialog.querySelector('#extension-model-close').onclick=cancel;
+      const rerender=()=>{captureDraft();render();};modelEditor?.bind(dialog,rerender,text=>note(text,true));trainerEditor?.bind(dialog,rerender,text=>note(text,true));
+      dialog.querySelector('#extension-model-form')?.addEventListener('submit',event=>{event.preventDefault();return perform(prepare);});
+      dialog.querySelector('#extension-reviewed')?.addEventListener('change',event=>{reviewed=event.target.checked;const button=dialog.querySelector('#extension-approve');if(button)button.disabled=!reviewed||!!busy||!owner();});
+      dialog.querySelector('#extension-review-reconcile')?.addEventListener('click',()=>perform(loadReview));
+      dialog.querySelector('#extension-approve')?.addEventListener('click',()=>perform(approve));
+      dialog.querySelector('#extension-admit')?.addEventListener('click',()=>perform(admit));
+      dialog.querySelector('#extension-open-run')?.addEventListener('click',()=>onRun(job.run.id));
+      if(focus)dialog.querySelector('#'+CSS.escape(focus))?.focus({preventScroll:true});
+    }
+    async function perform(action){
+      if(busy||!owner()||foreign)return;
+      captureDraft();const valid=currentScope(),token={};busy=token;status='Checking exact immutable material…';failed=false;
+      try{await action(valid);}catch(error){if(valid()){status=error.message;failed=true;}}
+      finally{if(busy===token){busy=null;if(valid()){render();if(job?.trial)dialog.querySelector('#extension-review-heading')?.focus({preventScroll:true});}}}
+    }
+    function checked(valid){if(!valid())throw Error('Selection or session changed. Reopen this recipe to inspect the retained operation.');}
+    async function create(j,field,operation,route,body,valid){
+      if(j[field])return;
+      if(j.creationUnknown)throw Error('An earlier '+j.creationUnknown+' creation is unresolved. Inspect saved records before another creation.');
+      try{const value=await send(operation,route,body);j[field]=value;save(j);checked(valid);}
+      catch(error){if(!j[field]&&uncertain(error)){j.creationUnknown=field;save(j);}throw error;}
+    }
+    async function prepare(valid){
+      checked(valid);
+      let j=job;
+      if(!j){
+        const configuration=modelEditor?modelEditor.read(dialog):{},parameters=trainerEditor.read(dialog),inputs={};
+        for(const select of dialog.querySelectorAll('[data-author-input]')){
+          const name=select.dataset.authorInput,item=inputChoices(name).find(item=>item.id===select.value);if(!item)throw Error('Choose the exact captured input for '+name+'.');inputs[name]={reference_id:item.id,expected_sha256:item.observed_sha256};
+        }
+        const number=id=>Number(dialog.querySelector('#extension-budget-'+id).value),limits={attempt_slots:number('attempts'),admitted_wall_seconds:number('wall'),retained_bytes:number('retained')*1048576,peak_staging_bytes:number('staging')*1048576};
+        if(Object.values(limits).some(value=>!Number.isSafeInteger(value)||value<1))throw Error('Use positive finite integer budget values.');
+        if(!draft.name.trim()||draft.name.length>120)throw Error('Enter a model trial name of at most 120 characters.');
+        j={key,actor:identity().actor_id,name:draft.name,configuration,parameters,inputs,limits};job=j;save(j);
+      }
+      if(j.actor!==identity()?.actor_id)throw Error('The preparing owner must reconcile this trial.');
+      render();checked(valid);
+      const specification=copy(inspected.definition.model_evidence.model_specification);specification.configuration=copy(j.configuration);
+      const source_selector={project_id:project.id,recipe_id:reference.id,expected_sha256:reference.observed_sha256};
+      await create(j,'model','models.create','models',{name:j.name,task:inspected.model_task,kind:'captured_source',specification,source_selector,preprocessing_policy:inspected.definition.model_evidence.preprocessing_policy,output_policy:inspected.definition.model_evidence.output_policy},valid);
+      if(!j.material){j.material=await send('models.publish','models/'+enc(j.model.id)+'/publish',{revision:j.model.revision,reconcile_capture:true});save(j);checked(valid);}
+      await create(j,'graph','graphs.create_external','graphs/external',{name:j.name,...source_selector,inputs:j.inputs,parameters:j.parameters},valid);
+      if(!j.preflight){j.preflight=await send('graphs.preflight_external','graphs/'+enc(j.graph.id)+'/preflight-external',{revision:j.graph.revision});save(j);checked(valid);}
+      if(j.preflight.valid!==true)throw Error('The exact bound graph did not pass preflight.');
+      await create(j,'study','studies.create','studies',{name:j.name,limits:j.limits,policy:inspected.selection_policy},valid);
+      if(!j.preparation){const state=await send('studies.get','studies/'+enc(j.study.id));checked(valid);j.study=state.study;j.preparation={request_key:crypto.randomUUID(),revision:j.study.revision,graph_id:j.graph.id,graph_revision:j.graph.revision,model:j.material.ref,replicate:0,reconcile_capture:true};save(j);}
+      if(!j.trial){try{j.trial=await send('studies.prepare_trial','studies/'+enc(j.study.id)+'/prepare-trial',j.preparation);save(j);checked(valid);}
+        catch(error){if(!j.preparationUnknown&&rejected(error)){j.preparation=null;save(j);}else if(uncertain(error)){j.preparationUnknown=true;save(j);}throw error;}}
+      await loadReview(valid);status='Immutable trial prepared. Review its full material before a separate exact approval and explicit admission.';
+    }
+    async function loadReview(valid){const j=job;checked(valid);render();if(j.actor!==identity()?.actor_id)throw Error('The preparing owner must review this trial.');if(!Object.values(roles).every(item=>providerDeclaration(item.provider)))throw Error('Reinspect the recipe to review exact provider effects, runtime and limits before approval.');const result=await send('recipes.material','recipe-material',{ref:j.trial.material});j.composition=result;save(j);checked(valid);if(!hasReview(j))throw Error('The returned composition does not match this exact trial and Model.');}
+    async function approve(valid){
+      const j=job;if(!reviewed||!hasReview(j)||j.actor!==identity()?.actor_id||j.approvalUnknown)throw Error('Review the prepared exact trial before approval.');checked(valid);render();
+      try{j.approval=await send('studies.approve','studies/'+enc(j.study.id)+'/approve',{trial_id:j.trial.id,expected_material_sha256:j.trial.material.sha256,consumer_actor_id:identity().actor_id});save(j);checked(valid);status='One-use full-composition approval retained. Start this finite Study trial explicitly.';}
+      catch(error){if(!j.approval&&uncertain(error)){j.approvalUnknown=true;save(j);}throw error;}
+    }
+    async function admit(valid){
+      const j=job;checked(valid);render();if(!hasReview(j)||!j?.approval||j.actor!==identity()?.actor_id)throw Error('The preparing owner and exact approval are required.');
+      if(!j.admission){let state=await send('studies.get','studies/'+enc(j.study.id));checked(valid);
+        if(!state.study.open){if(!j.continuation){j.continuation={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch};save(j);}try{await send('studies.continue','studies/'+enc(j.study.id)+'/continue',j.continuation);}catch(error){if(!j.continuationUnknown&&rejected(error)){j.continuation=null;save(j);}else if(uncertain(error)){j.continuationUnknown=true;save(j);}throw error;}checked(valid);state=await send('studies.get','studies/'+enc(j.study.id));checked(valid);}
+        j.admission={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch,trial_id:j.trial.id,approval_id:j.approval.id};save(j);
+      }
+      let result;try{result=await send('studies.admit','studies/'+enc(j.study.id)+'/admit',j.admission);}
+      catch(error){if(!j.admissionUnknown&&rejected(error)){j.admission=null;j.continuation=null;save(j);}else if(uncertain(error)){j.admissionUnknown=true;save(j);}throw error;}
+      j.run=result.run;j.admission=null;save(j);checked(valid);status='Durable Study attempt admitted.';await onRun(result.run.id);
+    }
+    return {cancel,async open(detail,item){
+      if(busy){announce('Finish or reconcile the current preparation before opening another recipe.');return;}
+      const validEpoch=++generation;project=copy(detail);reference=copy(item);key=project.id+':'+reference.id+':'+reference.observed_sha256;inspected=null;roles=null;reviewed=false;modelEditor=null;trainerEditor=null;draft=null;
+      const saved=history.state?.extensionModelTrials?.[key];foreign=!!(saved&&saved.actor!==identity()?.actor_id&&!saved.run);job=saved?.actor===identity()?.actor_id?{...saved,key}:null;
+      status='Inspecting the exact bound contributions. No project code is executed.';failed=false;dialog.showModal();render();const credential=identity()?.credential_id;
+      try{const value=await send('recipes.inspect','projects/'+enc(project.id)+'/recipes/'+enc(reference.id)+'?expected_sha256='+enc(reference.observed_sha256),undefined,2);if(validEpoch!==generation||credential!==identity()?.credential_id||!dialog.open)return;roles=binding(value);inspected=value;draft={name:value.definition.name,inputs:{},budget:{attempts:3,wall:10800,retained:1024,staging:2048}};makeEditors();status='Configure the declared model separately from trainer controls. Preparation does not execute a Run.';render();dialog.querySelector('#extension-model-name')?.focus();}
+      catch(error){if(validEpoch===generation&&credential===identity()?.credential_id&&dialog.open){status=error.message;failed=true;render();}}
+    }};
+  };
+})();

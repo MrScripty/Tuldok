@@ -416,6 +416,12 @@
         if(!isCurrent()||graph!==previous||JSON.stringify(graph)!==previousState)return false;
         adopt(document);return true;
       },
+      async openRunById(id,isCurrent=()=>true){
+        const credential=window.TuldokAuth?.identity()?.credential_id,selected=await api('runs/'+encoded(id));
+        if(!isCurrent()||credential!==window.TuldokAuth?.identity()?.credential_id)return false;
+        if(selected.id!==id)throw Error('The admitted Run could not be identified.');
+        ++runGeneration;model.invalidate();fieldEvidence.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
+      },
       identity: () => context?.dataset_id,
       async show(next) {
         view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);model.invalidate();fieldEvidence.invalidate();

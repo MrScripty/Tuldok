@@ -29,11 +29,27 @@ CPU_BOOTSTRAP = 'runtime-bootstrap/recipe_process.py'
 HOST_NAMES = ('recipe_contract.py', 'projects.py', 'pipeline.py', 'recipe_process.py')
 EVIDENCE_HOST_NAMES = (*HOST_NAMES, 'extension_evidence.py', 'field_evidence.py', 'scientific_fields.py', 'scientific_release.py')
 EVIDENCE_FORMAT = 'external_model_evidence_recipe_v1'
+BOUND_EVIDENCE_FORMAT = 'external_model_evidence_recipe_v2'
+BOUND_EVIDENCE_HOST_NAMES = (*EVIDENCE_HOST_NAMES, 'extension_bindings.py', 'extension_contract.py', 'agent_api.py',
+    *(f'extension_schemas/{name}-v1.json' for name in ('extension','contribution','parameter')))
 EVIDENCE_CONTEXT = 'runtime-bootstrap/model-evidence-context.json'
 EVIDENCE_CONTEXT_LIMIT = 64 * 1024
 IMPORTED_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in HOST_NAMES}
 IMPORTED_EVIDENCE_HOST_FILES = ({name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in EVIDENCE_HOST_NAMES}
     if all((Path(__file__).resolve().parent/name).is_file() for name in EVIDENCE_HOST_NAMES) else None)
+
+IMPORTED_BOUND_EVIDENCE_HOST_FILES = {name: hashlib.sha256((Path(__file__).resolve().parent/name).read_bytes()).hexdigest() for name in BOUND_EVIDENCE_HOST_NAMES}
+
+
+def is_bound_evidence(value):
+    return (type(value) is dict and type(value.get('schema_version')) is int
+            and value['schema_version'] == 3 and value.get('format') == BOUND_EVIDENCE_FORMAT)
+
+
+def is_evidence(value):
+    return (is_bound_evidence(value) or (type(value) is dict
+            and type(value.get('schema_version')) is int and value['schema_version'] == 2
+            and value.get('format') == EVIDENCE_FORMAT))
 
 
 def digest(value):
@@ -61,8 +77,14 @@ def decode_definition(raw):
         raise WorkbenchError('Recipe definition exceeds 64 KiB.')
     value = decode(raw)
     closed(value, ('schema_version', 'format', 'id', 'name', 'version', 'runtime', 'sources', 'entrypoint',
-                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','model_evidence'))
-    evidence = type(value['schema_version']) is int and value['schema_version'] == 2 and value['format'] == EVIDENCE_FORMAT
+                   'arguments', 'parameters', 'inputs', 'outputs', 'environment', 'resources'), ('native_sources','runtime_snapshot_sha256','model_evidence','extension_selection'))
+    evidence = is_evidence(value)
+    bound = is_bound_evidence(value)
+    if bound != ('extension_selection' in value):
+        raise WorkbenchError('Contribution selection requires the explicit bound recipe version.', 'unsupported', 400)
+    if bound:
+        import extension_bindings
+        extension_bindings.selection_references(value['extension_selection'])
     if not evidence and (type(value['schema_version']) is not int or value['schema_version'] != 1 or value['format'] != 'external_recipe_v1'):
         raise WorkbenchError('Unsupported explicit external recipe version.', 'unsupported', 400)
     if evidence != ('model_evidence' in value):
@@ -436,36 +458,184 @@ def graph_parameters(graph):
 
 
 def inspect_recipe(projects, project_id, reference_id, expected_sha256):
-    raw, receipt = projects.read_recipe_reference(project_id, reference_id, expected_sha256)
+    snapshot = False
+    try:
+        raw, receipt = projects.read_recipe_reference(project_id, reference_id, expected_sha256)
+    except WorkbenchError as error:
+        if error.code != 'unsupported':
+            raise
+        raw, receipt = projects.read_snapshot_recipe_reference(project_id, reference_id, expected_sha256)
+        snapshot = True
     definition = decode_definition(raw)
-    return {'definition': definition, 'receipt': receipt, 'parameter_definitions': definition['parameters'],
-            'inputs': definition['inputs'], 'outputs': definition['outputs'], 'runtime': definition['runtime']}
+    bound = is_bound_evidence(definition)
+    if snapshot != bound:
+        raise WorkbenchError('Only the explicit bound recipe uses a Project v2 snapshot.', 'unsupported', 400)
+    result = {'definition': definition, 'receipt': receipt, 'parameter_definitions': definition['parameters'],
+              'inputs': definition['inputs'], 'outputs': definition['outputs'], 'runtime': definition['runtime']}
+    if bound:
+        import extension_bindings
+        resolved = extension_bindings.resolve(projects, project_id, receipt['manifest_sha256'],
+            extension_bindings.selection_references(definition['extension_selection']))
+        extension_bindings.validate_configuration(resolved['binding'], definition, validate_parameters(definition, {}))
+        extension_bindings.validate_provider_requirements(resolved['binding'],resolved['blobs'],definition)
+        result['extension_binding'] = resolved['binding']
+        policy = definition['model_evidence']
+        result['model_task'] = {'kind':'task','catalog_id':projects.db.dataset_id,
+            'id':policy['task']['id'],'revision':policy['task']['revision'],'sha256':digest(policy['task']['definition'])}
+        result['selection_policy'] = {'format':'selection_policy_v1',
+            'metric_definition_sha256':digest(policy['metric_definitions'][0]),'checkpoint_rule':'last',
+            'replicate_reduce':'individual','required_capabilities':policy['profile']['required_capabilities'],
+            'numerical_acceptance':'diagnostic','tie_break':'trial_id'}
+    return result
 
 
-def host_identity(*, evidence=False):
+def bound_sources(projects, inspected):
+    """Capture a selected provider inventory using the authenticated Project receipt."""
+    import extension_bindings
+    definition = inspected['definition']; receipt = inspected['receipt']
+    result = extension_bindings.resolve(projects, receipt['project_id'], receipt['manifest_sha256'],
+        extension_bindings.selection_references(definition['extension_selection']))
+    if encode(result['binding']) != encode(inspected['extension_binding']):
+        raise WorkbenchError('Contribution binding changed during capture.', 'stale', 409)
+    selected = extension_bindings.validate_roles(result['binding'], definition['extension_selection'])
+    if definition['entrypoint'] != selected['trainer']['implementation']['source']:
+        raise WorkbenchError('Recipe entrypoint differs from the selected trainer source.')
+    extension_bindings.validate_provider_requirements(result['binding'],result['blobs'],definition)
+    sources = dict(result['blobs'])
+    for source in definition['sources']:
+        if source['path'] not in sources or file_digest(sources[source['path']]) != source['sha256']:
+            raise WorkbenchError('Recipe source is absent from its exact contribution inventory.')
+    if extension_bindings.BINDING_PATH in sources:
+        raise WorkbenchError('Provider inventory uses the reserved binding capture path.')
+    sources[extension_bindings.BINDING_PATH] = encode(result['binding']).encode()
+    if len(sources) > 64 or sum(map(len, sources.values())) > MAX_SOURCE_BYTES:
+        raise WorkbenchError('Bound source closure exceeds64 files/8MiB.', 'too_large', 400)
+    return sources
+
+
+def validate_bound_sources(definition, binding, sources, *, specification=None, task=None):
+    """Cold rederivation from retained files, with no Project reads or execution."""
+    import extension_bindings
+    raw = sources.get(extension_bindings.BINDING_PATH)
+    if not isinstance(raw, bytes) or len(raw) > extension_bindings.BOUND_DOCUMENT_LIMIT:
+        raise WorkbenchError('Retained binding document is missing or oversized.', 'unavailable', 409)
+    value = decode(raw)
+    if encode(value) != encode(binding):
+        raise WorkbenchError('Retained binding document differs.', 'unavailable', 409)
+    inventory = {item['path'] for item in binding['inventory']}
+    blobs = {path:sources[path] for path in inventory if path in sources}
+    extension_bindings.validate_captured(binding, blobs)
+    extension_bindings.validate_provider_requirements(binding,blobs,definition)
+    extension_bindings.validate_configuration(binding, definition, validate_parameters(definition, {}),
+                                               specification=specification, task=task)
+    selected = extension_bindings.validate_roles(binding, definition['extension_selection'])
+    if definition['entrypoint'] != selected['trainer']['implementation']['source']:
+        raise WorkbenchError('Retained entrypoint differs from its trainer contribution.', 'unavailable', 409)
+    if set(sources) != inventory | {extension_bindings.BINDING_PATH}:
+        raise WorkbenchError('Retained bound source inventory differs.', 'unavailable', 409)
+    for source in definition['sources']:
+        if source['path'] not in sources or file_digest(sources[source['path']]) != source['sha256']:
+            raise WorkbenchError('Retained recipe source differs from its binding.', 'unavailable', 409)
+    return binding
+
+
+def validate_bound_captures(material, captured):
+    if is_bound_evidence(material['recipe']):
+        return validate_bound_sources(material['recipe'], material['extension_binding'],
+            {path[len('source/'):]:raw for path,raw in captured.items() if path.startswith('source/')})
+
+
+def host_identity(*, evidence=False, bound=False):
     import recipe_process
     root = Path(__file__).resolve().parent
-    imported = IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
+    imported = IMPORTED_BOUND_EVIDENCE_HOST_FILES if bound else IMPORTED_EVIDENCE_HOST_FILES if evidence else IMPORTED_HOST_FILES
     if imported is None:
         raise WorkbenchError('Canonical field evidence dependency is unavailable; restart after explicit provisioning.', 'unavailable', 409)
-    current = {name: file_digest((root/name).read_bytes()) for name in (EVIDENCE_HOST_NAMES if evidence else HOST_NAMES)}
+    current = {name: file_digest((root/name).read_bytes()) for name in (BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES)}
     if current != imported or file_digest(recipe_process.SOURCE) != current['recipe_process.py']:
         raise WorkbenchError('Execution host changed after import. Restart before preflight or execution.', 'stale', 409)
     return current
+
+
+
+def recipe_host_identity(definition):
+    return host_identity(evidence=is_evidence(definition),bound=is_bound_evidence(definition))
+
+
+def revalidate_bound_material(projects, material, captured, profile=None):
+    """Recheck an owner-prepared immutable capture for an exact grant consumer.
+
+    Current Project bytes are compared privately against this exact retained
+    composition. Admission authorization stays with its owner; current runtime
+    and host qualification remain required. Cold disclosure uses retained bytes.
+    """
+    if not is_bound_evidence(material['recipe']):
+        raise WorkbenchError('Retained-only preparation requires the bound recipe version.')
+    validate_material(material)
+    measured={path:{'bytes':len(raw),'sha256':file_digest(raw)} for path,raw in captured.items()}
+    if encode(measured)!=encode(material['captures']):
+        raise WorkbenchError('Retained execution capture differs.','unavailable',409)
+    validate_bound_captures(material,captured)
+    # Exact retained composition has already been authorized and checked by
+    # Pipeline. This private nondisclosing comparison grants no ambient Project
+    # reads to its agent consumer, while preserving source freshness on new work.
+    import extension_bindings
+    binding=material['extension_binding']
+    try:
+        saved,manifest_raw=projects._snapshot_saved(material['project']['project_id'],material['project']['manifest_sha256'])
+        current=extension_bindings._resolve(saved,manifest_raw,
+            extension_bindings.selection_references(material['recipe']['extension_selection']),
+            lambda path,limit:projects._read_snapshot_file(saved,path,limit))
+        if encode(current['binding'])!=encode(binding):
+            raise WorkbenchError('Current contribution binding differs.')
+        for path,raw in current['blobs'].items():
+            if raw!=captured.get('source/'+path):raise WorkbenchError('Current provider bytes differ.')
+        ref=next((item for item in saved['manifest']['recipes'] if item['id']==material['project']['reference_id']),None)
+        if ref is None or ref['path']!=material['project']['path']:
+            raise WorkbenchError('Current recipe reference differs.')
+        raw=projects._read_snapshot_file(saved,ref['path'],65536)
+        if (file_digest(raw)!=material['project']['measured_sha256'] or
+                ref.get('sha256',file_digest(raw))!=file_digest(raw) or
+                encode(decode_definition(raw))!=encode(material['recipe'])):
+            raise WorkbenchError('Current recipe definition differs.')
+        for name,receipt in material['inputs'].items():
+            if 'kind' in receipt:raise WorkbenchError('Bound field inputs require Project references.')
+            ref=next((item for item in saved['manifest']['data'] if item['id']==receipt['reference_id']),None)
+            if ref is None or ref['path']!=receipt['path']:raise WorkbenchError('Current input reference differs.')
+            raw=projects._read_snapshot_file(saved,ref['path'],material['recipe']['inputs'][name]['max_bytes'])
+            if raw!=captured['input/'+name] or ref.get('sha256',file_digest(raw))!=file_digest(raw):
+                raise WorkbenchError('Current Project input differs.')
+        projects._snapshot_saved(material['project']['project_id'],material['project']['manifest_sha256'])
+    except WorkbenchError:
+        raise WorkbenchError('Bound Project, provider, recipe or input changed after review.','stale',409) from None
+    if recipe_host_identity(material['recipe'])!=material['host_files'] or runtime_identity(profile)!=material['runtime']:
+        raise WorkbenchError('Bound execution host or runtime changed after preparation.','stale',409)
+    from runtime_snapshots import RuntimeSnapshots
+    snapshot=RuntimeSnapshots(projects.db,projects.access,projects.db.path).get(
+        material['recipe']['runtime_snapshot_sha256'],verify=True)
+    if encode(snapshot)!=encode(material['cpu_snapshot']):
+        raise WorkbenchError('Bound CPU snapshot changed after preparation.','stale',409)
+    return material
 
 
 def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, runs=None):
     config, values = graph_parameters(graph)
     inspected = inspect_recipe(projects, config['project_id'], config['recipe_id'], config['expected_sha256'])
     definition = inspected['definition']; values = validate_parameters(definition, values)
-    sources = projects.read_recipe_sources(config['project_id'], definition['sources'])
+    bound = is_bound_evidence(definition)
+    sources = bound_sources(projects, inspected) if bound else projects.read_recipe_sources(config['project_id'], definition['sources'])
+    if bound:
+        import extension_bindings
+        extension_bindings.validate_configuration(inspected['extension_binding'], definition, values)
     if not isinstance(config['inputs'], dict) or set(config['inputs']) != set(definition['inputs']):
         raise WorkbenchError('Bind every declared input exactly once.')
-    if definition['format']==EVIDENCE_FORMAT and any(type(binding) is not dict or 'kind' in binding for binding in config['inputs'].values()):
+    if is_evidence(definition) and any(type(binding) is not dict or 'kind' in binding for binding in config['inputs'].values()):
         raise WorkbenchError('Authored model evidence supports only explicit project inputs, including unused inputs.','unsupported',409)
     captured = {'source/' + path: raw for path, raw in sources.items()}
     inputs = {}
     for name, binding in config['inputs'].items():
+        if bound and isinstance(binding,dict) and 'kind' in binding:
+            raise WorkbenchError('Bound field evidence requires authored Project inputs.','unsupported',400)
         if isinstance(binding, dict) and binding.get('kind') == 'run_artifact':
             closed(binding, ('kind', 'run_id', 'artifact_name', 'expected_sha256'))
             if runs is None:
@@ -480,7 +650,8 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
             raw, receipt = releases.capture_input(binding['release_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
         else:
             closed(binding, ('reference_id', 'expected_sha256'))
-            raw, receipt = projects.read_data_reference(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
+            reader = projects.read_snapshot_data_reference if bound else projects.read_data_reference
+            raw, receipt = reader(config['project_id'], binding['reference_id'], binding['expected_sha256'], definition['inputs'][name]['max_bytes'])
         captured['input/' + name] = raw; inputs[name] = receipt
     if {'input_evidence': True} in definition['arguments']:
         captured[INPUT_EVIDENCE] = encode(inputs).encode()
@@ -514,15 +685,16 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         captured[CPU_BOOTSTRAP] = recipe_process.SOURCE
         if len(captured) > MAX_FILES or sum(map(len,captured.values())) > capture_limit:
             raise WorkbenchError('Generated CPU bootstrap exceeds the capture bound.')
-    evidence = definition['format'] == EVIDENCE_FORMAT
+    evidence = is_evidence(definition)
     if evidence and (len(captured)>=MAX_FILES or sum(map(len,captured.values()))+EVIDENCE_CONTEXT_LIMIT>CPU_CAPTURE_BYTES):
         raise WorkbenchError('Capture must reserve one bounded generated context file.')
-    host = host_identity(evidence=evidence)
-    material = {'schema_version': 2 if evidence else 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
+    host = recipe_host_identity(definition)
+    material = {'schema_version': 3 if bound else 2 if evidence else 1, 'catalog_id': projects.db.dataset_id, 'project': inspected['receipt'], 'graph_execution_sha256': execution_sha256,
                 'recipe': definition, 'parameters': values, 'inputs': inputs,
                 'captures': {path: {'bytes':len(raw),'sha256':file_digest(raw)} for path,raw in sorted(captured.items())},
                 'runtime': runtime, 'host_files': host, 'permissions': {'filesystem':'trusted-local', 'network':'not_isolated'},
                 'environment': {'LANG':'C.UTF-8'}, 'resources': definition['resources']}
+    if bound: material['extension_binding'] = inspected['extension_binding']
     if policies is not None: material['native_policies'] = policies
     if cpu_snapshot is not None: material['cpu_snapshot'] = cpu_snapshot
     validate_material(material)
@@ -534,8 +706,8 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
 def validate_material(material):
     """Cold structural custody checks; no filesystem access or current-code comparison."""
     closed(material, ('schema_version', 'catalog_id', 'project', 'graph_execution_sha256', 'recipe',
-                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot'))
-    if type(material['schema_version']) is not int or material['schema_version'] not in (1,2) or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
+                      'parameters', 'inputs', 'captures', 'runtime', 'host_files', 'permissions', 'environment', 'resources'), ('native_policies','cpu_snapshot','extension_binding'))
+    if type(material['schema_version']) is not int or material['schema_version'] not in (1,2,3) or not isinstance(material['catalog_id'], str) or not material['catalog_id']:
         raise WorkbenchError('Invalid execution material identity.')
     def sha(value):
         if not isinstance(value, str) or not SHA.fullmatch(value): raise WorkbenchError('Invalid material SHA256.')
@@ -546,8 +718,13 @@ def validate_material(material):
         relative_path(value['path']); sha(value['manifest_sha256']); sha(value['measured_sha256'])
     sha(material['graph_execution_sha256']); receipt(material['project'])
     definition = decode_definition(encode(material['recipe']).encode())
-    evidence = definition['format'] == EVIDENCE_FORMAT
-    if material['schema_version'] != (2 if evidence else 1):raise WorkbenchError('Recipe/material version differs.')
+    evidence = is_evidence(definition)
+    bound = is_bound_evidence(definition)
+    if bound != ('extension_binding' in material):raise WorkbenchError('Material binding requires its explicit recipe version.')
+    if bound:
+        import extension_bindings
+        extension_bindings.validate_configuration(material['extension_binding'], definition, material['parameters'])
+    if material['schema_version'] != (3 if bound else 2 if evidence else 1):raise WorkbenchError('Recipe/material version differs.')
     if evidence and (len(material['captures'])>=MAX_FILES or sum(item['bytes'] for item in material['captures'].values())+EVIDENCE_CONTEXT_LIMIT>CPU_CAPTURE_BYTES):
         raise WorkbenchError('Material leaves no generated context capacity.')
     if encode(validate_parameters(definition, material['parameters'])) != encode(material['parameters']):
@@ -556,6 +733,12 @@ def validate_material(material):
         raise WorkbenchError('Material execution policy is inconsistent.')
     if not isinstance(material['inputs'], dict) or set(material['inputs']) != set(definition['inputs']): raise WorkbenchError('Material input inventory differs.')
     expected = {'source/'+item['path']:item['sha256'] for item in definition['sources']}
+    if bound:
+        binding = material['extension_binding']
+        if binding['project']['id'] != material['project']['project_id'] or binding['project']['manifest_sha256'] != material['project']['manifest_sha256']:
+            raise WorkbenchError('Contribution binding belongs to another Project snapshot.')
+        expected = {'source/'+item['path']:item['sha256'] for item in binding['inventory']}
+        expected['source/'+extension_bindings.BINDING_PATH] = file_digest(encode(binding).encode())
     for name, item in material['inputs'].items():
         if isinstance(item, dict) and item.get('kind') == 'run_artifact':
             import recipe_process
@@ -641,7 +824,7 @@ def validate_material(material):
         bounded_int(item['bytes'],0,64*1024*1024,'Runtime file bytes'); total += item['bytes']
     if total > RUNTIME_LIMIT or runtime['executable'] not in files or files[runtime['executable']]['sha256'] != runtime['executable_sha256'] or digest(files) != runtime['closure_sha256']:
         raise WorkbenchError('Runtime closure identity is inconsistent.')
-    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(EVIDENCE_HOST_NAMES if evidence else HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
+    if not isinstance(material['host_files'],dict) or set(material['host_files']) != set(BOUND_EVIDENCE_HOST_NAMES if bound else EVIDENCE_HOST_NAMES if evidence else HOST_NAMES): raise WorkbenchError('Invalid retained host closure.')
     for value in material['host_files'].values(): sha(value)
     return material
 
@@ -677,7 +860,7 @@ def spec_for_material(material, staging, *, context=None):
     if 'native_policies' in material or 'cpu_snapshot' in material: spec['native_loader_policy'] = NATIVE_POLICY
     if 'cpu_snapshot' in material: spec['cpu_snapshot'] = material['cpu_snapshot']
     if 'profile' in definition['resources']: spec['resource_profile'] = definition['resources']['profile']
-    if definition['format'] == EVIDENCE_FORMAT:
+    if is_evidence(definition):
         spec['schema_version']=2
         spec['model_evidence_context']=None
         if context is not None:
@@ -691,7 +874,7 @@ def spec_for_material(material, staging, *, context=None):
 
 
 def validate_spec(material, spec, staging, *, context=None):
-    if material['recipe']['format'] == EVIDENCE_FORMAT and context is None:
+    if is_evidence(material['recipe']) and context is None:
         raise WorkbenchError('Final model-evidence specification requires authoritative attempt context.')
     expected = spec_for_material(material, staging, context=context)
     actual = {key:value for key,value in spec.items() if key not in ('attempt_id', 'request_sha256')}
@@ -707,6 +890,7 @@ def _sync_directory(path):
 
 
 def capture(preflight, captured, staging):
+    validate_bound_captures(preflight['material'], captured)
     staging = Path(staging).absolute()
     # The Runs owner supplies an existing private attempt parent, never a client path.
     staging.mkdir(mode=0o700, exist_ok=False)

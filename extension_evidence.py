@@ -133,7 +133,8 @@ def validate_policy(value, definition):
     closed(value,('format','task','adapter_sha256','profile','probe','fit_members','fields','field_outputs',
                   'metric_definitions','model_specification','preprocessing_policy','output_policy','probe_inputs'),'Policy')
     require(value['format']==POLICY_FORMAT,'Unsupported policy.','unsupported')
-    require(definition['format']==RECIPE_FORMAT and definition['schema_version']==2,'Policy requires the selected model-evidence recipe.','unsupported')
+    import recipe_contract
+    require(recipe_contract.is_evidence(definition),'Policy requires the selected model-evidence recipe.','unsupported')
     require(value['adapter_sha256']==digest(sorted(definition['sources'],key=lambda item:item['path'])),'Adapter source closure differs.')
     task=value['task'];closed(task,('id','revision','definition'),'Task declaration')
     text(task['id'],'Task ID',64);natural(task['revision'],'Task revision',1)
@@ -231,7 +232,7 @@ def validate_policy(value, definition):
 
 
 @boundary
-def resolve(policy, model_material, execution_material):
+def resolve(policy, model_material, execution_material, *, model_specification=None, binding=None):
     """Bind authored declarations to published Model and actual captured data."""
     policy=validate_policy(policy,execution_material['recipe'])
     model=model_material['material'];ref=model_material['ref'];catalog_id=execution_material['catalog_id']
@@ -239,6 +240,17 @@ def resolve(policy, model_material, execution_material):
     require(type(execution_material['inputs']) is dict and
             all(type(item) is dict and 'kind' not in item for item in execution_material['inputs'].values()),
             'Authored input mode rejects every unsupported receipt, including unused inputs.','unsupported')
+    import recipe_contract
+    if recipe_contract.is_bound_evidence(execution_material['recipe']):
+        import extension_bindings
+        require(type(model_specification) is dict and type(binding) is dict,
+                'Bound evidence requires exact retained Model configuration and contribution binding.')
+        extension_bindings.validate_configuration(binding,execution_material['recipe'],execution_material['parameters'],
+                                                 specification=model_specification,task=model['task'])
+        policy=copy.deepcopy(policy)
+        policy['model_specification']=copy.deepcopy(model_specification)
+    elif model_specification is not None or binding is not None:
+        require(False,'Legacy evidence cannot override Model configuration.','unsupported')
     task={'kind':'task','catalog_id':catalog_id,'id':policy['task']['id'],'revision':policy['task']['revision'],'sha256':digest(policy['task']['definition'])}
     require(identical(model['task'],task),'Published model Task differs from selected policy.','stale')
     for key,policy_key in (('specification','model_specification'),('preprocessing_policy','preprocessing_policy'),('output_policy','output_policy')):

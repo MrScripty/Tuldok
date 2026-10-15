@@ -95,7 +95,7 @@ window.workspaceEscape = (value) =>
   }
   const projects = WorkspaceProjects({select:$("dataset"),
     roots:{data:$("project-data-root"),pipeline:$("project-pipeline-root"),runs:$("project-runs-root")},
-    announce,switchSource,contextChanged:context,openCatalogRecord,openExternalGraph:async id=>{const intent=workspaceIntent;if(await real.openGraph(id,()=>intent===workspaceIntent)){switchSource("catalog");location.hash="pipeline";}else announce("Saved graph "+id+". Current workspace and recipe edits retained.");}});
+    announce,switchSource,contextChanged:context,openCatalogRecord,openExternalRun:async id=>{const intent=workspaceIntent;if(await real.openRunById(id,()=>intent===workspaceIntent)){switchSource("catalog");location.hash="runs";}else announce("Admitted Run "+id+" retained. Current workspace is unchanged.");},openExternalGraph:async id=>{const intent=workspaceIntent;if(await real.openGraph(id,()=>intent===workspaceIntent)){switchSource("catalog");location.hash="pipeline";}else announce("Saved graph "+id+". Current workspace and recipe edits retained.");}});
   async function openCatalogRecord(id) {
     try {
     switchSource("catalog");

@@ -79,6 +79,8 @@ jobs:
           BROWSER: /usr/bin/google-chrome
       - run: node --check static/workspace-external.js
       - run: node tests/test_workspace_external_controller.cjs
+      - run: node tests/test_workspace_extension_author.cjs
+      - run: node tests/test_workspace_typed_parameters.cjs
       - run: node tests/browser_workspace_external.cjs
         env:
           BROWSER: /usr/bin/google-chrome
