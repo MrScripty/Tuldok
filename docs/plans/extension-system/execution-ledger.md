@@ -76,25 +76,6 @@ started/accepted by creating this documentation.
   allowed staged/range scope. No push, PR, merge, installation, training or data
   change. Parent receives final observed HEAD after the local evidence commit.
 
-## E1 authorized implementation — 2026-10-15
-
-- User selected E1–E4 with implementation/test/draft-PR authority; lead owns all
-  shared integration and merges. Revalidated PR63 f3f2d2b, PR62 f99182c and latest
-  main d788e08. Separate worktree/branch preserves unrelated local work.
-- Implemented static canonical schemas, exact project v2 catalog, optional locked
-  validator, owner-only explicit HTTP inspection and shared-component UI. No new
-  agent operation, extension numerical import, runtime qualification or Run path.
-- Real PostgreSQL/HTTP and 1440/390 browser/keyboard/stale-response checks pass;
-  fresh validator-only tests and old-reader/pre-v2 backup/restore witness pass.
-  Independent Sol High review identified and verified the recorded fixes.
-  [E1 implementation report](reports/e1-implementation.md) owns commands and limits.
-- Small app.py route patch is handed to the lead for serial integration. Dedicated
-  extension CI is an affected write-set addition; existing checks are unchanged.
-  E1 remains Verifying pending exact-head CI/lead integration. Compact dark styling
-  remains a shared P3 visual concern; current baseline styles are reused honestly.
-- E2/P1–P4 prerequisites and E4/P5 are still unaccepted; no fixture-only activation.
-  Retain the branch/worktree protected for lead integration and dependent work.
-
 ## Existing pressure-CNN/runtime prerequisite preparation —2026-10-15
 
 - Lead assignment6199181692 authorized isolated exact producer/runtime preparation
@@ -113,6 +94,31 @@ started/accepted by creating this documentation.
 - P1–P4/P5 and E2–E4 remain unaccepted. This branch supplies prerequisites only;
   lead owns all integration/merges. Retain private snapshot/catalog and branches
   for dependent qualification; no unrelated source or source lab was edited.
+
+- Resumed state check confirms lead-accepted P1/E1 merges8673509/91c5e96,
+  composed SDK536af2d and earlier successful preparation CI. Current plan now
+  accepts original E1 browser/HTTP discovery and keeps negotiated snapshot agent
+  projections/E2/P2–P4/P5 unavailable pending their explicit implementations.
+  Only documentation placement/lifecycle changed; numerical source/receipts stay exact.
+
+## E1 authorized implementation — 2026-10-15
+
+- User selected E1–E4 with implementation/test/draft-PR authority; lead owns all
+  shared integration and merges. Revalidated PR63 f3f2d2b, PR62 f99182c and latest
+  main d788e08. Separate worktree/branch preserves unrelated local work.
+- Implemented static canonical schemas, exact project v2 catalog, optional locked
+  validator, owner-only explicit HTTP inspection and shared-component UI. No new
+  agent operation, extension numerical import, runtime qualification or Run path.
+- Real PostgreSQL/HTTP and 1440/390 browser/keyboard/stale-response checks pass;
+  fresh validator-only tests and old-reader/pre-v2 backup/restore witness pass.
+  Independent Sol High review identified and verified the recorded fixes.
+  [E1 implementation report](reports/e1-implementation.md) owns commands and limits.
+- Small app.py route patch is handed to the lead for serial integration. Dedicated
+  extension CI is an affected write-set addition; existing checks are unchanged.
+  E1 remains Verifying pending exact-head CI/lead integration. Compact dark styling
+  remains a shared P3 visual concern; current baseline styles are reused honestly.
+- E2/P1–P4 prerequisites and E4/P5 are still unaccepted; no fixture-only activation.
+  Retain the branch/worktree protected for lead integration and dependent work.
 
 ## Independent static SDK preparation — 2026-10-15
 

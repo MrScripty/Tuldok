@@ -1,12 +1,13 @@
 # Extension-system issues and dispositions
 
-## I1 — PR62 production seams are not implemented evidence
+## I1 — PR62 design alone is not production evidence
 
 - Severity: high for product activation; no blocker to the plan.
 - Evidence: pinned PR62 D4 identifies documentation design and future P1–P6 work.
 - Owner/boundary: registry/model/evidence/Run implementation owners.
 - Disposition: E2 requires accepted P1/P2/P3 and P4 generic field evidence; E4 package
-  claims require accepted P5. No implicit prerequisite implementation in extension slices.
+  claims require accepted P5. P1 is now accepted; current remaining prerequisites
+  are tracked in I7. No implicit prerequisite implementation in extension slices.
 - Verification: actual source/qualification receipts before dependent slice admission.
 - Revisit trigger: PR62 integration or implementation changes these seams.
 
@@ -19,7 +20,7 @@
   record is historical only. Do not claim a fresh consultation or upgrade.
 - Verification: source/template structure and independent plan review.
 
-## I3 — Product runtime/numerical/cost evidence remains pending
+## I3 — Executable extension runtime/numerical/cost gate remains pending
 
 - Severity: high for X2/X3 activation.
 - Owner/boundary: qualified captured CPU runtime and model/evidence owners.
@@ -27,16 +28,19 @@
   until it passes. Fixtures cannot close physical-model or unsupported runtime claims.
 - Verification: exact captured runtime, actual checkpoints/probes, independent oracle,
   receipt-backed publication, measured selected profile bounds and cold inspection.
-- Revisit trigger: actual runtime availability or profile/workload incompatibility.
+- Prerequisite evidence: PR68 qualifies the existing captured CPU/pressure producer;
+  PR69 retains actual scalar checkpoints/probes and its independent frozen oracle.
+  Neither ordinary external-recipe preparation implements the E2 model/evidence path.
+- Revisit trigger: accepted P3/P4 integration or profile/workload incompatibility.
 
 ## I4 — Documentation lifecycle and local integration
 
 - Severity: medium; no application risk in this draft.
 - Owner/boundary: primary documentation integration owner.
-- Disposition: after reviewed local documentation commit, mark M0 accepted; retain overall
-  product plan Planned/partial with E1 as the next separately authorized slice. Never mark product X1–X5 satisfied from docs.
+- Disposition: M0 is accepted; keep full product X1–X5 partial until their named
+  implementation gates pass. Current E1 acceptance and next-slice state are in I7.
 - Verification: adopted plan structural check plus lifecycle/authority review in executor.
-- Resolution: independent review/checks passed and local material commit
+- Historical M0 resolution: independent review/checks passed and local material commit
   `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` was verified; M0 Accepted,
   product Planned/partial and E1 unstarted. No push.
 - Revisit trigger: new scope/authority or actual product slice admission.
@@ -51,7 +55,8 @@
   validation, quiesced pre-v2 backup/pairing and rollback into a new destination.
   Do not claim old binary refuses a saved v2 row; no live downgrade or DDL assumed.
 - Revisit: requirement for machine enforcement or failure of actual restore;
-  re-plan Metadata before v2 use. Product verification remains pending E1/E4.
+  re-plan Metadata before v2 use. E1 reader/counterexample/quiesced backup/restore
+  witnesses passed; E4 complete retention/package qualification remains pending.
 
 ## I6 — SDK and host need one complete validation authority
 
@@ -63,15 +68,18 @@
   unavailable without importing app/DB/Torch or installing at startup.
 - Revisit: unsupported keyword, divergent interpretation or new schema consumer.
 
-## I7 — E1 integration and later executable prerequisites
+## I7 — Accepted inspection and remaining executable prerequisites
 
 - Owner: lead thread01a13f2b-3678-73df-8bce-2f57a04de00b for all merges/shared files.
-- E1 static schemas/catalog/HTTP/UI and real local checks implemented; independent
-  review fixes applied. Exact-head CI and lead serial app.py integration remain.
-- P1 capabilities/operation negotiation is in progress, not accepted in observed
-  main d788e08. E1 new routes are owner-only/unregistered; legacy operations stay
-  v1-only. No agent execution is added. E2 awaits P1–P3/P4 generic evidence; E4 P5.
-- Current light stylesheet is unchanged because the lead owns shared visual work;
-  dark theme is not claimed by E1 browser receipts. Revisit at P3 integration.
-- No actual extension CPU numerical, hardware, fresh inference or complete Run
-  restore gate is satisfied by the authored inspection fixtures.
+- P1 PR66 merged as8673509; original E1 browser/HTTP inspection PR64 merged as
+  91c5e96 after exact-head lifecycle/catalog/workspace CI and independent review.
+- New snapshot routes remain owner-only/unregistered. Negotiated snapshot agent
+  projections need explicit registry/CLI/MCP contracts and qualification; none are
+  inferred from P1 negotiation support. Legacy project operations stay v1-only.
+- E2 requires accepted P2/P3/P4. P2 PR70 at1678a4c is Verifying; generic P3/P4
+  evidence/views remain unavailable. E4 requires accepted P5 export/fresh inference.
+- Actual CPU/runtime/pressure and authored scalar-A producer preparation is retained
+  in PR68/69, separate from host activation. Pressure physical result remains0/16;
+  recurring pressure-CNN checkpoints/probes and protected test are unavailable.
+- Current light baseline styles are reused. Shared dark model/evidence UX remains
+  the lead's P3 concern; original E1 receipts do not claim it.
