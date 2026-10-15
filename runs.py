@@ -1889,7 +1889,7 @@ class Runs:
         self._verified_artifacts(run)
         import model_evidence
         result,descriptors,predictions=model_evidence.verify(self.path/run_id,run,run['metrics'])
-        result.update(checkpoint=None,predictions=None)
+        result.update(checkpoint=None,predictions=None,metric_definition_hashes={item['id']:model_evidence.digest(item) for item in result['metric_definitions']})
         if selected is not None:
             entries=result['checkpoint_index']['entries']
             match=[i for i,item in enumerate(entries) if item['checkpoint']['sha256']==selected]
@@ -1898,10 +1898,31 @@ class Runs:
         return result
 
     @authorized('inspect', 'runs.compare_model_evidence')
-    def compare_model_evidence(self, run_id, other_run_id):
+    def compare_model_evidence(self, run_id, other_run_id, body=None):
         import model_evidence
         identifier(other_run_id,'Comparison Run ID')
         evidence=[self.model_evidence(item) for item in (run_id,other_run_id)]
+        if body is not None:
+            closed(body,('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256','other_evaluation_sha256',
+                         'metric_id','metric_definition_sha256','other_metric_definition_sha256','mode'))
+            if body['mode'] not in ('paired','side_by_side'):
+                raise WorkbenchError('Choose paired or side_by_side comparison mode.')
+            text_value(body['metric_id'],'Metric ID',64)
+            for key,value in body.items():
+                if key.endswith('sha256') and (type(value) is not str or not re.fullmatch('[a-f0-9]{64}',value)):
+                    raise WorkbenchError('Comparison identities require exact SHA256 values.')
+            if any(value['state']!='verified' for value in evidence):
+                raise WorkbenchError('Exact comparison requires verified checkpoint evidence.','unsupported',409)
+            with self.lock:
+                for index,selected_id in enumerate((run_id,other_run_id)):
+                    selected_run=self._load(selected_id)
+                    item=next((artifact for artifact in selected_run['artifacts'] if artifact['name']=='model-evidence.json'),None)
+                    expected=body[('other_' if index else '')+'evaluation_sha256']
+                    if item is None or item['sha256']!=expected:
+                        raise WorkbenchError('Exact comparison evaluation snapshot differs.','stale',409)
+            try:return model_evidence.compare_evidence(evidence,[run_id,other_run_id],body)
+            except (ValueError,KeyError,TypeError) as error:
+                raise WorkbenchError('Exact comparison refused: '+str(error)[:200],'invalid',409) from None
         reasons=[];metrics=[]
         if any(item['state']!='verified' for item in evidence):
             reasons.append('Both Runs require verified model_evidence_v1.')
