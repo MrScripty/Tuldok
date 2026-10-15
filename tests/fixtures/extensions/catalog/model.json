@@ -1,0 +1,29 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.field:model",
+  "version": "1.0.0",
+  "kind": "model",
+  "label": "Example inert model",
+  "requires": [],
+  "implementation": {
+    "source": "worker.py",
+    "entrypoint": "main"
+  },
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "width": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 8
+      }
+    },
+    "required": [
+      "width"
+    ],
+    "additionalProperties": false
+  },
+  "defaults": {
+    "width": 2
+  }
+}

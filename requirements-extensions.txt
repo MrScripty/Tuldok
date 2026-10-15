@@ -1,0 +1,2 @@
+# Optional inert extension validation; provision explicitly, never during discovery.
+jsonschema==4.26.0

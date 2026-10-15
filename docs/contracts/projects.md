@@ -119,3 +119,18 @@ contract rather than treating presence as capability.
 ## Explicit scientific data import
 
 POST `/api/workspace/projects/{id}/import-data/{reference_id}` selects only a saved data reference. Body requires `expected_sha256` from the displayed inspection; optional `name`, `rights`, `groups`, `parents` describe the new catalog record. The same root binding and no-follow file walk apply. Both the selected observed hash and any manifest-declared hash must match captured bytes before publication; stale selections return409. The generic project owner captures bytes and source identity; the [scientific data owner](scientific-fields.md) validates their format and owns immutable catalog custody. Opening/getting never imports automatically. Import leaves source files and project registration unchanged.
+
+## Explicit project v2 extension inspection
+
+Project v1 and its legacy HTTP/agent operations remain closed and unchanged.
+[Extensions](extensions.md) defines project v2's exact immutable `extensions`
+references and the owner-only `/api/workspace/project-snapshots` browser/HTTP
+projection. Legacy list omits v2; legacy open/get refuses it before new effects.
+No agent operation is added before accepted negotiation contracts. V2 discovery
+is inert and never treats a package declaration as runtime/admission authority.
+
+There is no metadata DDL change or old-binary refusal gate. An old binary may
+silently project saved v2 as v1. Stop all writers and retain a complete verified
+pre-v2 backup before first v2 use; pair post-v2 stores only with the new binary.
+Rollback requires restoration of that pre-v2 state into a new database/schema and
+destination. See the extension contract's cutover procedure and executable test.

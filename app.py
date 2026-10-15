@@ -575,10 +575,15 @@ def make_handler(dataset):
             try:
                 if path == '/api/agent/operations':
                     return self.reply(agent_api.discovery())
-                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/')
+                        or path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/')):
                     self.project_access()
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['project-snapshots']:
+                        return self.reply(dataset.projects.list_snapshots())
+                    if len(parts) == 2 and parts[0] == 'project-snapshots':
+                        return self.reply(dataset.projects.get_snapshot(parts[1]))
                     if parts == ['projects']:
                         return self.reply(dataset.projects.list())
                     if len(parts) == 2 and parts[0] == 'projects':
@@ -776,7 +781,8 @@ def make_handler(dataset):
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
-                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/')
+                        or path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/')):
                     self.project_access()
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
                 if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
@@ -786,12 +792,14 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = projects.decode(raw_body) if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                body = projects.decode(raw_body) if (path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/') or path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['project-snapshots']:
+                        return self.reply(dataset.projects.open_snapshot(body), 201)
                     if parts == ['projects']:
                         return self.reply(dataset.projects.open(body), 201)
                     if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'import-data':
