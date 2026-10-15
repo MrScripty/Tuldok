@@ -89,6 +89,12 @@ inputs. Historical request-as-input layouts are unchanged; runtime/input/file
 bounds are unchanged. Both the new canonical packaging operation and its fresh
 consumer select the explicit captured CPU snapshot.
 
+The portable snapshot manifest SHA identifies the captured file inventory. The
+composition runtime reference instead hashes the complete canonical descriptor,
+including its catalog and root. These identities are checked separately: the
+source execution descriptor must exactly equal the package descriptor, and the
+composition requires its full `kind`, catalog, descriptor ID and descriptor SHA.
+
 The fresh receipt remains `fresh_field_inference_verification_v1`, with exact
 adapter and contract SHAs identifying this distinct nomination. Its fixed-probe
 reconstruction tolerance is absolute `1e-10` plus relative `1e-10`; numerical
@@ -101,7 +107,8 @@ Ten focused authored byte-contract tests pass, including isolated stdlib pack
 execution,32-input closure, state-only replay with different initialization
 controls, native/source loss, unknown imports, semantic role substitution,
 gauge/stage changes, full descriptor/catalog/root binding and current-authority
-refusal before parent lookup. The historical package suite also passes with disposable PostgreSQL:37 enabled
+refusal before parent lookup. The combined package suite also passes with
+disposable PostgreSQL:38 enabled
 tests and two explicitly gated historical actual tests.
 
 The inference module was independently reviewed with four states ×64 fixed
