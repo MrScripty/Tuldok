@@ -120,4 +120,45 @@ class ActualEvidenceTests(unittest.TestCase):
             with self.assertRaises(WorkbenchError):self.dataset.runs.model_evidence(self.completed_run['id'],{'checkpoint_sha256':'f'*64})
             self.assertFalse(self.dataset.runs.get(self.completed_run['id'])['test_exposure']['exposed'])
 
+    def test_study_budget_cannot_delegate_builtin_execution(self):
+        from access import AccessError
+        with self.owner.bound(self.dataset):
+            model_body=copy.deepcopy(next(item for item in self.dataset.pipelines.definitions()['recipes']
+                if item['id']==image_training.MODEL_RECIPE)['model_template'])
+            model_body.update(specification=self.evidence['model_definition']['specification'],
+                              preprocessing_policy=self.evidence['model_definition']['preprocessing_policy'])
+            model=self.dataset.models.create(model_body)
+            material=self.dataset.models.publish(model['id'],{'revision':model['revision']})
+            graph=self.completed_run['graph']
+            validation=self.dataset.pipelines.validate(graph['id'],{'revision':graph['revision']})
+            study=self.dataset.studies.create({'name':'Owner authority regression','limits':{'attempt_slots':2,
+                'admitted_wall_seconds':2000,'retained_bytes':256*1024**2,'peak_staging_bytes':512*1024**2},
+                'policy':validation['selection_policy']})
+            trial=self.dataset.studies.prepare_trial(study['id'],{'request_key':'prepare-owner-authority',
+                'revision':study['revision'],'graph_id':graph['id'],'graph_revision':graph['revision'],
+                'model':material['ref'],'replicate':0})
+            current=self.dataset.studies.get(study['id'])['study']
+            current=self.dataset.studies.continue_study(study['id'],{'request_key':'continue-owner-authority',
+                'revision':current['revision'],'admission_epoch':current['admission_epoch']})
+            agent=self.dataset.access.issue({'label':'Classifier inspector','scopes':['inspect','execute']})
+            grant=self.dataset.access.grant_execution(trial['material']['sha256'],agent['identity']['actor_id'])
+        body={'request_key':'admit-owner-authority','revision':current['revision'],
+              'admission_epoch':current['admission_epoch'],'trial_id':trial['id'],'approval_id':grant['id']}
+        with self.dataset.access.bind(agent['token']),self.assertRaises(AccessError):
+            self.dataset.studies.admit(study['id'],body)
+        with self.owner.bound(self.dataset):
+            self.assertEqual(self.dataset.studies.get(study['id'])['charged']['attempt_slots'],0)
+            self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM access_execution_consumptions WHERE grant_id=%s',(grant['id'],)).fetchone()[0],0)
+            body.pop('approval_id')
+            with patch.object(self.dataset.runs,'_start'):
+                admitted=self.dataset.studies.admit(study['id'],body)
+            self.assertEqual(admitted['run']['study_membership'],{'study_id':study['id'],'trial_id':trial['id']})
+            self.dataset.runs.cancel(admitted['run']['id'])
+
+    def test_standalone_run_has_no_invented_study_membership(self):
+        with self.owner.bound(self.dataset):
+            result=self.dataset.runs.get(self.completed_run['id'])
+        self.assertIsNone(result['study_membership'])
+        self.assertNotIn('evidence_context',result)
+
 if __name__=='__main__':unittest.main()
