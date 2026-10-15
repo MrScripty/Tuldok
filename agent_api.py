@@ -574,7 +574,11 @@ _extension_binding=obj({'format':const('tuldok_extension_binding_v1'),
     'selections':array(_contribution_ref,64,1),
     'contributions':array(obj({'id':text(129),'version':text(32),'sha256':SHA,
         'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
-        'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA}),
+        'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA,
+            'runtime':obj({'profile':const('captured_cpu_python_v1'),'snapshot_sha256':SHA},['profile']),
+            'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
+            'resources':obj({'wall_seconds':integer(1,86400),
+                'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})}),
         'definition':{'type':'object','maxProperties':64}}),64,1),
     'inventory':array(obj({'path':text(512),'sha256':SHA,'bytes':integer(0,8*1024**2)}),64,1)})
 _bound_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][1])

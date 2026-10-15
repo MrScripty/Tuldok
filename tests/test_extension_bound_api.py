@@ -14,7 +14,10 @@ class BoundRecipeContractTests(unittest.TestCase):
             'schema_sha256':{key:sha for key in ('extension','contribution','parameter')},
             'selections':[reference],
             'contributions':[dict(reference,kind='task',provider={'reference_id':'a',
-                'id':'example.a','version':'1.0.0','sha256':sha},definition={})],
+                'id':'example.a','version':'1.0.0','sha256':sha,
+                'runtime':{'profile':'captured_cpu_python_v1','snapshot_sha256':sha},
+                'effects':['filesystem'],'resources':{'wall_seconds':60,
+                    'source_bytes':65536,'output_bytes':1048576}},definition={})],
             'inventory':[{'path':'project.json','sha256':sha,'bytes':100}]}
         return {'definition':{},'receipt':{'project_id':'b'*32,'manifest_sha256':sha,
             'reference_id':'recipe','path':'recipe.json','measured_sha256':sha},
@@ -48,7 +51,11 @@ class BoundRecipeContractTests(unittest.TestCase):
             lambda value:value['contributions'][0].update(kind='executable_view'),
             lambda value:value['inventory'][0].update(bytes=True),
             lambda value:value.update(inventory=value['inventory']*65),
-            lambda value:value['schema_sha256'].pop('parameter')]
+            lambda value:value['schema_sha256'].pop('parameter'),
+            lambda value:value['contributions'][0]['provider'].pop('effects'),
+            lambda value:value['contributions'][0]['provider']['runtime'].update(profile='foreign_runtime_v99'),
+            lambda value:value['contributions'][0]['provider'].update(effects=['filesystem','filesystem']),
+            lambda value:value['contributions'][0]['provider']['resources'].update(wall_seconds=True)]
         for mutate in mutations:
             with self.subTest(mutate=mutate):
                 bad=copy.deepcopy(positive);mutate(bad['extension_binding'])
