@@ -631,11 +631,71 @@ def validate_receipt(raw, expected_identity):
     return value
 
 
+def _builtin_artifact_source(source, expected_sha256, expected_bytes):
+    """Versioned built-in publication proof; deliberately no external custody claim."""
+    fields = {'schema_version', 'kind', 'catalog_id', 'run_id', 'request_sha256', 'material_sha256',
+              'graph_sha256', 'release_sha256', 'adapter_sha256', 'artifact_name', 'artifact_role',
+              'artifact_bytes', 'measured_sha256', 'artifact_manifest_sha256', 'artifact_manifest_base64', 'population'}
+    if type(source) is not dict or set(source) != fields or source['schema_version'] != 2 or type(source['schema_version']) is not int:
+        raise ProcessError('Built-in Run source fields differ from schema 2.')
+    if source['kind'] != 'builtin_classifier_publication_v1' or source['artifact_role'] != 'model_evidence':
+        raise ProcessError('Unsupported built-in publication source.')
+    for key in ('catalog_id', 'run_id'):
+        if type(source[key]) is not str or not ID.fullmatch(source[key]):
+            raise ProcessError('Invalid built-in publication identity.')
+    for key in ('request_sha256', 'material_sha256', 'graph_sha256', 'release_sha256', 'adapter_sha256',
+                'measured_sha256', 'artifact_manifest_sha256'):
+        if type(source[key]) is not str or not HASH.fullmatch(source[key]):
+            raise ProcessError('Invalid built-in publication hash.')
+    if (type(source['artifact_bytes']) is not int or source['artifact_bytes'] != expected_bytes
+            or source['measured_sha256'] != expected_sha256 or source['population'] not in ('train', 'validation', 'test')):
+        raise ProcessError('Built-in capture bytes or population differ.')
+    name = source['artifact_name']
+    if (type(name) is not str or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', name)
+            or name in ('artifact-manifest.json', 'custody-receipt.json', 'release.zip')):
+        raise ProcessError('Invalid built-in artifact name.')
+    value = source['artifact_manifest_base64']
+    if type(value) is not str or not 1 <= len(value) <= 87384:
+        raise ProcessError('Built-in manifest encoding exceeds bound.')
+    try:
+        raw = base64.b64decode(value, validate=True)
+    except ValueError as error:
+        raise ProcessError('Invalid built-in manifest encoding.') from error
+    if (len(raw) > 65536 or base64.b64encode(raw).decode('ascii') != value
+            or digest(raw) != source['artifact_manifest_sha256']):
+        raise ProcessError('Built-in publication manifest differs.')
+    manifest = decode(raw)
+    if (type(manifest) is not dict or set(manifest) != {'schema_version', 'adapter', 'source_identity', 'artifacts'}
+            or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1
+            or manifest['adapter'] != {'name': 'tinycnn_cpu', 'version': 2}):
+        raise ProcessError('Unsupported built-in classifier publication.')
+    identity = manifest['source_identity']
+    if (type(identity) is not dict or set(identity) != {'dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256'}
+            or identity != {'dataset_id': source['catalog_id'], 'run_id': source['run_id'],
+                'graph_sha256': source['graph_sha256'], 'release_id': source['release_sha256'], 'release_sha256': source['release_sha256']}):
+        raise ProcessError('Built-in publication identity differs.')
+    artifacts = manifest['artifacts']
+    if type(artifacts) is not list or not 1 <= len(artifacts) <= 32:
+        raise ProcessError('Built-in artifact inventory exceeds bound.')
+    matches = [item for item in artifacts if type(item) is dict and item.get('name') == name]
+    if len(matches) != 1:
+        raise ProcessError('Built-in artifact not uniquely published.')
+    item = matches[0]
+    if (set(item) != {'name', 'sha256', 'bytes', 'media_type', 'split'} or item['sha256'] != expected_sha256
+            or type(item['bytes']) is not int or item['bytes'] != expected_bytes
+            or item['split'] not in (None, 'validation', 'test')
+            or (item['split'] == 'test') != (source['population'] == 'test')):
+        raise ProcessError('Built-in artifact binding differs.')
+    return dict(source)
+
+
 def validate_artifact_source(source, expected_sha256, expected_bytes):
     """Check retained Run artifact custody declarations, not historical authority."""
     if (type(expected_sha256) is not str or not HASH.fullmatch(expected_sha256)
             or type(expected_bytes) is not int or expected_bytes < 0):
         raise ProcessError('Invalid expected artifact identity.')
+    if type(source) is dict and source.get('schema_version') == 2:
+        return _builtin_artifact_source(source, expected_sha256, expected_bytes)
     def exact(value, keys, label):
         if type(value) is not dict or set(value) != set(keys):
             raise ProcessError(label + ' fields differ from schema 1.')
