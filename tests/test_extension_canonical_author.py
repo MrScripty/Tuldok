@@ -52,6 +52,29 @@ class CanonicalAuthorTests(unittest.TestCase):
         for row in recipe['sources']:
             self.assertEqual(hashlib.sha256((self.root/'authored'/row['path']).read_bytes()).hexdigest(),row['sha256'])
         for name,raw in before.items():self.assertEqual((ORIGINAL/name).read_bytes(),raw)
+        contract=json.loads((self.root/'authored/inference-contract.json').read_bytes())
+        source_paths={row['path'] for row in recipe['sources']}
+        provider=json.loads((self.root/'authored/extension.json').read_bytes())
+        provider_paths={row['path'] for row in provider['sources']}
+        for name in ('infer.py','inference-contract.json'):
+            self.assertIn(name,source_paths);self.assertIn(name,provider_paths)
+        authority=contract['source_authority']
+        for sources in ('numerical_sources','sdk_sources'):
+            for name,digest in authority[sources].items():
+                self.assertEqual(hashlib.sha256((self.root/'authored'/name).read_bytes()).hexdigest(),digest)
+        for kind,declaration in authority['role_declarations'].items():
+            self.assertEqual(json.loads((self.root/'authored'/(kind+'.json')).read_bytes()),declaration)
+        for row in contract['sources']:
+            raw=(self.root/'authored'/row['path']).read_bytes()
+            self.assertEqual(len(raw),row['bytes']);self.assertEqual(hashlib.sha256(raw).hexdigest(),row['sha256'])
+        field_contract=copy.deepcopy(policy['fields'][0]['contract']);field_contract.pop('source_sha256')
+        self.assertEqual(field_contract,contract['policy']['field_contract'])
+        for kind in ('task','profile'):
+            self.assertEqual({key:policy[kind][key] for key in ('id','revision')},
+                             {key:contract['policy'][kind][key] for key in ('id','revision')})
+            definition=policy[kind]['definition'] if kind=='task' else policy[kind]
+            raw=json.dumps(definition,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(),contract['policy'][kind]['definition_sha256'])
         for name in ('evidence.py','__init__.py'):
             self.assertEqual((PACKAGE/'tuldok_extension_sdk'/name).read_bytes(),(Path(__file__).resolve().parents[1]/'tuldok_extension_sdk'/name).read_bytes())
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],0)

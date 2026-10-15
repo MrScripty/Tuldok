@@ -39,8 +39,10 @@ FROZEN_SOURCES = {
     'producer.py':'bcd801264bf05675cc6b2c5207848f723a38090b5bee6211543040831b801922',
     'cold_oracle.py':'573f142de868d13649dcdb6cc109fd629385b8ce48a1968399c0f86cb77feed9',
     'authored-source.json':'3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f',
-    'tuldok_extension_sdk/evidence.py':'d26d441226d83ec9c1616dbde750b4279a63ca39c44361224107cb42094b243e',
+    'tuldok_extension_sdk/evidence.py':'94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23',
     'tuldok_extension_sdk/__init__.py':'b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18',
+    'infer.py':'15f6bc0da835f4a3f8a54a2abf0552e8a0b6c69a1ac2e6baceebb9288a0b8b15',
+    'inference-contract.json':'d60b93699f978c125a567734ef4d610cb4027b3b2f047c31e6d579677121da1d',
 }
 
 
@@ -48,7 +50,7 @@ def verify_frozen_sources(project):
     for name,sha in FROZEN_SOURCES.items():
         require(hashlib.sha256((project/name).read_bytes()).hexdigest()==sha,'Reviewed canonical source differs: '+name)
     require(hashlib.sha256((ROOT/'tests/prepare_extension_canonical_project.py').read_bytes()).hexdigest()==
-            '82c54cf64ee3f2749784e0e60780762e33768cd13f0f25d6f252d0349ae3685c','Reviewed canonical author compiler differs')
+            'f9c79299af58324e15c1eb778d4cd2dd3678b09006fc3d7b3c1f6b423b84d80e','Reviewed canonical author compiler differs')
 
 
 def verify_accounting(selection,material,run,context,state):
@@ -81,9 +83,9 @@ def sdk_observation(completed,token):
 
 def main(args):
     require(not os.path.lexists(args.catalog),'Choose an absent disposable catalog; existing catalogs are never changed')
-    verify_frozen_sources(PACKAGE)
     require((PACKAGE/'infer.py').is_file() and (PACKAGE/'inference-contract.json').is_file(),
             'Accepted captured inference authority nomination is absent; no catalog/runtime/Model/admission started')
+    verify_frozen_sources(PACKAGE)
     require(callable(getattr(recipe_contract,'is_bound_evidence',None)),
             'Accepted schema3/catalog recipe owner is not composed; no catalog/runtime/admission started')
     output=args.output.resolve();output.mkdir(mode=0o700,parents=True,exist_ok=False)
