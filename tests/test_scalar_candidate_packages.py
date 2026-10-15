@@ -144,6 +144,53 @@ class ScalarCandidatePackageTests(unittest.TestCase):
             p.create_package(manifest, files)
         self.assertEqual(error.exception.code, 'unsupported')
 
+    def test_fully_rehashed_published_policy_cannot_substitute_frozen_author_policy(self):
+        for key in ('specification', 'preprocessing_policy', 'output_policy'):
+            manifest = copy.deepcopy(self.manifest); files = dict(self.files)
+            old = {name: p.sha(raw) for name, raw in files.items()}
+            policy = p.decode(files['published-' + key + '.json']); policy['unqualified_review_policy'] = True
+            files['published-' + key + '.json'] = p.encoded(policy)
+            model = p.decode(files[manifest['model']['name']]); model[key] = policy
+            files[manifest['model']['name']] = p.encoded(model)
+            if key == 'preprocessing_policy':
+                files['transform-policy.json'] = p.encoded(policy)
+            changes = {old[name]: p.sha(raw) for name, raw in files.items() if old[name] != p.sha(raw)}
+            def move(value):
+                if type(value) is str:
+                    seen = set()
+                    while value in changes and value not in seen:
+                        seen.add(value); value = changes[value]
+                    return value
+                if type(value) is list:
+                    return [move(item) for item in value]
+                if type(value) is dict:
+                    result = {name: move(item) for name, item in value.items()}
+                    if set(value) == {'name', 'sha256', 'bytes', 'media_type'}:
+                        raw = files.get(value['name'])
+                        if raw is None:
+                            raw = next((raw for raw in files.values() if p.sha(raw) == result['sha256']), None)
+                        if raw is not None:
+                            result.update(sha256=p.sha(raw), bytes=len(raw))
+                    return result
+                return value
+            for _ in range(30):
+                changed = False
+                for name in sorted(files):
+                    if not name.endswith('.json'):
+                        continue
+                    raw = files[name]; value = p.decode(raw); moved = move(value)
+                    if moved != value:
+                        new = p.encoded(moved); changes[p.sha(raw)] = p.sha(new)
+                        changes[p.sha(p.encoded(value))] = p.sha(new); files[name] = new; changed = True
+                manifest = move(manifest)
+                if not changed:
+                    break
+            else:
+                self.fail('Authored rehashed dependency graph did not stabilize')
+            reason = 'published policy' if key == 'specification' else 'policy|Unqualified'
+            with self.subTest(key=key), self.assertRaisesRegex(p.PackageError, reason):
+                p.create_package(manifest, files)
+
 
 if __name__ == '__main__':
     unittest.main()
