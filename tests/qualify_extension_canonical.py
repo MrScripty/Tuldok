@@ -73,6 +73,16 @@ def verify_accounting(selection,material,run,context,state):
     return reservation
 
 
+def verify_context_custody(run,raw):
+    """Use the independently fetched Run receipt, never the tested blob's hash."""
+    matches=[row for row in run['artifacts'] if row['name']=='execution-context.json']
+    require(len(matches)==1 and matches[0]['role']=='model_context','Retained Run context custody receipt differs')
+    measured=matches[0]
+    require(type(measured['bytes']) is int and measured['bytes']==len(raw) and
+            measured['sha256']==hashlib.sha256(raw).hexdigest(),'Downloaded context differs from retained Run custody')
+    return measured['sha256']
+
+
 def sdk_observation(completed,token):
     def clean(value,maximum):
         if isinstance(value,bytes):value=value.decode('utf-8',errors='replace')
@@ -215,7 +225,7 @@ def main(args):
         require(completed.returncode==0 and sdk['state']=='passed','SDK refused/unknown; inspect durable selection, never retry admission: '+str(sdk))
         run=cli('runs.get',dict(run_id=sdk['run_id']));save('run.json',run)
         require(run['state']=='completed' and run['custody_phase']=='drained' and len(run['artifacts'])==32,'Actual canonical producer did not publish/drain all32 outputs')
-        context_raw=(output/'artifacts/execution-context.json').read_bytes();context_sha=hashlib.sha256(context_raw).hexdigest()
+        context_raw=(output/'artifacts/execution-context.json').read_bytes();context_sha=verify_context_custody(run,context_raw)
         oracle=subprocess.run([str(args.oracle_python),str(project/'cold_oracle.py'),'--fixture',str(project/'authored-source.json'),
             '--release',str(project/'canonical-release.zip'),'--derivation',str(project/'canonical-derivation.json'),'--provenance',str(project/'canonical-source.json'),
             '--artifacts',str(output/'artifacts'),'--expected-context-sha256',context_sha,'--report',str(output/'oracle.json')],capture_output=True,text=True,timeout=30)
