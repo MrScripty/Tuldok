@@ -1,0 +1,31 @@
+name: Static extension authoring kit
+on:
+  pull_request:
+    paths:
+      - 'tuldok_extension_sdk/**'
+      - 'examples/extensions/template/**'
+      - 'extension_contract.py'
+      - 'extension_schemas/**'
+      - 'requirements-extensions*'
+      - 'tests/test_extension_sdk.py'
+      - 'tests/test_extensions.py'
+      - 'tests/fixtures/extensions/**'
+      - '.github/workflows/extension-sdk.yml'
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  static-kit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Provision only the optional validator closure
+        run: python -m pip install --require-hashes -r requirements-extensions.lock
+      - run: python -m unittest discover -s tests -p test_extensions.py -v
+      - run: python -m unittest discover -s tests -p test_extension_sdk.py -v
+      - run: python -m tuldok_extension_sdk validate examples/extensions/template

@@ -124,3 +124,39 @@ started/accepted by creating this documentation.
   It preserves all catalog/keyboard/reload/isolation assertions and retains failure
   diagnostics. Local actual Chromium catalog passes at1440/390 and all9 real HTTP
   tests pass0skip against PostgreSQL. Corrected-head CI remains a merge gate.
+## Independent static SDK preparation — 2026-10-15
+
+- While P1–P4 acceptance is unavailable, user-authorized SDK preparation uses
+  separate stacked `feat/extension-sdk-inert-validator` on E1 eb681de. No shared
+  application or numerical owner source is edited.
+- Added a private source-capturable single-package validator, exact schema copies,
+  inert authoring template, nine focused tests and a validator-only CI workflow.
+  Canonical host decoder/catalog remains the only grammar/policy interpreter.
+- Fresh copied-kit validation loads no app/Projects/DB/Torch and executes no
+  package source. Static validity remains separate from runtime/permission.
+  [Preparation evidence](reports/sdk-static-preparation.md) owns scope and limits.
+- This is not E3 A/B acceptance; E2/P1–P4 and E4/P5 gates stay blocked. Keep the
+  stacked SDK and E1 branches/worktrees retained for lead integration/dependencies.
+
+## Resumed authorization and owned CI diagnosis
+
+- Parent reconfirmed full implementation authority at18:17UTC; earlier pause is
+  superseded while unrelated local work stays untouched. E1 all three CI jobs
+  pass at eb681de; lead still owns integration/all merges.
+- SDK static CI passed; catalog browser CI failed before a screenshot and its
+  signed log endpoint returns403. Requested actual stderr from lead; added
+  bounded phase/failure artifact capture without changing checks or timeouts.
+  Positive real browser and intentional pre-screenshot failure paths were
+  observed locally; independent review clear. Root cause remains unclaimed.
+- Independent CPU runtime/producer preparation proceeds separately on
+  `feat/extension-cpu-producer-preparation`; no E2/P1–P4 acceptance inferred.
+
+- GitHub connector logs later exposed a reachable initial lost-click race:
+  parser-created controls precede their workspace handlers. Added exact handler
+  readiness and a deterministic script-interception regression; all existing
+  real browser assertions/timeouts and the single click remain. Actual full
+  workflow passes; lead receives the owned test correction for E1 integration.
+- SDK full lifecycle exposed a shallow-checkout dependency in the pinned old-reader
+  witness. Replaced git-history lookup with an exact hash-checked historical host
+  fixture; same exec/counterexample assertions. Actual9HTTP and history-free copy
+  witness pass; independent exact-byte review clear. Shared workflow/checks unchanged.
