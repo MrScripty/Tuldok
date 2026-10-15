@@ -24,6 +24,8 @@ import text_classification_export as projection
 from frozen_classification import validate_families
 
 ADAPTER = {'name': 'tfidf_multinomial_nb_cpu', 'version': 1}
+MODEL_ADAPTER = dict(ADAPTER, version=2)
+MODEL_RECIPE = 'text_classification_model_v2'
 PARAMETER_BOUNDS = {
     'max_features': {'minimum': 64, 'maximum': 4096, 'default': 1024, 'type': 'integer'},
     'alpha': {'minimum': 0.01, 'maximum': 10, 'default': 1, 'type': 'number'},
@@ -174,7 +176,7 @@ def inspect_release(path, expected_sha256):
         raise TrainingError('invalid', 'Frozen text ZIP or metadata cannot be decoded.') from error
 
 
-def probe_runtime():
+def probe_runtime(model_aware=False):
     runtime, problems = {'python': platform.python_version(), 'device': 'cpu', 'threads': 1}, []
     if sys.platform != 'linux':
         problems.append({'code': 'unsupported', 'message': 'The supervised text adapter requires Linux.'})
@@ -197,7 +199,7 @@ def probe_runtime():
                 problems.append({'code': 'unavailable', 'message': 'CPU math libraries must be limited to one thread.'})
         except Exception:
             problems.append({'code': 'unavailable', 'message': 'The pinned local text runtime could not load.'})
-    return {'schema_version': 1, 'available': not problems, 'adapter': dict(ADAPTER), 'runtime': runtime, 'problems': problems}
+    return {'schema_version': 1, 'available': not problems, 'adapter': dict(MODEL_ADAPTER if model_aware else ADAPTER), 'runtime': runtime, 'problems': problems}
 
 
 def _vectorizer(max_features, vocabulary=None):
@@ -379,17 +381,24 @@ def main():
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--probe', action='store_true')
     action.add_argument('--job', type=Path)
+    action.add_argument('--verify-evidence', type=Path)
+    parser.add_argument('--model-aware', action='store_true')
     args = parser.parse_args()
     try:
         if args.probe:
-            result = probe_runtime()
+            result = probe_runtime(args.model_aware)
             print(json.dumps(result, allow_nan=False), flush=True)
             return 0 if result['available'] else 2
-        with args.job.open('rb') as handle:
+        with (args.verify_evidence or args.job).open('rb') as handle:
             raw = handle.read(MAX_JOB_BYTES + 1)
         if len(raw) > MAX_JOB_BYTES:
             _invalid('Training job exceeds 16 KiB.')
-        train(_json(raw, 'Text training job'))
+        job = _json(raw, 'Text training job')
+        if args.verify_evidence:
+            guard_parent(job['parent_pid'])
+            verify_evidence(job['output_dir'], job)
+        else:
+            train(job)
         return 0
     except TrainingError as error:
         _emit('failed', outcome=error.outcome, message=str(error)[:400])
