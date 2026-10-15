@@ -27,7 +27,7 @@ import release_validation
 import psycopg
 from metadata import CommitOutcomeUnknown
 from workbench import WorkbenchError, encode, timestamp, text_value
-from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment
+from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment, model_aware_graph, model_contract
 
 ACTIVE = ('queued', 'running', 'cancelling')
 TERMINAL = ('completed', 'failed', 'cancelled', 'interrupted', 'unknown')
@@ -159,12 +159,12 @@ class Runs:
                     self._approved_composition(approved,run['graph'],run['material_sha256'])
             elif 'execution_kind' in run:
                 raise ValueError('Unknown execution kind.')
-            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
-                import model_evidence
+            if model_aware_graph(run['graph']):
+                owner = model_contract(run['graph'])
                 context=run['evidence_context']
                 if (context['adapter_sha256']!=run['runtime']['adapter_definition_sha256']
-                        or context['model_definition']!=model_evidence.model_definition(run['parameters'])
-                        or context['profile']!=model_evidence.profile(self.db.dataset_id,context['model_sha256'],run['parameters'],
+                        or context['model_definition']!=owner.model_definition(run['parameters'])
+                        or context['profile']!=owner.profile(self.db.dataset_id,context['model_sha256'],run['parameters'],
                             sum(row['split']=='validation' for row in run['source_records']))):
                     raise ValueError('Retained classifier evidence context differs.')
                 association=self.db.execute('SELECT r.study_id,r.trial_id,r.actor_id,r.request_sha256,t.material_sha256 '
@@ -259,6 +259,8 @@ class Runs:
 
     def _public(self, run):
         if self._external(run):
+            from candidate_packages import authorize_transitive_inputs
+            authorize_transitive_inputs(self,run)
             keys = ('schema_version', 'mode', 'id', 'dataset_id', 'request_key', 'state', 'created_at',
                     'started_at', 'finished_at', 'graph', 'graph_revision', 'graph_sha256', 'parameters',
                     'attempt', 'parent_run_id', 'events', 'error', 'progress', 'node_attempts',
@@ -665,6 +667,8 @@ class Runs:
             run = self._load(run_id)
         if not self._external(run):
             raise WorkbenchError('Progress diagnostics require an external Run.', 'unsupported', 400)
+        from candidate_packages import authorize_transitive_inputs
+        authorize_transitive_inputs(self,run)
         result = {'schema_version':1, 'run_id':run['id'], 'state':run['state'],
                   'custody_phase':run['custody_phase'], 'evidence':'unavailable',
                   'streams':{'stdout':None,'stderr':None}, 'progress':None,
@@ -843,6 +847,8 @@ class Runs:
     def _external_inventory(self, run):
         import recipe_process
         import recipe_contract
+        from candidate_packages import authorize_transitive_inputs
+        authorize_transitive_inputs(self,run)
         directory = self.path / run['id']
         descriptor = None
         try:
@@ -1092,18 +1098,18 @@ class Runs:
                'exposure_events': [], 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
-        if graph.get('recipe') == image_training.MODEL_RECIPE:
-            import model_evidence
+        if model_aware_graph(graph):
+            owner = model_contract(graph)
             model_sha = composition['ref']['sha256'] if composition else None
-            definition = model_evidence.model_definition(parameters)
-            model_identity = composition['material']['model']['sha256'] if composition else model_evidence.digest(definition)
+            definition = owner.model_definition(parameters)
+            model_identity = composition['material']['model']['sha256'] if composition else digest(definition)
             run['evidence_context'] = {'model_sha256':model_identity,
                 'material_sha256':model_sha or digest({'graph':graph,'runtime':validation['runtime'],'release':release['sha256']}),
                 'adapter_sha256':validation['runtime']['adapter_definition_sha256'],
                 'model_definition':definition,
-                'profile':model_evidence.profile(self.db.dataset_id,model_identity,parameters,
+                'profile':owner.profile(self.db.dataset_id,model_identity,parameters,
                     sum(row['split']=='validation' for row in release['manifest']['records']))}
-            run['evidence_context']['metric_definitions']=model_evidence.metric_definitions(run['evidence_context'],release['manifest'])
+            run['evidence_context']['metric_definitions']=owner.metric_definitions(run['evidence_context'],release['manifest'])
             if composition:
                 run.update(actor_id=self.access._context().actor_id, approval_material_sha256=model_sha)
         if self._validation_run(run):
@@ -1242,6 +1248,9 @@ class Runs:
                    'output_dir': str(output), 'parameters': run['parameters'], 'parent_pid': os.getpid()}
             if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
                 job.update(schema_version=2,evidence_context=run['evidence_context'])
+            elif model_aware_graph(run['graph']):
+                from one_fit_evidence import job_for_run
+                job.update(job_for_run(run, output), parent_pid=os.getpid(), release_path=release['path'])
             job_path = stage / 'job.json'
             job_path.write_text(encode(job))
             definition_files = run['runtime']['definition_files']
@@ -1320,7 +1329,7 @@ class Runs:
             if process.returncode != 0:
                 raise WorkbenchError(f'CPU trainer exited with status {process.returncode}; no results were published.', 'failed', 409)
             artifacts, metrics = self._verify_directory(run, output)
-            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+            if model_aware_graph(run['graph']):
                 # Only the owned pinned CPU subprocess may load retained state.
                 process.stdout.close()
                 command = [run['python'], str(worker_path), '--verify-evidence', str(job_path)]
@@ -1535,6 +1544,9 @@ class Runs:
         if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
             import model_evidence
             return model_evidence.payload_names(run['parameters']['epochs'])
+        if model_aware_graph(run['graph']):
+            from one_fit_evidence import payload_names
+            return payload_names()
         return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
 
     def _reference_keys(self, run):
@@ -1548,6 +1560,7 @@ class Runs:
         if directory.is_symlink() or not directory.is_dir():
             raise WorkbenchError('Published artifact directory is unavailable.', 'unavailable', 409)
         payload_names = self._payloads(run)
+        one_fit = model_aware_graph(run['graph']) and adapter_for_graph(run['graph']) is not image_training
         paths = list(directory.iterdir())
         if {path.name for path in paths} != payload_names | {'artifact-manifest.json'} or any(path.is_symlink() or not path.is_file() for path in paths):
             raise WorkbenchError('Artifact files do not match the closed result contract.', 'unavailable', 409)
@@ -1566,6 +1579,8 @@ class Runs:
             for item in artifacts:
                 closed(item, ('name', 'sha256', 'bytes', 'media_type', 'split'))
                 expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'] in ('metrics.json', 'predictions-validation.json') or item['name'].startswith('probes-epoch-') else None
+                if one_fit and item['name'] in ('probe.json', 'probe-inputs.json', 'probes-fit-0001.json', 'observations.json'):
+                    expected_split = 'validation'
                 expected_media = 'application/json' if item['name'].endswith('.json') else 'application/octet-stream'
                 if item['split'] != expected_split or item['media_type'] != expected_media:
                     raise ValueError('Artifact media type or split differs from its declared role.')
@@ -1579,7 +1594,7 @@ class Runs:
                     payloads[item['name']] = payload
             metrics = payloads['metrics.json']
             closed(metrics, ('schema_version', 'source_identity', 'adapter', 'parameters', 'transform', 'class_vocabulary',
-                             'class_to_idx', 'validation', 'history', 'best_epoch', 'runtime'))
+                             'class_to_idx', 'validation', 'runtime', *(['clocks'] if one_fit else ['history', 'best_epoch'])))
             self._vocabulary(run, metrics)
             if any(metrics['runtime'].get(key) != value for key, value in run['runtime']['runtime'].items()):
                 raise ValueError('Executed runtime differs from the admission fingerprint.')
@@ -1592,16 +1607,17 @@ class Runs:
                 if model['parameters'] != run['parameters'] or model['transform'] != adapter.TRANSFORM:
                     raise ValueError('JSON model differs from the admitted recipe.')
             self._metric(metrics['validation'], 'validation', run)
-            if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= self._fit_count(run):
-                raise ValueError('Selected checkpoint epoch is invalid.')
-            if not isinstance(metrics['history'], list) or len(metrics['history']) != self._fit_count(run):
-                raise ValueError('Training history does not contain the admitted epoch count.')
-            for epoch, entry in enumerate(metrics['history'], 1):
-                closed(entry, ('epoch', 'training_loss', 'validation'))
-                if (type(entry['epoch']) is not int or entry['epoch'] != epoch or type(entry['training_loss']) not in (int, float)
-                        or not 0 <= entry['training_loss'] <= 1e12 or not math.isfinite(entry['training_loss'])):
-                    raise ValueError('Training history is invalid.')
-                self._metric(entry['validation'], 'validation', run)
+            if not one_fit:
+                if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= self._fit_count(run):
+                    raise ValueError('Selected checkpoint epoch is invalid.')
+                if not isinstance(metrics['history'], list) or len(metrics['history']) != self._fit_count(run):
+                    raise ValueError('Training history does not contain the admitted epoch count.')
+                for epoch, entry in enumerate(metrics['history'], 1):
+                    closed(entry, ('epoch', 'training_loss', 'validation'))
+                    if (type(entry['epoch']) is not int or entry['epoch'] != epoch or type(entry['training_loss']) not in (int, float)
+                            or not 0 <= entry['training_loss'] <= 1e12 or not math.isfinite(entry['training_loss'])):
+                        raise ValueError('Training history is invalid.')
+                    self._metric(entry['validation'], 'validation', run)
             closed(payloads['test-metrics.json'], ('schema_version', 'source_identity', 'adapter', 'split', 'metrics'))
             if payloads['test-metrics.json']['split'] != 'test':
                 raise ValueError('Test metrics have the wrong split.')
@@ -1614,6 +1630,9 @@ class Runs:
             if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
                 import model_evidence
                 model_evidence.verify(directory,run,metrics)
+            elif one_fit:
+                import one_fit_evidence
+                one_fit_evidence.verify(directory,run,metrics)
             inventory = copy.deepcopy(artifacts)
             inventory.append({'name': 'artifact-manifest.json', 'sha256': hashlib.sha256(manifest_bytes).hexdigest(),
                               'bytes': len(manifest_bytes), 'media_type': 'application/json', 'split': None})
@@ -1767,9 +1786,9 @@ class Runs:
     def artifact_segment(self, run_id, name, body):
         """Read a bounded segment; only the client can verify the whole digest.
 
-        This new, explicitly weaker read contract does not change artifact(),
-        open_artifact() or capture_artifact() and never spools/hashes all payloads.
-        Every call rechecks credentials and retained completed custody.
+        Every call rechecks credentials. External Runs use retained custody;
+        qualified built-ins verify their complete published evidence inventory.
+        The returned segment still requires client-side whole-hash verification.
         """
         closed(body, ('expected_sha256', 'offset', 'max_bytes'))
         expected = body['expected_sha256']
@@ -1784,12 +1803,18 @@ class Runs:
             raise WorkbenchError('Artifact segment requires a declared flat output name.')
         with self.lock:
             run = self._load(run_id)
-        if not self._external(run):
-            raise WorkbenchError('Artifact segments support completed external Runs only.', 'unsupported', 400)
-        inventory = self._external_inventory(run)
+        if self._external(run):
+            inventory = self._external_inventory(run)
+        else:
+            adapter = adapter_for_graph(run['graph'])
+            if run['graph'].get('recipe') != getattr(adapter, 'MODEL_RECIPE', None):
+                raise WorkbenchError('Artifact segments require a qualified model-evidence or external Run.', 'unsupported', 400)
+            if name in TEST_FILES and not run['exposure_events']:
+                raise WorkbenchError('Record an explicit test-set exposure before opening test results.', 'conflict', 409)
+            inventory = self._verified_artifacts(run)
         item = next((item for item in inventory if item['name'] == name), None)
         if item is None:
-            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+            raise WorkbenchError('Unknown published artifact.', 'unavailable', 404)
         if item['sha256'] != expected:
             raise WorkbenchError('Artifact differs from the expected whole SHA256.', 'conflict', 409)
         if offset > item['bytes']:
@@ -1912,11 +1937,15 @@ class Runs:
         if selected is not None and (type(selected) is not str or not re.fullmatch('[a-f0-9]{64}',selected)):
             raise WorkbenchError('Checkpoint selection requires its descriptor SHA256.')
         with self.lock:run=self._load(run_id)
-        if run['graph'].get('recipe') != image_training.MODEL_RECIPE:
+        if not model_aware_graph(run['graph']):
             return {'state':'unsupported','reason':'This retained adapter did not capture model_evidence_v1.'}
         self._verified_artifacts(run)
         import model_evidence
-        result,descriptors,predictions=model_evidence.verify(self.path/run_id,run,run['metrics'])
+        if adapter_for_graph(run['graph']) is image_training:
+            evaluator = model_evidence
+        else:
+            import one_fit_evidence as evaluator
+        result,descriptors,predictions=evaluator.verify(self.path/run_id,run,run['metrics'])
         result.update(checkpoint=None,predictions=None,metric_definition_hashes={item['id']:model_evidence.digest(item) for item in result['metric_definitions']})
         if selected is not None:
             entries=result['checkpoint_index']['entries']

@@ -57,6 +57,8 @@ jobs:
       - run: build/workspace-agent/bin/python -m pip install --require-hashes -r requirements-agent.lock
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py
       - run: python -m unittest discover -s tests
@@ -285,6 +287,22 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - name: Qualify automatic classifier evidence and independent CPU reconstruction
+        run: python tests/qualify_model_development.py --task image --fixture tests/fixtures/model_development --output build/qa/model-development-cpu
+      - name: Exercise finite model development through the real browser
+        run: node tests/browser_model_development.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Exercise actual one-fit text model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: text
+      - name: Exercise actual one-fit audio model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: audio
       - uses: actions/upload-artifact@v4
         if: always()
         with:

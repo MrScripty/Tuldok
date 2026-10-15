@@ -1,5 +1,6 @@
 """Candidate decisions over one actual Study-admitted TinyCNN CPU attempt."""
 import copy
+from http.server import ThreadingHTTPServer
 import json
 import os
 from pathlib import Path
@@ -9,11 +10,12 @@ import threading
 import time
 import unittest
 import uuid
+from urllib.request import Request, urlopen
 from unittest.mock import patch
 
 import agent_api
 from access import AccessError
-from app import Dataset
+from app import Dataset, make_handler
 from auth_helpers import ExplicitOwnerFixture
 import image_training
 from pipeline import digest
@@ -89,6 +91,60 @@ class ActualCandidateSelectionTests(unittest.TestCase):
             if study['policy'] != self.default_policy:
                 self.dataset.studies.save(self.study_id, {'revision': study['revision'],
                     'name': study['name'], 'limits': study['limits'], 'policy': self.default_policy})
+
+    def test_actual_checkpoint_segments_preserve_whole_bytes_and_holdout_guard(self):
+        import hashlib
+        import base64
+        with self.owner.bound(self.dataset):
+            run = self.dataset.runs.get(self.run_id)
+            evidence = self.dataset.runs.model_evidence(self.run_id)
+            checkpoint = evidence['checkpoint_index']['entries'][0]['checkpoint']['sha256']
+            selected = self.dataset.runs.model_evidence(self.run_id, {'checkpoint_sha256': checkpoint})
+            weights = selected['checkpoint']['weights']
+            contents = bytearray()
+            while len(contents) < weights['bytes']:
+                part = self.dataset.runs.artifact_segment(self.run_id, weights['name'],
+                    {'expected_sha256': weights['sha256'], 'offset': len(contents), 'max_bytes': 4096})
+                contents.extend(base64.b64decode(part['data_base64']))
+                self.assertEqual(part['next_offset'], len(contents))
+            self.assertEqual(hashlib.sha256(contents).hexdigest(), weights['sha256'])
+            test = next(item for item in run['artifacts'] if item['name'] == 'predictions-test.json')
+            with self.assertRaises(WorkbenchError) as refused:
+                self.dataset.runs.artifact_segment(self.run_id, test['name'],
+                    {'expected_sha256': test['sha256'], 'offset': 0, 'max_bytes': 4096})
+            self.assertEqual(refused.exception.code, 'conflict')
+            with self.assertRaises(WorkbenchError):
+                self.dataset.runs.artifact_segment(self.run_id, weights['name'],
+                    {'expected_sha256': '0' * 64, 'offset': 0, 'max_bytes': 4096})
+
+    def test_exact_checkpoint_comparison_crosses_selected_http_v2(self):
+        with self.owner.bound(self.dataset):
+            run=self.dataset.runs.get(self.run_id)
+        evaluation=next(item['sha256'] for item in run['artifacts'] if item['name']=='model-evidence.json')
+        entries=self.evidence['checkpoint_index']['entries']
+        metric=self.evidence['metric_definition_hashes']['loss']
+        arguments={'run_id':self.run_id,'other_run_id':self.run_id,
+            'checkpoint_sha256':entries[0]['checkpoint']['sha256'],
+            'other_checkpoint_sha256':entries[1]['checkpoint']['sha256'],
+            'evaluation_sha256':evaluation,'other_evaluation_sha256':evaluation,
+            'metric_id':'loss','metric_definition_sha256':metric,'other_metric_definition_sha256':metric,'mode':'paired'}
+        server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            method,path,body=agent_api.project_request('runs.compare_model_evidence',arguments,2)
+            headers={**self.owner.headers,'Content-Type':'application/json',
+                agent_api.CONTRACT_HEADER:agent_api.selected_header('runs.compare_model_evidence',2)}
+            request=Request(f'http://127.0.0.1:{server.server_port}'+path,
+                data=json.dumps(body).encode(),headers=headers,method=method)
+            with urlopen(request,timeout=30) as response:
+                result=json.load(response)
+                agent_api.validate_output('runs.compare_model_evidence',{'status':response.status,'result':result},2)
+            self.assertEqual(result['state'],'compatible')
+            self.assertEqual([side['checkpoint_sha256'] for side in result['sides']],
+                [entries[0]['checkpoint']['sha256'],entries[1]['checkpoint']['sha256']])
+            self.assertAlmostEqual(result['delta']['value'],result['sides'][1]['result']['value']-result['sides'][0]['result']['value'])
+        finally:
+            server.shutdown();server.server_close();thread.join(5)
 
     def body(self):
         with self.owner.bound(self.dataset):

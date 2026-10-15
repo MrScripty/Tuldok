@@ -24,6 +24,58 @@ from auth_helpers import ExplicitOwnerFixture
 from PIL import Image
 
 
+# Deliberately independent of both training and evidence modules. This script is
+# executed by the separately provisioned CPU runtime with isolated import paths.
+INDEPENDENT_INFERENCE = r'''
+import hashlib,io,json,sys,zipfile
+from pathlib import Path
+import torch
+from PIL import Image
+job=json.loads(Path(sys.argv[1]).read_text());root=Path(job['output_dir'])
+raw=Path(job['release_path']).read_bytes()
+assert hashlib.sha256(raw).hexdigest()==job['release_sha256']
+probe=json.loads((root/'probe.json').read_text())
+index=json.loads((root/'checkpoints.json').read_text())
+definition=json.loads((root/'model-definition.json').read_text())
+params=definition['parameters'];a,b,c=params['widths'];size=params['input_size']
+with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+    frozen=json.loads(archive.read('manifest.json'));by_id={row['id']:row for row in frozen['records']}
+    images=[]
+    for member in probe['members']:
+        row=by_id[member['frozen_reference']['id']];assert row['split']=='validation'
+        asset=archive.read(row['asset']);assert hashlib.sha256(asset).hexdigest()==member['input_sha256']
+        with Image.open(io.BytesIO(asset)) as image:
+            rgb=image.convert('RGB').resize((size,size),resample=Image.Resampling.BILINEAR)
+            tensor=torch.frombuffer(bytearray(rgb.tobytes()),dtype=torch.uint8).reshape(size,size,3)
+            images.append(tensor.permute(2,0,1).contiguous().to(torch.float32).div(255))
+torch.set_num_threads(1);torch.use_deterministic_algorithms(True)
+nn=torch.nn
+model=nn.Sequential(nn.Conv2d(3,a,3,padding=1),nn.ReLU(),nn.MaxPool2d(2),
+    nn.Conv2d(a,b,3,padding=1),nn.ReLU(),nn.MaxPool2d(2),nn.Conv2d(b,c,3,padding=1),nn.ReLU(),
+    nn.AdaptiveAvgPool2d(1),nn.Flatten(),nn.Linear(c,len(frozen['class_vocabulary'])))
+logit_file=root/'validation-logits.json'
+logit_history=json.loads(logit_file.read_text())['entries'] if logit_file.exists() else None
+checked=[]
+for ordinal,entry in enumerate(index['entries']):
+    descriptor_raw=(root/entry['checkpoint']['name']).read_bytes()
+    assert hashlib.sha256(descriptor_raw).hexdigest()==entry['checkpoint']['sha256']
+    descriptor=json.loads(descriptor_raw);weight_raw=(root/descriptor['weights']['name']).read_bytes()
+    assert hashlib.sha256(weight_raw).hexdigest()==descriptor['weights']['sha256']
+    checkpoint=torch.load(io.BytesIO(weight_raw),map_location='cpu',weights_only=True)
+    assert checkpoint['class_vocabulary']==frozen['class_vocabulary'] and checkpoint['class_to_idx']==frozen['class_to_idx']
+    model.load_state_dict(checkpoint['state_dict'],strict=True);model.eval()
+    with torch.no_grad():logits=model(torch.stack(images));probabilities=logits.softmax(1)
+    expected=json.loads((root/f"probes-epoch-{entry['clocks']['epoch']:04d}.json").read_text())
+    assert torch.allclose(probabilities,torch.tensor([row['probabilities'] for row in expected['rows']]),atol=1e-6,rtol=1e-5)
+    if logit_history is not None:
+        assert torch.allclose(logits,torch.tensor([row['logits'] for row in logit_history[ordinal]['rows']]),atol=1e-6,rtol=1e-5)
+    checked.append({'checkpoint_sha256':entry['checkpoint']['sha256'],'weights_sha256':descriptor['weights']['sha256']})
+assert 'image_training' not in sys.modules and 'model_evidence' not in sys.modules
+Path(sys.argv[2]).write_text(json.dumps({'independent_implementation':True,'checkpoints':checked,
+    'probe_members':len(images),'raw_logits_compared':logit_history is not None,'producer_modules_imported':False}))
+'''
+
+
 def save(path,value):
     path.write_text(json.dumps(value,ensure_ascii=True,sort_keys=True,indent=2)+'\n')
 
@@ -69,7 +121,7 @@ def qualify(args):
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     calls=[]
     def call(operation,arguments):
-        version=2 if operation in ('graphs.create','graphs.save') else 1
+        version=2 if operation in ('graphs.create','graphs.save') or (operation=='runs.compare_model_evidence' and 'checkpoint_sha256' in arguments) else 1
         method,path,body=agent_api.project_request(operation,arguments,version=version)
         headers={**owner.headers,'Origin':endpoint,agent_api.CONTRACT_HEADER:agent_api.selected_header(operation,version)}
         if body is not None:headers['Content-Type']='application/json'
@@ -128,7 +180,14 @@ def qualify(args):
         corrected=call('graphs.save',{'graph_id':corrected['id'],'revision':corrected['revision'],'document':edited})
         call('studies.reconcile',{'study_id':study['id']})
         second_trial,second_run=prepare(corrected,call('studies.get',{'study_id':study['id']})['study'])
-        comparison=call('runs.compare_model_evidence',{'run_id':run['id'],'other_run_id':second_run['id']})
+        second_evidence=call('runs.model_evidence',{'run_id':second_run['id']})
+        selected=[next(item for item in value['checkpoint_index']['entries'] if item['selected']) for value in (evidence,second_evidence)]
+        evaluations=[next(item['sha256'] for item in value['artifacts'] if item['name']=='model-evidence.json') for value in (run,second_run)]
+        comparison=call('runs.compare_model_evidence',{'run_id':run['id'],'other_run_id':second_run['id'],
+            'checkpoint_sha256':selected[0]['checkpoint']['sha256'],'other_checkpoint_sha256':selected[1]['checkpoint']['sha256'],
+            'evaluation_sha256':evaluations[0],'other_evaluation_sha256':evaluations[1],'metric_id':'loss',
+            'metric_definition_sha256':evidence['metric_definition_hashes']['loss'],
+            'other_metric_definition_sha256':second_evidence['metric_definition_hashes']['loss'],'mode':'paired'})
         if comparison['state']!='compatible':raise ValueError(str(comparison))
         save(output/'comparison.json',comparison);save(output/'corrected-run.json',second_run)
         # No replay or backfill on close/reopen; identical immutable evidence remains readable.
@@ -144,7 +203,14 @@ def qualify(args):
         runtime=os.environ['TULDOK_TRAINING_PYTHON']
         replay=subprocess.run([runtime,str(ROOT/'image_training.py'),'--verify-evidence',str(output/'independent-job.json')],capture_output=True,timeout=100)
         if replay.returncode:raise ValueError('Independent cold checkpoint reconstruction failed: '+replay.stdout.decode())
+        manual=subprocess.run([runtime,'-I','-c',INDEPENDENT_INFERENCE,str(output/'independent-job.json'),
+            str(output/'independent-inference.json')],capture_output=True,timeout=90)
+        if manual.returncode:raise ValueError('Independent manual TinyCNN reconstruction failed: '+manual.stderr.decode()[-1000:])
+        independent=json.loads((output/'independent-inference.json').read_text())
+        if not independent['raw_logits_compared']:raise ValueError('Current required raw-logit inference evidence is absent.')
         receipt={'task':'image','source_fixture_sha256':hashlib.sha256(fixture_raw).hexdigest(),
+            'qualification_driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            'independent_oracle_sha256':hashlib.sha256(INDEPENDENT_INFERENCE.encode()).hexdigest(),
             'run_id':run['id'],'corrected_run_id':second_run['id'],'study_id':study['id'],
             'checkpoints':len(evidence['checkpoint_index']['entries']),'probe_members':len(evidence['probe']['members']),
             'retained_bytes':sum(item['bytes'] for item in run['artifacts']),
@@ -162,8 +228,13 @@ def qualify(args):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--task',choices=['image'],required=True);parser.add_argument('--fixture',type=Path,required=True)
+    parser.add_argument('--task',choices=['image','text','audio'],required=True);parser.add_argument('--fixture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
-    print(json.dumps(qualify(args),sort_keys=True))
+    if args.task == 'image':
+        result = qualify(args)
+    else:
+        from qualify_one_fit import qualify as qualify_one_fit
+        result = qualify_one_fit(args)
+    print(json.dumps(result,sort_keys=True))
 
 if __name__=='__main__':main()

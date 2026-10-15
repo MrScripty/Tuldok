@@ -434,6 +434,25 @@ model_operation('studies.select_candidate','POST','/api/workspace/studies/{study
     scopes=('inspect','edit'),mutation=True)
 model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
     {'candidate_id':ID},output=_CANDIDATE_RESULT)
+_PACKAGE_PREPARE_FIELDS={'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'candidate_id':ID,
+    'root':REF,'directory':ARTIFACT,'runtime_snapshot_sha256':SHA}
+_PACKAGE_PREPARED_FIELDS={'state':const('prepared'),'candidate_id':ID,'trial':_TRIAL,
+    'graph':_GRAPH,'model':MODEL_REF,'runtime_snapshot_sha256':SHA}
+for _action in ('package','verifier'):
+    _fields=dict(_PACKAGE_PREPARE_FIELDS);_result=dict(_PACKAGE_PREPARED_FIELDS)
+    if _action=='verifier':
+        _fields.update(package_run_id=ID,package_sha256=SHA)
+        _result.update(package_run_id=ID,package_sha256=SHA)
+    _name='studies.prepare_'+_action
+    model_operation(_name,'POST','/api/workspace/studies/{study_id}/prepare-'+_action,
+                    _fields,output=obj(_result),scopes=('inspect','edit'),mutation=True)
+    _OWNER_OPERATION_IDS.add(_name);_MODEL_RECEIPT_IDS.add(_name)
+model_operation('studies.package_state','GET','/api/workspace/candidates/{candidate_id}/package-state',
+    {'candidate_id':ID},output=obj({'candidate':_CANDIDATE_RESULT,
+        'state':{'enum':['selected','package_complete','fresh_verified']},
+        'packages':array(obj({'run_id':ID,'sha256':SHA,'bytes':SAFE_POS,'artifact_name':const('package.zip'),
+                              'url':text(512)}),100),
+        'verifications':array(obj({'run_id':ID,'receipt':{'type':'object','maxProperties':64}}),100)}))
 # Model evidence has a task-owned decoder. The public projection binds the
 # complete result variant while retaining its bounded, versioned domain bodies.
 _EVIDENCE_DOCUMENT={'type':'object','maxProperties':128}
@@ -442,6 +461,8 @@ _EVIDENCE_RESULT={'oneOf':[
     obj({'state':const('verified'),'manifest':_EVIDENCE_DOCUMENT,
          'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
          'metric_definitions':{'type':['object','array']},
+         'metric_definition_hashes':{'type':'object','maxProperties':64,
+             'propertyNames':text(64),'additionalProperties':SHA},
          'observations':array(_EVIDENCE_DOCUMENT,1000),
          'model_definition':_EVIDENCE_DOCUMENT,
          'checkpoint':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]},
@@ -474,6 +495,40 @@ for _node_schema in _model_graph['properties']['nodes']['items']['oneOf']:
 _model_save=copy.deepcopy(_CONTRACTS['graphs.save'][1])
 _model_save['inputSchema']['properties']['document']['oneOf'].append(_model_graph)
 _CONTRACTS['graphs.save'][2]=_model_save
+_exact_comparison=copy.deepcopy(_CONTRACTS['runs.compare_model_evidence'][1])
+_exact_comparison['inputSchema']=obj({'run_id':ID,'other_run_id':ID,
+    **{key:SHA for key in ('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256',
+        'other_evaluation_sha256','metric_definition_sha256','other_metric_definition_sha256')},
+    'metric_id':text(64),'mode':{'enum':['paired','side_by_side']}})
+_CLOCKS=obj({'optimizer_update':{'oneOf':[SAFE_NAT,{'type':'null'}]},
+    'epoch':{'oneOf':[SAFE_POS,{'type':'null'}]},'fit_pass':{'oneOf':[SAFE_POS,{'type':'null'}]},
+    'physical_time':{'oneOf':[text(64),{'type':'null'}]},'wall_elapsed_ms':SAFE_NAT})
+_OBSERVED_OR_UNDEFINED={'oneOf':[obj({'state':const('observed'),'value':{'type':'number'},'sample_count':SAFE_POS}),
+    obj({'state':const('undefined'),'reason':text(64)})]}
+_EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
+    'mode':{'enum':['paired','side_by_side']},'sides':array(obj({'run_id':ID,'evaluation_sha256':SHA,
+        'checkpoint_sha256':SHA,'metric_definition_sha256':SHA,'metric_id':text(64),'split':const('validation'),
+        'clocks':_CLOCKS,'units':text(80),'direction':{'enum':['minimize','maximize','none']},
+        'result':_OBSERVED_OR_UNDEFINED}),2,2),
+    'reasons':array(text(1000),64),'delta':{'oneOf':[{'type':'null'},
+        obj({'state':const('observed'),'value':{'type':'number'},'units':text(80)}),
+        obj({'state':const('undefined'),'reason':text(64)})]}})
+_exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
+_exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
+_CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+# One-fit recipes are independently versioned from the already selected image
+# contract. Retain exact v1/v2 pins for clients deployed before this slice.
+_one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
+_one_fit_create['inputSchema']['properties']['recipe']['enum'].extend(
+    ['text_classification_model_v2','audio_classification_model_v2'])
+_CONTRACTS['graphs.create'][3]=_one_fit_create
+_one_fit_save=copy.deepcopy(_CONTRACTS['graphs.save'][2])
+for _recipe in ('text_classification','audio_classification'):
+    _one_fit_graph=next(copy.deepcopy(item) for item in graph_schema()['oneOf']
+                        if item['properties']['recipe']==const(_recipe))
+    _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
+    _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
+_CONTRACTS['graphs.save'][3]=_one_fit_save
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
@@ -1009,7 +1064,8 @@ class AgentClient:
     def tool_definitions(self):
         return tool_definitions(self.selected_contracts())
 
-    def call(self, name, arguments):
+    def call(self, name, arguments, *, observer=None, observation=None):
+        from mcp_observer import observe_stage, observe_selection
         # Reject local invalid input before bootstrap/network side effects.
         op = operation(name)
         errors = []
@@ -1027,13 +1083,31 @@ class AgentClient:
             raise AgentAPIError('Operation has no compatible available contract.', 'operation_unsupported', 409)
         version = self._selected[op['operation_id']]
         method, path, body = project_request(name, arguments, version)
+        observe_selection(observer, observation, name, arguments, None if self._legacy else version)
+        observe_stage(observer, observation, 'validated')
         if self._legacy and op['side_effects']:
             self._check_discovery()
         selection = None if self._legacy else (op['operation_id'], version)
-        result = validate_output(name, self._request(method, path, body, selection=selection), version)
+        observe_stage(observer, observation, 'admitted')
+        observe_stage(observer, observation, 'dispatch')
+        envelope = self._request(method, path, body, selection=selection)
+        result = validate_output(name, envelope, version)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
         return result
+
+
+def observation_operation(method, target, headers):
+    """Local allowlist lookup only; raw routes/headers never leave this boundary."""
+    try:
+        selected = select_request(headers, method, target)
+        if selected is not None:
+            return selected[:2]
+    except AgentAPIError:
+        return None, None
+    matches = [op['operation_id'] for op in _PAYLOAD['operations']
+               if _route_matches(op, method, target)]
+    return (matches[0], None) if len(matches) == 1 else (None, None)
 
 
 def dispatch(client, name, arguments):

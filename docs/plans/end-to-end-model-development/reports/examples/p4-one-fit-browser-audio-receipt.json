@@ -1,0 +1,330 @@
+{
+  "source_commit": "a9154952e69e75945cdeb26ecf262ac1c9ae0ce8",
+  "source_sha256": {
+    "static/workspace-service.js": "1c289596e5a5bd85569691b2833584e99eb1bd7a9235d5c1c2d3bb3efecfc365",
+    "static/workspace-real.js": "3800055da1776c360a009b3b70b817dcb5e5943b2c9f6863b6108a7ec44a234b",
+    "static/workspaces.css": "ecdc2377f10f8ec0483cb5f6eaa977b1db28550e2c4b178c9e725d9a250d0c9a",
+    "app.py": "e33264ebfe8cf8c53057ecd457cb9df5863c45df5531d67476a3deebdcefcadb",
+    "pipeline.py": "5f3722c28adf07ece5c7cc3511dc64b8c0ad02cb0e780739df9fba651b9a71e4",
+    "runs.py": "4991699940c7dd5e01321aaf995c3e6f0a0a08d616beb49978c8108dbff631ef",
+    "experiments.py": "920ec1b308b553e1ee0f66825952f7e4779c61786c62d5ea4eda85b27d128b0e",
+    "model_evidence.py": "04012022740f45fc03ad11351a7efe4946e574890bb814fcdf5871b873a5701b",
+    "one_fit_evidence.py": "3a76d1790a1f8f450bbe38e9587f61d56d95034144f65c790493203e2f7d51db",
+    "text_training.py": "1eeaa53ba21885e6e0afc933f7161dbf20a2681dbfebedaee4e1eb7ec1c59914",
+    "audio_training.py": "396500bb2a63054c88b2720b8c168617641fe2ff9fd2285860a6dd894523f949",
+    "tests/qualify_one_fit.py": "a340983e0ac529af06b034d8cc1d116c16398830e7c4e3e658e3fc02eaa738f1",
+    "tests/browser_one_fit_model_evidence.cjs": "83220e5db396bb39b3b72064604b9b01259657cd6697983b7a19fd35cd667e96"
+  },
+  "command": "TULDOK_ONE_FIT_TASK=audio node tests/browser_one_fit_model_evidence.cjs",
+  "task": "audio",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "Actual audio authored fixture ran through authenticated HTTP Study and independent cold reconstruction",
+    "Second actual Study fit and unchanged legacy recipe fit completed without fixture completion injection",
+    "Linked Fit pass 1 stays a single checkpoint without epoch/update curve at1440/390; retained whole weights hash matches; test artifacts stay locked",
+    "Native keyboard comparison binds both checkpoints/evaluations/metric definitions and shows actual zero paired delta",
+    "Frozen validation correction link opens the exact current Data record with its frozen target context",
+    "Actual legacy one-fit result honestly reports that checkpoint/probe history was not captured"
+  ],
+  "captures": [
+    {
+      "file": "audio-linked-fit-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on authored mathematical contract fixtures; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "audio-linked-fit-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on authored mathematical contract fixtures; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "audio-exact-comparison-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on authored mathematical contract fixtures; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "audio-current-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on authored mathematical contract fixtures; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "audio-legacy-history-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on authored mathematical contract fixtures; no model-quality claim",
+      "quality": 85
+    }
+  ],
+  "viewport_checks": [
+    {
+      "width": 1440,
+      "focus": {
+        "tag": "A",
+        "id": "",
+        "text": "Download exact fitted state",
+        "outline": "solid",
+        "width": "3px"
+      }
+    },
+    {
+      "width": 390,
+      "focus": {
+        "tag": "A",
+        "id": "",
+        "text": "Download exact fitted state",
+        "outline": "solid",
+        "width": "3px"
+      }
+    }
+  ],
+  "actual_run_ids": [
+    "4822f4dbe86b40c3aff1ebf84e296702",
+    "26c3fedef0634fe798c4cf832d1eb68c",
+    "ec37e1f475d949998fd33335d4e97a83"
+  ],
+  "actual_training": true,
+  "actual_http_studies": 2,
+  "legacy_actual_fit": true,
+  "catalog_path": "/tmp/tuldok-one-fit-browser-E2hIwF/actual-audio/catalog",
+  "fixture_receipt": {
+    "actual_http_study": true,
+    "actual_training": true,
+    "checkpoints": 1,
+    "clocks": {
+      "epoch": null,
+      "fit_pass": 1,
+      "optimizer_update": null,
+      "physical_time": null,
+      "wall_elapsed_ms": 878
+    },
+    "cold_reopen": true,
+    "fabricated_curve": false,
+    "http_operations": [
+      {
+        "operation": "recipes.list",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "models.create",
+        "status": 201,
+        "version": 1
+      },
+      {
+        "operation": "models.publish",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "graphs.create",
+        "status": 201,
+        "version": 3
+      },
+      {
+        "operation": "graphs.validate",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "studies.create",
+        "status": 201,
+        "version": 1
+      },
+      {
+        "operation": "studies.prepare_trial",
+        "status": 201,
+        "version": 1
+      },
+      {
+        "operation": "studies.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "studies.continue",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "studies.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "studies.admit",
+        "status": 201,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.get",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.model_evidence",
+        "status": 200,
+        "version": 1
+      },
+      {
+        "operation": "runs.model_evidence",
+        "status": 200,
+        "version": 1
+      }
+    ],
+    "independent_fixed_inference": true,
+    "independent_maximum_error": 0,
+    "independent_oracle_sha256": "5e7e550b2c549794e354d0e6e44d938d6d554f370d5212f7ee545b9cd3809cec",
+    "limitations": [
+      "Authored fixtures qualify evidence plumbing, not generalization.",
+      "UI qualification is separate.",
+      "No generic inference-package claim; scientific physical qualification is separate."
+    ],
+    "peak_rss_bytes": 127885312,
+    "probe_members": 5,
+    "retained_bytes": 32606,
+    "run_id": "4822f4dbe86b40c3aff1ebf84e296702",
+    "runtime": {
+      "Pillow": "12.3.0",
+      "device": "cpu",
+      "numpy": "2.5.4",
+      "python": "3.12.14",
+      "scikit_learn": "1.7.2",
+      "scipy": "1.18.1",
+      "threads": 1
+    },
+    "source_fixture_sha256": "59477c7a0549fa9670bd3e028a089d1e90de39512a687287d2c1a7721fda4912",
+    "source_generator_sha256": "39af3d407b76cc64625e838d78f6e55208bd0f55f6f36ecba3167a7f1b786dd5",
+    "study_id": "b282a73979ed404e9a5cd6e04572b7d7",
+    "task": "audio",
+    "trial_id": "fb9c652af411448ba1e498a2190ab10d",
+    "wall_elapsed_seconds": 12.28151674899982
+  },
+  "selected_comparison": {
+    "other_run_id": "26c3fedef0634fe798c4cf832d1eb68c",
+    "checkpoint_sha256": "bb7accf1e000928c7eb44dd765cf371b9f7a6cc419d59fea46158209495b4a11",
+    "other_checkpoint_sha256": "59548cf6ee58f8b3cb1ad115893747299da89a2c389f282a405a00c6ecdecc0b",
+    "evaluation_sha256": "36cdd1f984410d1a2fd1b3dbbdd8d1c07756a0f15ce5628bf62781530393bd82",
+    "other_evaluation_sha256": "a391bc03003d119ccd44f679ba9458665fd3b0872256c8083b44f0156f0aa31b",
+    "metric_id": "loss",
+    "metric_definition_sha256": "4efb63982bb553dbe389b50da6137e17aa7668b21d3f842cfa89b7365c2abfd1",
+    "other_metric_definition_sha256": "4efb63982bb553dbe389b50da6137e17aa7668b21d3f842cfa89b7365c2abfd1",
+    "mode": "paired"
+  },
+  "retained_weight": {
+    "sha256": "d996d6af4f52526d98ffb21a91a95612a0b61a273416b60627743a580ab5608b",
+    "bytes": 1637
+  },
+  "test_exposed": false,
+  "completion_injection": false,
+  "cold_browser_reload": true,
+  "limitations": [
+    "Authored fixtures verify plumbing, not accuracy or generalization.",
+    "Browser gate starts with actual HTTP-prepared runs; it does not qualify browser import/model configuration.",
+    "Current Data link is qualified; correction editing is covered by retained task browser suites.",
+    "No physical or generic inference-package claim."
+  ],
+  "qa_artifacts_directory": "/tmp/p4-browser-final/one-fit-model-evidence/run-y3T52q"
+}

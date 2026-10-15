@@ -231,6 +231,9 @@ The checkpoint descriptor includes its exact weights Blob. Its immutable candida
 bytes bind the selected Run, checkpoint and evaluation; the retained published
 ModelMaterial binds every source import and each specification/preprocessing/output
 policy. An inventory entry alone cannot replace those cross-file identities.
+Candidate, runtime and published model catalog identities must agree. Expected
+probe truth indexes are exact integers in the frozen class range and hash to the
+retained fixed probe targets; copied source artifacts retain their lineage hashes.
 
 The classifier package includes only explicitly selected validation PNG probes,
 expected probabilities, fixed probe membership, fitted transform, model and task
@@ -249,6 +252,10 @@ and `studies.admit` provide exact material approval, conservative budget chargin
 Run custody, reconciliation and cancellation. No second runner or implicit retry
 is added. Package source Run inputs remain explicit captured bindings so every
 current derived accessor can reauthorize their transitive populations.
+These helpers reject an existing caller metadata transaction before capture or
+directory creation. Trial publication and the helper receipt share the final short
+transaction. Rollback owns cleanup after publication begins; a failure returning
+an already committed result preserves the retained project for exact replay.
 
 The verifier requires an existing approved `captured_cpu_python_v1` snapshot.
 Its runtime contract uses the RuntimeSnapshots owner, including exact Python,
@@ -282,3 +289,21 @@ named original directories are empty in the consumer filesystem. A sibling
 `package-result.json` may provide the expected published SHA when the explicit
 argument is omitted. The qualifier does not reinterpret public redistribution
 rights or a diagnostic candidate as a quality qualification.
+
+For the actual producer-to-consumer qualification, explicitly provision a
+disposable catalog and captured snapshot, then run:
+
+```
+TULDOK_TRAINING_PYTHON=/qualified/training/python python tests/qualify_candidate_package.py \
+  --production-catalog /disposable/catalog --snapshot-descriptor /tmp/runtime-descriptor.json \
+  --output /tmp/charged-package-qa
+```
+
+This driver performs actual two-epoch training, immutable candidate selection,
+normal package and verifier preparation/approval/admission in one finite Study,
+HTTP download and whole-hash verification. It records three charged attempts and
+observes that expensive external capture runs outside a metadata transaction.
+The authored RGB fixture qualifies the execution/evidence contract rather than
+classifier generalization. `test_candidate_packages.py` separately exercises
+real PostgreSQL publication-callback failure and rollback; its optional actual
+CPU case requires explicit qualification catalog/snapshot/output/runtime settings.

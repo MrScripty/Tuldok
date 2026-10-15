@@ -62,8 +62,19 @@ def decode(raw):
             result[key] = value
         return result
     try:
-        return json.loads(raw, object_pairs_hook=pairs,
-                          parse_constant=lambda _: require(False, 'Nonfinite package JSON.'))
+        value = json.loads(raw, object_pairs_hook=pairs,
+                           parse_constant=lambda _: require(False, 'Nonfinite package JSON.'))
+        pending = [(value, 0)]; visited = 0
+        while pending:
+            node, depth = pending.pop(); visited += 1
+            require(depth <= 64 and visited <= 100000, 'Package JSON exceeds structural bounds.')
+            if type(node) is float:
+                require(math.isfinite(node), 'Nonfinite package JSON.')
+            elif type(node) is dict:
+                pending.extend((item, depth + 1) for item in node.values())
+            elif type(node) is list:
+                pending.extend((item, depth + 1) for item in node)
+        return value
     except (ValueError, UnicodeError, RecursionError) as error:
         if isinstance(error, PackageError):
             raise
@@ -130,9 +141,11 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     require(manifest['format'] == FORMAT, 'Unsupported inference package format.', 'unsupported')
     require(distribution in ('local_private', 'redistribution'), 'Unknown requested distribution mode.')
     candidate = manifest['candidate']
+    closed(candidate, ('kind', 'catalog_id', 'id', 'sha256'))
     require(type(candidate) is dict and candidate.get('kind') == 'candidate'
             and type(candidate.get('sha256')) is str and HASH.fullmatch(candidate['sha256']) is not None
-            and type(candidate.get('id')) is str and re.fullmatch('[a-f0-9]{32}', candidate['id']) is not None,
+            and type(candidate.get('id')) is str and re.fullmatch('[a-f0-9]{32}', candidate['id']) is not None
+            and type(candidate.get('catalog_id')) is str and re.fullmatch('[a-f0-9]{32}', candidate['catalog_id']) is not None,
             'Package requires an exact immutable candidate reference.')
     inventory = manifest['inventory']
     require(type(inventory) is list and 1 <= len(inventory) < MAX_FILES, 'Package inventory exceeds bound.')
@@ -148,6 +161,7 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     require(sum(map(len, files.values())) <= MAX_EXPANDED_BYTES, 'Expanded package exceeds bound.')
     require('candidate-decision.json' in indexed, 'Immutable candidate decision bytes are required.')
     decision = decode(files['candidate-decision.json'])
+    closed(decision, ('format', 'id', 'study_id', 'trial_id', 'run_id', 'checkpoint_sha256', 'evaluation_sha256', 'policy', 'decision', 'limitations'))
     require(decision.get('format') == 'candidate_v1' and decision.get('id') == candidate['id']
             and sha(encoded(decision)) == candidate['sha256'], 'Candidate decision identity differs.')
     referenced = set()
@@ -164,6 +178,15 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     closed(manifest['runtime'], ('contract', 'provision'))
     require(manifest['runtime']['provision'] == 'external', 'Only explicit external CPU runtime is supported.', 'unsupported')
     ref(manifest['runtime']['contract'])
+    runtime = decode(files[manifest['runtime']['contract']['name']])
+    closed(runtime, ('format', 'snapshot'))
+    require(runtime['format'] == 'package_runtime_v1', 'Unsupported package runtime contract.', 'unsupported')
+    snapshot = runtime['snapshot']
+    closed(snapshot, ('schema_version', 'profile', 'catalog_id', 'root', 'manifest_sha256', 'manifest_bytes', 'file_count', 'total_bytes', 'python_version', 'packages', 'launch'))
+    require(type(snapshot['schema_version']) is int and snapshot['schema_version'] == 1
+            and snapshot['profile'] == 'captured_cpu_python_v1' and snapshot['python_version'] == '3.12'
+            and type(snapshot['manifest_sha256']) is str and HASH.fullmatch(snapshot['manifest_sha256']) is not None,
+            'Unsupported captured runtime identity.', 'unsupported')
     for name in ('probes', 'expected_outputs'):
         if manifest[name] is not None:
             ref(manifest[name])
@@ -206,6 +229,7 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
         require(all(x == 'permitted' for x in rights.values()),
                 'Unresolved or denied material rights prevent redistribution.', 'unsupported')
     descriptor = decode(files[manifest['checkpoint']['name']])
+    closed(descriptor, ('format', 'run_id', 'model_sha256', 'weights', 'fitted_transform_sha256', 'clocks'))
     require(descriptor.get('format') == 'checkpoint_state_v1', 'Unsupported checkpoint contract.', 'unsupported')
     ref(descriptor['weights'])
     require(decision.get('run_id') == descriptor.get('run_id')
@@ -214,6 +238,8 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
             'Selected candidate Run/checkpoint/evaluation differs from package closure.')
     require('published-model-material.json' in indexed, 'Published model material bytes are required.')
     published = decode(files['published-model-material.json'])
+    require(type(published) is dict and published.get('catalog_id') == candidate['catalog_id']
+            and snapshot['catalog_id'] == candidate['catalog_id'], 'Published model/runtime catalog differs from candidate.')
     require(published.get('format') == 'model_material_v1' and sha(encoded(published)) == descriptor.get('model_sha256'),
             'Published model identity differs from checkpoint.')
     source_by_path = {item['name']: item for item in manifest['sources']}
@@ -229,6 +255,14 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
         require(name in indexed and published[key]['sha256'] == indexed[name]['sha256']
                 and published[key]['bytes'] == indexed[name]['bytes']
                 and decode(files[name]) == model_definition[key], 'Published model policy/shape differs from inference definition.')
+    require(len(manifest['transforms']) == 2 and decode(files[manifest['transforms'][0]['name']]) == model_definition['preprocessing_policy']
+            and manifest['transforms'][1]['sha256'] == descriptor['fitted_transform_sha256'], 'Declared transforms differ from published/checkpoint policies.')
+    for source in lineage['sources']:
+        if source['artifact_name'] in indexed:
+            require(source['sha256'] == indexed[source['artifact_name']]['sha256']
+                    and source['run_id'] == descriptor['run_id'], 'Included source artifact differs from retained lineage.')
+    task = decode(files[manifest['task']['name']]); metrics = decode(files['metrics.json'])
+    require(task.get('class_vocabulary') == metrics.get('class_vocabulary') and task.get('class_to_idx') == metrics.get('class_to_idx'), 'Declared class order differs from selected evaluation.')
     # Auxiliary probe images must be named explicitly by the probe document.
     if manifest['probes'] is not None:
         probes = decode(files[manifest['probes']['name']])
@@ -240,6 +274,31 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
             closed(row, ('id', 'image'))
             require(type(row['id']) is str and row['id'] not in ids, 'Duplicate or invalid probe identity.')
             ids.add(row['id']); ref(row['image'])
+    if manifest['expected_outputs'] is not None:
+        expected = decode(files[manifest['expected_outputs']['name']])
+        closed(expected, ('run_id', 'checkpoint_sha256', 'probe_sha256', 'rows'))
+        require('probe.json' in indexed, 'Fixed probe contract is missing.')
+        probe = decode(files['probe.json'])
+        require(type(probe) is dict and probe.get('format') == 'probe_v1' and probe.get('split') == 'validation'
+                and expected['run_id'] == descriptor['run_id'] and expected['checkpoint_sha256'] == manifest['checkpoint']['sha256']
+                and expected['probe_sha256'] == indexed['probe.json']['sha256'], 'Expected fixed probe/checkpoint binding differs.')
+        members = probe.get('members'); rows = expected['rows']; count = len(task['class_vocabulary'])
+        require(type(members) is list and type(rows) is list and len(members) == len(rows) == len(probes['rows']) <= 128,
+                'Fixed probe output membership differs.')
+        for ordinal, (member, row, image) in enumerate(zip(members, rows, probes['rows'], strict=True)):
+            closed(row, ('ordinal', 'truth_index', 'predicted_index', 'probabilities'))
+            require(type(member) is dict and type(member.get('ordinal')) is int and member['ordinal'] == ordinal
+                    and type(row['ordinal']) is int and row['ordinal'] == ordinal
+                    and type(row['truth_index']) is int and 0 <= row['truth_index'] < count
+                    and type(row['predicted_index']) is int and 0 <= row['predicted_index'] < count
+                    and member.get('target_sha256') == sha(encoded(row['truth_index']))
+                    and type(member.get('frozen_reference')) is dict and member['frozen_reference'].get('id') == image['id']
+                    and member.get('input_sha256') == image['image']['sha256'], 'Fixed probe input/target/index binding differs.')
+            scores = row['probabilities']
+            require(type(scores) is list and len(scores) == count
+                    and all(type(value) in (int, float) and 0 <= value <= 1 and math.isfinite(value) for value in scores)
+                    and abs(sum(scores) - 1) <= 1e-4 and scores.index(max(scores)) == row['predicted_index'],
+                    'Invalid fixed probe probabilities/predicted class.')
     require(referenced | exempt == set(indexed), 'Unreferenced package content is not permitted.')
     return manifest
 
@@ -451,6 +510,7 @@ def classifier_closure(candidate, artifact_bytes, probe_images, sources, runtime
     """
     checkpoint_name = candidate['checkpoint']['name']
     descriptor = decode(artifact_bytes[checkpoint_name]); epoch = descriptor['clocks']['epoch']
+    require(type(epoch) is int and epoch >= 1, 'This package profile requires TinyCNN epoch checkpoints.', 'unsupported')
     expected_name = f'probes-epoch-{epoch:04d}.json'
     names = {checkpoint_name, descriptor['weights']['name'], 'model-definition.json',
              'fitted-transform.json', 'probe.json', expected_name, 'metrics.json'}
@@ -523,7 +583,14 @@ def authorize_transitive_inputs(runs, run, *, seen=None):
     seen = seen | {run['id']}
     if not runs._external(run):
         return
-    for item in run['material']['inputs'].values():
+    authorize_material_inputs(runs,run['material'],seen=seen)
+
+
+def authorize_material_inputs(runs,material,*,seen=None):
+    """Reauthorize an exact retained input material without inventing a Run."""
+    from workbench import WorkbenchError
+    seen=set() if seen is None else seen
+    for item in material['inputs'].values():
         if item.get('kind') != 'run_artifact':
             continue
         source = item['source']; source_id = source['run_id']; name = source['artifact_name']
@@ -647,11 +714,17 @@ def _prefix_project_references(destination, prefix, prepared):
         definition['entrypoint'] = prefix + '/' + definition['entrypoint']
         for source in definition['sources']:
             source['path'] = prefix + '/' + source['path']
-        path.chmod(0o600); path.write_bytes(encoded(definition)); path.chmod(0o400)
+        path.chmod(0o600)
+        with path.open('wb') as handle:
+            handle.write(encoded(definition)); handle.flush(); os.fsync(handle.fileno())
+        path.chmod(0o400)
         item.update(path=prefix + '/' + item['path'], sha256=sha(encoded(definition)))
         prepared['graph']['expected_sha256'] = item['sha256']
     path = destination / 'project.json'
-    path.chmod(0o600); path.write_bytes(encoded(project)); path.chmod(0o400)
+    path.chmod(0o600)
+    with path.open('wb') as handle:
+        handle.write(encoded(project)); handle.flush(); os.fsync(handle.fileno())
+    path.chmod(0o400)
 
 
 def _prepare_operation(experiments, study_id, body, kind):
@@ -661,6 +734,7 @@ def _prepare_operation(experiments, study_id, body, kind):
     from pipeline import digest
     from runtime_snapshots import RuntimeSnapshots
     from workbench import WorkbenchError
+    require(not experiments.db.in_transaction, 'Candidate preparation cannot run inside a caller metadata transaction.', 'unsupported')
     operation = 'studies.prepare_package' if kind == 'package' else 'studies.prepare_verifier'
     fields = {'request_key', 'revision', 'candidate_id', 'root', 'directory', 'runtime_snapshot_sha256'}
     if kind == 'verify':
@@ -691,6 +765,7 @@ def _prepare_operation(experiments, study_id, body, kind):
         snapshot = RuntimeSnapshots(dataset.db, access, dataset.path).get(body['runtime_snapshot_sha256'])
         if kind == 'package':
             run = dataset.runs._load(candidate['run_id'])
+            require(run['graph'].get('recipe') == 'image_classification_model_v2', 'Candidate packaging is qualified only for TinyCNN v2.', 'unsupported')
             artifacts = {item['name']: dataset.runs.artifact(run['id'], item['name'])[0] for item in run['artifacts']
                          if item['name'] not in ('test-metrics.json', 'predictions-test.json', 'artifact-manifest.json')}
             probe = decode(artifacts['probe.json'])
@@ -717,8 +792,11 @@ def _prepare_operation(experiments, study_id, body, kind):
                     'Verifier runtime differs from package.', 'unsupported')
             prepared = prepare_verifier_project(destination, {'kind': 'run_artifact', 'run_id': body['package_run_id'],
                 'artifact_name': 'package.zip', 'expected_sha256': body['package_sha256']}, snapshot['manifest_sha256'])
+        publication_owned = False
+        published_result = None
         try:
             _prefix_project_references(destination, body['directory'], prepared)
+            os.fsync(root_fd)
             with experiments.lock:
                 access.require('edit', operation, study_id, owner_only=True)
                 prior = experiments._receipt(context.actor_id, operation, body['request_key'], identity)
@@ -739,20 +817,27 @@ def _prepare_operation(experiments, study_id, body, kind):
                 'preprocessing_policy': {'kind': 'exact_captured_bytes'}, 'output_policy': {'kind': 'inference_package' if kind == 'package' else 'inference_verification'}})
             operation_material = dataset.models.publish(operation_model['id'], {'revision': operation_model['revision']})
             def publish(trial):
+                nonlocal publication_owned, published_result
+                publication_owned = True
+                experiments.db.on_rollback(lambda: shutil.rmtree(destination, ignore_errors=True))
                 access.require('edit', operation, study_id, owner_only=True)
                 prior = experiments._receipt(context.actor_id, operation, body['request_key'], identity)
                 if prior:
                     require(prior['trial'] == trial, 'Preparation receipt is bound to another trial.')
+                    published_result = prior
                     return
-                experiments.db.on_rollback(lambda: shutil.rmtree(destination, ignore_errors=True))
                 result = {'state': 'prepared', 'candidate_id': body['candidate_id'], 'trial': trial,
                           'graph': graph, 'model': operation_material['ref'], 'runtime_snapshot_sha256': snapshot['manifest_sha256']}
                 if kind == 'verify':
                     result.update(package_run_id=body['package_run_id'], package_sha256=body['package_sha256'])
                 experiments._save_receipt(context.actor_id, operation, body['request_key'], identity, result)
                 access.audit(operation, body['candidate_id'], {'study_id': study_id, 'trial_id': trial['id'], 'material_sha256': trial['material']['sha256']})
+                published_result = result
             experiments.prepare_trial(study_id, {'request_key': kind + '-' + identity, 'revision': body['revision'],
                 'graph_id': graph['id'], 'graph_revision': graph['revision'], 'model': operation_material['ref'], 'replicate': 0}, _publish=publish)
+            publication_owned = True
+            if published_result is not None:
+                return published_result
             with experiments.lock:
                 result = experiments._receipt(context.actor_id, operation, body['request_key'], identity)
             require(result is not None, 'Prepared trial lacks its atomic operation receipt.', 'unavailable')
@@ -760,7 +845,8 @@ def _prepare_operation(experiments, study_id, body, kind):
         except CommitOutcomeUnknown:
             raise
         except BaseException:
-            shutil.rmtree(destination, ignore_errors=True)
+            if not publication_owned:
+                shutil.rmtree(destination, ignore_errors=True)
             raise
 
     finally:
@@ -795,6 +881,8 @@ def candidate_package_state(experiments, candidate_id):
             run = experiments.dataset.runs.get(reservation['run_id'])
             if run['state'] != 'completed':
                 continue
+            collection = 'packages' if row['operation_id'] == 'studies.prepare_package' else 'verifications'
+            require(len(result[collection]) < 100, 'Candidate package state result limit exceeded.', 'unsupported')
             if row['operation_id'] == 'studies.prepare_package':
                 raw, _ = experiments.dataset.runs.artifact(run['id'], 'package.zip')
                 item = next(item for item in run['artifacts'] if item['name'] == 'package.zip')

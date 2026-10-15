@@ -1040,3 +1040,70 @@ details > p {
 @media(max-width:600px){.project-header{align-items:start;flex-direction:column}.project-reference>div{align-items:start}.project-references .badge{margin-left:0}}
 
 .external-stages{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.external-stages span{padding:10px;background:var(--surface,#edf2ef);border-radius:6px}.external-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:12px 0}.external-fields input[type=checkbox]{width:auto}.check-row{display:flex;gap:8px;align-items:center}.check-row input{width:auto}.external-run-custody{margin:16px 0}.external-run-custody p,#external-material code{overflow-wrap:anywhere}
+
+/* Compact real model workflow uses native controls and semantic evidence tables. */
+.model-workspace { margin-bottom: 18px; }
+.model-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; }
+.model-workspace fieldset { min-width:0; border:1px solid var(--line,#d5dbdf); border-radius:8px; padding:14px; }
+.model-workspace legend { font-weight:700; padding:0 6px; }
+.model-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.model-fields label,.model-probes label { display:grid; gap:6px; min-width:0; }
+.model-fields input,.model-fields select,.model-probes select { width:100%; min-width:0; }
+.model-status:empty { display:none; }
+.model-trial { margin-top:16px; }
+.model-trial dl { margin:12px 0; }
+.model-trial dl>div { display:grid; grid-template-columns:110px minmax(0,1fr); gap:8px; padding:5px 0; }
+.model-trial dt { font-weight:600; }
+.model-trial dd { margin:0; overflow-wrap:anywhere; }
+.model-study { display:block; margin:8px 0; text-align:left; }
+.model-evidence { margin:20px 0; padding:16px 0; border-top:1px solid var(--line,#d5dbdf); }
+.model-evidence table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.model-evidence caption { text-align:left; padding:8px 0; font-weight:600; }
+.model-evidence th,.model-evidence td { text-align:left; padding:8px; border-bottom:1px solid var(--line,#d5dbdf); }
+.model-selected { background:var(--soft,#eef5f1); }
+.model-probes { padding:14px 0; }
+.model-evidence pre { max-height:240px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
+.model-evidence select { max-width:100%; }
+.model-workspace :focus-visible,.model-evidence :focus-visible { outline:3px solid #245fbd; outline-offset:3px; }
+@media (max-width:650px) {
+  .model-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .model-fields label:nth-child(-n+2) { grid-column:1/-1; }
+  .model-trial dl>div { grid-template-columns:1fr; gap:2px; }
+  .model-evidence .actions>* { width:100%; }
+}
+.model-workspace p,.model-evidence p { overflow-wrap:anywhere; }
+.model-evidence [data-model-checkpoint] { min-width:88px; white-space:nowrap; }
+.model-evidence th,.model-evidence td { white-space:nowrap; }
+.model-comparison { padding:14px 0; }
+.model-comparison .model-fields { margin-bottom:12px; }
+.model-comparison-result { margin:12px 0; }
+.model-export { padding:14px 0; }
+.model-export fieldset { min-width:0; border:1px solid var(--line,#d5dbdf); padding:12px; }
+.model-export .model-fields { margin-bottom:12px; }
+.model-hash { overflow-wrap:anywhere; }
+
+/* Workspace surfaces follow the system preference; the classic Data frame keeps its own styles. */
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme:dark; --ink:#e5edf8; --muted:#aab8cb; --line:#3d4e67; --blue:#91b7ff; --soft:#202e43; --green:#84dcba; --surface:#151e2d; }
+  body { background:#0c1420; }
+  .topbar,.context-bar,.workspace-nav,.panel,dialog,.skip { background:var(--surface); color:var(--ink); }
+  button,.button,input,select,textarea { background:#1b293b; border-color:var(--line); color:var(--ink); }
+  button:hover,.button:hover { background:#2b3e58; }
+  button:disabled,input:disabled,select:disabled { color:#9caec5; background:#1a2331; }
+  button.primary,.button.primary { background:#426dc6; border-color:#82aaff; color:#fff; }
+  button.danger { color:#ffb5b5; }
+  .workspace-nav>a { color:var(--muted); }
+  .badge { background:#24344d; color:#c7d8f2; border-color:var(--line); }
+  .badge.green { background:#173c34; color:#a2ebd0; border-color:#2a7d65; }
+  .badge.amber { background:#3b301c; color:#ffdc8e; border-color:#83672a; }
+  .callout { background:#342f20; color:#ffe4a8; border-color:#756439; }
+  .error-panel { background:#3c252c; color:#ffc0b8; border-color:#a25c5d; }
+  .real-inspector,.source-preview,.record-symbol { background:var(--soft); color:var(--ink); }
+  .graph-board { background-color:var(--surface); background-image:radial-gradient(var(--line) 1px,transparent 1px); }
+  .graph-node { background:var(--surface); border-color:var(--line); }
+  .run-item[aria-current=true],.real-nodes button[aria-pressed=true],.record-row:has(button[aria-current=true]),.matrix button { background:var(--soft); color:var(--ink); border-color:var(--blue); }
+  .real-matrix .error-cell,.matrix button.error-cell { background:#4b2a25; color:#ffb8aa; }
+  body .session-bar { background:#18283d; color:#d8e9ff; }
+  body #session-dialog { background:var(--surface); color:var(--ink); border-color:var(--line); }
+  :focus-visible,.model-workspace :focus-visible,.model-evidence :focus-visible { outline:3px solid #9ec6ff; outline-offset:3px; }
+}

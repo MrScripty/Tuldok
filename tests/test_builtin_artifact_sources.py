@@ -35,7 +35,7 @@ class BuiltinArtifactSourceTests(unittest.TestCase):
             {'run_id': 'c' * 32}, {'catalog_id': 'c' * 32}, {'graph_sha256': '0' * 64},
             {'artifact_name': 'other.pt'}, {'artifact_bytes': len(raw)+1}, {'artifact_bytes': True},
             {'measured_sha256': '0' * 64}, {'artifact_manifest_sha256': '0' * 64},
-            {'artifact_manifest_base64': 'not-base64'}, {'population': 'unknown'}, {'population': 'test'},
+            {'artifact_manifest_base64': 'not-base64'}, {'population': 'unknown'}, {'population': 'test'}, {'population': 'validation'},
             {'custody_identity': {}}]
         for change in changes:
             with self.subTest(change=change), self.assertRaises(recipe_process.ProcessError):
