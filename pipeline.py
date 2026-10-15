@@ -236,8 +236,13 @@ class Pipelines:
             return [self._get(graph_id) for graph_id in ids]
 
     @authorized('inspect', 'pipeline.inspect_external_recipe')
-    def inspect_external_recipe(self, project_id, reference_id, expected_sha256):
-        return recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
+    def inspect_external_recipe(self, project_id, reference_id, expected_sha256, *, contract_version=None):
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2)):
+            raise WorkbenchError('Unsupported recipe inspection version.','unsupported',409)
+        result=recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
+        if recipe_contract.is_bound_evidence(result['definition']) and contract_version==1:
+            raise WorkbenchError('Bound recipes require inspection contract version2.','unsupported',409)
+        return result
 
     @authorized('edit', 'pipeline.create_external')
     def create_external(self, body):
@@ -779,7 +784,7 @@ class Pipelines:
         External outputs remain opaque; this does not qualify numerical evidence,
         grant execution, import project code or run a process.
         """
-        from model_definitions import ModelDefinitions, blob, checked_json, natural, read_owned_blob, owned_inventory
+        from model_definitions import ModelDefinitions, blob, checked_json, natural, read_owned_blob, owned_inventory, retained_json
         from metadata import _sync_directory
         natural(revision,'Recipe revision',1)
         if type(reconcile_capture) is not bool:raise WorkbenchError('Capture reconciliation must be boolean.')
@@ -805,14 +810,17 @@ class Pipelines:
         for number,(path,raw) in enumerate(sorted(captured.items())):
             item=blob(raw,f'capture-{number:04d}.bin','application/octet-stream')
             payloads[item['name']]=raw;paths.append({'path':path,'blob':item})
-        evidence=preflight['material']['recipe']['format']==recipe_contract.EVIDENCE_FORMAT
+        evidence=recipe_contract.is_evidence(preflight['material']['recipe'])
         snapshot={'format':'external_model_evidence_snapshot_v1' if evidence else 'external_recipe_snapshot_v1',
                   'graph':graph,'preflight':preflight,'capture_paths':paths}
         profile={'format':'opaque_external_outputs_v1','outputs':preflight['outputs'],
                  'numerical_evidence':'unsupported','automatic_checkpoints':'unsupported'}
         if evidence:
             import extension_evidence
-            static=extension_evidence.resolve(preflight['material']['recipe']['model_evidence'],model,preflight['material'])
+            bound=recipe_contract.is_bound_evidence(preflight['material']['recipe'])
+            resolved_spec=retained_json(models._read_blob(model_ref,model['material']['specification']).decode()) if bound else None
+            static=extension_evidence.resolve(preflight['material']['recipe']['model_evidence'],model,preflight['material'],
+                model_specification=resolved_spec,binding=preflight['material'].get('extension_binding'))
             snapshot['evidence_context']=static;profile=static['profile']
         for name,value in (('recipe.json',snapshot),('profile.json',profile)):
             payloads[name]=encode(value).encode()
@@ -970,7 +978,7 @@ class Pipelines:
         execution=snapshot['preflight']['material'];graph=decode_graph(snapshot['graph'])
         recipe_contract.validate_material(execution)
         if (snapshot['format']!='external_model_evidence_snapshot_v1' or
-                execution['recipe']['format']!=recipe_contract.EVIDENCE_FORMAT or
+                not recipe_contract.is_evidence(execution['recipe']) or
                 execution['catalog_id']!=self.db.dataset_id or
                 graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision'] or
                 digest(execution)!=material['executable_sha256'] or
@@ -1008,7 +1016,11 @@ class Pipelines:
                 original=sources.get(path[len('source/'):])
                 if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
                     raise WorkbenchError('Retained Model and execution source differ.','unavailable',409)
-        static=evidence.resolve(execution['recipe']['model_evidence'],model,execution)
+        recipe_contract.validate_bound_captures(execution,captured)
+        bound=recipe_contract.is_bound_evidence(execution['recipe'])
+        resolved_spec=retained_json(read_owned_blob(model_root,model_ref['sha256'],model['material']['specification'],MAX_SOURCE_BYTES).decode()) if bound else None
+        static=evidence.resolve(execution['recipe']['model_evidence'],model,execution,
+            model_specification=resolved_spec,binding=execution.get('extension_binding'))
         profile=retained_json(read_owned_blob(self.material_path,sha,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
         if (not evidence.identical(static,snapshot['evidence_context']) or not evidence.identical(profile,static['profile']) or
                 not evidence.identical(material['evaluation_profile'],static['profile']['definition']) or
@@ -1033,9 +1045,6 @@ class Pipelines:
                 preflight['material']['graph_execution_sha256']!=execution_digest(graph) or
                 digest(preflight['material'])!=preflight['material_sha256']):
             raise WorkbenchError('Retained execution binding differs.','unavailable',409)
-        current,captured=recipe_contract.prepare(self.dataset.projects,graph,execution_digest(graph),
-            getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases,runs=self.dataset.runs)
-        if current!=preflight:raise WorkbenchError('Source, runtime or input changed since preparation.','stale',409)
         paths=snapshot['capture_paths']
         if type(paths) is not list or len(paths)!=len(material['captures']):raise WorkbenchError('Capture mapping differs.')
         retained={}
@@ -1044,7 +1053,14 @@ class Pipelines:
             if item['path'] in retained or item['blob'] not in material['captures']:
                 raise WorkbenchError('Capture mapping differs.','unavailable',409)
             retained[item['path']]=read_owned_blob(self.material_path,ref['sha256'],item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
-        if retained!=captured:raise WorkbenchError('Retained capture differs from execution.','unavailable',409)
+        if recipe_contract.is_bound_evidence(preflight['material']['recipe']):
+            recipe_contract.revalidate_bound_material(self.dataset.projects,preflight['material'],retained,
+                getattr(self.dataset,'external_runtime_profile',None))
+        else:
+            current,captured=recipe_contract.prepare(self.dataset.projects,graph,execution_digest(graph),
+                getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases,runs=self.dataset.runs)
+            if current!=preflight:raise WorkbenchError('Source, runtime or input changed since preparation.','stale',409)
+            if retained!=captured:raise WorkbenchError('Retained capture differs from execution.','unavailable',409)
         return preflight,retained,graph
 
     @authorized('inspect', 'recipes.preflight_material')

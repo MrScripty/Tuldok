@@ -422,8 +422,8 @@ class Runs:
     def _extension(run):
         material=run.get('material')
         recipe=material.get('recipe') if type(material) is dict else None
-        return (run.get('execution_kind')=='external_recipe' and type(recipe) is dict and
-                recipe.get('format')=='external_model_evidence_recipe_v1')
+        import recipe_contract
+        return run.get('execution_kind')=='external_recipe' and recipe_contract.is_evidence(recipe)
 
     def _extension_context(self,run):
         """Rederive the exact admitted context; never authorize from its copy."""
@@ -467,7 +467,7 @@ class Runs:
             raise WorkbenchError('Prepared execution identity differs.', 'stale', 409)
         self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
         extension_context=None
-        if captured['material']['recipe']['format']==recipe_contract.EVIDENCE_FORMAT:
+        if recipe_contract.is_evidence(captured['material']['recipe']):
             if approval_material_sha256 is None:
                 raise WorkbenchError('Model evidence requires the complete Study composition grant.','unsupported',409)
             import extension_evidence
@@ -809,7 +809,7 @@ class Runs:
                 self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
                 run['started_at'] = timestamp()
                 self._save(run)
-            if recipe_contract.host_identity(evidence=self._extension(run)) != run['material']['host_files']:
+            if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
             preparation_seconds = recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in run['spec'] else recipe_process.READY_SECONDS
