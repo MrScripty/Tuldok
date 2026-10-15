@@ -1,0 +1,207 @@
+{
+  "source_commit": "ac3e9b6eae8f678436d6f2a56b286cd4b0fb4542",
+  "dirty": true,
+  "command": "node tests/browser_model_development.cjs",
+  "source_sha256": {
+    "static/workspace-service.js": "1c289596e5a5bd85569691b2833584e99eb1bd7a9235d5c1c2d3bb3efecfc365",
+    "static/workspace-real.js": "3800055da1776c360a009b3b70b817dcb5e5943b2c9f6863b6108a7ec44a234b",
+    "static/workspaces.css": "ecdc2377f10f8ec0483cb5f6eaa977b1db28550e2c4b178c9e725d9a250d0c9a",
+    "tests/browser_model_development.cjs": "3d7f89480acf0b4806d3b7c7d397cc2769a246aa06e6e8bbf30bf4f301f12f2d"
+  },
+  "dark_checks": [
+    {
+      "width": 1440,
+      "dark": true,
+      "focus": "model-checkpoint-324663743e859526281d42166121abb9803a2b68fee1535fb4d675e9b4554e5e",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(158, 198, 255)",
+      "text": "rgb(229, 237, 248)",
+      "background": "rgb(12, 20, 32)",
+      "textContrast": 15.662057908741831,
+      "focusContrast": 10.536654698975951
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "focus": "model-checkpoint-324663743e859526281d42166121abb9803a2b68fee1535fb4d675e9b4554e5e",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(158, 198, 255)",
+      "text": "rgb(229, 237, 248)",
+      "background": "rgb(12, 20, 32)",
+      "textContrast": 15.662057908741831,
+      "focusContrast": 10.536654698975951
+    }
+  ],
+  "catalog_path": "/tmp/tuldok-model-development-qsct8b/data",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "invalid held-out class coverage blocks release before training",
+    "fixed split preview, exact reviewed source release and immutable ZIP download",
+    "Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "Compatible frozen validation membership supports measured comparison across actual trained models",
+    "Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout"
+  ],
+  "captures": [
+    {
+      "file": "catalog-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "catalog-data-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-First TinyCNN-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-First TinyCNN-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-Second TinyCNN-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-Second TinyCNN-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "current-correction-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-Corrected TinyCNN-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "prepared-Corrected TinyCNN-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "corrected-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "corrected-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-evidence-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    }
+  ],
+  "compare_selectors": [
+    {
+      "other_run_id": "beefd244cfce46ecaf24cb8364b99e5d",
+      "checkpoint_sha256": "0560580cab5d14823b007876f5efbb7138755c355872655c86701cef0ffc3858",
+      "other_checkpoint_sha256": "2df146efcba28fc72853bf69d37ebcd924fee4fc5ffa11398aaefd3c26d941bc",
+      "evaluation_sha256": "b72eda3071a083646f44570d59cb97a11c92bb88a6555aaefb768a9125d06033",
+      "other_evaluation_sha256": "21d59ad4d29376f54968f9de54dfd52e74fec16384394730e14bdd865f70fb01",
+      "metric_id": "loss",
+      "metric_definition_sha256": "1cc498a87970e0678e22b6f7d0acb696b2944f2ba87b70f569be6c40829c91e9",
+      "other_metric_definition_sha256": "1cc498a87970e0678e22b6f7d0acb696b2944f2ba87b70f569be6c40829c91e9",
+      "mode": "paired"
+    },
+    {
+      "other_run_id": "beefd244cfce46ecaf24cb8364b99e5d",
+      "checkpoint_sha256": "635fbd831225122988e75aea038f7375c711e9492b9b0e62c04773f4b0d89ad0",
+      "other_checkpoint_sha256": "2df146efcba28fc72853bf69d37ebcd924fee4fc5ffa11398aaefd3c26d941bc",
+      "evaluation_sha256": "d784ccdee7085c5146ad99bfbe1f868e8275523ac4fa9e1e322e11bf10f7da28",
+      "other_evaluation_sha256": "21d59ad4d29376f54968f9de54dfd52e74fec16384394730e14bdd865f70fb01",
+      "metric_id": "loss",
+      "metric_definition_sha256": "a9ff111a75abe95d49302e7b3ec3ff47a34c19abedb56c3cecbe2a757fd821c6",
+      "other_metric_definition_sha256": "1cc498a87970e0678e22b6f7d0acb696b2944f2ba87b70f569be6c40829c91e9",
+      "mode": "paired"
+    },
+    {
+      "other_run_id": "beefd244cfce46ecaf24cb8364b99e5d",
+      "checkpoint_sha256": "635fbd831225122988e75aea038f7375c711e9492b9b0e62c04773f4b0d89ad0",
+      "other_checkpoint_sha256": "2df146efcba28fc72853bf69d37ebcd924fee4fc5ffa11398aaefd3c26d941bc",
+      "evaluation_sha256": "d784ccdee7085c5146ad99bfbe1f868e8275523ac4fa9e1e322e11bf10f7da28",
+      "other_evaluation_sha256": "21d59ad4d29376f54968f9de54dfd52e74fec16384394730e14bdd865f70fb01",
+      "metric_id": "loss",
+      "metric_definition_sha256": "a9ff111a75abe95d49302e7b3ec3ff47a34c19abedb56c3cecbe2a757fd821c6",
+      "other_metric_definition_sha256": "1cc498a87970e0678e22b6f7d0acb696b2944f2ba87b70f569be6c40829c91e9",
+      "mode": "side_by_side"
+    }
+  ],
+  "run_ids": [
+    "beefd244cfce46ecaf24cb8364b99e5d",
+    "46f39330ff494b99a39ceb98ddbf2fdd",
+    "595df887aac94ee886e2d96eb7ec2dbb"
+  ],
+  "release_ids": [
+    "d5be603ed58e322227d1a66c846fe7f846aa931b9b2fafae2290655cc53303c6",
+    "a1885ce9aeffc93e2d5d56dc8694ba28a01a29dc90fb0598075995cb9b7cf5ea"
+  ],
+  "training": true,
+  "quality_claim": false,
+  "fixture_provenance": "12 CC0 authored independent images imported and reviewed through ordinary Data UI",
+  "access_projection_test": "403 transport substitution; backend tests own actual revoke enforcement"
+}
