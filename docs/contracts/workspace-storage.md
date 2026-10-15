@@ -49,8 +49,8 @@ upgrade.
 
 ## Upgrade an existing catalog
 
-Fresh catalogs use schema 8. Ordinary application startup **does not migrate**
-an existing schema-1 through schema-7 catalog. It refuses with instructions to run the
+Fresh catalogs use schema 9. Ordinary application startup **does not migrate**
+an existing schema-1 through schema-8 catalog. It refuses with instructions to run the
 explicit upgrade. Stop every application, provider/training worker and artifact writer;
 keep them stopped throughout backup, upgrade and verification. The catalog
 advisory lock coordinates cooperating commands, but cannot fence an old binary
@@ -66,7 +66,7 @@ python app.py --data ./dataset
 
 The backup destination must be new. Keep the complete backup and its receipt.
 The accepted transitions have stable identities `workspace-metadata-1-to-2`,
-`audio-metadata-2-to-3`, `spatial-metadata-3-to-4`, `project-metadata-4-to-5`, `field-sequence-metadata-5-to-6`, `access-metadata-6-to-7` and `execution-approvals-7-to-8`. The command applies the ordered steps needed by the
+`audio-metadata-2-to-3`, `spatial-metadata-3-to-4`, `project-metadata-4-to-5`, `field-sequence-metadata-5-to-6`, `access-metadata-6-to-7`, `execution-approvals-7-to-8` and `model-development-8-to-9`. The command applies the ordered steps needed by the
 recognized source, with the complete chain in one transaction. It verifies:
 
 1. The manifest, catalog identity, version ledger and exact retained definition.
@@ -83,26 +83,26 @@ recognized source, with the complete chain in one transaction. It verifies:
 All DDL and version ledger updates commit in one transaction under the existing
 dataset advisory lock. A failed second step rolls back the first step as well;
 the old kind constraint is never authoritatively absent. Only the known version-1,
-version-2, version-3, version-4, version-5, version-6 or version-7 definitions are eligible. Unknown versions, altered constraints,
+version-2, version-3, version-4, version-5, version-6, version-7 or version-8 definitions are eligible. Unknown versions, altered constraints,
 indexes, tables or triggers, malformed ledgers, missing catalogs and contradictory
 identities fail closed. No command
 refreshes a signature to bless unsupported drift. The manifest remains version 1;
 manifest and SQL schema versions are different contracts.
 
 The command prints the dataset identity, final migration name
-(`execution-approvals-7-to-8`), final schema version, definition/structure hashes and
+(`model-development-8-to-9`), final schema version, definition/structure hashes and
 `upgraded` or `already_current`. A repeat on a
-known schema-8 catalog verifies its structure and leaves rows/files unchanged.
+known schema-9 catalog verifies its structure and leaves rows/files unchanged.
 Run one upgrade/transfer command at a time. A command failure rolls back its
 transaction. A lost commit acknowledgement is explicitly an unknown outcome:
 keep writers stopped, reopen, and rerun this same command to verify whether the
-catalog is still the known source version or already known schema 8. Never
+catalog is still the known source version or already known schema 9. Never
 manually change the ledger, delete a table or replay a training request to resolve it.
 
 ## Backup, restore and legacy imports
 
 The backup container remains `format_version: 1` and explicitly records
-`schema_version: 1`, `2`, `3`, `4`, `5`, `6`, `7` or `8`. `backup_metadata.py` accepts each recognized schema.
+`schema_version: 1`, `2`, `3`, `4`, `5`, `6`, `7`, `8` or `9`. `backup_metadata.py` accepts each recognized schema.
 Restore recreates **the exact backed-up schema version**, identity, rows,
 sequence states and ordinary files in an absent catalog/new directory. A retained
 schema-1, schema-2 or schema-3 backup remains restorable; upgrade that restored copy explicitly
@@ -115,11 +115,11 @@ specified in [local storage and recovery](local-storage.md).
 
 `Metadata(..., schema_version=1)`, `schema_version=2`, `schema_version=3` and `schema_version=None`
 are tooling entry points for exact old-version restoration and recognized-version inspection.
-Normal Dataset and Workbench callers omit that argument and require schema 8.
+Normal Dataset and Workbench callers omit that argument and require schema 9.
 Version selection never authorizes an unsupported definition or structural drift.
 
 Legacy SQLite preflight still recognizes only the original 19 owner tables.
-A new import creates schema 8 and leaves workspace/project tables empty.
+A new import creates schema 9 and leaves workspace/project tables empty.
 A retained schema-1 or schema-2 migration receipt remains byte-for-byte authoritative:
 an interrupted import continues at its receipt's version, and a completed import can be
 reconciled after an explicit upgrade only while its original rows/files still
@@ -238,3 +238,15 @@ without changing the retained byte receipt format or historical Run identities.
 Resumed and completed restores refuse contradictory permissions.
 The canonical transfer, retry and partial-cleanup policy is in
 [local storage](local-storage.md#backup-permission-preservation).
+
+## Schema9 model-development storage
+
+The current application requires schema9. The explicit quiesced8→9 transition
+adds Model Definitions, Pipeline recipe drafts/material, and finite Study intent/
+membership/reservation tables without rewriting schema8 rows or files. All prior
+schema definitions/signatures remain retained. Ordinary startup requires the
+explicit upgrade; see [model development](model-development.md#public-compatibility-and-storage).
+
+Backups include the full immutable byte directories and exact opaque row documents.
+Restore inserts in Metadata's retained table-definition order so Study/Trial/Run
+foreign keys remain enforced. It never launches proposals or refunds approvals.

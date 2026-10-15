@@ -70,7 +70,7 @@ class RuntimeSnapshotContract(unittest.TestCase):
         with self.assertRaises(StorageTransferError):
             restore_catalog(backup, restored)
         restored_executable.chmod(0o500)
-        current = Metadata(restored, create=False); self.addCleanup(current.close)
+        current = Metadata(restored, create=False, schema_version=db.schema_version); self.addCleanup(current.close)
         restored_access = Access(current, restored)
         token = restored_access.exchange(restored_access._local_owner_token())['token']
         with restored_access.bind(token):
@@ -94,7 +94,7 @@ class RuntimeSnapshotContract(unittest.TestCase):
     def test_quiesced_lease_and_owner_are_required(self):
         db,access,owner,config=self.fixture();identity=owner.inspect(config)['inventory_sha256']
         with self.assertRaises(WorkbenchError):owner.create(config,identity,reserve_bytes=0)
-        peer=Metadata(db.path,create=False);self.addCleanup(peer.close)
+        peer=Metadata(db.path,create=False,schema_version=db.schema_version);self.addCleanup(peer.close)
         self.assertTrue(peer.claim_runtime('workspace_runs'))
         with self.assertRaises(WorkbenchError):owner.create(config,identity,quiesced=True,reserve_bytes=0)
         peer.close()

@@ -1,15 +1,16 @@
-"""Explicit quiesced PostgreSQL schema 1–7 to 8 upgrade, without data rewriting."""
+"""Explicit quiesced PostgreSQL schema 1–8 to 9 upgrade, without data rewriting."""
 import argparse
 import json
 
 import psycopg
 
-from metadata import (Metadata, SCHEMA_VERSION, StorageError, WORKSPACE_TABLES, SPATIAL_TABLES, PROJECT_TABLES, ACCESS_TABLES, EXECUTION_APPROVAL_TABLES,
+from metadata import (Metadata, SCHEMA_VERSION, StorageError, WORKSPACE_TABLES, SPATIAL_TABLES, PROJECT_TABLES, ACCESS_TABLES, EXECUTION_APPROVAL_TABLES, MODEL_DEVELOPMENT_TABLES,
                       definition_hash)
 
 # Accepted ordered transitions, with stable identities. The complete chain is
 # one transaction: no intermediate version is published if a later step fails.
 UPGRADES = {
+    8: ('model-development-8-to-9', tuple(MODEL_DEVELOPMENT_TABLES.values())),
     7: ('execution-approvals-7-to-8', tuple(EXECUTION_APPROVAL_TABLES.values())),
     6: ('access-metadata-6-to-7', tuple(ACCESS_TABLES.values())),
     5: ('field-sequence-metadata-5-to-6', (
@@ -35,7 +36,7 @@ def upgrade_catalog(path, *, dsn=None, quiesced=False):
 
     Stop every old/new app and artifact writer before calling. The advisory lock
     coordinates cooperating commands; it is not a fence against a live old app.
-    Re-entry verifies current schema 8, including its independently known shape,
+    Re-entry verifies current schema 9, including its independently known shape,
     and performs no writes to domain rows, artifacts or the dataset manifest.
     """
     if not quiesced:
