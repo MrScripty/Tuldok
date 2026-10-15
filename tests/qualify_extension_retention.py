@@ -27,7 +27,7 @@ from psycopg.conninfo import make_conninfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import backup_metadata as transfer
-from qualify_scientific_restore import (compare, compact, raw_restored,
+from qualify_scientific_restore import (compare, compact, raw_restored, read_private,
                                         save_private, snapshot, verify_backup)
 
 
@@ -279,6 +279,10 @@ def main(args):
     try:
         log('Inventory released source and verify stopped worker locks/custody')
         base = snapshot(source, connection)
+        if args.previous_baseline is not None:
+            compare(base, read_private(args.previous_baseline))
+            report.update(previous_baseline_sha256=transfer.file_hash(args.previous_baseline),
+                          previous_baseline_parity=True)
         require(base['dataset_id'] == receipt['runtime_snapshot']['catalog_id'], 'P5/source catalog mismatch.')
         require(base['run_states'] == {receipt[key]: 'completed' for key in
                 ('source_run_id', 'package_run_id', 'verifier_run_id')}, 'Actual source must contain exactly the three completed P5 Runs.')
@@ -329,5 +333,7 @@ if __name__ == '__main__':
     parser.add_argument('--source', type=Path, required=True)
     parser.add_argument('--p5-receipt', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--previous-baseline', type=Path,
+                        help='Reconcile an earlier private raw snapshot before source reuse after an interrupted attempt.')
     parser.add_argument('--quiesced', action='store_true')
     main(parser.parse_args())
