@@ -1,0 +1,11 @@
+{
+  "actual_previously_trained_run_id": "139486adb9e84e0f9e318b0d72cbca24",
+  "checkpoint_sha256": "ff3b08e1343c0c33b0123592fcaa62605fbeb6c7a69174d0adde6a2f07fce839",
+  "cli_selected_evidence_equal": true,
+  "cli_whole_weight_download_verified": true,
+  "official_sdk_mcp_selected_evidence_equal": true,
+  "qualification_mode": "Actual cold retained CPU model evidence across CLI/MCP; no new training or numerical-quality claim.",
+  "same_session_revocation_refused": true,
+  "source_head": "16a66f308717998f90e3507229e2bfaf5468ebdc",
+  "weights_bytes": 16231
+}
