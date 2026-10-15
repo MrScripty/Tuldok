@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 import sys
 import threading
 import time
@@ -34,7 +35,7 @@ def require(value,reason):
     if not value:raise RuntimeError(reason)
 
 
-def nominate_runtime_project(project, expected_sha):
+def nominate_runtime_project(project, expected_sha, *, project_id=None):
     """Author a NEW named QA declaration; preserve all numerical source bytes."""
     require(type(expected_sha) is str and len(expected_sha)==64 and all(c in '0123456789abcdef' for c in expected_sha),
             'Nominate an exact lowercase runtime snapshot SHA256')
@@ -43,7 +44,10 @@ def nominate_runtime_project(project, expected_sha):
     registration=json.loads((project/'project.json').read_bytes())
     original_extension=hashlib.sha256((project/'extension.json').read_bytes()).hexdigest()
     original_recipe=hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest()
-    registration['id']=uuid.uuid4().hex
+    nominated_id=uuid.uuid4().hex if project_id is None else project_id
+    require(type(nominated_id) is str and len(nominated_id)==32 and all(c in '0123456789abcdef' for c in nominated_id) and
+            nominated_id!=registration['id'],'Runtime nomination requires a distinct exact QA project ID')
+    registration['id']=nominated_id
     registration['name']='Private QA scalar A runtime '+expected_sha[:12]
     extension['label']='Private QA scalar A runtime '+expected_sha[:12]
     extension['runtime']['snapshot_sha256']=expected_sha
@@ -72,6 +76,18 @@ def nominate_runtime_project(project, expected_sha):
     return nomination
 
 
+def validate_nomination_project(package, project, expected_sha):
+    """Reconstruct every authored declaration; a marker is not provenance."""
+    registration=json.loads((project/'project.json').read_bytes())
+    with tempfile.TemporaryDirectory(prefix='extension-runtime-declaration-') as temporary:
+        expected=Path(temporary)/'project';shutil.copytree(package,expected)
+        nominate_runtime_project(expected,expected_sha,project_id=registration['id'])
+        for source in expected.iterdir():
+            if source.is_file():
+                require((project/source.name).read_bytes()==source.read_bytes(),
+                        'Existing nominated project declaration differs: '+source.name)
+
+
 def main(args):
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
     package=ROOT/'examples/extensions/field-surrogate/v2'
@@ -94,9 +110,7 @@ def main(args):
             json.loads((project/'extension.json').read_bytes())['runtime']['snapshot_sha256']==args.expected_runtime_sha256,
             'Project must declare the exact explicitly nominated runtime')
     if nominated:
-        nomination=json.loads((project/'runtime-nomination.json').read_bytes())
-        require(nomination['original_snapshot_sha256']==RUNTIME_SHA and nomination['nominated_snapshot_sha256']==args.expected_runtime_sha256,
-                'Existing project has no exact runtime nomination receipt')
+        validate_nomination_project(package,project,args.expected_runtime_sha256)
     dataset=server=worker=owner=credential=None;endpoint=config=None;sequence=0
     report={'state':'in_progress','scope':'Actual A CPU/Study/custody/cold scientific state; UI/agent field projection pending',
         'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
@@ -437,7 +451,7 @@ def qualify_public_fields(args):
                     requests.append(body)
         query({'split':'test'},expected=400)
         query(dict(requests[0],checkpoint_sha256='f'*64),expected=409)
-        query(dict(requests[0],run_id='f'*32),expected=400)
+        query(dict(requests[0],run_id='f'*32),expected=409)
         with dataset.access.bind(owner['token']):
             require(dataset.runs.get(run['id'])==run,'Read-only field inspection changed the Run')
             require(dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0]==before,'Field inspection admitted a Run')

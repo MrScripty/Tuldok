@@ -348,7 +348,7 @@ class ContextCaptureTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 class RuntimeNominationTests(unittest.TestCase):
     def test_explicit_new_qa_runtime_rehashes_declarations_and_preserves_numerical_sources(self):
-        from qualify_extension_fields import nominate_runtime_project,RUNTIME_SHA
+        from qualify_extension_fields import nominate_runtime_project,validate_nomination_project,RUNTIME_SHA
         with tempfile.TemporaryDirectory() as temporary:
             project=Path(temporary)/'project';shutil.copytree(PACKAGE,project)
             original={name:(project/name).read_bytes() for name in ('producer.py','evidence_writer.py','fixture.json','cold_oracle.py')}
@@ -369,6 +369,16 @@ class RuntimeNominationTests(unittest.TestCase):
             self.assertTrue(all(item['evaluator_sha256']==closure for item in definition['model_evidence']['metric_definitions']))
             self.assertEqual(len(definition['outputs']),27)
             self.assertIn('runtime-nomination.json',{item['path'] for item in definition['sources']})
+            validate_nomination_project(PACKAGE,project,selected)
+            declaration=(project/'runtime-nomination.json').read_bytes()
+            (project/'runtime-nomination.json').write_bytes(evidence.canonical({'original_snapshot_sha256':RUNTIME_SHA,'nominated_snapshot_sha256':selected}))
+            with self.assertRaises(RuntimeError):validate_nomination_project(PACKAGE,project,selected)
+            (project/'runtime-nomination.json').write_bytes(declaration)
+            original_registration=(project/'project.json').read_bytes()
+            reused=json.loads(original_registration);reused['id']=before['id']
+            (project/'project.json').write_bytes(evidence.canonical(reused))
+            with self.assertRaises(RuntimeError):validate_nomination_project(PACKAGE,project,selected)
+            (project/'project.json').write_bytes(original_registration)
             for invalid in ('','b'*63,'B'*64,'../runtime'):
                 with self.subTest(invalid=invalid),self.assertRaises(RuntimeError):nominate_runtime_project(project,invalid)
 
