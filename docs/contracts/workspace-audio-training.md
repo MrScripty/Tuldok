@@ -1,5 +1,9 @@
 # Bounded audio classification v1
 
+The explicitly selected adapter-version-2 producer and task verifier use the
+[one-fit evidence contract](one-fit-evidence.md). Public recipe activation is
+pending; the version-1 contract below retains its original inventory/history.
+
 The real local CPU recipe classifies one reviewed interval per recording.
 Releases, Pipeline and Runs retain their existing custody and lifecycle owners;
 `audio_training.py` owns the checked input, features, model and evaluator.

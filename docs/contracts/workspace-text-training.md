@@ -1,5 +1,9 @@
 # Bounded text classification recipe v1
 
+The explicitly selected adapter-version-2 producer and task verifier use the
+[one-fit evidence contract](one-fit-evidence.md). Public recipe activation is
+pending; the version-1 contract below retains its original inventory/history.
+
 `text_classification_export.py` owns the frozen projection;
 `text_training.py` owns its checked reader, train-only transform, estimator and
 JSON model reader. The existing Releases, Pipelines and Runs owners retain
