@@ -144,7 +144,7 @@ class RegistryTests(unittest.TestCase):
 
 
 @contextmanager
-def server(mode='normal'):
+def server(mode='normal', capabilities=None):
     calls = []
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_args): pass
@@ -156,6 +156,8 @@ def server(mode='normal'):
             if self.path == '/api/access/session':
                 value = {'kind': 'owner' if mode == 'owner' else 'agent', 'catalog_id': CATALOG, 'actor_id': CATALOG, 'scopes': ['inspect','edit']}
             elif self.path == '/api/workspace/context': value = {'dataset_id': CATALOG}
+            elif self.path == '/api/agent/capabilities':
+                value = {'error': 'Legacy fixture has no capabilities route.', 'code': 'route_not_found'}
             elif self.path == '/api/agent/operations':
                 value = api.discovery()
                 if mode == 'mismatch': value['digest'] = '0'*64
@@ -176,8 +178,12 @@ def server(mode='normal'):
                 except OSError: pass
                 return
             status = 307 if mode == 'redirect' else 503 if mode in ('unknown','code_echo') and self.command == 'POST' else 200
+            if self.path == '/api/agent/capabilities' and status == 200: status = 404
             if mode == 'revoked' and value.get('code') == 'unauthenticated': status = 401
             if status == 503: raw = json.dumps({'code':TOKEN if mode == 'code_echo' else 'commit_unknown','error':'Uncertain '+TOKEN}).encode()
+            if self.path == '/api/agent/capabilities' and capabilities is not None:
+                status, value = capabilities
+                raw = json.dumps(value).encode()
             self.send_response(status)
             self.send_header('Content-Type', 'text/html' if mode == 'html' else 'application/json')
             self.send_header('Content-Length', '9'*5000 if mode == 'huge_digits' else str(len(raw)+1 if mode == 'truncated' else api.RESPONSE_LIMIT+1 if mode == 'huge' else len(raw)))

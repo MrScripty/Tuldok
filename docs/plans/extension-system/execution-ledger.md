@@ -1,5 +1,19 @@
 # Extension-system execution ledger
 
+## 2026-10-15 — Lead integration with P1
+
+- Integration lead stacked E1 head eb681de with P1
+  4431f40f8c5a32276017476d7901b520ca101d79 for combined validation before merge.
+  The two app.py conflicts retain both authenticated capabilities/selected-body
+  guards and explicit owner-only project-snapshot routes/strict parsing.
+- Private PostgreSQL17.11 and exact hash-locked MCP1.30 environment: all24
+  extension cases and22 negotiation cases pass with zero skips. The latter
+  includes retained/upgraded HTTP/CLI/MCP matrices and the full8MiB segment.
+  This is integration evidence, not E2 numerical or E4 inference acceptance.
+- Updated PR64 is stacked on P1 PR66; no merge until the composed head passes CI.
+  SDK PR65 and E branches remain retained. Lead owns shared integration/merges;
+  extension worker owns isolated producer/runtime prerequisites and64/65CI.
+
 ## 2026-10-15 — Supplied native M0 draft (historical author record)
 
 - User requested an implementation plan and commit; this operation is documentation
