@@ -165,3 +165,19 @@ isolated recorder-overhead or guaranteed-budget claim. The comparison remains
 reported; no guessed threshold, zero-cost claim or automatic activation follows.
 SQLite's 20 ms contention timeout does not bound filesystem, scheduler or health
 stream latency. Operators must qualify their own deployment/storage policy.
+
+
+Independent review identified and repaired a CLI failure-channel compatibility
+issue: the operator stderr health convention would have added two lines around
+the CLI's single JSON failure document. Configured CLI observation now keeps its
+health emission quiet, including invalid policy; its independent operator reader
+remains separate. A real subprocess comparison covers disabled, healthy,
+unavailable, unsafe, corrupt and invalid-policy modes and requires byte-identical
+stdout/stderr/exit status plus one parseable JSON failure. HTTP/MCP retain their
+existing stderr health channel. This is a command-contract preservation fix, not
+a change to domain outcomes or passive projection.
+
+The final CLI health-channel follow-up passed all three focused tests in 7.979
+seconds: byte-identical subprocess failure diagnostics, actual CLI partial stdout
+and actual MCP main/v2 health. The latter confirms MCP's operator stderr channel
+was preserved while CLI's machine diagnostic channel remains a single document.

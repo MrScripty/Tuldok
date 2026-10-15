@@ -255,6 +255,40 @@ class InterfaceStoreTests(unittest.TestCase):
         self.assertLess(terminal['response_bytes'], 16 * 1024 * 1024)
         self.assertEqual(self.rows("SELECT outcome FROM events WHERE phase='returned'")[0]['outcome'], 'success')
 
+    def test_configured_cli_failure_stderr_is_identical_single_json_document(self):
+        replies = []
+        arguments = self.directory / 'args.json'
+        arguments.write_text('{}')
+        for mode in ('disabled', 'healthy', 'unavailable', 'unsafe', 'corrupt', 'invalid-policy'):
+            database = self.directory / ('failure-' + mode + '.sqlite')
+            if mode == 'unavailable':
+                database = self.directory / 'missing' / 'PRIVATE_STORE'
+            elif mode in ('unsafe', 'corrupt'):
+                database.write_bytes(b'PRIVATE_STORE')
+                database.chmod(0o644 if mode == 'unsafe' else 0o600)
+            command = [sys.executable, str(ROOT / 'project_cli.py'), '--config', str(self.directory / 'PRIVATE_CONFIG')]
+            if mode != 'disabled':
+                command += ['--observe-v2-database', str(database)]
+            if mode == 'invalid-policy':
+                command += ['--observe-max-calls', 'PRIVATE_INVALID_POLICY']
+            command += ['call', '--operation', 'context.get', '--arguments', str(arguments)]
+            result = subprocess.run(command, cwd=ROOT, capture_output=True, timeout=15)
+            replies.append((result.returncode, result.stdout, result.stderr))
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(json.loads(result.stderr)['code'], 'configuration')
+            self.assertNotIn(b'PRIVATE_', result.stderr)
+            if mode == 'healthy':
+                self.assertEqual(obs.check_store(database, schema_version=2)['retained_terminals'], 1)
+            if mode == 'invalid-policy':
+                self.assertFalse(database.exists())
+        self.assertTrue(all(value == replies[0] for value in replies), replies)
+        # Operator inspection is separate and still has its own fixed health result.
+        checked = subprocess.run([sys.executable, str(ROOT / 'mcp_observer.py'), '--database',
+            str(self.directory / 'absent.sqlite'), '--schema-version', '2'], capture_output=True, timeout=5)
+        self.assertEqual(checked.returncode, 1)
+        self.assertEqual(checked.stdout, b'')
+        self.assertEqual(checked.stderr, b'tuldok observer storage-check-unavailable\n')
+
     def test_cli_operator_selection_and_actual_partial_pipe_delivery(self):
         arguments = self.directory / 'args.json'
         arguments.write_text('{}')

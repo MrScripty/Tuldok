@@ -151,3 +151,8 @@ storage and failure semantics are owned by the [shared observation contract](mcp
 Collection defaults off. Recording failure does not alter command results,
 consume another grant or authorize a retry. A written output terminal proves
 only local stdout/stderr acceptance; partial delivery remains unknown.
+
+Configured observation preserves a single JSON stderr failure diagnostic exactly.
+It emits no operator-health lines into that command channel, including when
+observer configuration/storage fails. Invoke the independent operator reader
+separately to inspect store health; CLI health emission is quiet by default.

@@ -558,19 +558,30 @@ def add_interface_options(parser):
     parser.add_argument('--observe-max-bytes')
 
 
-def configured_interface(args, boundary, *, selected=None):
+class _QuietHealth:
+    # CLI stderr is one domain JSON document; operator health uses the reader.
+    def write(self, value):
+        return len(value)
+
+    def flush(self):
+        pass
+
+
+def configured_interface(args, boundary, *, selected=None, diagnostics=None):
     if args.observe_v2_database is None:
         return None
+    health = (_QuietHealth() if boundary == 'cli' and diagnostics is None else
+              sys.stderr if diagnostics is None else diagnostics)
     try:
         import agent_api
         return InterfaceRecorder(RecorderConfig(args.observe_v2_database,
             int(args.observe_max_calls) if args.observe_max_calls is not None else DEFAULT_MAX_CALLS,
             int(args.observe_max_age_seconds) if args.observe_max_age_seconds is not None else DEFAULT_MAX_AGE_SECONDS,
             int(args.observe_max_bytes) if args.observe_max_bytes is not None else DEFAULT_MAX_BYTES),
-            agent_api.discovery(), boundary=boundary, selected=selected)
+            agent_api.discovery(), boundary=boundary, selected=selected, diagnostics=health)
     except Exception:
         try:
-            print('tuldok observer invalid-observer-configuration', file=sys.stderr, flush=True)
+            print('tuldok observer invalid-observer-configuration', file=health, flush=True)
         except Exception:
             pass
         return None

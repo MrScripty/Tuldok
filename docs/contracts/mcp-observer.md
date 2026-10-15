@@ -301,3 +301,13 @@ unknown/incomplete terminal on stalled or broken delivery remain unchanged.
 Capacity is a bounded local resource, not a client-receipt or throughput guarantee.
 This wire-compatible change applies to both recorder versions and disabled
 recording; optional telemetry is not responsible for making a transfer succeed.
+
+
+Configured CLI observation keeps stdout and its single JSON stderr diagnostic
+reserved for the ordinary command contract, including unavailable storage and
+invalid observer policy. CLI recorder health emission is quiet by default; use
+the separately invoked operator reader for store integrity/retention inspection.
+The reader does not prove a particular process recorded every call. An embedding
+operator may supply a separate diagnostics stream at composition. HTTP/MCP retain
+their existing operator stderr health channel. No domain error payload gains
+observation fields, extra stderr documents or a substitute result.
