@@ -326,3 +326,46 @@ missing dependency fails the job instead of triggering further exclusions.
 It preserves the existing CPU profile, loader checks and rights disposition.
 Its locally measured manifest may differ on a separately provisioned CI host;
 each run freezes its own full inventory before ordinary capture and inference.
+
+## Explicit scientific A package profile
+
+`package_scalar_a_task_v1` is a separate, explicitly frozen package task inside
+the unchanged `inference_package_v1` envelope. It accepts only the nominated
+`example.scalar-a:task` revision2 / fixed-validation profile revision2, source
+authority057c8ab, author inference source `cdfdf92c...95d98eb` and whole contract
+`468e3e15...78717fe`. Other field tasks, source variants, gauges and adapter
+entrypoints remain unsupported. The classifier task and its v1 receipt retain
+their existing contracts.
+
+The scientific candidate evaluation is the actual retained `model-evidence.json`,
+not a host-created metrics file. Its selected checkpoint descriptor, four retained
+16/32/48/64 descriptor/field pairs, exact little-endian float64 weights, training
+transform state and fit member identities, permitted initial/reference arrays,
+task/profile/policies/geometry/gauge, published material, six owner-captured
+source imports (five author sources plus recipe definition), frozen inference
+source/contract/notice, captured CPU runtime and permissioned artifact lineage
+are retained. Private training fixture values stay outside the package. Private
+QA rights deny redistribution; no license is inferred.
+
+Cold inspection decodes bounded JSON and native NPY data without importing the
+author adapter. The approved consumer derives its three raw-file request hashes
+from the selected descriptor weights, fitted-transform state and permitted input
+Blob. It separately binds the input's field-payload identity and reference target
+to the fixed probe. The D2 input identity is not a raw NPY file hash.
+
+After ordinary exact admission in the existing captured CPU profile, the consumer
+imports only the exact pinned author inference source and compares native output
+values using the frozen author/oracle `1e-10 +1e-10*abs(expected)` rule. The host
+implements no scientific model, fitting, MSE or physical acceptance operator.
+`fresh_field_inference_verification_v1` reports this reconstruction separately
+from independent numerical/physical acceptance and training resume. No generic
+untrusted executable hook or implicit runtime compatibility fallback is added.
+
+The downloaded-package qualifier can require `--expected-profile scalar_a`.
+For an existing real producer candidate with an approved registered runtime,
+`--production-catalog`, `--snapshot-descriptor`, `--source-study` and
+`--source-candidate` prepare and admit two ordinary charged package/verifier
+attempts, download the package through HTTP and retain the new receipt.
+The authored `test_scalar_candidate_packages.py` states are boundary fixtures;
+they are not completed Runs or E4 acceptance. Actual E4 producer/package evidence
+and any separately nominated runtime/source variant remain required.

@@ -5,6 +5,7 @@ captured recipes: Pipeline/Experiments/Access/Runs retain execution authority.
 Only local/private use is supported while any included rights remain unresolved.
 """
 import argparse
+import ast
 import hashlib
 import importlib.util
 import io
@@ -15,6 +16,7 @@ from pathlib import Path
 import re
 import shutil
 import stat
+import struct
 import subprocess
 import sys
 import tempfile
@@ -31,6 +33,10 @@ MANIFEST_FIELDS = {'format', 'candidate', 'checkpoint', 'model', 'sources',
                    'transforms', 'task', 'inference_entry', 'runtime', 'evidence',
                    'lineage', 'probes', 'expected_outputs', 'licenses', 'inventory',
                    'limitations'}
+SCALAR_A_CONTRACT_SHA256 = '468e3e15ad5aa88ce3e43deaeb7c5487bd16a77651b8328a618c89e2b78717fe'
+SCALAR_A_SOURCE_SHA256 = 'cdfdf92c798538afcbf974e16dd9686b3bac7837f001c300ac422bb9395d98eb'
+SCALAR_A_NOTICE_SHA256 = '6d60e9f2a605434edd38842f1b5248953b98b0f002fe3abe94c6688ad77429b6'
+SCALAR_A_TASK_FORMAT = 'package_scalar_a_task_v1'
 
 
 class PackageError(ValueError):
@@ -232,9 +238,13 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     closed(descriptor, ('format', 'run_id', 'model_sha256', 'weights', 'fitted_transform_sha256', 'clocks'))
     require(descriptor.get('format') == 'checkpoint_state_v1', 'Unsupported checkpoint contract.', 'unsupported')
     ref(descriptor['weights'])
+    task = decode(files[manifest['task']['name']])
+    require(type(task) is dict and task.get('format') in ('package_classifier_task_v1', SCALAR_A_TASK_FORMAT),
+            'Unqualified package task profile.', 'unsupported')
+    evaluation_name = 'model-evidence.json' if type(task) is dict and task.get('format') == SCALAR_A_TASK_FORMAT else 'metrics.json'
     require(decision.get('run_id') == descriptor.get('run_id')
             and decision.get('checkpoint_sha256') == manifest['checkpoint']['sha256']
-            and 'metrics.json' in indexed and decision.get('evaluation_sha256') == indexed['metrics.json']['sha256'],
+            and evaluation_name in indexed and decision.get('evaluation_sha256') == indexed[evaluation_name]['sha256'],
             'Selected candidate Run/checkpoint/evaluation differs from package closure.')
     require('published-model-material.json' in indexed, 'Published model material bytes are required.')
     published = decode(files['published-model-material.json'])
@@ -261,7 +271,11 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
         if source['artifact_name'] in indexed:
             require(source['sha256'] == indexed[source['artifact_name']]['sha256']
                     and source['run_id'] == descriptor['run_id'], 'Included source artifact differs from retained lineage.')
-    task = decode(files[manifest['task']['name']]); metrics = decode(files['metrics.json'])
+    if type(task) is dict and task.get('format') == SCALAR_A_TASK_FORMAT:
+        _validate_scalar_a(manifest, files, task, descriptor, published, ref)
+        require(referenced | exempt == set(indexed), 'Unreferenced package content is not permitted.')
+        return manifest
+    metrics = decode(files['metrics.json'])
     require(task.get('class_vocabulary') == metrics.get('class_vocabulary') and task.get('class_to_idx') == metrics.get('class_to_idx'), 'Declared class order differs from selected evaluation.')
     # Auxiliary probe images must be named explicitly by the probe document.
     if manifest['probes'] is not None:
@@ -301,6 +315,213 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
                     'Invalid fixed probe probabilities/predicted class.')
     require(referenced | exempt == set(indexed), 'Unreferenced package content is not permitted.')
     return manifest
+
+
+def _scalar_npy(raw, shape):
+    """Bounded native data decoding only; model arithmetic belongs to the author."""
+    require(type(raw) is bytes and 10 <= len(raw) <= 8192 and raw[:6] == b'\x93NUMPY'
+            and raw[6:8] in (b'\x01\x00', b'\x02\x00'), 'Invalid scalar A native array.')
+    start = 10 if raw[6:8] == b'\x01\x00' else 12
+    end = start + int.from_bytes(raw[8:start], 'little')
+    require(start < end <= min(len(raw), start + 4096) and end % 16 == 0 and raw[end-1:end] == b'\n', 'Invalid native array header bound.')
+    try:
+        tree = ast.parse(raw[start:end].decode('ascii').strip(), mode='eval')
+        nodes = list(ast.walk(tree))
+        require(len(nodes) <= 64 and type(tree.body) is ast.Dict
+                and all(type(node) in (ast.Expression, ast.Dict, ast.Tuple, ast.Constant, ast.Load) for node in nodes), 'Invalid native literal header.')
+        keys = [node.value for node in tree.body.keys if type(node) is ast.Constant and type(node.value) is str]
+        require(len(keys) == len(tree.body.keys) == len(set(keys)), 'Duplicate native header keys.')
+        header = ast.literal_eval(tree)
+    except (SyntaxError, ValueError, UnicodeError, TypeError, RecursionError) as error:
+        if isinstance(error, PackageError):
+            raise
+        raise PackageError('invalid', 'Invalid scalar A native header.') from error
+    require(type(header) is dict and set(header) == {'descr', 'fortran_order', 'shape'}
+            and header['descr'] == '<f8' and header['fortran_order'] is False
+            and type(header['shape']) is tuple and all(type(n) is int for n in header['shape'])
+            and header['shape'] == tuple(shape), 'Scalar A dtype/order/shape differs.')
+    count = math.prod(shape)
+    require(len(raw) == end + 8 * count, 'Scalar A native payload length differs.')
+    values = struct.unpack('<' + str(count) + 'd', raw[end:])
+    require(all(math.isfinite(value) for value in values), 'Nonfinite scalar A native payload.')
+    return raw[end:], values
+
+
+def _validate_scalar_a(manifest, files, task, descriptor, published, ref):
+    try:
+        return _validate_scalar_a_body(manifest, files, task, descriptor, published, ref)
+    except PackageError:
+        raise
+    except (KeyError, IndexError, TypeError, ValueError, OverflowError, RecursionError):
+        raise PackageError('invalid', 'Malformed scalar A package contract.') from None
+
+
+def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
+    """One frozen task-owned profile; never import its captured executable here."""
+    closed(task, ('format', 'contract', 'context', 'probe', 'field_index', 'profile'))
+    for key in ('contract', 'context', 'probe', 'field_index', 'profile'):
+        ref(task[key])
+    require(task['contract']['name'] == 'inference-contract.json'
+            and task['contract']['sha256'] == SCALAR_A_CONTRACT_SHA256
+            and sha(files.get('infer.py', b'')) == SCALAR_A_SOURCE_SHA256
+            and sha(files.get('inference-NOTICE.txt', b'')) == SCALAR_A_NOTICE_SHA256,
+            'Unqualified scalar A inference entry/contract/notice.', 'unsupported')
+    contract = decode(files['inference-contract.json']); policy = contract['policy']
+    context = decode(files[task['context']['name']]); static = context['static']; authored = static['policy']
+    require(encoded(decode(files['recipe.json'])['model_evidence']) == encoded(authored),
+            'Scalar A admitted policy differs from its captured recipe definition.')
+    require(context['format'] == 'extension_evidence_context_v1' and context['run_id'] == descriptor['run_id']
+            and static['catalog_id'] == manifest['candidate']['catalog_id']
+            and static['model']['sha256'] == descriptor['model_sha256']
+            and static['model']['catalog_id'] == static['catalog_id'], 'Scalar A selected context differs.')
+    evidence = decode(files['model-evidence.json'])
+    require(evidence['format'] == 'model_evidence_v1' and type(evidence['schema_version']) is int and evidence['schema_version'] == 1
+            and evidence['producer']['run_id'] == descriptor['run_id']
+            and evidence['producer']['catalog_id'] == static['catalog_id']
+            and evidence['producer']['material_sha256'] == context['composition']['sha256']
+            and evidence['model_sha256'] == descriptor['model_sha256'] and evidence['task'] == static['task']
+            and evidence['profile_sha256'] == sha(encoded(static['profile'])), 'Scalar A retained evaluation context differs.')
+    for item in (evidence['probe'], evidence['checkpoints'], evidence['metric_definitions'], evidence['field_index'],
+                 *evidence['observations'], *evidence['inference']['fitted_transforms']):
+        ref(item)
+    require(evidence['probe'] == task['probe'] and evidence['field_index'] == task['field_index']
+            and evidence['inference']['fitted_transforms'] == [manifest['transforms'][1]]
+            and evidence['inference']['output_policy_sha256'] == sha(encoded(policy['output_policy'])),
+            'Scalar A evaluation probe/field/transform policy differs.')
+    index = decode(files[evidence['checkpoints']['name']])
+    require(index['format'] == 'checkpoint_index_v1' and index['run_id'] == descriptor['run_id']
+            and type(index['entries']) is list and len(index['entries']) == 4, 'Scalar A checkpoint cadence differs.')
+    for point, entry in zip((16, 32, 48, 64), index['entries'], strict=True):
+        ref(entry['checkpoint']); checkpoint = decode(files[entry['checkpoint']['name']]); ref(checkpoint['weights'])
+        require(type(entry['clocks']['optimizer_update']) is int and entry['clocks']['optimizer_update'] == point
+                and checkpoint['clocks'] == entry['clocks'] and checkpoint['model_sha256'] == descriptor['model_sha256']
+                and checkpoint['run_id'] == descriptor['run_id'] and entry['model_sha256'] == descriptor['model_sha256']
+                and checkpoint['fitted_transform_sha256'] == entry['fitted_transform_sha256'] == descriptor['fitted_transform_sha256'],
+                'Scalar A checkpoint descriptor/index/model binding differs.')
+    require(sum(entry['checkpoint'] == manifest['checkpoint'] for entry in index['entries']) == 1,
+            'Scalar A candidate checkpoint is absent from retained evaluation index.')
+    for key in ('task', 'profile'):
+        actual = static['task'] if key == 'task' else static['profile']['definition']
+        expected = policy[key]
+        require(actual['id'] == expected['id'] and type(actual['revision']) is int and actual['revision'] == expected['revision']
+                and actual['sha256'] == expected['definition_sha256'], 'Scalar A task/profile definition differs.', 'unsupported')
+    require(encoded(authored['model_specification']) == encoded(policy['model_specification'])
+            and encoded(authored['preprocessing_policy']) == encoded(policy['preprocessing_policy'])
+            and encoded(authored['output_policy']) == encoded(policy['output_policy'])
+            and encoded(authored['fields']) == encoded([{'id': policy['field_id'], 'contract': policy['field_contract'],
+                'geometry': policy['geometry'], 'gauge_policy': policy['gauge_policy']}]),
+            'Scalar A field/model/preprocessing/geometry/gauge policy differs.', 'unsupported')
+    require(decode(files[task['profile']['name']]) == static['profile'], 'Scalar A retained profile differs.')
+    require(published['task'] == static['task'], 'Scalar A published task differs.')
+    source_map = {item['import_path']: item['blob'] for item in published['source_closure']}
+    require(set(source_map) == {'producer.py', 'evidence_writer.py', 'task.json', 'extension.json', 'NOTICE.txt', 'recipe.json'},
+            'Scalar A requires its five published training sources and owner-captured recipe definition.')
+    require({item['path']: item['sha256'] for item in decode(files['recipe.json'])['sources']}
+            == {name: item['sha256'] for name, item in source_map.items() if name != 'recipe.json'},
+            'Scalar A captured recipe/source/notice inventory differs.')
+    for path, key in (('producer.py', 'producer_sha256'), ('evidence_writer.py', 'evidence_writer_sha256'),
+                      ('task.json', 'task_sha256'), ('extension.json', 'extension_sha256'), ('recipe.json', 'recipe_sha256')):
+        require(source_map[path]['sha256'] == contract['source_authority'][key], 'Scalar A published source authority differs.', 'unsupported')
+    fitted = decode(files[manifest['transforms'][1]['name']])
+    closed(fitted, ('format', 'fit_scope', 'fit_members', 'state'))
+    require(fitted['format'] == 'fitted_transform_v1' and fitted['fit_scope'] == 'train'
+            and fitted['fit_members'] == authored['fit_members'], 'Scalar A training transform lineage differs.')
+    ref(fitted['state'])
+    _scalar_npy(files[descriptor['weights']['name']], (2,))
+    _payload, statistics = _scalar_npy(files[fitted['state']['name']], (2,))
+    require(statistics[1] > 0, 'Scalar A training standard deviation must be positive.')
+    probe = decode(files[task['probe']['name']])
+    require(probe == static['probe'] and probe['format'] == 'probe_v1' and probe['split'] == 'validation'
+            and type(probe['members']) is list and len(probe['members']) == 1, 'Scalar A fixed validation probe differs.', 'unsupported')
+    require(type(descriptor['clocks']['optimizer_update']) is int and descriptor['clocks']['optimizer_update'] in (16, 32, 48, 64)
+            and descriptor['clocks']['epoch'] is None and descriptor['clocks']['physical_time'] is None,
+            'Scalar A checkpoint clock differs.', 'unsupported')
+    groups = decode(files[task['field_index']['name']])
+    require(type(groups) is list and len(groups) == 4, 'Scalar A retained field cadence differs.')
+    checkpoint_ids = {entry['checkpoint']['sha256'] for entry in index['entries']}
+    require({group['checkpoint_sha256'] for group in groups} == checkpoint_ids, 'Scalar A field checkpoint membership differs.')
+    for group in groups:
+        require(group['run_id'] == descriptor['run_id'] and group['probe_sha256'] == task['probe']['sha256']
+                and type(group['cases']) is list and len(group['cases']) == 1, 'Scalar A field evidence membership differs.')
+        row = group['cases'][0]
+        for item in (row['predicted'], row['reference']):
+            ref(item); _scalar_npy(files[item['name']], (4, 4, 4))
+        require(type(row['member_ordinal']) is int and row['member_ordinal'] == 0 and row['mask'] is None
+                and row['geometry_sha256'] == sha(encoded(policy['geometry']))
+                and row['gauge_policy_sha256'] == policy['field_contract']['output']['gauge_policy_sha256'],
+                'Scalar A retained field geometry/gauge differs.')
+    selected = [group for group in groups if group['checkpoint_sha256'] == manifest['checkpoint']['sha256']]
+    require(len(selected) == 1, 'Selected scalar A field group is unavailable.')
+    group = selected[0]
+    require(group['run_id'] == descriptor['run_id'] and group['probe_sha256'] == task['probe']['sha256']
+            and len(group['cases']) == 1, 'Scalar A field context differs.')
+    case = group['cases'][0]; member = probe['members'][0]
+    require(type(case['member_ordinal']) is int and case['member_ordinal'] == member['ordinal'] == 0
+            and case['geometry_sha256'] == sha(encoded(policy['geometry'])) and case['time_units'] == 'not_applicable'
+            and case['gauge_policy_sha256'] == policy['field_contract']['output']['gauge_policy_sha256']
+            and case['mask'] is None, 'Scalar A field member/geometry/gauge differs.')
+    binding = [row for row in authored['field_outputs'] if row['clock'] == descriptor['clocks']['optimizer_update']
+               and row['field_id'] == 'raw' and row['member_id'] == member['frozen_reference']['member_id']]
+    require(len(binding) == 1 and case['predicted']['name'] == binding[0]['prediction']
+            and case['reference']['name'] == binding[0]['reference'], 'Scalar A selected output/clock binding differs.')
+    inputs = decode(files[manifest['probes']['name']]); expected = decode(files[manifest['expected_outputs']['name']])
+    closed(inputs, ('format', 'rows')); closed(expected, ('format', 'run_id', 'checkpoint_sha256', 'probe_sha256', 'rows'))
+    require(inputs['format'] == 'package_scalar_a_probes_v1' and type(inputs['rows']) is list and len(inputs['rows']) == 1
+            and expected['format'] == 'package_scalar_a_expected_v1' and expected['run_id'] == descriptor['run_id']
+            and expected['checkpoint_sha256'] == manifest['checkpoint']['sha256'] and expected['probe_sha256'] == task['probe']['sha256']
+            and type(expected['rows']) is list and len(expected['rows']) == 1, 'Scalar A fixed inference membership differs.')
+    initial = inputs['rows'][0]; target = expected['rows'][0]
+    closed(initial, ('ordinal', 'input')); closed(target, ('ordinal', 'prediction', 'reference'))
+    require(type(initial['ordinal']) is int and type(target['ordinal']) is int and initial['ordinal'] == target['ordinal'] == 0,
+            'Scalar A fixed inference ordinal differs.')
+    for item in (initial['input'], target['prediction'], target['reference']):
+        ref(item)
+    require(target['prediction'] == case['predicted'] and target['reference'] == case['reference'], 'Scalar A expected field bytes differ from retained selected field.')
+    binding = authored['probe_inputs'][0]
+    require(binding['member_id'] == member['frozen_reference']['member_id'] and binding['fields'] == [{'field_id': 'initial', 'artifact': initial['input']['name']}],
+            'Scalar A probe input source differs.')
+    native, _ = _scalar_npy(files[initial['input']['name']], (4, 4, 4))
+    require(sha(encoded([{'field_id': 'initial', 'payload_sha256': sha(native)}])) == member['input_sha256'],
+            'Scalar A raw-file input does not match admitted native field payload.')
+    native, _ = _scalar_npy(files[target['reference']['name']], (4, 4, 4))
+    require(sha(native) == member['target_sha256'], 'Scalar A reference differs from fixed probe target.')
+    _scalar_npy(files[target['prediction']['name']], (4, 4, 4))
+
+
+def _infer_scalar_a(manifest, files, package_sha256, snapshot_sha256):
+    """Execute the exact frozen author adapter after normal admitted runtime checks."""
+    require(manifest['inference_entry']['sha256'] == sha(Path(__file__).read_bytes()), 'Consumer implementation differs.')
+    contract = decode(files['inference-contract.json'])
+    descriptor = decode(files[manifest['checkpoint']['name']]); fitted = decode(files[manifest['transforms'][1]['name']])
+    initial = decode(files[manifest['probes']['name']])['rows'][0]['input']
+    expected = decode(files[manifest['expected_outputs']['name']])['rows'][0]
+    request = {'format': 'scalar_affine_inference_request_v1', 'policy': contract['policy'],
+        'sha256': {'initial': initial['sha256'], 'weights': descriptor['weights']['sha256'], 'transform': fitted['state']['sha256']}}
+    with tempfile.TemporaryDirectory(prefix='tuldok-scalar-a-consumer-') as directory:
+        root = Path(directory)
+        (root / 'infer.py').write_bytes(files['infer.py']); (root / 'NOTICE.txt').write_bytes(files['inference-NOTICE.txt'])
+        spec = importlib.util.spec_from_file_location('captured_scalar_a_inference_v1', root / 'infer.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        try:
+            module.validate_contract(contract)
+            output = module.predict(files[initial['name']], files[descriptor['weights']['name']], files[fitted['state']['name']], request)
+        except ValueError as error:
+            raise PackageError('invalid', 'Captured scalar A adapter refused its selected inputs: ' + str(error)) from None
+    _, values = _scalar_npy(output, (4, 4, 4)); _, targets = _scalar_npy(files[expected['prediction']['name']], (4, 4, 4))
+    tolerance = contract['reconstruction']
+    require(all(abs(x-y) <= tolerance['absolute_tolerance'] + tolerance['relative_tolerance'] * abs(y)
+                for x, y in zip(values, targets, strict=True)), 'Fresh scalar A inference differs from frozen evaluator tolerance.')
+    return {'format': 'fresh_field_inference_verification_v1', 'package_sha256': package_sha256,
+        'candidate': manifest['candidate'], 'checkpoint_sha256': manifest['checkpoint']['sha256'],
+        'weights_sha256': descriptor['weights']['sha256'], 'runtime_snapshot_sha256': snapshot_sha256,
+        'consumer_sha256': manifest['inference_entry']['sha256'], 'adapter_sha256': SCALAR_A_SOURCE_SHA256,
+        'contract_sha256': SCALAR_A_CONTRACT_SHA256, 'expected_outputs_sha256': manifest['expected_outputs']['sha256'],
+        'probes_sha256': manifest['probes']['sha256'], 'verified': True, 'numerical_acceptance': 'not_evaluated',
+        'implementation': 'captured_author_adapter_v1', 'reconstruction': tolerance,
+        'outputs': [{'ordinal': 0, 'field_id': 'raw', **{key: contract['policy']['field_contract']['output'][key]
+            for key in ('dtype', 'shape_zyx', 'stage', 'units', 'gauge_policy_sha256')},
+            'sha256': sha(output), 'values_c_order': list(values),
+            'max_absolute_difference': max(abs(x-y) for x, y in zip(values, targets, strict=True))}]}
 
 
 def inspect_package(raw, expected_sha256, *, distribution='local_private'):
@@ -364,6 +585,8 @@ def infer_package(raw, expected_sha256, snapshot_sha256):
     weights = descriptor['weights']
     task = decode(files[manifest['task']['name']])
     definition = decode(files[manifest['model']['name']])
+    if type(task) is dict and task.get('format') == SCALAR_A_TASK_FORMAT:
+        return _infer_scalar_a(manifest, files, expected_sha256, snapshot_sha256)
     require(descriptor.get('format') == 'checkpoint_state_v1' and definition.get('format') == 'tinycnn_definition_v2'
             and task.get('format') == 'package_classifier_task_v1', 'This consumer supports TinyCNN v2 only.', 'unsupported')
     require(task.get('input') == {'dtype': 'uint8', 'shape': ['height', 'width', 3], 'units': 'rgb_0_255'}
@@ -567,6 +790,86 @@ def classifier_closure(candidate, artifact_bytes, probe_images, sources, runtime
     return manifest, blobs
 
 
+def scalar_a_closure(candidate, artifact_bytes, sources, runtime, published_model, inference_files=None):
+    """Close one explicitly frozen scientific A selection; no training or inference.
+
+    All producer bytes are obtained through current authorized Run/Model owners.
+    Expected values are retained native producer fields, never host calculations.
+    """
+    context = decode(artifact_bytes['execution-context.json']); static = context['static']; policy = static['policy']
+    checkpoint_name = candidate['checkpoint']['name']; descriptor = decode(artifact_bytes[checkpoint_name])
+    require(candidate['run_id'] == descriptor['run_id'] and candidate['checkpoint']['sha256'] == sha(artifact_bytes[checkpoint_name]),
+            'Scalar A immutable candidate selection differs.')
+    index = decode(artifact_bytes['checkpoints.json']); field_index = decode(artifact_bytes['field-index.json'])
+    selected = [group for group in field_index if group['checkpoint_sha256'] == candidate['checkpoint']['sha256']]
+    require(len(selected) == 1 and len(selected[0]['cases']) == 1, 'Scalar A selected native fields are unavailable.', 'unsupported')
+    case = selected[0]['cases'][0]
+    names = {'execution-context.json', 'model-evidence.json', 'model-definition.json', 'profile.json', 'probe.json',
+             'metric-definitions.json', 'checkpoints.json', 'observations.json', 'field-index.json',
+             'fitted-transform.json', 'output-policy.json'}
+    for entry in index['entries']:
+        name = entry['checkpoint']['name']; names.add(name)
+        names.add(decode(artifact_bytes[name])['weights']['name'])
+    for group in field_index:
+        for row in group['cases']:
+            names.update((row['predicted']['name'], row['reference']['name']))
+    for binding in policy['probe_inputs']:
+        names.update(item['artifact'] for item in binding['fields'])
+    fitted = decode(artifact_bytes['fitted-transform.json']); names.add(fitted['state']['name'])
+    require(names <= set(artifact_bytes), 'Scalar A retained byte closure is incomplete.')
+    require(set(sources) == {'producer.py', 'evidence_writer.py', 'task.json', 'extension.json', 'NOTICE.txt', 'recipe.json'},
+            'Scalar A published source/recipe closure differs.')
+    blobs = {name: artifact_bytes[name] for name in names}; blobs.update(sources)
+    blobs['published-model-material.json'] = encoded(published_model['material'])
+    policies = {}
+    for key in ('specification', 'preprocessing_policy', 'output_policy'):
+        blobs['published-' + key + '.json'] = published_model[key]; policies[key] = decode(published_model[key])
+    blobs['package-model-definition.json'] = encoded({'format': 'package_scalar_a_model_v1', **policies})
+    blobs['transform-policy.json'] = published_model['preprocessing_policy']
+    if inference_files is None:
+        root = Path(__file__).parent / 'examples/extensions/field-surrogate/inference-v1'
+        inference_files = {name: (root / name).read_bytes() for name in ('infer.py', 'contract.json', 'NOTICE.txt')}
+    require(set(inference_files) == {'infer.py', 'contract.json', 'NOTICE.txt'}, 'Scalar A frozen adapter closure differs.')
+    blobs['infer.py'] = inference_files['infer.py']; blobs['inference-contract.json'] = inference_files['contract.json']
+    blobs['inference-NOTICE.txt'] = inference_files['NOTICE.txt']
+    blobs['candidate_packages.py'] = Path(__file__).read_bytes(); blobs['recipe_process.py'] = Path(__file__).with_name('recipe_process.py').read_bytes()
+    blobs['candidate-decision.json'] = encoded(candidate['candidate']); blobs['runtime.json'] = encoded(runtime)
+    def reference(name):
+        return blob(name, blobs[name], 'application/octet-stream' if name.endswith('.npy') else
+                    'text/x-python' if name.endswith('.py') else 'text/plain' if name.endswith('.txt') else 'application/json')
+    input_name = policy['probe_inputs'][0]['fields'][0]['artifact']
+    blobs['package-field-probes.json'] = encoded({'format': 'package_scalar_a_probes_v1',
+        'rows': [{'ordinal': 0, 'input': reference(input_name)}]})
+    blobs['package-field-expected.json'] = encoded({'format': 'package_scalar_a_expected_v1', 'run_id': descriptor['run_id'],
+        'checkpoint_sha256': candidate['checkpoint']['sha256'], 'probe_sha256': sha(blobs['probe.json']),
+        'rows': [{'ordinal': 0, 'prediction': case['predicted'], 'reference': case['reference']}]})
+    blobs['package-field-task.json'] = encoded({'format': SCALAR_A_TASK_FORMAT, 'contract': reference('inference-contract.json'),
+        'context': reference('execution-context.json'), 'probe': reference('probe.json'),
+        'field_index': reference('field-index.json'), 'profile': reference('profile.json')})
+    validation_names = {'probe.json', 'field-index.json', 'observations.json', 'model-evidence.json', 'metric-definitions.json', input_name}
+    validation_names.update(row[key]['name'] for group in field_index for row in group['cases'] for key in ('predicted', 'reference'))
+    blobs['lineage.json'] = encoded({'format': 'package_lineage_v1', 'data_policy': 'references_only',
+        'sources': [{'run_id': candidate['run_id'], 'artifact_name': name, 'sha256': sha(artifact_bytes[name]),
+                    'population': 'validation' if name in validation_names else 'train'} for name in sorted(names)]})
+    blobs['rights.json'] = encoded({'format': 'package_rights_v1', 'materials': sorted(blobs),
+        'authority': None, 'terms': None, 'redistribution': 'denied'})
+    refs = {name: reference(name) for name in blobs}
+    principal = {checkpoint_name, 'package-model-definition.json', 'transform-policy.json', 'fitted-transform.json',
+        'package-field-task.json', 'candidate_packages.py', 'runtime.json', 'lineage.json', 'package-field-probes.json',
+        'package-field-expected.json', 'rights.json', *sources, 'infer.py', 'recipe_process.py'}
+    manifest = {'format': FORMAT, 'candidate': candidate['ref'], 'checkpoint': refs[checkpoint_name],
+        'model': refs['package-model-definition.json'], 'sources': [refs[name] for name in sorted({*sources, 'infer.py', 'recipe_process.py'})],
+        'transforms': [refs['transform-policy.json'], refs['fitted-transform.json']], 'task': refs['package-field-task.json'],
+        'inference_entry': refs['candidate_packages.py'], 'runtime': {'contract': refs['runtime.json'], 'provision': 'external'},
+        'evidence': [refs[name] for name in sorted(set(blobs) - principal)], 'lineage': refs['lineage.json'],
+        'probes': refs['package-field-probes.json'], 'expected_outputs': refs['package-field-expected.json'],
+        'licenses': [refs['rights.json']], 'inventory': [refs[name] for name in sorted(refs)],
+        'limitations': ['Private authored scientific A QA only; redistribution is not granted.',
+            'Fixed-probe reconstruction establishes neither independent numerical quality nor physical validity or training resume.']}
+    validate_manifest(manifest, dict(blobs, **{'manifest.json': encoded(manifest)}))
+    return manifest, blobs
+
+
 def authorize_transitive_inputs(runs, run, *, seen=None):
     """Reauthorize retained inputs on every derived read, including summaries.
 
@@ -765,24 +1068,33 @@ def _prepare_operation(experiments, study_id, body, kind):
         snapshot = RuntimeSnapshots(dataset.db, access, dataset.path).get(body['runtime_snapshot_sha256'])
         if kind == 'package':
             run = dataset.runs._load(candidate['run_id'])
-            require(run['graph'].get('recipe') == 'image_classification_model_v2', 'Candidate packaging is qualified only for TinyCNN v2.', 'unsupported')
+            scientific = dataset.runs._extension(run)
+            require(scientific or run['graph'].get('recipe') == 'image_classification_model_v2',
+                    'Candidate package profile is unsupported.', 'unsupported')
+            if scientific:
+                require(dataset.runs.model_evidence(run['id'], {}, contract_version=2)['state'] == 'verified',
+                        'Scientific source requires verified current field evidence.', 'unsupported')
             artifacts = {item['name']: dataset.runs.artifact(run['id'], item['name'])[0] for item in run['artifacts']
                          if item['name'] not in ('test-metrics.json', 'predictions-test.json', 'artifact-manifest.json')}
-            probe = decode(artifacts['probe.json'])
-            release, media = dataset.runs.artifact(run['id'], 'release.zip')
-            require(sha(release) == run['release_sha256'], 'Frozen probe source differs.')
-            # Extract permitted fixed validation assets only. Never export the mixed release.
-            with zipfile.ZipFile(io.BytesIO(release)) as archive:
-                release_manifest = decode(archive.read('manifest.json'))
-                by_id = {row['id']: row for row in release_manifest['records'] if row['split'] == 'validation'}
-                images = {member['frozen_reference']['id']: archive.read(by_id[member['frozen_reference']['id']]['asset'])
-                          for member in probe['members']}
+            if not scientific:
+                probe = decode(artifacts['probe.json'])
+                release, media = dataset.runs.artifact(run['id'], 'release.zip')
+                require(sha(release) == run['release_sha256'], 'Frozen probe source differs.')
+                # Extract permitted fixed validation assets only. Never export the mixed release.
+                with zipfile.ZipFile(io.BytesIO(release)) as archive:
+                    release_manifest = decode(archive.read('manifest.json'))
+                    by_id = {row['id']: row for row in release_manifest['records'] if row['split'] == 'validation'}
+                    images = {member['frozen_reference']['id']: archive.read(by_id[member['frozen_reference']['id']]['asset'])
+                              for member in probe['members']}
             source_trial = experiments.trial(candidate['candidate']['trial_id'])
             source_material = dataset.pipelines.recipe_material(source_trial['material'])['material']
             model = dataset.models.material(source_material['model'], verify=True)
             sources = {item['import_path']: dataset.models.read_blob(model['ref'], item['blob']) for item in model['material']['source_closure']}
             published = {'material': model['material'], **{key: dataset.models.read_blob(model['ref'], model['material'][key]) for key in ('specification', 'preprocessing_policy', 'output_policy')}}
-            manifest, blobs = classifier_closure(candidate, artifacts, images, sources, runtime_contract(snapshot), published)
+            if scientific:
+                manifest, blobs = scalar_a_closure(candidate, artifacts, sources, runtime_contract(snapshot), published)
+            else:
+                manifest, blobs = classifier_closure(candidate, artifacts, images, sources, runtime_contract(snapshot), published)
             prepared = prepare_project(destination, manifest, blobs)
         else:
             package_raw, _media = dataset.runs.artifact(body['package_run_id'], 'package.zip')
