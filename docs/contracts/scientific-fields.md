@@ -1,5 +1,49 @@
 # Scientific field sequence custody (schema 1)
 
+## Model evidence co-test contracts
+
+`field_evidence.py` checks adapter-owned `field_adapter_contract_v1` documents:
+domain owner, exact adapter name/version and source SHA, named inputs/output,
+standalone/sequence time mode, and each field's dtype, ZYX shape, centering,
+stage, units and gauge-policy SHA. A changed field/stage/gauge/shape changes the
+contract digest and requires new pinned material; version changes belong to the
+domain adapter. Generic core never selects numerical methods or aligns stages.
+
+`validate_derivation(receipt, contract, releases, outputs)` verifies a separately
+executed domain preparation Run's `field_input_derivation_v1` receipt against
+actual `scientific_release` canonical ZIP readers. Every selected member/frame
+must be accounted for. Ordered case references retain release/member identity,
+split, family, exact protected groups, source time spelling, geometry SHA,
+field/gauge identity, full NPY/payload hashes and flat output Blob receipts.
+Outputs must preserve exact source NPY bytes; no conversion or silent dropping.
+Fitted statistics name exactly the ordered train case IDs. Cross-release group
+leakage fails. Canonical v1 certifies selected records only, so the receipt must
+retain `family_scope: selected_records_only`; omitted bridges are not inferred.
+NPZ packing or numerical reshaping needs the domain adapter's own independent
+oracle and qualification beyond these generic exact-copy checks.
+
+`validate_pair` checks the D2 standalone float64 cell pair, exact geometry,
+stage/units/gauge and source arrays. It accepts no invented frame/time, mask
+semantics, resampling or re-gauging. `validate_co_test` preserves separate
+inference and physical outcomes (`passed`, `failed`, `unavailable`,
+`unsupported`), bounded reasons and finite metric values. Exact reconstruction
+can coexist with a failed physical result; neither result overwrites the other.
+
+Scientific test evidence remains **unsupported**. `require_population` denies
+test at whole/segment/capture/import/query/summary/cache/export boundaries;
+there is no caller-supplied permission-proof switch. Access/Runs and the domain
+adapter must qualify the complete accessor population before enabling it.
+The generic checks create no route, execution exception or access grant.
+
+`tests/test_field_evidence.py` freezes authored arrays through real Workbench,
+Releases and PostgreSQL and exercises lossless receipts, negative co-test
+results, altered semantics and unavailable test access. This proves generic
+representation/custody contracts only. A real physical producer/consumer and
+independent domain oracle remain separately required; no pressure adapter is
+qualified by these fixtures.
+
+## Stored field sequence owner
+
 `scientific_fields.py` owns a generic, lossless stored-field format and its local
 artifact service. It does not import or execute producer code, authenticate
 scientific claims, infer units, resample arrays, or run a simulation/model.
