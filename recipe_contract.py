@@ -683,7 +683,7 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
         extension_bindings.validate_configuration(inspected['extension_binding'], definition, values)
     if not isinstance(config['inputs'], dict) or set(config['inputs']) != set(definition['inputs']):
         raise WorkbenchError('Bind every declared input exactly once.')
-    if is_evidence(definition) and any(type(binding) is not dict or 'kind' in binding for binding in config['inputs'].values()):
+    if is_evidence(definition) and not canonical and any(type(binding) is not dict or 'kind' in binding for binding in config['inputs'].values()):
         raise WorkbenchError('Authored model evidence supports only explicit project inputs, including unused inputs.','unsupported',409)
     captured = {'source/' + path: raw for path, raw in sources.items()}
     inputs = {}
