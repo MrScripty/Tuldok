@@ -56,17 +56,56 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y python3.12-venv
+          candidate_prefix="$RUNNER_TEMP/tuldok-candidate-python312-base"
           candidate_venv="$RUNNER_TEMP/tuldok-candidate-python312"
+          test ! -e "$candidate_prefix"
           test ! -e "$candidate_venv"
-          /usr/bin/python3.12 -m venv "$candidate_venv"
+          /usr/bin/python3.12 - "$candidate_prefix" <<'PY'
+          import hashlib, json, shutil, stat, sys
+          from pathlib import Path
+          destination = Path(sys.argv[1])
+          destination.mkdir()
+          (destination / 'bin').mkdir()
+          (destination / 'lib').mkdir()
+          receipts = []
+          def checksum(path):
+              with path.open('rb') as stream:
+                  return hashlib.file_digest(stream, 'sha256').hexdigest()
+          def copy_verified(source, target):
+              source, target = Path(source), Path(target)
+              resolved = source.resolve(strict=True)
+              assert (resolved.is_relative_to('/usr/lib') or resolved == Path('/usr/bin/python3.12')
+                      or resolved == Path('/etc/python3.12/sitecustomize.py')), 'Unexpected stdlib source escape'
+              assert stat.S_ISREG(resolved.stat().st_mode), 'Only regular distro files are supported'
+              before = checksum(resolved)
+              shutil.copy2(resolved, target)
+              assert before == checksum(resolved) == checksum(target), 'Distro copy bytes changed'
+              receipts.append(dict(source=str(source), resolved=str(resolved),
+                  target=target.relative_to(destination).as_posix(), bytes=target.stat().st_size, sha256=before))
+              return str(target)
+          def reject_directory_links(directory, entries):
+              assert not any((Path(directory) / name).is_symlink() and (Path(directory) / name).is_dir()
+                             for name in entries), 'Directory symlinks are unsupported'
+              return []
+          copy_verified('/usr/bin/python3.12', destination / 'bin/python3.12')
+          shutil.copytree('/usr/lib/python3.12', destination / 'lib/python3.12',
+                          copy_function=copy_verified, ignore=reject_directory_links)
+          output = Path('build/qa/candidate-python-provisioning')
+          output.mkdir(parents=True)
+          with (output / 'distro-copy.json').open('x') as stream:
+              json.dump(dict(format='candidate_ci_distro_copy_v1', source='/usr', root=str(destination),
+                  normalization='dereference_exact_file_bytes_without_ELF_or_stdlib_edits', files=receipts), stream, sort_keys=True)
+              stream.write('\n')
+          PY
+          "$candidate_prefix/bin/python3.12" -m venv "$candidate_venv"
           candidate_python="$candidate_venv/bin/python3"
-          "$candidate_python" - <<'PY'
-          import os, sys, sysconfig
+          "$candidate_python" - "$candidate_prefix" <<'PY'
+          import hashlib, sys, sysconfig
           from pathlib import Path
           assert sys.version_info[:2] == (3, 12)
-          assert Path(sys.base_prefix).resolve() == Path('/usr')
-          assert Path(sysconfig.get_path('stdlib')).resolve() == Path('/usr/lib/python3.12')
-          assert os.path.samefile(sys.executable, '/usr/bin/python3.12')
+          assert Path(sys.base_prefix).resolve() == Path(sys.argv[1])
+          assert Path(sysconfig.get_path('stdlib')).resolve() == Path(sys.argv[1]) / 'lib/python3.12'
+          assert hashlib.sha256(Path(sys.executable).read_bytes()).digest() == hashlib.sha256(Path('/usr/bin/python3.12').read_bytes()).digest()
           PY
           "$candidate_python" -m pip install -r requirements.txt -r requirements-training.txt
           printf '%s\n' "$candidate_venv/bin" >> "$GITHUB_PATH"
