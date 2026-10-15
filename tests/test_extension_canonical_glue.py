@@ -75,7 +75,7 @@ class CanonicalOwnerGlueTests(unittest.TestCase):
                 original=item['output']['name']
                 selected=('input-initial.npy' if item['field_id']=='initial' else 'reference.npy') if row['split']=='validation' else original
                 item['output']['name']=selected;self.outputs[selected]=result['outputs'][original]
-                if original==selected:self.recipe['outputs'].append({'path':selected,'role':'evidence','required':True,'max_bytes':8192})
+                if original==selected:self.recipe['outputs'].append({'path':selected,'role':'field_source','required':True,'max_bytes':8192})
         self.recipe['outputs'].append({'path':'canonical-derivation.json','role':'field_derivation','required':True,'max_bytes':65536})
         release_sha,release_raw=next(iter(result['releases'].items()))
         self.derivation_raw=evidence.canonical(derivation);self.provenance_raw=evidence.canonical(result['receipt'])
@@ -93,6 +93,18 @@ class CanonicalOwnerGlueTests(unittest.TestCase):
         population=evidence.digest(sorted([item['frozen_reference'] for item in self.policy['probe']['candidates']],key=evidence.canonical))
         for metric in self.policy['metric_definitions']:metric['population_sha256']=population
         self.outputs['canonical-derivation.json']=self.derivation_raw
+        for rule in self.recipe['outputs']:
+            filename=rule['path']
+            if filename in self.outputs and filename.endswith('.npy'):rule['role']='field_source'
+            elif filename.startswith('prediction-'):rule['role']='field_prediction'
+            elif filename.startswith('checkpoint-'):rule['role']='model_checkpoint'
+            elif filename.startswith('weights-') or filename=='transform.npy':rule['role']='model_state'
+        # Inert role-index documents only; no checkpoint, fitted state, producer
+        # execution, or completed Run is fabricated. The native source bytes and
+        # Release/proof above are actual and pass the real scientific validators.
+        self.outputs['checkpoints.json']=evidence.canonical({'entries':[{'checkpoint':{'name':f'checkpoint-{point}.json'}} for point in (16,32,48,64)]})
+        for point in (16,32,48,64):self.outputs[f'checkpoint-{point}.json']=evidence.canonical({'weights':{'name':f'weights-{point}.npy'}})
+        self.outputs['fitted-transform.json']=evidence.canonical({'state':{'name':'transform.npy'}})
         case.manifest['data']=[]
         for name,raw in [('derivation',self.derivation_raw),('provenance',self.provenance_raw)]:
             path=name+'.json';(case.project/path).write_bytes(raw)
