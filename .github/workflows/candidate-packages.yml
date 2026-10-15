@@ -1,0 +1,83 @@
+name: Candidate package captured CPU
+on:
+  pull_request:
+    paths:
+      - 'candidate_packages.py'
+      - 'runtime_snapshots.py'
+      - 'recipe_process.py'
+      - 'model_definitions.py'
+      - 'model_evidence.py'
+      - 'image_training.py'
+      - 'experiments.py'
+      - 'pipeline.py'
+      - 'runs.py'
+      - 'app.py'
+      - 'agent_api.py'
+      - 'access.py'
+      - 'static/workspace*'
+      - 'requirements*.txt'
+      - 'tests/*candidate*'
+      - 'tests/*model_development*'
+      - 'tests/fixtures/model_development/**'
+      - '.github/workflows/candidate-packages.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  captured-cpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tuldok_candidate
+          POSTGRES_PASSWORD: isolated-ci-candidate
+          POSTGRES_DB: tuldok_candidate
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tuldok_candidate -d tuldok_candidate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TULDOK_DATABASE_URL: postgresql://tuldok_candidate:isolated-ci-candidate@127.0.0.1:5432/tuldok_candidate
+      BROWSER: /usr/bin/google-chrome
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Explicitly provision the supported CPU runtime before qualification
+        run: |
+          python -m pip install -r requirements.txt -r requirements-training.txt
+          python -c 'import sys; print("TULDOK_TRAINING_PYTHON=" + sys.executable)' >> "$GITHUB_ENV"
+      - name: Exercise actual classifier preparation and training through the browser
+        run: node tests/browser_model_development.cjs
+      - name: Prepare the explicit captured inference subset and reviewable whole inventory
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, sys
+          receipts = list(Path('build/qa/model-development').glob('*/receipt.json'))
+          assert len(receipts) == 1, 'Expected exactly one preceding actual model browser receipt'
+          subprocess.run([sys.executable, 'tests/prepare_candidate_runtime.py',
+              '--output', 'build/qa/candidate-runtime-preparation',
+              '--model-browser-receipt', str(receipts[0])], check=True)
+          PY
+          cat build/qa/candidate-runtime-preparation/runtime.env >> "$GITHUB_ENV"
+      - name: Capture with the existing owner and verify charged package and fresh inference through the browser
+        run: node tests/browser_candidate_package.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-package-captured-cpu
+          path: build/qa/**
+          if-no-files-found: error
