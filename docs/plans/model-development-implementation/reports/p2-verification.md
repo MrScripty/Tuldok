@@ -155,3 +155,24 @@ P3 implements and qualifies actual classifier template edits, automatic recurren
 checkpoint/probe capture, linked inspection/correction and cold consumer behavior.
 P4 co-tests generic/one-fit fields; P5 package/fresh inference and P6 wider passive
 observation remain pending. Optional scientific producer drafts do not close them.
+
+## Product-lead takeover review, 2026-10-15
+
+Independent GPT-6.1 Sol High review reproduced two cold-read defects on actual
+PostgreSQL before fixing them in `ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02`.
+A deleted optional composed-approval marker could skip Study binding; a substituted
+grant could match material while belonging to another actor or lacking this Run's
+consumption. Runs now derives the requirement from durable Study membership and
+checks the exact catalog, actor, Run, admission and request consumption. Historical
+expiry/revocation does not erase the retained receipt or become fresh authority.
+Existing standalone external Runs retain their legacy interpretation.
+
+Final fix-head verification on disposable PostgreSQL17 (loopback port55432),
+Python3.12.14 and the separately provisioned pinned CPU runtime passed122 cases,
+zero skips: Study34 (232.629s), Model7/admission5/external11/approval9 (132.901s),
+metadata38/migration18 (202.285s). The two new regressions first failed on the
+original implementation and passed after the fix. Frozen API/schema identities
+remain unchanged. These timings are concurrent test runs, not a benchmark.
+Logs are task-local `/tmp/p2-review-{experiments,custody,metadata}-final.log`.
+No other concrete P2 blocker was found. Updated exact-head CI and merge remain
+pending; P3–P6 implementation is progressing on separate branches meanwhile.

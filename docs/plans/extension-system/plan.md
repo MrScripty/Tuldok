@@ -2,9 +2,9 @@
 
 **Plan status:** `Verifying`
 
-**Current phase:** E1 — inert extension inspection (implemented; serial integration/CI pending)
+**Current phase:** E2 — waiting for accepted model and generic field evidence prerequisites
 
-**Next slice:** Complete E1 lead-owned integration/CI; then E2 after accepted P1–P3 and P4 generic evidence.
+**Next slice:** Implement E2 after accepted P2/P3 and P4 generic evidence; P1 and the original E1 browser/HTTP inspection slice are accepted.
 
 **Acceptance status:** `partial`
 
@@ -31,9 +31,9 @@ the same owners and structured evidence, without UI interpretation or logger set
 M0 created and reviewed documentation only. The 2026-10-15 implementation
 delegation explicitly selected E1–E4 and authorized implementation, tests, separate
 branches and draft PRs. The lead thread `01a13f2b-3678-73df-8bce-2f57a04de00b`
-owns shared integration and **all merges**. E1 is implemented in an isolated
-feature branch; [E1 evidence](reports/e1-implementation.md) records actual checks
-and remaining integration gates. Executable E2 still requires accepted P1–P3 and
+owns shared integration and **all merges**. E1 browser/HTTP inspection is merged through PR64 at main91c5e96 after exact-head
+CI and independent review; [E1 evidence](reports/e1-implementation.md) records its
+checks and scope. P1 is merged through PR66 at8673509. Executable E2 still requires accepted P2/P3 and
 P4 generic evidence; E4 needs P5. Exact runtime review/grants remain independent
 of implementation authorization. No product gate is closed from design alone.
 
@@ -104,7 +104,8 @@ after the documentation claims pass:
 - Documentation base is PR62 head `f99182c03da1e070081718ef6829eaeac3c82640`;
   application main is `f58880df84d701ef66ffe21615ae787d80ce8a5e`. PR62's
   [selected design and P1–P6 handoff](../end-to-end-model-development/reports/implementation-handoff.md)
-  are **unimplemented prerequisites**, not runtime qualification. Current contracts
+  originally described unimplemented prerequisites, not runtime qualification.
+  Current accepted P1 and remaining P2–P5 state is recorded in Blockers below. Current contracts
   govern existing behavior; source/consumer facts are in the [baseline](reports/baseline-and-inputs.md).
 - Adopted standards remain `dcc56f26e884ade260770beceba2501d3746200d`.
   The actual template/source were read; [standards application](reports/standards-application.md)
@@ -394,7 +395,13 @@ contracts; compatibility needs executable imports; enablement needs a second
 authority; a schema keyword cannot be enforced consistently in host/SDK; old-binary/store
   use requires an enforced gate rather than the selected operator restriction.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
+
+**Evidence:** Lead merged PR64 as91c5e9647256d0b008ef2fd602914d031b0592fe.
+Its exacte65f0c9 lifecycle/catalog/workspace CI passed; independent Sol High review
+and real historical-reader/HTTP/browser witnesses passed. This accepts the
+original browser/HTTP inspection scope. New negotiated snapshot agent operations
+remain unavailable until explicitly registered and qualified by their owner.
 
 ### E2: Run and inspect one captured CPU extension
 
@@ -657,11 +664,14 @@ packaging; unknown rights deny affected export without inventing a license.
 
 - No blocker to preparing/reviewing this documentation. Live Coding Standards MCP
   is unavailable; adopted source/template review is explicitly disclosed.
-- M0 documentation is merged through PR63 at main `d788e08`. E1 code and real
-  inspection checks are complete locally; lead serial integration/CI remain.
-  [Current E1 report](reports/e1-implementation.md) owns exact evidence.
-- E2–E4 remain blocked on accepted PR62 production seams and actual runtime
-  qualification. E1 fixtures do not satisfy their numerical/product gates.
+- M0 and E1 are merged. P1 PR66 merged as8673509; E1 PR64 merged as91c5e96
+  after exact-head CI and independent review. Its original browser/HTTP inspection
+  scope is accepted; negotiated snapshot agent projections remain unavailable.
+- E2 requires accepted P2/P3 and generic P4 evidence. P2 PR70 at1678a4c is
+  Verifying; P3/P4 remain unavailable. E4 needs P5. Independently reviewed
+  [pressure/runtime preparation](reports/pressure-cnn-preparation.md) and
+  [scalar-A preparation PR69](https://github.com/MrScripty/Tuldok/pull/69) provide
+  real prerequisite evidence, not extension binding or E2–E4 product acceptance.
 - Implementation/draft PR authority is explicit in the current delegation.
   No new runtime execution/install, production migration, deployment or monitor
   is authorized by static discovery. Runtime admission retains normal grants.
@@ -687,8 +697,8 @@ review before implementation continues; missing authority never becomes a fallba
 ## Concurrent Work
 
 Current implementation: the lead owns all merges/shared application integration.
-The extension worker owns its isolated E1 branch and supplies exact shared-file
-patches for serial lead integration. An independent GPT-6.1 Sol High reviewer is
+The extension worker owns isolated SDK/preparation and future E2 branches, and
+supplies exact shared-file patches for serial lead integration. An independent GPT-6.1 Sol High reviewer is
 read-only. No other local worker changes are edited. The following M0 record is
 historical.
 
@@ -702,10 +712,11 @@ schema, fixtures, Pipeline/Run/Access and active plan writes remain serial.
 
 ## Repository Isolation
 
-Current implementation branch: `feat/extension-e1-manifest-catalog`, based on
-PR63 `f3f2d2b`, worktree `/workspace/Tuldok-extension-e1`. Latest verified main
-is `d788e08` (PR62/PR63 merged). Branch/PR and worktree remain retained for lead
-integration and any dependent work; no independent merge/cleanup occurs. The
+E1 branch `feat/extension-e1-manifest-catalog` and its worktree remain retained
+for dependent SDK/preparation stacks after merge to main91c5e96. SDK PR65 is
+composed at536af2d; isolated prerequisite PR68/69 retain their original source
+and numerical receipts. All merges and terminal cleanup remain lead-owned; no
+independent merge or history rewrite occurs. The
 following paragraph records the original M0 local-only authority.
 
 The user selected dedicated local branch `docs/extension-system-plan` based on
@@ -718,13 +729,12 @@ authorized. Later product branch/integration choices belong to their admitted sl
 ## Final Acceptance
 
 - Acceptance status: `partial`
-- Deferred follow-ups: E1 serial integration/CI, E2–E4 implementation/qualification
+- Deferred follow-ups: E2–E4 implementation/qualification and explicit negotiated snapshot agent projections
   under the current delegation after PR62 P1–P5 prerequisites; separately qualified GPU/strong isolation/
   hard quotas/custom UI/transport or public distribution only on concrete need.
 - Final status: `Verifying`
 
 M0 is Accepted after independent review, reproduced checks and verified local
-material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`. E1 now has real
-inspection evidence and awaits lead integration/CI; X1–X5 full product gates
-remain pending. The current authorized E1 implementation is inspection-only
+material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`. E1 browser/HTTP inspection is accepted after lead merge/exact-head CI; X1–X5
+full product gates remain pending. The accepted E1 implementation is inspection-only
 and does not qualify executable extensions or authorize product execution.

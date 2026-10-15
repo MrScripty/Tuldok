@@ -23,8 +23,8 @@ else:
  origin='source-derived HTTP fixture; not native Pumas'
 original=app.make_handler
 
-def make_handler(dataset):
- class Handler(original(dataset)):
+def make_handler(dataset, observer=None):
+ class Handler(original(dataset, observer)):
   def _post(self):
    if self.path=='/api/test/pumas-control':
     body=json.loads(self.rfile.read(int(self.headers['Content-Length'])));configure(body);return self.reply({'configured':True})
