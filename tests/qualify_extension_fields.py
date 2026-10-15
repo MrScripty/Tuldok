@@ -271,7 +271,8 @@ def qualify_retained_negatives(args):
             def unchanged(label):require(counts()==baseline,label+' changed admission/grant/reservation counts')
             current=dataset.pipelines.preflight_external(graph['id'],graph['revision'])
             http('runs.submit_external',{'request_key':'plain-model-evidence-'+uuid.uuid4().hex,
-                'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':current['material_sha256']},expected=409)
+                'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':current['material_sha256'],
+                'approval_id':original['approval_id']},expected=409)
             unchanged('Legacy submission refusal');checks.append({'check':'New variant refuses executable-only legacy submission before implicit grant/Run/reservation','state':'passed'})
             source=args.project.resolve()/'producer.py'
             def source_fault():
