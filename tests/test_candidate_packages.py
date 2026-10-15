@@ -32,18 +32,21 @@ def fixture():
         'metrics.json': packages.encoded({'class_vocabulary': [{'index': 0, 'label': 'a'}, {'index': 1, 'label': 'b'}],
             'class_to_idx': {'a': 0, 'b': 1}}),
         'probe.json': packages.encoded({'format': 'probe_v1', 'split': 'validation', 'members': [
-            {'ordinal': 0, 'frozen_reference': {'id': 'c' * 32}, 'input_sha256': packages.sha(probe_image)}]}),
-        'probes-epoch-0001.json': packages.encoded({'run_id': run_id, 'rows': [{'ordinal': 0, 'probabilities': [.25, .75]}],
+            {'ordinal': 0, 'frozen_reference': {'id': 'c' * 32}, 'input_sha256': packages.sha(probe_image), 'target_sha256': packages.sha(packages.encoded(0))}]}),
+        'probes-epoch-0001.json': packages.encoded({'run_id': run_id, 'rows': [{'ordinal': 0, 'truth_index': 0, 'predicted_index': 1, 'probabilities': [.25, .75]}],
             'checkpoint_sha256': packages.sha(packages.encoded(checkpoint)), 'probe_sha256': 'd' * 64})}
     source = b'# inert authored source fixture\n'
     model_definition = packages.decode(artifacts['model-definition.json'])
-    published = {'material': {'format': 'model_material_v1',
+    published = {'material': {'format': 'model_material_v1', 'catalog_id': 'e' * 32,
         'source_closure': [{'import_path': 'image_training.py', 'blob': packages.blob('source-0000.bin', source)}]},
         **{key: packages.encoded(model_definition[key]) for key in ('specification', 'preprocessing_policy', 'output_policy')}}
     for key in ('specification', 'preprocessing_policy', 'output_policy'):
         published['material'][key] = packages.blob(key + '.json', published[key])
     checkpoint['model_sha256'] = packages.sha(packages.encoded(published['material']))
     artifacts['checkpoint-epoch-0001.json'] = packages.encoded(checkpoint)
+    expected = packages.decode(artifacts['probes-epoch-0001.json'])
+    expected.update(checkpoint_sha256=packages.sha(artifacts['checkpoint-epoch-0001.json']), probe_sha256=packages.sha(artifacts['probe.json']))
+    artifacts['probes-epoch-0001.json'] = packages.encoded(expected)
     decision = {'format': 'candidate_v1', 'id': 'f' * 32, 'study_id': '2' * 32, 'trial_id': '3' * 32,
         'run_id': run_id, 'checkpoint_sha256': packages.sha(artifacts['checkpoint-epoch-0001.json']),
         'evaluation_sha256': packages.sha(artifacts['metrics.json']), 'policy': {}, 'decision': 'diagnostic',
@@ -136,6 +139,26 @@ class PackageTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaises(packages.PackageError):
                 packages.create_package(manifest, blobs)
 
+    def test_candidate_catalog_and_fixed_truth_are_strict_and_bound_to_probe(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest['candidate']['catalog_id'] = False
+        with self.assertRaises(packages.PackageError):
+            packages.create_package(manifest, self.blobs)
+        for truth in (True, 7, 1):
+            for rehash_lineage in (False, True):
+                manifest = copy.deepcopy(self.manifest); blobs = dict(self.blobs)
+                name = manifest['expected_outputs']['name']
+                expected = packages.decode(blobs[name]); expected['rows'][0]['truth_index'] = truth
+                self.replace_blob(manifest, blobs, name, packages.encoded(expected))
+                if rehash_lineage:
+                    lineage = packages.decode(blobs['lineage.json'])
+                    for source in lineage['sources']:
+                        if source['artifact_name'] == name:
+                            source['sha256'] = packages.sha(blobs[name])
+                    self.replace_blob(manifest, blobs, 'lineage.json', packages.encoded(lineage))
+                with self.subTest(truth=truth, rehash_lineage=rehash_lineage), self.assertRaises(packages.PackageError):
+                    packages.create_package(manifest, blobs)
+
     def test_unknown_rights_permit_private_inspection_but_deny_redistribution(self):
         raw = packages.create_package(self.manifest, self.blobs)
         packages.inspect_package(raw, packages.sha(raw))
@@ -213,6 +236,25 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(definition['runtime_snapshot_sha256'], 'c' * 64)
             self.assertEqual(definition['outputs'][0]['role'], 'inference_verification')
 
+    def test_package_state_aggregate_bound_precedes_the_101st_artifact_read(self):
+        from unittest.mock import Mock, patch
+        candidate = {'ref': self.manifest['candidate']}
+        receipts = [{'operation_id': 'studies.prepare_package', 'document': json.dumps({
+            'candidate_id': candidate['ref']['id'], 'trial': {'id': str(i)}})} for i in range(2)]
+        reservations = [{'run_id': 'a' * 32} for _ in range(51)]
+        db = SimpleNamespace(execute=Mock(side_effect=[SimpleNamespace(fetchall=lambda: receipts),
+            SimpleNamespace(fetchall=lambda: reservations), SimpleNamespace(fetchall=lambda: reservations)]))
+        item = packages.blob('package.zip', b'authored state boundary')
+        runs = SimpleNamespace(get=Mock(return_value={'id': 'a' * 32, 'state': 'completed', 'artifacts': [item]}),
+            artifact=Mock(return_value=(b'authored state boundary', 'application/zip')))
+        studies = SimpleNamespace(access=SimpleNamespace(require=Mock()), candidate=Mock(return_value=candidate),
+            db=db, dataset=SimpleNamespace(runs=runs))
+        with patch.object(packages, 'inspect_package', return_value=(self.manifest, self.blobs)):
+            with self.assertRaises(packages.PackageError) as error:
+                packages.candidate_package_state(studies, candidate['ref']['id'])
+        self.assertEqual(error.exception.code, 'unsupported')
+        self.assertEqual(runs.artifact.call_count, 100)
+
 
 class TransitiveAccessTests(unittest.TestCase):
     def test_nested_derivative_checks_current_access_and_test_exposure(self):
@@ -286,6 +328,22 @@ class PreparedReceiptAtomicityTests(unittest.TestCase):
         finally:
             case.doCleanups()
 
+    def test_helper_rejects_caller_transaction_before_capture_or_directory_creation(self):
+        from unittest.mock import patch
+        import test_model_definitions as fixtures
+        from experiments import Experiments
+        case = fixtures.CapturedModelCase(methodName='runTest'); case.setUp()
+        try:
+            dataset = case.dataset; studies = Experiments(dataset)
+            with case.owner.bound(dataset), dataset.db.transaction(force_rollback=True):
+                with patch('runtime_snapshots.RuntimeSnapshots.get', side_effect=AssertionError('No capture permitted')):
+                    with self.assertRaises(packages.PackageError) as error:
+                        packages.prepare_candidate_package(studies, 'a' * 32, {})
+                self.assertEqual(error.exception.code, 'unsupported')
+                self.assertEqual(dataset.db.execute('SELECT count(*) FROM model_trials').fetchone()[0], 0)
+        finally:
+            case.doCleanups()
+
 
 @unittest.skipUnless(os.environ.get('TULDOK_PACKAGE_QUALIFICATION_CATALOG') and
                      os.environ.get('TULDOK_PACKAGE_SNAPSHOT_DESCRIPTOR') and
@@ -304,6 +362,49 @@ class ActualCandidatePackageTests(unittest.TestCase):
         self.assertEqual(report['state']['state'], 'fresh_verified')
         self.assertTrue(report['capture_phases'])
         self.assertTrue(all(item['in_transaction'] is False for item in report['capture_phases']))
+
+
+    def test_postcommit_response_failure_preserves_project_trial_and_exact_replay(self):
+        from unittest.mock import patch
+        from app import Dataset
+        from auth_helpers import ExplicitOwnerFixture
+        report = packages.decode((Path(os.environ['TULDOK_PACKAGE_QUALIFICATION_OUTPUT']) / 'receipt.json').read_bytes())
+        root = Path(os.environ['TULDOK_PACKAGE_QUALIFICATION_OUTPUT']).with_name(Path(os.environ['TULDOK_PACKAGE_QUALIFICATION_OUTPUT']).name + '-postcommit')
+        root.mkdir(mode=0o700)
+        dataset = Dataset(Path(os.environ['TULDOK_PACKAGE_QUALIFICATION_CATALOG']), project_roots={'regression': root})
+        try:
+            owner = ExplicitOwnerFixture.bootstrap(dataset)
+            with owner.bound(dataset):
+                study = dataset.studies.get(report['study_id'])['study']
+                body = {'request_key': root.name + '-package', 'revision': study['revision'],
+                    'candidate_id': report['candidate_id'], 'root': 'regression', 'directory': 'package',
+                    'runtime_snapshot_sha256': report['runtime_snapshot']['manifest_sha256']}
+                with dataset.db.transaction(force_rollback=True):
+                    with self.assertRaises(packages.PackageError) as nested:
+                        packages.prepare_candidate_package(dataset.studies, study['id'], body)
+                    self.assertEqual(nested.exception.code, 'unsupported')
+                    self.assertFalse((root / 'package').exists())
+                prepare = dataset.studies.prepare_trial
+                def fail_after_acknowledged_commit(*args, **kwargs):
+                    trial = prepare(*args, **kwargs)
+                    self.assertFalse(dataset.db.in_transaction)
+                    self.assertEqual(dataset.studies.trial(trial['id']), trial)
+                    raise RuntimeError('Lost response after acknowledged publication')
+                with patch.object(dataset.studies, 'prepare_trial', side_effect=fail_after_acknowledged_commit):
+                    with self.assertRaisesRegex(RuntimeError, 'acknowledged publication'):
+                        packages.prepare_candidate_package(dataset.studies, study['id'], body)
+                self.assertTrue((root / 'package' / 'project.json').is_file())
+                replay = packages.prepare_candidate_package(dataset.studies, study['id'], body)
+                self.assertEqual(replay['state'], 'prepared')
+                self.assertEqual(dataset.studies.trial(replay['trial']['id']), replay['trial'])
+                checked = dataset.pipelines.preflight_recipe_material(replay['trial']['material'])
+                self.assertEqual(checked['graph']['id'], replay['graph']['id'])
+                self.assertEqual(dataset.studies.get(study['id'])['charged']['attempt_slots'], 3)
+                (root / 'evidence.json').write_bytes(packages.encoded({'project_preserved': True,
+                    'trial_preserved': True, 'exact_receipt_replay': True, 'material_reopens': True,
+                    'nested_transaction_rejected_before_project_creation': True, 'replay': replay}))
+        finally:
+            dataset.close()
 
 
 if __name__ == '__main__':

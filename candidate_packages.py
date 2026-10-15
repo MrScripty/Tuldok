@@ -144,7 +144,8 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     closed(candidate, ('kind', 'catalog_id', 'id', 'sha256'))
     require(type(candidate) is dict and candidate.get('kind') == 'candidate'
             and type(candidate.get('sha256')) is str and HASH.fullmatch(candidate['sha256']) is not None
-            and type(candidate.get('id')) is str and re.fullmatch('[a-f0-9]{32}', candidate['id']) is not None,
+            and type(candidate.get('id')) is str and re.fullmatch('[a-f0-9]{32}', candidate['id']) is not None
+            and type(candidate.get('catalog_id')) is str and re.fullmatch('[a-f0-9]{32}', candidate['catalog_id']) is not None,
             'Package requires an exact immutable candidate reference.')
     inventory = manifest['inventory']
     require(type(inventory) is list and 1 <= len(inventory) < MAX_FILES, 'Package inventory exceeds bound.')
@@ -237,7 +238,8 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
             'Selected candidate Run/checkpoint/evaluation differs from package closure.')
     require('published-model-material.json' in indexed, 'Published model material bytes are required.')
     published = decode(files['published-model-material.json'])
-    require(type(published) is dict, 'Published model material must be an object.')
+    require(type(published) is dict and published.get('catalog_id') == candidate['catalog_id']
+            and snapshot['catalog_id'] == candidate['catalog_id'], 'Published model/runtime catalog differs from candidate.')
     require(published.get('format') == 'model_material_v1' and sha(encoded(published)) == descriptor.get('model_sha256'),
             'Published model identity differs from checkpoint.')
     source_by_path = {item['name']: item for item in manifest['sources']}
@@ -255,6 +257,10 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
                 and decode(files[name]) == model_definition[key], 'Published model policy/shape differs from inference definition.')
     require(len(manifest['transforms']) == 2 and decode(files[manifest['transforms'][0]['name']]) == model_definition['preprocessing_policy']
             and manifest['transforms'][1]['sha256'] == descriptor['fitted_transform_sha256'], 'Declared transforms differ from published/checkpoint policies.')
+    for source in lineage['sources']:
+        if source['artifact_name'] in indexed:
+            require(source['sha256'] == indexed[source['artifact_name']]['sha256']
+                    and source['run_id'] == descriptor['run_id'], 'Included source artifact differs from retained lineage.')
     task = decode(files[manifest['task']['name']]); metrics = decode(files['metrics.json'])
     require(task.get('class_vocabulary') == metrics.get('class_vocabulary') and task.get('class_to_idx') == metrics.get('class_to_idx'), 'Declared class order differs from selected evaluation.')
     # Auxiliary probe images must be named explicitly by the probe document.
@@ -268,6 +274,31 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
             closed(row, ('id', 'image'))
             require(type(row['id']) is str and row['id'] not in ids, 'Duplicate or invalid probe identity.')
             ids.add(row['id']); ref(row['image'])
+    if manifest['expected_outputs'] is not None:
+        expected = decode(files[manifest['expected_outputs']['name']])
+        closed(expected, ('run_id', 'checkpoint_sha256', 'probe_sha256', 'rows'))
+        require('probe.json' in indexed, 'Fixed probe contract is missing.')
+        probe = decode(files['probe.json'])
+        require(type(probe) is dict and probe.get('format') == 'probe_v1' and probe.get('split') == 'validation'
+                and expected['run_id'] == descriptor['run_id'] and expected['checkpoint_sha256'] == manifest['checkpoint']['sha256']
+                and expected['probe_sha256'] == indexed['probe.json']['sha256'], 'Expected fixed probe/checkpoint binding differs.')
+        members = probe.get('members'); rows = expected['rows']; count = len(task['class_vocabulary'])
+        require(type(members) is list and type(rows) is list and len(members) == len(rows) == len(probes['rows']) <= 128,
+                'Fixed probe output membership differs.')
+        for ordinal, (member, row, image) in enumerate(zip(members, rows, probes['rows'], strict=True)):
+            closed(row, ('ordinal', 'truth_index', 'predicted_index', 'probabilities'))
+            require(type(member) is dict and type(member.get('ordinal')) is int and member['ordinal'] == ordinal
+                    and type(row['ordinal']) is int and row['ordinal'] == ordinal
+                    and type(row['truth_index']) is int and 0 <= row['truth_index'] < count
+                    and type(row['predicted_index']) is int and 0 <= row['predicted_index'] < count
+                    and member.get('target_sha256') == sha(encoded(row['truth_index']))
+                    and type(member.get('frozen_reference')) is dict and member['frozen_reference'].get('id') == image['id']
+                    and member.get('input_sha256') == image['image']['sha256'], 'Fixed probe input/target/index binding differs.')
+            scores = row['probabilities']
+            require(type(scores) is list and len(scores) == count
+                    and all(type(value) in (int, float) and 0 <= value <= 1 and math.isfinite(value) for value in scores)
+                    and abs(sum(scores) - 1) <= 1e-4 and scores.index(max(scores)) == row['predicted_index'],
+                    'Invalid fixed probe probabilities/predicted class.')
     require(referenced | exempt == set(indexed), 'Unreferenced package content is not permitted.')
     return manifest
 
@@ -696,6 +727,7 @@ def _prepare_operation(experiments, study_id, body, kind):
     from pipeline import digest
     from runtime_snapshots import RuntimeSnapshots
     from workbench import WorkbenchError
+    require(not experiments.db.in_transaction, 'Candidate preparation cannot run inside a caller metadata transaction.', 'unsupported')
     operation = 'studies.prepare_package' if kind == 'package' else 'studies.prepare_verifier'
     fields = {'request_key', 'revision', 'candidate_id', 'root', 'directory', 'runtime_snapshot_sha256'}
     if kind == 'verify':
@@ -753,6 +785,8 @@ def _prepare_operation(experiments, study_id, body, kind):
                     'Verifier runtime differs from package.', 'unsupported')
             prepared = prepare_verifier_project(destination, {'kind': 'run_artifact', 'run_id': body['package_run_id'],
                 'artifact_name': 'package.zip', 'expected_sha256': body['package_sha256']}, snapshot['manifest_sha256'])
+        publication_owned = False
+        published_result = None
         try:
             _prefix_project_references(destination, body['directory'], prepared)
             os.fsync(root_fd)
@@ -776,20 +810,27 @@ def _prepare_operation(experiments, study_id, body, kind):
                 'preprocessing_policy': {'kind': 'exact_captured_bytes'}, 'output_policy': {'kind': 'inference_package' if kind == 'package' else 'inference_verification'}})
             operation_material = dataset.models.publish(operation_model['id'], {'revision': operation_model['revision']})
             def publish(trial):
+                nonlocal publication_owned, published_result
+                publication_owned = True
+                experiments.db.on_rollback(lambda: shutil.rmtree(destination, ignore_errors=True))
                 access.require('edit', operation, study_id, owner_only=True)
                 prior = experiments._receipt(context.actor_id, operation, body['request_key'], identity)
                 if prior:
                     require(prior['trial'] == trial, 'Preparation receipt is bound to another trial.')
+                    published_result = prior
                     return
-                experiments.db.on_rollback(lambda: shutil.rmtree(destination, ignore_errors=True))
                 result = {'state': 'prepared', 'candidate_id': body['candidate_id'], 'trial': trial,
                           'graph': graph, 'model': operation_material['ref'], 'runtime_snapshot_sha256': snapshot['manifest_sha256']}
                 if kind == 'verify':
                     result.update(package_run_id=body['package_run_id'], package_sha256=body['package_sha256'])
                 experiments._save_receipt(context.actor_id, operation, body['request_key'], identity, result)
                 access.audit(operation, body['candidate_id'], {'study_id': study_id, 'trial_id': trial['id'], 'material_sha256': trial['material']['sha256']})
+                published_result = result
             experiments.prepare_trial(study_id, {'request_key': kind + '-' + identity, 'revision': body['revision'],
                 'graph_id': graph['id'], 'graph_revision': graph['revision'], 'model': operation_material['ref'], 'replicate': 0}, _publish=publish)
+            publication_owned = True
+            if published_result is not None:
+                return published_result
             with experiments.lock:
                 result = experiments._receipt(context.actor_id, operation, body['request_key'], identity)
             require(result is not None, 'Prepared trial lacks its atomic operation receipt.', 'unavailable')
@@ -797,7 +838,8 @@ def _prepare_operation(experiments, study_id, body, kind):
         except CommitOutcomeUnknown:
             raise
         except BaseException:
-            shutil.rmtree(destination, ignore_errors=True)
+            if not publication_owned:
+                shutil.rmtree(destination, ignore_errors=True)
             raise
 
     finally:
@@ -832,6 +874,8 @@ def candidate_package_state(experiments, candidate_id):
             run = experiments.dataset.runs.get(reservation['run_id'])
             if run['state'] != 'completed':
                 continue
+            collection = 'packages' if row['operation_id'] == 'studies.prepare_package' else 'verifications'
+            require(len(result[collection]) < 100, 'Candidate package state result limit exceeded.', 'unsupported')
             if row['operation_id'] == 'studies.prepare_package':
                 raw, _ = experiments.dataset.runs.artifact(run['id'], 'package.zip')
                 item = next(item for item in run['artifacts'] if item['name'] == 'package.zip')
