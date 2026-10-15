@@ -425,6 +425,12 @@ def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
             and encoded(authored['fields']) == encoded([{'id': policy['field_id'], 'contract': policy['field_contract'],
                 'geometry': policy['geometry'], 'gauge_policy': policy['gauge_policy']}]),
             'Scalar A field/model/preprocessing/geometry/gauge policy differs.', 'unsupported')
+    for name, policy_name in (('specification', 'model_specification'), ('preprocessing_policy', 'preprocessing_policy'), ('output_policy', 'output_policy')):
+        require(encoded(decode(files['published-' + name + '.json'])) == encoded(authored[policy_name]),
+                'Scalar A published policy differs from the captured author policy.', 'unsupported')
+    require(encoded(decode(files['model-definition.json'])) == encoded(authored['model_specification'])
+            and encoded(decode(files['output-policy.json'])) == encoded(authored['output_policy']),
+            'Scalar A retained model/output artifact differs from the author policy.')
     require(decode(files[task['profile']['name']]) == static['profile'], 'Scalar A retained profile differs.')
     require(published['task'] == static['task'], 'Scalar A published task differs.')
     source_map = {item['import_path']: item['blob'] for item in published['source_closure']}
