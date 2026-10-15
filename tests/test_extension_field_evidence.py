@@ -346,7 +346,6 @@ class ContextCaptureTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
-class RuntimeNominationTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'),'Requires disposable PostgreSQL')
 class RetainedExtensionRecordTests(unittest.TestCase):
     def test_actual_preflight_rejects_unused_run_input_before_capture_or_runtime(self):

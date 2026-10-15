@@ -65,3 +65,36 @@ examples/e2-a-retained-negatives.json. These tests do not substitute for the
 main-owned selected field2/UI or canonical Release gates. New focused suite23
 passed with actual PostgreSQL and no skips, including all-input receipt rejection
 before capture/runtime and classifier-v2 validation selector normalization.
+
+## Selected public inspection and native browser
+
+The same real completed Run `29682a74c2c744548bba1e95e9cf212c` subsequently passed
+selected HTTP contract 2 and production read-only agent CLI parity at source
+`3c34b865f6c55b88c5b8a87920781ef27a1d598f`. The driver SHA was
+`c55d67af235dc866684bddf234cd3c325a462ddcb9045682919389c718219d96`.
+The index and all twelve four-checkpoint/three-axis requests returned identical
+owner HTTP and agent CLI documents. Each plane used final index 3. Contract 1
+remained unsupported for this new evidence variant; selected test, wrong
+checkpoint, and conflicting route/body Run identity refused. Run count stayed
+one. The byte-exact receipt is `examples/e2-a-public-parity.json` (SHA256
+`dfebf53821fa6c1e0a25f8e36a3650547e31c31ff3c69b4f0956b5f780efa97e`).
+The earlier public-1 attempt had already passed its positive requests but failed
+a driver assertion expecting HTTP 400 for the correct canonical 409 identity
+refusal. It produced no final passing receipt and admitted no Run.
+
+Actual Chromium qualification at source `b377a89d2619eaf94f657ffdc1b89d298526f314`
+also passed on that retained Run. Its source hashes and exact requests are in
+`examples/e2-a-native-browser.json` (SHA256
+`72fa27748160116a82d82924d115a3ee880e8b782fe5f943330e29847200c7ac`).
+Local screenshots remain under `build/qa/external-field-evidence/run-RClysj`.
+Assertions cover checkpoint/member/stage controls, all orthogonal axes, exact
+numeric probes, physical/gauge metadata, shared reference/prediction scale,
+1440/390 layouts, dark mode, keyboard focus and overflow. At 390 pixels, the
+lower field canvases are outside the captured viewport; these images do not
+establish visual inspection of every slice index or pixel. The simulated 403
+case tests UI transport handling; separate retained backend fault tests establish
+the authority refusals. No new Run was admitted by these read-only checks.
+
+These results concern the original authored source mode. Canonical Release,
+full catalog contribution binding, independent B and scientific package/fresh
+consumer acceptance remain distinct later gates. No physical validity is claimed.
