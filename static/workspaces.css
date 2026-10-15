@@ -1107,3 +1107,20 @@ details > p {
   body #session-dialog { background:var(--surface); color:var(--ink); border-color:var(--line); }
   :focus-visible,.model-workspace :focus-visible,.model-evidence :focus-visible { outline:3px solid #9ec6ff; outline-offset:3px; }
 }
+
+/* Standalone retained field pairs share the returned geometry and one display range. */
+.field-evidence { min-width:0; margin-top:20px; }
+.field-evidence .model-fields { margin:12px 0; }
+.field-evidence .field-status { min-height:1.4em; }
+.field-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.field-pair figure { min-width:0; margin:0; }
+.field-pair figcaption { margin-bottom:8px; font-weight:650; overflow-wrap:anywhere; }
+.field-slice-viewport { display:grid; place-items:center; width:100%; height:clamp(180px,24vw,360px); min-width:0; overflow:hidden; border:1px solid var(--line); background:var(--soft); }
+.field-pair canvas { display:block; max-width:100%; max-height:100%; image-rendering:pixelated; }
+.field-pair canvas[hidden] { display:none; }
+.field-display-warning { color:var(--muted); }
+.field-coordinates,.field-hash { overflow-wrap:anywhere; }
+.field-probe-controls { max-width:420px; }
+.field-evidence th,.field-evidence td { white-space:nowrap; }
+.field-evidence :focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+@media(max-width:650px) { .field-pair { grid-template-columns:minmax(0,1fr); } }
