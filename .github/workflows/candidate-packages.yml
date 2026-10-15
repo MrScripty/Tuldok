@@ -27,7 +27,7 @@ permissions:
   contents: read
 jobs:
   captured-cpu:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
       postgres:
@@ -49,21 +49,35 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Explicitly provision the supported CPU runtime before qualification
         run: |
-          python -m pip install -r requirements.txt -r requirements-training.txt
-          python -c 'import sys; print("TULDOK_TRAINING_PYTHON=" + sys.executable)' >> "$GITHUB_ENV"
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y python3.12-venv
+          candidate_venv="$RUNNER_TEMP/tuldok-candidate-python312"
+          test ! -e "$candidate_venv"
+          /usr/bin/python3.12 -m venv "$candidate_venv"
+          candidate_python="$candidate_venv/bin/python3"
+          "$candidate_python" - <<'PY'
+          import os, sys, sysconfig
+          from pathlib import Path
+          assert sys.version_info[:2] == (3, 12)
+          assert Path(sys.base_prefix).resolve() == Path('/usr')
+          assert Path(sysconfig.get_path('stdlib')).resolve() == Path('/usr/lib/python3.12')
+          assert os.path.samefile(sys.executable, '/usr/bin/python3.12')
+          PY
+          "$candidate_python" -m pip install -r requirements.txt -r requirements-training.txt
+          printf '%s\n' "$candidate_venv/bin" >> "$GITHUB_PATH"
+          printf 'TULDOK_TRAINING_PYTHON=%s\n' "$candidate_python" >> "$GITHUB_ENV"
       - name: Exercise actual classifier preparation and training through the browser
-        run: node tests/browser_model_development.cjs
+        run: |
+          test "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"
+          node tests/browser_model_development.cjs
       - name: Prepare the explicit captured inference subset and reviewable whole inventory
         run: |
-          python - <<'PY'
+          "$TULDOK_TRAINING_PYTHON" - <<'PY'
           from pathlib import Path
           import subprocess, sys
           receipts = list(Path('build/qa/model-development').glob('*/receipt.json'))
@@ -74,7 +88,9 @@ jobs:
           PY
           cat build/qa/candidate-runtime-preparation/runtime.env >> "$GITHUB_ENV"
       - name: Capture with the existing owner and verify charged package and fresh inference through the browser
-        run: node tests/browser_candidate_package.cjs
+        run: |
+          test "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"
+          node tests/browser_candidate_package.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
