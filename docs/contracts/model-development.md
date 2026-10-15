@@ -231,6 +231,9 @@ The checkpoint descriptor includes its exact weights Blob. Its immutable candida
 bytes bind the selected Run, checkpoint and evaluation; the retained published
 ModelMaterial binds every source import and each specification/preprocessing/output
 policy. An inventory entry alone cannot replace those cross-file identities.
+Candidate, runtime and published model catalog identities must agree. Expected
+probe truth indexes are exact integers in the frozen class range and hash to the
+retained fixed probe targets; copied source artifacts retain their lineage hashes.
 
 The classifier package includes only explicitly selected validation PNG probes,
 expected probabilities, fixed probe membership, fitted transform, model and task
@@ -249,6 +252,10 @@ and `studies.admit` provide exact material approval, conservative budget chargin
 Run custody, reconciliation and cancellation. No second runner or implicit retry
 is added. Package source Run inputs remain explicit captured bindings so every
 current derived accessor can reauthorize their transitive populations.
+These helpers reject an existing caller metadata transaction before capture or
+directory creation. Trial publication and the helper receipt share the final short
+transaction. Rollback owns cleanup after publication begins; a failure returning
+an already committed result preserves the retained project for exact replay.
 
 The verifier requires an existing approved `captured_cpu_python_v1` snapshot.
 Its runtime contract uses the RuntimeSnapshots owner, including exact Python,
