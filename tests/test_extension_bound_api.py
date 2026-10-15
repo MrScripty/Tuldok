@@ -19,7 +19,11 @@ class BoundRecipeContractTests(unittest.TestCase):
         return {'definition':{},'receipt':{'project_id':'b'*32,'manifest_sha256':sha,
             'reference_id':'recipe','path':'recipe.json','measured_sha256':sha},
             'parameter_definitions':{},'inputs':{},'outputs':[{}],
-            'runtime':'captured_cpu_python_v1','extension_binding':binding}
+            'runtime':'captured_cpu_python_v1','extension_binding':binding,
+            'model_task':{'kind':'task','catalog_id':'b'*32,'id':'example.a:task','revision':1,'sha256':sha},
+            'selection_policy':{'format':'selection_policy_v1','metric_definition_sha256':sha,
+                'checkpoint_rule':'last','replicate_reduce':'individual','required_capabilities':[],
+                'numerical_acceptance':'diagnostic','tie_break':'trial_id'}}
 
     def test_frozen_legacy_identity_and_explicit_intersection(self):
         self.assertEqual(api.contract('recipes.inspect',1)['sha256'],
@@ -36,7 +40,8 @@ class BoundRecipeContractTests(unittest.TestCase):
     def test_binding_projection_is_closed_and_bounded(self):
         positive=self.inspection()
         api.validate_output('recipes.inspect',{'status':200,'result':positive},2)
-        legacy=copy.deepcopy(positive);legacy.pop('extension_binding')
+        legacy=copy.deepcopy(positive)
+        for key in ('extension_binding','model_task','selection_policy'):legacy.pop(key)
         api.validate_output('recipes.inspect',{'status':200,'result':legacy},2)
         mutations=[lambda value:value.update(blobs={'source.py':'private bytes'}),
             lambda value:value['project'].update(root='/unselected/path'),

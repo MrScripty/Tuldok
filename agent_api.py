@@ -582,9 +582,10 @@ _inspection_fields={'definition':{'type':'object','maxProperties':32},
     'receipt':obj({'project_id':ID,'manifest_sha256':SHA,'reference_id':REF,'path':text(512),'measured_sha256':SHA}),
     'parameter_definitions':{'type':'object','maxProperties':32},
     'inputs':{'type':'object','maxProperties':32},'outputs':array({'type':'object','maxProperties':8},96,1),
-    'runtime':{'enum':['system_python','captured_cpu_python_v1']},'extension_binding':_extension_binding}
-_bound_inspection['outputSchema']['oneOf'][0]['properties']['result']=obj(
-    _inspection_fields,[key for key in _inspection_fields if key!='extension_binding'])
+    'runtime':{'enum':['system_python','captured_cpu_python_v1']}}
+_bound_inspection['outputSchema']['oneOf'][0]['properties']['result']={'oneOf':[
+    obj(_inspection_fields),obj(dict(_inspection_fields,extension_binding=_extension_binding,
+                                   model_task=TASK_REF,selection_policy=SELECTION_POLICY))]}
 _bound_inspection['description']='Inspect exact selected recipe and inert project extension contribution binding; no imports, runtime probing or admission.'
 _CONTRACTS['recipes.inspect'][2]=_bound_inspection
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
