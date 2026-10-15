@@ -25,6 +25,19 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class ModelParameterTests(unittest.TestCase):
+    @unittest.skipUnless(os.environ.get('TULDOK_TRAINING_PYTHON'),'Qualified CPU runtime required for stable numerical oracle.')
+    def test_saturated_logits_match_actual_torch_cross_entropy_without_clamping(self):
+        # This checks the numerical formula; it never creates a fitted Run.
+        code="import json,torch; x=torch.tensor([[0.,-1000.]],dtype=torch.float32); print(json.dumps({'loss':float(torch.nn.functional.cross_entropy(x,torch.tensor([1]))),'probabilities':x.softmax(1)[0].tolist()}))"
+        result=subprocess.run([os.environ['TULDOK_TRAINING_PYTHON'],'-c',code],capture_output=True,timeout=30,check=True)
+        actual=json.loads(result.stdout)
+        self.assertEqual(actual['probabilities'],[1.,0.])
+        loss,probabilities=model_evidence.stable_cross_entropy([0.,-1000.],1)
+        self.assertEqual(loss,actual['loss']);self.assertEqual(probabilities,actual['probabilities'])
+        self.assertEqual(loss,1000.)
+        for logits in ([float('nan'),0.],[float('inf'),0.],[]):
+            with self.assertRaises(ValueError):model_evidence.stable_cross_entropy(logits,0)
+
     def test_v2_architecture_is_typed_and_legacy_parameters_stay_closed(self):
         parameters={key:rule['default'] for key,rule in image_training.PARAMETER_BOUNDS.items()}
         params=dict(parameters,widths=[4,12,64],input_size=32,head='linear')
@@ -38,7 +51,7 @@ class ModelParameterTests(unittest.TestCase):
         self.assertEqual(image_training.transform_for_parameters(params)['version'],2)
 
     def test_checkpoint_inventory_fits_closed_32_file_profile(self):
-        self.assertEqual(len(model_evidence.payload_names(5))+1,30)
+        self.assertEqual(len(model_evidence.payload_names(5))+1,31)
         self.assertNotIn('model-evidence.json',model_evidence.BASE_PAYLOADS)
 
 
@@ -92,7 +105,7 @@ class ActualEvidenceTests(unittest.TestCase):
 
     def test_missing_or_modified_required_evidence_cannot_publish_or_reopen(self):
         source=self.dataset.runs.path/self.completed_run['id']
-        for name in ('weights-epoch-0001.pt','probes-epoch-0002.json','checkpoint-epoch-0002.json','probe.json'):
+        for name in ('weights-epoch-0001.pt','probes-epoch-0002.json','checkpoint-epoch-0002.json','probe.json','validation-logits.json'):
             with self.subTest(name=name),tempfile.TemporaryDirectory() as tmp:
                 target=Path(tmp)/'output';shutil.copytree(source,target)
                 (target/name).unlink()
@@ -119,6 +132,26 @@ class ActualEvidenceTests(unittest.TestCase):
             with self.assertRaises(WorkbenchError):self.dataset.runs.model_evidence(self.completed_run['id'],{'split':'test'})
             with self.assertRaises(WorkbenchError):self.dataset.runs.model_evidence(self.completed_run['id'],{'checkpoint_sha256':'f'*64})
             self.assertFalse(self.dataset.runs.get(self.completed_run['id'])['test_exposure']['exposed'])
+
+    def test_real_http_downloads_each_retained_checkpoint_and_weights(self):
+        from app import make_handler
+        from http.server import ThreadingHTTPServer
+        from urllib.request import Request,urlopen
+        import threading
+        server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        endpoint=f'http://127.0.0.1:{server.server_port}'
+        try:
+            for entry in self.evidence['checkpoint_index']['entries']:
+                with self.owner.bound(self.dataset):
+                    selected=self.dataset.runs.model_evidence(self.completed_run['id'],{'checkpoint_sha256':entry['checkpoint']['sha256']})
+                for item in (entry['checkpoint'],selected['checkpoint']['weights']):
+                    request=Request(endpoint+'/api/workspace/runs/'+self.completed_run['id']+'/artifacts/'+item['name'],
+                        headers={**self.owner.headers,'Origin':endpoint})
+                    with urlopen(request,timeout=30) as response:raw=response.read()
+                    self.assertEqual((len(raw),hashlib.sha256(raw).hexdigest()),(item['bytes'],item['sha256']))
+        finally:
+            server.shutdown();server.server_close();thread.join(timeout=5)
 
     def test_study_budget_cannot_delegate_builtin_execution(self):
         from access import AccessError
