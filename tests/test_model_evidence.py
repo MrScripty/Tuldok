@@ -25,6 +25,19 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 class ModelParameterTests(unittest.TestCase):
+    @unittest.skipUnless(os.environ.get('TULDOK_TRAINING_PYTHON'),'Qualified CPU runtime required for stable numerical oracle.')
+    def test_saturated_logits_match_actual_torch_cross_entropy_without_clamping(self):
+        # This checks the numerical formula; it never creates a fitted Run.
+        code="import json,torch; x=torch.tensor([[0.,-1000.]],dtype=torch.float32); print(json.dumps({'loss':float(torch.nn.functional.cross_entropy(x,torch.tensor([1]))),'probabilities':x.softmax(1)[0].tolist()}))"
+        result=subprocess.run([os.environ['TULDOK_TRAINING_PYTHON'],'-c',code],capture_output=True,timeout=30,check=True)
+        actual=json.loads(result.stdout)
+        self.assertEqual(actual['probabilities'],[1.,0.])
+        loss,probabilities=model_evidence.stable_cross_entropy([0.,-1000.],1)
+        self.assertEqual(loss,actual['loss']);self.assertEqual(probabilities,actual['probabilities'])
+        self.assertEqual(loss,1000.)
+        for logits in ([float('nan'),0.],[float('inf'),0.],[]):
+            with self.assertRaises(ValueError):model_evidence.stable_cross_entropy(logits,0)
+
     def test_v2_architecture_is_typed_and_legacy_parameters_stay_closed(self):
         parameters={key:rule['default'] for key,rule in image_training.PARAMETER_BOUNDS.items()}
         params=dict(parameters,widths=[4,12,64],input_size=32,head='linear')
@@ -38,7 +51,7 @@ class ModelParameterTests(unittest.TestCase):
         self.assertEqual(image_training.transform_for_parameters(params)['version'],2)
 
     def test_checkpoint_inventory_fits_closed_32_file_profile(self):
-        self.assertEqual(len(model_evidence.payload_names(5))+1,30)
+        self.assertEqual(len(model_evidence.payload_names(5))+1,31)
         self.assertNotIn('model-evidence.json',model_evidence.BASE_PAYLOADS)
 
 
@@ -92,7 +105,7 @@ class ActualEvidenceTests(unittest.TestCase):
 
     def test_missing_or_modified_required_evidence_cannot_publish_or_reopen(self):
         source=self.dataset.runs.path/self.completed_run['id']
-        for name in ('weights-epoch-0001.pt','probes-epoch-0002.json','checkpoint-epoch-0002.json','probe.json'):
+        for name in ('weights-epoch-0001.pt','probes-epoch-0002.json','checkpoint-epoch-0002.json','probe.json','validation-logits.json'):
             with self.subTest(name=name),tempfile.TemporaryDirectory() as tmp:
                 target=Path(tmp)/'output';shutil.copytree(source,target)
                 (target/name).unlink()
@@ -119,5 +132,122 @@ class ActualEvidenceTests(unittest.TestCase):
             with self.assertRaises(WorkbenchError):self.dataset.runs.model_evidence(self.completed_run['id'],{'split':'test'})
             with self.assertRaises(WorkbenchError):self.dataset.runs.model_evidence(self.completed_run['id'],{'checkpoint_sha256':'f'*64})
             self.assertFalse(self.dataset.runs.get(self.completed_run['id'])['test_exposure']['exposed'])
+
+    def test_real_http_downloads_each_retained_checkpoint_and_weights(self):
+        from app import make_handler
+        from http.server import ThreadingHTTPServer
+        from urllib.request import Request,urlopen
+        import threading
+        server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        endpoint=f'http://127.0.0.1:{server.server_port}'
+        try:
+            for entry in self.evidence['checkpoint_index']['entries']:
+                with self.owner.bound(self.dataset):
+                    selected=self.dataset.runs.model_evidence(self.completed_run['id'],{'checkpoint_sha256':entry['checkpoint']['sha256']})
+                for item in (entry['checkpoint'],selected['checkpoint']['weights']):
+                    request=Request(endpoint+'/api/workspace/runs/'+self.completed_run['id']+'/artifacts/'+item['name'],
+                        headers={**self.owner.headers,'Origin':endpoint})
+                    with urlopen(request,timeout=30) as response:raw=response.read()
+                    self.assertEqual((len(raw),hashlib.sha256(raw).hexdigest()),(item['bytes'],item['sha256']))
+        finally:
+            server.shutdown();server.server_close();thread.join(timeout=5)
+
+    def test_legacy_run_projection_keeps_absent_study_membership(self):
+        legacy=copy.deepcopy(self.private)
+        legacy['graph'].pop('recipe')
+        legacy['adapter']=image_training.ADAPTER
+        legacy.pop('evidence_context')
+        with self.owner.bound(self.dataset):result=self.dataset.runs._public(legacy)
+        self.assertNotIn('study_membership',result)
+
+    def exact_comparison_body(self):
+        entries=self.evidence['checkpoint_index']['entries']
+        definition=self.evidence['metric_definition_hashes']['loss']
+        evaluation=next(item['sha256'] for item in self.completed_run['artifacts'] if item['name']=='model-evidence.json')
+        return {'checkpoint_sha256':entries[0]['checkpoint']['sha256'],'other_checkpoint_sha256':entries[1]['checkpoint']['sha256'],
+            'evaluation_sha256':evaluation,'other_evaluation_sha256':evaluation,'metric_id':'loss',
+            'metric_definition_sha256':definition,'other_metric_definition_sha256':definition,'mode':'paired'}
+
+    def test_exact_comparison_selects_both_actual_epochs_and_metric_definition(self):
+        body=self.exact_comparison_body()
+        with self.owner.bound(self.dataset):
+            result=self.dataset.runs.compare_model_evidence(self.completed_run['id'],self.completed_run['id'],body)
+            for key in ('evaluation_sha256','other_checkpoint_sha256','metric_definition_sha256'):
+                with self.subTest(key=key),self.assertRaises(WorkbenchError):
+                    self.dataset.runs.compare_model_evidence(self.completed_run['id'],self.completed_run['id'],dict(body,**{key:'f'*64}))
+        self.assertEqual(result['state'],'compatible')
+        self.assertEqual([side['clocks']['epoch'] for side in result['sides']],[1,2])
+        actual=[entry['validation']['loss'] for entry in self.completed_run['metrics']['history']]
+        self.assertNotEqual(actual[0],actual[1])
+        self.assertEqual([side['result']['value'] for side in result['sides']],actual)
+        self.assertEqual(result['delta']['value'],actual[1]-actual[0])
+
+    def test_exact_comparison_preserves_incompatible_and_undefined_sides(self):
+        body=self.exact_comparison_body();changed=copy.deepcopy(self.evidence)
+        changed['probe']['members'][0]['target_sha256']='f'*64
+        for mode in ('paired','side_by_side'):
+            result=model_evidence.compare_evidence([self.evidence,changed],[self.completed_run['id']]*2,dict(body,mode=mode))
+            self.assertEqual(result['state'],'incompatible');self.assertIsNone(result['delta'])
+            self.assertEqual(len(result['sides']),2)
+            self.assertTrue(all(side['result']['state']=='observed' for side in result['sides']))
+        changed=copy.deepcopy(self.evidence)
+        observation=next(item for item in changed['observations'] if item['metric_id']=='loss'
+            and item['checkpoint_sha256']==body['other_checkpoint_sha256'])
+        observation.update(state='undefined',reason='zero_reference_denominator')
+        observation.pop('value');observation.pop('sample_count')
+        result=model_evidence.compare_evidence([self.evidence,changed],[self.completed_run['id']]*2,body)
+        self.assertEqual(result['sides'][0]['result']['state'],'observed')
+        self.assertEqual(result['sides'][1]['result'],{'state':'undefined','reason':'zero_reference_denominator'})
+        self.assertEqual(result['delta']['state'],'undefined')
+        changed['observations'].append(copy.deepcopy(observation))
+        with self.assertRaises(ValueError):model_evidence.compare_evidence([self.evidence,changed],[self.completed_run['id']]*2,body)
+
+    def test_selected_metric_summary_must_equal_actual_selected_epoch(self):
+        for key,value in (('loss',10.),('macro_f1',.123456)):
+            changed=copy.deepcopy(self.completed_run['metrics']);changed['validation'][key]=value
+            with self.subTest(metric=key),self.assertRaises(ValueError):
+                model_evidence.verify(self.dataset.runs.path/self.completed_run['id'],self.private,changed)
+
+    def test_study_budget_cannot_delegate_builtin_execution(self):
+        from access import AccessError
+        with self.owner.bound(self.dataset):
+            model_body=copy.deepcopy(next(item for item in self.dataset.pipelines.definitions()['recipes']
+                if item['id']==image_training.MODEL_RECIPE)['model_template'])
+            model_body.update(specification=self.evidence['model_definition']['specification'],
+                              preprocessing_policy=self.evidence['model_definition']['preprocessing_policy'])
+            model=self.dataset.models.create(model_body)
+            material=self.dataset.models.publish(model['id'],{'revision':model['revision']})
+            graph=self.completed_run['graph']
+            validation=self.dataset.pipelines.validate(graph['id'],{'revision':graph['revision']})
+            study=self.dataset.studies.create({'name':'Owner authority regression','limits':{'attempt_slots':2,
+                'admitted_wall_seconds':2000,'retained_bytes':256*1024**2,'peak_staging_bytes':512*1024**2},
+                'policy':validation['selection_policy']})
+            trial=self.dataset.studies.prepare_trial(study['id'],{'request_key':'prepare-owner-authority',
+                'revision':study['revision'],'graph_id':graph['id'],'graph_revision':graph['revision'],
+                'model':material['ref'],'replicate':0})
+            current=self.dataset.studies.get(study['id'])['study']
+            current=self.dataset.studies.continue_study(study['id'],{'request_key':'continue-owner-authority',
+                'revision':current['revision'],'admission_epoch':current['admission_epoch']})
+            agent=self.dataset.access.issue({'label':'Classifier inspector','scopes':['inspect','execute']})
+            grant=self.dataset.access.grant_execution(trial['material']['sha256'],agent['identity']['actor_id'])
+        body={'request_key':'admit-owner-authority','revision':current['revision'],
+              'admission_epoch':current['admission_epoch'],'trial_id':trial['id'],'approval_id':grant['id']}
+        with self.dataset.access.bind(agent['token']),self.assertRaises(AccessError):
+            self.dataset.studies.admit(study['id'],body)
+        with self.owner.bound(self.dataset):
+            self.assertEqual(self.dataset.studies.get(study['id'])['charged']['attempt_slots'],0)
+            self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM access_execution_consumptions WHERE grant_id=%s',(grant['id'],)).fetchone()[0],0)
+            body.pop('approval_id')
+            with patch.object(self.dataset.runs,'_start'):
+                admitted=self.dataset.studies.admit(study['id'],body)
+            self.assertEqual(admitted['run']['study_membership'],{'study_id':study['id'],'trial_id':trial['id']})
+            self.dataset.runs.cancel(admitted['run']['id'])
+
+    def test_standalone_run_has_no_invented_study_membership(self):
+        with self.owner.bound(self.dataset):
+            result=self.dataset.runs.get(self.completed_run['id'])
+        self.assertIsNone(result['study_membership'])
+        self.assertNotIn('evidence_context',result)
 
 if __name__=='__main__':unittest.main()

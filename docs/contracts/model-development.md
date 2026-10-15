@@ -5,12 +5,13 @@ Definitions owns architecture/source and preprocessing/output policies. Runs own
 attempts, fitted state, process custody and published bytes. Experiments owns
 finite membership, limits and selection intent; it never spawns a worker.
 
-This first implementation supports inert captured external source and exact
-finite external attempts. A model-aware classifier template, automatic evidence,
-scientific interpretation, candidate selection/package and fresh inference remain
-unavailable until their P3–P5 qualification. An opaque external result does not
-become a checkpoint, scientific observation or numerical acceptance by attaching
-model metadata. Existing built-in training remains owner-only and unchanged.
+This implementation supports inert captured external source, exact finite external
+attempts and the separately versioned model-aware TinyCNN classifier described
+below. Scientific interpretation and candidate package/fresh-inference claims
+require their separate qualification. An opaque external result does not become a
+checkpoint, scientific observation or numerical acceptance by attaching model
+metadata. Built-in training remains owner-only; legacy image outputs keep their
+original closed contract.
 
 ## Model and material custody
 
@@ -128,9 +129,9 @@ or telemetry configuration is required for this workflow.
 
 The public `recipes.create/get/save/list_drafts` operations retain the closed
 Pipeline `recipe_draft_v2` format separately from legacy graphs. Draft storage
-checks syntax, identity, bounded layout and revision CAS. Trainer/model/task
-semantic qualification and v2 execution compilation remain unavailable until P3's
-actual producer gate; saving a draft never asserts it is executable. Existing
+checks syntax, identity, bounded layout and revision CAS. The generic
+`recipe_draft_v2` execution compiler remains unavailable; the qualified classifier uses the explicitly selected `image_classification_model_v2` closed
+graph contract. Saving a generic draft never asserts it is executable. Existing
 external graphs can prepare exact captured-source trials through the qualified
 external execution contract described above.
 
@@ -139,8 +140,8 @@ inspects these registered model/material/study operations through the same clien
 Study/membership/operation-receipt documents share an explicit1MiB owner bound,
 large enough for the declared10000-trial membership, checked before publication.
 
-Study execution uses the dedicated owner `studies.approve` action. It verifies
-an exact member trial's complete retained composition and current executable,
+External Study execution uses the dedicated owner `studies.approve` action. It
+verifies an exact member trial's complete retained composition and current executable,
 then issues the existing one-use actor grant for the **RecipeMaterial SHA256**.
 A legacy executable-only grant cannot authorize Study admission. A changed model,
 policy, task/profile or captured dependency requires its own composed approval.

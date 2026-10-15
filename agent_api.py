@@ -431,6 +431,7 @@ _EVIDENCE_RESULT={'oneOf':[
     obj({'state':const('verified'),'manifest':_EVIDENCE_DOCUMENT,
          'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
          'metric_definitions':{'type':['object','array']},
+         'metric_definition_hashes':{'type':'object','maxProperties':64,'propertyNames':text(64),'additionalProperties':SHA},
          'observations':array(_EVIDENCE_DOCUMENT,1000),
          'model_definition':_EVIDENCE_DOCUMENT,
          'checkpoint':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]},

@@ -87,6 +87,14 @@ class StudyChecks:
                 with self.actor.bound(reopened), patch('subprocess.Popen', side_effect=AssertionError('Evidence query must not execute')):
                     self.assertEqual(reopened.runs.model_evidence(run['id']), result)
                     self.assertEqual(reopened.runs.compare_model_evidence(run['id'], run['id'])['state'], 'compatible')
+                    evaluation = next(item['sha256'] for item in run['artifacts'] if item['name'] == 'model-evidence.json')
+                    exact = dict(checkpoint_sha256=entry['checkpoint']['sha256'], other_checkpoint_sha256=entry['checkpoint']['sha256'],
+                                 evaluation_sha256=evaluation, other_evaluation_sha256=evaluation, metric_id='loss',
+                                 metric_definition_sha256=result['metric_definition_hashes']['loss'],
+                                 other_metric_definition_sha256=result['metric_definition_hashes']['loss'], mode='paired')
+                    compared = reopened.runs.compare_model_evidence(run['id'], run['id'], exact)
+                    self.assertEqual(compared['state'], 'compatible')
+                    self.assertEqual(compared['delta']['value'], 0)
             finally:
                 hidden.rename(original)
         finally:
