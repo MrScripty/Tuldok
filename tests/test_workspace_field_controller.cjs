@@ -12,7 +12,7 @@ function projected(body,run='run') {
   const [row_axis,column_axis]={x:['z','y'],y:['z','x'],z:['y','x']}[body.axis],dimensions={x:4,y:3,z:2};
   const prediction=Array.from({length:dimensions[row_axis]},(_,row)=>Array.from({length:dimensions[column_axis]},(_,column)=>(body.checkpoint_sha256===sha('a')?100000:0)+({z:0,y:100,x:200}[body.axis])+body.index*10000+body.member_ordinal*1000+(body.field_id==='alien_one'?0:500)+row*10+column));
   const reference=prediction.map(row=>row.map(number=>number+100));
-  return {...value,field:{...body,shape_zyx:record.shape_zyx,stage:record.stage,units:record.units,dtype:'<f8',centering:'cell',grid:{units:'m'},row_axis,column_axis,physical_origin:[2,3,5],physical_row_step:[0,3,0],physical_column_step:[2,0,0],prediction,reference}};
+  return {...value,field:{...body,shape_zyx:record.shape_zyx,stage:record.stage,units:record.units,dtype:'<f8',centering:'cell',gauge_policy_sha256:sha('e'),gauge_policy:{mode:'authored_gauge',declared_value:0},time_units:'not_applicable',grid:{units:'m'},row_axis,column_axis,physical_origin:[2,3,5],physical_row_step:[0,3,0],physical_column_step:[2,0,0],prediction,reference}};
 }
 function fixture({canvas=false,resize=false}={}){
   const calls=[],nodes={},observers=[];let handler,active=true,html='';
@@ -25,7 +25,7 @@ function fixture({canvas=false,resize=false}={}){
 }
 (async()=>{
   const f=fixture();f.handler(async(route,body)=>body.field_id?projected(body):index());await f.ui.load(f.run,()=>true);f.render();
-  assert.match(f.html(),/Linked field evidence/);assert.match(f.html(),/Update 16/);assert.match(f.html(),/Update 32/);assert.match(f.html(),/>0<\/td>/);assert.match(f.html(),/Undefined: declared_undefined_rule/);
+  assert.match(f.html(),/Linked field evidence/);assert.match(f.html(),/Time units: <strong>not_applicable/);assert.match(f.html(),/Gauge policy SHA256 e{64}/);assert.match(f.html(),/authored_gauge/);assert.match(f.html(),/declared_value/);assert.match(f.html(),/Update 16/);assert.match(f.html(),/Update 32/);assert.match(f.html(),/>0<\/td>/);assert.match(f.html(),/Undefined: declared_undefined_rule/);
   assert.match(f.html(),/alien_one/);assert.match(f.html(),/different_stage/);assert.doesNotMatch(f.html(),/simulation frame<select|field-frame/);
   assert.match(f.html(),/Difference unavailable/);assert.match(f.html(),/Scientific test access is unsupported/);assert.match(f.html(),/Physical acceptance is not established/);
   assert.ok(f.calls.every(call=>call.version===2));assert.deepEqual(JSON.parse(JSON.stringify(f.calls[1].body)),{checkpoint_sha256:sha('b'),member_ordinal:0,field_id:'alien_one',axis:'z',index:0,split:'validation'});
@@ -66,5 +66,8 @@ function fixture({canvas=false,resize=false}={}){
   const currentObserver=fit.observers.at(-1);fit.stop();currentObserver.callback();assert.equal(fit.nodes['#field-prediction'].draws,draws,'Invalidated observer cannot draw');assert.equal(currentObserver.disconnected,true);
   const thin=fixture({canvas:true});thin.handler(async(route,body)=>{if(!body.field_id)return index();const value=projected(body);value.field.physical_row_step=[0,1e12,0];value.field.physical_column_step=[1,0,0];return value;});await thin.ui.load(thin.run,()=>true);thin.render();
   assert.equal(thin.nodes['#field-prediction'].hidden,true);assert.match(thin.nodes['[data-field-display="prediction"]'].textContent,/cannot be represented at this viewport resolution/);assert.match(thin.html(),/id="field-probe-row"/,'Unrepresentable aspect preserves exact numeric probe');
+  for(const change of [field=>delete field.gauge_policy,field=>field.gauge_policy={},field=>field.gauge_policy=[],field=>field.gauge_policy={nested:{not_finite:Infinity}},field=>field.gauge_policy={nested:[NaN]},field=>field.gauge_policy_sha256='not-a-digest',field=>delete field.time_units,field=>field.time_units='s']){
+    const invalid=fixture();invalid.handler(async(route,body)=>{if(!body.field_id)return index();const value=projected(body);change(value.field);return value;});await invalid.ui.load(invalid.run,()=>true);invalid.render();assert.match(invalid.html(),/gauge policy or standalone time units/);assert.doesNotMatch(invalid.html(),/id="field-prediction"|id="field-gauge-policy"/,'No invented gauge/time default after invalid projection');
+  }
   console.log('PASS external field UI: exact declared selectors, shared display range, exact numeric probes, stale selector/navigation exclusion, revoked-value clearing and unsupported legacy/physical time. Controlled transport only.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

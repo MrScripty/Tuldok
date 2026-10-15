@@ -300,7 +300,8 @@ function launch(command, args, options) {
           await fill('#field-index',String(sliceIndex));await key('Tab');
           await until(()=>text('.field-evidence').then(value=>value?.includes('Standalone slice '+axis.toUpperCase()+' '+sliceIndex)));
           const body={checkpoint_sha256:entry.checkpoint.sha256,member_ordinal:member.ordinal,field_id:field.field_id,axis,index:sliceIndex,split:'validation'},result=await query(body),value=result.field;
-          exactRequests.push(body);
+          exactRequests.push(body);assert.equal(value.time_units,'not_applicable');assert.match(value.gauge_policy_sha256,/^[a-f0-9]{64}$/);
+          assert.ok((await text('.field-metadata')).includes(value.gauge_policy_sha256));assert.deepEqual(await evaluate('JSON.parse(document.getElementById("field-gauge-policy").textContent)'),value.gauge_policy);
           assert.equal(await evaluate('document.getElementById("field-checkpoint").value'),body.checkpoint_sha256);
           const row=value.prediction.length-1,column=value.prediction[0].length-1;
           await fill('#field-probe-row',String(row));await fill('#field-probe-column',String(column));
