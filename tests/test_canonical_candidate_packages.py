@@ -123,7 +123,7 @@ def fixture(configuration=None):
         'derivation':{'measured_sha256':p.sha(derivation_raw)},'provenance':{'measured_sha256':p.sha(provenance_raw)}}
     capture_raw={'source/'+name:raw for name,raw in sources.items() if name!='recipe.json'}
     capture_raw.update({'input/derivation':derivation_raw,'input/provenance':provenance_raw,'input/canonical':b'x'})
-    execution={'catalog_id':catalog,'recipe':recipe,'inputs':static['inputs']}
+    execution={'catalog_id':catalog,'recipe':recipe,'inputs':static['inputs'],'cpu_snapshot':runtime['snapshot']}
     static['execution_material_sha256']=evidence.digest(execution)
     captures=[{'path':name,'blob':p.blob(f'capture-{i:04d}.bin',raw)} for i,(name,raw) in enumerate(capture_raw.items())]
     snapshot={'format':'external_model_evidence_snapshot_v1','preflight':{'material':execution,'material_sha256':evidence.digest(execution)},
@@ -131,7 +131,8 @@ def fixture(configuration=None):
     snapshot_raw=evidence.canonical(snapshot)
     composition={'catalog_id':catalog,'model':model,'recipe_document':p.blob('recipe.json',snapshot_raw),
                  'trainer':{'id':'external_model_evidence_recipe_v1','sha256':evidence.digest(recipe)},
-                 'runtime':{'sha256':runtime['snapshot']['manifest_sha256']},
+                 'runtime':{'kind':'runtime','catalog_id':catalog,'id':evidence.digest(runtime['snapshot']),
+                            'sha256':evidence.digest(runtime['snapshot'])},
                  'captures':[item['blob'] for item in captures]}
     comp_sha=evidence.digest(composition)
     context={'format':'extension_evidence_context_v1','static':static,'composition':{'kind':'recipe_material','catalog_id':catalog,'id':comp_sha,'sha256':comp_sha},
@@ -260,6 +261,36 @@ class CanonicalCandidatePackageTests(unittest.TestCase):
                 p._validate_canonical_a_sources(self.manifest,files,task,contract,
                     p.decode(files['execution-context.json'])['static']['policy'],p.decode(files[mapping['recipe.json']['name']]),
                     mapping,p.decode(files[self.manifest['checkpoint']['name']]),lambda item:None)
+
+    def test_composition_runtime_requires_full_descriptor_ref_and_exact_catalog_root(self):
+        task=p.decode(self.files[self.manifest['task']['name']]);contract=p.decode(self.files['inference-contract.json'])
+        mapping={item['import_path']:item['blob'] for item in task['source_map']}
+        descriptor=p.decode(self.files[self.manifest['checkpoint']['name']])
+        original_runtime=p.decode(self.files['runtime.json'])['snapshot']
+        original_comp=p.decode(self.files['source-composition.json'])
+        self.assertEqual(original_comp['runtime']['sha256'],evidence.digest(original_runtime))
+        self.assertNotEqual(original_comp['runtime']['sha256'],original_runtime['manifest_sha256'])
+        for mode in ('portable_manifest_as_ref','different_catalog','different_root'):
+            files=dict(self.files);comp=copy.deepcopy(original_comp);context=p.decode(files['execution-context.json'])
+            if mode=='portable_manifest_as_ref':
+                comp['runtime'].update(id=original_runtime['manifest_sha256'],sha256=original_runtime['manifest_sha256'])
+            elif mode=='different_catalog':
+                comp['runtime']['catalog_id']='f'*32
+            else:
+                snapshot=p.decode(files['source-execution.json'])
+                runtime=snapshot['preflight']['material']['cpu_snapshot'];runtime['root']='/different/qualified-runtime'
+                snapshot['preflight']['material_sha256']=evidence.digest(snapshot['preflight']['material'])
+                context['static']['execution_material_sha256']=snapshot['preflight']['material_sha256']
+                snapshot['evidence_context']=context['static']
+                files['source-execution.json']=evidence.canonical(snapshot)
+                comp['recipe_document']=p.blob('recipe.json',files['source-execution.json'])
+                comp['runtime'].update(id=evidence.digest(runtime),sha256=evidence.digest(runtime))
+            comp_sha=evidence.digest(comp);context['composition'].update(id=comp_sha,sha256=comp_sha)
+            files['source-composition.json']=evidence.canonical(comp)
+            files['execution-context.json']=evidence.canonical(context)
+            with self.subTest(mode=mode),self.assertRaisesRegex(p.PackageError,'runtime descriptor'):
+                p._validate_canonical_a_sources(self.manifest,files,task,contract,context['static']['policy'],
+                    p.decode(files[mapping['recipe.json']['name']]),mapping,descriptor,lambda item:None)
 
 
 if __name__=='__main__':

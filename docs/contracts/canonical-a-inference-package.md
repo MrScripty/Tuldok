@@ -97,11 +97,11 @@ model-quality, generalization, physical-validity or resume claim.
 
 ## Verification status
 
-Nine focused authored byte-contract tests pass, including isolated stdlib pack
+Ten focused authored byte-contract tests pass, including isolated stdlib pack
 execution,32-input closure, state-only replay with different initialization
 controls, native/source loss, unknown imports, semantic role substitution,
-gauge/stage changes and current-authority refusal before parent lookup. The
-historical package suite also passes with disposable PostgreSQL:37 enabled
+gauge/stage changes, full descriptor/catalog/root binding and current-authority
+refusal before parent lookup. The historical package suite also passes with disposable PostgreSQL:37 enabled
 tests and two explicitly gated historical actual tests.
 
 The inference module was independently reviewed with four states ×64 fixed
