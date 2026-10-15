@@ -820,7 +820,7 @@ class Pipelines:
             bound=recipe_contract.is_bound_evidence(preflight['material']['recipe'])
             resolved_spec=retained_json(models._read_blob(model_ref,model['material']['specification']).decode()) if bound else None
             static=extension_evidence.resolve(preflight['material']['recipe']['model_evidence'],model,preflight['material'],
-                model_specification=resolved_spec,binding=preflight['material'].get('extension_binding'))
+                model_specification=resolved_spec,binding=preflight['material'].get('extension_binding'),captured=captured)
             snapshot['evidence_context']=static;profile=static['profile']
         for name,value in (('recipe.json',snapshot),('profile.json',profile)):
             payloads[name]=encode(value).encode()
@@ -961,7 +961,7 @@ class Pipelines:
             (getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)).material(material['model'],verify=True)
         return value
 
-    def _retained_extension_static(self, composition):
+    def _retained_extension_static(self, composition, *, with_captured_inputs=False):
         """Pure retained integrity for Runs recovery; public callers guard access.
 
         No current project, runtime, draft or caller context document is consulted.
@@ -1017,16 +1017,17 @@ class Pipelines:
                 if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
                     raise WorkbenchError('Retained Model and execution source differ.','unavailable',409)
         recipe_contract.validate_bound_captures(execution,captured)
+        recipe_contract.validate_canonical_captures(execution,captured)
         bound=recipe_contract.is_bound_evidence(execution['recipe'])
         resolved_spec=retained_json(read_owned_blob(model_root,model_ref['sha256'],model['material']['specification'],MAX_SOURCE_BYTES).decode()) if bound else None
         static=evidence.resolve(execution['recipe']['model_evidence'],model,execution,
-            model_specification=resolved_spec,binding=execution.get('extension_binding'))
+            model_specification=resolved_spec,binding=execution.get('extension_binding'),captured=captured)
         profile=retained_json(read_owned_blob(self.material_path,sha,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
         if (not evidence.identical(static,snapshot['evidence_context']) or not evidence.identical(profile,static['profile']) or
                 not evidence.identical(material['evaluation_profile'],static['profile']['definition']) or
                 material['trainer']['sha256']!=digest(execution['recipe'])):
             raise WorkbenchError('Retained extension profile/context differs.','unavailable',409)
-        return static
+        return (static,recipe_contract.captured_inputs(execution,captured)) if with_captured_inputs else static
 
     def _prepare_recipe_material(self, ref):
         """Revalidate source/runtime against retained bytes, never the current graph."""
@@ -1055,7 +1056,7 @@ class Pipelines:
             retained[item['path']]=read_owned_blob(self.material_path,ref['sha256'],item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
         if recipe_contract.is_bound_evidence(preflight['material']['recipe']):
             recipe_contract.revalidate_bound_material(self.dataset.projects,preflight['material'],retained,
-                getattr(self.dataset,'external_runtime_profile',None))
+                getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases)
         else:
             current,captured=recipe_contract.prepare(self.dataset.projects,graph,execution_digest(graph),
                 getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases,runs=self.dataset.runs)

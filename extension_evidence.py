@@ -132,10 +132,11 @@ def validate_policy(value, definition):
     value=checked(value)
     import recipe_contract
     bound=recipe_contract.is_bound_evidence(definition)
+    canonical_mode=recipe_contract.is_canonical_evidence(definition)
     closed(value,('format','task','adapter_sha256','profile','probe','fit_members','fields','field_outputs',
                   'metric_definitions','model_specification','preprocessing_policy','output_policy','probe_inputs',
-                  *(['field_targets'] if bound else [])),'Policy')
-    require(value['format']==POLICY_FORMAT,'Unsupported policy.','unsupported')
+                  *(['field_targets'] if bound else []),*(['canonical'] if canonical_mode else [])),'Policy')
+    require(value['format']==(recipe_contract.CANONICAL_POLICY_FORMAT if canonical_mode else POLICY_FORMAT),'Unsupported policy.','unsupported')
     require(recipe_contract.is_evidence(definition),'Policy requires the selected model-evidence recipe.','unsupported')
     require(value['adapter_sha256']==digest(sorted(definition['sources'],key=lambda item:item['path'])),'Adapter source closure differs.')
     task=value['task'];closed(task,('id','revision','definition'),'Task declaration')
@@ -246,19 +247,27 @@ def validate_policy(value, definition):
                 metric['preprocessing_sha256']==digest(value['preprocessing_policy']),'Metric evaluator/population/preprocessing identity differs.')
         domain=metric['domain'];closed(domain,('minimum','maximum'),'Metric domain')
         require(all(type(domain[k]) in (int,float) and math.isfinite(domain[k]) for k in domain) and domain['minimum']<=domain['maximum'],'Metric domain must be finite/ordered.')
+    if canonical_mode:
+        import extension_canonical
+        extension_canonical.validate_declaration(value['canonical'],value,definition)
     return value
 
 
 @boundary
-def resolve(policy, model_material, execution_material, *, model_specification=None, binding=None):
+def resolve(policy, model_material, execution_material, *, model_specification=None, binding=None, captured=None):
     """Bind authored declarations to published Model and actual captured data."""
     policy=validate_policy(policy,execution_material['recipe'])
     model=model_material['material'];ref=model_material['ref'];catalog_id=execution_material['catalog_id']
     reference(ref,'model',catalog_id)
-    require(type(execution_material['inputs']) is dict and
-            all(type(item) is dict and 'kind' not in item for item in execution_material['inputs'].values()),
-            'Authored input mode rejects every unsupported receipt, including unused inputs.','unsupported')
     import recipe_contract
+    canonical_mode=recipe_contract.is_canonical_evidence(execution_material['recipe'])
+    if canonical_mode:
+        require(type(captured) is dict,'Canonical evidence requires exact retained captured inputs.','unavailable')
+        recipe_contract.validate_canonical_captures(execution_material,captured)
+    else:
+        require(type(execution_material['inputs']) is dict and
+                all(type(item) is dict and 'kind' not in item for item in execution_material['inputs'].values()),
+                'Authored input mode rejects every unsupported receipt, including unused inputs.','unsupported')
     if recipe_contract.is_bound_evidence(execution_material['recipe']):
         import extension_bindings
         require(type(model_specification) is dict and type(binding) is dict,
@@ -274,8 +283,10 @@ def resolve(policy, model_material, execution_material, *, model_specification=N
     for key,policy_key in (('specification','model_specification'),('preprocessing_policy','preprocessing_policy'),('output_policy','output_policy')):
         require(model[key]['sha256']==digest(policy[policy_key]),'Published model '+key+' differs from selected policy.','stale')
     for source in [*policy['fit_members'],*[item['frozen_reference'] for item in policy['probe']['candidates']]]:
-        captured=execution_material['inputs'].get(source['input'])
-        require(type(captured) is dict and 'kind' not in captured and captured.get('measured_sha256')==source['sha256'],
+        receipt=execution_material['inputs'].get(source['input'])
+        allowed=(type(receipt) is dict and receipt.get('measured_sha256')==source['sha256'] and
+                 ((receipt.get('kind')=='frozen_release' and source['input']==policy['canonical']['release']['input']) if canonical_mode else 'kind' not in receipt))
+        require(allowed,
                 'Initial field evidence requires exact authored project input receipts; protected/frozen/Run populations are unsupported.','unsupported')
     profile=copy.deepcopy(policy['profile']);profile.pop('id');profile.pop('revision')
     profile.update(format='resolved_profile_v1',definition={'kind':'profile','catalog_id':catalog_id,'id':policy['profile']['id'],
@@ -364,7 +375,7 @@ def read_regular(directory, filename, maximum):
 
 @boundary
 @retained_directory
-def verify(directory, run, admitted_context):
+def verify(directory, run, admitted_context, *, captured=None):
     """Verify structural closure after custody. Caller rederives authoritative context.
 
     The returned private array bytes are only for the bounded query below; they
@@ -411,6 +422,10 @@ def verify(directory, run, admitted_context):
         payloads[filename]=raw
     require(set(payloads)==set(retained),'Consumed artifact inventory differs from authoritative retained inventory.','unavailable')
     require(payloads.get('execution-context.json')==context_raw,'Published context differs from exact admitted bytes.')
+    import recipe_contract
+    if recipe_contract.is_canonical_evidence(run['material']['recipe']):
+        require(type(captured) is dict,'Canonical evidence requires authoritative captured inputs.','unavailable')
+        recipe_contract.validate_canonical_captures(run['material'],captured,outputs=payloads)
     def document(filename):return decode(payloads[filename],limits['manifest_bytes'] if filename=='model-evidence.json' else limits['shard_bytes'])
     def blob(item):
         closed(item,('name','sha256','bytes','media_type'),'Blob');name(item['name']);sha(item['sha256']);natural(item['bytes'],'Blob size',1,limits['shard_bytes']);text(item['media_type'],'Blob media type',80)
