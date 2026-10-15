@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "name": "Inert extension inspection",
+  "data": [],
+  "recipes": [],
+  "evidence": [],
+  "requirements": [],
+  "extensions": [
+    {
+      "id": "example",
+      "label": "Example field declarations",
+      "path": "extension.json",
+      "sha256": "4728e1a41dfe9fc4a50f197989c92cca297d20693dc8d36cae474c25bcb43e63"
+    },
+    {
+      "id": "broken",
+      "label": "Malformed sibling",
+      "path": "broken.json",
+      "sha256": "8f3b3d3e2c74bf3bc6d1954dc03f7e93ba921dafe4ed545d0e0a9cbcdecedf77"
+    },
+    {
+      "id": "missing",
+      "label": "Absent package",
+      "path": "missing.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

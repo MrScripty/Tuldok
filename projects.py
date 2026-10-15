@@ -1,5 +1,6 @@
 """Read-only project inspection; catalog registration never executes project code."""
 from access import authorized
+import extension_contract
 from contextlib import contextmanager
 import hashlib
 import json
@@ -59,9 +60,12 @@ def decode(raw):
 
 
 def manifest(value):
-    closed(value, ('schema_version', 'id', 'name', *GROUPS))
-    if type(value['schema_version']) is not int or value['schema_version'] != 1:
-        raise WorkbenchError('Only project schema 1 is supported.', 'unsupported', 400)
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int:
+        raise WorkbenchError('Project requires an integer schema version.')
+    version = value['schema_version']
+    if version not in (1, 2):
+        raise WorkbenchError('Only project schemas 1 and 2 are supported.', 'unsupported', 400)
+    closed(value, ('schema_version', 'id', 'name', *GROUPS, *(['extensions'] if version == 2 else [])))
     if not isinstance(value['id'], str) or not ID.fullmatch(value['id']):
         raise WorkbenchError('Project ID must be 32 lowercase hexadecimal characters.')
     text(value['name'], 'Project name', 120)
@@ -82,6 +86,21 @@ def manifest(value):
                 relative_path(entry['path'])
             if 'sha256' in entry and (not isinstance(entry['sha256'], str) or not SHA.fullmatch(entry['sha256'])):
                 raise WorkbenchError('Expected SHA256 must be lowercase hexadecimal.')
+    if version == 2:
+        extensions = value['extensions']
+        if not isinstance(extensions, list) or len(extensions) > extension_contract.MAX_PACKAGES:
+            raise WorkbenchError('Project permits at most 64 extension references.')
+        seen = set()
+        for entry in extensions:
+            closed(entry, ('id', 'label', 'path', 'sha256'))
+            key = entry['id']
+            if not isinstance(key, str) or not NAME.fullmatch(key) or key in seen:
+                raise WorkbenchError('Extension reference IDs must be bounded and unique.')
+            seen.add(key)
+            text(entry['label'], 'Extension label')
+            relative_path(entry['path'])
+            if not isinstance(entry['sha256'], str) or not SHA.fullmatch(entry['sha256']):
+                raise WorkbenchError('Extension references require an exact SHA256.')
     return value
 
 
@@ -153,7 +172,7 @@ class Projects:
                 raise WorkbenchError('Project file changed during inspection. Retry.', 'conflict', 409)
             return raw
 
-    def _saved(self, project_id):
+    def _saved(self, project_id, *, extensions=False):
         if not isinstance(project_id, str) or not ID.fullmatch(project_id):
             raise WorkbenchError('Invalid project ID.')
         with self.lock:
@@ -161,6 +180,9 @@ class Projects:
         if row is None:
             raise WorkbenchError('Project not found.', 'not_found', 404)
         result = json.loads(row[0])
+        manifest(result['manifest'])
+        if result['manifest']['schema_version'] == 2 and not extensions:
+            raise WorkbenchError('Project v2 requires the project-snapshots HTTP interface.', 'unsupported', 400)
         return result
 
     @staticmethod
@@ -169,13 +191,28 @@ class Projects:
 
     @authorized('inspect', 'projects.list')
     def list(self):
+        return self._list(False)
+
+    @authorized('inspect', 'projects.list_snapshots', owner_only=True)
+    def list_snapshots(self):
+        return self._list(True)
+
+    def _list(self, extensions):
         with self.lock:
             rows = self.db.execute('SELECT document FROM workspace_projects ORDER BY id').fetchall()
         return {'mode': 'inspection', 'roots': sorted(self.roots),
-                'projects': [self._summary(json.loads(row[0])) for row in rows]}
+                'projects': [self._summary(saved) for row in rows
+                             if (saved := json.loads(row[0]))['manifest']['schema_version'] == 1 or extensions]}
 
     @authorized('edit', 'projects.open')
     def open(self, body):
+        return self._open(body, False)
+
+    @authorized('edit', 'projects.open_snapshot', owner_only=True)
+    def open_snapshot(self, body):
+        return self._open(body, True)
+
+    def _open(self, body, extensions):
         closed(body, ('root', 'manifest_path'))
         root, path = body['root'], relative_path(body['manifest_path'])
         if not isinstance(root, str) or root not in self.roots:
@@ -185,6 +222,8 @@ class Projects:
         except OSError:
             raise WorkbenchError('Project manifest is missing or cannot be safely read.', 'unavailable', 400) from None
         value = manifest(decode(raw))
+        if value['schema_version'] == 2 and not extensions:
+            raise WorkbenchError('Project v2 requires the project-snapshots HTTP interface.', 'unsupported', 400)
         saved = {'id': value['id'], 'name': value['name'], 'root': root,
                  'root_identity': self.roots[root][1], 'manifest_path': path,
                  'manifest_sha256': hashlib.sha256(raw).hexdigest(), 'manifest': value}
@@ -196,7 +235,7 @@ class Projects:
             if not existing:
                 self.db.execute('INSERT INTO workspace_projects VALUES (%s,%s)', (value['id'], document))
                 self.access.audit('projects.open', value['id'], {'manifest_sha256': saved['manifest_sha256']})
-        return self.get(value['id'])
+        return self.get_snapshot(value['id']) if extensions else self.get(value['id'])
 
     def _bound(self, saved):
         entry = self.roots.get(saved['root'])
@@ -226,7 +265,14 @@ class Projects:
 
     @authorized('inspect', 'projects.get')
     def get(self, project_id):
-        saved = self._saved(project_id)
+        return self._get(project_id, False)
+
+    @authorized('inspect', 'projects.get_snapshot', owner_only=True)
+    def get_snapshot(self, project_id):
+        return self._get(project_id, True)
+
+    def _get(self, project_id, extensions):
+        saved = self._saved(project_id, extensions=extensions)
         result = {**self._summary(saved), 'mode': 'inspection', 'execution': 'unsupported',
                   'manifest_status': 'unavailable'}
         bound = self._bound(saved)
@@ -259,6 +305,17 @@ class Projects:
                 else:
                     item = self._inspect(saved['root'], ref, budget, DATA_LIMIT if group == 'data' else FILE_LIMIT)
                 result[group].append(item)
+        if saved['manifest']['schema_version'] == 2:
+            def read_extension(path, limit):
+                if not bound:
+                    raise extension_contract.ExtensionError('Original project root is not configured; snapshot retained.', 'unavailable')
+                try:
+                    return self._read(saved['root'], path, limit)
+                except WorkbenchError as error:
+                    kind = extension_contract.ReadLimitError if error.code == 'too_large' else extension_contract.ExtensionError
+                    raise kind('Referenced bytes cannot be safely read within bounds.', 'unavailable') from None
+            result['schema_version'] = 2
+            result['extensions'] = extension_contract.catalog(saved['manifest']['extensions'], read_extension)
         return result
 
     @authorized('inspect', 'projects.read_data_reference')

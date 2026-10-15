@@ -62,3 +62,16 @@
   jsonschema4.26.0 closure is separately provisioned. Missing validator reports
   unavailable without importing app/DB/Torch or installing at startup.
 - Revisit: unsupported keyword, divergent interpretation or new schema consumer.
+
+## I7 — E1 integration and later executable prerequisites
+
+- Owner: lead thread01a13f2b-3678-73df-8bce-2f57a04de00b for all merges/shared files.
+- E1 static schemas/catalog/HTTP/UI and real local checks implemented; independent
+  review fixes applied. Exact-head CI and lead serial app.py integration remain.
+- P1 capabilities/operation negotiation is in progress, not accepted in observed
+  main d788e08. E1 new routes are owner-only/unregistered; legacy operations stay
+  v1-only. No agent execution is added. E2 awaits P1–P3/P4 generic evidence; E4 P5.
+- Current light stylesheet is unchanged because the lead owns shared visual work;
+  dark theme is not claimed by E1 browser receipts. Revisit at P3 integration.
+- No actual extension CPU numerical, hardware, fresh inference or complete Run
+  restore gate is satisfied by the authored inspection fixtures.
