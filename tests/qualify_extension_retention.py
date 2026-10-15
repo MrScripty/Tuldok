@@ -27,7 +27,6 @@ from psycopg.conninfo import make_conninfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import backup_metadata as transfer
-from metadata import Metadata
 from qualify_scientific_restore import (compare, compact, raw_restored,
                                         save_private, snapshot, verify_backup)
 
@@ -55,15 +54,23 @@ def selected_reads(dataset, receipt, *, expected=None):
     runs = [dataset.runs.get(identity) for identity in identities]
     require(all(run['state'] == 'completed' and run['custody_phase'] == 'drained' for run in runs),
             'Actual completed/drained Runs required.')
-    require(dataset.projects.list_snapshots()['roots'] == [], 'Project roots must be absent.')
+    require(dataset.projects.roots == {}, 'Project roots must be absent.')
     public = dataset.runs.model_evidence(identities[0], {}, contract_version=2)
     require(public['state'] == 'verified', 'Retained scientific evidence is unavailable.')
     checkpoint = receipt['fresh_verification']['checkpoint_sha256']
-    require(checkpoint in [entry['checkpoint']['sha256'] for entry in public['checkpoint_index']['entries']],
+    entries = public['checkpoint_index']['entries']
+    require([entry['clocks']['optimizer_update'] for entry in entries] == [16, 32, 48, 64]
+            and all(entry['clocks'][key] is None for entry in entries
+                    for key in ('epoch', 'fit_pass', 'physical_time')), 'Actual A checkpoint clocks differ.')
+    require(checkpoint in [entry['checkpoint']['sha256'] for entry in entries],
             'P5 checkpoint is absent from actual A evidence.')
     query = dict(checkpoint_sha256=checkpoint, member_ordinal=0, field_id='raw', axis='z', index=2)
     field = dataset.runs.model_evidence(identities[0], query, contract_version=2)
     require(field['field']['stage'] == 'post_train_mapping', 'Raw field stage differs.')
+    values = receipt['fresh_verification']['outputs'][0]['values_c_order']
+    require(field['field']['prediction'] == [values[start:start + 4] for start in range(32, 48, 4)],
+            'Retained selected slice differs from P5 frozen reconstruction receipt.')
+    log('Selected retained field verified; inspect linked package/fresh verifier')
     package = dataset.studies.package_state(receipt['candidate_id'])
     require(package['state'] == 'fresh_verified', 'Retained package/verifier linkage differs.')
     require(any(item['run_id'] == identities[1] and item['sha256'] == receipt['package_sha256']
@@ -79,6 +86,7 @@ def selected_reads(dataset, receipt, *, expected=None):
     wanted_runtime = dict(receipt['runtime_snapshot'], root=str(dataset.path / 'runtime-snapshots' /
                                                               receipt['runtime_snapshot']['manifest_sha256']))
     require(runtime == wanted_runtime, 'Retained runtime differs beyond its new catalog root.')
+    log('All retained runtime files verified; inspect every published artifact')
     artifacts = []
     for run in runs:
         for item in run['artifacts']:
@@ -138,6 +146,7 @@ def inspect_restored(destination, connection, receipt, report):
             dataset = Dataset(destination, dsn=connection, project_roots={})
             owner = ExplicitOwnerFixture.bootstrap(dataset)
             with owner.bound(dataset):
+                require(dataset.projects.list_snapshots()['roots'] == [], 'Owner observed unexpected project roots.')
                 reader = dataset.access.issue({'label': 'Actual A restored retention reader', 'scopes': ['inspect']})
                 successor = dataset.access.issue({'label': 'Current independent retained reader', 'scopes': ['inspect']})
             with dataset.access.bind(reader['token']):
@@ -149,6 +158,8 @@ def inspect_restored(destination, connection, receipt, report):
                     if entry['checkpoint']['sha256'] == expected['query']['checkpoint_sha256'])
                 checkpoint_raw, _ = dataset.runs.artifact(run_id, selected_checkpoint['checkpoint']['name'])
                 weights_name = json.loads(checkpoint_raw)['weights']['name']
+                require(json.loads(checkpoint_raw)['weights']['sha256'] == receipt['fresh_verification']['weights_sha256'],
+                        'Selected checkpoint/P5 fitted weights differ.')
                 targets.append((run_id, weights_name))
                 targets = [(identity, next(item for run in expected['runs'] if run['id'] == identity
                                           for item in run['artifacts'] if item['name'] == name)) for identity, name in targets]
@@ -194,7 +205,7 @@ def inspect_restored(destination, connection, receipt, report):
                     'capture': lambda: dataset.runs.capture_artifact(identity, item['name'], item['sha256']),
                     'package_state': lambda: dataset.studies.package_state(receipt['candidate_id']),
                     'model': lambda: dataset.models.material(expected['model']['ref'], verify=True),
-                    'recipe': lambda: dataset.pipelines.recipe_material(material_ref_from(expected), verify=True),
+                    'recipe': lambda: dataset.pipelines.recipe_material(expected['material']['ref'], verify=True),
                 }
                 report['revoked'] = []
                 for label, action in reads.items():
@@ -222,6 +233,7 @@ def inspect_restored(destination, connection, receipt, report):
                     error.close()
                 else:
                     raise RuntimeError('Revoked whole HTTP download accepted.')
+            report['warm_retained_reads'] = 'passed'
             stop(server, thread)
             server = None
             dataset.close()
@@ -231,6 +243,7 @@ def inspect_restored(destination, connection, receipt, report):
                     raise RuntimeError('Revoked credential rebound after cold reopen.')
             except AccessError as error:
                 require(error.status == 401, 'Cold revoked credential refused incorrectly.')
+            log('Current revocation verified on all accessors; reopen rootless with independent current reader')
             with dataset.access.bind(successor['token']):
                 selected_reads(dataset, receipt, expected=expected)
             report.update(artifact_inventory=expected['artifacts'], selected_field_sha256=transfer.digest(expected['field']),
@@ -243,11 +256,6 @@ def inspect_restored(destination, connection, receipt, report):
                 stop(server, thread)
             if dataset is not None:
                 dataset.close()
-
-
-def material_ref_from(expected):
-    material = expected['material']
-    return material['ref']
 
 
 def main(args):
