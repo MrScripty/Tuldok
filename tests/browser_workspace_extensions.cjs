@@ -48,9 +48,9 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');assert.ok(target);
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
-  let next=0;const pending=new Map();
+  let next=0,initializationRequest;const pending=new Map();
   send=(method,params={})=>new Promise((resolve,reject)=>{const id=++next,timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout '+method));},20000);pending.set(id,{resolve:value=>{clearTimeout(timer);resolve(value);},reject:error=>{clearTimeout(timer);reject(error);}});ws.send(JSON.stringify({id,method,params}));});
-  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Network.requestWillBeSent')requests.push({url:message.params.request.url,method:message.params.request.method});};
+  ws.onmessage=event=>{const message=JSON.parse(event.data);tracker.observe(message);if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(task)message.error?task.reject(message.error):task.resolve(message.result);}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails);if(message.method==='Network.requestWillBeSent')requests.push({url:message.params.request.url,method:message.params.request.method});if(message.method==='Fetch.requestPaused')initializationRequest=message.params.requestId;};
   evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(JSON.stringify(result.exceptionDetails));return result.result.value;};
   const element=selector=>`document.querySelector(${JSON.stringify(selector)})`,text=selector=>evaluate(`${element(selector)}?.textContent`);
   async function click(selector){const box=await until(()=>evaluate(`(async()=>{const e=${element(selector)};if(!e||e.disabled||!e.getClientRects().length)return null;e.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const b=e.getBoundingClientRect(),x=b.x+b.width/2,y=b.y+b.height/2,hit=document.elementFromPoint(x,y);return hit&&(hit===e||e.contains(hit))?{x,y}:null})()`),'Click target unavailable '+selector);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...box});}
@@ -66,7 +66,15 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   const offlineCanary=process.env.LD_PRELOAD?JSON.parse(execFileSync('python3',['-c',"import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"],{cwd:root,encoding:'utf8'})):null;
   await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
   phase='open-workspaces';
-  await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("open-project")'));
+  await send('Fetch.enable',{patterns:[{urlPattern:base+'/workspaces.js',requestStage:'Request'}]});
+  await send('Page.navigate',{url:base+'/workspaces'});
+  await until(()=>initializationRequest&&evaluate('!!document.getElementById("open-project")'),'Workspace initialization script was not intercepted');
+  assert.equal(await evaluate('document.getElementById("open-project").onclick'),null);
+  await send('Fetch.continueRequest',{requestId:initializationRequest});await send('Fetch.disable');
+  // The parser creates the enabled button before the bottom scripts bind it.
+  // Wait for the real handlers before issuing the single user click.
+  await until(()=>evaluate('typeof document.getElementById("open-project")?.onclick === "function" && typeof document.getElementById("project-open-form")?.onsubmit === "function"'),'Project controls are not initialized');
+  check('Parser-created controls are not treated as ready before the real workspace handlers bind');
   phase='open-alpha';
   await openProject('alpha.project.json',first.name,first.id);
   phase='inspect-catalog';

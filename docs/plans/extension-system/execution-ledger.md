@@ -121,3 +121,9 @@ started/accepted by creating this documentation.
   observed locally; independent review clear. Root cause remains unclaimed.
 - Independent CPU runtime/producer preparation proceeds separately on
   `feat/extension-cpu-producer-preparation`; no E2/P1–P4 acceptance inferred.
+
+- GitHub connector logs later exposed a reachable initial lost-click race:
+  parser-created controls precede their workspace handlers. Added exact handler
+  readiness and a deterministic script-interception regression; all existing
+  real browser assertions/timeouts and the single click remain. Actual full
+  workflow passes; lead receives the owned test correction for E1 integration.

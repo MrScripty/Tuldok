@@ -78,3 +78,26 @@ artifact at `start-browser` and still exits1. Independent Sol High review found
 no weakened assertion or credential logging. This is diagnostic evidence, not a
 claim that the inaccessible original failure's cause is fixed. Exact-head CI
 must be observed after publication.
+
+## Browser initialization race correction
+
+The GitHub connector log reader retrieved the previously inaccessible original
+job output. Original SDK job116587441178 and composed E1 job116596245828 both
+time out waiting for the dialog after the initial mouse click. The HTML exposes
+the enabled button before the bottom workspace script installs its handlers;
+the original harness waited only for element existence. Independent source
+review confirmed that reachable lost-click ordering.
+
+The catalog harness now waits for the actual button and form handlers before
+issuing the same single mouse click. Its deterministic regression pauses only
+the initial `/workspaces.js` request, observes the parser-created button with no
+handler, releases the original script, disables interception, then awaits the
+real handlers and performs the complete workflow. No retries, timeout widening,
+application edits or assertions were removed. Actual Chromium passes both the
+minimal readiness barrier and full induced-ordering workflow; the latter receipt
+is `build/qa/workspace-extensions-catalog/run-MHJFD6/receipt.json`.
+
+Diagnostic-only f9a4c90 static-kit, catalog and workspace-interface CI passed; its
+lifecycle job was still running at this observation. The intermittent original
+race is corrected separately here and requires new exact-head CI. The lead owns
+cherry-picking the scoped harness correction onto composed E1 and all merges.
