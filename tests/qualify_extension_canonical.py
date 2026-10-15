@@ -40,6 +40,7 @@ FROZEN_SOURCES = {
     'producer.py':'bcd801264bf05675cc6b2c5207848f723a38090b5bee6211543040831b801922',
     'cold_oracle.py':'573f142de868d13649dcdb6cc109fd629385b8ce48a1968399c0f86cb77feed9',
     'authored-source.json':'3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f',
+    'NOTICE.txt':'8bdadd8f6a5163591c4485653678f5184ae1caaf7f4a45dae2f901fe44d1c12d',
     'tuldok_extension_sdk/evidence.py':'94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23',
     'tuldok_extension_sdk/__init__.py':'b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18',
     'infer.py':'15f6bc0da835f4a3f8a54a2abf0552e8a0b6c69a1ac2e6baceebb9288a0b8b15',

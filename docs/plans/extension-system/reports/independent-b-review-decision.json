@@ -1,0 +1,79 @@
+{
+  "actual_run_gate": "pending main frozen common catalog, operator harness review and independent cold oracle on downloaded artifacts",
+  "author_commit": "db5ce54",
+  "format": "independent_b_operator_inventory_review_v1",
+  "host_commit": "62a8dfbbbed34daf6a8e274a1614fbc09e708064",
+  "host_compatibility_receipt_sha256": "e99cfd8bcec98dc29ef4bfbae52850d66b133625f73d2ea236e3c9aa9eec5d1c",
+  "imports": {
+    "cold_oracle.py": [
+      "argparse",
+      "ast",
+      "hashlib",
+      "json",
+      "math",
+      "pathlib",
+      "struct"
+    ],
+    "producer.py": [
+      "hashlib",
+      "json",
+      "pathlib",
+      "resource",
+      "sys",
+      "time",
+      "numpy",
+      "tuldok_extension_sdk.evidence"
+    ],
+    "tuldok_extension_sdk/__init__.py": [],
+    "tuldok_extension_sdk/evidence.py": [
+      "copy",
+      "hashlib",
+      "functools",
+      "json",
+      "math",
+      "os",
+      "pathlib",
+      "re",
+      "stat"
+    ]
+  },
+  "independent_numerical_anchor": {
+    "path": "/tmp/p5-independent-b-numerical-review.json",
+    "reused_only_frozen_source_sha256": {
+      "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+      "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+      "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b"
+    },
+    "reviewed_commit": "b4df03b",
+    "scope": "Independent local author numerical/source review only; actual Run and numerical quality not established",
+    "sha256": "de35a28af8f7f0b02404654d5beea4def92f711ad6d5ed823d2ddddc2555e525"
+  },
+  "no_grant_or_admission": true,
+  "public_contract_documents": {
+    "docs/contracts/extension-field-identities.md": "3631ff6994907c637a19ac2af461b746f296bef0adbc4e7719cd82245454f71c",
+    "docs/contracts/extensions.md": "fdba467c019672ba53a4e966da31efb53f61f06baec21eac8dddbeb94a59a6ad"
+  },
+  "review_notes": {
+    "NOTICE.txt": "Read private local QA restrictions; upstream runtime notices remain separately inventoried; no redistribution or solver qualification inferred.",
+    "README.md": "Read corrected package scope, raw/corrected stages, exact runtime, bounded native identities, pending actual Run, no physical claim.",
+    "author-report.json": "Every listed source hash checked, public metric/config corrections distinguished from frozen algorithm; local evidence not treated as actual Run.",
+    "cold_oracle.py": "Exact frozen SHA matches independent p5 review and oracle-freeze; stdlib-only imports/native parser checked. No producer/SDK/NumPy/app dependency.",
+    "evaluator.json": "Checked exact Task/ports and authored evaluate implementation source already in complete reviewed closure; no host numerical operator added.",
+    "extension.json": "Checked declared source/contribution/notice inventory hashes and byte counts, explicit50502 CPU nomination, filesystem effect and finite resource bounds.",
+    "fixture.json": "Exact frozen SHA matches p5 and freeze; read split/input/target fields and checked native payload identity map only; no target derivation performed here.",
+    "model.json": "Checked exact Task dependency and typed ports, declared two-feature affine implementation identity, absence of editable Model params; no schema/default descriptors accepted as values.",
+    "oracle-freeze.json": "Checked exact oracle/fixture hashes and pre-Run freeze assertion/tolerance; no Run has been admitted in this review catalog.",
+    "producer.py": "Exact frozen source SHA matches independent p5 numerical review; read imports and source/context/output orchestration, train-only membership and mandatory boundary output; not executed during compatibility review.",
+    "project.json": "Checked exact v2 Project ID and all data/recipe/provider refs against reviewed bytes.",
+    "recipe.json": "Checked bound schema3 five exact roles, closed actual Model configuration {}, separate trainer defaults, required inputs, stages, 26 outputs, target map, metric identities and provider bounds; actual owner preparation passed.",
+    "task.json": "Checked required initial/source/boundary_mask inputs, distinct raw/corrected targets/outputs and exact ordered stage dataflow.",
+    "test_author_numerics.py": "Read nine local numeric/contract checks including corrected population/config rules; local tests do not substitute for actual retained execution/oracle gate.",
+    "trainer.json": "Checked exact Task/ports/stages and learning_rate range/default with fixed64 updates; control defaults match recipe.",
+    "tuldok_extension_sdk/__init__.py": "Exact bytes match reviewed public host SDK; inert module, no app/runtime startup.",
+    "tuldok_extension_sdk/evidence.py": "Exact bytes match reviewed canonical UTF-8 helper; inspected stdlib dependencies, context bounds and construction-only writer. It does not provide numerical inference or approval authority.",
+    "view.json": "Checked exact Task dependency, orthogonal_slices and registered tuldok:runs.model_evidence@2.0.0; no authored callback dispatch."
+  },
+  "reviewed_inventory_files": 18,
+  "reviewed_inventory_sha256": "de73d348bd34a1be19a37c419ab834f520fb008a84b15096d536a17852a6b859",
+  "state": "reviewed_for_operator_preparation_only"
+}

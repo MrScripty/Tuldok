@@ -37,6 +37,12 @@ SCALAR_A_CONTRACT_SHA256 = '468e3e15ad5aa88ce3e43deaeb7c5487bd16a77651b8328a618c
 SCALAR_A_SOURCE_SHA256 = 'cdfdf92c798538afcbf974e16dd9686b3bac7837f001c300ac422bb9395d98eb'
 SCALAR_A_NOTICE_SHA256 = '6d60e9f2a605434edd38842f1b5248953b98b0f002fe3abe94c6688ad77429b6'
 SCALAR_A_TASK_FORMAT = 'package_scalar_a_task_v1'
+CANONICAL_A_TASK_FORMAT = 'package_canonical_scalar_a_task_v1'
+CANONICAL_A_CONTRACT_SHA256 = 'd60b93699f978c125a567734ef4d610cb4027b3b2f047c31e6d579677121da1d'
+CANONICAL_A_ADAPTER = {'revision': 1,
+    'source_sha256': '15f6bc0da835f4a3f8a54a2abf0552e8a0b6c69a1ac2e6baceebb9288a0b8b15',
+    'notice_sha256': '8bdadd8f6a5163591c4485653678f5184ae1caaf7f4a45dae2f901fe44d1c12d',
+    'directory': 'v3-canonical', 'runtime_snapshot_sha256': None}
 SCALAR_A_ADAPTERS = {
     SCALAR_A_CONTRACT_SHA256: {'revision': 1, 'source_sha256': SCALAR_A_SOURCE_SHA256,
         'recipe_sha256': '90ce14a7bfcb1079f376ca93858ec90d1ebcc11533e54ec476639a44e006a644',
@@ -66,6 +72,12 @@ def encoded(value):
 
 def sha(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def _canonical_digest(value):
+    """The schema3 owner canonical form; historical package encoding is unchanged."""
+    return sha(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False,
+                          allow_nan=False).encode('utf-8'))
 
 
 def decode(raw):
@@ -211,7 +223,7 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     # Lineage lists only identities. No training/test records or files are inferred safe.
     lineage = decode(files[manifest['lineage']['name']])
     closed(lineage, ('format', 'sources', 'data_policy'))
-    require(lineage['format'] == 'package_lineage_v1' and lineage['data_policy'] == 'references_only',
+    require(lineage['format'] == 'package_lineage_v1' and lineage['data_policy'] in ('references_only', 'private_retained_native_sources_v1'),
             'Private training data must remain permissioned lineage references.')
     require(type(lineage['sources']) is list and len(lineage['sources']) <= MAX_FILES, 'Lineage exceeds bound.')
     for source in lineage['sources']:
@@ -248,9 +260,11 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     require(descriptor.get('format') == 'checkpoint_state_v1', 'Unsupported checkpoint contract.', 'unsupported')
     ref(descriptor['weights'])
     task = decode(files[manifest['task']['name']])
-    require(type(task) is dict and task.get('format') in ('package_classifier_task_v1', SCALAR_A_TASK_FORMAT),
+    require(type(task) is dict and task.get('format') in ('package_classifier_task_v1', SCALAR_A_TASK_FORMAT, CANONICAL_A_TASK_FORMAT),
             'Unqualified package task profile.', 'unsupported')
-    evaluation_name = 'model-evidence.json' if type(task) is dict and task.get('format') == SCALAR_A_TASK_FORMAT else 'metrics.json'
+    require(lineage['data_policy'] == ('private_retained_native_sources_v1' if task['format'] == CANONICAL_A_TASK_FORMAT else 'references_only'),
+            'Native private source export requires the explicit canonical profile.', 'unsupported')
+    evaluation_name = 'model-evidence.json' if task.get('format') in (SCALAR_A_TASK_FORMAT, CANONICAL_A_TASK_FORMAT) else 'metrics.json'
     require(decision.get('run_id') == descriptor.get('run_id')
             and decision.get('checkpoint_sha256') == manifest['checkpoint']['sha256']
             and evaluation_name in indexed and decision.get('evaluation_sha256') == indexed[evaluation_name]['sha256'],
@@ -262,6 +276,8 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
     require(published.get('format') == 'model_material_v1' and sha(encoded(published)) == descriptor.get('model_sha256'),
             'Published model identity differs from checkpoint.')
     source_by_path = {item['name']: item for item in manifest['sources']}
+    if task.get('format') == CANONICAL_A_TASK_FORMAT:
+        source_by_path = _canonical_source_map(task, manifest, ref)
     for source in published.get('source_closure', []):
         require(type(source) is dict and set(source) == {'import_path', 'blob'}, 'Invalid published import closure.')
         retained = source['blob']; captured = source_by_path.get(source['import_path'])
@@ -280,7 +296,7 @@ def validate_manifest(manifest, files, *, distribution='local_private'):
         if source['artifact_name'] in indexed:
             require(source['sha256'] == indexed[source['artifact_name']]['sha256']
                     and source['run_id'] == descriptor['run_id'], 'Included source artifact differs from retained lineage.')
-    if type(task) is dict and task.get('format') == SCALAR_A_TASK_FORMAT:
+    if task.get('format') in (SCALAR_A_TASK_FORMAT, CANONICAL_A_TASK_FORMAT):
         _validate_scalar_a(manifest, files, task, descriptor, published, ref)
         require(referenced | exempt == set(indexed), 'Unreferenced package content is not permitted.')
         return manifest
@@ -365,24 +381,212 @@ def _validate_scalar_a(manifest, files, task, descriptor, published, ref):
         raise PackageError('invalid', 'Malformed scalar A package contract.') from None
 
 
+def _canonical_source_map(task, manifest, ref):
+    values = task.get('source_map')
+    require(type(values) is list and 1 <= len(values) <= 64, 'Canonical source mapping exceeds its bound.')
+    result = {}; names = set(); previous = None
+    sources = {item['name']: item for item in manifest['sources']}
+    for index, item in enumerate(values):
+        closed(item, ('import_path', 'blob'))
+        path = item['import_path']
+        require(type(path) is str and len(path) <= 512 and not path.startswith('/') and '\\' not in path
+                and all(part not in ('', '.', '..') for part in path.split('/'))
+                and (previous is None or previous < path), 'Canonical import path/order differs.')
+        ref(item['blob'])
+        require(item['blob']['name'] == f'published-source-{index:04d}.bin'
+                and sources.get(item['blob']['name']) == item['blob'] and item['blob']['name'] not in names,
+                'Canonical flat source alias differs.')
+        result[path] = item['blob']; names.add(item['blob']['name']); previous = path
+    return result
+
+
+def _validate_canonical_a_sources(manifest, files, task, contract, policy, recipe, sources, descriptor, ref):
+    """Data-only custody/role validation; never import the training/SDK closure."""
+    authority = contract['source_authority']
+    expected_paths = {*authority['numerical_sources'], *authority['sdk_sources'],
+        *(key + '.json' for key in authority['role_declarations']), 'project.json', 'extension.json',
+        'recipe.json', 'infer.py', 'inference-contract.json', 'runtime-bootstrap/extension-binding.json'}
+    require(set(sources) == expected_paths, 'Canonical full published source closure differs.', 'unsupported')
+    def raw(path):
+        return files[sources[path]['name']]
+    for path, expected in {**authority['numerical_sources'], **authority['sdk_sources']}.items():
+        require(sha(raw(path)) == expected, 'Canonical numerical/SDK source authority differs.', 'unsupported')
+    for kind, definition in authority['role_declarations'].items():
+        require(encoded(decode(raw(kind + '.json'))) == encoded(definition),
+                'Canonical semantic role declaration differs.', 'unsupported')
+    require(raw('infer.py') == files['infer.py'] and raw('inference-contract.json') == files['inference-contract.json']
+            and raw('NOTICE.txt') == files['inference-NOTICE.txt'], 'Canonical captured inference closure differs.')
+    require({item['path']: item['sha256'] for item in recipe['sources']} ==
+            {path: item['sha256'] for path, item in sources.items()
+             if path not in ('project.json', 'recipe.json', 'runtime-bootstrap/extension-binding.json')},
+            'Canonical recipe full source/role/inference inventory differs.')
+    runtime = decode(files[manifest['runtime']['contract']['name']])['snapshot']
+    require(type(recipe['schema_version']) is int and recipe['schema_version'] == 3
+            and recipe['format'] == 'external_model_evidence_recipe_v2' and recipe['entrypoint'] == 'producer.py'
+            and recipe['runtime'] == 'captured_cpu_python_v1' and recipe['runtime_snapshot_sha256'] == runtime['manifest_sha256'],
+            'Canonical captured recipe/runtime identity differs.')
+    binding = decode(raw('runtime-bootstrap/extension-binding.json'))
+    require(binding['format'] == 'tuldok_extension_binding_v1'
+            and binding['project']['manifest_sha256'] == sha(raw('project.json')), 'Canonical captured Project binding differs.')
+    require(len(binding['inventory']) == len(sources)-2, 'Canonical binding inventory coverage differs.')
+    for item in binding['inventory']:
+        require(item['path'] in sources and item['sha256'] == sources[item['path']]['sha256']
+                and item['bytes'] == sources[item['path']]['bytes'], 'Canonical bound source inventory differs.')
+    provider = decode(raw('extension.json'))
+    require(provider['package'] == {'id': 'example.scalar-a', 'version': '3.0.0'}
+            and provider['runtime'] == {'profile': 'captured_cpu_python_v1', 'snapshot_sha256': runtime['manifest_sha256']},
+            'Canonical provider/runtime identity differs.')
+    for item in provider['sources'] + provider['contributions'] + provider['license']['notices']:
+        require(item['path'] in sources and item['sha256'] == sources[item['path']]['sha256']
+                and item['bytes'] == sources[item['path']]['bytes'], 'Canonical provider source inventory differs.')
+    for key in ('composition', 'execution_snapshot', 'canonical_provenance'):
+        ref(task[key])
+    context = decode(files[task['context']['name']]); static = context['static']
+    composition = decode(files[task['composition']['name']])
+    require(_canonical_digest(composition) == context['composition']['sha256'] and
+            composition['model'] == static['model'] and composition['catalog_id'] == static['catalog_id'],
+            'Canonical source composition differs from admitted context.')
+    snapshot_raw = files[task['execution_snapshot']['name']]
+    snapshot = decode(snapshot_raw); execution = snapshot['preflight']['material']
+    require(sha(snapshot_raw) == composition['recipe_document']['sha256']
+            and len(snapshot_raw) == composition['recipe_document']['bytes']
+            and snapshot['format'] == 'external_model_evidence_snapshot_v1'
+            and _canonical_digest(execution) == snapshot['preflight']['material_sha256'] == static['execution_material_sha256']
+            and encoded(execution['recipe']) == encoded(recipe)
+            and encoded(snapshot['evidence_context']) == encoded(static), 'Canonical retained execution capture differs.')
+    require(composition['trainer']['id'] == 'external_model_evidence_recipe_v1'
+            and composition['trainer']['sha256'] == _canonical_digest(recipe)
+            and encoded(execution['cpu_snapshot']) == encoded(runtime)
+            and composition['runtime'] == {'kind': 'runtime', 'catalog_id': static['catalog_id'],
+                'id': _canonical_digest(runtime), 'sha256': _canonical_digest(runtime)},
+            'Canonical source trainer/runtime descriptor composition differs.')
+    captures = {item['path']: item['blob'] for item in snapshot['capture_paths']}
+    require(len(captures) == len(snapshot['capture_paths']) == len(composition['captures'])
+            and sorted(captures.values(), key=lambda item: item['name']) == sorted(composition['captures'], key=lambda item: item['name']),
+            'Canonical retained capture path inventory differs.')
+    for path, item in sources.items():
+        if path == 'recipe.json':
+            continue
+        captured = captures.get('source/' + path)
+        require(captured is not None and captured['sha256'] == item['sha256'] and captured['bytes'] == item['bytes'],
+                'Canonical Model and execution source captures differ.')
+    canonical = policy['canonical']
+    closed(canonical, ('format', 'release', 'derivation', 'provenance', 'contract', 'members', 'mapping'))
+    closed(canonical['release'], ('input', 'sha256'))
+    closed(canonical['derivation'], ('input', 'sha256', 'output'))
+    closed(canonical['provenance'], ('input', 'sha256'))
+    require(policy['format'] == 'extension_field_policy_v2' and canonical['format'] == 'canonical_field_inputs_v1'
+            and canonical['mapping'] == {'inputs': [{'source_field_id': 'initial', 'model_field_id': 'initial'}],
+                                        'target': {'source_field_id': 'reference'}}, 'Canonical source mode/mapping differs.')
+    provenance_raw = files[task['canonical_provenance']['name']]
+    captured = captures.get('input/' + canonical['provenance']['input'])
+    require(captured is not None and captured['sha256'] == sha(provenance_raw) == canonical['provenance']['sha256']
+            and captured['bytes'] == len(provenance_raw), 'Canonical original provenance capture differs.')
+    provenance = decode(provenance_raw)
+    require(provenance['release_sha256'] == canonical['release']['sha256']
+            and provenance['catalog_id'] == static['catalog_id']
+            and provenance['source_sha256'] == authority['numerical_sources']['authored-source.json']
+            and encoded(provenance['contract']) == encoded(canonical['contract']), 'Canonical compilation provenance differs.')
+    source_contract = canonical['contract']; source_output = dict(contract['policy']['field_contract']['output'])
+    closed(source_contract, ('format', 'owner', 'adapter', 'source_sha256', 'inputs', 'output', 'time_mode'))
+    source_output.update(field_id='reference', stage='reference_target')
+    require(source_contract['format'] == 'field_adapter_contract_v1'
+            and source_contract['adapter'] == {'name': 'authored_scalar_a_canonical_source', 'version': 1}
+            and source_contract['source_sha256'] == provenance['compiler_sha256']
+            and encoded(source_contract['inputs']) == encoded(contract['policy']['field_contract']['inputs'])
+            and encoded(source_contract['output']) == encoded(source_output)
+            and source_contract['time_mode'] == 'standalone', 'Canonical source field contract differs.')
+    release = execution['inputs'][canonical['release']['input']]
+    require(release['kind'] == 'frozen_release' and release['catalog_id'] == static['catalog_id']
+            and release['release_id'] == release['measured_sha256'] == canonical['release']['sha256'],
+            'Canonical original frozen Release identity differs.')
+    release_capture = captures.get('input/' + canonical['release']['input'])
+    require(release_capture is not None and release_capture['sha256'] == canonical['release']['sha256']
+            and release_capture['bytes'] == release['bytes'], 'Canonical whole Release capture receipt differs.')
+    derivation_name = canonical['derivation']['output']
+    require(derivation_name in files and sha(files[derivation_name]) == canonical['derivation']['sha256']
+            and captures['input/' + canonical['derivation']['input']]['sha256'] == canonical['derivation']['sha256'],
+            'Canonical retained derivation differs from admitted input.')
+    derivation = decode(files[derivation_name])
+    members = canonical['members']; cases = derivation['cases']
+    require(derivation['format'] == 'field_input_derivation_v1'
+            and derivation['contract_sha256'] == sha(encoded(source_contract))
+            and derivation['family_scope'] == 'selected_records_only'
+            and len(members) == len(cases) == 3 and derivation['fit_case_ids'] == ['train-0', 'train-1']
+            and [item['case_id'] for item in members] == ['train-0', 'train-1', 'validation-0'],
+            'Canonical complete source membership differs.')
+    authored_cases = {item['id']: item for item in decode(raw('authored-source.json'))['cases']}
+    native_names = set()
+    for member, case in zip(members, cases, strict=True):
+        require(member['case_id'] == case['id'] and member['record_id'] == case['record_id']
+                and member['split'] == case['split'] and member['split'] in ('train', 'validation')
+                and member['split'] == authored_cases[case['id']]['split']
+                and type(member['record_id']) is str and re.fullmatch('[a-f0-9]{32}', member['record_id'])
+                and all(type(member[key]) is int and member[key] >= 1 for key in ('revision', 'source_revision'))
+                and case['release_sha256'] == canonical['release']['sha256']
+                and case['geometry_sha256'] == sha(encoded(contract['policy']['geometry']))
+                and case['frame'] == 0 and type(case['frame']) is int and case['time'] == '0'
+                and len(case['arrays']) == 2 and {item['field_id'] for item in case['arrays']} == {'initial', 'reference'},
+                'Canonical original case/record/split mapping differs.')
+        for item in case['arrays']:
+            output = item['output']; check_blob(output); name = output['name']
+            packaged = next((entry for entry in manifest['inventory'] if entry['name'] == name), None)
+            require(packaged is not None and packaged['sha256'] == output['sha256'] and packaged['bytes'] == output['bytes']
+                    and output['media_type'] == 'application/x-npy', 'Canonical native source receipt differs.')
+            ref(packaged)
+            require(name not in native_names and item['field_id'] in ('initial', 'reference')
+                    and sha(files[name]) == item['source_sha256'], 'Canonical native source bytes differ.')
+            payload, values = _scalar_npy(files[name], (4, 4, 4))
+            source_values = authored_cases[case['id']]['initial' if item['field_id'] == 'initial' else 'target']
+            require(sha(payload) == item['payload_sha256'] and tuple(source_values) == values
+                    and item['gauge_policy_sha256'] == contract['policy']['field_contract']['output']['gauge_policy_sha256'],
+                    'Canonical native source payload differs from exact pinned author values/gauge.')
+            native_names.add(name)
+    rules = {item['path']: item for item in recipe['outputs']}
+    require(native_names == {name for name, item in rules.items() if item['role'] == 'field_source'}
+            and len(native_names) == 6 and rules[derivation_name]['role'] == 'field_derivation',
+            'Canonical complete native/derivation role coverage differs.')
+    for item in decode(files['checkpoints.json'])['entries']:
+        checkpoint = decode(files[item['checkpoint']['name']])
+        require(rules[item['checkpoint']['name']]['role'] == 'model_checkpoint'
+                and rules[checkpoint['weights']['name']]['role'] == 'model_state', 'Canonical checkpoint/state roles collide.')
+    require(rules[decode(files['fitted-transform.json'])['state']['name']]['role'] == 'model_state',
+            'Canonical transform/source roles collide.')
+    for item in policy['field_outputs']:
+        require(rules[item['prediction']]['role'] == 'field_prediction' and item['reference'] in native_names,
+                'Canonical model prediction/source reference roles collide.')
+    lineage = decode(files[manifest['lineage']['name']])['sources']
+    require(len(lineage) == 31 and {item['artifact_name'] for item in lineage} ==
+            {item['path'] for item in recipe['outputs'] if item['required'] and item['path'] != 'diagnostics.json'},
+            'Canonical complete required retained artifact lineage differs.')
+
+
 def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
     """One frozen task-owned profile; never import its captured executable here."""
-    closed(task, ('format', 'contract', 'context', 'probe', 'field_index', 'profile'))
+    canonical = task.get('format') == CANONICAL_A_TASK_FORMAT
+    closed(task, ('format', 'contract', 'context', 'probe', 'field_index', 'profile',
+                 *(['source_map', 'composition', 'execution_snapshot', 'canonical_provenance'] if canonical else [])))
     for key in ('contract', 'context', 'probe', 'field_index', 'profile'):
         ref(task[key])
-    nomination = SCALAR_A_ADAPTERS.get(task['contract']['sha256'])
+    nomination = (CANONICAL_A_ADAPTER if task['contract']['sha256'] == CANONICAL_A_CONTRACT_SHA256 else None) if canonical else SCALAR_A_ADAPTERS.get(task['contract']['sha256'])
     require(nomination is not None and task['contract']['name'] == 'inference-contract.json'
             and sha(files.get('infer.py', b'')) == nomination['source_sha256']
-            and sha(files.get('inference-NOTICE.txt', b'')) == SCALAR_A_NOTICE_SHA256,
+            and sha(files.get('inference-NOTICE.txt', b'')) == (CANONICAL_A_ADAPTER['notice_sha256'] if canonical else SCALAR_A_NOTICE_SHA256),
             'Unqualified scalar A inference entry/contract/notice.', 'unsupported')
     contract = decode(files['inference-contract.json']); policy = contract['policy']
-    require(contract['adapter'] == {'id': 'example.scalar-a:inference', 'revision': nomination['revision']}
-            and contract['source_authority']['recipe_sha256'] == nomination['recipe_sha256'], 'Scalar A nomination identity differs.', 'unsupported')
+    require(contract['adapter'] == {'id': 'example.scalar-a.canonical:inference' if canonical else 'example.scalar-a:inference',
+                                  'revision': nomination['revision']}
+            and (canonical or contract['source_authority']['recipe_sha256'] == nomination['recipe_sha256']), 'Scalar A nomination identity differs.', 'unsupported')
     if nomination['runtime_snapshot_sha256'] is not None:
         require(decode(files[manifest['runtime']['contract']['name']])['snapshot']['manifest_sha256'] == nomination['runtime_snapshot_sha256'],
                 'Scalar A private QA nomination requires its exact selected captured runtime.', 'unsupported')
     context = decode(files[task['context']['name']]); static = context['static']; authored = static['policy']
-    require(encoded(decode(files['recipe.json'])['model_evidence']) == encoded(authored),
+    source_map = _canonical_source_map(task, manifest, ref) if canonical else None
+    recipe = decode(files[source_map['recipe.json']['name']]) if canonical else decode(files['recipe.json'])
+    recipe_policy = decode(encoded(recipe['model_evidence']))
+    if canonical:
+        recipe_policy['model_specification'] = authored['model_specification']
+    require(encoded(recipe_policy) == encoded(authored),
             'Scalar A admitted policy differs from its captured recipe definition.')
     require(context['format'] == 'extension_evidence_context_v1' and context['run_id'] == descriptor['run_id']
             and static['catalog_id'] == manifest['candidate']['catalog_id']
@@ -419,10 +623,21 @@ def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
         expected = policy[key]
         require(actual['id'] == expected['id'] and type(actual['revision']) is int and actual['revision'] == expected['revision']
                 and actual['sha256'] == expected['definition_sha256'], 'Scalar A task/profile definition differs.', 'unsupported')
-    require(encoded(authored['model_specification']) == encoded(policy['model_specification'])
+    specification = dict(authored['model_specification'])
+    fields = decode(encoded(authored['fields']))
+    if canonical:
+        configuration = specification.pop('configuration', None)
+        require(type(configuration) is dict and set(configuration) == {'initial_scale', 'initial_offset'}
+                and all(type(value) in (int, float) and math.isfinite(value) and -1 <= value <= 1 for value in configuration.values()),
+                'Canonical training initialization configuration differs.', 'unsupported')
+        require(len(fields) == 1, 'Canonical scalar profile requires its exact field.')
+        require(fields[0]['contract']['source_sha256'] == authored['adapter_sha256']
+                == sha(encoded(sorted(recipe['sources'], key=lambda item: item['path']))), 'Canonical source authority closure differs.')
+        fields[0]['contract'].pop('source_sha256')
+    require(encoded(specification) == encoded(policy['model_specification'])
             and encoded(authored['preprocessing_policy']) == encoded(policy['preprocessing_policy'])
             and encoded(authored['output_policy']) == encoded(policy['output_policy'])
-            and encoded(authored['fields']) == encoded([{'id': policy['field_id'], 'contract': policy['field_contract'],
+            and encoded(fields) == encoded([{'id': policy['field_id'], 'contract': policy['field_contract'],
                 'geometry': policy['geometry'], 'gauge_policy': policy['gauge_policy']}]),
             'Scalar A field/model/preprocessing/geometry/gauge policy differs.', 'unsupported')
     for name, policy_name in (('specification', 'model_specification'), ('preprocessing_policy', 'preprocessing_policy'), ('output_policy', 'output_policy')):
@@ -433,14 +648,19 @@ def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
             'Scalar A retained model/output artifact differs from the author policy.')
     require(decode(files[task['profile']['name']]) == static['profile'], 'Scalar A retained profile differs.')
     require(published['task'] == static['task'], 'Scalar A published task differs.')
-    source_map = {item['import_path']: item['blob'] for item in published['source_closure']}
-    require(set(source_map) == {'producer.py', 'evidence_writer.py', 'task.json', 'extension.json', 'NOTICE.txt', 'recipe.json'},
+    published_sources = {item['import_path']: item['blob'] for item in published['source_closure']}
+    if canonical:
+        require(set(source_map) == set(published_sources), 'Canonical published import mapping is incomplete.')
+        _validate_canonical_a_sources(manifest, files, task, contract, authored, recipe, source_map, descriptor, ref)
+    else:
+        source_map = published_sources
+    require(canonical or set(source_map) == {'producer.py', 'evidence_writer.py', 'task.json', 'extension.json', 'NOTICE.txt', 'recipe.json'},
             'Scalar A requires its five published training sources and owner-captured recipe definition.')
-    require({item['path']: item['sha256'] for item in decode(files['recipe.json'])['sources']}
+    require(canonical or {item['path']: item['sha256'] for item in decode(files['recipe.json'])['sources']}
             == {name: item['sha256'] for name, item in source_map.items() if name != 'recipe.json'},
             'Scalar A captured recipe/source/notice inventory differs.')
-    for path, key in (('producer.py', 'producer_sha256'), ('evidence_writer.py', 'evidence_writer_sha256'),
-                      ('task.json', 'task_sha256'), ('extension.json', 'extension_sha256'), ('recipe.json', 'recipe_sha256')):
+    for path, key in (() if canonical else (('producer.py', 'producer_sha256'), ('evidence_writer.py', 'evidence_writer_sha256'),
+                      ('task.json', 'task_sha256'), ('extension.json', 'extension_sha256'), ('recipe.json', 'recipe_sha256'))):
         require(source_map[path]['sha256'] == contract['source_authority'][key], 'Scalar A published source authority differs.', 'unsupported')
     fitted = decode(files[manifest['transforms'][1]['name']])
     closed(fitted, ('format', 'fit_scope', 'fit_members', 'state'))
@@ -504,7 +724,13 @@ def _validate_scalar_a_body(manifest, files, task, descriptor, published, ref):
     require(sha(encoded([{'field_id': 'initial', 'payload_sha256': sha(native)}])) == member['input_sha256'],
             'Scalar A raw-file input does not match admitted native field payload.')
     native, _ = _scalar_npy(files[target['reference']['name']], (4, 4, 4))
-    require(sha(native) == member['target_sha256'], 'Scalar A reference differs from fixed probe target.')
+    if canonical:
+        targets = authored['field_targets']
+        require(targets == [{'member_id': member['frozen_reference']['member_id'], 'field_id': 'raw', 'payload_sha256': sha(native)}]
+                and sha(encoded([{'field_id': 'raw', 'payload_sha256': sha(native)}])) == member['target_sha256'],
+                'Canonical field reference differs from its exact per-output fixed target.')
+    else:
+        require(sha(native) == member['target_sha256'], 'Scalar A reference differs from fixed probe target.')
     _scalar_npy(files[target['prediction']['name']], (4, 4, 4))
 
 
@@ -512,7 +738,7 @@ def _infer_scalar_a(manifest, files, package_sha256, snapshot_sha256):
     """Execute the exact frozen author adapter after normal admitted runtime checks."""
     require(manifest['inference_entry']['sha256'] == sha(Path(__file__).read_bytes()), 'Consumer implementation differs.')
     contract = decode(files['inference-contract.json'])
-    nomination = SCALAR_A_ADAPTERS[sha(files['inference-contract.json'])]
+    nomination = CANONICAL_A_ADAPTER if decode(files[manifest['task']['name']])['format'] == CANONICAL_A_TASK_FORMAT else SCALAR_A_ADAPTERS[sha(files['inference-contract.json'])]
     descriptor = decode(files[manifest['checkpoint']['name']]); fitted = decode(files[manifest['transforms'][1]['name']])
     initial = decode(files[manifest['probes']['name']])['rows'][0]['input']
     expected = decode(files[manifest['expected_outputs']['name']])['rows'][0]
@@ -607,7 +833,7 @@ def infer_package(raw, expected_sha256, snapshot_sha256):
     weights = descriptor['weights']
     task = decode(files[manifest['task']['name']])
     definition = decode(files[manifest['model']['name']])
-    if type(task) is dict and task.get('format') == SCALAR_A_TASK_FORMAT:
+    if type(task) is dict and task.get('format') in (SCALAR_A_TASK_FORMAT, CANONICAL_A_TASK_FORMAT):
         return _infer_scalar_a(manifest, files, expected_sha256, snapshot_sha256)
     require(descriptor.get('format') == 'checkpoint_state_v1' and definition.get('format') == 'tinycnn_definition_v2'
             and task.get('format') == 'package_classifier_task_v1', 'This consumer supports TinyCNN v2 only.', 'unsupported')
@@ -812,13 +1038,15 @@ def classifier_closure(candidate, artifact_bytes, probe_images, sources, runtime
     return manifest, blobs
 
 
-def scalar_a_closure(candidate, artifact_bytes, sources, runtime, published_model, inference_files=None):
+def scalar_a_closure(candidate, artifact_bytes, sources, runtime, published_model, inference_files=None, *, canonical_capture=None):
     """Close one explicitly frozen scientific A selection; no training or inference.
 
     All producer bytes are obtained through current authorized Run/Model owners.
     Expected values are retained native producer fields, never host calculations.
     """
     context = decode(artifact_bytes['execution-context.json']); static = context['static']; policy = static['policy']
+    if policy.get('format') == 'extension_field_policy_v2':
+        return canonical_a_closure(candidate, artifact_bytes, sources, runtime, published_model, canonical_capture)
     checkpoint_name = candidate['checkpoint']['name']; descriptor = decode(artifact_bytes[checkpoint_name])
     require(candidate['run_id'] == descriptor['run_id'] and candidate['checkpoint']['sha256'] == sha(artifact_bytes[checkpoint_name]),
             'Scalar A immutable candidate selection differs.')
@@ -893,6 +1121,93 @@ def scalar_a_closure(candidate, artifact_bytes, sources, runtime, published_mode
             'Fixed-probe reconstruction establishes neither independent numerical quality nor physical validity or training resume.']}
     validate_manifest(manifest, dict(blobs, **{'manifest.json': encoded(manifest)}))
     return manifest, blobs
+
+
+def canonical_a_closure(candidate, artifact_bytes, sources, runtime, published_model, captured):
+    """Explicit private canonical A profile; all31 required artifacts and imports."""
+    require(type(captured) is dict and set(captured) == {'composition', 'execution_snapshot', 'canonical_provenance'},
+            'Canonical source composition/provenance capture is required.', 'unavailable')
+    require('recipe.json' in sources and 'infer.py' in sources and 'inference-contract.json' in sources,
+            'Canonical inference must be captured before Model publication.', 'unsupported')
+    recipe = decode(sources['recipe.json']); policy = decode(artifact_bytes['execution-context.json'])['static']['policy']
+    names = {item['path'] for item in recipe['outputs'] if item['required'] and item['path'] != 'diagnostics.json'}
+    require(len(names) == 31 and names <= set(artifact_bytes), 'Canonical full31-output closure is unavailable.')
+    blobs = {name: artifact_bytes[name] for name in names}
+    source_map = []
+    for index, path in enumerate(sorted(sources)):
+        name = f'published-source-{index:04d}.bin'; blobs[name] = sources[path]
+        source_map.append({'import_path': path, 'blob': blob(name, sources[path], 'application/octet-stream')})
+    blobs.update({'infer.py': sources['infer.py'], 'inference-contract.json': sources['inference-contract.json'],
+                  'inference-NOTICE.txt': sources['NOTICE.txt'], 'candidate_packages.py': Path(__file__).read_bytes(),
+                  'recipe_process.py': Path(__file__).with_name('recipe_process.py').read_bytes(),
+                  'candidate-decision.json': encoded(candidate['candidate']), 'runtime.json': encoded(runtime),
+                  'published-model-material.json': encoded(published_model['material']),
+                  'source-composition.json': captured['composition'], 'source-execution.json': captured['execution_snapshot'],
+                  'canonical-source.json': captured['canonical_provenance']})
+    policies = {}
+    for key in ('specification', 'preprocessing_policy', 'output_policy'):
+        blobs['published-' + key + '.json'] = published_model[key]; policies[key] = decode(published_model[key])
+    blobs['package-model-definition.json'] = encoded({'format': 'package_canonical_scalar_a_model_v1', **policies})
+    blobs['transform-policy.json'] = published_model['preprocessing_policy']
+    def reference(name):
+        return blob(name, blobs[name], 'application/octet-stream' if name.endswith(('.npy', '.bin')) else
+                    'text/x-python' if name.endswith('.py') else 'text/plain' if name.endswith('.txt') else 'application/json')
+    descriptor_name = candidate['checkpoint']['name']; descriptor = decode(blobs[descriptor_name])
+    require(candidate['run_id'] == descriptor['run_id'] and candidate['checkpoint']['sha256'] == sha(blobs[descriptor_name]),
+            'Canonical immutable selected checkpoint differs.')
+    groups = decode(blobs['field-index.json'])
+    selected = [item for item in groups if item['checkpoint_sha256'] == candidate['checkpoint']['sha256']]
+    require(len(selected) == 1 and len(selected[0]['cases']) == 1, 'Canonical selected fixed field differs.')
+    case = selected[0]['cases'][0]; input_name = policy['probe_inputs'][0]['fields'][0]['artifact']
+    blobs['package-field-probes.json'] = encoded({'format': 'package_scalar_a_probes_v1',
+        'rows': [{'ordinal': 0, 'input': reference(input_name)}]})
+    blobs['package-field-expected.json'] = encoded({'format': 'package_scalar_a_expected_v1', 'run_id': descriptor['run_id'],
+        'checkpoint_sha256': candidate['checkpoint']['sha256'], 'probe_sha256': sha(blobs['probe.json']),
+        'rows': [{'ordinal': 0, 'prediction': case['predicted'], 'reference': case['reference']}]})
+    blobs['package-field-task.json'] = encoded({'format': CANONICAL_A_TASK_FORMAT,
+        'contract': reference('inference-contract.json'), 'context': reference('execution-context.json'),
+        'probe': reference('probe.json'), 'field_index': reference('field-index.json'), 'profile': reference('profile.json'),
+        'source_map': source_map, 'composition': reference('source-composition.json'),
+        'execution_snapshot': reference('source-execution.json'), 'canonical_provenance': reference('canonical-source.json')})
+    validation = {'probe.json', 'field-index.json', 'observations.json', 'model-evidence.json',
+                  'metric-definitions.json', input_name}
+    validation.update(row[key]['name'] for group in groups for row in group['cases'] for key in ('predicted', 'reference'))
+    blobs['lineage.json'] = encoded({'format': 'package_lineage_v1', 'data_policy': 'private_retained_native_sources_v1',
+        'sources': [{'run_id': candidate['run_id'], 'artifact_name': name, 'sha256': sha(artifact_bytes[name]),
+                    'population': 'validation' if name in validation else 'train'} for name in sorted(names)]})
+    blobs['rights.json'] = encoded({'format': 'package_rights_v1', 'materials': sorted(blobs),
+        'authority': None, 'terms': None, 'redistribution': 'denied'})
+    refs = {name: reference(name) for name in blobs}
+    source_names = {item['blob']['name'] for item in source_map} | {'infer.py', 'recipe_process.py'}
+    principal = {descriptor_name, 'package-model-definition.json', 'transform-policy.json', 'fitted-transform.json',
+        'package-field-task.json', 'candidate_packages.py', 'runtime.json', 'lineage.json', 'package-field-probes.json',
+        'package-field-expected.json', 'rights.json', *source_names}
+    manifest = {'format': FORMAT, 'candidate': candidate['ref'], 'checkpoint': refs[descriptor_name],
+        'model': refs['package-model-definition.json'], 'sources': [refs[name] for name in sorted(source_names)],
+        'transforms': [refs['transform-policy.json'], refs['fitted-transform.json']], 'task': refs['package-field-task.json'],
+        'inference_entry': refs['candidate_packages.py'], 'runtime': {'contract': refs['runtime.json'], 'provision': 'external'},
+        'evidence': [refs[name] for name in sorted(set(blobs)-principal)], 'lineage': refs['lineage.json'],
+        'probes': refs['package-field-probes.json'], 'expected_outputs': refs['package-field-expected.json'],
+        'licenses': [refs['rights.json']], 'inventory': [refs[name] for name in sorted(refs)],
+        'limitations': ['Private canonical scalar A QA only; complete retained source-native proof is included under current access.',
+            'Whole Release is retained by identity only; redistribution is not granted.',
+            'Fixed-probe reconstruction establishes neither model quality, physical validity nor training resume.']}
+    validate_manifest(manifest, dict(blobs, **{'manifest.json': encoded(manifest)}))
+    return manifest, blobs
+
+
+def _canonical_capture_evidence(dataset, composition_ref, policy):
+    """Use an authorized verified composition, then its hash-bound owned blobs."""
+    from model_definitions import read_owned_blob
+    value = dataset.pipelines.recipe_material(composition_ref, verify=True)
+    material = value['material']; directory = dataset.pipelines.material_path
+    snapshot_raw = read_owned_blob(directory, composition_ref['sha256'], material['recipe_document'], 2*1024**2)
+    snapshot = decode(snapshot_raw)
+    paths = [item['blob'] for item in snapshot['capture_paths']
+             if item['path'] == 'input/' + policy['canonical']['provenance']['input']]
+    require(len(paths) == 1 and paths[0] in material['captures'], 'Canonical captured provenance is unavailable.')
+    provenance_raw = read_owned_blob(directory, composition_ref['sha256'], paths[0], 65536)
+    return {'composition': encoded(material), 'execution_snapshot': snapshot_raw, 'canonical_provenance': provenance_raw}
 
 
 def authorize_transitive_inputs(runs, run, *, seen=None):
@@ -973,8 +1288,11 @@ def prepare_project(destination, manifest, blobs, *, snapshot_sha256=None):
     root = Path(destination)
     source = Path(__file__).read_bytes()
     request, payload = encoded(manifest), _zip(blobs)
-    data = {'request.json': request, 'closure.zip': payload}
+    canonical = decode(blobs[manifest['task']['name']]).get('format') == CANONICAL_A_TASK_FORMAT
+    data = {'closure.zip': payload} if canonical else {'request.json': request, 'closure.zip': payload}
     sources = [{'path': 'candidate_packages.py', 'sha256': sha(source)}]
+    if canonical:
+        sources.append({'path': 'request.json', 'sha256': sha(request)})
     common = {'schema_version': 1, 'format': 'external_recipe_v1', 'version': 1,
               'runtime': 'captured_cpu_python_v1' if snapshot_sha256 else 'system_python',
               'sources': sources, 'entrypoint': 'candidate_packages.py', 'parameters': {},
@@ -983,11 +1301,13 @@ def prepare_project(destination, manifest, blobs, *, snapshot_sha256=None):
         common['runtime_snapshot_sha256'] = snapshot_sha256
     lineage = decode(blobs[manifest['lineage']['name']])['sources']
     source_inputs = {f'lineage_{index}': source for index, source in enumerate(lineage)}
-    require(len(source_inputs) <= 30, 'Package lineage exceeds recipe input bound.')
+    require(len(source_inputs) <= (31 if canonical else 30), 'Package lineage exceeds recipe input bound.')
+    request_arguments = ([{'literal': '--request-from-source'}, {'literal': 'request.json'}] if canonical else
+                         [{'literal': '--request'}, {'input': 'request'}])
     pack = dict(common, id='candidate-package', name='Package exact candidate closure',
-        arguments=[{'literal': 'pack'}, {'literal': '--request'}, {'input': 'request'},
+        arguments=[{'literal': 'pack'}, *request_arguments,
             {'literal': '--blobs'}, {'input': 'closure'}, {'literal': '--output-dir'}, {'output_dir': True}],
-        inputs={'request': {'max_bytes': MAX_DOCUMENT_BYTES}, 'closure': {'max_bytes': MAX_PACKAGE_BYTES},
+        inputs={**({} if canonical else {'request': {'max_bytes': MAX_DOCUMENT_BYTES}}), 'closure': {'max_bytes': MAX_PACKAGE_BYTES},
                 **{name: {'max_bytes': MAX_PACKAGE_BYTES} for name in source_inputs}},
         outputs=[{'path': 'package.zip', 'role': 'inference_package', 'max_bytes': MAX_PACKAGE_BYTES, 'required': True},
                  {'path': 'package-result.json', 'role': 'package_result', 'max_bytes': MAX_DOCUMENT_BYTES, 'required': True}])
@@ -995,10 +1315,11 @@ def prepare_project(destination, manifest, blobs, *, snapshot_sha256=None):
         'data': [{'id': name.split('.')[0], 'label': name, 'path': name, 'sha256': sha(raw)} for name, raw in data.items()],
         'recipes': [{'id': 'package', 'label': 'Package exact candidate closure', 'path': 'package-recipe.json', 'sha256': sha(encoded(pack))}],
         'evidence': [], 'requirements': []}
-    _write_project(root, dict(data, **{'candidate_packages.py': source, 'package-recipe.json': encoded(pack), 'project.json': encoded(project)}))
+    _write_project(root, dict(data, **({'request.json': request} if canonical else {}),
+                             **{'candidate_packages.py': source, 'package-recipe.json': encoded(pack), 'project.json': encoded(project)}))
     return {'manifest': project, 'graph': {'name': 'Package exact candidate closure', 'project_id': project['id'],
         'recipe_id': 'package', 'expected_sha256': sha(encoded(pack)),
-        'inputs': {'request': {'reference_id': 'request', 'expected_sha256': sha(request)},
+        'inputs': {**({} if canonical else {'request': {'reference_id': 'request', 'expected_sha256': sha(request)}}),
                    'closure': {'reference_id': 'closure', 'expected_sha256': sha(payload)},
                    **{name: {'kind': 'run_artifact', 'run_id': item['run_id'], 'artifact_name': item['artifact_name'],
                              'expected_sha256': item['sha256']} for name, item in source_inputs.items()}}}}
@@ -1117,10 +1438,15 @@ def _prepare_operation(experiments, study_id, body, kind):
             sources = {item['import_path']: dataset.models.read_blob(model['ref'], item['blob']) for item in model['material']['source_closure']}
             published = {'material': model['material'], **{key: dataset.models.read_blob(model['ref'], model['material'][key]) for key in ('specification', 'preprocessing_policy', 'output_policy')}}
             if scientific:
-                manifest, blobs = scalar_a_closure(candidate, artifacts, sources, runtime_contract(snapshot), published)
+                policy = decode(artifacts['execution-context.json'])['static']['policy']
+                captured = (_canonical_capture_evidence(dataset, source_trial['material'], policy)
+                            if policy.get('format') == 'extension_field_policy_v2' else None)
+                manifest, blobs = scalar_a_closure(candidate, artifacts, sources, runtime_contract(snapshot), published,
+                                                  canonical_capture=captured)
             else:
                 manifest, blobs = classifier_closure(candidate, artifacts, images, sources, runtime_contract(snapshot), published)
-            prepared = prepare_project(destination, manifest, blobs)
+            prepared = prepare_project(destination, manifest, blobs,
+                snapshot_sha256=snapshot['manifest_sha256'] if scientific and policy.get('format') == 'extension_field_policy_v2' else None)
         else:
             package_raw, _media = dataset.runs.artifact(body['package_run_id'], 'package.zip')
             manifest, files = inspect_package(package_raw, body['package_sha256'])
@@ -1245,14 +1571,17 @@ def candidate_package_state(experiments, candidate_id):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('pack', 'consume'))
-    parser.add_argument('--request'); parser.add_argument('--blobs')
+    requests = parser.add_mutually_exclusive_group()
+    requests.add_argument('--request'); requests.add_argument('--request-from-source', choices=('request.json',))
+    parser.add_argument('--blobs')
     parser.add_argument('--package'); parser.add_argument('--expected-sha256')
     parser.add_argument('--runtime-snapshot-sha256'); parser.add_argument('--output-dir', required=True)
     args = parser.parse_args()
     try:
         output = Path(args.output_dir)
         if args.action == 'pack':
-            manifest = decode(Path(args.request).read_bytes())
+            request = Path(__file__).parent / args.request_from_source if args.request_from_source else Path(args.request)
+            manifest = decode(request.read_bytes())
             raw = create_package(manifest, archive_files(Path(args.blobs).read_bytes()))
             (output / 'package.zip').write_bytes(raw)
             (output / 'package-result.json').write_bytes(encoded({'format': 'package_result_v1',

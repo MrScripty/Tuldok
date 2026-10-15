@@ -59,12 +59,15 @@ class CanonicalDriverGuards(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'Reviewed canonical source differs'):
                 driver.verify_frozen_sources(project)
 
-    def test_notice_source_pin_refuses_changed_accepted_rights_bytes(self):
+    def test_changed_notice_refuses_before_catalog_runtime_or_admission(self):
         with tempfile.TemporaryDirectory() as temporary:
-            project=Path(temporary)/'project';shutil.copytree(driver.PACKAGE,project)
-            source=project/'NOTICE.txt';source.write_bytes(source.read_bytes()+b'\nchanged\n')
-            with self.assertRaisesRegex(RuntimeError,'Reviewed canonical source differs: NOTICE.txt'):
-                driver.verify_frozen_sources(project)
+            root=Path(temporary);package=root/'package';shutil.copytree(driver.PACKAGE,package)
+            driver.verify_frozen_sources(package)
+            notice=package/'NOTICE.txt';notice.write_bytes(notice.read_bytes()+b'\nChanged rights\n')
+            with patch.object(driver,'PACKAGE',package),patch.object(driver,'Dataset',side_effect=AssertionError('No catalog activation')):
+                with self.assertRaisesRegex(RuntimeError,'Reviewed canonical source differs: NOTICE.txt'):
+                    driver.main(SimpleNamespace(catalog=root/'absent-catalog'))
+            self.assertFalse((root/'absent-catalog').exists())
 
     def test_timeout_observation_is_bounded_redacted_and_not_an_outcome(self):
         timeout=subprocess.TimeoutExpired(['sdk'],1,output=b'secret-token'+b'x'*300000,stderr=b'secret-token'+b'y'*70000)

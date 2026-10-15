@@ -235,6 +235,7 @@ function launch(command, args, options) {
     if(name.startsWith("prepared"))await evaluate('document.querySelector("#real-model-root").scrollIntoView({block:"start"})');
     if(name.includes("evidence"))await evaluate('document.querySelector(".model-evidence").scrollIntoView({block:"start"})');
     if(name.includes('field'))await evaluate('document.querySelector(".field-evidence")?.scrollIntoView({block:"start"})');
+    if(name.includes('declared-field'))await evaluate('document.querySelector(".field-pair")?.scrollIntoView({block:"start"})');
     if (name.startsWith("catalog"))
       await evaluate(
         'document.getElementById("catalog-frame").contentWindow.scrollTo(0,0)',
@@ -286,6 +287,14 @@ function launch(command, args, options) {
   const pin=await evaluate('WorkspaceModelContracts["runs.model_evidence/2"]');
   async function query(body){const response=await fetch(base+'/api/workspace/runs/'+sourceRun+'/model-evidence',{method:'POST',headers:{'Content-Type':'application/json','Tuldok-Operation-Contract':'runs.model_evidence/2/'+pin},body:JSON.stringify(body)});assert.equal(response.status,200,await response.clone().text());return response.json();}
   const index=await query({});assert.equal(index.state,'verified');assert.ok(index.fields.length&&index.checkpoint_index.entries.length&&index.probe.members.length);
+  const uniqueFields=[...new Map(index.fields.map(item=>[JSON.stringify([item.field_id,item.stage]),{field_id:item.field_id,stage:item.stage}])).values()];
+  if(sourceReceipt.expected_fields!==undefined){
+    const expected=sourceReceipt.expected_fields;
+    assert.ok(Array.isArray(expected)&&expected.length>0&&expected.length<=4,'Provide finite reviewed field/stage pairs');
+    assert.ok(expected.every(item=>item&&Object.keys(item).sort().join(',')==='field_id,stage'&&typeof item.field_id==='string'&&item.field_id&&typeof item.stage==='string'&&item.stage));
+    const signature=items=>items.map(item=>JSON.stringify([item.field_id,item.stage])).sort();
+    assert.deepEqual(signature(uniqueFields),signature(expected),'Actual retained field/stage identities differ from the reviewed source');
+  }
   const exactRequests=[];
   for(const entry of index.checkpoint_index.entries){
     await select('#field-checkpoint',entry.checkpoint.sha256);
@@ -329,6 +338,38 @@ function launch(command, args, options) {
     assert.ok(style.preference&&style.outline!=='none'&&parseFloat(style.outlineWidth)>=2,JSON.stringify(style));darkChecks.push({width,...style});
     await screenshot('dark-linked-field-'+width,width,width===390?844:900);
   }
+  // Generic native keyboard selection covers every actual authored field/stage,
+  // including a separately declared boundary correction. No field operator runs here.
+  async function nativeOption(selector,value){
+    await focus(selector);
+    assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true,'Real keyboard focus '+selector);
+    const ordinal=await evaluate(`Array.from(${element(selector)}.options).findIndex(option=>option.value===${JSON.stringify(String(value))})`);
+    assert.ok(ordinal>=0,'Missing actual native option '+selector+' '+value);
+    await key('Home');
+    for(let i=0;i<ordinal;i++)await key('ArrowDown');
+    await key('Tab');
+    await until(()=>evaluate(`${element(selector)}?.value===${JSON.stringify(String(value))}&&!!document.getElementById('field-load')&&!document.getElementById('field-load').disabled`),'Native selector did not settle '+selector);
+  }
+  const captureCheckpoint=index.checkpoint_index.entries.find(item=>item.selected)||index.checkpoint_index.entries.at(-1),captureMember=index.probe.members[0];
+  const declaredCaptures=[];
+  for(const dark of [false,true]){
+    await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:dark?'dark':'light'}]});
+    for(const width of [1440,390]){
+      await send('Emulation.setDeviceMetricsOverride',{width,height:width===390?844:900,deviceScaleFactor:1,mobile:false});
+      await nativeOption('#field-checkpoint',captureCheckpoint.checkpoint.sha256);await nativeOption('#field-member',captureMember.ordinal);
+      for(const [ordinal,pair] of uniqueFields.entries()){
+        await nativeOption('#field-stage',pair.stage);await nativeOption('#field-id',pair.field_id);await nativeOption('#field-axis','z');
+        await fill('#field-index','0');await key('Tab');
+        await until(()=>evaluate(`!!document.getElementById('field-prediction')&&!document.getElementById('field-load').disabled&&document.getElementById('field-stage').value===${JSON.stringify(pair.stage)}&&document.getElementById('field-id').value===${JSON.stringify(pair.field_id)}`),'Actual declared field did not load');
+        const body={checkpoint_sha256:captureCheckpoint.checkpoint.sha256,member_ordinal:captureMember.ordinal,field_id:pair.field_id,axis:'z',index:0,split:'validation'},result=await query(body);
+        assert.equal(result.field.stage,pair.stage);await fill('#field-probe-row','0');await fill('#field-probe-column','0');
+        const sample=await text('#field-probe-value');assert.ok(sample.includes('Row 0, column 0:'));assert.ok(sample.includes(String(result.field.prediction[0][0]))&&sample.includes(String(result.field.reference[0][0])),sample);
+        const filename=(dark?'dark-':'')+'declared-field-'+ordinal+'-'+width;
+        await screenshot(filename,width,width===390?844:900);declaredCaptures.push({file:filename+'.jpg',field_id:pair.field_id,stage:pair.stage,width,dark,selectors:body});
+      }
+    }
+  }
+  check('Native keyboard selectors inspect every exact retained field/stage at 1440/390 in light/dark; separate raw and corrected target probes are read, never derived');
   await send('Fetch.enable',{patterns:[{urlPattern:base+'/api/workspace/runs/'+sourceRun+'/model-evidence',requestStage:'Response'}]});
   pausedRequest=null;await select('#field-axis','z');await until(()=>pausedRequest);await nav('pipeline');await send('Fetch.continueRequest',{requestId:pausedRequest});await send('Fetch.disable');
   assert.equal(await evaluate('document.getElementById("view-runs").hidden'),true);
@@ -343,7 +384,7 @@ function launch(command, args, options) {
   const finalRuns=await(await fetch(base+'/api/workspace/runs')).json();assert.deepEqual(finalRuns.map(item=>item.id).sort(),initialRuns.map(item=>item.id).sort(),'Field inspection must not admit or execute another Run');
   assert.ok(posts.every(url=>url.endsWith('/model-evidence')),'Read-only field inspection used a mutation route');
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_sha256:sourceHashes,command:'node tests/browser_field_evidence.cjs',catalog_path:data,run_id:sourceRun,source_receipt:path.resolve(process.env.TULDOK_FIELD_BROWSER_RECEIPT),browser:(await send('Browser.getVersion')).product,checks,captures,dark_checks:darkChecks,exact_requests:exactRequests,producer_execution:false,existing_actual_run:true,quality_claim:false,access_projection_test:'403 transport substitution; backend tests own actual current authority enforcement'},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_sha256:sourceHashes,command:'node tests/browser_field_evidence.cjs',catalog_path:data,run_id:sourceRun,source_receipt:path.resolve(process.env.TULDOK_FIELD_BROWSER_RECEIPT),browser:(await send('Browser.getVersion')).product,checks,captures,dark_checks:darkChecks,exact_requests:exactRequests,declared_fields:uniqueFields,expected_fields:sourceReceipt.expected_fields||null,declared_field_captures:declaredCaptures,producer_execution:false,existing_actual_run:true,quality_claim:false,access_projection_test:'403 transport substitution; backend tests own actual current authority enforcement'},null,2));
   console.log('PASS actual external field browser:',report);
 })().catch(async error=>{
   console.error(error);console.error('Application stderr:',serverErrors);

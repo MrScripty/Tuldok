@@ -138,7 +138,7 @@ def qualify_production(catalog, snapshot_descriptor, output, fixture_path=None):
         dataset.close()
 
 
-def qualify_field_production(catalog, snapshot_descriptor, output, study_id, candidate_id, limits=None):
+def qualify_field_production(catalog, snapshot_descriptor, output, study_id, candidate_id, limits=None, *, project_roots=None, expected_profile=None):
     """Two real charged attempts from an existing authorized scientific selection.
 
     The producer Run/candidate must already exist; this never fabricates evidence,
@@ -152,7 +152,10 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
     from auth_helpers import ExplicitOwnerFixture
     p = candidate_packages; out = Path(output).resolve(); out.mkdir(mode=0o700, parents=True, exist_ok=False)
     descriptor = p.decode(Path(snapshot_descriptor).read_bytes())
-    dataset = Dataset(catalog, project_roots={'qualification': out}); server = None
+    roots = dict(project_roots or {})
+    assert 'qualification' not in roots or Path(roots['qualification']).resolve() == out
+    roots['qualification'] = out
+    dataset = Dataset(catalog, project_roots=roots); server = None
     try:
         owner = ExplicitOwnerFixture.bootstrap(dataset)
         def call(function, *args, **kwargs):
@@ -165,7 +168,10 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
         source = call(dataset.runs.get, candidate['run_id'])
         assert source['state'] == 'completed'
         assert call(dataset.runs.model_evidence, source['id'], {}, contract_version=2)['state'] == 'verified'
-        before = call(dataset.studies.get, study_id)['charged']['attempt_slots']
+        initial = call(dataset.studies.get, study_id)
+        assert all(row['state'] == 'settled' for row in initial['reservations'])
+        (out / 'source-study-initial.json').write_bytes(p.encoded(initial))
+        before = initial['charged']['attempt_slots']
         budget_amendment = None
         if limits is not None:
             # Explicit caller-owned finite qualification amendment, never a
@@ -180,6 +186,7 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
             saved = call(dataset.studies.save, study_id, save_body)
             budget_amendment = {'original_study': original, 'stop_response': stopped, 'save_body': save_body, 'save_response': saved}
             (out / 'budget-amendment.json').write_bytes(p.encoded(budget_amendment))
+        assert current()['limits']['attempt_slots'] >= before + 2
         def admit(trial, key):
             state = current()
             if not state['open']:
@@ -188,9 +195,12 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
                 state = current()
             approval = call(dataset.studies.approve, study_id, {'trial_id': trial['id'],
                 'expected_material_sha256': trial['material']['sha256'], 'consumer_actor_id': owner.identity['actor_id']})
+            (out / (key + '-approval.json')).write_bytes(p.encoded(approval))
+            (out / (key + '-trial.json')).write_bytes(p.encoded(trial))
             result = call(dataset.studies.admit, study_id, {'request_key': out.name + '-admit-' + key,
                 'revision': state['revision'], 'admission_epoch': state['admission_epoch'], 'trial_id': trial['id'], 'approval_id': approval['id']})
-            run = result['run']; end = time.monotonic() + 300
+            (out / (key + '-admission.json')).write_bytes(p.encoded(result))
+            run = result['run']; end = time.monotonic() + 600
             print('ADMITTED', key, run['id'], flush=True)
             while run['state'] in ('queued', 'running', 'cancelling') and time.monotonic() < end:
                 time.sleep(.2); run = call(dataset.runs.get, run['id'])
@@ -212,7 +222,10 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
                 raw = response.read()
             (out / name).write_bytes(raw)
         manifest, files = p.inspect_package((out / 'package.zip').read_bytes(), package['sha256'])
-        assert p.decode(files[manifest['task']['name']])['format'] == p.SCALAR_A_TASK_FORMAT
+        task_format = p.decode(files[manifest['task']['name']])['format']
+        assert task_format in (p.SCALAR_A_TASK_FORMAT, p.CANONICAL_A_TASK_FORMAT)
+        if expected_profile is not None:
+            assert task_format == {'scalar_a': p.SCALAR_A_TASK_FORMAT, 'canonical_a': p.CANONICAL_A_TASK_FORMAT}[expected_profile]
         prepared = call(p.prepare_candidate_verifier, dataset.studies, study_id, {'request_key': out.name + '-prepare-verifier',
             'revision': current()['revision'], 'candidate_id': candidate_id, 'root': 'qualification', 'directory': 'verifier-project',
             'runtime_snapshot_sha256': descriptor['manifest_sha256'], 'package_run_id': package_run['id'], 'package_sha256': package['sha256']})
@@ -225,7 +238,7 @@ def qualify_field_production(catalog, snapshot_descriptor, output, study_id, can
             'source_run_id': source['id'], 'source_evaluation_sha256': candidate['candidate']['evaluation_sha256'],
             'package_run_id': package_run['id'], 'verifier_run_id': verifier['id'], 'package_sha256': package['sha256'],
             'runtime_snapshot': descriptor, 'charged_before': before, 'charged': totals, 'fresh_verification': receipt,
-            'budget_amendment': budget_amendment,
+            'budget_amendment': budget_amendment, 'source_study_initial': initial, 'package_task_format': task_format,
             'scope': 'Actual retained-source package reconstruction only; independent numerical/physical acceptance remains separate.'}
         (out / 'receipt.json').write_bytes(p.encoded(result)); return result
     finally:
@@ -242,9 +255,10 @@ def main():
     parser.add_argument('--source-study')
     parser.add_argument('--source-candidate')
     parser.add_argument('--field-limits', type=Path, help='Explicit finite limits JSON; close/save through the Study owner before the two package attempts.')
+    parser.add_argument('--project-roots', type=Path, help='Explicit complete root map retained alongside the new qualification output root.')
     parser.add_argument('--runtime', type=Path)
     parser.add_argument('--expected-sha256')
-    parser.add_argument('--expected-profile', choices=('classifier', 'scalar_a'),
+    parser.add_argument('--expected-profile', choices=('classifier', 'scalar_a', 'canonical_a'),
         help='Require the explicitly nominated package task profile before any captured consumer execution.')
     parser.add_argument('--mask-path', action='append', default=[])
     parser.add_argument('--output', type=Path, required=True)
@@ -255,8 +269,12 @@ def main():
         if args.source_study is not None or args.source_candidate is not None:
             if args.source_study is None or args.source_candidate is None:
                 parser.error('--source-study and --source-candidate must be supplied together.')
+            if args.expected_profile == 'classifier':
+                parser.error('Existing scientific source qualification requires scalar_a or canonical_a.')
             limits = candidate_packages.decode(args.field_limits.read_bytes()) if args.field_limits is not None else None
-            receipt = qualify_field_production(args.production_catalog, args.snapshot_descriptor, args.output, args.source_study, args.source_candidate, limits)
+            roots = candidate_packages.decode(args.project_roots.read_bytes()) if args.project_roots is not None else None
+            receipt = qualify_field_production(args.production_catalog, args.snapshot_descriptor, args.output, args.source_study, args.source_candidate, limits,
+                                              project_roots=roots, expected_profile=args.expected_profile)
         else:
             receipt = qualify_production(args.production_catalog, args.snapshot_descriptor, args.output)
         print(json.dumps({'verified': True, 'receipt': str(args.output / 'receipt.json'), 'study_id': receipt['study_id']}))
@@ -273,7 +291,8 @@ def main():
     manifest, files = candidate_packages.inspect_package(raw, expected)
     task = candidate_packages.decode(files[manifest['task']['name']])
     if args.expected_profile is not None:
-        required = {'classifier': 'package_classifier_task_v1', 'scalar_a': candidate_packages.SCALAR_A_TASK_FORMAT}[args.expected_profile]
+        required = {'classifier': 'package_classifier_task_v1', 'scalar_a': candidate_packages.SCALAR_A_TASK_FORMAT,
+                    'canonical_a': candidate_packages.CANONICAL_A_TASK_FORMAT}[args.expected_profile]
         if task.get('format') != required:
             parser.error('Downloaded package does not match the explicitly nominated task profile.')
     runtime = candidate_packages.decode(files[manifest['runtime']['contract']['name']])
