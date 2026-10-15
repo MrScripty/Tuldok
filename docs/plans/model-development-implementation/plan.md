@@ -51,8 +51,8 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 
 ### Constraints
 
-- Current main is `8673509d5430e6aa1162986f4d7b1c071aa1c82e`, after design
-  PR62/PR63 and P1 PR66 integration. Recheck before each new source branch/merge. No applicable
+- Current main is `91c5e9647256d0b008ef2fd602914d031b0592fe`, after design
+  PR62/PR63, P1 PR66 and E1 PR64 integration. Recheck before each new source branch/merge. No applicable
   AGENTS/skills files or callable live Coding Standards MCP are exposed; adopted
   dcc56f26 template/guidance and original structural function apply without certification.
 - Keep compatible legacy grammars/bytes, owner-only built-ins, exact one-use external
@@ -151,7 +151,9 @@ adds an explicit P2 Study run under the hash-locked optional agent environment s
 the new actual MCP witness is qualified there. `tests/test_access.py`,
 `tests/test_runtime_snapshots.py` and `tests/test_spatial_storage.py` receive only
 current-upgrade expectations or explicit retained-schema reader selection; old
-schema8 fixtures stay schema8. It reuses AgentClient,
+schema8 fixtures stay schema8. E1 `tests/test_extension_http.py` receives only
+the current-schema backup expectation when composed with main; project-format
+legacy/retained-reader checks stay exact. It reuses AgentClient,
 private configuration, exact schemas and existing authority; no arbitrary route,
 new RPC owner or owner-credential support.
 

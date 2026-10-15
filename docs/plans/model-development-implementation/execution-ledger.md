@@ -113,3 +113,20 @@
   column assumption; corrected by joining the immutable Trial row. Its failed
   receipt is diagnostic only. Fresh complete checks and final independent review
   are running before publication/CI; I2 remains pending until those gates pass.
+
+## 2026-10-15 — P2 local verification and E1 composition
+
+- Final P2 source at911da9c passed221 distinct local cases with0skips across
+  actual Study/model/Run/transport/metadata/transfer/authority owners, including
+  selected CPU holdout parity and actual MCP1.30. Existing Chromium project
+  lifecycle passed. [P2 verification](reports/p2-verification.md) retains exact
+  counts/environments, resolved findings and explicit unqualified boundaries.
+- E1PR64 all exact-head checks passed; merged main91c5e96. P2 merge0100712 resolves
+  only two app.py route insertions by preserving both full branches. Independent
+  review confirms selected guards, snapshot loopback/auth and strict JSON proof.
+- Actual composed Study32/0skip75.789s and extension24/0skip7.935s pass. The inherited
+  extension backup fixture creates current schema9, so its assertion now uses
+  SCHEMA_VERSION; exact project-format restoration and old-reader witness remain.
+- P2 remains Verifying/I2pending until its published-head CI passes. No new
+  classifier/evidence/candidate/physics acceptance. SDK65 is separately composed
+  with main for its own exact-head checks; README67 remains unmerged.

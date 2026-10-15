@@ -1,8 +1,9 @@
 # P2 verification: immutable composition and finite-study admission
 
 Status: local implementation/review verified; committed-head CI and merge remain
-pending. I2 is not closed by these local receipts. Base is merged P1 main8673509;
-E1 has separately merged as91c5e96 and must be composed before P2 acceptance.
+pending. I2 is not closed by these local receipts. Initial P2 implementation is911da9c on merged P1 main8673509.
+E1 main91c5e96 is composed by merge0100712; the two app.py route conflicts retain
+the exact union of Model/Study guards and E1 snapshot/auth/strict JSON behavior.
 No user catalog was migrated, training campaign launched or telemetry activated.
 
 ## Behavior and ownership
@@ -124,8 +125,12 @@ whitespace checks pass. This is not a fresh Engine certification.
 
 ## Remaining gates and next stage
 
-Publish a reviewable P2 commit/PR, compose current E1 main, run exact-head CI and
-recheck the composition before merging. P2 stays Verifying/I2 pending until then.
+A reviewable implementation and E1 composition are committed. Post-composition
+actual Study32/0skip75.789s and extension24/0skip7.935s pass. The extension backup
+test now asserts current SCHEMA_VERSION while keeping its exact project-format
+restoration/legacy-reader witnesses; it was not a historical schema8 fixture.
+Independent merge review confirms the app.py union preserves both owners.
+Run exact-head CI and recheck the composition before merging. P2 stays Verifying/I2 pending until then.
 Source identities are retained in [P2 fingerprints](p2-source-fingerprints.json).
 P3 implements and qualifies actual classifier template edits, automatic recurrent
 checkpoint/probe capture, linked inspection/correction and cold consumer behavior.

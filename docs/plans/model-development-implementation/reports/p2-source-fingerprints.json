@@ -1,18 +1,18 @@
 {
-  "base_commit": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+  "base_commit": "91c5e9647256d0b008ef2fd602914d031b0592fe",
   "files": {
     ".github/workflows/tests.yml": "57c83975a0bc67083e06395a1448c5dcb557b651b32ba822b305d43c09e94882",
     "agent_api.py": "47d034526165ee9b856efcd8ea13c77583243c7cb662561bba06a4c8ddd341b8",
-    "app.py": "aac5a7522cb1210b30b6ae2be67894b0dfa5e7058f3582a99f66a4e587bfea62",
+    "app.py": "d1d462bd64d7beeed82d718436edc91d3340c9fea33943f3f2eae574904aaecb",
     "backup_metadata.py": "4d050ed173b686c249157f513506eea9485f4cd6bbd05cb919a0f10113ba4a7d",
     "docs/contracts/actors.md": "69ee435f4b86c7e6ed4e10cdcb450db8b588f6a755299024df88e466ea0dbfc0",
     "docs/contracts/model-development.md": "a99174bb6c00954ff764f7a9ba30aba5873d651d939ec4b96222513c6a3d1499",
     "docs/contracts/project-cli.md": "175098270d9c6d3df7cc3465dc7a1f48887e690deea23919bae175c8242cdca6",
     "docs/contracts/workspace-storage.md": "b8b90572a7c27001230af4790f5a31a41a9bf6a201d7d0caf19021359cbb80b3",
-    "docs/plans/model-development-implementation/execution-ledger.md": "b14a5fbd905a32c81cbf25ced70f0c00282c81311517b0c7054ebfd8eb86fc71",
+    "docs/plans/model-development-implementation/execution-ledger.md": "7c32d7e3b346d86ad500b5694bdaaf0bf6d86fb484ac8d94bef657a148c667bf",
     "docs/plans/model-development-implementation/issues.md": "e15ec1773d88e7aeeb301e34a16c6713ca0cf6238332bc3b41e6d020a7b4446a",
-    "docs/plans/model-development-implementation/plan.md": "9bc6959ac62c0691a87b0e27fc26ef05383711f951a927c084d37ccff6916067",
-    "docs/plans/model-development-implementation/reports/p2-verification.md": "4c523ee7df0adfd841e6ca6abf3979148baeb81b4f2c3119610bff7ee323bd18",
+    "docs/plans/model-development-implementation/plan.md": "d56107d46ea8399f43eaf42b90e38044c6599b5537ad3fd62d81a3fd069d1bdf",
+    "docs/plans/model-development-implementation/reports/p2-verification.md": "7df56a2ee58c093211cbf8c8fbdf7c1a177c9f0de0e634580f2b3b4ebfb06937",
     "experiments.py": "36bbf48ab6ffbad68ee51bf1d7372013708e2e53a0e9f7b89a34f3f9b7985c6b",
     "metadata.py": "8b1878aefd2f6857a48d69ddfe0ae2c84db8e20dc2ee2fd3f58b48b83678955e",
     "model_definitions.py": "8f0de009f478fd1737a42f822d5b4ae18a17d3e95aa23ae1f4495795ffc14a35",
@@ -22,6 +22,7 @@
     "tests/test_access.py": "4296410ffc11a57358b7615280bbcce23ffa84d4580eab351ad5e02064254e6b",
     "tests/test_execution_approvals.py": "084fc3a24ea9ab6ddf68aa69df3f6605af495b97ef42aabd4b5fe30ee188a965",
     "tests/test_experiments.py": "595404dd1c91cac88f47954b1bbad03fc28280194e5aa05ff44f47d44347c5bc",
+    "tests/test_extension_http.py": "5bbd41c94d990c60a50000badc33aa046226e8474de2e07d8e20308dfeabd66c",
     "tests/test_model_definitions.py": "9a4f14e2ab7252292dce89226495e26411e6be8cbdcec4aeaffe21713c1c6f7f",
     "tests/test_runtime_snapshots.py": "424c3d65e97466935bb807602de83b535aacb06dc9b27a6b56bd9ba703bdc751",
     "tests/test_spatial_storage.py": "8f8083a258b3b38e1ad491e24593045830ca5669a8fb93d8771c5b006f6d6cfe",
@@ -30,6 +31,8 @@
     "upgrade_metadata.py": "dc17ade24b5d4cb45a9616e14ba38eaffb1f8178bee617b2ae26ba2e59a95645"
   },
   "format": "p2_source_fingerprints_v1",
+  "implementation_commit": "911da9c",
+  "integration_commit": "0100712",
   "schema_definition_sha256": "1672d984517caaabf772ce64e9b73edb96d04a1cbe2997c14350e2df63396f54",
   "schema_version": 9
 }

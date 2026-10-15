@@ -17,6 +17,7 @@ import types
 import uuid
 
 import psycopg
+from metadata import SCHEMA_VERSION
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
 from unittest.mock import patch
@@ -204,7 +205,7 @@ class ExtensionHTTPTests(unittest.TestCase):
         self.server.shutdown(); self.thread.join()
         self.dataset.close()
         receipt = backup_catalog(self.root/'catalog', self.root/'pre-v2-backup', quiesced=True)
-        self.assertEqual(receipt['schema_version'], 8)
+        self.assertEqual(receipt['schema_version'], SCHEMA_VERSION)
         # Actual post-backup store admits v2; rolling it back in place is unsupported.
         self.dataset = Dataset(self.root/'catalog', project_roots={'fixture':self.external})
         bind_owner(self, self.dataset)
