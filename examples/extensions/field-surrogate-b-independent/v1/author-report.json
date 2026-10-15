@@ -12,7 +12,7 @@
     {
       "command": "python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v",
       "state": "passed",
-      "tests": 6,
+      "tests": 7,
       "evidence_kind": "local numerical/closed-package tests; not actual Run"
     },
     {
@@ -33,15 +33,15 @@
     "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
     "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd",
     "tuldok_extension_sdk/__init__.py": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
-    "tuldok_extension_sdk/evidence.py": "d26d441226d83ec9c1616dbde750b4279a63ca39c44361224107cb42094b243e",
+    "tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
     "task.json": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
     "model.json": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
     "trainer.json": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
     "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
     "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
-    "extension.json": "b2f6fa8e4ccabca5cd16040292b3c2eb844e320268ace330bad92bb31bf6aa24",
-    "recipe.json": "79cc8270708466fc9ab37d35a4295bc3bbc8dbd5ed9578ae3b829cacd3c818c6",
-    "project.json": "060c6acffcd062db754609b9724f8f0de79833261c02716e16328550d67ea3b6"
+    "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+    "recipe.json": "88d72d41c6be925d9248ba1cf4f1a7ba46366f70e744653e41092dc44cc7f9e3",
+    "project.json": "a555f75ebd02b8ac8f311e6bcb3a1a8aaa2855cd422568a383fc4fef885cd43f"
   },
   "write_set": "examples/extensions/field-surrogate-b-independent/v1/",
   "constraints": {
@@ -74,7 +74,7 @@
   "identity_contract": {
     "path": "docs/contracts/extension-field-identities.md",
     "commit": "647cf2f",
-    "sha256": "fd2c98dfb1e983ab87ecc8c4906ecbc74a53341acfe25a443ce50f2e3a256397",
+    "sha256": "4444978750c9fdba7d724ca14ab47616704efab50cdf8489f0d5af6f2e49b51e",
     "state": "applied",
     "payload_encoding": "struct.pack little-endian float64; excludes NPY header",
     "input_order": [
@@ -97,6 +97,16 @@
         "field_id": "corrected",
         "payload_sha256": "2a68eb7ff67202cac3b293694fd343db9a509bf2fdfe2829d7c420517fbf54a5"
       }
-    ]
+    ],
+    "canonical_json": "UTF-8 ensure_ascii=False, sort_keys=True, compact separators; ASCII identities unchanged"
+  },
+  "sdk_recapture": {
+    "commit": "8e70f1e",
+    "evidence_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "reason": "Reviewed canonical UTF-8 compatibility fix; no admitted B material or grant exists",
+    "frozen_mathematical_sources_unchanged": true,
+    "adapter_identity": "Producer source bytes; SDK has a separate captured source identity; producer adapter/evaluator/field source SHA recomputed and unchanged",
+    "package_version": "1.0.0",
+    "version_disposition": "Not admitted yet; package SHA/source closure changes; no existing material or grant is reused"
   }
 }
