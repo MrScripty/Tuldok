@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import shutil
+import tempfile
 import sys
 import uuid
 import zipfile
@@ -152,6 +154,8 @@ class Pipelines:
         self.access = dataset.access
         self.dataset, self.db, self.lock = dataset, dataset.db, dataset.lock
         self.source_path = Path(__file__).resolve().parent
+        self.material_path = dataset.path / 'workspace-recipe-materials'
+        self.material_path.mkdir(mode=0o700, exist_ok=True)
 
     @authorized('inspect', 'pipeline.definitions')
     def definitions(self):
@@ -529,3 +533,271 @@ class Pipelines:
         if self.get(graph_id) != graph:
             raise WorkbenchError('Graph changed during admission.', 'stale', 409)
         return graph, result, self.inspect_release(result['release']['id'], private=True, recipe=graph.get('recipe', 'image_classification'))
+
+    def _recipe_draft(self, value):
+        from model_definitions import checked_json, natural, reference, text
+        value = checked_json(value)
+        closed(value, ('format', 'id', 'revision', 'name', 'task', 'data', 'model', 'trainer',
+                       'parameters', 'evaluation_profile', 'runtime', 'layout'))
+        if value['format'] != 'recipe_draft_v2':
+            raise WorkbenchError('Unsupported model-aware recipe format.', 'unsupported', 400)
+        identifier(value['id']); natural(value['revision'], 'Recipe revision', 1)
+        text(value['name'], 'Recipe name')
+        for key, kind in (('task', 'task'), ('model', 'model'), ('trainer', 'trainer'),
+                          ('evaluation_profile', 'profile'), ('runtime', 'runtime')):
+            reference(value[key], kind, self.db.dataset_id)
+        if type(value['data']) is not list or not 1 <= len(value['data']) <= 64:
+            raise WorkbenchError('A model-aware recipe requires1–64 immutable data references.')
+        for item in value['data']: reference(item, 'release', self.db.dataset_id)
+        if type(value['parameters']) is not dict or type(value['layout']) is not dict or len(value['layout']) > 10:
+            raise WorkbenchError('Recipe parameters/layout require bounded objects.')
+        for key, position in value['layout'].items():
+            if not NODE_ID.fullmatch(key): raise WorkbenchError('Invalid workflow layout key.')
+            closed(position, ('x', 'y'))
+            if any(type(number) not in (int, float) or not math.isfinite(number) or abs(number)>10000
+                   for number in position.values()):
+                raise WorkbenchError('Workflow layout requires finite bounded coordinates.')
+        return value
+
+    def _get_recipe(self, recipe_id):
+        from model_definitions import retained_json
+        identifier(recipe_id)
+        row = self.db.execute('SELECT revision,document FROM workspace_recipe_drafts WHERE id=%s', (recipe_id,)).fetchone()
+        if row is None: raise WorkbenchError('Model-aware recipe not found.', 'not_found', 404)
+        value = self._recipe_draft(retained_json(row['document']))
+        if value['id'] != recipe_id or value['revision'] != row['revision']:
+            raise WorkbenchError('Stored recipe identity differs.', 'unavailable', 409)
+        return value
+
+    @authorized('inspect', 'recipes.get')
+    def get_recipe(self, recipe_id):
+        with self.lock: return self._get_recipe(recipe_id)
+
+    @authorized('inspect', 'recipes.list')
+    def list_recipes(self,*,cursor=None,limit=20):
+        from model_definitions import natural
+        natural(limit,'Page limit',1,20)
+        if cursor is not None:identifier(cursor)
+        with self.lock:
+            rows=self.db.execute('SELECT id FROM workspace_recipe_drafts WHERE id>%s ORDER BY id LIMIT %s',
+                                 (cursor or '',limit+1)).fetchall()
+            return {'recipes':[self._get_recipe(row[0]) for row in rows[:limit]],'limit':limit,
+                    'next_cursor':rows[limit-1][0] if len(rows)>limit else None}
+
+    @authorized('edit', 'recipes.create')
+    def create_recipe(self, body):
+        closed(body, ('name', 'task', 'data', 'model', 'trainer', 'parameters', 'evaluation_profile', 'runtime', 'layout'))
+        value = self._recipe_draft(dict(body, format='recipe_draft_v2', id=uuid.uuid4().hex, revision=1))
+        with self.lock, self.db.transaction():
+            self.access.require('edit', 'recipes.create')
+            self.db.execute('INSERT INTO workspace_recipe_drafts VALUES(%s,%s,%s)', (value['id'], 1, encode(value)))
+            self.access.audit('recipes.create', value['id'], {'revision':1, 'document_sha256':digest(value)})
+        return value
+
+    @authorized('edit', 'recipes.save')
+    def save_recipe(self, recipe_id, body):
+        from model_definitions import natural
+        closed(body, ('revision', 'document')); natural(body['revision'], 'Recipe revision', 1)
+        value = self._recipe_draft(body['document'])
+        if value['id'] != recipe_id or value['revision'] != body['revision']:
+            raise WorkbenchError('Recipe identity/revision differs.')
+        with self.lock, self.db.transaction():
+            self.access.require('edit', 'recipes.save', recipe_id)
+            current = self._get_recipe(recipe_id)
+            if current['revision'] != body['revision']: raise WorkbenchError('Recipe changed. Reload.', 'stale', 409)
+            value['revision'] = natural(value['revision']+1, 'Recipe revision', 1)
+            self.db.execute('UPDATE workspace_recipe_drafts SET revision=%s,document=%s WHERE id=%s',
+                            (value['revision'], encode(value), recipe_id))
+            self.access.audit('recipes.save', recipe_id, {'revision':value['revision'], 'document_sha256':digest(value)})
+        return value
+
+    @authorized('edit', 'recipes.prepare_external_material')
+    def prepare_external_material(self, graph_id, revision, model_ref, *, reconcile_capture=False):
+        """Stage an exact external composition for transactional trial attachment.
+
+        External outputs remain opaque; this does not qualify numerical evidence,
+        grant execution, import project code or run a process.
+        """
+        from model_definitions import ModelDefinitions, blob, checked_json, natural, read_owned_blob, owned_inventory
+        from metadata import _sync_directory
+        natural(revision,'Recipe revision',1)
+        if type(reconcile_capture) is not bool:raise WorkbenchError('Capture reconciliation must be boolean.')
+        if reconcile_capture:self.access.require('edit','recipes.reconcile_capture',owner_only=True)
+        graph=self.get(graph_id)
+        if graph['revision']!=revision or graph.get('recipe')!='external_recipe':
+            raise WorkbenchError('Exact external recipe revision is unavailable.','stale',409)
+        models=getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)
+        model=models.material(model_ref,verify=True)
+        config,_parameters=recipe_contract.graph_parameters(graph)
+        expected={key:config[key] for key in ('project_id','recipe_id','expected_sha256')}
+        if model['material']['kind']!='captured_source' or model['material']['source_selector']!=expected:
+            raise WorkbenchError('Model and recipe select different captured source.','stale',409)
+        preflight,captured=recipe_contract.prepare(self.dataset.projects,graph,execution_digest(graph),
+            getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases,runs=self.dataset.runs)
+        source_map={item['import_path']:item['blob'] for item in model['material']['source_closure']}
+        for path,raw in captured.items():
+            if path.startswith('source/'):
+                original=source_map.get(path[len('source/'):])
+                if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
+                    raise WorkbenchError('Model and execution source inventories differ.','stale',409)
+        payloads={};paths=[]
+        for number,(path,raw) in enumerate(sorted(captured.items())):
+            item=blob(raw,f'capture-{number:04d}.bin','application/octet-stream')
+            payloads[item['name']]=raw;paths.append({'path':path,'blob':item})
+        snapshot={'format':'external_recipe_snapshot_v1','graph':graph,'preflight':preflight,'capture_paths':paths}
+        profile={'format':'opaque_external_outputs_v1','outputs':preflight['outputs'],
+                 'numerical_evidence':'unsupported','automatic_checkpoints':'unsupported'}
+        for name,value in (('recipe.json',snapshot),('profile.json',profile)):
+            payloads[name]=encode(value).encode()
+            if len(payloads[name])>2*1024**2:raise WorkbenchError('Recipe/profile document exceeds2MiB.')
+        def definition(kind,name,value):
+            return {'kind':kind,'catalog_id':self.db.dataset_id,'id':name,'revision':1,'sha256':digest(value)}
+        runtime_sha=digest(preflight['material'].get('cpu_snapshot',preflight['runtime']))
+        capture_bytes=sum(map(len,payloads.values()))
+        model_bytes=sum(item['blob']['bytes'] for item in model['material']['source_closure'])+sum(
+            model['material'][key]['bytes'] for key in ('specification','preprocessing_policy','output_policy'))
+        import recipe_process
+        ready=recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in preflight['material'] else recipe_process.READY_SECONDS
+        output_bytes=preflight['material']['resources']['max_output_bytes']
+        custody_bytes=2*recipe_process.STREAM_LIMIT+2*16384+256*1024
+        envelope={'attempt_slots':1,'admitted_wall_seconds':preflight['material']['resources']['wall_seconds']+
+                  ready+2+(ready if 'cpu_snapshot' in preflight['material'] else 0)+15,
+                  'retained_bytes':capture_bytes+model_bytes+output_bytes+custody_bytes,
+                  'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+custody_bytes}
+        for value in envelope.values():natural(value,'Resource envelope',1)
+        material={'format':'recipe_material_v1','catalog_id':self.db.dataset_id,'recipe_id':graph_id,
+            'recipe_revision':revision,'recipe_document':blob(payloads['recipe.json'],'recipe.json'),
+            'executable_sha256':preflight['material_sha256'],'model':model_ref,'data':[],
+            'trainer':definition('trainer','external_recipe_v1',preflight['material']['recipe']),
+            'evaluation_profile':definition('profile','opaque_external_outputs_v1',profile),
+            'resolved_profile':blob(payloads['profile.json'],'profile.json'),
+            'runtime':{'kind':'runtime','catalog_id':self.db.dataset_id,'id':runtime_sha,'sha256':runtime_sha},
+            'captures':[item['blob'] for item in paths],'resource_envelope':envelope}
+        material=checked_json(material);sha=digest(material)
+        document={'ref':{'kind':'recipe_material','catalog_id':self.db.dataset_id,'id':sha,'sha256':sha},'material':material}
+        staging=Path(tempfile.mkdtemp(prefix='.recipe-',dir=self.material_path))
+        try:
+            for name,raw in payloads.items():
+                with (staging/name).open('xb') as handle:
+                    handle.write(raw);handle.flush();os.fchmod(handle.fileno(),0o400);os.fsync(handle.fileno())
+            _sync_directory(staging)
+            if self.get(graph_id)!=graph:
+                raise WorkbenchError('Recipe changed during capture.','stale',409)
+            orphan=None;target=self.material_path/sha
+            if reconcile_capture and target.exists():
+                files={name:read_owned_blob(self.material_path,sha,blob(raw,name),recipe_contract.CPU_CAPTURE_BYTES,
+                                           with_identity=True)[1] for name,raw in payloads.items()}
+                orphan=owned_inventory(self.material_path,sha,payloads)
+                if orphan['files']!=files:raise WorkbenchError('Orphan recipe changed after hashing.','unavailable',409)
+            return {'document':document,'staging':staging,'graph':graph,'orphan':orphan,'reconcile_capture':reconcile_capture}
+        except BaseException:
+            shutil.rmtree(staging,ignore_errors=True);raise
+
+    def _retain_material(self, prepared):
+        """Small transactional publication, called by the study owner with attachment."""
+        from metadata import _sync_directory
+        from model_definitions import retained_json,owned_inventory
+        if not self.db.in_transaction:raise RuntimeError('Material attachment requires an outer transaction.')
+        self.access.require('edit','recipes.prepare_external_material')
+        value=prepared['document'];sha=value['ref']['sha256'];material=value['material']
+        if self._get(material['recipe_id'])!=prepared['graph']:
+            raise WorkbenchError('Recipe changed before attachment.','stale',409)
+        prior=self.db.execute('SELECT document FROM workspace_recipe_materials WHERE sha256=%s',(sha,)).fetchone()
+        if prior:
+            if retained_json(prior[0])!=value:raise WorkbenchError('Retained material conflicts.','unavailable',409)
+            self.db.on_commit(lambda:shutil.rmtree(prepared['staging'],ignore_errors=True))
+            self.db.on_rollback(lambda:shutil.rmtree(prepared['staging'],ignore_errors=True))
+            return value
+        target=self.material_path/sha
+        if target.exists():
+            self.access.require('edit','recipes.reconcile_capture',owner_only=True)
+            names=[item['name'] for item in [material['recipe_document'],material['resolved_profile'],*material['captures']]]
+            if not prepared['reconcile_capture'] or prepared['orphan']!=owned_inventory(self.material_path,sha,names):
+                raise WorkbenchError('Orphan recipe capture requires explicit owner reconciliation.','unavailable',409)
+            self.db.on_commit(lambda:shutil.rmtree(prepared['staging'],ignore_errors=True))
+            self.db.on_rollback(lambda:shutil.rmtree(prepared['staging'],ignore_errors=True))
+        else:
+            os.rename(prepared['staging'],target);_sync_directory(self.material_path)
+            self.db.on_rollback(lambda:shutil.rmtree(target,ignore_errors=True))
+        self.db.execute('INSERT INTO workspace_recipe_materials VALUES(%s,%s,%s,%s)',
+                        (sha,material['recipe_id'],material['recipe_revision'],encode(value)))
+        self.access.audit('recipes.material',sha,{'recipe_id':material['recipe_id'],'revision':material['recipe_revision']})
+        return value
+
+    @authorized('inspect', 'recipes.material')
+    def recipe_material(self, ref, *, verify=False):
+        from model_definitions import reference,retained_json,natural,read_owned_blob,ModelDefinitions
+        ref=reference(ref,'recipe_material',self.db.dataset_id)
+        with self.lock:
+            row=self.db.execute('SELECT recipe_id,recipe_revision,document FROM workspace_recipe_materials WHERE sha256=%s',
+                                (ref['sha256'],)).fetchone()
+        if row is None:raise WorkbenchError('Recipe material not found.','not_found',404)
+        value=retained_json(row['document']);closed(value,('ref','material'));material=value['material']
+        closed(material,('format','catalog_id','recipe_id','recipe_revision','recipe_document','executable_sha256',
+                         'model','data','trainer','evaluation_profile','resolved_profile','runtime','captures','resource_envelope'))
+        if (value['ref']!=ref or material['format']!='recipe_material_v1' or digest(material)!=ref['sha256'] or
+                material['catalog_id']!=self.db.dataset_id or row['recipe_id']!=material['recipe_id'] or
+                row['recipe_revision']!=material['recipe_revision']):
+            raise WorkbenchError('Recipe material identity differs.','unavailable',409)
+        identifier(material['recipe_id']);natural(material['recipe_revision'],'Recipe revision',1)
+        for key,kind in (('model','model'),('trainer','trainer'),('evaluation_profile','profile'),('runtime','runtime')):
+            reference(material[key],kind,self.db.dataset_id)
+        if material['data']!=[] or type(material['captures']) is not list or not 1<=len(material['captures'])<=recipe_contract.MAX_FILES:
+            raise WorkbenchError('Unsupported external material inventory.','unavailable',409)
+        envelope=material['resource_envelope'];closed(envelope,('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes'))
+        for number in envelope.values():natural(number,'Resource envelope',1)
+        inventory=[material['recipe_document'],material['resolved_profile'],*material['captures']]
+        names=[];total=0
+        for item in inventory:
+            closed(item,('name','sha256','bytes','media_type'));natural(item['bytes'],'Capture bytes',0,recipe_contract.CPU_CAPTURE_BYTES)
+            if (type(item['name']) is not str or not re.fullmatch(r'(?:recipe\.json|profile\.json|capture-\d{4}\.bin)',item['name']) or
+                    type(item['sha256']) is not str or not HASH.fullmatch(item['sha256'])):
+                raise WorkbenchError('Invalid recipe blob identity.','unavailable',409)
+            names.append(item['name']);total+=item['bytes']
+        if len(set(names))!=len(names) or total>recipe_contract.CPU_CAPTURE_BYTES+2*1024**2:
+            raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
+        if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
+            raise WorkbenchError('Recipe document names differ.','unavailable',409)
+        if verify:
+            for item in inventory:read_owned_blob(self.material_path,ref['sha256'],item,recipe_contract.CPU_CAPTURE_BYTES)
+            (getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)).material(material['model'],verify=True)
+        return value
+
+    def _prepare_recipe_material(self, ref):
+        """Revalidate source/runtime against retained bytes, never the current graph."""
+        from model_definitions import read_owned_blob,retained_json
+        value=self.recipe_material(ref,verify=True);material=value['material']
+        raw=read_owned_blob(self.material_path,ref['sha256'],material['recipe_document'],2*1024**2)
+        snapshot=retained_json(raw.decode(),2*1024**2)
+        closed(snapshot,('format','graph','preflight','capture_paths'))
+        if snapshot['format']!='external_recipe_snapshot_v1':raise WorkbenchError('Unsupported recipe snapshot.')
+        graph=decode_graph(snapshot['graph']);preflight=snapshot['preflight']
+        if (graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision'] or
+                preflight['material_sha256']!=material['executable_sha256'] or
+                preflight['material']['graph_execution_sha256']!=execution_digest(graph) or
+                digest(preflight['material'])!=preflight['material_sha256']):
+            raise WorkbenchError('Retained execution binding differs.','unavailable',409)
+        current,captured=recipe_contract.prepare(self.dataset.projects,graph,execution_digest(graph),
+            getattr(self.dataset,'external_runtime_profile',None),releases=self.dataset.releases,runs=self.dataset.runs)
+        if current!=preflight:raise WorkbenchError('Source, runtime or input changed since preparation.','stale',409)
+        paths=snapshot['capture_paths']
+        if type(paths) is not list or len(paths)!=len(material['captures']):raise WorkbenchError('Capture mapping differs.')
+        retained={}
+        for item in paths:
+            closed(item,('path','blob'))
+            if item['path'] in retained or item['blob'] not in material['captures']:
+                raise WorkbenchError('Capture mapping differs.','unavailable',409)
+            retained[item['path']]=read_owned_blob(self.material_path,ref['sha256'],item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
+        if retained!=captured:raise WorkbenchError('Retained capture differs from execution.','unavailable',409)
+        return preflight,retained,graph
+
+    @authorized('inspect', 'recipes.preflight_material')
+    def preflight_recipe_material(self, ref):
+        preflight,_retained,graph=self._prepare_recipe_material(ref)
+        return dict(preflight,graph=graph)
+
+    @authorized('inspect', 'recipes.capture_material')
+    def capture_recipe_material(self, ref, staging):
+        preflight,retained,graph=self._prepare_recipe_material(ref)
+        result=recipe_contract.capture(preflight,retained,staging)
+        return dict(result,graph=graph)

@@ -294,6 +294,135 @@ _PAYLOAD = {'version': 1, 'operations': [copy.deepcopy(_legacy_by_id[name]) for 
 REGISTRY_DIGEST = hashlib.sha256(encoded(_PAYLOAD)).hexdigest()
 if REGISTRY_DIGEST != _LEGACY_DIGEST:
     raise RuntimeError('Frozen legacy agent contract changed; preserve its actual projection.')
+
+# Additive contracts share the registry owner while the actual legacy projection
+# above remains frozen. Model-aware trainer/evidence capabilities are not added here.
+SAFE_NAT = integer(0, 2**53-1)
+SAFE_POS = integer(1, 2**53-1)
+KEY = {'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$'}
+def material_ref(kind, revision=False):
+    fields={'kind':const(kind),'catalog_id':ID,'id':SHA if kind in ('recipe_material','runtime','release') else ID,
+            'sha256':SHA}
+    if revision:fields['revision']=SAFE_POS
+    return obj(fields)
+
+MODEL_REF=material_ref('model',True)
+MATERIAL_REF=material_ref('recipe_material')
+POLICY_REF=material_ref('selection_policy',True)
+TASK_REF=obj({'kind':const('task'),'catalog_id':ID,'id':text(64),'revision':SAFE_POS,'sha256':SHA})
+JSON_OBJECT={'type':'object','maxProperties':128}
+MODEL_FIELDS={'name':text(120),'task':TASK_REF,'kind':{'enum':['template','captured_source']},
+    'specification':JSON_OBJECT,'source_selector':{'oneOf':[{'type':'null'},obj({'project_id':ID,'recipe_id':REF,'expected_sha256':SHA})]},
+    'preprocessing_policy':JSON_OBJECT,'output_policy':JSON_OBJECT}
+MODEL_DRAFT=obj(dict(MODEL_FIELDS,format=const('model_draft_v1'),id=ID,revision=SAFE_POS))
+BUDGET=obj({key:SAFE_POS for key in ('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes')})
+SELECTION_POLICY=obj({'format':const('selection_policy_v1'),'metric_definition_sha256':SHA,
+    'checkpoint_rule':{'enum':['selected','last','explicit']},'replicate_reduce':{'enum':['individual','mean']},
+    'required_capabilities':array(text(64),64),'numerical_acceptance':{'enum':['required','diagnostic']},'tie_break':const('trial_id')})
+def model_operation(name,method,path,properties=None,required=None,*,output=None,scopes=('inspect',),mutation=False):
+    register(name,method,path,properties,required,scopes=scopes,mutation=mutation)
+    _OPERATIONS[-1]['outputSchema']={'type':'object','oneOf':[
+        obj({'status':integer(200,299),'result':output or {'type':'object'}}),
+        obj({'status':integer(400,599),'result':obj({'error':text(1000),'code':text(120)},required=['error'])})]}
+
+for _name,_path,_key in [('models','models','model_id'),('studies','studies','study_id')]:
+    model_operation(_name+'.list','GET','/api/workspace/'+_path,output=array({'type':'object'},10000))
+    model_operation(_name+'.get','GET','/api/workspace/'+_path+'/{'+_key+'}',{_key:ID})
+model_operation('models.create','POST','/api/workspace/models',MODEL_FIELDS,scopes=('inspect','edit'),mutation=True,output=MODEL_DRAFT)
+model_operation('models.save','POST','/api/workspace/models/{model_id}',{'model_id':ID,'revision':SAFE_POS,'document':MODEL_DRAFT},
+                scopes=('inspect','edit'),mutation=True,output=MODEL_DRAFT)
+model_operation('models.publish','POST','/api/workspace/models/{model_id}/publish',
+                {'model_id':ID,'revision':SAFE_POS,'reconcile_capture':{'type':'boolean'}},['model_id','revision'],scopes=('inspect','edit'),mutation=True)
+model_operation('models.material','POST','/api/workspace/model-material',{'ref':MODEL_REF})
+model_operation('recipes.material','POST','/api/workspace/recipe-material',{'ref':MATERIAL_REF})
+model_operation('studies.trial','GET','/api/workspace/trials/{trial_id}',{'trial_id':ID})
+model_operation('studies.create','POST','/api/workspace/studies',{'name':text(120),'limits':BUDGET,'policy':SELECTION_POLICY},
+                scopes=('inspect','edit'),mutation=True)
+model_operation('studies.save','POST','/api/workspace/studies/{study_id}',
+                {'study_id':ID,'revision':SAFE_POS,'name':text(120),'limits':BUDGET,'policy':POLICY_REF},scopes=('inspect','edit'),mutation=True)
+model_operation('studies.prepare_trial','POST','/api/workspace/studies/{study_id}/prepare-trial',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'graph_id':ID,'graph_revision':SAFE_POS,'model':MODEL_REF,'replicate':SAFE_NAT,
+                 'reconcile_capture':{'type':'boolean'}},['study_id','request_key','revision','graph_id','graph_revision','model','replicate'],
+                scopes=('inspect','edit'),mutation=True)
+model_operation('studies.continue','POST','/api/workspace/studies/{study_id}/continue',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'admission_epoch':SAFE_NAT},scopes=('inspect','execute'),mutation=True)
+model_operation('studies.approve','POST','/api/workspace/studies/{study_id}/approve',
+                {'study_id':ID,'trial_id':ID,'expected_material_sha256':SHA,'consumer_actor_id':ID,'ttl_seconds':integer(60,3600)},
+                ['study_id','trial_id','expected_material_sha256','consumer_actor_id'],scopes=('inspect','approve-execution'),mutation=True)
+model_operation('studies.admit','POST','/api/workspace/studies/{study_id}/admit',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'admission_epoch':SAFE_NAT,'trial_id':ID,'approval_id':ID,'parent_run_id':ID},
+                ['study_id','request_key','revision','admission_epoch','trial_id'],scopes=('inspect','execute'),mutation=True)
+model_operation('studies.stop','POST','/api/workspace/studies/{study_id}/stop',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS},scopes=('inspect','cancel'),mutation=True)
+model_operation('studies.reconcile','POST','/api/workspace/studies/{study_id}/reconcile',{'study_id':ID},mutation=True)
+# Stable typed output bodies participate in each new contract identity.
+_BLOB=obj({'name':text(80),'sha256':SHA,'bytes':SAFE_NAT,'media_type':text(80)})
+_MODEL_MATERIAL=obj({'format':const('model_material_v1'),'catalog_id':ID,'model_definition_id':ID,
+    'model_definition_revision':SAFE_POS,'task':TASK_REF,'kind':{'enum':['template','captured_source']},
+    'entrypoint':text(1000),'source_selector':MODEL_FIELDS['source_selector'],
+    'source_closure':array(obj({'import_path':text(1000),'blob':_BLOB}),64,1),
+    'specification':_BLOB,'preprocessing_policy':_BLOB,'output_policy':_BLOB})
+_STUDY=obj({'format':const('study_v1'),'id':ID,'revision':SAFE_POS,'name':text(120),'admission_epoch':SAFE_NAT,
+    'open':{'type':'boolean'},'state':{'enum':['draft','open','stopping','stopped','unknown']},'limits':BUDGET,
+    'policy':POLICY_REF,'membership_revision':SAFE_POS,'trial_ids':array(ID,10000),
+    'stop_receipt_id':{'oneOf':[ID,{'type':'null'}]}})
+_TRIAL=obj({'format':const('trial_v1'),'id':ID,'study_id':ID,'material':MATERIAL_REF,'replicate':SAFE_NAT})
+_CHARGE=obj({key:SAFE_NAT for key in BUDGET['properties']})
+_RESERVATION=obj({'id':ID,'study_id':ID,'admission_epoch':SAFE_NAT,'request_key':KEY,'actor_id':ID,'trial_id':ID,
+    'parent_run_id':{'oneOf':[ID,{'type':'null'}]},'run_id':ID,'request_sha256':SHA,'material_sha256':SHA,
+    'envelope':BUDGET,'state':{'enum':['reserved','running','settled','unknown']},'settled':{'oneOf':[_CHARGE,{'type':'null'}]}})
+_STUDY_VIEW=obj({'study':_STUDY,'reservations':array(_RESERVATION,100),'charged':_CHARGE})
+_DEFINITION_REF=lambda kind:obj({'kind':const(kind),'catalog_id':ID,'id':text(64),'revision':SAFE_POS,'sha256':SHA})
+_RECIPE_MATERIAL=obj({'format':const('recipe_material_v1'),'catalog_id':ID,'recipe_id':ID,'recipe_revision':SAFE_POS,
+    'recipe_document':_BLOB,'executable_sha256':SHA,'model':MODEL_REF,'data':array(material_ref('release'),64),
+    'trainer':_DEFINITION_REF('trainer'),'evaluation_profile':_DEFINITION_REF('profile'),'resolved_profile':_BLOB,
+    'runtime':material_ref('runtime'),'captures':array(_BLOB,128,1),'resource_envelope':BUDGET})
+_RECIPE_FIELDS={'name':text(120),'task':TASK_REF,'data':array(material_ref('release'),64,1),'model':MODEL_REF,
+    'trainer':_DEFINITION_REF('trainer'),'parameters':JSON_OBJECT,'evaluation_profile':_DEFINITION_REF('profile'),
+    'runtime':material_ref('runtime'),'layout':{'type':'object','maxProperties':10,
+        'additionalProperties':obj({'x':{'type':'number','minimum':-10000,'maximum':10000},
+                                    'y':{'type':'number','minimum':-10000,'maximum':10000}})}}
+_RECIPE_DRAFT=obj(dict(_RECIPE_FIELDS,format=const('recipe_draft_v2'),id=ID,revision=SAFE_POS))
+model_operation('recipes.list_drafts','GET','/api/workspace/model-recipes',output=array(_RECIPE_DRAFT,10000))
+model_operation('recipes.get','GET','/api/workspace/model-recipes/{recipe_id}',{'recipe_id':ID},output=_RECIPE_DRAFT)
+model_operation('recipes.create','POST','/api/workspace/model-recipes',_RECIPE_FIELDS,
+                scopes=('inspect','edit'),mutation=True,output=_RECIPE_DRAFT)
+model_operation('recipes.save','POST','/api/workspace/model-recipes/{recipe_id}',
+                {'recipe_id':ID,'revision':SAFE_POS,'document':_RECIPE_DRAFT},scopes=('inspect','edit'),mutation=True,output=_RECIPE_DRAFT)
+_NEW_OUTPUTS={'models.list':array(MODEL_DRAFT,10000),'models.get':MODEL_DRAFT,
+    'models.publish':obj({'ref':MODEL_REF,'material':_MODEL_MATERIAL}),
+    'models.material':obj({'ref':MODEL_REF,'material':_MODEL_MATERIAL}),
+    'recipes.material':obj({'ref':MATERIAL_REF,'material':_RECIPE_MATERIAL}),
+    'studies.list':array(_STUDY_VIEW,10000),'studies.get':_STUDY_VIEW,'studies.trial':_TRIAL,
+    'studies.create':_STUDY,'studies.save':_STUDY,'studies.prepare_trial':_TRIAL,'studies.continue':_STUDY,
+    'studies.admit':obj({'reservation':_RESERVATION,'run':_RUN}),
+    'studies.approve':obj({'id':ID,'catalog_id':ID,'approver_actor_id':ID,'approver_credential_id':ID,
+        'consumer_actor_id':ID,'material_sha256':SHA,'created_at':SAFE_NAT,'expires_at':SAFE_NAT,'revoked_at':{'type':'null'}}),
+    'studies.stop':obj({'receipt':obj({'study_id':ID,'stop_receipt_id':ID,'admission_epoch':SAFE_NAT,'run_ids':array(ID,10000)}),
+                        'status':_STUDY_VIEW}),'studies.reconcile':_STUDY_VIEW}
+for _op in _OPERATIONS:
+    if _op['operation_id'] in _NEW_OUTPUTS:
+        _op['outputSchema']['oneOf'][0]['properties']['result']=_NEW_OUTPUTS[_op['operation_id']]
+_PAGE_CURSOR={'oneOf':[ID,{'type':'null'}]}
+_STUDY_PAGE=obj({'offset':SAFE_NAT,'limit':integer(1,100),'total':SAFE_NAT,'study_revision':SAFE_POS,
+                 'next_offset':{'oneOf':[SAFE_NAT,{'type':'null'}]}})
+_STUDY_VIEW['properties']['page']=_STUDY_PAGE
+_STUDY_VIEW['required'].append('page')
+_STUDY_SUMMARY=copy.deepcopy(_STUDY)
+_STUDY_SUMMARY['properties'].pop('trial_ids');_STUDY_SUMMARY['required'].remove('trial_ids')
+_STUDY_SUMMARY['properties']['trial_count']=integer(0,10000);_STUDY_SUMMARY['required'].append('trial_count')
+_COLLECTION_OUTPUTS={'models.list':obj({'models':array(MODEL_DRAFT,20),'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}),
+    'recipes.list_drafts':obj({'recipes':array(_RECIPE_DRAFT,20),'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}),
+    'studies.list':obj({'studies':array(_STUDY_SUMMARY,20),'limit':integer(1,20),'next_cursor':_PAGE_CURSOR})}
+for _op in _OPERATIONS:
+    if _op['operation_id'] in _COLLECTION_OUTPUTS:
+        _op['inputSchema']=obj({'cursor':ID,'limit':integer(1,20)},[]);_op['query']=['cursor','limit']
+        _op['outputSchema']['oneOf'][0]['properties']['result']=_COLLECTION_OUTPUTS[_op['operation_id']]
+    elif _op['operation_id']=='studies.get':
+        _op['inputSchema']=obj({'study_id':ID,'offset':SAFE_NAT,'limit':integer(1,100),'revision':SAFE_POS},['study_id'])
+        _op['query']=['offset','limit','revision']
+_OWNER_OPERATION_IDS={'studies.create','studies.save','studies.continue','studies.approve'}
+_MODEL_RECEIPT_IDS={'studies.prepare_trial','studies.continue','studies.admit','studies.stop'}
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
@@ -332,12 +461,12 @@ def contract(name, version=1):
         op = copy.deepcopy(_CONTRACTS[name][version])
     except (KeyError, TypeError):
         raise AgentAPIError('Operation contract is not locally supported.', 'contract_mismatch', 409) from None
-    retry = ('read' if not op['side_effects'] else 'receipt' if name == 'runs.submit_external'
+    retry = ('read' if not op['side_effects'] else 'receipt' if name == 'runs.submit_external' or name in _MODEL_RECEIPT_IDS
              else 'cas' if name in ('data.save_draft', 'responses.save_draft', 'graphs.save',
-                                   'proposals.caption_decide', 'proposals.classification_decide') else 'never')
+                                   'proposals.caption_decide', 'proposals.classification_decide','models.save','studies.save','recipes.save') else 'never')
     public = {'version': version, 'input_schema': _semantic_schema(op['inputSchema']),
               'output_schema': _semantic_schema(op['outputSchema']), 'scopes': op['scopes'],
-              'authority': 'agent', 'effects': 'mutation' if op['side_effects'] else 'read',
+              'authority': 'owner' if name in _OWNER_OPERATION_IDS else 'agent', 'effects': 'mutation' if op['side_effects'] else 'read',
               'retry': retry, 'bounds': {'request_bytes': REQUEST_LIMIT, 'response_bytes': RESPONSE_LIMIT,
                                        'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT}}
     identity = dict(public, id=name, method=op['method'], path=op['path'], query=op['query'],

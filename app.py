@@ -26,6 +26,8 @@ import sequence_batch_import
 import meshes
 import spatial_assets
 import pipeline
+import model_definitions
+import experiments
 import projects
 import access
 import agent_api
@@ -167,6 +169,8 @@ class Dataset:
                 self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
                 self.pipelines = pipeline.Pipelines(self)
                 self.runs = runs.Runs(self, self.pipelines)
+                self.models = model_definitions.ModelDefinitions(self)
+                self.studies = experiments.Experiments(self)
         except BaseException:
             if hasattr(self, 'projects'):
                 self.projects.close()
@@ -521,6 +525,18 @@ def make_handler(dataset):
                 return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
             return self.reply({'error': str(error), 'code': error.code}, error.status)
 
+        def _model_page_query(self, *, study=False):
+            query=parse_qs(urlsplit(self.path).query)
+            allowed=('offset','limit','revision') if study else ('cursor','limit')
+            if set(query)-set(allowed) or any(len(values)!=1 for values in query.values()):
+                raise workbench.WorkbenchError('Invalid page query.')
+            result={}
+            for key,values in query.items():
+                if key=='cursor':result[key]=values[0]
+                elif not re.fullmatch('[0-9]{1,16}',values[0]):raise workbench.WorkbenchError('Invalid numeric page query.')
+                else:result[key]=int(values[0])
+            return result
+
         def _select_contract(self):
             selected = agent_api.select_request(self.headers, self.command, self.path)
             if selected is not None:
@@ -617,6 +633,27 @@ def make_handler(dataset):
                     self.project_access()
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['models']:
+                        agent_api.require_selection(self._contract_selection,'models.list')
+                        return self.reply(dataset.models.list(**self._model_page_query()))
+                    if parts == ['model-recipes']:
+                        agent_api.require_selection(self._contract_selection,'recipes.list_drafts')
+                        return self.reply(dataset.pipelines.list_recipes(**self._model_page_query()))
+                    if len(parts)==2 and parts[0]=='model-recipes':
+                        agent_api.require_selection(self._contract_selection,'recipes.get')
+                        return self.reply(dataset.pipelines.get_recipe(parts[1]))
+                    if len(parts)==2 and parts[0]=='models':
+                        agent_api.require_selection(self._contract_selection,'models.get')
+                        return self.reply(dataset.models.get(parts[1]))
+                    if parts == ['studies']:
+                        agent_api.require_selection(self._contract_selection,'studies.list')
+                        return self.reply(dataset.studies.list(**self._model_page_query()))
+                    if len(parts)==2 and parts[0]=='studies':
+                        agent_api.require_selection(self._contract_selection,'studies.get')
+                        return self.reply(dataset.studies.get(parts[1],**self._model_page_query(study=True)))
+                    if len(parts)==2 and parts[0]=='trials':
+                        agent_api.require_selection(self._contract_selection,'studies.trial')
+                        return self.reply(dataset.studies.trial(parts[1]))
                     if parts == ['project-snapshots']:
                         return self.reply(dataset.projects.list_snapshots())
                     if len(parts) == 2 and parts[0] == 'project-snapshots':
@@ -839,6 +876,45 @@ def make_handler(dataset):
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['models']:
+                        agent_api.require_selection(self._contract_selection,'models.create')
+                        return self.reply(dataset.models.create(body),201)
+                    if parts == ['model-recipes']:
+                        agent_api.require_selection(self._contract_selection,'recipes.create')
+                        return self.reply(dataset.pipelines.create_recipe(body),201)
+                    if len(parts)==2 and parts[0]=='model-recipes':
+                        agent_api.require_selection(self._contract_selection,'recipes.save')
+                        return self.reply(dataset.pipelines.save_recipe(parts[1],body))
+                    if len(parts)==2 and parts[0]=='models':
+                        agent_api.require_selection(self._contract_selection,'models.save')
+                        return self.reply(dataset.models.save(parts[1],body))
+                    if len(parts)==3 and parts[0]=='models' and parts[2]=='publish':
+                        agent_api.require_selection(self._contract_selection,'models.publish')
+                        return self.reply(dataset.models.publish(parts[1],body))
+                    if parts in (['model-material'],['recipe-material']):
+                        model=parts==['model-material'];name='models.material' if model else 'recipes.material'
+                        agent_api.require_selection(self._contract_selection,name);projects.closed(body,('ref',))
+                        return self.reply(dataset.models.material(body['ref'],verify=True) if model else
+                                          dataset.pipelines.recipe_material(body['ref'],verify=True))
+                    if parts == ['studies']:
+                        agent_api.require_selection(self._contract_selection,'studies.create')
+                        return self.reply(dataset.studies.create(body),201)
+                    if len(parts)==2 and parts[0]=='studies':
+                        agent_api.require_selection(self._contract_selection,'studies.save')
+                        return self.reply(dataset.studies.save(parts[1],body))
+                    if len(parts)==3 and parts[0]=='studies':
+                        operation={'prepare-trial':'studies.prepare_trial','continue':'studies.continue',
+                                   'approve':'studies.approve',
+                                   'admit':'studies.admit','stop':'studies.stop','reconcile':'studies.reconcile'}.get(parts[2])
+                        if operation:
+                            agent_api.require_selection(self._contract_selection,operation)
+                            if parts[2]=='prepare-trial':return self.reply(dataset.studies.prepare_trial(parts[1],body),201)
+                            if parts[2]=='continue':return self.reply(dataset.studies.continue_study(parts[1],body))
+                            if parts[2]=='approve':return self.reply(dataset.studies.approve(parts[1],body),201)
+                            if parts[2]=='admit':return self.reply(dataset.studies.admit(parts[1],body,selection=self._contract_selection),201)
+                            if parts[2]=='stop':return self.reply(dataset.studies.stop(parts[1],body))
+                            projects.closed(body,())
+                            return self.reply(dataset.studies.reconcile(parts[1]))
                     if parts == ['project-snapshots']:
                         return self.reply(dataset.projects.open_snapshot(body), 201)
                     if parts == ['projects']:
