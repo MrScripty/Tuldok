@@ -1985,6 +1985,11 @@ class Runs:
                 return {'state':'unsupported','reason':'Scientific field evidence requires its explicit selected query contract.'}
             import extension_evidence
             return extension_evidence.query(extension_evidence.verify(self.path/run_id,run,self._extension_context(run)),body)
+        if contract_version==2:
+            closed(body,(),('checkpoint_sha256','split'))
+            if body.get('split','validation')!='validation':
+                raise WorkbenchError('Model evidence only supports validation queries.','unsupported',409)
+            body={key:value for key,value in body.items() if key!='split'}
         closed(body,(),('checkpoint_sha256',))
         selected=body.get('checkpoint_sha256')
         if selected is not None and (type(selected) is not str or not re.fullmatch('[a-f0-9]{64}',selected)):

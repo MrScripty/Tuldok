@@ -159,6 +159,14 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):evidence.validate_context(self.run['extension_context'],self.run,self.composition,
             dict(self.run['extension_context']['static'],model={'kind':'model'}))
 
+    def test_every_input_receipt_kind_is_checked_even_when_not_referenced(self):
+        execution=copy.deepcopy(self.run['material'])
+        execution['recipe']['inputs']['unused']={'max_bytes':65536}
+        for kind in ('run_artifact','frozen_release',None):
+            execution['inputs']['unused']={'kind':kind}
+            with self.subTest(kind=kind),self.assertRaisesRegex(WorkbenchError,'including unused inputs'):
+                evidence.resolve(execution['recipe']['model_evidence'],self.model,execution)
+
     def test_closed_malformed_policy_and_declared_input_shape_refuse_typed(self):
         for change in (lambda p:p['probe'].update(data_input={}),lambda p:p['field_outputs'][0].update(field_id=[]),
                        lambda p:p['fields'][0]['contract']['inputs'][0].update(shape_zyx=[3,3,3]),
@@ -340,12 +348,37 @@ class ContextCaptureTests(unittest.TestCase):
 if __name__=='__main__':unittest.main()
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'),'Requires disposable PostgreSQL')
 class RetainedExtensionRecordTests(unittest.TestCase):
+    def test_actual_preflight_rejects_unused_run_input_before_capture_or_runtime(self):
+        from test_external_runs import ExternalCase
+        case=ExternalCase(methodName='runTest');self.addCleanup(case.doCleanups);case.setUp()
+        for source in PACKAGE.iterdir():
+            if source.is_file():shutil.copyfile(source,case.project_path/source.name)
+        definition=json.loads((case.project_path/'recipe.json').read_bytes())
+        definition['inputs']['unused']={'max_bytes':65536}
+        raw=evidence.canonical(definition);(case.project_path/'recipe.json').write_bytes(raw)
+        manifest=json.loads((case.project_path/'project.json').read_bytes())
+        manifest['recipes'][0]['sha256']=hashlib.sha256(raw).hexdigest()
+        (case.project_path/'project.json').write_bytes(evidence.canonical(manifest))
+        with case.owner.bound(case.dataset):
+            case.dataset.projects.open({'root':'fixture','manifest_path':'project.json'})
+            graph=case.dataset.pipelines.create_external({'name':'Unsupported unused input negative',
+                'project_id':manifest['id'],'recipe_id':manifest['recipes'][0]['id'],'expected_sha256':hashlib.sha256(raw).hexdigest(),
+                'inputs':{'fixture':{'reference_id':'fixture','expected_sha256':hashlib.sha256((PACKAGE/'fixture.json').read_bytes()).hexdigest()},
+                          'unused':{'kind':'run_artifact','run_id':'f'*32,'artifact_name':'unused.npy','expected_sha256':'e'*64}}})
+            with patch.object(case.dataset.runs,'capture_artifact',side_effect=AssertionError('Unsupported receipt reached capture')),                    patch('runtime_snapshots.RuntimeSnapshots.get',side_effect=AssertionError('Unsupported receipt reached runtime')):
+                with self.assertRaisesRegex(WorkbenchError,'including unused inputs'):
+                    case.dataset.pipelines.preflight_external(graph['id'],graph['revision'])
+            for table in ('workspace_runs','access_execution_consumptions','access_execution_grants'):
+                self.assertEqual(case.dataset.db.execute('SELECT count(*) FROM '+table).fetchone()[0],0)
+
     def test_malformed_retained_material_refuses_through_actual_run_loader(self):
         from test_external_runs import ExternalCase
         from workbench import encode
         case=ExternalCase(methodName='runTest');self.addCleanup(case.doCleanups);case.setUp()
         queued=case.queued(case.body(approval=case.approve()))
         with case.owner.bound(case.dataset),case.dataset.lock:
+            self.assertEqual(case.dataset.runs.model_evidence(queued['id'],{'split':'validation'},contract_version=2)['state'],'unsupported')
+            with self.assertRaises(WorkbenchError):case.dataset.runs.model_evidence(queued['id'],{'split':'validation'},contract_version=1)
             row=case.dataset.db.execute('SELECT document FROM workspace_runs WHERE id=%s',(queued['id'],)).fetchone()
             original=json.loads(row[0])
             for material in ([],None,{'recipe':[]},{'recipe':None}):

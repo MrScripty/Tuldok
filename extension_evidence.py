@@ -236,6 +236,9 @@ def resolve(policy, model_material, execution_material):
     policy=validate_policy(policy,execution_material['recipe'])
     model=model_material['material'];ref=model_material['ref'];catalog_id=execution_material['catalog_id']
     reference(ref,'model',catalog_id)
+    require(type(execution_material['inputs']) is dict and
+            all(type(item) is dict and 'kind' not in item for item in execution_material['inputs'].values()),
+            'Authored input mode rejects every unsupported receipt, including unused inputs.','unsupported')
     task={'kind':'task','catalog_id':catalog_id,'id':policy['task']['id'],'revision':policy['task']['revision'],'sha256':digest(policy['task']['definition'])}
     require(identical(model['task'],task),'Published model Task differs from selected policy.','stale')
     for key,policy_key in (('specification','model_specification'),('preprocessing_policy','preprocessing_policy'),('output_policy','output_policy')):

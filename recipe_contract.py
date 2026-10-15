@@ -461,6 +461,8 @@ def prepare(projects, graph, execution_sha256, profile=None, *, releases=None, r
     sources = projects.read_recipe_sources(config['project_id'], definition['sources'])
     if not isinstance(config['inputs'], dict) or set(config['inputs']) != set(definition['inputs']):
         raise WorkbenchError('Bind every declared input exactly once.')
+    if definition['format']==EVIDENCE_FORMAT and any(type(binding) is not dict or 'kind' in binding for binding in config['inputs'].values()):
+        raise WorkbenchError('Authored model evidence supports only explicit project inputs, including unused inputs.','unsupported',409)
     captured = {'source/' + path: raw for path, raw in sources.items()}
     inputs = {}
     for name, binding in config['inputs'].items():
@@ -582,6 +584,8 @@ def validate_material(material):
             if (item['project_id'], item['manifest_sha256']) != (material['project']['project_id'], material['project']['manifest_sha256']):
                 raise WorkbenchError('Input receipt belongs to another project snapshot.')
         expected['input/'+name] = item['measured_sha256']
+    if evidence and any(type(item) is not dict or 'kind' in item for item in material['inputs'].values()):
+        raise WorkbenchError('Authored model evidence cannot retain unsupported input kinds.','unsupported',409)
     generated = validate_native_policies(material,definition)
     if {'input_evidence': True} in definition['arguments']:
         generated[INPUT_EVIDENCE] = encode(material['inputs']).encode()
