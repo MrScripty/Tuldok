@@ -293,6 +293,16 @@ jobs:
         run: node tests/browser_model_development.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - name: Exercise actual one-fit text model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: text
+      - name: Exercise actual one-fit audio model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: audio
       - uses: actions/upload-artifact@v4
         if: always()
         with:
