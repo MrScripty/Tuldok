@@ -78,3 +78,31 @@ No application test suite was run because no application behavior changed.
 The actual worked arithmetic and paper-source checks remain in the linked
 training-evaluation research. This slice adds the design sequence, requirements,
 ownership investigation, local discussion aid and standards traceability.
+
+## 2026-10-15 amendment: agent interfaces and transparent observability
+
+The amendment adds explicit A6/A7 requirements, milestone tasks, I11/I12, a
+source-backed agent/observation report and the matching provisional visual.
+The original independent review above predates this amendment; it is not new
+independent approval of these additions.
+
+- Re-read live MCP `topic.diagnostics` under snapshot
+  `snapshot:v1:346c97be-305b-4945-b646-41b80f20a8bd`. Diagnostics was already in
+  the original routed closure. No standards mutation was performed.
+- Reviewed the remote Tuldok observer contract/source, older local Coding
+  Standards recorder and pinned Chrema host/storage contracts. The amendment
+  distinguishes passive observation from required transactional audit, and
+  preserves separate request, commitment, completion and delivery claims.
+- Re-ran the exact upstream structural function using `python3` and the AST
+  procedure above: passed with the same source digest. One next slice remains;
+  A6/A7 are pending and overall design acceptance is partial.
+- Checked all 14 Markdown files in both plan directories: 151 relative links
+  resolve. HTML local links and unique IDs pass; no external assets were added.
+  Routing JSON still parses. `git diff --check` and the full-file whitespace
+  check for the new report pass.
+- Manual requirement review covers all workflow stages, structured evidence,
+  discovery/permissions, unknown outcomes, observation-free caller obligations,
+  privacy/retention/cost, operator access and failure isolation. Production
+  acceptance procedures are specified, not executed.
+- Browser rendering remains unverified under the environment limitation above.
+  No application tests were needed for this documentation-only amendment.

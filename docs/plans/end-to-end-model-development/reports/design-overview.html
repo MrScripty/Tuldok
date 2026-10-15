@@ -133,6 +133,14 @@
       </article>
     </section>
 
+    <section class="panel" aria-labelledby="agent-title">
+      <div class="section-top"><h2 id="agent-title">Agent interfaces with automatic observability</h2><span class="badge candidate">Required direction</span></div>
+      <p>Authorized agents complete the supported dataset-to-candidate workflow through discoverable interfaces. Metrics, checkpoint comparisons, error slices, probe predictions and bounded field values are available as structured evidence.</p>
+      <p>Observation runs behind ordinary operations: no extra logging tools, tracing arguments or per-run setup. Operators inspect permitted records separately. Interface observations, required domain audits and model-evaluation evidence keep their own owners and failure rules.</p>
+      <p class="note">Reuse the existing MCP observer first. D2 resolves transport coverage, operator policy, privacy, retention and overhead. Optional recording failure preserves domain outcomes; required audit failure follows its transaction contract. This is design direction, not activated collection.</p>
+      <a href="agent-interfaces-observability.md">Agent operation matrix, observation requirements and source evidence</a>
+    </section>
+
     <section class="panel" aria-labelledby="state-title">
       <div class="section-top"><h2 id="state-title">Preserve four different kinds of state</h2><span class="badge candidate">Contract design</span></div>
       <div class="table-scroll">

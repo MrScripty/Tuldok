@@ -21,6 +21,11 @@ must automatically produce the evaluation evidence and linked visualizations
 appropriate to that task. Users choose meaningful training inputs and goals;
 they do not configure loggers, prediction imports or dashboard wiring per run.
 
+Authorized agents must complete the supported workflow through discoverable,
+structured interfaces. Those interfaces include automatic observability behind
+the interface: agents supply no logging calls, telemetry arguments or tracing
+setup. Operators can inspect the permitted observations separately.
+
 This plan governs **architecture design**, including bounded design-selection
 observations. Its output is a reviewable design and implementation handoff.
 It does not authorize production feature implementation, training on user data,
@@ -42,6 +47,8 @@ remain pending until their later implementation is verified.
 | A3 | A local browser walkthrough demonstrates the proposed automatic views, linked checkpoint/example/time selection, missing evidence, correction and keyboard/narrow-screen behavior; it is clearly a design prototype. | user-workflow | representative | either | pending | D3 design walkthrough in local Chromium; no production-training claim |
 | A4 | Decision-changing assumptions about capture, scientific interpretation, runtime and resource budgets have proportionate real observations, or a bounded unsupported/deferred disposition that leaves the selected design valid. | integration | required-real | either | pending | D2/D3 observation reports with exact inputs, procedures and limits |
 | A5 | Final design resolves or explicitly excludes material choices, assigns migration/dependency/authorization owners, and supplies dependency-ordered production slices with exact write sets and claim-matched verification. | focused | not-applicable | manual | pending | D4 handoff and design review findings/dispositions |
+| A6 | An operation matrix and worked agent journey cover dataset work, model definition, experiments, training, structured evaluation, tuning and export; discovery, authorization, bounded reads and recovery have explicit contracts. | contract | not-applicable | either | pending | D1/D2 matrix and D3 agent acceptance procedure in the [agent requirements](reports/agent-interfaces-observability.md) |
+| A7 | Observability is automatic and agent-transparent across the supported interfaces, with explicit owners, privacy, lifecycle, cost and failure contracts; optional observation and required transactional audit remain distinct. | contract | not-applicable | either | pending | D2 observation contract, D3 comparison/failure procedures and D4 implementation handoff; [requirements and reference evidence](reports/agent-interfaces-observability.md) |
 
 ## Scope
 
@@ -64,6 +71,12 @@ remain pending until their later implementation is verified.
   compatibility, migration and backup/restore design.
 - Reuse-versus-build decisions for trainer instrumentation, model definitions,
   metric computation and rendering, informed by verified software precedents.
+- First-class agent interfaces for every supported workflow stage, including
+  machine-readable evaluation evidence, capability discovery, exact authority,
+  asynchronous status, cancellation and recovery from unknown outcomes.
+- Agent-transparent interaction observation and owned lifecycle projections,
+  automatic collection under operator policy, and separate operator inspection;
+  reuse the existing MCP observer before proposing additional machinery.
 
 ### Out Of Scope
 
@@ -81,16 +94,23 @@ remain pending until their later implementation is verified.
 
 - User requirements are the complete model-building/tuning workflow inside
   Tuldok, architecture definition, and automatic evaluation/view setup for
-  supported tasks. They do not require a particular library, graph editor,
+  supported tasks, plus agent interfaces with automatic observability invisible
+  to the agent using them. They do not require a particular library, graph editor,
   directory layout or module count.
 - Existing accepted data identity, family/review/freeze, execution custody,
   permissions and retained-state promises remain governing constraints. Existing
   implementations may be changed when a supported design requires it; name the
   affected owner, consumer and cutover rather than copying or bypassing authority.
-- Current code is local `main` at `6695668e`; observed `origin/main` is `133f420`.
+- Application baseline is local `6695668e`; the initial plan was committed at
+  `18af8ea`. Observed `origin/main` is `133f420`.
   The paper is at `281d77c8`. Managed Torch/CUDA at `d3514c6` is separate branch
   evidence. Recheck integration state before implementation; no branch merge
   or GPU qualification is implied by this design plan.
+- `origin/main` already has an optional local MCP observer, absent from this
+  application's local baseline. Its unchanged agent interface is a reuse
+  precedent, not complete observation of HTTP, CLI or long-running training.
+  Operator provisioning/defaults are designed once; no per-agent/per-run setup
+  is allowed. This documentation amendment enables no recording.
 - Use the Coding Standards MCP snapshot and plan template recorded in
   [standards-routing.md](reports/standards-routing.md). Existing historical plans
   retain their adopted `dcc56f26` reference. This task does not upgrade project-wide
@@ -133,6 +153,8 @@ the decisions produced by D1–D4.
 | Keep execution completion, evidence integrity, numerical acceptance and final candidate selection distinct; preserve validation/test roles. | Runs, evaluation/domain and selection owners respectively | Paper §10.2 and current negative CNN result | A completed Run or falling loss implying model acceptance |
 | Use existing exact-byte custody and permission owners as the baseline; evaluate focused evolution rather than parallel registries/supervisors. | Releases, Runs, runtime and access owners | Existing public/persisted contracts | New dataset store, tracker or queue as assumed infrastructure |
 | The local visual is provisional and links to this canonical plan; it cannot authorize implementation or change agreed requirements. | Primary agent: synthesis; visual agent: presentation | MCP `workflow.planning.discovery` | A diagram becoming a second decision authority |
+| Treat agent interfaces as a design deliverable for every supported workflow stage, with structured access to the evidence used by visualizations and the same owned domain rules. | User requirement; domain and interface designers | [Agent operation matrix](reports/agent-interfaces-observability.md) | UI-only workflow or incidental MCP coverage |
+| Instrument supported interfaces automatically behind their ordinary contract; agents do not manage logging, trace IDs or telemetry setup. Keep passive observations, required audit and model-evaluation evidence under their respective owners. | User requirement; interface, diagnostics, access and Runs owners | Existing Tuldok observer, Coding Standards and Chrema references in the [requirements report](reports/agent-interfaces-observability.md) | Agent-managed logging or a second execution/audit authority |
 
 ## Design Observations And Remaining Evidence
 
@@ -144,6 +166,7 @@ the decisions produced by D1–D4.
 | Meaningful model authoring can remain comprehensible | First model-authoring interface | Product/design lead | Walk through changing a classifier width/head, scientific model inputs and preprocessing, and a custom model; compare templates/config/graphs/code with the same tasks. | Local design artifacts; actual model metadata where needed | Pending D1; no full graph framework required for the observation |
 | Scientific comparisons preserve actual meaning | Alignment, metrics and adapter scope | Domain evaluator designer | Audit actual grid/time/centering/stage/unit/mask/gauge/operator evidence; compare fixed slices and values including a tenfold-amplitude counterexample. | Actual declared field evidence; native runtime only for operator claims | Pending D2/D3; no physical-quality claim from array parsing |
 | Tuning can be automated within authority and budget | Trial orchestration and access contract | Experiment and access designers | Enumerate a finite study's concrete child material; separately model adaptive proposals, approval, cancellation and unknown child outcomes. | Current access/Run contracts; disposable real-store probe only if design depends on it | Pending D4; exact grants are not open-ended study authority |
+| Agents need no observability work and retain ordinary operation semantics | Interface instrumentation and audit placement | Interface/diagnostics designers with domain owners | Design a headless journey and compare observation disabled, healthy and failed; trace request return, domain commitment, asynchronous completion and delivery separately. Audit redaction before persistence and actual retention/latency costs. | Current MCP observer source, Chrema host-hook contract; disposable real transport/store only where decision-changing | References inspected; D2/D3 design and any measurements pending; no whole-workflow observation claim |
 
 Unchanged existing test failures do not prove new behavior. If a future observation
 cannot reach the deciding point, isolate that obstruction or leave its claim
@@ -159,6 +182,8 @@ merely to write this plan.
 | A3 | Proposed interaction | Local browser navigation through labelled design scenarios, including keyboard and narrow layout | User's stated task outcomes | Actual training or production accessibility acceptance | Checkpoint switch changing the example/time/scale silently |
 | A4 | Capture feasibility and field semantics | Bounded actual producer/consumer observation and arithmetic/numeric comparison | Actual checkpoint/field bytes and project-owned numerical oracle | Authored diagrams as measured results | Identical-looking autoscaled amplitude error remains numerically and visually detectable |
 | A5 | Implementation readiness | Reviewed decisions, open-issue disposition and dependency-ordered handoff | This plan's requirements and routed MCP policies | Engine routing or structural validation as architecture certification | A production slice depends on an unresolved authority or unavailable required environment |
+| A6 | Agent workflow | Operation matrix, structured evaluation examples and real-interface product acceptance procedure | Existing domain rules, canonical evidence and explicit actor permissions | Screenshots or tool enumeration as end-to-end capability | A required stage needs UI-only work or hidden filesystem knowledge |
+| A7 | Transparent observation | Contract review plus specified unchanged-client comparison, privacy, delivery and storage-failure scenarios | Actual interface/domain/transport outcomes and operator policy | A recorded return as proof of client receipt, completed training or exact census | Recording alters a result, leaks content, duplicates work or fabricates completion |
 
 ## Simplicity And Ownership Review
 
@@ -171,11 +196,11 @@ implementation is admitted.
 
 - Independent concepts and dimensions: editable records/review and frozen releases already have owners; model computation, experimental comparison, process execution, numerical meaning and UI presentation change for different reasons. The user works in one product, while D1 assigns each what/who/how/when/where/why to a coherent concern. Reports and the visual remain supporting evidence, not application authorities.
 - State, identity, value, time, policy, and mechanism: editable draft revisions, immutable input/model/evaluation identities, optimizer progress, physical time and wall time remain distinct. Experiments compose references; they do not redefine release splitting, model mathematics, current permissions or Run custody. D2 must classify format discriminators, edit ordinals, content identities, compatibility versions and migration versions separately; only actual retained/public overlaps enter the consumer matrix. Changes invalidate only dependent results, preserving historical meaning.
-- Caller and composition-root knowledge: the intended training user supplies task/data/model/goals/budget, with visible resolved defaults. The composition root wires existing owners and supported adapters once. D1 must show the complete caller obligations, failure and ordering contract and avoid pushing observation setup or backend paths onto each user.
+- Caller and composition-root knowledge: the intended training user supplies task/data/model/goals/budget, with visible resolved defaults. The composition root wires existing owners, supported adapters and observation policy once. Agents use discoverable operations and bounded structured evidence without logging calls or trace setup. D1 must show the complete caller obligations, failure and ordering contract and avoid pushing observation setup or backend paths onto each user.
 - Representative change paths and forced owners: annotation correction touches Workbench → release → new experiment/trial; architecture change touches model definition/task compatibility → execution material; new plot consumes existing evidence; new telemetry changes producer and evidence contract; tuning delegates child work to Runs. The [five-scenario audit](reports/current-ownership.md#five-representative-changes-and-expected-propagation) names required propagation. D1 must reject unrelated invalidation across these paths.
 - Stable Interfaces versus hidden knowledge: stable references identify frozen inputs and declared evidence; task adapters own transform/output/domain semantics; checked queries own view-ready values. Hidden file layout, numerical operator assumptions, stdout parsing and lifecycle inference must not escape into UI or the experiment coordinator. D2 selects internal coordinated versus persisted/public contracts from actual consumers.
 - Independent evolution, testing, failure, and replacement: model definitions, renderer choice and project numerical evaluation should evolve under their own promises. Missing optional telemetry must not alter computed values; missing required evaluation must have a declared incomplete/failure outcome. D1/D2 must show startup, completion, cancellation, partial evidence, access revocation and replacement without a second execution or data owner.
-- Necessary complexity and containment: source/label lineage, immutable checkpoint/probe association, budgeted capture, comparison semantics and study lifecycle are necessary for the requested workflow. Existing Releases/Runs/access/runtime mechanisms contain established complexity. New candidate model/experiment/evaluation responsibilities require current examples; no generalized plugin marketplace, event-sourcing framework or universal graph engine is justified by this plan.
+- Necessary complexity and containment: source/label lineage, immutable checkpoint/probe association, budgeted capture, comparison semantics and study lifecycle are necessary for the requested workflow. Existing Releases/Runs/access/runtime mechanisms contain established complexity. Reuse the MCP observer for passive interaction records; domain owners retain required transactional audits. New observation seams must justify their audience, causal links and disclosure without a mandatory telemetry service. New candidate model/experiment/evaluation responsibilities require current examples; no generalized plugin marketplace, event-sourcing framework or universal graph engine is justified by this plan.
 - Deletion and cumulative machinery result: removing experiment coordination makes trial/budget/selection reasoning recur in UI and CLI; removing model-definition semantics spreads architecture/shape knowledge across trainers; removing evidence semantics duplicates comparison/probe/metric interpretation. A separate task registry, candidate registry, viewer store or runtime manager is not yet justified and may be absorbed or declined. D1/D4 must test each proposed permanent mechanism, its replacement cost and total retained machinery rather than ratify the sketch by naming its parts.
 
 ## Milestones
@@ -191,7 +216,8 @@ with editable experiment/Pipeline authority and model-authoring scope resolved.
 
 **Allowed write set:** `docs/plans/end-to-end-model-development/plan.md`,
 `execution-ledger.md`, `issues.md`, `reports/architecture-design.md`,
-`reports/design-overview.html` within this plan directory.
+`reports/agent-interfaces-observability.md`, `reports/design-overview.html`
+within this plan directory.
 
 **Tasks:**
 
@@ -206,6 +232,9 @@ with editable experiment/Pipeline authority and model-authoring scope resolved.
   training products; resolve ownership and maintenance consequences.
 - [ ] Produce complete concern/interface/state-owner and change-path/deletion
   artifacts. Update the local visual to reflect proposed versus decided content.
+- [ ] Walk the same journey as an authorized agent. Assign every operation to
+  its domain owner and supported transport; identify capability/permission gaps,
+  human decisions and automatic observation seams using the agent requirements.
 
 **Preserved/replaced semantics:** Preserve existing consumer promises unless
 their owner and cutover are explicitly revised. Replace the conversational
@@ -227,7 +256,8 @@ trainer observations, durable evaluation and its actual consumers.
 
 **Allowed write set:** this plan's `plan.md`, `execution-ledger.md`, `issues.md`,
 `reports/evidence-contract-design.md`, `reports/design-observations.md`, and
-`reports/design-overview.html`. Disposable seam examples may be retained as
+`reports/agent-interfaces-observability.md`, `reports/design-overview.html`.
+Disposable seam examples may be retained as
 explicit authored fixtures under this plan's `reports/examples/` only.
 
 **Tasks:**
@@ -249,6 +279,14 @@ explicit authored fixtures under this plan's `reports/examples/` only.
   training or retained replayable weights.
 - [ ] Exercise design-changing contract assumptions against actual existing
   evidence using the smallest adequate disposable observation.
+- [ ] Complete A6's operation matrix: discovery, schemas, capabilities, current
+  permissions, idempotency, asynchronous receipts/status/cancel, unknown outcomes,
+  bounded pagination/artifact reads and machine-readable evaluation queries.
+- [ ] Define A7's internal observation contract and separate operator reader:
+  actual stages/outcomes, justified correlation, redaction before collection,
+  access, retention, sampling, schema evolution, buffering/backpressure, shutdown,
+  overhead and degraded health. Classify required transactional audits separately;
+  reuse existing owners rather than copying Chrema's storage/schema wholesale.
 
 **Preserved/replaced semantics:** Old retained results stay honest about absent
 checkpoint history; new telemetry uses an explicit evolution decision. Internal
@@ -257,6 +295,8 @@ coordinated replacements do not retain speculative compatibility shims.
 **Acceptance gate:** A2 satisfied; A4's representation/interpretation observations
 completed or a design-valid bounded disposition recorded. Each representation
 has an owner, real consumers, evolution class and exact negative examples.
+A6's operation matrix and A7's observation contract are reviewed; unsupported
+transport/capability combinations and operator activation policy are explicit.
 
 **Re-plan condition:** A supported producer cannot supply required evidence, a
 retained/public contract changes, or a scientific meaning cannot be established.
@@ -270,7 +310,8 @@ automatically yields useful evaluation throughout the workflow.
 
 **Allowed write set:** this plan's `plan.md`, `execution-ledger.md`, `issues.md`,
 `reports/design-overview.html`, `reports/workflow-design.md`,
-`reports/design-observations.md`, and authored local prototypes/screenshots in
+`reports/design-observations.md`, `reports/agent-interfaces-observability.md`,
+and authored local prototypes/screenshots in
 `reports/prototypes/` and `reports/screenshots/`.
 
 **Tasks:**
@@ -289,6 +330,13 @@ automatically yields useful evaluation throughout the workflow.
 - [ ] Write eventual real-product acceptance procedures for automatic image
   checkpoint probes, text/audio one-fit results, scientific shared-scale errors,
   correction/new-release comparison and custom unsupported capabilities.
+- [ ] Specify a complete headless agent acceptance journey using discoverable
+  real interfaces, structured checkpoint/error/probe/field evidence and safe
+  tuning/cancel/recovery. Require no screenshot interpretation or telemetry work.
+- [ ] Specify unchanged-client comparisons with passive recording healthy,
+  disabled and unavailable; include refusals, unknown outcomes, partial delivery,
+  cancellation/restart, redaction and storage exhaustion. Required audit failure
+  follows its domain transaction contract, not optional-observer behavior.
 
 **Preserved/replaced semantics:** UI remains a projection; live diagnostics do
 not become published results. Shared scales preserve actual values. Current
@@ -297,6 +345,8 @@ permissions and exposure apply to every derived view, count, export and cache.
 **Acceptance gate:** A3 and capture/resource portions of A4 satisfied for the
 chosen scope; eventual product procedures observe real producers and consumers
 without per-run callback/import/chart setup. A mockup cannot close product claims.
+A6/A7 acceptance procedures cover the agent journey and observation failure
+semantics; actual product verification remains pending implementation.
 
 **Re-plan condition:** The automatic profile is unaffordable, needs unprovided
 semantics, cannot preserve required access, or fails the intended user task.
@@ -310,7 +360,8 @@ handoff with explicit tuning, execution, evolution and package obligations.
 
 **Allowed write set:** this plan's `plan.md`, `execution-ledger.md`, `issues.md`,
 `reports/architecture-design.md`, `reports/implementation-handoff.md`,
-`reports/design-review.md`, `reports/design-overview.html`; a proposed durable
+`reports/design-review.md`, `reports/agent-interfaces-observability.md`,
+`reports/design-overview.html`; a proposed durable
 decision at `docs/decisions/model-development-architecture.md` only when D1–D3
 have selected its material tradeoffs.
 
@@ -330,6 +381,9 @@ have selected its material tradeoffs.
 - [ ] Produce exact future production write sets, contract/migration cutovers,
   consumer dispositions and claim-matched real verification for a first useful
   vertical implementation and its dependency-ordered expansions.
+- [ ] Include agent-facing contracts, existing observer integration/cutover,
+  operator provisioning/inspection, required audit transactions and measured
+  overhead/retention verification in those slices. Explicitly resolve I11/I12.
 - [ ] Review all composed-design probes, scope decisions and outstanding issues;
   explain the final design back to the user. Record accepted versus proposed
   durable decisions without upgrading this design plan into feature authorization.
@@ -338,7 +392,7 @@ have selected its material tradeoffs.
 model/evidence authorities and current permissions. Cold inspection, replay,
 training resume, candidate selection and export carry their own promises.
 
-**Acceptance gate:** A5 and every non-deferred design claim satisfied; named
+**Acceptance gate:** A5–A7 and every non-deferred design claim satisfied; named
 follow-ups have owners/triggers. Product implementation remains a separately
 identified operation and acceptance plan, not a consequence of a completed diagram.
 
@@ -397,6 +451,7 @@ proposal protocol was required.
 - [Local visual overview](reports/design-overview.html)
 - [Current ownership and five change scenarios](reports/current-ownership.md)
 - [Automatic evaluation and reuse alternatives](reports/automatic-evaluation-design.md)
+- [Agent interfaces and transparent observability requirements](reports/agent-interfaces-observability.md)
 - [Coding Standards MCP routing and application](reports/standards-routing.md)
 - [Plan creation verification](reports/plan-verification.md)
 - [Independent plan review](reports/design-plan-review.md)
