@@ -39,7 +39,12 @@ def main(args):
     package=ROOT/'examples/extensions/field-surrogate/v2'
     for name,sha in (('fixture.json',FIXTURE_SHA),('cold_oracle.py',ORACLE_SHA)):
         require(hashlib.sha256((package/name).read_bytes()).hexdigest()==sha,'Frozen '+name+' differs')
-    project=output/'project';shutil.copytree(package,project)
+    project=args.project.resolve() if args.project is not None else output/'project'
+    if args.project is None:shutil.copytree(package,project)
+    else:
+        expected=json.loads((package/'recipe.json').read_bytes())
+        for name in ['project.json','recipe.json','fixture.json',*[row['path'] for row in expected['sources']]]:
+            require((project/name).read_bytes()==(package/name).read_bytes(),'Existing exact project differs: '+name)
     recipe=json.loads((project/'recipe.json').read_bytes());policy=recipe['model_evidence']
     dataset=server=worker=owner=credential=None;endpoint=config=None;sequence=0
     report={'state':'in_progress','scope':'Actual A CPU/Study/custody/cold scientific state; UI/agent field projection pending',
@@ -204,6 +209,7 @@ def main(args):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--project',type=Path)
     parser.add_argument('--require-public-fields',action='store_true')
     parser.add_argument('--catalog',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--runtime-config',type=Path,required=True);parser.add_argument('--oracle-python',type=Path,required=True)
