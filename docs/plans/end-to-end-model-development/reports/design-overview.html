@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Tuldok · Model development architecture discovery</title>
+  <title>Tuldok · D1 model development design</title>
   <style>
     :root { color-scheme: light dark; --bg:#f2f5f5; --paper:#fff; --ink:#142a32; --muted:#4e626b; --line:#cbd8dc; --accent:#006b66; --tint:#e6f4f1; --blue:#2455a3; --blue-tint:#eef3ff; --amber:#805300; --amber-tint:#fff5db; --shadow:0 12px 34px #142a3209; }
     @media (prefers-color-scheme:dark) { :root { --bg:#10191e; --paper:#17252c; --ink:#e3edf0; --muted:#afc1ca; --line:#3c535d; --accent:#75d6c4; --tint:#193e39; --blue:#a7c5ff; --blue-tint:#202f4b; --amber:#f4d382; --amber-tint:#3e341e; --shadow:none; } }
@@ -81,10 +81,10 @@
   <a class="skip" href="#main">Skip to architecture overview</a>
   <header>
     <div class="wrap">
-      <div class="eyebrow">Tuldok / architecture discovery / 15 October 2026</div>
+      <div class="eyebrow">Tuldok / D1 design recommendation / 15 October 2026</div>
       <h1>One workspace, from dataset to model candidate.</h1>
       <p class="intro">Design the connected process first. Task-aware evaluation should arrive with training, so users can understand results, correct data, tune models, and preserve the evidence behind each decision.</p>
-      <div class="meta"><span class="badge open">Provisional discussion aid</span><a href="../plan.md">Canonical design plan →</a><span>No application behavior is implemented by this document.</span></div>
+      <div class="meta"><span class="badge open">D1 recommendation · provisional visual</span><a href="../plan.md">Canonical design plan →</a><span>No application behavior is implemented by this document.</span></div>
     </div>
   </header>
   <main class="wrap" id="main">
@@ -99,13 +99,13 @@
     </section>
 
     <section class="panel" aria-labelledby="workflow-title">
-      <div class="section-top"><h2 id="workflow-title">The proposed user journey</h2><span class="badge candidate">Candidate design</span></div>
+      <div class="section-top"><h2 id="workflow-title">The selected D1 journey</h2><span class="badge candidate">Candidate design</span></div>
       <p class="note">Read steps 01–08 in order. These are conceptual responsibilities; they do not require eight new services or screens.</p>
       <ol class="workflow">
         <li><h3>Build the dataset</h3><p>Import, generate, annotate, review, and retain family and provenance information.</p></li>
         <li><h3>Freeze a release</h3><p>Record exact samples, annotations, split assignments, transformations, and exposure policy.</p></li>
-        <li><h3>Define task and model</h3><p>Declare input/target meaning and compatible architecture, preprocessing, objectives, and defaults.</p></li>
-        <li><h3>Prepare an experiment</h3><p>Resolve settings, validation probes, selection criteria, budgets, and concrete tuning trials.</p></li>
+        <li><h3>Define task and model</h3><p>Use template forms and typed configuration, or captured project source. Keep computation meaning separate from workflow stages.</p></li>
+        <li><h3>Prepare finite trials</h3><p>Pin exact Pipeline material; resolve validation probes, selection criteria and aggregate budget. Exact authorization remains required.</p></li>
         <li><h3>Execute through Runs</h3><p>Admit training and evaluation attempts through the existing execution owner.</p></li>
         <li class="eval"><h3>Evaluate automatically</h3><p>Open curves, fixed-example comparisons, task metrics, and declared domain checks as evidence arrives.</p></li>
         <li><h3>Compare and select</h3><p>Inspect comparable trials, failures, validation criteria, and separate acceptance outcomes.</p></li>
@@ -116,10 +116,10 @@
 
     <section class="columns" aria-label="Ownership and automatic evaluation">
       <article class="panel">
-        <div class="section-top"><h2>One execution custodian</h2><span class="badge candidate">Boundary to validate</span></div>
-        <div class="owner"><h3>Existing Runs</h3><p>Keep admission, runtime dispatch, process lifecycle, cancellation, and artifact verification under the established execution owner. Experiments coordinate intent and trials; they do not become a second runner.</p></div>
+        <div class="section-top"><h2>One recipe owner, one execution custodian</h2><span class="badge candidate">Selected D1 design</span></div>
+        <div class="owner"><h3>Pipeline edits; experiments pin; Runs executes</h3><p>Pipeline alone owns editable execution recipes. Experiments retain exact recipe material and own trial membership, total budget and selection. Runs keeps admission, dispatch, cancellation and verified artifact custody.</p></div>
         <div class="handoff" aria-label="Proposed handoff: experiment intent to Runs to verified evidence"><span>Experiment intent</span><b aria-hidden="true">→</b><span>Runs</span><b aria-hidden="true">→</b><span>Verified evidence</span></div>
-        <p class="small">Evaluation replay, tuning trials, and candidate verification must use the same owned execution path. The design phase must identify the actual entry points and failure behavior before assigning new module boundaries.</p>
+        <p class="small">Evaluation replay, tuning trials, and candidate verification must use the same owned execution path. D2 must specify retained pre-admission recipe snapshots and atomic study attachment; a bare reference to an overwritten draft cannot preserve a trial.</p>
       </article>
       <article class="panel">
         <h2>Automatic means integrated once</h2>
@@ -134,10 +134,11 @@
     </section>
 
     <section class="panel" aria-labelledby="agent-title">
-      <div class="section-top"><h2 id="agent-title">Agent interfaces with automatic observability</h2><span class="badge candidate">Required direction</span></div>
+      <div class="section-top"><h2 id="agent-title">Compatible agent operations, automatic observation</h2><span class="badge candidate">Required direction</span></div>
       <p>Authorized agents complete the supported dataset-to-candidate workflow through discoverable interfaces. Metrics, checkpoint comparisons, error slices, probe predictions and bounded field values are available as structured evidence.</p>
+      <p>Clients negotiate exact supported per-operation contracts. New operations preserve unrelated compatible calls; incompatible mutations fail before domain entry. Current whole-registry equality needs a D2 migration and consumer disposition.</p>
       <p>Observation runs behind ordinary operations: no extra logging tools, tracing arguments or per-run setup. Operators inspect permitted records separately. Interface observations, required domain audits and model-evaluation evidence keep their own owners and failure rules.</p>
-      <p class="note">Reuse the existing MCP observer first. D2 resolves transport coverage, operator policy, privacy, retention and overhead. Optional recording failure preserves domain outcomes; required audit failure follows its transaction contract. This is design direction, not activated collection.</p>
+      <p class="note">The MCP observer is integrated at main f58880df; reuse it first. D2 resolves transport coverage, operator policy, privacy, retention and overhead. Optional recording failure preserves domain outcomes; required audit failure follows its transaction contract. This is design direction, not activated collection.</p>
       <a href="agent-interfaces-observability.md">Agent operation matrix, observation requirements and source evidence</a>
     </section>
 
@@ -164,24 +165,33 @@
       <div class="section-top"><h2 id="phases-title">Design phase checkpoints</h2><span class="badge open">Proposed sequence</span></div>
       <p class="note">Expand a phase to inspect its decision evidence. These controls describe design checkpoints, not implementation progress. Canonical phase names and acceptance criteria live in the plan.</p>
       <div class="phase-grid">
-        <details open><summary><span>D1</span>Owner and task-path design</summary><div class="detail-body"><p><strong>Produce:</strong> a current-state owner map and proposed end-to-end task paths for dataset work, model definition, training, evaluation, correction, and candidate selection.</p><p><strong>Check:</strong> one execution custodian, concrete existing entry points, named gaps, and a clear separation between user requirements and proposed boundaries.</p></div></details>
-        <details open><summary><span>D2</span>Contracts and cold evidence</summary><div class="detail-body"><p><strong>Produce:</strong> versioned identity and evidence contracts, lifecycle rules, compatibility policy, and a restart/readback scenario using frozen artifacts.</p><p><strong>Check:</strong> comparable trials, honest missing history, exposed-family behavior, and reproducible interpretation without relying on a live process.</p></div></details>
+        <details open><summary><span>D1</span>Owner and task-path design</summary><div class="detail-body"><p><strong>Selected:</strong> Pipeline recipe authority, template/configuration plus captured source, finite exact trials and compatible per-operation discovery.</p><p><strong>Evidence:</strong> worked classifier and pressure-CNN paths, authoring edits, owner/change/deletion review and explicit current gaps. <a href="architecture-design.md">Read D1 design and independent review</a>.</p></div></details>
+        <details open><summary><span>D2</span>Contracts and cold evidence</summary><div class="detail-body"><p><strong>Produce:</strong> versioned identity/evidence contracts, finite-trial permission and aggregate-budget/cancellation invariants, compatibility migration and cold readback.</p><p><strong>Check:</strong> immutable recipe snapshots, atomic study attachment/reservation, scientific release bridge, honest missing history and current exposure policy before generic interface freeze.</p></div></details>
         <details open><summary><span>D3</span>Automatic capture and UI demonstration</summary><div class="detail-body"><p><strong>Produce:</strong> a bounded walkthrough showing task-aware default views and linked checkpoint/example selection, plus capture, retention, and resource budgets.</p><p><strong>Check:</strong> an ordinary user gets useful evaluation without configuring charts or callbacks; omitted evidence and unsuccessful model acceptance remain clear.</p></div></details>
-        <details open><summary><span>D4</span>Tuning, runtime, and evolution handoff</summary><div class="detail-body"><p><strong>Produce:</strong> tuning coordination rules, runtime qualification boundaries, candidate packaging, migration/evolution decisions, and a staged implementation proposal.</p><p><strong>Check:</strong> failed trials and repeated seeds are represented, tuning obeys exposure policy, and the handoff avoids a competing scheduler or speculative infrastructure.</p></div></details>
+        <details open><summary><span>D4</span>Tuning, runtime, and evolution handoff</summary><div class="detail-body"><p><strong>Produce:</strong> detailed runtime scheduling under D2 invariants, runtime qualification, closed candidate packages, fresh-consumer inference acceptance and implementation slices.</p><p><strong>Check:</strong> failed trials and repeated seeds are represented, tuning obeys exposure policy, and the handoff avoids a competing scheduler or speculative infrastructure.</p></div></details>
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="vertical-title">
+      <div class="section-top"><h2 id="vertical-title">Two worked paths before generic interfaces freeze</h2><span class="badge candidate">Design examples</span></div>
+      <div class="gate">
+        <article><h3>Existing image classifier</h3><p>Review/freeze → TinyCNN widths 16/32/64 to 24/48/96 → exact recipe → authorized Run → automatic fixed validation probes → human/agent errors → corrected release or finite next trial → candidate package. Current v1 has fixed architecture and only best-checkpoint predictions; new authoring and probe contracts are still proposed.</p></article>
+        <article><h3>Captured pressure CNN</h3><p>Review/freeze fields → captured model/input/gauge edits → exact external grant → Adam training → checkpoint/field evidence → structured physics/error inspection → authorized next trial → diagnostic or qualified candidate. Prior training and restore evidence is real; physics qualification remained 0/16. The canonical-release bridge and recurring probes are still pending.</p></article>
+      </div>
+      <p class="note" style="margin-top:17px">Text/audio show one fit; optional ModalPressure reports zero optimizer updates. Rheon and the lab keep numerical ownership. No application, lab source, user data or telemetry settings change in D1.</p>
+    </section>
+
     <section class="panel" aria-labelledby="open-title">
-      <div class="section-top"><h2 id="open-title">Choices the design must resolve</h2><span class="badge open">Still open</span></div>
+      <div class="section-top"><h2 id="open-title">What remains for D2–D4</h2><span class="badge open">Pending design and product proof</span></div>
       <ul class="questions">
-        <li><strong>First vertical slices:</strong> which built-in task and which scientific project prove automatic evaluation without claiming universal support?</li>
-        <li><strong>Model authoring:</strong> how far do templates and declarative definitions go before project-defined code is needed? A visual layer-graph editor is optional.</li>
-        <li><strong>Ownership boundaries:</strong> which existing dataset, training, evaluation, runtime, and artifact interfaces should be deepened rather than replaced?</li>
-        <li><strong>Evidence budgets:</strong> which checkpoints and probes are retained, and how does the UI explain unavailable history, capture failures, and replay costs?</li>
-        <li><strong>Evaluation policy:</strong> who declares domain checks, acceptance thresholds, test access, and candidate export eligibility?</li>
-        <li><strong>Evolution:</strong> how do legacy results remain readable while new task adapters and evidence schemas become available?</li>
+        <li><strong>D2 foundations:</strong> exact trial/attempt identities, permissions, immutable recipe snapshots, total-budget reservation and stop-before-cancel/restart invariants.</li>
+        <li><strong>Compatibility cutover:</strong> actual old/new client inventory, selected-contract checks before mutations and bounded legacy disposition. No generic schema-subsumption engine.</li>
+        <li><strong>Evidence semantics:</strong> checkpoint/probe association, pressure shape/gauge/normalization and family/split bridge. No classifier-only generic-interface admission.</li>
+        <li><strong>D3 interaction and costs:</strong> actual linked views, browser/keyboard/narrow-screen walkthrough and measured capture/retention/time/memory bounds.</li>
+        <li><strong>Candidate closure:</strong> weights, model/source, transforms/fitted statistics, schemas/runtime, lineage/evidence and access. Later fresh-consumer fixed-probe inference must work without a live project checkout.</li>
+        <li><strong>D4 handoff:</strong> detailed scheduling, runtime/dependency qualification, migrations and implementation slices. Adaptive prospective grants and a universal editable graph are deferred.</li>
       </ul>
-      <p class="note" style="margin-top:17px;margin-bottom:0">The architecture should reuse the current application and execution facilities unless discovery demonstrates a concrete need for additional infrastructure.</p>
+      <p class="note" style="margin-top:17px;margin-bottom:0">This is a provisional discussion visual of selected D1 recommendations. The canonical plan and D1 report own decisions. Document rendering was checked at desktop and narrow widths; this is not a product prototype or proof of training/package acceptance.</p>
     </section>
   </main>
   <footer>
@@ -189,6 +199,7 @@
       <strong>Evidence and canonical text</strong>
       <ul>
         <li><a href="../plan.md">Architecture design plan</a></li>
+        <li><a href="architecture-design.md">D1 decisions, sources and review</a></li>
         <li><a href="../../training-evaluation/reports/paper-review.md">Paper review</a></li>
         <li><a href="../../training-evaluation/reports/paper-methodology-review.md">Methodology review</a></li>
         <li><a href="../../training-evaluation/reports/software-precedents.md">Software precedents</a></li>

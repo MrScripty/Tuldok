@@ -53,3 +53,76 @@
 - A6/A7 remain pending and overall acceptance remains partial. Original
   independent plan review predates this amendment and does not certify it.
   Amendment checks are recorded in the verification report.
+
+## 2026-10-15 — D1 workflow, ownership and authoring
+
+- User authorized completion of D1 on a new documentation branch from current
+  main, commit/push/PR and independent GPT-6.1 Sol review; no auto-merge. Fresh
+  fetch confirms `origin/main` and initial clean HEAD at
+  `f58880df84d701ef66ffe21615ae787d80ce8a5e`. Created
+  `docs/model-development-d1`; no existing work was moved, reset or discarded.
+  No worktree was created. Writes are limited to D1's six documentation files.
+- No applicable AGENTS.md was present in repository/workspace ancestors and no
+  callable Coding Standards MCP was exposed. Read retained MCP routing and the
+  adopted `dcc56f26` source guidance through read-only GitHub; no live D1 MCP
+  consultation or standards upgrade is claimed. Prior source-check provenance is
+  historical. Supporting D1 structural checks are recorded in the D1 report.
+- Refreshed the baseline: MCP observer is integrated, remains operator opt-in and
+  does not cover every HTTP/CLI/domain lifecycle. Preserve passive observation,
+  transactional audit and training-evaluation evidence as distinct obligations.
+- Compared Experiment-owned compilation versus Pipeline-owned editable recipes.
+  Selected Pipeline authority with exact immutable study references; D2 must
+  specify retained pre-admission snapshots and checked/atomic attachment. No
+  editable study overrides or second process/artifact authority.
+- Parent-coordinated read-only workers supplied concrete model-authoring and
+  capability-negotiation findings. Primary agent alone integrated the six files.
+  Compared real TinyCNN and captured pressure-CNN width/head/channel/normalization/
+  gauge edits. Selected template forms/typed adapter configuration plus captured
+  source; lightweight source editing/import is a reversible recommendation for
+  review. No universal graph editor, full IDE or code/graph round-trip promised.
+- Wrote full classifier and scientific pressure-adapter human/agent journeys,
+  operation/transport gaps, owner/interface/change/deletion review and candidate
+  inference-package closure. Scientific source is pinned to lab `2a49aa81`;
+  existing 200-step CNN and fresh restore evidence remains distinct from its
+  negative 0/16 native qualification. Canonical-release bridge, new checkpoint
+  probes and generic package/fresh-consumer acceptance remain pending.
+- Selected finite exact trials/repeated seeds initially. Moved identity,
+  permission, aggregate budget and cancellation/restart invariants into D2;
+  D4 retains detailed scheduling. Existing built-in owner-only execution and
+  one-use exact external grants are preserved; adaptive prospective grants deferred.
+- Recorded the user's per-operation capability-negotiation decision and current
+  AgentClient equality coupling at lines 558–588. Selected exact supported
+  operation-version/contract intersections, not schema subsumption. D2 must
+  choose actual-consumer legacy cutover and guard contract changes before domain
+  entry; incompatible mutations fail closed without consuming grants.
+- Reconciled issues and provisional local visual. No application implementation,
+  runtime installation, user-data migration, telemetry activation, lab/Rheon
+  source changes or training campaign was performed. D1 independent review and
+  final documentation checks follow below before A1 is marked satisfied.
+
+
+### D1 review and verification outcome
+
+- Independent read-only GPT-6.1 Sol review found no blocking D1 findings after
+  checking all six files, owner contracts and pinned scientific model sources.
+  Its 78 local-target checks passed. Primary writer's broader plan-directory
+  link/anchor/HTML/structure checks also pass; exact evidence and limits are in
+  the D1 report. No Astra reviewer was used.
+- Executed the adopted upstream plan structural function from `dcc56f26`, with
+  original source SHA-256 `c7266c0564b9ee02944fc4eb12d66cc20d604fd4ddb7f051ed77d01e9fe4466e`:
+  passed. A first plan edit used unsupported lifecycle text `In Progress`;
+  corrected to the adopted `Active` before final validation.
+- Disposable link checker initially misread a fenced Python indexing expression
+  as a Markdown link; excluded fenced code and reran successfully. This was a
+  checking-script correction, not a broken product/document link.
+- Current environment has Chromium and Playwright. Direct file navigation was
+  blocked by browser policy; loopback static HTTP rendering of the same HTML
+  passed at 1440 and 390 widths, with no body overflow/page errors and a working
+  keyboard skip link. This verifies the provisional document only, not A3's
+  future linked-evidence product walkthrough. No dependencies were installed.
+- A1 is satisfied for the reviewed D1 design; D1 is Accepted, overall plan Active
+  with partial acceptance. A2–A7 remain pending. D2 is the single next stage,
+  starting with immutable recipe/trial material and finite-study identity,
+  permissions, aggregate budget/cancellation and compatible evidence contracts.
+- Commit, push and review PR publication follow final staged scope/history checks.
+  The branch remains for PR review; no merge or branch/worktree deletion occurs.
