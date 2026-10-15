@@ -47,7 +47,7 @@ python -m tuldok_extension_sdk validate examples/extensions/field-surrogate-b-in
 python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v
 ```
 
-These prove inert declaration validity and local numerical behavior. Five tests
+These prove inert declaration validity and local numerical behavior. Six tests
 compare NumPy updates/replay with independent stdlib equations, demonstrate
 train-only fitting and explicit boundary enforcement, reject missing/nonbinary
 inputs and malformed native arrays, and check exact source closure/dataflow.
@@ -69,11 +69,17 @@ python cold_oracle.py --fixture fixture.json --artifacts DOWNLOADED_ARTIFACTS \
   --expected-context-sha256 INDEPENDENT_EXPECTED_SHA --report ABSENT_REPORT.json
 ```
 
-Actual execution is pending the main owner's frozen kit and documented candidate
-input/target payload identity rules. The currently authored candidate hashes use
-canonical JSON over all three input arrays and both target arrays; they are
-explicit provisional author declarations until the public kit defines its payload
-identity. No host source was consulted to guess a hidden rule. The main owner
+The exact native identity rules follow
+`docs/contracts/extension-field-identities.md` at contract commit `647cf2f`.
+Candidate input identities hash ordered input field IDs and SHA256s of native
+little-endian float64 payloads, excluding NPY headers. The policy contains exact
+`field_targets` rows in candidate then field order, and candidate target identity
+hashes the ordered raw/corrected field payload identities. Raw and corrected
+reference payload hashes are distinct. The recipe's exact hashes and Project
+reference have been updated; frozen producer/oracle/fixture bytes are unchanged.
+
+Actual execution is pending the main owner's frozen public server/selection
+harness and canonical A owner glue. The main owner
 must prepare the finite Study normally, review the complete composition, grant
 that exact material and provide the public CLI/agent fixture. SDK conformance
 must then admit only that selected trial, download all retained artifacts and

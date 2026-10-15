@@ -81,6 +81,29 @@ class IndependentBNumericalTests(unittest.TestCase):
         with self.assertRaisesRegex(oracle.OracleError, '^Truncated or trailing NPY payload$'):
             oracle.npy(encode(values)+struct.pack('<d', 0), (4, 4, 4))
 
+    def test_native_probe_and_distinct_targets_match_published_identity_contract(self):
+        from tuldok_extension_sdk.evidence import digest
+        recipe = json.loads((ROOT/'recipe.json').read_text())
+        policy = recipe['model_evidence']
+        case = self.fixture['cases'][-1]
+        payload_sha = lambda values: hashlib.sha256(struct.pack('<64d', *values)).hexdigest()
+        input_identities = [{'field_id': field['field_id'], 'payload_sha256': payload_sha(case[field['field_id']])}
+                            for field in policy['fields'][0]['contract']['inputs']]
+        target_identities = [{'field_id': field['id'], 'payload_sha256': payload_sha(case[field['id']+'_target'])}
+                             for field in policy['fields']]
+        candidate = policy['probe']['candidates'][0]
+        self.assertEqual(candidate['input_sha256'], digest(input_identities))
+        self.assertEqual(candidate['target_sha256'], digest(target_identities))
+        self.assertEqual(policy['field_targets'], [dict(member_id=case['id'], **item) for item in target_identities])
+        self.assertNotEqual(target_identities[0]['payload_sha256'], target_identities[1]['payload_sha256'])
+        for field in policy['fields']:
+            self.assertEqual(field['contract']['inputs'], policy['fields'][0]['contract']['inputs'])
+        for metric in policy['metric_definitions']:
+            self.assertEqual(metric['population_sha256'], digest(policy['probe']['candidates']))
+        file = io.BytesIO()
+        np.save(file, np.asarray(case['initial'], dtype='<f8').reshape(4, 4, 4), allow_pickle=False)
+        self.assertNotEqual(input_identities[0]['payload_sha256'], hashlib.sha256(file.getvalue()).hexdigest())
+
     def test_source_closure_exact_five_roles_ports_stage_dataflow_and_frozen_oracle(self):
         extension = json.loads((ROOT/'extension.json').read_text())
         recipe = json.loads((ROOT/'recipe.json').read_text())
