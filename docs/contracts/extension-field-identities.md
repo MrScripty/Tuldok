@@ -3,10 +3,10 @@
 This is the author contract for the implemented field-evidence decoder. It is
 data identity, not numerical or physical acceptance. Validate native dtype,
 shape, C order, finite values, geometry, stage and gauge before using its bytes.
-The SDK's `digest` uses canonical JSON with sorted keys, compact separators and
-ASCII escaping. `payload_sha256` hashes native scalar payload bytes **without the
-NPY header**. Artifact Blobs separately hash the complete NPY file. These hashes
-have different meanings and cannot be substituted.
+The SDK's `digest` uses the host's UTF-8 canonical JSON with sorted keys, compact
+separators and unescaped Unicode. `payload_sha256` hashes native scalar payload
+bytes **without the NPY header**. Artifact Blobs separately hash the complete NPY
+file. These hashes have different meanings and cannot be substituted.
 
 For each frozen validation member, `input_sha256` is the digest of an ordered
 list of objects with exactly `field_id` and `payload_sha256`. Its order is

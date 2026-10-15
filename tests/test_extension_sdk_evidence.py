@@ -71,6 +71,63 @@ class SDKEvidenceTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(sdk.EvidenceError):
                 sdk.load_context(sdk.canonical(value))
 
+    def test_canonical_digest_matches_host_utf8_and_preserves_ascii_bytes(self):
+        ascii_value = {'field_id': 'initial', 'payload_sha256': 'a'*64}
+        ascii_raw = json.dumps(ascii_value, sort_keys=True, separators=(',', ':'),
+                               ensure_ascii=True, allow_nan=False).encode()
+        self.assertEqual(sdk.canonical(ascii_value), ascii_raw)
+        value = {'label': 'café', 'units': 'µm'}
+        self.assertEqual(sdk.canonical(value), b'{"label":"caf\xc3\xa9","units":"\xc2\xb5m"}')
+        for value in (ascii_value, value):
+            self.assertEqual(sdk.canonical(value), host.canonical(value))
+            self.assertEqual(sdk.digest(value), host.digest(value))
+        for value in ({'number': float('nan')}, {'label': '\ud800'}):
+            with self.subTest(value=repr(value)), self.assertRaises(sdk.EvidenceError):
+                sdk.canonical(value)
+
+    def test_host_resolved_unicode_task_units_and_blob_projection_agree(self):
+        # A new structural declaration exercises real host validation/context
+        # construction. This fixture never admits or claims a numerical Run.
+        policy = self.definition['model_evidence']
+        policy['task']['definition']['label'] = 'Champ café'
+        for port in policy['task']['definition']['ports']:
+            port['units'] = 'µm'
+        for field in policy['fields']:
+            field['gauge_policy']['field_units'] = 'µm'
+            gauge_sha = host.digest(field['gauge_policy'])
+            for descriptor in [*field['contract']['inputs'], field['contract']['output']]:
+                descriptor.update(units='µm', gauge_policy_sha256=gauge_sha)
+        policy['output_policy'].update(units='µm', gauge_policy_sha256=gauge_sha)
+        policy['metric_definitions'][0]['units'] = 'µm²'
+        self.model['material']['task']['sha256'] = host.digest(policy['task']['definition'])
+        self.model['material']['output_policy']['sha256'] = host.digest(policy['output_policy'])
+        execution = self.run['material']
+        static = host.resolve(policy, self.model, execution)
+        self.composition['material']['executable_sha256'] = host.digest(execution)
+        context = host.context(static, self.composition['ref'], self.run['id'], self.run['request_sha256'])
+        self.context_raw = host.canonical(context)
+        self.run.update(extension_context=context, material_sha256=host.digest(execution))
+        self.run['spec']['model_evidence_context'].update(
+            bytes=len(self.context_raw), sha256=hashlib.sha256(self.context_raw).hexdigest())
+        self.assertEqual(host.validate_context(context, self.run, self.composition, static), context)
+        self.assertEqual(sdk.load_context(self.context_raw), context)
+        self.assertIn('Champ café'.encode(), self.context_raw)
+        self.assertIn('µm'.encode(), self.context_raw)
+        self.assertEqual(sdk.digest(policy['task']['definition']), static['task']['sha256'])
+        self.produce()
+        blobs = {path.name: path.read_bytes() for path in self.output.iterdir()}
+        self.run['artifacts'] = [dict(name=row['path'], role=row['role'], bytes=len(blobs[row['path']]),
+            sha256=hashlib.sha256(blobs[row['path']]).hexdigest(), media_type='application/octet-stream')
+            for row in self.definition['outputs']]
+        public = host.query(host.verify(self.output, self.run, context))
+        self.assertEqual(sdk.validate_projection(public, self.context_raw, blobs)['numerical'], 'not_evaluated')
+        ref = public['manifest']['metric_definitions']
+        self.assertIn('µm²'.encode(), blobs[ref['name']])
+        self.assertEqual(ref['sha256'], hashlib.sha256(blobs[ref['name']]).hexdigest())
+        self.assertEqual(ref['bytes'], len(blobs[ref['name']]))
+        self.assertEqual(public['metric_definition_hashes'],
+                         {item['id']: sdk.digest(item) for item in policy['metric_definitions']})
+
     def test_cadence_bool_clocks_missing_metric_and_changed_blob_fail(self):
         writer = sdk.Evidence(self.output, self.context_raw)
         (self.output/'transform.npy').write_bytes(npy([0, 1], [2])); writer.transform('transform.npy')
