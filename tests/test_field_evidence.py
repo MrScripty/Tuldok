@@ -124,6 +124,9 @@ class FieldEvidenceTests(unittest.TestCase):
         invalid['physical']['metrics']['relative_l2'] = float('nan')
         with self.assertRaises(WorkbenchError):
             evidence.validate_co_test(invalid, self.contract)
+        invalid['physical']['metrics']['relative_l2'] = 10**400
+        with self.assertRaises(WorkbenchError):
+            evidence.validate_co_test(invalid, self.contract)
 
     def test_standalone_pair_has_no_invented_frame_and_preserves_native_arrays(self):
         contract = copy.deepcopy(self.contract)

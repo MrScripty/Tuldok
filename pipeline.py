@@ -484,7 +484,7 @@ class Pipelines:
             return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
         names = (*names, 'access.py')
         if recipe == image_training.MODEL_RECIPE: names = (*names, 'model_evidence.py')
-        elif recipe in MODEL_RECIPES: names = (*names, 'one_fit_evidence.py')
+        elif recipe in MODEL_RECIPES: names = (*names, 'one_fit_evidence.py', 'model_evidence.py')
         files = {name: hashlib.sha256((self.source_path / name).read_bytes()).hexdigest() for name in names}
         return {'definition_files': files, 'adapter_definition_sha256': digest(files)}
 

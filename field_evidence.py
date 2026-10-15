@@ -42,7 +42,7 @@ def validate_contract(value):
     fields.text(value['owner'], 160, 'Domain owner')
     _exact(value['adapter'], ('name', 'version'), 'Adapter identity')
     fields.text(value['adapter']['name'], 64, 'Adapter name')
-    _require(type(value['adapter']['version']) is int and value['adapter']['version'] > 0, 'Adapter version must be positive.')
+    _require(type(value['adapter']['version']) is int and 1 <= value['adapter']['version'] <= 2**53-1, 'Adapter version must be a positive safe integer.')
     _sha(value['source_sha256'])
     _require(value['time_mode'] in ('standalone', 'sequence'), 'Unsupported temporal semantics.', 'unsupported')
     _require(type(value['inputs']) is list and 1 <= len(value['inputs']) <= 16, 'Declare 1 to 16 input fields.')
@@ -196,5 +196,9 @@ def validate_co_test(value, contract):
         _require(type(item['metrics']) is dict and len(item['metrics']) <= 32, 'Metrics must be bounded.')
         for key, number in item['metrics'].items():
             fields.text(key, 64, 'Metric name')
-            _require(type(number) in (int, float) and math.isfinite(number), 'Co-test metric must be finite; undefined values need an explicit domain outcome.')
+            try:
+                finite = type(number) in (int, float) and math.isfinite(number)
+            except OverflowError:
+                finite = False
+            _require(finite, 'Co-test metric must be finite; undefined values need an explicit domain outcome.')
     return value

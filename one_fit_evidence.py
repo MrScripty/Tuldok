@@ -10,7 +10,8 @@ import math
 from pathlib import Path
 import re
 
-from image_training import TrainingError, _invalid, _json, _write_json
+from image_training import TrainingError, _invalid, _write_json
+from model_evidence import read_binary, read_document
 from workbench import encode
 
 HASH = re.compile(r'^[a-f0-9]{64}$')
@@ -141,7 +142,7 @@ def payload_names():
 
 
 def _ref(path):
-    raw = path.read_bytes()
+    raw = read_binary(path, 8 * 1024**2)
     return dict(name=path.name, sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw), media_type='application/json')
 
 
@@ -210,11 +211,8 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
     context = validate_job_selection(job, adapter)
     root = Path(directory)
     def read(name):
-        path = root / name
         maximum = 1024**2 if name == 'model-evidence.json' else 8 * 1024**2
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > maximum:
-            _invalid('One-fit evidence file is missing, unsafe or exceeds its bound.')
-        return _json(path.read_bytes(), 'One-fit evidence')
+        return read_document(root, name, maximum)
     evidence = read('model-evidence.json')
     _exact(evidence, ('format', 'schema_version', 'producer', 'task', 'model_sha256', 'data_sha256', 'profile_sha256', 'probe',
                      'metric_definitions', 'checkpoints', 'observations', 'field_index', 'coverage', 'inference'), 'Evidence manifest')
@@ -224,7 +222,7 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
             or evidence['data_sha256'] != job['release_sha256'] or evidence['profile_sha256'] != context['profile_sha256']):
         _invalid('One-fit evidence material differs from the admitted job.')
     def reference(ref, name):
-        if ref != _ref(root / name):
+        if not _same(ref, _ref(root / name)):
             _invalid('One-fit evidence blob differs from retained bytes.')
         return read(name)
     index = reference(evidence['checkpoints'], 'checkpoints.json')
@@ -299,7 +297,7 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
     metrics = read('metrics.json')
     if metrics.get('clocks') != clocks or 'history' in metrics or 'best_epoch' in metrics:
         _invalid('One-fit metrics cannot publish an artificial training curve.')
-    if evidence['observations'] != [_ref(root / 'observations.json'), _ref(root / 'probes-fit-0001.json')]:
+    if not _same(evidence['observations'], [_ref(root / 'observations.json'), _ref(root / 'probes-fit-0001.json')]):
         _invalid('One-fit observations differ from retained bytes.')
     observations = read('observations.json')
     expected_observations = [dict(run_id=job['run_id'], checkpoint_sha256=entry['checkpoint']['sha256'], probe_sha256=evidence['probe']['sha256'],
@@ -333,7 +331,7 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
 
 
 def digest_bytes(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.sha256(read_binary(path, 8 * 1024**2)).hexdigest()
 
 
 def job_for_run(run, output_dir=None):
@@ -354,7 +352,7 @@ def verify(directory, run, metrics):
     owner = contract(run['adapter'])
     records = run['source_records']
     manifest = dict(records=records, class_vocabulary=metrics['class_vocabulary'])
-    inputs = _json((root / 'probe-inputs.json').read_bytes(), 'Probe inputs')['inputs']
+    inputs = read_document(root, 'probe-inputs.json')['inputs']
     if owner.task == 'text_classification':
         inputs = [row['text'] for row in records if row['split'] == 'validation']
     elif (type(inputs) is not list or len(inputs) != sum(row['split'] == 'validation' for row in records)
@@ -362,7 +360,7 @@ def verify(directory, run, metrics):
         _invalid('Frozen audio probe measurements are invalid.')
     body = verify_directory(directory, job=job_for_run(run, directory), adapter=owner.adapter.ADAPTER, manifest=manifest,
                             reference_keys=owner.adapter.REFERENCE_KEYS, expected_inputs=inputs, reconstruct=False)
-    read = lambda name: _json((root / name).read_bytes(), 'One-fit query evidence')
+    read = lambda name: read_document(root, name)
     return dict(state='verified', manifest=body, checkpoint_index=read('checkpoints.json'), probe=read('probe.json'),
                 metric_definitions=read('metric-definitions.json'), observations=read('observations.json'),
                 model_definition=read('model-definition.json')), [read('checkpoint-fit-0001.json')], [read('probes-fit-0001.json')]

@@ -170,6 +170,12 @@ class OneFitChecks:
         self.write('checkpoint-fit-0001.json', checkpoint)
         self.write('checkpoints.json', original_index)
         self.write('model-evidence.json', original_manifest)
+        invalid_blob = copy.deepcopy(original_manifest)
+        invalid_blob['checkpoints']['bytes'] = float(invalid_blob['checkpoints']['bytes'])
+        self.write('model-evidence.json', invalid_blob)
+        with self.assertRaisesRegex(self.training.TrainingError, 'blob differs'):
+            self.verify()
+        self.write('model-evidence.json', original_manifest)
         saved = self.read('model.json')
         if self.training is text_training:
             saved['feature_log_prob'][0][0] -= .1
