@@ -1704,7 +1704,35 @@ class Runs:
         with self.lock:
             run = self._load(run_id)
         if not self._external(run):
-            raise WorkbenchError('Scientific import requires a completed external Run.', 'unsupported', 400)
+            if run.get('graph', {}).get('recipe') != 'image_classification_model_v2':
+                raise WorkbenchError('Capture requires a qualified classifier evidence or external Run.', 'unsupported', 400)
+            if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
+                raise WorkbenchError('Invalid artifact input byte bound.')
+            if name == 'release.zip':
+                raise WorkbenchError('Mixed private/protected releases are not model evidence inputs.', 'unsupported', 409)
+            artifacts = self._verified_artifacts(run)
+            item = next((item for item in artifacts if item['name'] == name), None)
+            if item is None or item['bytes'] > max_bytes:
+                raise WorkbenchError('Classifier artifact is unavailable or exceeds its capture bound.', 'unavailable', 409)
+            if item['sha256'] != expected_sha256:
+                raise WorkbenchError('Artifact differs from expected SHA256.', 'conflict', 409)
+            raw, _media_type = self.artifact(run_id, name)
+            manifest_raw = self._read_regular(self.path / run_id / 'artifact-manifest.json', 65536)
+            context = run['evidence_context']
+            source = {'schema_version': 2, 'kind': 'builtin_classifier_publication_v1',
+                'catalog_id': run['dataset_id'], 'run_id': run_id, 'request_sha256': run['request_sha256'],
+                'material_sha256': context['material_sha256'], 'graph_sha256': run['graph_sha256'],
+                'release_sha256': run['release_sha256'], 'adapter_sha256': context['adapter_sha256'],
+                'artifact_name': name, 'artifact_role': 'model_evidence', 'artifact_bytes': len(raw),
+                'measured_sha256': hashlib.sha256(raw).hexdigest(),
+                'artifact_manifest_sha256': hashlib.sha256(manifest_raw).hexdigest(),
+                'artifact_manifest_base64': base64.b64encode(manifest_raw).decode('ascii'),
+                'population': 'test' if name in TEST_FILES else 'validation' if item.get('split') == 'validation' else 'train'}
+            try:
+                recipe_process.validate_artifact_source(source, expected_sha256, len(raw))
+            except recipe_process.ProcessError as error:
+                raise WorkbenchError('Classifier publication source differs.', 'unavailable', 409) from error
+            return raw, source
         if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
             raise WorkbenchError('Invalid artifact input byte bound.')
         item = self._selected_external(run, name, max_bytes=max_bytes)

@@ -193,3 +193,24 @@ The common manifest/index/clock/checkpoint/probe grammar follows
 Structured model evidence and comparison queries expose the same verified bytes
 to humans and agents. A v1 Run reports unavailable historical evidence honestly.
 Candidate packaging/fresh-consumer qualification remains a separate P5 gate.
+
+## Built-in artifact input provenance
+
+Qualified `image_classification_model_v2` publications may become exact captured
+recipe inputs through `Runs.capture_artifact`. This operation verifies the
+completed Run's full published artifact inventory and applies the ordinary
+artifact permission/holdout guard before returning bytes. Whole mixed releases
+are excluded. This is a byte-publication proof and does not grant execution,
+transfer distribution rights, or assert that a historical permission is current.
+
+The distinct source schema2, kind `builtin_classifier_publication_v1`, records
+catalog/Run/request/material/graph/release/adapter identities, exact artifact
+name/role/size/hash, population, and the actual verified `artifact-manifest.json`
+bytes in canonical base64 plus their SHA256. The retained decoder checks source
+identity, qualified adapter version, selected manifest item, and measured input
+bytes. It does not fabricate an external custodian or drainage receipt. Existing
+schema1 external Run source receipts retain their exact custody contract.
+
+Transitive current permissions and protected-population disclosure are checked
+again on derived access; a captured source receipt alone cannot authorize a
+package export, import, query, segment read, or derivative summary.
