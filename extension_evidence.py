@@ -322,6 +322,16 @@ def verify(directory, run, admitted_context):
     static=admitted_context['static'];policy=validate_policy(static['policy'],run['material']['recipe'])
     limits=static['profile']['limits'];outputs={item['path']:item for item in run['outputs']}
     require(COMMON_FILES<=set(outputs),'Missing evidence declaration.')
+    inventory=run['artifacts']
+    require(type(inventory) is list and len(inventory)<=len(outputs),'Retained artifact inventory differs.','unavailable')
+    retained={}
+    for item in inventory:
+        closed(item,('name','role','bytes','sha256','media_type'),'Retained artifact')
+        require(item['name'] in outputs and item['name'] not in retained,'Retained artifact membership differs.','unavailable')
+        sha(item['sha256']);natural(item['bytes'],'Retained artifact bytes',0,outputs[item['name']]['max_bytes'])
+        require(item['role']==outputs[item['name']]['role'] and item['media_type']=='application/octet-stream','Retained artifact contract differs.','unavailable')
+        retained[item['name']]=item
+    require(all(not rule['required'] or filename in retained for filename,rule in outputs.items()),'Retained artifact inventory is incomplete.','unavailable')
     payloads={};total=0
     for filename,rule in outputs.items():
         try:raw=read_regular(directory,filename,min(rule['max_bytes'],limits['shard_bytes']))
@@ -329,8 +339,12 @@ def verify(directory, run, admitted_context):
             if rule['required']:raise
             if os.path.lexists(Path(directory)/filename):raise
             continue
+        item=retained.get(filename)
+        require(item is not None and item['bytes']==len(raw) and item['sha256']==hashlib.sha256(raw).hexdigest(),
+                'Exact decoder payload differs from authoritative retained artifact identity.','unavailable')
         total+=len(raw);require(total<=limits['total_output_bytes'],'Evidence exceeds the admitted aggregate bound.')
         payloads[filename]=raw
+    require(set(payloads)==set(retained),'Consumed artifact inventory differs from authoritative retained inventory.','unavailable')
     require(payloads.get('execution-context.json')==context_raw,'Published context differs from exact admitted bytes.')
     def document(filename):return decode(payloads[filename],limits['manifest_bytes'] if filename=='model-evidence.json' else limits['shard_bytes'])
     def blob(item):

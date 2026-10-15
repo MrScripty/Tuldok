@@ -59,6 +59,9 @@ def authored_fixture(root):
         instance.checkpoint(point,{'optimizer_update':point,'epoch':None,'fit_pass':None,'physical_time':None,'wall_elapsed_ms':point},
                             f'weights-{point}.npy',{'reference_mse':0})
     instance.finish();instance.write('diagnostics.json',{'scope':'synthetic structural state, no training'})
+    run['artifacts']=[{'name':row['path'],'role':row['role'],'bytes':(root/row['path']).stat().st_size,
+                       'sha256':hashlib.sha256((root/row['path']).read_bytes()).hexdigest(),'media_type':'application/octet-stream'}
+                      for row in definition['outputs']]
     return definition,model,composition,run,instance
 
 
@@ -70,6 +73,12 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
         self.policy=self.definition['model_evidence']
 
     def verify(self):return evidence.verify(self.root,self.run,self.run['extension_context'])
+
+    def refresh_synthetic_host_inventory(self):
+        """Explicit synthetic prepublication hash snapshot, never an admitted Run."""
+        for item in self.run['artifacts']:
+            raw=(self.root/item['name']).read_bytes()
+            item.update(bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
 
     def rewrite(self,name,value):
         (self.root/name).write_bytes(evidence.canonical(value)+b'\n')
@@ -92,6 +101,18 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
             self.assertEqual(result['prediction'],result['reference'])
             self.assertEqual((result['row_axis'],result['column_axis']),('z','x'))
             self.assertEqual(result['physical_origin'],[.5,2.5,.5])
+
+    def test_actual_decoder_reads_bind_host_inventory_after_any_prior_hash_pass(self):
+        # A prior host hashing pass is insufficient: forge a coherent worker
+        # bundle after it and keep the original authoritative Run inventory.
+        self.verify()
+        path=self.root/'prediction-16.npy';raw=path.read_bytes()
+        path.write_bytes(raw[:-8]+struct.pack('<d',123.0))
+        index=json.loads((self.root/'field-index.json').read_bytes())
+        index[0]['cases'][0]['predicted']=self.writer.blob('prediction-16.npy')
+        self.rewrite('field-index.json',index);self.rehash('field-index.json','field_index')
+        with self.assertRaisesRegex(WorkbenchError,'authoritative retained artifact'):
+            self.verify()
 
     def test_wrong_context_model_profile_task_attempt_and_spec_refuse(self):
         for change in (
@@ -134,10 +155,12 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
         index=json.loads((self.root/'field-index.json').read_bytes())
         for group in index:group['cases'][0]['reference']=self.writer.blob('reference.npy')
         self.rewrite('field-index.json',index);self.rehash('field-index.json','field_index')
+        self.refresh_synthetic_host_inventory()
         with self.assertRaisesRegex(WorkbenchError,'admitted target'):self.verify()
 
     def test_changed_probe_input_with_updated_file_integrity_still_refuses(self):
         path=self.root/'input-initial.npy';raw=path.read_bytes();path.write_bytes(raw[:-8]+struct.pack('<d',42))
+        self.refresh_synthetic_host_inventory()
         with self.assertRaisesRegex(WorkbenchError,'admitted identity'):self.verify()
 
     def test_field_order_stage_gauge_shape_clock_and_member_negatives(self):
@@ -261,3 +284,24 @@ class ContextCaptureTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'),'Requires disposable PostgreSQL')
+class RetainedExtensionRecordTests(unittest.TestCase):
+    def test_malformed_retained_material_refuses_through_actual_run_loader(self):
+        from test_external_runs import ExternalCase
+        from workbench import encode
+        case=ExternalCase(methodName='runTest');self.addCleanup(case.doCleanups);case.setUp()
+        queued=case.queued(case.body(approval=case.approve()))
+        with case.owner.bound(case.dataset),case.dataset.lock:
+            row=case.dataset.db.execute('SELECT document FROM workspace_runs WHERE id=%s',(queued['id'],)).fetchone()
+            original=json.loads(row[0])
+            for material in ([],None,{'recipe':[]},{'recipe':None}):
+                changed=dict(original,material=material)
+                with case.dataset.db.transaction():
+                    case.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(encode(changed),queued['id']))
+                try:
+                    with self.subTest(material=material),self.assertRaises(WorkbenchError) as refused:
+                        case.dataset.runs._load(queued['id'])
+                    self.assertEqual(refused.exception.code,'unavailable')
+                finally:
+                    with case.dataset.db.transaction():
+                        case.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(encode(original),queued['id']))

@@ -805,9 +805,15 @@ class Pipelines:
         for number,(path,raw) in enumerate(sorted(captured.items())):
             item=blob(raw,f'capture-{number:04d}.bin','application/octet-stream')
             payloads[item['name']]=raw;paths.append({'path':path,'blob':item})
-        snapshot={'format':'external_recipe_snapshot_v1','graph':graph,'preflight':preflight,'capture_paths':paths}
+        evidence=preflight['material']['recipe']['format']==recipe_contract.EVIDENCE_FORMAT
+        snapshot={'format':'external_model_evidence_snapshot_v1' if evidence else 'external_recipe_snapshot_v1',
+                  'graph':graph,'preflight':preflight,'capture_paths':paths}
         profile={'format':'opaque_external_outputs_v1','outputs':preflight['outputs'],
                  'numerical_evidence':'unsupported','automatic_checkpoints':'unsupported'}
+        if evidence:
+            import extension_evidence
+            static=extension_evidence.resolve(preflight['material']['recipe']['model_evidence'],model,preflight['material'])
+            snapshot['evidence_context']=static;profile=static['profile']
         for name,value in (('recipe.json',snapshot),('profile.json',profile)):
             payloads[name]=encode(value).encode()
             if len(payloads[name])>2*1024**2:raise WorkbenchError('Recipe/profile document exceeds2MiB.')
@@ -825,12 +831,17 @@ class Pipelines:
                   ready+2+(ready if 'cpu_snapshot' in preflight['material'] else 0)+15,
                   'retained_bytes':capture_bytes+model_bytes+output_bytes+custody_bytes,
                   'peak_staging_bytes':2*capture_bytes+model_bytes+2*output_bytes+custody_bytes}
+        if evidence:
+            # Reserve the generated context and its Run/spec/publication copies
+            # before Study admission; no post-grant envelope expansion.
+            envelope['retained_bytes']+=4*extension_evidence.MAX_CONTEXT_BYTES
+            envelope['peak_staging_bytes']+=4*extension_evidence.MAX_CONTEXT_BYTES
         for value in envelope.values():natural(value,'Resource envelope',1)
         material={'format':'recipe_material_v1','catalog_id':self.db.dataset_id,'recipe_id':graph_id,
             'recipe_revision':revision,'recipe_document':blob(payloads['recipe.json'],'recipe.json'),
             'executable_sha256':preflight['material_sha256'],'model':model_ref,'data':[],
-            'trainer':definition('trainer','external_recipe_v1',preflight['material']['recipe']),
-            'evaluation_profile':definition('profile','opaque_external_outputs_v1',profile),
+            'trainer':definition('trainer',recipe_contract.EVIDENCE_FORMAT if evidence else 'external_recipe_v1',preflight['material']['recipe']),
+            'evaluation_profile':static['profile']['definition'] if evidence else definition('profile','opaque_external_outputs_v1',profile),
             'resolved_profile':blob(payloads['profile.json'],'profile.json'),
             'runtime':{'kind':'runtime','catalog_id':self.db.dataset_id,'id':runtime_sha,'sha256':runtime_sha},
             'captures':[item['blob'] for item in paths],'resource_envelope':envelope}
@@ -919,14 +930,15 @@ class Pipelines:
             raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
         if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
             raise WorkbenchError('Recipe document names differ.','unavailable',409)
-        if material['trainer']['id']=='external_recipe_v1':
+        if material['trainer']['id'] in ('external_recipe_v1',recipe_contract.EVIDENCE_FORMAT):
             # Current disclosure of retained captures follows all Run inputs,
             # independently from their historical integrity and exact grant.
             raw=read_owned_blob(self.material_path,ref['sha256'],material['recipe_document'],2*1024**2)
             snapshot=retained_json(raw.decode(),2*1024**2)
-            closed(snapshot,('format','graph','preflight','capture_paths'))
+            evidence=material['trainer']['id']==recipe_contract.EVIDENCE_FORMAT
+            closed(snapshot,('format','graph','preflight','capture_paths',*(['evidence_context'] if evidence else [])))
             graph=decode_graph(snapshot['graph']);preflight=snapshot['preflight']
-            if (snapshot['format']!='external_recipe_snapshot_v1'
+            if (snapshot['format']!=('external_model_evidence_snapshot_v1' if evidence else 'external_recipe_snapshot_v1')
                     or graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision']
                     or preflight['material_sha256']!=material['executable_sha256']
                     or digest(preflight['material'])!=preflight['material_sha256']
@@ -935,10 +947,74 @@ class Pipelines:
             recipe_contract.validate_material(preflight['material'])
             from candidate_packages import authorize_material_inputs
             authorize_material_inputs(self.dataset.runs,preflight['material'])
+            if evidence:self._retained_extension_static(value)
         if verify:
             for item in inventory:read_owned_blob(self.material_path,ref['sha256'],item,recipe_contract.CPU_CAPTURE_BYTES)
             (getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)).material(material['model'],verify=True)
         return value
+
+    def _retained_extension_static(self, composition):
+        """Pure retained integrity for Runs recovery; public callers guard access.
+
+        No current project, runtime, draft or caller context document is consulted.
+        Like Runs._load this private primitive does not authorize disclosure.
+        """
+        import extension_evidence as evidence
+        from model_definitions import read_owned_blob,retained_json,reference,MAX_SOURCE_BYTES
+        ref=reference(composition['ref'],'recipe_material',self.db.dataset_id)
+        material=composition['material'];sha=ref['sha256']
+        if digest(material)!=sha or material['trainer']['id']!=recipe_contract.EVIDENCE_FORMAT:
+            raise WorkbenchError('Extension composition identity differs.','unavailable',409)
+        snapshot=retained_json(read_owned_blob(self.material_path,sha,material['recipe_document'],2*1024**2).decode(),2*1024**2)
+        closed(snapshot,('format','graph','preflight','capture_paths','evidence_context'))
+        execution=snapshot['preflight']['material'];graph=decode_graph(snapshot['graph'])
+        recipe_contract.validate_material(execution)
+        if (snapshot['format']!='external_model_evidence_snapshot_v1' or
+                execution['recipe']['format']!=recipe_contract.EVIDENCE_FORMAT or
+                execution['catalog_id']!=self.db.dataset_id or
+                graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision'] or
+                digest(execution)!=material['executable_sha256'] or
+                snapshot['preflight']['material_sha256']!=material['executable_sha256'] or
+                execution['graph_execution_sha256']!=execution_digest(graph)):
+            raise WorkbenchError('Retained extension execution binding differs.','unavailable',409)
+        model_ref=reference(material['model'],'model',self.db.dataset_id)
+        row=self.db.execute('SELECT document FROM model_materials WHERE id=%s AND revision=%s AND sha256=%s',
+            (model_ref['id'],model_ref['revision'],model_ref['sha256'])).fetchone()
+        if row is None:raise WorkbenchError('Retained extension Model is unavailable.','unavailable',409)
+        model=retained_json(row[0]);closed(model,('ref','material'))
+        if not evidence.identical(model['ref'],model_ref) or digest(model['material'])!=model_ref['sha256']:
+            raise WorkbenchError('Retained extension Model identity differs.','unavailable',409)
+        model_root=self.dataset.path/'model-materials'
+        # Read the exact Model closure; no imports or deserialization of state.
+        for item in [*(model['material'][key] for key in ('specification','preprocessing_policy','output_policy')),
+                     *(item['blob'] for item in model['material']['source_closure'])]:
+            read_owned_blob(model_root,model_ref['sha256'],item,MAX_SOURCE_BYTES)
+        sources={item['import_path']:item['blob'] for item in model['material']['source_closure']}
+        paths=snapshot['capture_paths']
+        if (type(paths) is not list or len(paths)!=len(material['captures']) or
+                len({item['path'] for item in paths})!=len(paths) or
+                not evidence.identical(sorted([item['blob'] for item in paths],key=lambda item:item['name']),
+                                       sorted(material['captures'],key=lambda item:item['name']))):
+            raise WorkbenchError('Retained extension capture map differs.','unavailable',409)
+        captured={}
+        for item in paths:
+            closed(item,('path','blob'))
+            captured[item['path']]=read_owned_blob(self.material_path,sha,item['blob'],recipe_contract.CPU_CAPTURE_BYTES)
+        expected={path:{'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()} for path,raw in captured.items()}
+        if not evidence.identical(expected,execution['captures']):
+            raise WorkbenchError('Retained extension captures differ.','unavailable',409)
+        for path,raw in captured.items():
+            if path.startswith('source/'):
+                original=sources.get(path[len('source/'):])
+                if original is None or original['sha256']!=hashlib.sha256(raw).hexdigest() or original['bytes']!=len(raw):
+                    raise WorkbenchError('Retained Model and execution source differ.','unavailable',409)
+        static=evidence.resolve(execution['recipe']['model_evidence'],model,execution)
+        profile=retained_json(read_owned_blob(self.material_path,sha,material['resolved_profile'],2*1024**2).decode(),2*1024**2)
+        if (not evidence.identical(static,snapshot['evidence_context']) or not evidence.identical(profile,static['profile']) or
+                not evidence.identical(material['evaluation_profile'],static['profile']['definition']) or
+                material['trainer']['sha256']!=digest(execution['recipe'])):
+            raise WorkbenchError('Retained extension profile/context differs.','unavailable',409)
+        return static
 
     def _prepare_recipe_material(self, ref):
         """Revalidate source/runtime against retained bytes, never the current graph."""
@@ -947,8 +1023,10 @@ class Pipelines:
         if material['trainer']['id'] in BUILTIN_TRAINERS:return self._prepare_builtin_recipe_material(value)
         raw=read_owned_blob(self.material_path,ref['sha256'],material['recipe_document'],2*1024**2)
         snapshot=retained_json(raw.decode(),2*1024**2)
-        closed(snapshot,('format','graph','preflight','capture_paths'))
-        if snapshot['format']!='external_recipe_snapshot_v1':raise WorkbenchError('Unsupported recipe snapshot.')
+        evidence=material['trainer']['id']==recipe_contract.EVIDENCE_FORMAT
+        closed(snapshot,('format','graph','preflight','capture_paths',*(['evidence_context'] if evidence else [])))
+        if snapshot['format']!=('external_model_evidence_snapshot_v1' if evidence else 'external_recipe_snapshot_v1'):
+            raise WorkbenchError('Unsupported recipe snapshot.')
         graph=decode_graph(snapshot['graph']);preflight=snapshot['preflight']
         if (graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision'] or
                 preflight['material_sha256']!=material['executable_sha256'] or
