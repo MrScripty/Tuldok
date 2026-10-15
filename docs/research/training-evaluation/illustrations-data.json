@@ -1,0 +1,117 @@
+{
+  "evidence_status": "Authored teaching illustrations, not measured training runs",
+  "learning_curves": {
+    "optimizer_updates": [
+      0,
+      1000,
+      2000,
+      4000,
+      6000
+    ],
+    "training_mse": [
+      1.0,
+      0.35,
+      0.18,
+      0.08,
+      0.04
+    ],
+    "validation_mse": [
+      1.1,
+      0.45,
+      0.29,
+      0.31,
+      0.42
+    ]
+  },
+  "rollout_curve": {
+    "physical_time_illustrative_units": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "error_illustrative_units": [
+      0,
+      0.05,
+      0.11,
+      0.22,
+      0.42
+    ],
+    "illustrative_tolerance": 0.2
+  },
+  "autoscaling": {
+    "target": [
+      [
+        0.0,
+        2.0,
+        4.0
+      ],
+      [
+        2.0,
+        6.0,
+        8.0
+      ],
+      [
+        4.0,
+        8.0,
+        10.0
+      ]
+    ],
+    "prediction": [
+      [
+        0.0,
+        0.2,
+        0.4
+      ],
+      [
+        0.2,
+        0.6,
+        0.8
+      ],
+      [
+        0.4,
+        0.8,
+        1.0
+      ]
+    ],
+    "target_units": "illustrative scalar units",
+    "auto_limits": {
+      "target": [
+        0,
+        10
+      ],
+      "prediction": [
+        0,
+        1
+      ]
+    },
+    "shared_limits": [
+      0,
+      10
+    ]
+  },
+  "checkpoint_score_table": {
+    "optimizer_updates": [
+      0,
+      1000,
+      2000,
+      4000,
+      6000
+    ],
+    "boundary_error": [
+      0.7,
+      0.4,
+      0.22,
+      0.12,
+      0.1
+    ],
+    "rollout_failures_out_of_20": [
+      19,
+      11,
+      6,
+      3,
+      5
+    ]
+  }
+}
