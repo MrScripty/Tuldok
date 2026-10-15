@@ -725,7 +725,10 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.projects.evidence(parts[1], parts[3]))
                     if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'recipes':
                         query = parse_qs(urlsplit(self.path).query)
-                        return self.reply(dataset.pipelines.inspect_external_recipe(parts[1], parts[3], query.get('expected_sha256', [''])[-1]))
+                        selected = self._contract_selection
+                        version = selected[1] if selected is not None and selected[0] == 'recipes.inspect' else 1
+                        return self.reply(dataset.pipelines.inspect_external_recipe(
+                            parts[1], parts[3], query.get('expected_sha256', [''])[-1], contract_version=version))
                     if parts == ['context']:
                         return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
                                            'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
