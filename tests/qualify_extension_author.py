@@ -35,6 +35,7 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 import agent_api
+import pipeline
 from app import Dataset, make_handler
 from runtime_snapshots import RuntimeSnapshots
 
@@ -142,6 +143,7 @@ class Operator:
     def __init__(self, args):
         self.args = args; self.output = args.output.resolve(); self.sequence = 0
         self.dataset = self.server = self.thread = self.owner = self.agent = None
+        self.review = None
         self.roots = document(args.roots) if args.roots else {args.root_alias: str(args.package.resolve())}
         require(type(self.roots) is dict and self.roots.get(args.root_alias) == str(args.package.resolve())
                 and all(type(k) is str and type(v) is str and Path(v).is_absolute()
@@ -160,6 +162,27 @@ class Operator:
         self.owner = self.dataset.access.exchange(self.dataset.access._local_owner_token())
         if serve:
             self.start_http()
+
+    def retain_review(self, inventory_raw, blobs):
+        """Keep the initial operator review outside the mutable author package."""
+        self.review = {'inventory_sha256': sha(inventory_raw),
+            'files': {name: sha(raw) for name, raw in blobs.items()}}
+        oracle_root = self.output / 'reviewed-oracle'
+        oracle_root.mkdir(mode=0o700)
+        for name, raw in [('reviewed-inventory.private.json', inventory_raw),
+                ('reviewed-oracle/cold_oracle.py', blobs['cold_oracle.py']),
+                ('reviewed-oracle/fixture.json', blobs['fixture.json'])]:
+            self.write(name, raw, private=True).chmod(0o400)
+        self.write('review-freeze.json', self.review, private=True)
+
+    def oracle_inputs(self):
+        require(self.review is not None, 'Initial operator review is unavailable.')
+        inventory = regular(self.output / 'reviewed-inventory.private.json')
+        require(sha(inventory) == self.review['inventory_sha256'], 'Retained review inventory changed.')
+        paths = [self.output / 'reviewed-oracle' / name for name in ('cold_oracle.py', 'fixture.json')]
+        for path in paths:
+            require(sha(regular(path)) == self.review['files'][path.name], 'Retained frozen oracle input changed.')
+        return paths
 
     def start_http(self):
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
@@ -258,7 +281,7 @@ class Operator:
         material = self.http('recipes.material', {'ref': trial['material']})['material']
         require(material['runtime']['sha256'] == RUNTIME_SHA and
                 material['model']['sha256'] == model['ref']['sha256'] and
-                material['trainer']['sha256'] == ref['sha256'], 'Published composition differs.')
+                material['trainer']['sha256'] == pipeline.digest(recipe), 'Published composition differs.')
         current = self.http('studies.get', {'study_id': study['id']})['study']
         self.http('studies.continue', {'study_id': study['id'], 'request_key': 'continue-' + uuid.uuid4().hex,
             'revision': current['revision'], 'admission_epoch': current['admission_epoch']})
@@ -319,8 +342,9 @@ class Operator:
             context = self.dataset.runs._load(run['id'])['spec']['model_evidence_context']
         require(sha(regular(self.output/'artifacts/execution-context.json')) == context['sha256'],
                 'Independent retained custody context differs.')
+        oracle_path, fixture_path = self.oracle_inputs()
         oracle = subprocess.run([str(self.args.oracle_python), '-I', '-S', '-B',
-            str(self.args.package.resolve()/'cold_oracle.py'), '--fixture', str(self.args.package.resolve()/'fixture.json'),
+            str(oracle_path), '--fixture', str(fixture_path),
             '--artifacts', str(self.output/'artifacts'), '--expected-context-sha256', context['sha256'],
             '--report', str(self.output/'oracle.json')], capture_output=True, timeout=60)
         require(oracle.returncode == 0, 'Frozen independent oracle refused; no numerical acceptance.')
@@ -393,6 +417,7 @@ def main(args):
     reviewed_inventory = agent_api.decode(reviewed_raw)
     project, recipe, blobs = review_package(args.package.resolve(), reviewed_inventory)
     operator = Operator(args); operator.output.mkdir(parents=True, mode=0o700, exist_ok=False)
+    operator.retain_review(reviewed_raw, blobs)
     prepared = None; passed = False
     try:
         operator.start(serve=False); prepared = operator.prepare(project, recipe, blobs)

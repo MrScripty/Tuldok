@@ -725,7 +725,7 @@
         "units": "dimensionless_squared",
         "direction": "minimize",
         "reduction": "mean_cell_squared_error_over_validation_members",
-        "population_sha256": "0e38bdf5d07634378d61e2f90ebac809c0697ba8014c67797ecbeb3bc28a004c",
+        "population_sha256": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800",
         "domain": {
           "minimum": 0,
           "maximum": 1000000000000.0
@@ -741,7 +741,7 @@
         "units": "dimensionless_squared",
         "direction": "minimize",
         "reduction": "mean_cell_squared_error_over_validation_members",
-        "population_sha256": "0e38bdf5d07634378d61e2f90ebac809c0697ba8014c67797ecbeb3bc28a004c",
+        "population_sha256": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800",
         "domain": {
           "minimum": 0,
           "maximum": 1000000000000.0
@@ -783,32 +783,7 @@
         ],
         "boundary_policy": "where(boundary_mask,0,raw)"
       },
-      "configuration": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "learning_rate": {
-              "type": "number",
-              "minimum": 0.001,
-              "maximum": 0.5
-            },
-            "updates": {
-              "type": "integer",
-              "minimum": 64,
-              "maximum": 64
-            }
-          },
-          "required": [
-            "learning_rate",
-            "updates"
-          ],
-          "additionalProperties": false
-        },
-        "defaults": {
-          "learning_rate": 0.1,
-          "updates": 64
-        }
-      }
+      "configuration": {}
     },
     "preprocessing_policy": {
       "kind": "population_standardization",

@@ -1,0 +1,1859 @@
+{
+  "after_counts": {
+    "access_execution_grants": 0,
+    "model_attempt_reservations": 0,
+    "model_definition_drafts": 1,
+    "model_materials": 0,
+    "model_studies": 0,
+    "model_trials": 0,
+    "workspace_graphs": 0,
+    "workspace_recipe_materials": 0,
+    "workspace_runs": 0
+  },
+  "before_counts": {
+    "access_execution_grants": 0,
+    "model_attempt_reservations": 0,
+    "model_definition_drafts": 0,
+    "model_materials": 0,
+    "model_studies": 0,
+    "model_trials": 0,
+    "workspace_graphs": 0,
+    "workspace_recipe_materials": 0,
+    "workspace_runs": 0
+  },
+  "catalog_path": "/workspace/tuldok-independent-b-host-review/catalog",
+  "checks": {
+    "Task trainer stages exact ordered": true,
+    "aggregate candidate target identity": true,
+    "both checkpoints preserve distinct raw corrected mappings": true,
+    "complete ordered per-field target hashes": true,
+    "exact Project recipe/provider references": true,
+    "full closure adapter and all evaluator field identities": true,
+    "no Run grant reservation Study trial recipe material created": true,
+    "provider recipe wall/output bounds": true,
+    "provider source bound": true,
+    "provider source inventory hashes sizes": true,
+    "raw corrected native targets distinct": true,
+    "recipe sources exact complete hashes": true,
+    "required input identity includes source and boundary": true,
+    "same exact captured runtime nomination": true
+  },
+  "closure_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+  "configuration": {
+    "defaults": {
+      "learning_rate": 0.1,
+      "updates": 64
+    },
+    "schema": {
+      "additionalProperties": false,
+      "properties": {
+        "learning_rate": {
+          "maximum": 0.5,
+          "minimum": 0.001,
+          "type": "number"
+        },
+        "updates": {
+          "maximum": 64,
+          "minimum": 64,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "learning_rate",
+        "updates"
+      ],
+      "type": "object"
+    }
+  },
+  "execution_permitted": false,
+  "inert_bound_configuration_validation": {
+    "code": "invalid",
+    "reason": "Model configuration violates the selected contribution schema.",
+    "scope": "Secondary inert contract check using exact real-PG resolved binding; no source edits or bypassed owner operation",
+    "state": "refused",
+    "status": 400
+  },
+  "input_identities": [
+    {
+      "field_id": "initial",
+      "payload_sha256": "5cccb0dbfd0afedd9fe01b4b2c76efb84fe60c189515666292ecba1a87dd1835"
+    },
+    {
+      "field_id": "source",
+      "payload_sha256": "bcac77e357aae348ee1c73e86c146b426a711cd37db2daa150919586eb8d8bf3"
+    },
+    {
+      "field_id": "boundary_mask",
+      "payload_sha256": "415448db9a4c15640e672a1842e908b72ef2f395eb0abd659ec4414523b20b06"
+    }
+  ],
+  "metric_population_identity": {
+    "declared": "0e38bdf5d07634378d61e2f90ebac809c0697ba8014c67797ecbeb3bc28a004c",
+    "digest_of_candidates": "0e38bdf5d07634378d61e2f90ebac809c0697ba8014c67797ecbeb3bc28a004c",
+    "expected_digest_of_sorted_frozen_references": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800"
+  },
+  "model_parameter_schema": null,
+  "operations": [
+    {
+      "operation": "projects.open_snapshot",
+      "result": {
+        "data": [
+          {
+            "bytes": 18816,
+            "id": "fixture",
+            "integrity": "verified",
+            "label": "B authored source and binary boundary fixture",
+            "observed_sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+            "path": "fixture.json",
+            "sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+            "status": "available"
+          }
+        ],
+        "evidence": [],
+        "execution": "unsupported",
+        "extensions": {
+          "bytes_inspected": 46173,
+          "execution": "unsupported",
+          "inspection_budget_consumed": 46173,
+          "mode": "inspection",
+          "packages": [
+            {
+              "contributions": [
+                {
+                  "bytes": 2912,
+                  "definition": {
+                    "format": "tuldok_contribution_v1",
+                    "id": "example.scalar-b-independent:task",
+                    "kind": "task",
+                    "label": "Independent B source-driven scalar and explicit boundary enforcement",
+                    "ports": [
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "initial",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "source",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:boundary-mask",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "boundary_mask",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "raw_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "corrected_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "raw",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "corrected",
+                        "units": "dimensionless"
+                      }
+                    ],
+                    "requires": [],
+                    "stages": [
+                      {
+                        "clock": "optimizer_update",
+                        "failure_policy": "fail",
+                        "id": "raw_inference",
+                        "inputs": [
+                          "initial",
+                          "source",
+                          "raw_target"
+                        ],
+                        "outputs": [
+                          "raw"
+                        ],
+                        "version": "1.0.0"
+                      },
+                      {
+                        "clock": "optimizer_update",
+                        "failure_policy": "fail",
+                        "id": "boundary_enforcement",
+                        "inputs": [
+                          "raw",
+                          "boundary_mask",
+                          "corrected_target"
+                        ],
+                        "outputs": [
+                          "corrected"
+                        ],
+                        "version": "1.0.0"
+                      }
+                    ],
+                    "version": "1.0.0"
+                  },
+                  "id": "example.scalar-b-independent:task",
+                  "kind": "task",
+                  "path": "task.json",
+                  "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                  "state": "valid",
+                  "version": "1.0.0"
+                },
+                {
+                  "bytes": 2558,
+                  "definition": {
+                    "format": "tuldok_contribution_v1",
+                    "id": "example.scalar-b-independent:model",
+                    "implementation": {
+                      "entrypoint": "infer",
+                      "source": "producer.py"
+                    },
+                    "kind": "model",
+                    "label": "Independent B model",
+                    "ports": [
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "initial",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "source",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:boundary-mask",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "boundary_mask",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "raw_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "corrected_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "raw",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "corrected",
+                        "units": "dimensionless"
+                      }
+                    ],
+                    "requires": [
+                      {
+                        "id": "example.scalar-b-independent:task",
+                        "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                        "version": "1.0.0"
+                      }
+                    ],
+                    "version": "1.0.0"
+                  },
+                  "id": "example.scalar-b-independent:model",
+                  "kind": "model",
+                  "path": "model.json",
+                  "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+                  "state": "valid",
+                  "version": "1.0.0"
+                },
+                {
+                  "bytes": 3567,
+                  "definition": {
+                    "defaults": {
+                      "learning_rate": 0.1,
+                      "updates": 64
+                    },
+                    "format": "tuldok_contribution_v1",
+                    "id": "example.scalar-b-independent:trainer",
+                    "implementation": {
+                      "entrypoint": "fit",
+                      "source": "producer.py"
+                    },
+                    "kind": "trainer",
+                    "label": "Independent B trainer",
+                    "parameters": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "learning_rate": {
+                          "maximum": 0.5,
+                          "minimum": 0.001,
+                          "type": "number"
+                        },
+                        "updates": {
+                          "maximum": 64,
+                          "minimum": 64,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "learning_rate",
+                        "updates"
+                      ],
+                      "type": "object"
+                    },
+                    "ports": [
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "initial",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "source",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:boundary-mask",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "boundary_mask",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "raw_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "corrected_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "raw",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "corrected",
+                        "units": "dimensionless"
+                      }
+                    ],
+                    "requires": [
+                      {
+                        "id": "example.scalar-b-independent:task",
+                        "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                        "version": "1.0.0"
+                      }
+                    ],
+                    "stages": [
+                      {
+                        "clock": "optimizer_update",
+                        "failure_policy": "fail",
+                        "id": "raw_inference",
+                        "inputs": [
+                          "initial",
+                          "source",
+                          "raw_target"
+                        ],
+                        "outputs": [
+                          "raw"
+                        ],
+                        "version": "1.0.0"
+                      },
+                      {
+                        "clock": "optimizer_update",
+                        "failure_policy": "fail",
+                        "id": "boundary_enforcement",
+                        "inputs": [
+                          "raw",
+                          "boundary_mask",
+                          "corrected_target"
+                        ],
+                        "outputs": [
+                          "corrected"
+                        ],
+                        "version": "1.0.0"
+                      }
+                    ],
+                    "version": "1.0.0"
+                  },
+                  "id": "example.scalar-b-independent:trainer",
+                  "kind": "trainer",
+                  "path": "trainer.json",
+                  "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+                  "state": "valid",
+                  "version": "1.0.0"
+                },
+                {
+                  "bytes": 2573,
+                  "definition": {
+                    "format": "tuldok_contribution_v1",
+                    "id": "example.scalar-b-independent:evaluator",
+                    "implementation": {
+                      "entrypoint": "evaluate",
+                      "source": "producer.py"
+                    },
+                    "kind": "evaluator",
+                    "label": "Independent B evaluator",
+                    "ports": [
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "initial",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "source",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:boundary-mask",
+                          "version": "1.0.0"
+                        },
+                        "direction": "input",
+                        "encoding": "npy",
+                        "id": "boundary_mask",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "raw_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "target",
+                        "encoding": "npy",
+                        "id": "corrected_target",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "raw",
+                        "units": "dimensionless"
+                      },
+                      {
+                        "axes": [
+                          "z",
+                          "y",
+                          "x"
+                        ],
+                        "contract": {
+                          "id": "example.scalar-b-independent:scalar-field",
+                          "version": "1.0.0"
+                        },
+                        "direction": "output",
+                        "encoding": "npy",
+                        "id": "corrected",
+                        "units": "dimensionless"
+                      }
+                    ],
+                    "requires": [
+                      {
+                        "id": "example.scalar-b-independent:task",
+                        "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                        "version": "1.0.0"
+                      }
+                    ],
+                    "version": "1.0.0"
+                  },
+                  "id": "example.scalar-b-independent:evaluator",
+                  "kind": "evaluator",
+                  "path": "evaluator.json",
+                  "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+                  "state": "valid",
+                  "version": "1.0.0"
+                },
+                {
+                  "bytes": 544,
+                  "definition": {
+                    "format": "tuldok_contribution_v1",
+                    "id": "example.scalar-b-independent:view",
+                    "kind": "view",
+                    "label": "Independent B view",
+                    "requires": [
+                      {
+                        "id": "example.scalar-b-independent:task",
+                        "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                        "version": "1.0.0"
+                      }
+                    ],
+                    "version": "1.0.0",
+                    "view": {
+                      "label": "Raw and boundary-enforced B fields",
+                      "primitive": "orthogonal_slices",
+                      "query": {
+                        "id": "tuldok:runs.model_evidence",
+                        "version": "2.0.0"
+                      }
+                    }
+                  },
+                  "id": "example.scalar-b-independent:view",
+                  "kind": "view",
+                  "path": "view.json",
+                  "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
+                  "state": "valid",
+                  "version": "1.0.0"
+                }
+              ],
+              "declared_runtime": {
+                "profile": "captured_cpu_python_v1",
+                "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+              },
+              "discovered": true,
+              "effects": [
+                "filesystem"
+              ],
+              "enabled": true,
+              "host": {
+                "required": [
+                  {
+                    "id": "tuldok:extension",
+                    "version": "1.0.0"
+                  },
+                  {
+                    "id": "tuldok:project",
+                    "version": "2.0.0"
+                  }
+                ],
+                "state": "compatible"
+              },
+              "id": "independent-b",
+              "integrity": "verified",
+              "label": "Independent author B scalar package",
+              "observed_sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+              "package": {
+                "id": "example.scalar-b-independent",
+                "version": "1.0.0"
+              },
+              "path": "extension.json",
+              "permission": {
+                "reason": "Extension execution admission is not implemented.",
+                "state": "unavailable"
+              },
+              "resources": {
+                "output_bytes": 1048576,
+                "source_bytes": 131072,
+                "wall_seconds": 60
+              },
+              "runtime": {
+                "reason": "No runtime qualification is performed during inspection.",
+                "state": "unavailable"
+              },
+              "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+              "state": "valid"
+            }
+          ],
+          "schema_sha256": {
+            "contribution": "2e1e038c3c1ba09c6b7525a1f9ed2f8cb083fde31cf067f12cf57b76f3f7dfe3",
+            "extension": "e78280176fd239b387ffc8b850a7bbff61f069cb47d4c7f9077e7d690c116d25",
+            "parameter": "12ea65f4eb51fc71ba4c98217813b0953aa73cda0fe13e8a6c4b0d4d8acc7305"
+          }
+        },
+        "id": "0ddf5fd116d543eba2e79e6b0f2e00b1",
+        "manifest_path": "project.json",
+        "manifest_sha256": "ef1965e9c7817dec2cce6882c5a4725dade23cec2f801f36a61640d33e1296a8",
+        "manifest_status": "unchanged",
+        "mode": "inspection",
+        "name": "Independent author B scalar Study",
+        "recipes": [
+          {
+            "bytes": 23158,
+            "id": "train",
+            "integrity": "verified",
+            "label": "B source and boundary evidence",
+            "observed_sha256": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e",
+            "path": "recipe.json",
+            "sha256": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e",
+            "status": "available"
+          }
+        ],
+        "requirements": [],
+        "root": "b",
+        "schema_version": 2
+      },
+      "state": "completed"
+    },
+    {
+      "code": "invalid",
+      "operation": "recipes.inspect/1",
+      "reason": "Extension evidence: Metric evaluator/population/preprocessing identity differs.",
+      "state": "refused",
+      "status": 400
+    },
+    {
+      "code": "invalid",
+      "operation": "recipes.inspect/2",
+      "reason": "Extension evidence: Metric evaluator/population/preprocessing identity differs.",
+      "state": "refused",
+      "status": 400
+    },
+    {
+      "operation": "extension_bindings.resolve",
+      "result": {
+        "binding": {
+          "contributions": [
+            {
+              "definition": {
+                "format": "tuldok_contribution_v1",
+                "id": "example.scalar-b-independent:evaluator",
+                "implementation": {
+                  "entrypoint": "evaluate",
+                  "source": "producer.py"
+                },
+                "kind": "evaluator",
+                "label": "Independent B evaluator",
+                "ports": [
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "initial",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "source",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:boundary-mask",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "boundary_mask",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "raw_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "corrected_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "raw",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "corrected",
+                    "units": "dimensionless"
+                  }
+                ],
+                "requires": [
+                  {
+                    "id": "example.scalar-b-independent:task",
+                    "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                    "version": "1.0.0"
+                  }
+                ],
+                "version": "1.0.0"
+              },
+              "id": "example.scalar-b-independent:evaluator",
+              "kind": "evaluator",
+              "provider": {
+                "effects": [
+                  "filesystem"
+                ],
+                "id": "example.scalar-b-independent",
+                "reference_id": "independent-b",
+                "resources": {
+                  "output_bytes": 1048576,
+                  "source_bytes": 131072,
+                  "wall_seconds": 60
+                },
+                "runtime": {
+                  "profile": "captured_cpu_python_v1",
+                  "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+                },
+                "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+                "version": "1.0.0"
+              },
+              "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+              "version": "1.0.0"
+            },
+            {
+              "definition": {
+                "format": "tuldok_contribution_v1",
+                "id": "example.scalar-b-independent:model",
+                "implementation": {
+                  "entrypoint": "infer",
+                  "source": "producer.py"
+                },
+                "kind": "model",
+                "label": "Independent B model",
+                "ports": [
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "initial",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "source",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:boundary-mask",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "boundary_mask",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "raw_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "corrected_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "raw",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "corrected",
+                    "units": "dimensionless"
+                  }
+                ],
+                "requires": [
+                  {
+                    "id": "example.scalar-b-independent:task",
+                    "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                    "version": "1.0.0"
+                  }
+                ],
+                "version": "1.0.0"
+              },
+              "id": "example.scalar-b-independent:model",
+              "kind": "model",
+              "provider": {
+                "effects": [
+                  "filesystem"
+                ],
+                "id": "example.scalar-b-independent",
+                "reference_id": "independent-b",
+                "resources": {
+                  "output_bytes": 1048576,
+                  "source_bytes": 131072,
+                  "wall_seconds": 60
+                },
+                "runtime": {
+                  "profile": "captured_cpu_python_v1",
+                  "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+                },
+                "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+                "version": "1.0.0"
+              },
+              "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+              "version": "1.0.0"
+            },
+            {
+              "definition": {
+                "format": "tuldok_contribution_v1",
+                "id": "example.scalar-b-independent:task",
+                "kind": "task",
+                "label": "Independent B source-driven scalar and explicit boundary enforcement",
+                "ports": [
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "initial",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "source",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:boundary-mask",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "boundary_mask",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "raw_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "corrected_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "raw",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "corrected",
+                    "units": "dimensionless"
+                  }
+                ],
+                "requires": [],
+                "stages": [
+                  {
+                    "clock": "optimizer_update",
+                    "failure_policy": "fail",
+                    "id": "raw_inference",
+                    "inputs": [
+                      "initial",
+                      "source",
+                      "raw_target"
+                    ],
+                    "outputs": [
+                      "raw"
+                    ],
+                    "version": "1.0.0"
+                  },
+                  {
+                    "clock": "optimizer_update",
+                    "failure_policy": "fail",
+                    "id": "boundary_enforcement",
+                    "inputs": [
+                      "raw",
+                      "boundary_mask",
+                      "corrected_target"
+                    ],
+                    "outputs": [
+                      "corrected"
+                    ],
+                    "version": "1.0.0"
+                  }
+                ],
+                "version": "1.0.0"
+              },
+              "id": "example.scalar-b-independent:task",
+              "kind": "task",
+              "provider": {
+                "effects": [
+                  "filesystem"
+                ],
+                "id": "example.scalar-b-independent",
+                "reference_id": "independent-b",
+                "resources": {
+                  "output_bytes": 1048576,
+                  "source_bytes": 131072,
+                  "wall_seconds": 60
+                },
+                "runtime": {
+                  "profile": "captured_cpu_python_v1",
+                  "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+                },
+                "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+                "version": "1.0.0"
+              },
+              "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+              "version": "1.0.0"
+            },
+            {
+              "definition": {
+                "defaults": {
+                  "learning_rate": 0.1,
+                  "updates": 64
+                },
+                "format": "tuldok_contribution_v1",
+                "id": "example.scalar-b-independent:trainer",
+                "implementation": {
+                  "entrypoint": "fit",
+                  "source": "producer.py"
+                },
+                "kind": "trainer",
+                "label": "Independent B trainer",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "learning_rate": {
+                      "maximum": 0.5,
+                      "minimum": 0.001,
+                      "type": "number"
+                    },
+                    "updates": {
+                      "maximum": 64,
+                      "minimum": 64,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "learning_rate",
+                    "updates"
+                  ],
+                  "type": "object"
+                },
+                "ports": [
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "initial",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "source",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:boundary-mask",
+                      "version": "1.0.0"
+                    },
+                    "direction": "input",
+                    "encoding": "npy",
+                    "id": "boundary_mask",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "raw_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "target",
+                    "encoding": "npy",
+                    "id": "corrected_target",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "raw",
+                    "units": "dimensionless"
+                  },
+                  {
+                    "axes": [
+                      "z",
+                      "y",
+                      "x"
+                    ],
+                    "contract": {
+                      "id": "example.scalar-b-independent:scalar-field",
+                      "version": "1.0.0"
+                    },
+                    "direction": "output",
+                    "encoding": "npy",
+                    "id": "corrected",
+                    "units": "dimensionless"
+                  }
+                ],
+                "requires": [
+                  {
+                    "id": "example.scalar-b-independent:task",
+                    "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                    "version": "1.0.0"
+                  }
+                ],
+                "stages": [
+                  {
+                    "clock": "optimizer_update",
+                    "failure_policy": "fail",
+                    "id": "raw_inference",
+                    "inputs": [
+                      "initial",
+                      "source",
+                      "raw_target"
+                    ],
+                    "outputs": [
+                      "raw"
+                    ],
+                    "version": "1.0.0"
+                  },
+                  {
+                    "clock": "optimizer_update",
+                    "failure_policy": "fail",
+                    "id": "boundary_enforcement",
+                    "inputs": [
+                      "raw",
+                      "boundary_mask",
+                      "corrected_target"
+                    ],
+                    "outputs": [
+                      "corrected"
+                    ],
+                    "version": "1.0.0"
+                  }
+                ],
+                "version": "1.0.0"
+              },
+              "id": "example.scalar-b-independent:trainer",
+              "kind": "trainer",
+              "provider": {
+                "effects": [
+                  "filesystem"
+                ],
+                "id": "example.scalar-b-independent",
+                "reference_id": "independent-b",
+                "resources": {
+                  "output_bytes": 1048576,
+                  "source_bytes": 131072,
+                  "wall_seconds": 60
+                },
+                "runtime": {
+                  "profile": "captured_cpu_python_v1",
+                  "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+                },
+                "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+                "version": "1.0.0"
+              },
+              "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+              "version": "1.0.0"
+            },
+            {
+              "definition": {
+                "format": "tuldok_contribution_v1",
+                "id": "example.scalar-b-independent:view",
+                "kind": "view",
+                "label": "Independent B view",
+                "requires": [
+                  {
+                    "id": "example.scalar-b-independent:task",
+                    "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+                    "version": "1.0.0"
+                  }
+                ],
+                "version": "1.0.0",
+                "view": {
+                  "label": "Raw and boundary-enforced B fields",
+                  "primitive": "orthogonal_slices",
+                  "query": {
+                    "id": "tuldok:runs.model_evidence",
+                    "version": "2.0.0"
+                  }
+                }
+              },
+              "id": "example.scalar-b-independent:view",
+              "kind": "view",
+              "provider": {
+                "effects": [
+                  "filesystem"
+                ],
+                "id": "example.scalar-b-independent",
+                "reference_id": "independent-b",
+                "resources": {
+                  "output_bytes": 1048576,
+                  "source_bytes": 131072,
+                  "wall_seconds": 60
+                },
+                "runtime": {
+                  "profile": "captured_cpu_python_v1",
+                  "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+                },
+                "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+                "version": "1.0.0"
+              },
+              "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
+              "version": "1.0.0"
+            }
+          ],
+          "format": "tuldok_extension_binding_v1",
+          "inventory": [
+            {
+              "bytes": 243,
+              "path": "NOTICE.txt",
+              "sha256": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223"
+            },
+            {
+              "bytes": 2573,
+              "path": "evaluator.json",
+              "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b"
+            },
+            {
+              "bytes": 2619,
+              "path": "extension.json",
+              "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
+            },
+            {
+              "bytes": 2558,
+              "path": "model.json",
+              "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba"
+            },
+            {
+              "bytes": 8005,
+              "path": "producer.py",
+              "sha256": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b"
+            },
+            {
+              "bytes": 837,
+              "path": "project.json",
+              "sha256": "ef1965e9c7817dec2cce6882c5a4725dade23cec2f801f36a61640d33e1296a8"
+            },
+            {
+              "bytes": 2912,
+              "path": "task.json",
+              "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+            },
+            {
+              "bytes": 3567,
+              "path": "trainer.json",
+              "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b"
+            },
+            {
+              "bytes": 86,
+              "path": "tuldok_extension_sdk/__init__.py",
+              "sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18"
+            },
+            {
+              "bytes": 23066,
+              "path": "tuldok_extension_sdk/evidence.py",
+              "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23"
+            },
+            {
+              "bytes": 544,
+              "path": "view.json",
+              "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+            }
+          ],
+          "project": {
+            "id": "0ddf5fd116d543eba2e79e6b0f2e00b1",
+            "manifest_path": "project.json",
+            "manifest_sha256": "ef1965e9c7817dec2cce6882c5a4725dade23cec2f801f36a61640d33e1296a8"
+          },
+          "schema_sha256": {
+            "contribution": "2e1e038c3c1ba09c6b7525a1f9ed2f8cb083fde31cf067f12cf57b76f3f7dfe3",
+            "extension": "e78280176fd239b387ffc8b850a7bbff61f069cb47d4c7f9077e7d690c116d25",
+            "parameter": "12ea65f4eb51fc71ba4c98217813b0953aa73cda0fe13e8a6c4b0d4d8acc7305"
+          },
+          "selections": [
+            {
+              "id": "example.scalar-b-independent:evaluator",
+              "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+              "version": "1.0.0"
+            },
+            {
+              "id": "example.scalar-b-independent:model",
+              "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+              "version": "1.0.0"
+            },
+            {
+              "id": "example.scalar-b-independent:task",
+              "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+              "version": "1.0.0"
+            },
+            {
+              "id": "example.scalar-b-independent:trainer",
+              "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+              "version": "1.0.0"
+            },
+            {
+              "id": "example.scalar-b-independent:view",
+              "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
+              "version": "1.0.0"
+            }
+          ]
+        },
+        "captured_paths": [
+          "NOTICE.txt",
+          "evaluator.json",
+          "extension.json",
+          "model.json",
+          "producer.py",
+          "project.json",
+          "task.json",
+          "trainer.json",
+          "tuldok_extension_sdk/__init__.py",
+          "tuldok_extension_sdk/evidence.py",
+          "view.json"
+        ]
+      },
+      "state": "completed"
+    },
+    {
+      "operation": "models.create",
+      "result": {
+        "format": "model_draft_v1",
+        "id": "adf6b110df074976b0f0f90d47a5c78b",
+        "kind": "captured_source",
+        "name": "Exact independent B host review draft",
+        "output_policy": {
+          "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+          "kind": "standalone_scalar",
+          "stages": [
+            {
+              "field": "raw",
+              "id": "raw_inference",
+              "target": "raw_target"
+            },
+            {
+              "field": "corrected",
+              "id": "boundary_enforcement",
+              "operation": "where(boundary_mask,0,raw)",
+              "target": "corrected_target"
+            }
+          ],
+          "units": "dimensionless"
+        },
+        "preprocessing_policy": {
+          "fields": [
+            "initial",
+            "source"
+          ],
+          "fit_members": [
+            "train-0",
+            "train-1"
+          ],
+          "fit_scope": "train",
+          "kind": "population_standardization"
+        },
+        "revision": 1,
+        "source_selector": {
+          "expected_sha256": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e",
+          "project_id": "0ddf5fd116d543eba2e79e6b0f2e00b1",
+          "recipe_id": "train"
+        },
+        "specification": {
+          "architecture": {
+            "boundary_policy": "where(boundary_mask,0,raw)",
+            "feature_order": [
+              "initial",
+              "source"
+            ],
+            "initial_weights": [
+              0,
+              0,
+              0
+            ],
+            "kind": "two_feature_affine",
+            "weights_shape": [
+              3
+            ]
+          },
+          "configuration": {
+            "defaults": {
+              "learning_rate": 0.1,
+              "updates": 64
+            },
+            "schema": {
+              "additionalProperties": false,
+              "properties": {
+                "learning_rate": {
+                  "maximum": 0.5,
+                  "minimum": 0.001,
+                  "type": "number"
+                },
+                "updates": {
+                  "maximum": 64,
+                  "minimum": 64,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "learning_rate",
+                "updates"
+              ],
+              "type": "object"
+            }
+          },
+          "format": "independent_b_affine_v1",
+          "input_fields": [
+            "initial",
+            "source",
+            "boundary_mask"
+          ],
+          "output_fields": [
+            "raw",
+            "corrected"
+          ],
+          "trainable_parameters": [
+            "initial_scale",
+            "source_scale",
+            "offset"
+          ]
+        },
+        "task": {
+          "catalog_id": "258b962478b44086a851b78d3ad03729",
+          "id": "example.scalar-b-independent:task",
+          "kind": "task",
+          "revision": 1,
+          "sha256": "e9c29d420a8cb614e64c927142cf533406a66c7d52d6d78d8358c04aa2c4b560"
+        }
+      },
+      "state": "completed"
+    },
+    {
+      "code": "invalid",
+      "operation": "models.publish",
+      "reason": "Extension evidence: Metric evaluator/population/preprocessing identity differs.",
+      "state": "refused",
+      "status": 400
+    },
+    {
+      "code": "invalid",
+      "operation": "graphs.create_external",
+      "reason": "Extension evidence: Metric evaluator/population/preprocessing identity differs.",
+      "state": "refused",
+      "status": 400
+    }
+  ],
+  "package_source_sha256": {
+    "NOTICE.txt": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223",
+    "README.md": "63f9aeec728153ba615db6f4f9b47b78846f04aebfefac5e2d69310c785ff165",
+    "author-report.json": "dd7458f9d2fa975253ac7b3569274e53229c965709b53a4c8f3d3f369055a5de",
+    "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+    "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+    "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+    "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+    "model.json": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+    "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd",
+    "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+    "project.json": "ef1965e9c7817dec2cce6882c5a4725dade23cec2f801f36a61640d33e1296a8",
+    "recipe.json": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e",
+    "task.json": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+    "test_author_numerics.py": "00cb431e240d7a01fa20d7aa83f7780b9d1008e7669321c50b86fe53107cb70e",
+    "trainer.json": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+    "tuldok_extension_sdk/__init__.py": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+    "tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+  },
+  "provider_resources": {
+    "output_bytes": 1048576,
+    "source_bytes": 131072,
+    "wall_seconds": 60
+  },
+  "recipe_resources": {
+    "max_output_bytes": 1048576,
+    "wall_seconds": 60
+  },
+  "runtime_qualified": false,
+  "scope": "Independent exact B host compatibility; no approval, admission or numerical execution",
+  "source_commit": "ea4c532f3640e68e3b91e74b0b301961d1875780",
+  "target_identities": [
+    {
+      "field_id": "raw",
+      "payload_sha256": "a5af5ffd194e6779855ede80e0c58251819b66fcbfb347ff692d6ec02813e04e"
+    },
+    {
+      "field_id": "corrected",
+      "payload_sha256": "2a68eb7ff67202cac3b293694fd343db9a509bf2fdfe2829d7c420517fbf54a5"
+    }
+  ]
+}
