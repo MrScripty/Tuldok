@@ -161,6 +161,54 @@ class ActualEvidenceTests(unittest.TestCase):
         with self.owner.bound(self.dataset):result=self.dataset.runs._public(legacy)
         self.assertNotIn('study_membership',result)
 
+    def exact_comparison_body(self):
+        entries=self.evidence['checkpoint_index']['entries']
+        definition=self.evidence['metric_definition_hashes']['loss']
+        evaluation=next(item['sha256'] for item in self.completed_run['artifacts'] if item['name']=='model-evidence.json')
+        return {'checkpoint_sha256':entries[0]['checkpoint']['sha256'],'other_checkpoint_sha256':entries[1]['checkpoint']['sha256'],
+            'evaluation_sha256':evaluation,'other_evaluation_sha256':evaluation,'metric_id':'loss',
+            'metric_definition_sha256':definition,'other_metric_definition_sha256':definition,'mode':'paired'}
+
+    def test_exact_comparison_selects_both_actual_epochs_and_metric_definition(self):
+        body=self.exact_comparison_body()
+        with self.owner.bound(self.dataset):
+            result=self.dataset.runs.compare_model_evidence(self.completed_run['id'],self.completed_run['id'],body)
+            for key in ('evaluation_sha256','other_checkpoint_sha256','metric_definition_sha256'):
+                with self.subTest(key=key),self.assertRaises(WorkbenchError):
+                    self.dataset.runs.compare_model_evidence(self.completed_run['id'],self.completed_run['id'],dict(body,**{key:'f'*64}))
+        self.assertEqual(result['state'],'compatible')
+        self.assertEqual([side['clocks']['epoch'] for side in result['sides']],[1,2])
+        actual=[entry['validation']['loss'] for entry in self.completed_run['metrics']['history']]
+        self.assertNotEqual(actual[0],actual[1])
+        self.assertEqual([side['result']['value'] for side in result['sides']],actual)
+        self.assertEqual(result['delta']['value'],actual[1]-actual[0])
+
+    def test_exact_comparison_preserves_incompatible_and_undefined_sides(self):
+        body=self.exact_comparison_body();changed=copy.deepcopy(self.evidence)
+        changed['probe']['members'][0]['target_sha256']='f'*64
+        for mode in ('paired','side_by_side'):
+            result=model_evidence.compare_evidence([self.evidence,changed],[self.completed_run['id']]*2,dict(body,mode=mode))
+            self.assertEqual(result['state'],'incompatible');self.assertIsNone(result['delta'])
+            self.assertEqual(len(result['sides']),2)
+            self.assertTrue(all(side['result']['state']=='observed' for side in result['sides']))
+        changed=copy.deepcopy(self.evidence)
+        observation=next(item for item in changed['observations'] if item['metric_id']=='loss'
+            and item['checkpoint_sha256']==body['other_checkpoint_sha256'])
+        observation.update(state='undefined',reason='zero_reference_denominator')
+        observation.pop('value');observation.pop('sample_count')
+        result=model_evidence.compare_evidence([self.evidence,changed],[self.completed_run['id']]*2,body)
+        self.assertEqual(result['sides'][0]['result']['state'],'observed')
+        self.assertEqual(result['sides'][1]['result'],{'state':'undefined','reason':'zero_reference_denominator'})
+        self.assertEqual(result['delta']['state'],'undefined')
+        changed['observations'].append(copy.deepcopy(observation))
+        with self.assertRaises(ValueError):model_evidence.compare_evidence([self.evidence,changed],[self.completed_run['id']]*2,body)
+
+    def test_selected_metric_summary_must_equal_actual_selected_epoch(self):
+        for key,value in (('loss',10.),('macro_f1',.123456)):
+            changed=copy.deepcopy(self.completed_run['metrics']);changed['validation'][key]=value
+            with self.subTest(metric=key),self.assertRaises(ValueError):
+                model_evidence.verify(self.dataset.runs.path/self.completed_run['id'],self.private,changed)
+
     def test_study_budget_cannot_delegate_builtin_execution(self):
         from access import AccessError
         with self.owner.bound(self.dataset):

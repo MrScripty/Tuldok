@@ -340,6 +340,8 @@ def verify(directory, run, metrics):
         previous_update=clocks['optimizer_update'];previous_wall=clocks['wall_elapsed_ms']
         descriptors.append(descriptor);predictions.append(prediction)
     best = min(range(len(metrics['history'])),key=lambda i:metrics['history'][i]['validation']['loss'])+1
+    if metrics['validation'] != metrics['history'][best-1]['validation']:
+        raise ValueError('Selected validation metrics differ from selected checkpoint observation.')
     if selected != [metrics['best_epoch']] or metrics['best_epoch'] != best:
         raise ValueError('Selected checkpoint differs from validation selection.')
     if read_binary(directory/'checkpoint.pt') != read_binary(directory/f'weights-epoch-{best:04d}.pt'):
@@ -379,6 +381,52 @@ def verify(directory, run, metrics):
     return {'state':'verified','manifest':manifest,'checkpoint_index':index,'probe':probe,
             'metric_definitions':definitions,'observations':observations,'model_definition':context['model_definition']},descriptors,predictions
 
+
+
+def compare_evidence(evidence, run_ids, body):
+    """Exact checkpoint comparisons after Runs has verified both immutable inputs."""
+    sides=[];definitions=[]
+    for index,value in enumerate(evidence):
+        prefix='' if index==0 else 'other_'
+        checkpoint_sha=body[prefix+'checkpoint_sha256']
+        definition_sha=body[prefix+'metric_definition_sha256']
+        entries=[item for item in value['checkpoint_index']['entries'] if item['checkpoint']['sha256']==checkpoint_sha]
+        if len(entries)!=1:raise ValueError('Exact checkpoint does not uniquely belong to its selected evaluation.')
+        matches=[item for item in value['metric_definitions'] if item['id']==body['metric_id'] and digest(item)==definition_sha]
+        if len(matches)!=1:raise ValueError('Exact metric definition does not uniquely belong to its selected evaluation.')
+        entry=entries[0];definition=matches[0];definitions.append(definition)
+        observations=[item for item in value['observations'] if item['checkpoint_sha256']==checkpoint_sha
+            and item['metric_id']==body['metric_id'] and item['probe_sha256']==value['manifest']['probe']['sha256']
+            and item['split']=='validation' and item['clocks']==entry['clocks']]
+        if len(observations)!=1:raise ValueError('Exact comparison observation is unavailable or ambiguous.')
+        observation=observations[0]
+        if observation['state']=='observed':
+            if (type(observation['value']) not in (int,float) or not math.isfinite(observation['value'])
+                    or type(observation['sample_count']) is not int or observation['sample_count']<1):
+                raise ValueError('Invalid observed comparison value.')
+            result={'state':'observed','value':observation['value'],'sample_count':observation['sample_count']}
+        elif observation['state']=='undefined':
+            if type(observation['reason']) is not str or not 1<=len(observation['reason'])<=64:
+                raise ValueError('Invalid undefined comparison reason.')
+            result={'state':'undefined','reason':observation['reason']}
+        else:raise ValueError('Comparison requires an observed or explicitly undefined value.')
+        sides.append({'run_id':run_ids[index],'evaluation_sha256':body[prefix+'evaluation_sha256'],
+            'checkpoint_sha256':checkpoint_sha,'metric_definition_sha256':definition_sha,'metric_id':body['metric_id'],
+            'split':'validation','clocks':entry['clocks'],'units':definition['units'],'direction':definition['direction'],'result':result})
+    reasons=[];left,right=evidence
+    if left['manifest']['task']['sha256']!=right['manifest']['task']['sha256']:reasons.append('Task semantics differ.')
+    for key,label in (('preprocessing_policy','Preprocessing'),('output_policy','Output')):
+        if left['model_definition'][key]!=right['model_definition'][key]:reasons.append(label+' policies differ.')
+    membership=lambda value:sorted([{'frozen_reference':item['frozen_reference'],'input_sha256':item['input_sha256'],
+                                    'target_sha256':item['target_sha256']} for item in value['probe']['members']],key=canonical)
+    if membership(left)!=membership(right):reasons.append('Frozen validation membership or targets differ.')
+    if definitions[0]!=definitions[1]:reasons.append('Metric definition, population, units or evaluator semantics differ.')
+    delta=None
+    if not reasons and body['mode']=='paired':
+        if all(side['result']['state']=='observed' for side in sides):
+            delta={'state':'observed','value':sides[1]['result']['value']-sides[0]['result']['value'],'units':sides[0]['units']}
+        else:delta={'state':'undefined','reason':'one_or_both_sides_undefined'}
+    return {'state':'incompatible' if reasons else 'compatible','mode':body['mode'],'sides':sides,'reasons':reasons,'delta':delta}
 
 def replay_checkpoints(job_path):
     """CPU worker verification: reconstruct every retained state from exact release."""

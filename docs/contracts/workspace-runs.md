@@ -182,3 +182,13 @@ neither logging nor manual artifact imports. Runtime installation is separate
 existing capacity. Conservative Study accounting reserves750 seconds per attempt
 and the full64MiB output envelope plus capture/publication duplication; it is an
 admission limit, not an OS sandbox or hard aggregate resource quota.
+
+The selected version2 comparison contract requires both evaluation manifest byte
+hashes, both checkpoint descriptor hashes, metric ID, each exact metric-definition
+hash and `paired|side_by_side` mode. Its labelled sides preserve observed versus
+undefined values and their reasons. Paired differences are returned only for
+compatible semantics and observed values; undefined arithmetic remains explicit.
+Incompatible or side-by-side comparisons return no paired difference. The earlier
+version1 comparison remains the explicitly narrow selected-result summary.
+`model_evidence` supplies authoritative `metric_definition_hashes` so interfaces
+can select exact definitions without implementing canonical hashing.
