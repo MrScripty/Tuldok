@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import io
+import importlib.util
 import json
 import math
 import os
@@ -19,6 +20,13 @@ import text_training
 import one_fit_evidence as evidence
 
 
+# These checks verify numerical source statistics and reconstruct fits in this
+# interpreter as well as child processes. The app's ambient CI Python deliberately
+# has no optional numerical stack; the provisioned training CI step runs all of them.
+NUMERICAL_RUNTIME = all(importlib.util.find_spec(name) is not None for name in ('numpy', 'sklearn'))
+NUMERICAL_RUNTIME_REASON = 'Requires NumPy and scikit-learn in the executing interpreter; CI runs this module with the provisioned CPU training Python.'
+
+
 class ContractIsolationTests(unittest.TestCase):
     def test_editing_template_projection_cannot_change_the_task_transform(self):
         for adapter in (text_training, audio_training):
@@ -32,6 +40,7 @@ class ContractIsolationTests(unittest.TestCase):
             self.assertEqual(owner.model_definition(parameters)['preprocessing_policy'], original)
             self.assertEqual(owner.OUTPUT_POLICY['class_order'], 'frozen_vocabulary')
 
+    @unittest.skipUnless(NUMERICAL_RUNTIME, NUMERICAL_RUNTIME_REASON)
     def test_source_stat_oracle_matches_pinned_vectorizer_frequency_cap(self):
         documents = [' '.join('token' + str(index) for index in range(150)),
                      ' '.join('token' + str(index) for index in range(75, 200))]
@@ -45,6 +54,7 @@ class ContractIsolationTests(unittest.TestCase):
         with self.assertRaises(text_training.TrainingError):
             text_training._verify_fit_statistics(model, documents)
 
+    @unittest.skipUnless(NUMERICAL_RUNTIME, NUMERICAL_RUNTIME_REASON)
     def test_source_stat_oracle_matches_near_constant_population_scaling(self):
         import numpy as np
         from sklearn.preprocessing import StandardScaler
@@ -283,12 +293,14 @@ class OneFitChecks:
             self.verify()
 
 
+@unittest.skipUnless(NUMERICAL_RUNTIME, NUMERICAL_RUNTIME_REASON)
 class TextEvidenceTests(OneFitChecks, TextCase):
     training = text_training
     task = 'text_classification'
     parameters = dict(max_features=64, alpha=1)
 
 
+@unittest.skipUnless(NUMERICAL_RUNTIME, NUMERICAL_RUNTIME_REASON)
 class AudioEvidenceTests(OneFitChecks, AudioCase):
     training = audio_training
     task = 'audio_classification'
