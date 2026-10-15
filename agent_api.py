@@ -423,9 +423,80 @@ for _op in _OPERATIONS:
         _op['query']=['offset','limit','revision']
 _OWNER_OPERATION_IDS={'studies.create','studies.save','studies.continue','studies.approve'}
 _MODEL_RECEIPT_IDS={'studies.prepare_trial','studies.continue','studies.admit','studies.stop'}
+_MODEL_RECEIPT_IDS.add('studies.select_candidate')
+_CANDIDATE=obj({'format':const('candidate_v1'),'id':ID,'study_id':ID,'trial_id':ID,'run_id':ID,
+    'checkpoint_sha256':SHA,'evaluation_sha256':SHA,'policy':POLICY_REF,
+    'decision':{'enum':['qualified','diagnostic']},'limitations':array(text(500),64)})
+_CANDIDATE_RESULT=obj({'ref':material_ref('candidate'),'candidate':_CANDIDATE,'run_id':ID,'checkpoint':_BLOB})
+model_operation('studies.select_candidate','POST','/api/workspace/studies/{study_id}/select-candidate',
+    {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'trial_id':ID,'run_id':ID,'checkpoint_sha256':SHA},
+    ['study_id','request_key','revision','trial_id','run_id'],output=_CANDIDATE_RESULT,
+    scopes=('inspect','edit'),mutation=True)
+model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
+    {'candidate_id':ID},output=_CANDIDATE_RESULT)
+# Model evidence has a task-owned decoder. The public projection binds the
+# complete result variant while retaining its bounded, versioned domain bodies.
+_EVIDENCE_DOCUMENT={'type':'object','maxProperties':128}
+_EVIDENCE_RESULT={'oneOf':[
+    obj({'state':const('unsupported'),'reason':text(1000)}),
+    obj({'state':const('verified'),'manifest':_EVIDENCE_DOCUMENT,
+         'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
+         'metric_definitions':{'type':['object','array']},
+         'metric_definition_hashes':{'type':'object','maxProperties':64,
+             'propertyNames':text(64),'additionalProperties':SHA},
+         'observations':array(_EVIDENCE_DOCUMENT,1000),
+         'model_definition':_EVIDENCE_DOCUMENT,
+         'checkpoint':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]},
+         'predictions':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]}})]}
+model_operation('runs.model_evidence','POST','/api/workspace/runs/{run_id}/model-evidence',
+                {'run_id':ID,'checkpoint_sha256':SHA},['run_id'],output=_EVIDENCE_RESULT)
+model_operation('runs.compare_model_evidence','POST','/api/workspace/runs/{run_id}/compare-model-evidence',
+                {'run_id':ID,'other_run_id':ID},output=obj({
+                    'state':{'enum':['compatible','incompatible']},'run_ids':array(ID,2,2),
+                    'reasons':array(text(1000),64),
+                    'metrics':array(obj({'metric_id':text(64),
+                        'values':array({'type':'number'},2,2),
+                        'direction':{'enum':['minimize','maximize','none']},'units':text(80)}),64)}))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# A distinct graph contract accepts typed TinyCNN architecture. Existing
+# installed v1 clients retain their exact grammar and discovery digest.
+_model_create=copy.deepcopy(_CONTRACTS['graphs.create'][1])
+_model_create['inputSchema']['properties']['recipe']['enum'].append('image_classification_model_v2')
+_CONTRACTS['graphs.create'][2]=_model_create
+_model_graph=copy.deepcopy(graph_schema()['oneOf'][0])
+_model_graph['properties']['recipe']=const('image_classification_model_v2')
+_model_graph['required'].append('recipe')
+for _node_schema in _model_graph['properties']['nodes']['items']['oneOf']:
+    if _node_schema['properties']['type']==const('train'):
+        _node_schema['properties']['parameters']['properties'].update({
+            'widths':array(integer(4,64),3,3),'input_size':{'enum':[32,64,96]},'head':const('linear')})
+        _node_schema['properties']['parameters']['required'].extend(['widths','input_size','head'])
+_model_save=copy.deepcopy(_CONTRACTS['graphs.save'][1])
+_model_save['inputSchema']['properties']['document']['oneOf'].append(_model_graph)
+_CONTRACTS['graphs.save'][2]=_model_save
+_exact_comparison=copy.deepcopy(_CONTRACTS['runs.compare_model_evidence'][1])
+_exact_comparison['inputSchema']=obj({'run_id':ID,'other_run_id':ID,
+    **{key:SHA for key in ('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256',
+        'other_evaluation_sha256','metric_definition_sha256','other_metric_definition_sha256')},
+    'metric_id':text(64),'mode':{'enum':['paired','side_by_side']}})
+_CLOCKS=obj({'optimizer_update':{'oneOf':[SAFE_NAT,{'type':'null'}]},
+    'epoch':{'oneOf':[SAFE_POS,{'type':'null'}]},'fit_pass':{'oneOf':[SAFE_POS,{'type':'null'}]},
+    'physical_time':{'oneOf':[text(64),{'type':'null'}]},'wall_elapsed_ms':SAFE_NAT})
+_OBSERVED_OR_UNDEFINED={'oneOf':[obj({'state':const('observed'),'value':{'type':'number'},'sample_count':SAFE_POS}),
+    obj({'state':const('undefined'),'reason':text(64)})]}
+_EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
+    'mode':{'enum':['paired','side_by_side']},'sides':array(obj({'run_id':ID,'evaluation_sha256':SHA,
+        'checkpoint_sha256':SHA,'metric_definition_sha256':SHA,'metric_id':text(64),'split':const('validation'),
+        'clocks':_CLOCKS,'units':text(80),'direction':{'enum':['minimize','maximize','none']},
+        'result':_OBSERVED_OR_UNDEFINED}),2,2),
+    'reasons':array(text(1000),64),'delta':{'oneOf':[{'type':'null'},
+        obj({'state':const('observed'),'value':{'type':'number'},'units':text(80)}),
+        obj({'state':const('undefined'),'reason':text(64)})]}})
+_exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
+_exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
+_CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256

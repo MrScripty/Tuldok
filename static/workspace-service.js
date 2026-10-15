@@ -633,3 +633,261 @@
   if (typeof module !== "undefined") module.exports = service;
   else window.WorkspaceService = service;
 })();
+
+// Real model/trial presentation. No fixture state or local inference is consumed.
+(() => {
+  if(typeof window==='undefined')return;
+  const esc = value => window.workspaceEscape(value), enc = encodeURIComponent;
+  const metric = value => Number.isFinite(value) ? value.toFixed(4) : typeof value==='string'?esc(value):'Unavailable';
+  const recipe = 'image_classification_model_v2';
+  const evidenceRecipes=new Set([recipe,'text_classification_model_v2','audio_classification_model_v2']);
+  // Generated from the operation registry; coordinated updates fail closed on drift.
+  const contracts = /* MODEL_CONTRACTS_START */ {
+  "models.create": "693d1514f44e92bb6c6635427db822acfc079a6e438d5d721630087157d1b8d5",
+  "models.publish": "bb84c1fd72b3617135a8246353db797bba270430121fbae6f9d46cdbfdd26235",
+  "models.list": "7a58a4f7e429c06f0c0488b8ca8a07b2901a864c7c24e1187bbd679ad0ac089a",
+  "models.get": "79b0ac2317f62ea368e8540f63c093eea2d99dd7833109037e2e3e8fa577962a",
+  "models.save": "093806e289da9fe7df57b021cd6eb4efb2e574a687bd7337656ddd6276367c25",
+  "studies.create": "8c4b35bbd1c2b7c6825787b40e40b2b3d22f58118ccaf1ef5f0d9bc12edb38f1",
+  "studies.get": "12080dea124eb9e763ec495e070211b60a219c47cab9488218383a7d3919533d",
+  "studies.list": "77c21d405c0e556341ea4212fbab927a6298be114c202a43e1cdcc409a32c48a",
+  "studies.prepare_trial": "516f89e4a03cafee9d50ac3910d1906fb34d51d3b21e8271a4be45075ea3778a",
+  "studies.continue": "44237f86e49135203613b40a7bf6fe0960581ed7c3f128150b9576a07b491008",
+  "studies.admit": "9c80abdfc50d56de88ada0141ba6c3b503cc07a395b0ceb930fa29169bd182ed",
+  "studies.reconcile": "a209efd79a85bdb9ff5f42c469413cff9ebcc56c55ab16aa76227427670565af",
+  "studies.save": "c5a0eee9a12d91f88b3e7dda4ee3c013c263f20897006ca50aed5f703d6c3d74",
+  "runs.model_evidence": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
+  "runs.compare_model_evidence": "0c89402e1749b5bca7c09c66bc5bfc13cd33b3be6e15c69826074583fc0e13c5",
+  "graphs.create": "a4c0ec40212ce85ad67c5f279fa90fe4564048d4ab41b6769670cbcf21bbb615",
+  "graphs.save": "da60657d6c3298db8b9bbdfc6d30577125c8a6310573cee5c2feefa3a67e3564",
+  "studies.select_candidate": "940d670ae6e4630572d1c5cdeda1cc658a7b73587bedd277af137b77dac3e582",
+  "studies.candidate": "d02dda330ac41ef05a1ff4e4d4f9ed04d5a60b24a444a28f1af9904791977799"
+} /* MODEL_CONTRACTS_END */;
+  window.WorkspaceModelContracts = contracts;
+  window.WorkspaceModel = function ({api, announce, openRun, openRecord, getIntent, getView}) {
+    let definition = null, releases = [], studies = [], root = null, busy = false,
+      message = '', failed = false, evidence = null, evidenceError = '', comparison = null,
+      checkpoint = null, probe = null, compareId = '', generation = 0, queryIntent = 0, detailPredictions = null, studyDetail = null, candidate = null, candidateBusy = false, candidateError = '', foreignPending = false, compareTarget = null, compareTargetRun = null, compareCheckpoint = '', compareMetric = '', compareMode = 'paired', compareBusy = false, compareIntent = 0, compareTargetIntent = 0, checkpointBusy = false, checkpointIntent = 0;
+    let config = {name: 'TinyCNN experiment', release: '', widths: [16,32,64], input_size: 96, epochs: 3, seed: 17};
+    let journal = history.state?.modelTrial || null;
+    const identity = () => window.TuldokAuth?.identity();
+    const owner = () => identity()?.kind === 'owner';
+    const remember = () => history.replaceState({...history.state, modelTrial: journal}, '');
+    function notice(text, error = false) { message = text; failed = error; announce(text,error); }
+    function scope() {
+      const intent = getIntent(), credential = identity()?.credential_id, version = generation;
+      return () => intent === getIntent() && credential === identity()?.credential_id && version === generation && getView() === 'pipeline';
+    }
+    async function write(route, body, current) {
+      const result = await api(route,body);
+      if (!current()) throw Error('Saved state may have changed after navigation or session change. Refresh the catalog to inspect it.');
+      return result;
+    }
+    async function perform(fn) {
+      if (busy) return;
+      const previousFocus=document.activeElement?.id;
+      busy = true; render();
+      try { await fn(scope()); } catch (error) { notice(error.message,true); }
+      finally { busy = false; if(getView()==='pipeline'){render();const focus=root?.querySelector(journal?.trial?'#model-start':'#'+CSS.escape(previousFocus||'model-prepare'));focus?.focus({preventScroll:true});} }
+    }
+    function render() {
+      if (!root || getView() !== 'pipeline') return;
+      const focus = root.contains(document.activeElement) ? document.activeElement.id : null;
+      const eligible = releases.filter(item => item.status === 'available' &&
+        (item.allowed_recipes || [item.recipe]).includes(recipe));
+      const ready = !!journal?.trial;
+      root.innerHTML = `<section class="panel panel-pad model-workspace" aria-labelledby="model-heading"><div class="model-heading"><div><span class="eyebrow">MODEL DEVELOPMENT · REAL CPU</span><h2 id="model-heading">Configure → train → inspect</h2></div><a href="#runs">Inspect runs →</a></div>
+      <p>Typed TinyCNN configuration, a frozen image release and one finite trial. Each epoch records its actual checkpoint, validation metrics and fixed probes automatically.</p>
+      <p class="model-status ${failed?'error-panel':''}" role="status">${esc(message)}</p>
+      ${!definition ? '<p>Model-aware image training is unavailable in the installed recipe definitions. Existing saved workflows remain available below.</p>' : `<form id="model-form"><fieldset ${busy||journal?'disabled':''}><legend>Model and training inputs</legend><div class="model-fields"><label>Name<input id="model-name" required maxlength="120" value="${esc(config.name)}"></label><label>Frozen image release<select id="model-release" required><option value="">Choose a release</option>${eligible.map(item=>`<option value="${esc(item.id)}" ${config.release===item.id?'selected':''}>${esc(item.id.slice(0,12))} · ${esc(item.records)} images</option>`).join('')}</select></label>
+      ${config.widths.map((value,i)=>`<label>Block ${i+1} width<input id="model-width-${i}" type="number" min="4" max="64" step="1" required value="${value}"></label>`).join('')}
+      <label>Input size<select id="model-size">${[32,64,96].map(value=>`<option ${value===config.input_size?'selected':''} value="${value}">${value} × ${value} RGB</option>`).join('')}</select></label><label>Head<select id="model-head"><option value="linear">Linear class head</option></select></label><label>Epochs<input id="model-epochs" type="number" min="2" max="${definition.parameter_bounds?.epochs?.maximum||10}" step="1" value="${config.epochs}" required></label><label>Seed<input id="model-seed" type="number" min="${definition.parameter_bounds?.seed?.minimum??0}" max="${definition.parameter_bounds?.seed?.maximum??2147483647}" step="1" value="${config.seed}" required></label></div><p class="footnote">Widths are integers from 4–64. RGB resize has no fitted statistics or augmentation. The release fixes class order. Preparing saves immutable material; training starts only with Start finite trial.</p></fieldset><button class="primary" id="model-prepare" ${busy||ready||journal?.uncertain||foreignPending||!eligible.length||!owner()?'disabled':''}>${journal?'Continue preparation':'Prepare finite trial'}</button></form>
+      ${foreignPending?'<p class="error-panel">Another actor has an unresolved trial admission. Return to that session to reconcile it before preparing another trial.</p>':''}
+      ${!eligible.length?'<p>No eligible frozen image release. Review records and freeze a release in <a href="#data">Data</a>, then refresh Pipeline.</p>':''}
+      ${!owner()?'<p>Starting built-in training requires the current owner session.</p>':''}
+      ${journal?`<div class="model-trial"><h3>${ready?'Prepared finite trial':'Preparation progress'}</h3><p>${esc(journal.config?.name)} · ${esc(journal.config?.epochs)} epochs · widths ${esc(journal.config?.widths?.join(' / '))}</p><dl>${[['Model',journal.model?.id],['Frozen material',journal.material?.ref?.sha256],['Recipe',journal.graph?.id],['Study',journal.study?.id],['Trial',journal.trial?.id],['Run',journal.run?.id]].filter(([,value])=>value).map(([name,value])=>`<div><dt>${name}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>${journal.uncertain?`<p class="error-panel">${esc(journal.uncertain)} Inspect saved state before preparing again.</p>`:''}<div class="actions">${ready&&!journal.run?`<button id="model-start" class="primary" ${busy||!owner()?'disabled':''}>${journal.admission?'Reconcile finite admission':'Start finite trial'}</button>`:''}${journal.run?'<button id="model-open-run">Inspect admitted run →</button>':''}<button id="model-new" ${busy||journal.admission||journal.uncertain?'disabled':''}>Configure another trial</button></div><p class="footnote">One requested training attempt. Finite budget: three attempt slots for training, export and verification; 10,800 admitted wall seconds, 1 GiB retained and 2 GiB staging. Admission rechecks current authority, material and runtime.</p></div>`:''}
+      <details><summary>Saved studies · ${studies.length}</summary>${studies.map(study=>`<button class="model-study" data-model-study="${esc(study.id)}">${esc(study.name)} · ${esc(study.state)}</button>`).join('')||'<p>No saved studies.</p>'}<div id="model-study-detail">${studyDetail?`<p>Membership r${esc(studyDetail.study.membership_revision)}: ${esc(studyDetail.study.trial_ids.length)} trials. ${esc(studyDetail.charged.attempt_slots)} charged attempts.</p>${studyDetail.reservations.map(row=>`<button data-model-saved-run="${esc(row.run_id)}">Open run ${esc(row.run_id.slice(0,12))}</button>`).join('')}`:''}</div></details>`}</section>`;
+      root.querySelector('#model-form')?.addEventListener('submit',event=>{
+        event.preventDefault(); if(!journal)readConfig(); perform(prepare);
+      });
+      for (const element of root.querySelectorAll('#model-form input,#model-form select')) element.addEventListener('change',readConfig);
+      root.querySelector('#model-start')?.addEventListener('click',()=>perform(start));
+      root.querySelector('#model-open-run')?.addEventListener('click',()=>openRun(journal.run));
+      root.querySelector('#model-new')?.addEventListener('click',()=>{journal=null;remember();message='Choose the new release and configuration, then prepare another finite trial.';render();});
+      for (const button of root.querySelectorAll('[data-model-study]')) button.onclick=()=>perform(async current=>{
+        const detail = await api('studies/'+enc(button.dataset.modelStudy)); if(!current())return;
+        studyDetail=detail;
+      });
+      for(const button of root.querySelectorAll('[data-model-saved-run]'))button.onclick=()=>openRun({id:button.dataset.modelSavedRun});
+      if(focus) root.querySelector('#'+CSS.escape(focus))?.focus({preventScroll:true});
+    }
+    function readConfig() {
+      const value = id => root.querySelector('#'+id)?.value;
+      config = {name:value('model-name'),release:value('model-release'),widths:[0,1,2].map(i=>Number(value('model-width-'+i))),input_size:Number(value('model-size')),epochs:Number(value('model-epochs')),seed:Number(value('model-seed'))};
+    }
+    async function prepare(current) {
+      if(!owner())throw Error('An owner session is required.');
+      if(foreignPending)throw Error('Reconcile the unresolved admission with its original actor.');
+      if(journal?.uncertain)throw Error(journal.uncertain);
+      if(!journal){journal={actor:identity()?.actor_id,config:structuredClone(config)};remember();}
+      if(journal.actor!==identity()?.actor_id)throw Error('This preparation belongs to another actor.');
+      const c=journal.config;
+      if(!journal.model){
+        const body=structuredClone(definition.model_template); body.name=c.name; body.specification={template:'tinycnn_v2',widths:c.widths,input_size:c.input_size,head:'linear'};body.preprocessing_policy.size=[c.input_size,c.input_size];
+        try {journal.model=await write('models',body,current);remember();}
+        catch(error){if([400,401,403,404,409].includes(error.status))throw error;journal.uncertain='Model creation acknowledgement is unresolved. Inspect the saved models before another creation.';remember();throw error;}
+      }
+      if(!journal.material){journal.material=await write('models/'+enc(journal.model.id)+'/publish',{revision:journal.model.revision},current);remember();}
+      if(!journal.graph){
+        try{journal.graph=await write('graphs',{name:c.name,release_id:c.release,recipe},current);remember();}
+        catch(error){if([400,401,403,404,409].includes(error.status))throw error;journal.uncertain='Recipe creation acknowledgement is unresolved. Inspect saved recipes before another creation.';remember();throw error;}
+      }
+      if(!journal.configured){
+        const document=structuredClone(journal.graph),train=document.nodes.find(node=>node.type==='train');
+        Object.assign(train.parameters,{widths:c.widths,input_size:c.input_size,head:'linear',epochs:c.epochs,seed:c.seed});
+        journal.graph=await write('graphs/'+enc(document.id),{revision:document.revision,document},current);journal.configured=true;remember();
+      }
+      if(!journal.validation){journal.validation=await write('graphs/'+enc(journal.graph.id)+'/validate',{revision:journal.graph.revision},current);remember();if(!journal.validation.valid||!journal.validation.selection_policy){journal.validation=null;remember();throw Error('Model recipe validation did not produce an exact frozen selection policy. Inspect its release and runtime.');}}
+      if(!journal.study){
+        try{journal.study=await write('studies',{name:c.name,limits:{attempt_slots:3,admitted_wall_seconds:10800,retained_bytes:1073741824,peak_staging_bytes:2147483648},policy:journal.validation.selection_policy},current);remember();}
+        catch(error){if([400,401,403,404,409].includes(error.status))throw error;journal.uncertain='Study creation acknowledgement is unresolved. Inspect saved studies before another creation.';remember();throw error;}
+      }
+      if(!journal.prepare){journal.prepare={request_key:crypto.randomUUID(),revision:journal.study.revision,graph_id:journal.graph.id,graph_revision:journal.graph.revision,model:journal.material.ref,replicate:0};remember();}
+      journal.trial=await write('studies/'+enc(journal.study.id)+'/prepare-trial',journal.prepare,current);remember();
+      notice('Finite trial prepared. Its model, data and recipe material are frozen. Start it explicitly when ready.');
+    }
+    async function start(current) {
+      if(!owner()||journal.actor!==identity()?.actor_id)throw Error('The preparing owner must start this trial.');
+      if(!journal.admission){
+        let state=await api('studies/'+enc(journal.study.id));if(!current())return;
+        if(!state.study.open){
+          if(!journal.continue){journal.continue={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch};remember();}
+          await write('studies/'+enc(journal.study.id)+'/continue',journal.continue,current);
+          state=await api('studies/'+enc(journal.study.id));if(!current())return;
+        }
+        journal.admission={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch,trial_id:journal.trial.id};remember();
+      }
+      let result;
+      try{result=await write('studies/'+enc(journal.study.id)+'/admit',journal.admission,current);}
+      catch(error){if([400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code)){journal.admission=null;journal.continue=null;remember();}throw error;}
+      journal.run=result.run;journal.admission=null;remember();notice('Durable finite attempt admitted. Epoch evidence appears after verified publication.');openRun(result.run);
+    }
+    return {
+      configure(value) {definition=value.definitions?.recipes?.find(item=>item.id===recipe);releases=value.releases;const saved=history.state?.modelTrial;if(!journal&&saved?.actor===identity()?.actor_id){journal=saved;foreignPending=false;}},
+      sessionChanged() {studies=[];studyDetail=null;message='';config={name:'TinyCNN experiment',release:'',widths:[16,32,64],input_size:96,epochs:3,seed:17};const saved=history.state?.modelTrial;foreignPending=!!(saved&&saved.actor!==identity()?.actor_id&&(saved.admission||saved.uncertain));if(journal?.actor!==identity()?.actor_id)journal=null;},
+      mount(node) {root=node;render();},
+      async refresh(current) {try{const result=await api('studies');if(current())studies=result.studies;}catch(error){if(current())notice('Saved studies unavailable: '+error.message,true);}},
+      invalidate() {generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;},
+      async load(run,current) {
+        const intent=++queryIntent;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;
+        evidence=null;comparison=null;evidenceError='';candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareId='';compareBusy=false;
+        if(!evidenceRecipes.has(run?.graph?.recipe)||run.state!=='completed')return;
+        try{
+          let value=await api('runs/'+enc(run.id)+'/model-evidence',{});if(!current()||intent!==queryIntent)return;
+          if(value.state==='verified'){
+            const entry=value.checkpoint_index.entries.find(item=>item.checkpoint.sha256===checkpoint)||value.checkpoint_index.entries.find(item=>item.selected)||value.checkpoint_index.entries[0];
+            if(entry){value=await api('runs/'+enc(run.id)+'/model-evidence',{checkpoint_sha256:entry.checkpoint.sha256});if(!current()||intent!==queryIntent)return;checkpoint=entry.checkpoint.sha256;}
+          }
+          evidence=value;
+          const savedCandidate=history.state?.modelCandidates?.[run.id];
+          if(savedCandidate?.actor===identity()?.actor_id){try{const saved=await api('candidates/'+enc(savedCandidate.id));if(current()&&intent===queryIntent){candidate=saved;}}catch(error){if(current()&&intent===queryIntent)candidateError=error.message;}}
+        }catch(error){if(current()&&intent===queryIntent)evidenceError=error.message;}
+      },
+      html(run,predictions) {
+        detailPredictions=predictions;
+        if(!evidenceRecipes.has(run?.graph?.recipe))return '<p class="muted model-history">Epoch checkpoint and probe history was not captured for this legacy workflow.</p>';
+        if(evidenceError)return `<section class="model-evidence"><h3>Model evidence unavailable</h3><p class="error-panel" role="alert">${esc(evidenceError)}</p><p>No cached checkpoint or probe values are shown. Refresh saved runs to retry.</p></section>`;
+        if(!evidence)return '<p>Model evidence has not been published yet.</p>';
+        if(evidence.state==='unsupported')return `<p class="muted model-history">${esc(evidence.reason)}</p>`;
+        return evidenceHTML(evidence,run);
+      },
+      bind(node,run,runs,rerender,current) {bindEvidence(node,run,runs,rerender,current);},
+    };
+    function evidenceHTML(value,run) {
+      // Index and checkpoint/probe projections are supplied by the same Runs query.
+      const points=value.checkpoint_index.entries.map(entry=>({checkpoint_sha256:entry.checkpoint.sha256,epoch:entry.clocks.epoch,progress:entry.clocks.epoch?('Epoch '+entry.clocks.epoch):('Fit pass '+entry.clocks.fit_pass),selected:entry.selected,
+        metrics:Object.fromEntries(value.observations.filter(item=>item.checkpoint_sha256===entry.checkpoint.sha256).map(item=>[item.metric_id,item.state==='observed'?item.value:item.state==='undefined'?'Undefined: '+item.reason:'Unavailable']))}));
+      const selected=points.find(item=>item.checkpoint_sha256===checkpoint)||points.find(item=>item.selected);
+      checkpoint=selected?.checkpoint_sha256||null;
+      const rows=probeRows(value,run),chosen=rows.find(item=>item.id===probe)||rows[0];probe=chosen?.id||null;
+      return `<section class="model-evidence" aria-labelledby="model-evidence-heading"><h3 id="model-evidence-heading">${run.graph.recipe===recipe?'Linked epoch evidence':'Linked fit evidence'}</h3><p>Run ${esc(run.id.slice(0,12))} · fixed validation membership. Select a checkpoint to inspect its actual fitted state, metrics and probes.</p><div class="real-table-wrap" tabindex="0" aria-label="Epoch checkpoints"><table><caption>Checkpoints and validation metrics</caption><thead><tr><th scope="col">Progress</th><th scope="col">Accuracy</th><th scope="col">Loss</th><th scope="col">Checkpoint</th></tr></thead><tbody>${points.map(item=>`<tr ${item.checkpoint_sha256===checkpoint?'class="model-selected"':''}><th scope="row"><button id="model-checkpoint-${esc(item.checkpoint_sha256)}" data-model-checkpoint="${esc(item.checkpoint_sha256)}" aria-pressed="${item.checkpoint_sha256===checkpoint}">${esc(item.progress)}${item.selected?'<br><small>selected</small>':''}</button></th><td>${metric(item.metrics?.accuracy)}</td><td>${metric(item.metrics?.loss)}</td><td>${esc(item.checkpoint_sha256?.slice(0,12))}</td></tr>`).join('')}</tbody></table></div>${value.checkpoint?`<p>${value.checkpoint.clocks.epoch?`Epoch ${esc(value.checkpoint.clocks.epoch)} · ${esc(value.checkpoint.clocks.optimizer_update)} updates`:`Fit pass ${esc(value.checkpoint.clocks.fit_pass)}`} · ${(value.checkpoint.clocks.wall_elapsed_ms/1000).toFixed(2)} elapsed seconds</p><div class="actions"><a href="/api/workspace/runs/${enc(run.id)}/artifacts/${enc(value.checkpoint.weights.name)}" download>Download exact fitted state</a><a href="/api/workspace/runs/${enc(run.id)}/artifacts/${enc(value.checkpoint_index.entries.find(item=>item.checkpoint.sha256===checkpoint)?.checkpoint.name)}" download>Checkpoint descriptor</a></div>`:''}<div class="model-probes"><label>Fixed validation example<select id="model-probe">${rows.map(row=>`<option value="${esc(row.id)}" ${row.id===probe?'selected':''}>${esc(row.id.slice(0,12))} · ${esc(row.truth_label||row.target?.label||'frozen target')}</option>`).join('')}</select></label>${chosen?`<p>Frozen target: ${esc(chosen.truth_label||chosen.target?.label)} · prediction: ${esc(chosen.predicted_label||'See probabilities')}</p><div class="real-table-wrap"><table><caption>Frozen class probabilities</caption><thead><tr><th scope="col">Class</th><th scope="col">Probability</th></tr></thead><tbody>${chosen.probabilities.map((value,index)=>`<tr><th scope="row">${esc((run.metrics?.class_vocabulary||detailPredictions?.class_vocabulary||[])[index]?.label||String(index))}</th><td>${Number.isFinite(value)?value.toFixed(6):'Unavailable'}</td></tr>`).join('')}</tbody></table></div><p>${chosen.current_record?.revision?`Current annotation r${esc(chosen.current_record.revision)}${chosen.current_record.changed?' · changed since this run':''}`:'Current record availability is checked when opened.'}</p><button id="model-correct">Open current record in Data →</button><p class="footnote">Save and review the correction, then freeze a new release and prepare a new trial. These frozen targets stay unchanged.</p>`:'<p>No disclosed validation probes in this checkpoint.</p>'}</div>${comparisonHTML(run)}${candidateHTML(run,selected)}<details><summary>Verified evidence identity</summary><pre>${esc(JSON.stringify({manifest:value.manifest,checkpoint_index:value.checkpoint_index},null,2))}</pre></details></section>`;
+    }
+    function comparisonHTML(run) {
+      const options=(evidence.metric_definitions||[]).map(item=>`<option value="${esc(item.id)}" ${item.id===compareMetric?'selected':''}>${esc(item.id)} · ${esc(item.units)} · ${esc(item.direction)}</option>`).join('');
+      const entries=compareTarget?.checkpoint_index?.entries||[];
+      return `<form id="model-compare-form" class="model-comparison"><h4>Compare exact validation evidence</h4><p>Current checkpoint ${esc(checkpoint?.slice(0,12))}. Choose the other run, its checkpoint and the metric. A paired delta requires compatible frozen populations and meaning.</p><div class="model-fields"><label>Other run<select id="model-compare-run"><option value="">Choose another completed model run</option></select></label><label>Other checkpoint<select id="model-compare-checkpoint" required ${!entries.length?'disabled':''}><option value="">Choose a checkpoint</option>${entries.map(item=>`<option value="${esc(item.checkpoint.sha256)}" ${item.checkpoint.sha256===compareCheckpoint?'selected':''}>${item.clocks.epoch?'Epoch '+esc(item.clocks.epoch):'Fit pass '+esc(item.clocks.fit_pass)}${item.selected?' · selected':''} · ${esc(item.checkpoint.sha256.slice(0,12))}</option>`).join('')}</select></label><label>Metric<select id="model-compare-metric" required><option value="">Choose a metric</option>${options}</select></label><label>Comparison<select id="model-compare-mode"><option value="paired" ${compareMode==='paired'?'selected':''}>Paired delta</option><option value="side_by_side" ${compareMode==='side_by_side'?'selected':''}>Side by side</option></select></label></div><button id="model-compare" ${compareBusy||checkpointBusy||!entries.length?'disabled':''}>${compareBusy?'Loading evidence…':'Compare'}</button></form>${comparison?comparisonResultHTML(comparison):''}`;
+    }
+    function comparisonResultHTML(value) {
+      if(!value.sides)return `<p class="error-panel" role="alert">${esc(value.reasons.join(' '))}</p>`;
+      const compatible=value.state==='compatible';
+      return `<section class="model-comparison-result"><p class="${compatible||value.mode==='side_by_side'?'callout':'error-panel'}" role="status">${value.mode==='side_by_side'?'Side-by-side values are shown without a paired delta.':compatible?'Identical compatible validation membership. Exact paired comparison is available.':'Validation populations or metric definitions differ; paired delta is unavailable.'}</p><div class="real-table-wrap"><table><caption>Exact comparison selectors and observed values</caption><thead><tr><th scope="col">Evidence</th><th scope="col">Current run</th><th scope="col">Other run</th></tr></thead><tbody>${[['Run',...value.sides.map(item=>item.run_id.slice(0,12))],['Checkpoint',...value.sides.map(item=>item.checkpoint_sha256.slice(0,12))],['Metric',...value.sides.map(item=>item.metric_id)],['Value',...value.sides.map(item=>item.result.state==='observed'?metric(item.result.value):'Undefined: '+item.result.reason)],['Examples',...value.sides.map(item=>item.result.state==='observed'?item.result.sample_count:'Undefined')]].map(row=>`<tr><th scope="row">${esc(row[0])}</th><td>${esc(row[1])}</td><td>${esc(row[2])}</td></tr>`).join('')}</tbody></table></div>${value.delta?`<p>Paired delta: ${value.delta.state==='observed'?metric(value.delta.value)+' '+esc(value.delta.units):'Undefined: '+esc(value.delta.reason)}</p>`:''}${value.reasons.length?`<p>${esc(value.reasons.join(' '))}</p>`:''}<details><summary>Exact evaluation, checkpoint and metric identities</summary><pre>${esc(JSON.stringify(value,null,2))}</pre></details></section>`;
+    }
+    function candidateHTML(run,selected) {
+      if(!run.study_membership)return '<p class="footnote">This run has no finite-study membership for candidate selection.</p>';
+      return `<section class="model-candidate"><h4 id="model-candidate-heading" tabindex="-1">Candidate and export</h4>${candidate?`<p><strong>Diagnostic candidate retained</strong> · ${esc(candidate.ref.id.slice(0,12))}</p><p>${esc(candidate.candidate.limitations.join(' '))}</p><p>Candidate checkpoint ${esc(candidate.checkpoint.sha256.slice(0,12))}</p>`:`<p>The study selects its validation-selected checkpoint. Candidate selection records a diagnostic decision; it does not establish model quality.</p><button id="model-select-candidate" ${candidateBusy||checkpointBusy||!selected?.selected?'disabled':''}>${candidateBusy?'Selecting candidate…':'Retain selected checkpoint candidate'}</button>${!selected?.selected?'<p>Select the checkpoint marked selected to retain its candidate.</p>':''}`}${candidateError?`<p class="error-panel" role="alert">${esc(candidateError)}</p>`:''}<p class="footnote">Package export and fresh verification require their own supported workflow.</p></section>`;
+    }
+    function probeRows(value,run) {
+      const vocabulary=run.metrics?.class_vocabulary||detailPredictions?.class_vocabulary||[];
+      return (value.predictions?.rows||[]).map(row=>{
+        const member=value.probe.members.find(item=>item.ordinal===row.ordinal),reference=member.frozen_reference;
+        const current=detailPredictions?.rows.find(item=>item.id===reference.id)?.current_record;
+        return {...reference,...row,truth_label:vocabulary[row.truth_index]?.label||String(row.truth_index),predicted_label:vocabulary[row.predicted_index]?.label||String(row.predicted_index),current_record:current};
+      });
+    }
+    function clearComparison() {
+      compareIntent++;comparison=null;
+      if(compareBusy?.kind==='comparison')compareBusy=false;
+    }
+    function bindEvidence(node,run,runs,rerender,current) {
+      if(!evidence||!evidenceRecipes.has(run?.graph?.recipe))return;
+      for(const button of node.querySelectorAll('[data-model-checkpoint]'))button.onclick=async()=>{
+        if(candidateBusy)return;const sha=button.dataset.modelCheckpoint,intent=++checkpointIntent;clearComparison();checkpointBusy=true;rerender();
+        try{const value=await api('runs/'+enc(run.id)+'/model-evidence',{checkpoint_sha256:sha});if(!current()||intent!==checkpointIntent)return;evidence=value;checkpoint=sha;rerender();}
+        catch(error){if(current()&&intent===checkpointIntent){evidence=null;evidenceError=error.message;rerender();}}
+        finally{if(current()&&intent===checkpointIntent){checkpointBusy=false;rerender();}}
+      };
+      node.querySelector('#model-select-candidate')?.addEventListener('click',async()=>{
+        if(candidateBusy||checkpointBusy)return;candidateBusy=true;candidateError='';const intent=++queryIntent;rerender();
+        try{
+          const member=run.study_membership;if(!member)throw Error('This run has no finite-study membership.');
+          const state=await api('studies/'+enc(member.study_id));if(!current()||intent!==queryIntent)return;
+          const requests=history.state?.modelCandidateRequests||{};let request=requests[run.id];
+          if(request&&request.actor!==identity()?.actor_id)throw Error('An unresolved candidate request belongs to another actor.');
+          if(!request){request={actor:identity()?.actor_id,body:{request_key:crypto.randomUUID(),revision:state.study.revision,trial_id:member.trial_id,run_id:run.id,checkpoint_sha256:checkpoint}};history.replaceState({...history.state,modelCandidateRequests:{...requests,[run.id]:request}},'');}
+          const result=await api('studies/'+enc(member.study_id)+'/select-candidate',request.body);
+          const remaining={...history.state?.modelCandidateRequests};delete remaining[run.id];
+          history.replaceState({...history.state,modelCandidateRequests:remaining,modelCandidates:{...history.state?.modelCandidates,[run.id]:{actor:request.actor,id:result.ref.id}}},'');
+          if(!current()||intent!==queryIntent)return;candidate=result;announce('Diagnostic candidate retained. Export and fresh inference verification remain separate.');
+        }catch(error){if(current()&&intent===queryIntent){candidateError=error.message;if([400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code)){const requests={...history.state?.modelCandidateRequests};delete requests[run.id];history.replaceState({...history.state,modelCandidateRequests:requests},'');}}}
+        finally{candidateBusy=false;if(current()){rerender();if(candidate&&intent===queryIntent)node.querySelector('#model-candidate-heading')?.focus();}}
+      });
+      node.querySelector('#model-probe')?.addEventListener('change',event=>{probe=event.target.value;rerender();});
+      node.querySelector('#model-correct')?.addEventListener('click',()=>{
+        const row=probeRows(evidence,run).find(item=>item.id===probe);
+        if(row)openRecord({...row,run_id:run.id,release_id:run.release_id,split:'validation'});
+      });
+      const select=node.querySelector('#model-compare-run');
+      if(select)select.innerHTML='<option value="">Choose another completed model run</option>'+runs.filter(item=>item.id!==run.id&&item.state==='completed'&&evidenceRecipes.has(item.graph?.recipe)).map(item=>`<option value="${esc(item.id)}" ${item.id===compareId?'selected':''}>${esc(item.graph.name)} · ${esc(item.id.slice(0,12))}</option>`).join('');
+      select?.addEventListener('change',async()=>{
+        compareId=select.value;compareTarget=null;compareTargetRun=null;compareCheckpoint='';clearComparison();const intent=++compareTargetIntent;
+        const token={kind:'target'};compareBusy=compareId?token:false;
+        if(!compareId){rerender();return;}rerender();
+        try{const [detail,value]=await Promise.all([api('runs/'+enc(compareId)),api('runs/'+enc(compareId)+'/model-evidence',{})]);if(!current()||intent!==compareTargetIntent)return;if(value.state!=='verified')throw Error('The other run has no verified model evidence.');compareTarget=value;compareTargetRun=detail;}
+        catch(error){if(current()&&intent===compareTargetIntent)comparison={reasons:[error.message]};}
+        finally{if(compareBusy===token){compareBusy=false;if(current())rerender();}}
+      });
+      for(const [id,update] of [['model-compare-checkpoint',value=>compareCheckpoint=value],['model-compare-metric',value=>compareMetric=value],['model-compare-mode',value=>compareMode=value]])node.querySelector('#'+id)?.addEventListener('change',event=>{update(event.target.value);clearComparison();rerender();});
+      node.querySelector('#model-compare-form')?.addEventListener('submit',async event=>{
+        event.preventDefault();if(compareBusy||checkpointBusy||!compareId||!compareTarget||!compareCheckpoint||!compareMetric)return;const intent=++compareIntent,token={kind:'comparison'};compareBusy=token;rerender();
+        try{
+          const evaluation=run.artifacts.find(item=>item.name==='model-evidence.json'),otherEvaluation=compareTargetRun.artifacts.find(item=>item.name==='model-evidence.json');
+          const leftMetric=evidence.metric_definition_hashes?.[compareMetric],rightMetric=compareTarget.metric_definition_hashes?.[compareMetric];
+          if(!evaluation||!otherEvaluation||!leftMetric||!rightMetric)throw Error('The exact evaluation or metric definition identity is unavailable.');
+          const value=await api('runs/'+enc(run.id)+'/compare-model-evidence',{other_run_id:compareId,checkpoint_sha256:checkpoint,other_checkpoint_sha256:compareCheckpoint,evaluation_sha256:evaluation.sha256,other_evaluation_sha256:otherEvaluation.sha256,metric_id:compareMetric,metric_definition_sha256:leftMetric,other_metric_definition_sha256:rightMetric,mode:compareMode});
+          if(!current()||intent!==compareIntent)return;comparison=value;announce(value.mode==='side_by_side'?'Exact side-by-side values are shown.':value.state==='compatible'?'Compatible validation membership. Exact paired comparison is shown.':'Paired delta is unavailable for these exact evidence selectors.');
+        }catch(error){if(current()&&intent===compareIntent)comparison={reasons:[error.message]};}
+        finally{if(compareBusy===token){compareBusy=false;if(current())rerender();}}
+      });
+    }
+  };
+})();
