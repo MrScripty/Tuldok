@@ -100,7 +100,9 @@ class SDKConformanceTests(unittest.TestCase):
             'studies.get':dict(study=dict(id=study_id,revision=3,admission_epoch=1,open=True,state='open',trial_ids=[trial_id])),
             'studies.trial':dict(id=trial_id,study_id=study_id,material=ref),
             'recipes.material':dict(ref=ref,material=material),'models.material':model,
-            'graphs.get':dict(id=graph_id,revision=1,project_id=project),
+            'graphs.get':dict(id=graph_id,revision=1,recipe='external_recipe',nodes=[
+                dict(id='input',type='input',parameters=dict(project_id=project)),
+                dict(id='execute',type='execute',parameters={}),dict(id='output',type='output',parameters={})]),
             'studies.admit':dict(reservation=reservation,run=current),'runs.get':current,'runs.model_evidence':public})
         self.output=self.root/'download';self.output.mkdir()
 
@@ -125,6 +127,19 @@ class SDKConformanceTests(unittest.TestCase):
                        lambda f:f['calls']['studies.get']['study'].update(revision=4),
                        lambda f:f['calls']['recipes.material']['material']['model'].update(sha256='f'*64)):
             fixture=copy.deepcopy(self.fixture);change(fixture);client=RepresentativeTransport(fixture)
+            with self.subTest(change=change),self.assertRaises(sdk.EvidenceError):self.execute(client)
+            self.assertNotIn('studies.admit',client.calls)
+
+    def test_actual_public_graph_input_project_is_required_before_admission(self):
+        changes=[lambda graph:graph['nodes'][0]['parameters'].update(project_id='f'*32),
+            lambda graph:graph.update(nodes=[]),lambda graph:graph.update(nodes=[None]),
+            lambda graph:graph['nodes'].append(copy.deepcopy(graph['nodes'][0])),
+            lambda graph:graph.update(recipe='built_in_recipe'),
+            lambda graph:graph.pop('nodes')]
+        for change in changes:
+            fixture=copy.deepcopy(self.fixture);graph=fixture['calls']['graphs.get'];change(graph)
+            # Invented legacy top-level aliases never override the public node.
+            graph['project_id']=self.selection['project_id'];client=RepresentativeTransport(fixture)
             with self.subTest(change=change),self.assertRaises(sdk.EvidenceError):self.execute(client)
             self.assertNotIn('studies.admit',client.calls)
 

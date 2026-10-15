@@ -59,6 +59,13 @@ class CanonicalDriverGuards(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,'Reviewed canonical source differs'):
                 driver.verify_frozen_sources(project)
 
+    def test_notice_source_pin_refuses_changed_accepted_rights_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            project=Path(temporary)/'project';shutil.copytree(driver.PACKAGE,project)
+            source=project/'NOTICE.txt';source.write_bytes(source.read_bytes()+b'\nchanged\n')
+            with self.assertRaisesRegex(RuntimeError,'Reviewed canonical source differs: NOTICE.txt'):
+                driver.verify_frozen_sources(project)
+
     def test_timeout_observation_is_bounded_redacted_and_not_an_outcome(self):
         timeout=subprocess.TimeoutExpired(['sdk'],1,output=b'secret-token'+b'x'*300000,stderr=b'secret-token'+b'y'*70000)
         observed=driver.sdk_observation(timeout,'secret-token')

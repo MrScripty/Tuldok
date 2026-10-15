@@ -182,7 +182,13 @@ def _conformance(selection, client, output):
     model = client.call('models.material', {'ref': material['model']})
     require(same(model['ref'], material['model']) and model['material']['task']['sha256'] == expected['task_sha256'], 'Expected Task differs.', 'stale')
     graph = client.call('graphs.get', {'graph_id': expected['graph_id']})
-    require(graph['id'] == expected['graph_id'] and same(graph['revision'], expected['graph_revision']) and graph['project_id'] == selection['project_id'], 'Expected project/current graph differs.', 'stale')
+    require(type(graph) is dict and type(graph.get('nodes')) is list and 1 <= len(graph['nodes']) <= 64 and
+        all(type(node) is dict for node in graph['nodes']), 'Expected public graph nodes are unavailable.', 'stale')
+    inputs = [node for node in graph['nodes'] if node.get('type') == 'input']
+    require(len(inputs) == 1 and type(inputs[0].get('parameters')) is dict and
+        graph.get('recipe') == 'external_recipe' and graph['id'] == expected['graph_id'] and
+        same(graph['revision'], expected['graph_revision']) and inputs[0]['parameters'].get('project_id') == selection['project_id'],
+        'Expected project/current graph differs.', 'stale')
     body = {key: selection[key] for key in ('study_id', 'trial_id', 'revision', 'admission_epoch', 'approval_id', 'request_key')}
     client.admission = True
     admitted = client.call('studies.admit', body)
