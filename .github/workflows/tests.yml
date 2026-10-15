@@ -45,8 +45,12 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json
       - run: python -m venv build/workspace-training
-      - run: build/workspace-training/bin/python -m pip install -r requirements-training.txt
+      - run: build/workspace-training/bin/python -m pip install -r requirements.txt -r requirements-training.txt
       - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
+      - name: Verify one-fit evidence in the provisioned CPU training interpreter
+        run: |
+          build/workspace-training/bin/python -c "import numpy, sklearn, psycopg"
+          build/workspace-training/bin/python -m unittest discover -s tests -p test_one_fit_evidence.py -v
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
@@ -293,6 +297,16 @@ jobs:
         run: node tests/browser_model_development.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - name: Exercise actual one-fit text model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: text
+      - name: Exercise actual one-fit audio model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: audio
       - uses: actions/upload-artifact@v4
         if: always()
         with:

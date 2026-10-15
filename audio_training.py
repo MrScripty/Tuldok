@@ -24,6 +24,8 @@ from image_training import TrainingError, HASH, IDENTIFIER, _json, _invalid, gua
 from workbench import WorkbenchError, encode
 
 ADAPTER = {'name': 'audio_features_logistic_cpu', 'version': 1}
+MODEL_ADAPTER = dict(ADAPTER, version=2)
+MODEL_RECIPE = 'audio_classification_model_v2'
 PARAMETER_BOUNDS = {'C': {'minimum': 0.01, 'maximum': 100, 'default': 1, 'type': 'number'}}
 FEATURE_NAMES = ['mean', 'rms', 'zero_crossing_fraction', 'spectral_centroid_nyquist',
                  'power_0_25', 'power_25_50', 'power_50_75', 'power_75_100']
@@ -161,7 +163,7 @@ def inspect_release(path, expected_sha256):
     return _read_release(path, expected_sha256)[0]
 
 
-def probe_runtime():
+def probe_runtime(model_aware=False):
     runtime, problems = {'python': platform.python_version(), 'device': 'cpu', 'threads': 1}, []
     if sys.platform != 'linux':
         problems.append({'code': 'unsupported', 'message': 'The supervised audio adapter requires Linux.'})
@@ -183,7 +185,7 @@ def probe_runtime():
                 problems.append({'code': 'unavailable', 'message': 'CPU math libraries must be limited to one thread.'})
         except Exception:
             problems.append({'code': 'unavailable', 'message': 'The pinned local audio runtime could not load.'})
-    return {'schema_version': 1, 'available': not problems, 'adapter': dict(ADAPTER), 'runtime': runtime, 'problems': problems}
+    return {'schema_version': 1, 'available': not problems, 'adapter': dict(MODEL_ADAPTER if model_aware else ADAPTER), 'runtime': runtime, 'problems': problems}
 
 
 def extract_features(raw, start_frame, end_frame, channel):
@@ -212,7 +214,7 @@ def validate_model(model):
     required = {'schema_version', 'source_identity', 'adapter', 'parameters', 'transform',
                 'class_vocabulary', 'class_to_idx', 'mean', 'scale', 'coefficients', 'intercepts'}
     if (not isinstance(model, dict) or set(model) != required or type(model['schema_version']) is not int
-            or model['schema_version'] != 1 or model['adapter'] != ADAPTER or type(model['adapter'].get('version')) is not int):
+            or model['schema_version'] != 1 or model['adapter'] not in (ADAPTER, dict(ADAPTER, version=2)) or type(model['adapter'].get('version')) is not int):
         _invalid('Unsupported audio model envelope.')
     identity = model['source_identity']
     if not isinstance(identity, dict) or set(identity) != {'dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256'}:
@@ -271,10 +273,15 @@ def predict_features(model, features):
 def _checked_job(value):
     fields = {'schema_version', 'dataset_id', 'run_id', 'graph_sha256', 'release_id',
               'release_sha256', 'release_path', 'output_dir', 'parameters', 'parent_pid'}
-    if not isinstance(value, dict) or set(value) != fields:
-        _invalid('Training job must contain exactly the version 1 job fields.')
-    if type(value['schema_version']) is not int or value['schema_version'] != 1:
-        raise TrainingError('unsupported', 'Only training job schema version 1 is supported.')
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] not in (1, 2):
+        raise TrainingError('unsupported', 'Only training job schemas 1 and 2 are supported.')
+    if value['schema_version'] == 2:
+        fields |= {'adapter', 'evidence'}
+    if set(value) != fields:
+        _invalid('Training job fields differ from its selected schema.')
+    if value['schema_version'] == 2:
+        from one_fit_evidence import validate_job_selection
+        validate_job_selection(value, ADAPTER)
     for key in ('dataset_id', 'run_id'):
         if not isinstance(value[key], str) or not IDENTIFIER.fullmatch(value[key]):
             _invalid(f'{key} must be a canonical 32-character identifier.')
@@ -289,6 +296,37 @@ def _checked_job(value):
     if type(value['parent_pid']) is not int or value['parent_pid'] < 1:
         _invalid('parent_pid must identify the owning local process.')
     return dict(value, parameters=validate_parameters(value['parameters']))
+
+
+def verify_evidence(directory, job):
+    """Validate v2 evidence using exact source-channel interval measurements."""
+    job = _checked_job(job)
+    if job['schema_version'] != 2:
+        raise TrainingError('unsupported', 'Historical one-fit results have no model evidence snapshot.')
+    from one_fit_evidence import verify_directory
+    manifest, raw = _read_release(job['release_path'], job['release_sha256'])
+    from model_evidence import read_document
+    saved = validate_model(read_document(Path(directory), 'model.json'))
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        inputs = [extract_features(archive.read(row['asset']), row['start_frame'], row['end_frame'], row['channel'])
+                  for row in manifest['records'] if row['split'] == 'validation']
+        train_inputs = [extract_features(archive.read(row['asset']), row['start_frame'], row['end_frame'], row['channel'])
+                        for row in manifest['records'] if row['split'] == 'train']
+    _verify_fit_statistics(saved, train_inputs)
+    return verify_directory(directory, job=job, adapter=ADAPTER, manifest=manifest,
+                            reference_keys=REFERENCE_KEYS, expected_inputs=inputs)
+
+
+def _verify_fit_statistics(model, features):
+    """Use the pinned scaler's numerical primitives, never another fit call."""
+    import numpy as np
+    from sklearn.preprocessing._data import _is_constant_feature
+    from sklearn.utils.extmath import _incremental_mean_and_var
+    mean, variance, count = _incremental_mean_and_var(np.array(features), np.zeros(8), np.zeros(8), np.zeros(8, dtype=np.int64))
+    scale = np.sqrt(variance)
+    scale[_is_constant_feature(variance, mean, count)] = 1
+    if not np.array_equal(model['mean'], mean) or not np.array_equal(model['scale'], scale):
+        raise TrainingError('failed', 'Frozen audio scaling differs from exact training-only statistics.')
 
 
 
@@ -312,7 +350,8 @@ def train(job):
         _invalid('The run owner must supply an existing empty output directory.')
     parameters = job['parameters']
     identity = {key: job[key] for key in ('dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256')}
-    envelope = {'schema_version': 1, 'adapter': dict(ADAPTER), 'source_identity': identity}
+    selected = job['schema_version'] == 2
+    envelope = {'schema_version': 1, 'adapter': dict(job['adapter'] if selected else ADAPTER), 'source_identity': identity}
     vocabulary, mapping = manifest['class_vocabulary'], manifest['class_to_idx']
     splits = {split: [row for row in manifest['records'] if row['split'] == split] for split in projection.SPLITS}
     _emit('started', epochs=1)
@@ -331,6 +370,7 @@ def train(job):
             estimator.fit(transformed, [row['class_index'] for row in splits['train']])
     except ConvergenceWarning as error:
         raise TrainingError('failed', 'Audio classifier did not converge within 200 iterations; inspect the data or choose another C.') from error
+    fitted_elapsed = time.monotonic() - started
     saved = {**envelope, 'parameters': parameters, 'transform': TRANSFORM, 'class_vocabulary': vocabulary,
              'class_to_idx': mapping, 'mean': scaler.mean_.tolist(), 'scale': scaler.scale_.tolist(),
              'coefficients': estimator.coef_.tolist(), 'intercepts': estimator.intercept_.tolist()}
@@ -359,20 +399,37 @@ def train(job):
     test, test_rows = evaluate('test')
     runtime = dict(readiness['runtime'], elapsed_seconds=time.monotonic() - started,
                    peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)
-    _write_json(output / 'metrics.json', {**envelope, 'parameters': parameters, 'transform': TRANSFORM,
+    metrics = {**envelope, 'parameters': parameters, 'transform': TRANSFORM,
                 'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'validation': validation,
                 'history': [{'epoch': 1, 'training_loss': training['loss'], 'validation': validation}],
-                'best_epoch': 1, 'runtime': runtime})
+                'best_epoch': 1, 'runtime': runtime}
+    if selected:
+        from one_fit_evidence import fit_clocks
+        metrics.pop('history')
+        metrics.pop('best_epoch')
+        metrics['clocks'] = fit_clocks(fitted_elapsed)
+    _write_json(output / 'metrics.json', metrics)
     _write_json(output / 'test-metrics.json', {**envelope, 'split': 'test', 'metrics': test})
     for split, rows in (('validation', validation_rows), ('test', test_rows)):
         _write_json(output / f'predictions-{split}.json', {**envelope, 'split': split,
                     'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'rows': rows})
+    if selected:
+        from one_fit_evidence import capture
+        capture(output, job=job, adapter=ADAPTER, manifest=manifest, reference_keys=REFERENCE_KEYS,
+                saved=saved, inputs=[features[row['id']] for row in splits['validation']], validation=validation,
+                rows=validation_rows, clocks=metrics['clocks'])
     artifacts = []
     for name, split in (('metrics.json', 'validation'), ('test-metrics.json', 'test'),
                         ('predictions-validation.json', 'validation'), ('predictions-test.json', 'test'), ('model.json', None)):
         raw = (output / name).read_bytes()
         artifacts.append({'name': name, 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
                           'media_type': 'application/json', 'split': split})
+    if selected:
+        from one_fit_evidence import CAPTURE_NAMES
+        for name in sorted(CAPTURE_NAMES):
+            raw = (output / name).read_bytes()
+            artifacts.append({'name': name, 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
+                              'media_type': 'application/json', 'split': 'validation' if name in ('probe.json', 'probe-inputs.json', 'probes-fit-0001.json', 'observations.json') else None})
     _write_json(output / 'artifact-manifest.json', {**envelope, 'artifacts': artifacts})
     _emit('completed', epochs=1)
 
@@ -384,17 +441,24 @@ def main():
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--probe', action='store_true')
     action.add_argument('--job', type=Path)
+    action.add_argument('--verify-evidence', type=Path)
+    parser.add_argument('--model-aware', action='store_true')
     args = parser.parse_args()
     try:
         if args.probe:
-            result = probe_runtime()
+            result = probe_runtime(args.model_aware)
             print(json.dumps(result, allow_nan=False), flush=True)
             return 0 if result['available'] else 2
-        with args.job.open('rb') as handle:
+        with (args.verify_evidence or args.job).open('rb') as handle:
             raw = handle.read(MAX_JOB_BYTES + 1)
         if len(raw) > MAX_JOB_BYTES:
             _invalid('Training job exceeds 16 KiB.')
-        train(_json(raw, 'Audio training job'))
+        job = _json(raw, 'Audio training job')
+        if args.verify_evidence:
+            guard_parent(job['parent_pid'])
+            verify_evidence(job['output_dir'], job)
+        else:
+            train(job)
         return 0
     except TrainingError as error:
         _emit('failed', outcome=error.outcome, message=str(error)[:400])
