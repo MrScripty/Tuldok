@@ -389,13 +389,15 @@ def main(args):
             'Trusted public CLI source differs.')
     require(1 <= args.wait_seconds <= 3600 and 1 <= args.wall_seconds <= 86400 and
             args.retained_bytes > 0 and args.staging_bytes > 0, 'Select finite positive qualification budgets.')
-    project, recipe, blobs = review_package(args.package.resolve(), document(args.reviewed_inventory))
+    reviewed_raw = regular(args.reviewed_inventory)
+    reviewed_inventory = agent_api.decode(reviewed_raw)
+    project, recipe, blobs = review_package(args.package.resolve(), reviewed_inventory)
     operator = Operator(args); operator.output.mkdir(parents=True, mode=0o700, exist_ok=False)
     prepared = None; passed = False
     try:
         operator.start(serve=False); prepared = operator.prepare(project, recipe, blobs)
         operator.write('prepared.json', dict(prepared, host_commit=host, driver_sha256=sha(Path(__file__).read_bytes()),
-            reviewed_inventory_sha256=sha(regular(args.reviewed_inventory)), project_files={name: sha(raw) for name, raw in blobs.items()},
+            reviewed_inventory_sha256=sha(reviewed_raw), project_files={name: sha(raw) for name, raw in blobs.items()},
             state='prepared_before_sdk_admission', physical_qualification='not_established'))
         command = [sys.executable, '-B', '-m', 'tuldok_extension_sdk', 'conformance',
             '--config', str(operator.output/'agent-config.private'), '--cli', str(args.cli.resolve()),
@@ -417,7 +419,9 @@ def main(args):
             wait_for_result(operator.output/'sdk-result.json', args.wait_seconds)
         # Recheck reviewed source and frozen oracle bytes before independent execution.
         frozen_host(args)
-        review_package(args.package.resolve(), document(args.reviewed_inventory))
+        require(regular(args.reviewed_inventory) == reviewed_raw, 'Original reviewed inventory changed.')
+        _, _, current_blobs = review_package(args.package.resolve(), reviewed_inventory)
+        require(current_blobs == blobs, 'Original frozen author/oracle closure changed.')
         receipt = operator.verify(prepared, document(operator.output/'sdk-result.json'))
         operator.write('receipt.json', dict(receipt, host_commit=host)); passed = True
         print(json.dumps({'state': 'passed', 'receipt': str(operator.output/'receipt.json')}), flush=True)
