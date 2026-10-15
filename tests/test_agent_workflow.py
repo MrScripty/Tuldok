@@ -15,6 +15,7 @@ import io
 import json
 import os
 from pathlib import Path
+import sqlite3
 import sys
 import time
 import unittest
@@ -60,8 +61,10 @@ class AgentWorkflowTests(AgentHTTPCase):
         private_file(token_file, (credential['token'] + '\n').encode('ascii'))
         private_file(config_file, json.dumps({'endpoint': self.root, 'catalog_id': self.owner.catalog_id,
                                               'token_file': str(token_file), 'timeout': 30}).encode())
-        parameters = StdioServerParameters(command=sys.executable,
-            args=[str(ROOT / 'mcp_stdio.py'), '--config', str(config_file)], cwd=str(ROOT))
+        arguments = [str(ROOT / 'mcp_stdio.py'), '--config', str(config_file)]
+        if getattr(self, 'observer_database', None) is not None:
+            arguments.extend(['--observe-database', str(self.observer_database)])
+        parameters = StdioServerParameters(command=sys.executable, args=arguments, cwd=str(ROOT))
         log = self.path / f'agent-stderr-{self.config_count}.log'
         with log.open('w+') as errors:
             async with stdio_client(parameters, errlog=errors) as (reader, writer):
@@ -131,6 +134,27 @@ class AgentWorkflowTests(AgentHTTPCase):
 
     def test_real_agent_draft_owner_review_freeze_approval_replay_restart_and_revocation(self):
         asyncio.run(self.workflow())
+
+    def test_observed_real_workflow_preserves_mutation_authority_restart_and_privacy(self):
+        import mcp_observer
+        self.observer_database = self.path / 'mcp-observer.sqlite'
+        asyncio.run(self.workflow())
+        checked = mcp_observer.check_store(self.observer_database)
+        self.assertEqual(checked['unfinished'], 0)
+        with sqlite3.connect(self.observer_database) as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM sessions').fetchone()[0], 3)
+            for outcome, status in [('success', 201), ('domain-error', 409),
+                                    ('permission-refusal', 403), ('permission-refusal', 401)]:
+                self.assertGreater(db.execute("SELECT count(*) FROM events WHERE phase='returned' AND outcome=? AND http_status=?",
+                                             (outcome, status)).fetchone()[0], 0)
+            self.assertEqual(db.execute("SELECT count(*) FROM events e JOIN interactions i ON e.interaction=i.id WHERE i.operation='data_import_text' AND e.phase='dispatch'").fetchone()[0], 1)
+            self.assertEqual(db.execute("SELECT count(*) FROM events e JOIN interactions i ON e.interaction=i.id WHERE i.operation='data_import_text' AND e.phase='returned' AND e.http_status=201").fetchone()[0], 1)
+            self.assertGreater(db.execute("SELECT count(*) FROM events WHERE phase='terminal' AND outcome='invalid-parameters'").fetchone()[0], 0)
+        raw = self.observer_database.read_bytes()
+        for secret in (self.editor['token'], self.owner.token, self.owner.catalog_id,
+                       str(self.path), 'Neutral reviewed text', 'project.json',
+                       'Authored QA fixture', self.manifest['id']):
+            self.assertNotIn(secret.encode(), raw)
 
     async def workflow(self):
         async with self.mcp(self.editor) as session:

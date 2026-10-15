@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="739.8pt" height="417.676875pt" viewBox="0 0 739.8 417.676875" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-14T17:54:08.511481</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.8, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 417.676875 
+L 739.8 417.676875 
+L 739.8 -0 
+L 0 -0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 15.381203 159.333675 
+L 179.005263 159.333675 
+Q 182.823158 159.333675 182.823158 155.452875 
+L 182.823158 69.520875 
+Q 182.823158 65.640075 179.005263 65.640075 
+L 15.381203 65.640075 
+Q 11.563308 65.640075 11.563308 69.520875 
+L 11.563308 155.452875 
+Q 11.563308 159.333675 15.381203 159.333675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #eef4f8; stroke: #a9bdca; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 192.640602 159.333675 
+L 356.264662 159.333675 
+Q 360.082556 159.333675 360.082556 155.452875 
+L 360.082556 69.520875 
+Q 360.082556 65.640075 356.264662 65.640075 
+L 192.640602 65.640075 
+Q 188.822707 65.640075 188.822707 69.520875 
+L 188.822707 155.452875 
+Q 188.822707 159.333675 192.640602 159.333675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #eef4f8; stroke: #a9bdca; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 369.9 159.333675 
+L 533.52406 159.333675 
+Q 537.341955 159.333675 537.341955 155.452875 
+L 537.341955 69.520875 
+Q 537.341955 65.640075 533.52406 65.640075 
+L 369.9 65.640075 
+Q 366.082105 65.640075 366.082105 69.520875 
+L 366.082105 155.452875 
+Q 366.082105 159.333675 369.9 159.333675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #eef4f8; stroke: #a9bdca; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 547.159398 159.333675 
+L 710.783459 159.333675 
+Q 714.601353 159.333675 714.601353 155.452875 
+L 714.601353 69.520875 
+Q 714.601353 65.640075 710.783459 65.640075 
+L 547.159398 65.640075 
+Q 543.341504 65.640075 543.341504 69.520875 
+L 543.341504 155.452875 
+Q 543.341504 159.333675 547.159398 159.333675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #eef4f8; stroke: #a9bdca; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 252.63609 279.638475 
+L 380.808271 279.638475 
+L 380.808271 239.721675 
+L 252.63609 239.721675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 397.170677 279.638475 
+L 525.342857 279.638475 
+L 525.342857 239.721675 
+L 397.170677 239.721675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 541.705263 279.638475 
+L 669.877444 279.638475 
+L 669.877444 239.721675 
+L 541.705263 239.721675 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 252.63609 331.752075 
+L 380.808271 331.752075 
+L 380.808271 291.835275 
+L 252.63609 291.835275 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 397.170677 331.752075 
+L 525.342857 331.752075 
+L 525.342857 291.835275 
+L 397.170677 291.835275 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 541.705263 331.752075 
+L 669.877444 331.752075 
+L 669.877444 291.835275 
+L 541.705263 291.835275 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 252.63609 383.865675 
+L 380.808271 383.865675 
+L 380.808271 343.948875 
+L 252.63609 343.948875 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 397.170677 383.865675 
+L 525.342857 383.865675 
+L 525.342857 343.948875 
+L 397.170677 343.948875 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 541.705263 383.865675 
+L 669.877444 383.865675 
+L 669.877444 343.948875 
+L 541.705263 343.948875 
+z
+" clip-path="url(#p026ba99782)" style="fill: #f9fbfc; stroke: #c2cdd5; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 20px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="15.381203" y="22.396875" transform="rotate(-0 15.381203 22.396875)">Four clocks in a training and simulation workflow</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #5b6873" x="15.381203" y="44.572875" transform="rotate(-0 15.381203 44.572875)">Conceptual diagram  |  No training result is shown</text>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="24.653233" y="91.696875" transform="rotate(-0 24.653233 91.696875)">Optimizer update</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="24.653233" y="119.416875" transform="rotate(-0 24.653233 119.416875)">s = 0, 1, 2, ...</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #536371" x="24.653233" y="139.929675" transform="rotate(-0 24.653233 139.929675)">Parameters change</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="201.912632" y="91.696875" transform="rotate(-0 201.912632 91.696875)">Data exposure</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="201.912632" y="119.416875" transform="rotate(-0 201.912632 119.416875)">Epochs or samples</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #536371" x="201.912632" y="139.929675" transform="rotate(-0 201.912632 139.929675)">Data are consumed</text>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="379.17203" y="91.696875" transform="rotate(-0 379.17203 91.696875)">Physical time</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="379.17203" y="119.416875" transform="rotate(-0 379.17203 119.416875)">t = n × Δt</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #536371" x="379.17203" y="139.929675" transform="rotate(-0 379.17203 139.929675)">The system evolves</text>
+   </g>
+   <g id="text_12">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="556.431429" y="91.696875" transform="rotate(-0 556.431429 91.696875)">Wall time</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="556.431429" y="119.416875" transform="rotate(-0 556.431429 119.416875)">Elapsed duration</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #536371" x="556.431429" y="139.929675" transform="rotate(-0 556.431429 139.929675)">The computer works</text>
+   </g>
+   <g id="text_15">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="15.381203" y="193.152075" transform="rotate(-0 15.381203 193.152075)">Compare one checkpoint across physical time, or one physical time across checkpoints</text>
+   </g>
+   <g id="text_16">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="20.835338" y="234.732075" transform="rotate(-0 20.835338 234.732075)">Learned checkpoint</text>
+   </g>
+   <g id="text_17">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="316.994887" y="234.732075" transform="rotate(-0 316.994887 234.732075)">Physical time 0.0</text>
+   </g>
+   <g id="text_18">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="461.529474" y="234.732075" transform="rotate(-0 461.529474 234.732075)">Physical time 0.5</text>
+   </g>
+   <g id="text_19">
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="606.06406" y="234.732075" transform="rotate(-0 606.06406 234.732075)">Physical time 1.0</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="20.835338" y="263.545725" transform="rotate(-0 20.835338 263.545725)">Optimizer update 0</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="316.994887" y="263.545725" transform="rotate(-0 316.994887 263.545725)">Prediction at t = 0.0</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="461.529474" y="263.545725" transform="rotate(-0 461.529474 263.545725)">Prediction at t = 0.5</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="606.06406" y="263.545725" transform="rotate(-0 606.06406 263.545725)">Prediction at t = 1.0</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="20.835338" y="315.659325" transform="rotate(-0 20.835338 315.659325)">Optimizer update 1000</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="316.994887" y="315.659325" transform="rotate(-0 316.994887 315.659325)">Prediction at t = 0.0</text>
+   </g>
+   <g id="text_26">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="461.529474" y="315.659325" transform="rotate(-0 461.529474 315.659325)">Prediction at t = 0.5</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="606.06406" y="315.659325" transform="rotate(-0 606.06406 315.659325)">Prediction at t = 1.0</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #162633" x="20.835338" y="367.772925" transform="rotate(-0 20.835338 367.772925)">Optimizer update 5000</text>
+   </g>
+   <g id="text_29">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="316.994887" y="367.772925" transform="rotate(-0 316.994887 367.772925)">Prediction at t = 0.0</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="461.529474" y="367.772925" transform="rotate(-0 461.529474 367.772925)">Prediction at t = 0.5</text>
+   </g>
+   <g id="text_31">
+    <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #162633" x="606.06406" y="367.772925" transform="rotate(-0 606.06406 367.772925)">Prediction at t = 1.0</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #536371" x="15.381203" y="404.932875" transform="rotate(-0 15.381203 404.932875)">Rows: learning progress. Columns: predicted physical evolution. Neither axis is elapsed wall time.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p026ba99782">
+   <rect x="7.2" y="11.308875" width="725.4" height="399.168"/>
+  </clipPath>
+ </defs>
+</svg>
