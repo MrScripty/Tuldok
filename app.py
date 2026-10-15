@@ -707,6 +707,9 @@ def make_handler(dataset, observer=None):
                     if len(parts)==2 and parts[0]=='candidates':
                         agent_api.require_selection(self._contract_selection,'studies.candidate')
                         return self.reply(dataset.studies.candidate(parts[1]))
+                    if len(parts)==3 and parts[0]=='candidates' and parts[2]=='package-state':
+                        agent_api.require_selection(self._contract_selection,'studies.package_state')
+                        return self.reply(dataset.studies.package_state(parts[1]))
                     if len(parts)==2 and parts[0]=='trials':
                         agent_api.require_selection(self._contract_selection,'studies.trial')
                         return self.reply(dataset.studies.trial(parts[1]))
@@ -961,6 +964,10 @@ def make_handler(dataset, observer=None):
                         agent_api.require_selection(self._contract_selection,'studies.save')
                         return self.reply(dataset.studies.save(parts[1],body))
                     if len(parts)==3 and parts[0]=='studies':
+                        if parts[2] in ('prepare-package','prepare-verifier'):
+                            name=parts[2].replace('-','_')
+                            agent_api.require_selection(self._contract_selection,'studies.'+name)
+                            return self.reply(getattr(dataset.studies,name)(parts[1],body),201)
                         if parts[2]=='select-candidate':
                             agent_api.require_selection(self._contract_selection,'studies.select_candidate')
                             return self.reply(dataset.studies.select_candidate(parts[1],body),201)

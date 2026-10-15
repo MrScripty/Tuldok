@@ -568,3 +568,23 @@ class Experiments:
         if not any(item['name']=='metrics.json' and item['sha256']==value['evaluation_sha256'] for item in run['artifacts']):
             raise WorkbenchError('Candidate evaluation identity differs.','unavailable',409)
         return self._candidate_result(value,checkpoint)
+
+    def _package_operation(self,name,*arguments):
+        import candidate_packages
+        try:
+            return getattr(candidate_packages,name)(self,*arguments)
+        except candidate_packages.PackageError as error:
+            status=400 if error.code=='invalid' else 409
+            raise WorkbenchError(str(error),error.code,status) from None
+
+    @authorized('edit','studies.prepare_package',owner_only=True)
+    def prepare_package(self,study_id,body):
+        return self._package_operation('prepare_candidate_package',study_id,body)
+
+    @authorized('edit','studies.prepare_verifier',owner_only=True)
+    def prepare_verifier(self,study_id,body):
+        return self._package_operation('prepare_candidate_verifier',study_id,body)
+
+    @authorized('inspect','studies.package_state')
+    def package_state(self,candidate_id):
+        return self._package_operation('candidate_package_state',candidate_id)
