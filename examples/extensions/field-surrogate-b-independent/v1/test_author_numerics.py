@@ -113,6 +113,21 @@ class IndependentBNumericalTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256((ROOT/'tuldok_extension_sdk/evidence.py').read_bytes()).hexdigest(),
                          '94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23')
 
+    def test_adapter_evaluator_and_fields_bind_complete_declared_source_closure(self):
+        from tuldok_extension_sdk.evidence import digest
+        recipe = json.loads((ROOT/'recipe.json').read_text())
+        self.assertTrue(all(set(item) == {'path', 'sha256'} for item in recipe['sources']))
+        self.assertNotIn('recipe.json', [item['path'] for item in recipe['sources']])
+        expected = digest(sorted(recipe['sources'], key=lambda item: item['path']))
+        policy = recipe['model_evidence']
+        self.assertEqual(policy['adapter_sha256'], expected)
+        self.assertTrue(all(field['contract']['source_sha256'] == expected for field in policy['fields']))
+        self.assertTrue(all(metric['evaluator_sha256'] == expected for metric in policy['metric_definitions']))
+        self.assertNotEqual(expected, hashlib.sha256((ROOT/'producer.py').read_bytes()).hexdigest())
+        changed = copy.deepcopy(recipe['sources'])
+        changed[0]['sha256'] = '0'*64
+        self.assertNotEqual(expected, digest(sorted(changed, key=lambda item: item['path'])))
+
     def test_source_closure_exact_five_roles_ports_stage_dataflow_and_frozen_oracle(self):
         extension = json.loads((ROOT/'extension.json').read_text())
         recipe = json.loads((ROOT/'recipe.json').read_text())
