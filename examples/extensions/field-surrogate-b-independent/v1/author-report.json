@@ -1,0 +1,74 @@
+{
+  "format": "independent_b_author_report_v1",
+  "status": "inert_preparation_verified",
+  "scope": "Independent author package only; no actual Run, grant, host mutation or physical acceptance",
+  "base_commit": "68d6602",
+  "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "local_environment": {
+    "python": "3.12.14",
+    "numpy": "2.3.5"
+  },
+  "verification": [
+    {
+      "command": "python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v",
+      "state": "passed",
+      "tests": 5,
+      "evidence_kind": "local numerical/closed-package tests; not actual Run"
+    },
+    {
+      "command": "python -m tuldok_extension_sdk validate examples/extensions/field-surrogate-b-independent/v1",
+      "state": "passed",
+      "contributions": 5,
+      "evidence_kind": "inert SDK contract inspection; runtime and permission unavailable"
+    }
+  ],
+  "pending": [
+    "Main frozen bound-v2 kit and documented probe payload/target identities",
+    "Owner normal finite Study preparation, complete exact grant and SDK conformance against public CLI",
+    "Independent cold oracle on actual downloaded retained artifacts"
+  ],
+  "source_sha256": {
+    "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+    "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+    "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+    "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd",
+    "tuldok_extension_sdk/__init__.py": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+    "tuldok_extension_sdk/evidence.py": "d26d441226d83ec9c1616dbde750b4279a63ca39c44361224107cb42094b243e",
+    "task.json": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+    "model.json": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+    "trainer.json": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+    "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+    "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
+    "extension.json": "b2f6fa8e4ccabca5cd16040292b3c2eb844e320268ace330bad92bb31bf6aa24",
+    "recipe.json": "8126b95a30d264335575cf77c846539ee51e574398b15685980babbee419a2cc",
+    "project.json": "1ec5c3703f47e843b0a4e062cf72331e6386922b1871eeb5ea92a59750a90242"
+  },
+  "write_set": "examples/extensions/field-surrogate-b-independent/v1/",
+  "constraints": {
+    "actual_checkpoints": [
+      32,
+      64
+    ],
+    "optimizer_updates": 64,
+    "declared_outputs": 26,
+    "required_inputs": [
+      "initial",
+      "source",
+      "boundary_mask"
+    ],
+    "target_equations": {
+      "raw": ".5 * initial + .25 + .2 * source",
+      "corrected": "where(boundary_mask, 0, raw)"
+    },
+    "retained_transform_shape": [
+      2,
+      2
+    ],
+    "retained_weight_shape": [
+      3
+    ],
+    "array_contract": "<f8 C-order ZYX, cell-centered 4x4x4; units dimensionless; unit grid in m; standalone without physical timeline",
+    "numerical_tolerance": "1e-10 + 1e-10 * abs(expected)",
+    "sdk": "captured exact __init__.py and evidence.py bytes; no copied untrusted helper; no local Run fallback"
+  }
+}
