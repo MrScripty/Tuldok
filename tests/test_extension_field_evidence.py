@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import struct
 import tempfile
@@ -101,6 +102,9 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
             self.assertEqual(result['prediction'],result['reference'])
             self.assertEqual((result['row_axis'],result['column_axis']),('z','x'))
             self.assertEqual(result['physical_origin'],[.5,2.5,.5])
+            self.assertEqual(result['gauge_policy'],self.policy['fields'][0]['gauge_policy'])
+            self.assertEqual(result['gauge_policy_sha256'],evidence.digest(result['gauge_policy']))
+            self.assertEqual(result['time_units'],'not_applicable')
 
     def test_actual_decoder_reads_bind_host_inventory_after_any_prior_hash_pass(self):
         # A prior host hashing pass is insufficient: forge a coherent worker
@@ -113,6 +117,35 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
         self.rewrite('field-index.json',index);self.rehash('field-index.json','field_index')
         with self.assertRaisesRegex(WorkbenchError,'authoritative retained artifact'):
             self.verify()
+
+    def test_decoder_retains_one_root_and_refuses_directory_replacement_after_first_read(self):
+        original=evidence.read_regular;first=True;moved=self.root.with_name(self.root.name+'-held')
+        self.addCleanup(lambda:shutil.rmtree(moved,ignore_errors=True))
+        def read(*args,**kwargs):
+            nonlocal first
+            raw=original(*args,**kwargs)
+            if first:
+                first=False;self.root.rename(moved);self.root.mkdir()
+            return raw
+        with patch.object(evidence,'read_regular',side_effect=read),self.assertRaisesRegex(WorkbenchError,'directory identity changed'):
+            self.verify()
+
+    def test_file_reader_refuses_changed_current_root_or_filename(self):
+        for variant in ('root','file'):
+            with tempfile.TemporaryDirectory() as outer:
+                root=Path(outer)/'live';root.mkdir();(root/'data.json').write_bytes(b'{}')
+                original=os.read;first=True
+                def read(fd,count):
+                    nonlocal first
+                    raw=original(fd,count)
+                    if first:
+                        first=False
+                        if variant=='root':root.rename(Path(outer)/'held');root.mkdir()
+                        else:(root/'data.json').rename(root/'held.json')
+                        (root/'data.json').write_bytes(b'{}')
+                    return raw
+                with self.subTest(variant=variant),patch('os.read',side_effect=read),self.assertRaises(WorkbenchError):
+                    evidence.read_regular(root,'data.json',100)
 
     def test_wrong_context_model_profile_task_attempt_and_spec_refuse(self):
         for change in (
@@ -266,6 +299,27 @@ class ContextCaptureTests(unittest.TestCase):
                            lambda v:v['model_evidence_context'].update(bytes=True),lambda v:v.pop('cpu_snapshot')):
                 value=copy.deepcopy(spec);change(value)
                 with self.subTest(change=change),self.assertRaises(recipe_process.ProcessError):recipe_process.validate_spec(value)
+
+    def test_context_refuses_current_root_child_or_filename_replacement(self):
+        for variant in ('root','child','file'):
+            with tempfile.TemporaryDirectory() as outer:
+                root=Path(outer)/'live';path=root/evidence.CONTEXT_PATH;path.parent.mkdir(parents=True)
+                raw=b'{}';path.write_bytes(raw);path.chmod(0o400)
+                spec={'schema_version':2,'cwd':str(root),'model_evidence_context':
+                    {'path':str(path),'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}}
+                original=os.read;first=True
+                def read(fd,count):
+                    nonlocal first
+                    content=original(fd,count)
+                    if first:
+                        first=False
+                        if variant=='root':root.rename(Path(outer)/'held');path.parent.mkdir(parents=True)
+                        elif variant=='child':path.parent.rename(root/'held');path.parent.mkdir()
+                        else:path.rename(path.with_name('held.json'))
+                        path.write_bytes(raw);path.chmod(0o400)
+                    return content
+                with self.subTest(variant=variant),patch('os.read',side_effect=read),self.assertRaises(recipe_process.ProcessError):
+                    recipe_process.verify_model_context(spec)
 
     def test_context_file_is_exact_readonly_owned_and_not_a_hardlink(self):
         with tempfile.TemporaryDirectory() as temporary:

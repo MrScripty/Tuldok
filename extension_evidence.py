@@ -278,10 +278,36 @@ def validate_context(value, run, composition, static_context):
     return expected
 
 
+def file_identity(value):
+    return (value.st_dev,value.st_ino,value.st_mode,value.st_nlink,value.st_uid,
+            value.st_size,value.st_mtime_ns,value.st_ctime_ns)
+
+
+def retained_directory(function):
+    """Hold one decoder root and recheck the current path before success."""
+    @wraps(function)
+    def anchored(directory,*args,**kwargs):
+        descriptor=None
+        try:
+            descriptor=os.open(directory,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+            before=os.fstat(descriptor)
+            result=function(descriptor,*args,**kwargs)
+            require(file_identity(before)==file_identity(os.fstat(descriptor))==
+                    file_identity(os.stat(directory,follow_symlinks=False)),
+                    'Evidence directory identity changed during decoding.','unavailable')
+            return result
+        except OSError:
+            raise WorkbenchError('Extension evidence directory is unavailable.','unavailable',409) from None
+        finally:
+            if descriptor is not None:os.close(descriptor)
+    return anchored
+
+
 def read_regular(directory, filename, maximum):
     name(filename);root=fd=None
     try:
-        root=os.open(directory,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        root=os.dup(directory) if type(directory) is int else os.open(directory,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        root_before=os.fstat(root)
         fd=os.open(filename,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=root)
         before=os.fstat(fd)
         require(stat.S_ISREG(before.st_mode) and before.st_uid==os.getuid() and before.st_nlink==1 and before.st_size<=maximum,'Evidence requires a bounded owned regular file.','unavailable')
@@ -291,8 +317,11 @@ def read_regular(directory, filename, maximum):
             if not raw:break
             chunks.append(raw);remaining-=len(raw)
         after=os.fstat(fd);raw=b''.join(chunks)
-        identity=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_nlink,s.st_uid,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
-        require(identity(before)==identity(after) and len(raw)==after.st_size and len(raw)<=maximum,'Evidence changed while reading.','unavailable')
+        current=os.stat(filename,dir_fd=root,follow_symlinks=False)
+        require(file_identity(before)==file_identity(after)==file_identity(current) and
+                file_identity(root_before)==file_identity(os.fstat(root)) and
+                (type(directory) is int or file_identity(root_before)==file_identity(os.stat(directory,follow_symlinks=False))) and
+                len(raw)==after.st_size and len(raw)<=maximum,'Evidence path or file changed while reading.','unavailable')
         return raw
     except OSError:raise WorkbenchError('Extension evidence file is unavailable.','unavailable',409) from None
     finally:
@@ -301,6 +330,7 @@ def read_regular(directory, filename, maximum):
 
 
 @boundary
+@retained_directory
 def verify(directory, run, admitted_context):
     """Verify structural closure after custody. Caller rederives authoritative context.
 
@@ -337,7 +367,9 @@ def verify(directory, run, admitted_context):
         try:raw=read_regular(directory,filename,min(rule['max_bytes'],limits['shard_bytes']))
         except WorkbenchError:
             if rule['required']:raise
-            if os.path.lexists(Path(directory)/filename):raise
+            try:os.stat(filename,dir_fd=directory,follow_symlinks=False)
+            except FileNotFoundError:pass
+            else:raise
             continue
         item=retained.get(filename)
         require(item is not None and item['bytes']==len(raw) and item['sha256']==hashlib.sha256(raw).hexdigest(),
@@ -444,7 +476,8 @@ def verify(directory, run, admitted_context):
                 reference_payload,_=scientific_fields.npy_payload(payloads[row['reference']['name']],output,field['geometry'])
                 require(hashlib.sha256(reference_payload).hexdigest()==member['target_sha256'],
                         'Retained reference payload differs from admitted target identity.')
-                key=(checkpoint_sha,member['ordinal'],field['id']);arrays[key]={'pair':pair,'prediction':payloads[row['predicted']['name']],'reference':payloads[row['reference']['name']]}
+                key=(checkpoint_sha,member['ordinal'],field['id']);arrays[key]={'pair':pair,'prediction':payloads[row['predicted']['name']],'reference':payloads[row['reference']['name']],
+                                                                               'gauge_policy':field['gauge_policy']}
                 field_records.append({'checkpoint_sha256':checkpoint_sha,'member_ordinal':member['ordinal'],'field_id':field['id'],'stage':output['stage'],'shape_zyx':output['shape_zyx'],'units':output['units']})
     return {'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
             'manifest':manifest,'checkpoint_index':index,'probe':static['probe'],'metric_definitions':policy['metric_definitions'],
@@ -488,6 +521,7 @@ def query(verified, selectors=None):
     step=lambda component:[grid['orientation'][i][component]*grid['spacing_xyz'][component] for i in range(3)]
     public['field']={'checkpoint_sha256':selected,'member_ordinal':ordinal,'field_id':field_id,'axis':axis,'index':index,
                      'shape_zyx':shape,'grid':grid,'stage':pair['stage'],'units':pair['units'],'dtype':pair['dtype'],'centering':pair['centering'],
+                     'gauge_policy_sha256':pair['gauge_policy_sha256'],'gauge_policy':copy.deepcopy(item['gauge_policy']),'time_units':'not_applicable',
                      'prediction':prediction,'reference':reference,'row_axis':row_axis,'column_axis':column_axis,
                      'physical_origin':physical,'physical_row_step':step(ri),'physical_column_step':step(ci)}
     require(len(canonical(public))<=2*1024**2,'Field projection exceeds its transport bound.')

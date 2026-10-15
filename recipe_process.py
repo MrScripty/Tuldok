@@ -436,7 +436,9 @@ def verify_model_context(spec):
     root=directory=descriptor=None
     try:
         root=os.open(spec['cwd'],os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        root_before=os.fstat(root)
         directory=os.open('runtime-bootstrap',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=root)
+        directory_before=os.fstat(directory)
         descriptor=os.open('model-evidence-context.json',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=directory)
         before=os.fstat(descriptor);context=spec['model_evidence_context']
         if (not stat.S_ISREG(before.st_mode) or before.st_nlink!=1 or before.st_uid!=os.getuid() or
@@ -449,8 +451,14 @@ def verify_model_context(spec):
             chunks.append(chunk);remaining-=len(chunk)
         raw=b''.join(chunks);after=os.fstat(descriptor)
         identity=lambda value:(value.st_dev,value.st_ino,value.st_uid,value.st_mode,value.st_nlink,value.st_size,value.st_mtime_ns,value.st_ctime_ns)
-        if identity(before)!=identity(after) or len(raw)!=context['bytes'] or digest(raw)!=context['sha256']:
-            raise ProcessError('Generated model context identity changed.','stale')
+        if (identity(before)!=identity(after) or identity(after)!=identity(os.stat('model-evidence-context.json',dir_fd=directory,follow_symlinks=False)) or
+                identity(root_before)!=identity(os.fstat(root)) or identity(root_before)!=identity(os.stat(spec['cwd'],follow_symlinks=False)) or
+                identity(directory_before)!=identity(os.fstat(directory)) or
+                identity(directory_before)!=identity(os.stat('runtime-bootstrap',dir_fd=root,follow_symlinks=False)) or
+                len(raw)!=context['bytes'] or digest(raw)!=context['sha256']):
+            raise ProcessError('Generated model context path or file identity changed.','stale')
+    except OSError:
+        raise ProcessError('Generated model context path is unavailable.','stale') from None
     finally:
         for handle in (descriptor,directory,root):
             if handle is not None:os.close(handle)
