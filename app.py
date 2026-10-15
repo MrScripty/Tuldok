@@ -1027,7 +1027,7 @@ def make_handler(dataset, observer=None):
                     if len(parts) == 3 and parts[0] == 'runs':
                         if parts[2] == 'model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.model_evidence')
-                            return self.reply(dataset.runs.model_evidence(parts[1],body))
+                            return self.reply(dataset.runs.model_evidence(parts[1],body,contract_version=self._contract_selection[1]))
                         if parts[2] == 'compare-model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.compare_model_evidence')
                             if self._contract_selection[1]==2:

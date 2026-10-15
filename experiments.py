@@ -487,7 +487,7 @@ class Experiments:
             study=self._study(study_id);self._expected(study,body)
             run=self.dataset.runs._load(body['run_id'])
             if run['state']!='completed':raise WorkbenchError('Candidate Run is not completed.','conflict',409)
-            metrics=next((item for item in run['artifacts'] if item['name']=='metrics.json'),None)
+            metrics=self._candidate_evaluation(run)
             if metrics is None:raise WorkbenchError('Candidate evaluation artifact is unavailable.','unavailable',409)
             candidate={'format':'candidate_v1','id':uuid.uuid4().hex,'study_id':study_id,
                 'trial_id':trial['id'],'run_id':run['id'],'checkpoint_sha256':checkpoint['sha256'],
@@ -501,6 +501,12 @@ class Experiments:
             result=self._candidate_result(candidate,checkpoint)
             self._save_receipt(actor,'studies.select_candidate',body['request_key'],request_sha,result)
         return result
+
+    def _candidate_evaluation(self,run):
+        # External D2 evidence owns its evaluation manifest. Historical
+        # classifier candidates retain their exact metrics artifact identity.
+        name='model-evidence.json' if self.dataset.runs._extension(run) else 'metrics.json'
+        return next((item for item in run['artifacts'] if item['name']==name),None)
 
     def _candidate_checkpoint(self,evidence,policy,requested):
         if policy['replicate_reduce']!='individual':
@@ -565,7 +571,8 @@ class Experiments:
             raise WorkbenchError('Candidate evidence material differs.','unavailable',409)
         checkpoint=self._candidate_checkpoint(evidence,policy,value['checkpoint_sha256'])
         run=self.dataset.runs.get(value['run_id'])
-        if not any(item['name']=='metrics.json' and item['sha256']==value['evaluation_sha256'] for item in run['artifacts']):
+        evaluation=self._candidate_evaluation(run)
+        if evaluation is None or evaluation['sha256']!=value['evaluation_sha256']:
             raise WorkbenchError('Candidate evaluation identity differs.','unavailable',409)
         return self._candidate_result(value,checkpoint)
 

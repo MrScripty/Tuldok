@@ -529,6 +529,41 @@ for _recipe in ('text_classification','audio_classification'):
     _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
     _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
 _CONTRACTS['graphs.save'][3]=_one_fit_save
+# Field evidence is selected explicitly; classifier version1 remains exact.
+_field_query=copy.deepcopy(_CONTRACTS['runs.model_evidence'][1])
+_field_query['inputSchema']={'type':'object','oneOf':[
+    obj({'run_id':ID,'split':const('validation')},['run_id']),
+    obj({'run_id':ID,'checkpoint_sha256':SHA,'split':const('validation')},['run_id','checkpoint_sha256']),
+    obj({'run_id':ID,'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),
+         'field_id':REF,'axis':{'enum':['x','y','z']},'index':integer(0,127),'split':const('validation')},
+        ['run_id','checkpoint_sha256','member_ordinal','field_id','axis','index'])]}
+_field_vector=array({'type':'number'},3,3)
+_field_shape=array(integer(1,128),3,3)
+_field_grid=obj({'shape_xyz':_field_shape,'origin_xyz':_field_vector,
+    'spacing_xyz':array({'type':'number','exclusiveMinimum':0},3,3),
+    'orientation':array(_field_vector,3,3),'units':text(80)})
+_field_matrix=array(array({'type':'number'},128,1),128,1)
+_field_slice=obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
+    'axis':{'enum':['x','y','z']},'index':integer(0,127),'shape_zyx':_field_shape,'grid':_field_grid,
+    'stage':text(160),'units':text(80),'dtype':const('<f8'),'centering':const('cell'),
+    'gauge_policy_sha256':SHA,'gauge_policy':_EVIDENCE_DOCUMENT,'time_units':const('not_applicable'),
+    'prediction':_field_matrix,'reference':_field_matrix,
+    'row_axis':{'enum':['x','y','z']},'column_axis':{'enum':['x','y','z']},
+    'physical_origin':_field_vector,'physical_row_step':_field_vector,'physical_column_step':_field_vector})
+_field_fields={'state':const('verified'),
+    'validation':const('structural_and_identity_closure; numerical_acceptance_is_separate'),
+    'manifest':_EVIDENCE_DOCUMENT,'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
+    'metric_definitions':array(_EVIDENCE_DOCUMENT,16,1),
+    'metric_definition_hashes':{'type':'object','maxProperties':16,'propertyNames':text(64),'additionalProperties':SHA},
+    'observations':array(_EVIDENCE_DOCUMENT,128,1),'model_definition':_EVIDENCE_DOCUMENT,
+    'fields':array(obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
+                       'stage':text(160),'shape_zyx':_field_shape,'units':text(80)}),256,1),
+    'checkpoints':array(_EVIDENCE_DOCUMENT,8,1),'checkpoint':_EVIDENCE_DOCUMENT,'field':_field_slice}
+_field_result=copy.deepcopy(_EVIDENCE_RESULT)
+_field_result['oneOf'].append(obj(_field_fields,[key for key in _field_fields if key not in ('checkpoint','field')]))
+_field_query['outputSchema']['oneOf'][0]['properties']['result']=_field_result
+_field_query['description']='Read exact retained classifier or validation field evidence through its task-owned decoder; no inference or test exposure.'
+_CONTRACTS['runs.model_evidence'][2]=_field_query
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256

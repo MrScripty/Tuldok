@@ -656,6 +656,7 @@
   "studies.admit": "9c80abdfc50d56de88ada0141ba6c3b503cc07a395b0ceb930fa29169bd182ed",
   "studies.reconcile": "a209efd79a85bdb9ff5f42c469413cff9ebcc56c55ab16aa76227427670565af",
   "studies.save": "c5a0eee9a12d91f88b3e7dda4ee3c013c263f20897006ca50aed5f703d6c3d74",
+  "runs.model_evidence/2": "48c1b942f8e7a102a83bf63806fb425576690f4bfbca841203d54edbca4a59f9",
   "runs.model_evidence": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
   "runs.compare_model_evidence": "0c89402e1749b5bca7c09c66bc5bfc13cd33b3be6e15c69826074583fc0e13c5",
   "graphs.create": "a4c0ec40212ce85ad67c5f279fa90fe4564048d4ab41b6769670cbcf21bbb615",
@@ -952,5 +953,151 @@
         finally{if(compareBusy===token){compareBusy=false;if(current())rerender();}}
       });
     }
+  };
+})();
+
+// Declarative external field inspection. It displays retained numbers and never runs an adapter.
+(() => {
+  if (typeof window === 'undefined') return;
+  const esc = value => window.workspaceEscape(value), enc = encodeURIComponent;
+  const numeric = value => Object.is(value, -0) ? '-0' : String(value);
+  const vector = value => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
+  const finiteJSON = (value,depth=0) => depth<=64 && (value===null || typeof value==='string' || typeof value==='boolean' || (typeof value==='number' && Number.isFinite(value)) || (Array.isArray(value) ? value.every(item=>finiteJSON(item,depth+1)) : typeof value==='object' && Object.prototype.toString.call(value)==='[object Object]' && Object.values(value).every(item=>finiteJSON(item,depth+1))));
+  const clock = value => ['optimizer_update', 'epoch', 'fit_pass'].filter(key => value?.[key] !== null && value?.[key] !== undefined).map(key => ({optimizer_update:'Update',epoch:'Epoch',fit_pass:'Fit pass'}[key])+' '+value[key]).join(' · ');
+  window.WorkspaceFieldEvidence = function ({api, announce}) {
+    let generation = 0, query = 0, catalog = null, slice = null, error = '', busy = false, layoutObserver = null, layoutIntent = 0;
+    let selection = {checkpoint:'',member:'',stage:'',field:'',axis:'z',index:0}, sample = {row:0,column:0};
+    const eligible = run => run?.graph?.recipe === 'external_recipe' && run.state === 'completed';
+    const records = () => (catalog?.fields || []).filter(item => item.checkpoint_sha256 === selection.checkpoint && item.member_ordinal === Number(selection.member));
+    const selectedRecord = () => records().find(item => item.field_id === selection.field && item.stage === selection.stage);
+    const stages = () => [...new Set(records().map(item => item.stage))];
+    function choose(reset = false) {
+      const entries = catalog?.checkpoint_index?.entries || [], members = catalog?.probe?.members || [];
+      if (!entries.some(item => item.checkpoint.sha256 === selection.checkpoint)) selection.checkpoint = (entries.find(item => item.selected) || entries[0])?.checkpoint.sha256 || '';
+      if (!members.some(item => String(item.ordinal) === selection.member)) selection.member = String(members[0]?.ordinal ?? '');
+      const choices = stages();
+      if (!choices.includes(selection.stage)) selection.stage = choices[0] || '';
+      const fields = records().filter(item => item.stage === selection.stage);
+      if (!fields.some(item => item.field_id === selection.field)) selection.field = fields[0]?.field_id || '';
+      const record = selectedRecord(), maximum = record?.shape_zyx?.['zyx'.indexOf(selection.axis)] - 1;
+      if (reset || !Number.isInteger(selection.index) || selection.index < 0 || selection.index > maximum) selection.index = 0;
+    }
+    function request() {
+      return {checkpoint_sha256:selection.checkpoint,member_ordinal:Number(selection.member),field_id:selection.field,axis:selection.axis,index:selection.index,split:'validation'};
+    }
+    function validIndex() {
+      const record = selectedRecord(), maximum = record?.shape_zyx?.['zyx'.indexOf(selection.axis)] - 1;
+      return !!record && Number.isInteger(selection.index) && selection.index >= 0 && selection.index <= maximum;
+    }
+    function validateIndex(value,run) {
+      if(value?.state==='unsupported')return;
+      if(value?.state!=='verified'||!Array.isArray(value.fields)||!Array.isArray(value.checkpoints)||value.manifest?.producer?.run_id!==run.id||!Array.isArray(value.checkpoint_index?.entries)||!Array.isArray(value.probe?.members)||!Array.isArray(value.metric_definitions)||!Array.isArray(value.observations))throw Error('The retained field evidence index is unavailable or belongs to another Run.');
+      if(value.probe.split!=='validation'||value.checkpoint_index.entries.some(item=>item.clocks?.physical_time!==null)||value.checkpoints.some(item=>item.clocks?.physical_time!==null))throw Error('Only standalone validation field evidence is supported; no physical timeline is qualified.');
+    }
+    function validateSlice(value,run,expected) {
+      validateIndex(value,run);
+      const field=value.field,record=(value.fields||[]).find(item=>item.checkpoint_sha256===expected.checkpoint_sha256&&item.member_ordinal===expected.member_ordinal&&item.field_id===expected.field_id);
+      if(!field||!record||Object.entries(expected).some(([key,v])=>key!=='split'&&field[key]!==v)||field.stage!==record.stage||field.units!==record.units||!Array.isArray(field.shape_zyx)||!field.shape_zyx.every((n,i)=>n===record.shape_zyx[i])||!vector(field.physical_origin)||!vector(field.physical_row_step)||!vector(field.physical_column_step))throw Error('The returned field does not match the exact checkpoint, member, stage and slice selectors.');
+      if(field.time_units!=='not_applicable'||!(/^[a-f0-9]{64}$/).test(field.gauge_policy_sha256)||!field.gauge_policy||typeof field.gauge_policy!=='object'||Array.isArray(field.gauge_policy)||!Object.keys(field.gauge_policy).length||!finiteJSON(field.gauge_policy))throw Error('The retained gauge policy or standalone time units are unavailable or invalid.');
+      const [row,column]={z:['y','x'],y:['z','x'],x:['z','y']}[expected.axis],dimensions={z:record.shape_zyx[0],y:record.shape_zyx[1],x:record.shape_zyx[2]};
+      if(field.row_axis!==row||field.column_axis!==column||!field.grid||typeof field.grid.units!=='string'||!['prediction','reference'].every(key=>Array.isArray(field[key])&&field[key].length===dimensions[row]&&field[key].every(values=>Array.isArray(values)&&values.length===dimensions[column]&&values.every(Number.isFinite))))throw Error('The field slice has invalid numeric arrays or physical axes.');
+      return field;
+    }
+    async function fetchSlice(run,current) {
+      const own=++query,version=generation,expected=request();slice=null;error='';busy=true;
+      try {
+        if(!validIndex())throw Error('Choose an integer slice index within the declared field shape.');
+        const value=await api('runs/'+enc(run.id)+'/model-evidence',expected,2);
+        if(!current()||version!==generation||own!==query)return;
+        slice=validateSlice(value,run,expected);
+        if(!Number.isInteger(sample.row)||sample.row<0||sample.row>=slice.prediction.length)sample.row=0;
+        if(!Number.isInteger(sample.column)||sample.column<0||sample.column>=slice.prediction[0].length)sample.column=0;
+      }catch(problem){if(current()&&version===generation&&own===query){slice=null;error=problem.message;if([401,403].includes(problem.status))catalog=null;}}
+      finally{if(version===generation&&own===query)busy=false;}
+    }
+    function metricValue(row) {
+      return !row?'Unavailable':row.state==='observed'?numeric(row.value):'Undefined: '+row.reason;
+    }
+    function indexHTML() {
+      const definitions=catalog.metric_definitions;
+      return `<div class="real-table-wrap" tabindex="0" aria-label="Retained field checkpoints and scalar observations"><table><caption>Retained checkpoints and declared validation observations</caption><thead><tr><th scope="col">Progress</th><th scope="col">Checkpoint</th>${definitions.map(item=>`<th scope="col">${esc(item.id)}<br><small>${esc(item.units)} · ${esc(item.direction)}</small></th>`).join('')}</tr></thead><tbody>${catalog.checkpoint_index.entries.map(entry=>`<tr ${entry.checkpoint.sha256===selection.checkpoint?'class="model-selected"':''}><th scope="row">${esc(clock(entry.clocks))}${entry.selected?' · selected':''}</th><td>${esc(entry.checkpoint.sha256.slice(0,12))}</td>${definitions.map(definition=>`<td>${esc(metricValue(catalog.observations.find(row=>row.checkpoint_sha256===entry.checkpoint.sha256&&row.metric_id===definition.id)))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+    function probeHTML() {
+      if(!slice)return '';
+      const {row,column}=sample,valid=Number.isInteger(row)&&Number.isInteger(column)&&row>=0&&column>=0&&row<slice.prediction.length&&column<slice.prediction[0].length;
+      if(!valid)return '<p id="field-probe-value" role="status">Choose an in-bounds integer row and column.</p>';
+      const physical=slice.physical_origin.map((value,i)=>value+row*slice.physical_row_step[i]+column*slice.physical_column_step[i]);
+      return `<p id="field-probe-value" role="status">Row ${row}, column ${column}: prediction <strong>${esc(numeric(slice.prediction[row][column]))}</strong>; reference <strong>${esc(numeric(slice.reference[row][column]))}</strong> ${esc(slice.units)}. Display coordinates (${physical.map(value=>esc(numeric(value))).join(', ')}) ${esc(slice.grid.units)}.</p>`;
+    }
+    function sliceHTML() {
+      if(!slice)return '';
+      return `<div class="field-pair" aria-label="Prediction and reference share physical and display scales">${['prediction','reference'].map(key=>`<figure><figcaption>${key==='prediction'?'Prediction':'Reference'} · ${esc(slice.stage)} · ${esc(slice.units)}</figcaption><div class="field-slice-viewport"><canvas id="field-${key}" role="img" aria-label="${key} field slice; exact values available in the numeric probe"></canvas></div><p class="field-display-warning" data-field-display="${key}" hidden></p></figure>`).join('')}</div><p id="field-scale" class="footnote"></p><p>Standalone slice ${esc(slice.axis.toUpperCase())} ${slice.index}; rows +${esc(slice.row_axis)}, columns +${esc(slice.column_axis)}. ${esc(slice.centering)} · ${esc(slice.dtype)} · shape Z/Y/X ${slice.shape_zyx.join(' / ')}.</p><p class="field-coordinates">Physical sample origin (${slice.physical_origin.map(numeric).map(esc).join(', ')}) ${esc(slice.grid.units)}; row step (${slice.physical_row_step.map(numeric).map(esc).join(', ')}); column step (${slice.physical_column_step.map(numeric).map(esc).join(', ')}).</p><div class="field-metadata"><p>Time units: <strong>${esc(slice.time_units)}</strong> · standalone physical time is not declared.</p><p class="field-hash">Gauge policy SHA256 ${esc(slice.gauge_policy_sha256)}</p><details><summary>Declared gauge policy</summary><pre id="field-gauge-policy">${esc(JSON.stringify(slice.gauge_policy,null,2))}</pre></details></div><div class="model-fields field-probe-controls"><label>Probe row<input id="field-probe-row" type="number" min="0" max="${slice.prediction.length-1}" step="1" required value="${sample.row}"></label><label>Probe column<input id="field-probe-column" type="number" min="0" max="${slice.prediction[0].length-1}" step="1" required value="${sample.column}"></label></div><div id="field-probe-result">${probeHTML()}</div><p class="callout">Difference unavailable: this pair contains no retained difference array. Choose a declared field/stage to inspect it; no residual or error operator runs in the interface.</p>`;
+    }
+    function draw(root) {
+      if(!slice)return;
+      let low=Infinity,high=-Infinity;
+      for(const key of ['prediction','reference'])for(const row of slice[key])for(const value of row){low=Math.min(low,value);high=Math.max(high,value);}
+      const magnitude=Math.max(Math.abs(low),Math.abs(high)),range=magnitude?high/magnitude-low/magnitude:0;
+      const rows=slice.prediction.length,columns=slice.prediction[0].length;
+      const rowLength=Math.hypot(...slice.physical_row_step),columnLength=Math.hypot(...slice.physical_column_step);
+      // Normalize first to keep the display-only aspect calculation bounded.
+      const physicalAspect=(columns/rows)*(columnLength/rowLength);
+      const label=`Shared display grayscale range ${numeric(low)} to ${numeric(high)} ${slice.units}. Both views use identical physical axis scales; original float values remain unchanged.`;
+      const legend=root.querySelector('#field-scale');if(legend)legend.textContent=label;
+      for(const key of ['prediction','reference']){
+        const canvas=root.querySelector('#field-'+key);if(!canvas?.getContext)continue;
+        canvas.width=columns;canvas.height=rows;
+        const viewport=canvas.parentElement,width=viewport.clientWidth,height=viewport.clientHeight;
+        const fitWidth=Math.min(width,height*physicalAspect),fitHeight=fitWidth/physicalAspect;
+        const representable=Number.isFinite(physicalAspect)&&physicalAspect>0&&Number.isFinite(fitWidth)&&Number.isFinite(fitHeight)&&fitWidth>=1&&fitHeight>=1;
+        const warning=root.querySelector('[data-field-display="'+key+'"]');
+        if(warning){warning.hidden=representable;warning.textContent='The declared physical aspect cannot be represented at this viewport resolution. Exact numeric probes and coordinates remain available.';}
+        canvas.hidden=!representable;if(!representable)continue;
+        canvas.style.width=fitWidth+'px';canvas.style.height=fitHeight+'px';
+        canvas.setAttribute('aria-label',`${key}; ${slice.axis} slice ${slice.index}, rows +${slice.row_axis}, columns +${slice.column_axis}. ${label}`);
+        const context=canvas.getContext('2d'),pixels=context.createImageData(columns,rows);
+        for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
+          const number=slice[key][row][column],gray=range?Math.round(255*(number/magnitude-low/magnitude)/range):128;
+          pixels.data.set([gray,gray,gray,255],(row*columns+column)*4);
+        }
+        context.putImageData(pixels,0,0);
+      }
+    }
+    return {
+      invalidate(){generation++;query++;catalog=null;slice=null;error='';busy=false;layoutIntent++;layoutObserver?.disconnect();layoutObserver=null;},
+      async load(run,current){
+        const version=++generation;query++;catalog=null;slice=null;error='';busy=false;layoutIntent++;layoutObserver?.disconnect();layoutObserver=null;
+        if(!eligible(run))return;
+        try{
+          const value=await api('runs/'+enc(run.id)+'/model-evidence',{},2);if(!current()||version!==generation)return;
+          validateIndex(value,run);catalog=value;if(value.state==='unsupported')return;
+          choose();if(selectedRecord())await fetchSlice(run,()=>current()&&version===generation);
+        }catch(problem){if(current()&&version===generation){catalog=null;slice=null;error=problem.message;}}
+      },
+      html(run){
+        if(!eligible(run))return '';
+        if(error&&!catalog)return `<section class="model-evidence field-evidence"><h3>Field evidence unavailable</h3><p class="error-panel" role="alert">${esc(error)}</p><p>No cached field values are shown. Refresh saved runs to retry.</p></section>`;
+        if(!catalog)return '';
+        if(catalog.state==='unsupported')return `<section class="field-evidence"><h3>Field evidence</h3><p class="muted">${esc(catalog.reason)}</p></section>`;
+        const member=catalog.probe.members.find(item=>String(item.ordinal)===selection.member),record=selectedRecord(),maximum=record?.shape_zyx?.['zyx'.indexOf(selection.axis)]-1;
+        const position=catalog.checkpoint_index.entries.findIndex(item=>item.checkpoint.sha256===selection.checkpoint),entry=catalog.checkpoint_index.entries[position],descriptor=catalog.checkpoints[position];
+        return `<section class="model-evidence field-evidence" aria-labelledby="field-evidence-heading"><h3 id="field-evidence-heading">Linked field evidence</h3><p>Retained standalone validation fields. Structural and identity closure is verified; numerical or physical acceptance requires separate task evidence.</p>${indexHTML()}<form id="field-selectors"><div class="model-fields"><label>Exact checkpoint<select id="field-checkpoint">${catalog.checkpoint_index.entries.map(item=>`<option value="${esc(item.checkpoint.sha256)}" ${item.checkpoint.sha256===selection.checkpoint?'selected':''}>${esc(clock(item.clocks))}${item.selected?' · selected':''} · ${esc(item.checkpoint.sha256.slice(0,12))}</option>`).join('')}</select></label><label>Fixed validation member<select id="field-member">${catalog.probe.members.map(item=>`<option value="${item.ordinal}" ${String(item.ordinal)===selection.member?'selected':''}>${item.ordinal} · ${esc(item.frozen_reference.member_id)}</option>`).join('')}</select></label><label>Declared stage<select id="field-stage">${stages().map(stage=>`<option ${stage===selection.stage?'selected':''} value="${esc(stage)}">${esc(stage)}</option>`).join('')}</select></label><label>Declared field<select id="field-id">${records().filter(item=>item.stage===selection.stage).map(item=>`<option value="${esc(item.field_id)}" ${item.field_id===selection.field?'selected':''}>${esc(item.field_id)} · ${esc(item.units)}</option>`).join('')}</select></label><label>Orthogonal axis<select id="field-axis">${['x','y','z'].map(axis=>`<option value="${axis}" ${axis===selection.axis?'selected':''}>${axis.toUpperCase()}</option>`).join('')}</select></label><label>Slice index<input id="field-index" type="number" min="0" max="${maximum}" step="1" required value="${selection.index}"></label></div><button id="field-load" ${busy||!record?'disabled':''}>${busy?'Loading exact retained slice…':'Reload exact slice'}</button></form>${descriptor?.weights?.name?`<div class="actions"><a href="/api/workspace/runs/${enc(run.id)}/artifacts/${enc(descriptor.weights.name)}" download>Download exact retained fitted state</a>${entry.checkpoint.name?`<a href="/api/workspace/runs/${enc(run.id)}/artifacts/${enc(entry.checkpoint.name)}" download>Checkpoint descriptor</a>`:''}</div>`:''}<p class="field-status" role="status">${busy?'Loading the exact selected checkpoint, member and slice. No earlier array values are shown.':error?esc(error):''}</p>${member?`<p>Frozen input ${esc(member.frozen_reference.input)} · member ${esc(member.frozen_reference.member_id)} · validation. Input SHA256 <span class="field-hash">${esc(member.input_sha256)}</span>; target SHA256 <span class="field-hash">${esc(member.target_sha256)}</span>.</p>`:''}${sliceHTML()}<p class="footnote">Scientific test access is unsupported. No simulation frame or physical timeline is declared. Physical acceptance is not established by these plots.</p><details><summary>Retained field index, model and evidence identities</summary><pre>${esc(JSON.stringify({validation:catalog.validation,fields:catalog.fields,probe:catalog.probe,checkpoint_index:catalog.checkpoint_index,checkpoints:catalog.checkpoints,model_definition:catalog.model_definition,manifest:catalog.manifest,selected_field_metadata:slice?{grid:slice.grid,gauge_policy_sha256:slice.gauge_policy_sha256,gauge_policy:slice.gauge_policy,time_units:slice.time_units}:undefined},null,2))}</pre></details></section>`;
+      },
+      bind(root,run,rerender,current){
+        layoutIntent++;layoutObserver?.disconnect();layoutObserver=null;
+        if(!eligible(run)||catalog?.state!=='verified')return;
+        draw(root);
+        if(slice&&typeof ResizeObserver!=='undefined'){const layoutVersion=layoutIntent;layoutObserver=new ResizeObserver(()=>{if(current()&&layoutVersion===layoutIntent&&root.isConnected!==false)draw(root);});for(const viewport of root.querySelectorAll('.field-slice-viewport'))layoutObserver.observe(viewport);}
+        const show=()=>{const focus=document.activeElement?.id;rerender();if(focus)root.querySelector('#'+CSS.escape(focus))?.focus({preventScroll:true});};
+        const load=async()=>{const pending=fetchSlice(run,current);show();await pending;if(current())show();};
+        for(const [id,key] of [['field-checkpoint','checkpoint'],['field-member','member'],['field-stage','stage'],['field-id','field'],['field-axis','axis'],['field-index','index']])root.querySelector('#'+id)?.addEventListener('change',event=>{
+          selection[key]=key==='index'?(event.target.value.trim()===''?NaN:Number(event.target.value)):event.target.value;if(key!=='index')choose(key==='axis'||key==='field'||key==='stage');load();
+        });
+        root.querySelector('#field-selectors')?.addEventListener('submit',event=>{event.preventDefault();load();});
+        for(const [id,key] of [['field-probe-row','row'],['field-probe-column','column']])root.querySelector('#'+id)?.addEventListener('input',event=>{
+          sample[key]=event.target.value.trim()===''?NaN:Number(event.target.value);const result=root.querySelector('#field-probe-result');if(result)result.innerHTML=probeHTML();
+        });
+      },
+    };
   };
 })();
