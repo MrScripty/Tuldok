@@ -101,3 +101,22 @@ Diagnostic-only f9a4c90 static-kit, catalog and workspace-interface CI passed; i
 lifecycle job was still running at this observation. The intermittent original
 race is corrected separately here and requires new exact-head CI. The lead owns
 cherry-picking the scoped harness correction onto composed E1 and all merges.
+
+## Historical-reader fixture in shallow CI
+
+The f9a4c90 full lifecycle run38785632488 reached1005unittests and failed only
+because the old-reader counterexample used `git show f99182c:projects.py` in a
+shallow source checkout (41optional tests were skipped). This is separate from
+the corrected initial browser click race. The dedicated catalog workflow had
+full Git history and passed; checkout history is an accidental test dependency.
+
+The HTTP counterexample now reads the exact18396-byte historical host source
+from `tests/fixtures/extensions/legacy-projects-f99182c.py` and verifies SHA256
+`d147c6bae61068f5517fd15e3512311459cd4de3d6edfdd9ea984783470d432d`
+before executing the unchanged old-reader witness. All counterexample and
+unsupported-version assertions remain. The fixture is outside the extension
+catalog and is neither discovered nor executed by project inspection.
+Independent review verified byte equality against the full pinned commit.
+No workflow/check was weakened or skipped. All9actual PostgreSQL/HTTP cases pass,
+and the counterexample also passes in a copied source tree with no `.git`.
+New exact-head lifecycle CI is still required; the earlier failure is not a pass.

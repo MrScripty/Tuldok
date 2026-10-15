@@ -127,3 +127,7 @@ started/accepted by creating this documentation.
   readiness and a deterministic script-interception regression; all existing
   real browser assertions/timeouts and the single click remain. Actual full
   workflow passes; lead receives the owned test correction for E1 integration.
+- SDK full lifecycle exposed a shallow-checkout dependency in the pinned old-reader
+  witness. Replaced git-history lookup with an exact hash-checked historical host
+  fixture; same exec/counterexample assertions. Actual9HTTP and history-free copy
+  witness pass; independent exact-byte review clear. Shared workflow/checks unchanged.
