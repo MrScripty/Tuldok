@@ -34,23 +34,39 @@ def require(value,reason):
     if not value:raise RuntimeError(reason)
 
 
-def main(args):
-    output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
-    package=ROOT/'examples/extensions/field-surrogate/v2'
+def qualification_inputs(args):
+    package=getattr(args,'project_template',ROOT/'examples/extensions/field-surrogate/v2').resolve()
+    expected=getattr(args,'expected_runtime_sha256',RUNTIME_SHA)
+    require(type(expected) is str and len(expected)==64 and all(c in '0123456789abcdef' for c in expected),
+            'Select an exact expected runtime snapshot SHA256')
     for name,sha in (('fixture.json',FIXTURE_SHA),('cold_oracle.py',ORACLE_SHA)):
         require(hashlib.sha256((package/name).read_bytes()).hexdigest()==sha,'Frozen '+name+' differs')
+    recipe=json.loads((package/'recipe.json').read_bytes())
+    require(recipe['runtime']=='captured_cpu_python_v1' and recipe['runtime_snapshot_sha256']==expected,
+            'Project runtime nomination differs from explicitly expected snapshot; no fallback')
+    return package,expected
+
+
+def main(args):
+    package,expected_runtime=qualification_inputs(args)
+    output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
     project=args.project.resolve() if args.project is not None else output/'project'
     if args.project is None:shutil.copytree(package,project)
     else:
-        expected=json.loads((package/'recipe.json').read_bytes())
-        for name in ['project.json','recipe.json','fixture.json',*[row['path'] for row in expected['sources']]]:
+        template_recipe=json.loads((package/'recipe.json').read_bytes())
+        for name in ['project.json','recipe.json','fixture.json',*[row['path'] for row in template_recipe['sources']]]:
             require((project/name).read_bytes()==(package/name).read_bytes(),'Existing exact project differs: '+name)
     recipe=json.loads((project/'recipe.json').read_bytes());policy=recipe['model_evidence']
+    require(recipe['runtime_snapshot_sha256']==expected_runtime,'Copied project runtime nomination changed')
     dataset=server=worker=owner=credential=None;endpoint=config=None;sequence=0
     report={'state':'in_progress','scope':'Actual A CPU/Study/custody/cold scientific state; UI/agent field projection pending',
         'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'oracle_sha256':ORACLE_SHA,'fixture_sha256':FIXTURE_SHA,'checks':[],
+        'expected_runtime_snapshot_sha256':expected_runtime,
+        'project_runtime_nomination':{'template':str(package),'recipe_sha256':hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest(),
+            'runtime':recipe['runtime'],'runtime_snapshot_sha256':recipe['runtime_snapshot_sha256'],
+            'relationship':'original_0b15_profile' if expected_runtime==RUNTIME_SHA else 'explicit_new_runtime_QA_nomination'},
         'physical_acceptance':'not_established','product_acceptance':'not_established'}
     def write(name,value):
         path=output/name
@@ -115,8 +131,8 @@ def main(args):
         with dataset.access.bind(owner['token']):
             snapshots=RuntimeSnapshots(dataset.db,dataset.access,dataset.path)
             inventory=snapshots.inspect(json.loads(args.runtime_config.read_bytes()))
-            require(inventory['inventory_sha256']==RUNTIME_SHA,'Actual runtime differs from reviewed snapshot')
-            report['runtime']=snapshots.create(json.loads(args.runtime_config.read_bytes()),RUNTIME_SHA,quiesced=True)
+            require(inventory['inventory_sha256']==expected_runtime,'Actual runtime differs from explicitly nominated snapshot')
+            report['runtime']=snapshots.create(json.loads(args.runtime_config.read_bytes()),expected_runtime,quiesced=True)
             credential=dataset.access.issue({'label':'Explicit extension A CPU qualification','scopes':['inspect','edit','execute','cancel']})
         private('agent-token.private',credential['token'])
         def configure(name):return private(name,json.dumps({'endpoint':endpoint,'catalog_id':report['catalog_id'],'token_file':str(output/'agent-token.private')}))
@@ -324,14 +340,20 @@ def qualify_retained_negatives(args):
         dataset.close()
 
 
-if __name__=='__main__':
+def argument_parser():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--existing-receipt',type=Path,help='Run only retained fault negatives against a prior real qualification receipt')
     parser.add_argument('--project',type=Path)
     parser.add_argument('--require-public-fields',action='store_true')
+    parser.add_argument('--project-template',type=Path,default=ROOT/'examples/extensions/field-surrogate/v2')
+    parser.add_argument('--expected-runtime-sha256',default=RUNTIME_SHA)
     parser.add_argument('--catalog',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--runtime-config',type=Path,required=True);parser.add_argument('--oracle-python',type=Path,required=True)
-    arguments=parser.parse_args()
+    return parser
+
+
+if __name__=='__main__':
+    parser=argument_parser();arguments=parser.parse_args()
     if arguments.existing_receipt is not None:
         if arguments.project is None:parser.error('--existing-receipt requires --project')
         qualify_retained_negatives(arguments)

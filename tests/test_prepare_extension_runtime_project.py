@@ -9,6 +9,7 @@ import unittest
 from unittest.mock import patch
 
 import prepare_extension_runtime_project as prepare
+import qualify_extension_fields as qualifier
 
 PROJECT = prepare.ROOT/'examples/extensions/field-surrogate/v2'
 INFERENCE = prepare.ROOT/'examples/extensions/field-surrogate/inference-v1'
@@ -128,6 +129,29 @@ class RuntimeNominationTests(unittest.TestCase):
                 self.compile()
         self.assertFalse(self.destination.exists())
         self.assertEqual(list(self.root.iterdir()), [])
+
+    def test_qualifier_defaults_keep_original_project_and_runtime(self):
+        args = qualifier.argument_parser().parse_args(['--catalog', str(self.root/'catalog'),
+            '--output', str(self.root/'output'), '--runtime-config', str(self.root/'config'),
+            '--oracle-python', '/usr/bin/python3'])
+        self.assertEqual(args.project_template, PROJECT)
+        self.assertEqual(args.expected_runtime_sha256, prepare.ORIGINAL_RUNTIME)
+        package, expected = qualifier.qualification_inputs(args)
+        self.assertEqual((package, expected), (PROJECT, prepare.ORIGINAL_RUNTIME))
+
+    def test_qualifier_requires_explicit_matching_nomination_before_catalog(self):
+        self.compile()
+        values = ['--catalog', str(self.root/'catalog'), '--output', str(self.root/'output'),
+                  '--runtime-config', str(self.root/'config'), '--oracle-python', '/usr/bin/python3',
+                  '--project-template', str(self.destination/'project')]
+        args = qualifier.argument_parser().parse_args(values)
+        with patch('qualify_extension_fields.Dataset', side_effect=AssertionError('No catalog before runtime selection')):
+            with self.assertRaisesRegex(RuntimeError, 'no fallback'):
+                qualifier.main(args)
+        self.assertFalse((self.root/'catalog').exists())
+        self.assertFalse((self.root/'output').exists())
+        args = qualifier.argument_parser().parse_args(values+['--expected-runtime-sha256', prepare.NOMINATED_RUNTIME])
+        self.assertEqual(qualifier.qualification_inputs(args), (self.destination/'project', prepare.NOMINATED_RUNTIME))
 
 
 if __name__ == '__main__':
