@@ -183,7 +183,7 @@ def main(args):
         inputs=dict(canonical=dict(kind='frozen_release',release_id=canonical['release']['sha256'],expected_sha256=canonical['release']['sha256']),
                     derivation=dict(reference_id='derivation',expected_sha256=canonical['derivation']['sha256']),
                     provenance=dict(reference_id='provenance',expected_sha256=canonical['provenance']['sha256']))
-        graph=cli('graphs.create_external',dict(name='Actual canonical catalog A SDK attempt',project_id=opened['id'],recipe_id=selected['id'],
+        graph=http('graphs.create_external',dict(name='Actual canonical catalog A SDK attempt',project_id=opened['id'],recipe_id=selected['id'],
                   expected_sha256=selected['sha256'],inputs=inputs,parameters=dict(learning_rate=0.1,updates=64)))
         specification=copy.deepcopy(policy['model_specification'])
         specification['configuration']=dict(initial_scale=0.125,initial_offset=-0.25)
@@ -194,7 +194,7 @@ def main(args):
         published=http('models.publish',dict(model_id=model['id'],revision=model['revision']))
         study=http('studies.create',dict(name='Finite canonical A training and fresh consumer',policy=inspected['selection_policy'],
             limits=dict(attempt_slots=3,admitted_wall_seconds=1200,retained_bytes=300*1024**2,peak_staging_bytes=300*1024**2)))
-        trial=cli('studies.prepare_trial',dict(study_id=study['id'],request_key='prepare-'+uuid.uuid4().hex,revision=study['revision'],
+        trial=http('studies.prepare_trial',dict(study_id=study['id'],request_key='prepare-'+uuid.uuid4().hex,revision=study['revision'],
             graph_id=graph['id'],graph_revision=graph['revision'],model=published['ref'],replicate=0))
         material=cli('recipes.material',dict(ref=trial['material']));current=cli('studies.get',dict(study_id=study['id']))['study']
         current=http('studies.continue',dict(study_id=study['id'],request_key='continue-'+uuid.uuid4().hex,revision=current['revision'],admission_epoch=current['admission_epoch']))
