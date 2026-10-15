@@ -209,7 +209,7 @@ Path(a.report).write_text(json.dumps({'state':'passed','executed':'initial_revie
             with self.assertRaisesRegex(RuntimeError, 'Retained frozen oracle input changed'):
                 operator.oracle_inputs()
 
-    def test_pretty_recipe_uses_canonical_trainer_digest_and_raw_project_selector(self):
+    def test_prepare_distinguishes_raw_recipe_canonical_recipe_and_runtime_descriptor_hashes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); package = root/'package'; package.mkdir(); reviewed = self.package(package)
             recipe = driver.document(package/'recipe.json'); recipe['inputs'] = {'fixture': {'max_bytes': 1000}}
@@ -228,8 +228,16 @@ Path(a.report).write_text(json.dumps({'state':'passed','executed':'initial_revie
             operator.dataset = SimpleNamespace(access=SimpleNamespace(bind=lambda _token: nullcontext()),
                 db=SimpleNamespace(dataset_id='2'*32), path=args.catalog)
             model = {'ref': {'sha256': 'a'*64}, 'material': {'task': {'sha256': 'b'*64}}}
+            runtime = {'schema_version': 1, 'profile': 'captured_cpu_python_v1', 'catalog_id': '2'*32,
+                'root': str(args.catalog/'runtime-snapshots'/driver.RUNTIME_SHA),
+                'manifest_sha256': driver.RUNTIME_SHA, 'manifest_bytes': 1234, 'file_count': 2,
+                'total_bytes': 12345, 'python_version': '3.12', 'packages': {'torch': '2.8.0+cpu'},
+                'launch': {'python': 'python/bin/python3.12'}}
+            runtime_sha = driver.pipeline.digest(runtime)
+            self.assertNotEqual(runtime_sha, driver.RUNTIME_SHA)
             material = {'trainer': {'id': 'external_model_evidence_recipe_v1', 'sha256': canonical_sha},
-                'model': model['ref'], 'runtime': {'sha256': driver.RUNTIME_SHA}, 'recipe_id': '1'*32,
+                'model': model['ref'], 'runtime': {'kind': 'runtime', 'catalog_id': '2'*32,
+                    'id': runtime_sha, 'sha256': runtime_sha}, 'recipe_id': '1'*32,
                 'recipe_revision': 1, 'evaluation_profile': {'sha256': 'c'*64}}
             state = {'study': {'id': '5'*32, 'revision': 3, 'admission_epoch': 1}, 'reservations': [], 'charged': {'attempt_slots': 0}}
             calls = []
@@ -249,13 +257,33 @@ Path(a.report).write_text(json.dumps({'state':'passed','executed':'initial_revie
                 return {'status': 201, 'result': {'token': 'representative-not-a-credential',
                     'identity': {'actor_id': '3'*32, 'credential_id': '8'*32}}}
             snapshots = SimpleNamespace(inspect=lambda _config: {'inventory_sha256': driver.RUNTIME_SHA},
-                create=lambda *_args, **_kwargs: {'manifest_sha256': driver.RUNTIME_SHA})
+                create=lambda *_args, **_kwargs: runtime)
             with patch.object(driver, 'RuntimeSnapshots', return_value=snapshots), patch.object(operator, 'start_http'), \
                     patch.object(operator, 'http', side_effect=public_call), patch.object(operator, 'raw', side_effect=raw):
                 prepared = operator.prepare(project, recipe, blobs)
             graph = next(arguments for operation, arguments in calls if operation == 'graphs.create_external')
             self.assertEqual(graph['expected_sha256'], raw_recipe_sha)
             self.assertEqual(prepared['selection']['expected']['material_sha256'], 'd'*64)
+            self.assertEqual(prepared['selection']['expected']['runtime_sha256'], runtime_sha)
+            self.assertEqual(prepared['runtime']['manifest_sha256'], driver.RUNTIME_SHA)
+            # Reusing the portable manifest identity as the composition reference
+            # must fail even though the exact same inventory was provisioned.
+            operator.output = root/'manifest-reference'; operator.output.mkdir()
+            material['runtime'].update(id=driver.RUNTIME_SHA, sha256=driver.RUNTIME_SHA)
+            with patch.object(driver, 'RuntimeSnapshots', return_value=snapshots), patch.object(operator, 'start_http'), \
+                    patch.object(operator, 'http', side_effect=public_call), patch.object(operator, 'raw', side_effect=raw), \
+                    self.assertRaisesRegex(RuntimeError, 'Published composition differs'):
+                operator.prepare(project, recipe, blobs)
+            # A descriptor bound to a different catalog/root is a distinct
+            # identity despite sharing the portable manifest.
+            operator.output = root/'other-descriptor'; operator.output.mkdir()
+            other = dict(runtime, catalog_id='9'*32, root=str(root/'other-catalog'/driver.RUNTIME_SHA))
+            other_sha = driver.pipeline.digest(other)
+            material['runtime'].update(id=other_sha, sha256=other_sha)
+            with patch.object(driver, 'RuntimeSnapshots', return_value=snapshots), patch.object(operator, 'start_http'), \
+                    patch.object(operator, 'http', side_effect=public_call), patch.object(operator, 'raw', side_effect=raw), \
+                    self.assertRaisesRegex(RuntimeError, 'Published composition differs'):
+                operator.prepare(project, recipe, blobs)
             self.assertNotIn('studies.admit', [operation for operation, _arguments in calls])
             self.assertFalse(args.catalog.exists())
 

@@ -231,6 +231,8 @@ class Operator:
             inventory = snapshots.inspect(config)
             require(inventory['inventory_sha256'] == RUNTIME_SHA, 'Sanctioned runtime inventory differs.')
             runtime = snapshots.create(config, RUNTIME_SHA, quiesced=True)
+            require(runtime['profile'] == 'captured_cpu_python_v1' and runtime['manifest_sha256'] == RUNTIME_SHA,
+                    'Captured runtime profile/manifest differs.')
         self.write('runtime.json', runtime)
         # Runtime capture is quiesced before exposing any loopback request.
         self.start_http()
@@ -279,7 +281,9 @@ class Operator:
             'revision': study['revision'], 'graph_id': graph['id'], 'graph_revision': graph['revision'],
             'model': model['ref'], 'replicate': 0})
         material = self.http('recipes.material', {'ref': trial['material']})['material']
-        require(material['runtime']['sha256'] == RUNTIME_SHA and
+        runtime_sha = pipeline.digest(runtime)
+        require(material['runtime'] == {'kind': 'runtime', 'catalog_id': self.dataset.db.dataset_id,
+                    'id': runtime_sha, 'sha256': runtime_sha} and
                 material['model']['sha256'] == model['ref']['sha256'] and
                 material['trainer']['sha256'] == pipeline.digest(recipe), 'Published composition differs.')
         current = self.http('studies.get', {'study_id': study['id']})['study']
