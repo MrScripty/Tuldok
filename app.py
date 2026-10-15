@@ -933,10 +933,14 @@ def make_handler(dataset):
                     if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifact-segment':
                         return self.reply(dataset.runs.artifact_segment(parts[1], parts[3], body))
                     if parts == ['graphs']:
+                        if body.get('recipe') == 'image_classification_model_v2':
+                            agent_api.require_selection(self._contract_selection,'graphs.create')
                         return self.reply(dataset.pipelines.create(body), 201)
                     if parts == ['graphs', 'external']:
                         return self.reply(dataset.pipelines.create_external(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':
+                        if isinstance(body.get('document'),dict) and body['document'].get('recipe') == 'image_classification_model_v2':
+                            agent_api.require_selection(self._contract_selection,'graphs.save')
                         return self.reply(dataset.pipelines.save(parts[1], body))
                     if len(parts) == 3 and parts[0] == 'graphs':
                         if parts[2] == 'clone':
@@ -953,6 +957,13 @@ def make_handler(dataset):
                     if parts == ['runs', 'submit-external']:
                         return self.reply(dataset.runs.submit_external(body), 201)
                     if len(parts) == 3 and parts[0] == 'runs':
+                        if parts[2] == 'model-evidence':
+                            agent_api.require_selection(self._contract_selection,'runs.model_evidence')
+                            return self.reply(dataset.runs.model_evidence(parts[1],body))
+                        if parts[2] == 'compare-model-evidence':
+                            agent_api.require_selection(self._contract_selection,'runs.compare_model_evidence')
+                            projects.closed(body,('other_run_id',))
+                            return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id']))
                         if parts[2] == 'cancel':
                             return self.reply(dataset.runs.cancel(parts[1]))
                         if parts[2] == 'retry':
