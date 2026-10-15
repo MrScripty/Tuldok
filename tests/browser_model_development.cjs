@@ -378,8 +378,10 @@ function launch(command, args, options) {
   }
   const selectedEntry=evidence.checkpoint_index.entries.find(item=>item.selected);
   await focus('[data-model-checkpoint="'+selectedEntry.checkpoint.sha256+'"]');await key('Enter');
-  await until(()=>evaluate(`document.querySelector('[data-model-checkpoint="${selectedEntry.checkpoint.sha256}"]').getAttribute('aria-pressed')==='true'`));
-  await focus('#model-select-candidate');await key('Enter');
+  await until(()=>evaluate(`(()=>{const checkpoint=document.querySelector('[data-model-checkpoint="${selectedEntry.checkpoint.sha256}"]'),candidate=document.getElementById('model-select-candidate');return checkpoint?.getAttribute('aria-pressed')==='true'&&candidate&&!candidate.disabled;})()`),'The selected checkpoint candidate control did not become ready');
+  await focus('#model-select-candidate');
+  assert.equal(await evaluate('document.activeElement.id'),'model-select-candidate','Keyboard activation must focus the enabled candidate control');
+  await key('Enter');
   await until(()=>text('.model-candidate').then(value=>value?.includes('Diagnostic candidate retained')));
   assert.match(await text('.model-candidate'),/no quality threshold/);
   check('Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states');
