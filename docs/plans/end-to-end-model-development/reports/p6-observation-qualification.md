@@ -181,3 +181,23 @@ The final CLI health-channel follow-up passed all three focused tests in 7.979
 seconds: byte-identical subprocess failure diagnostics, actual CLI partial stdout
 and actual MCP main/v2 health. The latter confirms MCP's operator stderr channel
 was preserved while CLI's machine diagnostic channel remains a single document.
+
+Full lifecycle CI at `6ad687e` exposed an actual fixture compatibility failure:
+the classification browser's instrumented `make_handler(dataset)` rejected the
+new optional observer argument before HTTP startup. Three local subprocess
+reproductions exited with the same `TypeError` in 1.84–2.05 seconds; no PostgreSQL
+locks were waiting. A source search found the same affected wrapper in the typed
+Pumas fixture. Both now accept and forward the optional observer without enabling
+it. Classification startup also reports child exit and a bounded stderr tail;
+the existing 15-second readiness bound and all browser assertions remain intact.
+
+Both full actual HTTP/Chromium suites passed with the repaired fixtures:
+`tests/browser_text_classification_proposals.cjs` (receipt directory
+`build/qa/text-classification-proposals/run-9q4nHN`) and
+`tests/browser_pumas_typed.cjs` (`build/qa/pumas-typed/run-Wpahhn`). These use bounded
+synthetic HTTP providers and make no native-provider or model-quality claim.
+The negative startup check, with database configuration intentionally absent,
+reported the child configuration error in 1.373 seconds instead of hiding it
+behind a readiness timeout. JavaScript syntax, Python compilation and diff checks
+passed. Local logs: `/tmp/p6-ci-browser-fixed.log`,
+`/tmp/p6-ci-pumas-typed-fixed.log`, `/tmp/p6-fixture-startup-diagnostic.log`.
