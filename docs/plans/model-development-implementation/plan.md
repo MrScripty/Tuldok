@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** P1 — compatible operation negotiation
+**Current phase:** P2 — immutable material and atomic finite-study admission
 
-**Next slice:** Publish P1, pass committed-head CI and merge; then P2 immutable material and atomic finite-study admission.
+**Next slice:** Complete P2 independent review and committed-head CI; then the P3 automatic classifier vertical.
 
 **Acceptance status:** `pending`
 
@@ -29,7 +29,7 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| I1 | Exact per-operation negotiation preserves unrelated compatible calls, legacy installed clients and live Access; mismatch has no domain/grant effect. | contract | representative | automated | pending | P1 actual HTTP/CLI/MCP old/new, framing/race/recovery tests and CI |
+| I1 | Exact per-operation negotiation preserves unrelated compatible calls, legacy installed clients and live Access; mismatch has no domain/grant effect. | contract | representative | automated | satisfied | P1 verification; exact-head CI; PR66 merged at8673509 |
 | I2 | Immutable model/recipe material, finite membership and atomic budget/grant/Run/audit admission survive drift, races, cancellation, restart and backup. | persistence | required-real | automated | pending | P2 real PostgreSQL/Run transactions and public inert views |
 | I3 | Actual CPU classifier emits ≥2 retained checkpoints/fixed probes automatically; linked human/agent inspection, correction/new release and cold inference work. | user-workflow | required-real | either | pending | P3 real training/consumer/browser receipt, cost bounds and CI |
 | I4 | Generic field and one-fit evidence preserves declared semantics/access and truthful unsupported domains; no fixture stands in for physical qualification. | integration | required-real | either | pending | P4 real supported producers/consumers; optional absent integrations explicitly unavailable |
@@ -51,8 +51,8 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 
 ### Constraints
 
-- Current main is `d788e08f3813af8b6bd054218556abb9e7df431c`, after design
-  PR62/PR63 integration. Recheck before each new source branch/merge. No applicable
+- Current main is `8673509d5430e6aa1162986f4d7b1c071aa1c82e`, after design
+  PR62/PR63 and P1 PR66 integration. Recheck before each new source branch/merge. No applicable
   AGENTS/skills files or callable live Coding Standards MCP are exposed; adopted
   dcc56f26 template/guidance and original structural function apply without certification.
 - Keep compatible legacy grammars/bytes, owner-only built-ins, exact one-use external
@@ -77,8 +77,8 @@ Current source matches f588 agent metadata exactly:56 operations, digest
 Independent baseline system-Python agent suite17/17 passes. Private PostgreSQL17.11,
 hash-locked MCP1.30 and pinned CPU runtime are now provisioned. P1's79 distinct
 agent/protocol/approval cases pass without skips, with actual browser and independent
-review evidence in [P1 verification](reports/p1-verification.md). Committed-head CI
-still gates P1 merge; later product acceptance is not closed by those checks.
+review evidence in [P1 verification](reports/p1-verification.md). Committed-head CI passed (workspace lifecycle run38783946595 and workspace UI);
+PR66 merged as8673509. Later product acceptance is not closed by those checks.
 
 ## Simplicity And Ownership Review
 
@@ -135,16 +135,25 @@ lost-ack receipt reconciliation. UI/Data/Pipeline/Runs remain usable. No new mod
 
 **Re-plan condition:** Legacy promise, authority, projection proof or package boundary changes.
 
-**Status:** `Active`
+**Status:** `Accepted`
 
 **Evidence:** [P1 verification and resolved review findings](reports/p1-verification.md).
-Local checks and independent review pass; published-head CI is pending.
+Local checks, independent review and committed-head CI pass; PR66 merged as8673509.
 
 ### P2: Immutable model/material and finite-study admission
 
 **Goal:** Implement the exact P2 handoff through one outer owned admission transaction.
 
-**Allowed write set:** Exact [P2 source/test/contract set](../end-to-end-model-development/reports/implementation-handoff.md#p2-immutable-modelrecipe-material-and-finite-study-admission), plus this plan's evidence.
+**Allowed write set:** Exact [P2 source/test/contract set](../end-to-end-model-development/reports/implementation-handoff.md#p2-immutable-modelrecipe-material-and-finite-study-admission), plus this plan's evidence. Bounded P2 additions: `project_cli.py` and
+`docs/contracts/project-cli.md` add a registry-scoped `call --operation --arguments`
+command for real inert model/recipe/study inspection. `.github/workflows/tests.yml`
+adds an explicit P2 Study run under the hash-locked optional agent environment so
+the new actual MCP witness is qualified there. `tests/test_access.py`,
+`tests/test_runtime_snapshots.py` and `tests/test_spatial_storage.py` receive only
+current-upgrade expectations or explicit retained-schema reader selection; old
+schema8 fixtures stay schema8. It reuses AgentClient,
+private configuration, exact schemas and existing authority; no arbitrary route,
+new RPC owner or owner-credential support.
 
 **Preserved/replaced semantics:** No second recipe owner or supervisor; quiesced explicit migration/backup.
 
@@ -152,7 +161,10 @@ Local checks and independent review pass; published-head CI is pending.
 
 **Re-plan condition:** Actual schema/authority/custody cannot satisfy the selected seam.
 
-**Status:** `Planned`
+**Status:** `Verifying`
+
+**Evidence:** [P2 local verification and resolved independent review](reports/p2-verification.md).
+221 distinct actual local cases pass0skip; exact committed-head CI/integration remain pending.
 
 ### P3: Automatic classifier vertical
 

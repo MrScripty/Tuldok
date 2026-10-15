@@ -257,7 +257,10 @@ def populate_catalog(metadata, tables):
     expected = read_catalog(metadata)
     if set(tables) != set(metadata.tables):
         raise StorageTransferError('Unsupported backup table set.')
-    for table, state in tables.items():
+    # Metadata's retained DDL order owns foreign-key dependencies. Backup JSON
+    # key order is canonical/alphabetical and cannot authorize insertion order.
+    for table in metadata.tables:
+        state = tables[table]
         if state['columns'] != expected[table]['columns']:
             raise StorageTransferError('Unsupported backup columns: ' + table)
         if expected[table]['count']:

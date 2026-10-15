@@ -94,6 +94,9 @@ def parser():
     artifact.add_argument('--name', required=True)
     artifact.add_argument('--expected-sha256', required=True)
     artifact.add_argument('--out', type=Path, required=True)
+    operation = commands.add_parser('call', help='Call one locally registered compatible operation with bounded JSON arguments')
+    operation.add_argument('--operation', required=True)
+    operation.add_argument('--arguments', type=Path, required=True)
     return result
 
 
@@ -104,7 +107,9 @@ def main(argv=None):
         if args.command == 'download':
             result = download(client, args.run_id, args.name, args.expected_sha256, args.out)
         else:
-            if args.command == 'open':
+            if args.command == 'call':
+                operation, arguments = args.operation, read_arguments(args.arguments)
+            elif args.command == 'open':
                 operation, arguments = 'projects.open', dict(root=args.root, manifest_path=args.manifest)
             elif args.command == 'inspect':
                 operation, arguments = 'projects.get', dict(project_id=args.project_id)

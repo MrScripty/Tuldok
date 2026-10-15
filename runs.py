@@ -136,6 +136,19 @@ class Runs:
                         or identity.get('request_sha256') != run['request_sha256']
                         or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
                     raise ValueError('Invalid external custodian identity.')
+                if 'approval_material_sha256' in run:
+                    approved=run['approval_material_sha256']
+                    if type(approved) is not str or not re.fullmatch('[a-f0-9]{64}',approved):
+                        raise ValueError('Invalid composed approval identity.')
+                    grant=self.db.execute('SELECT material_sha256 FROM access_execution_grants WHERE id=%s',(run['approval_id'],)).fetchone()
+                    if grant is None or grant[0]!=approved:raise ValueError('Composed approval differs from its retained grant.')
+                    association=self.db.execute('SELECT t.material_sha256,r.actor_id,r.request_sha256 FROM model_attempt_reservations r '
+                                                'JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',
+                                                (run['id'],)).fetchone()
+                    if (association is None or association['material_sha256']!=approved or association['actor_id']!=run['actor_id'] or
+                            association['request_sha256']!=run['request_sha256']):
+                        raise ValueError('Composed approval differs from its retained study association.')
+                    self._approved_composition(approved,run['graph'],run['material_sha256'])
             elif 'execution_kind' in run:
                 raise ValueError('Unknown execution kind.')
             return run
@@ -227,6 +240,7 @@ class Runs:
                     'quality_claim', 'execution_kind', 'result_kind', 'material', 'material_sha256',
                     'approval_id', 'actor_id', 'custody_phase')
             result = {key: copy.deepcopy(run[key]) for key in keys}
+            if 'approval_material_sha256' in run:result['approval_material_sha256']=run['approval_material_sha256']
             result['artifacts'] = [dict(item, locked=False,
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
@@ -335,52 +349,14 @@ class Runs:
         staging = self.path / ('.external-' + run_id)
         try:
             captured = self.pipelines.capture_external(body['graph_id'], body['graph_revision'], body['expected_digest'], staging)
-            graph = captured['graph']
-            spec = dict(captured['spec'], attempt_id=run_id, request_sha256=request_hash)
             with self.lock, self.db.transaction():
                 self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
                 receipt = self._external_receipt(key, request_hash, context.actor_id)
                 if receipt:
                     self.db.on_commit(lambda: shutil.rmtree(staging, ignore_errors=True))
                 else:
-                    # Captured/validated resource policy owns this bound. Check
-                    # after both reconciliation opportunities, before consuming
-                    # approval or persisting admission; failure uses normal cleanup.
-                    if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
-                        required_bytes = 2 * spec['max_output_bytes'] + 1024**3
-                        try:
-                            available_bytes = shutil.disk_usage(self.path).free
-                        except OSError as error:
-                            raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
-                        if available_bytes < required_bytes:
-                            raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
-                    if self.pipelines._get(graph['id']) != graph:
-                        raise WorkbenchError('Graph changed during capture.', 'stale', 409)
-                    if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
-                        raise WorkbenchError('The local queue is full (8 attempts).', 'unavailable', 409)
-                    grant_id = body.get('approval_id')
-                    if grant_id is None:
-                        grant_id = self.access.grant_execution(body['expected_digest'], context.actor_id)['id']
-                    admission_id = self.access._consume_external_run(grant_id, body['expected_digest'], run_id, request_hash)
-                    run = {'schema_version': 1, 'mode': 'real', 'execution_kind': 'external_recipe',
-                           'result_kind': 'external_recipe', 'id': run_id, 'dataset_id': self.db.dataset_id,
-                           'request_key': key, 'request_sha256': request_hash, 'actor_id': context.actor_id,
-                           'admission_id': admission_id, 'approval_id': grant_id,
-                           'state': 'queued', 'created_at': timestamp(), 'started_at': None, 'finished_at': None,
-                           'graph': graph, 'graph_revision': graph['revision'], 'graph_sha256': execution_digest(graph),
-                           'graph_document_sha256': digest(graph), 'material': captured['material'],
-                           'material_sha256': captured['material_sha256'], 'spec': spec,
-                           'outputs': captured['outputs'], 'parameters': next(node['parameters'] for node in graph['nodes'] if node['type'] == 'execute'),
-                           'attempt': 1, 'parent_run_id': None, 'events': [], 'artifacts': [], 'metrics': None,
-                           'error': None, 'worker': None, 'custody_phase': 'prepared', 'custody_identity': None,
-                           'custody_receipt_sha256': None, 'quality_claim': False,
-                           'progress': {'stage': 'queued', 'completed': None, 'total': None},
-                           'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
-                    self._event(run, 'queued', 'Exact owner-approved external recipe admitted.')
-                    self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
-                                    (run_id, key, request_hash, encode(run)))
-                    self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
-                                      'approval_id': grant_id, 'request_sha256': request_hash})
+                    run = self._admit_external_prepared(body, captured, run_id, staging,
+                                                        wake_on_commit=False)
         except CommitOutcomeUnknown:
             # Neither delete captured files nor dispatch after ambiguous admission.
             raise
@@ -389,10 +365,103 @@ class Runs:
             raise
         if receipt:
             return self._reconcile_receipt(receipt)
+        self._wake_external(run_id)
+        return self._public(run)
+
+    def _wake_external(self, run_id):
         with self.lock:
             self._confirmed_external.add(run_id)
         self._start()
-        return self._public(run)
+
+    def _approved_composition(self,sha,graph,execution_material_sha256):
+        from model_definitions import retained_json
+        row=self.db.execute('SELECT document FROM workspace_recipe_materials WHERE sha256=%s',(sha,)).fetchone()
+        if row is None:raise WorkbenchError('Approved composed material is unavailable.','unavailable',409)
+        value=retained_json(row[0]);closed(value,('ref','material'));material=value['material']
+        if (digest(material)!=sha or value['ref']!={'kind':'recipe_material','catalog_id':self.db.dataset_id,'id':sha,'sha256':sha} or
+                material.get('format')!='recipe_material_v1' or material.get('catalog_id')!=self.db.dataset_id or
+                material.get('recipe_id')!=graph['id'] or material.get('recipe_revision')!=graph['revision'] or
+                material.get('executable_sha256')!=execution_material_sha256):
+            raise WorkbenchError('Approved composed material differs from execution.','unavailable',409)
+
+    @authorized('inspect', 'runs.lookup_external_receipt')
+    def lookup_external_receipt(self, request_key, request_hash):
+        """Current-actor receipt read; this operation never wakes queued work."""
+        if (type(request_key) is not str or not REQUEST_KEY.fullmatch(request_key) or
+                type(request_hash) is not str or not re.fullmatch('[a-f0-9]{64}', request_hash)):
+            raise WorkbenchError('Receipt lookup requires an exact key and SHA256.')
+        context = self.access._context()
+        with self.lock:
+            return self._external_receipt(request_key, request_hash, context.actor_id)
+
+    def _admit_external_prepared(self, body, captured, run_id, staging, *,
+                                 check_current=True, request_hash=None, parent=None,
+                                 wake_on_commit=True, approval_material_sha256=None):
+        """Runs-owned insert inside an existing outer transaction; never wake early."""
+        if not self.db.in_transaction:
+            raise RuntimeError('Prepared admission requires an owned outer transaction.')
+        context = self.access.require_external_submission()
+        self._available()
+        if self._external_blocked:
+            raise WorkbenchError('External descendant cessation is unknown.', 'unavailable', 409)
+        key, original_hash = self._request(body, tuple(body))
+        request_hash = original_hash if request_hash is None else request_hash
+        approved_sha = body['expected_digest'] if approval_material_sha256 is None else approval_material_sha256
+        if type(approved_sha) is not str or not re.fullmatch('[a-f0-9]{64}',approved_sha):
+            raise WorkbenchError('Exact approved material SHA256 is required.')
+        graph = captured['graph']
+        if approval_material_sha256 is not None:self._approved_composition(approved_sha,graph,captured['material_sha256'])
+        spec = dict(captured['spec'], attempt_id=run_id, request_sha256=request_hash)
+        import recipe_contract
+        if (digest(captured['material']) != body['expected_digest'] or
+                captured['material_sha256'] != body['expected_digest'] or
+                captured['material']['graph_execution_sha256'] != execution_digest(graph)):
+            raise WorkbenchError('Prepared execution identity differs.', 'stale', 409)
+        recipe_contract.validate_spec(captured['material'], spec, str(staging))
+        self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
+        # Captured/validated resource policy owns this bound. Check
+        # after both reconciliation opportunities, before consuming
+        # approval or persisting admission; failure uses normal cleanup.
+        if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
+            required_bytes = 2 * spec['max_output_bytes'] + 1024**3
+            try:
+                available_bytes = shutil.disk_usage(self.path).free
+            except OSError as error:
+                raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
+            if available_bytes < required_bytes:
+                raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
+        if check_current and self.pipelines._get(graph['id']) != graph:
+            raise WorkbenchError('Graph changed during capture.', 'stale', 409)
+        if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
+            raise WorkbenchError('The local queue is full (8 attempts).', 'unavailable', 409)
+        grant_id = body.get('approval_id')
+        if grant_id is None:
+            grant_id = self.access.grant_execution(approved_sha, context.actor_id)['id']
+        admission_id = self.access._consume_external_run(grant_id, approved_sha, run_id, request_hash)
+        run = {'schema_version': 1, 'mode': 'real', 'execution_kind': 'external_recipe',
+               'result_kind': 'external_recipe', 'id': run_id, 'dataset_id': self.db.dataset_id,
+               'request_key': key, 'request_sha256': request_hash, 'actor_id': context.actor_id,
+               'admission_id': admission_id, 'approval_id': grant_id,
+               'state': 'queued', 'created_at': timestamp(), 'started_at': None, 'finished_at': None,
+               'graph': graph, 'graph_revision': graph['revision'], 'graph_sha256': execution_digest(graph),
+               'graph_document_sha256': digest(graph), 'material': captured['material'],
+               'material_sha256': captured['material_sha256'], 'spec': spec,
+               'outputs': captured['outputs'], 'parameters': next(node['parameters'] for node in graph['nodes'] if node['type'] == 'execute'),
+               'attempt': parent['attempt']+1 if parent else 1, 'parent_run_id': parent['id'] if parent else None, 'events': [], 'artifacts': [], 'metrics': None,
+               'error': None, 'worker': None, 'custody_phase': 'prepared', 'custody_identity': None,
+               'custody_receipt_sha256': None, 'quality_claim': False,
+               'progress': {'stage': 'queued', 'completed': None, 'total': None},
+               'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if approval_material_sha256 is not None:
+            run['approval_material_sha256']=approved_sha
+        self._event(run, 'queued', 'Exact owner-approved external recipe admitted.')
+        self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
+                        (run_id, key, request_hash, encode(run)))
+        self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
+                          'approved_material_sha256':approved_sha,'approval_id': grant_id, 'request_sha256': request_hash})
+        if wake_on_commit:
+            self.db.on_commit(lambda: self._wake_external(run_id))
+        return run
 
     def _external_directory(self, run):
         return self.path / ('.external-' + run['id'])

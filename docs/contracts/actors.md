@@ -127,3 +127,13 @@ contracts, not filesystem or network confinement.
 legacy owner-only behavior, TTL/revocation, two-connection consume/revoke races,
 transaction rollback, lost commit acknowledgement with retained Run receipt,
 closed continuation and schema-7/8 migration/backup custody.
+
+## Finite model studies
+
+Study create/save/continue remain owner-only. An inspect/edit agent may prepare
+exact model/trial material; it cannot acquire built-in execution permission from
+that preparation. External study admission retains current inspect+execute and
+one-use exact actor/material grant checks, atomically with its reservation/Run/
+audit. Stop requires inspect+cancel and closes the epoch before child cancellation.
+Unknown custody remains fenced. Negotiated owner-only operations advertise their
+authority and still reject agent attempts. See [model development](model-development.md).
