@@ -1,0 +1,52 @@
+{
+  "checkpoints": [
+    32,
+    64
+  ],
+  "declared_outputs": 26,
+  "format": "p5_independent_b_author_review_v1",
+  "mask_one_enforces_zero": true,
+  "mask_zero_preserves_raw": true,
+  "native_refusals": {
+    "append_payload": "Truncated or trailing NPY payload",
+    "big_endian": "Expected exact little-endian float64 C-order shape",
+    "bool_dimension": "Expected exact little-endian float64 C-order shape",
+    "duplicate_metadata": "Malformed NPY header",
+    "executable_header": "Malformed NPY header",
+    "float32": "Expected exact little-endian float64 C-order shape",
+    "fortran": "Expected exact little-endian float64 C-order shape",
+    "infinity": "Nonfinite NPY payload",
+    "missing_payload": "Truncated or trailing NPY payload",
+    "nan": "Nonfinite NPY payload",
+    "object_pickle": "Expected exact little-endian float64 C-order shape",
+    "wrong_shape": "Expected exact little-endian float64 C-order shape"
+  },
+  "pending": "Stable public multi-target probe map and subsequent SDK/actual Run gate",
+  "rates": [
+    {
+      "learning_rate": 0.001,
+      "transform_max_absolute_difference": 1.096345236817342e-15,
+      "weights_max_absolute_difference": 1.3877787807814457e-17
+    },
+    {
+      "learning_rate": 0.1,
+      "transform_max_absolute_difference": 1.096345236817342e-15,
+      "weights_max_absolute_difference": 4.996003610813204e-16
+    },
+    {
+      "learning_rate": 0.5,
+      "transform_max_absolute_difference": 1.096345236817342e-15,
+      "weights_max_absolute_difference": 4.996003610813204e-16
+    }
+  ],
+  "reviewed_commit": "b4df03b",
+  "scope": "Independent local author numerical/source review only; actual Run and numerical quality not established",
+  "source_feature_sensitivity": 0.20000158874552257,
+  "source_sha256": {
+    "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+    "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+    "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+    "recipe.json": "8126b95a30d264335575cf77c846539ee51e574398b15685980babbee419a2cc"
+  },
+  "validation_perturbation_fit_identical": true
+}

@@ -1,0 +1,507 @@
+{
+  "after_counts": {
+    "access_execution_grants": 0,
+    "model_attempt_reservations": 0,
+    "model_definition_drafts": 1,
+    "model_materials": 1,
+    "model_studies": 1,
+    "model_trials": 1,
+    "workspace_graphs": 1,
+    "workspace_recipe_materials": 1,
+    "workspace_runs": 0
+  },
+  "before_counts": {
+    "access_execution_grants": 0,
+    "model_attempt_reservations": 0,
+    "model_definition_drafts": 0,
+    "model_materials": 0,
+    "model_studies": 0,
+    "model_trials": 0,
+    "workspace_graphs": 0,
+    "workspace_recipe_materials": 0,
+    "workspace_runs": 0
+  },
+  "catalog_path": "/workspace/tuldok-independent-b-host-corrected/catalog",
+  "checks": {
+    "Model source closure retains every declared source and recipe": true,
+    "Study remains unadmitted closed and uncharged": true,
+    "Task trainer stages exact ordered": true,
+    "aggregate candidate target identity": true,
+    "both checkpoints preserve distinct raw corrected mappings": true,
+    "complete ordered per-field target hashes": true,
+    "exact Project recipe/provider references": true,
+    "exact external graph accepted": true,
+    "exact graph preflight accepted": true,
+    "exact immutable trial prepared": true,
+    "exact published Model accepted": true,
+    "explicit empty Model configuration without Model parameters": true,
+    "finite Study accepted": true,
+    "finite resource envelope fits requested budget": true,
+    "full closure adapter and all evaluator field identities": true,
+    "material binds exact Model graph runtime": true,
+    "metric population exact frozen references": true,
+    "no Run grant reservation created": true,
+    "one exact Model graph material Study and trial retained": true,
+    "provider recipe wall/output bounds": true,
+    "provider source bound": true,
+    "provider source inventory hashes sizes": true,
+    "published Model cold byte verification": true,
+    "raw corrected native targets distinct": true,
+    "recipe sources exact complete hashes": true,
+    "required input identity includes source and boundary": true,
+    "same exact captured runtime nomination": true,
+    "sanctioned actual CPU runtime captured": true,
+    "selected inspector and exact binding accepted": true
+  },
+  "closure_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+  "composition": {
+    "material": {
+      "captures": [
+        {
+          "bytes": 18816,
+          "media_type": "application/octet-stream",
+          "name": "capture-0000.bin",
+          "sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe"
+        },
+        {
+          "bytes": 62125,
+          "media_type": "application/octet-stream",
+          "name": "capture-0001.bin",
+          "sha256": "cccc79cf06ad95085f57917086d288b90c5373487d755b8dcfea7e65fc581589"
+        },
+        {
+          "bytes": 1180,
+          "media_type": "application/octet-stream",
+          "name": "capture-0002.bin",
+          "sha256": "3f4063b43c40c9a233275d586697cc7250ac87f7403c8e77ea099800b1be419a"
+        },
+        {
+          "bytes": 243,
+          "media_type": "application/octet-stream",
+          "name": "capture-0003.bin",
+          "sha256": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223"
+        },
+        {
+          "bytes": 2573,
+          "media_type": "application/octet-stream",
+          "name": "capture-0004.bin",
+          "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b"
+        },
+        {
+          "bytes": 2619,
+          "media_type": "application/octet-stream",
+          "name": "capture-0005.bin",
+          "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
+        },
+        {
+          "bytes": 2558,
+          "media_type": "application/octet-stream",
+          "name": "capture-0006.bin",
+          "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba"
+        },
+        {
+          "bytes": 8005,
+          "media_type": "application/octet-stream",
+          "name": "capture-0007.bin",
+          "sha256": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b"
+        },
+        {
+          "bytes": 837,
+          "media_type": "application/octet-stream",
+          "name": "capture-0008.bin",
+          "sha256": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887"
+        },
+        {
+          "bytes": 13165,
+          "media_type": "application/octet-stream",
+          "name": "capture-0009.bin",
+          "sha256": "f2137ccedb00fe83af8048b62d9ee37cc5ddf1df14dddbeceb31c328cb518a7d"
+        },
+        {
+          "bytes": 2912,
+          "media_type": "application/octet-stream",
+          "name": "capture-0010.bin",
+          "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+        },
+        {
+          "bytes": 3567,
+          "media_type": "application/octet-stream",
+          "name": "capture-0011.bin",
+          "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b"
+        },
+        {
+          "bytes": 86,
+          "media_type": "application/octet-stream",
+          "name": "capture-0012.bin",
+          "sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18"
+        },
+        {
+          "bytes": 23066,
+          "media_type": "application/octet-stream",
+          "name": "capture-0013.bin",
+          "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23"
+        },
+        {
+          "bytes": 544,
+          "media_type": "application/octet-stream",
+          "name": "capture-0014.bin",
+          "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+        }
+      ],
+      "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+      "data": [],
+      "evaluation_profile": {
+        "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+        "id": "example.scalar-b-independent.fixed-validation",
+        "kind": "profile",
+        "revision": 1,
+        "sha256": "7fff8d79994888029fd3a6b5c008a74206d6a93ceed2b778f4e257b09dd6ae90"
+      },
+      "executable_sha256": "bfe3c72ce9d413ae9fd89bfa999d2eb99de6d7de3c9f2cc25e202bc3a2a7d7fd",
+      "format": "recipe_material_v1",
+      "model": {
+        "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+        "id": "1ded7a9d6126478e88fb47a5a5d45b4e",
+        "kind": "model",
+        "revision": 1,
+        "sha256": "68a214f33520df86b2b49d605957d3ff04dd7e25fc397219035123a594ceabec"
+      },
+      "recipe_document": {
+        "bytes": 436793,
+        "media_type": "application/json",
+        "name": "recipe.json",
+        "sha256": "89ebbb86ca2520b467f6573173a4b1cd219995c955557164f31c17da602713e7"
+      },
+      "recipe_id": "81fe614648844e7ea270bd64644a4c30",
+      "recipe_revision": 1,
+      "resolved_profile": {
+        "bytes": 952,
+        "media_type": "application/json",
+        "name": "profile.json",
+        "sha256": "4eaee274092b3f3e9ea2845517b72b0807e29bd4d0d8be8dc34d3c9d6e95cc9b"
+      },
+      "resource_envelope": {
+        "admitted_wall_seconds": 197,
+        "attempt_slots": 1,
+        "peak_staging_bytes": 5995022,
+        "retained_bytes": 4366405
+      },
+      "runtime": {
+        "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+        "id": "3f4063b43c40c9a233275d586697cc7250ac87f7403c8e77ea099800b1be419a",
+        "kind": "runtime",
+        "sha256": "3f4063b43c40c9a233275d586697cc7250ac87f7403c8e77ea099800b1be419a"
+      },
+      "trainer": {
+        "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+        "id": "external_model_evidence_recipe_v1",
+        "kind": "trainer",
+        "revision": 1,
+        "sha256": "937d870676ad1fd54eb0cc27be031b0bdf8656b6ec85f6afa87a0b2a8dc95db6"
+      }
+    },
+    "ref": {
+      "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+      "id": "27746a7cb6f55ff99d9ef76ec95c9105cac116dc8fe636e4ee8b2740a4ff6b15",
+      "kind": "recipe_material",
+      "sha256": "27746a7cb6f55ff99d9ef76ec95c9105cac116dc8fe636e4ee8b2740a4ff6b15"
+    }
+  },
+  "configuration": {},
+  "execution_permitted": false,
+  "full_receipt": {
+    "path": "/workspace/tuldok-independent-b-host-corrected/receipt.json",
+    "sha256": "e99cfd8bcec98dc29ef4bfbae52850d66b133625f73d2ea236e3c9aa9eec5d1c"
+  },
+  "input_identities": [
+    {
+      "field_id": "initial",
+      "payload_sha256": "5cccb0dbfd0afedd9fe01b4b2c76efb84fe60c189515666292ecba1a87dd1835"
+    },
+    {
+      "field_id": "source",
+      "payload_sha256": "bcac77e357aae348ee1c73e86c146b426a711cd37db2daa150919586eb8d8bf3"
+    },
+    {
+      "field_id": "boundary_mask",
+      "payload_sha256": "415448db9a4c15640e672a1842e908b72ef2f395eb0abd659ec4414523b20b06"
+    }
+  ],
+  "model_parameter_schema": null,
+  "model_source_closure": [
+    {
+      "blob": {
+        "bytes": 243,
+        "media_type": "application/octet-stream",
+        "name": "source-0000.bin",
+        "sha256": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223"
+      },
+      "import_path": "NOTICE.txt"
+    },
+    {
+      "blob": {
+        "bytes": 2573,
+        "media_type": "application/octet-stream",
+        "name": "source-0001.bin",
+        "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b"
+      },
+      "import_path": "evaluator.json"
+    },
+    {
+      "blob": {
+        "bytes": 2619,
+        "media_type": "application/octet-stream",
+        "name": "source-0002.bin",
+        "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
+      },
+      "import_path": "extension.json"
+    },
+    {
+      "blob": {
+        "bytes": 2558,
+        "media_type": "application/octet-stream",
+        "name": "source-0003.bin",
+        "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba"
+      },
+      "import_path": "model.json"
+    },
+    {
+      "blob": {
+        "bytes": 8005,
+        "media_type": "application/octet-stream",
+        "name": "source-0004.bin",
+        "sha256": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b"
+      },
+      "import_path": "producer.py"
+    },
+    {
+      "blob": {
+        "bytes": 837,
+        "media_type": "application/octet-stream",
+        "name": "source-0005.bin",
+        "sha256": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887"
+      },
+      "import_path": "project.json"
+    },
+    {
+      "blob": {
+        "bytes": 22569,
+        "media_type": "application/octet-stream",
+        "name": "source-0006.bin",
+        "sha256": "7d089b3fe85191e5dbb3c222899e8b9629f4889708a10b854c533b73b0796416"
+      },
+      "import_path": "recipe.json"
+    },
+    {
+      "blob": {
+        "bytes": 13165,
+        "media_type": "application/octet-stream",
+        "name": "source-0007.bin",
+        "sha256": "f2137ccedb00fe83af8048b62d9ee37cc5ddf1df14dddbeceb31c328cb518a7d"
+      },
+      "import_path": "runtime-bootstrap/extension-binding.json"
+    },
+    {
+      "blob": {
+        "bytes": 2912,
+        "media_type": "application/octet-stream",
+        "name": "source-0008.bin",
+        "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+      },
+      "import_path": "task.json"
+    },
+    {
+      "blob": {
+        "bytes": 3567,
+        "media_type": "application/octet-stream",
+        "name": "source-0009.bin",
+        "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b"
+      },
+      "import_path": "trainer.json"
+    },
+    {
+      "blob": {
+        "bytes": 86,
+        "media_type": "application/octet-stream",
+        "name": "source-0010.bin",
+        "sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18"
+      },
+      "import_path": "tuldok_extension_sdk/__init__.py"
+    },
+    {
+      "blob": {
+        "bytes": 23066,
+        "media_type": "application/octet-stream",
+        "name": "source-0011.bin",
+        "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23"
+      },
+      "import_path": "tuldok_extension_sdk/evidence.py"
+    },
+    {
+      "blob": {
+        "bytes": 544,
+        "media_type": "application/octet-stream",
+        "name": "source-0012.bin",
+        "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+      },
+      "import_path": "view.json"
+    }
+  ],
+  "operations": [
+    {
+      "canonical_result_sha256": "efe40dc136deab25d3e34cb0f057c07928e35f2ea42f04d0aca2e6506b5837ac",
+      "operation": "projects.open_snapshot",
+      "state": "completed"
+    },
+    {
+      "code": "unsupported",
+      "operation": "recipes.inspect/1",
+      "reason": "Bound recipes require inspection contract version2.",
+      "state": "refused",
+      "status": 409
+    },
+    {
+      "canonical_result_sha256": "b139682fcf4d0e5fe10d9db42da0c673db86776ae971bfe1a388caa6ea7af2ef",
+      "operation": "recipes.inspect/2",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "8bc60d7b86ad743129c3e905d3139a42a76247117d36f2c76c8d36061949b2b3",
+      "operation": "extension_bindings.resolve",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "3f4063b43c40c9a233275d586697cc7250ac87f7403c8e77ea099800b1be419a",
+      "operation": "runtime_snapshots.create",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "60c5f5584cc48e552519db6938dc2b937d2a02fa6e4cf0bbcac5967def0a5439",
+      "operation": "models.create",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "50385587d33910a65aa168ca2e302c73e67957144f87a3a3a3a0832ae1676270",
+      "operation": "models.publish",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "8c83eef556f5c3e8288fd9c0be4ea74099e4385101ee70237a741d1095856ccb",
+      "operation": "graphs.create_external",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "53d297b0908e6846e3f362cc590dd6cc5bf5fa793d96e15e78d480c880596b89",
+      "operation": "graphs.preflight_external",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "299f84ca6fd91562efbf6cc9cccf458e78efb667e0ba0bcc9d9a72527ec065eb",
+      "operation": "studies.create",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "5ad2db7a6c243d58e8b9e443feb137d3758d253ef4ebafce83b012ad0cde5054",
+      "operation": "studies.prepare_trial",
+      "state": "completed"
+    },
+    {
+      "canonical_result_sha256": "7c640da122ebd5e365db52efdff0e222aa41b87253abf3b469342c5bbb87b0e5",
+      "operation": "recipes.material",
+      "state": "completed"
+    }
+  ],
+  "package_source_sha256": {
+    "NOTICE.txt": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223",
+    "README.md": "ac678cb209713698e6db924c5de1197a8083ee6bc42c92fbecf597150579d2a1",
+    "author-report.json": "b400fcedc569b0e8dbbbc8fa46694187dae2926630dde0be439f0bd2395e8422",
+    "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+    "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+    "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+    "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+    "model.json": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+    "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd",
+    "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+    "project.json": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887",
+    "recipe.json": "7d089b3fe85191e5dbb3c222899e8b9629f4889708a10b854c533b73b0796416",
+    "task.json": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+    "test_author_numerics.py": "d7331cd7a856353d055ed74cf0baf8ca1b8be0a0a6eb859b4a419e62948155f9",
+    "trainer.json": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+    "tuldok_extension_sdk/__init__.py": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+    "tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+  },
+  "prepared": {
+    "approval": null,
+    "catalog_path": "/workspace/tuldok-independent-b-host-corrected/catalog",
+    "graph_id": "81fe614648844e7ea270bd64644a4c30",
+    "material_sha256": "27746a7cb6f55ff99d9ef76ec95c9105cac116dc8fe636e4ee8b2740a4ff6b15",
+    "model": {
+      "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+      "id": "1ded7a9d6126478e88fb47a5a5d45b4e",
+      "kind": "model",
+      "revision": 1,
+      "sha256": "68a214f33520df86b2b49d605957d3ff04dd7e25fc397219035123a594ceabec"
+    },
+    "project_id": "0ddf5fd116d543eba2e79e6b0f2e00b1",
+    "project_roots": {
+      "b": "/workspace/Tuldok-b-host-corrected/examples/extensions/field-surrogate-b-independent/v1"
+    },
+    "recipe_id": "train",
+    "run_id": null,
+    "study_id": "5c5cf68953cd41f0bad66406509ccc86",
+    "trial": {
+      "format": "trial_v1",
+      "id": "f24800a3255c47019faf093a08b83480",
+      "material": {
+        "catalog_id": "cb665242df5b4264acd2c6e1a4f61da5",
+        "id": "27746a7cb6f55ff99d9ef76ec95c9105cac116dc8fe636e4ee8b2740a4ff6b15",
+        "kind": "recipe_material",
+        "sha256": "27746a7cb6f55ff99d9ef76ec95c9105cac116dc8fe636e4ee8b2740a4ff6b15"
+      },
+      "replicate": 0,
+      "study_id": "5c5cf68953cd41f0bad66406509ccc86"
+    }
+  },
+  "provider_resources": {
+    "output_bytes": 1048576,
+    "source_bytes": 131072,
+    "wall_seconds": 60
+  },
+  "recipe_resources": {
+    "max_output_bytes": 1048576,
+    "wall_seconds": 60
+  },
+  "resource_envelope": {
+    "admitted_wall_seconds": 197,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 5995022,
+    "retained_bytes": 4366405
+  },
+  "runtime_identity_disclosure": {
+    "composition_runtime_descriptor_sha256": "3f4063b43c40c9a233275d586697cc7250ac87f7403c8e77ea099800b1be419a",
+    "expected_digest_of_retained_full_cpu_descriptor": "3f4063b43c40c9a233275d586697cc7250ac87f7403c8e77ea099800b1be419a",
+    "portable_manifest_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "scope": "Distinct identities; no producer execution or grant. Earlier local review assertion incorrectly compared descriptor identity with portable manifest; no host/author change was needed."
+  },
+  "runtime_qualified": "captured and verified; producer not executed",
+  "scope": "Independent exact B host compatibility; no approval, admission or numerical execution",
+  "source_commit": "62a8dfbbbed34daf6a8e274a1614fbc09e708064",
+  "state": "host_compatibility_prepared_no_execution",
+  "study_limits": {
+    "admitted_wall_seconds": 2400,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 2147483648,
+    "retained_bytes": 1073741824
+  },
+  "target_identities": [
+    {
+      "field_id": "raw",
+      "payload_sha256": "a5af5ffd194e6779855ede80e0c58251819b66fcbfb347ff692d6ec02813e04e"
+    },
+    {
+      "field_id": "corrected",
+      "payload_sha256": "2a68eb7ff67202cac3b293694fd343db9a509bf2fdfe2829d7c420517fbf54a5"
+    }
+  ]
+}
