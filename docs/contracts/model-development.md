@@ -307,3 +307,22 @@ The authored RGB fixture qualifies the execution/evidence contract rather than
 classifier generalization. `test_candidate_packages.py` separately exercises
 real PostgreSQL publication-callback failure and rollback; its optional actual
 CPU case requires explicit qualification catalog/snapshot/output/runtime settings.
+
+The separate `Candidate package captured CPU` CI job provisions its supported
+Python/Torch CPU environment explicitly before running any qualification. After
+the actual model browser gate stops, `tests/prepare_candidate_runtime.py` runs in
+that environment and writes a closed RuntimeSnapshots config, the complete
+reviewable inventory, exact package versions/source hashes and `runtime.env`.
+The helper installs nothing and does not capture a snapshot. The existing
+`browser_candidate_package.cjs` passes that config and exact inventory SHA to
+`runtime_snapshots.py create --quiesced`, then exercises preparation, approval,
+charging, download and fresh inference through the ordinary UI.
+
+This fixture selects the qualified Torch/NumPy/Pillow inference subset and its
+upstream metadata/notices. It excludes the unused torchvision distribution,
+functorch native extension, Torch native tests/test data and optional tkinter
+extension. Those explicit exclusions precede inspection; an unsupported ELF or
+missing dependency fails the job instead of triggering further exclusions.
+It preserves the existing CPU profile, loader checks and rights disposition.
+Its locally measured manifest may differ on a separately provisioned CI host;
+each run freezes its own full inventory before ordinary capture and inference.
