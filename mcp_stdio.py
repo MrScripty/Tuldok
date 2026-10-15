@@ -175,7 +175,13 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
     import agent_api
 
     agent_api.validate_registry()
-    definitions = agent_api.tool_definitions()
+    definitions = (client.tool_definitions() if hasattr(client, 'tool_definitions')
+                   else agent_api.tool_definitions())
+    selected = client.selected_contracts() if hasattr(client, 'selected_contracts') else {}
+
+    def contract_version(name):
+        return selected.get(agent_api.operation(name)['operation_id'])
+
     profile = Profile(item['name'] for item in definitions)
     server = Server('tuldok', version='1')
     pending_observation = None
@@ -198,11 +204,11 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
         nonlocal pending_outcome, pending_status, pending_http_status
         pending_http_status = None
         try:
-            agent_api.validate_arguments(name, arguments)
+            agent_api.validate_arguments(name, arguments, contract_version(name))
             observe('dispatch', pending_observation)
             envelope = await anyio.to_thread.run_sync(client.call, name, arguments)
             pending_http_status = envelope.get('status') if isinstance(envelope, dict) else None
-            agent_api.validate_output(name, envelope)
+            agent_api.validate_output(name, envelope, contract_version(name))
             pending_outcome = ('permission-refusal' if envelope['status'] in (401, 403)
                                else 'domain-error' if envelope['status'] >= 400 else 'success')
         except agent_api.AgentAPIError as exc:
@@ -324,7 +330,8 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
                     if value.get('method') == 'tools/call':
                         params = value['params']
                         try:
-                            agent_api.validate_arguments(params['name'], params.get('arguments', {}))
+                            agent_api.validate_arguments(params['name'], params.get('arguments', {}),
+                                                         contract_version(params['name']))
                         except agent_api.AgentAPIError:
                             await write(error_response(value['id'], -32602, 'Invalid tool arguments'), observation=observation)
                             continue

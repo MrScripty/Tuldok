@@ -1,5 +1,19 @@
 # Extension-system execution ledger
 
+## 2026-10-15 — Lead integration with P1
+
+- Integration lead stacked E1 head eb681de with P1
+  4431f40f8c5a32276017476d7901b520ca101d79 for combined validation before merge.
+  The two app.py conflicts retain both authenticated capabilities/selected-body
+  guards and explicit owner-only project-snapshot routes/strict parsing.
+- Private PostgreSQL17.11 and exact hash-locked MCP1.30 environment: all24
+  extension cases and22 negotiation cases pass with zero skips. The latter
+  includes retained/upgraded HTTP/CLI/MCP matrices and the full8MiB segment.
+  This is integration evidence, not E2 numerical or E4 inference acceptance.
+- Updated PR64 is stacked on P1 PR66; no merge until the composed head passes CI.
+  SDK PR65 and E branches remain retained. Lead owns shared integration/merges;
+  extension worker owns isolated producer/runtime prerequisites and64/65CI.
+
 ## 2026-10-15 — Supplied native M0 draft (historical author record)
 
 - User requested an implementation plan and commit; this operation is documentation
@@ -120,6 +134,21 @@ started/accepted by creating this documentation.
 - E2/P1–P4 prerequisites and E4/P5 are still unaccepted; no fixture-only activation.
   Retain the branch/worktree protected for lead integration and dependent work.
 
+## 2026-10-15 — composed E1 CI corrections
+
+- P1 PR66 merged as8673509; PR64 now targets main. Retained the serial app.py
+  integration at7856add and imported only the worker-owned tests/fixtures from
+  SDK06d6744. SDK/producer branches and README draft67 remain separate.
+- Lifecycle CI exposed a shallow-history dependency in the actual old-reader
+  counterexample. The retained18396-byte Projects fixture is byte-identical to
+  f99182c source, SHAd147c6bae61068f5517fd15e3512311459cd4de3d6edfdd9ea984783470d432d;
+  the test asserts identity before executing the unchanged counterexample.
+- Catalog CI clicked a parser-created control before its real handlers bound.
+  The corrected browser witness deliberately pauses the initialization script,
+  proves the handler is absent, then awaits actual handlers before one user click.
+  It preserves all catalog/keyboard/reload/isolation assertions and retains failure
+  diagnostics. Local actual Chromium catalog passes at1440/390 and all9 real HTTP
+  tests pass0skip against PostgreSQL. Corrected-head CI remains a merge gate.
 ## Independent static SDK preparation — 2026-10-15
 
 - While P1–P4 acceptance is unavailable, user-authorized SDK preparation uses
@@ -133,3 +162,26 @@ started/accepted by creating this documentation.
   [Preparation evidence](reports/sdk-static-preparation.md) owns scope and limits.
 - This is not E3 A/B acceptance; E2/P1–P4 and E4/P5 gates stay blocked. Keep the
   stacked SDK and E1 branches/worktrees retained for lead integration/dependencies.
+
+## Resumed authorization and owned CI diagnosis
+
+- Parent reconfirmed full implementation authority at18:17UTC; earlier pause is
+  superseded while unrelated local work stays untouched. E1 all three CI jobs
+  pass at eb681de; lead still owns integration/all merges.
+- SDK static CI passed; catalog browser CI failed before a screenshot and its
+  signed log endpoint returns403. Requested actual stderr from lead; added
+  bounded phase/failure artifact capture without changing checks or timeouts.
+  Positive real browser and intentional pre-screenshot failure paths were
+  observed locally; independent review clear. Root cause remains unclaimed.
+- Independent CPU runtime/producer preparation proceeds separately on
+  `feat/extension-cpu-producer-preparation`; no E2/P1–P4 acceptance inferred.
+
+- GitHub connector logs later exposed a reachable initial lost-click race:
+  parser-created controls precede their workspace handlers. Added exact handler
+  readiness and a deterministic script-interception regression; all existing
+  real browser assertions/timeouts and the single click remain. Actual full
+  workflow passes; lead receives the owned test correction for E1 integration.
+- SDK full lifecycle exposed a shallow-checkout dependency in the pinned old-reader
+  witness. Replaced git-history lookup with an exact hash-checked historical host
+  fixture; same exec/counterexample assertions. Actual9HTTP and history-free copy
+  witness pass; independent exact-byte review clear. Shared workflow/checks unchanged.

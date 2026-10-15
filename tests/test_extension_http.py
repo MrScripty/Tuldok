@@ -1,6 +1,7 @@
 """Real disposable PostgreSQL and HTTP snapshot inspection; no executable runtime claims."""
 from auth_helpers import bind_owner
 import copy
+import hashlib
 from http.server import ThreadingHTTPServer
 import json
 import importlib.util
@@ -172,8 +173,9 @@ class ExtensionHTTPTests(unittest.TestCase):
         original = self.dataset.db.execute('SELECT document FROM workspace_projects WHERE id=%s', (self.value['id'],)).fetchone()[0]
         # Execute the pinned old Projects reader against the actual new saved row.
         # This is the documented silent-projection counterexample, not a refusal claim.
-        legacy_source = subprocess.check_output(['git','show','f99182c03da1e070081718ef6829eaeac3c82640:projects.py'],
-            cwd=Path(__file__).resolve().parents[1])
+        legacy_source = (FIXTURE.parent / 'legacy-projects-f99182c.py').read_bytes()
+        self.assertEqual(hashlib.sha256(legacy_source).hexdigest(),
+            'd147c6bae61068f5517fd15e3512311459cd4de3d6edfdd9ea984783470d432d')
         module = types.ModuleType('pinned_legacy_projects')
         exec(compile(legacy_source, 'pinned_legacy_projects.py', 'exec'), module.__dict__)
         legacy = module.Projects(self.dataset, {'fixture':self.external})
