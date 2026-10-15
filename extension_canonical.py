@@ -43,7 +43,12 @@ def validate_declaration(value, policy, definition):
         names.add(selected['input']); evidence.sha(selected['sha256'])
     outputs = {row['path']: row for row in definition['outputs']}
     output = evidence.name(value['derivation']['output'])
-    evidence.require(output in outputs and outputs[output]['required'], 'Canonical derivation must be retained as a required output.')
+    reserved = evidence.COMMON_FILES | {row[key] for row in policy['field_outputs'] for key in ('prediction', 'reference')}
+    reserved |= {field['artifact'] for row in policy['probe_inputs'] for field in row['fields']}
+    evidence.require(output not in reserved and output in outputs and outputs[output]['required'] and
+                     outputs[output]['role'] == 'field_derivation' and
+                     sum(row['role'] == 'field_derivation' for row in outputs.values()) == 1,
+                     'Canonical derivation needs one distinct required field_derivation output.')
     contract = field_evidence.validate_contract(value['contract'])
     evidence.require(contract['time_mode'] == 'standalone', 'Canonical initial mode requires standalone fields.', 'unsupported')
     members = value['members']

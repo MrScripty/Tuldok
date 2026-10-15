@@ -10,7 +10,8 @@ The additional `canonical` object has exactly:
 - `format: canonical_field_inputs_v1`;
 - `release: {input, sha256}` selecting one actual frozen Release;
 - `derivation: {input, sha256, output}` selecting the exact captured lossless
-  receipt and its separate required retained output;
+  receipt and its separate required retained output with unique role
+  `field_derivation`;
 - `provenance: {input, sha256}` selecting the exact author compilation policy;
 - `contract`, the existing `field_adapter_contract_v1` source contract;
 - ordered `members: [{case_id, record_id, revision, source_revision, split}]`;

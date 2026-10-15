@@ -34,7 +34,7 @@ class CanonicalPolicyTests(unittest.TestCase):
                 name = ('input-initial.npy' if row['field_id']=='initial' else 'reference.npy') if case['split']=='validation' else old
                 row['output']['name'] = name; self.outputs[name] = result['outputs'][old]
                 if name == old:self.definition['outputs'].append(dict(path=name, role='evidence', required=True, max_bytes=8192))
-        self.definition['outputs'].append(dict(path='canonical-derivation.json', role='evidence', required=True, max_bytes=65536))
+        self.definition['outputs'].append(dict(path='canonical-derivation.json', role='field_derivation', required=True, max_bytes=65536))
         release_sha, raw = next(iter(result['releases'].items()))
         self.derivation_raw = evidence.canonical(derivation); provenance_raw = evidence.canonical(result['receipt'])
         self.value = dict(format=canonical.FORMAT, release=dict(input='canonical',sha256=release_sha),
@@ -120,8 +120,10 @@ class CanonicalPolicyTests(unittest.TestCase):
             with self.subTest(outputs=outputs is not None),self.assertRaises(WorkbenchError):self.verify(outputs)
 
     def test_derivation_native_output_collision_and_impossible_total_refuse_before_runtime(self):
-        selected=self.value['derivation']['output'];self.value['derivation']['output']='reference.npy'
-        with self.assertRaises(WorkbenchError):self.verify()
+        selected=self.value['derivation']['output']
+        for filename in ('reference.npy','model-evidence.json','prediction-16.npy','input-initial.npy','checkpoint-16.json','weights-16.npy'):
+            self.value['derivation']['output']=filename
+            with self.subTest(filename=filename),self.assertRaises(WorkbenchError):self.verify()
         self.value['derivation']['output']=selected
         self.policy['profile']['limits']['total_output_bytes']=1
         with self.assertRaises(WorkbenchError):self.verify()
