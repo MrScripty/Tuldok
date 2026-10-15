@@ -63,7 +63,7 @@ class Contract:
                      reduction=reduction, population_sha256=population, domain=dict(minimum=0, maximum=maximum),
                      undefined_rule='not_applicable', evaluator_sha256=context['adapter_sha256'],
                      preprocessing_sha256=digest(self.adapter.TRANSFORM), class_order_sha256=digest(manifest['class_vocabulary']))
-                for key, direction, reduction, maximum in (('loss', 'minimize', 'mean_cross_entropy', 1e12),
+                for key, direction, reduction, maximum in (('loss', 'minimize', 'mean_sklearn_log_loss_float64_epsilon_clipping', 1e12),
                     ('accuracy', 'maximize', 'diagonal_over_population', 1),
                     ('macro_f1', 'maximize', 'macro_over_frozen_vocabulary_zero_division_0', 1))]
 
@@ -115,6 +115,8 @@ def validate_job_selection(job, adapter):
                      'selection_policy_sha256', 'output_policy_sha256'), 'Evidence context')
     if type(context['catalog_id']) is not str or not ID.fullmatch(context['catalog_id']):
         _invalid('One-fit catalog identity must be canonical.')
+    if context['catalog_id'] != job['dataset_id']:
+        _invalid('One-fit producer catalog differs from the admitted dataset.')
     for key in ('material_sha256', 'adapter_sha256', 'model_sha256', 'profile_sha256', 'selection_policy_sha256', 'output_policy_sha256'):
         _hash(context[key])
     task = context['task']
@@ -124,6 +126,8 @@ def validate_job_selection(job, adapter):
             or type(task['revision']) is not int or task['revision'] != 2):
         _invalid('One-fit task reference differs from the selected adapter.')
     _hash(task['sha256'])
+    if task != contract(adapter).task_ref(context['catalog_id']):
+        _invalid('One-fit task identity differs from the supported task definition.')
     return context
 
 
@@ -295,7 +299,7 @@ def verify_directory(directory, *, job, adapter, manifest, reference_keys, expec
     if not _same(actual, dict(run_id=job['run_id'], checkpoint_sha256=entry['checkpoint']['sha256'], probe_sha256=evidence['probe']['sha256'], rows=expected_rows)):
         _invalid('Frozen checkpoint reconstruction differs from retained probes.')
     metrics = read('metrics.json')
-    if metrics.get('clocks') != clocks or 'history' in metrics or 'best_epoch' in metrics:
+    if not _same(metrics.get('clocks'), clocks) or 'history' in metrics or 'best_epoch' in metrics:
         _invalid('One-fit metrics cannot publish an artificial training curve.')
     if not _same(evidence['observations'], [_ref(root / 'observations.json'), _ref(root / 'probes-fit-0001.json')]):
         _invalid('One-fit observations differ from retained bytes.')

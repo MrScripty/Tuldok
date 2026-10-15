@@ -32,6 +32,30 @@ class ContractIsolationTests(unittest.TestCase):
             self.assertEqual(owner.model_definition(parameters)['preprocessing_policy'], original)
             self.assertEqual(owner.OUTPUT_POLICY['class_order'], 'frozen_vocabulary')
 
+    def test_source_stat_oracle_matches_pinned_vectorizer_frequency_cap(self):
+        documents = [' '.join('token' + str(index) for index in range(150)),
+                     ' '.join('token' + str(index) for index in range(75, 200))]
+        vectorizer = text_training._vectorizer(64)
+        vectorizer.fit_transform(documents)
+        model = dict(parameters=dict(max_features=64, alpha=1), vocabulary={key:int(value) for key,value in vectorizer.vocabulary_.items()},
+                     idf=vectorizer.idf_.tolist())
+        text_training._verify_fit_statistics(model, documents)
+        import numpy as np
+        model['idf'][0] = float(np.nextafter(model['idf'][0], np.inf))
+        with self.assertRaises(text_training.TrainingError):
+            text_training._verify_fit_statistics(model, documents)
+
+    def test_source_stat_oracle_matches_near_constant_population_scaling(self):
+        import numpy as np
+        from sklearn.preprocessing import StandardScaler
+        features = np.array([[.5 + row*1e-16, 0, row*.01, .1, .2, .3, .4, .5] for row in range(4)])
+        scaler = StandardScaler().fit(features)
+        model = dict(mean=scaler.mean_.tolist(), scale=scaler.scale_.tolist())
+        audio_training._verify_fit_statistics(model, features)
+        model['mean'][0] = float(np.nextafter(model['mean'][0], np.inf))
+        with self.assertRaises(audio_training.TrainingError):
+            audio_training._verify_fit_statistics(model, features)
+
 
 class OneFitChecks:
     def produce(self, version=2):
@@ -176,6 +200,13 @@ class OneFitChecks:
         with self.assertRaisesRegex(self.training.TrainingError, 'blob differs'):
             self.verify()
         self.write('model-evidence.json', original_manifest)
+        original_metrics = self.read('metrics.json')
+        invalid_metrics = copy.deepcopy(original_metrics)
+        invalid_metrics['clocks']['fit_pass'] = True
+        self.write('metrics.json', invalid_metrics)
+        with self.assertRaisesRegex(self.training.TrainingError, 'artificial training curve'):
+            self.verify()
+        self.write('metrics.json', original_metrics)
         saved = self.read('model.json')
         if self.training is text_training:
             saved['feature_log_prob'][0][0] -= .1
@@ -200,6 +231,56 @@ class OneFitChecks:
         with self.assertRaises(self.training.TrainingError) as caught:
             self.training._checked_job(bad)
         self.assertEqual(caught.exception.outcome, 'unsupported')
+        for changes in ('catalog', 'task'):
+            bad = copy.deepcopy(self.job)
+            if changes == 'catalog':
+                bad['evidence']['catalog_id'] = '0'*32
+                bad['evidence']['task']['catalog_id'] = '0'*32
+            else:
+                bad['evidence']['task']['sha256'] = '0'*64
+            with self.subTest(changes=changes), self.assertRaises(self.training.TrainingError) as caught:
+                self.training._checked_job(bad)
+            self.assertEqual(caught.exception.outcome, 'invalid')
+
+    def test_initial_worker_verifier_rejects_self_consistent_wrong_fit_statistics(self):
+        self.produce()
+        saved = self.read('model.json')
+        if self.training is text_training:
+            saved['idf'][0] += .01
+        else:
+            saved['mean'][0] += .01
+        self.write('model.json', saved)
+        # Rebuild all evidence from the altered state and its new predictions.
+        # This leaves fit-member IDs honest while falsifying their statistics.
+        manifest, inputs = self.frozen()
+        if self.training is text_training:
+            scores = self.training.predict_model(saved, inputs)
+        else:
+            import numpy as np
+            scores = np.array(self.training.predict_features(saved, inputs))
+        from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss
+        sources = [row for row in manifest['records'] if row['split'] == 'validation']
+        truth = [row['class_index'] for row in sources]
+        predicted = scores.argmax(axis=1)
+        labels = list(range(len(saved['class_vocabulary'])))
+        validation = dict(split='validation', examples=len(sources), loss=float(log_loss(truth, scores, labels=labels)),
+                accuracy=float(accuracy_score(truth, predicted)), macro_f1=float(f1_score(truth, predicted, labels=labels, average='macro', zero_division=0)),
+                confusion_matrix=confusion_matrix(truth, predicted, labels=labels).tolist())
+        rows = [dict(truth_index=row['class_index'], predicted_index=int(index), probabilities=probability.tolist())
+                for row, index, probability in zip(sources, predicted, scores, strict=True)]
+        metrics = self.read('metrics.json')
+        metrics['validation'] = validation
+        self.write('metrics.json', metrics)
+        for name in evidence.CAPTURE_NAMES:
+            (self.output / name).unlink()
+        evidence.capture(self.output, job=self.job, adapter=self.training.ADAPTER, manifest=manifest,
+                         reference_keys=self.training.REFERENCE_KEYS, saved=saved, inputs=inputs, validation=validation, rows=rows, clocks=metrics['clocks'])
+        # Plain reconstruction/cross-file checks succeed: only source-owned
+        # numerical verification of the declared training population rejects it.
+        evidence.verify_directory(self.output, job=self.job, adapter=self.training.ADAPTER, manifest=manifest,
+                                  reference_keys=self.training.REFERENCE_KEYS, expected_inputs=inputs)
+        with self.assertRaisesRegex(self.training.TrainingError, 'training-only statistics'):
+            self.verify()
 
 
 class TextEvidenceTests(OneFitChecks, TextCase):

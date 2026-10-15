@@ -17,8 +17,8 @@ artifacts. Readiness is scoped to these task/runtime contracts.
 
 | Actual task | Checkpoints | Validation probes | Retained bytes | CPU peak RSS | Qualification elapsed | Independent inference maximum error |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Text | 1 | 5 | 28,346 | 117,960,704 bytes | 20.72 seconds | 0 |
-| Audio | 1 | 5 | 32,412 | 124,571,648 bytes | 19.18 seconds | 1.11e-16 |
+| Text | 1 | 5 | 28,346 | 118,145,024 bytes | 35.74 seconds | 0 |
+| Audio | 1 | 5 | 32,604 | 127,709,184 bytes | 35.31 seconds | 1.39e-17 |
 
 Each driver cold-reopened the catalog and compared its evidence, then copied
 only `model.json`, validation inputs and the independent test oracle into a
@@ -28,7 +28,7 @@ frozen inference; it does not promise a general inference package or transfer
 training-data distribution rights. Source fixture, source generator when
 applicable, oracle and actual adapter/runtime identities are retained.
 
-Focused evidence includes 11 one-fit producer/contract tests, 7 generic field
+Focused evidence includes 15 one-fit producer/contract tests, 7 generic field
 contract tests, 2 real HTTP Study/Run tests and the image model-evidence
 regression suite. Existing text/audio suites also passed (14/13 tests). Graph
 contract 3 adds the new recipe variants; exact prior contract-2 hashes and
@@ -49,3 +49,12 @@ UI qualification and the optional scientific integration are coordinated by
 their separate owners. This report claims the text/audio authenticated
 HTTP/Study/Run and cold-inference path, not their browser workflow, optional
 physics, generic packaging or public redistribution.
+
+Independent review reproduced a self-consistent wrong-fit snapshot that the
+initial reconstruction-only check accepted. The worker verifier now recomputes
+train-only text vocabulary/IDF and audio mean/population scale from exact source
+inputs, without fitting another classifier. Bit-exact checks use the pinned
+numerical primitives, including vocabulary frequency ties and near-constant
+scaler features. Rebuilt wrong-stat snapshots, boolean clocks, non-integer Blob
+lengths and singleton boolean field shapes are rejected. The one-fit loss
+definition explicitly names sklearn float64-epsilon probability clipping.

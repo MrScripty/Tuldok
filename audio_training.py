@@ -305,11 +305,28 @@ def verify_evidence(directory, job):
         raise TrainingError('unsupported', 'Historical one-fit results have no model evidence snapshot.')
     from one_fit_evidence import verify_directory
     manifest, raw = _read_release(job['release_path'], job['release_sha256'])
+    from model_evidence import read_document
+    saved = validate_model(read_document(Path(directory), 'model.json'))
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         inputs = [extract_features(archive.read(row['asset']), row['start_frame'], row['end_frame'], row['channel'])
                   for row in manifest['records'] if row['split'] == 'validation']
+        train_inputs = [extract_features(archive.read(row['asset']), row['start_frame'], row['end_frame'], row['channel'])
+                        for row in manifest['records'] if row['split'] == 'train']
+    _verify_fit_statistics(saved, train_inputs)
     return verify_directory(directory, job=job, adapter=ADAPTER, manifest=manifest,
                             reference_keys=REFERENCE_KEYS, expected_inputs=inputs)
+
+
+def _verify_fit_statistics(model, features):
+    """Use the pinned scaler's numerical primitives, never another fit call."""
+    import numpy as np
+    from sklearn.preprocessing._data import _is_constant_feature
+    from sklearn.utils.extmath import _incremental_mean_and_var
+    mean, variance, count = _incremental_mean_and_var(np.array(features), np.zeros(8), np.zeros(8), np.zeros(8, dtype=np.int64))
+    scale = np.sqrt(variance)
+    scale[_is_constant_feature(variance, mean, count)] = 1
+    if not np.array_equal(model['mean'], mean) or not np.array_equal(model['scale'], scale):
+        raise TrainingError('failed', 'Frozen audio scaling differs from exact training-only statistics.')
 
 
 

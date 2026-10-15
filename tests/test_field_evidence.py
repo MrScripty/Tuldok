@@ -3,6 +3,7 @@ import copy
 import hashlib
 import io
 import json
+import struct
 import unittest
 import zipfile
 
@@ -142,3 +143,13 @@ class FieldEvidenceTests(unittest.TestCase):
         invalid = dict(pair, frame=0)
         with self.assertRaisesRegex(WorkbenchError, 'fields differ'):
             evidence.validate_pair(invalid, contract, self.outputs)
+        from qualify_scientific_fields import npy_payload
+        raw = npy_payload(struct.pack('<d', 1), '<f8', [1, 1, 1])
+        singleton_contract = copy.deepcopy(contract)
+        singleton_contract['output']['shape_zyx'] = [1, 1, 1]
+        singleton = dict(pair, geometry=dict(pair['geometry'], shape_xyz=[1, 1, 1]), shape_zyx=[1, 1, 1],
+                         prediction=blob('one.npy', raw), reference=blob('one.npy', raw))
+        evidence.validate_pair(singleton, singleton_contract, {'one.npy': raw})
+        invalid = dict(singleton, shape_zyx=[True, True, True])
+        with self.assertRaisesRegex(WorkbenchError, 'exact positive'):
+            evidence.validate_pair(invalid, singleton_contract, {'one.npy': raw})

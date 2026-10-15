@@ -68,7 +68,11 @@ confers no private-data export right. No new dependency is selected.
 ## Verification and limits
 
 Both adapters expose `verify_evidence(directory, job)` and `--verify-evidence`:
-reopen the exact frozen release and reconstruct from JSON. Runs launches this
+reopen the exact frozen release, recompute train-only vocabulary/IDF or
+mean/population scale and reconstruct from JSON. The verifier uses pinned
+numerical primitives without another classifier fit; statistics must match
+exactly, including feature-cap tie ordering and near-constant scale policy.
+Runs launches this
 only in a supervised captured-source CPU subprocess before publication.
 `one_fit_evidence.verify` supplies inert publication/query checks of identities,
 membership, arrays and independently tallied metrics; it imports no numerical
