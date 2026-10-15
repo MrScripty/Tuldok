@@ -971,3 +971,11 @@ draft for inspection, human review and freeze. Native bytes, loaded-library
 identity and the original custody receipt are retained. Initial support is Jacobi
 generation at grids 8–32 and one or two frames; this is not training, GPU or
 general physics acceptance. Generic projects and Data work without the adapter.
+
+## Training evaluation research
+
+[Evaluating and visually understanding model training runs](docs/research/training-evaluation/README.md)
+is a principles-first educational research chapter covering held-out evidence,
+checkpoint diagnostics, truthful visualization, and scientific surrogate evaluation.
+It includes an original-source bibliography and three authored SVG illustrations;
+its numerical examples are teaching illustrations rather than measured training results.
