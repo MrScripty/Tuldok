@@ -267,7 +267,7 @@ class Runs:
             result = {key: copy.deepcopy(run[key]) for key in keys}
             if 'approval_material_sha256' in run:result['approval_material_sha256']=run['approval_material_sha256']
             association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
-            result['study_membership']=dict(association) if association is not None else None
+            if association is not None:result['study_membership']=dict(association)
             result['artifacts'] = [dict(item, locked=False,
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
@@ -275,7 +275,8 @@ class Runs:
                   'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
         association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
-        result['study_membership']=dict(association) if association is not None else None
+        if association is not None or run['graph'].get('recipe')==image_training.MODEL_RECIPE:
+            result['study_membership']=dict(association) if association is not None else None
         result['test_exposure'] = {'exposed': bool(run['exposure_events']), 'event_count': len(run['exposure_events'])}
         result['current_test_exposure'] = ({'exposed': False, 'events': []} if self._validation_run(run)
                                            else self.pipelines.exposures(run['source_records']))
