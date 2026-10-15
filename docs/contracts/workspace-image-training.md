@@ -203,13 +203,15 @@ preparation refuses changed source, model policies or runtime. The resolved
 `tinycnn_epoch_full_validation_v1` profile captures each admitted epoch, retains
 the selected state within the existing snapshot budget and ranks the complete
 validation membership using `sha256_rank_v1`, seed0 independent of training seed.
-No test example is a probe. The largest five-epoch inventory is30 files including
+No test example is a probe. The largest five-epoch inventory is31 files including
 the outer manifest, within the32-file/64MiB result profile.
 
 V2 automatically emits the D2 `model_evidence_v1` envelope, fixed probe manifest,
 checkpoint index, exact `checkpoint_state_v1` descriptors, fitted-transform
 manifest, metric definitions, scalar observations and each epoch's weights and
-probe predictions. A descriptor hashes the run/model/weights/transform/actual
+probe predictions. One bounded full-validation raw-logit shard retains all epochs;
+the evaluator reconstructs cross entropy with stable logsumexp, including valid
+zero probabilities caused by float32 softmax underflow. A descriptor hashes the run/model/weights/transform/actual
 clock binding; equal weight bytes at distinct clocks remain distinct checkpoints.
 Optimizer updates are counted at the actual `optimizer.step()` call; epoch,
 physical time and wall elapsed time keep their separate meanings. Transform

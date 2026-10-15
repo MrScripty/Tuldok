@@ -1843,10 +1843,6 @@ class Runs:
             if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
                 raise WorkbenchError('Artifact changed during read.', 'unavailable', 409)
             return raw, item['media_type']
-        if name not in PAYLOADS | release_validation.PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
-            raise WorkbenchError('Unknown run artifact.', 'unavailable', 404)
-        with self.lock:
-            run = self._load(run_id)
         if name not in self._payloads(run) | {'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown artifact for this recipe.', 'unavailable', 404)
         if name == 'release.zip':
