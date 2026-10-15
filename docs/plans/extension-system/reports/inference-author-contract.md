@@ -53,12 +53,16 @@ Preserve the old source/Run/capture and do not append this file to its evidence.
 P5 owns the versioned package/profile validation and ordinary fresh verification
 recipe; no generic executable hook or shared owner change is supplied here.
 
-Study candidate selection also currently requires a retained metrics.json artifact.
-The initial A evidence variant supplies D2 observations and authoritative metric
-hashes; it does not yet supply that metrics artifact. That author-owned addition
-and exact semantic binding must be frozen before a candidate/package Run; no
-host-generated metric or arbitrary diagnostic substitute is authorized by this
-source preparation. B's explicit author source and checkpoint format are pending.
+The integration lead's disposition (PR76 comment6203429002) preserves the frozen
+A producer/recipe. A narrow Experiment evaluation-artifact helper binds explicit
+external model-evidence candidates to the actual model-evidence.json publication
+manifest. Historical classifier candidates retain their exact metrics.json hash
+and semantics. Do not add metrics.json or rewrite A merely for candidate selection.
+The P5 scientific profile preserves that exact evaluation descriptor. This helper
+does not place affine_inference.py in the historical source closure: its separate
+explicit declaration/new Model/full capture-grant-Run and actual fresh consumer
+requirements above remain mandatory. B's author source and checkpoint format are
+still pending.
 
 Rights remain private authored QA/unknown redistribution. The package must retain
 NOTICE and exact per-material rights without asserting a permissive license.
