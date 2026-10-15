@@ -285,6 +285,12 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - name: Qualify automatic classifier evidence and independent CPU reconstruction
+        run: python tests/qualify_model_development.py --task image --fixture tests/fixtures/model_development --output build/qa/model-development-cpu
+      - name: Exercise finite model development through the real browser
+        run: node tests/browser_model_development.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:

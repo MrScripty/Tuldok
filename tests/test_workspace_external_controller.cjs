@@ -126,6 +126,7 @@ function fixture(){
     const window={workspaceEscape:String,TuldokAuth:auth,addEventListener:(name,fn)=>(listeners[name]||=[]).push(fn)};
     const context={window,TuldokAuth:auth,history:{state:{},replaceState(){}},structuredClone,crypto,clearTimeout,setTimeout,document:{activeElement:null},CSS:{escape:String}};
     vm.runInNewContext(source,context);context.WorkspaceExternal=window.WorkspaceExternal;
+    vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-service.js'),'utf8'),context);context.WorkspaceModel=window.WorkspaceModel;
     vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-real.js'),'utf8'),context);
     const workspace=window.WorkspaceReal({pipelineRoot,runsRoot,announce(){}}),loading=workspace.show('runs');await requested.promise;
     if(change==='view')await workspace.show(null);
