@@ -78,6 +78,8 @@ def validate_pair(value, contract, blobs):
     _require(contract['time_mode'] == 'standalone', 'A standalone pair cannot represent a trajectory.', 'unsupported')
     _exact(value, ('geometry', 'dtype', 'shape_zyx', 'centering', 'stage', 'units', 'gauge_policy_sha256', 'prediction', 'reference', 'mask'), 'Pressure pair')
     output = contract['output']
+    shape = value['shape_zyx']
+    _require(type(shape) is list and len(shape) == 3 and all(type(n) is int and 1 <= n <= 129 for n in shape), 'Pair shape must contain exact positive ZYX integers.')
     _require(value['mask'] is None, 'Masked pressure pairs require a separately qualified domain contract.', 'unsupported')
     fields.grid_contract(value['geometry'])
     for name in ('dtype', 'shape_zyx', 'centering', 'stage', 'units', 'gauge_policy_sha256'):

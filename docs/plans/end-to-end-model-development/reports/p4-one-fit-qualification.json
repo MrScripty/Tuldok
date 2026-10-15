@@ -8,7 +8,7 @@
       "fit_pass": 1,
       "optimizer_update": null,
       "physical_time": null,
-      "wall_elapsed_ms": 2402
+      "wall_elapsed_ms": 2787
     },
     "cold_reopen": true,
     "fabricated_curve": false,
@@ -66,56 +66,6 @@
       {
         "operation": "studies.admit",
         "status": 201,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
         "version": 1
       },
       {
@@ -220,17 +170,17 @@
       }
     ],
     "independent_fixed_inference": true,
-    "independent_maximum_error": 1.1102230246251565e-16,
+    "independent_maximum_error": 1.3877787807814457e-17,
     "independent_oracle_sha256": "5e7e550b2c549794e354d0e6e44d938d6d554f370d5212f7ee545b9cd3809cec",
     "limitations": [
       "Authored fixtures qualify evidence plumbing, not generalization.",
       "UI qualification is separate.",
       "No generic inference-package claim; scientific physical qualification is separate."
     ],
-    "peak_rss_bytes": 124571648,
+    "peak_rss_bytes": 127709184,
     "probe_members": 5,
-    "retained_bytes": 32412,
-    "run_id": "57b1f91f81a3415b84f84be916fc96ec",
+    "retained_bytes": 32604,
+    "run_id": "3ddffde93a1c4cd1977b254303a5692a",
     "runtime": {
       "Pillow": "12.3.0",
       "device": "cpu",
@@ -242,10 +192,10 @@
     },
     "source_fixture_sha256": "59477c7a0549fa9670bd3e028a089d1e90de39512a687287d2c1a7721fda4912",
     "source_generator_sha256": "39af3d407b76cc64625e838d78f6e55208bd0f55f6f36ecba3167a7f1b786dd5",
-    "study_id": "978e0db5be3949ae986a586e914d6594",
+    "study_id": "ec4f81184df34da985169a1329dd9d03",
     "task": "audio",
-    "trial_id": "6abf521ca485467c87eaf9bb85e1a086",
-    "wall_elapsed_seconds": 19.181094923000273
+    "trial_id": "f8d880f6452b456c81ad430b13d749e4",
+    "wall_elapsed_seconds": 35.30766827399975
   },
   "text": {
     "actual_http_study": true,
@@ -256,7 +206,7 @@
       "fit_pass": 1,
       "optimizer_update": null,
       "physical_time": null,
-      "wall_elapsed_ms": 2183
+      "wall_elapsed_ms": 1763
     },
     "cold_reopen": true,
     "fabricated_curve": false,
@@ -314,56 +264,6 @@
       {
         "operation": "studies.admit",
         "status": 201,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
-        "version": 1
-      },
-      {
-        "operation": "runs.get",
-        "status": 200,
         "version": 1
       },
       {
@@ -500,10 +400,10 @@
       "UI qualification is separate.",
       "No generic inference-package claim; scientific physical qualification is separate."
     ],
-    "peak_rss_bytes": 117960704,
+    "peak_rss_bytes": 118145024,
     "probe_members": 5,
     "retained_bytes": 28346,
-    "run_id": "40ae9347be464ca98ff693c6812f3257",
+    "run_id": "e0ba2d0d80eb492ea9bd32da49b71880",
     "runtime": {
       "Pillow": "12.3.0",
       "device": "cpu",
@@ -515,9 +415,9 @@
     },
     "source_fixture_sha256": "d172e9bd15e0d5c3da71724993d0c18328469f2b93ec585aebc2631644b668d9",
     "source_generator_sha256": null,
-    "study_id": "7e5d04a9d3634581893d8a7e696f1cd4",
+    "study_id": "70f6c7cd99c54b7eaa9f7af8c1aa140f",
     "task": "text",
-    "trial_id": "f0fd3599fcff4348aa6f1d7c486a5c4f",
-    "wall_elapsed_seconds": 20.718865628999993
+    "trial_id": "8fa867de7b394bf180fb1044ecb0104a",
+    "wall_elapsed_seconds": 35.744713655000396
   }
 }

@@ -272,10 +272,38 @@ def verify_evidence(directory, job):
         raise TrainingError('unsupported', 'Historical one-fit results have no model evidence snapshot.')
     from one_fit_evidence import verify_directory
     manifest = inspect_release(job['release_path'], job['release_sha256'])
+    from model_evidence import read_document
+    saved = validate_model(read_document(Path(directory), 'model.json'))
+    _verify_fit_statistics(saved, [row['text'] for row in manifest['records'] if row['split'] == 'train'])
     manifest = dict(manifest, records=[dict(row, content_sha256=row['content_hash']) for row in manifest['records']])
     inputs = [row['text'] for row in manifest['records'] if row['split'] == 'validation']
     return verify_directory(directory, job=job, adapter=ADAPTER, manifest=manifest,
                             reference_keys=REFERENCE_KEYS, expected_inputs=inputs)
+
+
+def _verify_fit_statistics(model, texts):
+    """Recompute train-only counts and IDF without fitting another estimator."""
+    from collections import Counter
+    import numpy as np
+    analyzer = _vectorizer(model['parameters']['max_features']).build_analyzer()
+    documents = [Counter(analyzer(text)) for text in texts]
+    frequency = Counter()
+    for document in documents:
+        frequency.update(document)
+    terms = sorted(frequency)
+    limit = model['parameters']['max_features']
+    # Match the pinned vectorizer's lexically sorted columns and NumPy tie
+    # ordering for its frequency cap, rather than selecting held-out features.
+    if len(terms) > limit:
+        indices = (-np.array([frequency[term] for term in terms], dtype=np.int64)).argsort()[:limit]
+        terms = sorted(terms[int(index)] for index in indices)
+    vocabulary = {term: index for index, term in enumerate(terms)}
+    frequency = np.array([1 + sum(term in document for document in documents) for term in terms], dtype=np.float64)
+    expected_idf = np.full_like(frequency, 1 + len(documents)) / frequency
+    np.log(expected_idf, out=expected_idf)
+    expected_idf += 1
+    if model['vocabulary'] != vocabulary or not np.array_equal(model['idf'], expected_idf):
+        raise TrainingError('failed', 'Frozen text vocabulary/IDF differ from exact training-only statistics.')
 
 
 def train(job):
