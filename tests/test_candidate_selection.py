@@ -92,6 +92,31 @@ class ActualCandidateSelectionTests(unittest.TestCase):
                 self.dataset.studies.save(self.study_id, {'revision': study['revision'],
                     'name': study['name'], 'limits': study['limits'], 'policy': self.default_policy})
 
+    def test_actual_checkpoint_segments_preserve_whole_bytes_and_holdout_guard(self):
+        import hashlib
+        import base64
+        with self.owner.bound(self.dataset):
+            run = self.dataset.runs.get(self.run_id)
+            evidence = self.dataset.runs.model_evidence(self.run_id)
+            checkpoint = evidence['checkpoint_index']['entries'][0]['checkpoint']['sha256']
+            selected = self.dataset.runs.model_evidence(self.run_id, {'checkpoint_sha256': checkpoint})
+            weights = selected['checkpoint']['weights']
+            contents = bytearray()
+            while len(contents) < weights['bytes']:
+                part = self.dataset.runs.artifact_segment(self.run_id, weights['name'],
+                    {'expected_sha256': weights['sha256'], 'offset': len(contents), 'max_bytes': 4096})
+                contents.extend(base64.b64decode(part['data_base64']))
+                self.assertEqual(part['next_offset'], len(contents))
+            self.assertEqual(hashlib.sha256(contents).hexdigest(), weights['sha256'])
+            test = next(item for item in run['artifacts'] if item['name'] == 'predictions-test.json')
+            with self.assertRaises(WorkbenchError) as refused:
+                self.dataset.runs.artifact_segment(self.run_id, test['name'],
+                    {'expected_sha256': test['sha256'], 'offset': 0, 'max_bytes': 4096})
+            self.assertEqual(refused.exception.code, 'conflict')
+            with self.assertRaises(WorkbenchError):
+                self.dataset.runs.artifact_segment(self.run_id, weights['name'],
+                    {'expected_sha256': '0' * 64, 'offset': 0, 'max_bytes': 4096})
+
     def test_exact_checkpoint_comparison_crosses_selected_http_v2(self):
         with self.owner.bound(self.dataset):
             run=self.dataset.runs.get(self.run_id)

@@ -192,3 +192,10 @@ Incompatible or side-by-side comparisons return no paired difference. The earlie
 version1 comparison remains the explicitly narrow selected-result summary.
 `model_evidence` supplies authoritative `metric_definition_hashes` so interfaces
 can select exact definitions without implementing canonical hashing.
+
+Qualified model-aware classifier publications support the existing bounded
+artifact-segment transport for agent downloads of retained fitted state. Each
+call checks current authority, the exact published inventory and test exposure;
+the client verifies the complete downloaded SHA256 before publishing a file.
+The original standalone classifier recipes retain their previous transport
+contract. This does not grant test access or promise training resumption.

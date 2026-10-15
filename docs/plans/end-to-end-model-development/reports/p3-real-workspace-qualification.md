@@ -31,3 +31,20 @@ Native controls, keyboard epoch selection/correction/start and 1440/390 viewport
 - Separate actual backend qualification05: two checkpoints/four probes; 74,995 retained bytes, 428,109,824 peak RSS bytes, 100.932 seconds. Cold reopen and a second corrected Run passed. Independent Torch/PIL inference compared raw logits and exact checkpoint/weights identities without importing producer modules. Receipt `/tmp/tuldok-model-p3-qa-05/receipt.json`, oracle `/tmp/tuldok-model-p3-qa-05/independent-inference.json`.
 
 Package controls and fresh-consumer qualification are a separate P5 commit/report. This P3 commit neither claims a package is complete nor marks fresh inference verified.
+
+## Actual agent evidence and fitted-state download
+
+An additional cold retained-model check found that the original segment transport
+refused built-in checkpoint weights. The qualified-adapter inventory path now
+retains current authorization, holdout, whole-hash, file and directory identity
+guards; legacy standalone recipes retain their previous transport behavior.
+The actual two-epoch segment/holdout/hash case passed in28.120s. Independent
+review plus seven existing HTTP/client/CLI safety regressions passed in7.204s.
+
+[Agent receipt](examples/p3-real-agent-receipt.json) binds the composed source
+head and actual previously trained Run. A real inspect-only credential obtained
+identical selected-checkpoint evidence through CLI and the official MCP SDK;
+CLI downloaded and independently verified the whole weights hash. Revoking the
+credential refused a subsequent evidence call in the same MCP session. Private
+credential/config files were removed. This check performed no new training and
+makes no numerical-quality claim.

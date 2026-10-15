@@ -1,0 +1,129 @@
+{
+  "source_commit": "c04c0d00453665675ed81b077befa7a9c5e97a2f",
+  "dirty": true,
+  "command": "node tests/browser_candidate_package.cjs",
+  "source_sha256": {
+    "static/workspace-service.js": "9dd0aa246f885ed4beb40b9f4c4745747df8346d18550b50211346fa1bff0b5b",
+    "static/workspace-real.js": "3253849345d72c4d4e153288942e02c8f0c891c0b85ae3e2491c5a4f7924db91",
+    "static/workspaces.css": "efbb74af1712236a769ced2f9e330ac542999b28b27476ce260af0cc78f43b76",
+    "candidate_packages.py": "12e0909560b9fce0fcc35c6309dbfb5ccef7c4851f094ee1dc45f5504715fae3",
+    "tests/browser_candidate_package.cjs": "2adcdff00b7fa92808512872da3ab7d4bb075dc74ee0e69388e648b7129e2eb3"
+  },
+  "dark_checks": [
+    {
+      "width": 1440,
+      "dark": true,
+      "focus": "",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(158, 198, 255)",
+      "text": "rgb(229, 237, 248)",
+      "background": "rgb(21, 30, 45)",
+      "textContrast": 14.178348680001829,
+      "focusContrast": 9.538488818859296
+    },
+    {
+      "width": 390,
+      "dark": true,
+      "focus": "",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "outlineColor": "rgb(158, 198, 255)",
+      "text": "rgb(229, 237, 248)",
+      "background": "rgb(21, 30, 45)",
+      "textContrast": 14.178348680001829,
+      "focusContrast": 9.538488818859296
+    }
+  ],
+  "catalog_path": "/tmp/tuldok-model-development-qsct8b/data",
+  "source_model_receipt": "/workspace/Tuldok-ui/build/qa/model-development/run-DXcFpG/receipt.json",
+  "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots",
+    "Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic"
+  ],
+  "captures": [
+    {
+      "file": "package-prepared-package-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "package-prepared-package-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "package-complete-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "package-complete-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "package-prepared-verifier-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "package-prepared-verifier-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "fresh-verified-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "fresh-verified-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "fresh-dark-verified-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    },
+    {
+      "file": "fresh-dark-verified-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+      "quality": 85
+    }
+  ],
+  "source_run_id": "595df887aac94ee886e2d96eb7ec2dbb",
+  "package_run_id": "510939d356b147b2a91d653fbd85e7a0",
+  "verification_run_id": "9cc6562a86b84e4c8da87360fe38ff0a",
+  "package_sha256": "b6cf3ebc1260de9b0e00ea932773b141698c7e8231502e83441f2a2375a57abe",
+  "charged": {
+    "admitted_wall_seconds": 1214,
+    "attempt_slots": 3,
+    "peak_staging_bytes": 230405395,
+    "retained_bytes": 117859496
+  },
+  "quality_claim": false
+}
