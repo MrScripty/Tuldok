@@ -33,7 +33,7 @@ class CanonicalPolicyTests(unittest.TestCase):
                 old = row['output']['name']
                 name = ('input-initial.npy' if row['field_id']=='initial' else 'reference.npy') if case['split']=='validation' else old
                 row['output']['name'] = name; self.outputs[name] = result['outputs'][old]
-                if name == old:self.definition['outputs'].append(dict(path=name, role='evidence', required=True, max_bytes=8192))
+                if name == old:self.definition['outputs'].append(dict(path=name, role='field_source', required=True, max_bytes=8192))
         self.definition['outputs'].append(dict(path='canonical-derivation.json', role='field_derivation', required=True, max_bytes=65536))
         release_sha, raw = next(iter(result['releases'].items()))
         self.derivation_raw = evidence.canonical(derivation); provenance_raw = evidence.canonical(result['receipt'])
@@ -51,6 +51,16 @@ class CanonicalPolicyTests(unittest.TestCase):
             derivation=dict(measured_sha256=self.value['derivation']['sha256']),provenance=dict(measured_sha256=self.value['provenance']['sha256'])))
         self.captured = {'input/canonical':raw,'input/derivation':self.derivation_raw,'input/provenance':provenance_raw}
         self.outputs['canonical-derivation.json'] = self.derivation_raw
+        for rule in self.definition['outputs']:
+            filename=rule['path']
+            if filename in self.outputs and filename.endswith('.npy'):rule['role']='field_source'
+            elif filename.startswith('prediction-'):rule['role']='field_prediction'
+            elif filename.startswith('checkpoint-'):rule['role']='model_checkpoint'
+            elif filename.startswith('weights-') or filename=='transform.npy':rule['role']='model_state'
+        # Clearly synthetic descriptor-role witnesses; source arrays/Release above are actual.
+        self.outputs['checkpoints.json']=evidence.canonical(dict(entries=[dict(checkpoint=dict(name=f'checkpoint-{point}.json')) for point in (16,32,48,64)]))
+        for point in (16,32,48,64):self.outputs[f'checkpoint-{point}.json']=evidence.canonical(dict(weights=dict(name=f'weights-{point}.npy')))
+        self.outputs['fitted-transform.json']=evidence.canonical(dict(state=dict(name='transform.npy')))
 
     def verify(self, outputs=None):
         return canonical.validate_captured(self.value,self.policy,self.definition,self.material,self.captured,outputs=outputs)
@@ -127,3 +137,26 @@ class CanonicalPolicyTests(unittest.TestCase):
         self.value['derivation']['output']=selected
         self.policy['profile']['limits']['total_output_bytes']=1
         with self.assertRaises(WorkbenchError):self.verify()
+
+    def test_rehashed_train_and_validation_source_cannot_be_relabelled_as_prediction(self):
+        for case_id in ('train-0','validation-0'):
+            definition=copy.deepcopy(self.definition);policy=copy.deepcopy(self.policy);value=policy['canonical']
+            material=copy.deepcopy(self.material);captured=dict(self.captured);outputs=dict(self.outputs)
+            derivation=evidence.decode(captured['input/derivation'])
+            case=next(case for case in derivation['cases'] if case['id']==case_id)
+            row=next(row for row in case['arrays'] if row['field_id']=='reference');old=row['output']['name']
+            row['output']['name']='prediction-16.npy';outputs['prediction-16.npy']=outputs[old]
+            if case_id=='validation-0':
+                for binding in policy['field_outputs']:binding['reference']='prediction-16.npy'
+            raw=evidence.canonical(derivation);captured['input/derivation']=raw;outputs['canonical-derivation.json']=raw
+            value['derivation']['sha256']=hashlib.sha256(raw).hexdigest();material['inputs']['derivation']['measured_sha256']=value['derivation']['sha256']
+            for supplied in (None,outputs):
+                with self.subTest(case_id=case_id,post=supplied is not None),self.assertRaises(WorkbenchError):
+                    canonical.validate_captured(value,policy,definition,material,captured,outputs=supplied)
+
+    def test_native_source_cannot_serve_checkpoint_weights_transform_or_common_evidence(self):
+        for source_name in ('train-0-reference.npy','reference.npy'):
+            for target,document in [('checkpoint-16.json',dict(weights=dict(name=source_name))),
+                                    ('fitted-transform.json',dict(state=dict(name=source_name)))]:
+                outputs=dict(self.outputs);outputs[target]=evidence.canonical(document)
+                with self.subTest(source=source_name,target=target),self.assertRaises(WorkbenchError):self.verify(outputs)

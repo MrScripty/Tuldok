@@ -16,6 +16,11 @@ import scientific_fields
 
 FORMAT = 'canonical_field_inputs_v1'
 POLICY_FORMAT = 'extension_field_policy_v2'
+SOURCE_ROLE = 'field_source'
+PREDICTION_ROLE = 'field_prediction'
+CHECKPOINT_ROLE = 'model_checkpoint'
+STATE_ROLE = 'model_state'
+OUTPUT_ROLES = {SOURCE_ROLE, PREDICTION_ROLE, CHECKPOINT_ROLE, STATE_ROLE, 'model_context', 'model_evidence', 'field_derivation'}
 MEMBER_KEYS = ('case_id', 'record_id', 'revision', 'source_revision', 'split')
 
 
@@ -42,6 +47,17 @@ def validate_declaration(value, policy, definition):
                          selected['input'] not in names, 'Canonical input names must be distinct declared inputs.')
         names.add(selected['input']); evidence.sha(selected['sha256'])
     outputs = {row['path']: row for row in definition['outputs']}
+    evidence.require(all(row['role'] in OUTPUT_ROLES for row in outputs.values()), 'Canonical output role is unsupported.', 'unsupported')
+    for filename in evidence.COMMON_FILES:
+        evidence.require(filename in outputs and outputs[filename]['role'] == ('model_context' if filename == 'execution-context.json' else 'model_evidence'),
+                         'Canonical common evidence output role differs.')
+    for row in policy['field_outputs']:
+        evidence.require(outputs.get(row['prediction'], {}).get('role') == PREDICTION_ROLE and
+                         outputs.get(row['reference'], {}).get('role') == SOURCE_ROLE,
+                         'Canonical prediction/reference roles must be distinct.')
+    for row in policy['probe_inputs']:
+        evidence.require(all(outputs.get(item['artifact'], {}).get('role') == SOURCE_ROLE for item in row['fields']),
+                         'Canonical probe input must have the source role.')
     output = evidence.name(value['derivation']['output'])
     reserved = evidence.COMMON_FILES | {row[key] for row in policy['field_outputs'] for key in ('prediction', 'reference')}
     reserved |= {field['artifact'] for row in policy['probe_inputs'] for field in row['fields']}
@@ -180,11 +196,14 @@ def validate_captured(value, policy, definition, material, captured, *, outputs=
                 arrays = {item['field']: item for item in row['manifest']['frames'][case['frame']]['arrays']}
                 for item in case['arrays']:
                     filename = evidence.name(item['output']['name'])
-                    evidence.require(filename not in used and filename != value['derivation']['output'] and filename not in evidence.COMMON_FILES and filename in output_rules and output_rules[filename]['required'],
+                    evidence.require(filename not in used and filename != value['derivation']['output'] and filename not in evidence.COMMON_FILES and
+                                     filename in output_rules and output_rules[filename]['required'] and output_rules[filename]['role'] == SOURCE_ROLE,
                                      'Canonical native output is repeated or not required.')
                     used.add(filename)
                     evidence.require(item['output']['bytes'] <= output_rules[filename]['max_bytes'], 'Canonical native output exceeds its declared bound.')
                     if outputs is None: inventory[filename] = bundle.read(arrays[item['field_id']]['path'])
+    evidence.require(used == {filename for filename, rule in output_rules.items() if rule['role'] == SOURCE_ROLE},
+                     'Canonical complete native source role inventory differs.')
     lower_bound = len(derivation_raw) + sum(len(inventory[filename]) for filename in used)
     evidence.require(lower_bound <= definition['resources']['max_output_bytes'] and
                      lower_bound <= policy['profile']['limits']['total_output_bytes'], 'Canonical proof cannot fit admitted aggregate output bound.')
@@ -204,8 +223,30 @@ def validate_captured(value, policy, definition, material, captured, *, outputs=
                          all(row['reference'] == target['output']['name'] for row in policy['field_outputs'] if row['member_id'] == case_id),
                          'Canonical validation input/target bindings differ from retained model probe fields.')
     if outputs is not None:
+        validate_output_roles(policy, definition, outputs)
         evidence.require(outputs.get(value['derivation']['output']) == derivation_raw,
                          'Retained derivation differs from exact admitted input.', 'unavailable')
     return dict(format=FORMAT, release_sha256=release['sha256'], derivation_sha256=value['derivation']['sha256'],
                 provenance_sha256=value['provenance']['sha256'], members=copy.deepcopy(value['members']),
                 source_contract_sha256=field_evidence.digest(value['contract']))
+
+
+@evidence.boundary
+def validate_output_roles(policy, definition, outputs):
+    """Repeat purpose separation using authoritative post-decoder JSON bytes."""
+    rules = {row['path']: row for row in definition['outputs']}
+    def role(filename, expected):
+        evidence.require(rules.get(filename, {}).get('role') == expected,
+                         'Canonical checkpoint/state/source/prediction output roles collide.')
+    index = evidence.decode(outputs['checkpoints.json'])
+    evidence.require(type(index['entries']) is list and index['entries'], 'Canonical checkpoint role inventory is missing.')
+    descriptors = set()
+    for entry in index['entries']:
+        filename = entry['checkpoint']['name']; role(filename, CHECKPOINT_ROLE); descriptors.add(filename)
+        descriptor = evidence.decode(outputs[filename]); role(descriptor['weights']['name'], STATE_ROLE)
+    evidence.require(descriptors == {filename for filename, rule in rules.items() if rule['role'] == CHECKPOINT_ROLE},
+                     'Canonical complete checkpoint role inventory differs.')
+    transform = evidence.decode(outputs['fitted-transform.json']); role(transform['state']['name'], STATE_ROLE)
+    for field in policy['field_outputs']:
+        role(field['prediction'], PREDICTION_ROLE); role(field['reference'], SOURCE_ROLE)
+    return True

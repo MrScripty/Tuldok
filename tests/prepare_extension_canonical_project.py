@@ -62,6 +62,15 @@ def prepare(result, destination, *, runtime_sha256=RUNTIME_SHA):
             row['output']['name']=name;native[name]=result['outputs'][original_name]
             if case['split']=='train':recipe['outputs'].append(dict(path=name,role='model_evidence',max_bytes=8192,required=True))
     recipe['outputs'].append(dict(path='canonical-derivation.json',role='field_derivation',max_bytes=65536,required=True))
+    prediction_names={row['prediction'] for row in policy['field_outputs']}
+    points=[policy['profile']['capture']['interval']*step for step in range(1,policy['profile']['capture']['max_snapshots']+1)]
+    checkpoint_names={f'checkpoint-{point}.json' for point in points}
+    state_names={'transform.npy'} | {f'weights-{point}.npy' for point in points}
+    for rule in recipe['outputs']:
+        if rule['path'] in native:rule['role']='field_source'
+        elif rule['path'] in prediction_names:rule['role']='field_prediction'
+        elif rule['path'] in checkpoint_names:rule['role']='model_checkpoint'
+        elif rule['path'] in state_names:rule['role']='model_state'
     derivation_raw=write('canonical-derivation.json',derivation)
     provenance_raw=write('canonical-source.json',result['receipt'])
     (destination/'canonical-release.zip').write_bytes(release_raw)

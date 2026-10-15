@@ -53,3 +53,29 @@ The helper has not yet been wired into shared recipe/Model/Pipeline/Runs owners.
 Its PostgreSQL tests use actual new import/review/freeze owners and leave zero
 producer Run rows. This is source/identity contract evidence, not canonical E2
 execution, SDK admission, physical quality or full product acceptance.
+
+## Disjoint source and model output purposes
+
+The new canonical mode also assigns finite recipe output roles. Native source
+NPYs use `field_source`; model predictions use `field_prediction`; checkpoint
+JSON uses `model_checkpoint`; opaque weights/transform state use `model_state`;
+the separate exact derivation uses `field_derivation`. Existing common JSON
+keeps `model_evidence` and the context keeps `model_context`. These are required
+purpose declarations only for this explicit new input mode; old recipes keep
+their original roles and bytes.
+
+The complete derivation native names must equal the recipe's source-role names.
+Policy prediction/reference/probe bindings must agree with their roles, and no
+source can become a prediction by renaming/re-hashing the receipt. After the
+normal decoder has verified the closed authoritative payload inventory, the
+helper additionally checks checkpoint descriptor/state and transform-state
+references against their declared distinct roles. No source-native proof can
+also serve opaque model state, checkpoint JSON or common evidence. This uses
+policy/recipe roles and generic D2 references, with no A filename convention.
+
+The shared schema3 `field_targets` repair is independently owned by p2. A
+canonical common-policy parser must preserve that explicit bound-only key while
+checking the additional canonical declaration; never project it away to force
+old authored grammar. Its composite target identity must remain distinct from
+the old schema2 direct payload identity. The canonical author compiler will
+align to the accepted schema3 map before new material capture.
