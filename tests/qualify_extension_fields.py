@@ -63,6 +63,7 @@ def main(args):
         'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'oracle_sha256':ORACLE_SHA,'fixture_sha256':FIXTURE_SHA,'checks':[],
+        'catalog_path':str(args.catalog.resolve()),'project_roots':{'extension-a':str(project)},
         'expected_runtime_snapshot_sha256':expected_runtime,
         'project_runtime_nomination':{'template':str(package),'recipe_sha256':hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest(),
             'runtime':recipe['runtime'],'runtime_snapshot_sha256':recipe['runtime_snapshot_sha256'],
@@ -341,8 +342,91 @@ def qualify_retained_negatives(args):
         dataset.close()
 
 
+def qualify_public_fields(args):
+    """Inspect a real retained Run through selected HTTP and production agent CLI."""
+    original=json.loads(args.existing_receipt.read_bytes());output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
+    dataset=Dataset(args.catalog.resolve(),project_roots={'extension-a':args.project.resolve()})
+    owner=dataset.access.exchange(dataset.access._local_owner_token(require_existing=True));credential=None
+    headers=[];base=make_handler(dataset)
+    class ObservedHandler(base):
+        def do_POST(self):
+            headers.append({'path':self.path,'selection':self.headers.get(agent_api.CONTRACT_HEADER)})
+            return super().do_POST()
+    server=ThreadingHTTPServer(('127.0.0.1',0),ObservedHandler)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();endpoint=f'http://127.0.0.1:{server.server_port}'
+    sequence=0
+    def save(name,value):
+        path=output/name;path.write_text(json.dumps(value,indent=2,allow_nan=False)+'\n');return path
+    def private(name,value):
+        path=output/name;fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+        with os.fdopen(fd,'w') as handle:handle.write(value)
+        return path
+    def query(body,version=2,expected=200):
+        nonlocal sequence
+        request=Request(endpoint+f'/api/workspace/runs/{original["run_id"]}/model-evidence',method='POST',data=agent_api.encoded(body),
+            headers={'Authorization':'Bearer '+owner['token'],'Content-Type':'application/json',
+                     agent_api.CONTRACT_HEADER:agent_api.selected_header('runs.model_evidence',version)})
+        try:
+            with urlopen(request,timeout=60) as response:status=response.status;value=json.loads(response.read())
+        except HTTPError as error:status=error.code;value=json.loads(error.read())
+        require(status==expected,'Unexpected selected field HTTP'+str(status)+': '+str(value)[:1000])
+        agent_api.validate_output('runs.model_evidence',{'status':status,'result':value},version)
+        sequence+=1;save(f'owner-{sequence:02d}-v{version}.json',{'body':body,'status':status,'result':value});return value
+    try:
+        with dataset.access.bind(owner['token']):
+            run=dataset.runs.get(original['run_id']);before=dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0]
+            credential=dataset.access.issue({'label':'Read-only actual field contract2 co-test','scopes':['inspect']})
+        token=private('token.private',credential['token'])
+        config=private('config.private',json.dumps({'endpoint':endpoint,'catalog_id':original['catalog_id'],'token_file':str(token)}))
+        def cli(body):
+            nonlocal sequence
+            sequence+=1;path=save(f'agent-{sequence:02d}-arguments.json',dict(body,run_id=run['id']))
+            result=subprocess.run([sys.executable,str(ROOT/'project_cli.py'),'--config',str(config),'call',
+                '--operation','runs.model_evidence','--arguments',str(path)],capture_output=True,text=True,timeout=120)
+            require(credential['token'] not in result.stdout+result.stderr,'Agent credential disclosure')
+            require(result.returncode==0,'Actual agent field call refused: '+result.stderr[:1000])
+            value=json.loads(result.stdout);save(f'agent-{sequence:02d}-result.json',value);return value
+        require(query({},1)['state']=='unsupported','Classifier v1 meaning changed for external evidence')
+        public=query({});require(public['state']=='verified' and cli({})==public,'Index HTTP/agent parity differs')
+        requests=[]
+        for entry in public['checkpoint_index']['entries']:
+            for field in public['fields']:
+                if field['checkpoint_sha256']!=entry['checkpoint']['sha256']:continue
+                for axis in ('x','y','z'):
+                    body={'checkpoint_sha256':entry['checkpoint']['sha256'],'member_ordinal':field['member_ordinal'],
+                        'field_id':field['field_id'],'axis':axis,'index':field['shape_zyx']['zyx'.index(axis)]-1,'split':'validation'}
+                    current=query(body);require(cli(body)==current,'Exact selected field HTTP/agent parity differs')
+                    require(current['field']['checkpoint_sha256']==body['checkpoint_sha256'] and current['field']['axis']==axis,
+                            'Wrong field context replaced selection')
+                    requests.append(body)
+        query({'split':'test'},expected=400)
+        query(dict(requests[0],checkpoint_sha256='f'*64),expected=409)
+        query(dict(requests[0],run_id='f'*32),expected=409)
+        with dataset.access.bind(owner['token']):
+            require(dataset.runs.get(run['id'])==run,'Read-only field inspection changed the Run')
+            require(dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0]==before,'Field inspection admitted a Run')
+        require(all(row['path'].endswith('/model-evidence') for row in headers),'Unexpected mutation route')
+        require(sum(row['selection']==agent_api.selected_header('runs.model_evidence',2) for row in headers)>=2*len(requests),
+                'Production agent did not actually select contract2')
+        receipt={'state':'passed','scope':'Actual selected HTTP and production read-only agent contract2 parity on retained A; no producer replay',
+            'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+            'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'run_id':run['id'],
+            'catalog_id':original['catalog_id'],'contract2_sha256':agent_api.contract('runs.model_evidence',2)['sha256'],
+            'exact_requests':requests,'request_headers':headers,'run_count_before':before,'run_count_after':before,
+            'v1_state':'unsupported','selected_test_state':'400 invalid','wrong_checkpoint_state':'409 stale',
+            'physical_acceptance':'not_established','canonical_release_derivation':'unsupported in authored-only mode'}
+        save('receipt.json',receipt);print('PASS actual selected HTTP/agent field parity',output,flush=True)
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=5)
+        with dataset.access.bind(owner['token']):
+            if credential is not None:dataset.access.revoke(credential['identity']['credential_id'])
+            dataset.access.logout()
+        dataset.close()
+
+
 def argument_parser():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--public-only',action='store_true',help='Co-test selected HTTP and agent fields for an existing real receipt; never admit')
     parser.add_argument('--existing-receipt',type=Path,help='Run only retained fault negatives against a prior real qualification receipt')
     parser.add_argument('--project',type=Path)
     parser.add_argument('--require-public-fields',action='store_true')
@@ -357,5 +441,5 @@ if __name__=='__main__':
     parser=argument_parser();arguments=parser.parse_args()
     if arguments.existing_receipt is not None:
         if arguments.project is None:parser.error('--existing-receipt requires --project')
-        qualify_retained_negatives(arguments)
+        (qualify_public_fields if arguments.public_only else qualify_retained_negatives)(arguments)
     else:main(arguments)
