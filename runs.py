@@ -136,15 +136,23 @@ class Runs:
                         or identity.get('request_sha256') != run['request_sha256']
                         or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
                     raise ValueError('Invalid external custodian identity.')
-                if 'approval_material_sha256' in run:
-                    approved=run['approval_material_sha256']
+                association=self.db.execute('SELECT t.material_sha256,r.actor_id,r.request_sha256 FROM model_attempt_reservations r '
+                                            'JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',
+                                            (run['id'],)).fetchone()
+                # A retained Study association owns this requirement: removing
+                # the JSON marker must not downgrade its Run to legacy custody.
+                if association is not None or 'approval_material_sha256' in run:
+                    approved=run.get('approval_material_sha256')
                     if type(approved) is not str or not re.fullmatch('[a-f0-9]{64}',approved):
                         raise ValueError('Invalid composed approval identity.')
-                    grant=self.db.execute('SELECT material_sha256 FROM access_execution_grants WHERE id=%s',(run['approval_id'],)).fetchone()
-                    if grant is None or grant[0]!=approved:raise ValueError('Composed approval differs from its retained grant.')
-                    association=self.db.execute('SELECT t.material_sha256,r.actor_id,r.request_sha256 FROM model_attempt_reservations r '
-                                                'JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',
-                                                (run['id'],)).fetchone()
+                    grant=self.db.execute('SELECT g.material_sha256,g.consumer_actor_id,g.catalog_id,'
+                                          'c.run_id,c.admission_id,c.request_sha256 FROM access_execution_grants g '
+                                          'JOIN access_execution_consumptions c ON c.grant_id=g.id WHERE g.id=%s',
+                                          (run['approval_id'],)).fetchone()
+                    if (grant is None or grant['material_sha256']!=approved or grant['consumer_actor_id']!=run['actor_id'] or
+                            grant['catalog_id']!=self.db.dataset_id or grant['run_id']!=run['id'] or
+                            grant['admission_id']!=run['admission_id'] or grant['request_sha256']!=run['request_sha256']):
+                        raise ValueError('Composed approval differs from its retained consumption.')
                     if (association is None or association['material_sha256']!=approved or association['actor_id']!=run['actor_id'] or
                             association['request_sha256']!=run['request_sha256']):
                         raise ValueError('Composed approval differs from its retained study association.')
