@@ -93,7 +93,7 @@ def _json(value, depth=0, budget=None):
 
 def canonical(value):
     _json(value)
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode()
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()
 
 
 def digest(value):

@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "0ddf5fd116d543eba2e79e6b0f2e00b1",
+  "name": "Independent author B scalar Study",
+  "data": [
+    {
+      "id": "fixture",
+      "label": "B authored source and binary boundary fixture",
+      "path": "fixture.json",
+      "sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "train",
+      "label": "B source and boundary evidence",
+      "path": "recipe.json",
+      "sha256": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e"
+    }
+  ],
+  "evidence": [],
+  "requirements": [],
+  "extensions": [
+    {
+      "id": "independent-b",
+      "label": "Independent B five contribution package",
+      "path": "extension.json",
+      "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
+    }
+  ]
+}

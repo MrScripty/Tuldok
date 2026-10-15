@@ -160,7 +160,7 @@ window.workspaceEscape = (value) =>
       $("context").textContent =
         `fixture-dataset-v1 · ${selected.size} selected · ${draftDirty ? "unsaved fixture draft" : "authored CC0 examples"} · release fixture-release-v1`;
     else if (source.startsWith("project:"))
-      $("context").textContent = projects.label() + " · inspection only · external references";
+      $("context").textContent = projects.label() + " · saved project references";
     else
       $("context").textContent = catalogContext
         ? `${catalogContext.selection.length} exact revisions selected · ${catalogContext.record?.name || "No active record"} · ${catalogContext.dirty ? "unsaved edits" : "saved state"}${real.identity() ? " · catalog " + real.identity().slice(0, 12) : " · current catalog handle"}`
@@ -325,7 +325,7 @@ window.workspaceEscape = (value) =>
     projects.show(source, next);
     if (next === "runs" && source === "fixtures") runs?.render();
     if (source.startsWith("project:"))
-      announce("Project inspection · " + next + ". Execution is unsupported.");
+      announce("Project references · " + next + ". Opening a project does not execute a recipe.");
     else if (next !== "data" && source === "catalog")
       announce("Current catalog · real " + next + ". Source edits remain mounted in Data.");
     else

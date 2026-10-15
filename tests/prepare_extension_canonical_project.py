@@ -114,7 +114,8 @@ def prepare(result, destination, *, runtime_sha256=RUNTIME_SHA):
     for kind,doc in docs.items():
         raw=write(kind+'.json',doc);extension_contract.declaration(raw,'contribution')
         contributions.append(dict(id=doc['id'],version=doc['version'],kind=kind,path=kind+'.json',sha256=sha(raw),bytes=len(raw)))
-    author_sources=['producer.py','cold_oracle.py','authored-source.json','tuldok_extension_sdk/evidence.py','tuldok_extension_sdk/__init__.py']
+    author_sources=['producer.py','cold_oracle.py','authored-source.json','tuldok_extension_sdk/evidence.py','tuldok_extension_sdk/__init__.py',
+                    'infer.py','inference-contract.json']
     source_refs=[dict(path=name,sha256=sha((destination/name).read_bytes()),bytes=(destination/name).stat().st_size) for name in author_sources]
     extension=json.loads((ORIGINAL/'extension.json').read_bytes())
     extension.update(package=dict(id='example.scalar-a',version='3.0.0'),label='Private QA canonical scalar A with captured SDK',

@@ -320,6 +320,9 @@ class BoundExtensionRecipeTests(unittest.TestCase):
         shutil.copytree(package,self.project)
         self.recipe=json.loads((self.project/'recipe.json').read_bytes())
         self.recipe.update(schema_version=3,format=recipe_contract.BOUND_EVIDENCE_FORMAT)
+        self.direct_targets={item['frozen_reference']['member_id']:item['target_sha256']
+                             for item in self.recipe['model_evidence']['probe']['candidates']}
+        self.target_payloads={}
         self.recipe['model_evidence']['model_specification']['configuration']={'width':2}
         model={'format':'tuldok_contribution_v1','id':'example.scalar-a:model','version':'2.0.0',
             'kind':'model','label':'Inert bound model','requires':[],
@@ -369,6 +372,20 @@ class BoundExtensionRecipeTests(unittest.TestCase):
         self.dataset.projects.open_snapshot({'root':'fixture','manifest_path':'project.json'})
 
     def write_project(self):
+        import recipe_contract
+        policy=self.recipe['model_evidence']
+        if recipe_contract.is_bound_evidence(self.recipe):
+            policy['field_targets']=[]
+            for member in policy['probe']['candidates']:
+                member_id=member['frozen_reference']['member_id'];identity=[]
+                for field in policy['fields']:
+                    payload=self.target_payloads.get((member_id,field['id']),self.direct_targets[member_id])
+                    policy['field_targets'].append({'member_id':member_id,'field_id':field['id'],'payload_sha256':payload})
+                    identity.append({'field_id':field['id'],'payload_sha256':payload})
+                member['target_sha256']=recipe_contract.digest(identity)
+        else:
+            policy.pop('field_targets',None)
+            for member in policy['probe']['candidates']:member['target_sha256']=self.direct_targets[member['frozen_reference']['member_id']]
         raw=json.dumps(self.extension,sort_keys=True,separators=(',',':')).encode()
         (self.project/'provider.json').write_bytes(raw)
         self.manifest['extensions']=[{'id':'selected','label':'Selected','path':'provider.json','sha256':digest(raw)}]
@@ -575,6 +592,60 @@ class BoundExtensionRecipeTests(unittest.TestCase):
         self.assertIn('agent_api.py',expected)
         self.assertIn('extension_bindings.py',expected)
         self.assertNotEqual(expected,recipe_contract.host_identity(evidence=True))
+
+    def test_bound_fields_pin_distinct_targets_and_complete_ordered_mapping(self):
+        import struct
+        import extension_evidence
+        from test_extension_field_evidence import npy
+        task=self.definitions['task'];output=copy.deepcopy(next(p for p in task['ports'] if p['direction']=='output'))
+        output['id']='corrected';task['ports'].append(output)
+        task['stages'].append({'id':'corrected_stage','version':'1.0.0','inputs':['prediction'],
+            'outputs':['corrected'],'clock':'optimizer_update','failure_policy':'fail'})
+        for role,directions in [('model',('input','output')),('trainer',('input','target','output')),('evaluator',('target','output'))]:
+            self.definitions[role]['ports']=[copy.deepcopy(port) for port in task['ports'] if port['direction'] in directions]
+        self.definitions['trainer']['stages']=copy.deepcopy(task['stages'])
+        policy=self.recipe['model_evidence'];policy['task']['definition']=task
+        corrected=copy.deepcopy(policy['fields'][0]);corrected['id']='corrected'
+        corrected['contract']['output'].update(field_id='corrected',stage='corrected_stage');policy['fields'].append(corrected)
+        outputs={item['path']:item for item in self.recipe['outputs']}
+        for item in list(policy['field_outputs']):
+            other=copy.deepcopy(item);other.update(field_id='corrected',prediction='corrected-'+item['prediction'],reference='corrected-reference.npy')
+            policy['field_outputs'].append(other)
+            declared=copy.deepcopy(outputs[item['prediction']]);declared['path']=other['prediction'];self.recipe['outputs'].append(declared)
+        declared=copy.deepcopy(outputs['reference.npy']);declared['path']='corrected-reference.npy';self.recipe['outputs'].append(declared)
+        fixture=json.loads((self.project/'fixture.json').read_bytes());member_id=policy['probe']['candidates'][0]['frozen_reference']['member_id']
+        original=next(row for row in fixture['cases'] if row['id']==member_id)['target']
+        changed=[value+1 for value in original]
+        self.target_payloads[(member_id,'corrected')]=digest(struct.pack('<'+'d'*len(changed),*changed))
+        self._rebind_definitions();inspected=self.inspect(2)
+        draft=self.models.create(self.body());published=self.models.publish(draft['id'],{'revision':1})
+        self.assertEqual(self.models.material(published['ref'],verify=True),published)
+        policy=inspected['definition']['model_evidence'];member=policy['probe']['candidates'][0]
+        raw=npy(original,[4,4,4]);different=npy(changed,[4,4,4])
+        first=extension_evidence.verify_target_payload(self.recipe,policy,member,policy['fields'][0],raw)
+        second=extension_evidence.verify_target_payload(self.recipe,policy,member,policy['fields'][1],different)
+        self.assertNotEqual(first,second)
+        self.assertNotEqual(member['target_sha256'],first)
+        for field,payload in ((policy['fields'][0],different),(policy['fields'][1],raw)):
+            with self.assertRaises(WorkbenchError):extension_evidence.verify_target_payload(self.recipe,policy,member,field,payload)
+        mutations=[lambda p:p['field_targets'].pop(),lambda p:p['field_targets'].reverse(),
+                   lambda p:p['field_targets'][0].update(field_id='unknown'),
+                   lambda p:p['field_targets'][0].update(extra=True),
+                   lambda p:p['probe']['candidates'][0].update(target_sha256=first)]
+        for mutate in mutations:
+            invalid=copy.deepcopy(policy);mutate(invalid)
+            with self.subTest(mutate=mutate),self.assertRaises(WorkbenchError):extension_evidence.validate_policy(invalid,self.recipe)
+
+    def test_legacy_policy_keeps_direct_target_payload_and_refuses_bound_mapping(self):
+        import extension_evidence
+        from test_extension_field_evidence import npy
+        root=Path(__file__).resolve().parents[1]/'examples/extensions/field-surrogate/v2'
+        definition=json.loads((root/'recipe.json').read_bytes());policy=definition['model_evidence']
+        member=policy['probe']['candidates'][0];fixture=json.loads((root/'fixture.json').read_bytes())
+        values=next(row for row in fixture['cases'] if row['id']==member['frozen_reference']['member_id'])['target']
+        self.assertEqual(extension_evidence.verify_target_payload(definition,policy,member,policy['fields'][0],npy(values,[4,4,4])),member['target_sha256'])
+        changed=copy.deepcopy(policy);changed['field_targets']=[]
+        with self.assertRaises(WorkbenchError):extension_evidence.validate_policy(changed,definition)
 
     @unittest.skipUnless(os.environ.get('TULDOK_BOUND_RUNTIME_CATALOG') and os.environ.get('TULDOK_BOUND_RUNTIME_DESCRIPTOR'),
                          'Requires an isolated preprovisioned actual CPU runtime catalog and descriptor')

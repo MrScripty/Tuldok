@@ -425,12 +425,19 @@ class Runs:
         import recipe_contract
         return run.get('execution_kind')=='external_recipe' and recipe_contract.is_evidence(recipe)
 
-    def _extension_context(self,run):
+    def _extension_context(self,run, *, with_captured_inputs=False):
         """Rederive the exact admitted context; never authorize from its copy."""
         import extension_evidence
         composition=self._approved_composition(run.get('approval_material_sha256'),run['graph'],run['material_sha256'])
-        static=self.pipelines._retained_extension_static(composition)
-        return extension_evidence.validate_context(run.get('extension_context'),run,composition,static)
+        retained=self.pipelines._retained_extension_static(composition,with_captured_inputs=with_captured_inputs)
+        static,captured=retained if with_captured_inputs else (retained,None)
+        context=extension_evidence.validate_context(run.get('extension_context'),run,composition,static)
+        return (context,captured) if with_captured_inputs else context
+
+    def _verify_extension(self,directory,run):
+        import extension_evidence
+        context,captured=self._extension_context(run,with_captured_inputs=True)
+        return extension_evidence.verify(directory,run,context,captured=captured)
 
     @authorized('inspect', 'runs.lookup_external_receipt')
     def lookup_external_receipt(self, request_key, request_hash):
@@ -778,7 +785,7 @@ class Runs:
             import extension_evidence
             from candidate_packages import authorize_material_inputs
             authorize_material_inputs(self,run['material'])
-            extension_evidence.verify(destination,dict(run,artifacts=artifacts),self._extension_context(run))
+            self._verify_extension(destination,dict(run,artifacts=artifacts))
         receipt_raw = encode(receipt).encode()
         manifest = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
                     'request_sha256': run['request_sha256'], 'custody_receipt_sha256': hashlib.sha256(receipt_raw).hexdigest(),
@@ -936,7 +943,7 @@ class Runs:
                 # All download/segment/capture/summary accessors share this
                 # structural gate and current transitive input authorization.
                 for item in run['artifacts']:self._copy_verified(descriptor,item['name'],item)
-                extension_evidence.verify(directory,run,self._extension_context(run))
+                self._verify_extension(directory,run)
             return run['artifacts']
         except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
             raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
@@ -1984,7 +1991,7 @@ class Runs:
                 closed(body,(),('checkpoint_sha256',))
                 return {'state':'unsupported','reason':'Scientific field evidence requires its explicit selected query contract.'}
             import extension_evidence
-            return extension_evidence.query(extension_evidence.verify(self.path/run_id,run,self._extension_context(run)),body)
+            return extension_evidence.query(self._verify_extension(self.path/run_id,run),body)
         if contract_version==2:
             closed(body,(),('checkpoint_sha256','split'))
             if body.get('split','validation')!='validation':
