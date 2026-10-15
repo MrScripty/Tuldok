@@ -206,3 +206,14 @@ Response errors without a legacy code map to `http_error`; malformed/non-string/
 secret-bearing code fields are transport failures. HTTP output objects posing as
 success (`200` with only an error body) fail the operation output schema. Raw
 tracebacks or arbitrary response formats are not accepted as authoritative errors.
+
+## Optional interface observations
+
+HTTP, CLI and MCP boundary observations remain operator opt-in and separate from
+operation contracts and required transactional audit. New boundaries require an
+explicit fresh private v2 store; existing MCP v1 stores are preserved. No headers,
+operation arguments, schemas or domain results gain telemetry requirements.
+The [shared observation contract](mcp-observer.md#shared-interface-observation-v2)
+owns the closed projection, independent health reader, private retention and
+actual delivery semantics. Passive records cannot establish a domain commit,
+Run completion, client receipt or permission to retry.
