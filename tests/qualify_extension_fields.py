@@ -34,6 +34,16 @@ def require(value,reason):
     if not value:raise RuntimeError(reason)
 
 
+def retained_roots(receipt,project):
+    require(not receipt.get('canonical_release_sha256') or 'project_roots' in receipt,
+        'Canonical qualification requires its retained complete project root map')
+    roots=receipt.get('project_roots',{'extension-a':str(project.resolve())})
+    require(type(roots) is dict and roots.get('extension-a')==str(project.resolve()) and
+        all(type(key) is str and type(value) is str and Path(value).is_absolute() for key,value in roots.items()),
+        'Retained qualification requires its exact complete project root map')
+    return roots
+
+
 def qualification_inputs(args):
     package=getattr(args,'project_template',ROOT/'examples/extensions/field-surrogate/v2').resolve()
     expected=getattr(args,'expected_runtime_sha256',RUNTIME_SHA)
@@ -230,7 +240,7 @@ def qualify_retained_negatives(args):
     base=args.existing_receipt.resolve().parent
     original=json.loads(args.existing_receipt.read_bytes())
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
-    dataset=Dataset(args.catalog.resolve(),project_roots={'extension-a':args.project.resolve()})
+    dataset=Dataset(args.catalog.resolve(),project_roots=retained_roots(original,args.project))
     owner=dataset.access.exchange(dataset.access._local_owner_token(require_existing=True))
     server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(dataset))
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
@@ -345,7 +355,7 @@ def qualify_retained_negatives(args):
 def qualify_public_fields(args):
     """Inspect a real retained Run through selected HTTP and production agent CLI."""
     original=json.loads(args.existing_receipt.read_bytes());output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
-    dataset=Dataset(args.catalog.resolve(),project_roots={'extension-a':args.project.resolve()})
+    dataset=Dataset(args.catalog.resolve(),project_roots=retained_roots(original,args.project))
     owner=dataset.access.exchange(dataset.access._local_owner_token(require_existing=True));credential=None
     headers=[];base=make_handler(dataset)
     class ObservedHandler(base):
@@ -414,7 +424,8 @@ def qualify_public_fields(args):
             'catalog_id':original['catalog_id'],'contract2_sha256':agent_api.contract('runs.model_evidence',2)['sha256'],
             'exact_requests':requests,'request_headers':headers,'run_count_before':before,'run_count_after':before,
             'v1_state':'unsupported','selected_test_state':'400 invalid','wrong_checkpoint_state':'409 stale',
-            'physical_acceptance':'not_established','canonical_release_derivation':'unsupported in authored-only mode'}
+            'physical_acceptance':'not_established','canonical_release_sha256':original.get('canonical_release_sha256'),
+            'source_mode':'canonical_release' if original.get('canonical_release_sha256') else 'authored_project_input'}
         save('receipt.json',receipt);print('PASS actual selected HTTP/agent field parity',output,flush=True)
     finally:
         server.shutdown();server.server_close();thread.join(timeout=5)

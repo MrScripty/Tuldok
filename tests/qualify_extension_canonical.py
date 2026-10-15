@@ -36,7 +36,6 @@ def require(value,reason):
 
 
 FROZEN_SOURCES = {
-    'NOTICE.txt':'8bdadd8f6a5163591c4485653678f5184ae1caaf7f4a45dae2f901fe44d1c12d',
     'producer.py':'bcd801264bf05675cc6b2c5207848f723a38090b5bee6211543040831b801922',
     'cold_oracle.py':'573f142de868d13649dcdb6cc109fd629385b8ce48a1968399c0f86cb77feed9',
     'authored-source.json':'3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f',
