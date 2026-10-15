@@ -2,6 +2,7 @@
 import copy
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -51,12 +52,22 @@ def fixture():
     candidate = {'ref': ref, 'candidate': decision, 'run_id': run_id,
         'checkpoint': packages.blob('checkpoint-epoch-0001.json', artifacts['checkpoint-epoch-0001.json'])}
     return packages.classifier_closure(candidate, artifacts, {'c' * 32: probe_image},
-        {'image_training.py': source}, {'format': 'authored_runtime_fixture'}, published)
+        {'image_training.py': source}, {'format': 'package_runtime_v1', 'snapshot': {
+            'schema_version': 1, 'profile': 'captured_cpu_python_v1', 'catalog_id': 'e' * 32,
+            'root': '/authored/runtime-snapshots/' + '4' * 64, 'manifest_sha256': '4' * 64,
+            'manifest_bytes': 1, 'file_count': 1, 'total_bytes': 1, 'python_version': '3.12',
+            'packages': {}, 'launch': {}}}, published)
 
 
 class PackageTests(unittest.TestCase):
     def setUp(self):
         self.manifest, self.blobs = fixture()
+
+    def test_non_epoch_candidate_profile_is_explicitly_unsupported(self):
+        with self.assertRaises(packages.PackageError) as error:
+            packages.classifier_closure({'checkpoint': {'name': 'checkpoint-fit.json'}},
+                {'checkpoint-fit.json': packages.encoded({'clocks': {'epoch': None}})}, {}, {}, {}, {})
+        self.assertEqual(error.exception.code, 'unsupported')
 
     def test_exact_d2_manifest_whole_hash_and_complete_weight_closure(self):
         raw = packages.create_package(self.manifest, self.blobs)
@@ -111,6 +122,20 @@ class PackageTests(unittest.TestCase):
         with self.assertRaisesRegex(packages.PackageError, 'Selected candidate'):
             packages.create_package(manifest, blobs)
 
+    def test_rehashed_wrong_class_order_and_transform_are_rejected(self):
+        for name in ('task.json', 'transform.json', 'runtime.json'):
+            manifest = copy.deepcopy(self.manifest); blobs = dict(self.blobs)
+            document = packages.decode(blobs[name])
+            if name == 'task.json':
+                document['class_vocabulary'].reverse()
+            elif name == 'transform.json':
+                document['size'] = [64, 64]
+            else:
+                document['snapshot']['profile'] = 'arbitrary_interpreter'
+            self.replace_blob(manifest, blobs, name, packages.encoded(document))
+            with self.subTest(name=name), self.assertRaises(packages.PackageError):
+                packages.create_package(manifest, blobs)
+
     def test_unknown_rights_permit_private_inspection_but_deny_redistribution(self):
         raw = packages.create_package(self.manifest, self.blobs)
         packages.inspect_package(raw, packages.sha(raw))
@@ -164,6 +189,9 @@ class PackageTests(unittest.TestCase):
             packages.create_package(self.manifest, blobs)
         with self.assertRaises(packages.PackageError):
             packages.decode(b'{"x":1,"x":2}')
+        for raw in (b'{"x":1e309}', b'{"x":-1e309}', b'{"nested":[{"x":1e999}]}', b'[' * 65 + b'0' + b']' * 65):
+            with self.subTest(raw=raw), self.assertRaises(packages.PackageError):
+                packages.decode(raw)
 
     def test_project_pins_all_source_runs_and_does_not_admit_or_grant(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -209,6 +237,73 @@ class TransitiveAccessTests(unittest.TestCase):
         runs.access.require = revoked
         with self.assertRaises(PermissionError):
             packages.authorize_transitive_inputs(runs, leaf)
+
+
+class PreparedReceiptAtomicityTests(unittest.TestCase):
+    """Real PostgreSQL callback/capture boundary; no numerical claim."""
+    def test_publish_failure_rolls_back_trial_receipts_audit_and_owned_directory(self):
+        import shutil
+        import uuid
+        from unittest.mock import patch
+        import test_model_definitions as fixtures
+        from experiments import Experiments
+        case = fixtures.CapturedModelCase(methodName='runTest'); case.setUp()
+        try:
+            dataset = case.dataset; studies = Experiments(dataset); dataset.models = case.models
+            model = case.publish(case.create())
+            with case.owner.bound(dataset):
+                study = studies.create({'name': 'Atomic callback qualification', 'limits': {name: 10**8 for name in
+                    ('attempt_slots', 'admitted_wall_seconds', 'retained_bytes', 'peak_staging_bytes')},
+                    'policy': {'format': 'selection_policy_v1', 'metric_definition_sha256': '1' * 64,
+                        'checkpoint_rule': 'explicit', 'replicate_reduce': 'individual', 'required_capabilities': [],
+                        'numerical_acceptance': 'diagnostic', 'tie_break': 'trial_id'}})
+                body = {'request_key': 'prepare-' + uuid.uuid4().hex, 'revision': study['revision'],
+                    'graph_id': case.graph['id'], 'graph_revision': case.graph['revision'], 'model': model['ref'], 'replicate': 0}
+                baseline = {table: dataset.db.execute('SELECT count(*) FROM ' + table).fetchone()[0]
+                    for table in ('model_trials', 'model_operation_receipts', 'access_audit')}
+                directory = case.path / 'owned-preparation'; directory.mkdir()
+                capture = dataset.pipelines.prepare_external_material; observed = []
+                def outside_transaction(*args, **kwargs):
+                    observed.append(dataset.db.in_transaction)
+                    self.assertFalse(dataset.db.in_transaction)
+                    return capture(*args, **kwargs)
+                def fail_publication(trial):
+                    self.assertTrue(dataset.db.in_transaction)
+                    dataset.db.on_rollback(lambda: shutil.rmtree(directory))
+                    studies._save_receipt(case.owner.identity['actor_id'], 'studies.prepare_package', 'callback-failure-key',
+                        '2' * 64, {'trial': trial})
+                    dataset.access.audit('studies.prepare_package', trial['id'], {})
+                    raise RuntimeError('Required publication callback failed')
+                with patch.object(dataset.pipelines, 'prepare_external_material', side_effect=outside_transaction):
+                    with self.assertRaisesRegex(RuntimeError, 'publication callback'):
+                        studies.prepare_trial(study['id'], body, _publish=fail_publication)
+                self.assertEqual(observed, [False])
+                self.assertFalse(directory.exists())
+                for table, count in baseline.items():
+                    self.assertEqual(dataset.db.execute('SELECT count(*) FROM ' + table).fetchone()[0], count, table)
+                self.assertEqual(studies.get(study['id'])['study']['trial_ids'], [])
+                self.assertEqual(studies.get(study['id'])['study']['revision'], study['revision'])
+        finally:
+            case.doCleanups()
+
+
+@unittest.skipUnless(os.environ.get('TULDOK_PACKAGE_QUALIFICATION_CATALOG') and
+                     os.environ.get('TULDOK_PACKAGE_SNAPSHOT_DESCRIPTOR') and
+                     os.environ.get('TULDOK_PACKAGE_QUALIFICATION_OUTPUT') and
+                     os.environ.get('TULDOK_TRAINING_PYTHON'),
+                     'Explicit disposable catalog, captured snapshot, output and CPU training runtime required.')
+class ActualCandidatePackageTests(unittest.TestCase):
+    def test_actual_study_training_http_package_and_captured_fresh_verifier(self):
+        from qualify_candidate_package import qualify_production
+        report = qualify_production(Path(os.environ['TULDOK_PACKAGE_QUALIFICATION_CATALOG']),
+            Path(os.environ['TULDOK_PACKAGE_SNAPSHOT_DESCRIPTOR']), Path(os.environ['TULDOK_PACKAGE_QUALIFICATION_OUTPUT']))
+        self.assertTrue(report['actual_training'])
+        self.assertTrue(report['actual_package_run'])
+        self.assertTrue(report['actual_captured_verifier_run'])
+        self.assertEqual(report['charged']['attempt_slots'], 3)
+        self.assertEqual(report['state']['state'], 'fresh_verified')
+        self.assertTrue(report['capture_phases'])
+        self.assertTrue(all(item['in_transaction'] is False for item in report['capture_phases']))
 
 
 if __name__ == '__main__':
