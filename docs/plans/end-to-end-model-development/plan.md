@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** D2 — Contracts, evidence and retained state
+**Current phase:** D3 — Automatic visualization and resource design
 
-**Next slice:** D2 — Specify immutable recipe/trial material, finite-study identity/permission/budget/cancellation invariants and negotiated evidence contracts against both worked journeys.
+**Next slice:** D3 — Prototype linked human/agent evidence inspection and specify capture/resource defaults with claim-matched observations or explicit unsupported dispositions.
 
 **Acceptance status:** `partial`
 
@@ -44,7 +44,7 @@ remain pending until their later implementation is verified.
 | --- | --- | --- | --- | --- | --- | --- |
 | A0 | Source-backed baseline distinguishes current owners, retained contracts, branch-only capabilities and software precedents; MCP guidance is routed from explicit facts. | focused | not-applicable | either | satisfied | [Ownership](reports/current-ownership.md), [evaluation assessment](reports/automatic-evaluation-design.md), [MCP record](reports/standards-routing.md) |
 | A1 | One complete journey and its correction/tuning loop have unambiguous state owners, small interfaces, model-authoring choices and a composed-design review covering representative changes and deletion. | focused | not-applicable | manual | satisfied | [D1 decisions, worked journeys and independent Sol review](reports/architecture-design.md) |
-| A2 | Proposed persisted/process/public contracts specify identities, metric meaning, capabilities, lifecycle, failure, access, compatibility and cold reconstruction; all actual consumers have dispositions. | contract | not-applicable | either | pending | D2 contract and consumer matrix with worked valid/invalid examples |
+| A2 | Proposed persisted/process/public contracts specify identities, metric meaning, capabilities, lifecycle, failure, access, compatibility and cold reconstruction; all actual consumers have dispositions. | contract | not-applicable | either | satisfied | [D2 contracts and consumers](reports/evidence-contract-design.md), [worked observations/review](reports/design-observations.md) |
 | A3 | A local browser walkthrough demonstrates the proposed automatic views, linked checkpoint/example/time selection, missing evidence, correction and keyboard/narrow-screen behavior; it is clearly a design prototype. | user-workflow | representative | either | pending | D3 design walkthrough in local Chromium; no production-training claim |
 | A4 | Decision-changing assumptions about capture, scientific interpretation, runtime and resource budgets have proportionate real observations, or a bounded unsupported/deferred disposition that leaves the selected design valid. | integration | required-real | either | pending | D2/D3 observation reports with exact inputs, procedures and limits |
 | A5 | Final design resolves or explicitly excludes material choices, assigns migration/dependency/authorization owners, and supplies dependency-ordered production slices with exact write sets and claim-matched verification. | focused | not-applicable | manual | pending | D4 handoff and design review findings/dispositions |
@@ -110,19 +110,22 @@ remain pending until their later implementation is verified.
   unverified branch evidence, with no merge/GPU guarantee implied.
 - MCP observer is integrated on this main baseline. Reuse its opt-in, private,
   closed-allowlist observation behind unchanged agent calls. It does not cover
-  all HTTP/CLI or long-running lifecycle outcomes. D1 activates no recording and
+  all HTTP/CLI or long-running lifecycle outcomes. This design work activates no
+  recording and
   adds no per-agent/per-run logging obligation.
 - No applicable `AGENTS.md` or callable Coding Standards MCP is available in the
-  D1 environment. Read the retained MCP snapshot/template record in
+  D1/D2 environment. Read the retained MCP snapshot/template record in
   [standards-routing.md](reports/standards-routing.md) and adopted `dcc56f26`
   source guidance through read-only GitHub retrieval. Historical pins and prior
   consultation evidence are preserved; this is not a fresh Engine certification.
-- D1 repository writes are restricted to its six allowed documentation files
-  below. Application, database, runtime, credentials, user data, Rheon and the
+- Each design stage is restricted to its allowed documentation files below.
+  D2 also permits explicitly authored disposable examples; no production source
+  or application test files are in its write set. Application, database, runtime,
+  credentials, user data, Rheon and the
   surrogate lab remain untouched. Source/model edits in the report are worked
   design examples, not application implementation or a training campaign.
-- Primary agent is the single documentation writer/integration owner. Two
-  parent-coordinated read-only workers advise authoring and negotiation; an
+- Primary agent is the single documentation writer/integration owner.
+  Parent-coordinated read-only workers advise evidence and trial authority; an
   independent GPT-6.1 Sol reviewer checks the composed result. No concurrent local
   implementation is reported. Branch `docs/model-development-d1` isolates this
   review proposal from main at the user's request.
@@ -165,6 +168,9 @@ the decisions produced by D1–D4.
 | Select finite enumerated trials/repeated seeds initially; decide identity, current/exact authority, aggregate budget and cancellation invariants in D2. D4 owns detailed scheduling. | D1 experiment/access recommendation | [Tuning invariants](reports/architecture-design.md#initial-tuning-invariants-d1-choice-and-d2-obligations) | Deferring foundational tuning authority to D4 or implying prospective adaptive grants |
 | Negotiate supported operations and exact compatible per-operation contracts; additive operations preserve unrelated compatible calls. Refuse incompatible mutations before domain entry and preserve live authorization. | User decision; interface/access owners | [Negotiation and current equality migration](reports/agent-interfaces-observability.md#d1-capability-decision-negotiate-compatible-operations) | Whole-registry lockstep as future compatibility policy |
 | Candidate export must close inference dependencies and later pass fresh-consumer fixed-probe inference; selection, package completeness and numerical acceptance remain distinct. | Model/experiment/evaluator and Runs owners | [Closure and future acceptance](reports/architecture-design.md#candidate-package-closure-and-future-acceptance) | Checkpoint download as complete generic model export |
+| Retain a bounded f58880df legacy discovery/dispatch projection for actual strict clients, alongside negotiated contracts; retire only after explicit supported-installation inventory/cutover. | D2 registry/client owners | [Consumer transition](reports/evidence-contract-design.md#discovery-and-compatibility-transition) | Unresolved choice of indefinite shims versus breaking old strict clients |
+| Study admission uses a narrow Runs-owned transactional seam and outer-commit wake; exact-material retries reject drift. Aggregate reservation is admission/accounting, not a hard CPU/GPU/RSS/filesystem quota. | D2 Experiment/Runs/Access owners | [Finite-study invariants](reports/evidence-contract-design.md#finite-study-authority-budgets-and-cancellation) | Wrapping public submit inside an outer study transaction or promising absent quotas |
+| New scientific protected-test support remains unavailable until whole-artifact transitive protection spans every accessor; standalone pressure cases have no invented physical frames. | D2 Access/evidence/adapter owners | [Protected evidence](reports/evidence-contract-design.md#lifecycle-protected-evidence-and-package-closure) | UI-only holdout gates or sequence semantics inferred from array shape |
 
 ## Design Observations And Remaining Evidence
 
@@ -281,42 +287,42 @@ explicit authored fixtures under this plan's `reports/examples/` only.
 
 **Tasks:**
 
-- [ ] Specify finite-study trial versus attempt/replication identity, exact-material
+- [x] Specify finite-study trial versus attempt/replication identity, exact-material
   permissions and current built-in/external authority, aggregate budget reservation
   and accounting, stop-before-child-cancel and restart/unknown-outcome fencing.
   Work concurrent reservation/admission and lost-ack examples before scheduling.
-- [ ] Specify retained pre-admission immutable Pipeline material and checked
+- [x] Specify retained pre-admission immutable Pipeline material and checked
   study attachment, cleanup and cross-owner failure/half-commit behavior; no bare
   reference to a mutable recipe revision or duplicated study overrides.
-- [ ] Define per-operation negotiation and exact supported contracts, pre-domain
+- [x] Define per-operation negotiation and exact supported contracts, pre-domain
   contract checks and actual legacy-client cutover/retirement. Preserve unrelated
   compatible operations under additive discovery, live Access and fail-closed
   incompatible mutations. Inventory real consumers before retaining a facade.
-- [ ] Work the scientific canonical-release→captured-model bridge, pressure
+- [x] Work the scientific canonical-release→captured-model bridge, pressure
   shape/gauge/normalization and automatic checkpoint/probe evidence against the
   classifier journey before freezing generic interfaces. Unsupported integrations
   stay explicit; no classifier-only interface admission.
-- [ ] Define minimal task/model/experiment/trial/checkpoint/probe/evaluation/
+- [x] Define minimal task/model/experiment/trial/checkpoint/probe/evaluation/
   candidate meanings and assign each authority; references/package membership
   do not transfer authority or require a new registry.
-- [ ] Specify default profile resolution, producing checkpoint identity,
+- [x] Specify default profile resolution, producing checkpoint identity,
   preprocessing/reconstruction/inference mode, metric definitions/units,
   clocks, sampling roles, live versus verified evidence and comparison admission.
-- [ ] Specify complete process/artifact/public representations, bounds, inbound/
+- [x] Specify complete process/artifact/public representations, bounds, inbound/
   outbound proof, typed outcomes and capability/access states. Reuse existing
   captured input/artifact mechanisms when they satisfy the required semantics.
-- [ ] Classify actual consumers and persisted states, including old v1 classifier
+- [x] Classify actual consumers and persisted states, including old v1 classifier
   inventories, external recipes, HTTP, CLI/MCP, current browser views, cold
   readers, backup/restore and current authorization/test-exposure enforcement.
-- [ ] Define crash/partial-write/publication/reopen/cancellation behavior and
+- [x] Define crash/partial-write/publication/reopen/cancellation behavior and
   retention versus replay. An observed prediction is not a promise of resumable
   training or retained replayable weights.
-- [ ] Exercise design-changing contract assumptions against actual existing
+- [x] Exercise design-changing contract assumptions against actual existing
   evidence using the smallest adequate disposable observation.
-- [ ] Complete A6's operation matrix: discovery, schemas, capabilities, current
+- [x] Complete A6's operation matrix: discovery, schemas, capabilities, current
   permissions, idempotency, asynchronous receipts/status/cancel, unknown outcomes,
   bounded pagination/artifact reads and machine-readable evaluation queries.
-- [ ] Define A7's internal observation contract and separate operator reader:
+- [x] Define A7's internal observation contract and separate operator reader:
   actual stages/outcomes, justified correlation, redaction before collection,
   access, retention, sampling, schema evolution, buffering/backpressure, shutdown,
   overhead and degraded health. Classify required transactional audits separately;
@@ -337,7 +343,15 @@ transport/capability combinations and operator activation policy are explicit.
 **Re-plan condition:** A supported producer cannot supply required evidence, a
 retained/public contract changes, or a scientific meaning cannot be established.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [Concrete D2 contracts](reports/evidence-contract-design.md),
+[bounded observations and limits](reports/design-observations.md),
+[structured operations and observation policy](reports/agent-interfaces-observability.md#d2-selected-structured-operation-contracts).
+Independent GPT-6.1 Sol review findings resolved and rechecked; documentation,
+source/decoder and explicitly authored arithmetic checks pass. A2 is satisfied
+for design only. A3–A7 and product implementation acceptance remain pending;
+A4 capture/interpretation remains bounded as recorded in observations.
 
 ### D3: Automatic visualization and resource design
 
@@ -465,10 +479,10 @@ because another file belongs to an already bounded owner.
 
 ## Concurrent Work
 
-Primary agent serially owns all six D1 documentation files. Parent-coordinated
-read-only workers supplied model-authoring and per-operation negotiation findings;
+Primary agent serially owns the active stage's allowed documentation files. Parent-coordinated
+read-only workers supplied D1 authoring/negotiation and D2 evidence/trial findings;
 no local edits were delegated to them. The independent reviewer reads the composed
-D1 artifacts and sources without writing. Earlier report authorship remains in
+active-stage artifacts and sources without writing. Earlier report authorship remains in
 the ledger; those investigations do not imply current concurrent application work.
 
 ## Repository Isolation
@@ -491,6 +505,8 @@ No worktree was created or historical branch/worktree cleanup authorized.
 
 - [Local visual overview](reports/design-overview.html)
 - [D1 selected architecture and worked journeys](reports/architecture-design.md)
+- [D2 concrete evidence, compatibility and trial contracts](reports/evidence-contract-design.md)
+- [D2 bounded observations and remaining proof](reports/design-observations.md)
 - [Current ownership and five change scenarios](reports/current-ownership.md)
 - [Automatic evaluation and reuse alternatives](reports/automatic-evaluation-design.md)
 - [Agent interfaces and transparent observability requirements](reports/agent-interfaces-observability.md)

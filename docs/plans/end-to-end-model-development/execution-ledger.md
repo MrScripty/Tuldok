@@ -126,3 +126,59 @@
   permissions, aggregate budget/cancellation and compatible evidence contracts.
 - Commit, push and review PR publication follow final staged scope/history checks.
   The branch remains for PR review; no merge or branch/worktree deletion occurs.
+
+## 2026-10-15 — D2 contracts and retained state
+
+- User continued after D1 publication. Continued documentation-only on
+  `docs/model-development-d1` / PR62 from D1 `0f8ccfe`; fetched application main
+  remains `f58880df`. Existing D1 decisions and exact authority are preserved.
+- Primary agent remains the single writer. Parent-coordinated read-only reviewers
+  supplied evidence-contract and finite-trial authority/budget findings; integrated
+  the selected/final-checkpoint limitation, mixed external holdout gap, standalone
+  pressure-field semantics, exact-material retry drift, and public-submit nested
+  transaction/wake concern. No application/lab source or user-data edits.
+- Added concrete proposed model/recipe/trial/attempt/checkpoint/probe/evidence/
+  candidate formats, semantic metrics/clocks, structured bounded operations,
+  current/new producer/consumer dispositions, immutable preparation/attachment,
+  partial/publication/reopen/cold-read and package closure obligations.
+- Selected exact per-operation negotiation plus bounded f58880df legacy projection
+  for actual strict MCP/CLI installations. Retirement requires explicit supported
+  installation inventory; current Access and fail-closed contract checks remain.
+- Defined finite-study admission as a narrow Runs-owned outer transaction spanning
+  reservation, exact grant, Run/continuation/association and mandatory audit, with
+  outer-commit dispatch and stop admission epochs. Current CPU/GPU/RSS/filesystem
+  hard quotas are absent; ledger reservation is admission/accounting, not a sandbox.
+- Scientific canonical-release derivation and recurring checkpoints are explicit
+  unimplemented adapter work. Standalone CNN fields have no physical frame/time.
+  Protected scientific test support stays unavailable until every whole/segment/
+  input-capture/query/import/export accessor protects mixed artifacts or outputs
+  are split. Historical optional lab evidence remains negative/limited.
+- Performed only bounded read-only/import/decoder observations on in-memory authored
+  metadata/arrays, current discovery and existing recorded receipts. Seven retained
+  JSON cases are explicitly authored design arithmetic, not training outputs or
+  PostgreSQL/Access conformance. Details and remaining A4 proof are in
+  `reports/design-observations.md`. No Dataset, user catalog, model/native code,
+  trainer, runtime install, migration or observer was run/enabled.
+- D2 draft is Verifying with A2 pending independent GPT-6.1 Sol review and final
+  documentation checks. A3–A7/product acceptance remain pending; no auto-merge.
+
+
+### D2 review, corrections and acceptance
+
+- Independent GPT-6.1 Sol review identified four initial contract gaps: zero
+  settlement charges, study pagination, checkpoint-specific comparison and
+  retained study/create/edit/continue. Resolved each with explicit types,
+  requests/lifecycle/authority and worked examples. Subsequent recheck clarified
+  typed source/package references and clock-bound descriptors for unchanged
+  weights. Packaging pins prepared material/epoch/grant and shares budget/Run
+  admission. Final reviewer recheck reports no remaining D2 blockers.
+- Passed unchanged upstream plan structure checker, local links/anchors/table/
+  fence/HTML structure, eight-file D2 scope, seven authored JSON arithmetic cases
+  and whitespace checks. Chromium desktop/narrow document smoke passes. Full
+  procedures, actual source/decoder observations, reviewer corrections and proof
+  limits are retained in `reports/design-observations.md`.
+- D2 Accepted and A2 satisfied for design. Overall plan remains Active/partial;
+  A3–A7 remain pending, including real capture/physical interpretation/resource
+  proof. D3 is the single next stage. No product implementation, telemetry-v2
+  deployment, generic package inference or protected-scientific test support is
+  claimed. D2 commit/push follows staged verification; PR62 remains unmerged.

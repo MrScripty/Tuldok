@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Tuldok · D1 model development design</title>
+  <title>Tuldok · D1–D2 model development design</title>
   <style>
     :root { color-scheme: light dark; --bg:#f2f5f5; --paper:#fff; --ink:#142a32; --muted:#4e626b; --line:#cbd8dc; --accent:#006b66; --tint:#e6f4f1; --blue:#2455a3; --blue-tint:#eef3ff; --amber:#805300; --amber-tint:#fff5db; --shadow:0 12px 34px #142a3209; }
     @media (prefers-color-scheme:dark) { :root { --bg:#10191e; --paper:#17252c; --ink:#e3edf0; --muted:#afc1ca; --line:#3c535d; --accent:#75d6c4; --tint:#193e39; --blue:#a7c5ff; --blue-tint:#202f4b; --amber:#f4d382; --amber-tint:#3e341e; --shadow:none; } }
@@ -81,10 +81,10 @@
   <a class="skip" href="#main">Skip to architecture overview</a>
   <header>
     <div class="wrap">
-      <div class="eyebrow">Tuldok / D1 design recommendation / 15 October 2026</div>
+      <div class="eyebrow">Tuldok / D2 contract design / 15 October 2026</div>
       <h1>One workspace, from dataset to model candidate.</h1>
       <p class="intro">Design the connected process first. Task-aware evaluation should arrive with training, so users can understand results, correct data, tune models, and preserve the evidence behind each decision.</p>
-      <div class="meta"><span class="badge open">D1 recommendation · provisional visual</span><a href="../plan.md">Canonical design plan →</a><span>No application behavior is implemented by this document.</span></div>
+      <div class="meta"><span class="badge open">D1–D2 reviewed · D3 next · provisional visual</span><a href="../plan.md">Canonical design plan →</a><span>No application behavior is implemented by this document.</span></div>
     </div>
   </header>
   <main class="wrap" id="main">
@@ -166,7 +166,7 @@
       <p class="note">Expand a phase to inspect its decision evidence. These controls describe design checkpoints, not implementation progress. Canonical phase names and acceptance criteria live in the plan.</p>
       <div class="phase-grid">
         <details open><summary><span>D1</span>Owner and task-path design</summary><div class="detail-body"><p><strong>Selected:</strong> Pipeline recipe authority, template/configuration plus captured source, finite exact trials and compatible per-operation discovery.</p><p><strong>Evidence:</strong> worked classifier and pressure-CNN paths, authoring edits, owner/change/deletion review and explicit current gaps. <a href="architecture-design.md">Read D1 design and independent review</a>.</p></div></details>
-        <details open><summary><span>D2</span>Contracts and cold evidence</summary><div class="detail-body"><p><strong>Produce:</strong> versioned identity/evidence contracts, finite-trial permission and aggregate-budget/cancellation invariants, compatibility migration and cold readback.</p><p><strong>Check:</strong> immutable recipe snapshots, atomic study attachment/reservation, scientific release bridge, honest missing history and current exposure policy before generic interface freeze.</p></div></details>
+        <details open><summary><span>D2</span>Reviewed contracts and cold evidence</summary><div class="detail-body"><p><strong>Produce:</strong> versioned identity/evidence contracts, finite-trial permission and aggregate-budget/cancellation invariants, compatibility migration and cold readback.</p><p><strong>Check:</strong> immutable recipe snapshots, atomic study attachment/reservation, scientific release bridge, honest missing history and current exposure policy before generic interface freeze.</p></div></details>
         <details open><summary><span>D3</span>Automatic capture and UI demonstration</summary><div class="detail-body"><p><strong>Produce:</strong> a bounded walkthrough showing task-aware default views and linked checkpoint/example selection, plus capture, retention, and resource budgets.</p><p><strong>Check:</strong> an ordinary user gets useful evaluation without configuring charts or callbacks; omitted evidence and unsuccessful model acceptance remain clear.</p></div></details>
         <details open><summary><span>D4</span>Tuning, runtime, and evolution handoff</summary><div class="detail-body"><p><strong>Produce:</strong> detailed runtime scheduling under D2 invariants, runtime qualification, closed candidate packages, fresh-consumer inference acceptance and implementation slices.</p><p><strong>Check:</strong> failed trials and repeated seeds are represented, tuning obeys exposure policy, and the handoff avoids a competing scheduler or speculative infrastructure.</p></div></details>
       </div>
@@ -182,16 +182,16 @@
     </section>
 
     <section class="panel" aria-labelledby="open-title">
-      <div class="section-top"><h2 id="open-title">What remains for D2–D4</h2><span class="badge open">Pending design and product proof</span></div>
+      <div class="section-top"><h2 id="open-title">D2 contracts and remaining D3–D4 proof</h2><span class="badge open">Pending design and product proof</span></div>
       <ul class="questions">
-        <li><strong>D2 foundations:</strong> exact trial/attempt identities, permissions, immutable recipe snapshots, total-budget reservation and stop-before-cancel/restart invariants.</li>
-        <li><strong>Compatibility cutover:</strong> actual old/new client inventory, selected-contract checks before mutations and bounded legacy disposition. No generic schema-subsumption engine.</li>
-        <li><strong>Evidence semantics:</strong> checkpoint/probe association, pressure shape/gauge/normalization and family/split bridge. No classifier-only generic-interface admission.</li>
-        <li><strong>D3 interaction and costs:</strong> actual linked views, browser/keyboard/narrow-screen walkthrough and measured capture/retention/time/memory bounds.</li>
+        <li><strong>D2 foundations specified:</strong> immutable material and trial/attempt/replicate identity, atomic preparation/attachment, exact authority and stop-before-cancel epochs. Runs needs an outer-commit admission seam; reservation is accounting, not CPU/GPU/memory containment.</li>
+        <li><strong>Compatibility selected:</strong> exact per-operation contracts with pre-domain checks, plus a frozen 56-operation legacy projection for supported strict clients. Inventory-owned retirement; no schema-subsumption engine.</li>
+        <li><strong>Evidence contracts specified:</strong> versioned manifest/checkpoint/probe/field binding and bounded queries; retained v1 history stays absent. Standalone pressure fields have no invented physical frames. Scientific protected modes stay unavailable until every accessor protects mixed artifacts.</li>
+        <li><strong>D3 still pending — interaction and costs:</strong> actual linked views, browser/keyboard/narrow-screen walkthrough and measured capture/retention/time/memory bounds.</li>
         <li><strong>Candidate closure:</strong> weights, model/source, transforms/fitted statistics, schemas/runtime, lineage/evidence and access. Later fresh-consumer fixed-probe inference must work without a live project checkout.</li>
         <li><strong>D4 handoff:</strong> detailed scheduling, runtime/dependency qualification, migrations and implementation slices. Adaptive prospective grants and a universal editable graph are deferred.</li>
       </ul>
-      <p class="note" style="margin-top:17px;margin-bottom:0">This is a provisional discussion visual of selected D1 recommendations. The canonical plan and D1 report own decisions. Document rendering was checked at desktop and narrow widths; this is not a product prototype or proof of training/package acceptance.</p>
+      <p class="note" style="margin-top:17px;margin-bottom:0">This is a provisional discussion visual of selected D1 recommendations. The canonical plan and D1 report own decisions. D2 contract review findings are resolved; D3 interaction and measured-cost work remains. Document rendering was checked at desktop and narrow widths; this is not a product prototype or proof of training/package acceptance.</p>
     </section>
   </main>
   <footer>
@@ -200,6 +200,8 @@
       <ul>
         <li><a href="../plan.md">Architecture design plan</a></li>
         <li><a href="architecture-design.md">D1 decisions, sources and review</a></li>
+        <li><a href="evidence-contract-design.md">D2 contracts</a></li>
+        <li><a href="design-observations.md">D2 observations and limits</a></li>
         <li><a href="../../training-evaluation/reports/paper-review.md">Paper review</a></li>
         <li><a href="../../training-evaluation/reports/paper-methodology-review.md">Methodology review</a></li>
         <li><a href="../../training-evaluation/reports/software-precedents.md">Software precedents</a></li>
