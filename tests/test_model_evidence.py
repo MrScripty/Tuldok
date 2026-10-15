@@ -153,6 +153,14 @@ class ActualEvidenceTests(unittest.TestCase):
         finally:
             server.shutdown();server.server_close();thread.join(timeout=5)
 
+    def test_legacy_run_projection_keeps_absent_study_membership(self):
+        legacy=copy.deepcopy(self.private)
+        legacy['graph'].pop('recipe')
+        legacy['adapter']=image_training.ADAPTER
+        legacy.pop('evidence_context')
+        with self.owner.bound(self.dataset):result=self.dataset.runs._public(legacy)
+        self.assertNotIn('study_membership',result)
+
     def test_study_budget_cannot_delegate_builtin_execution(self):
         from access import AccessError
         with self.owner.bound(self.dataset):
