@@ -108,3 +108,19 @@ started/accepted by creating this documentation.
   [Preparation evidence](reports/sdk-static-preparation.md) owns scope and limits.
 - This is not E3 A/B acceptance; E2/P1–P4 and E4/P5 gates stay blocked. Keep the
   stacked SDK and E1 branches/worktrees retained for lead integration/dependencies.
+
+## Authored scalar-A numerical prerequisite —2026-10-15
+
+- Separate feat/extension-a-producer-preparation freezes explicit authored fixture,
+  actual worker and independent stdlib oracle at38c16f6 before execution. It does
+  not substitute authored arrays for original pressure-CNN preparation inputs.
+- Real production CLI/HTTP/exact actor-bound one-use grant/Run9808a102 completed64
+  actual gradient updates, emitting real weights and one validation field at16/64.
+  Six outputs/2402bytes and cold catalog reopen downloads verified; frozen cold
+  oracle passes reconstruction/analytic weights and independent MSE tallies.
+- [Preparation report](reports/scalar-a-preparation.md) records exact captured
+  source/input/runtime/material/receipt hashes, authored numerical scope and costs.
+  Existing recipe execution supplies no extension binding or E2/P4/evidence ABI.
+- E2 waits accepted P1–P3/P4; E3 needs independent B/locality, E4/P5 complete export
+  remains unavailable. Lead owns integration/all merges and safe terminal cleanup;
+  preserve this branch and its dependent E1/SDK ancestors.
