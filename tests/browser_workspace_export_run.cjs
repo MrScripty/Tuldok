@@ -297,7 +297,7 @@ function launch(command, args, options) {
   await key('Escape');await nav('pipeline');await until(()=>evaluate('!!document.getElementById("real-create-recipe")'));
   await select('#real-create-release',releaseId);
   assert.equal(await evaluate('document.getElementById("real-create-recipe").value'),'text_classification');
-  assert.deepEqual(await evaluate('[...document.getElementById("real-create-recipe").options].map(o=>o.value)'),['text_classification','text_validate_export']);
+  assert.deepEqual(await evaluate('[...document.getElementById("real-create-recipe").options].map(o=>o.value)'),['text_classification','text_validate_export','text_classification_model_v2']);
   await select('#real-create-recipe','text_validate_export');await fill('#real-create-name','Authored text export');await click('#real-create-form button');
   await until(()=>evaluate('!!document.getElementById("real-save")'));
   assert.equal(await evaluate('document.querySelectorAll("#real-pipeline-root [data-node]").length'),3);
