@@ -1,0 +1,248 @@
+{
+  "adapter": {
+    "id": "example.scalar-a:inference",
+    "revision": 1
+  },
+  "entrypoint": {
+    "function": "predict",
+    "path": "infer.py"
+  },
+  "format": "scalar_affine_inference_contract_v1",
+  "imports": [
+    "argparse",
+    "ast",
+    "hashlib",
+    "json",
+    "math",
+    "os",
+    "pathlib",
+    "stat",
+    "struct",
+    "sys"
+  ],
+  "interface": {
+    "cli_arguments": [
+      "--contract",
+      "--request",
+      "--input",
+      "--weights",
+      "--transform",
+      "--output"
+    ],
+    "cli_exit_status": {
+      "invalid": 2,
+      "written": 0
+    },
+    "encoding": {
+      "dtype": "<f8",
+      "format": "npy",
+      "order": "C",
+      "versions": [
+        "1.0",
+        "2.0"
+      ]
+    },
+    "formula": "scale * ((initial - train_mean) / train_population_std) + offset",
+    "function": "predict(initial_npy: bytes, weights_npy: bytes, transform_npy: bytes, request: dict) -> bytes",
+    "hash_roles": [
+      "initial",
+      "weights",
+      "transform"
+    ],
+    "initial_shape_zyx": [
+      4,
+      4,
+      4
+    ],
+    "output_encoding_version": "1.0",
+    "output_shape_zyx": [
+      4,
+      4,
+      4
+    ],
+    "request_format": "scalar_affine_inference_request_v1",
+    "request_keys": [
+      "format",
+      "policy",
+      "sha256"
+    ],
+    "transform_order": [
+      "train_mean",
+      "train_population_std"
+    ],
+    "transform_shape": [
+      2
+    ],
+    "weights_order": [
+      "scale",
+      "offset"
+    ],
+    "weights_shape": [
+      2
+    ]
+  },
+  "notices": [
+    {
+      "bytes": 458,
+      "path": "NOTICE.txt",
+      "sha256": "6d60e9f2a605434edd38842f1b5248953b98b0f002fe3abe94c6688ad77429b6"
+    }
+  ],
+  "policy": {
+    "field_contract": {
+      "adapter": {
+        "name": "example.scalar-a",
+        "version": 2
+      },
+      "format": "field_adapter_contract_v1",
+      "inputs": [
+        {
+          "centering": "cell",
+          "dtype": "<f8",
+          "field_id": "initial",
+          "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+          "shape_zyx": [
+            4,
+            4,
+            4
+          ],
+          "stage": "input",
+          "units": "dimensionless"
+        }
+      ],
+      "output": {
+        "centering": "cell",
+        "dtype": "<f8",
+        "field_id": "prediction",
+        "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+        "shape_zyx": [
+          4,
+          4,
+          4
+        ],
+        "stage": "post_train_mapping",
+        "units": "dimensionless"
+      },
+      "owner": "Authored dimensionless scalar; no physics claim",
+      "source_sha256": "1c0f5e17dec97cb3100a8d0cbec57bd734d6621b80142cf9249545acde853d4d",
+      "time_mode": "standalone"
+    },
+    "field_id": "raw",
+    "format": "authored_affine_scalar_inference_policy_v1",
+    "gauge_policy": {
+      "field_units": "dimensionless",
+      "format": "authored_scalar_gauge_v1",
+      "operation": "identity"
+    },
+    "geometry": {
+      "orientation": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "origin_xyz": [
+        0,
+        0,
+        0
+      ],
+      "shape_xyz": [
+        4,
+        4,
+        4
+      ],
+      "spacing_xyz": [
+        1,
+        1,
+        1
+      ],
+      "units": "m"
+    },
+    "model_specification": {
+      "format": "authored_affine_scalar_v2",
+      "input_fields": [
+        "initial"
+      ],
+      "output_fields": [
+        "prediction"
+      ],
+      "trainable_parameters": [
+        "scale",
+        "offset"
+      ]
+    },
+    "output_policy": {
+      "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+      "kind": "standalone_scalar",
+      "stage": "post_train_mapping",
+      "units": "dimensionless"
+    },
+    "preprocessing_policy": {
+      "fields": [
+        "initial"
+      ],
+      "fit_members": [
+        "train-0",
+        "train-1"
+      ],
+      "fit_scope": "train",
+      "kind": "population_standardization"
+    },
+    "profile": {
+      "definition_sha256": "fddc62673a267facad1da6abaeb94d045262783bd053677781b04f26eb4835a5",
+      "id": "example.scalar-a.fixed-validation",
+      "revision": 2
+    },
+    "task": {
+      "definition_sha256": "a0f932d2416bbbe2606a8ec9a9f72d6ea5b073f54446da897c4b3a2b3b07ed45",
+      "id": "example.scalar-a:task",
+      "revision": 2
+    }
+  },
+  "reconstruction": {
+    "absolute_tolerance": 1e-10,
+    "independent_oracle_sha256": "ccfbe3bc92badf265ea882382d392e05daca091f5694f528f268ec3d6e38764b",
+    "physical_acceptance": "not_established",
+    "quality_acceptance": "not_established",
+    "relative_tolerance": 1e-10,
+    "scope": "retained_fixed_probe_reconstruction_only"
+  },
+  "rights": {
+    "redistribution": "not_granted",
+    "runtime_notices": "separate_package_owner",
+    "scope": "private_qa_only"
+  },
+  "runtime": {
+    "dependencies": [],
+    "implementation": "cpython",
+    "installation": "none",
+    "selection": "explicit_caller_owned_compatible_runtime",
+    "version": "3.12"
+  },
+  "source_authority": {
+    "commit": "057c8abf571d62331486dc56ef43064e72f9d03a",
+    "evidence_writer_sha256": "320c2db43c2b64cc6c7f2fff5f21c8a25f1c611d9bc4dd5b8f4c151c2075619e",
+    "extension_sha256": "3641238eee64e54c77548b4ba92afd094cd52dc1d95f319c8a0f10a45b0be744",
+    "producer_sha256": "563ccc91c5c0f4fc4dda6d2dc0e8c5526fbc9e26ef9278165c5ab51d0eb95774",
+    "recipe_sha256": "90ce14a7bfcb1079f376ca93858ec90d1ebcc11533e54ec476639a44e006a644",
+    "task_sha256": "23bbadd9cf6f647219367243f375beafdc51c9cb2f706077577080a01bf0c2da"
+  },
+  "sources": [
+    {
+      "bytes": 13158,
+      "path": "infer.py",
+      "sha256": "cdfdf92c798538afcbf974e16dd9686b3bac7837f001c300ac422bb9395d98eb"
+    }
+  ]
+}
