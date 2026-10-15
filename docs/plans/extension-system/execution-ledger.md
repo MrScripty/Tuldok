@@ -95,20 +95,6 @@ started/accepted by creating this documentation.
 - E2/P1–P4 prerequisites and E4/P5 are still unaccepted; no fixture-only activation.
   Retain the branch/worktree protected for lead integration and dependent work.
 
-## Independent static SDK preparation — 2026-10-15
-
-- While P1–P4 acceptance is unavailable, user-authorized SDK preparation uses
-  separate stacked `feat/extension-sdk-inert-validator` on E1 eb681de. No shared
-  application or numerical owner source is edited.
-- Added a private source-capturable single-package validator, exact schema copies,
-  inert authoring template, nine focused tests and a validator-only CI workflow.
-  Canonical host decoder/catalog remains the only grammar/policy interpreter.
-- Fresh copied-kit validation loads no app/Projects/DB/Torch and executes no
-  package source. Static validity remains separate from runtime/permission.
-  [Preparation evidence](reports/sdk-static-preparation.md) owns scope and limits.
-- This is not E3 A/B acceptance; E2/P1–P4 and E4/P5 gates stay blocked. Keep the
-  stacked SDK and E1 branches/worktrees retained for lead integration/dependencies.
-
 ## Authored scalar-A numerical prerequisite —2026-10-15
 
 - Separate feat/extension-a-producer-preparation freezes explicit authored fixture,
@@ -124,3 +110,17 @@ started/accepted by creating this documentation.
 - E2 waits accepted P1–P3/P4; E3 needs independent B/locality, E4/P5 complete export
   remains unavailable. Lead owns integration/all merges and safe terminal cleanup;
   preserve this branch and its dependent E1/SDK ancestors.
+
+## Independent static SDK preparation — 2026-10-15
+
+- While P1–P4 acceptance is unavailable, user-authorized SDK preparation uses
+  separate stacked `feat/extension-sdk-inert-validator` on E1 eb681de. No shared
+  application or numerical owner source is edited.
+- Added a private source-capturable single-package validator, exact schema copies,
+  inert authoring template, nine focused tests and a validator-only CI workflow.
+  Canonical host decoder/catalog remains the only grammar/policy interpreter.
+- Fresh copied-kit validation loads no app/Projects/DB/Torch and executes no
+  package source. Static validity remains separate from runtime/permission.
+  [Preparation evidence](reports/sdk-static-preparation.md) owns scope and limits.
+- This is not E3 A/B acceptance; E2/P1–P4 and E4/P5 gates stay blocked. Keep the
+  stacked SDK and E1 branches/worktrees retained for lead integration/dependencies.
