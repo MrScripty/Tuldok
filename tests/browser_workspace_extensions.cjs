@@ -20,7 +20,7 @@ fs.mkdirSync(projectRoot);
 const sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');
 const sourceHashes={},captures=[],checks=[],requests=[],errors=[],children=[],tracker=pageLoadTracker();
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-let ws,send,evaluate,serverErrors='';
+let ws,send,evaluate,serverErrors='',browserErrors='',phase='prepare';
 async function until(fn,message='Timed out'){for(let i=0;i<600;i++){const value=await fn();if(value)return value;await pause(100);}throw Error(message);}
 function launch(command,args,options){const child=spawn(command,args,options);children.push(child);return child;}
 function write(relative,raw){const destination=path.join(projectRoot,relative);fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,raw);return relative;}
@@ -36,12 +36,15 @@ write('alpha.project.json',JSON.stringify(first,null,2));write('beta.project.jso
 const before=snapshot(projectRoot);
 const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(temporary,'data'),'--project-root','sample='+projectRoot];
 (async()=>{
+  phase='start-server';
   let server=launch('python3',serverArgs(0),{cwd:root,stdio:['ignore','pipe','pipe']});
   let output='';server.stdout.on('data',chunk=>output+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);
   const port=await until(()=>{if(server.exitCode!==null)throw Error('Project server exited: '+serverErrors);return output.match(/127\.0\.0\.1:(\d+)/)?.[1];});
   const base='http://127.0.0.1:'+port;
   await fixtureAuth.register('http://127.0.0.1:'+port,path.join(temporary,'data'),root);
-  const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1440,900','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','ignore'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  phase='start-browser';
+  const browser=launch(process.env.BROWSER||'/usr/bin/chromium',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--window-size=1440,900','--user-data-dir='+path.join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','pipe'],env:{...process.env,XDG_CONFIG_HOME:temporary,XDG_CACHE_HOME:temporary}});
+  browser.stderr.on('data',chunk=>browserErrors=(browserErrors+chunk).slice(-16384));
   const debugPort=await waitForDebugger(browser,path.join(temporary,'browser','DevToolsActivePort'));
   const tabs=await(await fetch('http://127.0.0.1:'+debugPort+'/json')).json(),target=tabs.find(tab=>tab.type==='page'&&tab.url==='about:blank');assert.ok(target);
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
@@ -62,8 +65,11 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');await send('Network.enable');
   const offlineCanary=process.env.LD_PRELOAD?JSON.parse(execFileSync('python3',['-c',"import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"],{cwd:root,encoding:'utf8'})):null;
   await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
+  phase='open-workspaces';
   await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("open-project")'));
+  phase='open-alpha';
   await openProject('alpha.project.json',first.name,first.id);
+  phase='inspect-catalog';
   const details=await(await fetch(base+'/api/workspace/project-snapshots/'+first.id)).json();
   assert.equal(details.execution,'unsupported');assert.equal(details.schema_version,2);
   assert.deepEqual(details.extensions.packages.map(item=>item.state),['valid','invalid','unavailable']);
@@ -75,6 +81,7 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   assert.match(await text('#project-data-root .project-extensions'),/Absent package/);
   assert.equal(await evaluate('!!window.extensionExecuted'),false);
   assert.equal(await evaluate('document.querySelector(".project-extensions img")'),null);
+  phase='capture-catalog';
   await capture('extensions-catalog-1440',1440,'#project-data-root .project-extensions');
   await capture('extensions-catalog-390',390,'#project-data-root .project-extensions');
   check('Real owner HTTP/browser shows independent validity, integrity, host, runtime and permission without executing fixture source or active labels');
@@ -86,17 +93,20 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await nav('pipeline');assert.equal(await evaluate('document.querySelectorAll("#project-pipeline-root [data-project-recipe]").length'),0);
   await nav('runs');assert.equal(await evaluate('document.querySelectorAll("#project-runs-root [data-project-evidence]").length'),0);
   check('Keyboard expands exact package/contribution identity; v2 exposes inspection-only actions on all three panels');
+  phase='switch-beta';
   await openProject('beta.project.json',second.name,second.id);
   assert.match(await text('#project-data-root .project-extensions'),/No extensions enabled/);
   assert.doesNotMatch(await text('#project-data-root .project-extensions'),/Example field declarations/);
   // Deliberately let a superseded fetch finish after the newer selection.
   await evaluate(`(()=>{const original=TuldokAuth.fetch;window.restoreExtensionFetch=()=>TuldokAuth.fetch=original;TuldokAuth.fetch=async (...args)=>{const response=await original(...args);if(String(args[0]).endsWith('/${first.id}'))await new Promise(resolve=>setTimeout(resolve,350));return response;};})()`);
+  phase='late-catalog';
   await select('#dataset','project:'+first.id);await pause(60);await select('#dataset','project:'+second.id);
   await until(()=>text('#project-data-root').then(value=>value?.includes(second.name)));await pause(450);
   assert.match(await text('#project-data-root .project-extensions'),/No extensions enabled/);
   await evaluate('window.restoreExtensionFetch()');
   check('Context-local disablement retains old snapshot; a delayed old catalog cannot replace current project');
   await select('#dataset','project:'+first.id);await until(()=>text('#project-data-root .project-extensions').then(value=>value?.includes('Example field declarations')));
+  phase='reload';
   await reload();await until(()=>text('#project-data-root .project-extensions').then(value=>value?.includes('Example field declarations')));
   assert.deepEqual(await(await fetch(base+'/api/workspace/runs')).json(),[]);
   assert.deepEqual(snapshot(projectRoot),before);
@@ -107,4 +117,4 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   check('Cold browser reload preserves catalog identity; no Run/grant/action, source mutation or external browser request occurs');
   fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_workspace_extensions.cjs --scenario catalog',qualification:labRoot?'Inspection of exact copies of actual lab files only; no new training, execution or scientific verification':'Generic synthetic project UI/lifecycle only',actual_lab_source:labRoot?{commit:execFileSync('git',['rev-parse','HEAD'],{cwd:labRoot,encoding:'utf8'}).trim(),files:sourceHashes}:null,project_file_hashes:before,checks,captures,offline_canary:offlineCanary,execution_submitted:false,source_mutation:false,browser:(await send('Browser.getVersion')).product},null,2));
   console.log('PASS inert extension catalog browser:',report);
-})().catch(async error=>{console.error(error);console.error('Application stderr:',serverErrors);if(evaluate)try{console.error(await evaluate('JSON.stringify({url:location.href,body:document.body.innerText.slice(-9000)})'));}catch{}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())child.kill('SIGTERM');});
+})().catch(async error=>{fs.writeFileSync(path.join(report,'failure.json'),JSON.stringify({phase,error:String(error),stack:error.stack,checks,captures,server_stderr:serverErrors.slice(-16384),browser_stderr:browserErrors},null,2));console.error('Extension catalog failure phase:',phase);console.error(error);console.error('Application stderr:',serverErrors);console.error('Browser stderr:',browserErrors);if(evaluate)try{console.error(await evaluate('JSON.stringify({url:location.href,body:document.body.innerText.slice(-9000)})'));}catch{}process.exitCode=1;}).finally(()=>{ws?.close();for(const child of children.reverse())child.kill('SIGTERM');});

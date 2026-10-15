@@ -108,3 +108,16 @@ started/accepted by creating this documentation.
   [Preparation evidence](reports/sdk-static-preparation.md) owns scope and limits.
 - This is not E3 A/B acceptance; E2/P1–P4 and E4/P5 gates stay blocked. Keep the
   stacked SDK and E1 branches/worktrees retained for lead integration/dependencies.
+
+## Resumed authorization and owned CI diagnosis
+
+- Parent reconfirmed full implementation authority at18:17UTC; earlier pause is
+  superseded while unrelated local work stays untouched. E1 all three CI jobs
+  pass at eb681de; lead still owns integration/all merges.
+- SDK static CI passed; catalog browser CI failed before a screenshot and its
+  signed log endpoint returns403. Requested actual stderr from lead; added
+  bounded phase/failure artifact capture without changing checks or timeouts.
+  Positive real browser and intentional pre-screenshot failure paths were
+  observed locally; independent review clear. Root cause remains unclaimed.
+- Independent CPU runtime/producer preparation proceeds separately on
+  `feat/extension-cpu-producer-preparation`; no E2/P1–P4 acceptance inferred.

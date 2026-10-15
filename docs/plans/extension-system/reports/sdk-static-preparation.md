@@ -60,3 +60,21 @@ Branch `feat/extension-sdk-inert-validator`, worktree
 integration; its parent E1 branch must remain until no stacked branch requires
 it. The integration lead decides safe terminal cleanup after acceptance. Main,
 E1 published history and unrelated local work are preserved.
+
+## Resumed CI diagnosis
+
+The parent explicitly reconfirmed full implementation authorization at18:17UTC;
+this supersedes the earlier pause and preserves unrelated work. E1's complete
+catalog/workspace/lifecycle CI passed at eb681de. SDK static CI passed at559992c,
+but its catalog browser job failed before a screenshot; signed GitHub log storage
+returns403 in this environment, leaving the original stderr unavailable. The
+lead was asked to relay the original job output.
+
+The owned browser harness now retains its exact failed phase, bounded browser/
+server stderr and failure.json even before a screenshot. Assertions, timeouts,
+waits and product code are unchanged. Its real local positive workflow passes;
+an intentionally failing browser executable verifies a pre-screenshot failure
+artifact at `start-browser` and still exits1. Independent Sol High review found
+no weakened assertion or credential logging. This is diagnostic evidence, not a
+claim that the inaccessible original failure's cause is fixed. Exact-head CI
+must be observed after publication.
