@@ -1,0 +1,48 @@
+{
+  "format": "tuldok_extension_v1",
+  "package": {
+    "id": "example.template",
+    "version": "1.0.0"
+  },
+  "label": "Private authoring template",
+  "license": {
+    "id": "LicenseRef-Author-Required",
+    "notices": [
+      {
+        "path": "NOTICE.txt",
+        "sha256": "65df5827eeb270686a36c8ffef7f22df5e6bf652a2a0c636ae81bdfef9e5d9e3",
+        "bytes": 161
+      }
+    ]
+  },
+  "sources": [],
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "runtime": {
+    "profile": "unqualified-author-selection"
+  },
+  "effects": [],
+  "resources": {
+    "wall_seconds": 60,
+    "source_bytes": 1024,
+    "output_bytes": 1024
+  },
+  "contributions": [
+    {
+      "id": "example.template:task",
+      "version": "1.0.0",
+      "kind": "task",
+      "path": "task.json",
+      "sha256": "9ef1e9f54c95161c2704c8e77f992420af6cbd46d58ac14527903c7c23295e61",
+      "bytes": 178
+    }
+  ]
+}

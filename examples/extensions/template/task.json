@@ -1,0 +1,8 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.template:task",
+  "version": "1.0.0",
+  "kind": "task",
+  "label": "Author-defined task declaration",
+  "requires": []
+}
