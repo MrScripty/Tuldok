@@ -12,7 +12,7 @@
     {
       "command": "python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v",
       "state": "passed",
-      "tests": 5,
+      "tests": 6,
       "evidence_kind": "local numerical/closed-package tests; not actual Run"
     },
     {
@@ -23,7 +23,7 @@
     }
   ],
   "pending": [
-    "Main frozen bound-v2 kit and documented probe payload/target identities",
+    "Main frozen public server/selection harness and canonical A owner glue",
     "Owner normal finite Study preparation, complete exact grant and SDK conformance against public CLI",
     "Independent cold oracle on actual downloaded retained artifacts"
   ],
@@ -40,8 +40,8 @@
     "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
     "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
     "extension.json": "b2f6fa8e4ccabca5cd16040292b3c2eb844e320268ace330bad92bb31bf6aa24",
-    "recipe.json": "8126b95a30d264335575cf77c846539ee51e574398b15685980babbee419a2cc",
-    "project.json": "1ec5c3703f47e843b0a4e062cf72331e6386922b1871eeb5ea92a59750a90242"
+    "recipe.json": "79cc8270708466fc9ab37d35a4295bc3bbc8dbd5ed9578ae3b829cacd3c818c6",
+    "project.json": "060c6acffcd062db754609b9724f8f0de79833261c02716e16328550d67ea3b6"
   },
   "write_set": "examples/extensions/field-surrogate-b-independent/v1/",
   "constraints": {
@@ -70,5 +70,33 @@
     "array_contract": "<f8 C-order ZYX, cell-centered 4x4x4; units dimensionless; unit grid in m; standalone without physical timeline",
     "numerical_tolerance": "1e-10 + 1e-10 * abs(expected)",
     "sdk": "captured exact __init__.py and evidence.py bytes; no copied untrusted helper; no local Run fallback"
+  },
+  "identity_contract": {
+    "path": "docs/contracts/extension-field-identities.md",
+    "commit": "647cf2f",
+    "sha256": "fd2c98dfb1e983ab87ecc8c4906ecbc74a53341acfe25a443ce50f2e3a256397",
+    "state": "applied",
+    "payload_encoding": "struct.pack little-endian float64; excludes NPY header",
+    "input_order": [
+      "initial",
+      "source",
+      "boundary_mask"
+    ],
+    "target_order": [
+      "raw",
+      "corrected"
+    ],
+    "field_targets": [
+      {
+        "member_id": "validation-0",
+        "field_id": "raw",
+        "payload_sha256": "a5af5ffd194e6779855ede80e0c58251819b66fcbfb347ff692d6ec02813e04e"
+      },
+      {
+        "member_id": "validation-0",
+        "field_id": "corrected",
+        "payload_sha256": "2a68eb7ff67202cac3b293694fd343db9a509bf2fdfe2829d7c420517fbf54a5"
+      }
+    ]
   }
 }
