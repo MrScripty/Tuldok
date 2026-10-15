@@ -47,6 +47,10 @@ jobs:
       - run: python -m venv build/workspace-training
       - run: build/workspace-training/bin/python -m pip install -r requirements-training.txt
       - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
+      - name: Verify one-fit evidence in the provisioned CPU training interpreter
+        run: |
+          build/workspace-training/bin/python -c "import numpy, sklearn"
+          build/workspace-training/bin/python -m unittest discover -s tests -p test_one_fit_evidence.py -v
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
