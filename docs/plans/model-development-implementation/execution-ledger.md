@@ -130,3 +130,15 @@
 - P2 remains Verifying/I2pending until its published-head CI passes. No new
   classifier/evidence/candidate/physics acceptance. SDK65 is separately composed
   with main for its own exact-head checks; README67 remains unmerged.
+
+## 2026-10-15 — P2 composition with accepted inert SDK
+
+- SDK PR65 exact head536af2d passed both lifecycle, both catalog and both static-kit
+  runs, plus independent GPT-6.1 Sol High review. Merged main is1a5c596; no runtime
+  integration or E2/E3 claim. Producer branches remain stacked and preserved.
+- P2 merge06d397b cleanly adds the15 accepted SDK/doc/template/test paths and
+  ledger entries. No P2 application owner changes; independent review confirms
+  SDK source, canonical and copied schemas, fixtures and workflow match main.
+- Actual composed Study32/0skip88.009s and extension33/0skip9.834s pass. Existing
+  initial221-case evidence is unchanged and the subset rerun is counted separately.
+  New published-head CI is required before I2 closes. README67 remains unmerged.

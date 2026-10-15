@@ -51,8 +51,8 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 
 ### Constraints
 
-- Current main is `91c5e9647256d0b008ef2fd602914d031b0592fe`, after design
-  PR62/PR63, P1 PR66 and E1 PR64 integration. Recheck before each new source branch/merge. No applicable
+- Current main is `1a5c5968a4e73f17e79862d77179cffc776c3cdf`, after design
+  PR62/PR63, P1 PR66, E1 PR64 and inert SDK PR65 integration. Recheck before each new source branch/merge. No applicable
   AGENTS/skills files or callable live Coding Standards MCP are exposed; adopted
   dcc56f26 template/guidance and original structural function apply without certification.
 - Keep compatible legacy grammars/bytes, owner-only built-ins, exact one-use external

@@ -1,5 +1,5 @@
 {
-  "base_commit": "91c5e9647256d0b008ef2fd602914d031b0592fe",
+  "base_commit": "1a5c5968a4e73f17e79862d77179cffc776c3cdf",
   "files": {
     ".github/workflows/tests.yml": "57c83975a0bc67083e06395a1448c5dcb557b651b32ba822b305d43c09e94882",
     "agent_api.py": "47d034526165ee9b856efcd8ea13c77583243c7cb662561bba06a4c8ddd341b8",
@@ -9,10 +9,10 @@
     "docs/contracts/model-development.md": "a99174bb6c00954ff764f7a9ba30aba5873d651d939ec4b96222513c6a3d1499",
     "docs/contracts/project-cli.md": "175098270d9c6d3df7cc3465dc7a1f48887e690deea23919bae175c8242cdca6",
     "docs/contracts/workspace-storage.md": "b8b90572a7c27001230af4790f5a31a41a9bf6a201d7d0caf19021359cbb80b3",
-    "docs/plans/model-development-implementation/execution-ledger.md": "7c32d7e3b346d86ad500b5694bdaaf0bf6d86fb484ac8d94bef657a148c667bf",
+    "docs/plans/model-development-implementation/execution-ledger.md": "0555f66f1fdb3f8bccab2dfe88a7784eb23a1b5987f676f4dfac09c87c9041ef",
     "docs/plans/model-development-implementation/issues.md": "e15ec1773d88e7aeeb301e34a16c6713ca0cf6238332bc3b41e6d020a7b4446a",
-    "docs/plans/model-development-implementation/plan.md": "d56107d46ea8399f43eaf42b90e38044c6599b5537ad3fd62d81a3fd069d1bdf",
-    "docs/plans/model-development-implementation/reports/p2-verification.md": "7df56a2ee58c093211cbf8c8fbdf7c1a177c9f0de0e634580f2b3b4ebfb06937",
+    "docs/plans/model-development-implementation/plan.md": "03e988c4a32c7a1b5dd05fe97b1a9ff6c703119fd3f1b3124952640fdc894678",
+    "docs/plans/model-development-implementation/reports/p2-verification.md": "4134b3db0731bedd0b7aab6313a6fb5f937031533628c9f6412f55982c21946b",
     "experiments.py": "36bbf48ab6ffbad68ee51bf1d7372013708e2e53a0e9f7b89a34f3f9b7985c6b",
     "metadata.py": "8b1878aefd2f6857a48d69ddfe0ae2c84db8e20dc2ee2fd3f58b48b83678955e",
     "model_definitions.py": "8f0de009f478fd1737a42f822d5b4ae18a17d3e95aa23ae1f4495795ffc14a35",
@@ -32,7 +32,7 @@
   },
   "format": "p2_source_fingerprints_v1",
   "implementation_commit": "911da9c",
-  "integration_commit": "0100712",
+  "integration_commit": "06d397bb7d5bb23e6b35a3b4ee7fa37847ebac4f",
   "schema_definition_sha256": "1672d984517caaabf772ce64e9b73edb96d04a1cbe2997c14350e2df63396f54",
   "schema_version": 9
 }

@@ -4,6 +4,9 @@ Status: local implementation/review verified; committed-head CI and merge remain
 pending. I2 is not closed by these local receipts. Initial P2 implementation is911da9c on merged P1 main8673509.
 E1 main91c5e96 is composed by merge0100712; the two app.py route conflicts retain
 the exact union of Model/Study guards and E1 snapshot/auth/strict JSON behavior.
+Accepted inert SDK main1a5c596 is composed by merge06d397b. Its15 additions and
+ledger union leave P2 application owners unchanged. Independent review verifies
+canonical/copied SDK schema bytes, source and test owners match accepted main.
 No user catalog was migrated, training campaign launched or telemetry activated.
 
 ## Behavior and ownership
@@ -130,6 +133,11 @@ actual Study32/0skip75.789s and extension24/0skip7.935s pass. The extension back
 test now asserts current SCHEMA_VERSION while keeping its exact project-format
 restoration/legacy-reader witnesses; it was not a historical schema8 fixture.
 Independent merge review confirms the app.py union preserves both owners.
+SDK PR65 subsequently passed all six exact-head checks and merged as1a5c596.
+P2 merge06d397b is the clean union; no P2 application file changed. Actual composed
+Study32/0skip88.009s and all extension33/0skip9.834s pass, including SDK static
+validation and the original retained-reader witnesses. Independent review confirms
+the15 SDK additions and schema/canonical/test owners exactly match accepted main.
 Run exact-head CI and recheck the composition before merging. P2 stays Verifying/I2 pending until then.
 Source identities are retained in [P2 fingerprints](p2-source-fingerprints.json).
 P3 implements and qualifies actual classifier template edits, automatic recurrent
