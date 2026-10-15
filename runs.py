@@ -1739,9 +1739,9 @@ class Runs:
     def artifact_segment(self, run_id, name, body):
         """Read a bounded segment; only the client can verify the whole digest.
 
-        This new, explicitly weaker read contract does not change artifact(),
-        open_artifact() or capture_artifact() and never spools/hashes all payloads.
-        Every call rechecks credentials and retained completed custody.
+        Every call rechecks credentials. External Runs use retained custody;
+        qualified built-ins verify their complete published evidence inventory.
+        The returned segment still requires client-side whole-hash verification.
         """
         closed(body, ('expected_sha256', 'offset', 'max_bytes'))
         expected = body['expected_sha256']
@@ -1756,12 +1756,18 @@ class Runs:
             raise WorkbenchError('Artifact segment requires a declared flat output name.')
         with self.lock:
             run = self._load(run_id)
-        if not self._external(run):
-            raise WorkbenchError('Artifact segments support completed external Runs only.', 'unsupported', 400)
-        inventory = self._external_inventory(run)
+        if self._external(run):
+            inventory = self._external_inventory(run)
+        else:
+            adapter = adapter_for_graph(run['graph'])
+            if run['graph'].get('recipe') != getattr(adapter, 'MODEL_RECIPE', None):
+                raise WorkbenchError('Artifact segments require a qualified model-evidence or external Run.', 'unsupported', 400)
+            if name in TEST_FILES and not run['exposure_events']:
+                raise WorkbenchError('Record an explicit test-set exposure before opening test results.', 'conflict', 409)
+            inventory = self._verified_artifacts(run)
         item = next((item for item in inventory if item['name'] == name), None)
         if item is None:
-            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+            raise WorkbenchError('Unknown published artifact.', 'unavailable', 404)
         if item['sha256'] != expected:
             raise WorkbenchError('Artifact differs from the expected whole SHA256.', 'conflict', 409)
         if offset > item['bytes']:
