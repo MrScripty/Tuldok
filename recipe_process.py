@@ -29,6 +29,8 @@ LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
 LARGE_OUTPUT_LIMIT = 4 * 1024 * 1024 * 1024
 LARGE_OUTPUT_FILE_LIMIT = 512 * 1024 * 1024
 SPEC_LIMIT = 4 * 1024 * 1024
+MODEL_CONTEXT_PATH = 'runtime-bootstrap/model-evidence-context.json'
+MODEL_CONTEXT_LIMIT = 64 * 1024
 SOURCE = Path(__file__).read_bytes()
 HASH = re.compile(r'^[a-f0-9]{64}$')
 ID = re.compile(r'^[a-f0-9]{32}$')
@@ -302,7 +304,10 @@ def verify_cpu_snapshot(descriptor, *, checkpoint=None):
 def validate_spec(value):
     keys = {'schema_version','attempt_id','request_sha256','argv','env','cwd','stdin_base64',
             'wall_seconds','executable_sha256','max_output_bytes','output_dir','captured_files','runtime_files','trusted_install_owner_uid'}
-    if type(value) is not dict or set(value) - {'native_loader_policy', 'cpu_snapshot', 'resource_profile'} != keys or type(value['schema_version']) is not int or value['schema_version'] != 1:
+    if type(value) is not dict or type(value.get('schema_version')) is not int or value['schema_version'] not in (1,2):
+        raise ProcessError('Unsupported custody spec.')
+    if value['schema_version']==2:keys.add('model_evidence_context')
+    if set(value)-{'native_loader_policy','cpu_snapshot','resource_profile'}!=keys:
         raise ProcessError('Unsupported custody spec.')
     if not isinstance(value['attempt_id'], str) or not ID.fullmatch(value['attempt_id']):
         raise ProcessError('Invalid attempt identity.')
@@ -356,6 +361,13 @@ def validate_spec(value):
                 or not bootstrap_file or argv[7] not in inventory
                 or Path(argv[4]).name != 'recipe_process.py' or Path(argv[6]).name != 'snapshot.json'):
             raise ProcessError('CPU bootstrap, descriptor and entry must be exact captured files.')
+    if value['schema_version']==2:
+        context=value['model_evidence_context']
+        if (type(context) is not dict or set(context)!={'path','sha256','bytes'} or
+                context not in files or context.get('path')!=str(Path(value['cwd'])/MODEL_CONTEXT_PATH) or
+                type(context.get('bytes')) is not int or not 1<=context['bytes']<=MODEL_CONTEXT_LIMIT or
+                argv.count(context['path'])!=1 or 'cpu_snapshot' not in value):
+            raise ProcessError('Model context must be one exact bounded captured CPU argument.')
     capture_limit = 64 * 1024 * 1024
     if 'cpu_snapshot' in value:
         # The complete descriptor/bootstrap contract above qualifies this profile.
@@ -418,7 +430,34 @@ def verify_native_loader_policy(owner_uid):
         os.close(descriptor)
 
 
+def verify_model_context(spec):
+    """The new generated input is owned/read-only at READY, GO and drainage."""
+    if spec.get('schema_version')!=2:return
+    root=directory=descriptor=None
+    try:
+        root=os.open(spec['cwd'],os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        directory=os.open('runtime-bootstrap',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=root)
+        descriptor=os.open('model-evidence-context.json',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=directory)
+        before=os.fstat(descriptor);context=spec['model_evidence_context']
+        if (not stat.S_ISREG(before.st_mode) or before.st_nlink!=1 or before.st_uid!=os.getuid() or
+                before.st_mode&0o222 or before.st_size!=context['bytes']):
+            raise ProcessError('Generated model context is not the exact read-only owned file.','stale')
+        chunks=[];remaining=MODEL_CONTEXT_LIMIT+1
+        while remaining:
+            chunk=os.read(descriptor,min(remaining,65536))
+            if not chunk:break
+            chunks.append(chunk);remaining-=len(chunk)
+        raw=b''.join(chunks);after=os.fstat(descriptor)
+        identity=lambda value:(value.st_dev,value.st_ino,value.st_uid,value.st_mode,value.st_nlink,value.st_size,value.st_mtime_ns,value.st_ctime_ns)
+        if identity(before)!=identity(after) or len(raw)!=context['bytes'] or digest(raw)!=context['sha256']:
+            raise ProcessError('Generated model context identity changed.','stale')
+    finally:
+        for handle in (descriptor,directory,root):
+            if handle is not None:os.close(handle)
+
+
 def verify_captures(spec, *, checkpoint=None, include_cpu=True):
+    verify_model_context(spec)
     if 'cpu_snapshot' in spec and include_cpu:
         verify_cpu_snapshot(spec['cpu_snapshot'], checkpoint=checkpoint)
     if 'native_loader_policy' in spec:
@@ -909,6 +948,9 @@ def _helper(control_fd,spec_fd,exe_fd,directory_fd):
                 try:os.close(key.fd)
                 except OSError:pass
         selector.close()
+    if drained and go and spec['schema_version']==2:
+        try:verify_model_context(spec)
+        except (OSError,ProcessError):reason='model_context_changed'
     outcome='unknown' if not drained else 'completed' if go and code==0 and reason=='exited' else 'cancelled' if reason in ('cancelled','shutdown','controller_lost') else 'failed'
     receipt=dict(common,helper=who,go_received=go,spawn_closed=True,drained=drained,echild=drained,outcome=outcome,reason=reason,
         leader_returncode=code,streams={name:{'bytes':sizes[name],'sha256':hashes[name].hexdigest()} for name in hashes})
