@@ -687,3 +687,51 @@ class StudyTests(CapturedModelCase):
         finally:
             with self.owner.bound(self.dataset),self.dataset.db.transaction():
                 self.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(original,run['id']))
+
+    def test_cold_study_run_cannot_drop_composition_marker_to_skip_approval_binding(self):
+        trial,_=self.prepare();self.open();body=self.admission_body(trial,self.approve())
+        with self.dataset.access.bind(self.agent['token']),patch.object(self.dataset.runs,'_start'):
+            admitted=self.studies.admit(self.study['id'],body)
+        with self.owner.bound(self.dataset):
+            retained=self.dataset.runs._load(admitted['run']['id'])
+            original=self.dataset.db.execute('SELECT document FROM workspace_runs WHERE id=%s',(retained['id'],)).fetchone()[0]
+        for replace_preflight in (False,True):
+            with self.subTest(replace_preflight=replace_preflight):
+                run=copy.deepcopy(retained);run.pop('approval_material_sha256')
+                if replace_preflight:
+                    run['material']['runtime']['trusted_install_owner_uid']+=1
+                    run['material_sha256']=digest(run['material']);run['spec']['trusted_install_owner_uid']+=1
+                    import recipe_contract
+                    recipe_contract.validate_spec(run['material'],run['spec'],run['spec']['cwd'])
+                with self.owner.bound(self.dataset),self.dataset.db.transaction():
+                    self.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(json.dumps(run),run['id']))
+                try:
+                    with self.owner.bound(self.dataset),self.assertRaises(WorkbenchError):
+                        self.dataset.runs.get(run['id'])
+                finally:
+                    with self.owner.bound(self.dataset),self.dataset.db.transaction():
+                        self.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(original,run['id']))
+
+    def test_cold_study_run_requires_its_exact_consumed_actor_grant(self):
+        trial,_=self.prepare();self.open();grant=self.approve()
+        with self.dataset.access.bind(self.agent['token']),patch.object(self.dataset.runs,'_start'):
+            admitted=self.studies.admit(self.study['id'],self.admission_body(trial,grant))
+        with self.owner.bound(self.dataset):self.dataset.runs.cancel(admitted['run']['id'])
+        sibling_grant=self.approve()
+        with self.dataset.access.bind(self.agent['token']),patch.object(self.dataset.runs,'_start'):
+            self.studies.admit(self.study['id'],self.admission_body(trial,sibling_grant))
+        replacements=(sibling_grant,self.approve(),self.approve(self.other['identity']['actor_id']))
+        with self.owner.bound(self.dataset):
+            retained=self.dataset.runs._load(admitted['run']['id'])
+            original=self.dataset.db.execute('SELECT document FROM workspace_runs WHERE id=%s',(retained['id'],)).fetchone()[0]
+        for replacement in replacements:
+            with self.subTest(approval_id=replacement['id']):
+                run=copy.deepcopy(retained);run['approval_id']=replacement['id']
+                with self.owner.bound(self.dataset),self.dataset.db.transaction():
+                    self.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(json.dumps(run),run['id']))
+                try:
+                    with self.owner.bound(self.dataset),self.assertRaises(WorkbenchError):
+                        self.dataset.runs.get(run['id'])
+                finally:
+                    with self.owner.bound(self.dataset),self.dataset.db.transaction():
+                        self.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s',(original,run['id']))
