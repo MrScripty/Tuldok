@@ -12,7 +12,7 @@
     {
       "command": "python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v",
       "state": "passed",
-      "tests": 7,
+      "tests": 8,
       "evidence_kind": "local numerical/closed-package tests; not actual Run"
     },
     {
@@ -40,8 +40,8 @@
     "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
     "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
     "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
-    "recipe.json": "88d72d41c6be925d9248ba1cf4f1a7ba46366f70e744653e41092dc44cc7f9e3",
-    "project.json": "a555f75ebd02b8ac8f311e6bcb3a1a8aaa2855cd422568a383fc4fef885cd43f"
+    "recipe.json": "95db6579afb9980e42f2504d02485cc076908a3c8c1733267d9417aeeaef7b6e",
+    "project.json": "ef1965e9c7817dec2cce6882c5a4725dade23cec2f801f36a61640d33e1296a8"
   },
   "write_set": "examples/extensions/field-surrogate-b-independent/v1/",
   "constraints": {
@@ -73,8 +73,8 @@
   },
   "identity_contract": {
     "path": "docs/contracts/extension-field-identities.md",
-    "commit": "647cf2f",
-    "sha256": "4444978750c9fdba7d724ca14ab47616704efab50cdf8489f0d5af6f2e49b51e",
+    "commit": "d6396a5",
+    "sha256": "027e67658298183d98eb8085da999d1f584fc372498d5f8af25769cf22e48a3d",
     "state": "applied",
     "payload_encoding": "struct.pack little-endian float64; excludes NPY header",
     "input_order": [
@@ -105,8 +105,19 @@
     "evidence_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
     "reason": "Reviewed canonical UTF-8 compatibility fix; no admitted B material or grant exists",
     "frozen_mathematical_sources_unchanged": true,
-    "adapter_identity": "Producer source bytes; SDK has a separate captured source identity; producer adapter/evaluator/field source SHA recomputed and unchanged",
+    "adapter_identity": "Superseded producer-only identity corrected by documented d6396a5 full recipe.sources closure digest; numerical bytes remain frozen",
     "package_version": "1.0.0",
     "version_disposition": "Not admitted yet; package SHA/source closure changes; no existing material or grant is reused"
+  },
+  "adapter_closure": {
+    "sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+    "algorithm": "SDK digest(sorted(recipe['sources'], key=lambda item: item['path']))",
+    "entries": "exact {path, sha256}; excludes bytes, recipe itself and automatic Model binding",
+    "applies_to": [
+      "model_evidence.adapter_sha256",
+      "fields[*].contract.source_sha256",
+      "metric_definitions[*].evaluator_sha256"
+    ],
+    "source_inventory_unchanged": true
   }
 }

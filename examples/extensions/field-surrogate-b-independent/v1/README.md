@@ -47,7 +47,7 @@ python -m tuldok_extension_sdk validate examples/extensions/field-surrogate-b-in
 python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v
 ```
 
-These prove inert declaration validity and local numerical behavior. Seven tests
+These prove inert declaration validity and local numerical behavior. Eight tests
 compare NumPy updates/replay with independent stdlib equations, demonstrate
 train-only fitting and explicit boundary enforcement, reject missing/nonbinary
 inputs and malformed native arrays, and check exact source closure/dataflow.
@@ -69,9 +69,8 @@ python cold_oracle.py --fixture fixture.json --artifacts DOWNLOADED_ARTIFACTS \
   --expected-context-sha256 INDEPENDENT_EXPECTED_SHA --report ABSENT_REPORT.json
 ```
 
-The exact native identity rules follow
-`docs/contracts/extension-field-identities.md`, first published at `647cf2f`
-and corrected with the reviewed SDK UTF-8 canonicalization change `8e70f1e`.
+The exact native identity and source-closure rules follow
+`docs/contracts/extension-field-identities.md` at contract commit `d6396a5`.
 Candidate input identities hash ordered input field IDs and SHA256s of native
 little-endian float64 payloads, excluding NPY headers. The policy contains exact
 `field_targets` rows in candidate then field order, and candidate target identity
@@ -89,8 +88,10 @@ pass the independent cold oracle. No actual Run or E3 acceptance is claimed here
 The own-package SDK evidence helper was recaptured from reviewed `8e70f1e`:
 canonical JSON emits UTF-8 with unescaped Unicode. ASCII probe identities stay
 unchanged. Its new exact source hash changes provider/recipe/Project identities;
-producer-only adapter/evaluator/field-source hashes remain the frozen producer
-SHA. Mathematical source, oracle and fixture remain unchanged. This unadmitted
+adapter/evaluator/field-source hashes all use the SDK digest of the complete
+recipe source inventory sorted by path, retaining exact `{path, sha256}` entries.
+File sizes, the recipe itself and automatic Model binding entries are excluded.
+Mathematical source, oracle and fixture remain unchanged. This unadmitted
 package has no prior material or grant to reuse.
 
 Exact author/source hashes, commands, constraints and pending evidence are in
