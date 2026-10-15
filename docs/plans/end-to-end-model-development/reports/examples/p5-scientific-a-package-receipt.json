@@ -1,0 +1,46 @@
+{
+  "adapter_revision": 2,
+  "adapter_sha256": "b77face4f2e51345a565216fc5139271aa02bd17577ac099706393b3149acc2c",
+  "candidate": {
+    "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+    "id": "59985dbb547d48a9834b5d3f932df31f",
+    "kind": "candidate",
+    "sha256": "b555587dbecefe31a46418d5eba7e682377727ad8fb8a6ef9bbb989a0084c21d"
+  },
+  "candidate_packages_sha256": "760b4206395ae58f4fe4eb01e73334573104ea9d8a52d92760d79fa45b453aff",
+  "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+  "charged": {
+    "admitted_wall_seconds": 661,
+    "attempt_slots": 3,
+    "peak_staging_bytes": 101399545,
+    "retained_bytes": 54523222
+  },
+  "checkpoint_sha256": "6b7ce4212150e7af090abe69738553d50c41a129247e673e310d754c87d8d75c",
+  "contract_sha256": "9588ee2632a90dc647e65b4f2b6289ef78338de29ec3f16480f02f6ea02f7dd8",
+  "format": "p5_scientific_a_package_acceptance_v1",
+  "masked_fresh_verified": true,
+  "max_absolute_difference": 0.0,
+  "numerical_acceptance": "not_evaluated",
+  "output_value_count": 64,
+  "package_bytes": 77975,
+  "package_run_id": "ba3c1e6bb17f4ddfab9b7905535fd2f9",
+  "package_sha256": "d386463952e85242e31b2c839b3e9b5e80002f87eed2f11a459c49d6d54f2d37",
+  "receipt_format": "fresh_field_inference_verification_v1",
+  "reconstruction": {
+    "absolute_tolerance": 1e-10,
+    "independent_oracle_sha256": "ccfbe3bc92badf265ea882382d392e05daca091f5694f528f268ec3d6e38764b",
+    "physical_acceptance": "not_established",
+    "quality_acceptance": "not_established",
+    "relative_tolerance": 1e-10,
+    "scope": "retained_fixed_probe_reconstruction_only"
+  },
+  "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "scope": "Private QA nominated A retained fixed-probe reconstruction; canonical Release/E1, source B, numerical/physical acceptance and full E4 remain separate.",
+  "source_commit": "268e5d58cab29c0e5262ec804c9459806973c2e2",
+  "source_evaluation_sha256": "2ce8e6890a02acc12016c7e144fd6ec52845880fa4785fde576fb8d1cdbbd45d",
+  "source_run_id": "87a0cfd1bfe6498793f9b46dc95b4950",
+  "study_id": "a7b87df86f9e4ff2b18dc5e496731030",
+  "verified": true,
+  "verifier_run_id": "3f52fb27c9a94f0ab4e816d83bcdea23",
+  "weights_sha256": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c"
+}
