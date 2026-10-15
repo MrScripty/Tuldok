@@ -442,6 +442,8 @@ _EVIDENCE_RESULT={'oneOf':[
     obj({'state':const('verified'),'manifest':_EVIDENCE_DOCUMENT,
          'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
          'metric_definitions':{'type':['object','array']},
+         'metric_definition_hashes':{'type':'object','maxProperties':64,
+             'propertyNames':text(64),'additionalProperties':SHA},
          'observations':array(_EVIDENCE_DOCUMENT,1000),
          'model_definition':_EVIDENCE_DOCUMENT,
          'checkpoint':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]},
@@ -474,6 +476,27 @@ for _node_schema in _model_graph['properties']['nodes']['items']['oneOf']:
 _model_save=copy.deepcopy(_CONTRACTS['graphs.save'][1])
 _model_save['inputSchema']['properties']['document']['oneOf'].append(_model_graph)
 _CONTRACTS['graphs.save'][2]=_model_save
+_exact_comparison=copy.deepcopy(_CONTRACTS['runs.compare_model_evidence'][1])
+_exact_comparison['inputSchema']=obj({'run_id':ID,'other_run_id':ID,
+    **{key:SHA for key in ('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256',
+        'other_evaluation_sha256','metric_definition_sha256','other_metric_definition_sha256')},
+    'metric_id':text(64),'mode':{'enum':['paired','side_by_side']}})
+_CLOCKS=obj({'optimizer_update':{'oneOf':[SAFE_NAT,{'type':'null'}]},
+    'epoch':{'oneOf':[SAFE_POS,{'type':'null'}]},'fit_pass':{'oneOf':[SAFE_POS,{'type':'null'}]},
+    'physical_time':{'oneOf':[text(64),{'type':'null'}]},'wall_elapsed_ms':SAFE_NAT})
+_OBSERVED_OR_UNDEFINED={'oneOf':[obj({'state':const('observed'),'value':{'type':'number'},'sample_count':SAFE_POS}),
+    obj({'state':const('undefined'),'reason':text(64)})]}
+_EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
+    'mode':{'enum':['paired','side_by_side']},'sides':array(obj({'run_id':ID,'evaluation_sha256':SHA,
+        'checkpoint_sha256':SHA,'metric_definition_sha256':SHA,'metric_id':text(64),'split':const('validation'),
+        'clocks':_CLOCKS,'units':text(80),'direction':{'enum':['minimize','maximize','none']},
+        'result':_OBSERVED_OR_UNDEFINED}),2,2),
+    'reasons':array(text(1000),64),'delta':{'oneOf':[{'type':'null'},
+        obj({'state':const('observed'),'value':{'type':'number'},'units':text(80)}),
+        obj({'state':const('undefined'),'reason':text(64)})]}})
+_exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
+_exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
+_CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256

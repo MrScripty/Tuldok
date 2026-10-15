@@ -17,6 +17,9 @@ from image_training import TrainingError, _json, _write_json, transform_for_para
 FORMAT = 'model_evidence_v1'
 MAX_SHARD_BYTES = 8 * 1024**2
 MAX_MANIFEST_BYTES = 1024**2
+MAX_INTEGER = 2**53 - 1
+MAX_JSON_DEPTH = 16
+MAX_JSON_NODES = 32768
 BASE_PAYLOADS = {'metrics.json', 'test-metrics.json', 'predictions-validation.json',
                  'predictions-test.json', 'checkpoint.pt'}
 COMMON_PAYLOADS = {'model-evidence.json', 'model-definition.json', 'profile.json', 'probe.json',
@@ -39,7 +42,7 @@ def digest(value):
 
 def read_binary(path, maximum=64*1024**2):
     if path.is_symlink():raise ValueError('Evidence symlink is invalid.')
-    descriptor=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
+    descriptor=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
     with os.fdopen(descriptor,'rb') as handle:
         before=os.fstat(handle.fileno())
         if not stat.S_ISREG(before.st_mode) or before.st_nlink!=1 or before.st_size>maximum:
@@ -209,7 +212,25 @@ def finish_capture(output, envelope, checkpoints, best_epoch, context):
 
 
 def read_document(directory, name, maximum=MAX_SHARD_BYTES):
-    return _json(read_binary(directory/name,maximum),name)
+    value = _json(read_binary(directory/name,maximum),name)
+    pending = [(value, 0)]
+    visited = 0
+    while pending:
+        node, depth = pending.pop()
+        visited += 1
+        if depth > MAX_JSON_DEPTH or visited > MAX_JSON_NODES:
+            raise ValueError('Evidence JSON exceeds its structural bound.')
+        if type(node) is float and not math.isfinite(node):
+            raise ValueError('Evidence JSON contains a nonfinite number.')
+        if type(node) is dict:
+            pending.extend((child, depth + 1) for pair in node.items() for child in pair)
+        elif type(node) is list:
+            pending.extend((child, depth + 1) for child in node)
+    return value
+
+
+def _natural(value, minimum=0):
+    return type(value) is int and minimum <= value <= MAX_INTEGER
 
 
 def verify(directory, run, metrics):
@@ -218,19 +239,20 @@ def verify(directory, run, metrics):
     manifest = read_document(directory, 'model-evidence.json', MAX_MANIFEST_BYTES)
     keys = {'format','schema_version','producer','task','model_sha256','data_sha256','profile_sha256','probe',
             'metric_definitions','checkpoints','observations','field_index','coverage','inference'}
-    if set(manifest) != keys or manifest['format'] != FORMAT or manifest['schema_version'] != 1:
+    if (set(manifest) != keys or manifest['format'] != FORMAT
+            or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1):
         raise ValueError('Invalid model evidence envelope.')
     context = run['evidence_context']
     producer = {'catalog_id':run['dataset_id'],'run_id':run['id'],'material_sha256':context['material_sha256'],
                 'adapter_sha256':context['adapter_sha256']}
-    if (manifest['producer'] != producer or manifest['task'] != task_ref(run['dataset_id'])
+    if (manifest['producer'] != producer or canonical(manifest['task']) != canonical(task_ref(run['dataset_id']))
             or manifest['data_sha256'] != run['release_sha256'] or manifest['model_sha256'] != context['model_sha256']
             or manifest['profile_sha256'] != digest(context['profile']) or manifest['field_index'] is not None
             or manifest['coverage'] != {'required':context['profile']['required_capabilities'],'optional':[],'omitted':[]}
-            or read_document(directory,'model-definition.json') != context['model_definition']
-            or read_document(directory,'profile.json') != context['profile']
-            or read_document(directory,'fitted-transform.json') != EMPTY_FITTED_TRANSFORM
-            or read_document(directory,'output-policy.json') != OUTPUT_POLICY):
+            or canonical(read_document(directory,'model-definition.json')) != canonical(context['model_definition'])
+            or canonical(read_document(directory,'profile.json')) != canonical(context['profile'])
+            or canonical(read_document(directory,'fitted-transform.json')) != canonical(EMPTY_FITTED_TRANSFORM)
+            or canonical(read_document(directory,'output-policy.json')) != canonical(OUTPUT_POLICY)):
         raise ValueError('Evidence differs from admitted model/profile/task/source.')
     def checked_blob(item):
         if type(item) is not dict or set(item) != {'name','sha256','bytes','media_type'} or item['name'] not in payload_names(run['parameters']['epochs']):
@@ -239,7 +261,7 @@ def verify(directory, run, metrics):
         return read_document(directory,item['name']) if item['name'].endswith('.json') else None
     probe = checked_blob(manifest['probe'])
     expected_probe = probe_manifest({'records':run['source_records']}, run['release_sha256'], context['profile'])
-    if probe != expected_probe: raise ValueError('Fixed validation membership differs.')
+    if canonical(probe) != canonical(expected_probe): raise ValueError('Fixed validation membership differs.')
     index = checked_blob(manifest['checkpoints'])
     if set(index) != {'format','run_id','entries'} or index['format'] != 'checkpoint_index_v1' or index['run_id'] != run['id']:
         raise ValueError('Invalid checkpoint index.')
@@ -257,16 +279,16 @@ def verify(directory, run, metrics):
             raise ValueError('Invalid checkpoint entry.')
         descriptor = checked_blob(entry['checkpoint']); clocks = entry['clocks']
         if (set(clocks) != {'optimizer_update','epoch','fit_pass','physical_time','wall_elapsed_ms'}
-                or clocks['epoch'] != epoch or type(clocks['epoch']) is not int
-                or type(clocks['optimizer_update']) is not int or clocks['optimizer_update'] <= previous_update
+                or not _natural(clocks['epoch'], 1) or clocks['epoch'] != epoch
+                or not _natural(clocks['optimizer_update'], 1) or clocks['optimizer_update'] <= previous_update
                 or clocks['optimizer_update'] != epoch * math.ceil(sum(row['split']=='train' for row in run['source_records']) / run['parameters']['batch_size'])
-                or type(clocks['wall_elapsed_ms']) is not int or clocks['wall_elapsed_ms'] < previous_wall
+                or not _natural(clocks['wall_elapsed_ms']) or clocks['wall_elapsed_ms'] < previous_wall
                 or clocks['fit_pass'] is not None or clocks['physical_time'] is not None):
             raise ValueError('Checkpoint clocks differ from actual admitted progress.')
         expected = {'format':'checkpoint_state_v1','run_id':run['id'],'model_sha256':context['model_sha256'],
                     'weights':blob(directory/f'weights-epoch-{epoch:04d}.pt'),
                     'fitted_transform_sha256':fitted_transform_sha256(),'clocks':clocks}
-        if descriptor != expected or any(entry[key] != descriptor[key] for key in ('model_sha256','fitted_transform_sha256','clocks')):
+        if canonical(descriptor) != canonical(expected) or any(entry[key] != descriptor[key] for key in ('model_sha256','fitted_transform_sha256','clocks')):
             raise ValueError('Checkpoint descriptor binding differs.')
         checked_blob(descriptor['weights'])
         prediction = read_document(directory,f'probes-epoch-{epoch:04d}.json')
@@ -318,6 +340,8 @@ def verify(directory, run, metrics):
         previous_update=clocks['optimizer_update'];previous_wall=clocks['wall_elapsed_ms']
         descriptors.append(descriptor);predictions.append(prediction)
     best = min(range(len(metrics['history'])),key=lambda i:metrics['history'][i]['validation']['loss'])+1
+    if metrics['validation'] != metrics['history'][best-1]['validation']:
+        raise ValueError('Selected validation metrics differ from selected checkpoint observation.')
     if selected != [metrics['best_epoch']] or metrics['best_epoch'] != best:
         raise ValueError('Selected checkpoint differs from validation selection.')
     if read_binary(directory/'checkpoint.pt') != read_binary(directory/f'weights-epoch-{best:04d}.pt'):
@@ -339,7 +363,7 @@ def verify(directory, run, metrics):
     if len(definitions)!=3 or len(observations)!=len(index['entries'])*3:
         raise ValueError('Metric observation coverage differs.')
     expected_population=digest(sorted([item['frozen_reference'] for item in probe['members']], key=canonical))
-    if definitions!=metric_definitions(context,{'records':run['source_records'],'class_vocabulary':metrics['class_vocabulary']}):
+    if canonical(definitions)!=canonical(metric_definitions(context,{'records':run['source_records'],'class_vocabulary':metrics['class_vocabulary']})):
         raise ValueError('Metric definitions differ from selected evaluator semantics.')
     for definition in definitions:
         if definition['population_sha256']!=expected_population or definition['evaluator_sha256']!=context['adapter_sha256']:
@@ -350,13 +374,59 @@ def verify(directory, run, metrics):
             expected={'run_id':run['id'],'checkpoint_sha256':entry['checkpoint']['sha256'],
                 'probe_sha256':manifest['probe']['sha256'],'metric_id':metric,'split':'validation','clocks':entry['clocks'],
                 'state':'observed','value':step['validation'][metric],'sample_count':step['validation']['examples']}
-            if match != [expected]:raise ValueError('Scalar observation differs from actual validation.')
+            if canonical(match) != canonical([expected]):raise ValueError('Scalar observation differs from actual validation.')
     expected_inference={'mode':'eval_no_grad','fitted_transforms':[blob(directory/'fitted-transform.json')],
                         'output_policy_sha256':digest(OUTPUT_POLICY)}
     if manifest['inference'] != expected_inference:raise ValueError('Inference transform differs.')
     return {'state':'verified','manifest':manifest,'checkpoint_index':index,'probe':probe,
             'metric_definitions':definitions,'observations':observations,'model_definition':context['model_definition']},descriptors,predictions
 
+
+
+def compare_evidence(evidence, run_ids, body):
+    """Exact checkpoint comparisons after Runs has verified both immutable inputs."""
+    sides=[];definitions=[]
+    for index,value in enumerate(evidence):
+        prefix='' if index==0 else 'other_'
+        checkpoint_sha=body[prefix+'checkpoint_sha256']
+        definition_sha=body[prefix+'metric_definition_sha256']
+        entries=[item for item in value['checkpoint_index']['entries'] if item['checkpoint']['sha256']==checkpoint_sha]
+        if len(entries)!=1:raise ValueError('Exact checkpoint does not uniquely belong to its selected evaluation.')
+        matches=[item for item in value['metric_definitions'] if item['id']==body['metric_id'] and digest(item)==definition_sha]
+        if len(matches)!=1:raise ValueError('Exact metric definition does not uniquely belong to its selected evaluation.')
+        entry=entries[0];definition=matches[0];definitions.append(definition)
+        observations=[item for item in value['observations'] if item['checkpoint_sha256']==checkpoint_sha
+            and item['metric_id']==body['metric_id'] and item['probe_sha256']==value['manifest']['probe']['sha256']
+            and item['split']=='validation' and item['clocks']==entry['clocks']]
+        if len(observations)!=1:raise ValueError('Exact comparison observation is unavailable or ambiguous.')
+        observation=observations[0]
+        if observation['state']=='observed':
+            if (type(observation['value']) not in (int,float) or not math.isfinite(observation['value'])
+                    or type(observation['sample_count']) is not int or observation['sample_count']<1):
+                raise ValueError('Invalid observed comparison value.')
+            result={'state':'observed','value':observation['value'],'sample_count':observation['sample_count']}
+        elif observation['state']=='undefined':
+            if type(observation['reason']) is not str or not 1<=len(observation['reason'])<=64:
+                raise ValueError('Invalid undefined comparison reason.')
+            result={'state':'undefined','reason':observation['reason']}
+        else:raise ValueError('Comparison requires an observed or explicitly undefined value.')
+        sides.append({'run_id':run_ids[index],'evaluation_sha256':body[prefix+'evaluation_sha256'],
+            'checkpoint_sha256':checkpoint_sha,'metric_definition_sha256':definition_sha,'metric_id':body['metric_id'],
+            'split':'validation','clocks':entry['clocks'],'units':definition['units'],'direction':definition['direction'],'result':result})
+    reasons=[];left,right=evidence
+    if left['manifest']['task']['sha256']!=right['manifest']['task']['sha256']:reasons.append('Task semantics differ.')
+    for key,label in (('preprocessing_policy','Preprocessing'),('output_policy','Output')):
+        if left['model_definition'][key]!=right['model_definition'][key]:reasons.append(label+' policies differ.')
+    membership=lambda value:sorted([{'frozen_reference':item['frozen_reference'],'input_sha256':item['input_sha256'],
+                                    'target_sha256':item['target_sha256']} for item in value['probe']['members']],key=canonical)
+    if membership(left)!=membership(right):reasons.append('Frozen validation membership or targets differ.')
+    if definitions[0]!=definitions[1]:reasons.append('Metric definition, population, units or evaluator semantics differ.')
+    delta=None
+    if not reasons and body['mode']=='paired':
+        if all(side['result']['state']=='observed' for side in sides):
+            delta={'state':'observed','value':sides[1]['result']['value']-sides[0]['result']['value'],'units':sides[0]['units']}
+        else:delta={'state':'undefined','reason':'one_or_both_sides_undefined'}
+    return {'state':'incompatible' if reasons else 'compatible','mode':body['mode'],'sides':sides,'reasons':reasons,'delta':delta}
 
 def replay_checkpoints(job_path):
     """CPU worker verification: reconstruct every retained state from exact release."""
