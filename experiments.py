@@ -138,7 +138,9 @@ class Experiments:
             receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
             if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
-        prepared=self.dataset.pipelines.prepare_external_material(body['graph_id'],body['graph_revision'],body['model'],
+        prepare=(self.dataset.pipelines.prepare_builtin_material if self.dataset.pipelines.get(body['graph_id']).get('recipe')=='image_classification_model_v2'
+                 else self.dataset.pipelines.prepare_external_material)
+        prepared=prepare(body['graph_id'],body['graph_revision'],body['model'],
                                             reconcile_capture=body.get('reconcile_capture',False))
         try:
             with self.lock,self.db.transaction():
@@ -265,6 +267,9 @@ class Experiments:
     def _ceased(self,run):
         if run['state'] in ACTIVE or run['state']=='unknown':return False
         if run.get('custody_phase')=='drained':return True
+        if not self.dataset.runs._external(run):
+            from runs import process_status
+            return run.get('worker') is None or process_status(run['worker'])=='ceased'
         return self.dataset.runs._external_recovery_state(run)=='interrupted'
 
     @authorized('execute','studies.continue',owner_only=True)
@@ -302,7 +307,9 @@ class Experiments:
                 raise WorkbenchError('Composed material differs. Review the exact trial.','stale',409)
         # Full retained model/profile/input and current executable proof occurs
         # before the short grant transaction, without a process or private Run.
-        self.dataset.pipelines.preflight_recipe_material(trial['material'])
+        prepared=self.dataset.pipelines.preflight_recipe_material(trial['material'])
+        if prepared.get('kind')=='builtin':
+            raise WorkbenchError('Built-in classifier execution remains owner-only; no delegated execution grant applies.','unsupported',409)
         with self.lock,self.db.transaction():
             self.access.require('approve-execution','studies.approve',study_id,owner_only=True)
             grant=self.access.grant_execution(trial['material']['sha256'],body['consumer_actor_id'],body.get('ttl_seconds',600))
@@ -332,6 +339,8 @@ class Experiments:
             if trial['study_id']!=study_id or trial['id'] not in study['trial_ids']:
                 raise WorkbenchError('Trial is not a member of this study.')
         material=self.dataset.pipelines.recipe_material(trial['material'],verify=True)
+        builtin=material['material']['trainer']['id']=='tinycnn_cpu_v2'
+        if builtin:self.access.require('execute','studies.admit_builtin',study_id,owner_only=True)
         envelope=material['material']['resource_envelope']
         run_id=uuid.uuid4().hex;staging=self.dataset.runs.path/('.external-'+run_id)
         rollback_owned=False
@@ -362,12 +371,20 @@ class Experiments:
                         raise WorkbenchError('Retry requires a ceased failed/cancelled/interrupted parent.')
                 run_key='study-'+digest({'study_id':study_id,'actor_id':actor,'request_key':body['request_key'],
                                          'operation_id':'studies.admit'})
-                run_body={'request_key':run_key,'graph_id':captured['graph']['id'],
-                          'graph_revision':captured['graph']['revision'],'expected_digest':captured['material_sha256']}
-                if body.get('approval_id') is not None:run_body['approval_id']=body['approval_id']
-                run=self.dataset.runs._admit_external_prepared(run_body,captured,run_id,staging,
-                            check_current=False,request_hash=sha,parent=parent,
-                            approval_material_sha256=trial['material']['sha256'])
+                if builtin:
+                    if body.get('approval_id') is not None:
+                        raise WorkbenchError('Built-in owner admission does not consume delegated external grants.')
+                    self.dataset.runs._available()
+                    run=self.dataset.runs._admit(run_key,sha,captured['graph'],captured['validation'],captured['release'],
+                                                parent,run_id=run_id,composition=captured['composition'])
+                    self.db.on_commit(lambda:self.dataset.runs._start())
+                else:
+                    run_body={'request_key':run_key,'graph_id':captured['graph']['id'],
+                              'graph_revision':captured['graph']['revision'],'expected_digest':captured['material_sha256']}
+                    if body.get('approval_id') is not None:run_body['approval_id']=body['approval_id']
+                    run=self.dataset.runs._admit_external_prepared(run_body,captured,run_id,staging,
+                                check_current=False,request_hash=sha,parent=parent,
+                                approval_material_sha256=trial['material']['sha256'])
                 reservation={'id':uuid.uuid4().hex,'study_id':study_id,'admission_epoch':study['admission_epoch'],
                     'request_key':body['request_key'],'actor_id':actor,'trial_id':trial['id'],
                     'parent_run_id':parent['id'] if parent else None,'run_id':run_id,'request_sha256':sha,

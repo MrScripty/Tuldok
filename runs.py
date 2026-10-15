@@ -151,6 +151,23 @@ class Runs:
                     self._approved_composition(approved,run['graph'],run['material_sha256'])
             elif 'execution_kind' in run:
                 raise ValueError('Unknown execution kind.')
+            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+                import model_evidence
+                context=run['evidence_context']
+                if (context['adapter_sha256']!=run['runtime']['adapter_definition_sha256']
+                        or context['model_definition']!=model_evidence.model_definition(run['parameters'])
+                        or context['profile']!=model_evidence.profile(self.db.dataset_id,context['model_sha256'],run['parameters'],
+                            sum(row['split']=='validation' for row in run['source_records']))):
+                    raise ValueError('Retained classifier evidence context differs.')
+                association=self.db.execute('SELECT r.study_id,r.trial_id,r.actor_id,r.request_sha256,t.material_sha256 '
+                    'FROM model_attempt_reservations r JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',(run_id,)).fetchone()
+                if association is not None:
+                    if (run.get('actor_id')!=association['actor_id'] or run.get('approval_material_sha256')!=association['material_sha256']
+                            or context['material_sha256']!=association['material_sha256'] or run['request_sha256']!=association['request_sha256']):
+                        raise ValueError('Built-in Study association differs from its authoritative receipt.')
+                    self._approved_composition(association['material_sha256'],run['graph'],run['graph_sha256'])
+                elif run.get('approval_material_sha256') is not None:
+                    raise ValueError('Unexpected built-in Study marker.')
             return run
         except (ValueError, KeyError, TypeError):
             raise WorkbenchError('Stored run envelope is invalid; refusing to guess execution state.', 'unavailable', 409) from None
@@ -245,8 +262,10 @@ class Runs:
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
         hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase', 'admission_id'}
+                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
+        association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
+        result['study_membership']=dict(association) if association is not None else None
         result['test_exposure'] = {'exposed': bool(run['exposure_events']), 'event_count': len(run['exposure_events'])}
         result['current_test_exposure'] = ({'exposed': False, 'events': []} if self._validation_run(run)
                                            else self.pipelines.exposures(run['source_records']))
@@ -1039,11 +1058,11 @@ class Runs:
             self._start()
         return receipt
 
-    def _admit(self, key, request_hash, graph, validation, release, parent=None):
+    def _admit(self, key, request_hash, graph, validation, release, parent=None, *, run_id=None, composition=None):
         queued = sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs'))
         if queued >= 8:
             raise WorkbenchError('The local queue is full (8 attempts). Wait or cancel a queued attempt.', 'unavailable', 409)
-        run_id = uuid.uuid4().hex
+        run_id = run_id or uuid.uuid4().hex
         parameters = next((node['parameters'] for node in graph['nodes'] if node['type'] == 'train'), {})
         run = {'schema_version': 1, 'mode': 'real', 'id': run_id, 'dataset_id': self.db.dataset_id,
                'request_key': key, 'request_sha256': request_hash, 'state': 'queued',
@@ -1062,6 +1081,20 @@ class Runs:
                'exposure_events': [], 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if graph.get('recipe') == image_training.MODEL_RECIPE:
+            import model_evidence
+            model_sha = composition['ref']['sha256'] if composition else None
+            definition = model_evidence.model_definition(parameters)
+            model_identity = composition['material']['model']['sha256'] if composition else model_evidence.digest(definition)
+            run['evidence_context'] = {'model_sha256':model_identity,
+                'material_sha256':model_sha or digest({'graph':graph,'runtime':validation['runtime'],'release':release['sha256']}),
+                'adapter_sha256':validation['runtime']['adapter_definition_sha256'],
+                'model_definition':definition,
+                'profile':model_evidence.profile(self.db.dataset_id,model_identity,parameters,
+                    sum(row['split']=='validation' for row in release['manifest']['records']))}
+            run['evidence_context']['metric_definitions']=model_evidence.metric_definitions(run['evidence_context'],release['manifest'])
+            if composition:
+                run.update(actor_id=self.access._context().actor_id, approval_material_sha256=model_sha)
         if self._validation_run(run):
             run.update(result_kind='release_validation', validation_summary=copy.deepcopy(release['validation_summary']))
         recipe = graph.get('recipe', 'image_classification')
@@ -1196,6 +1229,8 @@ class Runs:
                    'graph_sha256': run['graph_sha256'], 'release_id': run['release_id'],
                    'release_sha256': run['release_sha256'], 'release_path': release['path'],
                    'output_dir': str(output), 'parameters': run['parameters'], 'parent_pid': os.getpid()}
+            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+                job.update(schema_version=2,evidence_context=run['evidence_context'])
             job_path = stage / 'job.json'
             job_path.write_text(encode(job))
             definition_files = run['runtime']['definition_files']
@@ -1274,6 +1309,32 @@ class Runs:
             if process.returncode != 0:
                 raise WorkbenchError(f'CPU trainer exited with status {process.returncode}; no results were published.', 'failed', 409)
             artifacts, metrics = self._verify_directory(run, output)
+            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+                # Only the owned pinned CPU subprocess may load retained state.
+                process.stdout.close()
+                command = [run['python'], str(worker_path), '--verify-evidence', str(job_path)]
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                           start_new_session=True, env=training_environment())
+                owner = process_identity(process.pid)
+                if owner is None:
+                    process.wait(timeout=10)
+                    raise WorkbenchError('Checkpoint verifier exited before custody was recorded.', 'failed', 409)
+                with self.lock,self.db.transaction():
+                    current=self._load(run_id);current['worker']=owner;current['worker_command']=command;self._save(current)
+                until=time.monotonic()+90
+                while process.poll() is None:
+                    with self.lock: current=self._load(run_id)
+                    if current['state']=='cancelling' or self._stop.is_set():
+                        self._drain(process,owner);self._finish(run_id,'cancelled','Checkpoint verification cancelled; no outputs published.');return
+                    if time.monotonic()>until:
+                        self._drain(process,owner);raise WorkbenchError('Checkpoint verifier exceeded its90-second bound.','failed',409)
+                    self._wake.wait(.1);self._wake.clear()
+                process.wait()
+                try:os.killpg(process.pid,0)
+                except ProcessLookupError:pass
+                else:raise WorkbenchError('Checkpoint verifier cessation is unknown.','unknown',409)
+                if process.returncode:
+                    raise WorkbenchError('Retained checkpoints failed independent fixed-probe reconstruction.','failed',409)
             for path in output.iterdir():
                 with path.open('rb') as handle:
                     os.fsync(handle.fileno())
@@ -1460,6 +1521,9 @@ class Runs:
     def _payloads(self, run):
         if self._validation_run(run):
             return release_validation.PAYLOADS
+        if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+            import model_evidence
+            return model_evidence.payload_names(run['parameters']['epochs'])
         return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
 
     def _reference_keys(self, run):
@@ -1485,20 +1549,20 @@ class Runs:
             if manifest['schema_version'] != 1 or manifest['source_identity'] != self._identity(run) or manifest['adapter'] != run['adapter']:
                 raise ValueError('Artifact identity mismatch.')
             artifacts = manifest['artifacts']
-            if len(artifacts) != 5 or {item['name'] for item in artifacts} != payload_names:
+            if len(artifacts) != len(payload_names) or {item['name'] for item in artifacts} != payload_names:
                 raise ValueError('Artifact inventory mismatch.')
             payloads = {}
             for item in artifacts:
                 closed(item, ('name', 'sha256', 'bytes', 'media_type', 'split'))
-                expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'] in ('metrics.json', 'predictions-validation.json') else None
+                expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'] in ('metrics.json', 'predictions-validation.json') or item['name'].startswith('probes-epoch-') else None
                 expected_media = 'application/json' if item['name'].endswith('.json') else 'application/octet-stream'
                 if item['split'] != expected_split or item['media_type'] != expected_media:
                     raise ValueError('Artifact media type or split differs from its declared role.')
                 contents = (directory / item['name']).read_bytes()
                 if type(item['bytes']) is not int or len(contents) != item['bytes'] or hashlib.sha256(contents).hexdigest() != item['sha256']:
                     raise ValueError('Artifact hash mismatch.')
-                if item['name'].endswith('.json'):
-                    payload = json.loads(contents)
+                if item['name'].endswith('.json') and item['name'] in PAYLOADS - {'checkpoint.pt'} | {'model.json'}:
+                    payload = image_training._json(contents,'Training artifact')
                     if payload['schema_version'] != 1 or payload['source_identity'] != self._identity(run) or payload['adapter'] != run['adapter']:
                         raise ValueError('Artifact source identity mismatch.')
                     payloads[item['name']] = payload
@@ -1508,7 +1572,7 @@ class Runs:
             self._vocabulary(run, metrics)
             if any(metrics['runtime'].get(key) != value for key, value in run['runtime']['runtime'].items()):
                 raise ValueError('Executed runtime differs from the admission fingerprint.')
-            if metrics['parameters'] != run['parameters'] or metrics['transform'] != adapter_for_graph(run['graph']).TRANSFORM:
+            if metrics['parameters'] != run['parameters'] or metrics['transform'] != (image_training.transform_for_parameters(run['parameters']) if run['graph'].get('recipe') == image_training.MODEL_RECIPE else adapter_for_graph(run['graph']).TRANSFORM):
                 raise ValueError('Default metrics are inconsistent or disclose test results.')
             if adapter_for_graph(run['graph']) is not image_training:
                 adapter = adapter_for_graph(run['graph'])
@@ -1536,6 +1600,9 @@ class Runs:
                 expected_metric = metrics['validation'] if split == 'validation' else payloads['test-metrics.json']['metrics']
                 if matrix != expected_metric['confusion_matrix']:
                     raise ValueError('Per-example predictions disagree with the reported confusion matrix.')
+            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+                import model_evidence
+                model_evidence.verify(directory,run,metrics)
             inventory = copy.deepcopy(artifacts)
             inventory.append({'name': 'artifact-manifest.json', 'sha256': hashlib.sha256(manifest_bytes).hexdigest(),
                               'bytes': len(manifest_bytes), 'media_type': 'application/json', 'split': None})
@@ -1801,6 +1868,60 @@ class Runs:
             except WorkbenchError:
                 row['current_record'] = {'id': row['id'], 'status': 'unavailable'}
         return result
+
+    @authorized('inspect', 'runs.model_evidence')
+    def model_evidence(self, run_id, body=None):
+        body={} if body is None else body
+        closed(body,(),('checkpoint_sha256',))
+        selected=body.get('checkpoint_sha256')
+        if selected is not None and (type(selected) is not str or not re.fullmatch('[a-f0-9]{64}',selected)):
+            raise WorkbenchError('Checkpoint selection requires its descriptor SHA256.')
+        with self.lock:run=self._load(run_id)
+        if run['graph'].get('recipe') != image_training.MODEL_RECIPE:
+            return {'state':'unsupported','reason':'This retained adapter did not capture model_evidence_v1.'}
+        self._verified_artifacts(run)
+        import model_evidence
+        result,descriptors,predictions=model_evidence.verify(self.path/run_id,run,run['metrics'])
+        result.update(checkpoint=None,predictions=None)
+        if selected is not None:
+            entries=result['checkpoint_index']['entries']
+            match=[i for i,item in enumerate(entries) if item['checkpoint']['sha256']==selected]
+            if not match:raise WorkbenchError('Checkpoint does not belong to this Run.','not_found',404)
+            result.update(checkpoint=descriptors[match[0]],predictions=predictions[match[0]])
+        return result
+
+    @authorized('inspect', 'runs.compare_model_evidence')
+    def compare_model_evidence(self, run_id, other_run_id):
+        import model_evidence
+        identifier(other_run_id,'Comparison Run ID')
+        evidence=[self.model_evidence(item) for item in (run_id,other_run_id)]
+        reasons=[];metrics=[]
+        if any(item['state']!='verified' for item in evidence):
+            reasons.append('Both Runs require verified model_evidence_v1.')
+        else:
+            left,right=evidence
+            if left['manifest']['task']['sha256']!=right['manifest']['task']['sha256']:
+                reasons.append('Task semantics differ.')
+            if left['model_definition']['preprocessing_policy']!=right['model_definition']['preprocessing_policy']:
+                reasons.append('Preprocessing policies differ.')
+            if left['model_definition']['output_policy']!=right['model_definition']['output_policy']:
+                reasons.append('Output policies differ.')
+            if sorted((model_evidence.canonical(item['frozen_reference']) for item in left['probe']['members'])) != sorted(
+                    model_evidence.canonical(item['frozen_reference']) for item in right['probe']['members']):
+                reasons.append('Frozen validation membership differs.')
+            with self.lock:
+                runs=[self._load(item) for item in (run_id,other_run_id)]
+            if runs[0]['metrics']['class_vocabulary']!=runs[1]['metrics']['class_vocabulary']:
+                reasons.append('Frozen class vocabulary or order differs.')
+            if left['metric_definitions']!=right['metric_definitions']:
+                reasons.append('Metric semantics or validation population differ.')
+            if not reasons:
+                for definition in left['metric_definitions']:
+                    metrics.append({'metric_id':definition['id'],'values':[run['metrics']['validation'][definition['id']] for run in runs],
+                                    'direction':definition['direction'],'units':definition['units']})
+        return {'state':'incompatible' if reasons else 'compatible','run_ids':[run_id,other_run_id],
+                'reasons':reasons,'metrics':metrics}
+
 
     def close(self):
         self._closed = True

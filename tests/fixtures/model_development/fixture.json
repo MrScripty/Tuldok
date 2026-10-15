@@ -1,0 +1,1 @@
+{"format":"authored_image_fixture_v1","description":"Deterministic authored CPU evidence fixture, not a quality benchmark","classes":["circle","square"],"splits":["train","validation","test"],"examples_per_class_split":2,"size":[24,24],"generator":"rgb_patterns_v1","seed":19}
