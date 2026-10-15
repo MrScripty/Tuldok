@@ -13,8 +13,8 @@
     const modelRecipe=body?.recipe||body?.document?.recipe;
     const modelGraph=['image_classification_model_v2','text_classification_model_v2','audio_classification_model_v2'].includes(modelRecipe);
     const operation = path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
-      path[0] === 'studies' ? (path.length === 1 ? (body === undefined ? 'studies.list' : 'studies.create') : path[2] ? ({'prepare-trial':'studies.prepare_trial',continue:'studies.continue',admit:'studies.admit',reconcile:'studies.reconcile','select-candidate':'studies.select_candidate'})[path[2]] : body === undefined ? 'studies.get' : 'studies.save') :
-      path[0] === 'candidates' ? 'studies.candidate' : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
+      path[0] === 'studies' ? (path.length === 1 ? (body === undefined ? 'studies.list' : 'studies.create') : path[2] ? ({'prepare-trial':'studies.prepare_trial',continue:'studies.continue',admit:'studies.admit',reconcile:'studies.reconcile',approve:'studies.approve','prepare-package':'studies.prepare_package','prepare-verifier':'studies.prepare_verifier','select-candidate':'studies.select_candidate'})[path[2]] : body === undefined ? 'studies.get' : 'studies.save') :
+      path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
     if (operation) {
       const version=operation==='runs.compare_model_evidence'?2:operation.startsWith('graphs.')?(modelRecipe==='image_classification_model_v2'?2:3):1;
       const sha = window.WorkspaceModelContracts?.[version===3?operation+'/3':operation];
