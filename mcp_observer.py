@@ -15,6 +15,7 @@ import sqlite3
 import stat
 import sys
 import time
+import threading
 import uuid
 
 SCHEMA_VERSION = 1
@@ -117,7 +118,7 @@ def _check_private(path, directory=False):
     return info
 
 
-def _connect(config, *, readonly=False, exclusive=False, create=False):
+def _connect(config, *, readonly=False, exclusive=False, create=False, shared=False):
     """Own the process lock until connection closes; callers own trusted ancestors."""
     path = config.database
     if os.name != 'posix':
@@ -139,7 +140,7 @@ def _connect(config, *, readonly=False, exclusive=False, create=False):
             raise StorageRejected('unsafe-storage')
         fcntl.flock(fd, (fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH) | fcntl.LOCK_NB)
         db = sqlite3.connect(path.as_uri() + '?mode=' + ('ro' if readonly else 'rw'),
-            uri=True, timeout=BUSY_TIMEOUT_MS / 1000, isolation_level=None)
+            uri=True, timeout=BUSY_TIMEOUT_MS / 1000, isolation_level=None, check_same_thread=not shared)
         db.execute('PRAGMA foreign_keys=ON')
         db.execute(f'PRAGMA busy_timeout={BUSY_TIMEOUT_MS}')
         if readonly:
@@ -151,12 +152,12 @@ def _connect(config, *, readonly=False, exclusive=False, create=False):
         raise
 
 
-def _validate_schema(db):
+def _validate_schema(db, schema_version=SCHEMA_VERSION, schema_ddl=SCHEMA_DDL):
     if (db.execute('PRAGMA application_id').fetchone()[0] != APPLICATION_ID or
-            db.execute('PRAGMA user_version').fetchone()[0] != SCHEMA_VERSION):
+            db.execute('PRAGMA user_version').fetchone()[0] != schema_version):
         raise StorageRejected('unsupported-database-schema')
     actual = dict(db.execute("SELECT name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'"))
-    if actual != {ddl.split()[2]: ddl for ddl in SCHEMA_DDL}:
+    if actual != {ddl.split()[2]: ddl for ddl in schema_ddl}:
         raise StorageRejected('invalid-database-schema')
 
 
@@ -176,6 +177,11 @@ def _validate_records(db):
 
 
 class InteractionRecorder:
+    schema_version = SCHEMA_VERSION
+    schema_ddl = SCHEMA_DDL
+    shared = False
+    max_observed_bytes = 32 * 1024 * 1024
+
     def __init__(self, config, registry, *, diagnostics=None):
         self.config = config
         self._diagnostics = sys.stderr if diagnostics is None else diagnostics
@@ -230,7 +236,7 @@ class InteractionRecorder:
         self._emit()
 
     def _open(self):
-        db, self._fd, original_size = _connect(self.config, create=True)
+        db, self._fd, original_size = _connect(self.config, create=True, shared=self.shared)
         self._connection = db
         db.execute('BEGIN IMMEDIATE')
         try:
@@ -245,12 +251,15 @@ class InteractionRecorder:
                     not db.execute('SELECT 1 FROM sqlite_master').fetchone()):
                 if original_size or self.config.database.stat().st_size:
                     raise StorageRejected('nonpristine-database')
-                for ddl in SCHEMA_DDL: db.execute(ddl)
+                for ddl in self.schema_ddl: db.execute(ddl)
                 db.execute(f'PRAGMA application_id={APPLICATION_ID}')
-                db.execute(f'PRAGMA user_version={SCHEMA_VERSION}')
+                db.execute(f'PRAGMA user_version={self.schema_version}')
                 db.execute('INSERT INTO policy VALUES(1,?,?,?)',
                     (self.config.max_calls, self.config.max_age_seconds, self.config.max_bytes))
-            _validate_schema(db)
+            if self.schema_version == SCHEMA_VERSION:
+                _validate_schema(db)
+            else:
+                _validate_schema(db, self.schema_version, self.schema_ddl)
             _validate_records(db)
             if _read_policy(db, self.config.database) != self.config:
                 raise StorageRejected('retention-policy-mismatch')
@@ -335,7 +344,7 @@ class InteractionRecorder:
                 envelope_status = None
             if rpc_code not in (-32700, -32600, -32601, -32602, -32000, -32603):
                 rpc_code = None
-            if response_bytes is not None and (type(response_bytes) is not int or not 0 <= response_bytes <= 32 * 1024 * 1024):
+            if response_bytes is not None and (type(response_bytes) is not int or not 0 <= response_bytes <= self.max_observed_bytes):
                 response_bytes = None
             evicted = False
             def write(db):
@@ -362,13 +371,231 @@ class InteractionRecorder:
         self._emit()
 
 
-def check_store(database, *, retain=False):
+# An explicit separate persisted contract. Never migrate an existing v1 store.
+INTERFACE_SCHEMA_VERSION = 2
+INTERFACE_SCHEMA_DDL = tuple(
+    ddl.replace('protocol TEXT NOT NULL)',
+                "protocol TEXT NOT NULL, boundary TEXT NOT NULL CHECK(boundary IN ('mcp','http','cli')))")
+       .replace('input_shape TEXT NOT NULL, UNIQUE',
+                'input_shape TEXT NOT NULL, contract_version INTEGER, contract_digest TEXT, UNIQUE')
+    for ddl in SCHEMA_DDL)
+BOUNDARY_METHODS = {'mcp': METHODS, 'http': frozenset({'GET', 'POST'}),
+                    'cli': frozenset({'call', 'status', 'download'})}
+MAX_INTERFACE_ACTIVE = 256
+
+
+class InterfaceRecorder(InteractionRecorder):
+    """Thread-safe, fail-open shared v2 sink; raw values never enter its state."""
+    schema_version = INTERFACE_SCHEMA_VERSION
+    schema_ddl = INTERFACE_SCHEMA_DDL
+    shared = True
+    max_observed_bytes = 1024 * 1024 * 1024
+
+    def __init__(self, config, registry, *, boundary, selected=None, diagnostics=None):
+        if boundary not in BOUNDARY_METHODS:
+            raise ValueError('invalid-observer-configuration')
+        self.boundary = boundary
+        self._lock = threading.RLock()
+        self._selected = dict(selected or {})
+        super().__init__(config, registry, diagnostics=diagnostics)
+        try:
+            source = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+                      for name in ('app.py', 'project_cli.py', 'mcp_stdio.py', 'agent_api.py', 'mcp_observer.py')}
+            self._runtime = (*self._runtime[:4], _digest(source), self._runtime[5], boundary)
+        except Exception as error:
+            self._degrade(error)
+
+    def begin(self, message, request_bytes, *, framing=False):
+        """MCP adapter; unknown names and malformed messages use fixed markers."""
+        method = message.get('method') if isinstance(message, dict) else None
+        params = message.get('params') if isinstance(message, dict) else None
+        params = params if isinstance(params, dict) else {}
+        return self.begin_request(method, params.get('name') if method == 'tools/call' else None,
+            params.get('arguments', {}), request_bytes=request_bytes, framing=framing)
+
+    def begin_request(self, method, operation=None, arguments=None, *, request_bytes=0,
+                      selected_version=None, framing=False):
+        import agent_api
+        with self._lock:
+            if self._closed:
+                return None
+            if self._connection is None or len(self._active) >= MAX_INTERFACE_ACTIVE:
+                self.health['dropped'] += 1
+                return None
+            try:
+                # Resolve only installed public contracts before creating buffered state.
+                try:
+                    op = agent_api.operation(operation)
+                except agent_api.AgentAPIError:
+                    op = None
+                version = selected_version
+                if op is not None and version is None:
+                    version = self._selected.get(op['operation_id'])
+                public = None
+                if op is not None and version is not None:
+                    try:
+                        public = agent_api.contract(op['operation_id'], version)
+                        op = agent_api.operation(op['operation_id'], version)
+                    except agent_api.AgentAPIError:
+                        op, version = None, None
+                method = (method if isinstance(method, str) and method in BOUNDARY_METHODS[self.boundary]
+                          else 'framing' if framing and self.boundary == 'mcp' else 'other')
+                size = request_bytes if type(request_bytes) is int and 0 <= request_bytes <= self.max_observed_bytes else 0
+                shape = _json(input_shape(op['inputSchema'], arguments)) if op else '{}'
+                observation = Observation(uuid.uuid4().hex, time.monotonic())
+                self._sequence += 1
+                now, pruned = time.time(), 0
+                def write(db):
+                    nonlocal pruned
+                    pruned = self._prune(db, now)
+                    db.execute('INSERT OR IGNORE INTO sessions VALUES(?,?,?,?,?,?,?)', self._runtime)
+                    db.execute('INSERT INTO interactions VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                        (observation.identity, self.session, self._sequence, now, method,
+                         op['mcp_name'] if op else 'other', op['operation_id'] if op else 'other',
+                         _digest(op['inputSchema']) if op else '', _digest(op['outputSchema']) if op else '',
+                         size, shape, version if public else None, public['sha256'] if public else None))
+                if not self._transaction(write):
+                    return None
+                self.health['starts'] += 1
+                self.health['pruned'] += pruned
+                self._active[observation.identity] = observation
+                return observation
+            except Exception as error:
+                self._degrade(error)
+                return None
+
+    def measure_request(self, observation, size):
+        if observation is None or type(size) is not int or not 0 <= size <= self.max_observed_bytes:
+            return
+        with self._lock:
+            if not self._closed:
+                self._transaction(lambda db: db.execute('UPDATE interactions SET request_bytes=? WHERE id=?',
+                                                       (size, observation.identity)))
+
+    def select(self, observation, operation, arguments, version=None):
+        """Replace only the closed projection once this boundary selects a contract."""
+        if observation is None or operation is None:
+            return
+        import agent_api
+        with self._lock:
+            if self._closed:
+                return
+            try:
+                op = agent_api.operation(operation, version)
+                public = agent_api.contract(op['operation_id'], version) if version is not None else None
+                shape = _json(input_shape(op['inputSchema'], arguments))
+                self._transaction(lambda db: db.execute(
+                    'UPDATE interactions SET operation=?,operation_id=?,input_schema=?,output_schema=?,'
+                    'input_shape=?,contract_version=?,contract_digest=? WHERE id=?',
+                    (op['mcp_name'], op['operation_id'], _digest(op['inputSchema']),
+                     _digest(op['outputSchema']), shape, version if public else None,
+                     public['sha256'] if public else None, observation.identity)))
+            except Exception as error:
+                self._degrade(error)
+
+    def stage(self, observation, phase, **values):
+        with self._lock:
+            return super().stage(observation, phase, **values)
+
+    def close(self):
+        with self._lock:
+            return super().close()
+
+
+def outcome(status):
+    """Fixed classification; never consume error text or result contents."""
+    return ('permission-refusal' if status in (401, 403) else
+            'domain-error' if type(status) is int and status >= 400 else 'success')
+
+
+def observe_stage(recorder, observation, phase, **values):
+    """Boundary guard: even a broken optional sink cannot change ordinary results."""
+    if recorder is not None:
+        try:
+            recorder.stage(observation, phase, **values)
+        except Exception:
+            pass
+
+
+def observe_close(recorder):
+    if recorder is not None:
+        try:
+            recorder.close()
+        except Exception:
+            pass
+
+
+def observe_begin(recorder, method, operation=None, arguments=None, **values):
+    if recorder is not None:
+        try:
+            return recorder.begin_request(method, operation, arguments, **values)
+        except Exception:
+            pass
+    return None
+
+
+def observe_request_bytes(recorder, observation, size):
+    if recorder is not None:
+        try:
+            recorder.measure_request(observation, size)
+        except Exception:
+            pass
+
+
+def observe_selection(recorder, observation, operation, arguments, version=None):
+    if recorder is not None:
+        try:
+            recorder.select(observation, operation, arguments, version)
+        except Exception:
+            pass
+
+
+def add_interface_options(parser):
+    parser.add_argument('--observe-v2-database', type=Path,
+                        help='Explicit operator opt-in to a fresh private v2 interface store')
+    parser.add_argument('--observe-max-calls')
+    parser.add_argument('--observe-max-age-seconds')
+    parser.add_argument('--observe-max-bytes')
+
+
+class _QuietHealth:
+    # CLI stderr is one domain JSON document; operator health uses the reader.
+    def write(self, value):
+        return len(value)
+
+    def flush(self):
+        pass
+
+
+def configured_interface(args, boundary, *, selected=None, diagnostics=None):
+    if args.observe_v2_database is None:
+        return None
+    health = (_QuietHealth() if boundary == 'cli' and diagnostics is None else
+              sys.stderr if diagnostics is None else diagnostics)
+    try:
+        import agent_api
+        return InterfaceRecorder(RecorderConfig(args.observe_v2_database,
+            int(args.observe_max_calls) if args.observe_max_calls is not None else DEFAULT_MAX_CALLS,
+            int(args.observe_max_age_seconds) if args.observe_max_age_seconds is not None else DEFAULT_MAX_AGE_SECONDS,
+            int(args.observe_max_bytes) if args.observe_max_bytes is not None else DEFAULT_MAX_BYTES),
+            agent_api.discovery(), boundary=boundary, selected=selected, diagnostics=health)
+    except Exception:
+        try:
+            print('tuldok observer invalid-observer-configuration', file=health, flush=True)
+        except Exception:
+            pass
+        return None
+
+
+def check_store(database, *, retain=False, schema_version=SCHEMA_VERSION):
     """Basic operator integrity/persistence check; never emits stored values."""
     config = RecorderConfig(database)
     db, fd, _ = _connect(config, readonly=not retain, exclusive=retain)
     try:
         db.execute('BEGIN IMMEDIATE' if retain else 'BEGIN')
-        _validate_schema(db)
+        if schema_version not in (SCHEMA_VERSION, INTERFACE_SCHEMA_VERSION):
+            raise StorageRejected('unsupported-database-schema')
+        _validate_schema(db, schema_version, INTERFACE_SCHEMA_DDL if schema_version == 2 else SCHEMA_DDL)
         policy = _read_policy(db, database)
         _validate_records(db)
         if retain:
@@ -379,7 +606,7 @@ def check_store(database, *, retain=False):
         starts = db.execute('SELECT count(*) FROM interactions').fetchone()[0]
         terminals = db.execute("SELECT count(*) FROM events WHERE phase='terminal'").fetchone()[0]
         db.execute('COMMIT')
-        return {'state': 'healthy', 'schema_version': SCHEMA_VERSION, 'retained_starts': starts,
+        return {'state': 'healthy', 'schema_version': schema_version, 'retained_starts': starts,
                 'retained_terminals': terminals, 'unfinished': starts - terminals}
     finally:
         db.close()
@@ -389,10 +616,11 @@ def check_store(database, *, retain=False):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--database', required=True)
+    parser.add_argument('--schema-version', type=int, choices=(1, 2), default=1)
     parser.add_argument('--retain', action='store_true', help='Prune an offline store under its existing policy')
     args = parser.parse_args(argv)
     try:
-        print(_json(check_store(Path(args.database), retain=args.retain)))
+        print(_json(check_store(Path(args.database), retain=args.retain, schema_version=args.schema_version)))
         return 0
     except Exception:
         print('tuldok observer storage-check-unavailable', file=sys.stderr)

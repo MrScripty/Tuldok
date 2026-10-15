@@ -141,3 +141,18 @@ through selected HTTP and structured MCP. No project code executes on inspection
 Only locally registered operations are callable; this is not an arbitrary URL or
 route dispatcher. Existing AgentClient requires an active agent credential, and
 owner-only study control still requires authenticated owner HTTP actions.
+
+## Optional operator observations
+
+Ordinary commands require no telemetry arguments or setup. The operator may
+explicitly select a fresh private v2 store with `--observe-v2-database` before
+the subcommand. Retention/configuration, independent health inspection, private
+storage and failure semantics are owned by the [shared observation contract](mcp-observer.md#shared-interface-observation-v2).
+Collection defaults off. Recording failure does not alter command results,
+consume another grant or authorize a retry. A written output terminal proves
+only local stdout/stderr acceptance; partial delivery remains unknown.
+
+Configured observation preserves a single JSON stderr failure diagnostic exactly.
+It emits no operator-health lines into that command channel, including when
+observer configuration/storage fails. Invoke the independent operator reader
+separately to inspect store health; CLI health emission is quiet by default.

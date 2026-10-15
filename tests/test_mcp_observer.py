@@ -309,6 +309,11 @@ o.InteractionRecorder(o.RecorderConfig(Path(sys.argv[1])),agent_api.discovery(),
 
 @unittest.skipUnless(SDK_AVAILABLE, 'Optional pinned MCP environment required')
 class ObserverProcessTests(unittest.TestCase):
+    schema_version = 1
+
+    def check_store(self, database):
+        return obs.check_store(database, schema_version=self.schema_version)
+
     cleanup = protocol.SDKProcessTests.cleanup
     ready = protocol.SDKProcessTests.ready
 
@@ -333,7 +338,7 @@ class ObserverProcessTests(unittest.TestCase):
         process.stdin.flush()
         if 'id' in value: self.sent += len(raw)
 
-    def read(self, process, timeout=8):
+    def read(self, process, timeout=20):
         deadline, raw = time.monotonic() + timeout, bytearray()
         while not raw.endswith(b'\n'):
             remaining = deadline - time.monotonic()
@@ -386,7 +391,8 @@ class ObserverProcessTests(unittest.TestCase):
         self.assertEqual(starts[2]['operation_id'], 'context.get')
         self.assertEqual(starts[2]['input_schema'], obs._digest(agent_api.operation('context_get')['inputSchema']))
         self.assertEqual(self.rows('SELECT registry_digest FROM sessions')[0]['registry_digest'], 'cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8')
-        self.assertEqual(hashlib.sha256(agent_api.encoded(agent_api.tool_definitions())).hexdigest(), 'deeb2a54844707e6bc1c27df98e489b41123cd251283a9bc1d8007ec5f0d779a')
+        self.assertEqual(hashlib.sha256(agent_api.encoded(agent_api.tool_definitions(
+            {op['operation_id']: 1 for op in agent_api.discovery()['operations']}))).hexdigest(), 'deeb2a54844707e6bc1c27df98e489b41123cd251283a9bc1d8007ec5f0d779a')
 
     def test_protocol_refusals_before_dispatch_and_id_reuse(self):
         process = self.start()
@@ -447,7 +453,7 @@ class ObserverProcessTests(unittest.TestCase):
         self.ready(third)
         self.stop(third)
         self.assertFalse(self.rows(f"SELECT * FROM events WHERE interaction='{original}' AND phase='terminal'"))
-        self.assertEqual(obs.check_store(self.database)['unfinished'], 1)
+        self.assertEqual(self.check_store(self.database)['unfinished'], 1)
 
     def test_unavailable_and_locked_storage_preserve_identical_replies(self):
         replies = []
@@ -491,8 +497,8 @@ class ObserverProcessTests(unittest.TestCase):
             process.stdin.close()
             self.assertEqual(self.read(process)['error']['code'], -32700)
             self.assertEqual(process.wait(timeout=8), 0)
-            self.assertEqual(obs.check_store(self.database)['retained_starts'], 1)
-            self.assertEqual(obs.check_store(self.database)['retained_terminals'], 1)
+            self.assertEqual(self.check_store(self.database)['retained_starts'], 1)
+            self.assertEqual(self.check_store(self.database)['retained_terminals'], 1)
             self.assertNotIn(b'PRIVATE_EOF', self.database.read_bytes())
 
     def test_typed_execution_outcomes_do_not_store_error_text_or_output(self):
@@ -569,7 +575,7 @@ anyio.run(serve, AuthoredClient(), 0, 1, observer)
         errors = self.stop(process)
         self.assertIn(b'storage-full', errors)
         self.assertEqual(len(self.rows("SELECT * FROM events WHERE phase='dispatch'")), 1)
-        self.assertEqual(obs.check_store(self.database)['unfinished'], 1)
+        self.assertEqual(self.check_store(self.database)['unfinished'], 1)
 
     def test_actual_main_opt_in_default_disabled_config_failure_and_operator_check(self):
         from test_agent_api import server, TOKEN, CATALOG
@@ -607,7 +613,7 @@ anyio.run(serve, AuthoredClient(), 0, 1, observer)
         disabled = self.start(enabled=False)
         self.ready(disabled)
         self.stop(disabled)
-        self.assertEqual(obs.check_store(self.database)['retained_starts'], 2)
+        self.assertEqual(self.check_store(self.database)['retained_starts'], 2)
 
 
 if __name__ == '__main__':

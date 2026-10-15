@@ -16,6 +16,26 @@ INPUT_LIMIT = 1024 * 1024
 OUTPUT_LIMIT = 32 * 1024 * 1024
 DEPTH_LIMIT = 64
 WRITE_SECONDS = 5
+OUTPUT_PIPE_BYTES = 1024 * 1024
+
+
+def prepare_output_pipe(output_fd):
+    """Bound local kernel buffering for large frames; retain ordinary backpressure."""
+    try:
+        import fcntl
+        if not stat.S_ISFIFO(os.fstat(output_fd).st_mode):
+            return None
+        capacity = fcntl.fcntl(output_fd, fcntl.F_GETPIPE_SZ)
+        if capacity < OUTPUT_PIPE_BYTES:
+            try:
+                fcntl.fcntl(output_fd, fcntl.F_SETPIPE_SZ, OUTPUT_PIPE_BYTES)
+            except OSError:
+                # Some hosts prohibit resizing. The same bounded writer still owns
+                # timeout and incomplete delivery; never change global pipe policy.
+                pass
+        return fcntl.fcntl(output_fd, fcntl.F_GETPIPE_SZ)
+    except (ImportError, AttributeError, OSError):
+        return None
 
 
 class FrameError(ValueError):
@@ -190,10 +210,18 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
 
     def observe(phase, observation=None, **values):
         if observer is not None:
-            observer.stage(observation, phase, **values)
+            try:
+                observer.stage(observation, phase, **values)
+            except Exception:
+                pass
 
     def begin(value, size, framing=False):
-        return observer.begin(value, size, framing=framing) if observer is not None else None
+        if observer is not None:
+            try:
+                return observer.begin(value, size, framing=framing)
+            except Exception:
+                pass
+        return None
 
     @server.list_tools()
     async def list_tools():
@@ -235,6 +263,7 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
     output_lock = anyio.Lock()
     regular_input = stat.S_ISREG(os.fstat(input_fd).st_mode)
     regular_output = stat.S_ISREG(os.fstat(output_fd).st_mode)
+    prepare_output_pipe(output_fd)
     old_input, old_output = os.get_blocking(input_fd), os.get_blocking(output_fd)
     os.set_blocking(input_fd, False)
     os.set_blocking(output_fd, False)
@@ -366,12 +395,16 @@ async def serve(client, input_fd=0, output_fd=1, observer=None):
             os.set_blocking(output_fd, old_output)
         finally:
             if observer is not None:
-                observer.close()
+                try:
+                    observer.close()
+                except Exception:
+                    pass
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, help='Private AgentClient JSON configuration file')
+    parser.add_argument('--observe-v2-database', help='Explicit operator opt-in to a fresh private v2 interface store')
     parser.add_argument('--observe-database', help='Opt in to operator-only SQLite in an existing private directory')
     parser.add_argument('--observe-max-calls')
     parser.add_argument('--observe-max-age-seconds')
@@ -385,16 +418,23 @@ def main(argv=None):
         import agent_api
         client = agent_api.AgentClient.from_config(args.config)
         client.bootstrap()
-        if args.observe_database is not None:
+        if args.observe_database is not None or args.observe_v2_database is not None:
             try:
                 from pathlib import Path
                 from mcp_observer import (InteractionRecorder, RecorderConfig, DEFAULT_MAX_CALLS,
                                           DEFAULT_MAX_AGE_SECONDS, DEFAULT_MAX_BYTES)
-                config = RecorderConfig(Path(args.observe_database),
+                if args.observe_database is not None and args.observe_v2_database is not None:
+                    raise ValueError('invalid-observer-configuration')
+                config = RecorderConfig(Path(args.observe_v2_database or args.observe_database),
                     int(args.observe_max_calls) if args.observe_max_calls is not None else DEFAULT_MAX_CALLS,
                     int(args.observe_max_age_seconds) if args.observe_max_age_seconds is not None else DEFAULT_MAX_AGE_SECONDS,
                     int(args.observe_max_bytes) if args.observe_max_bytes is not None else DEFAULT_MAX_BYTES)
-                observer = InteractionRecorder(config, agent_api.discovery())
+                if args.observe_v2_database is not None:
+                    from mcp_observer import InterfaceRecorder
+                    observer = InterfaceRecorder(config, agent_api.discovery(), boundary='mcp',
+                        selected=client.selected_contracts())
+                else:
+                    observer = InteractionRecorder(config, agent_api.discovery())
             except Exception:
                 try:
                     print('tuldok observer invalid-observer-configuration', file=sys.stderr, flush=True)
@@ -409,7 +449,10 @@ def main(argv=None):
         print('Agent bridge stopped: configuration, authentication, transport or protocol failure.', file=sys.stderr)
     finally:
         if observer is not None:
-            observer.close()
+            try:
+                observer.close()
+            except Exception:
+                pass
     return 1
 
 
