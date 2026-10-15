@@ -68,6 +68,11 @@ class StoreTests(unittest.TestCase):
         again.close()
         self.assertEqual(obs.check_store(self.database)['retained_starts'], 2)
         self.assertEqual(len(self.rows('SELECT * FROM sessions')), 2)
+        source = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
+                  for name in ('mcp_stdio.py', 'agent_api.py', 'mcp_observer.py')}
+        self.assertEqual(self.rows('SELECT implementation_digest FROM sessions')[0]['implementation_digest'],
+                         hashlib.sha256(json.dumps(source, ensure_ascii=True, sort_keys=True,
+                                                   separators=(',', ':')).encode()).hexdigest())
         self.assertEqual([x['outcome'] for x in self.rows("SELECT * FROM events WHERE phase='terminal' ORDER BY recorded")], ['success', 'unknown'])
         self.assertEqual(self.rows('PRAGMA user_version')[0]['user_version'], 1)
         self.assertEqual(self.rows('PRAGMA application_id')[0]['application_id'], obs.APPLICATION_ID)
@@ -155,6 +160,13 @@ class StoreTests(unittest.TestCase):
         self.directory.chmod(0o755)
         self.assertEqual(self.recorder().health['reason'], 'unsafe-storage')
         self.directory.chmod(0o700)
+        unwritable = self.directory / 'unwritable'
+        unwritable.mkdir(mode=0o500)
+        try:
+            self.assertEqual(self.recorder(unwritable / 'db').health['state'], 'degraded')
+            self.assertFalse((unwritable / 'db').exists())
+        finally:
+            unwritable.chmod(0o700)
 
     def test_concurrent_sessions_retention_eviction_and_bounded_active_state(self):
         first = self.recorder(max_calls=16)
@@ -232,6 +244,8 @@ class StoreTests(unittest.TestCase):
             event = recorder.begin(message, 500)
             recorder.stage(event, 'terminal', outcome='invalid-parameters', delivery='written')
         recorder.close()
+        with patch.object(obs.time, 'time', return_value=time.time() + obs.DEFAULT_MAX_AGE_SECONDS + 1):
+            self.assertEqual(obs.check_store(self.database, retain=True)['retained_starts'], 0)
         for path in self.directory.iterdir():
             raw = path.read_bytes()
             for secret in secrets:

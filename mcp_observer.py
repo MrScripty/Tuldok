@@ -189,11 +189,10 @@ class InteractionRecorder:
         self._operations = {op['mcp_name']: op for op in registry['operations']}
         try:
             # Installed source must be coherent and immutable during startup/run.
-            source = hashlib.sha256()
-            for name in ('mcp_stdio.py', 'agent_api.py', 'mcp_observer.py'):
-                source.update(Path(__file__).with_name(name).read_bytes())
+            source = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+                      for name in ('mcp_stdio.py', 'agent_api.py', 'mcp_observer.py')}
             self._runtime = (self.session, time.time(), registry['version'], registry['digest'],
-                             source.hexdigest(), '2025-06-18')
+                             _digest(source), '2025-06-18')
             self._open()
             self.health['state'] = 'healthy'
             self._emit()

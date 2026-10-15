@@ -52,3 +52,23 @@
   split synthetic envelope status from available actual HTTP status; maintenance
   never creates a missing path; admission rejects orphan/corrupt retained records.
   No production activation/publication or unrelated source writes.
+
+## Final local verification and handoff
+
+- Final observer22/22, existing MCP16/16, agent31/31 and authority/execution39/39
+  all passed with no skips. Observed/plain real SDK→HTTP→PostgreSQL workflows2/2
+  also passed (subset of agent31, not double-counted). The original classifier
+  skip was resolved with a separately selected disposable scikit-learn runtime.
+- Fixed final source-identity ambiguity using canonical filename/per-file code
+  digests. Added durable-init interruption, concurrent cleanup, unwritable path
+  and post-retention privacy evidence. Final raw suite summaries are linked from
+  [verification](reports/verification.md); no actual telemetry store staged.
+- [Independent GPT-6.1 Sol High review](reports/implementation-review.md) satisfies
+  source/privacy/lifecycle review at exact final hashes; five findings resolved.
+  Owner logs and independent reviewer executions retain separate attribution.
+- A1–A8 local evidence satisfied; A9 reference hosted CI remains pending under
+  parent ownership. Plan remains Verifying/blocked solely on that dependency.
+  No publication, installation telemetry activation or merge performed.
+- Disposable PostgreSQL fixture stopped; feature branch retained for parent
+  review/publication disposition. Isolated interpreters and reference sources
+  remain outside tracked Tuldok files as reusable local verification resources.

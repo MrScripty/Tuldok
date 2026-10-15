@@ -1,12 +1,12 @@
 # Plan: Local MCP interaction observer
 
-**Plan status:** `Active`
+**Plan status:** `Verifying`
 
-**Current phase:** M1: qualified local reference adaptation and acceptance.
+**Current phase:** Local implementation accepted; reference hosted CI disposition pending.
 
-**Next slice:** Implement and qualify the optional SQLite observer at existing bridge boundaries.
+**Next slice:** Obtain parent-owned reference hosted CI disposition after final local review; no publication action is authorized.
 
-**Acceptance status:** `pending`
+**Acceptance status:** `blocked`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -23,9 +23,8 @@ preparation is authorized now. The adaptation is not admitted from a draft.
 ## Scope and write set
 
 Preparation writes only this plan directory and `tests/test_mcp_stdio.py`.
-After reference admission, the proposed bounded write set is `mcp_stdio.py`,
-`mcp_observer.py`, `tests/test_mcp_observer.py`, `tests/test_mcp_stdio.py`, focused
-observer assertions in existing agent integration tests if necessary,
+The admitted implementation write set is `mcp_stdio.py`,
+`mcp_observer.py`, `tests/test_mcp_observer.py`, `tests/test_mcp_stdio.py`, `tests/test_agent_workflow.py`,
 `docs/contracts/mcp-observer.md`, the bridge instructions in `README.md`, and this
 plan directory. New paths or material design changes require updating this owner.
 
@@ -50,8 +49,9 @@ or merge. Local test evidence and a source review are in scope.
   edits; no application-purpose Engine connection is available. Direct canonical
   standards reading supplies guidance, not an Engine qualification certificate.
 - [Coding-Standards #3](https://github.com/MrScripty/Coding-Standards/issues/3)
-  must supply a qualified commit, actual acceptance evidence and source files.
-  Parent owns that qualification. Its issue was open with no comments at intake.
+  local head4887b7af, source and acceptance evidence were supplied by parent
+  and inspected. Parent owns pending hosted CI; [admission](reports/reference-admission.md)
+  records exact local evidence and limits.
 - SQLite is separate from PostgreSQL domain metadata; observer failure is
   explicitly fail-open and operator-visible. No production activation during work.
 
@@ -72,14 +72,15 @@ Baseline checks support these claims but do not satisfy observer acceptance.
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence/design |
 | --- | --- | --- | --- | --- | --- | --- |
-| A1 | Cold initialize/list/call produces ordered correlated durable metadata with measured framing bytes and observer-disabled output parity | system | representative | automated | pending | [Test design](reports/investigation.md) |
-| A2 | Invalid frames, admission/validation refusals, typed domain/transport errors and mutation delivery have exactly one interaction each | system | representative | automated | pending | Same |
-| A3 | Restart/SIGKILL/interruption and partial/failed delivery retain incomplete/unknown outcomes without fabricated completion | system | representative | automated | pending | Same |
-| A4 | Credentials, bodies, content, paths, arbitrary keys/errors/IDs and sensitive hashes cannot be recovered from SQLite or diagnostics | contract | representative | automated | pending | Same |
-| A5 | Disabled/unavailable/locked/full storage preserves MCP output and domain result; bounded operator health describes degradation | system | representative | automated | pending | Same |
-| A6 | Actual SQLite reopen/concurrency/retention/version migration or rejection/corrupt-record behavior meets the adopted store contract | integration | representative | automated | pending | Same |
-| A7 | Existing agent/workflow/scoped authorization/external execution tests and public registry/envelopes remain intact | system | representative | automated | pending | [Baseline](reports/baseline.md) |
-| A8 | Independent GPT-6.1 Sol High source/privacy/lifecycle review resolves material findings | contract | representative | manual | pending | Review preparation and then implementation separately |
+| A1 | Cold initialize/list/call produces ordered correlated durable metadata with measured framing bytes and observer-disabled output parity | system | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A2 | Invalid frames, admission/validation refusals, typed domain/transport errors and mutation delivery have exactly one interaction each | system | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A3 | Restart/SIGKILL/interruption and partial/failed delivery retain incomplete/unknown outcomes without fabricated completion | system | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A4 | Credentials, bodies, content, paths, arbitrary keys/errors/IDs and sensitive hashes cannot be recovered from SQLite or diagnostics | contract | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A5 | Disabled/unavailable/locked/full storage preserves MCP output and domain result; bounded operator health describes degradation | system | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A6 | Actual SQLite reopen/concurrency/retention/version migration or rejection/corrupt-record behavior meets the adopted store contract | integration | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A7 | Existing agent/workflow/scoped authorization/external execution tests and public registry/envelopes remain intact | system | representative | automated | satisfied | [Local verification](reports/verification.md) |
+| A8 | Independent GPT-6.1 Sol High source/privacy/lifecycle review resolves material findings | contract | representative | manual | satisfied | [Final review](reports/implementation-review.md) |
+| A9 | Parent completes reference hosted CI qualification or supplies its accepted disposition | contract | required-real | either | blocked | Parent-owned; reference local qualification is admitted |
 
 ## Evidence and oracle plan
 
@@ -127,13 +128,13 @@ Reference composition inspected at 4887b7aff0ba84acd257da081135b7849cc9c79f. Reu
    store version; supported source states still require explicit policy.
 - Necessary complexity and containment: Inherent complexity is request correlation plus truthful delivery and durable
    lifecycle under failure. Contain it in one observer owner with a small bridge
-   adapter, reusing qualified patterns. Exact machinery remains reference-blocked.
+   adapter, reusing qualified patterns. The implementation follows this composition.
 
 ## Milestones
 
 ### M0: Preparation
 
-**Status:** `Accepted` for preparation only; full observer acceptance remains blocked.
+**Status:** `Accepted` for preparation; historical evidence remains scoped to that checkpoint.
 
 **Goal:** Bound the actual seams, preserve a tested baseline, and expose the
 reference dependency without installing a speculative observer.
@@ -147,7 +148,7 @@ No observer acceptance claim.
 
 ### M1: Qualified adaptation and acceptance
 
-**Status:** `Active`; parent follow-up admits implementation of this canonical plan.
+**Status:** `Accepted` for local implementation, tests and independent review. A9 remains a separate final qualification dependency.
 
 **Goal:** One complete optional observer capability, including operational controls,
 privacy/lifecycle documentation and direct acceptance tests.
@@ -156,12 +157,14 @@ privacy/lifecycle documentation and direct acceptance tests.
 
 **Gate:** A1–A8; record actual reused concepts/files/license obligations and each
 Tuldok-specific boundary. Bind implementation to this plan's `start`/`continue`
-operation when the reference is qualified; no additional publication authority.
+operation admitted by the parent continuation; no publication authority.
 
 ## Blockers
 
-Reference hosted CI remains pending; local implementation/review evidence is admitted
-by parent, but is not merged or fully CI-qualified. Tuldok publication is prohibited.
+A9 reference hosted CI remains pending under parent ownership; local A1–A8 are
+satisfied with [verification](reports/verification.md) and [review](reports/implementation-review.md).
+Neither reference nor Tuldok is claimed merged or fully CI-qualified. Tuldok
+publication remains prohibited until parent/user authorization.
 
 ## Re-Plan Triggers
 
@@ -181,6 +184,6 @@ source adaptation is authorized locally by the parent follow-up.
 
 ## Final Acceptance
 
-- Acceptance status: `pending`
-- Final status: `Active`
-- Deferred follow-ups: reference hosted CI and classifier-runtime baseline remain explicit evidence limits.
+- Acceptance status: `blocked`
+- Final status: `Verifying`
+- Deferred follow-ups: reference hosted CI remains parent-owned; prior classifier baseline skip resolved in final local run.
