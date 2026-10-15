@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Tuldok · Model development architecture discovery</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#f2f5f5; --paper:#fff; --ink:#142a32; --muted:#4e626b; --line:#cbd8dc; --accent:#006b66; --tint:#e6f4f1; --blue:#2455a3; --blue-tint:#eef3ff; --amber:#805300; --amber-tint:#fff5db; --shadow:0 12px 34px #142a3209; }
+    @media (prefers-color-scheme:dark) { :root { --bg:#10191e; --paper:#17252c; --ink:#e3edf0; --muted:#afc1ca; --line:#3c535d; --accent:#75d6c4; --tint:#193e39; --blue:#a7c5ff; --blue-tint:#202f4b; --amber:#f4d382; --amber-tint:#3e341e; --shadow:none; } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:var(--blue); text-underline-offset:.18em; }
+    a:hover { text-decoration-thickness:2px; }
+    a:focus-visible, summary:focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+    .skip { position:absolute; top:-100px; left:1rem; background:var(--paper); padding:.5rem; }
+    .skip:focus { top:1rem; }
+    .wrap { max-width:1240px; margin:auto; padding:0 32px; }
+    header { background:var(--paper); border-bottom:1px solid var(--line); padding:34px 0 38px; }
+    .eyebrow { color:var(--accent); letter-spacing:.12em; font-size:.75rem; font-weight:750; text-transform:uppercase; }
+    h1 { font-size:clamp(2rem,4vw,3.25rem); line-height:1.12; letter-spacing:-.045em; max-width:900px; margin:14px 0 18px; }
+    h2 { font-size:1.55rem; line-height:1.25; margin:0 0 12px; letter-spacing:-.025em; }
+    h3 { font-size:1.05rem; line-height:1.35; margin:0 0 9px; }
+    p { margin:0 0 14px; }
+    .intro { max-width:850px; color:var(--muted); font-size:1.1rem; }
+    .meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin-top:20px; font-size:.9rem; }
+    .badge { display:inline-block; padding:3px 9px; border:1px solid currentColor; border-radius:5px; font-size:.72rem; font-weight:700; letter-spacing:.03em; }
+    .requirement { color:var(--accent); background:var(--tint); }
+    .candidate { color:var(--blue); background:var(--blue-tint); }
+    .open { color:var(--amber); background:var(--amber-tint); }
+    main { padding-top:34px; padding-bottom:48px; }
+    section { margin-bottom:32px; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:25px; box-shadow:var(--shadow); }
+    .section-top { display:flex; align-items:baseline; justify-content:space-between; gap:15px; margin-bottom:17px; }
+    .section-top h2 { margin:0; }
+    .small, .note { color:var(--muted); font-size:.88rem; }
+    .requirements { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+    .requirement-card { padding:16px; background:var(--tint); border-radius:8px; border-top:3px solid var(--accent); }
+    .requirement-card p { font-size:.92rem; margin:0; }
+    .workflow { list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(4,1fr); gap:14px; counter-reset:step; }
+    .workflow li { border:1px solid var(--line); border-radius:8px; padding:17px; position:relative; }
+    .workflow li::before { counter-increment:step; content:counter(step, decimal-leading-zero); display:block; color:var(--accent); font-size:.8rem; font-weight:750; margin-bottom:12px; }
+    .workflow p { color:var(--muted); font-size:.9rem; margin:0; }
+    .workflow .eval { border:2px solid var(--accent); padding:16px; background:var(--tint); }
+    .loop { margin-top:16px; padding:13px 16px; border-left:3px solid var(--accent); background:var(--tint); font-size:.95rem; }
+    .loop p { margin:0; }
+    .columns { display:grid; grid-template-columns:1.2fr 1fr; gap:22px; }
+    .owner { padding:18px; background:var(--blue-tint); border:1px solid var(--blue); border-radius:8px; }
+    .owner p:last-child { margin:0; }
+    .handoff { display:flex; align-items:center; gap:10px; margin:16px 0; font-size:.87rem; }
+    .handoff span { flex:1; text-align:center; border:1px solid var(--line); padding:10px 5px; border-radius:6px; }
+    .handoff b { font-weight:500; color:var(--muted); }
+    ul { padding-left:1.2rem; margin:10px 0 0; }
+    li { margin-bottom:7px; }
+    .table-scroll { overflow-x:auto; }
+    table { border-collapse:collapse; width:100%; min-width:560px; font-size:.93rem; }
+    th, td { padding:13px 14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { font-size:.79rem; text-transform:uppercase; letter-spacing:.045em; color:var(--muted); }
+    td:first-child { font-weight:650; width:22%; }
+    tr:last-child td { border:0; }
+    .gate { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }
+    .gate article { padding:17px; border:1px solid var(--line); border-radius:8px; }
+    .gate p { color:var(--muted); font-size:.93rem; margin:0; }
+    .phase-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    details { border:1px solid var(--line); background:var(--paper); border-radius:8px; }
+    summary { cursor:pointer; padding:17px; font-weight:650; }
+    summary span { color:var(--accent); margin-right:8px; }
+    .detail-body { padding:0 18px 18px; font-size:.93rem; }
+    .detail-body p:last-child { margin-bottom:0; }
+    .questions { margin:0; }
+    .questions li { margin-bottom:12px; }
+    .questions li:last-child { margin-bottom:0; }
+    footer { border-top:1px solid var(--line); padding:23px 0 32px; font-size:.88rem; color:var(--muted); }
+    footer ul { display:flex; flex-wrap:wrap; list-style:none; gap:10px 22px; padding:0; margin:10px 0 0; }
+    @media(max-width:950px) { .requirements,.workflow { grid-template-columns:repeat(2,1fr); } .columns { grid-template-columns:1fr; } }
+    @media(max-width:600px) { .wrap { padding:0 18px; } header { padding-top:25px; } .panel { padding:19px; } .requirements,.workflow,.gate,.phase-grid { grid-template-columns:1fr; } .section-top { display:block; } .section-top .badge { margin-top:10px; } .handoff { flex-wrap:wrap; } .handoff span { min-width:100px; } }
+    @media print { body { background:white; color:black; font-size:10pt; } :root { --paper:white; --ink:black; --muted:#333; --line:#aaa; --accent:#075a51; --tint:#f2f7f6; --blue:#204977; --blue-tint:#f4f6fa; } .wrap { max-width:none; padding:0; } header { padding-top:0; } .panel { box-shadow:none; break-inside:avoid; } details { break-inside:avoid; } a { color:inherit; } .skip { display:none; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to architecture overview</a>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">Tuldok / architecture discovery / 15 October 2026</div>
+      <h1>One workspace, from dataset to model candidate.</h1>
+      <p class="intro">Design the connected process first. Task-aware evaluation should arrive with training, so users can understand results, correct data, tune models, and preserve the evidence behind each decision.</p>
+      <div class="meta"><span class="badge open">Provisional discussion aid</span><a href="../plan.md">Canonical design plan →</a><span>No application behavior is implemented by this document.</span></div>
+    </div>
+  </header>
+  <main class="wrap" id="main">
+    <section aria-labelledby="requirements-title">
+      <div class="section-top"><h2 id="requirements-title">What the user has asked for</h2><span class="badge requirement">Requirements</span></div>
+      <div class="requirements">
+        <article class="requirement-card"><h3>End to end in Tuldok</h3><p>Build and annotate datasets, train models, evaluate outcomes, and return to improve them.</p></article>
+        <article class="requirement-card"><h3>Define the model</h3><p>Architecture and training choices belong in the workflow alongside dataset choices.</p></article>
+        <article class="requirement-card"><h3>Views without extra setup</h3><p>Supported tasks and trainers automatically provide applicable evaluation tools.</p></article>
+        <article class="requirement-card"><h3>Tune with evidence</h3><p>Compare candidates and configurations, inspect errors, and iterate reproducibly.</p></article>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="workflow-title">
+      <div class="section-top"><h2 id="workflow-title">The proposed user journey</h2><span class="badge candidate">Candidate design</span></div>
+      <p class="note">Read steps 01–08 in order. These are conceptual responsibilities; they do not require eight new services or screens.</p>
+      <ol class="workflow">
+        <li><h3>Build the dataset</h3><p>Import, generate, annotate, review, and retain family and provenance information.</p></li>
+        <li><h3>Freeze a release</h3><p>Record exact samples, annotations, split assignments, transformations, and exposure policy.</p></li>
+        <li><h3>Define task and model</h3><p>Declare input/target meaning and compatible architecture, preprocessing, objectives, and defaults.</p></li>
+        <li><h3>Prepare an experiment</h3><p>Resolve settings, validation probes, selection criteria, budgets, and concrete tuning trials.</p></li>
+        <li><h3>Execute through Runs</h3><p>Admit training and evaluation attempts through the existing execution owner.</p></li>
+        <li class="eval"><h3>Evaluate automatically</h3><p>Open curves, fixed-example comparisons, task metrics, and declared domain checks as evidence arrives.</p></li>
+        <li><h3>Compare and select</h3><p>Inspect comparable trials, failures, validation criteria, and separate acceptance outcomes.</p></li>
+        <li><h3>Package a candidate</h3><p>Retain checkpoint, model and preprocessing definitions, output meaning, lineage, and evaluation evidence.</p></li>
+      </ol>
+      <div class="loop"><p><strong>Two return paths:</strong> evaluation → dataset corrections → new frozen release; evaluation → model/settings changes → new experiment revision or trial. Historical evidence continues to reference its original inputs.</p></div>
+    </section>
+
+    <section class="columns" aria-label="Ownership and automatic evaluation">
+      <article class="panel">
+        <div class="section-top"><h2>One execution custodian</h2><span class="badge candidate">Boundary to validate</span></div>
+        <div class="owner"><h3>Existing Runs</h3><p>Keep admission, runtime dispatch, process lifecycle, cancellation, and artifact verification under the established execution owner. Experiments coordinate intent and trials; they do not become a second runner.</p></div>
+        <div class="handoff" aria-label="Proposed handoff: experiment intent to Runs to verified evidence"><span>Experiment intent</span><b aria-hidden="true">→</b><span>Runs</span><b aria-hidden="true">→</b><span>Verified evidence</span></div>
+        <p class="small">Evaluation replay, tuning trials, and candidate verification must use the same owned execution path. The design phase must identify the actual entry points and failure behavior before assigning new module boundaries.</p>
+      </article>
+      <article class="panel">
+        <h2>Automatic means integrated once</h2>
+        <p>A task definition declares semantics, applicable metrics, and views. A trainer adapter emits the corresponding observations and retained evidence.</p>
+        <ul>
+          <li><strong>User chooses:</strong> task, dataset, model, and budget.</li>
+          <li><strong>Tuldok resolves:</strong> compatible defaults, fixed validation probes, capture cadence, and viewers.</li>
+          <li><strong>UI explains:</strong> pending, available, unsupported, failed, or omitted evidence.</li>
+        </ul>
+        <p class="small" style="margin-top:14px;margin-bottom:0">Arbitrary custom code still requires an integration contract. Missing gradients, predictions, or physical semantics cannot be inferred from a final metric file.</p>
+      </article>
+    </section>
+
+    <section class="panel" aria-labelledby="state-title">
+      <div class="section-top"><h2 id="state-title">Preserve four different kinds of state</h2><span class="badge candidate">Contract design</span></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">State</th><th scope="col">Purpose</th><th scope="col">Required distinction</th></tr></thead>
+          <tbody>
+            <tr><td>Editable drafts</td><td>Annotations, architecture choices, experiment settings, and review work.</td><td>Changing a draft cannot rewrite what an older run consumed.</td></tr>
+            <tr><td>Frozen definitions</td><td>Dataset releases, task/model versions, resolved trial recipes, and evaluation protocols.</td><td>Stable identities make lineage and comparable evaluation possible.</td></tr>
+            <tr><td>Live observations</td><td>Progress, current metrics, and execution feedback during a run.</td><td>Live status is not itself a complete or verified historical record.</td></tr>
+            <tr><td>Verified artifacts</td><td>Histories, checkpoints, predictions, metric results, and candidate packages.</td><td>Readers check schema and custody; scientific validity depends on declared evaluators and evidence.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gate">
+        <article><h3>Validation probes: visible during development</h3><p>Fixed cases support checkpoint comparison, debugging, model selection, and tuning. Record their identity, selection policy, inference settings, units, coordinates, and shared scales.</p></article>
+        <article><h3>Test evaluation: separately gated</h3><p>Protected test families must remain outside routine tuning and probe galleries. Record access and exposure; a displayed failure may become a regression case but must not silently remain an untouched holdout.</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="phases-title">
+      <div class="section-top"><h2 id="phases-title">Design phase checkpoints</h2><span class="badge open">Proposed sequence</span></div>
+      <p class="note">Expand a phase to inspect its decision evidence. These controls describe design checkpoints, not implementation progress. Canonical phase names and acceptance criteria live in the plan.</p>
+      <div class="phase-grid">
+        <details open><summary><span>D1</span>Owner and task-path design</summary><div class="detail-body"><p><strong>Produce:</strong> a current-state owner map and proposed end-to-end task paths for dataset work, model definition, training, evaluation, correction, and candidate selection.</p><p><strong>Check:</strong> one execution custodian, concrete existing entry points, named gaps, and a clear separation between user requirements and proposed boundaries.</p></div></details>
+        <details open><summary><span>D2</span>Contracts and cold evidence</summary><div class="detail-body"><p><strong>Produce:</strong> versioned identity and evidence contracts, lifecycle rules, compatibility policy, and a restart/readback scenario using frozen artifacts.</p><p><strong>Check:</strong> comparable trials, honest missing history, exposed-family behavior, and reproducible interpretation without relying on a live process.</p></div></details>
+        <details open><summary><span>D3</span>Automatic capture and UI demonstration</summary><div class="detail-body"><p><strong>Produce:</strong> a bounded walkthrough showing task-aware default views and linked checkpoint/example selection, plus capture, retention, and resource budgets.</p><p><strong>Check:</strong> an ordinary user gets useful evaluation without configuring charts or callbacks; omitted evidence and unsuccessful model acceptance remain clear.</p></div></details>
+        <details open><summary><span>D4</span>Tuning, runtime, and evolution handoff</summary><div class="detail-body"><p><strong>Produce:</strong> tuning coordination rules, runtime qualification boundaries, candidate packaging, migration/evolution decisions, and a staged implementation proposal.</p><p><strong>Check:</strong> failed trials and repeated seeds are represented, tuning obeys exposure policy, and the handoff avoids a competing scheduler or speculative infrastructure.</p></div></details>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="open-title">
+      <div class="section-top"><h2 id="open-title">Choices the design must resolve</h2><span class="badge open">Still open</span></div>
+      <ul class="questions">
+        <li><strong>First vertical slices:</strong> which built-in task and which scientific project prove automatic evaluation without claiming universal support?</li>
+        <li><strong>Model authoring:</strong> how far do templates and declarative definitions go before project-defined code is needed? A visual layer-graph editor is optional.</li>
+        <li><strong>Ownership boundaries:</strong> which existing dataset, training, evaluation, runtime, and artifact interfaces should be deepened rather than replaced?</li>
+        <li><strong>Evidence budgets:</strong> which checkpoints and probes are retained, and how does the UI explain unavailable history, capture failures, and replay costs?</li>
+        <li><strong>Evaluation policy:</strong> who declares domain checks, acceptance thresholds, test access, and candidate export eligibility?</li>
+        <li><strong>Evolution:</strong> how do legacy results remain readable while new task adapters and evidence schemas become available?</li>
+      </ul>
+      <p class="note" style="margin-top:17px;margin-bottom:0">The architecture should reuse the current application and execution facilities unless discovery demonstrates a concrete need for additional infrastructure.</p>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">
+      <strong>Evidence and canonical text</strong>
+      <ul>
+        <li><a href="../plan.md">Architecture design plan</a></li>
+        <li><a href="../../training-evaluation/reports/paper-review.md">Paper review</a></li>
+        <li><a href="../../training-evaluation/reports/paper-methodology-review.md">Methodology review</a></li>
+        <li><a href="../../training-evaluation/reports/software-precedents.md">Software precedents</a></li>
+        <li><a href="../../training-evaluation/reports/primary-sources.md">Supporting sources</a></li>
+      </ul>
+      <p style="margin-top:14px;margin-bottom:0">Local, self-contained discovery artifact. No external assets, hosted publishing, or application dependencies.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,296 @@
+{
+  "recorded_date": "2026-10-15",
+  "runtime": {
+    "kind": "runtime-info-result",
+    "purpose": "authoring",
+    "interface_version": 47,
+    "implementation_version": "0.2.0",
+    "instance_id": "b4e568f6-7fda-4678-8cd1-dd9494446ee2",
+    "implementation_digest": "sha256:1fe5b81d933a036e2f6a9fa8ce71e49e1028181c7fa181c8306928013bbdc466",
+    "catalog_digest": "sha256:8a9f84b8c07f364eb36aa7e0b6d96832bc70957e82d709a12c110bb74292242e",
+    "schema_digest": "sha256:851bd8883d0e7dd62eb5e1152e1a0887620ed8510957a5662eba9b1afe7021f2",
+    "installation_state": "current",
+    "client_catalog_state": "unspecified",
+    "action": "reuse"
+  },
+  "snapshot": {
+    "kind": "snapshot-handle",
+    "id": "snapshot:v1:5d59fde2-6756-42e9-a6d3-fba30457128c",
+    "schema_version": 5
+  },
+  "facts": {
+    "routing.activities": [
+      "planning",
+      "documentation",
+      "uncertainty-reduction",
+      "verification"
+    ],
+    "routing.applications": [
+      "frontend",
+      "launcher",
+      "library"
+    ],
+    "routing.boundaries": [
+      "persistence",
+      "ipc"
+    ],
+    "routing.details": [
+      "workflow.planning.discovery",
+      "topic.architecture.replay",
+      "topic.code-design",
+      "topic.contracts.evolution",
+      "topic.contracts.protocols",
+      "topic.contracts.schemas",
+      "workflow.verification.gui",
+      "workflow.verification.oracles",
+      "workflow.verification.platforms"
+    ],
+    "routing.frameworks": [],
+    "routing.languages": [],
+    "routing.topics": [
+      "accessibility",
+      "architecture",
+      "concurrency",
+      "contracts",
+      "dependencies",
+      "diagnostics",
+      "licensing",
+      "performance",
+      "resilience",
+      "security"
+    ],
+    "routing.workflow-profiles": []
+  },
+  "route": {
+    "status": "complete",
+    "unresolved_questions": [],
+    "unresolved_policy_count": 0,
+    "summary": "Selected 31 standards with 0 unresolved fact categories."
+  },
+  "policies": [
+    {
+      "id": "core",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "8d81c8b558269cf45aa768f67399e6ea120acf2318e0e4c3030b8114a083a14d",
+      "source_path": "CORE-STANDARDS.md"
+    },
+    {
+      "id": "router",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "35f014a0090301e89815700ff60aa5f043f3c033660c20ab144e6e6461df2181",
+      "source_path": "STANDARDS-ROUTER.md"
+    },
+    {
+      "id": "workflow.implementation",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "02bc0feb1f411072b082236da5354ab44b1a4cdfe4a07afab70108631c80e532",
+      "source_path": "workflows/implementation.md"
+    },
+    {
+      "id": "workflow.verification",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "798071f8beed08fca9937ad5ea9d6d6a42b99157b82a3f2dc80c46412f475f8b",
+      "source_path": "workflows/verification.md"
+    },
+    {
+      "id": "topic.accessibility",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "e1dac1dc41f883418d3b753db8ffa53d485b4f3afec2e48b1c0fee371771f6d6",
+      "source_path": "topics/accessibility.md"
+    },
+    {
+      "id": "topic.contracts",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "3190700189e589d7baec3551ff6330ca7afd64d8f425566cb621db9dd1399532",
+      "source_path": "topics/contracts.md"
+    },
+    {
+      "id": "topic.architecture",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "d35471532ba216056a4a88474fac15f2aada1de866ada136efb31ce26dc06036",
+      "source_path": "topics/architecture.md"
+    },
+    {
+      "id": "topic.contracts.evolution",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "9789fccbc295188ec264a50d0e4183021e6bc136807d49eb7417b1159f0e86b8",
+      "source_path": "topics/contracts/evolution.md"
+    },
+    {
+      "id": "topic.contracts.protocols",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "a49bb7b346c3fcacc39cc4402d8338b211df98299185aa0b6a5549d52e520194",
+      "source_path": "topics/contracts/protocols.md"
+    },
+    {
+      "id": "topic.resilience",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "573d59e334455d8f35c4e9213ce7f68a6edb23c36a36abdf72104af3f27685e8",
+      "source_path": "topics/resilience.md"
+    },
+    {
+      "id": "topic.security",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "1ae23154bf405dd3722819189ae4bd1859b7777aecbf0b5951b532c6aece16e7",
+      "source_path": "topics/security.md"
+    },
+    {
+      "id": "workflow.development-proportionality",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "bdd29ec308d035e5ab9b5375560321a459a82a7ef29fb941b9c858fb417eea94",
+      "source_path": "workflows/development-proportionality.md"
+    },
+    {
+      "id": "workflow.planning",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "59d2cbd6b7525e41b41761b0caf7471ddde9c4e33290ba4a16c812937abc4403",
+      "source_path": "workflows/planning.md"
+    },
+    {
+      "id": "profile.application.library",
+      "authority": "normative",
+      "application_exposure": "unreviewed",
+      "content_sha256": "ae605d474a922b213257916824344dadadf505aee9c585e055198208f7b8e834",
+      "source_path": "profiles/applications/library.md"
+    },
+    {
+      "id": "topic.code-design",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "659f47b7d53abc05627cb3672aab33265062f92001b4d212d4c52ffd8c2de8e0",
+      "source_path": "topics/code-design.md"
+    },
+    {
+      "id": "workflow.documentation",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "154f4d866ef99ccfde5f85cc01de2e5480e25e8c116cd5b9082b9e69d42faf6b",
+      "source_path": "workflows/documentation.md"
+    },
+    {
+      "id": "profile.application.frontend",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "32ab0d4e9f24dfcd48661f8fd3ea7547c0b6f7fc995b6c8e1d3bc0938606797b",
+      "source_path": "profiles/applications/frontend.md"
+    },
+    {
+      "id": "topic.concurrency",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "e0cd8f80f95c0acc8d6c246e871f1d674861d8019a906137127aa51ad4065e0c",
+      "source_path": "topics/concurrency.md"
+    },
+    {
+      "id": "topic.architecture.replay",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "678edd13bdaf6db9604c8dd4e98cc68e358d6e39eba8089d4f0ab69b52a085c5",
+      "source_path": "topics/architecture/replay.md"
+    },
+    {
+      "id": "profile.boundary.persistence",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "9ec9473c865a4293433d0f22d0b82b6089fce9a72b47c7f735612a20faf1734b",
+      "source_path": "profiles/boundaries/persistence.md"
+    },
+    {
+      "id": "topic.contracts.schemas",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "428bd940c6d843d8b2a0fe53ef8f473c753863b31c94ada006997c72eb2dfc72",
+      "source_path": "topics/contracts/schemas.md"
+    },
+    {
+      "id": "topic.dependencies",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "b9698a1985aec38491f2d66d141978952fa691bef99ee7222f67e992d552b07f",
+      "source_path": "topics/dependencies.md"
+    },
+    {
+      "id": "topic.diagnostics",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "5e8e057397835fe09d9b02f74f080b39ed11d7062625c76cf8161b048f81bf7a",
+      "source_path": "topics/diagnostics.md"
+    },
+    {
+      "id": "topic.licensing",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "80e8558198346fd6f5f57d5756fcf81d0929ebcbc4ca18288e22aba946bd4cb7",
+      "source_path": "topics/licensing.md"
+    },
+    {
+      "id": "topic.performance",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "ff1ce8f1e7592c14bbb8f84fd2d6fef2434e861c29ddf517fe5f9ba9d983ae40",
+      "source_path": "topics/performance.md"
+    },
+    {
+      "id": "profile.application.launcher",
+      "authority": "normative",
+      "application_exposure": "unreviewed",
+      "content_sha256": "f4229bd7d628ad50dc65132652432ca77ef7d0a50790931942469608fd6401e2",
+      "source_path": "profiles/applications/launcher.md"
+    },
+    {
+      "id": "profile.boundary.ipc",
+      "authority": "normative",
+      "application_exposure": "unreviewed",
+      "content_sha256": "2f6d0391e6a01fecf259386f314daccdcd0ed5c0b58ac0fadc6816b8171347e4",
+      "source_path": "profiles/boundaries/ipc.md"
+    },
+    {
+      "id": "workflow.planning.discovery",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "3cec960a68530b7afec2df692329e6a31d3f3ec429d48ff51ea92272c917a239",
+      "source_path": "workflows/planning/discovery.md"
+    },
+    {
+      "id": "workflow.verification.gui",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "042d4fb92f880a07d1f025ace5c02aa211fadf921dd4a98701755f2e2edcbe8a",
+      "source_path": "workflows/verification/gui.md"
+    },
+    {
+      "id": "workflow.verification.oracles",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "f5cfd7d06a894f8f63ed14ebefafb6c861015bcd9746862e23d3918d1397f191",
+      "source_path": "workflows/verification/oracles.md"
+    },
+    {
+      "id": "workflow.verification.platforms",
+      "authority": "normative",
+      "application_exposure": "current",
+      "content_sha256": "a27afd0d5e11f8e4bd5f3319b1a2da55593ac59a9f4b8eb82e7e8641c32f9a7d",
+      "source_path": "workflows/verification/platforms.md"
+    }
+  ],
+  "template": {
+    "id": "templates/PLAN-TEMPLATE.md",
+    "role": "template",
+    "application_exposure": "needs-review",
+    "content_sha256": "c12c0365bb558c8ef973647fc74af9678cd1c35f54d17b104afdd3ed373f4f50"
+  },
+  "scope": "Read-only standards routing and plan-template retrieval for a Tuldok architecture-design plan; not an Engine approval/certification or library mutation."
+}
