@@ -684,7 +684,7 @@ def _builtin_artifact_source(source, expected_sha256, expected_bytes):
     if (set(item) != {'name', 'sha256', 'bytes', 'media_type', 'split'} or item['sha256'] != expected_sha256
             or type(item['bytes']) is not int or item['bytes'] != expected_bytes
             or item['split'] not in (None, 'validation', 'test')
-            or (item['split'] == 'test') != (source['population'] == 'test')):
+            or source['population'] != ('test' if item['split'] == 'test' else 'validation' if item['split'] == 'validation' else 'train')):
         raise ProcessError('Built-in artifact binding differs.')
     return dict(source)
 

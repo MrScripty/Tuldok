@@ -282,3 +282,21 @@ named original directories are empty in the consumer filesystem. A sibling
 `package-result.json` may provide the expected published SHA when the explicit
 argument is omitted. The qualifier does not reinterpret public redistribution
 rights or a diagnostic candidate as a quality qualification.
+
+For the actual producer-to-consumer qualification, explicitly provision a
+disposable catalog and captured snapshot, then run:
+
+```
+TULDOK_TRAINING_PYTHON=/qualified/training/python python tests/qualify_candidate_package.py \
+  --production-catalog /disposable/catalog --snapshot-descriptor /tmp/runtime-descriptor.json \
+  --output /tmp/charged-package-qa
+```
+
+This driver performs actual two-epoch training, immutable candidate selection,
+normal package and verifier preparation/approval/admission in one finite Study,
+HTTP download and whole-hash verification. It records three charged attempts and
+observes that expensive external capture runs outside a metadata transaction.
+The authored RGB fixture qualifies the execution/evidence contract rather than
+classifier generalization. `test_candidate_packages.py` separately exercises
+real PostgreSQL publication-callback failure and rollback; its optional actual
+CPU case requires explicit qualification catalog/snapshot/output/runtime settings.
