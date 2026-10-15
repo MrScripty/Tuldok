@@ -1,5 +1,6 @@
 """Representative driver guards; these fixtures are not admitted Run evidence."""
 import copy
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,6 +15,23 @@ import qualify_extension_canonical as driver
 
 
 class CanonicalDriverGuards(unittest.TestCase):
+    def test_oracle_context_identity_comes_from_independent_run_custody(self):
+        raw=b'representative-context-bytes'
+        expected=hashlib.sha256(raw).hexdigest()
+        receipt=dict(name='execution-context.json',role='model_context',bytes=len(raw),sha256=expected)
+        # Public runs.get exposes authoritative artifact receipts, never private spec.
+        run=dict(artifacts=[receipt])
+        self.assertEqual(driver.verify_context_custody(run,raw),expected)
+        for mutated in (raw+b'x',b'X'+raw[1:]):
+            with self.assertRaisesRegex(RuntimeError,'retained Run custody'):
+                driver.verify_context_custody(run,mutated)
+        receipt['bytes']=True
+        with self.assertRaises(RuntimeError):driver.verify_context_custody(run,raw)
+        receipt['bytes']=len(raw);receipt['role']='field_source'
+        with self.assertRaises(RuntimeError):driver.verify_context_custody(run,raw)
+        receipt['role']='model_context';run['artifacts'].append(dict(receipt))
+        with self.assertRaises(RuntimeError):driver.verify_context_custody(run,raw)
+
     def test_existing_catalog_is_rejected_before_any_dataset_or_source_change(self):
         with tempfile.TemporaryDirectory() as temporary:
             catalog=Path(temporary)/'catalog';catalog.mkdir();marker=catalog/'unrelated.txt';marker.write_text('preserve')
