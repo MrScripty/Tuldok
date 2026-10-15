@@ -130,7 +130,7 @@ class Experiments:
         return value
 
     @authorized('edit','studies.prepare_trial')
-    def prepare_trial(self,study_id,body):
+    def prepare_trial(self,study_id,body,*,_publish=None):
         closed(body,('request_key','revision','graph_id','graph_revision','model','replicate'),('reconcile_capture',));body=checked_json(body)
         request_key(body['request_key']);natural(body['replicate'],'Replicate')
         actor=self.access._context().actor_id;sha=digest({'study_id':study_id,'body':body})
@@ -162,6 +162,9 @@ class Experiments:
                                 (study_id,study['membership_revision'],encode({'trial_ids':study['trial_ids']})))
                 self._write(study,'studies.prepare_trial',{'trial_id':value['id']})
                 self._save_receipt(actor,'studies.prepare_trial',body['request_key'],sha,value)
+                # Trusted owner composition may attach its bounded receipt to
+                # this same final commit, after all expensive capture finished.
+                if _publish is not None:_publish(value)
             return value
         except CommitOutcomeUnknown:raise
         except BaseException:
