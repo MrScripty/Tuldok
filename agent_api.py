@@ -1,6 +1,6 @@
 """Versioned agent operations and bounded client of the existing local HTTP owner.
 
-Import/discovery use only the standard library. Optional jsonschema is loaded by
+Import/discovery use only the standard library. Pinned jsonschema is loaded by
 argument validation, never by the application discovery route.
 """
 import base64
@@ -17,7 +17,7 @@ import socket
 import stat
 import time
 import threading
-from urllib.parse import quote, urlencode, urlsplit
+from urllib.parse import parse_qsl, quote, unquote, urlencode, urlsplit
 
 REGISTRY_VERSION = 1
 REQUEST_LIMIT = 1024 * 1024
@@ -284,25 +284,248 @@ EXCLUSIONS = ['owner review and execution grants', 'credential administration', 
               'saved search/selection mutations', 'alternate release projections', 'arbitrary files/URLs', 'non-Run binary download tools']
 LIMITS = {'request_bytes': REQUEST_LIMIT, 'http_response_bytes': RESPONSE_LIMIT, 'mcp_response_bytes': MCP_RESPONSE_LIMIT,
           'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT, 'artifact_segment_bytes': 8*1024*1024}
-_PAYLOAD = {'version': REGISTRY_VERSION, 'operations': _OPERATIONS, 'limits': LIMITS, 'exclusions': EXCLUSIONS}
+# These IDs and bytes belong to installed f588 strict clients. New operations
+# belong to the same registry but never silently enter the legacy projection.
+_LEGACY_IDS = ('context.get', 'identity.get', 'projects.list', 'recipes.list', 'releases.list', 'releases.inputs', 'graphs.list', 'runs.list', 'run_inputs.list', 'projects.get', 'projects.open', 'projects.evidence', 'recipes.inspect', 'data.query', 'data.get', 'data.history', 'data.audio', 'data.mesh', 'data.pointcloud', 'data.responses', 'data.preferences', 'data.volume', 'data.scientific', 'data.import_image', 'data.import_text', 'data.import_audio', 'data.import_mesh', 'data.import_pointcloud', 'data.import_volume', 'data.import_sequence', 'data.import_project_scientific', 'data.import_run_scientific', 'data.save_draft', 'responses.save_draft', 'proposals.caption_list', 'proposals.caption_get', 'proposals.caption_decide', 'proposals.classification_list', 'proposals.classification_get', 'proposals.classification_decide', 'releases.preview', 'releases.freeze', 'graphs.get', 'graphs.create', 'graphs.create_external', 'graphs.save', 'graphs.clone', 'graphs.validate', 'graphs.preflight_external', 'runs.get', 'runs.progress', 'runs.predictions', 'runs.submit_external', 'runs.cancel', 'runs.expose_test', 'runs.artifact_chunk')
+_LEGACY_DIGEST = 'cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8'
+_legacy_by_id = {op['operation_id']: op for op in _OPERATIONS}
+_PAYLOAD = {'version': 1, 'operations': [copy.deepcopy(_legacy_by_id[name]) for name in _LEGACY_IDS],
+            'limits': copy.deepcopy(LIMITS), 'exclusions': copy.deepcopy(EXCLUSIONS)}
 REGISTRY_DIGEST = hashlib.sha256(encoded(_PAYLOAD)).hexdigest()
+if REGISTRY_DIGEST != _LEGACY_DIGEST:
+    raise RuntimeError('Frozen legacy agent contract changed; preserve its actual projection.')
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
+# Explicit locally implemented versions. No remotely supplied code or routes.
+_CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+CONTRACT_HEADER = 'Tuldok-Operation-Contract'
+CAPABILITIES_LIMIT = 1024 * 1024
+MAX_OPERATIONS = 256
+MAX_CONTRACTS = 4
 
 
 def discovery():
     return copy.deepcopy(dict(_PAYLOAD, digest=REGISTRY_DIGEST))
 
 
-def tool_definitions():
-    return [{'name': op['mcp_name'], 'description': op['description'] + ' Required scopes: ' + ', '.join(op['scopes']) + '.', 'inputSchema': copy.deepcopy(op['inputSchema']),
-             'outputSchema': copy.deepcopy(op['outputSchema']), 'annotations': {'readOnlyHint': not op['side_effects'],
-             'destructiveHint': op['side_effects'], 'idempotentHint': False, 'openWorldHint': op['operation_id'] == 'runs.submit_external'}} for op in _OPERATIONS]
+def _semantic_schema(schema):
+    """Exclude schema prose without stripping data-property names or const values."""
+    if not isinstance(schema, dict):
+        return copy.deepcopy(schema)
+    result = {}
+    for key, value in schema.items():
+        if key in ('description', 'title', '$comment'):
+            continue
+        if key in ('properties', 'patternProperties', '$defs', 'dependentSchemas'):
+            result[key] = {name: _semantic_schema(child) for name, child in value.items()}
+        elif key in ('allOf', 'anyOf', 'oneOf', 'prefixItems'):
+            result[key] = [_semantic_schema(child) for child in value]
+        elif key in ('items', 'contains', 'not', 'if', 'then', 'else', 'propertyNames',
+                     'additionalProperties', 'unevaluatedProperties', 'unevaluatedItems'):
+            result[key] = _semantic_schema(value)
+        else:
+            result[key] = copy.deepcopy(value)
+    return result
 
 
-def operation(name):
+def contract(name, version=1):
+    try:
+        op = copy.deepcopy(_CONTRACTS[name][version])
+    except (KeyError, TypeError):
+        raise AgentAPIError('Operation contract is not locally supported.', 'contract_mismatch', 409) from None
+    retry = ('read' if not op['side_effects'] else 'receipt' if name == 'runs.submit_external'
+             else 'cas' if name in ('data.save_draft', 'responses.save_draft', 'graphs.save',
+                                   'proposals.caption_decide', 'proposals.classification_decide') else 'never')
+    public = {'version': version, 'input_schema': _semantic_schema(op['inputSchema']),
+              'output_schema': _semantic_schema(op['outputSchema']), 'scopes': op['scopes'],
+              'authority': 'agent', 'effects': 'mutation' if op['side_effects'] else 'read',
+              'retry': retry, 'bounds': {'request_bytes': REQUEST_LIMIT, 'response_bytes': RESPONSE_LIMIT,
+                                       'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT}}
+    identity = dict(public, id=name, method=op['method'], path=op['path'], query=op['query'],
+                    injected=op['injected'], binary_fields=op['binary_fields'], mcp_name=op['mcp_name'])
+    public['sha256'] = hashlib.sha256(encoded(identity)).hexdigest()
+    return public
+
+
+def capabilities(catalog_id):
+    if type(catalog_id) is not str or not re.fullmatch('[a-f0-9]{32}', catalog_id):
+        raise AgentAPIError('Invalid capability catalog identity.', 'registry_invalid', 503)
+    if len(_CONTRACTS) > MAX_OPERATIONS:
+        raise AgentAPIError('Operation registry exceeds its capability bound.', 'registry_invalid', 503)
+    operations = []
+    for name, versions in _CONTRACTS.items():
+        if not 1 <= len(versions) <= MAX_CONTRACTS:
+            raise AgentAPIError('Contract version count exceeds its bound.', 'registry_invalid', 503)
+        operations.append({'id': name, 'contracts': [contract(name, version) for version in sorted(versions)],
+                           'availability': 'available'})
+    value = {'format': 'agent_capabilities_v1', 'envelope_version': 1, 'catalog_id': catalog_id,
+             'operations': operations, 'limits': {'request_bytes': REQUEST_LIMIT,
+                  'response_bytes': RESPONSE_LIMIT, 'max_operations': MAX_OPERATIONS}}
+    if len(encoded(value)) > CAPABILITIES_LIMIT:
+        raise AgentAPIError('Capabilities exceed the manifest byte bound.', 'registry_invalid', 503)
+    return value
+
+
+def negotiate(remote, catalog_id):
+    """Validate a bounded envelope, then select only exact local contract intersections."""
+    _finite(remote)
+    if (type(remote) is not dict or set(remote) != {'format', 'envelope_version', 'catalog_id', 'operations', 'limits'}
+            or remote['format'] != 'agent_capabilities_v1' or type(remote['envelope_version']) is not int
+            or remote['envelope_version'] != 1 or remote['catalog_id'] != catalog_id
+            or type(remote['operations']) is not list or len(remote['operations']) > MAX_OPERATIONS
+            or remote['limits'] != {'request_bytes': REQUEST_LIMIT, 'response_bytes': RESPONSE_LIMIT,
+                                     'max_operations': MAX_OPERATIONS}
+            or len(encoded(remote)) > CAPABILITIES_LIMIT):
+        raise AgentAPIError('Malformed or incompatible capability envelope.', 'capabilities_invalid', 502)
+    selected, names = {}, set()
+    keys = {'version', 'sha256', 'input_schema', 'output_schema', 'scopes', 'authority', 'effects', 'retry', 'bounds'}
+    for op in remote['operations']:
+        if (type(op) is not dict or set(op) != {'id', 'contracts', 'availability'}
+                or type(op['id']) is not str or not re.fullmatch(r'[a-z][a-z0-9_.]{0,79}', op['id'])
+                or op['id'] in names or op['availability'] not in ('available', 'unsupported', 'unavailable')
+                or type(op['contracts']) is not list or not 1 <= len(op['contracts']) <= MAX_CONTRACTS):
+            raise AgentAPIError('Malformed operation capability.', 'capabilities_invalid', 502)
+        names.add(op['id']); versions = set(); matches = []
+        for item in op['contracts']:
+            if (type(item) is not dict or set(item) != keys or type(item['version']) is not int
+                    or not 1 <= item['version'] <= 2**53-1 or item['version'] in versions
+                    or type(item['sha256']) is not str or not re.fullmatch('[a-f0-9]{64}', item['sha256'])
+                    or type(item['input_schema']) is not dict or type(item['output_schema']) is not dict
+                    or type(item['scopes']) is not list or len(item['scopes']) > 16
+                    or any(type(scope) is not str or not 1 <= len(scope) <= 40 for scope in item['scopes'])
+                    or item['authority'] not in ('agent', 'owner') or item['effects'] not in ('read', 'mutation')
+                    or item['retry'] not in ('read', 'cas', 'receipt', 'never') or type(item['bounds']) is not dict):
+                raise AgentAPIError('Malformed operation contract.', 'capabilities_invalid', 502)
+            bounds = item['bounds']
+            if (len(set(item['scopes'])) != len(item['scopes']) or
+                    set(bounds) != {'request_bytes','response_bytes','inline_decoded_bytes','json_depth'} or
+                    any(type(value) is not int or not 1 <= value <= 2**53-1 for value in bounds.values())):
+                raise AgentAPIError('Malformed operation contract bounds or scopes.', 'capabilities_invalid', 502)
+            try:
+                _validator(item['input_schema'])
+                _validator(item['output_schema'])
+            except AgentAPIError as error:
+                if error.code == 'dependency_missing':
+                    raise
+                raise AgentAPIError('Unsupported operation schema declaration.', 'capabilities_invalid', 502) from None
+            except ValueError:
+                raise AgentAPIError('Invalid operation schema declaration.', 'capabilities_invalid', 502) from None
+            versions.add(item['version'])
+            if op['id'] in _CONTRACTS and item['version'] in _CONTRACTS[op['id']]:
+                local = contract(op['id'], item['version'])
+                if item == local:
+                    matches.append(item['version'])
+        if matches and op['availability'] == 'available':
+            selected[op['id']] = max(matches)
+    return selected
+
+
+def selected_header(name, version=1):
+    return name + '/' + str(version) + '/' + contract(name, version)['sha256']
+
+
+def _route_matches(op, method, target):
+    parsed = urlsplit(target)
+    pattern = re.sub(r'\\\{([^}]+)\\\}', r'([^/]+)', re.escape(op['path']))
+    return method == op['method'] and not parsed.fragment and re.fullmatch(pattern, parsed.path)
+
+
+def select_request(headers, method, target):
+    values = headers.get_all(CONTRACT_HEADER, [])
+    if not values:
+        new_route = any(name not in _LEGACY_IDS and _route_matches(op, method, target)
+                        for name, versions in _CONTRACTS.items() for op in versions.values())
+        legacy_route = any(_route_matches(op, method, target) for op in _PAYLOAD['operations'])
+        if new_route and not legacy_route:
+            raise AgentAPIError('This operation requires an exact contract selection.', 'contract_mismatch', 409)
+        return None
+    if len(values) != 1 or type(values[0]) is not str or len(values[0]) > 180:
+        raise AgentAPIError('Use one exact operation contract header.', 'contract_mismatch', 409)
+    match = re.fullmatch(r'([a-z][a-z0-9_.]{0,79})/([1-9][0-9]{0,15})/([a-f0-9]{64})', values[0])
+    if not match:
+        raise AgentAPIError('Malformed operation contract selection.', 'contract_mismatch', 409)
+    name, version, digest = match[1], int(match[2]), match[3]
+    current = contract(name, version)
+    op = copy.deepcopy(_CONTRACTS[name][version])
+    parsed = urlsplit(target)
+    pattern = re.sub(r'\\\{([^}]+)\\\}', r'([^/]+)', re.escape(op['path']))
+    if digest != current['sha256'] or method != op['method'] or parsed.fragment or not re.fullmatch(pattern, parsed.path):
+        raise AgentAPIError('Selected contract does not match this request.', 'contract_mismatch', 409)
+    return (name, version, digest)
+
+
+def require_selection(selection, name):
+    """A shared-route new variant must call this before entering its domain owner."""
+    if (selection is None or selection[0] != name or
+            contract(selection[0], selection[1])['sha256'] != selection[2]):
+        raise AgentAPIError('This variant requires its exact operation contract.', 'contract_mismatch', 409)
+
+
+def validate_selected(selection, method, target, body):
+    if selection is None:
+        return
+    name, version, digest = selection
+    if contract(name, version)['sha256'] != digest:
+        raise AgentAPIError('Selected operation contract changed.', 'contract_mismatch', 409)
+    op = _CONTRACTS[name][version]
+    template = op['path']; fields = re.findall(r'\{([^}]+)\}', template)
+    pattern = re.sub(r'\\\{([^}]+)\\\}', r'([^/]+)', re.escape(template))
+    parsed = urlsplit(target); match = re.fullmatch(pattern, parsed.path)
+    if method != op['method'] or match is None:
+        raise AgentAPIError('Selected route changed.', 'contract_mismatch', 409)
+    try:
+        pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=64)
+    except ValueError:
+        raise AgentAPIError('Invalid selected query representation.', 'contract_mismatch', 409) from None
+    if len({key for key, _ in pairs}) != len(pairs) or any(key not in op['query'] for key, _ in pairs):
+        raise AgentAPIError('Unexpected or duplicate selected query.', 'contract_mismatch', 409)
+    if method == 'GET':
+        if body is not None:
+            raise AgentAPIError('Selected GET requests have no body.', 'contract_mismatch', 409)
+        arguments = {}
+    else:
+        if type(body) is not dict:
+            raise AgentAPIError('Selected request requires an object.', 'contract_mismatch', 409)
+        arguments = copy.deepcopy(body)
+        for key, value in op['injected'].items():
+            if key not in arguments or encoded(arguments.pop(key)) != encoded(value):
+                raise AgentAPIError('Selected injected fields differ.', 'contract_mismatch', 409)
+    if set(arguments).intersection(fields + op['query']):
+        raise AgentAPIError('Selected arguments appear in two locations.', 'contract_mismatch', 409)
+    arguments.update({key: unquote(value) for key, value in zip(fields, match.groups())})
+    properties = op['inputSchema'].get('properties', {})
+    for key, value in pairs:
+        if properties.get(key, {}).get('type') in ('integer', 'number'):
+            try:
+                value = decode(value)
+            except AgentAPIError:
+                raise AgentAPIError('Invalid numeric query representation.', 'contract_mismatch', 409) from None
+        arguments[key] = value
+    checked = validate_arguments(name, arguments, version=version)
+    expected_method, expected_target, expected_body = project_request(name, checked, version=version)
+    if (expected_method != method or urlsplit(expected_target).path != parsed.path
+            or sorted(parse_qsl(urlsplit(expected_target).query, keep_blank_values=True)) != sorted(pairs)
+            or encoded(expected_body) != encoded(body)):
+        raise AgentAPIError('Request differs from its selected representation.', 'contract_mismatch', 409)
+    return arguments
+
+
+def tool_definitions(selected=None):
+    chosen = ({name: max(versions) for name, versions in _CONTRACTS.items()}
+              if selected is None else selected)
+    operations = [_CONTRACTS[name][version] for name, version in chosen.items()]
+    return [{'name': op['mcp_name'], 'description': op['description'] + ' Required scopes: ' + ', '.join(op['scopes']) + '.',
+             'inputSchema': copy.deepcopy(op['inputSchema']), 'outputSchema': copy.deepcopy(op['outputSchema']),
+             'annotations': {'readOnlyHint': not op['side_effects'], 'destructiveHint': op['side_effects'],
+                             'idempotentHint': False, 'openWorldHint': op['operation_id'] == 'runs.submit_external'}}
+            for op in operations]
+
+
+def operation(name, version=None):
     if type(name) is not str or name not in _LOOKUP:
         raise AgentAPIError('Unknown agent operation.', 'unknown_operation')
-    return copy.deepcopy(_LOOKUP[name])
+    op = _LOOKUP[name]
+    versions = _CONTRACTS[op['operation_id']]
+    return copy.deepcopy(versions[max(versions) if version is None else version])
 
 
 def _finite(value, depth=0):
@@ -344,8 +567,9 @@ def decode(raw):
 def _validator(schema):
     try:
         from jsonschema import Draft202012Validator
+        from jsonschema.exceptions import SchemaError
     except ImportError:
-        raise AgentAPIError('Install the documented optional agent dependencies.', 'dependency_missing', 503) from None
+        raise AgentAPIError('Install the documented base JSON Schema dependency.', 'dependency_missing', 503) from None
     # Checked-in schemas contain no references; no network/file retrieval exists.
     def check(value):
         if isinstance(value, dict):
@@ -357,26 +581,30 @@ def _validator(schema):
             for child in value:
                 check(child)
     check(schema)
-    Draft202012Validator.check_schema(schema)
+    try:
+        Draft202012Validator.check_schema(schema)
+    except SchemaError:
+        raise AgentAPIError('Registry schema is invalid.', 'registry_invalid', 503) from None
     return Draft202012Validator(schema)
 
 
 def validate_registry():
-    for op in _OPERATIONS:
-        _validator(op['inputSchema'])
-        _validator(op['outputSchema'])
+    for versions in _CONTRACTS.values():
+        for op in versions.values():
+            _validator(op['inputSchema'])
+            _validator(op['outputSchema'])
     return REGISTRY_DIGEST
 
 
-def validate_output(name, envelope):
+def validate_output(name, envelope, version=None):
     _finite(envelope)
-    if next(_validator(operation(name)['outputSchema']).iter_errors(envelope), None) is not None:
+    if next(_validator(operation(name, version)['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
     return envelope
 
 
-def validate_arguments(name, arguments):
-    op = operation(name)
+def validate_arguments(name, arguments, version=None):
+    op = operation(name, version)
     _finite(arguments)
     if len(encoded(arguments)) > REQUEST_LIMIT:
         raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
@@ -403,9 +631,9 @@ def validate_arguments(name, arguments):
     return copy.deepcopy(arguments)
 
 
-def project_request(name, arguments):
-    op = operation(name)
-    arguments = validate_arguments(name, arguments)
+def project_request(name, arguments, version=None):
+    op = operation(name, version)
+    arguments = validate_arguments(name, arguments, version)
     segments = re.findall(r'\{([^}]+)\}', op['path'])
     path = op['path']
     for key in segments:
@@ -465,6 +693,8 @@ class AgentClient:
         self.host, self.port = parsed.hostname, parsed.port
         self._token, self.catalog_id, self.timeout = token, expected_catalog_id, timeout
         self._ready = False
+        self._selected = None
+        self._legacy = False
 
     @classmethod
     def from_config(cls, path):
@@ -477,7 +707,7 @@ class AgentClient:
             raise AgentAPIError('Invalid private credential file.', 'configuration') from None
         return cls(config['endpoint'], token, config['catalog_id'], config.get('timeout', 120))
 
-    def _request(self, method, path, body=None):
+    def _request(self, method, path, body=None, selection=None):
         connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, self.timeout))
         deadline = time.monotonic() + self.timeout
         sockets = []
@@ -496,6 +726,8 @@ class AgentClient:
             if raw is not None and len(raw) > REQUEST_LIMIT:
                 raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
             headers = {'Authorization': 'Bearer '+self._token, 'Accept': 'application/json', 'Accept-Encoding': 'identity', 'Connection': 'close'}
+            if selection is not None:
+                headers[CONTRACT_HEADER] = selected_header(*selection)
             if raw is not None:
                 headers['Content-Type'] = 'application/json'
             connection.connect()
@@ -517,7 +749,7 @@ class AgentClient:
                     or response.getheader('Content-Type', '').split(';')[0].strip() != 'application/json'):
                 raise AgentAPIError('HTTP response framing or content type is unsupported.', 'transport', 502)
             length = int(lengths[0])
-            if length > RESPONSE_LIMIT:
+            if length > (CAPABILITIES_LIMIT if path == '/api/agent/capabilities' else RESPONSE_LIMIT):
                 raise AgentAPIError('HTTP response exceeds the agent receive bound.', 'response_too_large', 413)
             data = bytearray()
             while len(data) < length:
@@ -574,18 +806,54 @@ class AgentClient:
         context = self._request('GET', '/api/workspace/context')
         if context['status'] != 200 or not isinstance(context['result'], dict) or context['result'].get('dataset_id') != self.catalog_id:
             raise AgentAPIError('Configured catalog does not match HTTP service.', 'catalog_mismatch', 409)
-        self._check_discovery()
+        envelope = self._request('GET', '/api/agent/capabilities')
+        missing_route = (envelope['status'] == 404 and (
+            envelope['result'].get('code') == 'route_not_found' or
+            envelope['result'] == {'code': 'http_error', 'error': 'Not found.'}))
+        missing_method = (envelope['status'] == 405 and
+                          envelope['result'].get('code') == 'method_not_allowed')
+        if missing_route or missing_method:
+            self._check_discovery()
+            self._legacy = True
+            self._selected = {name: 1 for name in _LEGACY_IDS}
+        elif envelope['status'] != 200:
+            raise AgentAPIError(envelope['result']['error'], envelope['result']['code'], envelope['status'])
+        else:
+            self._selected = negotiate(envelope['result'], self.catalog_id)
         self._ready = True
-        return {'identity': value, 'discovery': discovery()}
+        return {'identity': value, 'discovery': discovery(), 'mode': 'legacy' if self._legacy else 'negotiated',
+                'operations': sorted(self._selected)}
 
-    def call(self, name, arguments):
-        op = operation(name)
-        method, path, body = project_request(name, arguments)
+    def selected_contracts(self):
         if not self._ready:
             self.bootstrap()
-        if op['side_effects']:
+        return dict(self._selected)
+
+    def tool_definitions(self):
+        return tool_definitions(self.selected_contracts())
+
+    def call(self, name, arguments):
+        # Reject local invalid input before bootstrap/network side effects.
+        op = operation(name)
+        errors = []
+        for local_version in sorted(_CONTRACTS[op['operation_id']], reverse=True):
+            try:
+                validate_arguments(name, arguments, local_version)
+                break
+            except AgentAPIError as error:
+                errors.append(error)
+        else:
+            raise errors[0]
+        if not self._ready:
+            self.bootstrap()
+        if op['operation_id'] not in self._selected:
+            raise AgentAPIError('Operation has no compatible available contract.', 'operation_unsupported', 409)
+        version = self._selected[op['operation_id']]
+        method, path, body = project_request(name, arguments, version)
+        if self._legacy and op['side_effects']:
             self._check_discovery()
-        result = validate_output(name, self._request(method, path, body))
+        selection = None if self._legacy else (op['operation_id'], version)
+        result = validate_output(name, self._request(method, path, body, selection=selection), version)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
         return result

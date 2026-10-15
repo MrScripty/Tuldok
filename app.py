@@ -38,6 +38,7 @@ import io
 import ipaddress
 import json
 import math
+import re
 import shutil
 from metadata import Metadata, StorageError, CommitOutcomeUnknown
 import tempfile
@@ -426,6 +427,16 @@ def make_handler(dataset):
             pass
 
         def reply(self, data, status=200, content_type='application/json', headers=()):
+            selected = getattr(self, '_contract_selection', None)
+            if selected is not None and content_type == 'application/json':
+                try:
+                    agent_api.validate_output(selected[0], {'status': status, 'result': data}, selected[1])
+                    data = agent_api.encoded(data)
+                    if len(data) > agent_api.RESPONSE_LIMIT:
+                        raise agent_api.AgentAPIError('Selected result exceeds its bound.')
+                except agent_api.AgentAPIError:
+                    data, status = {'error': 'Selected result is invalid; inspect durable state before retrying.',
+                                    'code': 'contract_output'}, 502
             if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
             self.send_response(status)
@@ -510,9 +521,24 @@ def make_handler(dataset):
                 return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
             return self.reply({'error': str(error), 'code': error.code}, error.status)
 
+        def _select_contract(self):
+            selected = agent_api.select_request(self.headers, self.command, self.path)
+            if selected is not None:
+                lengths = self.headers.get_all('Content-Length', [])
+                if (self.headers.get_all('Transfer-Encoding', []) or len(lengths) > 1
+                        or (lengths and not re.fullmatch('[0-9]{1,10}', lengths[0]))
+                        or (self.command == 'GET' and lengths and int(lengths[0]) != 0)
+                        or (self.command == 'POST' and (len(lengths) != 1 or
+                            not 0 < int(lengths[0]) <= agent_api.REQUEST_LIMIT))):
+                    raise agent_api.AgentAPIError('Selected request framing is unsupported.', 'contract_mismatch', 409)
+            self._contract_selection = selected
+            return selected
+
         def do_GET(self):
+            self._contract_selection = None
             try:
                 if not urlsplit(self.path).path.startswith('/api/'):
+                    self._select_contract()
                     return self._get()
                 token, _bearer = self._credential()
                 with dataset.access.bind(token):
@@ -522,9 +548,13 @@ def make_handler(dataset):
                     except access.AccessError as error:
                         dataset.access.denial(error, 'http.get', urlsplit(self.path).path[:512])
                         raise
+                    selected = self._select_contract()
+                    agent_api.validate_selected(selected, self.command, self.path, None)
                     if urlsplit(self.path).path == '/api/access/session':
                         return self.reply(dataset.access.identity())
                     return self._get()
+            except agent_api.AgentAPIError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except access.AccessError as error:
                 return self._access_error(error)
             except CommitOutcomeUnknown:
@@ -533,9 +563,11 @@ def make_handler(dataset):
                 return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
 
         def do_POST(self):
+            self._contract_selection = None
             try:
                 path = urlsplit(self.path).path
                 if path == '/api/access/session':
+                    self._select_contract()
                     self._same_origin(True)
                     body = self._access_body()
                     if set(body) != {'token'}:
@@ -550,6 +582,7 @@ def make_handler(dataset):
                     except access.AccessError as error:
                         dataset.access.denial(error, 'http.post', path)
                         raise
+                    self._select_contract()
                     if path == '/api/access/logout':
                         self._access_body()
                         dataset.access.logout()
@@ -563,6 +596,8 @@ def make_handler(dataset):
                         projects.closed(self._access_body(), ())
                         return self.reply(dataset.access.revoke_execution(path.split('/')[-2]))
                     return self._post()
+            except agent_api.AgentAPIError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except access.AccessError as error:
                 return self._access_error(error)
             except CommitOutcomeUnknown:
@@ -575,6 +610,8 @@ def make_handler(dataset):
             try:
                 if path == '/api/agent/operations':
                     return self.reply(agent_api.discovery())
+                if path == '/api/agent/capabilities':
+                    return self.reply(agent_api.capabilities(dataset.db.dataset_id))
                 if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/')
                         or path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/')):
                     self.project_access()
@@ -793,6 +830,10 @@ def make_handler(dataset):
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
                 body = projects.decode(raw_body) if (path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/') or path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                if getattr(self, '_contract_selection', None) is not None:
+                    # Strict JSON at the selected boundary, preserving ordinary HTTP semantics.
+                    body = agent_api.decode(raw_body)
+                    agent_api.validate_selected(self._contract_selection, self.command, self.path, body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
                 path = urlsplit(self.path).path

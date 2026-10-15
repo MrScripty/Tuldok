@@ -1,0 +1,640 @@
+"""Versioned agent operations and bounded client of the existing local HTTP owner.
+
+Import/discovery use only the standard library. Optional jsonschema is loaded by
+argument validation, never by the application discovery route.
+"""
+import base64
+import binascii
+import copy
+import hashlib
+import http.client
+import json
+import math
+import os
+from pathlib import Path
+import re
+import socket
+import stat
+import time
+import threading
+from urllib.parse import quote, urlencode, urlsplit
+
+REGISTRY_VERSION = 1
+REQUEST_LIMIT = 1024 * 1024
+RESPONSE_LIMIT = 16 * 1024 * 1024
+MCP_RESPONSE_LIMIT = 32 * 1024 * 1024
+INLINE_LIMIT = 512 * 1024
+DEPTH_LIMIT = 64
+ID = {'type': 'string', 'pattern': '^[a-f0-9]{32}$'}
+SHA = {'type': 'string', 'pattern': '^[a-f0-9]{64}$'}
+REF = {'type': 'string', 'pattern': '^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$'}
+NAME = {'type': 'string', 'pattern': '^[A-Za-z][A-Za-z0-9_-]{0,39}$'}
+SLOT = '^[A-Za-z][A-Za-z0-9_-]{0,63}$'
+ARTIFACT = {'type': 'string', 'pattern': '^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$',
+            'not': {'enum': ['artifact-manifest.json', 'custody-receipt.json']}}
+
+
+class AgentAPIError(Exception):
+    """Safe transport error: never contains a credential or remote traceback."""
+    def __init__(self, message, code='invalid', status=400):
+        super().__init__(message)
+        self.code, self.status = code, status
+
+
+def encoded(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+                      allow_nan=False).encode('utf-8')
+
+
+def obj(properties=None, required=None):
+    properties = properties or {}
+    return {'type': 'object', 'properties': properties,
+            'required': list(properties) if required is None else required,
+            'additionalProperties': False}
+
+
+def text(maximum, empty=False):
+    result = {'type': 'string', 'maxLength': maximum}
+    if not empty:
+        result.update(minLength=1, pattern=r'\S')
+    return result
+
+
+def integer(minimum=0, maximum=None):
+    result = {'type': 'integer', 'minimum': minimum}
+    if maximum is not None:
+        result['maximum'] = maximum
+    return result
+
+
+def array(items, maximum, minimum=0):
+    return {'type': 'array', 'items': items, 'minItems': minimum, 'maxItems': maximum}
+
+
+def const(value):
+    return {'const': value}
+
+
+GROUPS = array(text(120), 30, 1)
+OPTIONAL_META = {'name': text(200), 'rights': text(1000), 'groups': GROUPS,
+                 'parents': array(text(120), 30)}
+B64 = {'type': 'string', 'maxLength': 4 * ((INLINE_LIMIT + 2) // 3),
+       'pattern': '^[A-Za-z0-9+/]*={0,2}$'}
+PARAMETERS = {'type': 'object', 'maxProperties': 32, 'propertyNames': {'pattern': SLOT},
+              'additionalProperties': {'oneOf': [{'type': 'boolean'}, {'type': 'number'},
+                                                  {'type': 'string', 'maxLength': 1024}]}}
+BINDING = {'oneOf': [obj({'reference_id': REF, 'expected_sha256': SHA}),
+                    obj({'kind': const('frozen_release'), 'release_id': SHA, 'expected_sha256': SHA}),
+                    obj({'kind': const('run_artifact'), 'run_id': ID, 'artifact_name': ARTIFACT,
+                         'expected_sha256': SHA})]}
+BINDINGS = {'type': 'object', 'maxProperties': 32, 'propertyNames': {'pattern': SLOT},
+            'additionalProperties': BINDING}
+EXTERNAL_INPUT = obj({'project_id': ID, 'recipe_id': REF, 'expected_sha256': SHA, 'inputs': BINDINGS})
+RECIPES = ['image_classification', 'text_classification', 'audio_classification',
+           'mesh_validate_export', 'sequence_validate_export', 'pointcloud_validate_export',
+           'volume_validate_export', 'image_validate_export', 'text_validate_export', 'audio_validate_export']
+TRAINING = {
+    'image_classification': obj({'epochs': integer(1, 5), 'batch_size': integer(1, 16),
+        'learning_rate': {'type': 'number', 'minimum': .00001, 'maximum': .01}, 'seed': integer(0, 2**32-1)}),
+    'text_classification': obj({'max_features': integer(64, 4096), 'alpha': {'type': 'number', 'minimum': .01, 'maximum': 10}}),
+    'audio_classification': obj({'C': {'type': 'number', 'minimum': .01, 'maximum': 100}}),
+}
+
+
+def graph_schema():
+    variants = []
+    for recipe in RECIPES + ['external_recipe']:
+        stages = {'input': EXTERNAL_INPUT, 'execute': PARAMETERS, 'output': obj()} if recipe == 'external_recipe' else {
+            'release': obj({'release_id': SHA}), 'validate': obj(), 'publish': obj()}
+        if recipe in TRAINING:
+            stages.update(train=TRAINING[recipe], evaluate=obj())
+        nodes = {'oneOf': [obj({'id': NAME, 'type': const(kind), 'definition_version': integer(1),
+                               'parameters': params}) for kind, params in stages.items()]}
+        properties = {'schema_version': const(1), 'mode': const('real'), 'id': ID, 'revision': integer(1),
+            'name': text(120), 'recipe_version': const(1), 'recipe': const(recipe),
+            'nodes': array(nodes, 10, 1), 'edges': array(obj({k: NAME for k in ('from', 'output', 'to', 'input')}), 12),
+            'layout': {'type': 'object', 'maxProperties': 10, 'propertyNames': NAME,
+                       'additionalProperties': obj({k: {'type': 'number', 'minimum': -10000, 'maximum': 10000} for k in ('x', 'y')})}}
+        required = [k for k in properties if k != 'layout' and not (k == 'recipe' and recipe == 'image_classification')]
+        variants.append(obj(properties, required))
+    return {'oneOf': variants}
+
+
+ANNOTATIONS = {
+    'image_detection': obj({'boxes': array(obj({'label': text(80), 'x': {'type': 'number', 'minimum': 0},
+        'y': {'type': 'number', 'minimum': 0}, 'width': {'type': 'number', 'exclusiveMinimum': 0},
+        'height': {'type': 'number', 'exclusiveMinimum': 0}}), 500)}),
+    'image_classification': obj({'label': text(80)}), 'image_caption': obj({'caption': text(4000)}),
+    'text_classification': obj({'label': text(80)}),
+    'text_entities': obj({'spans': array(obj({'label': text(80), 'start': integer(), 'end': integer(1)}), 500)}),
+    'text_corpus': obj({'note': text(4000)}),
+    'audio_timed': obj({'segments': array(obj({'start_frame': integer(), 'end_frame': integer(1), 'channel': integer(),
+        'transcript': text(4000, True), 'label': text(80, True), 'speaker': text(120, True)}), 200, 1)}),
+    **{kind: obj({'note': text(4000, True)}) for kind in ('sequence_transport', 'mesh_geometry',
+                                                        'pointcloud_geometry', 'volume_grid', 'field_sequence_fields')},
+}
+OUTPUT_SCHEMA = obj({'status': integer(100, 599), 'result': {}})
+_OPERATIONS = []
+
+
+def register(name, method, path, properties=None, required=None, *, schema=None, scopes=('inspect',),
+             mutation=False, query=(), injected=None, description=None, binary=()):
+    _OPERATIONS.append({'operation_id': name, 'mcp_name': name.replace('.', '_'),
+        'description': description or name.replace('.', ' ').replace('_', ' ') + '; existing domain authorization and validation apply.',
+        'method': method, 'path': path, 'inputSchema': dict(schema, type='object') if schema else obj(properties, required),
+        'outputSchema': OUTPUT_SCHEMA, 'scopes': list(scopes), 'side_effects': mutation,
+        'query': list(query), 'injected': injected or {}, 'binary_fields': list(binary)})
+
+
+for name, path in [('context.get', 'workspace/context'), ('identity.get', 'access/session'),
+                   ('projects.list', 'workspace/projects'), ('recipes.list', 'workspace/definitions'),
+                   ('releases.list', 'workspace/releases'), ('releases.inputs', 'workbench/releases/input-candidates'),
+                   ('graphs.list', 'workspace/graphs'), ('runs.list', 'workspace/runs'),
+                   ('run_inputs.list', 'workspace/run-artifact-inputs')]:
+    register(name, 'GET', '/api/' + path)
+register('projects.get', 'GET', '/api/workspace/projects/{project_id}', {'project_id': ID})
+register('projects.open', 'POST', '/api/workspace/projects', {'root': text(160), 'manifest_path': text(512)}, scopes=('inspect', 'edit'), mutation=True)
+register('projects.evidence', 'GET', '/api/workspace/projects/{project_id}/evidence/{reference_id}', {'project_id': ID, 'reference_id': REF})
+register('recipes.inspect', 'GET', '/api/workspace/projects/{project_id}/recipes/{reference_id}',
+         {'project_id': ID, 'reference_id': REF, 'expected_sha256': SHA}, query=('expected_sha256',))
+register('data.query', 'GET', '/api/workbench/records', {
+    'q': text(200, True), 'kind': {'enum': ['', 'image', 'text', 'sequence', 'mesh', 'audio', 'pointcloud', 'volume', 'field_sequence']},
+    'review': {'enum': ['', 'draft', 'human_reviewed', 'programmatically_verified']},
+    'sort': {'enum': ['', 'newest', 'oldest', 'name', 'review']}, 'task': {'enum': ['', *ANNOTATIONS]},
+    'label': text(80, True), 'group': text(120, True), 'rights': text(1000, True), 'offset': integer(), 'limit': integer(1, 100)},
+    required=[], query=('q', 'kind', 'review', 'sort', 'task', 'label', 'group', 'rights', 'offset', 'limit'))
+for name, path in [('get', 'records'), ('history', 'history'), ('audio', 'audio-inspection'), ('mesh', 'mesh-inspection'), ('pointcloud', 'pointcloud-inspection')]:
+    register('data.' + name, 'GET', '/api/workbench/' + path + '/{record_id}', {'record_id': ID})
+for name in ('responses', 'preferences'):
+    register('data.' + name, 'GET', '/api/workbench/records/{record_id}/' + name, {'record_id': ID})
+register('data.volume', 'GET', '/api/workbench/volume-inspection/{record_id}', {'record_id': ID, 'axis': {'enum': ['x', 'y', 'z']}, 'index': integer()}, required=['record_id'], query=('axis', 'index'))
+register('data.scientific', 'GET', '/api/workbench/records/{record_id}/scientific', {'record_id': ID, 'axis': {'enum': ['x', 'y', 'z']}, 'index': integer(), 'frame': integer(), 'field': text(120)}, required=['record_id'], query=('frame', 'field', 'axis', 'index'))
+for kind in ('image', 'text'):
+    field = 'image' if kind == 'image' else 'text'
+    value = B64 if kind == 'image' else text(200000)
+    register('data.import_' + kind, 'POST', '/api/workbench/import', {field: value, **OPTIONAL_META},
+             required=[field, 'groups'], scopes=('inspect', 'edit'), mutation=True, injected={'kind': kind}, binary=[field] if kind == 'image' else [])
+register('data.import_audio', 'POST', '/api/workbench/audio-import', {'wav': B64, **OPTIONAL_META}, required=['wav', 'groups'], scopes=('inspect', 'edit'), mutation=True, binary=['wav'])
+for kind, names in [('mesh', ('mesh.ply', 'mesh.json')), ('pointcloud', ('points.ply', 'points.json')), ('volume', ('volume.npy', 'volume.json'))]:
+    register('data.import_' + kind, 'POST', '/api/workbench/' + kind + '-import', {'files': obj({name: B64 for name in names}), **OPTIONAL_META}, required=['files', 'groups'], scopes=('inspect', 'edit'), mutation=True, binary=['files'])
+register('data.import_sequence', 'POST', '/api/workbench/sequence-import', {'files': {'oneOf': [obj({name: B64 for name in names}) for names in [('run.json', 'frames.jsonl')]]}, **OPTIONAL_META}, required=['files', 'groups'], scopes=('inspect', 'edit'), mutation=True, binary=['files'])
+for kind, path, ids in [('project', '/api/workspace/projects/{project_id}/import-data/{reference_id}', {'project_id': ID, 'reference_id': REF}),
+                        ('run', '/api/workspace/runs/{run_id}/import-data/{artifact_name}', {'run_id': ID, 'artifact_name': ARTIFACT})]:
+    register('data.import_' + kind + '_scientific', 'POST', path, {**ids, 'expected_sha256': SHA, **OPTIONAL_META}, required=[*ids, 'expected_sha256'], scopes=('inspect', 'edit'), mutation=True)
+register('data.save_draft', 'POST', '/api/workbench/records/{record_id}', schema={'oneOf': [obj({
+    'record_id': ID, 'revision': integer(), 'source_revision': integer(), 'task': const(task), 'annotation': annotation,
+    'groups': GROUPS, 'review': const('draft')}) for task, annotation in ANNOTATIONS.items()]}, scopes=('inspect', 'edit'), mutation=True)
+register('responses.save_draft', 'POST', '/api/workbench/responses', {'id': ID, 'prompt_id': ID, 'revision': integer(),
+    'parent_revision': integer(), 'source_revision': integer(), 'completion': text(200000), 'review': const('draft')}, scopes=('inspect', 'edit'), mutation=True)
+for family, path in [('caption', 'caption-proposals'), ('classification', 'text-classification-proposals')]:
+    register('proposals.'+family+'_list', 'GET', '/api/workbench/'+path)
+    register('proposals.'+family+'_get', 'GET', '/api/workbench/'+path+'/{job_id}', {'job_id': ID})
+    fields = {'job_id': ID, 'revision': integer(), 'decision': {'enum': ['reject', 'apply_draft']}}
+    if family == 'classification':
+        fields['labels'] = array(text(80), 30, 1)
+    register('proposals.'+family+'_decide', 'POST', '/api/workbench/'+path+'/decide/{job_id}', fields,
+             required=['job_id', 'revision', 'decision'], scopes=('inspect', 'edit'), mutation=True)
+release = {'items': array(obj({'id': ID, 'revision': integer(), 'source_revision': integer()}), 5000, 1),
+           'ratios': obj({key: integer(0, 100) for key in ('train', 'validation', 'test')}), 'seed': integer(0, 2**32-1),
+           'format': const('canonical_v1'), 'preview_token': SHA}
+register('releases.preview', 'POST', '/api/workbench/releases/preview', release, required=['items', 'ratios', 'seed'])
+register('releases.freeze', 'POST', '/api/workbench/releases', release, required=['items', 'ratios', 'seed', 'preview_token'], scopes=('inspect', 'freeze'), mutation=True)
+register('graphs.get', 'GET', '/api/workspace/graphs/{graph_id}', {'graph_id': ID})
+register('graphs.create', 'POST', '/api/workspace/graphs', {'name': text(120), 'release_id': SHA, 'recipe': {'enum': RECIPES}}, required=['name', 'release_id'], scopes=('inspect', 'edit'), mutation=True)
+register('graphs.create_external', 'POST', '/api/workspace/graphs/external', {'name': text(120), 'project_id': ID,
+    'recipe_id': REF, 'expected_sha256': SHA, 'inputs': BINDINGS, 'parameters': PARAMETERS}, required=['name', 'project_id', 'recipe_id', 'expected_sha256', 'inputs'], scopes=('inspect', 'edit'), mutation=True)
+register('graphs.save', 'POST', '/api/workspace/graphs/{graph_id}', {'graph_id': ID, 'revision': integer(1), 'document': graph_schema()}, scopes=('inspect', 'edit'), mutation=True)
+register('graphs.clone', 'POST', '/api/workspace/graphs/{graph_id}/clone', {'graph_id': ID, 'name': text(120)}, scopes=('inspect', 'edit'), mutation=True)
+for name in ('validate', 'preflight_external'):
+    register('graphs.'+name, 'POST', '/api/workspace/graphs/{graph_id}/'+name.replace('_', '-'), {'graph_id': ID, 'revision': integer(1)})
+for name, suffix in [('get', ''), ('progress', '/progress')]:
+    register('runs.'+name, 'GET', '/api/workspace/runs/{run_id}'+suffix, {'run_id': ID})
+register('runs.predictions', 'GET', '/api/workspace/runs/{run_id}/predictions', {'run_id': ID, 'split': {'enum': ['validation', 'test']}}, required=['run_id'], query=('split',))
+register('runs.submit_external', 'POST', '/api/workspace/runs/submit-external', {'request_key': {'type': 'string', 'pattern': '^[A-Za-z0-9_.:-]{8,128}$'}, 'graph_id': ID, 'graph_revision': integer(1), 'expected_digest': SHA, 'approval_id': ID}, scopes=('inspect', 'execute'), mutation=True,
+    description='Submit exact owner-granted material. Same request key/body reconciles admission; never creates a grant or automatically retries.')
+register('runs.cancel', 'POST', '/api/workspace/runs/{run_id}/cancel', {'run_id': ID}, scopes=('inspect', 'cancel'), mutation=True)
+register('runs.expose_test', 'POST', '/api/workspace/runs/{run_id}/expose-test', {'run_id': ID, 'reason': text(500)}, scopes=('inspect', 'expose-holdout'), mutation=True,
+    description='Irreversibly record disclosure of held-out classifier test results. Explicit expose-holdout scope required; non-idempotent, no automatic retry.')
+register('runs.artifact_chunk', 'POST', '/api/workspace/runs/{run_id}/artifact-segment/{name}', {'run_id': ID, 'name': ARTIFACT, 'expected_sha256': SHA, 'offset': integer(), 'max_bytes': integer(1, 8*1024*1024)},
+    description='Read a bounded artifact segment; verify final reassembled whole SHA256 before use. Segment hash does not verify the whole artifact.')
+
+
+def projected(properties):
+    """Validate top-level domain shape; preserve unknown owned nested evidence."""
+    return {'type': 'object', 'properties': properties, 'required': list(properties), 'additionalProperties': True}
+
+
+SEGMENT_SCHEMA = obj({'run_id': ID, 'name': ARTIFACT, 'expected_sha256': SHA,
+    'total_bytes': integer(0, 512*1024*1024), 'media_type': const('application/octet-stream'),
+    'offset': integer(0, 512*1024*1024), 'bytes': integer(0, 8*1024*1024),
+    'next_offset': integer(0, 512*1024*1024), 'eof': {'type': 'boolean'}, 'segment_sha256': SHA,
+    'data_base64': {'type': 'string', 'maxLength': 4*((8*1024*1024+2)//3), 'pattern': '^[A-Za-z0-9+/]*={0,2}$'},
+    'verification': const('segment_read_whole_hash_unverified')})
+_LIST = {'type': 'array'}
+_RECORD = projected({'id': ID, 'revision': integer(), 'kind': {'type': 'string'}})
+_GRAPH = projected({'id': ID, 'revision': integer(1), 'nodes': _LIST, 'edges': _LIST})
+_RUN = projected({'id': ID, 'state': {'type': 'string'}})
+_SHAPES = {
+    'context.get': projected({'dataset_id': ID, 'mode': const('real')}),
+    'identity.get': projected({'catalog_id': ID, 'actor_id': ID, 'kind': const('agent'), 'scopes': _LIST}),
+    'projects.list': projected({'projects': _LIST, 'roots': _LIST}),
+    'projects.get': projected({'id': ID, 'manifest_sha256': SHA}),
+    'projects.open': projected({'id': ID, 'manifest_sha256': SHA}),
+    'projects.evidence': projected({'id': REF, 'text': {'type':'string'}, 'sha256': SHA}),
+    'recipes.list': projected({'recipes': _LIST, 'schema_version': const(1)}),
+    'recipes.inspect': projected({'definition': {'type':'object'}, 'receipt': {'type':'object'}, 'parameter_definitions': {'type':'object'}}),
+    'data.query': projected({'items': _LIST, 'total': integer(), 'offset': integer(), 'limit': integer(1,100)}),
+    'data.get': _RECORD, 'data.history': _LIST,
+    'data.responses': projected({'parent': _RECORD, 'responses': _LIST}),
+    'data.preferences': projected({'parent': _RECORD, 'responses': _LIST, 'judgments': _LIST}),
+    'data.save_draft': _RECORD,
+    'responses.save_draft': projected({'response': projected({'id': ID, 'prompt_id': ID, 'revision': integer()}), 'parent': _RECORD, 'changed': {'type':'boolean'}}),
+    'releases.list': _LIST, 'releases.inputs': projected({'releases': _LIST}),
+    'releases.preview': projected({'eligible': {'type':'boolean'}, 'blockers': _LIST}),
+    'releases.freeze': projected({'id': SHA, 'url': {'type':'string'}, 'records': integer()}),
+    'graphs.list': _LIST, 'graphs.get': _GRAPH, 'graphs.create': _GRAPH, 'graphs.create_external': _GRAPH,
+    'graphs.save': _GRAPH, 'graphs.clone': _GRAPH,
+    'graphs.validate': projected({'valid': {'type':'boolean'}, 'errors': _LIST}),
+    'graphs.preflight_external': projected({'valid': {'type':'boolean'}, 'material_sha256': SHA, 'material': {'type':'object'}}),
+    'run_inputs.list': projected({'runs': _LIST}), 'runs.list': _LIST, 'runs.get': _RUN,
+    'runs.submit_external': _RUN, 'runs.cancel': _RUN,
+    'runs.progress': projected({'run_id': ID, 'state': {'type':'string'}, 'evidence': {'type':'string'}}),
+    'runs.predictions': projected({'rows': _LIST}),
+    'runs.expose_test': projected({'id': ID, 'run_id': ID, 'release_id': SHA, 'reason': text(500),
+                                   'test_exposure': obj({'exposed': const(True), 'event_count': integer(1)})}),
+    'runs.artifact_chunk': SEGMENT_SCHEMA,
+}
+for _kind in ('audio','mesh','pointcloud','volume','scientific'):
+    _SHAPES['data.'+_kind] = projected({'id': ID, 'content_hash': SHA})
+for _op in _OPERATIONS:
+    _name = _op['operation_id']
+    if _name.startswith('data.import_'):
+        _SHAPES[_name] = _RECORD
+    if _name.startswith('proposals.'):
+        _SHAPES[_name] = (projected({'jobs': _LIST}) if _name.endswith('_list') else
+            projected({'job': {'type':'object'}, 'changed': {'type':'boolean'}}) if _name.endswith('_decide') else
+            projected({'id': ID, 'status': {'type':'string'}}))
+    _op['outputSchema'] = {'type':'object', 'oneOf': [
+        obj({'status': integer(200,299), 'result': _SHAPES[_name]}),
+        obj({'status': integer(400,599), 'result': obj({'error': text(1000), 'code': text(120)}, required=['error'])})]}
+
+
+EXCLUSIONS = ['owner review and execution grants', 'credential administration', 'provider/model discovery or execution',
+              'ordinary run submit/retry', 'backup/restore/runtime snapshots', 'bulk native import workflows',
+              'saved search/selection mutations', 'alternate release projections', 'arbitrary files/URLs', 'non-Run binary download tools']
+LIMITS = {'request_bytes': REQUEST_LIMIT, 'http_response_bytes': RESPONSE_LIMIT, 'mcp_response_bytes': MCP_RESPONSE_LIMIT,
+          'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT, 'artifact_segment_bytes': 8*1024*1024}
+_PAYLOAD = {'version': REGISTRY_VERSION, 'operations': _OPERATIONS, 'limits': LIMITS, 'exclusions': EXCLUSIONS}
+REGISTRY_DIGEST = hashlib.sha256(encoded(_PAYLOAD)).hexdigest()
+_LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
+
+
+def discovery():
+    return copy.deepcopy(dict(_PAYLOAD, digest=REGISTRY_DIGEST))
+
+
+def tool_definitions():
+    return [{'name': op['mcp_name'], 'description': op['description'] + ' Required scopes: ' + ', '.join(op['scopes']) + '.', 'inputSchema': copy.deepcopy(op['inputSchema']),
+             'outputSchema': copy.deepcopy(op['outputSchema']), 'annotations': {'readOnlyHint': not op['side_effects'],
+             'destructiveHint': op['side_effects'], 'idempotentHint': False, 'openWorldHint': op['operation_id'] == 'runs.submit_external'}} for op in _OPERATIONS]
+
+
+def operation(name):
+    if type(name) is not str or name not in _LOOKUP:
+        raise AgentAPIError('Unknown agent operation.', 'unknown_operation')
+    return copy.deepcopy(_LOOKUP[name])
+
+
+def _finite(value, depth=0):
+    if depth > DEPTH_LIMIT:
+        raise AgentAPIError('JSON nesting exceeds the transport bound.')
+    if isinstance(value, str):
+        if any(0xD800 <= ord(ch) <= 0xDFFF for ch in value) or '\x00' in value:
+            raise AgentAPIError('Text contains an invalid code point.')
+    elif isinstance(value, float) and not math.isfinite(value):
+        raise AgentAPIError('JSON numbers must be finite.')
+    elif isinstance(value, dict):
+        for key, child in value.items():
+            if type(key) is not str:
+                raise AgentAPIError('JSON object keys must be strings.')
+            _finite(key, depth+1); _finite(child, depth+1)
+    elif isinstance(value, list):
+        for child in value:
+            _finite(child, depth+1)
+    elif value is not None and type(value) not in (bool, int, float):
+        raise AgentAPIError('Unsupported JSON value.')
+
+
+def decode(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise AgentAPIError('Duplicate JSON field.')
+            result[key] = value
+        return result
+    try:
+        value = json.loads(raw, object_pairs_hook=pairs, parse_constant=lambda _value: (_ for _ in ()).throw(ValueError()))
+        _finite(value)
+        return value
+    except (ValueError, UnicodeError, RecursionError):
+        raise AgentAPIError('Invalid bounded JSON.') from None
+
+
+def _validator(schema):
+    try:
+        from jsonschema import Draft202012Validator
+    except ImportError:
+        raise AgentAPIError('Install the documented optional agent dependencies.', 'dependency_missing', 503) from None
+    # Checked-in schemas contain no references; no network/file retrieval exists.
+    def check(value):
+        if isinstance(value, dict):
+            if '$ref' in value or '$dynamicRef' in value:
+                raise AgentAPIError('Registry references are unsupported.', 'registry_invalid', 503)
+            for child in value.values():
+                check(child)
+        elif isinstance(value, list):
+            for child in value:
+                check(child)
+    check(schema)
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
+
+
+def validate_registry():
+    for op in _OPERATIONS:
+        _validator(op['inputSchema'])
+        _validator(op['outputSchema'])
+    return REGISTRY_DIGEST
+
+
+def validate_output(name, envelope):
+    _finite(envelope)
+    if next(_validator(operation(name)['outputSchema']).iter_errors(envelope), None) is not None:
+        raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    return envelope
+
+
+def validate_arguments(name, arguments):
+    op = operation(name)
+    _finite(arguments)
+    if len(encoded(arguments)) > REQUEST_LIMIT:
+        raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
+    if (op['operation_id'] == 'data.import_sequence' and type(arguments) is dict
+            and type(arguments.get('files')) is dict
+            and set(arguments['files']) == {'run.json', 'frames.jsonl', 'controls.json'}):
+        raise AgentAPIError('Generic agent sequence imports support run.json and frames.jsonl only.',
+                            'unsupported', 400)
+    if next(_validator(op['inputSchema']).iter_errors(arguments), None) is not None:
+        raise AgentAPIError('Arguments do not match the operation schema.')
+    total = 0
+    for key in op['binary_fields']:
+        value = arguments[key]
+        values = value.values() if isinstance(value, dict) else [value]
+        for entry in values:
+            try:
+                total += len(base64.b64decode(entry, validate=True))
+            except (ValueError, binascii.Error):
+                raise AgentAPIError('Invalid base64 import bytes.') from None
+    if total > INLINE_LIMIT:
+        raise AgentAPIError('Inline import exceeds 512 KiB; use the supported HTTP/UI or scientific references.', 'too_large', 413)
+    if op['operation_id'] == 'graphs.save' and len(json.dumps(arguments['document'], ensure_ascii=False, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')) > 32768:
+        raise AgentAPIError('Graph exceeds the 32 KiB bound.', 'too_large', 413)
+    return copy.deepcopy(arguments)
+
+
+def project_request(name, arguments):
+    op = operation(name)
+    arguments = validate_arguments(name, arguments)
+    segments = re.findall(r'\{([^}]+)\}', op['path'])
+    path = op['path']
+    for key in segments:
+        path = path.replace('{'+key+'}', quote(arguments[key], safe=''))
+    query = {key: arguments[key] for key in op['query'] if key in arguments}
+    if query:
+        path += '?' + urlencode(query)
+    body = {key: value for key, value in arguments.items() if key not in segments and key not in op['query']}
+    body.update(op['injected'])
+    return op['method'], path, body if op['method'] != 'GET' else None
+
+
+def _private_file(path, maximum):
+    fd = None
+    try:
+        path = Path(path)
+        if not path.is_absolute() or '..' in path.parts:
+            raise ValueError()
+        directory = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            for part in path.parts[1:-1]:
+                child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+                os.close(directory); directory = child
+            fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        finally:
+            os.close(directory)
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid() or info.st_mode & 0o077 or not 0 < info.st_size <= maximum:
+            raise ValueError()
+        raw = os.read(fd, maximum+1)
+        after = os.fstat(fd)
+        if len(raw) != info.st_size or (info.st_size, info.st_mtime_ns, info.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+            raise ValueError()
+        return raw
+    except (OSError, ValueError, TypeError):
+        raise AgentAPIError('Use an owned private regular configuration/token file.', 'configuration') from None
+    finally:
+        if fd is not None:
+            os.close(fd)
+
+
+class AgentClient:
+    """No catalog access, automatic retries, redirects, proxies or owner identity."""
+    def __init__(self, endpoint, token, expected_catalog_id, timeout=120):
+        try:
+            parsed = urlsplit(endpoint)
+            if (parsed.scheme != 'http' or parsed.hostname not in ('127.0.0.1', '::1') or parsed.username is not None
+                    or parsed.password is not None or parsed.path not in ('', '/') or parsed.query or parsed.fragment
+                    or parsed.port is None or not 1 <= parsed.port <= 65535 or any(ch.isspace() for ch in endpoint)):
+                raise ValueError()
+            if not re.fullmatch(r'[A-Za-z0-9_-]{20,4096}', token) or not re.fullmatch('[a-f0-9]{32}', expected_catalog_id):
+                raise ValueError()
+            if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 0 < timeout <= 300:
+                raise ValueError()
+        except (ValueError, TypeError):
+            raise AgentAPIError('Invalid fixed loopback client configuration.', 'configuration') from None
+        self.host, self.port = parsed.hostname, parsed.port
+        self._token, self.catalog_id, self.timeout = token, expected_catalog_id, timeout
+        self._ready = False
+
+    @classmethod
+    def from_config(cls, path):
+        config = decode(_private_file(path, 16384))
+        if type(config) is not dict or set(config) not in ({'endpoint', 'catalog_id', 'token_file'}, {'endpoint', 'catalog_id', 'token_file', 'timeout'}):
+            raise AgentAPIError('Configuration requires endpoint, catalog_id and token_file.', 'configuration')
+        try:
+            token = _private_file(config['token_file'], 4096).decode('ascii').strip()
+        except (UnicodeError, TypeError):
+            raise AgentAPIError('Invalid private credential file.', 'configuration') from None
+        return cls(config['endpoint'], token, config['catalog_id'], config.get('timeout', 120))
+
+    def _request(self, method, path, body=None):
+        connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, self.timeout))
+        deadline = time.monotonic() + self.timeout
+        sockets = []
+        response = None
+        def expire():
+            for owned in sockets:
+                try:
+                    owned.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+        timer = threading.Timer(self.timeout, expire)
+        timer.daemon = True
+        timer.start()
+        try:
+            raw = encoded(body) if body is not None else None
+            if raw is not None and len(raw) > REQUEST_LIMIT:
+                raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
+            headers = {'Authorization': 'Bearer '+self._token, 'Accept': 'application/json', 'Accept-Encoding': 'identity', 'Connection': 'close'}
+            if raw is not None:
+                headers['Content-Type'] = 'application/json'
+            connection.connect()
+            sockets.append(connection.sock)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError()
+            # A preflight may produce no headers for >5s. The independent timer
+            # bounds this entire phase, including a peer trickling header bytes.
+            connection.sock.settimeout(remaining)
+            connection.request(method, path, body=raw, headers=headers)
+            response = connection.getresponse()
+            if 300 <= response.status < 400:
+                raise AgentAPIError('Redirects are not supported.', 'transport', 502)
+            lengths = response.headers.get_all('Content-Length', [])
+            if (len(lengths) != 1 or len(lengths[0]) > 10 or not re.fullmatch('[0-9]+', lengths[0])
+                    or response.getheader('Transfer-Encoding') is not None
+                    or response.getheader('Content-Encoding', 'identity') != 'identity'
+                    or response.getheader('Content-Type', '').split(';')[0].strip() != 'application/json'):
+                raise AgentAPIError('HTTP response framing or content type is unsupported.', 'transport', 502)
+            length = int(lengths[0])
+            if length > RESPONSE_LIMIT:
+                raise AgentAPIError('HTTP response exceeds the agent receive bound.', 'response_too_large', 413)
+            data = bytearray()
+            while len(data) < length:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError()
+                # getresponse may detach the connection socket (Connection:close).
+                sockets[0].settimeout(min(5, remaining))
+                chunk = response.read1(min(65536, length-len(data)))
+                if not chunk:
+                    raise AgentAPIError('HTTP response ended before its declared length.', 'transport', 502)
+                data.extend(chunk)
+            if time.monotonic() > deadline:
+                raise TimeoutError()
+            value = decode(data)
+            if response.status >= 400:
+                if not isinstance(value, dict) or not isinstance(value.get('error'), str):
+                    raise AgentAPIError('Malformed HTTP error response.', 'transport', 502)
+                code = value.get('code', 'http_error')
+                if (type(code) is not str or not re.fullmatch('[a-z][a-z0-9_]{0,79}', code)
+                        or self._token in code):
+                    raise AgentAPIError('Malformed HTTP error code.', 'transport', 502)
+                value = {'code': code, 'error': value['error'].replace(self._token, '[redacted]')[:1000]}
+            return {'status': response.status, 'result': value}
+        except AgentAPIError:
+            raise
+        except (OSError, http.client.HTTPException, TimeoutError):
+            raise AgentAPIError('Local HTTP request failed; inspect durable state before retrying a mutation.', 'transport', 503) from None
+        finally:
+            timer.cancel()
+            if response is not None:
+                response.close()
+            connection.close()
+            for owned in sockets:
+                owned.close()
+            timer.join(timeout=1)
+
+    def _check_discovery(self):
+        envelope = self._request('GET', '/api/agent/operations')
+        remote = envelope['result']
+        if envelope['status'] != 200:
+            if envelope['status'] >= 400:
+                raise AgentAPIError(remote['error'], remote['code'], envelope['status'])
+            raise AgentAPIError('Unexpected discovery response status.', 'transport', 502)
+        if not isinstance(remote, dict) or remote != discovery():
+            raise AgentAPIError('Server and bridge operation registries differ.', 'registry_mismatch', 409)
+
+    def bootstrap(self):
+        validate_registry()
+        identity = self._request('GET', '/api/access/session')
+        value = identity['result']
+        if identity['status'] != 200 or not isinstance(value, dict) or value.get('kind') != 'agent' or value.get('catalog_id') != self.catalog_id:
+            raise AgentAPIError('Use an active agent credential for the configured catalog.', 'unauthenticated', 401)
+        context = self._request('GET', '/api/workspace/context')
+        if context['status'] != 200 or not isinstance(context['result'], dict) or context['result'].get('dataset_id') != self.catalog_id:
+            raise AgentAPIError('Configured catalog does not match HTTP service.', 'catalog_mismatch', 409)
+        self._check_discovery()
+        self._ready = True
+        return {'identity': value, 'discovery': discovery()}
+
+    def call(self, name, arguments):
+        op = operation(name)
+        method, path, body = project_request(name, arguments)
+        if not self._ready:
+            self.bootstrap()
+        if op['side_effects']:
+            self._check_discovery()
+        result = validate_output(name, self._request(method, path, body))
+        if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
+            validate_segment(result['result'], arguments)
+        return result
+
+
+def dispatch(client, name, arguments):
+    return client.call(name, arguments)
+
+
+def validate_segment(value, request):
+    """Check one returned segment, never claim its unobserved whole-file hash."""
+    try:
+        raw = base64.b64decode(value['data_base64'], validate=True)
+        if (base64.b64encode(raw).decode('ascii') != value['data_base64']
+                or any(value[key] != request[key] for key in ('run_id','name','expected_sha256','offset'))
+                or len(raw) != value['bytes'] or len(raw) > request['max_bytes']
+                or value['next_offset'] != value['offset'] + len(raw)
+                or value['next_offset'] > value['total_bytes']
+                or value['eof'] != (value['next_offset'] == value['total_bytes'])
+                or (not value['eof'] and not raw)
+                or hashlib.sha256(raw).hexdigest() != value['segment_sha256']):
+            raise ValueError()
+        return raw
+    except (ValueError, KeyError, TypeError, binascii.Error):
+        raise AgentAPIError('Artifact segment identity, bytes or hash differ.', 'artifact_mismatch', 409) from None
+
+
+def verify_artifact(client, run_id, name, expected_sha256, *, consume=None, chunk_bytes=8*1024*1024):
+    """Stream into an optional caller callback; bytes remain provisional until return.
+
+    This library helper opens no files and is not a separate MCP operation.
+    A caller must discard provisional outputs on any exception.
+    """
+    offset, total, checksum = 0, None, hashlib.sha256()
+    while True:
+        request = dict(run_id=run_id, name=name, expected_sha256=expected_sha256, offset=offset, max_bytes=chunk_bytes)
+        envelope = client.call('runs.artifact_chunk', request)
+        if envelope['status'] >= 400:
+            raise AgentAPIError('Artifact read was refused; discard provisional bytes.', 'artifact_unavailable', envelope['status'])
+        value = envelope['result']
+        raw = validate_segment(value, request)
+        if total is not None and total != value['total_bytes']:
+            raise AgentAPIError('Artifact size changed between segments.', 'artifact_mismatch', 409)
+        total = value['total_bytes']
+        checksum.update(raw)
+        if consume is not None:
+            consume(raw)
+        offset = value['next_offset']
+        if value['eof']:
+            if checksum.hexdigest() != expected_sha256 or offset != total:
+                raise AgentAPIError('Whole artifact SHA256 differs; discard provisional bytes.', 'artifact_mismatch', 409)
+            return {'sha256': expected_sha256, 'bytes': total, 'verification': 'whole_sha256_verified'}

@@ -5,11 +5,18 @@ execution grants, Run custody, progress, cancellation and artifacts keep their
 existing owners and remain visible in `/workspaces` → Current local catalog →
 Pipeline / Runs. The CLI opens no catalog and owns no model or scheduler.
 
-Use the [optional agent environment](agent-operations.md), including its pinned
-JSON Schema dependency; no MCP connection is needed. Reuse its private config
+Install base requirements, including the pinned JSON Schema validator; no MCP
+package or connection is needed for the CLI. The optional agent environment is
+also supported. Reuse the [agent client's private config](agent-operations.md)
 with `endpoint`, `catalog_id`, `token_file` and optional `timeout`. Endpoint must
 be numeric loopback HTTP with an explicit port. Config/token files must be owned
 private regular files. Start the server with the desired project root alias.
+
+Commands negotiate exact per-operation contracts. Additive server operations do
+not disable compatible CLI calls; an incompatible requested operation is refused.
+Definite old-server route absence permits exact frozen legacy fallback. Ordinary
+auth/server/malformed discovery failures never trigger fallback. Contract selection
+is internal to the client; there are no schema, telemetry or retry flags to manage.
 
 An owner issues an agent credential with `inspect,edit,execute` and optional
 `cancel` scopes. The CLI cannot approve execution. In Pipeline the owner reviews
