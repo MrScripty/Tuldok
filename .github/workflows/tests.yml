@@ -61,6 +61,8 @@ jobs:
       - run: build/workspace-agent/bin/python -m pip install --require-hashes -r requirements-agent.lock
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py
       - run: python -m unittest discover -s tests

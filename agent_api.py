@@ -1045,7 +1045,8 @@ class AgentClient:
     def tool_definitions(self):
         return tool_definitions(self.selected_contracts())
 
-    def call(self, name, arguments):
+    def call(self, name, arguments, *, observer=None, observation=None):
+        from mcp_observer import observe_stage, observe_selection
         # Reject local invalid input before bootstrap/network side effects.
         op = operation(name)
         errors = []
@@ -1063,13 +1064,31 @@ class AgentClient:
             raise AgentAPIError('Operation has no compatible available contract.', 'operation_unsupported', 409)
         version = self._selected[op['operation_id']]
         method, path, body = project_request(name, arguments, version)
+        observe_selection(observer, observation, name, arguments, None if self._legacy else version)
+        observe_stage(observer, observation, 'validated')
         if self._legacy and op['side_effects']:
             self._check_discovery()
         selection = None if self._legacy else (op['operation_id'], version)
-        result = validate_output(name, self._request(method, path, body, selection=selection), version)
+        observe_stage(observer, observation, 'admitted')
+        observe_stage(observer, observation, 'dispatch')
+        envelope = self._request(method, path, body, selection=selection)
+        result = validate_output(name, envelope, version)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
         return result
+
+
+def observation_operation(method, target, headers):
+    """Local allowlist lookup only; raw routes/headers never leave this boundary."""
+    try:
+        selected = select_request(headers, method, target)
+        if selected is not None:
+            return selected[:2]
+    except AgentAPIError:
+        return None, None
+    matches = [op['operation_id'] for op in _PAYLOAD['operations']
+               if _route_matches(op, method, target)]
+    return (matches[0], None) if len(matches) == 1 else (None, None)
 
 
 def dispatch(client, name, arguments):

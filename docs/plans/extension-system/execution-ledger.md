@@ -90,6 +90,31 @@ started/accepted by creating this documentation.
   allowed staged/range scope. No push, PR, merge, installation, training or data
   change. Parent receives final observed HEAD after the local evidence commit.
 
+## Existing pressure-CNN/runtime prerequisite preparation —2026-10-15
+
+- Lead assignment6199181692 authorized isolated exact producer/runtime preparation
+  while P1–P4 are unaccepted. Separate branch preserves shared application owners.
+- Explicit captured CPU runtime0b15b611 passed real forward/backward/checkpoint,
+  initialized-child cancellation/drain and cold catalog artifact checks using
+  unchanged existing qualifiers and normal grants/profile/reserve.
+- Exact unchanged original lab source/data completed200actualAdam updates and
+  a fresh zero-update restore through production CLI/HTTP/Pipeline/Runs. All12
+  outputs and cold reopen bytes pass; independent frozen cold spatial inference
+  matches1344validation points per mode (maxabs7.99e-15).
+- Native evaluator independently preserves0/16negative pressure qualification.
+  Only final checkpoint/probes exist; recurrent observations remain unavailable.
+  Source/runtime/notices/costs and original checkout-absence limitation are recorded
+  in [the preparation report](reports/pressure-cnn-preparation.md).
+- P1–P4/P5 and E2–E4 remain unaccepted. This branch supplies prerequisites only;
+  lead owns all integration/merges. Retain private snapshot/catalog and branches
+  for dependent qualification; no unrelated source or source lab was edited.
+
+- Resumed state check confirms lead-accepted P1/E1 merges8673509/91c5e96,
+  composed SDK536af2d and earlier successful preparation CI. Current plan now
+  accepts original E1 browser/HTTP discovery and keeps negotiated snapshot agent
+  projections/E2/P2–P4/P5 unavailable pending their explicit implementations.
+  Only documentation placement/lifecycle changed; numerical source/receipts stay exact.
+
 ## E1 authorized implementation — 2026-10-15
 
 - User selected E1–E4 with implementation/test/draft-PR authority; lead owns all

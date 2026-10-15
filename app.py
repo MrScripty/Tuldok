@@ -31,6 +31,8 @@ import experiments
 import projects
 import access
 import agent_api
+from mcp_observer import (add_interface_options, configured_interface, observe_begin, observe_stage,
+                          observe_selection, observe_request_bytes, observe_close, outcome)
 from access import authorized
 from http.cookies import SimpleCookie, CookieError
 import runs
@@ -425,10 +427,51 @@ class Dataset:
             raise
 
 
-def make_handler(dataset):
+def make_handler(dataset, observer=None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
+
+        def _observe_request(self, handler):
+            name, version = (agent_api.observation_operation(self.command, self.path, self.headers)
+                             if observer is not None else (None, None))
+            self._observation_operation, self._observation_version = name, version
+            self._observation = observe_begin(observer, self.command, name, selected_version=version)
+            self._observation_finished = False
+            try:
+                return handler()
+            finally:
+                if not self._observation_finished:
+                    observe_stage(observer, self._observation, 'terminal', outcome='unknown', delivery='incomplete')
+                    self._observation_finished = True
+
+        def _observe_dispatch(self, body=None):
+            observe_selection(observer, getattr(self, '_observation', None),
+                              self._observation_operation, body, self._observation_version)
+            for phase in ('validated', 'admitted', 'dispatch'):
+                observe_stage(observer, getattr(self, '_observation', None), phase)
+
+        def _write_observed(self, chunks, status):
+            observation = getattr(self, '_observation', None)
+            written = 0
+            try:
+                for raw in chunks:
+                    view = memoryview(raw)
+                    while view:
+                        count = self.connection.send(view)
+                        if count <= 0:
+                            raise BrokenPipeError()
+                        written += count
+                        view = view[count:]
+            except (OSError, ConnectionError):
+                self.close_connection = True
+                observe_stage(observer, observation, 'terminal', outcome='unknown',
+                              response_bytes=written, delivery='incomplete')
+            else:
+                observe_stage(observer, observation, 'terminal', outcome=outcome(status),
+                              envelope_status=status, http_status=status,
+                              response_bytes=written, delivery='written')
+            self._observation_finished = True
 
         def reply(self, data, status=200, content_type='application/json', headers=()):
             selected = getattr(self, '_contract_selection', None)
@@ -443,6 +486,8 @@ def make_handler(dataset):
                                     'code': 'contract_output'}, 502
             if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
+            observe_stage(observer, getattr(self, '_observation', None), 'returned',
+                          outcome=outcome(status), envelope_status=status, http_status=status)
             self.send_response(status)
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(data)))
@@ -451,28 +496,25 @@ def make_handler(dataset):
             for key, value in headers:
                 self.send_header(key, value)
             self.end_headers()
-            try:
-                self.wfile.write(data)
-            except (BrokenPipeError, ConnectionResetError):
-                pass
+            self._write_observed((data,), status)
 
         def reply_stream(self, stream, metadata):
             # The owner has already verified a private spool before HTTP success.
+            observe_stage(observer, getattr(self, '_observation', None), 'returned',
+                          outcome='success', envelope_status=200, http_status=200)
             self.send_response(200)
             self.send_header('Content-Type', metadata['media_type'])
             self.send_header('Content-Length', str(metadata['bytes']))
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
-            try:
+            def chunks():
                 while True:
                     raw = stream.read(65536)
                     if not raw:
-                        break
-                    self.wfile.write(raw)
-            except (OSError, ConnectionError):
-                # Headers are committed; never append a JSON error to payload.
-                self.close_connection = True
+                        return
+                    yield raw
+            self._write_observed(chunks(), 200)
 
         def project_access(self):
             # This opt-in file inspection surface is local-only until actor authentication.
@@ -509,9 +551,12 @@ def make_handler(dataset):
                 length = int(self.headers.get('Content-Length', '0'))
                 if not 0 < length <= 16384:
                     raise ValueError()
-                body = projects.decode(self.rfile.read(length))
+                raw = self.rfile.read(length)
+                observe_request_bytes(observer, getattr(self, '_observation', None), len(raw))
+                body = projects.decode(raw)
                 if not isinstance(body, dict):
                     raise ValueError()
+                self._observe_dispatch(body)
                 return body
             except (ValueError, workbench.WorkbenchError):
                 raise access.AccessError('Access requests require a bounded JSON object.', 'invalid', 400) from None
@@ -551,10 +596,14 @@ def make_handler(dataset):
             return selected
 
         def do_GET(self):
+            return self._observe_request(self._handle_GET)
+
+        def _handle_GET(self):
             self._contract_selection = None
             try:
                 if not urlsplit(self.path).path.startswith('/api/'):
                     self._select_contract()
+                    self._observe_dispatch()
                     return self._get()
                 token, _bearer = self._credential()
                 with dataset.access.bind(token):
@@ -566,6 +615,7 @@ def make_handler(dataset):
                         raise
                     selected = self._select_contract()
                     agent_api.validate_selected(selected, self.command, self.path, None)
+                    self._observe_dispatch()
                     if urlsplit(self.path).path == '/api/access/session':
                         return self.reply(dataset.access.identity())
                     return self._get()
@@ -579,6 +629,9 @@ def make_handler(dataset):
                 return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
 
         def do_POST(self):
+            return self._observe_request(self._handle_POST)
+
+        def _handle_POST(self):
             self._contract_selection = None
             try:
                 path = urlsplit(self.path).path
@@ -869,6 +922,7 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
+                observe_request_bytes(observer, getattr(self, '_observation', None), len(raw_body))
                 body = projects.decode(raw_body) if (path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/') or path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
                 if getattr(self, '_contract_selection', None) is not None:
                     # Strict JSON at the selected boundary, preserving ordinary HTTP semantics.
@@ -876,6 +930,7 @@ def make_handler(dataset):
                     agent_api.validate_selected(self._contract_selection, self.command, self.path, body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
+                self._observe_dispatch(body)
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
@@ -1119,6 +1174,7 @@ def make_handler(dataset):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    add_interface_options(parser)
     parser.add_argument('--data', type=Path, default=ROOT / 'data')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
@@ -1135,7 +1191,8 @@ def main():
         dataset = Dataset(args.data, project_roots=roots)
     except (StorageError, workbench.WorkbenchError) as error:
         parser.exit(2, str(error) + "\n")
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
+    observer = configured_interface(args, 'http')
+    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset, observer))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)
     try:
         server.serve_forever()
@@ -1144,6 +1201,8 @@ def main():
     finally:
         server.server_close()
         dataset.close()
+        if observer is not None:
+            observe_close(observer)
 
 
 if __name__ == '__main__':
