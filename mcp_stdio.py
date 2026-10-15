@@ -165,7 +165,7 @@ class Profile:
             self.pending = self.pending_method = None
 
 
-async def serve(client, input_fd=0, output_fd=1):
+async def serve(client, input_fd=0, output_fd=1, observer=None):
     """Run the public SDK over bounded stdio; caller bootstraps AgentClient first."""
     import anyio
     from mcp import types
@@ -178,6 +178,16 @@ async def serve(client, input_fd=0, output_fd=1):
     definitions = agent_api.tool_definitions()
     profile = Profile(item['name'] for item in definitions)
     server = Server('tuldok', version='1')
+    pending_observation = None
+    pending_outcome, pending_status = 'response', None
+    pending_http_status = None
+
+    def observe(phase, observation=None, **values):
+        if observer is not None:
+            observer.stage(observation, phase, **values)
+
+    def begin(value, size, framing=False):
+        return observer.begin(value, size, framing=framing) if observer is not None else None
 
     @server.list_tools()
     async def list_tools():
@@ -185,15 +195,28 @@ async def serve(client, input_fd=0, output_fd=1):
 
     @server.call_tool(validate_input=False)
     async def call_tool(name, arguments):
+        nonlocal pending_outcome, pending_status, pending_http_status
+        pending_http_status = None
         try:
             agent_api.validate_arguments(name, arguments)
+            observe('dispatch', pending_observation)
             envelope = await anyio.to_thread.run_sync(client.call, name, arguments)
+            pending_http_status = envelope.get('status') if isinstance(envelope, dict) else None
             agent_api.validate_output(name, envelope)
+            pending_outcome = ('permission-refusal' if envelope['status'] in (401, 403)
+                               else 'domain-error' if envelope['status'] >= 400 else 'success')
         except agent_api.AgentAPIError as exc:
             # Owner supplies bounded, public API errors; no raw transport exception.
             envelope = tool_error(exc.code, str(exc), exc.status)
+            pending_outcome = ('transport-error' if exc.code in ('transport', 'response_too_large')
+                               else 'registry-refusal' if exc.code == 'registry_mismatch'
+                               else 'permission-refusal' if exc.status in (401, 403) else 'call-error')
         except Exception:
             envelope = tool_error('bridge_failure', 'Tool call failed; acknowledgement may be unknown')
+            pending_outcome = 'bridge-error'
+        pending_status = envelope['status']
+        observe('returned', pending_observation, outcome=pending_outcome,
+                envelope_status=pending_status, http_status=pending_http_status)
         return types.CallToolResult(
             content=[types.TextContent(type='text', text=json.dumps(envelope, ensure_ascii=False,
                                                                   allow_nan=False, separators=(',', ':')))],
@@ -210,7 +233,16 @@ async def serve(client, input_fd=0, output_fd=1):
     os.set_blocking(input_fd, False)
     os.set_blocking(output_fd, False)
 
-    async def write(value, sdk_response=False):
+    async def write(value, sdk_response=False, observation=None):
+        nonlocal pending_observation
+        outcome, status = (pending_outcome, pending_status) if sdk_response else ('response', None)
+        http_status = pending_http_status if sdk_response else None
+        rpc_code = None
+        if 'error' in value:
+            rpc_code = value['error'].get('code')
+            outcome = {-32700: 'parse-error', -32600: 'invalid-request',
+                       -32601: 'unsupported-method', -32602: 'invalid-parameters',
+                       -32000: 'busy-or-not-ready'}.get(rpc_code, 'protocol-error')
         try:
             raw = encode_response(value)
         except (FrameError, UnicodeError, ValueError):
@@ -219,23 +251,35 @@ async def serve(client, input_fd=0, output_fd=1):
                 'content': [{'type': 'text', 'text': json.dumps(envelope)}],
                 'structuredContent': envelope, 'isError': True}}
             raw = encode_response(value)
-        async with output_lock:
-            with anyio.fail_after(WRITE_SECONDS):
-                view = memoryview(raw)
-                while view:
-                    if not regular_output:
-                        await anyio.wait_writable(output_fd)
-                    try:
-                        count = os.write(output_fd, view)
-                    except BlockingIOError:
-                        continue
-                    if count <= 0:
-                        raise BrokenPipeError('Closed output')
-                    view = view[count:]
-            if sdk_response:
-                profile.replied(value)
+            outcome, status = 'response-too-large', 502
+        written = 0
+        try:
+            async with output_lock:
+                with anyio.fail_after(WRITE_SECONDS):
+                    view = memoryview(raw)
+                    while view:
+                        if not regular_output:
+                            await anyio.wait_writable(output_fd)
+                        try:
+                            count = os.write(output_fd, view)
+                        except BlockingIOError:
+                            continue
+                        if count <= 0:
+                            raise BrokenPipeError('Closed output')
+                        written += count
+                        view = view[count:]
+                if sdk_response:
+                    profile.replied(value)
+        except BaseException:
+            observe('terminal', observation, outcome='unknown', response_bytes=written, delivery='incomplete')
+            raise
+        observe('terminal', observation, outcome=outcome, envelope_status=status, http_status=http_status, rpc_code=rpc_code,
+                response_bytes=written, delivery='written')
+        if sdk_response:
+            pending_observation = None
 
     async def reader():
+        nonlocal pending_observation, pending_outcome, pending_status, pending_http_status
         buffer = bytearray()
         async with incoming_send:
             while True:
@@ -247,7 +291,8 @@ async def serve(client, input_fd=0, output_fd=1):
                     continue
                 if not block:
                     if buffer:
-                        await write(error_response(None, -32700, 'Incomplete JSON line at EOF'))
+                        observation = begin(None, len(buffer), framing=True)
+                        await write(error_response(None, -32700, 'Incomplete JSON line at EOF'), observation=observation)
                     return
                 buffer.extend(block)
                 while b'\n' in buffer:
@@ -257,11 +302,14 @@ async def serve(client, input_fd=0, output_fd=1):
                     try:
                         value = parse_frame(raw)
                     except FrameError as exc:
-                        await write(error_response(None, exc.code, str(exc)))
+                        observation = begin(None, len(raw), framing=True)
+                        await write(error_response(None, exc.code, str(exc)), observation=observation)
                         continue
+                    original = value
                     value, refusal = profile.accept(value)
+                    observation = begin(original, len(raw)) if 'id' in original or refusal is not None else None
                     if refusal is not None:
-                        await write(refusal)
+                        await write(refusal, observation=observation)
                     if value is None:
                         continue
                     try:
@@ -271,26 +319,33 @@ async def serve(client, input_fd=0, output_fd=1):
                             types.ClientNotification.model_validate(value)
                         message = types.JSONRPCMessage.model_validate(value)
                     except ValueError:
-                        await write(error_response(value.get('id'), -32602, 'Invalid method parameters'))
+                        await write(error_response(value.get('id'), -32602, 'Invalid method parameters'), observation=observation)
                         continue
                     if value.get('method') == 'tools/call':
                         params = value['params']
                         try:
                             agent_api.validate_arguments(params['name'], params.get('arguments', {}))
                         except agent_api.AgentAPIError:
-                            await write(error_response(value['id'], -32602, 'Invalid tool arguments'))
+                            await write(error_response(value['id'], -32602, 'Invalid tool arguments'), observation=observation)
                             continue
+                    observe('validated', observation)
+                    observe('admitted', observation)
+                    if 'id' in value:
+                        pending_observation = observation
+                        pending_outcome, pending_status = 'response', None
+                        pending_http_status = None
                     profile.admitted(value)
                     await incoming_send.send(SessionMessage(message))
                 if len(buffer) >= INPUT_LIMIT:
-                    await write(error_response(None, -32700, 'Input line exceeds 1 MiB'))
+                    observation = begin(None, len(buffer), framing=True)
+                    await write(error_response(None, -32700, 'Input line exceeds 1 MiB'), observation=observation)
                     return
 
     async def writer():
         async with outgoing_receive:
             async for session_message in outgoing_receive:
                 value = session_message.message.model_dump(by_alias=True, exclude_none=True)
-                await write(value, sdk_response=True)
+                await write(value, sdk_response=True, observation=pending_observation)
 
     try:
         async with anyio.create_task_group() as group:
@@ -299,14 +354,23 @@ async def serve(client, input_fd=0, output_fd=1):
             async with outgoing_send:
                 await server.run(incoming_receive, outgoing_send, options, raise_exceptions=True)
     finally:
-        os.set_blocking(input_fd, old_input)
-        os.set_blocking(output_fd, old_output)
+        try:
+            os.set_blocking(input_fd, old_input)
+            os.set_blocking(output_fd, old_output)
+        finally:
+            if observer is not None:
+                observer.close()
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', required=True, help='Private AgentClient JSON configuration file')
+    parser.add_argument('--observe-database', help='Opt in to operator-only SQLite in an existing private directory')
+    parser.add_argument('--observe-max-calls')
+    parser.add_argument('--observe-max-age-seconds')
+    parser.add_argument('--observe-max-bytes')
     args = parser.parse_args(argv)
+    observer = None
     try:
         import anyio
         import mcp  # noqa: F401 - explicit optional consumer boundary
@@ -314,13 +378,31 @@ def main(argv=None):
         import agent_api
         client = agent_api.AgentClient.from_config(args.config)
         client.bootstrap()
-        anyio.run(serve, client)
+        if args.observe_database is not None:
+            try:
+                from pathlib import Path
+                from mcp_observer import (InteractionRecorder, RecorderConfig, DEFAULT_MAX_CALLS,
+                                          DEFAULT_MAX_AGE_SECONDS, DEFAULT_MAX_BYTES)
+                config = RecorderConfig(Path(args.observe_database),
+                    int(args.observe_max_calls) if args.observe_max_calls is not None else DEFAULT_MAX_CALLS,
+                    int(args.observe_max_age_seconds) if args.observe_max_age_seconds is not None else DEFAULT_MAX_AGE_SECONDS,
+                    int(args.observe_max_bytes) if args.observe_max_bytes is not None else DEFAULT_MAX_BYTES)
+                observer = InteractionRecorder(config, agent_api.discovery())
+            except Exception:
+                try:
+                    print('tuldok observer invalid-observer-configuration', file=sys.stderr, flush=True)
+                except Exception:
+                    pass
+        anyio.run(serve, client, 0, 1, observer)
         return 0
     except ImportError:
         print('Optional agent dependencies unavailable; install the approved requirements-agent lock in a separate environment.', file=sys.stderr)
     except (Exception, KeyboardInterrupt):
         # No token, config, URL, request body, or raw exception reaches diagnostics.
         print('Agent bridge stopped: configuration, authentication, transport or protocol failure.', file=sys.stderr)
+    finally:
+        if observer is not None:
+            observer.close()
     return 1
 
 
