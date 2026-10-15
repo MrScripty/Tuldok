@@ -36,7 +36,10 @@
 - Disposition: after reviewed local documentation commit, mark M0 accepted; retain overall
   product plan Planned/partial with E1 as the next separately authorized slice. Never mark product X1–X5 satisfied from docs.
 - Verification: adopted plan structural check plus lifecycle/authority review in executor.
-- Revisit trigger: final documentation review and verified local commit. No push.
+- Resolution: independent review/checks passed and local material commit
+  `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` was verified; M0 Accepted,
+  product Planned/partial and E1 unstarted. No push.
+- Revisit trigger: new scope/authority or actual product slice admission.
 
 ## I5 — Old binary can silently project saved v2 as legacy project
 

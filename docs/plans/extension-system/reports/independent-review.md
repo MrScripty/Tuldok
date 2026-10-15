@@ -35,5 +35,6 @@ PR62 P1–P5 proposed prerequisites. All eight composed probes, independent auth
 locality and actual producer/consumer gates are reviewed. Final stable-bundle recheck reports **no remaining semantic blockers**. It reviewed
 plan SHA-256 `45f53d9810b8d57ece79eff6e7a96cdf0343b485c89197ae0c5da5f39a50cc44`;
 subsequent edits only record lifecycle/check evidence and do not change reviewed
-contract meaning. Primary documentation checks pass. Local commit verification
-remains the final M0 step; product X1–X5 remain pending.
+contract meaning. Primary documentation checks pass. The primary executor then verified local material commit
+`ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` and accepted M0. Product X1–X5 remain
+pending and E1 has not started; no push or PR is authorized.

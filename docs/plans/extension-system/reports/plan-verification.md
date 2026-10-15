@@ -41,13 +41,17 @@ Primary checks pass on the integrated documentation:
 - Actual branch is `docs/extension-system-plan`, base f99182c. Independent
   GPT-6.1 Sol stable-bundle recheck reports no remaining semantic blockers; findings
   and resolutions are in [independent-review.md](independent-review.md). Staged
-  scope/base and local commit verification complete the publication step.
+  scope/base checks passed; material commit
+  `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` was created and verified locally with
+  exactly these eleven documentation files and a clean working tree.
 
 Structure success does not close product acceptance. The supplied draft's checks
 were prior-author evidence; the counts above come from the current executor's
-actual reproduction. The documentation milestone will close only with the verified local commit; E1 has not started.
+actual reproduction. M0 is Accepted after that verified local commit; E1 has not started. The final
+lifecycle/evidence record is committed locally after checking the same scope and
+unchanged reviewed semantics.
 
 No application, numerical, browser, SQL, migration, dependency installation or
 product tests run in M0. X1–X5 stay pending; no runtime or performance result is
-inferred from plan parsing. Local commit identity is reported only after the
-actual authorized commit; push/PR/merge remain outside this operation.
+inferred from plan parsing. Local commit identity above is observed, not predicted. Push/PR/merge remain
+outside this operation.

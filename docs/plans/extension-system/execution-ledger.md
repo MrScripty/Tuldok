@@ -60,3 +60,18 @@ started/accepted by creating this documentation.
 - A0–A3 documentation claims satisfied. Overall future product plan is Planned/
   partial because X1–X5 remain pending. E1 has not started. M0 awaits actual local
   commit verification before its Accepted transition; no push is authorized.
+
+## M0 local commit verification and handoff
+
+- Created and verified local material commit
+  `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` on
+  `docs/extension-system-plan`. Exactly eleven new documentation files; parent
+  f99182c, working tree clean after commit, prior PR62 history preserved.
+- This observed local commit closes M0 after independent Sol review and reproduced
+  checks. Record its Accepted transition and actual evidence now, while overall
+  plan remains Planned/partial, next E1 not started, X1–X5 pending. The final local
+  evidence commit adds no product semantics or implementation authority.
+- Re-ran original structural function,47 local targets/5 anchors, table/fence,
+  strict authored whitespace, narrowly preserved source EOF, research hashes and
+  allowed staged/range scope. No push, PR, merge, installation, training or data
+  change. Parent receives final observed HEAD after the local evidence commit.

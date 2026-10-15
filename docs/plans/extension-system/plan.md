@@ -2,9 +2,9 @@
 
 **Plan status:** `Planned`
 
-**Current phase:** M0 — prepare and independently review the implementation plan
+**Current phase:** E1 — inert extension inspection (not started)
 
-**Next slice:** M0 — finish documentation review and authorized commit
+**Next slice:** E1 — only after separate implementation authorization and fresh source/prerequisite verification.
 
 **Acceptance status:** `partial`
 
@@ -28,8 +28,8 @@ material, authorize a normal Run, and inspect its automatically retained evidenc
 in the compact dark workspace. An authorized agent can do the same work through
 the same owners and structured evidence, without UI interpretation or logger setup.
 
-This operation creates and commits **documentation only**. M0 is the current
-authorized operation. E1–E4 below are implementation proposals with acceptance
+This operation created and locally committed **documentation only**. M0 is
+Accepted; E1–E4 below are implementation proposals with acceptance
 gates, not permission to edit application code, run training, install dependencies,
 migrate a catalog or deploy. Their `Planned` state records the requested planning
 direction; starting any slice requires explicit selection of this canonical plan
@@ -201,7 +201,7 @@ implementation expands around them, with the following stopping conditions.
 
 | Assumption or claim | Decision affected | Owner | Executable procedure | Required environment | Status/evidence |
 | --- | --- | --- | --- | --- | --- |
-| Existing closed v1 contracts and PR62 owner baseline | Versioning and dependencies | Plan author | Read pinned Projects/external/runtime/actors and PR62 D1/D2/D4; compare claimed current/proposed facts | GitHub read access | Source reviewed; M0 review pending |
+| Existing closed v1 contracts and PR62 owner baseline | Versioning and dependencies | Plan author | Read pinned Projects/external/runtime/actors and PR62 D1/D2/D4; compare claimed current/proposed facts | GitHub read access | Source inspected and independently reviewed; M0 accepted |
 | Inert bounded discovery can serve UI and agents | Manifest/catalog seam | Projects/extension contract | E1 fixture imports/startup hooks write markers or fail; compare catalog/open/preflight side effects and malformed sibling behavior | Disposable Linux catalog; real browser/HTTP | pending |
 | Real A fits existing CPU/source/output profile and evidence contract | Runtime and data plane | Runtime/model/evidence | E2 actual Run; count captures/outputs/checkpoints/probes, wall/RSS and cold query; compare selected declared bounds | Exact captured CPU snapshot | pending; capability unavailable until pass |
 | B stays entirely package-local | Contribution adequacy | Independent extension author/reviewer | E3 A/B diff and real public-path run, old history and unrelated workflows | Same qualified runtime | pending |
@@ -304,7 +304,7 @@ the same plan directory. No application/source/test/schema/runtime/user-data wri
 - [x] Select bounded delivery/compatibility/runtime/UI/SDK decisions and exact gates.
 - [x] Run structural/link/anchor/scope checks and independent read-only review.
 - [x] Resolve findings and record review limits.
-- [ ] Verify the authorized local documentation commit, then close M0.
+- [x] Verify the authorized local documentation commit, then close M0.
 
 **Preserved/replaced semantics:** Existing application contracts and PR62 remain
 unchanged. This plan resolves the research's open extension choices for review.
@@ -317,7 +317,11 @@ secrets and source base. No merge/push is implied by commit authority alone.
 **Re-plan condition:** A user correction, actual owner/contract conflict, new
 material security consequence or incompatible PR62 baseline changes the plan.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
+
+**Evidence:** Local material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`
+verified after independent review and all documentation checks; final evidence
+is in the verification/review reports. This accepts M0 documentation only.
 
 ### E1: Open and inspect project extension declarations
 
@@ -651,8 +655,8 @@ packaging; unknown rights deny affected export without inventing a license.
 
 - No blocker to preparing/reviewing this documentation. Live Coding Standards MCP
   is unavailable; adopted source/template review is explicitly disclosed.
-- Local documentation execution is available on the selected branch; final review,
-  staged-scope checks and the local commit remain M0 work. No publication is authorized.
+- M0 documentation review/checks/local commit are complete. No push or PR is
+  authorized; source/runtime/product prerequisites remain future slice gates.
 - E2–E4 depend on unimplemented PR62 production seams and a real qualified CPU
   environment; their product gates cannot be run or marked satisfied in M0.
 - Application implementation, execution, install/migration and deployment need
@@ -703,6 +707,7 @@ authorized. Later product branch/integration choices belong to their admitted sl
   hard quotas/custom UI/transport or public distribution only on concrete need.
 - Final status: `Planned`
 
-M0 closes only when A0–A3 have matching checks/review and the authorized commit is
-verified. Then retain this as the implementation handoff with X1–X5 explicitly
-pending; do not label the extension system implemented or qualified.
+M0 is Accepted after independent review, reproduced checks and verified local
+material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`. E1 has not started;
+X1–X5 remain pending. This is a Planned implementation handoff, not an implemented
+or qualified extension system and not authority to start product execution.
