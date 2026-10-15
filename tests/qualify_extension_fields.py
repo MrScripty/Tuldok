@@ -324,16 +324,21 @@ def qualify_retained_negatives(args):
                 'task':dict(published['material']['task'],id='example.scalar-a:wrong-task'),
                 'specification':policy['model_specification'],'preprocessing_policy':policy['preprocessing_policy'],
                 'output_policy':policy['output_policy'],'source_selector':published['material']['source_selector']})
-            wrong=http('models.publish',{'model_id':wrong['id'],'revision':wrong['revision']})
-            study=http('studies.create',{'name':'Bounded mismatched Task preparation negative',
-                'limits':{'attempt_slots':1,'admitted_wall_seconds':600,'retained_bytes':100*1024**2,'peak_staging_bytes':100*1024**2},
-                'policy':{'format':'selection_policy_v1','metric_definition_sha256':digest(policy['metric_definitions'][0]),
-                    'checkpoint_rule':'last','replicate_reduce':'individual','required_capabilities':policy['profile']['required_capabilities'],
-                    'numerical_acceptance':'diagnostic','tie_break':'trial_id'}})
-            http('studies.prepare_trial',{'study_id':study['id'],'request_key':'wrong-task-'+uuid.uuid4().hex,
-                'revision':study['revision'],'graph_id':graph['id'],'graph_revision':graph['revision'],'model':wrong['ref'],'replicate':0},expected=409)
-            unchanged('Mismatched Task preparation')
-            checks.append({'check':'Actual published wrong-Task Model refuses normal HTTP Study preparation before grant/reservation/Run','state':'passed'})
+            if original.get('canonical_release_sha256'):
+                http('models.publish',{'model_id':wrong['id'],'revision':wrong['revision']},expected=409)
+                unchanged('Bound mismatched Task publication')
+                checks.append({'check':'Actual bound wrong-Task draft refuses owner HTTP Model publication before material/grant/reservation/Run','state':'passed'})
+            else:
+                wrong=http('models.publish',{'model_id':wrong['id'],'revision':wrong['revision']})
+                study=http('studies.create',{'name':'Bounded mismatched Task preparation negative',
+                    'limits':{'attempt_slots':1,'admitted_wall_seconds':600,'retained_bytes':100*1024**2,'peak_staging_bytes':100*1024**2},
+                    'policy':{'format':'selection_policy_v1','metric_definition_sha256':digest(policy['metric_definitions'][0]),
+                        'checkpoint_rule':'last','replicate_reduce':'individual','required_capabilities':policy['profile']['required_capabilities'],
+                        'numerical_acceptance':'diagnostic','tie_break':'trial_id'}})
+                http('studies.prepare_trial',{'study_id':study['id'],'request_key':'wrong-task-'+uuid.uuid4().hex,
+                    'revision':study['revision'],'graph_id':graph['id'],'graph_revision':graph['revision'],'model':wrong['ref'],'replicate':0},expected=409)
+                unchanged('Mismatched Task preparation')
+                checks.append({'check':'Actual published wrong-Task Model refuses normal HTTP Study preparation before grant/reservation/Run','state':'passed'})
             require(dataset.runs.get(run['id'])==run,'Restored Run meaning changed')
             require(dataset.pipelines.recipe_material(original['material'],verify=True)==material,'Restored material changed')
             require(dataset.runs.model_evidence(run['id'],{},contract_version=2)['state']=='verified','Restored evidence did not verify')
