@@ -651,6 +651,9 @@ def make_handler(dataset):
                     if len(parts)==2 and parts[0]=='studies':
                         agent_api.require_selection(self._contract_selection,'studies.get')
                         return self.reply(dataset.studies.get(parts[1],**self._model_page_query(study=True)))
+                    if len(parts)==2 and parts[0]=='candidates':
+                        agent_api.require_selection(self._contract_selection,'studies.candidate')
+                        return self.reply(dataset.studies.candidate(parts[1]))
                     if len(parts)==2 and parts[0]=='trials':
                         agent_api.require_selection(self._contract_selection,'studies.trial')
                         return self.reply(dataset.studies.trial(parts[1]))
@@ -903,6 +906,9 @@ def make_handler(dataset):
                         agent_api.require_selection(self._contract_selection,'studies.save')
                         return self.reply(dataset.studies.save(parts[1],body))
                     if len(parts)==3 and parts[0]=='studies':
+                        if parts[2]=='select-candidate':
+                            agent_api.require_selection(self._contract_selection,'studies.select_candidate')
+                            return self.reply(dataset.studies.select_candidate(parts[1],body),201)
                         operation={'prepare-trial':'studies.prepare_trial','continue':'studies.continue',
                                    'approve':'studies.approve',
                                    'admit':'studies.admit','stop':'studies.stop','reconcile':'studies.reconcile'}.get(parts[2])
@@ -962,6 +968,9 @@ def make_handler(dataset):
                             return self.reply(dataset.runs.model_evidence(parts[1],body))
                         if parts[2] == 'compare-model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.compare_model_evidence')
+                            if self._contract_selection[1]==2:
+                                choices={key:value for key,value in body.items() if key!='other_run_id'}
+                                return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id'],choices))
                             projects.closed(body,('other_run_id',))
                             return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id']))
                         if parts[2] == 'cancel':
