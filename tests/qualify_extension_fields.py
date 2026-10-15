@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import tempfile
 import sys
 import threading
 import time
@@ -35,89 +34,40 @@ def require(value,reason):
     if not value:raise RuntimeError(reason)
 
 
-def nominate_runtime_project(project, expected_sha, *, project_id=None):
-    """Author a NEW named QA declaration; preserve all numerical source bytes."""
-    require(type(expected_sha) is str and len(expected_sha)==64 and all(c in '0123456789abcdef' for c in expected_sha),
-            'Nominate an exact lowercase runtime snapshot SHA256')
-    extension=json.loads((project/'extension.json').read_bytes())
-    recipe=json.loads((project/'recipe.json').read_bytes())
-    registration=json.loads((project/'project.json').read_bytes())
-    original_extension=hashlib.sha256((project/'extension.json').read_bytes()).hexdigest()
-    original_recipe=hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest()
-    nominated_id=uuid.uuid4().hex if project_id is None else project_id
-    require(type(nominated_id) is str and len(nominated_id)==32 and all(c in '0123456789abcdef' for c in nominated_id) and
-            nominated_id!=registration['id'],'Runtime nomination requires a distinct exact QA project ID')
-    registration['id']=nominated_id
-    registration['name']='Private QA scalar A runtime '+expected_sha[:12]
-    extension['label']='Private QA scalar A runtime '+expected_sha[:12]
-    extension['runtime']['snapshot_sha256']=expected_sha
-    def save(name,value):
-        (project/name).write_text(json.dumps(value,indent=2,allow_nan=False)+'\n')
-    save('extension.json',extension)
-    nomination={'format':'explicit_private_runtime_nomination_v1','project_id':registration['id'],
-        'original_snapshot_sha256':RUNTIME_SHA,'nominated_snapshot_sha256':expected_sha,
-        'original_extension_sha256':original_extension,'original_recipe_sha256':original_recipe,
-        'fixture_sha256':FIXTURE_SHA,'numerical_sources_unchanged':True,
-        'authority':'New named QA project; requires actual exact runtime capture, new Model/composition and owner grant'}
-    save('runtime-nomination.json',nomination)
-    recipe['runtime_snapshot_sha256']=expected_sha
-    recipe['id']='scalar-a-evidence-v2-qa-'+expected_sha[:12]
-    recipe['name']='Private QA scalar A runtime '+expected_sha[:12]
-    recipe['sources'].append({'path':'runtime-nomination.json','sha256':hashlib.sha256((project/'runtime-nomination.json').read_bytes()).hexdigest()})
-    for item in recipe['sources']:item['sha256']=hashlib.sha256((project/item['path']).read_bytes()).hexdigest()
-    closure=digest(sorted(recipe['sources'],key=lambda item:item['path']))
-    recipe['model_evidence']['adapter_sha256']=closure
-    for field in recipe['model_evidence']['fields']:field['contract']['source_sha256']=closure
-    for metric in recipe['model_evidence']['metric_definitions']:metric['evaluator_sha256']=closure
-    save('recipe.json',recipe)
-    registration['recipes'][0]['sha256']=hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest()
-    registration['recipes'][0]['label']='Explicit QA nominated CPU '+expected_sha[:12]
-    save('project.json',registration)
-    return nomination
-
-
-def validate_nomination_project(package, project, expected_sha):
-    """Reconstruct every authored declaration; a marker is not provenance."""
-    registration=json.loads((project/'project.json').read_bytes())
-    with tempfile.TemporaryDirectory(prefix='extension-runtime-declaration-') as temporary:
-        expected=Path(temporary)/'project';shutil.copytree(package,expected)
-        nominate_runtime_project(expected,expected_sha,project_id=registration['id'])
-        for source in expected.iterdir():
-            if source.is_file():
-                require((project/source.name).read_bytes()==source.read_bytes(),
-                        'Existing nominated project declaration differs: '+source.name)
+def qualification_inputs(args):
+    package=getattr(args,'project_template',ROOT/'examples/extensions/field-surrogate/v2').resolve()
+    expected=getattr(args,'expected_runtime_sha256',RUNTIME_SHA)
+    require(type(expected) is str and len(expected)==64 and all(c in '0123456789abcdef' for c in expected),
+            'Select an exact expected runtime snapshot SHA256')
+    for name,sha in (('fixture.json',FIXTURE_SHA),('cold_oracle.py',ORACLE_SHA)):
+        require(hashlib.sha256((package/name).read_bytes()).hexdigest()==sha,'Frozen '+name+' differs')
+    recipe=json.loads((package/'recipe.json').read_bytes())
+    require(recipe['runtime']=='captured_cpu_python_v1' and recipe['runtime_snapshot_sha256']==expected,
+            'Project runtime nomination differs from explicitly expected snapshot; no fallback')
+    return package,expected
 
 
 def main(args):
+    package,expected_runtime=qualification_inputs(args)
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
-    package=ROOT/'examples/extensions/field-surrogate/v2'
-    for name,sha in (('fixture.json',FIXTURE_SHA),('cold_oracle.py',ORACLE_SHA)):
-        require(hashlib.sha256((package/name).read_bytes()).hexdigest()==sha,'Frozen '+name+' differs')
-    require(type(args.expected_runtime_sha256) is str and len(args.expected_runtime_sha256)==64 and
-            all(c in '0123456789abcdef' for c in args.expected_runtime_sha256),'Exact expected runtime SHA256 required')
-    nominated=args.expected_runtime_sha256!=RUNTIME_SHA
     project=args.project.resolve() if args.project is not None else output/'project'
-    if args.project is None:
-        shutil.copytree(package,project)
-        if nominated:nominate_runtime_project(project,args.expected_runtime_sha256)
+    if args.project is None:shutil.copytree(package,project)
     else:
-        expected=json.loads((package/'recipe.json').read_bytes())
-        names=['fixture.json','producer.py','evidence_writer.py','task.json','NOTICE.txt','cold_oracle.py'] if nominated else ['project.json','recipe.json','fixture.json',*[row['path'] for row in expected['sources']]]
-        for name in names:
+        template_recipe=json.loads((package/'recipe.json').read_bytes())
+        for name in ['project.json','recipe.json','fixture.json',*[row['path'] for row in template_recipe['sources']]]:
             require((project/name).read_bytes()==(package/name).read_bytes(),'Existing exact project differs: '+name)
     recipe=json.loads((project/'recipe.json').read_bytes());policy=recipe['model_evidence']
-    require(recipe['runtime_snapshot_sha256']==args.expected_runtime_sha256 and
-            json.loads((project/'extension.json').read_bytes())['runtime']['snapshot_sha256']==args.expected_runtime_sha256,
-            'Project must declare the exact explicitly nominated runtime')
-    if nominated:
-        validate_nomination_project(package,project,args.expected_runtime_sha256)
+    require(recipe['runtime_snapshot_sha256']==expected_runtime,'Copied project runtime nomination changed')
     dataset=server=worker=owner=credential=None;endpoint=config=None;sequence=0
     report={'state':'in_progress','scope':'Actual A CPU/Study/custody/cold scientific state; UI/agent field projection pending',
         'host_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'oracle_sha256':ORACLE_SHA,'fixture_sha256':FIXTURE_SHA,'checks':[],
-        'expected_runtime_sha256':args.expected_runtime_sha256,'runtime_nomination':'explicit_new_QA_project' if nominated else 'original_default',
         'catalog_path':str(args.catalog.resolve()),'project_roots':{'extension-a':str(project)},
+        'expected_runtime_snapshot_sha256':expected_runtime,
+        'project_runtime_nomination':{'template':str(package),'recipe_sha256':hashlib.sha256((project/'recipe.json').read_bytes()).hexdigest(),
+            'runtime':recipe['runtime'],'runtime_snapshot_sha256':recipe['runtime_snapshot_sha256'],
+            'relationship':'original_0b15_profile' if expected_runtime==RUNTIME_SHA else 'explicit_new_runtime_QA_nomination'},
         'physical_acceptance':'not_established','product_acceptance':'not_established'}
     def write(name,value):
         path=output/name
@@ -182,8 +132,8 @@ def main(args):
         with dataset.access.bind(owner['token']):
             snapshots=RuntimeSnapshots(dataset.db,dataset.access,dataset.path)
             inventory=snapshots.inspect(json.loads(args.runtime_config.read_bytes()))
-            require(inventory['inventory_sha256']==args.expected_runtime_sha256,'Actual runtime differs from reviewed snapshot')
-            report['runtime']=snapshots.create(json.loads(args.runtime_config.read_bytes()),args.expected_runtime_sha256,quiesced=True)
+            require(inventory['inventory_sha256']==expected_runtime,'Actual runtime differs from explicitly nominated snapshot')
+            report['runtime']=snapshots.create(json.loads(args.runtime_config.read_bytes()),expected_runtime,quiesced=True)
             credential=dataset.access.issue({'label':'Explicit extension A CPU qualification','scopes':['inspect','edit','execute','cancel']})
         private('agent-token.private',credential['token'])
         def configure(name):return private(name,json.dumps({'endpoint':endpoint,'catalog_id':report['catalog_id'],'token_file':str(output/'agent-token.private')}))
@@ -324,7 +274,7 @@ def qualify_retained_negatives(args):
             http('runs.submit_external',{'request_key':'plain-model-evidence-'+uuid.uuid4().hex,
                 'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':current['material_sha256'],
                 'approval_id':original['approval_id']},expected=409)
-            unchanged('Legacy submission refusal');checks.append({'check':'New variant refuses executable-only legacy submission before grant consumption/Run/reservation','state':'passed'})
+            unchanged('Legacy submission refusal');checks.append({'check':'New variant refuses executable-only legacy submission before implicit grant/Run/reservation','state':'passed'})
             source=args.project.resolve()/'producer.py'
             def source_fault():
                 http('graphs.preflight_external',{'graph_id':graph['id'],'revision':graph['revision']},expected=409)
@@ -474,16 +424,21 @@ def qualify_public_fields(args):
         dataset.close()
 
 
-if __name__=='__main__':
+def argument_parser():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--public-only',action='store_true',help='Co-test selected HTTP and agent fields for an existing real receipt; never admit')
-    parser.add_argument('--expected-runtime-sha256',default=RUNTIME_SHA,help='Explicit exact nomination; nondefault authors a new named QA project and new hashes, never a fallback')
     parser.add_argument('--existing-receipt',type=Path,help='Run only retained fault negatives against a prior real qualification receipt')
     parser.add_argument('--project',type=Path)
     parser.add_argument('--require-public-fields',action='store_true')
+    parser.add_argument('--project-template',type=Path,default=ROOT/'examples/extensions/field-surrogate/v2')
+    parser.add_argument('--expected-runtime-sha256',default=RUNTIME_SHA)
     parser.add_argument('--catalog',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--runtime-config',type=Path,required=True);parser.add_argument('--oracle-python',type=Path,required=True)
-    arguments=parser.parse_args()
+    return parser
+
+
+if __name__=='__main__':
+    parser=argument_parser();arguments=parser.parse_args()
     if arguments.existing_receipt is not None:
         if arguments.project is None:parser.error('--existing-receipt requires --project')
         (qualify_public_fields if arguments.public_only else qualify_retained_negatives)(arguments)

@@ -318,52 +318,137 @@ class Projects:
             result['extensions'] = extension_contract.catalog(saved['manifest']['extensions'], read_extension)
         return result
 
+    def _snapshot_identity(self, saved, path):
+        """Compare the current rooted path, including every parent directory."""
+        if not self._bound(saved):
+            raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
+        directory = self.roots[saved['root']][0]
+        root = os.fstat(directory)
+        if [root.st_dev, root.st_ino] != saved['root_identity']:
+            raise WorkbenchError('Original project root changed.', 'conflict', 409)
+        descriptors, identities = [], [(root.st_dev, root.st_ino)]
+        try:
+            parts = relative_path(path).split('/')
+            for index, part in enumerate(parts):
+                flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+                if index < len(parts) - 1:
+                    flags |= os.O_DIRECTORY
+                directory = os.open(part, flags, dir_fd=directory)
+                descriptors.append(directory)
+                info = os.fstat(directory)
+                if index == len(parts) - 1 and not stat.S_ISREG(info.st_mode):
+                    raise WorkbenchError('Only regular snapshot files can be captured.', 'unsupported', 400)
+                identities.append((info.st_dev, info.st_ino, info.st_size,
+                                   info.st_mtime_ns, info.st_ctime_ns))
+            return identities
+        finally:
+            for descriptor in reversed(descriptors):
+                os.close(descriptor)
+
+    def _read_snapshot_file(self, saved, path, limit):
+        try:
+            before = self._snapshot_identity(saved, path)
+            raw = self._read(saved['root'], path, limit)
+            if before != self._snapshot_identity(saved, path):
+                raise WorkbenchError('Snapshot path changed during capture.', 'conflict', 409)
+            return raw
+        except OSError:
+            raise WorkbenchError('Snapshot file cannot be safely read.', 'unavailable', 409) from None
+
+    def _snapshot_saved(self, project_id, expected_sha256=None):
+        saved = self._saved(project_id, extensions=True)
+        if expected_sha256 is not None and (not isinstance(expected_sha256, str)
+                or not SHA.fullmatch(expected_sha256) or expected_sha256 != saved['manifest_sha256']):
+            raise WorkbenchError('Select the exact saved project manifest SHA256.', 'stale', 409)
+        raw = self._read_snapshot_file(saved, saved['manifest_path'], MANIFEST_LIMIT)
+        if hashlib.sha256(raw).hexdigest() != saved['manifest_sha256']:
+            raise WorkbenchError('Project manifest changed; open a new snapshot.', 'stale', 409)
+        return saved, raw
+
+    @authorized('inspect', 'projects.read_snapshot_manifest', owner_only=True)
+    def read_snapshot_manifest(self, project_id, expected_sha256):
+        """Internal capture seam; no legacy HTTP or agent projection is added."""
+        if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
+            raise WorkbenchError('Select the exact saved project manifest SHA256.', 'stale', 409)
+        return self._snapshot_saved(project_id, expected_sha256)
+
+    @authorized('inspect', 'projects.read_snapshot_data_reference', owner_only=True)
+    def read_snapshot_data_reference(self, project_id, reference_id, expected_sha256, limit):
+        return self._read_data_reference(project_id, reference_id, expected_sha256, limit, extensions=True)
+
+    @authorized('inspect', 'projects.read_snapshot_recipe_reference', owner_only=True)
+    def read_snapshot_recipe_reference(self, project_id, reference_id, expected_sha256):
+        return self._read_recipe_reference(project_id, reference_id, expected_sha256, extensions=True)
+
+    @authorized('inspect', 'projects.read_snapshot_recipe_sources', owner_only=True)
+    def read_snapshot_recipe_sources(self, project_id, sources):
+        return self._read_recipe_sources(project_id, sources, extensions=True)
+
     @authorized('inspect', 'projects.read_data_reference')
     def read_data_reference(self, project_id, reference_id, expected_sha256, limit):
         """Capture a selected saved reference; source owners interpret its bytes."""
+        return self._read_data_reference(project_id, reference_id, expected_sha256, limit)
+
+    def _read_data_reference(self, project_id, reference_id, expected_sha256, limit, *, extensions=False):
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
             raise WorkbenchError('Import requires the observed source SHA256.')
         if type(limit) is not int or not 0 < limit <= DATA_LIMIT:
             raise WorkbenchError('Invalid bounded data read limit.')
-        saved = self._saved(project_id)
+        saved = self._snapshot_saved(project_id)[0] if extensions else self._saved(project_id)
         if not self._bound(saved):
             raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
         ref = next((entry for entry in saved['manifest']['data'] if entry['id'] == reference_id), None)
         if ref is None:
             raise WorkbenchError('Data reference not found.', 'not_found', 404)
         try:
-            raw = self._read(saved['root'], ref['path'], limit)
+            if extensions:
+                raw = self._read_snapshot_file(saved, ref['path'], limit)
+            else:
+                raw = self._read(saved['root'], ref['path'], limit)
         except OSError:
             raise WorkbenchError('Data reference cannot be safely read.', 'unavailable', 409) from None
         digest = hashlib.sha256(raw).hexdigest()
         if digest != expected_sha256 or ref.get('sha256', digest) != digest:
             raise WorkbenchError('Data changed or differs from its declared SHA256. Inspect again before importing.', 'conflict', 409)
+        if extensions:
+            self._snapshot_saved(project_id, saved['manifest_sha256'])
         return raw, {'project_id': project_id, 'manifest_sha256': saved['manifest_sha256'],
                      'reference_id': reference_id, 'path': ref['path'], 'measured_sha256': digest}
 
     @authorized('inspect', 'projects.read_recipe_reference')
     def read_recipe_reference(self, project_id, reference_id, expected_sha256):
+        return self._read_recipe_reference(project_id, reference_id, expected_sha256)
+
+    def _read_recipe_reference(self, project_id, reference_id, expected_sha256, *, extensions=False):
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
             raise WorkbenchError('Select the observed recipe SHA256.')
-        saved = self._saved(project_id)
+        saved = self._snapshot_saved(project_id)[0] if extensions else self._saved(project_id)
         if not self._bound(saved):
             raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
         ref = next((entry for entry in saved['manifest']['recipes'] if entry['id'] == reference_id), None)
         if ref is None:
             raise WorkbenchError('Recipe reference not found.', 'not_found', 404)
         try:
-            raw = self._read(saved['root'], ref['path'], 65536)
+            if extensions:
+                raw = self._read_snapshot_file(saved, ref['path'], MANIFEST_LIMIT)
+            else:
+                raw = self._read(saved['root'], ref['path'], MANIFEST_LIMIT)
         except OSError:
             raise WorkbenchError('Recipe definition cannot be safely read.', 'unavailable', 409) from None
         measured = hashlib.sha256(raw).hexdigest()
         if measured != expected_sha256 or ref.get('sha256', measured) != measured:
             raise WorkbenchError('Recipe changed. Inspect its definition again.', 'stale', 409)
+        if extensions:
+            self._snapshot_saved(project_id, saved['manifest_sha256'])
         return raw, {'project_id': project_id, 'manifest_sha256': saved['manifest_sha256'],
                      'reference_id': reference_id, 'path': ref['path'], 'measured_sha256': measured}
 
     @authorized('inspect', 'projects.read_recipe_sources')
     def read_recipe_sources(self, project_id, sources):
-        saved = self._saved(project_id)
+        return self._read_recipe_sources(project_id, sources)
+
+    def _read_recipe_sources(self, project_id, sources, *, extensions=False):
+        saved = self._snapshot_saved(project_id)[0] if extensions else self._saved(project_id)
         if not self._bound(saved):
             raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
         if not isinstance(sources, list) or not 1 <= len(sources) <= 64:
@@ -375,15 +460,20 @@ class Projects:
             if path in result:
                 raise WorkbenchError('Repeated source path.')
             try:
-                raw = self._read(saved['root'], path, FILE_LIMIT)
+                if extensions:
+                    raw = self._read_snapshot_file(saved, path, min(FILE_LIMIT, extension_contract.CATALOG_LIMIT - total))
+                else:
+                    raw = self._read(saved['root'], path, FILE_LIMIT)
             except OSError:
                 raise WorkbenchError('Recipe source cannot be safely read.', 'unavailable', 409) from None
             total += len(raw)
-            if total > INSPECTION_LIMIT:
-                raise WorkbenchError('Source closure exceeds 64 MiB.')
+            if total > (extension_contract.CATALOG_LIMIT if extensions else INSPECTION_LIMIT):
+                raise WorkbenchError('Source closure exceeds its bounded capture budget.' if extensions else 'Source closure exceeds 64 MiB.')
             if hashlib.sha256(raw).hexdigest() != source['sha256']:
                 raise WorkbenchError('Recipe source changed; update and review its definition.', 'stale', 409)
             result[path] = raw
+        if extensions:
+            self._snapshot_saved(project_id, saved['manifest_sha256'])
         return result
 
     @authorized('inspect', 'projects.evidence')

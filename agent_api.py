@@ -564,6 +564,30 @@ _field_result['oneOf'].append(obj(_field_fields,[key for key in _field_fields if
 _field_query['outputSchema']['oneOf'][0]['properties']['result']=_field_result
 _field_query['description']='Read exact retained classifier or validation field evidence through its task-owned decoder; no inference or test exposure.'
 _CONTRACTS['runs.model_evidence'][2]=_field_query
+# Project extension capture has an explicit inspector contract. Historical
+# recipe clients keep their selected-only grammar and cannot opt into binding
+# by supplying a field in the request body.
+_contribution_ref=obj({'id':text(129),'version':text(32),'sha256':SHA})
+_extension_binding=obj({'format':const('tuldok_extension_binding_v1'),
+    'project':obj({'id':ID,'manifest_sha256':SHA,'manifest_path':text(512)}),
+    'schema_sha256':obj({key:SHA for key in ('extension','contribution','parameter')}),
+    'selections':array(_contribution_ref,64,1),
+    'contributions':array(obj({'id':text(129),'version':text(32),'sha256':SHA,
+        'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
+        'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA}),
+        'definition':{'type':'object','maxProperties':64}}),64,1),
+    'inventory':array(obj({'path':text(512),'sha256':SHA,'bytes':integer(0,8*1024**2)}),64,1)})
+_bound_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][1])
+_inspection_fields={'definition':{'type':'object','maxProperties':32},
+    'receipt':obj({'project_id':ID,'manifest_sha256':SHA,'reference_id':REF,'path':text(512),'measured_sha256':SHA}),
+    'parameter_definitions':{'type':'object','maxProperties':32},
+    'inputs':{'type':'object','maxProperties':32},'outputs':array({'type':'object','maxProperties':8},96,1),
+    'runtime':{'enum':['system_python','captured_cpu_python_v1']}}
+_bound_inspection['outputSchema']['oneOf'][0]['properties']['result']={'oneOf':[
+    obj(_inspection_fields),obj(dict(_inspection_fields,extension_binding=_extension_binding,
+                                   model_task=TASK_REF,selection_policy=SELECTION_POLICY))]}
+_bound_inspection['description']='Inspect exact selected recipe and inert project extension contribution binding; no imports, runtime probing or admission.'
+_CONTRACTS['recipes.inspect'][2]=_bound_inspection
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
