@@ -1,0 +1,5 @@
+Private authored QA inference adapter for the Tuldok scalar A example.
+Authored for this qualification; no physical solver, model-quality or public redistribution claim.
+Only Python standard-library modules are imported. No third-party implementation is bundled.
+Runtime libraries and their complete notices remain the package/runtime owner's responsibility.
+Permission here is limited to this private QA workflow; no public distribution rights are granted.
