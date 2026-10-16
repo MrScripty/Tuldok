@@ -29,3 +29,12 @@ the independently frozen A/B source, package and original native qualification.
 Their149-file application freeze and numerical/source evidence retain their
 original exact host. No numerical producer, custody, material, SDK or source
 package changes; final restored native inspection uses this corrected UI.
+
+The permanent regression, `tests/browser_workspace_graph_focus.cjs`, always
+requires the three focused selections, both held-response safeguards and zero
+recipe Runs. It has no old-source or environment-selected acceptance mode.
+Its [actual Chromium receipt](examples/graph-keyboard-focus/regression.json)
+binds the tested application to commit `ecb4e8e` and the added test bytes to
+SHA `f051f89d05ca862ac493d3672a651d748dc3bf3d616bd93a85cca9a056bc7e9f`.
+The fixture opens an inert private Project and saves graphs; it performs no
+recipe preflight or execution and establishes no scientific acceptance.
