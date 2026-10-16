@@ -1,0 +1,43 @@
+{
+  "state": "passed_offline_review",
+  "package_sha256": "78e806a13cc7aad3463cef794e5c47c5e85333c0244f235367f398c3c4f8f9a2",
+  "package_bytes": 269168,
+  "zip_inventory_files": 69,
+  "lineage_artifacts": 31,
+  "published_sources_exact": 17,
+  "source_run_id": "610afd2bb09b4c1588b23a628d5756d3",
+  "package_run_id": "6122dc25241b42cf9b72213390f72524",
+  "verifier_run_id": "ea998c767836451eb06c62d5fac270cf",
+  "runtime_sha256": "0b15b611ead55bd5fa6f2f7bbcc56870f6e9f9f60f2192d989e7473ef8af1826",
+  "masked_receipt_sha256": "caec5f8dc1bb52f6eeb0707d2ceb35fc00f41456809115ffbc6aa97a1c0b220c",
+  "charged_receipt_sha256": "008920a6ed2c8ec061b7c6c0140c20e67f170e57f9297512176981db07955d26",
+  "masked_verification_equals_charged": true,
+  "values_compared_each": 64,
+  "max_absolute_difference": 0,
+  "independent_retained_state_replay": true,
+  "charged": {
+    "admitted_wall_seconds": 771,
+    "attempt_slots": 3,
+    "peak_staging_bytes": 102988554,
+    "retained_bytes": 55405809
+  },
+  "final_reservations_independently_checked": true,
+  "final_accounting_sha256": "5d3419261aea49e2ecc4d7119dee4097bcd150eaa1eeaf12300da91f40598802",
+  "final_counts_sha256": "7f4e1c8e1746a775ef6a5192396199dfcc3434c00f08f1838b6305895ee1b9ab",
+  "scope": "Read-only retained canonical A package and fixed validation probe reconstruction; no inference/producer/runtime rerun; no physical quality, B, 505, restore or hostile-sandbox claim.",
+  "approved_full_material_envelope_arithmetic_independently_checked": true,
+  "evidence_limits": [
+    "Private HOME emptiness was checked at guard stage; accepted CPU launcher rebuilds its child environment.",
+    "Filesystem absence applies to the trusted consumer and explicit masks; this is not a hostile-code sandbox.",
+    "Package retains permissioned native source arrays and source closure; no public distribution or privacy claim."
+  ],
+  "full_material_document_sha256": {
+    "package-full-material.json": "f73b9e7f549f5b3be284e1fdfd84b66772c27b05ffc9cbf6f20e7f9191cee557",
+    "verifier-full-material.json": "bb3da33a984ad8c37063b84100484f60889f6af16df7f2c6a8d34910fe755560"
+  },
+  "approved_material_checks": [
+    "Canonical full composition digests equal exact trial, approval, Run approval and reservation identities.",
+    "Executable, recipe trainer, runtime descriptor and complete capture hash/byte multisets agree with separately retained public Runs.",
+    "Both approved four-dimensional resource envelopes exactly equal settled reservation rows; their sums plus original source charge equal every final charged total."
+  ]
+}
