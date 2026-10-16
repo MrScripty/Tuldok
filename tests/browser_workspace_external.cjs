@@ -50,7 +50,7 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');await send('Network.enable');
   const offlineCanary=process.env.LD_PRELOAD?JSON.parse(execFileSync('python3',['-c',"import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"],{cwd:root,encoding:'utf8'})):null;
   await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
-  await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("open-project")'));
+  await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('typeof document.getElementById("open-project")?.onclick==="function"'),'Project controls are not bound');
   await openProject('project.json',project.name,project.id);await nav('pipeline');
   await click('[data-project-recipe="neutral"]');await until(()=>evaluate('!!document.querySelector("[data-external-input=sample]")'));
   await select('[data-external-input="sample"]','sample');await fill('#external-create-name','Neutral exact bytes');
