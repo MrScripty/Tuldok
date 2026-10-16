@@ -20,12 +20,15 @@
   record is historical only. Do not claim a fresh consultation or upgrade.
 - Verification: source/template structure and independent plan review.
 
-## I3 — Executable extension runtime/numerical/cost gate remains pending
+## I3 — Executable extension runtime/numerical/cost qualification
 
 - Severity: high for X2/X3 activation.
 - Owner/boundary: qualified captured CPU runtime and model/evidence owners.
-- Disposition: E2 real producer/consumer/custody/cost gate; capability stays unavailable
-  until it passes. Fixtures cannot close physical-model or unsupported runtime claims.
+- Disposition: actual canonical A source/cold/numerical/custody and finite-cost
+  evidence is retained in PR76 on the exact 0b runtime, with independent review.
+  This supersedes the earlier A-runtime-unavailable state. Full independent B,
+  integration and unsupported runtime claims remain separately gated; synthetic
+  fixtures cannot close physical-model or hardware claims.
 - Verification: exact captured runtime, actual checkpoints/probes, independent oracle,
   receipt-backed publication, measured selected profile bounds and cold inspection.
 - Prerequisite evidence: PR68 qualifies the existing captured CPU/pressure producer;
@@ -68,18 +71,32 @@
   unavailable without importing app/DB/Torch or installing at startup.
 - Revisit: unsupported keyword, divergent interpretation or new schema consumer.
 
-## I7 — Accepted inspection and remaining executable prerequisites
+## I7 — Accepted inspection and current executable qualification
 
-- Owner: lead thread01a13f2b-3678-73df-8bce-2f57a04de00b for all merges/shared files.
+- Owner: current lead thread `01a14159-4cbb-70d0-92cf-981514f3d0e4` for all
+  merges/shared files, succeeding original lead `01a13f2b-3678-73df-8bce-2f57a04de00b`.
 - P1 PR66 merged as8673509; original E1 browser/HTTP inspection PR64 merged as
   91c5e96 after exact-head lifecycle/catalog/workspace CI and independent review.
 - New snapshot routes remain owner-only/unregistered. Negotiated snapshot agent
   projections need explicit registry/CLI/MCP contracts and qualification; none are
   inferred from P1 negotiation support. Legacy project operations stay v1-only.
-- E2 requires accepted P2/P3/P4. P2 PR70 at1678a4c is Verifying; generic P3/P4
-  evidence/views remain unavailable. E4 requires accepted P5 export/fresh inference.
+- The lead supplied and composed P2/P3/P4 plus canonical P5 before actual
+  canonical A qualification. PR76 at `6da68df` retains normal SDK admission,
+  source/cold/numerical, native/public/refusal, package/separate charged verifier,
+  masked fresh inference and independent reviews on the exact 0b runtime.
+  Final source/package/verifier accounting is three settled attempts, three
+  slots / 771 seconds / 55,405,809 retained bytes / 102,988,554 staging bytes,
+  within unchanged original finite limits; no budget amendment.
+- PR80's independent B consumer is frozen at `311431e`, with 23 synthetic
+  validator-only cases. The integration lead owns its actual B bundle, separate
+  50502 A/B catalog, native raw/corrected-stage and unrelated-task checks.
+- PR81 separately exercises A-only stopped backup/restore, absent roots,
+  current-access revocation and cold inspection. It cannot close shared A/B
+  upgrade/disable/removal or the full supported-client matrix. Exact-head CI,
+  independent review and lead acceptance remain integration/merge gates.
 - Actual CPU/runtime/pressure and authored scalar-A producer preparation is retained
   in PR68/69, separate from host activation. Pressure physical result remains0/16;
   recurring pressure-CNN checkpoints/probes and protected test are unavailable.
-- Current light baseline styles are reused. Shared dark model/evidence UX remains
-  the lead's P3 concern; original E1 receipts do not claim it.
+- Original E1 receipts reuse the then-current baseline styles. Later canonical A
+  native receipts qualify the composed dark/light evidence UI at 1440/390;
+  neither receipt is substituted for the pending actual B stage workflow.
