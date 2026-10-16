@@ -1,6 +1,84 @@
 # Extension-system execution ledger
 
-## 2026-10-16 — Canonical A evidence and remaining A/B gates
+## 2026-10-16 — Current composed qualification; final agent/CI work remains
+
+This entry supersedes the earlier checkpoint statuses below. Those dated records,
+including failed verification attempts and then-unavailable prerequisites, remain
+historical evidence. Local status base is `0150582`; only the integration lead's
+[PR78](https://github.com/MrScripty/Tuldok/pull/78) publishes the composed head and
+its CI. No final CI or whole-plan pass is inferred from this local source.
+
+- P1–P6 are implemented and merged with their recorded qualification. The former
+  P2/P3/P4/P5 implementation blockers are closed; see
+  [product status](../end-to-end-model-development/reports/product-implementation-status.md).
+  The separate 0b PR76/81 source/package/retention history below remains exact.
+- Main 50502 canonical A Run `0ca8523fe44f42bea520e941f79b839b` and independent
+  B Run `3ceea12b26754accb2c65f3a0aa5038f` passed ordinary SDK admission,
+  numerical oracles and hot/cold whole-byte checks. B's source/mask and two
+  raw/corrected stages are package-owned; all 149 frozen application files stayed
+  unchanged. [Actual B history](reports/independent-b-50502-qualification.md)
+  preserves both tests-only verification failures, one owner settlement and
+  read-only recovery without another admission. The independently frozen
+  [B cold consumer](reports/independent-b-actual-cold-consumer.md) also passed.
+- Main A package `6924591425a84ef19d926b6b63b9e7da` and separate verifier
+  `cb7935abed6c488bbcb8e434cc90fc29` passed, plus masked fresh inference.
+  Whole 269,170-byte ZIP SHA256
+  `7a17efbbc2af6e5a95eca9fcaf8bac08c9e22840e12986b1480f85b7e3f72aec`
+  reconstructs all 64 fixed native values exactly. The original finite A Study
+  stayed three slots / 771 seconds / 55,405,825 retained bytes / 102,988,586
+  staging bytes, without amendment. These are the main 50502 values, not the
+  slightly different 0b catalog accounting below.
+- [Shared A/B retention](reports/e4-ab-final-qualification.md) passed stopped
+  backup/fresh restore, rootless warm/cold reads, current revocation, cross-grant
+  refusal, disabled/removed B current selection and official HTTP/CLI/MCP.
+  One unrelated classifier completed/settled once; same-Run cold recovery passed
+  17 whole/stream reads, 16 declared captures and two locked-test refusals.
+  Both restored native journeys passed with 44 captures. Final bookend SHA256
+  `1589d5396ca45e5ec8758029288ea9a228d9f54e9b3ed7426ee748b3bb953cc6`
+  preserves original 42-table/sequences/files/modes/custody and root identities,
+  plus restored 39-domain-table parity. Final counts are five Runs, five grants,
+  four external consumptions, five reservations, five Studies, seven Trials,
+  seven Projects and seven recipe materials. A3/B1 and the separate classifier1
+  charges are unchanged. Core `ecc35409...` keeps its original disable-pending
+  state; no old receipt was promoted or rewritten.
+- Six image/text/audio/mesh/points/volume descriptor fixtures at
+  `4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a` pass 8 focused cases and 24 existing
+  SDK/catalog cases, zero skips. Independent review SHA256
+  `80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`
+  confirms exact host/SDK projections, bounded declarations and inert opaque
+  metadata fallback. This closes E3's fixture obligation, not new trainers,
+  renderers or mandatory case12 ordinary workflow execution.
+- The later external package UI source `00865e9` completed actual A/B journeys
+  with 56 captures. Raw A/B receipt SHAs are
+  `665cd332f67392aebd263045e034cd091068c578a5619e7246c6c722b7130a8b` /
+  `a5fb2674aae4033d40e7408bfd23c548d85f61f65db3a4e498a156f308d6cb0c`;
+  capture manifest SHA is
+  `850de68752a6385e4de80c8187634b893570d2ebe055094bbed8b1cdbe50cb0b`.
+  Final independent review
+  `d26dbef42c29e3745686a388a43c33b2401822e8a56207c82f855bb433ceb1f2`
+  confirms the whole ZIP/verifier and honest unsupported B package state,
+  unchanged domain/admission counts and stopped services. Its source manifest
+  records 144 prior application files unchanged and five late explicit changes;
+  earlier exact 149-file and 148-plus-one native proofs remain historical.
+  P3 sealed the [separate proof report](reports/native-external-package-evidence.md)
+  at `6905fc8`. A further real-200/read→revoke→same-GET401 test passed in 25.688
+  seconds with unchanged 13 domain counts; tests-only source `c0efd4f` has
+  independent review SHA256
+  `d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
+- New ordinary-agent snapshot/bound-source authoring is not qualified yet.
+  Published [PR86](https://github.com/MrScripty/Tuldok/pull/86) candidate head
+  `831ac7095790fcd0544c1afa15bf1c578a69a2c6` is under review after
+  revision-authority/receipt corrections. Twelve focused cases passed in 67.377
+  seconds at the earlier pre-correction checkpoint; they are not proof of the
+  current candidate or an actual agent workflow.
+  No new 50502 agent-authoring admission is claimed. The isolated qualification
+  helper is composed, but authoring source review/fresh public execution remain.
+- Overall E4/plan acceptance and composed CI stay open. Remaining work is the
+  new agent path, sealed late-UI proof composition, independent
+  composed review and exact-head PR78 CI/lead integration. No B package, GPU,
+  physics, hard quota, public distribution or hostile-code isolation claim follows.
+
+## 2026-10-16 — Canonical A evidence and remaining A/B gates (earlier checkpoint)
 
 - PR76 at `6da68df` retains the actual 0b canonical A source Run
   `610afd2bb09b4c1588b23a628d5756d3`, all 32 hot/cold whole artifacts, independent

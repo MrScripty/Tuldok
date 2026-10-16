@@ -2,9 +2,9 @@
 
 **Plan status:** `Verifying`
 
-**Current phase:** E2–E4 — close negotiated agent authoring and external package UI
+**Current phase:** E2–E4 — qualify negotiated agent authoring and compose the completed UI evidence
 
-**Next slice:** Implement and qualify agent snapshot/bound-source authoring and the external candidate/package/fresh-verifier view; complete composed CI and serial integration.
+**Next slice:** Finish review of the agent-authoring revision/receipt corrections and fresh 50502 public qualification; compose the sealed late package UI proof; complete PR78 exact-head CI and serial integration.
 
 **Acceptance status:** `partial`
 
@@ -23,9 +23,11 @@ disable-pending state. Later restored-only B disable/removal passed in its own
 immutable receipt. Classifier cold recovery, 44 restored native captures and
 the final original/restored bookend have also passed. The
 [shared retention matrix](reports/e4-ab-final-qualification.md) retains that exact
-scope. Full acceptance remains open for negotiated agent source authoring and
-the external A package/fresh-verification interface; those are implementation
-gaps, not completed gates.
+scope. The later external A package/fresh-verification UI at `00865e9` has now
+completed both actual browser journeys (56 captures) with independent final
+review; its [separate report](reports/native-external-package-evidence.md) is
+sealed at `6905fc8` for serial integration. Negotiated ordinary-agent source authoring remains under revision-authority/receipt review and has no fresh 50502 actual
+qualification. Overall acceptance and composed CI remain open.
 
 The separate 0b canonical A package/fresh-inference and
 [A-only stopped retention](reports/e4-canonical-a-retention-qualification.md)
@@ -61,10 +63,11 @@ qualification in [PR76](https://github.com/MrScripty/Tuldok/pull/76).
 Its [source/cold report](reports/e2-canonical-a-cpu-qualification.md) and
 [native/public/refusal report](reports/e2-canonical-a-interface-qualification.md)
 record actual 0b-runtime evidence; PR76 also retains the separately charged
-package/verifier and additional masked-consumer receipts. These are completed
-witnesses, while full A/B acceptance and exact-head CI/lead integration remain
-pending. Exact runtime review/grants remain independent
-of implementation authorization. No product gate is closed from design alone.
+package/verifier and additional masked-consumer receipts. The separate main 50502
+A/B source, package and shared-retention witnesses are also complete in the
+linked reports above. The remaining ordinary-agent workflow, final publication
+and exact-head CI/lead acceptance stay separate. Exact runtime review/grants
+remain independent of implementation authorization. No product gate is closed from design alone.
 
 Canonical intended repository path: `docs/plans/extension-system/plan.md`.
 The [research recommendation](reports/research.md) and
@@ -86,8 +89,8 @@ the separate product gates following the table.
 Product acceptance uses the actual implementation evidence below. X3's stated
 change-locality criterion is satisfied by the independent B source freeze and
 later retained-history/unrelated-classifier controls. Overall acceptance remains
-partial for X5's remaining external package UI, the cross-cutting negotiated
-agent-authoring workflow and composed CI/integration:
+partial for the cross-cutting negotiated agent-authoring workflow and X5's
+composed interface/regression acceptance. Completed named retention and late-UI proofs do not qualify the unseen new agent implementation:
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -95,7 +98,7 @@ agent-authoring workflow and composed CI/integration:
 | X2 | Real independent CPU model uses exact normal admission/custody, verified publication and common evidence queries/views. | integration | required-real | either | satisfied | [Canonical A](reports/canonical-a-50502-qualification.md), [independent B](reports/independent-b-50502-qualification.md), [independent cold consumer](reports/independent-b-actual-cold-consumer.md) |
 | X3 | Independent B changes required I/O and stages without application-owner edits; A history and unrelated tasks still work. | integration | required-real | either | satisfied | [Independent B and exact 149-file freeze](reports/independent-b-50502-qualification.md), [restored A/B and classifier continuity](reports/native-restored-author-ab.md), [final source/accounting bookend](reports/e4-ab-final-qualification.md) |
 | X4 | SDK validates without app/DB/Torch startup and separately runs conformance through normal authorized Runs. | contract | representative | either | satisfied | [Isolated SDK contract gate](reports/e3-sdk-contract-qualification.md), [actual canonical A SDK](reports/canonical-a-50502-qualification.md), [actual independent B SDK](reports/independent-b-50502-qualification.md) |
-| X5 | Upgrade/disable/removal, supported clients, cold reads, backup/restore and fresh inference retain meaning/current access. | integration | required-real | either | pending | E4 and accepted PR62 P5 |
+| X5 | Upgrade/disable/removal, supported clients, cold reads, backup/restore and fresh inference retain meaning/current access. | integration | required-real | either | pending | [Shared retained-state matrix](reports/e4-ab-final-qualification.md) and accepted P5 pass; [late package UI actual/review](reports/native-external-package-evidence.md) passed; new agent-authoring and final composed regression/CI remain open |
 
 ## Scope
 
@@ -137,8 +140,8 @@ agent-authoring workflow and composed CI/integration:
   application main is `f58880df84d701ef66ffe21615ae787d80ce8a5e`. PR62's
   [selected design and P1–P6 handoff](../end-to-end-model-development/reports/implementation-handoff.md)
   originally described unimplemented prerequisites, not runtime qualification.
-  Current accepted P1 and remaining P2–P5 state is recorded in Blockers below. Current contracts
-  govern existing behavior; source/consumer facts are in the [baseline](reports/baseline-and-inputs.md).
+  Accepted P1–P6 and current extension qualification are recorded in Blockers
+  below. Current contracts govern existing behavior; source/consumer facts are in the [baseline](reports/baseline-and-inputs.md).
 - Adopted standards remain `dcc56f26e884ade260770beceba2501d3746200d`.
   The actual template/source were read; [standards application](reports/standards-application.md)
   records their effects. No AGENTS file or callable standards MCP is available here.
@@ -238,10 +241,10 @@ implementation expands around them, with the following stopping conditions.
 | --- | --- | --- | --- | --- | --- |
 | Existing closed v1 contracts and PR62 owner baseline | Versioning and dependencies | Plan author | Read pinned Projects/external/runtime/actors and PR62 D1/D2/D4; compare claimed current/proposed facts | GitHub read access | Source inspected and independently reviewed; M0 accepted |
 | Inert bounded discovery can serve UI and agents | Manifest/catalog seam | Projects/extension contract | E1 fixture imports/startup hooks write markers or fail; compare catalog/open/preflight side effects and malformed sibling behavior | Disposable Linux catalog; real browser/HTTP | E1 browser/HTTP accepted; negotiated snapshot agent projection remains separate |
-| Real A fits existing CPU/source/output profile and evidence contract | Runtime and data plane | Runtime/model/evidence | E2 actual Run; count captures/outputs/checkpoints/probes, wall/RSS and cold query; compare selected declared bounds | Exact captured CPU snapshot | Actual canonical A 0b source/cold/numerical and finite charges passed in PR76; integration pending |
-| B stays entirely package-local | Contribution adequacy | Independent extension author/reviewer | E3 A/B diff and real public-path run, old history and unrelated workflows | Same qualified runtime | pending |
-| No custom executable UI is needed | Declarative view choice | UI/evidence | E2/E3 real workflow at 1440/390 widths, keyboard/numeric and agent query parity | Actual browser and server | Actual canonical A native/public passed; B raw/corrected workflow pending |
-| Package reconstructs inference without ambient project/cache | SDK and closure | PR62 package/model/evaluator owners | E4 actual export/download/hash/fresh process, original checkout/cache unavailable, independent expected probes | Accepted P5 package seam plus compatible runtime | Actual canonical A charged verifier and additional source-masked consumer passed in PR76; no complete A/B retention claim |
+| Real A fits existing CPU/source/output profile and evidence contract | Runtime and data plane | Runtime/model/evidence | E2 actual Run; count captures/outputs/checkpoints/probes, wall/RSS and cold query; compare selected declared bounds | Exact captured CPU snapshot | Actual canonical A 0b and main 50502 source/cold/numerical and finite charges passed; exact runtime witnesses remain distinct |
+| B stays entirely package-local | Contribution adequacy | Independent extension author/reviewer | E3 A/B diff and real public-path run, old history and unrelated workflows | Same qualified runtime | [Independent B locality](reports/independent-b-50502-qualification.md), [A/B and classifier continuity](reports/native-restored-author-ab.md) and [final bookend](reports/e4-ab-final-qualification.md) passed |
+| No custom executable UI is needed | Declarative view choice | UI/evidence | E2/E3 real workflow at 1440/390 widths, keyboard/numeric and agent query parity | Actual browser and server | Actual A/B raw/corrected native/public and restored continuity passed; the later package UI actual/review passed separately |
+| Package reconstructs inference without ambient project/cache | SDK and closure | PR62 package/model/evaluator owners | E4 actual export/download/hash/fresh process, original checkout/cache unavailable, independent expected probes | Accepted P5 package seam plus compatible runtime | Actual 0b and main 50502 charged verifiers/masked consumers passed separately; [shared A/B retention](reports/e4-ab-final-qualification.md) also passed its named scope |
 
 ## Evidence And Oracle Plan
 
@@ -507,7 +510,11 @@ required evidence cannot fit accepted profiles; needed material cannot be captur
 without live state; a new execution/security/runtime mode is required.
 
 **Status:** `Verifying` — actual canonical A CPU/source/cold, native/public and
-negative receipts are retained in PR76; exact-head CI/lead integration pending.
+negative receipts passed on the distinct 0b and main 50502 runtimes. P1–P4
+prerequisites are implemented and merged. Ordinary-agent snapshot/bound-source
+authoring still needs candidate revision/receipt review and fresh public qualification;
+owner-prepared SDK admission is not proof of that new path. Exact-head composed
+CI and lead acceptance remain open.
 
 ### E3: Prove changed I/O and stages with an independent authoring kit
 
@@ -579,8 +586,13 @@ SDK gate are satisfied. Independent B retained its required source/mask inputs,
 raw/corrected stages and checkpoints under the exact 149-file application freeze;
 the later restored native and unrelated-classifier controls preserve A/B history
 and ordinary work. Their final original-source bookend is unchanged. These
-source-specific proofs do not qualify the still-missing negotiated agent-authoring
-workflow or external package/fresh-verifier view; overall acceptance remains open.
+source-specific proofs do not qualify the new negotiated agent-authoring
+workflow. The explicit six-modality descriptor corpus at `4f2c45a` now passes
+8 focused cases plus 24 unchanged SDK/catalog cases, with independent review
+SHA256 `80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`.
+It proves bounded shared host/SDK declarations and opaque metadata fallback,
+not new trainers/renderers or ordinary workflow execution. The later external
+package UI has its own actual/reviewed proof; overall acceptance remains open.
 
 ### E4: Qualify retention, compatibility and complete inference closure
 
@@ -644,10 +656,14 @@ package/rights/runtime blocks only its claim; it cannot be recorded as a pass.
 reader closure is missing; any accessor can disclose protected mixed data; public
 distribution/strong isolation or a new runtime is now required.
 
-**Status:** `Verifying` — actual canonical A package/separate verifier and
-additional filesystem-masked inference passed in PR76. A-only stopped retention
-PR81 also passed [stopped A-only retention](reports/e4-canonical-a-retention-qualification.md);
-lead-owned shared A/B compatibility remains distinct and pending.
+**Status:** `Verifying` — the distinct 0b and main 50502 canonical A
+package/separate-verifier/masked-consumer witnesses passed. A-only retention PR81
+and the later [shared A/B matrix](reports/e4-ab-final-qualification.md) passed
+separately, including cross-grant/disable, official clients, unrelated classifier,
+44 restored native captures and the final source/accounting bookend. The late
+external package UI at `00865e9` added 56 actual captures with clear independent
+review and unchanged counts; its [separate sealed report](reports/native-external-package-evidence.md)
+retains those exact source identities. The new agent workflow and composed interface/regression/CI acceptance remain open.
 
 ## Migration And Compatibility
 
@@ -709,22 +725,24 @@ packaging; unknown rights deny affected export without inventing a license.
 - M0 and E1 are merged. P1 PR66 merged as8673509; E1 PR64 merged as91c5e96
   after exact-head CI and independent review. Its original browser/HTTP inspection
   scope is accepted; negotiated snapshot agent projections remain unavailable.
-- P2/P3/P4 and canonical P5 implementations have been composed by the lead and
-  exercised through the actual canonical A path in PR76. This supersedes the
-  earlier implementation-unavailable blocker. The independently reviewed
+- P1–P6 are merged, as recorded in
+  [product implementation status](../end-to-end-model-development/reports/product-implementation-status.md).
+  The 0b and main 50502 A/B actuals supersede the earlier prerequisite/runtime
+  blockers without changing their historical receipts. The independently reviewed
   [pressure/runtime preparation](reports/pressure-cnn-preparation.md) and
   [scalar-A preparation PR69](https://github.com/MrScripty/Tuldok/pull/69) remain
   historical prerequisites, separate from the later canonical extension evidence.
 - Independent B consumer [PR80](https://github.com/MrScripty/Tuldok/pull/80) is
   frozen at `311431e`, with 23 validator-only synthetic cases. The lead has
   published actual B source/cold and frozen-consumer numerical evidence from its
-  separate 50502 common A/B catalog; this worker does not relabel those as local
-  execution. Native stages, classifier regression and shared retention remain
-  lead-owned gates.
+  separate 50502 common A/B catalog; authorship, actual execution and independent
+  retained-byte review remain distinct. Native raw/corrected stages, classifier
+  continuity and shared retention have now passed their recorded scopes.
 - A-only stopped retention [PR81](https://github.com/MrScripty/Tuldok/pull/81)
   uses the exact 0b catalog and preserves the existing transfer/access/custody
-  assertions. Its result cannot close B upgrade/disable/removal or the full
-  supported-client matrix. Exact-head CI and lead acceptance remain merge gates.
+  assertions. Its result alone does not close B upgrade/disable/removal or the
+  supported-client matrix; the later shared A/B receipts supply those named
+  proofs. Exact-head PR78 CI and lead acceptance remain merge gates.
 - Implementation/draft PR authority is explicit in the current delegation.
   No new runtime execution/install, production migration, deployment or monitor
   is authorized by static discovery. Runtime admission retains normal grants.
@@ -783,11 +801,14 @@ authorized. Later product branch/integration choices belong to their admitted sl
 ## Final Acceptance
 
 - Acceptance status: `partial`
-- Deferred follow-ups: complete independent B/A-to-B, disable/removal, unrelated
-  task and supported-client qualification; exact-head CI/lead integration and
-  explicit negotiated snapshot agent projections under the current delegation;
-  separately qualified GPU/strong isolation/
-  hard quotas/custom UI/transport or public distribution only on concrete need.
+- Deferred follow-ups: review the negotiated agent-authoring revision/receipt
+  corrections and complete the fresh 50502 actual public workflow; compose the sealed late external
+  package UI/revocation proof; complete exact-head PR78
+  CI, independent composed review and lead integration. Independent B locality,
+  shared disable/removal, unrelated-classifier continuity and existing supported
+  clients are completed named proofs, not remaining execution. GPU, strong
+  isolation, hard quotas, custom executable UI/transport and public distribution
+  remain outside this delivery unless separately selected on concrete need.
 - Final status: `Verifying`
 
 M0 is Accepted after independent review, reproduced checks and verified local

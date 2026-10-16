@@ -106,14 +106,37 @@ inodes and all 39 restored domain tables. The independently reviewed
 [shared retention matrix](../../extension-system/reports/e4-ab-final-qualification.md)
 passes its named scope and explicitly keeps overall E4/plan acceptance open.
 
-Two concrete workflow gaps remain under implementation. Ordinary authorized
-agents cannot yet discover/open v2 snapshots or configure bound source because
-the snapshot/read wrappers remain owner-only. The external field Run interface
-also lacks the canonical A candidate/package/fresh-verification panel, despite
-the existing verified package and verifier. New negotiated agent operations and
-a current-authority retained-candidate UI are assigned on disjoint branches.
-Their later application changes do not retrofit the frozen A/B numerical or
-149-file native proofs.
+The explicit six-modality descriptor corpus at `4f2c45a` now passes 8 focused
+cases plus 24 existing SDK/catalog cases, zero skips. Independent review SHA256
+`80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`
+confirms canonical host/SDK equality, bounded opaque declarations, exact dependency
+refusals and inert metadata fallback. This is descriptor coverage; existing actual
+one-fit/spatial workflows own their separate execution evidence.
+
+The late external field candidate/package/fresh-verification view at `00865e9`
+is implemented. Both actual A/B owner-browser journeys completed 56 captures;
+final independent review SHA256
+`d26dbef42c29e3745686a388a43c33b2401822e8a56207c82f855bb433ceb1f2`
+confirms whole ZIP/verifier identity, honest unsupported B packaging, unchanged
+39 domain tables/counts and stopped services. The source proves 144 prior files
+unchanged plus five explicit late UI/backend changes. Its
+[separate proof report](../../extension-system/reports/native-external-package-evidence.md)
+is sealed at `6905fc8`; the focused real-read/revocation regression at `c0efd4f`
+has independent review SHA256
+`d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
+Serial integration remains lead-owned;
+the older exact 149-file and 148-plus-one/44-capture proofs remain unchanged.
+
+Ordinary-agent discovery/open/bound-source authoring is the remaining functional
+qualification. Published [PR86](https://github.com/MrScripty/Tuldok/pull/86)
+candidate head `831ac7095790fcd0544c1afa15bf1c578a69a2c6` is under
+revision-authority/receipt review. Twelve focused cases passed in 67.377 seconds
+at an earlier checkpoint, before the later corrections; they are not proof of
+this current source. The isolated fresh-50502
+qualifier is composed, but no new actual public agent-authoring Run is recorded.
+Owner-prepared SDK admission cannot stand in for that workflow. Final status
+must use the reviewed new source and its own actual receipt, without retrofitting
+any earlier frozen A/B or UI proof.
 
 The P1–P6 PRs are merged. Final composed extension CI and independent acceptance
 review remain merge gates. Superseded CI is canceled only after its replacement is published.

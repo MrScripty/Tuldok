@@ -72,7 +72,11 @@ refuse a write to the sealed descriptor, stop stdout/stderr floods and retain an
 unknown in-flight timeout. The independent reviewer found no remaining concrete
 source defect at `a632cc4`.
 
-## Remaining real gates and interface constraints
+## Original remaining gates and interface constraints (historical checkpoint)
+
+The following list records the original `a632cc4` boundary. The current appendix
+below supersedes its then-pending A/B capture/execution/canonical-evolution items;
+its finite authority, unknown-outcome and runtime restrictions still apply.
 
 - A/B must actually capture and consume the SDK helper in new explicit source
   versions/materials. Old A's exact five-source closure remains historical. The
@@ -95,3 +99,45 @@ source defect at `a632cc4`.
 - Numerical/physical acceptance, actual A-to-B change locality, package/fresh
   inference and distribution rights remain separate. No numerical pass or E3
   overall completion follows from this source/contract seam alone.
+
+## Current qualification appendix — 2026-10-16
+
+The original representative seam above has since been used by real source
+versions/materials. [Canonical main 50502 A](canonical-a-50502-qualification.md)
+and [independently authored B](independent-b-50502-qualification.md) captured the
+SDK helper and completed ordinary exact-grant public CLI/SDK admission, retained
+context/evidence, hot/cold whole downloads and independent numerical checks.
+Canonical Release-derived inputs and B's required source/mask/raw/corrected policy
+are now exercised, not remaining hypothetical SDK prerequisites. The distinct
+0b [canonical A source](e2-canonical-a-cpu-qualification.md) is separately retained.
+Owner-prepared exact Trials and explicit grants remain part of these witnesses;
+they do not prove ordinary-agent snapshot/model authoring.
+
+B's original missing held oracle-freeze dependency and first read-only recovery
+route refusal are preserved in its report. Verification recovered the same Run;
+it did not rerun conformance or consume a second grant. Independent B cold
+reconstruction and [main A package/fresh inference](canonical-a-50502-package-qualification.md)
+also passed as separate numerical/package gates. The later
+[shared A/B matrix](e4-ab-final-qualification.md) preserves retention, current
+permission and ordinary-workflow continuity without rewriting its core receipt.
+
+The additional six-modality descriptor corpus at
+`4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a` is
+[documented beside its fixtures](../../../../tests/fixtures/extensions/modalities/README.md).
+Eight new cases plus 24 existing SDK/catalog cases passed, zero skips.
+Independent review SHA256
+`80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`
+binds its frozen test/corpus and confirms complete shared host/SDK projections,
+authored payload bounds, malformed declarations, exact dependency refusal and
+unchanged six-package projections beside missing/malformed/incompatible/removed
+field providers. Worker import sentinels/process guards and unchanged fixture
+bytes prove inertness at these seams. Image/text/audio/mesh/points/volume semantics
+remain opaque authored declarations with metadata fallback; no new trainer,
+renderer, numerical query or semantic conversion is qualified. This is E3's
+explicit descriptor-envelope fixture obligation, not a substitute for actual
+ordinary workflows or their composed regression suites.
+
+Still open: the new ordinary-agent discovery/open/bound-model authoring path,
+review of its revision/receipt corrections and fresh 50502 public qualification; late
+package-UI proof composition; final composed CI and lead
+acceptance. No unreviewed new API or fresh agent Run is activated by this appendix.
