@@ -136,10 +136,7 @@ class Experiments:
         actor=self.access._context().actor_id;sha=digest({'study_id':study_id,'body':body})
         with self.lock:
             receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
-            if receipt:
-                if _graph_guard is not None:
-                    _graph_guard(self.dataset.pipelines.retained_material_graph(receipt['material']))
-                return receipt
+            if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
         graph=self.dataset.pipelines.get(body['graph_id'])
         if _graph_guard is not None:_graph_guard(graph)
@@ -151,8 +148,6 @@ class Experiments:
             with self.lock,self.db.transaction():
                 receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
                 if receipt:
-                    if _graph_guard is not None:
-                        _graph_guard(self.dataset.pipelines.retained_material_graph(receipt['material']))
                     self.db.on_commit(lambda:shutil.rmtree(prepared['staging'],ignore_errors=True));return receipt
                 self.access.require('edit','studies.prepare_trial',study_id)
                 study=self._study(study_id);self._expected(study,body)

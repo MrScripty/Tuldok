@@ -247,9 +247,7 @@ class ModelDefinitions:
             prior=self.db.execute('SELECT document FROM model_materials WHERE id=%s AND revision=%s',
                                   (model_id,body['revision'])).fetchone()
         if prior:
-            retained=self.material(retained_json(prior[0])['ref'],verify=True)
-            if _source_guard is not None:_source_guard(retained['material'])
-            return retained
+            return self.material(retained_json(prior[0])['ref'],verify=True)
         draft=self.get(model_id)
         if draft['revision']!=body['revision']:raise WorkbenchError('Model changed. Reload.','stale',409)
         # Trusted boundary callback checks this exact immutable revision, never

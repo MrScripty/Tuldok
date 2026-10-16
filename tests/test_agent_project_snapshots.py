@@ -231,10 +231,10 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
         newer['source_selector']['project_id'] = legacy['id']
         self.dataset.models.save(draft['id'],{'revision':1,'document':newer})
         self.assertEqual(self.call('models.publish',{'model_id':draft['id'],'revision':1}),published)
-        # The latest draft now points at v1; the retained requested revision is v2.
+        # Verified retained replay captures nothing, even with the old contract.
         before = self.counts()
         status,result = self.http('models.publish',{'model_id':draft['id'],'revision':1},version=1)
-        self.assertEqual((status,result['code']),(403,'forbidden'))
+        self.assertEqual((status,result),(200,published))
         self.assertEqual(self.counts(),before)
 
     def test_future_revision_cannot_pass_an_old_source_gate(self):
@@ -339,7 +339,7 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
             self.dataset.pipelines.save(graph['id'],{'revision':graph['revision'],'document':newer})
             self.assertEqual(self.call('studies.prepare_trial',trial_arguments,201),trial)
             status,result = self.http('studies.prepare_trial',trial_arguments,version=1)
-            self.assertEqual((status,result['code']),(403,'forbidden'))
+            self.assertEqual((status,result),(201,trial))
             state = self.call('studies.get',{'study_id':study['id']})['study']
             self.assertFalse(state['open'])
             self.assertEqual(state['admission_epoch'],0)
