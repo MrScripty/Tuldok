@@ -43,8 +43,9 @@ manifest identity never substitutes for the full captured runtime reference.
   original missing oracle-freeze snapshot failure and a subsequent read-only
   material-route refusal are preserved. Tests-only verification recovery reads
   the existing Run; no SDK/admission retry occurred. Its one normal owner
-  settlement leaves charges unchanged. The linked source/recovery report is
-  being independently reviewed for publication.
+  settlement leaves charges unchanged. [Independently reviewed source/recovery
+  report](../../extension-system/reports/independent-b-50502-qualification.md)
+  and its hashed evidence inventory preserve the exact chronology and scope.
 - The decisive B application freeze covers149 application/SDK/UI/schema/
   dependency files at `e5d1d79`. Every file still matches after B execution and
   recovery. Tests, documentation and author packages are outside that scope.
