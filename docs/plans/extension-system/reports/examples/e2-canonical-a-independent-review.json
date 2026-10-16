@@ -1,0 +1,67 @@
+{
+  "state": "passed",
+  "scope": "Independent actual canonical A retained source/custody and scalar numerical diagnostics; no physical quality/product acceptance",
+  "host_commit": "4b68c5136a672c43006106313ef7815a82f52ca7",
+  "run_id": "610afd2bb09b4c1588b23a628d5756d3",
+  "context_sha256": "afb25d4ee59a2a1a998eeafe9b65be9683e89ab3729de527dcfc81a1ea28476c",
+  "artifact_count": 32,
+  "artifact_total_bytes": 36542,
+  "source_native_copies": 6,
+  "canonical_release_sha256": "8952f10c7878c758c40f8db329f68263716dfeb6c43196e0e66c1a77253db459",
+  "frozen_fixture_sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+  "population_mean": 0.734375,
+  "population_std": 0.946441732556738,
+  "initial_configuration": {
+    "initial_offset": -0.25,
+    "initial_scale": 0.125
+  },
+  "observations": [
+    {
+      "update": 16,
+      "reference_mse": 0.0005756206595554737,
+      "max_weight_error": 1.1102230246251565e-16,
+      "max_replay_error": 0.0,
+      "max_analytic_error": 2.220446049250313e-16
+    },
+    {
+      "update": 32,
+      "reference_mse": 4.560536716183977e-07,
+      "max_weight_error": 1.1102230246251565e-16,
+      "max_replay_error": 0.0,
+      "max_analytic_error": 2.220446049250313e-16
+    },
+    {
+      "update": 48,
+      "reference_mse": 3.613229441027695e-10,
+      "max_weight_error": 5.551115123125783e-17,
+      "max_replay_error": 0.0,
+      "max_analytic_error": 2.220446049250313e-16
+    },
+    {
+      "update": 64,
+      "reference_mse": 2.862695293846856e-13,
+      "max_weight_error": 5.551115123125783e-17,
+      "max_replay_error": 0.0,
+      "max_analytic_error": 2.220446049250313e-16
+    }
+  ],
+  "resource_envelope": {
+    "admitted_wall_seconds": 197,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 6216933,
+    "retained_bytes": 4495421
+  },
+  "custody_receipt_sha256": "421a8dc29d44915d406356b97da5831a30b4fcf6dd0e1de0f1f92d8d643e54ac",
+  "cold_equal_files_at_review": 32,
+  "cold_complete_at_review": true,
+  "final_receipt_state": "canonical_sdk_source_numerical_cold_passed",
+  "final_counts": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 1
+  },
+  "run_receipt_sha256": "b795bd74ce68d5946fd49ec60d1536b7b832b39ed59a920e9ff03dd215e7e269",
+  "oracle_receipt_sha256": "a6516027afde9945118b90fe3e61ccaf8edac759558e53af188e425221ef27ce",
+  "accounting_sha256": "fa57e99deaa9b548d604454b58da14e4d73f23f7bf5edab77ed57b3bac7ea2b5"
+}

@@ -142,6 +142,27 @@ Only locally registered operations are callable; this is not an arbitrary URL or
 route dispatcher. Existing AgentClient requires an active agent credential, and
 owner-only study control still requires authenticated owner HTTP actions.
 
+Snapshot discovery and registration use the same generic command, for example:
+
+```sh
+python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots.list --arguments page.json
+python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots.open --arguments opening.json
+python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots.get --arguments project.json
+```
+
+Here `page.json` is `{"limit":20}`, `opening.json` is
+`{"root":"research","manifest_path":"project.json"}` and `project.json` is
+`{"project_id":"OPAQUE_ID"}`. Files contain arguments only; credentials stay in
+the private client configuration. These operations select their additive v1
+contracts. Existing legacy project commands keep their original operations.
+The recipe inspection command negotiates `recipes.inspect/3`; generic calls
+also negotiate `models.publish/2`, `graphs.create_external/2`,
+`graphs.preflight_external/2` and `studies.prepare_trial/2` when supported.
+These versions authorize static source authoring with current inspect/edit
+scopes. They do not authorize owner Study control or execution; see the
+[snapshot and authoring boundary](agent-operations.md#negotiated-project-snapshots-and-bound-authoring).
+An owner credential cannot be substituted into AgentClient bootstrap.
+
 ## Optional operator observations
 
 Ordinary commands require no telemetry arguments or setup. The operator may

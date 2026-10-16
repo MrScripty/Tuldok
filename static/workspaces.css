@@ -1107,3 +1107,37 @@ details > p {
   body #session-dialog { background:var(--surface); color:var(--ink); border-color:var(--line); }
   :focus-visible,.model-workspace :focus-visible,.model-evidence :focus-visible { outline:3px solid #9ec6ff; outline-offset:3px; }
 }
+
+/* Standalone retained field pairs share the returned geometry and one display range. */
+.field-evidence { min-width:0; margin-top:20px; }
+.field-evidence .model-fields { margin:12px 0; }
+.field-evidence .field-status { min-height:1.4em; }
+.field-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.field-pair figure { min-width:0; margin:0; }
+.field-pair figcaption { margin-bottom:8px; font-weight:650; overflow-wrap:anywhere; }
+.field-slice-viewport { display:grid; place-items:center; width:100%; height:clamp(180px,24vw,360px); min-width:0; overflow:hidden; border:1px solid var(--line); background:var(--soft); }
+.field-pair canvas { display:block; max-width:100%; max-height:100%; image-rendering:pixelated; }
+.field-pair canvas[hidden] { display:none; }
+.field-display-warning { color:var(--muted); }
+.field-coordinates,.field-hash { overflow-wrap:anywhere; }
+.field-probe-controls { max-width:420px; }
+.field-evidence th,.field-evidence td { white-space:nowrap; }
+.field-evidence :focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+@media(max-width:650px) { .field-pair { grid-template-columns:minmax(0,1fr); } }
+
+/* The bound recipe editor uses native controls and a bounded modal viewport. */
+#extension-model-dialog{width:min(58rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow:auto;padding:1.25rem;box-sizing:border-box}
+#extension-model-dialog .panel-title{gap:1rem;align-items:start}
+#extension-model-dialog fieldset{min-width:0}
+#extension-model-dialog label{display:grid;gap:.35rem;margin:.6rem 0}
+#extension-model-dialog .check-row{display:flex;align-items:start;gap:.5rem}
+#extension-model-dialog input:not([type=checkbox]),#extension-model-dialog select{width:100%;min-width:0;box-sizing:border-box}
+#extension-model-dialog .author-parameters{border:1px solid var(--line,#cbd5e1);padding:.75rem;margin:.8rem 0;border-radius:.5rem}
+#extension-model-dialog .author-array-item{padding:.5rem;border-bottom:1px solid var(--line,#cbd5e1)}
+#extension-model-dialog .author-contributions{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:.6rem}
+#extension-model-dialog .author-contributions li{padding:.65rem;border:1px solid var(--line,#cbd5e1);border-radius:.5rem;min-width:0}
+#extension-model-dialog .author-contributions p{margin:.35rem 0;overflow-wrap:anywhere}
+#extension-model-dialog pre{max-height:20rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#extension-model-dialog dd{margin:0;overflow-wrap:anywhere}
+#extension-model-dialog button{margin:.25rem 0}
+@media(prefers-color-scheme:dark){#extension-model-dialog{background:#17212c;color:#edf3fa;border:1px solid #617286}#extension-model-dialog input,#extension-model-dialog select{background:#111a24;color:#edf3fa;border:1px solid #738498}#extension-model-dialog button{background:#243445;color:#edf3fa;border-color:#738498}#extension-model-dialog .author-parameters,#extension-model-dialog .author-contributions li{border-color:#617286}}

@@ -1,0 +1,81 @@
+{
+  "format": "independent_b_accounting_receipt_extract_v1",
+  "source": {
+    "path": "/workspace/shared/extension-ab-b-02-accounting-recovery-01/receipt.json",
+    "bytes": 239001,
+    "sha256": "3674058e3912b7f0e29a86a8ebbf12d5e510edb163873a5e75b77c6a6892608b"
+  },
+  "action": "one_existing_completed_run_accounting_reconciliation",
+  "state": "passed",
+  "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+  "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+  "additional_charge": false,
+  "no_admission_or_sdk": true,
+  "counts_before": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "counts_after": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "reservation_before": {
+    "actor_id": "a09ecfc3230143bc804fdcb3cd7a872f",
+    "admission_epoch": 1,
+    "envelope": {
+      "admitted_wall_seconds": 197,
+      "attempt_slots": 1,
+      "peak_staging_bytes": 5995018,
+      "retained_bytes": 4366403
+    },
+    "id": "bbebc65daffc406087e9fc02feb1bb0c",
+    "material_sha256": "6d19d4d06efabbdff713fd4148c38d5f9171773c01fba85b00e3156ee094e9e4",
+    "parent_run_id": null,
+    "request_key": "sdk-admit-c12e4508163b450790c6218430c8dfef",
+    "request_sha256": "a389b9192a5cbdfb0b66c54f0f0f10c09d4d19165bf7e3e081ea85b537a2f90d",
+    "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+    "settled": null,
+    "state": "reserved",
+    "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+    "trial_id": "11a355fbc67f49c3a9cdf42087f09baa"
+  },
+  "reservation_after": {
+    "actor_id": "a09ecfc3230143bc804fdcb3cd7a872f",
+    "admission_epoch": 1,
+    "envelope": {
+      "admitted_wall_seconds": 197,
+      "attempt_slots": 1,
+      "peak_staging_bytes": 5995018,
+      "retained_bytes": 4366403
+    },
+    "id": "bbebc65daffc406087e9fc02feb1bb0c",
+    "material_sha256": "6d19d4d06efabbdff713fd4148c38d5f9171773c01fba85b00e3156ee094e9e4",
+    "parent_run_id": null,
+    "request_key": "sdk-admit-c12e4508163b450790c6218430c8dfef",
+    "request_sha256": "a389b9192a5cbdfb0b66c54f0f0f10c09d4d19165bf7e3e081ea85b537a2f90d",
+    "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+    "settled": {
+      "admitted_wall_seconds": 197,
+      "attempt_slots": 1,
+      "peak_staging_bytes": 5995018,
+      "retained_bytes": 4366403
+    },
+    "state": "settled",
+    "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+    "trial_id": "11a355fbc67f49c3a9cdf42087f09baa"
+  },
+  "charged": {
+    "admitted_wall_seconds": 197,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 5995018,
+    "retained_bytes": 4366403
+  }
+}

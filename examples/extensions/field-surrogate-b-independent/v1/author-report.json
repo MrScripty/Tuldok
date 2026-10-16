@@ -1,0 +1,131 @@
+{
+  "format": "independent_b_author_report_v1",
+  "status": "inert_preparation_verified",
+  "scope": "Independent author package only; no actual Run, grant, host mutation or physical acceptance",
+  "base_commit": "68d6602",
+  "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "local_environment": {
+    "python": "3.12.14",
+    "numpy": "2.3.5"
+  },
+  "verification": [
+    {
+      "command": "python -m unittest discover -s examples/extensions/field-surrogate-b-independent/v1 -p test_author_numerics.py -v",
+      "state": "passed",
+      "tests": 9,
+      "evidence_kind": "local numerical/closed-package tests; not actual Run"
+    },
+    {
+      "command": "python -m tuldok_extension_sdk validate examples/extensions/field-surrogate-b-independent/v1",
+      "state": "passed",
+      "contributions": 5,
+      "evidence_kind": "inert SDK contract inspection; runtime and permission unavailable"
+    }
+  ],
+  "pending": [
+    "Main frozen public server/selection harness and canonical A owner glue",
+    "Owner normal finite Study preparation, complete exact grant and SDK conformance against public CLI",
+    "Independent cold oracle on actual downloaded retained artifacts"
+  ],
+  "source_sha256": {
+    "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+    "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+    "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+    "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd",
+    "tuldok_extension_sdk/__init__.py": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+    "tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "task.json": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+    "model.json": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+    "trainer.json": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+    "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+    "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
+    "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+    "recipe.json": "7d089b3fe85191e5dbb3c222899e8b9629f4889708a10b854c533b73b0796416",
+    "project.json": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887"
+  },
+  "write_set": "examples/extensions/field-surrogate-b-independent/v1/",
+  "constraints": {
+    "actual_checkpoints": [
+      32,
+      64
+    ],
+    "optimizer_updates": 64,
+    "declared_outputs": 26,
+    "required_inputs": [
+      "initial",
+      "source",
+      "boundary_mask"
+    ],
+    "target_equations": {
+      "raw": ".5 * initial + .25 + .2 * source",
+      "corrected": "where(boundary_mask, 0, raw)"
+    },
+    "retained_transform_shape": [
+      2,
+      2
+    ],
+    "retained_weight_shape": [
+      3
+    ],
+    "array_contract": "<f8 C-order ZYX, cell-centered 4x4x4; units dimensionless; unit grid in m; standalone without physical timeline",
+    "numerical_tolerance": "1e-10 + 1e-10 * abs(expected)",
+    "sdk": "captured exact __init__.py and evidence.py bytes; no copied untrusted helper; no local Run fallback"
+  },
+  "identity_contract": {
+    "path": "docs/contracts/extension-field-identities.md",
+    "commit": "4ec09a2",
+    "sha256": "3631ff6994907c637a19ac2af461b746f296bef0adbc4e7719cd82245454f71c",
+    "state": "applied",
+    "payload_encoding": "struct.pack little-endian float64; excludes NPY header",
+    "input_order": [
+      "initial",
+      "source",
+      "boundary_mask"
+    ],
+    "target_order": [
+      "raw",
+      "corrected"
+    ],
+    "field_targets": [
+      {
+        "member_id": "validation-0",
+        "field_id": "raw",
+        "payload_sha256": "a5af5ffd194e6779855ede80e0c58251819b66fcbfb347ff692d6ec02813e04e"
+      },
+      {
+        "member_id": "validation-0",
+        "field_id": "corrected",
+        "payload_sha256": "2a68eb7ff67202cac3b293694fd343db9a509bf2fdfe2829d7c420517fbf54a5"
+      }
+    ],
+    "canonical_json": "UTF-8 ensure_ascii=False, sort_keys=True, compact separators; ASCII identities unchanged"
+  },
+  "sdk_recapture": {
+    "commit": "8e70f1e",
+    "evidence_sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "reason": "Reviewed canonical UTF-8 compatibility fix; no admitted B material or grant exists",
+    "frozen_mathematical_sources_unchanged": true,
+    "adapter_identity": "Superseded producer-only identity corrected by documented d6396a5 full recipe.sources closure digest; numerical bytes remain frozen",
+    "package_version": "1.0.0",
+    "version_disposition": "Not admitted yet; package SHA/source closure changes; no existing material or grant is reused"
+  },
+  "adapter_closure": {
+    "sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+    "algorithm": "SDK digest(sorted(recipe['sources'], key=lambda item: item['path']))",
+    "entries": "exact {path, sha256}; excludes bytes, recipe itself and automatic Model binding",
+    "applies_to": [
+      "model_evidence.adapter_sha256",
+      "fields[*].contract.source_sha256",
+      "metric_definitions[*].evaluator_sha256"
+    ],
+    "source_inventory_unchanged": true
+  },
+  "metric_and_model_contract": {
+    "population_sha256": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800",
+    "population_rule": "SDK digest of canonical-sorted frozen_reference objects only",
+    "preprocessing_sha256": "905f89c429cbadae20edf269a0fb212f21e1894b99506cc95ebf615142099d86",
+    "model_configuration": {},
+    "model_parameter_declaration": "none; trainer controls stay separate",
+    "owner_compatibility_recheck": "pending fresh public owner check; no actual Run"
+  }
+}

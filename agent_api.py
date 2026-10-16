@@ -319,8 +319,9 @@ BUDGET=obj({key:SAFE_POS for key in ('attempt_slots','admitted_wall_seconds','re
 SELECTION_POLICY=obj({'format':const('selection_policy_v1'),'metric_definition_sha256':SHA,
     'checkpoint_rule':{'enum':['selected','last','explicit']},'replicate_reduce':{'enum':['individual','mean']},
     'required_capabilities':array(text(64),64),'numerical_acceptance':{'enum':['required','diagnostic']},'tie_break':const('trial_id')})
-def model_operation(name,method,path,properties=None,required=None,*,output=None,scopes=('inspect',),mutation=False):
-    register(name,method,path,properties,required,scopes=scopes,mutation=mutation)
+def model_operation(name,method,path,properties=None,required=None,*,output=None,scopes=('inspect',),mutation=False,
+                    query=(),description=None):
+    register(name,method,path,properties,required,scopes=scopes,mutation=mutation,query=query,description=description)
     _OPERATIONS[-1]['outputSchema']={'type':'object','oneOf':[
         obj({'status':integer(200,299),'result':output or {'type':'object'}}),
         obj({'status':integer(400,599),'result':obj({'error':text(1000),'code':text(120)},required=['error'])})]}
@@ -434,6 +435,11 @@ model_operation('studies.select_candidate','POST','/api/workspace/studies/{study
     scopes=('inspect','edit'),mutation=True)
 model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
     {'candidate_id':ID},output=_CANDIDATE_RESULT)
+model_operation('studies.candidates','GET','/api/workspace/runs/{run_id}/candidates',
+    {'run_id':ID,'cursor':ID,'limit':integer(1,20)},['run_id'],
+    output=obj({'run_id':ID,'candidates':array(material_ref('candidate'),20),
+                'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}))
+_OPERATIONS[-1]['query']=['cursor','limit']
 _PACKAGE_PREPARE_FIELDS={'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'candidate_id':ID,
     'root':REF,'directory':ARTIFACT,'runtime_snapshot_sha256':SHA}
 _PACKAGE_PREPARED_FIELDS={'state':const('prepared'),'candidate_id':ID,'trial':_TRIAL,
@@ -476,6 +482,61 @@ model_operation('runs.compare_model_evidence','POST','/api/workspace/runs/{run_i
                     'metrics':array(obj({'metric_id':text(64),
                         'values':array({'type':'number'},2,2),
                         'direction':{'enum':['minimize','maximize','none']},'units':text(80)}),64)}))
+# Snapshot projections describe inert declarations, not runtime or execution grants.
+_SNAPSHOT_SUMMARY={'id':ID,'name':text(120),'root':text(160),
+    'manifest_path':text(512),'manifest_sha256':SHA,'schema_version':{'enum':[1,2]}}
+_SNAPSHOT_REFERENCE=obj({'id':REF,'label':text(160),'path':text(512),'sha256':SHA,
+    'status':{'enum':['available','missing','unavailable','present_unqualified','unverified']},
+    'integrity':{'enum':['unverified','verified','mismatch']},'reason':text(1000),
+    'bytes':SAFE_NAT,'observed_sha256':SHA},['id','label','status'])
+_DECLARATION_STATE={'enum':['valid','invalid','unavailable','unsupported']}
+_DECLARED_RUNTIME=obj({'profile':text(64),'snapshot_sha256':SHA},['profile'])
+_DECLARED_RESOURCES=obj({'wall_seconds':integer(1,86400),
+    'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})
+_UNQUALIFIED_FACET=obj({'state':const('unavailable'),'reason':text(1000)})
+_SNAPSHOT_CONTRIBUTION=obj({'id':text(129),'version':text(32),
+    'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
+    'path':text(512),'sha256':SHA,'bytes':SAFE_NAT,'state':_DECLARATION_STATE,
+    'definition':JSON_OBJECT,'reason':text(1000)},
+    ['id','version','kind','path','sha256','bytes','state'])
+_SNAPSHOT_PACKAGE=obj({'id':REF,'label':text(160),'path':text(512),'sha256':SHA,
+    'enabled':{'type':'boolean'},'discovered':{'type':'boolean'},'state':_DECLARATION_STATE,
+    'integrity':{'enum':['unverified','verified','mismatch']},
+    'contributions':array(_SNAPSHOT_CONTRIBUTION,64),
+    'host':{'oneOf':[_UNQUALIFIED_FACET,obj({'state':{'enum':['compatible','unsupported']},
+        'required':array(obj({'id':text(80),'version':text(32)}),64)})]},
+    'runtime':_UNQUALIFIED_FACET,'permission':_UNQUALIFIED_FACET,
+    'observed_sha256':SHA,'reason':text(1000),
+    'package':obj({'id':text(64),'version':text(32)}),'declared_runtime':_DECLARED_RUNTIME,
+    'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
+    'resources':_DECLARED_RESOURCES},
+    ['id','label','path','sha256','enabled','discovered','state','integrity',
+     'contributions','host','runtime','permission'])
+_SNAPSHOT_CATALOG=obj({'mode':const('inspection'),'execution':const('unsupported'),
+    'schema_sha256':obj({name:SHA for name in ('extension','contribution','parameter')},[]),
+    'bytes_inspected':integer(0,8*1024**2),'inspection_budget_consumed':integer(0,8*1024**2),
+    'packages':array(_SNAPSHOT_PACKAGE,64)})
+_SNAPSHOT_FIELDS=dict(_SNAPSHOT_SUMMARY,mode=const('inspection'),execution=const('unsupported'),
+    manifest_status={'enum':['unavailable','unchanged','changed','missing']},
+    **{name:array(_SNAPSHOT_REFERENCE,64) for name in ('data','recipes','evidence','requirements')})
+_SNAPSHOT_VIEW={'oneOf':[obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1))),
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG))]}
+model_operation('project_snapshots.list','GET','/api/workspace/project-snapshots',
+    {'cursor':ID,'limit':integer(1,20)},[],query=('cursor','limit'),
+    output=obj({'mode':const('inspection'),'roots':array(text(160),10000),
+        'projects':array(obj(_SNAPSHOT_SUMMARY),20),'limit':integer(1,20),
+        'next_cursor':{'oneOf':[{'type':'null'},ID]}}),
+    description='List bounded immutable v1/v2 project snapshots and configured root aliases; no code or runtime execution.')
+model_operation('project_snapshots.get','GET','/api/workspace/project-snapshots/{project_id}',
+    {'project_id':ID},output=_SNAPSHOT_VIEW,
+    description='Inspect exact saved v1/v2 declarations through current scoped, rooted, bounded readers; no source blobs or execution.')
+model_operation('project_snapshots.open','POST','/api/workspace/project-snapshots',
+    {'root':text(160),'manifest_path':text(512)},scopes=('inspect','edit'),mutation=True,
+    output=_SNAPSHOT_VIEW,
+    description='Register and inspect an explicit configured-root v1/v2 manifest; inert metadata only, never approval or execution.')
+# These E1 routes already have a supported unselected owner-browser consumer.
+# Their domain dispatch keeps that owner gate; ordinary agents select contracts.
+_OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
@@ -495,19 +556,6 @@ for _node_schema in _model_graph['properties']['nodes']['items']['oneOf']:
 _model_save=copy.deepcopy(_CONTRACTS['graphs.save'][1])
 _model_save['inputSchema']['properties']['document']['oneOf'].append(_model_graph)
 _CONTRACTS['graphs.save'][2]=_model_save
-# One-fit recipes are independently versioned from the already selected image
-# contract. Retain exact v1/v2 pins for clients deployed before this slice.
-_one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
-_one_fit_create['inputSchema']['properties']['recipe']['enum'].extend(
-    ['text_classification_model_v2','audio_classification_model_v2'])
-_CONTRACTS['graphs.create'][3]=_one_fit_create
-_one_fit_save=copy.deepcopy(_CONTRACTS['graphs.save'][2])
-for _recipe in ('text_classification','audio_classification'):
-    _one_fit_graph=next(copy.deepcopy(item) for item in graph_schema()['oneOf']
-                        if item['properties']['recipe']==const(_recipe))
-    _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
-    _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
-_CONTRACTS['graphs.save'][3]=_one_fit_save
 _exact_comparison=copy.deepcopy(_CONTRACTS['runs.compare_model_evidence'][1])
 _exact_comparison['inputSchema']=obj({'run_id':ID,'other_run_id':ID,
     **{key:SHA for key in ('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256',
@@ -529,6 +577,89 @@ _EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
 _exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
 _exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
 _CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+# One-fit recipes are independently versioned from the already selected image
+# contract. Retain exact v1/v2 pins for clients deployed before this slice.
+_one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
+_one_fit_create['inputSchema']['properties']['recipe']['enum'].extend(
+    ['text_classification_model_v2','audio_classification_model_v2'])
+_CONTRACTS['graphs.create'][3]=_one_fit_create
+_one_fit_save=copy.deepcopy(_CONTRACTS['graphs.save'][2])
+for _recipe in ('text_classification','audio_classification'):
+    _one_fit_graph=next(copy.deepcopy(item) for item in graph_schema()['oneOf']
+                        if item['properties']['recipe']==const(_recipe))
+    _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
+    _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
+_CONTRACTS['graphs.save'][3]=_one_fit_save
+# Field evidence is selected explicitly; classifier version1 remains exact.
+_field_query=copy.deepcopy(_CONTRACTS['runs.model_evidence'][1])
+_field_query['inputSchema']={'type':'object','oneOf':[
+    obj({'run_id':ID,'split':const('validation')},['run_id']),
+    obj({'run_id':ID,'checkpoint_sha256':SHA,'split':const('validation')},['run_id','checkpoint_sha256']),
+    obj({'run_id':ID,'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),
+         'field_id':REF,'axis':{'enum':['x','y','z']},'index':integer(0,127),'split':const('validation')},
+        ['run_id','checkpoint_sha256','member_ordinal','field_id','axis','index'])]}
+_field_vector=array({'type':'number'},3,3)
+_field_shape=array(integer(1,128),3,3)
+_field_grid=obj({'shape_xyz':_field_shape,'origin_xyz':_field_vector,
+    'spacing_xyz':array({'type':'number','exclusiveMinimum':0},3,3),
+    'orientation':array(_field_vector,3,3),'units':text(80)})
+_field_matrix=array(array({'type':'number'},128,1),128,1)
+_field_slice=obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
+    'axis':{'enum':['x','y','z']},'index':integer(0,127),'shape_zyx':_field_shape,'grid':_field_grid,
+    'stage':text(160),'units':text(80),'dtype':const('<f8'),'centering':const('cell'),
+    'gauge_policy_sha256':SHA,'gauge_policy':_EVIDENCE_DOCUMENT,'time_units':const('not_applicable'),
+    'prediction':_field_matrix,'reference':_field_matrix,
+    'row_axis':{'enum':['x','y','z']},'column_axis':{'enum':['x','y','z']},
+    'physical_origin':_field_vector,'physical_row_step':_field_vector,'physical_column_step':_field_vector})
+_field_fields={'state':const('verified'),
+    'validation':const('structural_and_identity_closure; numerical_acceptance_is_separate'),
+    'manifest':_EVIDENCE_DOCUMENT,'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
+    'metric_definitions':array(_EVIDENCE_DOCUMENT,16,1),
+    'metric_definition_hashes':{'type':'object','maxProperties':16,'propertyNames':text(64),'additionalProperties':SHA},
+    'observations':array(_EVIDENCE_DOCUMENT,128,1),'model_definition':_EVIDENCE_DOCUMENT,
+    'fields':array(obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
+                       'stage':text(160),'shape_zyx':_field_shape,'units':text(80)}),256,1),
+    'checkpoints':array(_EVIDENCE_DOCUMENT,8,1),'checkpoint':_EVIDENCE_DOCUMENT,'field':_field_slice}
+_field_result=copy.deepcopy(_EVIDENCE_RESULT)
+_field_result['oneOf'].append(obj(_field_fields,[key for key in _field_fields if key not in ('checkpoint','field')]))
+_field_query['outputSchema']['oneOf'][0]['properties']['result']=_field_result
+_field_query['description']='Read exact retained classifier or validation field evidence through its task-owned decoder; no inference or test exposure.'
+_CONTRACTS['runs.model_evidence'][2]=_field_query
+# Project extension capture has an explicit inspector contract. Historical
+# recipe clients keep their selected-only grammar and cannot opt into binding
+# by supplying a field in the request body.
+_contribution_ref=obj({'id':text(129),'version':text(32),'sha256':SHA})
+_extension_binding=obj({'format':const('tuldok_extension_binding_v1'),
+    'project':obj({'id':ID,'manifest_sha256':SHA,'manifest_path':text(512)}),
+    'schema_sha256':obj({key:SHA for key in ('extension','contribution','parameter')}),
+    'selections':array(_contribution_ref,64,1),
+    'contributions':array(obj({'id':text(129),'version':text(32),'sha256':SHA,
+        'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
+        'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA,
+            'runtime':obj({'profile':const('captured_cpu_python_v1'),'snapshot_sha256':SHA},['profile']),
+            'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
+            'resources':obj({'wall_seconds':integer(1,86400),
+                'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})}),
+        'definition':{'type':'object','maxProperties':64}}),64,1),
+    'inventory':array(obj({'path':text(512),'sha256':SHA,'bytes':integer(0,8*1024**2)}),64,1)})
+_bound_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][1])
+_inspection_fields={'definition':{'type':'object','maxProperties':32},
+    'receipt':obj({'project_id':ID,'manifest_sha256':SHA,'reference_id':REF,'path':text(512),'measured_sha256':SHA}),
+    'parameter_definitions':{'type':'object','maxProperties':32},
+    'inputs':{'type':'object','maxProperties':32},'outputs':array({'type':'object','maxProperties':8},96,1),
+    'runtime':{'enum':['system_python','captured_cpu_python_v1']}}
+_bound_inspection['outputSchema']['oneOf'][0]['properties']['result']={'oneOf':[
+    obj(_inspection_fields),obj(dict(_inspection_fields,extension_binding=_extension_binding,
+                                   model_task=TASK_REF,selection_policy=SELECTION_POLICY))]}
+_bound_inspection['description']='Inspect exact selected recipe and inert project extension contribution binding; no imports, runtime probing or admission.'
+_CONTRACTS['recipes.inspect'][2]=_bound_inspection
+# Old selected contracts retain their owner-only v2 source boundary. These
+# versions admit ordinary scoped static authoring; execution still needs its grant.
+for _name,_old,_new in (('recipes.inspect',2,3),('graphs.create_external',1,2),
+        ('graphs.preflight_external',1,2),('models.publish',1,2),('studies.prepare_trial',1,2)):
+    _scoped=copy.deepcopy(_CONTRACTS[_name][_old])
+    _scoped['description']+=' Ordinary inspect/edit agents may use exact project-v2 source; no execution or approval authority is conferred.'
+    _CONTRACTS[_name][_new]=_scoped
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
@@ -664,7 +795,7 @@ def _route_matches(op, method, target):
 def select_request(headers, method, target):
     values = headers.get_all(CONTRACT_HEADER, [])
     if not values:
-        new_route = any(name not in _LEGACY_IDS and _route_matches(op, method, target)
+        new_route = any(name not in _LEGACY_IDS and name not in _OWNER_SNAPSHOT_HTTP_IDS and _route_matches(op, method, target)
                         for name, versions in _CONTRACTS.items() for op in versions.values())
         legacy_route = any(_route_matches(op, method, target) for op in _PAYLOAD['operations'])
         if new_route and not legacy_route:

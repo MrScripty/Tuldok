@@ -1,0 +1,337 @@
+{
+  "scope": "Static agent authoring and existing neutral-process regressions; no main505 CPU qualification",
+  "base_commit": "afc45dc50530c4b6bfcdf1f2d8c2f2361e2837bc",
+  "combined_validation_commit": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+  "production_commit": "06ebaf2b749f90398955631c70db12092294d6ff",
+  "production_files_sha256": {
+    "agent_api.py": "d050218037dbc566933e0d2390130fa2df1b3bdb88657a4681685971ac8aaa77",
+    "app.py": "042791bc810c317487ac4aa3fa01b1f987acc40f2f359ea071c72259f3542c0e",
+    "projects.py": "2031a806229609a95f8ea847336b79fcc661f29e1c78465443696593f1927ced",
+    "pipeline.py": "f85394738966c3ee1ad50461b199d8e3a6209ff7633552521ce6d594e937b3fa",
+    "model_definitions.py": "58295609c32cb3d8d3c380f418f4e6a1503e23a15a320886d54478cdcf04a989",
+    "experiments.py": "a40f0c948c2243517d2234b917fafbcc8373c74bd82c8c55f00993e778f58d67",
+    "runs.py": "4aae90787ba293c02f7755ed5b17e2b969f4ab418d704acef9280267a2883d70",
+    "extension_bindings.py": "cc31bb10c43855f2b8f02421f2ade002c9a1831a68a7ffa041e864ac71bfdd25"
+  },
+  "explicit_reserve_test_file_sha256": "3bc06899cd0505a90d7e5ac034f230b3fd83b6ded73b49e986f0ca8c36800677",
+  "fixture_reserve_bytes": 1048576,
+  "production_default_reserve_bytes": 6442450944,
+  "python": "3.12.14",
+  "locked_agent_packages": {
+    "mcp": "1.30.0",
+    "anyio": "4.15.1",
+    "jsonschema": "4.26.0",
+    "psycopg": "3.3.6",
+    "Pillow": "12.3.0"
+  },
+  "base_mcp_present": false,
+  "previous_contracts_unchanged": 92,
+  "previous_contract_hashes": {
+    "context.get": {
+      "1": "bdf3f54c5c17064dc493bda792e64f94bdb2adaa011e3f20dfeb0af4b9a09e91"
+    },
+    "data.audio": {
+      "1": "b7ec1ef8130def12d8c1b5a23a481194ec8a0a127e1b7f2b77a3a0417ee35eb0"
+    },
+    "data.get": {
+      "1": "12486e16d1eb306d4fb005d934373a93a816174a66cb998209e3c059c49db8a6"
+    },
+    "data.history": {
+      "1": "e6962d14b1f126eabfaa8f04d8fe2e2ddb7f1d008696bcf0029dfcc940dd4cd3"
+    },
+    "data.import_audio": {
+      "1": "e3acba91ee3f8e08a30673e96516981c93c4a1dec22ee0739f3bee1200563512"
+    },
+    "data.import_image": {
+      "1": "661f5a74b60bc5af77f7e9de4f3e3e9470cfce264e46f371b60b073ed4d0a232"
+    },
+    "data.import_mesh": {
+      "1": "026b371bb199677de989fe9aad10736e9f774896eebde5da72dbe6592a31a548"
+    },
+    "data.import_pointcloud": {
+      "1": "6ac607e1a923468cdeb2de4ac564f7c606862674d17cc4753bcd7776361c94fd"
+    },
+    "data.import_project_scientific": {
+      "1": "178f1a7a6cfa10f6eb88269b27e286c6eb357c8820359c1ca7b51e85f8056d6a"
+    },
+    "data.import_run_scientific": {
+      "1": "716eec54d547d02116e72cff5d770cb9474839cad3d11b3a30c491eedab5f921"
+    },
+    "data.import_sequence": {
+      "1": "2796d4ae42d9af2043578aa8cd42fc355a88f081dbeb1fd1ae2986a8feb47451"
+    },
+    "data.import_text": {
+      "1": "f21a28172a64520e4fe4a21a8f638059b0daa384055dd0b532bc5fa7ba1c6af0"
+    },
+    "data.import_volume": {
+      "1": "f0c041109ab841bac24b96da14785d548fdbe83a1c29c2f9c6838915e81a8f02"
+    },
+    "data.mesh": {
+      "1": "f0cc78c30525eec3a08e443dd85fc7ddef5f19faa162cee3ce49d7fcbcea6b71"
+    },
+    "data.pointcloud": {
+      "1": "cd54eeec5d3329a9873cb043303df88f48b97f4be27c8726eef4a9d6e70eadbd"
+    },
+    "data.preferences": {
+      "1": "b64ead9e81f480eccb30341d895ca80d10493d17839111ca69dd571f7ce7545c"
+    },
+    "data.query": {
+      "1": "72737d63bfc545991afc93e4f050577bc49ab7b332029fd7e292b6555fdc6baf"
+    },
+    "data.responses": {
+      "1": "4a24120dfe01bd0e482786668ebee85c862978ea2e423b614c2c6e47d8d8e69c"
+    },
+    "data.save_draft": {
+      "1": "9eb258c9c66f332eb3f44b705fc3b2c8013f09f7e2d4ec619c1a26a33c4bb45b"
+    },
+    "data.scientific": {
+      "1": "2a2b5cf9d6a787014f9725ff0dcee8ee2594511f4b29926409066c57c69555c2"
+    },
+    "data.volume": {
+      "1": "4548adfac53ced635916174e167f75dc47587a59e0d6dc23cffa55ee27906b00"
+    },
+    "graphs.clone": {
+      "1": "caff868389b4bb3d7e2ccc3716e855f1efea18cb2ebdf602a30dfb83caac4b79"
+    },
+    "graphs.create": {
+      "1": "fba1add7dca037da902d2890f41fd682b021c381f9be92c12ff749adb669604f",
+      "2": "a4c0ec40212ce85ad67c5f279fa90fe4564048d4ab41b6769670cbcf21bbb615",
+      "3": "4badcdff944e7f37824f2424573c620a45a5f63f227f92fc9268cd3c3b5ad944"
+    },
+    "graphs.create_external": {
+      "1": "219f3c28bcb73e6d5445bdbd9b97e563bde3bd90487796b4680f36e02d338ffa"
+    },
+    "graphs.get": {
+      "1": "3bdb79835c5df6b1c5a893165a46e656201bd50e9dcb7123f1044534e5b4be7e"
+    },
+    "graphs.list": {
+      "1": "28ce7f42861e76af870b4a1e1914435c9d3fd5121901b9a7fd5e8d9572bf1669"
+    },
+    "graphs.preflight_external": {
+      "1": "81515fd903aefd3ab717a8a9b7cfb937726a312b1fa4808bec8a06ae03094125"
+    },
+    "graphs.save": {
+      "1": "2791331c9628e6159f210b4ef88924dd1c44c8de8bea2d6f4aa830ddc12e81af",
+      "2": "da60657d6c3298db8b9bbdfc6d30577125c8a6310573cee5c2feefa3a67e3564",
+      "3": "4aea6bd80d0aaa8e93eb81e2bd8a7d00a36e61317abaeeb47175a9bce38a4a24"
+    },
+    "graphs.validate": {
+      "1": "78a8dae94d36bc98dd874eba89af381f3a34aff06d3f0892cee4beddd7f9452f"
+    },
+    "identity.get": {
+      "1": "b93197acd73d5622f325874bf80d66e34d57afc9f196690a352cc94c8a2a4561"
+    },
+    "models.create": {
+      "1": "693d1514f44e92bb6c6635427db822acfc079a6e438d5d721630087157d1b8d5"
+    },
+    "models.get": {
+      "1": "79b0ac2317f62ea368e8540f63c093eea2d99dd7833109037e2e3e8fa577962a"
+    },
+    "models.list": {
+      "1": "7a58a4f7e429c06f0c0488b8ca8a07b2901a864c7c24e1187bbd679ad0ac089a"
+    },
+    "models.material": {
+      "1": "ab0986561fc5a738b41131d7128e65e9032588f615ccf61fd65722e80f767202"
+    },
+    "models.publish": {
+      "1": "bb84c1fd72b3617135a8246353db797bba270430121fbae6f9d46cdbfdd26235"
+    },
+    "models.save": {
+      "1": "093806e289da9fe7df57b021cd6eb4efb2e574a687bd7337656ddd6276367c25"
+    },
+    "projects.evidence": {
+      "1": "5e6f711de712b10bec6c04f66f91aca7e54fbf518eeb7fcab6d35e9db6c1455d"
+    },
+    "projects.get": {
+      "1": "2bcf2160fe3424a8cb59199c1e1d47166cedd86dd819ae4db0dbec0f6230c7e5"
+    },
+    "projects.list": {
+      "1": "4cdd739a17078b96d32329556dfc6c4e7f91a92a1e6918513394f69596caca14"
+    },
+    "projects.open": {
+      "1": "1b48cb0696b08ee91c71e221bf6669b6871feb3febfd3ed831b3e8dca78dbf6d"
+    },
+    "proposals.caption_decide": {
+      "1": "43a88c36d98c7ee850147dbeb0f7c8049ede5b0f91bb3bf45a3a07afb468fe04"
+    },
+    "proposals.caption_get": {
+      "1": "4a8568ee62c5d3d78bb103ed1ccb03e2607e313a8c21f0b26cabfcbe193f2e40"
+    },
+    "proposals.caption_list": {
+      "1": "c79b714a33ee72362bf32ad38e02a450efe08886e17a12c0ea98c482a08e47c3"
+    },
+    "proposals.classification_decide": {
+      "1": "856d53554c99b4dade1928ca98a3af729f95582cd6c450b2b04a607fa92945a6"
+    },
+    "proposals.classification_get": {
+      "1": "c0e716a3329a3eedddb92abc23cc542e29defc3b5190c0dd9853908267d8fc86"
+    },
+    "proposals.classification_list": {
+      "1": "b2a90f8ca2514d54e2a7dee096e5fc98365906879599453313301f52a8227831"
+    },
+    "recipes.create": {
+      "1": "02f50bb3a87200e6651bd22db17d7801b9bf76b93ad75dcfbdaf77393350bf20"
+    },
+    "recipes.get": {
+      "1": "cfa012d17ba485b87a5c624d8f7d6a2e98eff95aab590d093f27aab82b1f9413"
+    },
+    "recipes.inspect": {
+      "1": "096de78ee573233201b14b6766e6267f6d2dff53904acc533f4a003cb2b973f8",
+      "2": "be0cfb596b3ae741e2903be57413684bac28e9fa3c59987086fde49e514284ea"
+    },
+    "recipes.list": {
+      "1": "0b4322ebcaf0bf80f407cb847614abd56a5a4550ffa2b8b9e6c1bf49263fc560"
+    },
+    "recipes.list_drafts": {
+      "1": "98dc2795d2081b822134bbc2c1055673850273ee20e36bfba910f255b6290e59"
+    },
+    "recipes.material": {
+      "1": "d3ded92c05a1e3d7d88392355e4c61b480b63e55cf763774e2823462774c2870"
+    },
+    "recipes.save": {
+      "1": "8c8016cc75974a1fc77df4c59c0afd6c3151a9377d83937c7a52d6a58ec11dcd"
+    },
+    "releases.freeze": {
+      "1": "46c47631fe9e68bc8ffb5317194a78c78f346a791632699d14f727b1fbbb29d6"
+    },
+    "releases.inputs": {
+      "1": "112404e67d68a2e383cfeb4391c119435e06bd9f1295e3c903123300869fdc24"
+    },
+    "releases.list": {
+      "1": "b1b3aa41f82dc5a1dd13c5f1ac4961675dee34c886bca94f84f0fbcf042d6bf4"
+    },
+    "releases.preview": {
+      "1": "855120f88e996d5fd165d15038c9a2900e33b77d26750ed15412a9fa35eaf5ad"
+    },
+    "responses.save_draft": {
+      "1": "58a1159cd4d12b7266318602762d07ac43720ab212fc091122400bd665c2d68b"
+    },
+    "run_inputs.list": {
+      "1": "65cb223921e6bfb78b0d9dbfd42db126dc5cf1b981386b033cd70620b1254250"
+    },
+    "runs.artifact_chunk": {
+      "1": "6dc1d29d698949b9a6439c65e501f9e30d0395c534aedc933a00efed8a5d3dbd"
+    },
+    "runs.cancel": {
+      "1": "6136113e34115dfef7c1de06f7ca0ee38397cdee5d54e00ce5bd186721c987ef"
+    },
+    "runs.compare_model_evidence": {
+      "1": "75842ef0768d8b95ca6057df3f01e31b78659ff91f91ca3a49f3194d7031ebdd",
+      "2": "0c89402e1749b5bca7c09c66bc5bfc13cd33b3be6e15c69826074583fc0e13c5"
+    },
+    "runs.expose_test": {
+      "1": "08d36f1708a4299b4fb38589ab688ec648fc7326fd574870b8f1866dbe6b7338"
+    },
+    "runs.get": {
+      "1": "74677042379321827f3ce590bdff656bf7504099d34d01bc98ef21baf35a0ee8"
+    },
+    "runs.list": {
+      "1": "5130a95df5068e81b566f08203c134599d9b9a8a08dd58bfbcd508a6aab44d3c"
+    },
+    "runs.model_evidence": {
+      "1": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
+      "2": "48c1b942f8e7a102a83bf63806fb425576690f4bfbca841203d54edbca4a59f9"
+    },
+    "runs.predictions": {
+      "1": "66d80ec732561adc33ce91270e28005cf33f988844dc9a7915e3e36212b5dc71"
+    },
+    "runs.progress": {
+      "1": "3a647993b2eeda126be8b5dbbdab885dcf72612816565c56d696597154bd655a"
+    },
+    "runs.submit_external": {
+      "1": "c3688c9c64cc8115ecd0ad9d0e13a9661aff1a7b8ff2c1acea98a82fc60afd4e"
+    },
+    "studies.admit": {
+      "1": "9c80abdfc50d56de88ada0141ba6c3b503cc07a395b0ceb930fa29169bd182ed"
+    },
+    "studies.approve": {
+      "1": "5ed2d9db58231f14c164a76f1c64157260902d2cd86f5e86433f29fc00f4f408"
+    },
+    "studies.candidate": {
+      "1": "d02dda330ac41ef05a1ff4e4d4f9ed04d5a60b24a444a28f1af9904791977799"
+    },
+    "studies.continue": {
+      "1": "44237f86e49135203613b40a7bf6fe0960581ed7c3f128150b9576a07b491008"
+    },
+    "studies.create": {
+      "1": "8c4b35bbd1c2b7c6825787b40e40b2b3d22f58118ccaf1ef5f0d9bc12edb38f1"
+    },
+    "studies.get": {
+      "1": "12080dea124eb9e763ec495e070211b60a219c47cab9488218383a7d3919533d"
+    },
+    "studies.list": {
+      "1": "77c21d405c0e556341ea4212fbab927a6298be114c202a43e1cdcc409a32c48a"
+    },
+    "studies.package_state": {
+      "1": "4ad0fd6c580c794ed01a8f94fc9f0ee1e07b09578be940bc02be3581f44449bd"
+    },
+    "studies.prepare_package": {
+      "1": "6eea96340355a085a4709c180f3ae61bed063a344c3e4ad8b876c53f36ff6f14"
+    },
+    "studies.prepare_trial": {
+      "1": "516f89e4a03cafee9d50ac3910d1906fb34d51d3b21e8271a4be45075ea3778a"
+    },
+    "studies.prepare_verifier": {
+      "1": "cde685bd4e93bb749055bb291501c67520f97dc514b2a4e4c3ba2cd1a10a6528"
+    },
+    "studies.reconcile": {
+      "1": "a209efd79a85bdb9ff5f42c469413cff9ebcc56c55ab16aa76227427670565af"
+    },
+    "studies.save": {
+      "1": "c5a0eee9a12d91f88b3e7dda4ee3c013c263f20897006ca50aed5f703d6c3d74"
+    },
+    "studies.select_candidate": {
+      "1": "940d670ae6e4630572d1c5cdeda1cc658a7b73587bedd277af137b77dac3e582"
+    },
+    "studies.stop": {
+      "1": "1e6d127c4d74a38a36208d513590ebf3de16a286d4316ffd766b60f60c99de9d"
+    },
+    "studies.trial": {
+      "1": "e53b6231eb96f09569e44e9210acf7b11c42a3fca14f35b161d58a2b36303e93"
+    }
+  },
+  "legacy_digest": "cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8",
+  "capabilities_bytes": 386670,
+  "independent_source_review": "https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6207075507",
+  "checks": [
+    {
+      "name": "locked_agent_combined",
+      "command": "python -m unittest test_agent_project_snapshots test_model_definitions test_model_development_http test_extension_bound_http test_experiments test_agent_project_cli -v",
+      "tests": 75,
+      "passed": 75,
+      "skipped": 0,
+      "errors": 0,
+      "failures": 0,
+      "seconds": 326.715,
+      "log_sha256": "384d98b88780afdea7a4f3d59f99dbbb36de87967ed05cf90d0a3934037883b0",
+      "raw_utf8": "test_agent_discovers_opens_and_inspects_exact_bound_source_without_execution (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_discovers_opens_and_inspects_exact_bound_source_without_execution) ... ok\ntest_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget)\nTiny non-runnable runtime bytes prove static capture, never CPU execution. ... ok\ntest_future_revision_cannot_pass_an_old_source_gate (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_future_revision_cannot_pass_an_old_source_gate) ... ok\ntest_missing_scope_unknown_root_and_revocation_refuse_without_project_mutation (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_missing_scope_unknown_root_and_revocation_refuse_without_project_mutation) ... ok\ntest_model_source_guard_uses_exact_revision_and_preserves_published_replay (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_model_source_guard_uses_exact_revision_and_preserves_published_replay) ... ok\ntest_new_agent_project_and_model_publication_use_normal_edit_owners (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_new_agent_project_and_model_publication_use_normal_edit_owners) ... ok\ntest_old_snapshot_and_bound_recipe_contracts_keep_their_owner_boundary (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_old_snapshot_and_bound_recipe_contracts_keep_their_owner_boundary) ... ok\ntest_old_static_versions_cannot_publish_or_prepare_bound_material (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_old_static_versions_cannot_publish_or_prepare_bound_material) ... ok\ntest_old_v1_project_trial_receipt_survives_later_graph_revision (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_old_v1_project_trial_receipt_survives_later_graph_revision) ... ok\ntest_owner_budget_epoch_and_approval_authority_is_unchanged (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_owner_budget_epoch_and_approval_authority_is_unchanged) ... ok\ntest_selected_catalog_keeps_invalid_siblings_and_explicit_v1_shape (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_selected_catalog_keeps_invalid_siblings_and_explicit_v1_shape) ... ok\ntest_selected_header_mismatch_refuses_before_registration (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_selected_header_mismatch_refuses_before_registration) ... ok\ntest_explicit_snapshot_contracts_preserve_the_installed_legacy_registry (test_agent_project_snapshots.SnapshotRegistryTests.test_explicit_snapshot_contracts_preserve_the_installed_legacy_registry) ... ok\ntest_snapshot_arguments_are_closed_and_bounded (test_agent_project_snapshots.SnapshotRegistryTests.test_snapshot_arguments_are_closed_and_bounded) ... ok\ntest_actual_cli_and_official_mcp_use_selected_snapshots_and_revoke_cached_session (test_agent_project_snapshots.SnapshotTransportTests.test_actual_cli_and_official_mcp_use_selected_snapshots_and_revoke_cached_session) ... ok\ntest_cold_material_refuses_blob_tampering_and_symlinks (test_model_definitions.ModelDefinitionTests.test_cold_material_refuses_blob_tampering_and_symlinks) ... ok\ntest_integer_and_reference_domains_reject_bool_unsafe_and_cross_catalog (test_model_definitions.ModelDefinitionTests.test_integer_and_reference_domains_reject_bool_unsafe_and_cross_catalog) ... ok\ntest_owner_orphan_reconciliation_rejects_in_place_child_rewrite_after_hash (test_model_definitions.ModelDefinitionTests.test_owner_orphan_reconciliation_rejects_in_place_child_rewrite_after_hash) ... ok\ntest_public_blob_read_requires_exact_published_model_and_inventory (test_model_definitions.ModelDefinitionTests.test_public_blob_read_requires_exact_published_model_and_inventory) ... ok\ntest_publish_captures_exact_source_without_import_or_process_and_survives_draft_edit (test_model_definitions.ModelDefinitionTests.test_publish_captures_exact_source_without_import_or_process_and_survives_draft_edit) ... ok\ntest_required_audit_failure_rolls_back_model_and_cleans_new_files (test_model_definitions.ModelDefinitionTests.test_required_audit_failure_rolls_back_model_and_cleans_new_files) ... ok\ntest_stale_save_source_drift_and_missing_authority_leave_no_publication (test_model_definitions.ModelDefinitionTests.test_stale_save_source_drift_and_missing_authority_leave_no_publication) ... ok\ntest_model_queries_are_reads_with_closed_inputs_and_result_variants (test_model_development_http.ModelContractTests.test_model_queries_are_reads_with_closed_inputs_and_result_variants) ... ok\ntest_one_fit_recipes_require_v3_and_preserve_exact_v2_pins (test_model_development_http.ModelContractTests.test_one_fit_recipes_require_v3_and_preserve_exact_v2_pins) ... ok\ntest_typed_architecture_requires_v2_without_changing_legacy_discovery (test_model_development_http.ModelContractTests.test_typed_architecture_requires_v2_without_changing_legacy_discovery) ... ok\ntest_legacy_graph_contract_refuses_new_recipe_before_creation (test_model_development_http.ModelHTTPSelectionTests.test_legacy_graph_contract_refuses_new_recipe_before_creation) ... ok\ntest_missing_or_invalid_selection_refuses_before_model_domain (test_model_development_http.ModelHTTPSelectionTests.test_missing_or_invalid_selection_refuses_before_model_domain) ... ok\ntest_old_and_absent_contracts_cannot_create_one_fit_graphs (test_model_development_http.ModelHTTPSelectionTests.test_old_and_absent_contracts_cannot_create_one_fit_graphs) ... ok\ntest_absent_or_legacy_selection_refuses_bound_projection_without_mutation (test_extension_bound_http.BoundExtensionHTTPTests.test_absent_or_legacy_selection_refuses_bound_projection_without_mutation) ... ok\ntest_agent_owner_only_denial_and_current_credential_revocation (test_extension_bound_http.BoundExtensionHTTPTests.test_agent_owner_only_denial_and_current_credential_revocation) ... ok\ntest_changed_source_provider_and_project_refuse_without_fallback (test_extension_bound_http.BoundExtensionHTTPTests.test_changed_source_provider_and_project_refuse_without_fallback) ... ok\ntest_malformed_selection_and_selected_query_refuse_before_recipe_owner (test_extension_bound_http.BoundExtensionHTTPTests.test_malformed_selection_and_selected_query_refuse_before_recipe_owner) ... ok\ntest_selected_v2_owner_returns_exact_closed_binding_without_execution (test_extension_bound_http.BoundExtensionHTTPTests.test_selected_v2_owner_returns_exact_closed_binding_without_execution) ... ok\ntest_unused_kind_input_preflight_refuses_before_input_capture_or_runtime (test_extension_bound_http.BoundExtensionHTTPTests.test_unused_kind_input_preflight_refuses_before_input_capture_or_runtime) ... ok\ntest_actual_admitted_neutral_process_completes_and_conservative_settlement_keeps_charges (test_experiments.StudyTests.test_actual_admitted_neutral_process_completes_and_conservative_settlement_keeps_charges) ... ok\ntest_actual_command_line_and_official_mcp_process_inspect_same_retained_model (test_experiments.StudyTests.test_actual_command_line_and_official_mcp_process_inspect_same_retained_model) ... ok\ntest_agent_exact_grant_admission_and_unchanged_receipt_do_not_double_charge_or_wake (test_experiments.StudyTests.test_agent_exact_grant_admission_and_unchanged_receipt_do_not_double_charge_or_wake) ... ok\ntest_audit_failure_rolls_back_entire_attempt_and_grant (test_experiments.StudyTests.test_audit_failure_rolls_back_entire_attempt_and_grant) ... ok\ntest_changed_runtime_policy_rejects_retry_without_new_charge_or_grant_consumption (test_experiments.StudyTests.test_changed_runtime_policy_rejects_retry_without_new_charge_or_grant_consumption) ... ok\ntest_cold_receipt_and_accounting_refuse_corrupt_row_or_lowered_charge (test_experiments.StudyTests.test_cold_receipt_and_accounting_refuse_corrupt_row_or_lowered_charge) ... ok\ntest_cold_run_refuses_different_self_consistent_preflight_under_composed_approval (test_experiments.StudyTests.test_cold_run_refuses_different_self_consistent_preflight_under_composed_approval) ... ok\ntest_cold_study_run_cannot_drop_composition_marker_to_skip_approval_binding (test_experiments.StudyTests.test_cold_study_run_cannot_drop_composition_marker_to_skip_approval_binding) ... ok\ntest_cold_study_run_requires_its_exact_consumed_actor_grant (test_experiments.StudyTests.test_cold_study_run_requires_its_exact_consumed_actor_grant) ... ok\ntest_distinct_studies_accept_same_scoped_key_with_independent_runs_and_grants (test_experiments.StudyTests.test_distinct_studies_accept_same_scoped_key_with_independent_runs_and_grants) ... ok\ntest_exact_trial_retry_consumes_new_grant_and_cumulative_charge (test_experiments.StudyTests.test_exact_trial_retry_consumes_new_grant_and_cumulative_charge) ... ok\ntest_large_valid_membership_remains_readable_and_continuation_receipt_reconciles (test_experiments.StudyTests.test_large_valid_membership_remains_readable_and_continuation_receipt_reconciles) ... ok\ntest_legacy_preflight_grant_does_not_authorize_composed_study_material (test_experiments.StudyTests.test_legacy_preflight_grant_does_not_authorize_composed_study_material) ... ok\ntest_model_policy_substitution_cannot_reuse_sibling_composition_grant (test_experiments.StudyTests.test_model_policy_substitution_cannot_reuse_sibling_composition_grant) ... ok\ntest_owner_can_adopt_exact_orphan_recipe_only_by_explicit_reconciliation (test_experiments.StudyTests.test_owner_can_adopt_exact_orphan_recipe_only_by_explicit_reconciliation) ... ok\ntest_owner_control_and_budget_inequality_preserve_current_rights (test_experiments.StudyTests.test_owner_control_and_budget_inequality_preserve_current_rights) ... ok\ntest_postcommit_response_read_failure_preserves_durable_custody_and_charge (test_experiments.StudyTests.test_postcommit_response_read_failure_preserves_durable_custody_and_charge) ... ok\ntest_postcommit_wake_failure_preserves_durable_custody_and_charge (test_experiments.StudyTests.test_postcommit_wake_failure_preserves_durable_custody_and_charge) ... ok\ntest_preparation_is_inert_atomic_and_reconciles_after_draft_edit (test_experiments.StudyTests.test_preparation_is_inert_atomic_and_reconciles_after_draft_edit) ... ok\ntest_prepare_audit_failure_rolls_back_trial_membership_and_material_bytes (test_experiments.StudyTests.test_prepare_audit_failure_rolls_back_trial_membership_and_material_bytes) ... ok\ntest_public_selected_http_preserves_legacy_and_owner_control_and_admission_receipt (test_experiments.StudyTests.test_public_selected_http_preserves_legacy_and_owner_control_and_admission_receipt) ... ok\ntest_recipe_orphan_reconciliation_rejects_child_rewrite_after_hash (test_experiments.StudyTests.test_recipe_orphan_reconciliation_rejects_child_rewrite_after_hash) ... ok\ntest_reopen_after_ungraceful_connection_loss_never_replays_queued_study_child (test_experiments.StudyTests.test_reopen_after_ungraceful_connection_loss_never_replays_queued_study_child) ... ok\ntest_repeated_old_stop_receipt_never_cancels_a_new_epoch_child (test_experiments.StudyTests.test_repeated_old_stop_receipt_never_cancels_a_new_epoch_child) ... ok\ntest_second_connection_credential_revocation_wins_before_atomic_study_admission (test_experiments.StudyTests.test_second_connection_credential_revocation_wins_before_atomic_study_admission) ... ok\ntest_second_connection_grant_revocation_wins_before_atomic_study_admission (test_experiments.StudyTests.test_second_connection_grant_revocation_wins_before_atomic_study_admission) ... ok\ntest_second_connection_stop_wins_race_before_atomic_admission (test_experiments.StudyTests.test_second_connection_stop_wins_race_before_atomic_admission) ... ok\ntest_source_drift_after_trial_preparation_is_not_silently_replaced (test_experiments.StudyTests.test_source_drift_after_trial_preparation_is_not_silently_replaced) ... ok\ntest_stop_after_admission_observes_closed_epoch_before_queued_child_cancel (test_experiments.StudyTests.test_stop_after_admission_observes_closed_epoch_before_queued_child_cancel) ... ok\ntest_stop_closes_epoch_before_cancel_and_old_admission_preserves_grant (test_experiments.StudyTests.test_stop_closes_epoch_before_cancel_and_old_admission_preserves_grant) ... ok\ntest_stopped_complete_backup_restores_material_trial_and_admission_without_replay (test_experiments.StudyTests.test_stopped_complete_backup_restores_material_trial_and_admission_without_replay) ... ok\ntest_two_connection_admissions_compete_for_one_revision_without_second_grant_consumption (test_experiments.StudyTests.test_two_connection_admissions_compete_for_one_revision_without_second_grant_consumption) ... ok\ntest_unacknowledged_real_commit_retains_study_run_and_exact_grant_without_wake (test_experiments.StudyTests.test_unacknowledged_real_commit_retains_study_run_and_exact_grant_without_wake) ... ok\ntest_unknown_child_closes_epoch_and_preserves_full_obligation (test_experiments.StudyTests.test_unknown_child_closes_epoch_and_preserves_full_obligation) ... ok\ntest_missing_grant_invalid_selection_and_stale_source_leave_no_run (test_agent_project_cli.ProjectCLIHTTPTests.test_missing_grant_invalid_selection_and_stale_source_leave_no_run) ... ok\ntest_open_prepare_approve_run_and_download_share_real_saved_owners (test_agent_project_cli.ProjectCLIHTTPTests.test_open_prepare_approve_run_and_download_share_real_saved_owners) ... ok\ntest_argument_file_refuses_symlinks_duplicate_keys_nonfinite_and_fifo (test_agent_project_cli.PublicationTests.test_argument_file_refuses_symlinks_duplicate_keys_nonfinite_and_fifo) ... ok\ntest_concurrent_destination_creation_refuses_publication_without_overwriting (test_agent_project_cli.PublicationTests.test_concurrent_destination_creation_refuses_publication_without_overwriting) ... ok\ntest_corrupt_whole_bytes_and_refused_read_leave_no_published_or_partial_file (test_agent_project_cli.PublicationTests.test_corrupt_whole_bytes_and_refused_read_leave_no_published_or_partial_file) ... ok\ntest_existing_regular_and_dangling_symlink_destinations_are_preserved (test_agent_project_cli.PublicationTests.test_existing_regular_and_dangling_symlink_destinations_are_preserved) ... ok\ntest_valid_empty_and_nonempty_bytes_are_published_with_private_mode (test_agent_project_cli.PublicationTests.test_valid_empty_and_nonempty_bytes_are_published_with_private_mode) ... ok\n\n----------------------------------------------------------------------\nRan 75 tests in 326.715s\n\nOK\n"
+    },
+    {
+      "name": "base_without_mcp",
+      "command": "python -m unittest test_agent_project_snapshots -v",
+      "tests": 15,
+      "passed": 14,
+      "skipped": 1,
+      "errors": 0,
+      "failures": 0,
+      "seconds": 83.607,
+      "log_sha256": "2bf415b2fa7f49face34bcf1c6e2332fab9a2ee6ff5978bebad04639a255b2e8",
+      "raw_utf8": "test_agent_discovers_opens_and_inspects_exact_bound_source_without_execution (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_discovers_opens_and_inspects_exact_bound_source_without_execution) ... ok\ntest_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget)\nTiny non-runnable runtime bytes prove static capture, never CPU execution. ... ok\ntest_future_revision_cannot_pass_an_old_source_gate (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_future_revision_cannot_pass_an_old_source_gate) ... ok\ntest_missing_scope_unknown_root_and_revocation_refuse_without_project_mutation (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_missing_scope_unknown_root_and_revocation_refuse_without_project_mutation) ... ok\ntest_model_source_guard_uses_exact_revision_and_preserves_published_replay (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_model_source_guard_uses_exact_revision_and_preserves_published_replay) ... ok\ntest_new_agent_project_and_model_publication_use_normal_edit_owners (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_new_agent_project_and_model_publication_use_normal_edit_owners) ... ok\ntest_old_snapshot_and_bound_recipe_contracts_keep_their_owner_boundary (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_old_snapshot_and_bound_recipe_contracts_keep_their_owner_boundary) ... ok\ntest_old_static_versions_cannot_publish_or_prepare_bound_material (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_old_static_versions_cannot_publish_or_prepare_bound_material) ... ok\ntest_old_v1_project_trial_receipt_survives_later_graph_revision (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_old_v1_project_trial_receipt_survives_later_graph_revision) ... ok\ntest_owner_budget_epoch_and_approval_authority_is_unchanged (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_owner_budget_epoch_and_approval_authority_is_unchanged) ... ok\ntest_selected_catalog_keeps_invalid_siblings_and_explicit_v1_shape (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_selected_catalog_keeps_invalid_siblings_and_explicit_v1_shape) ... ok\ntest_selected_header_mismatch_refuses_before_registration (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_selected_header_mismatch_refuses_before_registration) ... ok\ntest_explicit_snapshot_contracts_preserve_the_installed_legacy_registry (test_agent_project_snapshots.SnapshotRegistryTests.test_explicit_snapshot_contracts_preserve_the_installed_legacy_registry) ... ok\ntest_snapshot_arguments_are_closed_and_bounded (test_agent_project_snapshots.SnapshotRegistryTests.test_snapshot_arguments_are_closed_and_bounded) ... ok\ntest_actual_cli_and_official_mcp_use_selected_snapshots_and_revoke_cached_session (test_agent_project_snapshots.SnapshotTransportTests.test_actual_cli_and_official_mcp_use_selected_snapshots_and_revoke_cached_session) ... skipped 'Requires the isolated official MCP agent environment and PostgreSQL'\n\n----------------------------------------------------------------------\nRan 15 tests in 83.607s\n\nOK (skipped=1)\n"
+    },
+    {
+      "name": "explicit_static_fixture_reserve",
+      "command": "python -m unittest test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget -v",
+      "tests": 1,
+      "passed": 1,
+      "skipped": 0,
+      "errors": 0,
+      "failures": 0,
+      "seconds": 7.797,
+      "log_sha256": "6c386dc54b6a9a5bc3e3dcf61bff0c571e0834dc37c580883077e3ce7d33f152",
+      "raw_utf8": "test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget (test_agent_project_snapshots.AgentSnapshotHTTPTests.test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget)\nTiny non-runnable runtime bytes prove static capture, never CPU execution. ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 7.797s\n\nOK\n"
+    }
+  ],
+  "main505_cpu_qualification": "Not performed by this worker; lead-owned separate pending gate",
+  "hosted_ci": "Pending; no success claimed",
+  "superseded_runs": "Source-overlap host-hash refusals and incomplete negative-test argument refusals are preserved privately and excluded from these successful terminal results"
+}

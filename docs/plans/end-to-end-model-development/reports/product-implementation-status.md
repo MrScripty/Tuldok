@@ -1,0 +1,174 @@
+# Product implementation qualification
+
+Updated 2026-10-16. This records implementation, actual qualification and merge
+state after the user's implementation authorization. The accepted D1–D4 design
+documents remain historical design evidence. Their original implementation pause
+is superseded by that authorization; their design acceptance is not product proof.
+
+The integration lead owns serial merges. Work uses isolated branches and actual
+CPU/PostgreSQL/browser fixtures, with independent review. Original local `work`
+and unrelated branches are preserved. Current integration is draft
+[PR78](https://github.com/MrScripty/Tuldok/pull/78).
+
+| Slice | Implemented behavior and actual evidence | Integration state |
+| --- | --- | --- |
+| P1 | Negotiated contracts and unchanged legacy projection; real supported interfaces and refusal tests. | PR66 merged. |
+| P2 | Immutable Model/recipe material, finite Studies, exact admission and reservations, stopped-store migration/restore and inert UI. | PR70 merged at `8fa4915`; exact source `351f55b` passed lifecycle/catalog/UI. |
+| P3 | Actual CPU TinyCNN training, automatic epoch weights and fixed probes, cold independent inference, correction/new Release/retraining, exact comparison and real browser/agent inspection. [Actual qualification](p3-real-workspace-qualification.md). | PR72 merged at `cfd032fc67f4f3fd8a6b0d401c7fa837a4bcad2e`; exact `767f66f` passed full CI. |
+| P4 | Actual one-fit text/audio evidence and native browser workflows, generic data-only field evidence, canonical scientific Release derivation. [One-fit](p4-one-fit-browser-qualification.md), [canonical source](../../extension-system/reports/p4-canonical-source-qualification.json). | PR73 merged at `61292e4ac4cbd200253fe8a5c19bf1be887af42d`. Exact `1d621e8` passed full lifecycle/catalog/UI, including actual classifier and one-fit browser gates. The earlier exact option-list failure is preserved; its correction requalified in full CI. |
+| P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 merged at `9585f3cd15f140bf8c24d9aa33b8f51ef352621e`. Exact `ed51510` passed captured-CPU, full lifecycle, catalog and workspace UI CI. Its predecessor `407068d` has separate historical qualification. |
+| P6 | Shared opt-in interface observation at HTTP/CLI/MCP boundaries, private bounded storage, fail-open passive sink, separate mandatory audit and unchanged caller arguments. [Qualification](p6-observation-qualification.md). | PR74 merged at `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`. |
+
+## Extension implementation and final integration
+
+The integration contains exact project-v2 contribution binding, inert declarative
+Model configuration, generic canonical field-input policy and schema3 evidence,
+captured source/context custody, public queries, SDK validation/conformance,
+independent B sources and canonical A inference packaging. Host owners contain
+no A/B numerical training or inference algorithm.
+
+Main CPU snapshot is
+`50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d`.
+The complete composition runtime descriptor has its own SHA; this portable
+manifest identity never substitutes for the full captured runtime reference.
+
+- Main canonical A Run `0ca8523fe44f42bea520e941f79b839b` completed/drained
+  through ordinary SDK admission, with nondefault Model initialization `.125,-.25`,
+  64 actual CPU updates, checkpoints16/32/48/64 and32 verified hot/cold artifacts.
+  The frozen independent oracle passes. [Exact source and qualification](../../extension-system/reports/canonical-a-50502-qualification.md).
+- Independent B Run `3ceea12b26754accb2c65f3a0aa5038f` completed/drained after
+  one SDK admission. Required source/mask inputs, raw/corrected stages and
+  checkpoints32/64 come from the author package. All26 artifacts match SDK,
+  current and cold whole-file hashes; the independent oracle passes. The
+  original missing oracle-freeze snapshot failure and a subsequent read-only
+  material-route refusal are preserved. Tests-only verification recovery reads
+  the existing Run; no SDK/admission retry occurred. Its one normal owner
+  settlement leaves charges unchanged. [Independently reviewed source/recovery
+  report](../../extension-system/reports/independent-b-50502-qualification.md)
+  and its hashed evidence inventory preserve the exact chronology and scope.
+  A second [independent closed-form consumer](../../extension-system/reports/independent-b-actual-cold-consumer.md)
+  also passes on the actual26 cold artifacts without importing the producer,
+  application or database. Its kernel was frozen before inspecting B's producer.
+- The decisive B application freeze covers149 application/SDK/UI/schema/
+  dependency files at `e5d1d79`. All149 matched after B execution, recovery,
+  main packaging and original native inspection. Tests, documentation and author
+  packages are outside that scope. A later, separately qualified one-file UI
+  focus correction is recorded below; it does not retrofit the frozen proof.
+- A separate exact0b runtime qualification completed canonical A source,
+  native/public inspection, charged package and fresh verifier, plus a consumer
+  with checkout/catalog/cache absent. [Source](../../extension-system/reports/e2-canonical-a-cpu-qualification.md),
+  [interfaces](../../extension-system/reports/e2-canonical-a-interface-qualification.md),
+  [package](../../extension-system/reports/e2-canonical-a-package-qualification.md).
+  Those actual results apply to their named0b runtime/source/catalog, not to
+  the main50502 A/B catalog.
+
+Main50502 A packaging and its separately charged fresh verifier passed using
+the two remaining slots of A's original finite three-slot Study. Package Run
+`6924591425a84ef19d926b6b63b9e7da` and verifier
+`cb7935abed6c488bbcb8e434cc90fc29` completed/drained/settled. The whole269,170-byte
+ZIP has SHA `7a17efbbc2af6e5a95eca9fcaf8bac08c9e22840e12986b1480f85b7e3f72aec`;
+all64 native values match exactly in both the charged and filesystem-masked
+fresh consumer. [Qualification](../../extension-system/reports/canonical-a-50502-package-qualification.md)
+retains all31 lineages,17 sources and unchanged finite accounting.
+
+[Actual A/B native captures](../../extension-system/reports/native-author-ab-actual-browser.md)
+also passed against the frozen application: A8 captures and B12,12 exact queries
+each, continuous field-selector keys and1440/390 light/dark inspection. The
+separate saved-graph selector focus defect is fixed and independently qualified
+with [actual old/fixed Chromium evidence](../../extension-system/reports/graph-keyboard-focus-qualification.md),
+including moved-focus and navigation negatives. The strict final browser harness
+allows one initial focus and requires preservation after every native key.
+The stopped shared A/B backup and fresh restore passed on the exact four-Run
+selection: 42 SQL tables, five sequences, 22,849 filesystem entries and 61
+artifacts retain their original meaning and custody. Root-absent warm/cold
+reads, 34 revoked reads and six unentered download streams passed without
+execution. The immutable core receipt is `ecc35409c853deb72a8ad84b7c8ecf84f59ec9c0e884cf52fc6a851e4694bcee`;
+its state remains `rootless_retention_verified_disable_pending`. The separately
+recorded [actual core, cross-grant and disable qualification](../../extension-system/reports/e4-ab-core-and-cross-grant-qualification.md)
+preserves that immutable state and binds the later phases.
+
+[Actual restored official interfaces](../../extension-system/reports/restored-ab-official-interface-qualification.md)
+passed three A/B stage projections and two whole contexts across HTTP, CLI and
+MCP, with current revocation and unchanged four-Run accounting. A separate
+actual fresh unspent A grant presented for B returned the exact reviewed-material
+403 refusal without adding a Run, reservation or consumption. Independent
+reviews checked the core and interface receipts. Restored-only B disable/remove
+also passed with two new snapshots, unchanged original Project rows and retained
+A/B/package history. An unrelated classifier completed and settled one actual
+CPU Run in the restored copy. Its driver then incorrectly requested capture of
+the self-excluded outer artifact manifest; that failure is preserved. Read-only
+recovery passed on the same completed Run: 17 whole/stream checks, 16 declared
+payload captures and two locked refusals, without another admission or training.
+[Final owner-native continuity](../../extension-system/reports/native-restored-author-ab.md)
+passed both strict journeys with 44 captures and unchanged domain/admission
+counts. The post-native raw bookend retains all original source rows/files/root
+inodes and all 39 restored domain tables. The independently reviewed
+[shared retention matrix](../../extension-system/reports/e4-ab-final-qualification.md)
+passes its named scope and explicitly keeps overall E4/plan acceptance open.
+
+The explicit six-modality descriptor corpus at `4f2c45a` now passes 8 focused
+cases plus 24 existing SDK/catalog cases, zero skips. Independent review SHA256
+`80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`
+confirms canonical host/SDK equality, bounded opaque declarations, exact dependency
+refusals and inert metadata fallback. This is descriptor coverage; existing actual
+one-fit/spatial workflows own their separate execution evidence.
+
+The late external field candidate/package/fresh-verification view at `00865e9`
+is implemented. Both actual A/B owner-browser journeys completed 56 captures;
+final independent review SHA256
+`d26dbef42c29e3745686a388a43c33b2401822e8a56207c82f855bb433ceb1f2`
+confirms whole ZIP/verifier identity, honest unsupported B packaging, unchanged
+39 domain tables/counts and stopped services. The source proves 144 prior files
+unchanged plus five explicit late UI/backend changes. Its
+[separate proof report](../../extension-system/reports/native-external-package-evidence.md)
+is sealed at `6905fc8`; the focused real-read/revocation regression at `c0efd4f`
+has independent review SHA256
+`d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
+The proof is composed; final integration remains lead-owned.
+The older exact 149-file and 148-plus-one/44-capture proofs remain unchanged.
+
+Ordinary-agent discovery/open/bound-source authoring now has its own
+[actual 50502 qualification](../../extension-system/reports/main505-agent-authoring-qualification.md)
+and [sanitized machine proof](../../extension-system/reports/main505-agent-authoring-qualification.json),
+separate from earlier owner-prepared Trials. Reviewed PR86 source `da9f57d8`
+was composed into frozen host `e1bc02a`. The agent authored Model, graph and
+Trial through official CLI/MCP/negotiated operations; the owner supplied an
+empty closed finite Study, reviewed continuation and one exact execution grant.
+Run `ae5cc100fcb84c59932cedc3cba60bdb` completed/drained with 32 whole artifacts
+and nondefault initialization `scale=-0.375`, `offset=0.5`. The original driver
+failed after SDK success on an incorrect context-key lookup. Reviewed same-Run
+recovery `16c1165` settled the existing reservation, then passed rootless
+warm/cold reads, independent numerical reconstruction, stale-identity refusal
+and current HTTP/CLI/MCP revocation checks, with no new admission or training.
+Recovery receipt SHA256 is
+`d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+Its one settled test envelope is 197 admitted wall seconds, 4,495,496 retained
+bytes and 6,217,084 peak staging bytes, not measured resource use. The new case
+uses only a fixed synthetic authored fixture in an isolated test namespace.
+Original failure evidence and earlier frozen A/B/UI proofs remain unchanged.
+
+Original local host `e1bc02a` and composed source `d61ef320` are the receipt
+identities. Ordinary GitHub API publication recreated commit metadata while
+preserving exact trees and ordered mapped parents: the public review source
+`3349af525478d74fb13b87e8c2dc32939d3c6cbb` has the same source tree as `e1bc02a`,
+and `64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508` has the same source tree as
+`d61ef320` (`df72714e12de271ab5790959de2dbe3a891e639b`). These are tree-equivalence
+claims, not identical commit IDs or a claim that PR78 already points to them.
+
+The P1–P6 PRs are merged and the named extension functional gates are qualified.
+Final composed extension CI, independent composed acceptance review and lead
+integration remain open. The authoritative final source/checks are
+[PR78](https://github.com/MrScripty/Tuldok/pull/78/checks); no future CI or merge
+result is inferred from the actual local qualifications. Earlier immutable
+shared-matrix `full_E4_pass:false` and core pending-state receipts are not rewritten. Superseded CI is canceled only after its replacement is published.
+Branches are removed only after safe merge and dependent retargeting.
+
+## Explicit qualification limits
+
+This delivery qualifies the named local Linux CPU workflows and retained-byte/
+inference reconstruction. Candidate status remains diagnostic. Synthetic
+fixtures do not establish useful-model generalization or physical validity.
+The historical pressure CNN retains its negative0/16 result; unavailable pinned
+native pressure inputs and periodic pressure checkpoints are not passed gates.
+GPU, hard quotas, hostile-code sandboxing, training resume, distributed/adaptive
+execution and public redistribution remain outside the selected delivery.

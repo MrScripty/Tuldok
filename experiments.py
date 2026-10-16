@@ -130,7 +130,7 @@ class Experiments:
         return value
 
     @authorized('edit','studies.prepare_trial')
-    def prepare_trial(self,study_id,body,*,_publish=None):
+    def prepare_trial(self,study_id,body,*,_publish=None,_graph_guard=None):
         closed(body,('request_key','revision','graph_id','graph_revision','model','replicate'),('reconcile_capture',));body=checked_json(body)
         request_key(body['request_key']);natural(body['replicate'],'Replicate')
         actor=self.access._context().actor_id;sha=digest({'study_id':study_id,'body':body})
@@ -138,7 +138,9 @@ class Experiments:
             receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
             if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
-        prepare=(self.dataset.pipelines.prepare_builtin_material if model_aware_graph(self.dataset.pipelines.get(body['graph_id']))
+        graph=self.dataset.pipelines.get(body['graph_id'])
+        if _graph_guard is not None:_graph_guard(graph)
+        prepare=(self.dataset.pipelines.prepare_builtin_material if model_aware_graph(graph)
                  else self.dataset.pipelines.prepare_external_material)
         prepared=prepare(body['graph_id'],body['graph_revision'],body['model'],
                                             reconcile_capture=body.get('reconcile_capture',False))
@@ -487,7 +489,7 @@ class Experiments:
             study=self._study(study_id);self._expected(study,body)
             run=self.dataset.runs._load(body['run_id'])
             if run['state']!='completed':raise WorkbenchError('Candidate Run is not completed.','conflict',409)
-            metrics=next((item for item in run['artifacts'] if item['name']=='metrics.json'),None)
+            metrics=self._candidate_evaluation(run)
             if metrics is None:raise WorkbenchError('Candidate evaluation artifact is unavailable.','unavailable',409)
             candidate={'format':'candidate_v1','id':uuid.uuid4().hex,'study_id':study_id,
                 'trial_id':trial['id'],'run_id':run['id'],'checkpoint_sha256':checkpoint['sha256'],
@@ -501,6 +503,12 @@ class Experiments:
             result=self._candidate_result(candidate,checkpoint)
             self._save_receipt(actor,'studies.select_candidate',body['request_key'],request_sha,result)
         return result
+
+    def _candidate_evaluation(self,run):
+        # External D2 evidence owns its evaluation manifest. Historical
+        # classifier candidates retain their exact metrics artifact identity.
+        name='model-evidence.json' if self.dataset.runs._extension(run) else 'metrics.json'
+        return next((item for item in run['artifacts'] if item['name']==name),None)
 
     def _candidate_checkpoint(self,evidence,policy,requested):
         if policy['replicate_reduce']!='individual':
@@ -536,6 +544,24 @@ class Experiments:
         return {'ref':{'kind':'candidate','catalog_id':self.db.dataset_id,'id':value['id'],'sha256':digest(value)},
                 'candidate':value,'run_id':value['run_id'],'checkpoint':checkpoint}
 
+    @authorized('inspect','studies.candidates')
+    def candidates(self,run_id,*,cursor=None,limit=20):
+        """Discover retained decisions for one currently inspectable Run."""
+        identifier(run_id);natural(limit,'Page limit',1,20)
+        if cursor is not None:identifier(cursor)
+        self.dataset.runs.get(run_id)
+        with self.lock:
+            rows=self.db.execute('SELECT id FROM model_candidates WHERE run_id=%s AND id>%s ORDER BY id LIMIT %s',
+                                 (run_id,cursor or '',limit+1)).fetchall()
+        refs=[]
+        for row in rows[:limit]:
+            value=self.candidate(row[0])
+            if value['run_id']!=run_id:
+                raise WorkbenchError('Candidate Run association differs.','unavailable',409)
+            refs.append(value['ref'])
+        return {'run_id':run_id,'candidates':refs,'limit':limit,
+                'next_cursor':rows[limit-1][0] if len(rows)>limit else None}
+
     @authorized('inspect','studies.candidate')
     def candidate(self,candidate_id):
         identifier(candidate_id)
@@ -565,7 +591,8 @@ class Experiments:
             raise WorkbenchError('Candidate evidence material differs.','unavailable',409)
         checkpoint=self._candidate_checkpoint(evidence,policy,value['checkpoint_sha256'])
         run=self.dataset.runs.get(value['run_id'])
-        if not any(item['name']=='metrics.json' and item['sha256']==value['evaluation_sha256'] for item in run['artifacts']):
+        evaluation=self._candidate_evaluation(run)
+        if evaluation is None or evaluation['sha256']!=value['evaluation_sha256']:
             raise WorkbenchError('Candidate evaluation identity differs.','unavailable',409)
         return self._candidate_result(value,checkpoint)
 

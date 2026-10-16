@@ -260,3 +260,64 @@
   all pass. Initial Accepted projection included explanatory suffixes that the
   adopted checker rejects; retained exact canonical status lines and moved prose
   below them, then reran the original function successfully.
+
+## 2026-10-16 — authorized product implementation
+
+- The user superseded the historical design-only pause with P1–P6/E1–E4
+  implementation, actual validation, parallel isolated work and serial merge
+  authority. The active integration lead preserves unrelated local branches.
+- P1/P2/P3/P6 are merged after independent review and exact-head CI. P4/P5 are
+  implemented and verifying; current source/CI identities and actual CPU,
+  browser, agent, correction, package and observation receipts are in
+  [the product implementation record](reports/product-implementation-status.md).
+- Main canonical A and independent B each completed one actual finite SDK source
+  attempt, independently checked numerical evidence and whole-artifact cold reads.
+  All149 decisive B application files still match the frozen host. Original
+  verification failures and accounting recovery remain preserved, without a
+  repeated SDK admission. Main canonical A package/fresh verifier and final A/B
+  native/restore/disable/continuity qualification continue; no milestone stop
+  or unavailable pressure/GPU/physics success is claimed.
+
+### Serial P4/P5 merge closeout
+
+- PR73 exact `1d621e8` passed full lifecycle/catalog/workspace CI, including real
+  classifier and one-fit text/audio browser gates. Merged as `61292e4` at
+  2026-10-16T00:56:14Z. PR75 was retargeted to main before the safely merged
+  P4 remote branch was deleted; local worktrees remain preserved.
+- PR75 exact `ed51510` passed all four checks, including actual captured-CPU
+  package/fresh-consumer qualification and full lifecycle. Merged as `9585f3c`
+  at01:02:57Z. No open PR depended on P5 before its remote branch was deleted.
+- Both main merges are composed into the extension branch without changing its
+  already qualified tree. The P1–P6 PRs are now merged; actual shared A/B
+  retention/client/disable/continuity and composed-extension CI remain in progress.
+
+### Extension functional qualification closeout; final integration remains open
+
+- P1–P6 are merged. Canonical A and independently authored B source/cold gates,
+  main A charged package/separate verifier/masked consumer and shared A/B
+  retention/official-client/disable/unrelated-classifier/native witnesses passed
+  at their recorded sources. The final shared bookend preserves original source
+  state and restored business state. Historical core pending and shared-matrix
+  overall-false receipts are unchanged.
+- The six-modality descriptor corpus `4f2c45a` passed 8 focused plus 24 existing
+  SDK/catalog cases, zero skips; independent review `80e219b4...` covers bounded
+  shared declarations and inert opaque metadata only. Ordinary workflow
+  execution remains supported by its separate actual/CI witnesses.
+- Late external package UI `00865e9` and report `6905fc8` are composed: 56 actual
+  captures, exact A ZIP/verifier, honest unsupported B packaging and unchanged
+  retained counts. The 144-plus-five source scope is separate from the old
+  149-file and 148-plus-one proofs.
+- The separately reviewed [ordinary-agent authoring qualification](../extension-system/reports/main505-agent-authoring-qualification.md)
+  now proves agent Model/graph/Trial authoring on frozen host `e1bc02a` and one
+  exact-grant SDK Run `ae5cc100fcb84c59932cedc3cba60bdb`, with 32 artifacts.
+  The initial post-SDK operator failure remains preserved. Same-Run recovery
+  `16c1165` settled the existing reservation and passed rootless cold, independent
+  oracle, stale-identity and current HTTP/CLI/MCP revocation checks; no new
+  admission or training occurred. Recovery receipt SHA256 is
+  `d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+  Final authority/accounting and artifact/oracle/source/cleanup reviews cleared.
+- Named extension functional gates are qualified; overall acceptance remains
+  partial pending independent composed review, exact-head
+  [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks) and lead
+  integration. No future CI, main merge, physical validity, useful-model quality,
+  new hardware capability or distribution right is claimed.

@@ -30,7 +30,7 @@ class ModelContractTests(unittest.TestCase):
         selected=agent_api.negotiate(agent_api.capabilities('a'*32),'a'*32)
         self.assertEqual(selected['graphs.create'],3)
         self.assertEqual(selected['graphs.save'],3)
-        self.assertEqual(selected['runs.model_evidence'],1)
+        self.assertEqual(selected['runs.model_evidence'],2)
 
     def test_model_queries_are_reads_with_closed_inputs_and_result_variants(self):
         value={'run_id':'a'*32}

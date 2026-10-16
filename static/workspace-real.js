@@ -7,17 +7,17 @@
     short = (s) => String(s || "").slice(0, 12),
     encoded = encodeURIComponent,
     terminal = new Set(["completed", "failed", "cancelled", "interrupted", "unknown"]);
-  async function api(route, body) {
+  async function api(route, body, selectedVersion) {
     const headers = {"Content-Type": "application/json"};
     const path = route.split('?')[0].split('/');
     const modelRecipe=body?.recipe||body?.document?.recipe;
     const modelGraph=['image_classification_model_v2','text_classification_model_v2','audio_classification_model_v2'].includes(modelRecipe);
     const operation = path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
       path[0] === 'studies' ? (path.length === 1 ? (body === undefined ? 'studies.list' : 'studies.create') : path[2] ? ({'prepare-trial':'studies.prepare_trial',continue:'studies.continue',admit:'studies.admit',reconcile:'studies.reconcile',approve:'studies.approve','prepare-package':'studies.prepare_package','prepare-verifier':'studies.prepare_verifier','select-candidate':'studies.select_candidate'})[path[2]] : body === undefined ? 'studies.get' : 'studies.save') :
-      path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
+      path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'candidates' ? 'studies.candidates' : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
     if (operation) {
-      const version=operation==='runs.compare_model_evidence'?2:operation.startsWith('graphs.')?(modelRecipe==='image_classification_model_v2'?2:3):1;
-      const sha = window.WorkspaceModelContracts?.[version===3?operation+'/3':operation];
+      const version=operation==='runs.model_evidence'&&selectedVersion===2?2:operation==='runs.compare_model_evidence'?2:operation.startsWith('graphs.')?(modelRecipe==='image_classification_model_v2'?2:3):1;
+      const sha = window.WorkspaceModelContracts?.[version===3||operation==='runs.model_evidence'&&version===2?operation+'/'+version:operation];
       if (!sha) throw Error('This model operation has no supported local contract: ' + operation);
       headers['Tuldok-Operation-Contract'] = operation + '/' + version + '/' + sha;
     }
@@ -46,6 +46,8 @@
       onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
     const model = WorkspaceModel({api, announce, openRecord, getIntent:()=>loadGeneration, getView:()=>view,
       openRun:result=>{run=result;runId=result.id;remember();if(view==='runs')loadRuns(runId);else openRun();}});
+    const fieldEvidence = window.WorkspaceFieldEvidence({api,announce});
+    const candidatePackages = window.WorkspaceCandidatePackageEvidence({api});
     function mountModel() {
       const container=document.createElement('div');container.id='real-model-root';pipelineRoot.prepend(container);
       model.configure({definitions,releases,context});model.mount(container);
@@ -86,15 +88,21 @@
     }
     async function action(fn) {
       if (busy) return;
+      const actionView = view, actionIntent = loadGeneration;
+      const actionRoot = view === "pipeline" ? pipelineRoot : view === "runs" ? runsRoot : null;
+      const focusedId = actionRoot?.contains(document.activeElement) ? document.activeElement.id : null;
       busy = true;
       for (const root of [pipelineRoot, runsRoot]) root.querySelectorAll("button,input,select").forEach(e => e.disabled = true);
       try { await fn(); } catch (error) {
         status(error.message + (error.code === "commit_unknown" ? " The acknowledgement was lost. Reload saved state before another write." : ""), true);
       } finally {
         busy = false;
+        const restore = focusedId && view === actionView && loadGeneration === actionIntent && document.activeElement === document.body;
         // Keep the error/status outside the replaced panels.
         if (view === "pipeline") renderPipeline();
         else if (view === "runs") renderRuns();
+        if (restore && document.activeElement === document.body)
+          actionRoot.querySelector("#" + CSS.escape(focusedId))?.focus({ preventScroll: true });
       }
     }
     async function loadPipeline() {
@@ -173,7 +181,7 @@
     function renderPipeline() {
       if (!definitions) return;
       if(external.isGraph(graph)){
-        external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}});
+        retainFocus(pipelineRoot, () => external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}}));
         if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}mountModel();return;
       }
       const integrity = integrityKind(graph);
@@ -290,6 +298,7 @@
     function artifactURL(name) { return `/api/workspace/runs/${encoded(run.id)}/artifacts/${encoded(name)}`; }
     async function loadRuns(chosen = runId, quiet = false) {
       const generation = ++runGeneration,session=window.TuldokAuth?.identity()?.credential_id;
+      candidatePackages.invalidate();
       const current=()=>generation===runGeneration&&view==='runs'&&session===window.TuldokAuth?.identity()?.credential_id;
       if (!quiet) runsRoot.innerHTML = '<p class="real-status" role="status">Loading durable run receipts…</p>';
       try {
@@ -318,10 +327,14 @@
         if (!current()) return;
         await model.load(detail,current);
         if (!current()) return;
+        await fieldEvidence.load(detail,current);
+        if (!current()) return;
+        const packageRead=candidatePackages.load(detail&&external.isGraph(detail.graph)?detail:null,current);
         runs = list; run = detail; runProgress = progress; runId = id || null; predictions = rows; predictionError = rowsError; remember(); renderRuns();
+        packageRead.then(()=>{if(current())renderRuns();});
       } catch (error) {
         if (!current()) return;
-        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();renderRuns();status(error.message,true);return;}
+        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();renderRuns();status(error.message,true);return;}
         if (!quiet) runsRoot.innerHTML = `<div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));
@@ -345,7 +358,7 @@
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
         ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
         ${externalRun ? external.runHTML(run,runProgress) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
-        ${!externalRun&&!integrity?model.html(run,predictions):""}
+        ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run):""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
         <div class="${externalRun?'':'run-columns'}">${!externalRun?`<section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section>`:`<details id="external-lifecycle-events" data-external-disclosure><summary>Run lifecycle events</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details>`}<section><h3>${run.artifact_status?.status==='receipt_verified'?'Recorded outputs; verified on download':'Verified artifacts'}</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">${run.artifact_status?.status==='receipt_verified'?'Output receipt verified. Payload bytes are checked individually when requested.':'Every artifact read verifies its frozen hash.'}</p></section></div>
         ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
@@ -385,7 +398,9 @@
         openRecord({ ...prediction, run_id: run.id, release_id: run.release_id });
       });
       const displayedRun=runId,displayedGeneration=runGeneration,credential=window.TuldokAuth?.identity()?.credential_id;
+      fieldEvidence.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
       model.bind(runsRoot,run,runs,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
+      candidatePackages.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id,id=>loadRuns(id));
       if (busy) runsRoot.querySelectorAll("button,input,select").forEach(e => e.disabled = true);
     }
     function predictionsHTML() {
@@ -398,7 +413,7 @@
       return `<p class="muted">Rows are frozen targets; columns are model predictions. Select a count to inspect exact examples.</p><div class="real-table-wrap"><table class="real-matrix"><thead><tr><th scope="col">Target / prediction</th>${vocabulary.map(v => `<th scope="col">${esc(v.label)}</th>`).join("")}</tr></thead><tbody>${vocabulary.map((v, a) => `<tr><th scope="row">${esc(v.label)}</th>${vocabulary.map((w, b) => `<td><button data-real-cell="${a}:${b}" aria-label="${esc(v.label)} predicted ${esc(w.label)}: ${counts[a][b]} examples" ${a !== b && counts[a][b] ? 'class="error-cell"' : ""}>${counts[a][b]}</button></td>`).join("")}</tr>`).join("")}</tbody></table></div><h3 id="real-examples-heading" tabindex="-1">${selectedCell ? "Selected cell" : "All " + split + " examples"} · ${filtered.length}</h3>${!filtered.length ? '<p>No examples in this cell.</p>' : filtered.map(p => `<div class="prediction"><strong>${esc(p.truth_label)} → ${esc(p.predicted_label)}</strong><p>${esc(short(p.id))} · source r${p.source_revision} · frozen annotation r${p.revision}</p>${p.start_frame !== undefined ? `<p class="audio-result-reference">Source channel ${p.channel + 1} (index ${p.channel}) · frames [${p.start_frame}, ${p.end_frame}) · ${p.sample_rate_hz} Hz<br><span class="muted">Original WAV ${esc(short(p.source_sha256))} · PCM ${esc(short(p.pcm_sha256))}</span></p>` : ""}<p class="muted">${p.current_record?.revision ? `Current annotation r${p.current_record.revision}${p.current_record.changed ? " · changed since this run" : ""}` : "Current record unavailable"}</p><button data-correct-record="${esc(p.id)}" ${p.current_record?.revision ? "" : "disabled"}>Open current record in Data →</button><p class="footnote">Editing creates a new current revision. This prediction and its frozen target remain unchanged.</p></div>`).join("")}`;
     }
     window.addEventListener('tuldok-session',()=>{
-      ++runGeneration;++loadGeneration;clearTimeout(timer);runProgress=null;model.invalidate();model.sessionChanged();
+      ++runGeneration;++loadGeneration;clearTimeout(timer);runProgress=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();model.sessionChanged();
       if(view==='pipeline'){definitions=null;graph=null;graphs=[];releases=[];pipelineRoot.innerHTML='<p>Session changed. Refreshing current catalog…</p>';if(window.TuldokAuth?.identity())loadPipeline();}
       if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
     });
@@ -412,9 +427,15 @@
         if(!isCurrent()||graph!==previous||JSON.stringify(graph)!==previousState)return false;
         adopt(document);return true;
       },
+      async openRunById(id,isCurrent=()=>true){
+        const credential=window.TuldokAuth?.identity()?.credential_id,selected=await api('runs/'+encoded(id));
+        if(!isCurrent()||credential!==window.TuldokAuth?.identity()?.credential_id)return false;
+        if(selected.id!==id)throw Error('The admitted Run could not be identified.');
+        ++runGeneration;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
+      },
       identity: () => context?.dataset_id,
       async show(next) {
-        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);model.invalidate();
+        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();
         if (next === "pipeline") {
           if (definitions && graph) renderPipeline(); else await loadPipeline();
         } else if (next === "runs") await loadRuns();

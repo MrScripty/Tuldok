@@ -1,0 +1,12 @@
+{
+  "format": "independent_b_oracle_freeze_v1",
+  "fixture_sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+  "oracle_sha256": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+  "frozen_before_actual_run": true,
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-10
+  },
+  "authority": "docs/plans/extension-system/reports/acceptance-procedures.md Concrete A/B extension specification",
+  "scope": "stdlib gradient recurrence, native arrays and reconstruction; reference quality diagnostic; no physical claim"
+}

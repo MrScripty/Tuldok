@@ -1,0 +1,69 @@
+{
+  "contributions": [
+    {
+      "bytes": 1897,
+      "id": "example.modality-audio:descriptor",
+      "kind": "task",
+      "path": "audio/descriptor.json",
+      "sha256": "242c06c2bd31a74101b6c552d03bf6663e2e542b35437d8add738f28f70019d5",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 1020,
+      "id": "example.modality-audio:reader",
+      "kind": "reader",
+      "path": "audio/reader.json",
+      "sha256": "677806106e7afe12f2f6c9208c022e310dbbaa420bcda391c5bba877555d2205",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 582,
+      "id": "example.modality-audio:metadata",
+      "kind": "view",
+      "path": "audio/view.json",
+      "sha256": "b2b6e84b1b9b1bb0c10c1e9c63c7dc2892842b77fe0be24258abfdefa5eb35d8",
+      "version": "1.0.0"
+    }
+  ],
+  "effects": [],
+  "format": "tuldok_extension_v1",
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "label": "audio descriptor envelope fixture",
+  "license": {
+    "id": "LicenseRef-Authored-Test-Fixture",
+    "notices": []
+  },
+  "package": {
+    "id": "example.modality-audio",
+    "version": "1.0.0"
+  },
+  "resources": {
+    "output_bytes": 1024,
+    "source_bytes": 4096,
+    "wall_seconds": 1
+  },
+  "runtime": {
+    "profile": "unqualified-descriptor-only"
+  },
+  "sources": [
+    {
+      "bytes": 237,
+      "path": "audio/audio_worker.py",
+      "sha256": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869"
+    },
+    {
+      "bytes": 199,
+      "path": "audio/config.json",
+      "sha256": "7f24efedc1ab28a5f31a5566cb456469f172a0f76a653b1687b9cf8f94a01419"
+    }
+  ]
+}

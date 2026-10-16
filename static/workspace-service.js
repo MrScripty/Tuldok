@@ -656,18 +656,26 @@
   "studies.admit": "9c80abdfc50d56de88ada0141ba6c3b503cc07a395b0ceb930fa29169bd182ed",
   "studies.reconcile": "a209efd79a85bdb9ff5f42c469413cff9ebcc56c55ab16aa76227427670565af",
   "studies.save": "c5a0eee9a12d91f88b3e7dda4ee3c013c263f20897006ca50aed5f703d6c3d74",
+  "runs.model_evidence/2": "48c1b942f8e7a102a83bf63806fb425576690f4bfbca841203d54edbca4a59f9",
   "runs.model_evidence": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
   "runs.compare_model_evidence": "0c89402e1749b5bca7c09c66bc5bfc13cd33b3be6e15c69826074583fc0e13c5",
   "graphs.create": "a4c0ec40212ce85ad67c5f279fa90fe4564048d4ab41b6769670cbcf21bbb615",
   "graphs.save": "da60657d6c3298db8b9bbdfc6d30577125c8a6310573cee5c2feefa3a67e3564",
   "studies.select_candidate": "940d670ae6e4630572d1c5cdeda1cc658a7b73587bedd277af137b77dac3e582",
   "studies.candidate": "d02dda330ac41ef05a1ff4e4d4f9ed04d5a60b24a444a28f1af9904791977799",
+  "studies.candidates": "84eacef1aacffdfcba18ce037f013034ac959f23a617c8b443247c72f89fcfd2",
   "studies.approve": "5ed2d9db58231f14c164a76f1c64157260902d2cd86f5e86433f29fc00f4f408",
   "studies.prepare_package": "6eea96340355a085a4709c180f3ae61bed063a344c3e4ad8b876c53f36ff6f14",
   "studies.prepare_verifier": "cde685bd4e93bb749055bb291501c67520f97dc514b2a4e4c3ba2cd1a10a6528",
   "studies.package_state": "4ad0fd6c580c794ed01a8f94fc9f0ee1e07b09578be940bc02be3581f44449bd"
 } /* MODEL_CONTRACTS_END */;
   window.WorkspaceModelContracts = contracts;
+  // Shared read-only projection. Only the owner response establishes package state.
+  window.WorkspacePackageStateHTML = function (state) {
+    if(!state)return '<p>Package state has not been loaded.</p>';
+    const packages=state.packages||[],verified=state.state==='fresh_verified';
+    return `<div class="package-state-summary"><p><strong>Package: ${packages.length?'complete':'not exported'}.</strong> Fresh inference: ${verified?'verified in a separate consumer Run':'not verified'}.</p>${packages.map(item=>`<p><a href="/api/workspace/runs/${enc(item.run_id)}/artifacts/package.zip" download>Download verified package</a> · ${esc(item.bytes.toLocaleString())} bytes · <span class="field-hash">SHA256 ${esc(item.sha256)}</span><br>Completed package Run <span class="field-hash">${esc(item.run_id)}</span></p>`).join('')}${verified?'<p>Fresh inference reproduced the retained fixed probes. The candidate remains diagnostic.</p>':''}${(state.verifications||[]).map(item=>`<p>Separate fresh verifier Run <span class="field-hash">${esc(item.run_id)}</span> · package <span class="field-hash">${esc(item.receipt.package_sha256)}</span></p>`).join('')}${state.verifications?.length?`<details><summary>Fresh consumer verification receipts</summary><pre>${esc(JSON.stringify(state.verifications,null,2))}</pre></details>`:''}</div>`;
+  };
   window.WorkspaceModel = function ({api, announce, openRun, openRecord, getIntent, getView}) {
     let definition = null, releases = [], studies = [], root = null, busy = false,
       message = '', failed = false, evidence = null, evidenceError = '', comparison = null,
@@ -839,11 +847,11 @@
     }
     function exportHTML() {
       if(!contracts['studies.package_state'])return '<p>Package preparation is unavailable in this installed interface. No package or fresh verification is claimed.</p>';
-      const packages=packageState?.packages||[],verified=packageState?.state==='fresh_verified';
-      return `<section class="model-export"><h4>Package and fresh inference</h4>${packageError?`<p class="error-panel" role="alert">Export state unavailable: ${esc(packageError)}</p>`:packageState?`<p><strong>Package: ${packages.length?'complete':'not exported'}.</strong> Fresh inference: ${verified?'verified in a separate consumer Run':'not verified'}.</p>${packages.map(item=>`<p><a href="${esc(item.url)}" download>Download verified package</a> · ${esc(item.bytes.toLocaleString())} bytes · SHA ${esc(item.sha256.slice(0,12))}</p>`).join('')}${verified?'<p>Fresh inference reproduced the retained fixed probes. The candidate remains diagnostic.</p>':''}`:'<p>Export state has not been loaded.</p>'}
+      const packages=packageState?.packages||[];
+      return `<section class="model-export"><h4>Package and fresh inference</h4>${packageError?`<p class="error-panel" role="alert">Export state unavailable: ${esc(packageError)}</p>`:window.WorkspacePackageStateHTML(packageState)}
       <button id="model-export-refresh" ${exportBusy?'disabled':''}>Refresh export state</button>
       ${!owner()?'<p>Preparing and approving these local operations requires the owner session.</p>':!exportSetup?`<button id="model-export-setup" ${exportBusy?'disabled':''}>Load export setup</button>`:!exportSetup.roots.length?'<p>No project root is configured for this local server. Configure an allowed project root before preparing export.</p>':!exportJob?`<form id="model-export-form"><fieldset ${exportBusy?'disabled':''}><legend>Prepare one finite operation</legend><div class="model-fields"><label>Operation<select id="model-export-mode"><option value="package" ${exportDraft.mode==='package'?'selected':''}>Export package</option><option value="verifier" ${exportDraft.mode==='verifier'?'selected':''} ${!packages.length?'disabled':''}>Verify fresh inference</option></select></label><label>Configured root<select id="model-export-root">${exportSetup.roots.map(alias=>`<option value="${esc(alias)}" ${exportDraft.root===alias?'selected':''}>${esc(alias)}</option>`).join('')}</select></label><label>New directory<input id="model-export-directory" required maxlength="120" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,119}" value="${esc(exportDraft.directory)}"></label><label>Exact CPU runtime snapshot SHA256<input id="model-export-runtime" required minlength="64" maxlength="64" pattern="[a-f0-9]{64}" value="${esc(exportDraft.runtime)}"></label>${packages.length?`<label>Package for fresh verification<select id="model-export-package">${packages.map(item=>`<option value="${esc(item.run_id)}" ${item.run_id===exportDraft.packageRun?'selected':''}>${esc(item.sha256.slice(0,12))} · Run ${esc(item.run_id.slice(0,12))}</option>`).join('')}</select></label>`:''}</div><p class="footnote">Use an existing captured CPU runtime. Preparation writes a new operation project and immutable trial; approval and execution remain separate actions.</p><button id="model-export-prepare">Prepare operation</button></fieldset></form>`:`<div class="model-export-prepared"><h5>${exportJob.mode==='package'?'Package':'Fresh verifier'} operation</h5>${exportJob.prepared?`<p>Prepared trial ${esc(exportJob.prepared.trial.id.slice(0,12))}</p><p class="model-hash">Exact material SHA256 ${esc(exportJob.prepared.trial.material.sha256)}</p><details><summary>Inspect prepared operation</summary><pre>${esc(JSON.stringify(exportJob.prepared,null,2))}</pre></details>${exportJob.run?`<p>Admitted Run ${esc(exportJob.run.id.slice(0,12))}</p><button id="model-export-open">Inspect operation Run →</button><button id="model-export-next" ${exportBusy?'disabled':''}>Prepare another operation</button>`:exportJob.approval?`<p>Exact one-use approval ${esc(exportJob.approval.id.slice(0,12))}</p><button id="model-export-start" class="primary" ${exportBusy?'disabled':''}>${exportJob.admission?'Reconcile exact admission':'Start approved operation'}</button>`:`<button id="model-export-approve" ${exportBusy||exportJob.approvalUnknown?'disabled':''}>Approve this exact operation</button>${exportJob.approvalUnknown?'<p class="error-panel">Approval acknowledgement is unresolved. Inspect execution grants before issuing another approval.</p>':''}`}`:`${exportJob.preparationUnknown?'<p>The original preparation acknowledgement is unresolved. Reconcile the same request before changing inputs.</p>':''}<button id="model-export-resume" ${exportBusy?'disabled':''}>Reconcile operation preparation</button>${exportJob.failureKnown&&!exportJob.preparationUnknown?'<button id="model-export-revise">Revise preparation inputs</button>':''}`}</div>`}
-      ${packageState?.verifications?.length?`<details><summary>Fresh consumer verification receipts</summary><pre>${esc(JSON.stringify(packageState.verifications,null,2))}</pre></details>`:''}</section>`;
+      </section>`;
     }
     function saveExport(job) {history.replaceState({...history.state,modelExports:{...history.state?.modelExports,[job.candidate_id]:job}},'');}
     function bindExport(node,run,rerender,current) {
@@ -952,5 +960,476 @@
         finally{if(compareBusy===token){compareBusy=false;if(current())rerender();}}
       });
     }
+  };
+
+  // Passive external evidence inspection shares the existing package-state owner.
+  // Candidate discovery is an authorized Run-scoped query, never artifact inference.
+  window.WorkspaceCandidatePackageEvidence = function ({api}) {
+    let generation=0,intent=0,runId=null,busy=false,error='',refs=[],states=new Map(),selected='',next=null;
+    const identity=()=>window.TuldokAuth?.identity()?.credential_id;
+    const id=value=>typeof value==='string'&&/^[a-f0-9]{32}$/.test(value);
+    function clear(){refs=[];states=new Map();selected='';next=null;error='';}
+    function validState(value,ref,run){
+      return value&&['selected','package_complete','fresh_verified'].includes(value.state)&&
+        value.candidate?.ref?.id===ref.id&&value.candidate.ref.sha256===ref.sha256&&
+        value.candidate.ref.catalog_id===ref.catalog_id&&value.candidate.run_id===run.id&&
+        value.candidate.candidate?.run_id===run.id&&value.candidate.candidate.id===ref.id&&
+        Array.isArray(value.packages)&&value.packages.length<=100&&Array.isArray(value.verifications)&&value.verifications.length<=100;
+    }
+    async function load(run,current,append=false){
+      if(!current())return;
+      const own=++intent,version=generation,credential=identity();runId=run?.id||null;
+      const valid=()=>current()&&own===intent&&version===generation&&credential===identity()&&runId===run?.id;
+      const cursor=append?next:null;
+      if(!append)clear();busy=true;
+      if(!run||run.state!=='completed'){busy=false;return;}
+      try{
+        const page=await api('runs/'+enc(run.id)+'/candidates?limit=20'+(cursor?'&cursor='+enc(cursor):''));if(!valid())return;
+        if(page.run_id!==run.id||!Array.isArray(page.candidates)||page.candidates.length>20||
+          page.candidates.some(ref=>ref.kind!=='candidate'||!id(ref.id)||!id(ref.catalog_id)||typeof ref.sha256!=='string'||!/^[a-f0-9]{64}$/.test(ref.sha256)||run.dataset_id&&ref.catalog_id!==run.dataset_id)||
+          page.next_cursor!==null&&!id(page.next_cursor))throw Error('The retained candidate index does not match this Run.');
+        if(refs.length+page.candidates.length>100)throw Error('Inspect at most 100 retained candidates in this view.');
+        for(const ref of page.candidates){
+          if(refs.some(item=>item.id===ref.id))throw Error('The retained candidate index repeated an identity.');
+          const value=await api('candidates/'+enc(ref.id)+'/package-state');if(!valid())return;
+          if(!validState(value,ref,run))throw Error('Package evidence does not belong to this exact source Run and candidate.');
+          refs.push(ref);states.set(ref.id,value);
+        }
+        next=page.next_cursor;
+        const rank={selected:0,package_complete:1,fresh_verified:2};
+        if(!states.has(selected))selected=[...refs].sort((a,b)=>rank[states.get(b.id).state]-rank[states.get(a.id).state]||a.id.localeCompare(b.id))[0]?.id||'';
+      }catch(problem){if(valid()){clear();error=problem.message;}}
+      finally{if(valid())busy=false;}
+    }
+    return {
+      invalidate(){generation++;intent++;runId=null;busy=false;clear();},
+      load,
+      html(run){
+        if(!run||run.id!==runId)return '';
+        const state=states.get(selected),candidate=state?.candidate;
+        return `<section class="model-evidence external-package-evidence" aria-labelledby="external-package-heading"><h3 id="external-package-heading">Retained candidate and inference evidence</h3><p>Current authorized records for this source Run. Package completeness and fresh inference verification are separate from field interpretation and candidate diagnostics.</p>${busy?'<p role="status">Loading exact retained candidate and package receipts…</p>':error?`<p class="error-panel" role="alert">Package evidence unavailable: ${esc(error)}</p><p>No cached package or verifier result is shown.</p>`:!candidate?'<p class="external-package-empty">No retained candidate package evidence is available for this Run. Package: not established. Fresh inference: not verified. Field plots do not establish export support.</p>':`<label>Retained candidate<select id="external-package-candidate">${refs.map(ref=>`<option value="${esc(ref.id)}" ${ref.id===selected?'selected':''}>${esc(ref.id.slice(0,12))} · ${esc(states.get(ref.id).state)}</option>`).join('')}</select></label><p>Diagnostic candidate <span class="field-hash">${esc(candidate.ref.id)}</span><br>Source Run <span class="field-hash">${esc(candidate.run_id)}</span><br>Checkpoint <span class="field-hash">${esc(candidate.checkpoint.sha256)}</span></p><p>${esc(candidate.candidate.limitations.join(' '))}</p>${window.WorkspacePackageStateHTML(state)}<div class="actions">${state.packages.map(item=>`<button type="button" data-package-open-run="${esc(item.run_id)}">Open package Run</button>`).join('')}${state.verifications.map(item=>`<button type="button" data-package-open-run="${esc(item.run_id)}">Open fresh verifier Run</button>`).join('')}</div>`}<div class="actions"><button id="external-package-refresh" type="button" aria-disabled="${busy}" aria-busy="${busy}">Refresh retained package evidence</button>${next?`<button id="external-package-more" type="button" aria-disabled="${busy}">Load more retained candidates</button>`:''}</div><p class="footnote">Inspection only. This panel cannot build a package, approve material or admit a Run. No model-quality or physical acceptance is inferred.</p></section>`;
+      },
+      bind(root,run,rerender,current,openRun){
+        async function refresh(append){if(busy||!current()||run?.id!==runId)return;const task=load(run,current,append);rerender();await task;if(current())rerender();}
+        root.querySelector('#external-package-refresh')?.addEventListener('click',()=>refresh(false));
+        root.querySelector('#external-package-more')?.addEventListener('click',()=>refresh(true));
+        root.querySelector('#external-package-candidate')?.addEventListener('change',event=>{if(busy||!current()||!states.has(event.target.value))return;selected=event.target.value;rerender();});
+        for(const button of root.querySelectorAll('[data-package-open-run]'))button.addEventListener('click',()=>{if(current()&&!busy)openRun(button.dataset.packageOpenRun);});
+      },
+    };
+  };
+})();
+
+// Declarative external field inspection. It displays retained numbers and never runs an adapter.
+(() => {
+  if (typeof window === 'undefined') return;
+  const esc = value => window.workspaceEscape(value), enc = encodeURIComponent;
+  const numeric = value => Object.is(value, -0) ? '-0' : String(value);
+  const vector = value => Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
+  const finiteJSON = (value,depth=0) => depth<=64 && (value===null || typeof value==='string' || typeof value==='boolean' || (typeof value==='number' && Number.isFinite(value)) || (Array.isArray(value) ? value.every(item=>finiteJSON(item,depth+1)) : typeof value==='object' && Object.prototype.toString.call(value)==='[object Object]' && Object.values(value).every(item=>finiteJSON(item,depth+1))));
+  const clock = value => ['optimizer_update', 'epoch', 'fit_pass'].filter(key => value?.[key] !== null && value?.[key] !== undefined).map(key => ({optimizer_update:'Update',epoch:'Epoch',fit_pass:'Fit pass'}[key])+' '+value[key]).join(' · ');
+  window.WorkspaceFieldEvidence = function ({api, announce}) {
+    let generation = 0, query = 0, catalog = null, slice = null, error = '', busy = false, layoutObserver = null, layoutIntent = 0;
+    let selection = {checkpoint:'',member:'',stage:'',field:'',axis:'z',index:0}, sample = {row:0,column:0};
+    const eligible = run => run?.graph?.recipe === 'external_recipe' && run.state === 'completed';
+    const records = () => (catalog?.fields || []).filter(item => item.checkpoint_sha256 === selection.checkpoint && item.member_ordinal === Number(selection.member));
+    const selectedRecord = () => records().find(item => item.field_id === selection.field && item.stage === selection.stage);
+    const stages = () => [...new Set(records().map(item => item.stage))];
+    function choose(reset = false) {
+      const entries = catalog?.checkpoint_index?.entries || [], members = catalog?.probe?.members || [];
+      if (!entries.some(item => item.checkpoint.sha256 === selection.checkpoint)) selection.checkpoint = (entries.find(item => item.selected) || entries[0])?.checkpoint.sha256 || '';
+      if (!members.some(item => String(item.ordinal) === selection.member)) selection.member = String(members[0]?.ordinal ?? '');
+      const choices = stages();
+      if (!choices.includes(selection.stage)) selection.stage = choices[0] || '';
+      const fields = records().filter(item => item.stage === selection.stage);
+      if (!fields.some(item => item.field_id === selection.field)) selection.field = fields[0]?.field_id || '';
+      const record = selectedRecord(), maximum = record?.shape_zyx?.['zyx'.indexOf(selection.axis)] - 1;
+      if (reset || !Number.isInteger(selection.index) || selection.index < 0 || selection.index > maximum) selection.index = 0;
+    }
+    function request() {
+      return {checkpoint_sha256:selection.checkpoint,member_ordinal:Number(selection.member),field_id:selection.field,axis:selection.axis,index:selection.index,split:'validation'};
+    }
+    function validIndex() {
+      const record = selectedRecord(), maximum = record?.shape_zyx?.['zyx'.indexOf(selection.axis)] - 1;
+      return !!record && Number.isInteger(selection.index) && selection.index >= 0 && selection.index <= maximum;
+    }
+    function validateIndex(value,run) {
+      if(value?.state==='unsupported')return;
+      if(value?.state!=='verified'||!Array.isArray(value.fields)||!Array.isArray(value.checkpoints)||value.manifest?.producer?.run_id!==run.id||!Array.isArray(value.checkpoint_index?.entries)||!Array.isArray(value.probe?.members)||!Array.isArray(value.metric_definitions)||!Array.isArray(value.observations))throw Error('The retained field evidence index is unavailable or belongs to another Run.');
+      if(value.probe.split!=='validation'||value.checkpoint_index.entries.some(item=>item.clocks?.physical_time!==null)||value.checkpoints.some(item=>item.clocks?.physical_time!==null))throw Error('Only standalone validation field evidence is supported; no physical timeline is qualified.');
+    }
+    function validateSlice(value,run,expected) {
+      validateIndex(value,run);
+      const field=value.field,record=(value.fields||[]).find(item=>item.checkpoint_sha256===expected.checkpoint_sha256&&item.member_ordinal===expected.member_ordinal&&item.field_id===expected.field_id);
+      if(!field||!record||Object.entries(expected).some(([key,v])=>key!=='split'&&field[key]!==v)||field.stage!==record.stage||field.units!==record.units||!Array.isArray(field.shape_zyx)||!field.shape_zyx.every((n,i)=>n===record.shape_zyx[i])||!vector(field.physical_origin)||!vector(field.physical_row_step)||!vector(field.physical_column_step))throw Error('The returned field does not match the exact checkpoint, member, stage and slice selectors.');
+      if(field.time_units!=='not_applicable'||!(/^[a-f0-9]{64}$/).test(field.gauge_policy_sha256)||!field.gauge_policy||typeof field.gauge_policy!=='object'||Array.isArray(field.gauge_policy)||!Object.keys(field.gauge_policy).length||!finiteJSON(field.gauge_policy))throw Error('The retained gauge policy or standalone time units are unavailable or invalid.');
+      const [row,column]={z:['y','x'],y:['z','x'],x:['z','y']}[expected.axis],dimensions={z:record.shape_zyx[0],y:record.shape_zyx[1],x:record.shape_zyx[2]};
+      if(field.row_axis!==row||field.column_axis!==column||!field.grid||typeof field.grid.units!=='string'||!['prediction','reference'].every(key=>Array.isArray(field[key])&&field[key].length===dimensions[row]&&field[key].every(values=>Array.isArray(values)&&values.length===dimensions[column]&&values.every(Number.isFinite))))throw Error('The field slice has invalid numeric arrays or physical axes.');
+      return field;
+    }
+    async function fetchSlice(run,current) {
+      const own=++query,version=generation,expected=request();slice=null;error='';busy=true;
+      try {
+        if(!validIndex())throw Error('Choose an integer slice index within the declared field shape.');
+        const value=await api('runs/'+enc(run.id)+'/model-evidence',expected,2);
+        if(!current()||version!==generation||own!==query)return;
+        slice=validateSlice(value,run,expected);
+        if(!Number.isInteger(sample.row)||sample.row<0||sample.row>=slice.prediction.length)sample.row=0;
+        if(!Number.isInteger(sample.column)||sample.column<0||sample.column>=slice.prediction[0].length)sample.column=0;
+      }catch(problem){if(current()&&version===generation&&own===query){slice=null;error=problem.message;if([401,403].includes(problem.status))catalog=null;}}
+      finally{if(version===generation&&own===query)busy=false;}
+    }
+    function metricValue(row) {
+      return !row?'Unavailable':row.state==='observed'?numeric(row.value):'Undefined: '+row.reason;
+    }
+    function indexHTML() {
+      const definitions=catalog.metric_definitions;
+      return `<div class="real-table-wrap" tabindex="0" aria-label="Retained field checkpoints and scalar observations"><table><caption>Retained checkpoints and declared validation observations</caption><thead><tr><th scope="col">Progress</th><th scope="col">Checkpoint</th>${definitions.map(item=>`<th scope="col">${esc(item.id)}<br><small>${esc(item.units)} · ${esc(item.direction)}</small></th>`).join('')}</tr></thead><tbody>${catalog.checkpoint_index.entries.map(entry=>`<tr ${entry.checkpoint.sha256===selection.checkpoint?'class="model-selected"':''}><th scope="row">${esc(clock(entry.clocks))}${entry.selected?' · selected':''}</th><td>${esc(entry.checkpoint.sha256.slice(0,12))}</td>${definitions.map(definition=>`<td>${esc(metricValue(catalog.observations.find(row=>row.checkpoint_sha256===entry.checkpoint.sha256&&row.metric_id===definition.id)))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+    function probeHTML() {
+      if(!slice)return '';
+      const {row,column}=sample,valid=Number.isInteger(row)&&Number.isInteger(column)&&row>=0&&column>=0&&row<slice.prediction.length&&column<slice.prediction[0].length;
+      if(!valid)return '<p id="field-probe-value" role="status">Choose an in-bounds integer row and column.</p>';
+      const physical=slice.physical_origin.map((value,i)=>value+row*slice.physical_row_step[i]+column*slice.physical_column_step[i]);
+      return `<p id="field-probe-value" role="status">Row ${row}, column ${column}: prediction <strong>${esc(numeric(slice.prediction[row][column]))}</strong>; reference <strong>${esc(numeric(slice.reference[row][column]))}</strong> ${esc(slice.units)}. Display coordinates (${physical.map(value=>esc(numeric(value))).join(', ')}) ${esc(slice.grid.units)}.</p>`;
+    }
+    function sliceHTML() {
+      if(!slice)return '';
+      return `<div class="field-pair" aria-label="Prediction and reference share physical and display scales">${['prediction','reference'].map(key=>`<figure><figcaption>${key==='prediction'?'Prediction':'Reference'} · ${esc(slice.stage)} · ${esc(slice.units)}</figcaption><div class="field-slice-viewport"><canvas id="field-${key}" role="img" aria-label="${key} field slice; exact values available in the numeric probe"></canvas></div><p class="field-display-warning" data-field-display="${key}" hidden></p></figure>`).join('')}</div><p id="field-scale" class="footnote"></p><p>Standalone slice ${esc(slice.axis.toUpperCase())} ${slice.index}; rows +${esc(slice.row_axis)}, columns +${esc(slice.column_axis)}. ${esc(slice.centering)} · ${esc(slice.dtype)} · shape Z/Y/X ${slice.shape_zyx.join(' / ')}.</p><p class="field-coordinates">Physical sample origin (${slice.physical_origin.map(numeric).map(esc).join(', ')}) ${esc(slice.grid.units)}; row step (${slice.physical_row_step.map(numeric).map(esc).join(', ')}); column step (${slice.physical_column_step.map(numeric).map(esc).join(', ')}).</p><div class="field-metadata"><p>Time units: <strong>${esc(slice.time_units)}</strong> · standalone physical time is not declared.</p><p class="field-hash">Gauge policy SHA256 ${esc(slice.gauge_policy_sha256)}</p><details><summary>Declared gauge policy</summary><pre id="field-gauge-policy">${esc(JSON.stringify(slice.gauge_policy,null,2))}</pre></details></div><div class="model-fields field-probe-controls"><label>Probe row<input id="field-probe-row" type="number" min="0" max="${slice.prediction.length-1}" step="1" required value="${sample.row}"></label><label>Probe column<input id="field-probe-column" type="number" min="0" max="${slice.prediction[0].length-1}" step="1" required value="${sample.column}"></label></div><div id="field-probe-result">${probeHTML()}</div><p class="callout">Difference unavailable: this pair contains no retained difference array. Choose a declared field/stage to inspect it; no residual or error operator runs in the interface.</p>`;
+    }
+    function draw(root) {
+      if(!slice)return;
+      let low=Infinity,high=-Infinity;
+      for(const key of ['prediction','reference'])for(const row of slice[key])for(const value of row){low=Math.min(low,value);high=Math.max(high,value);}
+      const magnitude=Math.max(Math.abs(low),Math.abs(high)),range=magnitude?high/magnitude-low/magnitude:0;
+      const rows=slice.prediction.length,columns=slice.prediction[0].length;
+      const rowLength=Math.hypot(...slice.physical_row_step),columnLength=Math.hypot(...slice.physical_column_step);
+      // Normalize first to keep the display-only aspect calculation bounded.
+      const physicalAspect=(columns/rows)*(columnLength/rowLength);
+      const label=`Shared display grayscale range ${numeric(low)} to ${numeric(high)} ${slice.units}. Both views use identical physical axis scales; original float values remain unchanged.`;
+      const legend=root.querySelector('#field-scale');if(legend)legend.textContent=label;
+      for(const key of ['prediction','reference']){
+        const canvas=root.querySelector('#field-'+key);if(!canvas?.getContext)continue;
+        canvas.width=columns;canvas.height=rows;
+        const viewport=canvas.parentElement,width=viewport.clientWidth,height=viewport.clientHeight;
+        const fitWidth=Math.min(width,height*physicalAspect),fitHeight=fitWidth/physicalAspect;
+        const representable=Number.isFinite(physicalAspect)&&physicalAspect>0&&Number.isFinite(fitWidth)&&Number.isFinite(fitHeight)&&fitWidth>=1&&fitHeight>=1;
+        const warning=root.querySelector('[data-field-display="'+key+'"]');
+        if(warning){warning.hidden=representable;warning.textContent='The declared physical aspect cannot be represented at this viewport resolution. Exact numeric probes and coordinates remain available.';}
+        canvas.hidden=!representable;if(!representable)continue;
+        canvas.style.width=fitWidth+'px';canvas.style.height=fitHeight+'px';
+        canvas.setAttribute('aria-label',`${key}; ${slice.axis} slice ${slice.index}, rows +${slice.row_axis}, columns +${slice.column_axis}. ${label}`);
+        const context=canvas.getContext('2d'),pixels=context.createImageData(columns,rows);
+        for(let row=0;row<rows;row++)for(let column=0;column<columns;column++){
+          const number=slice[key][row][column],gray=range?Math.round(255*(number/magnitude-low/magnitude)/range):128;
+          pixels.data.set([gray,gray,gray,255],(row*columns+column)*4);
+        }
+        context.putImageData(pixels,0,0);
+      }
+    }
+    return {
+      invalidate(){generation++;query++;catalog=null;slice=null;error='';busy=false;layoutIntent++;layoutObserver?.disconnect();layoutObserver=null;},
+      async load(run,current){
+        const version=++generation;query++;catalog=null;slice=null;error='';busy=false;layoutIntent++;layoutObserver?.disconnect();layoutObserver=null;
+        if(!eligible(run))return;
+        try{
+          const value=await api('runs/'+enc(run.id)+'/model-evidence',{},2);if(!current()||version!==generation)return;
+          validateIndex(value,run);catalog=value;if(value.state==='unsupported')return;
+          choose();if(selectedRecord())await fetchSlice(run,()=>current()&&version===generation);
+        }catch(problem){if(current()&&version===generation){catalog=null;slice=null;error=problem.message;}}
+      },
+      html(run){
+        if(!eligible(run))return '';
+        if(error&&!catalog)return `<section class="model-evidence field-evidence"><h3>Field evidence unavailable</h3><p class="error-panel" role="alert">${esc(error)}</p><p>No cached field values are shown. Refresh saved runs to retry.</p></section>`;
+        if(!catalog)return '';
+        if(catalog.state==='unsupported')return `<section class="field-evidence"><h3>Field evidence</h3><p class="muted">${esc(catalog.reason)}</p></section>`;
+        const member=catalog.probe.members.find(item=>String(item.ordinal)===selection.member),record=selectedRecord(),maximum=record?.shape_zyx?.['zyx'.indexOf(selection.axis)]-1;
+        const position=catalog.checkpoint_index.entries.findIndex(item=>item.checkpoint.sha256===selection.checkpoint),entry=catalog.checkpoint_index.entries[position],descriptor=catalog.checkpoints[position];
+        return `<section class="model-evidence field-evidence" aria-labelledby="field-evidence-heading"><h3 id="field-evidence-heading">Linked field evidence</h3><p>Retained standalone validation fields. Structural and identity closure is verified; numerical or physical acceptance requires separate task evidence.</p>${indexHTML()}<form id="field-selectors"><div class="model-fields"><label>Exact checkpoint<select id="field-checkpoint">${catalog.checkpoint_index.entries.map(item=>`<option value="${esc(item.checkpoint.sha256)}" ${item.checkpoint.sha256===selection.checkpoint?'selected':''}>${esc(clock(item.clocks))}${item.selected?' · selected':''} · ${esc(item.checkpoint.sha256.slice(0,12))}</option>`).join('')}</select></label><label>Fixed validation member<select id="field-member">${catalog.probe.members.map(item=>`<option value="${item.ordinal}" ${String(item.ordinal)===selection.member?'selected':''}>${item.ordinal} · ${esc(item.frozen_reference.member_id)}</option>`).join('')}</select></label><label>Declared stage<select id="field-stage">${stages().map(stage=>`<option ${stage===selection.stage?'selected':''} value="${esc(stage)}">${esc(stage)}</option>`).join('')}</select></label><label>Declared field<select id="field-id">${records().filter(item=>item.stage===selection.stage).map(item=>`<option value="${esc(item.field_id)}" ${item.field_id===selection.field?'selected':''}>${esc(item.field_id)} · ${esc(item.units)}</option>`).join('')}</select></label><label>Orthogonal axis<select id="field-axis">${['x','y','z'].map(axis=>`<option value="${axis}" ${axis===selection.axis?'selected':''}>${axis.toUpperCase()}</option>`).join('')}</select></label><label>Slice index<input id="field-index" type="number" min="0" max="${maximum}" step="1" required value="${selection.index}"></label></div><button id="field-load" ${busy||!record?'disabled':''}>${busy?'Loading exact retained slice…':'Reload exact slice'}</button></form>${descriptor?.weights?.name?`<div class="actions"><a href="/api/workspace/runs/${enc(run.id)}/artifacts/${enc(descriptor.weights.name)}" download>Download exact retained fitted state</a>${entry.checkpoint.name?`<a href="/api/workspace/runs/${enc(run.id)}/artifacts/${enc(entry.checkpoint.name)}" download>Checkpoint descriptor</a>`:''}</div>`:''}<p class="field-status" role="status">${busy?'Loading the exact selected checkpoint, member and slice. No earlier array values are shown.':error?esc(error):''}</p>${member?`<p>Frozen input ${esc(member.frozen_reference.input)} · member ${esc(member.frozen_reference.member_id)} · validation. Input SHA256 <span class="field-hash">${esc(member.input_sha256)}</span>; target SHA256 <span class="field-hash">${esc(member.target_sha256)}</span>.</p>`:''}${sliceHTML()}<p class="footnote">Scientific test access is unsupported. No simulation frame or physical timeline is declared. Physical acceptance is not established by these plots.</p><details><summary>Retained field index, model and evidence identities</summary><pre>${esc(JSON.stringify({validation:catalog.validation,fields:catalog.fields,probe:catalog.probe,checkpoint_index:catalog.checkpoint_index,checkpoints:catalog.checkpoints,model_definition:catalog.model_definition,manifest:catalog.manifest,selected_field_metadata:slice?{grid:slice.grid,gauge_policy_sha256:slice.gauge_policy_sha256,gauge_policy:slice.gauge_policy,time_units:slice.time_units}:undefined},null,2))}</pre></details></section>`;
+      },
+      bind(root,run,rerender,current){
+        layoutIntent++;layoutObserver?.disconnect();layoutObserver=null;
+        if(!eligible(run)||catalog?.state!=='verified')return;
+        draw(root);
+        if(slice&&typeof ResizeObserver!=='undefined'){const layoutVersion=layoutIntent;layoutObserver=new ResizeObserver(()=>{if(current()&&layoutVersion===layoutIntent&&root.isConnected!==false)draw(root);});for(const viewport of root.querySelectorAll('.field-slice-viewport'))layoutObserver.observe(viewport);}
+        const show=()=>{const focus=document.activeElement?.id;rerender();if(focus)root.querySelector('#'+CSS.escape(focus))?.focus({preventScroll:true});};
+        const load=async()=>{const pending=fetchSlice(run,current);show();await pending;if(current())show();};
+        for(const [id,key] of [['field-checkpoint','checkpoint'],['field-member','member'],['field-stage','stage'],['field-id','field'],['field-axis','axis'],['field-index','index']])root.querySelector('#'+id)?.addEventListener('change',event=>{
+          selection[key]=key==='index'?(event.target.value.trim()===''?NaN:Number(event.target.value)):event.target.value;if(key!=='index')choose(key==='axis'||key==='field'||key==='stage');load();
+        });
+        root.querySelector('#field-selectors')?.addEventListener('submit',event=>{event.preventDefault();load();});
+        for(const [id,key] of [['field-probe-row','row'],['field-probe-column','column']])root.querySelector('#'+id)?.addEventListener('input',event=>{
+          sample[key]=event.target.value.trim()===''?NaN:Number(event.target.value);const result=root.querySelector('#field-probe-result');if(result)result.innerHTML=probeHTML();
+        });
+      },
+    };
+  };
+})();
+
+// Bounded native controls for an inert contribution's declared parameter schema.
+(() => {
+  if(typeof window==='undefined')return;
+  const esc=value=>window.workspaceEscape(value);
+  window.WorkspaceTypedParameters=function({schema,value,prefix}){
+    let state=structuredClone(value),bindings=[],actions=[],count=0;
+    const own=(value,key)=>value!==null&&typeof value==='object'&&Object.hasOwn(value,key);
+    const at=path=>path.reduce((value,key)=>own(value,key)?value[key]:undefined,state);
+    function set(path,value){if(!path.length){state=value;return;}let parent=state;for(const key of path.slice(0,-1))parent=parent[key];parent[path.at(-1)]=value;}
+    function remove(path){let parent=state;for(const key of path.slice(0,-1))parent=parent[key];delete parent[path.at(-1)];}
+    function blank(rule){if(rule.type==='object')return Object.fromEntries((rule.required||[]).map(key=>[key,blank(rule.properties[key])]));if(rule.type==='array')return Array.from({length:rule.minItems||0},()=>blank(rule.items));return undefined;}
+    function validate(rule,value,label,depth=0){
+      if(depth>8)throw Error('This configuration exceeds the native editor depth bound.');
+      if(rule.enum&&!rule.enum.some(item=>item===value))throw Error('Choose '+label+'.');
+      if(rule.type==='object'){
+        if(!value||typeof value!=='object'||Array.isArray(value)||rule.additionalProperties!==false||!rule.properties)throw Error(label+' requires a closed object.');
+        if(Object.keys(value).some(key=>!own(rule.properties,key)))throw Error(label+' contains undeclared fields.');
+        for(const key of rule.required||[])if(!own(value,key))throw Error('Complete '+label+' · '+key+'.');
+        for(const key of Object.keys(value))validate(rule.properties[key],value[key],label+' · '+key,depth+1);
+      }else if(rule.type==='array'){
+        if(!Array.isArray(value)||!Number.isInteger(rule.maxItems)||rule.maxItems>64||value.length<(rule.minItems||0)||value.length>rule.maxItems)throw Error(label+' has an invalid item count.');
+        value.forEach((item,index)=>validate(rule.items,item,label+' '+(index+1),depth+1));
+      }else if(rule.type==='number'||rule.type==='integer'){
+        if(!Number.isFinite(value)||(rule.type==='integer'&&!Number.isSafeInteger(value))||(rule.minimum!==undefined&&value<rule.minimum)||(rule.maximum!==undefined&&value>rule.maximum))throw Error('Enter a valid '+label+'.');
+      }else if(rule.type==='string'){
+        if(typeof value!=='string'||value.length<(rule.minLength||0)||value.length>(rule.maxLength??4096))throw Error('Enter a valid '+label+'.');
+      }else if(rule.type==='boolean'){if(typeof value!=='boolean')throw Error('Choose '+label+'.');}
+      else throw Error('This parameter type is unavailable in the native editor.');
+    }
+    function node(rule,path,label,depth=0){
+      if(depth>8||++count>256)throw Error('This configuration exceeds the native editor size bound.');
+      const current=at(path),title=rule.title||label,hint=rule.description?`<small>${esc(rule.description)}</small>`:'';
+      if(rule.type==='object'){
+        if(rule.additionalProperties!==false||!rule.properties||Object.keys(rule.properties).length>64)throw Error('Only bounded closed parameter objects are supported.');
+        return `<fieldset class="author-parameters"><legend>${esc(title)}</legend>${hint}${Object.entries(rule.properties).map(([key,child])=>{
+          if(!/^[a-z][a-z0-9_.-]{0,63}$/.test(key))throw Error('Unsupported declared parameter name.');
+          const childPath=[...path,key],required=(rule.required||[]).includes(key);
+          if(required)return node(child,childPath,key.replaceAll('_',' '),depth+1);
+          const id=prefix+'-optional-'+bindings.length;bindings.push({id,kind:'optional',path:childPath,rule:child});
+          return `<div><label class="check-row"><input id="${id}" type="checkbox" ${own(current,key)?'checked':''}>Include ${esc(child.title||key)}</label>${own(current,key)?node(child,childPath,key.replaceAll('_',' '),depth+1):''}</div>`;
+        }).join('')}</fieldset>`;
+      }
+      if(rule.type==='array'){
+        if(!Number.isInteger(rule.maxItems)||rule.maxItems>64||rule.maxItems<0||!rule.items)throw Error('Only explicitly bounded parameter arrays are supported.');
+        const items=Array.isArray(current)?current:[],group=prefix+'-array-'+actions.length;
+        const add=group+'-add';actions.push({id:add,run:()=>set(path,[...at(path),blank(rule.items)])});
+        return `<fieldset class="author-parameters"><legend>${esc(title)}</legend>${hint}${items.map((item,index)=>{
+          const id=group+'-remove-'+index;actions.push({id,run:()=>set(path,at(path).filter((value,i)=>i!==index))});
+          return `<div class="author-array-item">${node(rule.items,[...path,index],title+' '+(index+1),depth+1)}<button id="${id}" type="button" ${items.length<=(rule.minItems||0)?'disabled':''}>Remove ${esc(title)} ${index+1}</button></div>`;
+        }).join('')}<button id="${add}" type="button" ${items.length>=rule.maxItems?'disabled':''}>Add ${esc(title)} item</button><small>${rule.minItems||0}–${rule.maxItems} items.</small></fieldset>`;
+      }
+      const id=prefix+'-value-'+bindings.length;bindings.push({id,kind:'value',path,rule,label:title});
+      let control;
+      if(rule.enum){control=`<select id="${id}" required><option value="">Choose ${esc(title)}</option>${rule.enum.map((item,index)=>`<option value="${index}" ${item===current?'selected':''}>${esc(item)}</option>`).join('')}</select>`;}
+      else if(rule.type==='boolean')control=`<input id="${id}" type="checkbox" ${current===true?'checked':''}>`;
+      else if(['integer','number','string'].includes(rule.type))control=`<input id="${id}" type="${rule.type==='string'?'text':'number'}" required value="${esc(current??'')}" ${rule.minimum!==undefined?`min="${esc(rule.minimum)}"`:''} ${rule.maximum!==undefined?`max="${esc(rule.maximum)}"`:''} ${rule.type==='string'?`minlength="${rule.minLength||0}" maxlength="${rule.maxLength??4096}"`:`step="${rule.type==='integer'?'1':'any'}"`}>`;
+      else throw Error('This declared parameter type is unavailable in the native editor.');
+      return `<label class="${rule.type==='boolean'?'check-row':''}">${esc(title)}${control}${hint}</label>`;
+    }
+    function read(root,check=true){
+      if(root)for(const binding of bindings){
+        if(binding.kind!=='value')continue;
+        const input=root.querySelector('#'+binding.id);if(!input)throw Error('Configuration control is unavailable.');
+        const raw=input.value;let value;
+        if(binding.rule.enum){if(raw===''&&check)throw Error('Choose '+binding.label+'.');value=raw===''?undefined:binding.rule.enum[Number(raw)];}
+        else if(binding.rule.type==='boolean')value=input.checked;
+        else if(binding.rule.type==='string')value=raw;
+        else value=raw.trim()===''?undefined:Number(raw);
+        set(binding.path,value);
+      }
+      if(check)validate(schema,state,'configuration');return structuredClone(state);
+    }
+    return {
+      html(label){bindings=[];actions=[];count=0;return node(schema,[],label);},
+      read,
+      bind(root,rerender,onError){
+        for(const action of actions)root.querySelector('#'+action.id)?.addEventListener('click',()=>{try{read(root,false);action.run();rerender();}catch(error){onError(error.message);}});
+        for(const binding of bindings.filter(item=>item.kind==='optional'))root.querySelector('#'+binding.id)?.addEventListener('change',event=>{
+          try{read(root,false);if(event.target.checked)set(binding.path,blank(binding.rule));else remove(binding.path);rerender();}catch(error){onError(error.message);}
+        });
+      },
+    };
+  };
+})();
+
+// Human preparation of the explicitly bound model recipe variant. No project code is loaded here.
+(() => {
+  if(typeof window==='undefined')return;
+  const pins=/* AUTHOR_CONTRACTS_START */ {
+    "recipes.inspect/2":"be0cfb596b3ae741e2903be57413684bac28e9fa3c59987086fde49e514284ea",
+    "models.create":"693d1514f44e92bb6c6635427db822acfc079a6e438d5d721630087157d1b8d5",
+    "models.publish":"bb84c1fd72b3617135a8246353db797bba270430121fbae6f9d46cdbfdd26235",
+    "graphs.create_external":"219f3c28bcb73e6d5445bdbd9b97e563bde3bd90487796b4680f36e02d338ffa",
+    "graphs.preflight_external":"81515fd903aefd3ab717a8a9b7cfb937726a312b1fa4808bec8a06ae03094125",
+    "studies.create":"8c4b35bbd1c2b7c6825787b40e40b2b3d22f58118ccaf1ef5f0d9bc12edb38f1",
+    "studies.prepare_trial":"516f89e4a03cafee9d50ac3910d1906fb34d51d3b21e8271a4be45075ea3778a",
+    "recipes.material":"d3ded92c05a1e3d7d88392355e4c61b480b63e55cf763774e2823462774c2870",
+    "studies.get":"12080dea124eb9e763ec495e070211b60a219c47cab9488218383a7d3919533d",
+    "studies.continue":"44237f86e49135203613b40a7bf6fe0960581ed7c3f128150b9576a07b491008",
+    "studies.approve":"5ed2d9db58231f14c164a76f1c64157260902d2cd86f5e86433f29fc00f4f408",
+    "studies.admit":"9c80abdfc50d56de88ada0141ba6c3b503cc07a395b0ceb930fa29169bd182ed"
+  } /* AUTHOR_CONTRACTS_END */;
+  window.WorkspaceExtensionAuthorContracts=pins;
+  const esc=value=>window.workspaceEscape(value),enc=encodeURIComponent,copy=value=>structuredClone(value);
+  const exactRef=(left,right)=>!!left&&!!right&&['kind','catalog_id','id','sha256'].every(key=>left[key]===right[key]);
+  const rejected=error=>[400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code);
+  const uncertain=error=>!error.status||error.status>=500||['commit_outcome_unknown','commit_unknown','outcome_unknown','unknown'].includes(error.code);
+  const identity=()=>window.TuldokAuth?.identity(),owner=()=>identity()?.kind==='owner';
+  async function request(operation,route,body,version=1){
+    const pin=pins[version===1?operation:operation+'/'+version];if(!pin)throw Error('This preparation operation is unavailable.');
+    const response=await (window.TuldokAuth?.fetch||fetch)('/api/workspace/'+route,{headers:{'Content-Type':'application/json','Tuldok-Operation-Contract':operation+'/'+version+'/'+pin},...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)})});
+    const value=await response.json();if(!response.ok){const error=Error(value.error||'Bound recipe operation unavailable.');error.status=response.status;error.code=value.code;throw error;}return value;
+  }
+  window.WorkspaceExtensionModelAuthor=function({announce,onRun,send=request}){
+    let generation=0,busy=null,project=null,reference=null,inspected=null,roles=null,job=null,foreign=false,key='',status='',failed=false,reviewed=false,modelEditor=null,trainerEditor=null,draft=null;
+    const dialog=document.createElement('dialog');dialog.id='extension-model-dialog';dialog.setAttribute('aria-labelledby','extension-model-title');document.body.append(dialog);
+    const save=value=>{history.replaceState({...history.state,extensionModelTrials:{...history.state?.extensionModelTrials,[value.key]:value}},'');};
+    const currentScope=()=>{const epoch=generation,credential=identity()?.credential_id;return ()=>epoch===generation&&credential===identity()?.credential_id&&dialog.open;};
+    const note=(text,error=false)=>{status=text;failed=error;if(dialog.open)render();announce(text,error);};
+    function cancel(){generation++;if(dialog.open)dialog.close();if(busy&&!job?.run)announce('An exact preparation or admission may still finish. Reopen this recipe with the original owner to inspect its saved request.');}
+    window.addEventListener('tuldok-session',()=>{cancel();job=null;inspected=null;roles=null;reviewed=false;});
+    dialog.addEventListener('cancel',cancel);
+    function binding(value){
+      const definition=value.definition,bound=value.extension_binding,selection=definition?.extension_selection?.selections;
+      if(project.schema_version!==2||definition?.schema_version!==3||definition?.format!=='external_model_evidence_recipe_v2'||bound?.format!=='tuldok_extension_binding_v1'||bound.project?.id!==project.id||bound.project.manifest_sha256!==project.manifest_sha256||!selection||!value.model_task||!value.selection_policy)throw Error('Only the explicitly bound model recipe is supported here. This project recipe remains inspection-only.');
+      const result={};
+      for(const role of ['task','model','trainer','evaluator','view']){
+        const selected=selection[role],matches=bound.contributions.filter(item=>item.kind===role&&['id','version','sha256'].every(name=>item[name]===selected?.[name]));
+        if(matches.length!==1||!bound.selections.some(item=>['id','version','sha256'].every(name=>item[name]===selected?.[name])))throw Error('The exact '+role+' contribution is unavailable.');
+        result[role]=matches[0];
+      }
+      if(!definition.model_evidence?.model_specification?.configuration||typeof definition.model_evidence.model_specification.configuration!=='object'||Array.isArray(definition.model_evidence.model_specification.configuration))throw Error('The bound model has no explicit configuration object.');
+      return result;
+    }
+    function trainerSchema(){
+      const properties={};
+      for(const [name,rule] of Object.entries(inspected.parameter_definitions)){
+        const declared=roles.trainer.definition.parameters?.properties?.[name]||{};
+        const value={...declared,type:rule.type,title:declared.title||name.replaceAll('_',' ')};
+        if(rule.min!==undefined)value.minimum=Math.max(rule.min,value.minimum??-Infinity);
+        if(rule.max!==undefined)value.maximum=Math.min(rule.max,value.maximum??Infinity);
+        if(rule.max_length!==undefined)value.maxLength=Math.min(rule.max_length,value.maxLength??4096);
+        if(rule.enum)value.enum=rule.enum.filter(item=>!declared.enum||declared.enum.includes(item));
+        properties[name]=value;
+      }
+      return {type:'object',properties,required:Object.keys(properties),additionalProperties:false};
+    }
+    function captureDraft(){
+      if(job||!draft)return;
+      const name=dialog.querySelector('#extension-model-name');if(!name)return;draft.name=name.value;
+      for(const node of dialog.querySelectorAll('[data-author-input]'))draft.inputs[node.dataset.authorInput]=node.value;
+      for(const id of ['attempts','wall','retained','staging'])draft.budget[id]=dialog.querySelector('#extension-budget-'+id).value;
+    }
+    function providerDeclaration(provider){return provider&&Array.isArray(provider.effects)&&provider.runtime?.profile==='captured_cpu_python_v1'&&provider.resources?provider:null;}
+    function hasReview(j){return Object.values(roles||{}).every(item=>providerDeclaration(item.provider))&& j?.preflight?.valid===true&&typeof j.preflight.material?.permissions?.filesystem==='string'&&typeof j.preflight.material.permissions.network==='string'&&!!j?.composition&&exactRef(j.composition.ref,j.trial?.material)&&exactRef(j.composition.material?.model,j.material?.ref)&&j.composition.material.recipe_id===j.graph?.id&&j.composition.material.recipe_revision===j.graph?.revision&&!!j.composition.material.resource_envelope;}
+    function makeEditors(){
+      const config=job?.configuration||inspected.definition.model_evidence.model_specification.configuration;
+      modelEditor=roles.model.definition.parameters?window.WorkspaceTypedParameters({schema:roles.model.definition.parameters,value:config,prefix:'extension-model'}):null;
+      if(!modelEditor&&Object.keys(config).length)throw Error('This model does not declare editable configuration parameters.');
+      trainerEditor=window.WorkspaceTypedParameters({schema:trainerSchema(),value:job?.parameters||Object.fromEntries(Object.entries(inspected.parameter_definitions).map(([name,rule])=>[name,rule.default])),prefix:'extension-trainer'});
+    }
+    function inputChoices(name){
+      const policy=inspected.definition.model_evidence,required=new Set([...policy.fit_members,...policy.probe.candidates.map(item=>item.frozen_reference)].filter(item=>item.input===name).map(item=>item.sha256));
+      return project.data.filter(item=>item.status==='available'&&item.integrity!=='mismatch'&&/^[a-f0-9]{64}$/.test(item.observed_sha256||'')&&(!required.size||required.has(item.observed_sha256))&&item.bytes<=inspected.inputs[name].max_bytes);
+    }
+    function contributionsHTML(){
+      return `<ul class="author-contributions">${Object.entries(roles).map(([role,item])=>`<li><strong>${esc(role)} · ${esc(item.definition.label)}</strong><p>${esc(item.id)} @ ${esc(item.version)} · ${esc(item.provider?.id||item.provider?.reference_id)}</p><small class="field-hash">${esc(item.sha256)}</small></li>`).join('')}</ul>`;
+    }
+    function providersHTML(){
+      const providers=[...new Map(Object.values(roles).map(item=>[item.provider.reference_id,item.provider])).values()];
+      return `<section><h3>Provider declarations</h3><p>These are hash-bound provider declarations. Effective process permissions are shown separately below.</p><ul>${providers.map(provider=>{
+        const item=providerDeclaration(provider);
+        return `<li><strong>${esc(provider.id)} @ ${esc(provider.version)}</strong>${item?`<p>Declared effects: ${esc(item.effects.join(', ')||'none')}. Declared runtime: ${esc(item.runtime.profile)} · <span class="field-hash">${esc(item.runtime.snapshot_sha256??'Snapshot hash not declared')}</span></p><p>Declared limits: ${item.resources.wall_seconds} wall seconds; ${item.resources.source_bytes} source bytes; ${item.resources.output_bytes} output bytes.</p>`:'<p>Declared effects, runtime and limits are unavailable in this bound inspection. Reinspect the recipe before approval.</p>'}</li>`;
+      }).join('')}</ul></section>`;
+    }
+    function reviewHTML(){
+      if(!hasReview(job))return '<p class="callout">The exact trial composition must be loaded before approval.</p><button id="extension-review-reconcile" type="button" '+(busy||!owner()?'disabled':'')+'>Load exact trial review</button>';
+      const material=job.composition.material,policy=inspected.definition.model_evidence;
+      return `<section class="author-review">${providersHTML()}<h3 id="extension-review-heading" tabindex="-1">Review this exact finite trial</h3><p>Trial ${esc(job.trial.id)} · composition SHA256 <span class="field-hash">${esc(job.trial.material.sha256)}</span></p><p>Model material ${esc(job.material.ref.sha256)} · recipe r${esc(job.graph.revision)}. The Study retains a diagnostic last-checkpoint policy; no numerical or physical acceptance threshold is qualified.</p><dl><div><dt>Runtime</dt><dd>${esc(inspected.runtime)} · <span class="field-hash">${esc(inspected.definition.runtime_snapshot_sha256||material?.runtime?.sha256)}</span></dd></div><div><dt>Finite requested budget</dt><dd>${job.limits.attempt_slots} attempts · ${job.limits.admitted_wall_seconds} wall seconds · ${job.limits.retained_bytes} retained bytes · ${job.limits.peak_staging_bytes} staging bytes</dd></div><div><dt>Effective process permissions</dt><dd>Filesystem: ${esc(job.preflight?.material?.permissions?.filesystem)} · network: ${esc(job.preflight?.material?.permissions?.network)}</dd></div><div><dt>Exact input membership</dt><dd>${policy.fit_members.length} training members; ${policy.probe.candidates.length} fixed validation members. Test and a physical timeline are unsupported.</dd></div></dl><p class="callout">Trusted local code runs with the service user’s filesystem and network access. This is not a sandbox. Limits do not guarantee aggregate resource isolation. Approval authorizes this exact material for the current owner. Process completion and retained diagnostics do not establish scientific correctness.</p><details><summary>Captured sources, data and declared limits</summary><ul>${inspected.extension_binding.inventory.map(item=>`<li>${esc(item.path)} · ${item.bytes} bytes · <span class="field-hash">${esc(item.sha256)}</span></li>`).join('')}</ul><pre>${esc(JSON.stringify({inputs:job.inputs,captured_sources:job.preflight?.material?.captures,resources:inspected.definition.resources,fit_members:policy.fit_members,validation_members:policy.probe.candidates,field_targets:policy.field_targets,resource_envelope:material?.resource_envelope},null,2))}</pre></details>${job.run?`<p>Admitted Run ${esc(job.run.id)}</p><button id="extension-open-run" type="button">Inspect admitted Run →</button>`:job.approval?`<p>Exact one-use approval ${esc(job.approval.id)}</p><button id="extension-admit" class="primary" type="button" ${busy||!owner()?'disabled':''}>${job.admission?'Reconcile exact Study admission':'Start approved finite trial'}</button>`:`<label class="check-row"><input id="extension-reviewed" type="checkbox" ${reviewed?'checked':''} ${busy||!owner()||job.approvalUnknown?'disabled':''}>I reviewed this exact model, input membership, runtime, sources, permissions and finite budget.</label><button id="extension-approve" type="button" ${busy||!owner()||!reviewed||job.approvalUnknown?'disabled':''}>Approve this exact Study trial</button>${job.approvalUnknown?'<p class="error-panel">Approval acknowledgement is unresolved. Inspect execution grants before issuing another approval; this interface will not create a replacement grant.</p>':''}`}</section>`;
+    }
+    function render(){
+      if(!dialog.open)return;
+      const focus=dialog.contains(document.activeElement)?document.activeElement.id:null;
+      let form='';
+      if(inspected&&roles){
+        try{
+          form=`${contributionsHTML()}<p>Project snapshot ${esc(inspected.extension_binding.project.manifest_sha256)}. Opening and inspection run no contribution code.</p><form id="extension-model-form"><fieldset ${busy||job||foreign||!owner()?'disabled':''}><legend>Model and training configuration</legend><label>Name<input id="extension-model-name" maxlength="120" required value="${esc(job?.name??draft.name)}"></label>${modelEditor?modelEditor.html('Model configuration'):'<p>No editable model configuration parameters are declared.</p>'}${trainerEditor.html('Trainer controls')}<fieldset class="author-parameters"><legend>Exact authored project inputs</legend>${Object.keys(inspected.inputs).map(name=>`<label>${esc(name)}<select data-author-input="${esc(name)}" required><option value="">Choose a matching captured input</option>${inputChoices(name).map(item=>`<option value="${esc(item.id)}" ${(job?.inputs?.[name]?.reference_id??draft.inputs[name])===item.id?'selected':''}>${esc(item.label)} · ${esc(item.observed_sha256.slice(0,12))}</option>`).join('')}</select></label>`).join('')}</fieldset><fieldset class="author-parameters"><legend>Finite Study budget</legend><div class="model-fields">${[['attempts','Attempt slots',3],['wall','Admitted wall seconds',10800],['retained','Retained MiB',1024],['staging','Peak staging MiB',2048]].map(([id,label,value])=>`<label>${label}<input id="extension-budget-${id}" type="number" min="1" step="1" max="${id==='retained'||id==='staging'?Math.floor(Number.MAX_SAFE_INTEGER/1048576):Number.MAX_SAFE_INTEGER}" required value="${job?(id==='attempts'?job.limits.attempt_slots:id==='wall'?job.limits.admitted_wall_seconds:id==='retained'?job.limits.retained_bytes/1048576:job.limits.peak_staging_bytes/1048576):draft.budget[id]}"></label>`).join('')}</div></fieldset></fieldset>${foreign?'<p class="error-panel">Another actor has unresolved preparation for this recipe. Reconcile it in that actor’s session before creating a replacement.</p>':!owner()?'<p>The current owner session is required to prepare and approve a local model trial.</p>':!job?.trial?`<button id="extension-prepare" class="primary" ${busy||job?.creationUnknown?'disabled':''}>${job?'Reconcile exact preparation':'Prepare immutable finite trial'}</button>`:''}</form><details><summary>Declared ordered stages</summary><ol>${(roles.trainer.definition.stages||roles.task.definition.stages||[]).map(stage=>`<li>${esc(stage.id)} @ ${esc(stage.version)} · ${esc(stage.clock||'declared stage')}</li>`).join('')}</ol><p>The declared stages and native field view are fixed by this recipe.</p></details>${job?.creationUnknown?`<p class="error-panel">${esc(job.creationUnknown)} creation acknowledgement is unresolved. Inspect saved ${esc(job.creationUnknown)} records before another creation; the original preparation remains retained.</p>`:''}${job?.trial?reviewHTML():''}`;
+        }catch(error){form=`<p class="error-panel">${esc(error.message)} No configuration is submitted.</p>`;}
+      }
+      dialog.innerHTML=`<div class="panel-title"><h2 id="extension-model-title">Prepare a bound model trial</h2><button id="extension-model-close" type="button">Close</button></div><p>${esc(reference?.label)} · ${esc(project?.name)}</p><p class="author-status ${failed?'error-panel':''}" role="status">${esc(status)}</p>${form}`;
+      dialog.querySelector('#extension-model-close').onclick=cancel;
+      const rerender=()=>{captureDraft();render();};modelEditor?.bind(dialog,rerender,text=>note(text,true));trainerEditor?.bind(dialog,rerender,text=>note(text,true));
+      dialog.querySelector('#extension-model-form')?.addEventListener('submit',event=>{event.preventDefault();return perform(prepare);});
+      dialog.querySelector('#extension-reviewed')?.addEventListener('change',event=>{reviewed=event.target.checked;const button=dialog.querySelector('#extension-approve');if(button)button.disabled=!reviewed||!!busy||!owner();});
+      dialog.querySelector('#extension-review-reconcile')?.addEventListener('click',()=>perform(loadReview));
+      dialog.querySelector('#extension-approve')?.addEventListener('click',()=>perform(approve));
+      dialog.querySelector('#extension-admit')?.addEventListener('click',()=>perform(admit));
+      dialog.querySelector('#extension-open-run')?.addEventListener('click',()=>onRun(job.run.id));
+      if(focus)dialog.querySelector('#'+CSS.escape(focus))?.focus({preventScroll:true});
+    }
+    async function perform(action){
+      if(busy||!owner()||foreign)return;
+      captureDraft();const valid=currentScope(),token={};busy=token;status='Checking exact immutable material…';failed=false;
+      try{await action(valid);}catch(error){if(valid()){status=error.message;failed=true;}}
+      finally{if(busy===token){busy=null;if(valid()){render();if(job?.trial)dialog.querySelector('#extension-review-heading')?.focus({preventScroll:true});}}}
+    }
+    function checked(valid){if(!valid())throw Error('Selection or session changed. Reopen this recipe to inspect the retained operation.');}
+    async function create(j,field,operation,route,body,valid){
+      if(j[field])return;
+      if(j.creationUnknown)throw Error('An earlier '+j.creationUnknown+' creation is unresolved. Inspect saved records before another creation.');
+      try{const value=await send(operation,route,body);j[field]=value;save(j);checked(valid);}
+      catch(error){if(!j[field]&&uncertain(error)){j.creationUnknown=field;save(j);}throw error;}
+    }
+    async function prepare(valid){
+      checked(valid);
+      let j=job;
+      if(!j){
+        const configuration=modelEditor?modelEditor.read(dialog):{},parameters=trainerEditor.read(dialog),inputs={};
+        for(const select of dialog.querySelectorAll('[data-author-input]')){
+          const name=select.dataset.authorInput,item=inputChoices(name).find(item=>item.id===select.value);if(!item)throw Error('Choose the exact captured input for '+name+'.');inputs[name]={reference_id:item.id,expected_sha256:item.observed_sha256};
+        }
+        const number=id=>Number(dialog.querySelector('#extension-budget-'+id).value),limits={attempt_slots:number('attempts'),admitted_wall_seconds:number('wall'),retained_bytes:number('retained')*1048576,peak_staging_bytes:number('staging')*1048576};
+        if(Object.values(limits).some(value=>!Number.isSafeInteger(value)||value<1))throw Error('Use positive finite integer budget values.');
+        if(!draft.name.trim()||draft.name.length>120)throw Error('Enter a model trial name of at most 120 characters.');
+        j={key,actor:identity().actor_id,name:draft.name,configuration,parameters,inputs,limits};job=j;save(j);
+      }
+      if(j.actor!==identity()?.actor_id)throw Error('The preparing owner must reconcile this trial.');
+      render();checked(valid);
+      const specification=copy(inspected.definition.model_evidence.model_specification);specification.configuration=copy(j.configuration);
+      const source_selector={project_id:project.id,recipe_id:reference.id,expected_sha256:reference.observed_sha256};
+      await create(j,'model','models.create','models',{name:j.name,task:inspected.model_task,kind:'captured_source',specification,source_selector,preprocessing_policy:inspected.definition.model_evidence.preprocessing_policy,output_policy:inspected.definition.model_evidence.output_policy},valid);
+      if(!j.material){j.material=await send('models.publish','models/'+enc(j.model.id)+'/publish',{revision:j.model.revision,reconcile_capture:true});save(j);checked(valid);}
+      await create(j,'graph','graphs.create_external','graphs/external',{name:j.name,...source_selector,inputs:j.inputs,parameters:j.parameters},valid);
+      if(!j.preflight){j.preflight=await send('graphs.preflight_external','graphs/'+enc(j.graph.id)+'/preflight-external',{revision:j.graph.revision});save(j);checked(valid);}
+      if(j.preflight.valid!==true)throw Error('The exact bound graph did not pass preflight.');
+      await create(j,'study','studies.create','studies',{name:j.name,limits:j.limits,policy:inspected.selection_policy},valid);
+      if(!j.preparation){const state=await send('studies.get','studies/'+enc(j.study.id));checked(valid);j.study=state.study;j.preparation={request_key:crypto.randomUUID(),revision:j.study.revision,graph_id:j.graph.id,graph_revision:j.graph.revision,model:j.material.ref,replicate:0,reconcile_capture:true};save(j);}
+      if(!j.trial){try{j.trial=await send('studies.prepare_trial','studies/'+enc(j.study.id)+'/prepare-trial',j.preparation);save(j);checked(valid);}
+        catch(error){if(!j.preparationUnknown&&rejected(error)){j.preparation=null;save(j);}else if(uncertain(error)){j.preparationUnknown=true;save(j);}throw error;}}
+      await loadReview(valid);status='Immutable trial prepared. Review its full material before a separate exact approval and explicit admission.';
+    }
+    async function loadReview(valid){const j=job;checked(valid);render();if(j.actor!==identity()?.actor_id)throw Error('The preparing owner must review this trial.');if(!Object.values(roles).every(item=>providerDeclaration(item.provider)))throw Error('Reinspect the recipe to review exact provider effects, runtime and limits before approval.');const result=await send('recipes.material','recipe-material',{ref:j.trial.material});j.composition=result;save(j);checked(valid);if(!hasReview(j))throw Error('The returned composition does not match this exact trial and Model.');}
+    async function approve(valid){
+      const j=job;if(!reviewed||!hasReview(j)||j.actor!==identity()?.actor_id||j.approvalUnknown)throw Error('Review the prepared exact trial before approval.');checked(valid);render();
+      try{j.approval=await send('studies.approve','studies/'+enc(j.study.id)+'/approve',{trial_id:j.trial.id,expected_material_sha256:j.trial.material.sha256,consumer_actor_id:identity().actor_id});save(j);checked(valid);status='One-use full-composition approval retained. Start this finite Study trial explicitly.';}
+      catch(error){if(!j.approval&&uncertain(error)){j.approvalUnknown=true;save(j);}throw error;}
+    }
+    async function admit(valid){
+      const j=job;checked(valid);render();if(!hasReview(j)||!j?.approval||j.actor!==identity()?.actor_id)throw Error('The preparing owner and exact approval are required.');
+      if(!j.admission){let state=await send('studies.get','studies/'+enc(j.study.id));checked(valid);
+        if(!state.study.open){if(!j.continuation){j.continuation={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch};save(j);}try{await send('studies.continue','studies/'+enc(j.study.id)+'/continue',j.continuation);}catch(error){if(!j.continuationUnknown&&rejected(error)){j.continuation=null;save(j);}else if(uncertain(error)){j.continuationUnknown=true;save(j);}throw error;}checked(valid);state=await send('studies.get','studies/'+enc(j.study.id));checked(valid);}
+        j.admission={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch,trial_id:j.trial.id,approval_id:j.approval.id};save(j);
+      }
+      let result;try{result=await send('studies.admit','studies/'+enc(j.study.id)+'/admit',j.admission);}
+      catch(error){if(!j.admissionUnknown&&rejected(error)){j.admission=null;j.continuation=null;save(j);}else if(uncertain(error)){j.admissionUnknown=true;save(j);}throw error;}
+      j.run=result.run;j.admission=null;save(j);checked(valid);status='Durable Study attempt admitted.';await onRun(result.run.id);
+    }
+    return {cancel,async open(detail,item){
+      if(busy){announce('Finish or reconcile the current preparation before opening another recipe.');return;}
+      const validEpoch=++generation;project=copy(detail);reference=copy(item);key=project.id+':'+reference.id+':'+reference.observed_sha256;inspected=null;roles=null;reviewed=false;modelEditor=null;trainerEditor=null;draft=null;
+      const saved=history.state?.extensionModelTrials?.[key];foreign=!!(saved&&saved.actor!==identity()?.actor_id&&!saved.run);job=saved?.actor===identity()?.actor_id?{...saved,key}:null;
+      status='Inspecting the exact bound contributions. No project code is executed.';failed=false;dialog.showModal();render();const credential=identity()?.credential_id;
+      try{const value=await send('recipes.inspect','projects/'+enc(project.id)+'/recipes/'+enc(reference.id)+'?expected_sha256='+enc(reference.observed_sha256),undefined,2);if(validEpoch!==generation||credential!==identity()?.credential_id||!dialog.open)return;roles=binding(value);inspected=value;draft={name:value.definition.name,inputs:{},budget:{attempts:3,wall:10800,retained:1024,staging:2048}};makeEditors();status='Configure the declared model separately from trainer controls. Preparation does not execute a Run.';render();dialog.querySelector('#extension-model-name')?.focus();}
+      catch(error){if(validEpoch===generation&&credential===identity()?.credential_id&&dialog.open){status=error.message;failed=true;render();}}
+    }};
   };
 })();

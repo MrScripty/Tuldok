@@ -1,0 +1,9 @@
+{
+  "format": "external_package_native_process_and_source_after_v1",
+  "matching_processes": [],
+  "all_149_source_hashes_still_match": true,
+  "source_commit": "00865e9e25244aa77b41d00e2f678b5bea80679d",
+  "original_catalog_opened": false,
+  "lease_released": true,
+  "scope": "Filesystem/process inspection only after both existing-Run read-only browsers exited."
+}

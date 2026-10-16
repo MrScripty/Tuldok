@@ -1,0 +1,249 @@
+{
+  "qualified_source_commit": "eabcf4da6fa44f845c60e05869e5e201324eb089",
+  "source_base": "0dcb8ac",
+  "compiler_source": "tests/extension_canonical_fixture.py",
+  "compiler_sha256": "e4a2da4c4aa65f41d1cf28a9822919de8f9859b9fbbade4525216cdc86ab4e47",
+  "tests": [
+    {
+      "command": "python -m unittest discover -s tests -p test_extension_canonical_release.py -v",
+      "count": 9,
+      "skips": 0,
+      "state": "passed",
+      "elapsed_seconds": 5.338
+    },
+    {
+      "command": "python -m unittest discover -s tests -p test_field_evidence.py -v",
+      "count": 7,
+      "skips": 0,
+      "state": "passed",
+      "elapsed_seconds": 2.308
+    }
+  ],
+  "actual_qualification_command": "python tests/extension_canonical_fixture.py --output /tmp/tuldok-extension-canonical-final",
+  "qualification_output": "/tmp/tuldok-extension-canonical-final",
+  "e2_canonical_mode": "unsupported in existing resolver; not executed or qualified by this work",
+  "receipt": {
+    "format": "extension_a_canonical_qa_fixture_v1",
+    "source_commit": "057c8ab",
+    "source_path": "examples/extensions/field-surrogate/v2/fixture.json",
+    "source_sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+    "compiler_sha256": "e4a2da4c4aa65f41d1cf28a9822919de8f9859b9fbbade4525216cdc86ab4e47",
+    "catalog_id": "729bb2a1ba6a4b52b61d971d807be595",
+    "project_id": "467d6b870c50405d87b8de6048daceb7",
+    "release": {
+      "id": "a4b4759b13b3e3392abd33847eccef1b0bd93b98fe8d62f89a69678e79d24734",
+      "url": "/api/workbench/releases/a4b4759b13b3e3392abd33847eccef1b0bd93b98fe8d62f89a69678e79d24734.zip",
+      "records": 3,
+      "split_report": {
+        "requested_percentages": {
+          "train": 67,
+          "validation": 33,
+          "test": 0
+        },
+        "actual_counts": {
+          "train": 2,
+          "validation": 1
+        },
+        "independent_components": 3,
+        "note": "Whole connected groups are indivisible; existing source splits are preserved. Requested percentages are targets, not exact quotas."
+      }
+    },
+    "release_sha256": "a4b4759b13b3e3392abd33847eccef1b0bd93b98fe8d62f89a69678e79d24734",
+    "release_bytes": 56244,
+    "split_seed": 0,
+    "contract": {
+      "format": "field_adapter_contract_v1",
+      "owner": "Authored scalar A canonical source fixture; private QA only",
+      "adapter": {
+        "name": "authored_scalar_a_canonical_source",
+        "version": 1
+      },
+      "source_sha256": "e4a2da4c4aa65f41d1cf28a9822919de8f9859b9fbbade4525216cdc86ab4e47",
+      "inputs": [
+        {
+          "field_id": "initial",
+          "dtype": "<f8",
+          "shape_zyx": [
+            4,
+            4,
+            4
+          ],
+          "centering": "cell",
+          "stage": "input",
+          "units": "dimensionless",
+          "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+        }
+      ],
+      "output": {
+        "field_id": "reference",
+        "dtype": "<f8",
+        "shape_zyx": [
+          4,
+          4,
+          4
+        ],
+        "centering": "cell",
+        "stage": "reference_target",
+        "units": "dimensionless",
+        "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+      },
+      "time_mode": "standalone"
+    },
+    "gauge_policy": {
+      "format": "authored_scalar_gauge_v1",
+      "operation": "identity",
+      "field_units": "dimensionless"
+    },
+    "temporal_encoding": "storage_frame_label_only_no_physical_time",
+    "original_mapping": "target = 0.5 * initial + 0.25",
+    "derivation": {
+      "format": "field_input_derivation_v1",
+      "contract_sha256": "3fc442b6fdc3fa796cac9db2cda2a2bc292e6d98e556a288ae84bbd72f241a84",
+      "family_scope": "selected_records_only",
+      "cases": [
+        {
+          "id": "train-0",
+          "release_sha256": "a4b4759b13b3e3392abd33847eccef1b0bd93b98fe8d62f89a69678e79d24734",
+          "record_id": "127f1e6287c2423cb316a688091d4d54",
+          "split": "train",
+          "family": {
+            "namespace": "authored-extension-a-v2-qa",
+            "id": "train-0"
+          },
+          "protected_groups": [
+            "field-sequence-source:2718ba9e49bc78a7183a7918a47c1ff95ca8dfcb75726319b54ae4223a2dd57d",
+            "field-sequence-state:ffdb6bb26194412206f6ce9fab285f51010775178fe7a61f606000966a863a53",
+            "field-sequence-family:4f80c5da96c68eae25475c151c1d88ce5978260b59d23c4a7eeece38cb64faf5"
+          ],
+          "frame": 0,
+          "time": "0",
+          "geometry_sha256": "f231202325b44cfadab384849827b5862577dd2072043103b616490dfaec4714",
+          "arrays": [
+            {
+              "field_id": "initial",
+              "source_sha256": "f2570680ab0edcf478d027c3050149f8fe39949a1cf39d629256da674d55ef51",
+              "payload_sha256": "ee8d953dc542fa978a132fa4cf4ad99a3940ade39e55bb4a8d7761444c955cb0",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+              "output": {
+                "name": "train-0-initial.npy",
+                "bytes": 640,
+                "sha256": "f2570680ab0edcf478d027c3050149f8fe39949a1cf39d629256da674d55ef51",
+                "media_type": "application/x-npy"
+              }
+            },
+            {
+              "field_id": "reference",
+              "source_sha256": "edecab2e4664a603c25c0b7f99151c52fc63f42f98b2f11badde48dc15c0f6cb",
+              "payload_sha256": "f5f892d7f4e2dcce4c2ec63ac979a9d7fe5e3a7fb31d9fabce9fa529b684173f",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+              "output": {
+                "name": "train-0-reference.npy",
+                "bytes": 640,
+                "sha256": "edecab2e4664a603c25c0b7f99151c52fc63f42f98b2f11badde48dc15c0f6cb",
+                "media_type": "application/x-npy"
+              }
+            }
+          ]
+        },
+        {
+          "id": "train-1",
+          "release_sha256": "a4b4759b13b3e3392abd33847eccef1b0bd93b98fe8d62f89a69678e79d24734",
+          "record_id": "3a349b80a6394b3ca80459008b278211",
+          "split": "train",
+          "family": {
+            "namespace": "authored-extension-a-v2-qa",
+            "id": "train-1"
+          },
+          "protected_groups": [
+            "field-sequence-source:661e77ba04052dae6eef904d21d72b7f71a008bff035555a775fe9a5d19d8ab2",
+            "field-sequence-state:5fa41b3061c6569ec288bfef6094f4968384b2967587c18f0a0cc3368ae39ede",
+            "field-sequence-family:9b993f6b5f94d340371286e1fd302d4ad9d62bff706ddfab2c0cc53d31e45986"
+          ],
+          "frame": 0,
+          "time": "0",
+          "geometry_sha256": "f231202325b44cfadab384849827b5862577dd2072043103b616490dfaec4714",
+          "arrays": [
+            {
+              "field_id": "initial",
+              "source_sha256": "f1f95da722543ad1cd830d0173020f26f23127fc8eda4a2548bbc99b6564e556",
+              "payload_sha256": "fd058a51600ba162d9f95e2839aee162ed9eb027996ae327a7a48cc7fbd2d119",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+              "output": {
+                "name": "train-1-initial.npy",
+                "bytes": 640,
+                "sha256": "f1f95da722543ad1cd830d0173020f26f23127fc8eda4a2548bbc99b6564e556",
+                "media_type": "application/x-npy"
+              }
+            },
+            {
+              "field_id": "reference",
+              "source_sha256": "35c8a59267ac4d1201a045535529e530526ec8100a60530e3adc361914e11b94",
+              "payload_sha256": "e7a91f5edba1d4ee60822941b384cd73956feee913eb5c878e150bdffcd5be5c",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+              "output": {
+                "name": "train-1-reference.npy",
+                "bytes": 640,
+                "sha256": "35c8a59267ac4d1201a045535529e530526ec8100a60530e3adc361914e11b94",
+                "media_type": "application/x-npy"
+              }
+            }
+          ]
+        },
+        {
+          "id": "validation-0",
+          "release_sha256": "a4b4759b13b3e3392abd33847eccef1b0bd93b98fe8d62f89a69678e79d24734",
+          "record_id": "89f7427c8de245598ece2c0524b7345c",
+          "split": "validation",
+          "family": {
+            "namespace": "authored-extension-a-v2-qa",
+            "id": "validation-0"
+          },
+          "protected_groups": [
+            "field-sequence-source:35e19e5af8f107861693e0fa2976d8c92e4be423af334a0da63494c7dc62733b",
+            "field-sequence-state:667f1f2c3243b21ad09a263367972a37007f605f65683483d33688f1bb23c62f",
+            "field-sequence-family:9882aebae6c549d92731345550c63730fd11e454a6655445d8ea3e04e5d6363a"
+          ],
+          "frame": 0,
+          "time": "0",
+          "geometry_sha256": "f231202325b44cfadab384849827b5862577dd2072043103b616490dfaec4714",
+          "arrays": [
+            {
+              "field_id": "initial",
+              "source_sha256": "f9e9838679f8b4c123e908382469312decc6b71055727b806baf47b27c3ff189",
+              "payload_sha256": "0bb06224e3a43c607db3d65c0ccdb54489c09557f1394b292ec9f473c494a71b",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+              "output": {
+                "name": "validation-0-initial.npy",
+                "bytes": 640,
+                "sha256": "f9e9838679f8b4c123e908382469312decc6b71055727b806baf47b27c3ff189",
+                "media_type": "application/x-npy"
+              }
+            },
+            {
+              "field_id": "reference",
+              "source_sha256": "a3d5ed68f9f45badf5146729e9b3004e10718705f6b033472525e88b41bca9b0",
+              "payload_sha256": "01575b8581ca92622705e8a456e00c220cb58fd19c17a8a50e08363538c0e9bf",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+              "output": {
+                "name": "validation-0-reference.npy",
+                "bytes": 640,
+                "sha256": "a3d5ed68f9f45badf5146729e9b3004e10718705f6b033472525e88b41bca9b0",
+                "media_type": "application/x-npy"
+              }
+            }
+          ]
+        }
+      ],
+      "fit_case_ids": [
+        "train-0",
+        "train-1"
+      ]
+    },
+    "native_array_count": 6,
+    "native_payload_values_bitwise_unchanged": true,
+    "actual_workbench_review": true,
+    "actual_canonical_release": true,
+    "e2_canonical_execution": false,
+    "limitation": "E2 resolver currently rejects frozen Release/Run inputs; no training/inference/physics or E2 canonical acceptance claim."
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "contributions": [
+    {
+      "bytes": 2166,
+      "id": "example.modality-text:descriptor",
+      "kind": "task",
+      "path": "text/descriptor.json",
+      "sha256": "63ae47f3328591f9f27089533093a50587ffecea72c83f4dfc39cca2ebf06aca",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 989,
+      "id": "example.modality-text:reader",
+      "kind": "reader",
+      "path": "text/reader.json",
+      "sha256": "0e12cde520fc128f7bcd9d99ba5272b7f89ff7da71587d7d0a2566ee3102d69c",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 578,
+      "id": "example.modality-text:metadata",
+      "kind": "view",
+      "path": "text/view.json",
+      "sha256": "4fe9a6991044f44b27b2561d19532a9678979aa0edfa8f93285479b9d8bc16a0",
+      "version": "1.0.0"
+    }
+  ],
+  "effects": [],
+  "format": "tuldok_extension_v1",
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "label": "text descriptor envelope fixture",
+  "license": {
+    "id": "LicenseRef-Authored-Test-Fixture",
+    "notices": []
+  },
+  "package": {
+    "id": "example.modality-text",
+    "version": "1.0.0"
+  },
+  "resources": {
+    "output_bytes": 1024,
+    "source_bytes": 4096,
+    "wall_seconds": 1
+  },
+  "runtime": {
+    "profile": "unqualified-descriptor-only"
+  },
+  "sources": [
+    {
+      "bytes": 237,
+      "path": "text/text_worker.py",
+      "sha256": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869"
+    },
+    {
+      "bytes": 275,
+      "path": "text/config.json",
+      "sha256": "662173f78dda7c124298e74cf314cc1dc7afd5af6891b6d2428e02817aed7d84"
+    }
+  ]
+}

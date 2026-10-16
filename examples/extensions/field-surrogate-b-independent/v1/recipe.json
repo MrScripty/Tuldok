@@ -1,0 +1,860 @@
+{
+  "schema_version": 3,
+  "format": "external_model_evidence_recipe_v2",
+  "id": "independent-b-evidence-v1",
+  "name": "Independent B source and boundary evidence",
+  "version": 1,
+  "runtime": "captured_cpu_python_v1",
+  "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "sources": [
+    {
+      "path": "producer.py",
+      "sha256": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b"
+    },
+    {
+      "path": "tuldok_extension_sdk/__init__.py",
+      "sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18"
+    },
+    {
+      "path": "tuldok_extension_sdk/evidence.py",
+      "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23"
+    },
+    {
+      "path": "task.json",
+      "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+    },
+    {
+      "path": "model.json",
+      "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba"
+    },
+    {
+      "path": "trainer.json",
+      "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b"
+    },
+    {
+      "path": "evaluator.json",
+      "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b"
+    },
+    {
+      "path": "view.json",
+      "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+    },
+    {
+      "path": "extension.json",
+      "sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f"
+    },
+    {
+      "path": "NOTICE.txt",
+      "sha256": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223"
+    }
+  ],
+  "entrypoint": "producer.py",
+  "arguments": [
+    {
+      "input": "fixture"
+    },
+    {
+      "model_evidence_context": true
+    },
+    {
+      "output_dir": true
+    }
+  ],
+  "parameters": {
+    "learning_rate": {
+      "type": "number",
+      "default": 0.1,
+      "min": 0.001,
+      "max": 0.5
+    },
+    "updates": {
+      "type": "integer",
+      "default": 64,
+      "min": 64,
+      "max": 64
+    }
+  },
+  "inputs": {
+    "fixture": {
+      "max_bytes": 65536
+    }
+  },
+  "outputs": [
+    {
+      "path": "execution-context.json",
+      "role": "model_context",
+      "max_bytes": 65536,
+      "required": true
+    },
+    {
+      "path": "model-evidence.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "model-definition.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "profile.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "probe.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "metric-definitions.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoints.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "observations.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "field-index.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "fitted-transform.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "output-policy.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "diagnostics.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "transform.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "reference-raw.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "reference-corrected.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "input-initial.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "input-source.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "input-boundary_mask.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "weights-32.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "raw-32.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "corrected-32.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoint-32.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "weights-64.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "raw-64.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "corrected-64.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoint-64.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    }
+  ],
+  "environment": {},
+  "resources": {
+    "wall_seconds": 60,
+    "max_output_bytes": 1048576
+  },
+  "model_evidence": {
+    "format": "extension_field_policy_v1",
+    "task": {
+      "id": "example.scalar-b-independent:task",
+      "revision": 1,
+      "definition": {
+        "format": "tuldok_contribution_v1",
+        "id": "example.scalar-b-independent:task",
+        "version": "1.0.0",
+        "kind": "task",
+        "label": "Independent B source-driven scalar and explicit boundary enforcement",
+        "requires": [],
+        "ports": [
+          {
+            "id": "initial",
+            "direction": "input",
+            "contract": {
+              "id": "example.scalar-b-independent:scalar-field",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "source",
+            "direction": "input",
+            "contract": {
+              "id": "example.scalar-b-independent:scalar-field",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "boundary_mask",
+            "direction": "input",
+            "contract": {
+              "id": "example.scalar-b-independent:boundary-mask",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "raw_target",
+            "direction": "target",
+            "contract": {
+              "id": "example.scalar-b-independent:scalar-field",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "corrected_target",
+            "direction": "target",
+            "contract": {
+              "id": "example.scalar-b-independent:scalar-field",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "raw",
+            "direction": "output",
+            "contract": {
+              "id": "example.scalar-b-independent:scalar-field",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "corrected",
+            "direction": "output",
+            "contract": {
+              "id": "example.scalar-b-independent:scalar-field",
+              "version": "1.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          }
+        ],
+        "stages": [
+          {
+            "id": "raw_inference",
+            "version": "1.0.0",
+            "inputs": [
+              "initial",
+              "source",
+              "raw_target"
+            ],
+            "outputs": [
+              "raw"
+            ],
+            "clock": "optimizer_update",
+            "failure_policy": "fail"
+          },
+          {
+            "id": "boundary_enforcement",
+            "version": "1.0.0",
+            "inputs": [
+              "raw",
+              "boundary_mask",
+              "corrected_target"
+            ],
+            "outputs": [
+              "corrected"
+            ],
+            "clock": "optimizer_update",
+            "failure_policy": "fail"
+          }
+        ]
+      }
+    },
+    "adapter_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+    "profile": {
+      "id": "example.scalar-b-independent.fixed-validation",
+      "revision": 1,
+      "probe_selection": {
+        "role": "validation",
+        "algorithm": "sha256_rank_v1",
+        "namespace": "example.scalar-b-independent-validation-v1",
+        "seed": 0,
+        "count": 1
+      },
+      "capture": {
+        "clock": "optimizer_update",
+        "interval": 32,
+        "retain_selected": true,
+        "max_snapshots": 2
+      },
+      "required_capabilities": [
+        "checkpoints",
+        "fixed_validation_predictions",
+        "scalar_history",
+        "field_pairs"
+      ],
+      "optional_capabilities": [],
+      "limits": {
+        "manifest_bytes": 65536,
+        "shard_bytes": 65536,
+        "total_output_bytes": 1048576
+      }
+    },
+    "probe": {
+      "data_input": "fixture",
+      "candidates": [
+        {
+          "frozen_reference": {
+            "input": "fixture",
+            "sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+            "member_id": "validation-0",
+            "split": "validation"
+          },
+          "input_sha256": "ca0dc286949d06eaf26980eaf39647e97df4010662414acb805879c628c73e15",
+          "target_sha256": "fa9d3d81a42b3fbe510c5462616925702f05ae9ffb930ba921e67963f4cabebb"
+        }
+      ]
+    },
+    "probe_inputs": [
+      {
+        "member_id": "validation-0",
+        "fields": [
+          {
+            "field_id": "initial",
+            "artifact": "input-initial.npy"
+          },
+          {
+            "field_id": "source",
+            "artifact": "input-source.npy"
+          },
+          {
+            "field_id": "boundary_mask",
+            "artifact": "input-boundary_mask.npy"
+          }
+        ]
+      }
+    ],
+    "fit_members": [
+      {
+        "input": "fixture",
+        "sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+        "member_id": "train-0",
+        "split": "train"
+      },
+      {
+        "input": "fixture",
+        "sha256": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+        "member_id": "train-1",
+        "split": "train"
+      }
+    ],
+    "fields": [
+      {
+        "id": "raw",
+        "contract": {
+          "format": "field_adapter_contract_v1",
+          "owner": "Independent B dimensionless author; no physics claim",
+          "adapter": {
+            "name": "example.scalar-b-independent",
+            "version": 1
+          },
+          "source_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+          "inputs": [
+            {
+              "field_id": "initial",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            },
+            {
+              "field_id": "source",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            },
+            {
+              "field_id": "boundary_mask",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            }
+          ],
+          "output": {
+            "field_id": "raw",
+            "dtype": "<f8",
+            "shape_zyx": [
+              4,
+              4,
+              4
+            ],
+            "centering": "cell",
+            "stage": "raw_inference",
+            "units": "dimensionless",
+            "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+          },
+          "time_mode": "standalone"
+        },
+        "geometry": {
+          "shape_xyz": [
+            4,
+            4,
+            4
+          ],
+          "origin_xyz": [
+            0,
+            0,
+            0
+          ],
+          "spacing_xyz": [
+            1,
+            1,
+            1
+          ],
+          "orientation": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "units": "m"
+        },
+        "gauge_policy": {
+          "format": "authored_scalar_gauge_v1",
+          "operation": "identity",
+          "field_units": "dimensionless"
+        }
+      },
+      {
+        "id": "corrected",
+        "contract": {
+          "format": "field_adapter_contract_v1",
+          "owner": "Independent B dimensionless author; no physics claim",
+          "adapter": {
+            "name": "example.scalar-b-independent",
+            "version": 1
+          },
+          "source_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+          "inputs": [
+            {
+              "field_id": "initial",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            },
+            {
+              "field_id": "source",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            },
+            {
+              "field_id": "boundary_mask",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            }
+          ],
+          "output": {
+            "field_id": "corrected",
+            "dtype": "<f8",
+            "shape_zyx": [
+              4,
+              4,
+              4
+            ],
+            "centering": "cell",
+            "stage": "boundary_enforcement",
+            "units": "dimensionless",
+            "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+          },
+          "time_mode": "standalone"
+        },
+        "geometry": {
+          "shape_xyz": [
+            4,
+            4,
+            4
+          ],
+          "origin_xyz": [
+            0,
+            0,
+            0
+          ],
+          "spacing_xyz": [
+            1,
+            1,
+            1
+          ],
+          "orientation": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "units": "m"
+        },
+        "gauge_policy": {
+          "format": "authored_scalar_gauge_v1",
+          "operation": "identity",
+          "field_units": "dimensionless"
+        }
+      }
+    ],
+    "field_outputs": [
+      {
+        "clock": 32,
+        "field_id": "raw",
+        "member_id": "validation-0",
+        "prediction": "raw-32.npy",
+        "reference": "reference-raw.npy"
+      },
+      {
+        "clock": 32,
+        "field_id": "corrected",
+        "member_id": "validation-0",
+        "prediction": "corrected-32.npy",
+        "reference": "reference-corrected.npy"
+      },
+      {
+        "clock": 64,
+        "field_id": "raw",
+        "member_id": "validation-0",
+        "prediction": "raw-64.npy",
+        "reference": "reference-raw.npy"
+      },
+      {
+        "clock": 64,
+        "field_id": "corrected",
+        "member_id": "validation-0",
+        "prediction": "corrected-64.npy",
+        "reference": "reference-corrected.npy"
+      }
+    ],
+    "metric_definitions": [
+      {
+        "id": "raw_reference_mse",
+        "semantic_version": 1,
+        "split": "validation",
+        "units": "dimensionless_squared",
+        "direction": "minimize",
+        "reduction": "mean_cell_squared_error_over_validation_members",
+        "population_sha256": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800",
+        "domain": {
+          "minimum": 0,
+          "maximum": 1000000000000.0
+        },
+        "undefined_rule": "not_applicable",
+        "evaluator_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+        "preprocessing_sha256": "905f89c429cbadae20edf269a0fb212f21e1894b99506cc95ebf615142099d86"
+      },
+      {
+        "id": "corrected_reference_mse",
+        "semantic_version": 1,
+        "split": "validation",
+        "units": "dimensionless_squared",
+        "direction": "minimize",
+        "reduction": "mean_cell_squared_error_over_validation_members",
+        "population_sha256": "8f6b4d9939fc1a69d6b6b642237a56adb8dbcaa3ae3f4ab47cf7236dcf103800",
+        "domain": {
+          "minimum": 0,
+          "maximum": 1000000000000.0
+        },
+        "undefined_rule": "not_applicable",
+        "evaluator_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+        "preprocessing_sha256": "905f89c429cbadae20edf269a0fb212f21e1894b99506cc95ebf615142099d86"
+      }
+    ],
+    "model_specification": {
+      "format": "independent_b_affine_v1",
+      "trainable_parameters": [
+        "initial_scale",
+        "source_scale",
+        "offset"
+      ],
+      "input_fields": [
+        "initial",
+        "source",
+        "boundary_mask"
+      ],
+      "output_fields": [
+        "raw",
+        "corrected"
+      ],
+      "architecture": {
+        "kind": "two_feature_affine",
+        "weights_shape": [
+          3
+        ],
+        "feature_order": [
+          "initial",
+          "source"
+        ],
+        "initial_weights": [
+          0,
+          0,
+          0
+        ],
+        "boundary_policy": "where(boundary_mask,0,raw)"
+      },
+      "configuration": {}
+    },
+    "preprocessing_policy": {
+      "kind": "population_standardization",
+      "fit_scope": "train",
+      "fields": [
+        "initial",
+        "source"
+      ],
+      "fit_members": [
+        "train-0",
+        "train-1"
+      ]
+    },
+    "output_policy": {
+      "kind": "standalone_scalar",
+      "stages": [
+        {
+          "id": "raw_inference",
+          "field": "raw",
+          "target": "raw_target"
+        },
+        {
+          "id": "boundary_enforcement",
+          "field": "corrected",
+          "target": "corrected_target",
+          "operation": "where(boundary_mask,0,raw)"
+        }
+      ],
+      "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+      "units": "dimensionless"
+    },
+    "field_targets": [
+      {
+        "member_id": "validation-0",
+        "field_id": "raw",
+        "payload_sha256": "a5af5ffd194e6779855ede80e0c58251819b66fcbfb347ff692d6ec02813e04e"
+      },
+      {
+        "member_id": "validation-0",
+        "field_id": "corrected",
+        "payload_sha256": "2a68eb7ff67202cac3b293694fd343db9a509bf2fdfe2829d7c420517fbf54a5"
+      }
+    ]
+  },
+  "extension_selection": {
+    "selections": {
+      "task": {
+        "id": "example.scalar-b-independent:task",
+        "version": "1.0.0",
+        "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+      },
+      "model": {
+        "id": "example.scalar-b-independent:model",
+        "version": "1.0.0",
+        "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba"
+      },
+      "trainer": {
+        "id": "example.scalar-b-independent:trainer",
+        "version": "1.0.0",
+        "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b"
+      },
+      "evaluator": {
+        "id": "example.scalar-b-independent:evaluator",
+        "version": "1.0.0",
+        "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b"
+      },
+      "view": {
+        "id": "example.scalar-b-independent:view",
+        "version": "1.0.0",
+        "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+      }
+    }
+  }
+}

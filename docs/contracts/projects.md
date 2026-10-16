@@ -124,9 +124,12 @@ POST `/api/workspace/projects/{id}/import-data/{reference_id}` selects only a sa
 
 Project v1 and its legacy HTTP/agent operations remain closed and unchanged.
 [Extensions](extensions.md) defines project v2's exact immutable `extensions`
-references and the owner-only `/api/workspace/project-snapshots` browser/HTTP
-projection. Legacy list omits v2; legacy open/get refuses it before new effects.
-No agent operation is added before accepted negotiation contracts. V2 discovery
+references and the unselected owner-only `/api/workspace/project-snapshots`
+browser/HTTP projection. The separately negotiated `project_snapshots.list/get/open`
+contracts admit current scoped agents, with bounded pagination and explicit
+schema-version inspection. Legacy list omits v2; legacy open/get refuses it before
+new effects. The [agent contract](agent-operations.md#negotiated-project-snapshots-and-bound-authoring)
+owns these new projections and selected static-authoring versions. V2 discovery
 is inert and never treats a package declaration as runtime/admission authority.
 
 There is no metadata DDL change or old-binary refusal gate. An old binary may

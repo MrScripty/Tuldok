@@ -221,16 +221,23 @@ class ModelDefinitions:
         import recipe_contract
         inspected=recipe_contract.inspect_recipe(self.dataset.projects,selector['project_id'],
                                                  selector['recipe_id'],selector['expected_sha256'])
-        sources=self.dataset.projects.read_recipe_sources(selector['project_id'],inspected['definition']['sources'])
-        raw,receipt=self.dataset.projects.read_recipe_reference(selector['project_id'],selector['recipe_id'],
-                                                                selector['expected_sha256'])
+        bound=recipe_contract.is_bound_evidence(inspected['definition'])
+        if bound:
+            import extension_bindings
+            extension_bindings.validate_configuration(inspected['extension_binding'],inspected['definition'],
+                recipe_contract.validate_parameters(inspected['definition'],{}),specification=draft['specification'],task=draft['task'])
+            sources=recipe_contract.bound_sources(self.dataset.projects,inspected)
+        else:
+            sources=self.dataset.projects.read_recipe_sources(selector['project_id'],inspected['definition']['sources'])
+        reader=self.dataset.projects.read_snapshot_recipe_reference if bound else self.dataset.projects.read_recipe_reference
+        raw,receipt=reader(selector['project_id'],selector['recipe_id'],selector['expected_sha256'])
         sources[receipt['path']]=raw
         if not 1<=len(sources)<=MAX_SOURCE_FILES or sum(map(len,sources.values()))>MAX_SOURCE_BYTES:
             raise WorkbenchError('Model source closure exceeds64 files/8MiB including its definition.')
         return inspected['definition']['entrypoint'],sources
 
     @authorized('edit','models.publish')
-    def publish(self,model_id,body):
+    def publish(self,model_id,body,*,_source_guard=None):
         closed(body,('revision',),('reconcile_capture',));natural(body['revision'],'Model revision',1)
         reconcile=body.get('reconcile_capture',False)
         if type(reconcile) is not bool:raise WorkbenchError('Capture reconciliation must be boolean.')
@@ -243,6 +250,9 @@ class ModelDefinitions:
             return self.material(retained_json(prior[0])['ref'],verify=True)
         draft=self.get(model_id)
         if draft['revision']!=body['revision']:raise WorkbenchError('Model changed. Reload.','stale',409)
+        # Trusted boundary callback checks this exact immutable revision, never
+        # a separately fetched latest draft or any caller-supplied body flag.
+        if _source_guard is not None:_source_guard(draft)
         entrypoint,sources=self._sources(draft)
         payloads={};material={'format':'model_material_v1','catalog_id':self.db.dataset_id,
             'model_definition_id':model_id,'model_definition_revision':draft['revision'],'task':draft['task'],
@@ -332,7 +342,31 @@ class ModelDefinitions:
             for item in [*(value['material'][key] for key in ('specification','preprocessing_policy','output_policy')),
                          *(source['blob'] for source in value['material']['source_closure'])]:
                 self._read_blob(ref,item)
+            if material['kind']=='captured_source':
+                self._validate_bound_sources(value)
         return value
+
+    def _validate_bound_sources(self, value):
+        import extension_bindings
+        import recipe_contract
+        material=value['material'];ref=value['ref']
+        sources={item['import_path']:self._read_blob(ref,item['blob']) for item in material['source_closure']}
+        matches=[raw for raw in sources.values() if hashlib.sha256(raw).hexdigest()==material['source_selector']['expected_sha256']]
+        if not matches:raise WorkbenchError('Retained model recipe is missing.','unavailable',409)
+        definition=recipe_contract.decode_definition(matches[0])
+        if recipe_contract.is_bound_evidence(definition):
+            raw=sources.get(extension_bindings.BINDING_PATH)
+            if raw is None:raise WorkbenchError('Retained model binding is missing.','unavailable',409)
+            binding=retained_json(raw.decode(),extension_bindings.BOUND_DOCUMENT_LIMIT)
+            inventory={item['path'] for item in binding['inventory']}
+            bound_sources={path:data for path,data in sources.items() if path in inventory or path==extension_bindings.BINDING_PATH}
+            recipe_contract.validate_bound_sources(definition,binding,bound_sources,
+                specification=retained_json(self._read_blob(ref,material['specification']).decode()),task=material['task'])
+            if material['entrypoint']!=definition['entrypoint']:
+                raise WorkbenchError('Retained Model entrypoint differs.','unavailable',409)
+            return binding
+        if extension_bindings.BINDING_PATH in sources:
+            raise WorkbenchError('Legacy model cannot retain an extension binding.','unavailable',409)
 
     @staticmethod
     def _blob(item):

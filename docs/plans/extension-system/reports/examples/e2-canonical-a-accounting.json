@@ -1,0 +1,69 @@
+{
+  "charged": {
+    "admitted_wall_seconds": 197,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 6216933,
+    "retained_bytes": 4495421
+  },
+  "page": {
+    "limit": 100,
+    "next_offset": null,
+    "offset": 0,
+    "study_revision": 5,
+    "total": 1
+  },
+  "reservations": [
+    {
+      "actor_id": "0b992c990cf947508de50d563f4515ae",
+      "admission_epoch": 1,
+      "envelope": {
+        "admitted_wall_seconds": 197,
+        "attempt_slots": 1,
+        "peak_staging_bytes": 6216933,
+        "retained_bytes": 4495421
+      },
+      "id": "3e33244ccae740a194c9ab874c47eeeb",
+      "material_sha256": "67a28c7765f6762ec32f5d3f6da9b8de79cb795401d50ef69c12e4ce23808c77",
+      "parent_run_id": null,
+      "request_key": "canonical-sdk-01a69d797cf24b24856f28aaff53933b",
+      "request_sha256": "3f342422631604b9a83c67cd40052fd3657cdde79001a6a214dc8a0e3e6ce3f7",
+      "run_id": "610afd2bb09b4c1588b23a628d5756d3",
+      "settled": {
+        "admitted_wall_seconds": 197,
+        "attempt_slots": 1,
+        "peak_staging_bytes": 6216933,
+        "retained_bytes": 4495421
+      },
+      "state": "settled",
+      "study_id": "8d6428412c4148b3ad7df7f501cd90f4",
+      "trial_id": "3ee2b31d381f4d32840355be6b4cb2ec"
+    }
+  ],
+  "study": {
+    "admission_epoch": 1,
+    "format": "study_v1",
+    "id": "8d6428412c4148b3ad7df7f501cd90f4",
+    "limits": {
+      "admitted_wall_seconds": 1200,
+      "attempt_slots": 3,
+      "peak_staging_bytes": 314572800,
+      "retained_bytes": 314572800
+    },
+    "membership_revision": 2,
+    "name": "Finite canonical A training and fresh consumer",
+    "open": true,
+    "policy": {
+      "catalog_id": "1139df50423642f0b5f579aa4b26bc8b",
+      "id": "ba9f7421686b40b19d48c5bd46d55b61",
+      "kind": "selection_policy",
+      "revision": 1,
+      "sha256": "f0ae12046c4a1e8627b478f9308da6a2884add1f335d306c2578814d3394c0c5"
+    },
+    "revision": 5,
+    "state": "open",
+    "stop_receipt_id": null,
+    "trial_ids": [
+      "3ee2b31d381f4d32840355be6b4cb2ec"
+    ]
+  }
+}

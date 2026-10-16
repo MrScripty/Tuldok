@@ -121,7 +121,8 @@ class Runs:
                         or Path(declared).name != '.external-' + run['id']
                         or Path(declared).parent.name != 'workspace-runs'):
                     raise ValueError('Invalid retained external staging location.')
-                recipe_contract.validate_spec(run['material'], run['spec'], declared)
+                admitted_context=self._extension_context(run) if self._extension(run) else None
+                recipe_contract.validate_spec(run['material'], run['spec'], declared,context=admitted_context)
                 if (run['graph'].get('recipe') != 'external_recipe'
                         or run['material']['catalog_id'] != self.db.dataset_id
                         or digest(run['material']) != run['material_sha256']
@@ -365,7 +366,7 @@ class Runs:
         return self._public(run)
 
     @authorized('inspect', 'runs.submit_external')
-    def submit_external(self, body):
+    def submit_external(self, body, *, _graph_guard=None):
         """The sole agent execution exception consumes an exact owner grant."""
         context = self.access.require_external_submission()
         closed(body, ('request_key', 'graph_id', 'graph_revision', 'expected_digest'), ('approval_id',))
@@ -374,6 +375,8 @@ class Runs:
             receipt = self._external_receipt(key, request_hash, context.actor_id)
         if receipt:
             return self._reconcile_receipt(receipt)
+        if _graph_guard is not None:
+            _graph_guard(self.pipelines.get(body['graph_id']))
         self._available()
         if self._external_blocked:
             raise WorkbenchError('External descendant cessation is unknown for this host boot.', 'unavailable', 409)
@@ -415,6 +418,28 @@ class Runs:
                 material.get('recipe_id')!=graph['id'] or material.get('recipe_revision')!=graph['revision'] or
                 material.get('executable_sha256')!=execution_material_sha256):
             raise WorkbenchError('Approved composed material differs from execution.','unavailable',409)
+        return value
+
+    @staticmethod
+    def _extension(run):
+        material=run.get('material')
+        recipe=material.get('recipe') if type(material) is dict else None
+        import recipe_contract
+        return run.get('execution_kind')=='external_recipe' and recipe_contract.is_evidence(recipe)
+
+    def _extension_context(self,run, *, with_captured_inputs=False):
+        """Rederive the exact admitted context; never authorize from its copy."""
+        import extension_evidence
+        composition=self._approved_composition(run.get('approval_material_sha256'),run['graph'],run['material_sha256'])
+        retained=self.pipelines._retained_extension_static(composition,with_captured_inputs=with_captured_inputs)
+        static,captured=retained if with_captured_inputs else (retained,None)
+        context=extension_evidence.validate_context(run.get('extension_context'),run,composition,static)
+        return (context,captured) if with_captured_inputs else context
+
+    def _verify_extension(self,directory,run):
+        import extension_evidence
+        context,captured=self._extension_context(run,with_captured_inputs=True)
+        return extension_evidence.verify(directory,run,context,captured=captured)
 
     @authorized('inspect', 'runs.lookup_external_receipt')
     def lookup_external_receipt(self, request_key, request_hash):
@@ -449,8 +474,23 @@ class Runs:
                 captured['material_sha256'] != body['expected_digest'] or
                 captured['material']['graph_execution_sha256'] != execution_digest(graph)):
             raise WorkbenchError('Prepared execution identity differs.', 'stale', 409)
-        recipe_contract.validate_spec(captured['material'], spec, str(staging))
         self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
+        extension_context=None
+        if recipe_contract.is_evidence(captured['material']['recipe']):
+            if approval_material_sha256 is None:
+                raise WorkbenchError('Model evidence requires the complete Study composition grant.','unsupported',409)
+            import extension_evidence
+            composition=self._approved_composition(approved_sha,graph,captured['material_sha256'])
+            static=self.pipelines._retained_extension_static(composition)
+            extension_context=extension_evidence.context(static,composition['ref'],run_id,request_hash)
+            path=staging/extension_evidence.CONTEXT_PATH
+            with path.open('xb') as output:
+                output.write(extension_evidence.canonical(extension_context));output.flush()
+                os.fchmod(output.fileno(),0o400);os.fsync(output.fileno())
+            _sync(path.parent);_sync(staging)
+            spec=dict(recipe_contract.spec_for_material(captured['material'],staging,context=extension_context),
+                      attempt_id=run_id,request_sha256=request_hash)
+        recipe_contract.validate_spec(captured['material'], spec, str(staging),context=extension_context)
         # Captured/validated resource policy owns this bound. Check
         # after both reconciliation opportunities, before consuming
         # approval or persisting admission; failure uses normal cleanup.
@@ -484,6 +524,7 @@ class Runs:
                'custody_receipt_sha256': None, 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if extension_context is not None:run['extension_context']=extension_context
         if approval_material_sha256 is not None:
             run['approval_material_sha256']=approved_sha
         self._event(run, 'queued', 'Exact owner-approved external recipe admitted.')
@@ -742,6 +783,11 @@ class Runs:
                                   'sha256':item['sha256'],'media_type':item.get('media_type','application/octet-stream')})
         finally:
             os.close(source_descriptor)
+        if self._extension(run):
+            import extension_evidence
+            from candidate_packages import authorize_material_inputs
+            authorize_material_inputs(self,run['material'])
+            self._verify_extension(destination,dict(run,artifacts=artifacts))
         receipt_raw = encode(receipt).encode()
         manifest = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
                     'request_sha256': run['request_sha256'], 'custody_receipt_sha256': hashlib.sha256(receipt_raw).hexdigest(),
@@ -772,7 +818,7 @@ class Runs:
                 self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
                 run['started_at'] = timestamp()
                 self._save(run)
-            if recipe_contract.host_identity() != run['material']['host_files']:
+            if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
             preparation_seconds = recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in run['spec'] else recipe_process.READY_SECONDS
@@ -894,6 +940,12 @@ class Runs:
                 info = os.stat(item['name'], dir_fd=descriptor, follow_symlinks=False)
                 if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size != item['bytes']:
                     raise ValueError('Artifact inventory changed.')
+            if self._extension(run):
+                import extension_evidence
+                # All download/segment/capture/summary accessors share this
+                # structural gate and current transitive input authorization.
+                for item in run['artifacts']:self._copy_verified(descriptor,item['name'],item)
+                self._verify_extension(directory,run)
             return run['artifacts']
         except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
             raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
@@ -1930,8 +1982,23 @@ class Runs:
         return result
 
     @authorized('inspect', 'runs.model_evidence')
-    def model_evidence(self, run_id, body=None):
+    def model_evidence(self, run_id, body=None, *, contract_version=None):
         body={} if body is None else body
+        with self.lock:run=self._load(run_id)
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2)):
+            raise WorkbenchError('Unsupported model evidence query contract.','unsupported',409)
+        if self._extension(run):
+            self._external_inventory(run)
+            if contract_version==1:
+                closed(body,(),('checkpoint_sha256',))
+                return {'state':'unsupported','reason':'Scientific field evidence requires its explicit selected query contract.'}
+            import extension_evidence
+            return extension_evidence.query(self._verify_extension(self.path/run_id,run),body)
+        if contract_version==2:
+            closed(body,(),('checkpoint_sha256','split'))
+            if body.get('split','validation')!='validation':
+                raise WorkbenchError('Model evidence only supports validation queries.','unsupported',409)
+            body={key:value for key,value in body.items() if key!='split'}
         closed(body,(),('checkpoint_sha256',))
         selected=body.get('checkpoint_sha256')
         if selected is not None and (type(selected) is not str or not re.fullmatch('[a-f0-9]{64}',selected)):

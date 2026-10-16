@@ -1,0 +1,21 @@
+{
+  "actual_log_sha256": "47d3d87c0c8cfd6a050c329e14d018642b7dde2c05e2a0d7dc0bf97313ef0ef5",
+  "actual_passed": 1,
+  "actual_restored_catalog_opened_by_reviewer": false,
+  "actual_seconds": 25.688,
+  "actual_tests": 1,
+  "business_accounting_counts_unchanged": 13,
+  "closes_creation_time_pending_item_in_review_sha256": "d26dbef42c29e3745686a388a43c33b2401822e8a56207c82f855bb433ceb1f2",
+  "contract_sha256": "84eacef1aacffdfcba18ce037f013034ac959f23a617c8b443247c72f89fcfd2",
+  "format": "independent_candidate_selected_revocation_review_v1",
+  "native_receipts_mutated": false,
+  "operation": "studies.candidates/1",
+  "product_source_changed": false,
+  "review_scope": "Independent source and retained actual log review, not a second runtime execution.",
+  "skipped": 0,
+  "state": "clear",
+  "target": "Independent disposable CPU fixture; not the restored catalog.",
+  "test_commit": "c0efd4f36f88cd1e5750d0ec3a4ca0fc6581c58c",
+  "test_sha256": "63714a8b78a8ee523aad994badde674b65af8791c473479deba91a97e70fcf7d",
+  "witness": "Same selected HTTP request, token and pin returns200 with a real retained candidate; exact credential revoked normally by owner; identical request returns401 without candidate refs or identity."
+}

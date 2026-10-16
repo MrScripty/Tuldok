@@ -1,0 +1,66 @@
+{
+  "state": "passed_offline_independent_review",
+  "report_sha256": "e3f4fc3d3be14050bc129c13dcf08dd3b77f0a4d4d82be4d27177dc377b9ae63",
+  "driver_sha256": "258af4ec030b52012fe8442a41d284f79d216b74db360e8059ff8a33f09081e6",
+  "host_commit": "0572ad9ec4261b2686b93da4fa753a9b35c7015a",
+  "p5_receipt_sha256": "008920a6ed2c8ec061b7c6c0140c20e67f170e57f9297512176981db07955d26",
+  "baseline_sha256": "0cafe285d90a459af375488f253971d01966654d79904e83c7c5c1ca91be3cbe",
+  "backup_receipt_sha256": "6a7a19d49d3310a1814ef0423ec8dfad1be7b141ed3d354fa168e87be709d7a9",
+  "backup_metadata_sha256": "939be349dc33b7fb9016c201a89c68f5c84468b292c4705b8fd0e07ea76e1f61",
+  "dataset_id": "1139df50423642f0b5f579aa4b26bc8b",
+  "run_ids": [
+    "610afd2bb09b4c1588b23a628d5756d3",
+    "6122dc25241b42cf9b72213390f72524",
+    "ea998c767836451eb06c62d5fac270cf"
+  ],
+  "backup_tree": {
+    "files": 21371,
+    "bytes": 890407879,
+    "paths": 23097,
+    "all_hashes_modes_types_links_match": true
+  },
+  "restored_tree": {
+    "files": 21371,
+    "bytes": 890407879,
+    "paths": 23097,
+    "all_hashes_modes_types_links_match": true
+  },
+  "source_tree": {
+    "files": 21371,
+    "bytes": 890407879,
+    "paths": 23097,
+    "all_hashes_modes_types_links_match": true
+  },
+  "tables_verified_offline": 42,
+  "charged": {
+    "admitted_wall_seconds": 771,
+    "attempt_slots": 3,
+    "peak_staging_bytes": 102988554,
+    "retained_bytes": 55405809
+  },
+  "revoked_accessors": [
+    "selected_field",
+    "whole",
+    "segment",
+    "capture",
+    "package_state",
+    "model",
+    "recipe",
+    "unentered_download"
+  ],
+  "root_absent": true,
+  "cold_successor_equality_reported": true,
+  "execution_blocked_by_driver": true,
+  "database_opened_by_reviewer": false,
+  "scope": "Canonical A stopped backup/restore and current access; offline hashes/modes/packed SQL independently checked. Live restored SQL, revocation and cold equality supported by final driver report and inspected assertions. No execution, numerical quality, B, 505 or hostile-sandbox claim.",
+  "artifact_inventory_count": 35,
+  "captured_model_source_count": 17,
+  "whole_segmented_http_downloads": 4,
+  "runtime_snapshot_sha256": "0b15b611ead55bd5fa6f2f7bbcc56870f6e9f9f60f2192d989e7473ef8af1826",
+  "limitations": [
+    "No independent SQL connection was opened; final live SQL immutability, current credential revocation and cold successor equality are assessed from retained actual report and exact driver assertions.",
+    "Original project roots were absent from restored owner configuration; this retention test does not claim filesystem masking of all original source paths.",
+    "Runtime and artifact hashes are retention evidence; no inference/training replay was performed.",
+    "This is the exact canonical A/0b catalog only; no B disable/removal, 50502 or complete supported-client matrix claim."
+  ]
+}

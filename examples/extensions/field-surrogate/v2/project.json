@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "0c621e6ed1e84e3bb5c85f1f1dfc8a11",
+  "name": "Explicit scalar A model-evidence recipe",
+  "data": [
+    {
+      "id": "fixture",
+      "label": "Authored train/validation fixture with explicit geometry/gauge",
+      "path": "fixture.json",
+      "sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "train",
+      "label": "Captured scalar A training and evidence",
+      "path": "recipe.json",
+      "sha256": "90ce14a7bfcb1079f376ca93858ec90d1ebcc11533e54ec476639a44e006a644"
+    }
+  ],
+  "evidence": [],
+  "requirements": []
+}
