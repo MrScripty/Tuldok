@@ -12,6 +12,12 @@
 
 **Issues:** [issues.md](issues.md)
 
+Current authorized product implementation and actual qualification are tracked in
+[the implementation record](reports/product-implementation-status.md). D1–D4
+remain accepted design history; the later user authorization selected P1–P6
+implementation and serial PR integration. Do not read the original design-only
+pause below as the current implementation state.
+
 ## Objective
 
 Design an architecture that makes Tuldok an end-to-end workspace for producing

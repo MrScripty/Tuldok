@@ -2,15 +2,22 @@
 
 **Plan status:** `Verifying`
 
-**Current phase:** E2 — waiting for accepted model and generic field evidence prerequisites
+**Current phase:** E2–E4 — actual A/B qualification and final retention integration
 
-**Next slice:** Implement E2 after accepted P2/P3 and P4 generic evidence; P1 and the original E1 browser/HTTP inspection slice are accepted.
+**Next slice:** Finish main canonical A packaging, real A/B native inspection and stopped shared A/B restore/disable/continuity qualification; complete exact-head CI and serial integration.
 
 **Acceptance status:** `partial`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
 **Issues:** [issues.md](issues.md)
+
+[Current implementation and actual evidence](../end-to-end-model-development/reports/product-implementation-status.md)
+supersede the older prerequisite/status observations retained below. P2, P3 and
+P6 are merged; P4/P5 and the composed extension branch are verifying. Canonical
+A and independent B have completed actual CPU SDK/cold numerical qualification.
+Full X3/X5 remain pending their final retention/continuity execution; no design
+or fixture result closes those gates.
 
 ## Objective
 
