@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import uuid
 
 import qualify_main505_agent_authoring as driver
@@ -98,12 +98,40 @@ class Main505AgentAuthoringGuards(unittest.TestCase):
         for state in ('unavailable','unknown',None):
             self.assertEqual(driver.sdk_admission_state(dict(state=state)),'unknown')
 
-    def test_measured_storage_keeps_capture_bounds_and_explicit_reserve(self):
-        measured=897*1024**2
-        required=measured+3*320*1024**2+1024**3
-        self.assertEqual(driver.disk_plan(measured,required)['required_bytes'],required)
+    def test_measured_storage_includes_manifest_and_owner_capture_uses_full_reserve(self):
+        measured=897*1024**2;manifest_bytes=3*1024**2+17
+        reserve=3*320*1024**2+1024**3
+        required=measured+manifest_bytes+reserve
+        plan=driver.disk_plan(measured,manifest_bytes,required)
+        self.assertEqual(plan['required_bytes'],required)
+        self.assertEqual(plan['reserve_bytes'],reserve)
+        self.assertEqual(plan['headroom_bytes'],1024**3)
+        self.assertEqual(plan['capture_and_staging_bytes']+plan['headroom_bytes'],reserve)
         with self.assertRaisesRegex(RuntimeError,'Insufficient space'):
-            driver.disk_plan(measured,required-1)
+            driver.disk_plan(measured,manifest_bytes,required-1)
+        # The reserve argument at the real owner boundary must match the exact
+        # pre-target plan, rather than falling back to production's 6 GiB.
+        owner=Mock()
+        owner.inspect.return_value=dict(inventory_sha256=driver.RUNTIME_SHA,
+            total_bytes=measured,manifest_bytes=manifest_bytes)
+        config={'explicit_runtime_configuration':'test-only'}
+        self.assertIs(driver.capture_runtime(owner,config,plan),owner.create.return_value)
+        owner.create.assert_called_once_with(config,driver.RUNTIME_SHA,quiesced=True,reserve_bytes=reserve)
+        from runtime_snapshots import DEFAULT_RESERVE
+        self.assertEqual(DEFAULT_RESERVE,6*1024**3)
+
+    def test_owner_capture_refuses_changed_manifest_before_create(self):
+        plan=driver.disk_plan(100,10,100+10+3*320*1024**2+1024**3)
+        for change in ({'manifest_bytes':11},{'total_bytes':101},{'inventory_sha256':'0'*64}):
+            owner=Mock()
+            owner.inspect.return_value=dict(inventory_sha256=driver.RUNTIME_SHA,total_bytes=100,manifest_bytes=10)
+            owner.inspect.return_value.update(change)
+            with self.assertRaisesRegex(RuntimeError,'differs'):
+                driver.capture_runtime(owner,{},plan)
+            owner.create.assert_not_called()
+        for manifest in (0,True,-1):
+            with self.assertRaisesRegex(RuntimeError,'canonical manifest'):
+                driver.disk_plan(100,manifest,10**12)
 
 
 if __name__=='__main__':unittest.main()
