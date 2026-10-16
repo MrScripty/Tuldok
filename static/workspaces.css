@@ -1077,6 +1077,10 @@ details > p {
 .model-comparison { padding:14px 0; }
 .model-comparison .model-fields { margin-bottom:12px; }
 .model-comparison-result { margin:12px 0; }
+.model-export { padding:14px 0; }
+.model-export fieldset { min-width:0; border:1px solid var(--line,#d5dbdf); padding:12px; }
+.model-export .model-fields { margin-bottom:12px; }
+.model-hash { overflow-wrap:anywhere; }
 
 /* Workspace surfaces follow the system preference; the classic Data frame keeps its own styles. */
 @media (prefers-color-scheme: dark) {

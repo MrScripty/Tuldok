@@ -661,13 +661,17 @@
   "graphs.create": "a4c0ec40212ce85ad67c5f279fa90fe4564048d4ab41b6769670cbcf21bbb615",
   "graphs.save": "da60657d6c3298db8b9bbdfc6d30577125c8a6310573cee5c2feefa3a67e3564",
   "studies.select_candidate": "940d670ae6e4630572d1c5cdeda1cc658a7b73587bedd277af137b77dac3e582",
-  "studies.candidate": "d02dda330ac41ef05a1ff4e4d4f9ed04d5a60b24a444a28f1af9904791977799"
+  "studies.candidate": "d02dda330ac41ef05a1ff4e4d4f9ed04d5a60b24a444a28f1af9904791977799",
+  "studies.approve": "5ed2d9db58231f14c164a76f1c64157260902d2cd86f5e86433f29fc00f4f408",
+  "studies.prepare_package": "6eea96340355a085a4709c180f3ae61bed063a344c3e4ad8b876c53f36ff6f14",
+  "studies.prepare_verifier": "cde685bd4e93bb749055bb291501c67520f97dc514b2a4e4c3ba2cd1a10a6528",
+  "studies.package_state": "4ad0fd6c580c794ed01a8f94fc9f0ee1e07b09578be940bc02be3581f44449bd"
 } /* MODEL_CONTRACTS_END */;
   window.WorkspaceModelContracts = contracts;
   window.WorkspaceModel = function ({api, announce, openRun, openRecord, getIntent, getView}) {
     let definition = null, releases = [], studies = [], root = null, busy = false,
       message = '', failed = false, evidence = null, evidenceError = '', comparison = null,
-      checkpoint = null, probe = null, compareId = '', generation = 0, queryIntent = 0, detailPredictions = null, studyDetail = null, candidate = null, candidateBusy = false, candidateError = '', foreignPending = false, compareTarget = null, compareTargetRun = null, compareCheckpoint = '', compareMetric = '', compareMode = 'paired', compareBusy = false, compareIntent = 0, compareTargetIntent = 0, checkpointBusy = false, checkpointIntent = 0;
+      checkpoint = null, probe = null, compareId = '', generation = 0, queryIntent = 0, detailPredictions = null, studyDetail = null, candidate = null, candidateBusy = false, candidateError = '', foreignPending = false, compareTarget = null, compareTargetRun = null, compareCheckpoint = '', compareMetric = '', compareMode = 'paired', compareBusy = false, compareIntent = 0, compareTargetIntent = 0, checkpointBusy = false, checkpointIntent = 0, packageState = null, packageError = '', exportSetup = null, exportJob = null, exportBusy = false, exportDraft = {mode:'package',root:'',directory:'',runtime:'',packageRun:''};
     let config = {name: 'TinyCNN experiment', release: '', widths: [16,32,64], input_size: 96, epochs: 3, seed: 17};
     let journal = history.state?.modelTrial || null;
     const identity = () => window.TuldokAuth?.identity();
@@ -774,13 +778,13 @@
     }
     return {
       configure(value) {definition=value.definitions?.recipes?.find(item=>item.id===recipe);releases=value.releases;const saved=history.state?.modelTrial;if(!journal&&saved?.actor===identity()?.actor_id){journal=saved;foreignPending=false;}},
-      sessionChanged() {studies=[];studyDetail=null;message='';config={name:'TinyCNN experiment',release:'',widths:[16,32,64],input_size:96,epochs:3,seed:17};const saved=history.state?.modelTrial;foreignPending=!!(saved&&saved.actor!==identity()?.actor_id&&(saved.admission||saved.uncertain));if(journal?.actor!==identity()?.actor_id)journal=null;},
+      sessionChanged() {studies=[];studyDetail=null;message='';exportDraft={mode:'package',root:'',directory:'',runtime:'',packageRun:''};config={name:'TinyCNN experiment',release:'',widths:[16,32,64],input_size:96,epochs:3,seed:17};const saved=history.state?.modelTrial;foreignPending=!!(saved&&saved.actor!==identity()?.actor_id&&(saved.admission||saved.uncertain));if(journal?.actor!==identity()?.actor_id)journal=null;},
       mount(node) {root=node;render();},
       async refresh(current) {try{const result=await api('studies');if(current())studies=result.studies;}catch(error){if(current())notice('Saved studies unavailable: '+error.message,true);}},
-      invalidate() {generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;},
+      invalidate() {generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;packageState=null;packageError='';exportSetup=null;exportJob=null;},
       async load(run,current) {
         const intent=++queryIntent;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;
-        evidence=null;comparison=null;evidenceError='';candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareId='';compareBusy=false;
+        evidence=null;comparison=null;evidenceError='';candidate=null;candidateError='';packageState=null;packageError='';exportJob=null;compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareId='';compareBusy=false;
         if(!evidenceRecipes.has(run?.graph?.recipe)||run.state!=='completed')return;
         try{
           let value=await api('runs/'+enc(run.id)+'/model-evidence',{});if(!current()||intent!==queryIntent)return;
@@ -790,7 +794,7 @@
           }
           evidence=value;
           const savedCandidate=history.state?.modelCandidates?.[run.id];
-          if(savedCandidate?.actor===identity()?.actor_id){try{const saved=await api('candidates/'+enc(savedCandidate.id));if(current()&&intent===queryIntent){candidate=saved;}}catch(error){if(current()&&intent===queryIntent)candidateError=error.message;}}
+          if(savedCandidate?.actor===identity()?.actor_id){try{const saved=await api('candidates/'+enc(savedCandidate.id));if(current()&&intent===queryIntent){candidate=saved;await loadPackage(saved,current,intent);}}catch(error){if(current()&&intent===queryIntent)candidateError=error.message;}}
         }catch(error){if(current()&&intent===queryIntent)evidenceError=error.message;}
       },
       html(run,predictions) {
@@ -824,7 +828,65 @@
     }
     function candidateHTML(run,selected) {
       if(!run.study_membership)return '<p class="footnote">This run has no finite-study membership for candidate selection.</p>';
-      return `<section class="model-candidate"><h4 id="model-candidate-heading" tabindex="-1">Candidate and export</h4>${candidate?`<p><strong>Diagnostic candidate retained</strong> · ${esc(candidate.ref.id.slice(0,12))}</p><p>${esc(candidate.candidate.limitations.join(' '))}</p><p>Candidate checkpoint ${esc(candidate.checkpoint.sha256.slice(0,12))}</p>`:`<p>The study selects its validation-selected checkpoint. Candidate selection records a diagnostic decision; it does not establish model quality.</p><button id="model-select-candidate" ${candidateBusy||checkpointBusy||!selected?.selected?'disabled':''}>${candidateBusy?'Selecting candidate…':'Retain selected checkpoint candidate'}</button>${!selected?.selected?'<p>Select the checkpoint marked selected to retain its candidate.</p>':''}`}${candidateError?`<p class="error-panel" role="alert">${esc(candidateError)}</p>`:''}<p class="footnote">Package export and fresh verification require their own supported workflow.</p></section>`;
+      return `<section class="model-candidate"><h4 id="model-candidate-heading" tabindex="-1">Candidate and export</h4>${candidate?`<p><strong>Diagnostic candidate retained</strong> · ${esc(candidate.ref.id.slice(0,12))}</p><p>${esc(candidate.candidate.limitations.join(' '))}</p><p>Candidate checkpoint ${esc(candidate.checkpoint.sha256.slice(0,12))}</p>`:`<p>The study selects its validation-selected checkpoint. Candidate selection records a diagnostic decision; it does not establish model quality.</p><button id="model-select-candidate" ${candidateBusy||checkpointBusy||!selected?.selected?'disabled':''}>${candidateBusy?'Selecting candidate…':'Retain selected checkpoint candidate'}</button>${!selected?.selected?'<p>Select the checkpoint marked selected to retain its candidate.</p>':''}`}${candidateError?`<p class="error-panel" role="alert">${esc(candidateError)}</p>`:''}${candidate?exportHTML():'<p class="footnote">Package: not exported. Fresh inference: not verified. Export and verification are separate outcomes from candidate selection.</p>'}</section>`;
+    }
+    async function loadPackage(value,current,intent) {
+      packageState=null;packageError='';
+      const saved=history.state?.modelExports?.[value.ref.id];exportJob=saved?.actor===identity()?.actor_id?saved:null;
+      if(!contracts['studies.package_state'])return;
+      try{const state=await api('candidates/'+enc(value.ref.id)+'/package-state');if(!current()||intent!==queryIntent)return;packageState=state;}
+      catch(error){if(current()&&intent===queryIntent)packageError=error.message;}
+    }
+    function exportHTML() {
+      if(!contracts['studies.package_state'])return '<p>Package preparation is unavailable in this installed interface. No package or fresh verification is claimed.</p>';
+      const packages=packageState?.packages||[],verified=packageState?.state==='fresh_verified';
+      return `<section class="model-export"><h4>Package and fresh inference</h4>${packageError?`<p class="error-panel" role="alert">Export state unavailable: ${esc(packageError)}</p>`:packageState?`<p><strong>Package: ${packages.length?'complete':'not exported'}.</strong> Fresh inference: ${verified?'verified in a separate consumer Run':'not verified'}.</p>${packages.map(item=>`<p><a href="${esc(item.url)}" download>Download verified package</a> · ${esc(item.bytes.toLocaleString())} bytes · SHA ${esc(item.sha256.slice(0,12))}</p>`).join('')}${verified?'<p>Fresh inference reproduced the retained fixed probes. The candidate remains diagnostic.</p>':''}`:'<p>Export state has not been loaded.</p>'}
+      <button id="model-export-refresh" ${exportBusy?'disabled':''}>Refresh export state</button>
+      ${!owner()?'<p>Preparing and approving these local operations requires the owner session.</p>':!exportSetup?`<button id="model-export-setup" ${exportBusy?'disabled':''}>Load export setup</button>`:!exportSetup.roots.length?'<p>No project root is configured for this local server. Configure an allowed project root before preparing export.</p>':!exportJob?`<form id="model-export-form"><fieldset ${exportBusy?'disabled':''}><legend>Prepare one finite operation</legend><div class="model-fields"><label>Operation<select id="model-export-mode"><option value="package" ${exportDraft.mode==='package'?'selected':''}>Export package</option><option value="verifier" ${exportDraft.mode==='verifier'?'selected':''} ${!packages.length?'disabled':''}>Verify fresh inference</option></select></label><label>Configured root<select id="model-export-root">${exportSetup.roots.map(alias=>`<option value="${esc(alias)}" ${exportDraft.root===alias?'selected':''}>${esc(alias)}</option>`).join('')}</select></label><label>New directory<input id="model-export-directory" required maxlength="120" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,119}" value="${esc(exportDraft.directory)}"></label><label>Exact CPU runtime snapshot SHA256<input id="model-export-runtime" required minlength="64" maxlength="64" pattern="[a-f0-9]{64}" value="${esc(exportDraft.runtime)}"></label>${packages.length?`<label>Package for fresh verification<select id="model-export-package">${packages.map(item=>`<option value="${esc(item.run_id)}" ${item.run_id===exportDraft.packageRun?'selected':''}>${esc(item.sha256.slice(0,12))} · Run ${esc(item.run_id.slice(0,12))}</option>`).join('')}</select></label>`:''}</div><p class="footnote">Use an existing captured CPU runtime. Preparation writes a new operation project and immutable trial; approval and execution remain separate actions.</p><button id="model-export-prepare">Prepare operation</button></fieldset></form>`:`<div class="model-export-prepared"><h5>${exportJob.mode==='package'?'Package':'Fresh verifier'} operation</h5>${exportJob.prepared?`<p>Prepared trial ${esc(exportJob.prepared.trial.id.slice(0,12))}</p><p class="model-hash">Exact material SHA256 ${esc(exportJob.prepared.trial.material.sha256)}</p><details><summary>Inspect prepared operation</summary><pre>${esc(JSON.stringify(exportJob.prepared,null,2))}</pre></details>${exportJob.run?`<p>Admitted Run ${esc(exportJob.run.id.slice(0,12))}</p><button id="model-export-open">Inspect operation Run →</button><button id="model-export-next" ${exportBusy?'disabled':''}>Prepare another operation</button>`:exportJob.approval?`<p>Exact one-use approval ${esc(exportJob.approval.id.slice(0,12))}</p><button id="model-export-start" class="primary" ${exportBusy?'disabled':''}>${exportJob.admission?'Reconcile exact admission':'Start approved operation'}</button>`:`<button id="model-export-approve" ${exportBusy||exportJob.approvalUnknown?'disabled':''}>Approve this exact operation</button>${exportJob.approvalUnknown?'<p class="error-panel">Approval acknowledgement is unresolved. Inspect execution grants before issuing another approval.</p>':''}`}`:`${exportJob.preparationUnknown?'<p>The original preparation acknowledgement is unresolved. Reconcile the same request before changing inputs.</p>':''}<button id="model-export-resume" ${exportBusy?'disabled':''}>Reconcile operation preparation</button>${exportJob.failureKnown&&!exportJob.preparationUnknown?'<button id="model-export-revise">Revise preparation inputs</button>':''}`}</div>`}
+      ${packageState?.verifications?.length?`<details><summary>Fresh consumer verification receipts</summary><pre>${esc(JSON.stringify(packageState.verifications,null,2))}</pre></details>`:''}</section>`;
+    }
+    function saveExport(job) {history.replaceState({...history.state,modelExports:{...history.state?.modelExports,[job.candidate_id]:job}},'');}
+    function bindExport(node,run,rerender,current) {
+      if(!candidate)return;
+      async function action(fn){if(exportBusy)return;exportBusy=true;packageError='';const intent=++queryIntent;rerender();try{await fn(()=>current()&&intent===queryIntent);}catch(error){if(current()&&intent===queryIntent)packageError=error.message;}finally{exportBusy=false;if(current())rerender();}}
+      node.querySelector('#model-export-refresh')?.addEventListener('click',()=>action(valid=>loadPackage(candidate,valid,queryIntent)));
+      node.querySelector('#model-export-setup')?.addEventListener('click',()=>action(async valid=>{
+        const setup=await api('project-snapshots');if(!valid())return;exportSetup=setup;exportDraft.root=setup.roots[0]||'';exportDraft.directory='candidate-'+candidate.ref.id.slice(0,12)+'-package';
+      }));
+      function read(){const value=id=>node.querySelector('#'+id)?.value;exportDraft={mode:value('model-export-mode'),root:value('model-export-root'),directory:value('model-export-directory'),runtime:value('model-export-runtime'),packageRun:value('model-export-package')||''};}
+      for(const field of node.querySelectorAll('#model-export-form input,#model-export-form select'))field.addEventListener('change',read);
+      async function prepare(valid){
+        let job=exportJob;
+        if(!job){read();const state=await api('studies/'+enc(candidate.candidate.study_id));if(!valid())return;
+          const body={request_key:crypto.randomUUID(),revision:state.study.revision,candidate_id:candidate.ref.id,root:exportDraft.root,directory:exportDraft.directory,runtime_snapshot_sha256:exportDraft.runtime};
+          if(exportDraft.mode==='verifier'){const item=packageState.packages.find(item=>item.run_id===exportDraft.packageRun);if(!item)throw Error('Choose a verified package.');Object.assign(body,{package_run_id:item.run_id,package_sha256:item.sha256});}
+          job={actor:identity()?.actor_id,candidate_id:candidate.ref.id,study_id:candidate.candidate.study_id,mode:exportDraft.mode,body};saveExport(job);exportJob=job;
+        }
+        if(job.actor!==identity()?.actor_id)throw Error('This operation belongs to another actor.');
+        try{job.prepared=await api('studies/'+enc(job.study_id)+'/prepare-'+job.mode,job.body);job.preparationUnknown=false;job.failureKnown=false;saveExport(job);if(valid())exportJob=job;}
+        catch(error){if([400,401,403,404,409].includes(error.status)){job.failureKnown=!job.preparationUnknown;}else{job.preparationUnknown=true;job.failureKnown=false;}saveExport(job);throw error;}
+      }
+      node.querySelector('#model-export-form')?.addEventListener('submit',event=>{event.preventDefault();read();action(prepare);});
+      node.querySelector('#model-export-resume')?.addEventListener('click',()=>action(prepare));
+      node.querySelector('#model-export-revise')?.addEventListener('click',()=>{if(!exportJob?.failureKnown||exportJob.preparationUnknown)return;const saved={...history.state?.modelExports};delete saved[candidate.ref.id];history.replaceState({...history.state,modelExports:saved},'');exportJob=null;rerender();});
+      node.querySelector('#model-export-approve')?.addEventListener('click',()=>action(async valid=>{
+        const job=exportJob;if(!valid())return;if(job.actor!==identity()?.actor_id)throw Error('This operation belongs to another actor.');
+        try{job.approval=await api('studies/'+enc(job.study_id)+'/approve',{trial_id:job.prepared.trial.id,expected_material_sha256:job.prepared.trial.material.sha256,consumer_actor_id:job.actor});saveExport(job);if(valid())exportJob=job;}
+        catch(error){if(![400,401,403,404,409].includes(error.status)){job.approvalUnknown=true;saveExport(job);}throw error;}
+      }));
+      node.querySelector('#model-export-start')?.addEventListener('click',()=>action(async valid=>{
+        const job=exportJob;if(!valid())return;if(job.actor!==identity()?.actor_id)throw Error('This operation belongs to another actor.');
+        if(!job.admission){let state=await api('studies/'+enc(job.study_id));if(!valid())return;
+          if(!state.study.open){if(!job.continue){job.continue={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch};saveExport(job);}await api('studies/'+enc(job.study_id)+'/continue',job.continue);if(!valid())return;state=await api('studies/'+enc(job.study_id));if(!valid())return;}
+          job.admission={request_key:crypto.randomUUID(),revision:state.study.revision,admission_epoch:state.study.admission_epoch,trial_id:job.prepared.trial.id,approval_id:job.approval.id};saveExport(job);
+        }
+        let result;try{result=await api('studies/'+enc(job.study_id)+'/admit',job.admission);}
+        catch(error){if([400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code)){job.admission=null;job.continue=null;saveExport(job);}throw error;}job.run=result.run;saveExport(job);if(!valid())return;exportJob=job;openRun(result.run);
+      }));
+      node.querySelector('#model-export-open')?.addEventListener('click',()=>openRun(exportJob.run));
+      node.querySelector('#model-export-next')?.addEventListener('click',()=>{
+        const remaining={...history.state?.modelExports};delete remaining[candidate.ref.id];history.replaceState({...history.state,modelExports:remaining},'');exportDraft.runtime=exportJob.body.runtime_snapshot_sha256;exportDraft.root=exportJob.body.root;exportJob=null;exportDraft.mode=packageState?.packages?.length?'verifier':'package';exportDraft.directory='candidate-'+candidate.ref.id.slice(0,12)+'-'+exportDraft.mode;rerender();
+      });
     }
     function probeRows(value,run) {
       const vocabulary=run.metrics?.class_vocabulary||detailPredictions?.class_vocabulary||[];
@@ -857,7 +919,7 @@
           const result=await api('studies/'+enc(member.study_id)+'/select-candidate',request.body);
           const remaining={...history.state?.modelCandidateRequests};delete remaining[run.id];
           history.replaceState({...history.state,modelCandidateRequests:remaining,modelCandidates:{...history.state?.modelCandidates,[run.id]:{actor:request.actor,id:result.ref.id}}},'');
-          if(!current()||intent!==queryIntent)return;candidate=result;announce('Diagnostic candidate retained. Export and fresh inference verification remain separate.');
+          if(!current()||intent!==queryIntent)return;candidate=result;await loadPackage(result,current,intent);announce('Diagnostic candidate retained. Export and fresh inference verification remain separate.');
         }catch(error){if(current()&&intent===queryIntent){candidateError=error.message;if([400,404,409].includes(error.status)&&['invalid','stale','unsupported','unavailable'].includes(error.code)){const requests={...history.state?.modelCandidateRequests};delete requests[run.id];history.replaceState({...history.state,modelCandidateRequests:requests},'');}}}
         finally{candidateBusy=false;if(current()){rerender();if(candidate&&intent===queryIntent)node.querySelector('#model-candidate-heading')?.focus();}}
       });
@@ -866,6 +928,7 @@
         const row=probeRows(evidence,run).find(item=>item.id===probe);
         if(row)openRecord({...row,run_id:run.id,release_id:run.release_id,split:'validation'});
       });
+      bindExport(node,run,rerender,current);
       const select=node.querySelector('#model-compare-run');
       if(select)select.innerHTML='<option value="">Choose another completed model run</option>'+runs.filter(item=>item.id!==run.id&&item.state==='completed'&&evidenceRecipes.has(item.graph?.recipe)).map(item=>`<option value="${esc(item.id)}" ${item.id===compareId?'selected':''}>${esc(item.graph.name)} · ${esc(item.id.slice(0,12))}</option>`).join('');
       select?.addEventListener('change',async()=>{

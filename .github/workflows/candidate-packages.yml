@@ -1,0 +1,148 @@
+name: Candidate package captured CPU
+on:
+  pull_request:
+    paths:
+      - 'candidate_packages.py'
+      - 'runtime_snapshots.py'
+      - 'recipe_process.py'
+      - 'model_definitions.py'
+      - 'model_evidence.py'
+      - 'image_training.py'
+      - 'experiments.py'
+      - 'pipeline.py'
+      - 'runs.py'
+      - 'app.py'
+      - 'agent_api.py'
+      - 'access.py'
+      - 'static/workspace*'
+      - 'requirements*.txt'
+      - 'tests/*candidate*'
+      - 'tests/*model_development*'
+      - 'tests/fixtures/model_development/**'
+      - '.github/workflows/candidate-packages.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  captured-cpu:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: tuldok_candidate
+          POSTGRES_PASSWORD: isolated-ci-candidate
+          POSTGRES_DB: tuldok_candidate
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tuldok_candidate -d tuldok_candidate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      TULDOK_DATABASE_URL: postgresql://tuldok_candidate:isolated-ci-candidate@127.0.0.1:5432/tuldok_candidate
+      BROWSER: /usr/bin/google-chrome
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Explicitly provision the supported CPU runtime before qualification
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y python3.12-venv
+          candidate_prefix="$RUNNER_TEMP/tuldok-candidate-python312-base"
+          candidate_venv="$RUNNER_TEMP/tuldok-candidate-python312"
+          test ! -e "$candidate_prefix"
+          test ! -e "$candidate_venv"
+          /usr/bin/python3.12 - "$candidate_prefix" <<'PY'
+          import hashlib, json, shutil, stat, sys
+          from pathlib import Path
+          destination = Path(sys.argv[1])
+          destination.mkdir()
+          (destination / 'bin').mkdir()
+          (destination / 'lib').mkdir()
+          receipts = []
+          def checksum(path):
+              with path.open('rb') as stream:
+                  return hashlib.file_digest(stream, 'sha256').hexdigest()
+          def copy_verified(source, target):
+              source, target = Path(source), Path(target)
+              resolved = source.resolve(strict=True)
+              assert (resolved.is_relative_to('/usr/lib') or resolved == Path('/usr/bin/python3.12')
+                      or resolved == Path('/etc/python3.12/sitecustomize.py')), 'Unexpected stdlib source escape'
+              assert stat.S_ISREG(resolved.stat().st_mode), 'Only regular distro files are supported'
+              before = checksum(resolved)
+              shutil.copy2(resolved, target)
+              assert before == checksum(resolved) == checksum(target), 'Distro copy bytes changed'
+              receipts.append(dict(source=str(source), resolved=str(resolved),
+                  target=target.relative_to(destination).as_posix(), bytes=target.stat().st_size, sha256=before))
+              return str(target)
+          def reject_directory_links(directory, entries):
+              assert not any((Path(directory) / name).is_symlink() and (Path(directory) / name).is_dir()
+                             for name in entries), 'Directory symlinks are unsupported'
+              return []
+          copy_verified('/usr/bin/python3.12', destination / 'bin/python3.12')
+          shutil.copytree('/usr/lib/python3.12', destination / 'lib/python3.12',
+                          copy_function=copy_verified, ignore=reject_directory_links)
+          build_scope = 'lib/python3.12/config-3.12-x86_64-linux-gnu'
+          build_files = [item for item in receipts if item['target'].startswith(build_scope + '/')]
+          assert (destination / build_scope).is_dir() and build_files, 'Expected explicit CPython build scope'
+          for item in build_files:
+              assert checksum(Path(item['resolved'])) == checksum(destination / item['target']) == item['sha256']
+          shutil.rmtree(destination / build_scope)
+          receipts = [item for item in receipts if not item['target'].startswith(build_scope + '/')]
+          output = Path('build/qa/candidate-python-provisioning')
+          output.mkdir(parents=True)
+          with (output / 'distro-copy.json').open('x') as stream:
+              json.dump(dict(format='candidate_ci_distro_copy_v1', source='/usr', root=str(destination),
+                  normalization='dereference_exact_file_bytes_without_ELF_edits', files=receipts,
+                  excluded_build_scope=dict(path=build_scope, files=build_files,
+                      reason='CPython development build/link configuration and objects are outside the inference runtime; strict native dependency closure still applies.')),
+                  stream, sort_keys=True)
+              stream.write('\n')
+          PY
+          "$candidate_prefix/bin/python3.12" -m venv "$candidate_venv"
+          candidate_python="$candidate_venv/bin/python3"
+          "$candidate_python" - "$candidate_prefix" <<'PY'
+          import hashlib, sys, sysconfig
+          from pathlib import Path
+          assert sys.version_info[:2] == (3, 12)
+          assert Path(sys.base_prefix).resolve() == Path(sys.argv[1])
+          assert Path(sysconfig.get_path('stdlib')).resolve() == Path(sys.argv[1]) / 'lib/python3.12'
+          assert hashlib.sha256(Path(sys.executable).read_bytes()).digest() == hashlib.sha256(Path('/usr/bin/python3.12').read_bytes()).digest()
+          PY
+          "$candidate_python" -m pip install -r requirements.txt -r requirements-training.txt
+          printf '%s\n' "$candidate_venv/bin" >> "$GITHUB_PATH"
+          printf 'TULDOK_TRAINING_PYTHON=%s\n' "$candidate_python" >> "$GITHUB_ENV"
+      - name: Exercise actual classifier preparation and training through the browser
+        run: |
+          test "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"
+          node tests/browser_model_development.cjs
+      - name: Prepare the explicit captured inference subset and reviewable whole inventory
+        run: |
+          "$TULDOK_TRAINING_PYTHON" - <<'PY'
+          from pathlib import Path
+          import subprocess, sys
+          receipts = list(Path('build/qa/model-development').glob('*/receipt.json'))
+          assert len(receipts) == 1, 'Expected exactly one preceding actual model browser receipt'
+          subprocess.run([sys.executable, 'tests/prepare_candidate_runtime.py',
+              '--output', 'build/qa/candidate-runtime-preparation',
+              '--model-browser-receipt', str(receipts[0])], check=True)
+          PY
+          cat build/qa/candidate-runtime-preparation/runtime.env >> "$GITHUB_ENV"
+      - name: Capture with the existing owner and verify charged package and fresh inference through the browser
+        run: |
+          test "$(command -v python3)" = "$TULDOK_TRAINING_PYTHON"
+          node tests/browser_candidate_package.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-package-captured-cpu
+          path: build/qa/**
+          if-no-files-found: error

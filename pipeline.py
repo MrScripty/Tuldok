@@ -919,6 +919,22 @@ class Pipelines:
             raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
         if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
             raise WorkbenchError('Recipe document names differ.','unavailable',409)
+        if material['trainer']['id']=='external_recipe_v1':
+            # Current disclosure of retained captures follows all Run inputs,
+            # independently from their historical integrity and exact grant.
+            raw=read_owned_blob(self.material_path,ref['sha256'],material['recipe_document'],2*1024**2)
+            snapshot=retained_json(raw.decode(),2*1024**2)
+            closed(snapshot,('format','graph','preflight','capture_paths'))
+            graph=decode_graph(snapshot['graph']);preflight=snapshot['preflight']
+            if (snapshot['format']!='external_recipe_snapshot_v1'
+                    or graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision']
+                    or preflight['material_sha256']!=material['executable_sha256']
+                    or digest(preflight['material'])!=preflight['material_sha256']
+                    or preflight['material']['graph_execution_sha256']!=execution_digest(graph)):
+                raise WorkbenchError('Retained input material binding differs.','unavailable',409)
+            recipe_contract.validate_material(preflight['material'])
+            from candidate_packages import authorize_material_inputs
+            authorize_material_inputs(self.dataset.runs,preflight['material'])
         if verify:
             for item in inventory:read_owned_blob(self.material_path,ref['sha256'],item,recipe_contract.CPU_CAPTURE_BYTES)
             (getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)).material(material['model'],verify=True)

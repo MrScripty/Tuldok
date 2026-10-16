@@ -203,3 +203,126 @@ The current classifier evaluator supplies diagnostics only: a successful fit is
 not a model-quality threshold. Required numerical acceptance and mean-replicate
 selection remain unsupported; export cannot upgrade that decision.
 
+## Built-in artifact input provenance
+
+Qualified `image_classification_model_v2` publications may become exact captured
+recipe inputs through `Runs.capture_artifact`. This operation verifies the
+completed Run's full published artifact inventory and applies the ordinary
+artifact permission/holdout guard before returning bytes. Whole mixed releases
+are excluded. This is a byte-publication proof and does not grant execution,
+transfer distribution rights, or assert that a historical permission is current.
+
+The distinct source schema2, kind `builtin_classifier_publication_v1`, records
+catalog/Run/request/material/graph/release/adapter identities, exact artifact
+name/role/size/hash, population, and the actual verified `artifact-manifest.json`
+bytes in canonical base64 plus their SHA256. The retained decoder checks source
+identity, qualified adapter version, selected manifest item, and measured input
+bytes. It does not fabricate an external custodian or drainage receipt. Existing
+schema1 external Run source receipts retain their exact custody contract.
+
+Transitive current permissions and protected-population disclosure are checked
+again on derived access; a captured source receipt alone cannot authorize a
+package export, import, query, segment read, or derivative summary.
+
+## Candidate package and fresh inference (P5)
+
+`candidate_packages.py` implements the exact `inference_package_v1` body from D2.
+The checkpoint descriptor includes its exact weights Blob. Its immutable candidate
+bytes bind the selected Run, checkpoint and evaluation; the retained published
+ModelMaterial binds every source import and each specification/preprocessing/output
+policy. An inventory entry alone cannot replace those cross-file identities.
+Candidate, runtime and published model catalog identities must agree. Expected
+probe truth indexes are exact integers in the frozen class range and hash to the
+retained fixed probe targets; copied source artifacts retain their lineage hashes.
+
+The classifier package includes only explicitly selected validation PNG probes,
+expected probabilities, fixed probe membership, fitted transform, model and task
+contracts, source closure, runtime contract, decision/evaluation/lineage and rights
+inventory. Training and holdout records remain permissioned references. Unknown
+or mixed protected populations are unsupported for this profile. Every included
+material has an explicit rights disposition. Unknown rights allow the owner's
+local/private workflow and deny redistribution; no permissive license is inferred.
+
+Preparation selects an existing configured Projects root and a new flat directory.
+The owner helpers prepare a declared packaging or captured CPU verifier graph,
+its captured operation model and an exact member Trial. Preparation returns the
+proposed Trial/material without granting execution or starting a process. Repeated
+actor/request keys return the same durable receipt. Existing `studies.approve`
+and `studies.admit` provide exact material approval, conservative budget charging,
+Run custody, reconciliation and cancellation. No second runner or implicit retry
+is added. Package source Run inputs remain explicit captured bindings so every
+current derived accessor can reauthorize their transitive populations.
+These helpers reject an existing caller metadata transaction before capture or
+directory creation. Trial publication and the helper receipt share the final short
+transaction. Rollback owns cleanup after publication begins; a failure returning
+an already committed result preserves the retained project for exact replay.
+
+The verifier requires an existing approved `captured_cpu_python_v1` snapshot.
+Its runtime contract uses the RuntimeSnapshots owner, including exact Python,
+packages, transitive native files and notices. The fresh consumer reconstructs
+the declared TinyCNN topology independently, applies PIL bilinear RGB resize and
+CHW float32 division by255, loads weights-only state with strict keys and compares
+fixed probabilities under evaluator-owned `atol=1e-6`, `rtol=1e-5`. It imports no
+training adapter, live checkout, model cache or torchvision implementation. It
+independently recounts confusion, accuracy and macro F1. Physical validity and
+training resume remain separate unsupported claims.
+
+Candidate decision, `package_complete` and `fresh_verified` are distinct states.
+Construction reports `verification_pending`; only a separately completed admitted
+verifier Run supplies fresh verification. Inspection and state queries decode
+bounded data and never execute captured code. State collection is scoped to the
+candidate and bounded; unsupported collection size returns a typed outcome.
+
+The standalone checkpoint is:
+
+```
+python tests/qualify_candidate_package.py --package /tmp/export/package.zip \
+  --runtime /catalog/runtime-snapshots/SHA/python/bin/python3.12 \
+  --expected-sha256 PUBLISHED_PACKAGE_SHA --mask-path /original/checkout \
+  --mask-path /original/model-cache --output /tmp/fresh-inference-qa
+```
+
+The qualifier first verifies the entire downloaded artifact against the published
+SHA, then starts the approved runtime through its captured bootstrap in a private
+working directory. `--mask-path` requires bubblewrap and separately verifies the
+named original directories are empty in the consumer filesystem. A sibling
+`package-result.json` may provide the expected published SHA when the explicit
+argument is omitted. The qualifier does not reinterpret public redistribution
+rights or a diagnostic candidate as a quality qualification.
+
+For the actual producer-to-consumer qualification, explicitly provision a
+disposable catalog and captured snapshot, then run:
+
+```
+TULDOK_TRAINING_PYTHON=/qualified/training/python python tests/qualify_candidate_package.py \
+  --production-catalog /disposable/catalog --snapshot-descriptor /tmp/runtime-descriptor.json \
+  --output /tmp/charged-package-qa
+```
+
+This driver performs actual two-epoch training, immutable candidate selection,
+normal package and verifier preparation/approval/admission in one finite Study,
+HTTP download and whole-hash verification. It records three charged attempts and
+observes that expensive external capture runs outside a metadata transaction.
+The authored RGB fixture qualifies the execution/evidence contract rather than
+classifier generalization. `test_candidate_packages.py` separately exercises
+real PostgreSQL publication-callback failure and rollback; its optional actual
+CPU case requires explicit qualification catalog/snapshot/output/runtime settings.
+
+The separate `Candidate package captured CPU` CI job provisions its supported
+Python/Torch CPU environment explicitly before running any qualification. After
+the actual model browser gate stops, `tests/prepare_candidate_runtime.py` runs in
+that environment and writes a closed RuntimeSnapshots config, the complete
+reviewable inventory, exact package versions/source hashes and `runtime.env`.
+The helper installs nothing and does not capture a snapshot. The existing
+`browser_candidate_package.cjs` passes that config and exact inventory SHA to
+`runtime_snapshots.py create --quiesced`, then exercises preparation, approval,
+charging, download and fresh inference through the ordinary UI.
+
+This fixture selects the qualified Torch/NumPy/Pillow inference subset and its
+upstream metadata/notices. It excludes the unused torchvision distribution,
+functorch native extension, Torch native tests/test data and optional tkinter
+extension. Those explicit exclusions precede inspection; an unsupported ELF or
+missing dependency fails the job instead of triggering further exclusions.
+It preserves the existing CPU profile, loader checks and rights disposition.
+Its locally measured manifest may differ on a separately provisioned CI host;
+each run freezes its own full inventory before ordinary capture and inference.
