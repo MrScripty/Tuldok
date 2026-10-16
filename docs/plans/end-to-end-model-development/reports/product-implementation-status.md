@@ -46,6 +46,9 @@ manifest identity never substitutes for the full captured runtime reference.
   settlement leaves charges unchanged. [Independently reviewed source/recovery
   report](../../extension-system/reports/independent-b-50502-qualification.md)
   and its hashed evidence inventory preserve the exact chronology and scope.
+  A second [independent closed-form consumer](../../extension-system/reports/independent-b-actual-cold-consumer.md)
+  also passes on the actual26 cold artifacts without importing the producer,
+  application or database. Its kernel was frozen before inspecting B's producer.
 - The decisive B application freeze covers149 application/SDK/UI/schema/
   dependency files at `e5d1d79`. Every file still matches after B execution and
   recovery. Tests, documentation and author packages are outside that scope.
