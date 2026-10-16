@@ -1,0 +1,71 @@
+{
+  "state": "failed_test_only",
+  "harness_sha256": "6fdcc93d640558551f16c3d14b225b359427ddcda10b655902d535a319841cde",
+  "source_commit": "8e63a9c",
+  "capture_count": 8,
+  "captures": [
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/dark-declared-field-0-1440.jpg",
+      "file": "dark-declared-field-0-1440.jpg",
+      "sha256": "e96f4b25e05f094f21ec912665574027d1c8a316bd8a6698ed9e20585326ea48",
+      "bytes": 103522,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/dark-declared-field-0-390.jpg",
+      "file": "dark-declared-field-0-390.jpg",
+      "sha256": "c4f53980e7e2458e72453d820fe3ffa0d6db14ef3bcdfac31ccc1f85e91c1874",
+      "bytes": 50765,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/dark-linked-field-1440.jpg",
+      "file": "dark-linked-field-1440.jpg",
+      "sha256": "4d0b3efbb6068ee63ca6fce5833785e1eee117d5dea4ae2cf0fb69b12eb04851",
+      "bytes": 124997,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/dark-linked-field-390.jpg",
+      "file": "dark-linked-field-390.jpg",
+      "sha256": "65cdee345545002bb69ae0f730f39c3bf8f306d4e07a90dfdcd311002d2a1800",
+      "bytes": 55579,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/declared-field-0-1440.jpg",
+      "file": "declared-field-0-1440.jpg",
+      "sha256": "575be04709d07dd4e17780be1f78077f274fce2f7b5d9f1495ce63fd4342034f",
+      "bytes": 102190,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/declared-field-0-390.jpg",
+      "file": "declared-field-0-390.jpg",
+      "sha256": "e5256b0ef398194e3f6f571aea2800b5e50dd8277960d06df3859b8337a1e891",
+      "bytes": 50507,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/linked-field-1440.jpg",
+      "file": "linked-field-1440.jpg",
+      "sha256": "56ceeb37cfe8b02fadc8aea02a22d51168104697de72e918287874c58e1f5d0f",
+      "bytes": 122503,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    },
+    {
+      "path": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y/linked-field-390.jpg",
+      "file": "linked-field-390.jpg",
+      "sha256": "475b3134d7c3f5e0962deea2870099f65069816e88f6cacac72b0c4c48a36942",
+      "bytes": 54001,
+      "scope": "First failed test-only attempt; partial A field/H6 observations, not complete E4 acceptance"
+    }
+  ],
+  "log": {
+    "path": "/workspace/shared/extension-ab-native-restored-results-01/attempt-01.log",
+    "sha256": "137feeafd05daebfc08db2cd496fc9db80bbf4c8c2cb010a14507f3d2654194a"
+  },
+  "failure": "/workspace/shared/extension-ab-native-restored-results-01/attempt-01-harness-failure.json",
+  "b_started": false,
+  "e4_complete": false
+}
