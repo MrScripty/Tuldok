@@ -21,9 +21,12 @@ sys.path.insert(0,str(ROOT))
 import candidate_packages as packages
 
 
-GUARD="""import json,os,sys
+GUARD="""import errno,json,os,sys
 from pathlib import Path
 config=json.loads(Path('guard-input.json').read_text())
+# The mount setup needs this host directory FD; inference must not inherit it.
+try:os.close(config['runtime_fd'])
+except OSError as error:assert error.errno==errno.EBADF
 workspace=Path(config['workspace']);runtime=Path(config['runtime_root'])
 cursor=workspace
 for part in runtime.relative_to(workspace).parts:
@@ -35,7 +38,8 @@ assert all(not any(Path(path).iterdir()) for path in config['cache_paths'])
 assert not any(Path(os.environ['HOME']).iterdir())
 Path('isolation.json').write_text(json.dumps(dict(workspace=str(workspace),workspace_only_approved_runtime=True,
     runtime_exception=str(runtime),source_absences=config['source_absences'],cache_paths=config['cache_paths'],
-    private_home_initially_empty=True,scope='filesystem source/cache absence for this trusted package consumer; no security sandbox claim')))
+    private_home_initially_empty=True,runtime_setup_fd_closed=True,
+    scope='filesystem source/cache absence for this trusted package consumer; no security sandbox claim')))
 root=Path.cwd()
 os.execv('/usr/bin/python3',['/usr/bin/python3','-I','-S','-B',str(root/'recipe_process.py'),'--cpu-launch',str(root/'snapshot.json'),str(root/'candidate_packages.py'),
     'consume','--package',str(root/'package.zip'),'--expected-sha256',config['package_sha256'],
@@ -76,8 +80,9 @@ def main(args):
         (staging/'isolation_guard.py').write_text(GUARD)
         config=dict(workspace=str(workspace),runtime_root=str(runtime),package_sha256=args.expected_sha256,
             runtime_sha256=descriptor['manifest_sha256'],source_absences=list(map(str,args.source_absence)),cache_paths=list(map(str,caches)))
-        (staging/'guard-input.json').write_text(json.dumps(config))
         fd=os.open(runtime,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        config['runtime_fd']=fd
+        (staging/'guard-input.json').write_text(json.dumps(config))
         try:
             command=['bwrap','--die-with-parent','--new-session','--ro-bind','/','/','--dev','/dev','--proc','/proc',
                 '--bind',str(staging),str(staging),'--tmpfs',str(workspace),'--dir',str(runtime.parent),
