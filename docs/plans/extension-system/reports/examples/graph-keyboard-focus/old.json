@@ -1,0 +1,37 @@
+{
+  "mode": "old",
+  "source_commit": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+  "workspace_real_sha256": "9d7f59f928298d9fd1e851f7823b265eccee3c6a499de8a61f71d838d1a7eb77",
+  "harness_sha256": "8ae8c453068c49384898a58f65e1baa5df2a235621f5e37d5150f7bfc7d93cc5",
+  "native_keys": [
+    "Home",
+    "ArrowDown",
+    "ArrowDown"
+  ],
+  "programmatic_focus_calls_in_journey": 1,
+  "values": [
+    "258379efc79f4e52a89addc1e46e3d7f",
+    "fcc45cf085844766942a878a9ad8e80e",
+    "2c1966f033d748aa9ef714185d76ea34"
+  ],
+  "observed": [
+    {
+      "focus": false,
+      "value": "258379efc79f4e52a89addc1e46e3d7f",
+      "active": "BODY"
+    },
+    {
+      "focus": false,
+      "value": "258379efc79f4e52a89addc1e46e3d7f",
+      "active": "BODY"
+    },
+    {
+      "focus": false,
+      "value": "258379efc79f4e52a89addc1e46e3d7f",
+      "active": "BODY"
+    }
+  ],
+  "negativeChecks": [],
+  "recipe_runs": 0,
+  "browser": "Chrome/151.0.7922.173"
+}
