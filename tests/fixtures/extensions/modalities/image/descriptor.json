@@ -1,0 +1,109 @@
+{
+  "defaults": {
+    "channel_order": "rgb",
+    "dtype": "uint8",
+    "layout": "hwc",
+    "payload": [
+      [
+        [
+          0,
+          128,
+          255
+        ],
+        [
+          255,
+          0,
+          128
+        ]
+      ],
+      [
+        [
+          64,
+          64,
+          64
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ]
+    ]
+  },
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-image:descriptor",
+  "kind": "task",
+  "label": "image bounded opaque descriptor",
+  "parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "channel_order": {
+        "enum": [
+          "rgb"
+        ],
+        "maxLength": 3,
+        "type": "string"
+      },
+      "dtype": {
+        "enum": [
+          "uint8"
+        ],
+        "maxLength": 5,
+        "type": "string"
+      },
+      "layout": {
+        "enum": [
+          "hwc"
+        ],
+        "maxLength": 3,
+        "type": "string"
+      },
+      "payload": {
+        "items": {
+          "items": {
+            "items": {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "type": "array"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "maxItems": 2,
+        "minItems": 2,
+        "type": "array"
+      }
+    },
+    "required": [
+      "payload",
+      "channel_order",
+      "dtype",
+      "layout"
+    ],
+    "type": "object"
+  },
+  "ports": [
+    {
+      "axes": [
+        "height",
+        "width",
+        "channel"
+      ],
+      "contract": {
+        "id": "example.modality-image:pixels",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "pixels",
+      "units": "uint8_code_value"
+    }
+  ],
+  "requires": [],
+  "version": "1.0.0"
+}

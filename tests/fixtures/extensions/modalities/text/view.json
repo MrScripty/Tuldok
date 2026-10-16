@@ -1,0 +1,22 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-text:metadata",
+  "kind": "view",
+  "label": "text opaque metadata declaration",
+  "requires": [
+    {
+      "id": "example.modality-text:descriptor",
+      "sha256": "63ae47f3328591f9f27089533093a50587ffecea72c83f4dfc39cca2ebf06aca",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0",
+  "view": {
+    "label": "Opaque descriptor; execution and semantic query unavailable",
+    "primitive": "metadata",
+    "query": {
+      "id": "example.modality-text:opaque-query",
+      "version": "1.0.0"
+    }
+  }
+}

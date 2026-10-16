@@ -1,0 +1,69 @@
+{
+  "contributions": [
+    {
+      "bytes": 2904,
+      "id": "example.modality-mesh:descriptor",
+      "kind": "task",
+      "path": "mesh/descriptor.json",
+      "sha256": "4329a6b5d3fb3e2c74ed4d2d28a4b4bcade0aa9409a3a7ec70b12eaeee8a2881",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 1026,
+      "id": "example.modality-mesh:reader",
+      "kind": "reader",
+      "path": "mesh/reader.json",
+      "sha256": "d6d41eb8990e2a0826f35c7e98313f6f2d48d381f4e917d5500559098f2781a7",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 578,
+      "id": "example.modality-mesh:metadata",
+      "kind": "view",
+      "path": "mesh/view.json",
+      "sha256": "9b6ecf274fbb3c2a439ea7ea365bce6f597e3704fdfd0aa297954394734f5414",
+      "version": "1.0.0"
+    }
+  ],
+  "effects": [],
+  "format": "tuldok_extension_v1",
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "label": "mesh descriptor envelope fixture",
+  "license": {
+    "id": "LicenseRef-Authored-Test-Fixture",
+    "notices": []
+  },
+  "package": {
+    "id": "example.modality-mesh",
+    "version": "1.0.0"
+  },
+  "resources": {
+    "output_bytes": 1024,
+    "source_bytes": 4096,
+    "wall_seconds": 1
+  },
+  "runtime": {
+    "profile": "unqualified-descriptor-only"
+  },
+  "sources": [
+    {
+      "bytes": 237,
+      "path": "mesh/mesh_worker.py",
+      "sha256": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869"
+    },
+    {
+      "bytes": 459,
+      "path": "mesh/config.json",
+      "sha256": "96d820a7f69532e91098dc7e5e90450af1d4eb7b1e61bb59e07ff3ca77ccdb4e"
+    }
+  ]
+}

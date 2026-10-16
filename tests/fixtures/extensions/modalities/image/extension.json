@@ -1,0 +1,69 @@
+{
+  "contributions": [
+    {
+      "bytes": 1923,
+      "id": "example.modality-image:descriptor",
+      "kind": "task",
+      "path": "image/descriptor.json",
+      "sha256": "cc8bd4054eef396ff7689bc7aa742dd6da441256287294edb2be55b2e641be96",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 779,
+      "id": "example.modality-image:reader",
+      "kind": "reader",
+      "path": "image/reader.json",
+      "sha256": "3be8eebc58922f52ab0568b489f7e4e470d2c03ba875fd01f28ca7481f90cefb",
+      "version": "1.0.0"
+    },
+    {
+      "bytes": 582,
+      "id": "example.modality-image:metadata",
+      "kind": "view",
+      "path": "image/view.json",
+      "sha256": "4a4402f9b4880cd8ab4f0e7f3fd3ac6a787cf0e1f48f89522865fa27d9b96690",
+      "version": "1.0.0"
+    }
+  ],
+  "effects": [],
+  "format": "tuldok_extension_v1",
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "label": "image descriptor envelope fixture",
+  "license": {
+    "id": "LicenseRef-Authored-Test-Fixture",
+    "notices": []
+  },
+  "package": {
+    "id": "example.modality-image",
+    "version": "1.0.0"
+  },
+  "resources": {
+    "output_bytes": 1024,
+    "source_bytes": 4096,
+    "wall_seconds": 1
+  },
+  "runtime": {
+    "profile": "unqualified-descriptor-only"
+  },
+  "sources": [
+    {
+      "bytes": 237,
+      "path": "image/image_worker.py",
+      "sha256": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869"
+    },
+    {
+      "bytes": 318,
+      "path": "image/config.json",
+      "sha256": "263e95f859c8d9324512df20321a0316f3d722e9340a2856eee2a006a9d587f5"
+    }
+  ]
+}

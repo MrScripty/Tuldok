@@ -1,0 +1,22 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-audio:metadata",
+  "kind": "view",
+  "label": "audio opaque metadata declaration",
+  "requires": [
+    {
+      "id": "example.modality-audio:descriptor",
+      "sha256": "242c06c2bd31a74101b6c552d03bf6663e2e542b35437d8add738f28f70019d5",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0",
+  "view": {
+    "label": "Opaque descriptor; execution and semantic query unavailable",
+    "primitive": "metadata",
+    "query": {
+      "id": "example.modality-audio:opaque-query",
+      "version": "1.0.0"
+    }
+  }
+}
