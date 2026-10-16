@@ -4,7 +4,7 @@
 
 **Current phase:** E2–E4 — actual A/B qualification and final retention integration
 
-**Next slice:** Finish main canonical A packaging, real A/B native inspection and stopped shared A/B restore/disable/continuity qualification; complete exact-head CI and serial integration.
+**Next slice:** Finish restored-only B disable/removal, unrelated classifier continuity and final restored native inspection; complete composed CI, independent acceptance review and serial integration.
 
 **Acceptance status:** `partial`
 
@@ -16,8 +16,11 @@
 supersede the older prerequisite/status observations retained below. The P1–P6
 PRs are merged; the composed extension branch is verifying. Canonical
 A and independent B have completed actual CPU SDK/cold numerical qualification.
-Full X3/X5 remain pending their final retention/continuity execution; no design
-or fixture result closes those gates.
+Main canonical A packaging/fresh inference and original A/B native inspection
+have passed. The shared stopped backup/fresh restore and official restored
+HTTP/CLI/MCP checks also passed; their core receipt explicitly retains its
+disable-pending state. Full X3/X5 remain pending final disable/continuity/native
+execution; no design or fixture result closes those gates.
 
 ## Objective
 
