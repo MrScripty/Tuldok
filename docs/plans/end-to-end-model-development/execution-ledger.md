@@ -261,6 +261,37 @@
   adopted checker rejects; retained exact canonical status lines and moved prose
   below them, then reran the original function successfully.
 
+
+## 2026-10-15 — D1 historical CLI coverage correction
+
+- Reverified original D1 commit `0f8ccfe3badee80b88d9ee076498b160e90273b4`:
+  its parent is the requested `f58880df` baseline and its exact six-file scope
+  preserves application code. The original plan validator, 10 Markdown files,
+  176 local links, 104 anchors, HTML structure, whitespace and desktop/narrow
+  document-rendering checks pass again. These are documentation checks only.
+- A fresh read-only Sol review confirmed the D1 ownership and authoring design,
+  both human/agent journeys, capability migration, finite-mode sequencing and
+  explicit future acceptance limits. It identified one baseline coverage error:
+  `project_cli.py` at `f58880df` has nine fixed commands and no generic `call`.
+  Corrected the D1 transport matrix to distinguish registered MCP/HTTP data
+  operations, internal CLI discovery and proposed future CLI parity. No agent
+  authority or selected design changes.
+- PR62 has subsequently been merged and expanded through D4. Preserve that
+  accepted work and every existing implementation worktree. This correction
+  uses isolated branch `docs/model-development-d1-cli-baseline` from accepted
+  main `1a5c5968a4e73f17e79862d77179cffc776c3cdf`; only this ledger and the
+  D1 agent report change. No application code, training, migration, telemetry
+  activation, Rheon or surrogate-lab change. The follow-up PR is not auto-merged.
+- Coding Standards MCP remains unavailable. Adopted original validator/source
+  guidance and retained routing are evidence, not a fresh Engine certification.
+  D1's next design stage was D2; later design acceptance does not prove product
+  implementation, scientific qualification or fresh-consumer package inference.
+- Independent final recheck closes the CLI finding: the nine command names
+  match an AST extraction of the baseline parser, with no remaining D1 blocker.
+  On this correction, the original plan structural checker, 15 Markdown files,
+  268 local links, 129 anchors, HTML/table/fence structure, exact two-file scope
+  and whitespace checks pass. No application test is implied by these checks.
+
 ## 2026-10-16 — authorized product implementation
 
 - The user superseded the historical design-only pause with P1–P6/E1–E4
