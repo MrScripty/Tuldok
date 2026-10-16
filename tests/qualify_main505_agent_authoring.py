@@ -284,7 +284,7 @@ def main(args):
         # Budget and epoch authority remain with the owner. No prepared Trial,
         # Model or graph is supplied by setup.
         with dataset.access.bind(owner['token']):
-            study=dataset.experiments.create(dict(name='Finite main505 agent-authoring Study',policy=inspected['selection_policy'],
+            study=dataset.studies.create(dict(name='Finite main505 agent-authoring Study',policy=inspected['selection_policy'],
                 limits=dict(attempt_slots=1,admitted_wall_seconds=600,retained_bytes=64*1024**2,peak_staging_bytes=128*1024**2)))
         save('owner-closed-finite-study.json',study)
         require(study['open'] is False and study['trial_ids']==[],'Owner setup must leave an empty closed Study.')
@@ -309,7 +309,7 @@ def main(args):
                 'Typed nondefault specification did not reach published/composed material.')
         current=cli('studies.get',dict(study_id=study['id']))['study']
         with dataset.access.bind(owner['token']):
-            current=dataset.experiments.continue_study(study['id'],dict(revision=current['revision'],
+            current=dataset.studies.continue_study(study['id'],dict(revision=current['revision'],
                 admission_epoch=current['admission_epoch'],request_key='owner-continue-'+uuid.uuid4().hex))
         save('owner-reviewed-open-epoch.json',current)
         require(counters(dataset)['workspace_runs']==counters(dataset)['access_execution_grants']==0,'Agent authoring unexpectedly executed or granted.')
