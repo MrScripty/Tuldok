@@ -904,6 +904,17 @@ class Pipelines:
         self.access.audit('recipes.material',sha,{'recipe_id':material['recipe_id'],'revision':material['recipe_revision']})
         return value
 
+    @authorized('inspect', 'recipes.material_graph')
+    def retained_material_graph(self, ref):
+        """Read the exact retained graph for trusted static boundary checks."""
+        from model_definitions import read_owned_blob, retained_json
+        value=self.recipe_material(ref);material=value['material']
+        raw=read_owned_blob(self.material_path,value['ref']['sha256'],material['recipe_document'],2*1024**2)
+        graph=decode_graph(retained_json(raw.decode(),2*1024**2)['graph'])
+        if graph['id']!=material['recipe_id'] or graph['revision']!=material['recipe_revision']:
+            raise WorkbenchError('Retained graph identity differs.','unavailable',409)
+        return graph
+
     @authorized('inspect', 'recipes.material')
     def recipe_material(self, ref, *, verify=False):
         from model_definitions import reference,retained_json,natural,read_owned_blob,ModelDefinitions

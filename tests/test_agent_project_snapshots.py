@@ -338,6 +338,8 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
             newer['name'] = 'Later saved draft does not alter the Trial receipt'
             self.dataset.pipelines.save(graph['id'],{'revision':graph['revision'],'document':newer})
             self.assertEqual(self.call('studies.prepare_trial',trial_arguments,201),trial)
+            status,result = self.http('studies.prepare_trial',trial_arguments,version=1)
+            self.assertEqual((status,result['code']),(403,'forbidden'))
             state = self.call('studies.get',{'study_id':study['id']})['study']
             self.assertFalse(state['open'])
             self.assertEqual(state['admission_epoch'],0)
