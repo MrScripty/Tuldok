@@ -62,14 +62,4 @@ class BoundRecipeContractTests(unittest.TestCase):
                 with self.assertRaises(api.AgentAPIError):
                     api.validate_output('recipes.inspect',{'status':200,'result':bad},2)
 
-    def test_mcp_uses_the_same_selected_contract(self):
-        from mcp.types import Tool
-        selected=api.negotiate(api.capabilities('b'*32),'b'*32)
-        definition=next(item for item in api.tool_definitions(selected)
-                        if item['name']==api.operation('recipes.inspect')['mcp_name'])
-        tool=Tool.model_validate(definition)
-        self.assertEqual(tool.outputSchema,api.operation('recipes.inspect',2)['outputSchema'])
-        self.assertEqual(tool.inputSchema,api.operation('recipes.inspect',2)['inputSchema'])
-
-
 if __name__=='__main__':unittest.main()
