@@ -1,16 +1,29 @@
 # Plan: Implement the model-development workflow
 
-**Plan status:** `Active`
+**Plan status:** `Accepted`
 
-**Current phase:** P2 — immutable material and atomic finite-study admission
+**Current phase:** P1–P6 implementation accepted; final composed extension integration recorded
 
-**Next slice:** Complete P2 independent review and committed-head CI; then the P3 automatic classifier vertical.
+**Next slice:** None within the selected implementation scope. New hardware, physics, security, distribution or workload claims require their own qualification.
 
-**Acceptance status:** `pending`
+**Acceptance status:** `satisfied`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
 **Issues:** [issues.md](issues.md)
+
+
+The P1–P6 PRs are merged with actual source/Run/browser/client evidence and
+independent review. The [current product qualification](../end-to-end-model-development/reports/product-implementation-status.md)
+records each exact merge, source, test and limitation. The later E1–E4 composition
+passed all five checks at `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` and the
+integration lead merged PR78 as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at
+`2026-10-16T06:18:08Z`. The
+[extension acceptance](../extension-system/plan.md#final-acceptance) links all
+five runs and final independent review. This later closeout supersedes the old
+P2-era status without rewriting dated ledger entries or raw failed receipts.
+A documentation follow-up has its own CI identity; implementation checks do
+not certify that later metadata commit.
 
 ## Objective
 
@@ -30,11 +43,11 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | I1 | Exact per-operation negotiation preserves unrelated compatible calls, legacy installed clients and live Access; mismatch has no domain/grant effect. | contract | representative | automated | satisfied | P1 verification; exact-head CI; PR66 merged at8673509 |
-| I2 | Immutable model/recipe material, finite membership and atomic budget/grant/Run/audit admission survive drift, races, cancellation, restart and backup. | persistence | required-real | automated | pending | P2 real PostgreSQL/Run transactions and public inert views |
-| I3 | Actual CPU classifier emits ≥2 retained checkpoints/fixed probes automatically; linked human/agent inspection, correction/new release and cold inference work. | user-workflow | required-real | either | pending | P3 real training/consumer/browser receipt, cost bounds and CI |
-| I4 | Generic field and one-fit evidence preserves declared semantics/access and truthful unsupported domains; no fixture stands in for physical qualification. | integration | required-real | either | pending | P4 real supported producers/consumers; optional absent integrations explicitly unavailable |
-| I5 | Full candidate closure exports through current authority and passes independent fresh-consumer fixed-probe inference without original checkout/cache. | integration | required-real | automated | pending | P5 actual package/download/hash/fresh process and negative tests |
-| I6 | Wider opt-in observation is agent-transparent with privacy/failure/retention qualification; mandatory audit remains transactional. | contract | representative | automated | pending | P6 unchanged-client healthy/disabled/failed actual boundaries and CI |
+| I2 | Immutable model/recipe material, finite membership and atomic budget/grant/Run/audit admission survive drift, races, cancellation, restart and backup. | persistence | required-real | automated | satisfied | [P2 verification](reports/p2-verification.md) and [merged-source qualification](../end-to-end-model-development/reports/product-implementation-status.md): PR70 merge `8fa4915b36d3fa0209e1f3e6b219194dd50baf30`, checked source `351f55b76a2545592618a98eb68276eb9d38b713` |
+| I3 | Actual CPU classifier emits ≥2 retained checkpoints/fixed probes automatically; linked human/agent inspection, correction/new release and cold inference work. | user-workflow | required-real | either | satisfied | [Actual P3 training/correction/cold browser and agent evidence](../end-to-end-model-development/reports/p3-real-workspace-qualification.md); PR72 merge `cfd032fc67f4f3fd8a6b0d401c7fa837a4bcad2e`, checked source `767f66f8c9435561e68aee216b0dc54808997908` |
+| I4 | Generic field and one-fit evidence preserves declared semantics/access and truthful unsupported domains; no fixture stands in for physical qualification. | integration | required-real | either | satisfied | [Actual one-fit text/audio](../end-to-end-model-development/reports/p4-one-fit-browser-qualification.md), [canonical field/source](../extension-system/reports/p4-canonical-source-qualification.json); PR73 merge `61292e4ac4cbd200253fe8a5c19bf1be887af42d`, checked source `1d621e826aab89a24afed9e8927e7e5cd15564c9`; physics remains unqualified |
+| I5 | Full candidate closure exports through current authority and passes independent fresh-consumer fixed-probe inference without original checkout/cache. | integration | required-real | automated | satisfied | [Actual native classifier package/fresh consumer](../end-to-end-model-development/reports/p5-native-package-qualification.md), [canonical A closure/masked consumer](../extension-system/reports/canonical-a-50502-package-qualification.md); PR75 merge `9585f3cd15f140bf8c24d9aa33b8f51ef352621e`, checked source `ed515101e2ef92cb03c0e9e67e6886250af6db8f` |
+| I6 | Wider opt-in observation is agent-transparent with privacy/failure/retention qualification; mandatory audit remains transactional. | contract | representative | automated | satisfied | [P6 actual boundary/privacy/audit qualification](../end-to-end-model-development/reports/p6-observation-qualification.md); PR74 merge `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`; observer and mandatory audit retain separate effects |
 
 ## Binding Decisions
 
@@ -51,8 +64,10 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 
 ### Constraints
 
-- Current main is `1a5c5968a4e73f17e79862d77179cffc776c3cdf`, after design
-  PR62/PR63, P1 PR66, E1 PR64 and inert SDK PR65 integration. Recheck before each new source branch/merge. No applicable
+- Historical starting baseline (2026-10-15): main was
+  `1a5c5968a4e73f17e79862d77179cffc776c3cdf`, after design PR62/PR63,
+  P1 PR66, E1 PR64 and inert SDK PR65 integration. Current accepted composition
+  is recorded above; recheck the actual base before a future source branch/merge. No applicable
   AGENTS/skills files or callable live Coding Standards MCP are exposed; adopted
   dcc56f26 template/guidance and original structural function apply without certification.
 - Keep compatible legacy grammars/bytes, owner-only built-ins, exact one-use external
@@ -72,13 +87,14 @@ or unsupported. This plan owns implementation status, not the accepted design hi
 
 ## Design Observations And Remaining Evidence
 
-Current source matches f588 agent metadata exactly:56 operations, digest
+The P1 frozen legacy projection matches f588 agent metadata exactly:56 operations, digest
 `cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8`.
 Independent baseline system-Python agent suite17/17 passes. Private PostgreSQL17.11,
 hash-locked MCP1.30 and pinned CPU runtime are now provisioned. P1's79 distinct
 agent/protocol/approval cases pass without skips, with actual browser and independent
 review evidence in [P1 verification](reports/p1-verification.md). Committed-head CI passed (workspace lifecycle run38783946595 and workspace UI);
-PR66 merged as8673509. Later product acceptance is not closed by those checks.
+PR66 merged as8673509. Those P1 checks alone do not qualify later slices; the
+later P2–P6 and composed evidence below closes their own implementation gates.
 
 ## Simplicity And Ownership Review
 
@@ -167,10 +183,12 @@ capacity, grant, Run, cleanup and legacy reconciliation assertions remain.
 
 **Re-plan condition:** Actual schema/authority/custody cannot satisfy the selected seam.
 
-**Status:** `Verifying`
+**Status:** `Accepted`
 
 **Evidence:** [P2 local verification and resolved independent review](reports/p2-verification.md).
-221 distinct actual local cases pass0skip; exact committed-head CI/integration remain pending.
+Its 221-case local checkpoint passed with0skips. Later exact checked source
+`351f55b` passed lifecycle/catalog/UI and PR70 merged as `8fa4915`; see the
+[product record](../end-to-end-model-development/reports/product-implementation-status.md). The earlier report remains exact to its source.
 
 ### P3: Automatic classifier vertical
 
@@ -184,7 +202,9 @@ capacity, grant, Run, cleanup and legacy reconciliation assertions remain.
 
 **Re-plan condition:** Actual cost, producer, access or semantic assumptions fail.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [Actual P3 training/correction/cold browser and agent evidence](../end-to-end-model-development/reports/p3-real-workspace-qualification.md); PR72 merge `cfd032fc67f4f3fd8a6b0d401c7fa837a4bcad2e`, checked source `767f66f8c9435561e68aee216b0dc54808997908`.
 
 ### P4: Generic field and one-fit evidence
 
@@ -198,7 +218,9 @@ capacity, grant, Run, cleanup and legacy reconciliation assertions remain.
 
 **Re-plan condition:** New numerical authority/format/runtime or unresolved protected accessor.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [Actual one-fit text/audio](../end-to-end-model-development/reports/p4-one-fit-browser-qualification.md), [canonical field/source](../extension-system/reports/p4-canonical-source-qualification.json); PR73 merge `61292e4ac4cbd200253fe8a5c19bf1be887af42d`, checked source `1d621e826aab89a24afed9e8927e7e5cd15564c9`; physics remains unqualified.
 
 ### P5: Candidate closure and fresh inference
 
@@ -212,7 +234,9 @@ capacity, grant, Run, cleanup and legacy reconciliation assertions remain.
 
 **Re-plan condition:** Closure, rights, runtime or reference expectations are unavailable.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [Actual native classifier package/fresh consumer](../end-to-end-model-development/reports/p5-native-package-qualification.md), [canonical A closure/masked consumer](../extension-system/reports/canonical-a-50502-package-qualification.md); PR75 merge `9585f3cd15f140bf8c24d9aa33b8f51ef352621e`, checked source `ed515101e2ef92cb03c0e9e67e6886250af6db8f`.
 
 ### P6: Wider transparent observation and final qualification
 
@@ -226,14 +250,19 @@ capacity, grant, Run, cleanup and legacy reconciliation assertions remain.
 
 **Re-plan condition:** Privacy, lifecycle, performance or operator ownership cannot satisfy contracts.
 
-**Status:** `Planned`
+**Status:** `Accepted`
+
+**Evidence:** [P6 actual boundary/privacy/audit qualification](../end-to-end-model-development/reports/p6-observation-qualification.md); PR74 merge `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`; observer and mandatory audit retain separate effects.
 
 ## Blockers
 
-No P1 design/authority blocker. Disposable PostgreSQL, exact MCP and CPU dependencies
-are installed privately; GPU/native physics remain unqualified. Direct cloud-thread
-messaging is unavailable here; the shared PR64 handoff and parent relay coordinate
-the extension worker until an accessible direct channel is supplied.
+No selected P1–P6 implementation or integration blocker remains after the actual
+gates and lead merge recorded above. PostgreSQL, pinned MCP and captured CPU
+qualification occurred in isolated environments; this is evidence at those
+named sources, not a requirement that every installation has those runtimes.
+GPU/native physics and stronger isolation remain outside this acceptance. The
+earlier cross-executor messenger limitation was handled through parent relay
+and serial integration; it was not a runtime/product capability.
 
 ## Re-Plan Triggers
 
@@ -251,14 +280,16 @@ No conflicting mutable plan/schema proposals or unrelated local-work changes.
 
 ## Repository Isolation
 
-P1 branch `feature/model-development-p1` from main d788e08; primary lead owns
+Historical P1 branch baseline: `feature/model-development-p1` from main d788e08.
+The primary lead owns
 commit/push/draft PR/validated merge. Keep design/feature bases until no dependent
 stack uses them. Delete only safely merged branches after reachability/disposition
 checks; no worktree or unrelated historical branch cleanup is authorized.
 
 ## Final Acceptance
 
-- Acceptance status: `pending`
-- Deferred follow-ups: Unsupported GPU/native platforms/strong sandbox/hard quotas and
-  unqualified scientific physics retain their owning runtime/domain gates.
-- Final status: `Active`
+- Acceptance status: `satisfied`
+- Deferred follow-ups: none in the selected implementation scope. Unsupported
+  GPU/native platforms, strong sandboxing, hard quotas and unqualified scientific
+  physics retain separate runtime/domain gates; no pass is implied.
+- Final status: `Accepted`

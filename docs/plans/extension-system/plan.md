@@ -1,12 +1,12 @@
 # Plan: Implement project-scoped model extensions
 
-**Plan status:** `Verifying`
+**Plan status:** `Accepted`
 
-**Current phase:** E2–E4 — completed functional qualification; final composed CI and lead integration
+**Current phase:** E1–E4 implementation accepted at the named qualified sources and merged composition
 
-**Next slice:** Complete independent composed review, exact-head [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks) and lead integration. Named agent-authoring, package UI and descriptor gates have passed; no future CI or merge result is implied.
+**Next slice:** None in the selected implementation scope. Any new runtime, modality execution, physics, distribution or security claim requires separate qualification.
 
-**Acceptance status:** `partial`
+**Acceptance status:** `satisfied`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
@@ -31,8 +31,20 @@ sealed at `6905fc8` and composed into the integration source.
 also passed on frozen host `e1bc02a`: one normal SDK admission and 32 retained
 artifacts, followed by reviewed recovery of that same Run after an operator
 context-key error. No admission or training was repeated. Functional X1–X5
-witnesses are complete at their named sources; overall acceptance remains
-partial pending final composed review, exact-head PR78 CI and lead integration.
+witnesses are complete at their named sources. Final composed review, all five
+exact-head PR78 checks and lead integration are complete; selected implementation
+acceptance is satisfied.
+
+PR78 implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` passed all five
+checks: [lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38855021995),
+[SDK](https://github.com/MrScripty/Tuldok/actions/runs/38855022003),
+[catalog](https://github.com/MrScripty/Tuldok/actions/runs/38855022034),
+[workspace UI](https://github.com/MrScripty/Tuldok/actions/runs/38855022023) and
+[captured CPU](https://github.com/MrScripty/Tuldok/actions/runs/38855021942).
+The integration lead merged it as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at
+`2026-10-16T06:18:08Z`, after [final external source review](https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6208731010) (review SHA256 `f1c128d4d3a78495f717df536b401484ab7b9822c75c4be81a8dc5502c96e221`).
+These checks qualify that implementation head. A later documentation closeout
+has its own source/CI identity; these run results do not claim CI for that follow-up.
 
 The separate 0b canonical A package/fresh-inference and
 [A-only stopped retention](reports/e4-canonical-a-retention-qualification.md)
@@ -71,7 +83,7 @@ record actual 0b-runtime evidence; PR76 also retains the separately charged
 package/verifier and additional masked-consumer receipts. The separate main 50502
 A/B source, package and shared-retention witnesses are also complete in the
 linked reports above. The later ordinary-agent workflow now has its own actual
-qualification; final publication and exact-head CI/lead acceptance stay separate.
+qualification. Final implementation CI and lead integration are recorded above.
 Exact runtime review/grants remain independent of implementation authorization.
 No product gate is closed from design alone.
 
@@ -94,9 +106,8 @@ the separate product gates following the table.
 
 Product acceptance uses the actual implementation evidence below. X1–X5 have
 passed their named functional witnesses, including the separately reviewed
-ordinary-agent workflow. Overall acceptance remains partial until the final
-composed source passes independent review, exact-head PR78 CI and lead
-integration. Each proof retains its original source and runtime scope:
+ordinary-agent workflow. Final composed review, exact-head PR78 CI and lead
+integration are complete. Each proof retains its original source and runtime scope:
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -104,7 +115,7 @@ integration. Each proof retains its original source and runtime scope:
 | X2 | Real independent CPU model uses exact normal admission/custody, verified publication and common evidence queries/views. | integration | required-real | either | satisfied | [Canonical A](reports/canonical-a-50502-qualification.md), [independent B](reports/independent-b-50502-qualification.md), [independent cold consumer](reports/independent-b-actual-cold-consumer.md) |
 | X3 | Independent B changes required I/O and stages without application-owner edits; A history and unrelated tasks still work. | integration | required-real | either | satisfied | [Independent B and exact 149-file freeze](reports/independent-b-50502-qualification.md), [restored A/B and classifier continuity](reports/native-restored-author-ab.md), [final source/accounting bookend](reports/e4-ab-final-qualification.md) |
 | X4 | SDK validates without app/DB/Torch startup and separately runs conformance through normal authorized Runs. | contract | representative | either | satisfied | [Isolated SDK contract gate](reports/e3-sdk-contract-qualification.md), [actual canonical A SDK](reports/canonical-a-50502-qualification.md), [actual independent B SDK](reports/independent-b-50502-qualification.md) |
-| X5 | Upgrade/disable/removal, supported clients, cold reads, backup/restore and fresh inference retain meaning/current access. | integration | required-real | either | satisfied | [Shared retained-state matrix](reports/e4-ab-final-qualification.md), [canonical A package](reports/canonical-a-50502-package-qualification.md), [late package UI](reports/native-external-package-evidence.md) and [ordinary-agent cold/access qualification](reports/main505-agent-authoring-qualification.md); final composed CI/lead acceptance remains open |
+| X5 | Upgrade/disable/removal, supported clients, cold reads, backup/restore and fresh inference retain meaning/current access. | integration | required-real | either | satisfied | [Shared retained-state matrix](reports/e4-ab-final-qualification.md), [canonical A package](reports/canonical-a-50502-package-qualification.md), [late package UI](reports/native-external-package-evidence.md) and [ordinary-agent cold/access qualification](reports/main505-agent-authoring-qualification.md); final composed CI/lead acceptance is recorded above |
 
 ## Scope
 
@@ -516,13 +527,13 @@ the capability unavailable. Fixture-only contract checks do not activate it.
 required evidence cannot fit accepted profiles; needed material cannot be captured
 without live state; a new execution/security/runtime mode is required.
 
-**Status:** `Verifying` — actual canonical A CPU/source/cold, native/public and
+**Status:** `Accepted` — actual canonical A CPU/source/cold, native/public and
 negative receipts passed on the distinct 0b and main 50502 runtimes. P1–P4
 prerequisites are implemented and merged. The separately reviewed
 [ordinary-agent snapshot/bound-source workflow](reports/main505-agent-authoring-qualification.md)
 now qualifies agent Model/graph/Trial authoring and one exact-grant CPU Run.
 The original post-SDK operator failure and same-Run recovery remain explicit.
-Exact-head composed CI and lead acceptance remain open.
+Exact-head composed CI and lead acceptance are complete at the source above.
 
 ### E3: Prove changed I/O and stages with an independent authoring kit
 
@@ -589,7 +600,7 @@ rejected before the relevant effect. Keep old exact versions side by side.
 host knowledge, generic executable hook or numerical core edit; two consumers
 interpret the schema subset differently; an unused generality creates support cost.
 
-**Status:** `Verifying` — X3's actual A/B change-locality criterion and X4's
+**Status:** `Accepted` — X3's actual A/B change-locality criterion and X4's
 SDK gate are satisfied. Independent B retained its required source/mask inputs,
 raw/corrected stages and checkpoints under the exact 149-file application freeze;
 the later restored native and unrelated-classifier controls preserve A/B history
@@ -601,7 +612,8 @@ The explicit six-modality descriptor corpus at `4f2c45a` now passes
 SHA256 `80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`.
 It proves bounded shared host/SDK declarations and opaque metadata fallback,
 not new trainers/renderers or ordinary workflow execution. The later external
-package UI has its own actual/reviewed proof; overall acceptance remains open.
+package UI has its own actual/reviewed proof; final composed CI and lead
+acceptance are recorded above.
 
 ### E4: Qualify retention, compatibility and complete inference closure
 
@@ -665,7 +677,7 @@ package/rights/runtime blocks only its claim; it cannot be recorded as a pass.
 reader closure is missing; any accessor can disclose protected mixed data; public
 distribution/strong isolation or a new runtime is now required.
 
-**Status:** `Verifying` — the distinct 0b and main 50502 canonical A
+**Status:** `Accepted` — the distinct 0b and main 50502 canonical A
 package/separate-verifier/masked-consumer witnesses passed. A-only retention PR81
 and the later [shared A/B matrix](reports/e4-ab-final-qualification.md) passed
 separately, including cross-grant/disable, official clients, unrelated classifier,
@@ -676,7 +688,7 @@ retains those exact source identities. The separately reviewed ordinary-agent
 workflow also passed its fresh 50502 source/cold/access gate. These completed
 functional witnesses do not rewrite the earlier shared matrix
 `full_E4_pass:false` or its immutable core state. Final composed CI and lead
-acceptance remain open.
+acceptance are complete and recorded as later evidence above.
 
 ## Migration And Compatibility
 
@@ -814,21 +826,15 @@ authorized. Later product branch/integration choices belong to their admitted sl
 
 ## Final Acceptance
 
-- Acceptance status: `partial`
-- Deferred follow-ups: complete exact-head [PR78 CI](https://github.com/MrScripty/Tuldok/pull/78/checks),
-  independent composed review and lead integration. Ordinary-agent authoring,
-  late external package UI/revocation and descriptor fixtures have passed their
-  reviewed functional gates. Independent B locality,
-  shared disable/removal, unrelated-classifier continuity and existing supported
-  clients are completed named proofs, not remaining execution. GPU, strong
-  isolation, hard quotas, custom executable UI/transport and public distribution
-  remain outside this delivery unless separately selected on concrete need.
-- Final status: `Verifying`
+- Acceptance status: `satisfied`
+- Deferred follow-ups: none within the selected E1–E4 implementation scope.
+  GPU, physical validity, hard quotas, hostile-code isolation, custom executable
+  UI/transport, new modality execution and public distribution remain outside
+  this delivery unless separately selected and qualified.
+- Final status: `Accepted`
 
-M0 is Accepted after independent review, reproduced checks and verified local
-material commit `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef`. E1 browser/HTTP inspection is accepted after lead merge/exact-head CI; X1–X5
-functional witnesses are satisfied at their named sources; final composed
-acceptance remains partial. E1 retains its inspection-only scope; later
-executable canonical A claims come from PR76's actual normal grants, retained
-bytes and independent numerical review. The 0b and lead-owned 50502 witnesses
-remain distinct; no physical-model, unsupported hardware or sandbox claim follows.
+X1–X5 are satisfied by the named actual witnesses and final composed review/CI/
+lead integration recorded above. This closes implementation acceptance, not just
+M0 design. Earlier raw failures, source freezes and partial/pending machine
+receipts retain their historical meaning. Separate 0b and main50502 identities
+are not interchangeable; no extra numerical or runtime claim follows.
