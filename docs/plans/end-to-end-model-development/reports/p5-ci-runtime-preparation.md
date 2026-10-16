@@ -46,3 +46,27 @@ the reviewable runtime config/inventory, exports the three required package
 browser inputs, and runs the actual package browser. Existing lifecycle jobs are
 unchanged. Its captured inventory is measured afresh on CI and any unsupported
 host dependency or loader path fails through the existing strict owner.
+
+## Canonical qualification prerequisites in generic CI
+
+The composed canonical Release tests use an independently decoded NumPy array
+and the historical authored fixture at
+`057c8abf571d62331486dc56ef43064e72f9d03a`. Generic discovery runs in the base
+interpreter, separate from the provisioned training environment. Its old
+requirements omitted NumPy; a depth-one checkout also omitted that Git object.
+
+The lifecycle workflow now explicitly fetches only that exact commit at depth
+one, verifies the fixture path exists, and reuses the unchanged existing
+`requirements-spatial-qualification.txt` in the base verification interpreter.
+The fixture reader still checks its complete source SHA
+`3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f`.
+Application dependencies, the training/agent environments, assertions, skips,
+timeouts and permissions are unchanged.
+
+A fresh temporary depth-one repository reproduced the absent-object failure;
+the exact fetch supplied all8,721 fixture bytes with the reviewed SHA. This
+uses the retained local repository as the Git remote and does not claim a new
+GitHub Actions result. The affected actual PostgreSQL canonical Release suite
+passed all9 tests in11.697 seconds under the existing qualified NumPy2.5.4
+environment. Independent workflow review is clear. The repaired hosted job
+must still complete on its new source head.
