@@ -366,7 +366,7 @@ class Runs:
         return self._public(run)
 
     @authorized('inspect', 'runs.submit_external')
-    def submit_external(self, body):
+    def submit_external(self, body, *, _graph_guard=None):
         """The sole agent execution exception consumes an exact owner grant."""
         context = self.access.require_external_submission()
         closed(body, ('request_key', 'graph_id', 'graph_revision', 'expected_digest'), ('approval_id',))
@@ -375,6 +375,8 @@ class Runs:
             receipt = self._external_receipt(key, request_hash, context.actor_id)
         if receipt:
             return self._reconcile_receipt(receipt)
+        if _graph_guard is not None:
+            _graph_guard(self.pipelines.get(body['graph_id']))
         self._available()
         if self._external_blocked:
             raise WorkbenchError('External descendant cessation is unknown for this host boot.', 'unavailable', 409)

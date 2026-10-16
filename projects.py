@@ -197,6 +197,22 @@ class Projects:
     def list_snapshots(self):
         return self._list(True)
 
+    @authorized('inspect', 'project_snapshots.list')
+    def list_snapshot_catalog(self, *, cursor=None, limit=20):
+        if type(limit) is not int or not 1 <= limit <= 20 or (cursor is not None and
+                (not isinstance(cursor, str) or not ID.fullmatch(cursor))):
+            raise WorkbenchError('Invalid snapshot page.')
+        with self.lock:
+            rows = self.db.execute('SELECT document FROM workspace_projects WHERE id>%s ORDER BY id LIMIT %s',
+                                   (cursor or '', limit + 1)).fetchall()
+        saved = [json.loads(row[0]) for row in rows]
+        for value in saved:
+            manifest(value['manifest'])
+        return {'mode': 'inspection', 'roots': sorted(self.roots), 'limit': limit,
+                'projects': [dict(self._summary(value), schema_version=value['manifest']['schema_version'])
+                             for value in saved[:limit]],
+                'next_cursor': saved[limit-1]['id'] if len(saved) > limit else None}
+
     def _list(self, extensions):
         with self.lock:
             rows = self.db.execute('SELECT document FROM workspace_projects ORDER BY id').fetchall()
@@ -212,7 +228,14 @@ class Projects:
     def open_snapshot(self, body):
         return self._open(body, True)
 
+    @authorized('edit', 'project_snapshots.open')
+    def register_snapshot(self, body):
+        result = self._open(body, True)
+        result.setdefault('schema_version', 1)
+        return result
+
     def _open(self, body, extensions):
+        self.access.require('inspect', 'projects.open')
         closed(body, ('root', 'manifest_path'))
         root, path = body['root'], relative_path(body['manifest_path'])
         if not isinstance(root, str) or root not in self.roots:
@@ -235,7 +258,7 @@ class Projects:
             if not existing:
                 self.db.execute('INSERT INTO workspace_projects VALUES (%s,%s)', (value['id'], document))
                 self.access.audit('projects.open', value['id'], {'manifest_sha256': saved['manifest_sha256']})
-        return self.get_snapshot(value['id']) if extensions else self.get(value['id'])
+        return self._get(value['id'], extensions)
 
     def _bound(self, saved):
         entry = self.roots.get(saved['root'])
@@ -270,6 +293,12 @@ class Projects:
     @authorized('inspect', 'projects.get_snapshot', owner_only=True)
     def get_snapshot(self, project_id):
         return self._get(project_id, True)
+
+    @authorized('inspect', 'project_snapshots.get')
+    def inspect_snapshot(self, project_id):
+        result = self._get(project_id, True)
+        result.setdefault('schema_version', 1)
+        return result
 
     def _get(self, project_id, extensions):
         saved = self._saved(project_id, extensions=extensions)
@@ -365,22 +394,22 @@ class Projects:
             raise WorkbenchError('Project manifest changed; open a new snapshot.', 'stale', 409)
         return saved, raw
 
-    @authorized('inspect', 'projects.read_snapshot_manifest', owner_only=True)
+    @authorized('inspect', 'projects.read_snapshot_manifest')
     def read_snapshot_manifest(self, project_id, expected_sha256):
-        """Internal capture seam; no legacy HTTP or agent projection is added."""
+        """Current scoped capture seam; HTTP owns its selected-version boundary."""
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
             raise WorkbenchError('Select the exact saved project manifest SHA256.', 'stale', 409)
         return self._snapshot_saved(project_id, expected_sha256)
 
-    @authorized('inspect', 'projects.read_snapshot_data_reference', owner_only=True)
+    @authorized('inspect', 'projects.read_snapshot_data_reference')
     def read_snapshot_data_reference(self, project_id, reference_id, expected_sha256, limit):
         return self._read_data_reference(project_id, reference_id, expected_sha256, limit, extensions=True)
 
-    @authorized('inspect', 'projects.read_snapshot_recipe_reference', owner_only=True)
+    @authorized('inspect', 'projects.read_snapshot_recipe_reference')
     def read_snapshot_recipe_reference(self, project_id, reference_id, expected_sha256):
         return self._read_recipe_reference(project_id, reference_id, expected_sha256, extensions=True)
 
-    @authorized('inspect', 'projects.read_snapshot_recipe_sources', owner_only=True)
+    @authorized('inspect', 'projects.read_snapshot_recipe_sources')
     def read_snapshot_recipe_sources(self, project_id, sources):
         return self._read_recipe_sources(project_id, sources, extensions=True)
 

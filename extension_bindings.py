@@ -34,7 +34,7 @@ def resolve(projects, project_id, expected_project_manifest_sha256, selections):
     Successful resolution establishes an inert capture, not runtime support,
     scientific verification, permission, or an execution grant.
     """
-    # The Projects owner preserves its E1 owner-only boundary and immutable root.
+    # Projects enforces current inspect authority and the immutable root binding.
     saved, manifest_raw = projects.read_snapshot_manifest(project_id, expected_project_manifest_sha256)
     if saved['manifest']['schema_version'] != 2:
         raise WorkbenchError('Contribution binding requires a project v2 snapshot.', 'unsupported', 400)

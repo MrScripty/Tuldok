@@ -595,6 +595,27 @@ def make_handler(dataset, observer=None):
             self._contract_selection = selected
             return selected
 
+        def _snapshot_contract_access(self, project_id, operation, version, scope='inspect'):
+            # Older wire contracts keep E1's owner-only v2 source boundary.
+            selected = self._contract_selection
+            if selected is not None and selected[0] == operation and selected[1] >= version:
+                return
+            saved = dataset.projects._saved(project_id, extensions=True)
+            if saved['manifest']['schema_version'] == 2:
+                dataset.access.require(scope, operation, project_id, owner_only=True)
+
+        def _graph_snapshot_contract_access(self, graph_id, revision, operation, version, scope='inspect', *, graph=None):
+            selected = self._contract_selection
+            if selected is not None and selected[0] == operation and selected[1] >= version:
+                return
+            if graph is None:
+                graph = dataset.pipelines.get(graph_id)
+            if graph['revision'] != revision:
+                raise workbench.WorkbenchError('Graph changed. Reload.', 'stale', 409)
+            if graph.get('recipe') == 'external_recipe':
+                configuration, _parameters = pipeline.recipe_contract.graph_parameters(graph)
+                self._snapshot_contract_access(configuration['project_id'], operation, version, scope)
+
         def do_GET(self):
             return self._observe_request(self._handle_GET)
 
@@ -714,8 +735,14 @@ def make_handler(dataset, observer=None):
                         agent_api.require_selection(self._contract_selection,'studies.trial')
                         return self.reply(dataset.studies.trial(parts[1]))
                     if parts == ['project-snapshots']:
+                        if self._contract_selection is not None:
+                            agent_api.require_selection(self._contract_selection,'project_snapshots.list')
+                            return self.reply(dataset.projects.list_snapshot_catalog(**self._model_page_query()))
                         return self.reply(dataset.projects.list_snapshots())
                     if len(parts) == 2 and parts[0] == 'project-snapshots':
+                        if self._contract_selection is not None:
+                            agent_api.require_selection(self._contract_selection,'project_snapshots.get')
+                            return self.reply(dataset.projects.inspect_snapshot(parts[1]))
                         return self.reply(dataset.projects.get_snapshot(parts[1]))
                     if parts == ['projects']:
                         return self.reply(dataset.projects.list())
@@ -727,6 +754,7 @@ def make_handler(dataset, observer=None):
                         query = parse_qs(urlsplit(self.path).query)
                         selected = self._contract_selection
                         version = selected[1] if selected is not None and selected[0] == 'recipes.inspect' else 1
+                        self._snapshot_contract_access(parts[1],'recipes.inspect',3)
                         return self.reply(dataset.pipelines.inspect_external_recipe(
                             parts[1], parts[3], query.get('expected_sha256', [''])[-1], contract_version=version))
                     if parts == ['context']:
@@ -957,7 +985,11 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.models.save(parts[1],body))
                     if len(parts)==3 and parts[0]=='models' and parts[2]=='publish':
                         agent_api.require_selection(self._contract_selection,'models.publish')
-                        return self.reply(dataset.models.publish(parts[1],body))
+                        def source_guard(source):
+                            if source['kind'] == 'captured_source':
+                                self._snapshot_contract_access(source['source_selector']['project_id'],
+                                                               'models.publish',2,'edit')
+                        return self.reply(dataset.models.publish(parts[1],body,_source_guard=source_guard))
                     if parts in (['model-material'],['recipe-material']):
                         model=parts==['model-material'];name='models.material' if model else 'recipes.material'
                         agent_api.require_selection(self._contract_selection,name);projects.closed(body,('ref',))
@@ -982,7 +1014,11 @@ def make_handler(dataset, observer=None):
                                    'admit':'studies.admit','stop':'studies.stop','reconcile':'studies.reconcile'}.get(parts[2])
                         if operation:
                             agent_api.require_selection(self._contract_selection,operation)
-                            if parts[2]=='prepare-trial':return self.reply(dataset.studies.prepare_trial(parts[1],body),201)
+                            if parts[2]=='prepare-trial':
+                                def graph_guard(graph):
+                                    self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                        'studies.prepare_trial',2,'edit',graph=graph)
+                                return self.reply(dataset.studies.prepare_trial(parts[1],body,_graph_guard=graph_guard),201)
                             if parts[2]=='continue':return self.reply(dataset.studies.continue_study(parts[1],body))
                             if parts[2]=='approve':return self.reply(dataset.studies.approve(parts[1],body),201)
                             if parts[2]=='admit':return self.reply(dataset.studies.admit(parts[1],body,selection=self._contract_selection),201)
@@ -990,6 +1026,9 @@ def make_handler(dataset, observer=None):
                             projects.closed(body,())
                             return self.reply(dataset.studies.reconcile(parts[1]))
                     if parts == ['project-snapshots']:
+                        if self._contract_selection is not None:
+                            agent_api.require_selection(self._contract_selection,'project_snapshots.open')
+                            return self.reply(dataset.projects.register_snapshot(body), 201)
                         return self.reply(dataset.projects.open_snapshot(body), 201)
                     if parts == ['projects']:
                         return self.reply(dataset.projects.open(body), 201)
@@ -1011,6 +1050,7 @@ def make_handler(dataset, observer=None):
                             agent_api.require_selection(self._contract_selection,'graphs.create')
                         return self.reply(dataset.pipelines.create(body), 201)
                     if parts == ['graphs', 'external']:
+                        self._snapshot_contract_access(body.get('project_id'),'graphs.create_external',2,'edit')
                         return self.reply(dataset.pipelines.create_external(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':
                         if isinstance(body.get('document'),dict) and body['document'].get('recipe') in tuple(pipeline.MODEL_RECIPES):
@@ -1020,16 +1060,22 @@ def make_handler(dataset, observer=None):
                         if parts[2] == 'clone':
                             return self.reply(dataset.pipelines.clone(parts[1], body), 201)
                         if parts[2] == 'validate':
+                            projects.closed(body, ('revision',))
+                            self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.validate',2)
                             return self.reply(dataset.pipelines.validate(parts[1], body))
                         if parts[2] == 'preflight-external':
                             projects.closed(body, ('revision',))
+                            self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.preflight_external',2)
                             return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)
                     if parts == ['runs', 'approve-external']:
                         return self.reply(dataset.runs.approve_external(body), 201)
                     if parts == ['runs', 'submit-external']:
-                        return self.reply(dataset.runs.submit_external(body), 201)
+                        def graph_guard(graph):
+                            self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                'runs.submit_external',2,graph=graph)
+                        return self.reply(dataset.runs.submit_external(body,_graph_guard=graph_guard), 201)
                     if len(parts) == 3 and parts[0] == 'runs':
                         if parts[2] == 'model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.model_evidence')
