@@ -367,6 +367,45 @@ class ActualCandidateSelectionTests(unittest.TestCase):
                 self.dataset.studies.candidates(self.run_id)
             candidate_read.assert_not_called()
 
+    def test_selected_run_candidate_discovery_rejects_the_same_revoked_http_credential(self):
+        with self.owner.bound(self.dataset):
+            selected=self.dataset.studies.select_candidate(self.study_id,self.body())['ref']
+            reader=self.dataset.access.issue({'label':'Revocable retained candidate reader','scopes':['inspect']})
+        names=('workspace_runs','access_execution_grants','access_execution_consumptions',
+               'access_admissions','model_attempt_reservations','model_definition_drafts',
+               'model_materials','workspace_graphs','model_studies','model_trials',
+               'workspace_recipe_materials','model_candidates','model_operation_receipts')
+        def counts():
+            return {name:self.dataset.db.execute('SELECT count(*) FROM '+name).fetchone()[0] for name in names}
+        before=counts()
+        server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            method,path,body=agent_api.project_request('studies.candidates',{'run_id':self.run_id,'limit':20})
+            self.assertIsNone(body)
+            request=Request(f'http://127.0.0.1:{server.server_port}'+path,method=method,
+                headers={'Authorization':'Bearer '+reader['token'],
+                         agent_api.CONTRACT_HEADER:agent_api.selected_header('studies.candidates',1)})
+            with urlopen(request,timeout=30) as response:
+                page=json.load(response)
+                self.assertEqual(response.status,200)
+                agent_api.validate_output('studies.candidates',{'status':response.status,'result':page})
+            self.assertEqual(page['run_id'],self.run_id)
+            self.assertIn(selected,page['candidates'])
+            self.assertEqual(counts(),before)
+            with self.owner.bound(self.dataset):
+                self.dataset.access.revoke(reader['identity']['credential_id'])
+            with self.assertRaises(HTTPError) as refused:
+                urlopen(request,timeout=30)
+            self.assertEqual(refused.exception.code,401)
+            with refused.exception:
+                denied=json.load(refused.exception)
+            self.assertNotIn('candidates',denied)
+            self.assertNotIn(selected['id'],json.dumps(denied))
+            self.assertEqual(counts(),before)
+        finally:
+            server.shutdown();server.server_close();thread.join(5)
+
 
 if __name__ == '__main__':
     unittest.main()
