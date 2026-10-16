@@ -24,8 +24,10 @@ The owner browser uses these explicit HTTP operations:
   a structurally valid v1/v2 immutable snapshot and returns current inspection.
 - `GET /api/workspace/project-snapshots/ID`: saved references plus current catalog.
 
-These operations are owner-only until negotiated P1 contracts admit agent
-projections. They are absent from legacy agent discovery. Auth, loopback Host,
+These unselected operations remain owner-only. Ordinary agents use the explicit
+`project_snapshots.list/get/open` negotiated contracts described in
+[agent operations](agent-operations.md#negotiated-project-snapshots-and-bound-authoring).
+They remain absent from legacy agent discovery. Auth, loopback Host,
 same-origin JSON and strict duplicate-key request decoding remain required.
 The legacy `/api/workspace/projects` collection/open/detail remains v1-only;
 v2 open/get returns `unsupported` before registration/projection and legacy

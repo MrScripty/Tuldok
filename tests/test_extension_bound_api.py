@@ -38,7 +38,7 @@ class BoundRecipeContractTests(unittest.TestCase):
         with self.assertRaises(api.AgentAPIError):
             api.validate_arguments('recipes.inspect',dict(arguments,contract_version=2),2)
         selected=api.negotiate(api.capabilities('b'*32),'b'*32)
-        self.assertEqual(selected['recipes.inspect'],2)
+        self.assertEqual(selected['recipes.inspect'],3)
 
     def test_binding_projection_is_closed_and_bounded(self):
         positive=self.inspection()

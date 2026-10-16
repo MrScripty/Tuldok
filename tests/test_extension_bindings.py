@@ -293,7 +293,7 @@ class ExtensionBindingTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'too_large')
         self.assertIn('Binding document', str(caught.exception))
 
-    def test_closed_selection_bounds_and_owner_authority(self):
+    def test_closed_selection_bounds_and_current_inspection_authority(self):
         snapshot = self.open()
         for expected in (None, True, '0'*63):
             with self.subTest(expected=expected), self.assertRaises(WorkbenchError):
@@ -302,8 +302,13 @@ class ExtensionBindingTests(unittest.TestCase):
                            [dict(self.selection, version=True)], [self.selection]*65):
             with self.subTest(selections=selections), self.assertRaises(WorkbenchError):
                 self.resolve(snapshot, selections)
-        agent = self.dataset.access.issue({'label':'E1 binding boundary','scopes':['inspect','edit']})
-        with self.dataset.access.bind(agent['token']), self.assertRaises(AccessError):
+        agent = self.dataset.access.issue({'label':'Scoped binding inspector','scopes':['inspect']})
+        with self.dataset.access.bind(agent['token']):
+            self.assertEqual(self.resolve(snapshot)['binding']['project']['id'], snapshot[0])
+        with self.assertRaises(AccessError):
+            self.dataset.access.issue({'label':'No source inspection','scopes':['edit']})
+        self.dataset.access.revoke(agent['identity']['credential_id'])
+        with self.assertRaises(AccessError), self.dataset.access.bind(agent['token']):
             self.resolve(snapshot)
 
 
@@ -568,7 +573,7 @@ class BoundExtensionRecipeTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):recipe_contract.validate_bound_sources(self.recipe,binding,changed)
 
     def test_contradictory_provider_runtime_pin_and_legacy_contract_types_refuse(self):
-        for version in (True,1.0,'2',3):
+        for version in (True,1.0,'2',4):
             with self.subTest(version=version),self.assertRaises(WorkbenchError):self.inspect(version)
         self.extension['runtime']['snapshot_sha256']='f'*64
         self._rebind_definitions()

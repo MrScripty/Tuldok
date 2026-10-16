@@ -46,6 +46,7 @@ The registry is the machine-readable exact field/schema inventory:
 | --- | --- |
 | context.get, identity.get | workspace context and authenticated identity |
 | projects.list/get/open/evidence | configured project roots and bounded declared evidence |
+| project_snapshots.list/get/open | selected bounded v1/v2 snapshot inspection and registration; legacy projects.* stays v1-only |
 | recipes.list/inspect | recipe declarations, exact expected recipe SHA |
 | data.query/get/history/responses/preferences | all eight record kinds, existing metadata/history |
 | data.audio/mesh/pointcloud/volume/scientific | existing bounded typed inspections/slices |
@@ -73,7 +74,7 @@ effect or reinterpretation as two-file input. All file payloads, including image
 are original raw base64 (not image data URLs); no scientific conversion occurs in the transport.
 
 Unexposed: owner review/grant/admin operations, providers/model execution,
-ordinary run submit/retry, backup/restore/snapshots, bulk native import workflows,
+ordinary run submit/retry, backup/restore/runtime snapshots, bulk native import workflows,
 saved-search/selection mutations, alternate export formats and general binary
 asset/release downloads. Project evidence DOES have its existing HTTP route;
 `projects.evidence` invokes it. Metadata parity does not promise binary rendering.
@@ -206,6 +207,48 @@ Response errors without a legacy code map to `http_error`; malformed/non-string/
 secret-bearing code fields are transport failures. HTTP output objects posing as
 success (`200` with only an error body) fail the operation output schema. Raw
 tracebacks or arbitrary response formats are not accepted as authoritative errors.
+
+## Negotiated project snapshots and bound authoring
+
+Ordinary agents use three additive version1 operations through the same selected
+HTTP, CLI and MCP registry:
+
+- `project_snapshots.list` accepts optional `cursor` and `limit` (1–20, default20).
+  Its closed page contains `mode:inspection`, configured root aliases, immutable
+  v1/v2 project summaries, `limit` and nullable `next_cursor`. Pagination uses
+  project ID order. Summaries explicitly identify `schema_version`.
+- `project_snapshots.get` accepts exactly `project_id`. Its closed v1/v2 result
+  reports saved declarations and current bounded inspection; v2 adds the inert
+  extension catalog. It does not return captured source blobs.
+- `project_snapshots.open` accepts exactly `root` and `manifest_path` and requires
+  inspect plus edit. It registers immutable metadata and returns inspection.
+  Root is a configured alias; callers cannot nominate an absolute root.
+
+List/get require current inspect authority. Readers retain pinned root identity,
+descriptor-relative no-follow access, aggregate byte bounds and exact manifest
+and source integrity checks. Cached capabilities convey no authority after
+credential revocation. Package declaration, host compatibility, runtime evidence
+and execution permission remain distinct facets. Inspection never imports source,
+probes a runtime or executes a process. Unselected owner-browser snapshot routes
+and all legacy discovery documents retain their existing shapes and owner gates.
+
+The following explicit new versions permit static authoring from project-v2
+source for ordinary scoped agents: `recipes.inspect/3`,
+`graphs.create_external/2`, `graphs.preflight_external/2`, `models.publish/2`
+and `studies.prepare_trial/2`. The trusted selected contract header controls this
+boundary; request-body flags cannot opt into it. Earlier selected versions retain
+their owner-only project-v2 behavior and exact contract hashes. Project-v1
+behavior is unchanged. Source capture reconciliation and orphan adoption remain
+owner-only even with the new publication version.
+
+An agent may inspect declared parameters, create/publish a captured Model, create
+and preflight a bound graph, and prepare a Trial in an owner-created Study.
+Study creation, policy/budget changes, continuation and approval remain owner
+actions. These authoring calls do not open an epoch, create an execution grant,
+reserve an attempt or submit a Run. `studies.admit/1` is unchanged: ordinary
+execution still requires the owner's exact finite budget, open epoch and grant.
+Static source inspection and Trial preparation establish no runtime, numerical
+or hardware acceptance.
 
 ## Optional interface observations
 

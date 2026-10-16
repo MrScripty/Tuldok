@@ -237,7 +237,7 @@ class Pipelines:
 
     @authorized('inspect', 'pipeline.inspect_external_recipe')
     def inspect_external_recipe(self, project_id, reference_id, expected_sha256, *, contract_version=None):
-        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2)):
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2,3)):
             raise WorkbenchError('Unsupported recipe inspection version.','unsupported',409)
         result=recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
         if recipe_contract.is_bound_evidence(result['definition']) and contract_version==1:
