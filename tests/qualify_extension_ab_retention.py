@@ -3,11 +3,19 @@
 Select --selection JSON exactly {format: extension_ab_retention_selection_v1,
 catalog_id, a: {source,selection,model,material,run,package,package_run,verifier_run},
 b: {source,selection,model,material,run}, unrelated_completed_run_ids: []}.
+Optional current_roots is the same exact reference shape, containing only a
+bounded absolute root map for the separate restored-only public control.
+--defer-disabled-selection records rootless_retention_verified_disable_pending
+for the explicit read-parity -> public mismatch -> disabled B execution order.
 Every named document is an exact reviewed {path: absolute-path, sha256} reference.
 A source is the passed canonical qualifier receipt; B source is the passed
 extension_author_operator_qualification_v1 receipt. Selection is each real
 sdk-selection.json; model/material/run are actual public fetch documents, either
-raw or the existing closed {status,result} / {operation,status,result} HTTP wrapper. A package is the real
+raw or the existing closed {status,result} / {operation,status,result} HTTP wrapper.
+B source may instead select extension_author_existing_run_recovery_v1; its exact
+successful_verification reference supplies the final source receipt. Selecting a
+completed_run_verification_only receipt directly requires b.recovery_summary.
+All original preparation/SDK/failure/settlement and whole hashes remain linked. A package is the real
 p5_field_charged_qualification_v1 receipt, with its actual package/verifier Run
 fetches. Failed/pre-admission attempts cannot be selected. Additional catalog
 Runs must be explicitly reviewed as unrelated completed IDs.
@@ -25,6 +33,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -72,6 +81,83 @@ def reviewed(reference,role=None):
     return value
 
 
+def linked_bytes(reference):
+    closed(reference,{'path','sha256','bytes'},'Recovery evidence reference')
+    require(type(reference['path']) is str and Path(reference['path']).is_absolute() and
+            type(reference['sha256']) is str and SHA.fullmatch(reference['sha256']) and
+            type(reference['bytes']) is int and 0<=reference['bytes']<=DOCUMENT_BYTES,
+            'Recovery evidence must be exact and bounded.')
+    fd=os.open(reference['path'],os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    try:
+        before=os.fstat(fd)
+        require(stat.S_ISREG(before.st_mode) and before.st_size==reference['bytes'],'Recovery evidence is not the selected regular file.')
+        chunks=[];remaining=DOCUMENT_BYTES+1
+        while remaining:
+            piece=os.read(fd,min(65536,remaining))
+            if not piece:break
+            chunks.append(piece);remaining-=len(piece)
+        raw=b''.join(chunks);after=os.fstat(fd)
+        current=os.stat(reference['path'],follow_symlinks=False)
+        require(len(raw)==reference['bytes'] and hashlib.sha256(raw).hexdigest()==reference['sha256'] and
+                all(getattr(before,key)==getattr(after,key)==getattr(current,key) for key in
+                    ('st_dev','st_ino','st_mode','st_size','st_mtime_ns','st_ctime_ns')),
+                'Recovery evidence identity changed.')
+        return raw
+    finally:os.close(fd)
+
+
+def recovered_b(summary,source=None):
+    """Read known data-only recovery links; never call an owner or retry SDK."""
+    require(type(summary) is dict and summary.get('format')=='extension_author_existing_run_recovery_v1' and
+            summary.get('state')=='passed' and summary.get('no_admission_or_sdk_retry') is True and
+            type(summary.get('source_sdk_admissions')) is int and summary['source_sdk_admissions']==1 and
+            summary.get('all_sdk_current_and_cold_whole_hashes_verified') is True and
+            summary['domain_counts_before']==summary['domain_counts_after'],'Select successful data-only B recovery.')
+    linked={name:linked_bytes(summary[name]) for name in ('successful_verification','source_prepared','source_sdk','settlement',
+            'original_failure','original_diagnostic_stderr','first_recovery_failure','first_recovery_diagnostic')}
+    final=evidence.decode(linked['successful_verification'],DOCUMENT_BYTES)
+    require(source is None or evidence.identical(source,final),'Recovery summary/final verification receipt differs.')
+    source=final;prepared=evidence.decode(linked['source_prepared'],DOCUMENT_BYTES)
+    sdk=evidence.decode(linked['source_sdk'],DOCUMENT_BYTES);settlement=evidence.decode(linked['settlement'],DOCUMENT_BYTES)
+    require(source.get('format')=='extension_author_operator_qualification_v1' and source.get('state')=='passed' and
+            source.get('mode')=='completed_run_verification_only' and source.get('cold_whole_downloads_verified') is True and
+            source['domain_counts_before']==source['domain_counts_after']==summary['domain_counts_after'] and
+            source['run_id']==summary['run_id']==sdk['run_id'] and source['selection']==prepared['selection'] and
+            source['selection']['catalog_id']==summary['catalog_id'] and
+            source['selection']['study_id']==summary['study_id'] and source['selection']['trial_id']==summary['trial_id'],
+            'Recovered B selection/Run/no-admission identities differ.')
+    recovery=source['recovery']
+    require(recovery['original_prepared_sha256']==summary['source_prepared']['sha256'] and
+            recovery['initial_review_sha256']==prepared['reviewed_inventory_sha256'] and
+            set(recovery['oracle_dependencies'])=={'cold_oracle.py','fixture.json','oracle-freeze.json'} and
+            all(type(value) is str and SHA.fullmatch(value) for value in recovery['oracle_dependencies'].values()) and
+            recovery['preserved_original_evidence']['failure.json']==summary['original_failure']['sha256'] and
+            recovery['preserved_original_evidence']['oracle-diagnostic-stderr.txt']==summary['original_diagnostic_stderr']['sha256'],
+            'Recovered B lost its original preparation/failure/oracle-freeze evidence.')
+    require(sdk.get('format')=='extension_sdk_conformance_v1' and sdk.get('state')=='passed' and
+            type(sdk['operations']) is list and len(sdk['operations'])<=256 and sdk['operations'].count('studies.admit')==1 and
+            not set(sdk['operations'])&{'studies.create','studies.approve','studies.continue','runs.submit_external'} and
+            all(sdk[key]==source['selection'][key] for key in ('study_id','trial_id','request_key')) and
+            sdk['material_sha256']==source['selection']['expected']['material_sha256'] and
+            sorted(sdk['artifacts'],key=lambda row:row['name'])==sorted(source['artifacts'],key=lambda row:row['name']) and
+            type(summary['artifact_count']) is int and summary['artifact_count']==len(source['artifacts']),
+            'Recovered B changed original single SDK admission/whole-artifact identities.')
+    require(settlement.get('state')=='passed' and settlement.get('no_admission_or_sdk') is True and
+            settlement.get('additional_charge') is False and settlement.get('action')=='one_existing_completed_run_accounting_reconciliation' and
+            settlement['run_id']==source['run_id'] and settlement['study_id']==source['selection']['study_id'] and
+            settlement['before']['counts']==settlement['after']['counts'] and
+            settlement['before']['study']['charged']==settlement['after']['study']['charged']==source['charged']==summary['charged'] and source['oracle']==summary['oracle'],
+            'Recovered B settlement/charges/numerical receipt differs.')
+    return source
+
+
+def source_run_key(selection):
+    # Experiments retains the operation-qualified internal Run key separately
+    # from the SDK's public Study request key. Both remain exactly bound.
+    return 'study-'+evidence.digest({'study_id':selection['study_id'],'actor_id':selection['actor_id'],
+                                    'request_key':selection['request_key'],'operation_id':'studies.admit'})
+
+
 def artifact_index(run):
     require(type(run) is dict and type(run.get('id')) is str and ID.fullmatch(run['id']) and
             run.get('state')=='completed' and run.get('custody_phase')=='drained','Reviewed completed/drained Run required.')
@@ -89,14 +175,30 @@ def artifact_index(run):
 
 def load_selection(path):
     value=evidence.decode(regular(path,DOCUMENT_BYTES),DOCUMENT_BYTES)
-    closed(value,{'format','catalog_id','a','b','unrelated_completed_run_ids'},'A/B retention selection')
+    keys={'format','catalog_id','a','b','unrelated_completed_run_ids'}
+    require(type(value) is dict and set(value) in (keys,keys|{'current_roots'}),'A/B retention selection fields differ.')
     require(value['format']=='extension_ab_retention_selection_v1' and type(value['catalog_id']) is str and
             ID.fullmatch(value['catalog_id']),'Select explicit A/B retention version and catalog.')
     normalized={'catalog_id':value['catalog_id'],'references':copy.deepcopy(value)}
+    if 'current_roots' in value:
+        roots=reviewed(value['current_roots'])
+        require(type(roots) is dict and 1<=len(roots)<=8 and all(type(key) is str and 1<=len(key)<=64 and
+                type(path) is str and Path(path).is_absolute() for key,path in roots.items()),'Select the exact bounded current root map.')
+        normalized['current_roots']=roots
     for label,keys in ROLE_KEYS.items():
-        closed(value[label],keys,'Selected '+label.upper())
+        actual=set(value[label]) if type(value[label]) is dict else set()
+        require(actual==keys or (label=='b' and actual==keys|{'recovery_summary'}),'Selected '+label.upper()+' fields differ.')
         docs={key:reviewed(ref,key) for key,ref in value[label].items()}
-        source=docs['source'];selection=docs['selection'];run=docs['run'];model=docs['model'];material=docs['material']
+        source=docs['source']
+        if label=='b':
+            if source.get('format')=='extension_author_existing_run_recovery_v1':
+                require('recovery_summary' not in docs,'Select one explicit recovery summary.')
+                docs['recovery_summary']=source;docs['source']=source=recovered_b(source)
+            elif source.get('mode')=='completed_run_verification_only':
+                require('recovery_summary' in docs,'Recovered B requires its explicit linked recovery summary.')
+                docs['source']=source=recovered_b(docs['recovery_summary'],source)
+            else:require('recovery_summary' not in docs,'Recovery summary requires the explicit recovery receipt mode.')
+        selection=docs['selection'];run=docs['run'];model=docs['model'];material=docs['material']
         if label=='a':
             require(source.get('state')=='canonical_sdk_source_numerical_cold_passed' and source.get('sdk',{}).get('state')=='passed',
                     'Select successful actual canonical A02+ source; pre-admission failures are unsupported.')
@@ -106,7 +208,8 @@ def load_selection(path):
                     source['selection']==selection,'Select actual passed independent B source receipt.')
         require(selection.get('format')=='extension_sdk_conformance_selection_v1' and selection['catalog_id']==value['catalog_id'] and
                 source['run_id']==run['id'] and run['study_membership']=={'study_id':selection['study_id'],'trial_id':selection['trial_id']} and
-                all(run[key]==selection[key] for key in ('actor_id','approval_id','request_key')),
+                all(run[key]==selection[key] for key in ('actor_id','approval_id')) and
+                run['request_key']==source_run_key(selection),
                 'Source selection/Run/Study differs.')
         expected=selection['expected'];inventory=artifact_index(run)
         require('execution-context.json' in inventory and run['approval_material_sha256']==expected['material_sha256'] and
@@ -423,10 +526,15 @@ def main(args):
                 'Rootless retained files/modes/custody changed.')
         report['read_only_table_parity']=immutable
         original_projects=project_rows(destination,restored_connection)
-        report['new_selection_refusals']=disabled_b_copy(destination,restored_connection,selected,output,expected)
-        current_projects=project_rows(destination,restored_connection)
-        added={row['project_id'] for row in report['new_selection_refusals']}
-        check_project_rows(original_projects,current_projects,added)
+        deferred=getattr(args,'defer_disabled_selection',False)
+        if deferred:
+            report['new_selection_refusals']=[]
+            require(project_rows(destination,restored_connection)==original_projects,'Read-only Project rows changed.')
+        else:
+            report['new_selection_refusals']=disabled_b_copy(destination,restored_connection,selected,output,expected)
+            current_projects=project_rows(destination,restored_connection)
+            added={row['project_id'] for row in report['new_selection_refusals']}
+            check_project_rows(original_projects,current_projects,added)
         report['original_project_rows_unchanged']=True
         final=snapshot(destination,restored_connection,exclude=exclude)
         require(all(final['tables'][name]==base['tables'][name] for name in immutable if name!='workspace_projects') and
@@ -437,10 +545,12 @@ def main(args):
         # the final receipt after successful inspection.
         require(load_selection(args.selection)==selected,'Reviewed retention selection changed during execution.')
         require(hashlib.sha256(Path(__file__).read_bytes()).hexdigest()==report['driver_sha256'],'Retention driver changed during execution.')
-        report.update(state='passed',source_unchanged=True,restored_database=database,restored_database_retained=True,
+        report.update(state='rootless_retention_verified_disable_pending' if deferred else 'passed',
+                      remaining=['restored_only_public_cross_material_refusal','disabled_removed_B_selection','unrelated_classifier'] if deferred else [],
+                      source_unchanged=True,restored_database=database,restored_database_retained=True,
                       finished_unix=time.time(),scope='Actual stopped A/B retention and current access; no replay or physical/comparable-metric claim.')
         save_private(output/'report.json',report)
-        print('PASS actual A/B retention '+str(output),flush=True)
+        print(('VERIFIED rootless A/B; disable/control pending ' if deferred else 'PASS actual A/B retention ')+str(output),flush=True)
     except BaseException as error:
         report.update(state='failed',error_type=type(error).__name__,failure=str(error),restored_database=database if created else None)
         save_private(output/'failure.json',report);raise
@@ -452,6 +562,7 @@ def parser():
     result.add_argument('--selection',type=Path,required=True)
     result.add_argument('--output',type=Path,required=True)
     result.add_argument('--quiesced',action='store_true')
+    result.add_argument('--defer-disabled-selection',action='store_true',help='Stop after strict rootless parity; writes an explicit pending phase state, never a full E4 pass.')
     return result
 
 
