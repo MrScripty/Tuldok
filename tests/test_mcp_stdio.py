@@ -145,6 +145,16 @@ class FramingTests(unittest.TestCase):
 
 @unittest.skipUnless(SDK_AVAILABLE, 'Optional MCP environment required; skipped tests are not protocol qualification')
 class SDKProcessTests(unittest.TestCase):
+    def test_bound_recipe_uses_the_same_selected_contract(self):
+        import agent_api as api
+        from mcp.types import Tool
+        selected=api.negotiate(api.capabilities('b'*32),'b'*32)
+        definition=next(item for item in api.tool_definitions(selected)
+                        if item['name']==api.operation('recipes.inspect')['mcp_name'])
+        tool=Tool.model_validate(definition)
+        self.assertEqual(tool.outputSchema,api.operation('recipes.inspect',2)['outputSchema'])
+        self.assertEqual(tool.inputSchema,api.operation('recipes.inspect',2)['inputSchema'])
+
     def start(self, **env):
         process = subprocess.Popen([sys.executable, '-c', CHILD], cwd=ROOT,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
