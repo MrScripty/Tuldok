@@ -4,7 +4,7 @@
 
 **Current phase:** E2–E4 — actual A/B qualification and final retention integration
 
-**Next slice:** Finish restored-only B disable/removal, unrelated classifier continuity and final restored native inspection; complete composed CI, independent acceptance review and serial integration.
+**Next slice:** Finish the completed classifier's read-only cold verification and final restored native inspection; complete composed CI, independent acceptance review and serial integration.
 
 **Acceptance status:** `partial`
 
@@ -19,8 +19,9 @@ A and independent B have completed actual CPU SDK/cold numerical qualification.
 Main canonical A packaging/fresh inference and original A/B native inspection
 have passed. The shared stopped backup/fresh restore and official restored
 HTTP/CLI/MCP checks also passed; their core receipt explicitly retains its
-disable-pending state. Full X3/X5 remain pending final disable/continuity/native
-execution; no design or fixture result closes those gates.
+disable-pending state. Later restored-only B disable/removal passed in its own
+immutable receipt. Full X3/X5 remain pending classifier cold verification and
+final native execution; no design or fixture result closes those gates.
 
 ## Objective
 

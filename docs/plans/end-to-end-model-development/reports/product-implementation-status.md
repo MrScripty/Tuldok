@@ -83,16 +83,24 @@ selection: 42 SQL tables, five sequences, 22,849 filesystem entries and 61
 artifacts retain their original meaning and custody. Root-absent warm/cold
 reads, 34 revoked reads and six unentered download streams passed without
 execution. The immutable core receipt is `ecc35409c853deb72a8ad84b7c8ecf84f59ec9c0e884cf52fc6a851e4694bcee`;
-its state remains `rootless_retention_verified_disable_pending`.
+its state remains `rootless_retention_verified_disable_pending`. The separately
+recorded [actual core, cross-grant and disable qualification](../../extension-system/reports/e4-ab-core-and-cross-grant-qualification.md)
+preserves that immutable state and binds the later phases.
 
 [Actual restored official interfaces](../../extension-system/reports/restored-ab-official-interface-qualification.md)
 passed three A/B stage projections and two whole contexts across HTTP, CLI and
 MCP, with current revocation and unchanged four-Run accounting. A separate
 actual fresh unspent A grant presented for B returned the exact reviewed-material
 403 refusal without adding a Run, reservation or consumption. Independent
-reviews checked the core and interface receipts. Restored-only B disable/remove,
-unrelated classifier execution and final restored native inspection are the
-remaining serial execution gates; the combined E4 acceptance is not yet passed.
+reviews checked the core and interface receipts. Restored-only B disable/remove
+also passed with two new snapshots, unchanged original Project rows and retained
+A/B/package history. An unrelated classifier completed and settled one actual
+CPU Run in the restored copy. Its driver then incorrectly requested capture of
+the self-excluded outer artifact manifest; the failure is preserved and a
+read-only verification recovery for that same Run is pending. No training retry
+is authorized by that verification failure. Classifier cold verification and
+final restored native inspection remain execution gates; combined E4 acceptance
+is not yet passed.
 
 The P1–P6 PRs are merged. Final composed extension CI and independent acceptance
 review remain merge gates. Superseded CI is canceled only after its replacement is published.
