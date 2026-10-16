@@ -43,6 +43,18 @@ function launch(command, args, options) {
   const data=sourceReceipt.catalog_path,sourceRun=sourceReceipt.run_id;
   assert.ok(data&&sourceRun,'The real receipt must retain catalog_path and run_id');
   const projectRoots=sourceReceipt.project_roots||{};
+  const restored=sourceReceipt.restored_checks;
+  const retainedCounts=()=>JSON.parse(execFileSync('python3',['-c',
+    "import json,sys;from metadata import Metadata;m=Metadata(sys.argv[1],create=False,schema_version=None);tables=('workspace_runs','access_execution_grants','access_execution_consumptions','model_attempt_reservations','model_definition_drafts','model_materials','workspace_graphs','model_studies','model_trials','workspace_recipe_materials');print(json.dumps({name:m.execute('SELECT count(*) FROM '+name).fetchone()[0] for name in tables}));m.close()",data],{cwd:root,encoding:'utf8'}));
+  const beforeCounts=restored?retainedCounts():null;
+  if(restored){
+    assert.equal(restored.disposable_restored_catalog,true,'Refusal checks require an explicitly disposable restored catalog');
+    assert.deepEqual(restored.refusals.map(item=>item.mode).sort(),['disabled','removed']);
+    assert.ok(restored.refusals.every(item=>typeof item.project_id==='string'&&typeof item.recipe_id==='string'));
+    assert.ok(restored.retained_runs.length===2&&new Set(restored.retained_runs.map(item=>item.run_id)).size===2);
+    assert.ok(restored.unrelated_run_id&&restored.unrelated_graph_id&&restored.unrelated_release_id);
+    assert.ok(Array.isArray(restored.unrelated_recipe_choices)&&restored.unrelated_recipe_choices.length);
+  }
   const server=launch('python3',['-u','app.py','--port','0','--data',data,...Object.entries(projectRoots).flatMap(([alias,directory])=>['--project-root',alias+'='+directory])],{cwd:root,stdio:['ignore','pipe','pipe']});
   let output = "";
   server.stdout.on("data", (chunk) => (output += chunk));
@@ -340,15 +352,18 @@ function launch(command, args, options) {
   }
   // Generic native keyboard selection covers every actual authored field/stage,
   // including a separately declared boundary correction. No field operator runs here.
-  async function nativeOption(selector,value){
-    await focus(selector);
-    assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true,'Real keyboard focus '+selector);
-    const ordinal=await evaluate(`Array.from(${element(selector)}.options).findIndex(option=>option.value===${JSON.stringify(String(value))})`);
+  async function nativeOption(selector,value,fieldSettled=true){
+    const values=await evaluate(`Array.from(${element(selector)}.options,option=>option.value)`),ordinal=values.indexOf(String(value));
     assert.ok(ordinal>=0,'Missing actual native option '+selector+' '+value);
-    await key('Home');
-    for(let i=0;i<ordinal;i++)await key('ArrowDown');
-    await key('Tab');
-    await until(()=>evaluate(`${element(selector)}?.value===${JSON.stringify(String(value))}&&!!document.getElementById('field-load')&&!document.getElementById('field-load').disabled`),'Native selector did not settle '+selector);
+    for(let i=0;i<=ordinal;i++){
+      // A selected saved graph replaces its native select synchronously.
+      // Reacquire real focus for each key instead of dispatching to a detached node.
+      await focus(selector);
+      assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true,'Real keyboard focus '+selector);
+      await key(i===0?'Home':'ArrowDown');
+      await until(()=>evaluate(`${element(selector)}?.value===${JSON.stringify(values[i])}&&${fieldSettled?"!!document.getElementById('field-load')&&!document.getElementById('field-load').disabled":"true"}`),'Native selector did not settle '+selector);
+    }
+    await focus(selector);assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true);await key('Tab');
   }
   const captureCheckpoint=index.checkpoint_index.entries.find(item=>item.selected)||index.checkpoint_index.entries.at(-1),captureMember=index.probe.members[0];
   const declaredCaptures=[];
@@ -381,10 +396,56 @@ function launch(command, args, options) {
   assert.equal(await evaluate('!!document.getElementById("field-prediction")'),false);assert.equal(await evaluate('!!document.getElementById("field-checkpoint")'),false);
   await click('#real-runs-refresh');await until(()=>evaluate('!!document.getElementById("field-prediction")'));
   check('H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest');
+  const restoredResults=restored?{refusals:[],retained_runs:[],unrelated:null}:null;
+  if(restored){
+    // All selection changes are pre-existing snapshots on a restored disposable
+    // catalog. This journey never changes a provider or creates execution state.
+    for(const item of restored.refusals){
+      await select('#dataset','project:'+item.project_id);await nav('pipeline');
+      const selector='#project-pipeline-root [data-project-model="'+item.recipe_id+'"]';
+      await until(()=>evaluate(`!!${element(selector)}&&!${element(selector)}.disabled`),'Restored recipe inspection unavailable');
+      await focus(selector);assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true);await key('Enter');
+      await until(()=>text('#extension-model-dialog .author-status.error-panel').then(value=>!!value),'Expected actual current-provider refusal');
+      const message=await text('#extension-model-dialog .author-status');
+      assert.equal(await evaluate('!!document.querySelector("#extension-model-dialog #extension-model-form,#extension-model-dialog #extension-prepare,#extension-model-dialog #extension-approve,#extension-model-dialog #extension-admit,#extension-model-dialog .author-review")'),false,'Refused inspection exposed preparation or cached review controls');
+      const detail=await(await fetch(base+'/api/workspace/projects/'+item.project_id)).json(),recipe=detail.recipes.find(value=>value.id===item.recipe_id);assert.ok(recipe);
+      const inspectPin=await evaluate('WorkspaceExtensionAuthorContracts["recipes.inspect/2"]');
+      const response=await fetch(base+'/api/workspace/projects/'+item.project_id+'/recipes/'+item.recipe_id+'?expected_sha256='+recipe.observed_sha256,{headers:{'Tuldok-Operation-Contract':'recipes.inspect/2/'+inspectPin}}),failure=await response.json();
+      assert.ok([400,404,409].includes(response.status));assert.ok(['unavailable','unsupported','invalid'].includes(failure.code));assert.equal(message,failure.error);
+      await screenshot('restored-'+item.mode+'-refusal-1440',1440,900);await screenshot('restored-'+item.mode+'-refusal-390',390,844);
+      restoredResults.refusals.push({...item,status:response.status,code:failure.code,message});
+      await focus('#extension-model-close');await key('Enter');await until(()=>evaluate('!document.getElementById("extension-model-dialog").open'));
+    }
+    await select('#dataset','catalog');await nav('runs');
+    for(const item of restored.retained_runs){
+      await until(()=>evaluate(`!!document.querySelector('[data-real-run="${item.run_id}"]')`));await focus('[data-real-run="'+item.run_id+'"]');await key('Enter');
+      await until(()=>evaluate(`document.querySelector('[data-real-run="${item.run_id}"]')?.getAttribute('aria-current')==='true'&&!!document.getElementById('field-prediction')&&!document.getElementById('field-load').disabled`),'Retained actual source Run did not reopen');
+      const response=await fetch(base+'/api/workspace/runs/'+item.run_id+'/model-evidence',{method:'POST',headers:{'Content-Type':'application/json','Tuldok-Operation-Contract':'runs.model_evidence/2/'+pin},body:'{}'});assert.equal(response.status,200);const retained=await response.json();
+      const pairs=[...new Set(retained.fields.map(field=>JSON.stringify([field.field_id,field.stage])))].sort();assert.deepEqual(pairs,item.expected_fields.map(field=>JSON.stringify([field.field_id,field.stage])).sort());
+      assert.deepEqual(await evaluate('Array.from(document.getElementById("field-checkpoint").options,option=>option.value)'),retained.checkpoint_index.entries.map(entry=>entry.checkpoint.sha256));
+      await screenshot('restored-retained-'+item.label+'-field-1440',1440,900);await screenshot('restored-retained-'+item.label+'-field-390',390,844);
+      restoredResults.retained_runs.push({run_id:item.run_id,fields:item.expected_fields,checkpoints:retained.checkpoint_index.entries.map(entry=>({sha256:entry.checkpoint.sha256,clocks:entry.clocks}))});
+    }
+    await focus('[data-real-run="'+restored.unrelated_run_id+'"]');await key('Enter');
+    await until(()=>evaluate(`document.querySelector('[data-real-run="${restored.unrelated_run_id}"]')?.getAttribute('aria-current')==='true'&&document.getElementById('real-run-state')?.textContent==='completed'`),'Unrelated completed built-in Run unavailable');
+    const unrelated=await(await fetch(base+'/api/workspace/runs/'+restored.unrelated_run_id)).json();assert.equal(unrelated.state,'completed');assert.equal(unrelated.graph.id,restored.unrelated_graph_id);assert.equal(unrelated.release_id,restored.unrelated_release_id);
+    const links=await evaluate('Array.from(document.querySelectorAll("#real-runs-root .real-artifacts a[download]"),node=>({name:node.textContent,url:node.href}))');
+    assert.ok(links.length);const artifacts=[];
+    for(const artifact of unrelated.artifacts.filter(item=>!item.locked)){const link=links.find(item=>item.name===artifact.name);assert.ok(link);const response=await fetch(link.url);assert.equal(response.status,200);const raw=Buffer.from(await response.arrayBuffer());assert.equal(raw.length,artifact.bytes);assert.equal(require('node:crypto').createHash('sha256').update(raw).digest('hex'),artifact.sha256);artifacts.push({name:artifact.name,sha256:artifact.sha256,bytes:raw.length});}
+    await screenshot('restored-unrelated-built-in-run-1440',1440,900);await screenshot('restored-unrelated-built-in-run-390',390,844);
+    await nav('pipeline');await until(()=>evaluate('!!document.getElementById("real-graph-select")'));await nativeOption('#real-graph-select',restored.unrelated_graph_id,false);
+    await until(()=>evaluate(`document.getElementById('real-name')?.value===${JSON.stringify(unrelated.graph.name)}`));await select('#real-create-release',restored.unrelated_release_id);
+    assert.deepEqual(await evaluate('Array.from(document.getElementById("real-create-recipe").options,option=>option.value)'),restored.unrelated_recipe_choices);
+    assert.equal(await evaluate('document.querySelector("#real-create-form button").disabled'),false);
+    await screenshot('restored-unrelated-built-in-pipeline-1440',1440,900);await screenshot('restored-unrelated-built-in-pipeline-390',390,844);
+    restoredResults.unrelated={run_id:unrelated.id,graph_id:unrelated.graph.id,release_id:unrelated.release_id,artifacts,recipe_choices:restored.unrelated_recipe_choices};
+    assert.deepEqual(retainedCounts(),beforeCounts,'Native restored browsing changed Model/graph/Study/material/grant/admission/Run counts');
+    check('E4 actual disabled/removed new selection refuses natively; retained A/B history and unrelated built-in Run/artifacts/saved graph/create choices remain usable with unchanged execution counts');
+  }
   const finalRuns=await(await fetch(base+'/api/workspace/runs')).json();assert.deepEqual(finalRuns.map(item=>item.id).sort(),initialRuns.map(item=>item.id).sort(),'Field inspection must not admit or execute another Run');
   assert.ok(posts.every(url=>url.endsWith('/model-evidence')),'Read-only field inspection used a mutation route');
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_sha256:sourceHashes,command:'node tests/browser_field_evidence.cjs',catalog_path:data,run_id:sourceRun,source_receipt:path.resolve(process.env.TULDOK_FIELD_BROWSER_RECEIPT),browser:(await send('Browser.getVersion')).product,checks,captures,dark_checks:darkChecks,exact_requests:exactRequests,declared_fields:uniqueFields,expected_fields:sourceReceipt.expected_fields||null,declared_field_captures:declaredCaptures,producer_execution:false,existing_actual_run:true,quality_claim:false,access_projection_test:'403 transport substitution; backend tests own actual current authority enforcement'},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_sha256:sourceHashes,command:'node tests/browser_field_evidence.cjs',catalog_path:data,run_id:sourceRun,source_receipt:path.resolve(process.env.TULDOK_FIELD_BROWSER_RECEIPT),browser:(await send('Browser.getVersion')).product,checks,captures,dark_checks:darkChecks,exact_requests:exactRequests,declared_fields:uniqueFields,expected_fields:sourceReceipt.expected_fields||null,declared_field_captures:declaredCaptures,restored_checks:restoredResults,retained_counts:beforeCounts,producer_execution:false,existing_actual_run:true,quality_claim:false,access_projection_test:'403 transport substitution; backend tests own actual current authority enforcement'},null,2));
   console.log('PASS actual external field browser:',report);
 })().catch(async error=>{
   console.error(error);console.error('Application stderr:',serverErrors);

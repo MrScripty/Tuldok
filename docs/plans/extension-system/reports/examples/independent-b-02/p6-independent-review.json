@@ -1,0 +1,79 @@
+{
+  "artifact_count": 26,
+  "charged_attempt_slots": 1,
+  "domain_counts_after": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "domain_counts_before": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "format": "independent_b_recovery_receipt_review_v1",
+  "linked_receipts_verified": {
+    "first_recovery_diagnostic": {
+      "bytes": 673,
+      "sha256": "9bfcbc7f00cff3e9b9dd62c08766df6716ece77a3c49daf64d446ddd7f8195e7"
+    },
+    "first_recovery_failure": {
+      "bytes": 177,
+      "sha256": "b20a91fe2b6edde6fe6faba71cbf54d05ad38dff566e05a520ba24106fb7a913"
+    },
+    "original_diagnostic_stderr": {
+      "bytes": 1224,
+      "sha256": "204c9e7a1c9b7882c6a84e2c34949d34b9676a0dbe610d07f0eb127cbb334cd4"
+    },
+    "original_failure": {
+      "bytes": 1028,
+      "sha256": "802530c875faa10efdd7ca2f636e62f1de489c95afac3f0f1c9b9448216eba95"
+    },
+    "settlement": {
+      "bytes": 239001,
+      "sha256": "3674058e3912b7f0e29a86a8ebbf12d5e510edb163873a5e75b77c6a6892608b"
+    },
+    "source_prepared": {
+      "bytes": 12685,
+      "sha256": "299aee5f314cb095494062d4f715c433645f156905e56262b0ae546afaa0f5cf"
+    },
+    "source_sdk": {
+      "bytes": 4618,
+      "sha256": "cd1facc41a6622e030f26cca653e07ab3de35395e234a8fc5c95d6c4c88c55fa"
+    },
+    "successful_verification": {
+      "bytes": 7027,
+      "sha256": "6c46560ffcec5600188dc3824a0f35a73637219fa5cf7be073e78ede5a63d85b"
+    }
+  },
+  "maximum_gradient_state_error": 4.996003610813204e-16,
+  "maximum_reconstruction_error": 2.220446049250313e-16,
+  "numerical_oracle_state": "valid",
+  "original_failure_evidence_preserved": true,
+  "physical_qualification": "not_established",
+  "product_conformance": "not_established",
+  "reviewed_oracle_dependencies": {
+    "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+    "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+    "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd"
+  },
+  "scope": "Independent read-only receipt/file review; no Run admission, SDK invocation or catalog writes. Application owner149-file freeze was not re-read in this review.",
+  "sdk_numerical": "not_evaluated",
+  "snapshot_mode": "0400",
+  "source_host_commit": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+  "source_sdk_admissions": 1,
+  "state": "passed",
+  "verification_host_commit": "3affe90bc258c1327fde49faf57bceb852cc2759",
+  "whole_download_copies_checked": [
+    "sdk",
+    "current_http",
+    "cold_http"
+  ],
+  "whole_file_hash_comparisons": 78
+}

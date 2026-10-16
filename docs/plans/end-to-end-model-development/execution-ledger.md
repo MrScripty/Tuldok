@@ -260,3 +260,20 @@
   all pass. Initial Accepted projection included explanatory suffixes that the
   adopted checker rejects; retained exact canonical status lines and moved prose
   below them, then reran the original function successfully.
+
+## 2026-10-16 — authorized product implementation
+
+- The user superseded the historical design-only pause with P1–P6/E1–E4
+  implementation, actual validation, parallel isolated work and serial merge
+  authority. The active integration lead preserves unrelated local branches.
+- P1/P2/P3/P6 are merged after independent review and exact-head CI. P4/P5 are
+  implemented and verifying; current source/CI identities and actual CPU,
+  browser, agent, correction, package and observation receipts are in
+  [the product implementation record](reports/product-implementation-status.md).
+- Main canonical A and independent B each completed one actual finite SDK source
+  attempt, independently checked numerical evidence and whole-artifact cold reads.
+  All149 decisive B application files still match the frozen host. Original
+  verification failures and accounting recovery remain preserved, without a
+  repeated SDK admission. Main canonical A package/fresh verifier and final A/B
+  native/restore/disable/continuity qualification continue; no milestone stop
+  or unavailable pressure/GPU/physics success is claimed.
