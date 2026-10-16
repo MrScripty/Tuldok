@@ -493,7 +493,9 @@ class VerificationOperator(Operator):
         return super().http(operation, arguments, version)
 
     def raw(self, method, path, body=None, headers=None, binary=False):
-        require(method == 'GET' or (method == 'POST' and re.fullmatch('/api/workspace/runs/[a-f0-9]{32}/model-evidence', path)),
+        require(method == 'GET' or (method == 'POST' and
+                (path in ('/api/workspace/model-material', '/api/workspace/recipe-material') or
+                 re.fullmatch('/api/workspace/runs/[a-f0-9]{32}/model-evidence', path))),
                 'Verification resume cannot call a mutation route.')
         return super().raw(method, path, body, headers, binary)
 
