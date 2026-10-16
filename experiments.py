@@ -542,6 +542,24 @@ class Experiments:
         return {'ref':{'kind':'candidate','catalog_id':self.db.dataset_id,'id':value['id'],'sha256':digest(value)},
                 'candidate':value,'run_id':value['run_id'],'checkpoint':checkpoint}
 
+    @authorized('inspect','studies.candidates')
+    def candidates(self,run_id,*,cursor=None,limit=20):
+        """Discover retained decisions for one currently inspectable Run."""
+        identifier(run_id);natural(limit,'Page limit',1,20)
+        if cursor is not None:identifier(cursor)
+        self.dataset.runs.get(run_id)
+        with self.lock:
+            rows=self.db.execute('SELECT id FROM model_candidates WHERE run_id=%s AND id>%s ORDER BY id LIMIT %s',
+                                 (run_id,cursor or '',limit+1)).fetchall()
+        refs=[]
+        for row in rows[:limit]:
+            value=self.candidate(row[0])
+            if value['run_id']!=run_id:
+                raise WorkbenchError('Candidate Run association differs.','unavailable',409)
+            refs.append(value['ref'])
+        return {'run_id':run_id,'candidates':refs,'limit':limit,
+                'next_cursor':rows[limit-1][0] if len(rows)>limit else None}
+
     @authorized('inspect','studies.candidate')
     def candidate(self,candidate_id):
         identifier(candidate_id)

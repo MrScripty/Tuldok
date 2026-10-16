@@ -11,6 +11,7 @@ import time
 import unittest
 import uuid
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 import agent_api
@@ -312,6 +313,59 @@ class ActualCandidateSelectionTests(unittest.TestCase):
             self.assertEqual(self.dataset.studies.candidate(result['ref']['id']), result)
         with self.owner.bound(self.dataset):
             self.assertEqual(len(self.dataset.runs.list()), 1)
+
+    def test_run_candidate_discovery_pages_exact_retained_refs_over_selected_http(self):
+        with self.owner.bound(self.dataset):
+            created=[self.dataset.studies.select_candidate(self.study_id,self.body())['ref'] for _ in range(2)]
+            counts={name:self.dataset.db.execute('SELECT count(*) FROM '+name).fetchone()[0] for name in
+                    ('workspace_runs','access_execution_grants','model_candidates','model_attempt_reservations')}
+        server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(self.dataset))
+        thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            refs=[];cursor=None
+            while True:
+                arguments={'run_id':self.run_id,'limit':1}
+                if cursor:arguments['cursor']=cursor
+                method,path,body=agent_api.project_request('studies.candidates',arguments)
+                self.assertIsNone(body)
+                request=Request(f'http://127.0.0.1:{server.server_port}'+path,method=method,
+                    headers={**self.owner.headers,agent_api.CONTRACT_HEADER:agent_api.selected_header('studies.candidates',1)})
+                with urlopen(request,timeout=30) as response:
+                    page=json.load(response)
+                    agent_api.validate_output('studies.candidates',{'status':response.status,'result':page})
+                self.assertEqual(page['run_id'],self.run_id);self.assertEqual(page['limit'],1)
+                refs.extend(page['candidates']);cursor=page['next_cursor']
+                if cursor is None:break
+            self.assertEqual([ref['id'] for ref in refs],sorted(ref['id'] for ref in refs))
+            self.assertTrue(all(ref in refs for ref in created))
+            with self.assertRaises(HTTPError) as missing:
+                urlopen(Request(f'http://127.0.0.1:{server.server_port}/api/workspace/runs/{self.run_id}/candidates',
+                                headers=self.owner.headers),timeout=30)
+            self.assertEqual(missing.exception.code,409)
+            self.assertEqual(json.load(missing.exception)['code'],'contract_mismatch')
+            with self.owner.bound(self.dataset):
+                self.assertEqual(refs,[self.dataset.studies.candidate(ref['id'])['ref'] for ref in refs])
+                self.assertEqual(counts,{name:self.dataset.db.execute('SELECT count(*) FROM '+name).fetchone()[0] for name in counts})
+                with self.assertRaises(WorkbenchError):self.dataset.studies.candidates(self.run_id,limit=21)
+                with self.assertRaises(WorkbenchError):self.dataset.studies.candidates(self.run_id,cursor='invalid')
+                with self.assertRaises(WorkbenchError):self.dataset.studies.candidates(uuid.uuid4().hex)
+        finally:
+            server.shutdown();server.server_close();thread.join(5)
+
+    def test_run_candidate_discovery_rechecks_current_inspect_authority_before_refs(self):
+        with self.owner.bound(self.dataset):
+            reader=self.dataset.access.issue({'label':'Read retained candidates','scopes':['inspect']})
+        with self.dataset.access.bind(reader['token']):
+            self.assertEqual(self.dataset.studies.candidates(self.run_id)['run_id'],self.run_id)
+            original=self.dataset.access.require
+            def deny_source(scope,action,target=None,**kwargs):
+                if action=='runs.get' and target==self.run_id:
+                    raise AccessError('Source Run access denied.','forbidden',403)
+                return original(scope,action,target,**kwargs)
+            with patch.object(self.dataset.access,'require',side_effect=deny_source), \
+                    patch.object(self.dataset.studies,'candidate') as candidate_read, self.assertRaises(AccessError):
+                self.dataset.studies.candidates(self.run_id)
+            candidate_read.assert_not_called()
 
 
 if __name__ == '__main__':

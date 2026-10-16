@@ -746,6 +746,9 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.runs.list())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'candidates':
+                        agent_api.require_selection(self._contract_selection,'studies.candidates')
+                        return self.reply(dataset.studies.candidates(parts[1],**self._model_page_query()))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'progress':
                         return self.reply(dataset.runs.external_progress(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'predictions':
