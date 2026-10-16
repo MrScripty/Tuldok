@@ -197,7 +197,8 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
             {'graph_id':graph['id'],'revision':graph['revision']},version=1)
         self.assertEqual((status,result['code']),(403,'forbidden'))
         status, result = self.http('runs.submit_external',{'request_key':uuid.uuid4().hex,
-            'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':'a'*64},version=1)
+            'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':'a'*64,
+            'approval_id':uuid.uuid4().hex},version=1)
         self.assertEqual((status,result['code']),(403,'forbidden'))
         self.assertEqual(sorted(self.dataset.runs.path.glob('.external-*')),stage_before)
         status, result = self.http('graphs.preflight_external',
@@ -264,7 +265,7 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
             for name,arguments in (
                     ('graphs.validate',{'graph_id':graph['id'],'revision':2}),
                     ('runs.submit_external',{'request_key':uuid.uuid4().hex,'graph_id':graph['id'],
-                        'graph_revision':2,'expected_digest':'a'*64}),
+                        'graph_revision':2,'expected_digest':'a'*64,'approval_id':uuid.uuid4().hex}),
                     ('graphs.preflight_external',{'graph_id':graph['id'],'revision':2}),
                     ('studies.prepare_trial',{'study_id':study['id'],'request_key':uuid.uuid4().hex,
                         'revision':study['revision'],'graph_id':graph['id'],'graph_revision':2,'replicate':0,
