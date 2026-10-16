@@ -79,6 +79,21 @@ print('held sibling dependency verified')
                 self.assertEqual(driver.main(args),'read-only')
                 resume.assert_called_once_with(args,'b'*40)
 
+    def test_verification_resume_accepts_exact_public_read_only_post_projections(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);operator=driver.VerificationOperator(self.arguments(root,root/'package'))
+            for operation,arguments in (
+                    ('models.material',{'ref':{'kind':'model','catalog_id':'a'*32,'id':'b'*32,'revision':1,'sha256':'b'*64}}),
+                    ('recipes.material',{'ref':{'kind':'recipe_material','catalog_id':'a'*32,'id':'c'*64,'sha256':'c'*64}})):
+                method,path,body=driver.agent_api.project_request(operation,arguments,1)
+                self.assertEqual(method,'POST')
+                with patch.object(driver.Operator,'raw',return_value={'status':200,'result':{}}) as transport:
+                    self.assertEqual(operator.raw(method,path,body),{'status':200,'result':{}})
+                    transport.assert_called_once_with(method,path,body,None,False)
+                for changed in (path+'/',path+'/publish'):
+                    with self.assertRaisesRegex(RuntimeError,'mutation route'):
+                        operator.raw('POST',changed,body)
+
     def arguments(self, root, package, output='output'):
         cli = root/'cli.py'
         cli.write_bytes(b'# representative trusted CLI; never executed\n')
