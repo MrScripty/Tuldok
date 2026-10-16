@@ -41,6 +41,7 @@ from runtime_snapshots import RuntimeSnapshots
 
 RUNTIME_SHA = '50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d'
 SHA = re.compile('[a-f0-9]{64}')
+ORACLE_FILES = ('cold_oracle.py', 'fixture.json', 'oracle-freeze.json')
 
 
 def require(value, reason):
@@ -166,12 +167,15 @@ class Operator:
     def retain_review(self, inventory_raw, blobs):
         """Keep the initial operator review outside the mutable author package."""
         self.review = {'inventory_sha256': sha(inventory_raw),
-            'files': {name: sha(raw) for name, raw in blobs.items()}}
+            'files': agent_api.decode(inventory_raw)['files']}
+        require(all(name in self.review['files'] and sha(raw) == self.review['files'][name]
+                    for name, raw in blobs.items()), 'Held review bytes differ from initial inventory.')
         oracle_root = self.output / 'reviewed-oracle'
         oracle_root.mkdir(mode=0o700)
         for name, raw in [('reviewed-inventory.private.json', inventory_raw),
                 ('reviewed-oracle/cold_oracle.py', blobs['cold_oracle.py']),
-                ('reviewed-oracle/fixture.json', blobs['fixture.json'])]:
+                ('reviewed-oracle/fixture.json', blobs['fixture.json']),
+                ('reviewed-oracle/oracle-freeze.json', blobs['oracle-freeze.json'])]:
             self.write(name, raw, private=True).chmod(0o400)
         self.write('review-freeze.json', self.review, private=True)
 
@@ -179,10 +183,10 @@ class Operator:
         require(self.review is not None, 'Initial operator review is unavailable.')
         inventory = regular(self.output / 'reviewed-inventory.private.json')
         require(sha(inventory) == self.review['inventory_sha256'], 'Retained review inventory changed.')
-        paths = [self.output / 'reviewed-oracle' / name for name in ('cold_oracle.py', 'fixture.json')]
+        paths = [self.output / 'reviewed-oracle' / name for name in ORACLE_FILES]
         for path in paths:
             require(sha(regular(path)) == self.review['files'][path.name], 'Retained frozen oracle input changed.')
-        return paths
+        return paths[:2]
 
     def start_http(self):
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
@@ -322,7 +326,7 @@ class Operator:
             with (directory/name).open('xb') as handle:
                 handle.write(result['result'])
 
-    def verify(self, prepared, sdk):
+    def verify(self, prepared, sdk, *, sdk_artifacts=None, read_only=False):
         selected = prepared['selection']; expected = selected['expected']
         require(sdk['format'] == 'extension_sdk_conformance_v1' and sdk['state'] == 'passed' and
                 sdk['numerical'] == 'not_evaluated' and sdk['operations'].count('studies.admit') == 1 and
@@ -340,7 +344,7 @@ class Operator:
         require(projection['state'] == 'verified', 'Actual selected field evidence is not verified.')
         self.download(run, self.output/'artifacts')
         for item in run['artifacts']:
-            raw = regular(self.output/'sdk-artifacts'/item['name'])
+            raw = regular((sdk_artifacts or self.output/'sdk-artifacts')/item['name'])
             require(len(raw) == item['bytes'] and sha(raw) == item['sha256'], 'SDK whole download differs.')
         with self.dataset.access.bind(self.owner['token']), self.dataset.lock:
             context = self.dataset.runs._load(run['id'])['spec']['model_evidence_context']
@@ -351,8 +355,10 @@ class Operator:
             str(oracle_path), '--fixture', str(fixture_path),
             '--artifacts', str(self.output/'artifacts'), '--expected-context-sha256', context['sha256'],
             '--report', str(self.output/'oracle.json')], capture_output=True, timeout=60)
+        self.write('oracle-stdout.txt', oracle.stdout, private=True)
+        self.write('oracle-stderr.txt', oracle.stderr, private=True)
         require(oracle.returncode == 0, 'Frozen independent oracle refused; no numerical acceptance.')
-        state = self.http('studies.reconcile', {'study_id': selected['study_id']})
+        state = self.http('studies.get' if read_only else 'studies.reconcile', {'study_id': selected['study_id']})
         require(state['charged']['attempt_slots'] == 1 and len(state['reservations']) == 1 and
                 state['reservations'][0]['run_id'] == run['id'] and state['reservations'][0]['state'] == 'settled',
                 'This Study must contain exactly one actual settled source charge.')
@@ -375,9 +381,11 @@ class Operator:
 
 def parser():
     result = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    for name in ('package', 'reviewed-inventory', 'catalog', 'runtime-config', 'output', 'oracle-python', 'cli'):
+    for name in ('package', 'catalog', 'output', 'oracle-python'):
         result.add_argument('--' + name, type=Path, required=True)
-    result.add_argument('--cli-sha256', required=True)
+    for name in ('reviewed-inventory', 'runtime-config', 'cli'):
+        result.add_argument('--' + name, type=Path)
+    result.add_argument('--cli-sha256')
     result.add_argument('--expected-host-commit', required=True, help='Exact reviewed clean host source commit')
     result.add_argument('--roots', type=Path)
     result.add_argument('--root-alias', default='author-b')
@@ -390,6 +398,9 @@ def parser():
     mode.add_argument('--prepare-only', action='store_true', help='Default: stop without any SDK admission')
     mode.add_argument('--serve', action='store_true', help='Wait for separate author sdk-result.json; never invoke SDK')
     mode.add_argument('--run-sdk', action='store_true', help='Explicitly invoke the frozen SDK/CLI and admit the selected source Trial')
+    mode.add_argument('--resume-verification', type=Path, help='Verify one already completed SDK-selected Run; never prepare or admit')
+    result.add_argument('--expected-completed-run-id')
+    result.add_argument('--original-prepared-sha256')
     return result
 
 
@@ -413,6 +424,10 @@ def frozen_host(args):
 
 def main(args):
     host = frozen_host(args)
+    if args.resume_verification is not None:
+        return resume_verification(args, host)
+    require(all(getattr(args, key) is not None for key in ('reviewed_inventory', 'runtime_config', 'cli', 'cli_sha256')),
+            'Preparation requires reviewed inventory, runtime configuration and exact trusted CLI.')
     require(SHA.fullmatch(args.cli_sha256) and sha(regular(args.cli)) == args.cli_sha256,
             'Trusted public CLI source differs.')
     require(1 <= args.wait_seconds <= 3600 and 1 <= args.wall_seconds <= 86400 and
@@ -464,6 +479,96 @@ def main(args):
         if passed and operator.agent is not None:
             with operator.dataset.access.bind(operator.owner['token']):
                 operator.dataset.access.revoke(operator.agent['identity']['credential_id'])
+        operator.stop()
+
+
+class VerificationOperator(Operator):
+    """A resume has no operation capable of creating or admitting domain work."""
+    def prepare(self, *_args):
+        raise RuntimeError('Verification resume cannot prepare work.')
+
+    def http(self, operation, arguments, version=1):
+        require(operation in ('runs.get', 'runs.model_evidence', 'studies.get', 'models.material', 'recipes.material'),
+                'Verification resume permits read operations only.')
+        return super().http(operation, arguments, version)
+
+    def raw(self, method, path, body=None, headers=None, binary=False):
+        require(method == 'GET' or (method == 'POST' and re.fullmatch('/api/workspace/runs/[a-f0-9]{32}/model-evidence', path)),
+                'Verification resume cannot call a mutation route.')
+        return super().raw(method, path, body, headers, binary)
+
+    def counts(self):
+        with self.dataset.access.bind(self.owner['token']), self.dataset.lock:
+            return {table: self.dataset.db.execute('SELECT count(*) FROM ' + table).fetchone()[0] for table in
+                ('workspace_runs', 'access_execution_grants', 'access_execution_consumptions',
+                 'model_attempt_reservations', 'model_studies', 'model_trials')}
+
+
+def resume_review(operator, original, prepared, expected_prepared_sha):
+    """Hold original snapshots plus the one originally reviewed missing JSON.
+
+    Existing oracle/fixture bytes must come from the original held copy. Only
+    the previously omitted oracle-freeze.json may be read from the author root,
+    and only under the exact initial inventory/prepare/freeze identity.
+    """
+    prepared_raw = regular(original/'prepared.json')
+    require(sha(prepared_raw) == expected_prepared_sha and agent_api.decode(prepared_raw) == prepared,
+            'Original prepared receipt differs.')
+    inventory_raw = regular(original/'reviewed-inventory.private.json')
+    inventory = agent_api.decode(inventory_raw); freeze = document(original/'review-freeze.json')
+    require(sha(inventory_raw) == prepared['reviewed_inventory_sha256'] == freeze['inventory_sha256']
+            and inventory['format'] == 'extension_author_reviewed_inventory_v1'
+            and inventory['files'] == freeze['files'] == prepared['project_files'], 'Original initial review identities differ.')
+    held = {}
+    for name in ORACLE_FILES:
+        path = original/'reviewed-oracle'/name
+        try:
+            raw = regular(path)
+        except FileNotFoundError:
+            require(name == 'oracle-freeze.json', 'Original held oracle/fixture is missing.')
+            raw = regular(operator.args.package.resolve()/name)
+        require(name in freeze['files'] and sha(raw) == freeze['files'][name], 'Original reviewed oracle dependency differs.')
+        held[name] = raw
+    frozen = agent_api.decode(held['oracle-freeze.json'])
+    require(sha(held['cold_oracle.py']) == frozen['oracle_sha256'] and sha(held['fixture.json']) == frozen['fixture_sha256'],
+            'Original frozen dependency relationship differs.')
+    operator.retain_review(inventory_raw, held)
+    # Keep the full initial file inventory, not only the three held files.
+    operator.review = freeze
+    operator.write('original-prepared.json', prepared_raw, private=True)
+    preserved = {}
+    for name in ('failure.json', 'oracle-diagnostic-stderr.txt', 'oracle-diagnostic-stdout.txt'):
+        path = original/name
+        if path.exists():
+            raw = regular(path) if path.stat().st_size else b''
+            operator.write('original-' + name, raw, private=True); preserved[name] = sha(raw)
+    return {'original_prepared_sha256': sha(prepared_raw), 'initial_review_sha256': sha(inventory_raw),
+            'oracle_dependencies': {name: sha(raw) for name, raw in held.items()}, 'preserved_original_evidence': preserved}
+
+
+def resume_verification(args, host):
+    require(type(args.expected_completed_run_id) is str and re.fullmatch('[a-f0-9]{32}', args.expected_completed_run_id)
+            and type(args.original_prepared_sha256) is str and SHA.fullmatch(args.original_prepared_sha256),
+            'Resume requires the exact already completed Run ID and original prepared receipt SHA.')
+    original = args.resume_verification.resolve()
+    prepared = document(original/'prepared.json'); sdk = document(original/'sdk-result.json')
+    require(sdk.get('run_id') == args.expected_completed_run_id, 'SDK result differs from the selected completed Run.')
+    operator = VerificationOperator(args); operator.output.mkdir(parents=True, mode=0o700, exist_ok=False)
+    try:
+        recovery = resume_review(operator, original, prepared, args.original_prepared_sha256)
+        operator.start(); baseline = operator.counts()
+        receipt = operator.verify(prepared, sdk, sdk_artifacts=original/'sdk-artifacts', read_only=True)
+        after = operator.counts(); require(after == baseline, 'Verification-only resume changed domain counts.')
+        operator.write('receipt.json', dict(receipt, host_commit=host, original_host_commit=prepared['host_commit'],
+            mode='completed_run_verification_only', original_output=str(original), recovery=recovery,
+            domain_counts_before=baseline, domain_counts_after=after))
+        print(json.dumps({'state': 'passed', 'run_id': args.expected_completed_run_id,
+                          'receipt': str(operator.output/'receipt.json')}), flush=True)
+    except BaseException as error:
+        operator.write('failure.json', {'state': 'verification_incomplete_no_admission', 'error_type': type(error).__name__,
+            'run_id': args.expected_completed_run_id, 'original_output': str(original)})
+        raise
+    finally:
         operator.stop()
 
 
