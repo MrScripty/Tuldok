@@ -1,5 +1,10 @@
 # Bounded audio classification v1
 
+The separately selected `audio_classification_model_v2` recipe uses the
+[one-fit evidence contract](one-fit-evidence.md), typed model publication and
+finite owner-authorized Study/Run execution. The version-1 contract below
+retains its original inventory/history.
+
 The real local CPU recipe classifies one reviewed interval per recording.
 Releases, Pipeline and Runs retain their existing custody and lifecycle owners;
 `audio_training.py` owns the checked input, features, model and evaluator.

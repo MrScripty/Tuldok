@@ -23,8 +23,7 @@ class ExportRunChecks:
         summary = pipelines.inspect_release(release_id)
         self.assertEqual(summary['recipe'], self.kind + '_classification')
         allowed_recipes = [self.kind + '_classification', self.kind + '_validate_export']
-        if self.kind == 'image':
-            allowed_recipes.append('image_classification_model_v2')
+        allowed_recipes.append(self.kind + '_classification_model_v2')
         self.assertEqual(summary['allowed_recipes'], allowed_recipes)
         original_digest = execution_digest(self.graph)
         graph = pipelines.create(dict(name='Export integrity', release_id=release_id, recipe=self.kind + '_validate_export'))

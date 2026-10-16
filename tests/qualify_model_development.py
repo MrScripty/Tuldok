@@ -228,8 +228,13 @@ def qualify(args):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--task',choices=['image'],required=True);parser.add_argument('--fixture',type=Path,required=True)
+    parser.add_argument('--task',choices=['image','text','audio'],required=True);parser.add_argument('--fixture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
-    print(json.dumps(qualify(args),sort_keys=True))
+    if args.task == 'image':
+        result = qualify(args)
+    else:
+        from qualify_one_fit import qualify as qualify_one_fit
+        result = qualify_one_fit(args)
+    print(json.dumps(result,sort_keys=True))
 
 if __name__=='__main__':main()

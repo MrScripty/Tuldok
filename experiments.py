@@ -10,7 +10,7 @@ import uuid
 from access import authorized
 from metadata import CommitOutcomeUnknown
 from model_definitions import checked_json, natural, reference, retained_json, text, SHA
-from pipeline import closed, digest, identifier
+from pipeline import BUILTIN_TRAINERS, closed, digest, identifier, model_aware_graph
 from runs import ACTIVE, REQUEST_KEY
 from workbench import WorkbenchError, encode
 
@@ -138,7 +138,7 @@ class Experiments:
             receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
             if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
-        prepare=(self.dataset.pipelines.prepare_builtin_material if self.dataset.pipelines.get(body['graph_id']).get('recipe')=='image_classification_model_v2'
+        prepare=(self.dataset.pipelines.prepare_builtin_material if model_aware_graph(self.dataset.pipelines.get(body['graph_id']))
                  else self.dataset.pipelines.prepare_external_material)
         prepared=prepare(body['graph_id'],body['graph_revision'],body['model'],
                                             reconcile_capture=body.get('reconcile_capture',False))
@@ -339,7 +339,7 @@ class Experiments:
             if trial['study_id']!=study_id or trial['id'] not in study['trial_ids']:
                 raise WorkbenchError('Trial is not a member of this study.')
         material=self.dataset.pipelines.recipe_material(trial['material'],verify=True)
-        builtin=material['material']['trainer']['id']=='tinycnn_cpu_v2'
+        builtin=material['material']['trainer']['id'] in BUILTIN_TRAINERS
         if builtin:self.access.require('execute','studies.admit_builtin',study_id,owner_only=True)
         envelope=material['material']['resource_envelope']
         run_id=uuid.uuid4().hex;staging=self.dataset.runs.path/('.external-'+run_id)

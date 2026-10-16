@@ -476,6 +476,19 @@ for _node_schema in _model_graph['properties']['nodes']['items']['oneOf']:
 _model_save=copy.deepcopy(_CONTRACTS['graphs.save'][1])
 _model_save['inputSchema']['properties']['document']['oneOf'].append(_model_graph)
 _CONTRACTS['graphs.save'][2]=_model_save
+# One-fit recipes are independently versioned from the already selected image
+# contract. Retain exact v1/v2 pins for clients deployed before this slice.
+_one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
+_one_fit_create['inputSchema']['properties']['recipe']['enum'].extend(
+    ['text_classification_model_v2','audio_classification_model_v2'])
+_CONTRACTS['graphs.create'][3]=_one_fit_create
+_one_fit_save=copy.deepcopy(_CONTRACTS['graphs.save'][2])
+for _recipe in ('text_classification','audio_classification'):
+    _one_fit_graph=next(copy.deepcopy(item) for item in graph_schema()['oneOf']
+                        if item['properties']['recipe']==const(_recipe))
+    _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
+    _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
+_CONTRACTS['graphs.save'][3]=_one_fit_save
 _exact_comparison=copy.deepcopy(_CONTRACTS['runs.compare_model_evidence'][1])
 _exact_comparison['inputSchema']=obj({'run_id':ID,'other_run_id':ID,
     **{key:SHA for key in ('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256',
