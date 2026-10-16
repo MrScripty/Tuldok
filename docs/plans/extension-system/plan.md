@@ -2,9 +2,9 @@
 
 **Plan status:** `Verifying`
 
-**Current phase:** E2–E4 — actual A/B qualification and final retention integration
+**Current phase:** E2–E4 — close negotiated agent authoring and external package UI
 
-**Next slice:** Finish the completed classifier's read-only cold verification and final restored native inspection; complete composed CI, independent acceptance review and serial integration.
+**Next slice:** Implement and qualify agent snapshot/bound-source authoring and the external candidate/package/fresh-verifier view; complete composed CI and serial integration.
 
 **Acceptance status:** `partial`
 
@@ -20,13 +20,17 @@ Main canonical A packaging/fresh inference and original A/B native inspection
 have passed. The shared stopped backup/fresh restore and official restored
 HTTP/CLI/MCP checks also passed; their core receipt explicitly retains its
 disable-pending state. Later restored-only B disable/removal passed in its own
-immutable receipt. Full X3/X5 remain pending classifier cold verification and
-final native execution; no design or fixture result closes those gates.
+immutable receipt. Classifier cold recovery, 44 restored native captures and
+the final original/restored bookend have also passed. The
+[shared retention matrix](reports/e4-ab-final-qualification.md) retains that exact
+scope. Full acceptance remains open for negotiated agent source authoring and
+the external A package/fresh-verification interface; those are implementation
+gaps, not completed gates.
 
 The separate 0b canonical A package/fresh-inference and
 [A-only stopped retention](reports/e4-canonical-a-retention-qualification.md)
 witnesses have passed. Their exact source/runtime/host provenance remains
-distinct from the lead's 50502 common A/B catalog and pending shared matrix.
+distinct from the lead's 50502 common A/B catalog and shared matrix.
 
 ## Objective
 

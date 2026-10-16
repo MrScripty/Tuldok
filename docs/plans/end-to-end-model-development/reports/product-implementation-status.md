@@ -96,11 +96,24 @@ reviews checked the core and interface receipts. Restored-only B disable/remove
 also passed with two new snapshots, unchanged original Project rows and retained
 A/B/package history. An unrelated classifier completed and settled one actual
 CPU Run in the restored copy. Its driver then incorrectly requested capture of
-the self-excluded outer artifact manifest; the failure is preserved and a
-read-only verification recovery for that same Run is pending. No training retry
-is authorized by that verification failure. Classifier cold verification and
-final restored native inspection remain execution gates; combined E4 acceptance
-is not yet passed.
+the self-excluded outer artifact manifest; that failure is preserved. Read-only
+recovery passed on the same completed Run: 17 whole/stream checks, 16 declared
+payload captures and two locked refusals, without another admission or training.
+[Final owner-native continuity](../../extension-system/reports/native-restored-author-ab.md)
+passed both strict journeys with 44 captures and unchanged domain/admission
+counts. The post-native raw bookend retains all original source rows/files/root
+inodes and all 39 restored domain tables. The independently reviewed
+[shared retention matrix](../../extension-system/reports/e4-ab-final-qualification.md)
+passes its named scope and explicitly keeps overall E4/plan acceptance open.
+
+Two concrete workflow gaps remain under implementation. Ordinary authorized
+agents cannot yet discover/open v2 snapshots or configure bound source because
+the snapshot/read wrappers remain owner-only. The external field Run interface
+also lacks the canonical A candidate/package/fresh-verification panel, despite
+the existing verified package and verifier. New negotiated agent operations and
+a current-authority retained-candidate UI are assigned on disjoint branches.
+Their later application changes do not retrofit the frozen A/B numerical or
+149-file native proofs.
 
 The P1–P6 PRs are merged. Final composed extension CI and independent acceptance
 review remain merge gates. Superseded CI is canceled only after its replacement is published.
