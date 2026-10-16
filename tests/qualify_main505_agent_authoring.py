@@ -356,7 +356,7 @@ def main(args):
         save('run.json',run)
         context_raw=(output/'artifacts/execution-context.json').read_bytes();context_sha=verify_context_custody(run,context_raw)
         context=evidence.decode(context_raw)
-        require(context['static']['model_specification']['configuration']==CONFIGURATION,'Actual context lost nondefault agent configuration.')
+        verify_configuration(context)
         oracle=subprocess.run([str(args.oracle_python),'-I','-S',str(project/'cold_oracle.py'),'--fixture',str(project/'authored-source.json'),
             '--release',str(project/'canonical-release.zip'),'--derivation',str(project/'canonical-derivation.json'),
             '--provenance',str(project/'canonical-source.json'),'--artifacts',str(output/'artifacts'),
@@ -456,6 +456,11 @@ def main(args):
                 cold_guards.close()
                 for path in private_paths:
                     if path.exists():path.unlink()
+
+
+def verify_configuration(context):
+    require(context['static']['policy']['model_specification']['configuration']==CONFIGURATION,
+            'Actual context lost nondefault agent configuration.')
 
 
 def sdk_admission_state(result):

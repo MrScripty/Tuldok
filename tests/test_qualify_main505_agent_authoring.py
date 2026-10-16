@@ -90,6 +90,14 @@ class Main505AgentAuthoringGuards(unittest.TestCase):
             driver.main(args)
         self.assertFalse(workspace.exists())
 
+    def test_configuration_is_owned_by_the_retained_static_policy(self):
+        context={'static':{'policy':{'model_specification':{'configuration':dict(driver.CONFIGURATION)}},
+                           'model_specification':{'configuration':{'initial_scale':0,'initial_offset':0}}}}
+        driver.verify_configuration(context)
+        context['static']['policy']['model_specification']['configuration']['initial_scale']=0
+        with self.assertRaisesRegex(RuntimeError,'nondefault'):
+            driver.verify_configuration(context)
+
     def test_sdk_known_refusal_and_observed_run_are_preserved_without_retry(self):
         self.assertEqual(driver.sdk_admission_state(dict(state='passed',run_id='a'*32)),'completed')
         self.assertEqual(driver.sdk_admission_state(dict(state='failed',run_id='a'*32)),'run_observed')
