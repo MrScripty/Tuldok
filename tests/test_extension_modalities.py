@@ -199,6 +199,8 @@ class ExtensionModalityTests(unittest.TestCase):
 
     def test_bad_or_absent_field_provider_does_not_suppress_six_unrelated_descriptors(self):
         refs = [dict(self.reference(entry),id=entry['modality']) for entry in CORPUS['modalities']]
+        baseline = contract.catalog(refs, self.read)['packages']
+        sdk_baseline = {entry['modality']:self.both(entry) for entry in CORPUS['modalities']}
         neutral = json.loads((self.root/'image/extension.json').read_text())
         neutral['package']['id'] = 'example.unrelated-field'
         neutral['contributions'] = []
@@ -216,6 +218,7 @@ class ExtensionModalityTests(unittest.TestCase):
                 field_ref=dict(id='field',label='Field sibling',path='field-extension.json',sha256=contract.digest(content))
                 if mode=='missing':path.unlink()
                 result=contract.catalog(refs+([] if mode=='removed' else [field_ref]),self.read)
+                self.assertEqual(result['packages'][:6], baseline)
                 self.assertEqual([p['state'] for p in result['packages'][:6]],['valid']*6)
                 self.assertTrue(all(all(c['state']=='valid' for c in p['contributions']) for p in result['packages'][:6]))
                 if mode!='removed':
@@ -223,7 +226,7 @@ class ExtensionModalityTests(unittest.TestCase):
                     self.assertEqual(field['state'],{'missing':'unavailable','malformed':'invalid','incompatible':'valid'}[mode])
                     if mode=='incompatible':self.assertEqual(field['host']['state'],'unsupported')
                 for entry in CORPUS['modalities']:
-                    self.assertEqual(self.both(entry)['state'],'valid')
+                    self.assertEqual(self.both(entry), sdk_baseline[entry['modality']])
 
 
 if __name__ == '__main__':
