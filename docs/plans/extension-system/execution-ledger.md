@@ -1,5 +1,39 @@
 # Extension-system execution ledger
 
+## 2026-10-16 — Canonical A evidence and remaining A/B gates
+
+- PR76 at `6da68df` retains the actual 0b canonical A source Run
+  `610afd2bb09b4c1588b23a628d5756d3`, all 32 hot/cold whole artifacts, independent
+  source/numerical review, native 1440/390 light/dark receipt, 12 HTTP/agent plane
+  pairs and actual retained corruption/legacy/Task refusals. Original bytes were
+  restored and checked after every fault.
+- The same catalog's normal package Run `6122dc25241b42cf9b72213390f72524` and
+  separately charged verifier Run `ea998c767836451eb06c62d5fac270cf` completed and
+  drained. Whole package SHA `78e806a13cc7aad3463cef794e5c47c5e85333c0244f235367f398c3c4f8f9a2`;
+  all 64 fresh values equal the retained source prediction exactly. An additional
+  reviewed filesystem-masked consumer passed with only the exact approved
+  runtime visible under `/workspace`; this is source-absence evidence, not a
+  security sandbox claim.
+- All three grants were consumed and all three reservations settled exactly:
+  three slots / 771
+  seconds / 55,405,809 retained bytes / 102,988,554 staging bytes within unchanged
+  original finite limits. No amendment, uncertain admission retry or substitution
+  of the integration lead's separate 50502 runtime occurred.
+- Separate PR81's frozen `0572ad9` A-only retention driver adds only closed
+  canonical-profile stage selection. Production stopped backup, raw restore,
+  root-absent warm/current-revocation/cold and final immutable/source comparisons
+  passed. [Actual receipt and independent review](reports/e4-canonical-a-retention-qualification.md)
+  preserve the exact 0b provenance and review limits; no execution was performed.
+- PR80 remains frozen at `311431e`: independent B analytic consumer and 23
+  validator-only synthetic cases. The lead published actual B source/cold and
+  frozen-consumer numerical evidence on its separate 50502 catalog; authorship,
+  actual execution and retained-byte review provenance remain distinct. Native
+  A/B stages, classifier and full compatibility matrix remain lead-owned gates.
+- Current lead `01a14159-4cbb-70d0-92cf-981514f3d0e4` owns every merge and shared
+  integration. Exact-head CI remains pending. Preserve all dependent branches,
+  source catalogs and failure evidence. Older entries below are historical
+  evidence and do not override this current state.
+
 ## 2026-10-15 — Lead integration with P1
 
 - Integration lead stacked E1 head eb681de with P1

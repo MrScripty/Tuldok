@@ -47,6 +47,20 @@ def read_receipt(path):
     return value
 
 
+def expected_a_stage(receipt):
+    # Keep the historical authored profile exact; canonical A is a separate
+    # accepted P5 literal profile, never an arbitrary stage override.
+    from candidate_packages import CANONICAL_A_TASK_FORMAT, SCALAR_A_TASK_FORMAT
+    profile=receipt.get('package_task_format')
+    require(profile in (None,SCALAR_A_TASK_FORMAT,CANONICAL_A_TASK_FORMAT),
+        'Only the exact authored or canonical A package profile is qualified.')
+    stage='train' if profile==CANONICAL_A_TASK_FORMAT else 'post_train_mapping'
+    outputs=receipt['fresh_verification']['outputs']
+    require(len(outputs)==1 and outputs[0]['field_id']=='raw' and outputs[0]['stage']==stage,
+        'Fresh A receipt differs from its exact package profile stage.')
+    return stage
+
+
 def selected_reads(dataset, receipt, *, expected=None):
     """Current bound inspector, no project roots, no executable reconstruction."""
     from runtime_snapshots import RuntimeSnapshots
@@ -66,7 +80,7 @@ def selected_reads(dataset, receipt, *, expected=None):
             'P5 checkpoint is absent from actual A evidence.')
     query = dict(checkpoint_sha256=checkpoint, member_ordinal=0, field_id='raw', axis='z', index=2)
     field = dataset.runs.model_evidence(identities[0], query, contract_version=2)
-    require(field['field']['stage'] == 'post_train_mapping', 'Raw field stage differs.')
+    require(field['field']['stage'] == expected_a_stage(receipt), 'Raw field stage differs.')
     values = receipt['fresh_verification']['outputs'][0]['values_c_order']
     require(field['field']['prediction'] == [values[start:start + 4] for start in range(32, 48, 4)],
             'Retained selected slice differs from P5 frozen reconstruction receipt.')
