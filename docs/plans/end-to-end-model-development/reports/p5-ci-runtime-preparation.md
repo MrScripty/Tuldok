@@ -70,3 +70,24 @@ GitHub Actions result. The affected actual PostgreSQL canonical Release suite
 passed all9 tests in11.697 seconds under the existing qualified NumPy2.5.4
 environment. Independent workflow review is clear. The repaired hosted job
 must still complete on its new source head.
+
+## Optional MCP assertion in its provisioned verification suite
+
+E2 head `fdad9482e6d49795c1452f31521f10add5499c22` reached generic
+discovery in hosted lifecycle run `38832100036`, job `116752949255`.
+Its 1,395 tests reported one error and 68 skips: the bound-recipe MCP assertion
+imported `mcp.types` in the intentionally MCP-free base interpreter. The earlier
+provisioned agent/MCP steps had passed. This is a failed historical job.
+
+The exact assertion is moved from `test_extension_bound_api.py` into the
+existing `SDKProcessTests` class in `test_mcp_stdio.py`. That suite already runs
+in the explicitly provisioned, locked optional-agent environment. Its existing
+absence rule remains; no new skip rule, dependency, assertion change, workflow
+change or timeout is introduced. Both plain API tests still run in base discovery.
+
+A fresh temporary environment installed only `requirements.txt`, confirmed MCP
+was absent, and passed both plain API tests with zero skips in 2.183 seconds.
+The moved MCP case passed with zero skips in the provisioned environment in
+2.551 seconds. An earlier `-S` probe also removed the required JSON Schema
+dependency and was unsuitable as the base-environment witness; it is not counted
+as qualification. Repaired current-head hosted CI remains required.
