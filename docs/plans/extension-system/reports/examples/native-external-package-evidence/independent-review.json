@@ -1,0 +1,406 @@
+{
+  "B_absence_is_actual_authorized_index": true,
+  "access_admissions": 5,
+  "backend_new_route_direct_revoked_selected_http": "missing direct witness at creation; narrow isolated test requested separately",
+  "bindings": {
+    "capture-manifest.json": "850de68752a6385e4de80c8187634b893570d2ebe055094bbed8b1cdbe50cb0b",
+    "domain-after.json": "fe38dd65d0f2a02675f34d50b72d97d946dc57c2e526d627d79c69ae1475b150",
+    "processes-after.json": "883de5af3669e30819b7fc6d68779de2f8e3ffa023ef9faca829f59d39a5ff68",
+    "source-manifest.json": "568a8d42ff336d415751045929c97265dee499aea69e4758d4a1399f2ebd51f4"
+  },
+  "counts": {
+    "access_execution_consumptions": 4,
+    "access_execution_grants": 5,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_graphs": 5,
+    "workspace_recipe_materials": 7,
+    "workspace_runs": 5
+  },
+  "decoded_whole_hash_images": 56,
+  "domain_tables_equal_prior_recovery": 39,
+  "format": "independent_external_package_ui_file_review_v1",
+  "harness_sha256": "37cf2848e046f3a16a7495258d8a83763dc11bbebda9bcf3e545ffcd942976a0",
+  "historical_native_proof_not_retrofitted": true,
+  "images": [
+    {
+      "case": "a",
+      "file": "external-package-verified-1440.jpg",
+      "package_view": true,
+      "sha256": "d2fcfadc08c74504f0274e67168a5b86ce877c4681d7b3dbb56c042107e5f93e"
+    },
+    {
+      "case": "a",
+      "file": "external-package-summary-1440.jpg",
+      "package_view": true,
+      "sha256": "4a97c0ae5e2f0a366c5ad88f07eea3da5f6bdb60c55c469a7c8a97602ae7d38b"
+    },
+    {
+      "case": "a",
+      "file": "external-package-verified-390.jpg",
+      "package_view": true,
+      "sha256": "dda15679f3a4b84c6c16a70f116c2ded16cbaa128df91e3fed7d780ad0917788"
+    },
+    {
+      "case": "a",
+      "file": "external-package-summary-390.jpg",
+      "package_view": true,
+      "sha256": "5dfe06d873a4cec929e0913b5adc01baebf7471ae00cefaf78ca59817e2a9ab5"
+    },
+    {
+      "case": "a",
+      "file": "dark-external-package-verified-1440.jpg",
+      "package_view": true,
+      "sha256": "d807cf04f0b8ab3409f4997c1d74659b28633852c21f8966397f031be47727f1"
+    },
+    {
+      "case": "a",
+      "file": "dark-external-package-summary-1440.jpg",
+      "package_view": true,
+      "sha256": "030476c3d7d4d77ea00c3cc2f2d83045f45beaee4ecb1f8a8795a80436f1c93d"
+    },
+    {
+      "case": "a",
+      "file": "dark-external-package-verified-390.jpg",
+      "package_view": true,
+      "sha256": "746c0ee0387c59ecdccb29d8f5c0c141e8ad2667ccd3d49776162342663a2f62"
+    },
+    {
+      "case": "a",
+      "file": "dark-external-package-summary-390.jpg",
+      "package_view": true,
+      "sha256": "de325766283b1d35396c4b8fd24d3b58f1e2be34380413350e77b4991df760e1"
+    },
+    {
+      "case": "a",
+      "file": "linked-field-1440.jpg",
+      "package_view": false,
+      "sha256": "8bd6c9d6c4e17ff89698f63f767e70544e1e787dc1ccbd263f6d3b9e1bbc0a25"
+    },
+    {
+      "case": "a",
+      "file": "linked-field-390.jpg",
+      "package_view": false,
+      "sha256": "d282bc02d8a0d9df6eec61612c57e6048f67a32b0e3147be41cd9d21cabbe9cd"
+    },
+    {
+      "case": "a",
+      "file": "dark-linked-field-1440.jpg",
+      "package_view": false,
+      "sha256": "7dd02d26ba699908a1acc373a9264eeeafaeca29ed533a9cf0f86a4b3e71b597"
+    },
+    {
+      "case": "a",
+      "file": "dark-linked-field-390.jpg",
+      "package_view": false,
+      "sha256": "a96d33d5501e20c49de8baf104718970bf4a75d5059e626a7527410b0e234790"
+    },
+    {
+      "case": "a",
+      "file": "declared-field-0-1440.jpg",
+      "package_view": false,
+      "sha256": "8418aea1de0b1347753541d3c521a54732a5bf6cf170be2ecdf4a49d5516df56"
+    },
+    {
+      "case": "a",
+      "file": "declared-field-0-390.jpg",
+      "package_view": false,
+      "sha256": "35ebf53e6586ded718f7ccf165632664827b5f6c84755aa7c6d8bd68ea4b9dbe"
+    },
+    {
+      "case": "a",
+      "file": "dark-declared-field-0-1440.jpg",
+      "package_view": false,
+      "sha256": "7fa7c4ac609430d793d482b237023f5782f4b14f321410f6dd06666358553c02"
+    },
+    {
+      "case": "a",
+      "file": "dark-declared-field-0-390.jpg",
+      "package_view": false,
+      "sha256": "87b911425217eaa528a8133626b6c6c2a90ffc5c0968bf58761c5334b0b9207c"
+    },
+    {
+      "case": "a",
+      "file": "restored-disabled-refusal-1440.jpg",
+      "package_view": false,
+      "sha256": "7fe6bb0dffdb612b026595ece4a93fc72c05cab5c8437c4dcf27bb486ded9aac"
+    },
+    {
+      "case": "a",
+      "file": "restored-disabled-refusal-390.jpg",
+      "package_view": false,
+      "sha256": "49387b0aadb84c7a2659ae42089e9b60c2ae8bce5456b163a8f864c2bd45b102"
+    },
+    {
+      "case": "a",
+      "file": "restored-removed-refusal-1440.jpg",
+      "package_view": false,
+      "sha256": "cb9762d82ad19470030365275d3f4b2941765b618553e17de1808404048cf128"
+    },
+    {
+      "case": "a",
+      "file": "restored-removed-refusal-390.jpg",
+      "package_view": false,
+      "sha256": "12bb0a2b6f89e257f4fc0b719003ac015fe536c10864c99aa569051b35a9450b"
+    },
+    {
+      "case": "a",
+      "file": "restored-retained-a-field-1440.jpg",
+      "package_view": false,
+      "sha256": "d507dbd286fd02e3f7d1f3f3c119140fabe485d0bf5eb047d17084d69e440c28"
+    },
+    {
+      "case": "a",
+      "file": "restored-retained-a-field-390.jpg",
+      "package_view": false,
+      "sha256": "baff8061804e9bfbf01bdc5c5a22dedbaa02447dcff23ba4299ea0ae03308cc6"
+    },
+    {
+      "case": "a",
+      "file": "restored-retained-b-field-1440.jpg",
+      "package_view": false,
+      "sha256": "37dc4827e7c0a62a60d52484ae9933c616e3636bbe852f62ae4e1e984be7e920"
+    },
+    {
+      "case": "a",
+      "file": "restored-retained-b-field-390.jpg",
+      "package_view": false,
+      "sha256": "87341dbb0482c4757b022e177e71fdf458f69b49d07ccbc0a9547ce33b991b9b"
+    },
+    {
+      "case": "a",
+      "file": "restored-unrelated-built-in-run-1440.jpg",
+      "package_view": false,
+      "sha256": "f7d91d12c85f4eadc9540ef8aa895695264181557a240cc8cae3afbc238a3860"
+    },
+    {
+      "case": "a",
+      "file": "restored-unrelated-built-in-run-390.jpg",
+      "package_view": false,
+      "sha256": "2d6364e44c478b7e9c80c37fd193ab8c30612b760c6aa2a1525b3b66ea74b91e"
+    },
+    {
+      "case": "a",
+      "file": "restored-unrelated-built-in-pipeline-1440.jpg",
+      "package_view": false,
+      "sha256": "7c5c2fe714a6d24e951cf46e9e275202c1074536460bcfc5abd58999355ad07d"
+    },
+    {
+      "case": "a",
+      "file": "restored-unrelated-built-in-pipeline-390.jpg",
+      "package_view": false,
+      "sha256": "5c2d0fd5ae97c8d3b8e422a33d74184efcfe273b25d67f95fd4ae8d3b2398dc3"
+    },
+    {
+      "case": "b",
+      "file": "external-package-absent-1440.jpg",
+      "package_view": true,
+      "sha256": "6f725caa4db9a730554c42e5b36b39536b135c0a51330c85abaa71431fcb151e"
+    },
+    {
+      "case": "b",
+      "file": "external-package-absent-390.jpg",
+      "package_view": true,
+      "sha256": "58f76ff100c0a89d07e8df05ec28cfd1b681ef19f99621c870078b89fe13fc56"
+    },
+    {
+      "case": "b",
+      "file": "dark-external-package-absent-1440.jpg",
+      "package_view": true,
+      "sha256": "551c509fb68df2642bdd6d60a6d6e4ad2279808402e9a8ccc40756fbe1bdeda6"
+    },
+    {
+      "case": "b",
+      "file": "dark-external-package-absent-390.jpg",
+      "package_view": true,
+      "sha256": "fd6978c92d95e4f67e39ee70d9b1439f5687783eaeefa9911d10ff7ecc91b0f7"
+    },
+    {
+      "case": "b",
+      "file": "linked-field-1440.jpg",
+      "package_view": false,
+      "sha256": "bee3af1e8273b5ca4441ea4a5d39124240adb2116ea171e95283285bc9a84718"
+    },
+    {
+      "case": "b",
+      "file": "linked-field-390.jpg",
+      "package_view": false,
+      "sha256": "6a54fbcc40b77e5d8dec31d7b3cb2b66b4a06c186ada5c9d788c43547bfc2dac"
+    },
+    {
+      "case": "b",
+      "file": "dark-linked-field-1440.jpg",
+      "package_view": false,
+      "sha256": "9b9afd0068ad1314e902e39a921207649869c15b463a79802b1befeada3df6fd"
+    },
+    {
+      "case": "b",
+      "file": "dark-linked-field-390.jpg",
+      "package_view": false,
+      "sha256": "5ebee284332446cf9e2eea4457ec9a2f5da37dec54ffacf0e27ab5598c07b861"
+    },
+    {
+      "case": "b",
+      "file": "declared-field-0-1440.jpg",
+      "package_view": false,
+      "sha256": "de799ff44e7dfdbe0496b08124d1169b2f6781e725b5b6a1c18de257e8863a1e"
+    },
+    {
+      "case": "b",
+      "file": "declared-field-1-1440.jpg",
+      "package_view": false,
+      "sha256": "7954be2ef27d2b3aef76f5b5cd1c015173d7f57ced269e858526c38b2b146e5b"
+    },
+    {
+      "case": "b",
+      "file": "declared-field-0-390.jpg",
+      "package_view": false,
+      "sha256": "bbfe2584846e1ce3fcfef8886f87bcca8c35de936adf261f2784f6e826bfb5d4"
+    },
+    {
+      "case": "b",
+      "file": "declared-field-1-390.jpg",
+      "package_view": false,
+      "sha256": "cb4d6fea0f4cd067c9ce6f16ce885e8ea9d651e0e14def2c29c9809bad054331"
+    },
+    {
+      "case": "b",
+      "file": "dark-declared-field-0-1440.jpg",
+      "package_view": false,
+      "sha256": "8044d3286254a845b358907ff3377362a2567046d089c9c82cef3805b206897f"
+    },
+    {
+      "case": "b",
+      "file": "dark-declared-field-1-1440.jpg",
+      "package_view": false,
+      "sha256": "6a63b938ccba0ebbebe3af5d5cd162ef45bb50d529e5cc73ff8e3769e3855bb7"
+    },
+    {
+      "case": "b",
+      "file": "dark-declared-field-0-390.jpg",
+      "package_view": false,
+      "sha256": "c9433b8196bc8926e2e41deec62cb6f431e93f849b9c1c63db23cae2dbd3f1f7"
+    },
+    {
+      "case": "b",
+      "file": "dark-declared-field-1-390.jpg",
+      "package_view": false,
+      "sha256": "7c30a495ee83db0fcbe7de1f871993ecf8e697cbdcb5fb4fece6f3521e1883f9"
+    },
+    {
+      "case": "b",
+      "file": "restored-disabled-refusal-1440.jpg",
+      "package_view": false,
+      "sha256": "7fe6bb0dffdb612b026595ece4a93fc72c05cab5c8437c4dcf27bb486ded9aac"
+    },
+    {
+      "case": "b",
+      "file": "restored-disabled-refusal-390.jpg",
+      "package_view": false,
+      "sha256": "49387b0aadb84c7a2659ae42089e9b60c2ae8bce5456b163a8f864c2bd45b102"
+    },
+    {
+      "case": "b",
+      "file": "restored-removed-refusal-1440.jpg",
+      "package_view": false,
+      "sha256": "cb9762d82ad19470030365275d3f4b2941765b618553e17de1808404048cf128"
+    },
+    {
+      "case": "b",
+      "file": "restored-removed-refusal-390.jpg",
+      "package_view": false,
+      "sha256": "12bb0a2b6f89e257f4fc0b719003ac015fe536c10864c99aa569051b35a9450b"
+    },
+    {
+      "case": "b",
+      "file": "restored-retained-a-field-1440.jpg",
+      "package_view": false,
+      "sha256": "d507dbd286fd02e3f7d1f3f3c119140fabe485d0bf5eb047d17084d69e440c28"
+    },
+    {
+      "case": "b",
+      "file": "restored-retained-a-field-390.jpg",
+      "package_view": false,
+      "sha256": "baff8061804e9bfbf01bdc5c5a22dedbaa02447dcff23ba4299ea0ae03308cc6"
+    },
+    {
+      "case": "b",
+      "file": "restored-retained-b-field-1440.jpg",
+      "package_view": false,
+      "sha256": "37dc4827e7c0a62a60d52484ae9933c616e3636bbe852f62ae4e1e984be7e920"
+    },
+    {
+      "case": "b",
+      "file": "restored-retained-b-field-390.jpg",
+      "package_view": false,
+      "sha256": "87341dbb0482c4757b022e177e71fdf458f69b49d07ccbc0a9547ce33b991b9b"
+    },
+    {
+      "case": "b",
+      "file": "restored-unrelated-built-in-run-1440.jpg",
+      "package_view": false,
+      "sha256": "f7d91d12c85f4eadc9540ef8aa895695264181557a240cc8cae3afbc238a3860"
+    },
+    {
+      "case": "b",
+      "file": "restored-unrelated-built-in-run-390.jpg",
+      "package_view": false,
+      "sha256": "2d6364e44c478b7e9c80c37fd193ab8c30612b760c6aa2a1525b3b66ea74b91e"
+    },
+    {
+      "case": "b",
+      "file": "restored-unrelated-built-in-pipeline-1440.jpg",
+      "package_view": false,
+      "sha256": "7c5c2fe714a6d24e951cf46e9e275202c1074536460bcfc5abd58999355ad07d"
+    },
+    {
+      "case": "b",
+      "file": "restored-unrelated-built-in-pipeline-390.jpg",
+      "package_view": false,
+      "sha256": "5c2d0fd5ae97c8d3b8e422a33d74184efcfe273b25d67f95fd4ae8d3b2398dc3"
+    }
+  ],
+  "model_candidates": 1,
+  "no_catalog_or_client_invocation_by_reviewer": true,
+  "numerical_acceptance": "not_evaluated_by_this_review",
+  "owned_server_processes_currently_found": [],
+  "owner_process_bookend_empty": true,
+  "package_images": 12,
+  "package_lineage": {
+    "browser_measured_zip_hash_equals_prior_retained_zip": true,
+    "candidate_id": "b2fc476574304b33b8c90b7aaf542d02",
+    "package_bytes": 269170,
+    "package_run_id": "6924591425a84ef19d926b6b63b9e7da",
+    "package_sha256": "7a17efbbc2af6e5a95eca9fcaf8bac08c9e22840e12986b1480f85b7e3f72aec",
+    "source_run_id": "0ca8523fe44f42bea520e941f79b839b",
+    "verifier_receipt_equals_prior_actual": true,
+    "verifier_run_id": "cb7935abed6c488bbcb8e434cc90fc29"
+  },
+  "receipts": {
+    "a": "665cd332f67392aebd263045e034cd091068c578a5619e7246c6c722b7130a8b",
+    "b": "a5fb2674aae4033d40e7408bfd23c548d85f61f65db3a4e498a156f308d6cb0c"
+  },
+  "regression_images": 44,
+  "review_scope": "Filesystem/receipt/source/hash/image and exact retained domain-summary comparison; no live catalog or client invocation.",
+  "reviewed_late_files": [
+    "agent_api.py",
+    "app.py",
+    "experiments.py",
+    "static/workspace-real.js",
+    "static/workspace-service.js"
+  ],
+  "same_as_prior_native": 144,
+  "scope_of_403": "Field query transport substitution only; actual provider refusals are409. Package denial/session/stale checks are controlled controller evidence.",
+  "selected_plan_acceptance": false,
+  "source_commit": "00865e9e25244aa77b41d00e2f678b5bea80679d",
+  "source_files_checked": 149,
+  "state": "clear",
+  "visual_samples": [
+    "A mobile light/dark package identity and summary",
+    "A desktop dark package summary",
+    "B mobile light and desktop dark absence view"
+  ]
+}

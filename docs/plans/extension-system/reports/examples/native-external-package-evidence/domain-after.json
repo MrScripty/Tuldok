@@ -1,0 +1,684 @@
+{
+  "format": "external_package_native_domain_after_v1",
+  "counts": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "access_admissions": 5,
+  "model_candidates": 1,
+  "prior_cold_recovery_sha256": "e3edf5b5d1babac42d8297c9acc9df6245e2079ec419ac406e887c9605aced3a",
+  "all_domain_tables_unchanged": 39,
+  "domain_tables": {
+    "access_admissions": {
+      "columns": [
+        "id",
+        "catalog_id",
+        "actor_id",
+        "credential_id",
+        "kind",
+        "job_id",
+        "request_digest",
+        "effects_json",
+        "created_at"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "01e456e8037a87dc1e6a087d2d11d67df779949dade1720d4317e095fec94e01",
+        "c46358050c8aeaad0584590b50755e133ada883107e6e3cf1716a58fe83302b5",
+        "e20dc13c2968552e891d052587c9efb19a82f12d3d0cbc348d8e8633c3ade6a4",
+        "4ca44a371bfee0b7b816344a3f037b6ac58d8f147e7cfc94fc1b39ef255dc28b",
+        "abcf8f0a0cbf0737eb25786e504992902a856d695de2129170d9678be3619d89"
+      ],
+      "sha256": "4ccc0688b7b67aa57eef4bdbafd0c589a17de408858b443c328de5a130bffc71"
+    },
+    "access_execution_consumptions": {
+      "columns": [
+        "grant_id",
+        "run_id",
+        "admission_id",
+        "consumer_credential_id",
+        "request_sha256",
+        "consumed_at"
+      ],
+      "count": 4,
+      "row_sha256": [
+        "734214853323d4cfae90e98a0c76113e13d4ea0a2b557b91d7b3c83ee5ab4575",
+        "fd2dba3142c6e2170b27bd71a4dddfaf84759f6e89277098b81d375371ebdd00",
+        "b1b13d871b7c01194e5d40acb89e3c9529d8669e0f20347a4288354fa29bb2c8",
+        "564aa91785a8d665c0cf942b87d536a05ffd37e4026e2efe1ec3bb0508509f6b"
+      ],
+      "sha256": "37b268708962464777ef9db5b8bfb4614ce999eee50fd5c456bd47ca2547b9d4"
+    },
+    "access_execution_grants": {
+      "columns": [
+        "id",
+        "catalog_id",
+        "approver_actor_id",
+        "approver_credential_id",
+        "consumer_actor_id",
+        "material_sha256",
+        "created_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "dc22ab03189291de197d20d9089033e55f5d3ddcd8776cfd58c05dde6182dda6",
+        "308f5ce0dc24d6e1d29dc161d9dc751f9fe5c57fc8ce2188da7c490fd69690db",
+        "4b38c05912f98a01beaa2fbc8c5c18dfa91581c8af31f437793418aabfbbc921",
+        "fcf0430f87cc9c9e3777a01734cb13283088d4c8121f988f25da6e59d809fdff",
+        "f1998082ab6e856b9cd06533d4ec0bf1e585e382e549a7b7e98807e2c10f4ac3"
+      ],
+      "sha256": "8c588f3e591da40b415878b26464c536b0f0854682c62d42e2ee45a778bbc51b"
+    },
+    "caption_proposals": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "generation_entries": {
+      "columns": [
+        "id",
+        "job_id",
+        "ordinal",
+        "data",
+        "storage_order"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "530faef7a9e5031599c72af9332f8c2472584ffd0d4110ab97eb445c3a9680dd"
+    },
+    "generation_jobs": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "grounded_jobs": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "model_attempt_reservations": {
+      "columns": [
+        "id",
+        "study_id",
+        "actor_id",
+        "request_key",
+        "request_sha256",
+        "trial_id",
+        "run_id",
+        "document"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "cb1b14c9d0456089a6c7c0d120a99fd709a72fbc3db422a8c4378a6ea9fbb493",
+        "83c31feedfd3926b754a681db2dbe08486f1d3bd327b59642705c3ac92d68853",
+        "f93fbe82cf11b4e2861fd207ba7d56df095431404a46e6c241797f6790c7810e",
+        "abd3c0b805f6fd35d0d3f87e687e853b17ead233afe23a8c9c740c17c86d0453",
+        "266db1403288c1109d308897daa88b2c5090fbded619693e95ad511cfe3c75d6"
+      ],
+      "sha256": "2e9e7b82fc31bc0e90a45210dc10a664cd52b0f760eea5bfeb45c55bcaf92f3e"
+    },
+    "model_candidates": {
+      "columns": [
+        "id",
+        "study_id",
+        "trial_id",
+        "run_id",
+        "document"
+      ],
+      "count": 1,
+      "row_sha256": [
+        "5e8fac954100c5cfff0e88ae155388acdc320bda0761b29d8a1caaa84d4d7f1e"
+      ],
+      "sha256": "24cc77c079182aed6cdb1674343ea0ee238f01ae458ccb18df9135174e286341"
+    },
+    "model_definition_drafts": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "19d9fa9dd39fbaaddbe077bc62ad1cb1b8d43d8d4e9c88520d0d5e6e440b79d1",
+        "b2f83703dff3c7eb049abb7099199360b16472b7d0405eed4b9656a39cf52074",
+        "dd0047ea00fa2aa0750bc50aae9a1c121d1a55427c566278ab3522e6224c4122",
+        "669b28699ede95816d9939d011d7b2ae68c5b3913d2b59b3b3db0a80118cd768",
+        "335ef1dde692ac9ccfd4e5ec4e97899c328c01898447c041770f444c977d6241"
+      ],
+      "sha256": "d60deea90970b5f0580303dc92c0b2130308068b6fb1e1bfe21fe74aff8fac7e"
+    },
+    "model_materials": {
+      "columns": [
+        "id",
+        "revision",
+        "sha256",
+        "document"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "7315049aa6e7c6e594eeee7de93e964d620833dc0f9c82c033faf08237b917de",
+        "02bb4de26d87abe44a81b872fcf39736613d1649cb77b8e1641a6a0e5b78320e",
+        "8010280ee8dccdcd11606be7e90901d57dcbbfb4d5afbba23e9327ed79b9105a",
+        "fba50ea7145541363cf3a10beb70be421dd5d5673fc4175a0c3131d103ee1fbf",
+        "f000382f40f7dd976665a77f7c4d58a4e169fe3c967364e2c19fb2e10c4ef6de"
+      ],
+      "sha256": "1fb34918088cabb4e66f3295850165cd9b0f8e954d353c08637e031974220f01"
+    },
+    "model_operation_receipts": {
+      "columns": [
+        "actor_id",
+        "operation_id",
+        "request_key",
+        "request_sha256",
+        "document"
+      ],
+      "count": 15,
+      "row_sha256": [
+        "41818d409cca9fadbab4983df77dce37728e5c0bb55234e61ed4543e7e7060c2",
+        "5923cfe7c7b9a070a06dbc5767f511cf2c2cc969cf0af192d19adbd0721f16a2",
+        "c762c1cb49c1fbcbf1fa95178dfeae51dab395f4f7babf87555be38a4da332b3",
+        "0ba0e630a3eeccc865d586ee099ad4e998e6a68687fd56a049c7c1ca3468fb7b",
+        "9175981079b9db63d9b60cf8e344cc43d51ac4fde805fa66dc6436b7b6658be3",
+        "d68433a27aaba5dcedbd75add2ac2aeae472f1a6e0979533dfb1a7e2c76377c5",
+        "04989991b9668227b62349e270d6a704f3d9a8c7e669e139be13ac172c85b0a8",
+        "6253347d872a8fb22d7c2d9e40b85f235edd3b100d3b678ec5a3f1cfad3ec9b4",
+        "9e455aa3927258de8b7cd03f0f798e8606963ae1021dd9125e168217e27dc442",
+        "e4c6f944401e851c533d2e28dd5b5a2e79bd6920c30e3b17f27e7f14ecec46fc",
+        "532a5a9f19a7772a5f141339d674c7a8495ef092978f587144ea943f93bfb30f",
+        "91406b9cdb6845d79ea0d9a43b80d6b7bbadc024a0ea7fbd8c6a2bc5da2ebcb4",
+        "b05586b22f8b3fbd55471946d2384af954afc0920a4eaf41da3e6de6bd38f445",
+        "339ebc937cdcc4160731ccb72389b6dfa91fa454b9182d978faf241eaf282049",
+        "1b19fc0e821a020d014743a6130edcc0104fc3e2e1d3d58b9d0fc4fd99263ce9"
+      ],
+      "sha256": "6f527e9c0ccebb48a3383791147a2782b9ad3e01c888f859b2df22965fcd5fc4"
+    },
+    "model_selection_policies": {
+      "columns": [
+        "id",
+        "revision",
+        "sha256",
+        "document"
+      ],
+      "count": 3,
+      "row_sha256": [
+        "f7b1eddd6d21a3df55d0cc8abf29a7877da69317ffd3b6a32289db07b4d513bb",
+        "506d9f3022a3875c6f16759de795ced18a03c137625ec36cb44602c7a307652f",
+        "1f76174f6499350e66c0aaed39abd0180977e21cdaa4e9ff5c321bd28e69e008"
+      ],
+      "sha256": "ef305ff55d57219980e641ef164f42e95ca3205a873dd47a27f5d1ac3beacaca"
+    },
+    "model_studies": {
+      "columns": [
+        "id",
+        "revision",
+        "admission_epoch",
+        "document"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "0cba262589e82067ef5062763b1c165647772fa39766740dc1e477d4360d9aa4",
+        "9781dc17eb138b0f703ec1ef683e13ae1d6a8462a3fb3535244b74d3530c225c",
+        "d0eff8e93a292d3980ac364c2ca592133b3362fbe52f7f86352040ef576affb6",
+        "10d20567bfa060075882dac015abbdddf75d662065d7caf05a8d19d8db6a9b86",
+        "fb03b16f057ebd5c200860790352c3feace3c01648bd8438c2541c9f97dd2249"
+      ],
+      "sha256": "2129081dff43141cc0361952364e1a1f4522595e2dbcb98ea3fed48b9252df1c"
+    },
+    "model_study_memberships": {
+      "columns": [
+        "study_id",
+        "revision",
+        "document"
+      ],
+      "count": 12,
+      "row_sha256": [
+        "0ea3740659867b367bd99b77a00f16f4dace6c805dd43026fdfe58f4448425a3",
+        "e82c27c874614c1f09a1492c7988629c245d739c5902e8fc891e5349ef3201ed",
+        "ab0c3594d4c52e0baedfaa5b1e153b3b49dac27f823db95d2e12422a3fedaa3f",
+        "f792909f84ef9a68a4fb48ef3becb598168b4e2b97710ed3eef00d349736dfb3",
+        "bbd5a4396c0e6d6cd174d1a51010979816aaedd3e21a088b2b4c42126aeaafff",
+        "196384a0f8faf306e416ebbc176dfb5d60465d60a31a81b9780db925a73af726",
+        "4d58b4a6c73a7669351db52f66ce00995575c74cefd197723918d8cc968db37a",
+        "ce88619d3c791525233ce16523956540e91cb1bd74a9090b877c8823e860a779",
+        "a4d684ed4c5755f6e82d0b429cc9feaa1fa7a25ce8888c2a02a0dfb9134f5b6c",
+        "63b9a95e5e03295b4f14aaaaee5ff292b1a3ac660553cf5e7888166c1333fbc7",
+        "fccba7b4fa8f38542c79701271c768c613b1b20fa6066cc0626ff09554ee3192",
+        "cd7fcbc1207256d6752186b0eecbe60e5729c7fc465b6474633adcc4d0bf37ff"
+      ],
+      "sha256": "8a83afe19d1c62802868c2f869702843f436ca36ad8a27e813bcf237701dc4e4"
+    },
+    "model_trials": {
+      "columns": [
+        "id",
+        "study_id",
+        "material_sha256",
+        "replicate",
+        "document"
+      ],
+      "count": 7,
+      "row_sha256": [
+        "d8f7b73308ab913560f5a60b576498465e40ee0b343d46e548d06dc90769457f",
+        "26546cb6ca4973055277a7b15275201e2cf48d6016e1f109dd986684ff8150f2",
+        "35cd91abefa9726b23042dfa68507bf88272d84be85f4dd8775788ec251128a8",
+        "1bcb292c675f6c51b309a1fa1b77fb654eac29c6c3617a3cad3c6fa8b3e73a4b",
+        "1dd3541cee0400f1f5c33dfa5cf0aee5f596774cd5c160ee3662891dfd4b2db9",
+        "15671affac382e5a7caf2ba7a6d3f10fc141f034c7dc62a38e44e6de2867e404",
+        "a93ea18290ad4190f26889d536f77feeae4e07ae91a6be67726f28ca03c2b4bc"
+      ],
+      "sha256": "7ce633e3aad15626b5eb0b42cf95a291fd3f7830b317ab357ec7c80b1e8488e3"
+    },
+    "samples": {
+      "columns": [
+        "id",
+        "sha256",
+        "filename",
+        "width",
+        "height",
+        "book_id",
+        "session_id",
+        "split",
+        "created_at",
+        "updated_at",
+        "revision",
+        "annotation"
+      ],
+      "count": 12,
+      "row_sha256": [
+        "1ac5a7c54a0d2db9c22d54b366f9e25877f7d3248b5de519ec9d6441e756a251",
+        "45b8e0db891c824aeb223afad6dc24e060d67816ea29e5c519584d243e395668",
+        "69c9265c4de3c3d440f00aa4a77259dd6c4a7775505f476467c7b6e7c480b3ca",
+        "edf1c53d4b03bdcd075cd8ee38c7a4088928796ae31c5c5e37a999a7ef251a12",
+        "651df72f857b71d3c81995b4dd90e29e3d120771970e5d121c909019e2a1d8a3",
+        "88642a17566c40b804927d6d8163980b6fd97971cdb55eeb1b5510c09d106d7c",
+        "186cf9eaadc7c4868caa301d2d73be51535a02cdffeea8dd0816cfb9a64854d3",
+        "d25c57a6cb154702de544c15aa945381d9c2647fafe09badf4538d342e696f3e",
+        "e451e719ec04d04eeba7d7d5bf11596e05ae35cfbdf49edf39343ba3cfe11a34",
+        "2abdf5a3eeb6e1e7beb1143dc1b53726002f732356b40a797bca85f36a0b2c9c",
+        "8e8e8d767a7ff1cda791f66f6b5854f0b637729059bbee5a030abaa851425c9b",
+        "8df1788379228cce301d7ef93255b44a06c2b25d167ab4d8825a287903a5f924"
+      ],
+      "sha256": "4885373ca678562415ac0b8cb6065325f256a1d63d674518baa503c33d3a3c15"
+    },
+    "saved_searches": {
+      "columns": [
+        "id",
+        "name",
+        "revision",
+        "criteria_json",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "caa62ec987589481b04e93502d8f340a1a41703997b68a0c94df642ee8e5a8a6"
+    },
+    "saved_selections": {
+      "columns": [
+        "id",
+        "name",
+        "revision",
+        "members_json",
+        "member_count",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ef015a7aae83417e2ee6b9aa54c0f3f618358296ed201682901be8c0841b7e11"
+    },
+    "text_classification_proposals": {
+      "columns": [
+        "id",
+        "data",
+        "ordinal"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "2239b351e3d06bc5293c9bba3811ccca010924f2050b60760c4b58ac8cb022a8"
+    },
+    "workbench_deleted_sources": {
+      "columns": [
+        "id",
+        "book_id",
+        "session_id",
+        "split"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "c1c95154abd259591b21272e5324695db12a227e849c3fbd46d96ea2e554a7c2"
+    },
+    "workbench_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 30,
+      "row_sha256": [
+        "e46e7c8cdc6a8da5335e30c25de8ce611400db33d6de3c479e6c8702e98ce1e0",
+        "b34c235a220f019c9233204421654cb8883b8c62ca1369bfff608e2d1a769630",
+        "c5b986f4583f67704d14c3da2fe1ad9250be9afd52f583968ef8496646c25c8d",
+        "c5c5ccce02f9c4f39ca2ab8d7a01329386641cab53e3ccfd4b8b2e0dd7d7e797",
+        "a5ce3cadd8599e91003e85371a39597e41f825b42e2ad28fe5f3b625c25e2c3d",
+        "8e3d93d1de1e5bb2daaef6d82c73c58de80d0a85baca1c3d235d051625a33af5",
+        "7bb5708a07bd29da0ab0cf1e5dc51af926bd3c5d319672bb9b578435230a1487",
+        "3e703e4831b0f35bbb8b9f196a1c5ec82b6433b73d6b4788b8ef3e27d969d422",
+        "52b9452de86f825cd8a8d1adf34018fa90d0c1e69c331fe11a88a692623ab884",
+        "8ea4d96d1822de401292cada9a52fe334e82c9f4e80da568adb73329965426f3",
+        "170b6688dbaebc02213d11a5d72f38f8173a45c211de01910bc201975863c36a",
+        "bd593e7dd10f410cfa82e4a8391f32c640a19c3c99c4c96c3b3a1cc3582d482b",
+        "210686cff23f92d2ddfb12fdb4bd9e46f08124352892f577bff95db8552336fc",
+        "9579e067a1f86ced57e3c669a7025370f7dd16b5ad07ec53fac1102675ad54b0",
+        "d61ab3e357c197b872900a9b57f8aefafb1c77e79d681866ad8fae9157cf5bd7",
+        "bb349e194aca50b23ec95e8602e18e4ae1c1c284872b9b6422a5277a85e4ddc1",
+        "dfddbf1cf9db353af85dd000c5ec969b914629814f8688ad08b5c572eba06a3d",
+        "4565d04518cf812468cc29d7afae43ef00d374df473e5cfb7a6b28e01f86c8dd",
+        "1807a18cb8e60a80cb898f19e342ecf81c942ec82de65d77bb86bc8f073705a8",
+        "703abc4801aeaafab6734a5c463d3044cb2ab2870e5df5289d22fa1ef70a39bd",
+        "664d6f839ac24d2fc6202ad751310f27ca5cef900deac3ac3980e6d2d3ad2e82",
+        "7f98ae144e7039e281c92d7ec091a9c782bed6c9e26e465285e7ce76cefd80af",
+        "6deb76f3b3928dfc1295dbe83be84bac2cc319006678f5cd29b09cc4ec866590",
+        "cf9d5c0d90daad40cbcb66033b9b3116707108aa4d7e80f7a83272a94c10e1d8",
+        "a656878325af11c59ce6cddf5ac6f0c61859828a1e8c89ce90041f3a5b0b1ba5",
+        "89a82277a6e566f6e2ade4ec0714772f848d0913f1928f42981110277b2d6d4e",
+        "cba965c2706a2912d33dfd155f547ecf8ee700b3f2e3140e55878bc5366c915c",
+        "5704c6a4788284fbd7574737282560c1d6bff9e95e0b5317e913f72f468ac84c",
+        "7d5183fee4203a870594b4e803899ae57efca33ab92e55172346943e01255a39",
+        "863bd45bd2af71383790ffed63e31424e5e45907ec00fdcab38352207d18ccf4"
+      ],
+      "sha256": "e7f3fb05ded2480c7ecffa9d623a85c96bcdcf2bc13ec8374051d4607f4ee91b"
+    },
+    "workbench_mesh_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_pointcloud_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_preference_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_preferences": {
+      "columns": [
+        "id",
+        "prompt_id",
+        "revision",
+        "data"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "67b197c3ca40fbcbe1baf7d841be28c4e9c98b3ef3f22178c7732560f66e16c3"
+    },
+    "workbench_records": {
+      "columns": [
+        "id",
+        "kind",
+        "name",
+        "text",
+        "original_text",
+        "content_hash",
+        "pixel_hash",
+        "groups_json",
+        "parents_json",
+        "provenance_json",
+        "task",
+        "annotation_json",
+        "review",
+        "revision",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 15,
+      "row_sha256": [
+        "2ccee1f3178fdb97324e44e2a2c150f9f96d18a9be3c1aa9bbaab2e8ddddd1f9",
+        "f2e7f73e8de40193f9dccb54024ff5b7ad8285220248355d8dee17e3630ea61d",
+        "fd556627d6245b02fe84b2bb0fa2d2043f10f679579b642d09f6ae0cbd78e656",
+        "bdedb44400fe022b012675fb081cd5829751d4bb5ce7a0645d102ab7fef6d20f",
+        "f96ddbc7ae63b1e407a411f38c8c9b042f1cd859fa8da4fb87f18f32f0d0e648",
+        "a827e85527a4813ff46744e8e40fc5d74f15c5df842b11caa3715286ea3d1d2a",
+        "7b76acdffa75bea178aeab2e8696299c8fd99bf2feea31ba341759a4aad3604a",
+        "7649657da427019852d4dffc1b70540ea9c1a3635678c61951f75c7f977e864a",
+        "6e606ac57b4ebce962697faa42c89ffdb5bf8c2dff3ca501cfe0c0e4232dca4a",
+        "f8af5152b88eedaaa28186987f2b15317dca677847c7f809363d674881ba1918",
+        "70cfe231c60c5730e67667fef48e9716a53ed8f65be41698be449ac9db10c026",
+        "1550fdb04f4ba02f7257912a3baa0427d2d2eda0f2bbecb23b46e8d38e1f968a",
+        "35338c1f0cf7d344e03fcedb5e8e5e639f981ecf8e13886c58e7a2c61817ec23",
+        "7f84974fe73c2a84f2403fe0c5ecf4740758ecc7d4cb40dadaa8c7d30c3d20a6",
+        "facbccd47bf2b4033e8973a15aeea1de96ea354c56a99e6a408ae9506d527657"
+      ],
+      "sha256": "176c3d448117bf17391483ea11ff8a2135549452e9871b0766d015cca311a4a3"
+    },
+    "workbench_response_history": {
+      "columns": [
+        "id",
+        "revision",
+        "snapshot"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "8c767798a7512a72e56b40ecff0c92b8303bd7aa32fb65e1052d57238f08bfa6"
+    },
+    "workbench_responses": {
+      "columns": [
+        "id",
+        "prompt_id",
+        "revision",
+        "completion",
+        "review",
+        "provenance_json",
+        "created_at",
+        "updated_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "4eb68800cc161c30f33a81c52c233a59559a12f1a3744545088bf3cbe9930d67"
+    },
+    "workbench_rights_notes": {
+      "columns": [
+        "id",
+        "note",
+        "revision"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "894e92255b0040027f355105f88c51cff087e8471008b30731a6e0e849c3cdc3"
+    },
+    "workbench_sequence_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workbench_target_proposals": {
+      "columns": [
+        "id",
+        "evidence"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "c610988ec09c1a996fba5c2d51051fd38b37a1b51d1defc6ea9647664742838e"
+    },
+    "workbench_volume_assets": {
+      "columns": [
+        "id",
+        "bundle",
+        "metadata_json",
+        "bundle_bytes"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "52372712cdd0cf503b97b2aa3a696f10ab52df562097e77dd96d9c0d6feb920d"
+    },
+    "workspace_exposures": {
+      "columns": [
+        "id",
+        "record_id",
+        "source_hash",
+        "reason",
+        "run_id",
+        "release_id",
+        "created_at"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "5bf95a047db8503a858f55e8095cb28322d6329af09b545dc4f67a3cb83e8599"
+    },
+    "workspace_graphs": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "ebfc9c7935628abfc92cd7567f9d541860792dd4de6282b6fc33b15672837bd4",
+        "e868e143d1d518972dddc105690457eba59e31f8c74d5e4e64b34da3b8b61cb9",
+        "f8aa021519989cf5d39b404291d236bb3633a4be9cc302fcc89266d6a31b8777",
+        "7f0c64954ddc2aded994ec6376c0c83bf64f67b9de3e3357f5b6dc13b899f63f",
+        "2d03f6a6b00747f5671a0e2c89701e0066409b20af052b05b9d6ae51e082d756"
+      ],
+      "sha256": "2fd8dd61dfc85fea8474709eb2367c4a443c66951266ef23302ff9aa0ef163e5"
+    },
+    "workspace_projects": {
+      "columns": [
+        "id",
+        "document"
+      ],
+      "count": 7,
+      "row_sha256": [
+        "5a300fdb46aae34a828dbcc3180be1098b9dd357317146cce386bb1d8729454c",
+        "abda3e5d003133b851837c2f508e260d7ab671cd1887e84ad93d70910e32f904",
+        "2d981a37b4555b7f1ad24758a1c47a2b3e53ccba48b3ae3284acc17e2066579f",
+        "91b164410db251ec22ebac3a68f9f5e4af738c264010dc6fb48019e8af6f9377",
+        "b18fa7d4ba219d4891b1114bf3433822f9c55509d3b0ce7a2abac771a278f7ed",
+        "ba1bb3e9e91fc103bce8ad7dfa3f11acb73fce36f7e2e40193b728e09f9e5c54",
+        "3512bbddab69a96b751bbdfdc7d00376bf4dfecee2ee903cce4adc37c09bc304"
+      ],
+      "sha256": "efc29e4f4cbaf70c99cd4b9b68309f1c4bbfe94dbcc86939c34fb3702be16b16"
+    },
+    "workspace_recipe_drafts": {
+      "columns": [
+        "id",
+        "revision",
+        "document"
+      ],
+      "count": 0,
+      "row_sha256": [],
+      "sha256": "ffb3a23ecc7b51f988108891d577a0c846811cfcfddbb1427421287a201f347a"
+    },
+    "workspace_recipe_materials": {
+      "columns": [
+        "sha256",
+        "recipe_id",
+        "recipe_revision",
+        "document"
+      ],
+      "count": 7,
+      "row_sha256": [
+        "98c98e71e77dc4f7c679f90783c0dcbd7ccbdf7132f0bbdfb3ab987006656fdf",
+        "a2a2f41c380da9f8d6d24c00cb34ebfcb28a3aa7d269c581ccd268e8890f6eda",
+        "0b64445e7d11316d99c016a58c048cd975cffd13e315f0744d4af55831d5a3cf",
+        "878ef5805f3b4bb4749d99c02331773dff9a17a2c3691c1bad74564786f2c48f",
+        "be136f855d06fe9786a2bb89dac76e2328edd28d807700f33c013dc6072fea1a",
+        "658385d9171b35732a42499d3c34286c0e091fb50955b97c34b137ab89532d81",
+        "86f0253774c2c3e8cfbec9d6b96afba8fda52718385a8439af6fcb83dc5767b5"
+      ],
+      "sha256": "268747a724e2481e74a0ac9e6fa84734a1bf5a9be7dbf18ab6b0bc89dc39f6a2"
+    },
+    "workspace_runs": {
+      "columns": [
+        "id",
+        "request_key",
+        "request_sha256",
+        "document"
+      ],
+      "count": 5,
+      "row_sha256": [
+        "d4eb97d1a5e802a0adce292d507a620c1e87226af21e4f940ee4e395fb7648b0",
+        "71289110e45e0333b7c6bd4ccf20159bbcbfd208925aebbc5dc25bac974dd6ff",
+        "3d0621d50b15772ba5bb15cb91ee359c80b3ad35155e9ced807951b80dab13db",
+        "07ae449a9baf7a5fbe43255785895e465b575d102387ee9454fa44b323a9c850",
+        "4b56c3098b5f0b317834bb4eeb2dba29919eca9ff0a9b1f89ae66444c5a10e46"
+      ],
+      "sha256": "e8f3a78d0427c985929b917b79ff40adb12677ab11b2bfab284085e3dbf2b145"
+    }
+  },
+  "run_directories": [
+    ".external-0ca8523fe44f42bea520e941f79b839b",
+    ".external-3ceea12b26754accb2c65f3a0aa5038f",
+    ".external-6924591425a84ef19d926b6b63b9e7da",
+    ".external-cb7935abed6c488bbcb8e434cc90fc29",
+    ".staging-3c65c663843f4afb85baba776fc7cb23",
+    "0ca8523fe44f42bea520e941f79b839b",
+    "3c65c663843f4afb85baba776fc7cb23",
+    "3ceea12b26754accb2c65f3a0aa5038f",
+    "6924591425a84ef19d926b6b63b9e7da",
+    "cb7935abed6c488bbcb8e434cc90fc29"
+  ],
+  "raw_receipts": {
+    "a": {
+      "path": "/workspace/shared/extension-external-package-native-01/a/external-field-evidence/run-V9vVZk/receipt.json",
+      "sha256": "665cd332f67392aebd263045e034cd091068c578a5619e7246c6c722b7130a8b"
+    },
+    "b": {
+      "path": "/workspace/shared/extension-external-package-native-01/b/external-field-evidence/run-beyd5L/receipt.json",
+      "sha256": "a5fb2674aae4033d40e7408bfd23c548d85f61f65db3a4e498a156f308d6cb0c"
+    }
+  },
+  "dataset_opened": false,
+  "original_catalog_opened": false,
+  "no_admission": true,
+  "scope": "Restored-only raw SQL after both serial native read journeys; audit/session metadata excluded explicitly."
+}

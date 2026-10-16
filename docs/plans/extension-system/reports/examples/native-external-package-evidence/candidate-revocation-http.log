@@ -1,0 +1,6 @@
+test_selected_run_candidate_discovery_rejects_the_same_revoked_http_credential (test_candidate_selection.ActualCandidateSelectionTests.test_selected_run_candidate_discovery_rejects_the_same_revoked_http_credential) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 25.688s
+
+OK
