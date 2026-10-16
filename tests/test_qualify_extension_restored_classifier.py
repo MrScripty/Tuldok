@@ -15,7 +15,8 @@ class RestoredClassifierGuards(unittest.TestCase):
             report={'source':str(root/'original-catalog'),'output':str(root/'e4')}
             selected={'current_roots':{'author':str(root/'original-author')}}
             destination=root/'e4/restored-catalog'
-            for parent in (Path(report['source']),destination,driver.ROOT,root/'original-author',root/'e4/restored-only-b-source'):
+            for parent in (Path(report['source']),destination,driver.ROOT,root/'original-author',
+                           root/'e4/restored-only-b-source',root/'e4/stopped-backup'):
                 output=parent/'new-report'
                 with self.subTest(parent=parent),self.assertRaises(driver.transfer.StorageTransferError):
                     driver.guard_output(report,destination,selected,output)
