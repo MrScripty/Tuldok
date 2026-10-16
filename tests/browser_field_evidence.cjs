@@ -407,7 +407,8 @@ function launch(command, args, options) {
       await until(()=>text('#extension-model-dialog .author-status.error-panel').then(value=>!!value),'Expected actual current-provider refusal');
       const message=await text('#extension-model-dialog .author-status');
       assert.equal(await evaluate('!!document.querySelector("#extension-model-dialog #extension-model-form,#extension-model-dialog #extension-prepare,#extension-model-dialog #extension-approve,#extension-model-dialog #extension-admit,#extension-model-dialog .author-review")'),false,'Refused inspection exposed preparation or cached review controls');
-      const detail=await(await fetch(base+'/api/workspace/projects/'+item.project_id)).json(),recipe=detail.recipes.find(value=>value.id===item.recipe_id);assert.ok(recipe);
+      const detailResponse=await fetch(base+'/api/workspace/project-snapshots/'+item.project_id);assert.equal(detailResponse.status,200);
+      const detail=await detailResponse.json(),recipe=detail.recipes.find(value=>value.id===item.recipe_id);assert.ok(recipe);
       const inspectPin=await evaluate('WorkspaceExtensionAuthorContracts["recipes.inspect/2"]');
       const response=await fetch(base+'/api/workspace/projects/'+item.project_id+'/recipes/'+item.recipe_id+'?expected_sha256='+recipe.observed_sha256,{headers:{'Tuldok-Operation-Contract':'recipes.inspect/2/'+inspectPin}}),failure=await response.json();
       assert.ok([400,404,409].includes(response.status));assert.ok(['unavailable','unsupported','invalid'].includes(failure.code));assert.equal(message,failure.error);
