@@ -91,12 +91,25 @@ def required_contracts():
     return selected
 
 
-def disk_plan(runtime_bytes,free_bytes):
-    # One immutable CPU snapshot; conservative additional capture/staging space.
-    required=runtime_bytes+3*320*1024**2+1024**3
-    require(free_bytes>=required,'Insufficient space for measured runtime, bounded captures and 1 GiB reserve.')
-    return dict(runtime_bytes=runtime_bytes,capture_and_staging_bytes=3*320*1024**2,
-                reserve_bytes=1024**3,required_bytes=required,free_bytes=free_bytes)
+def disk_plan(runtime_bytes,manifest_bytes,free_bytes):
+    # Owner capture retains this entire reserve after payload+manifest copying.
+    require(all(type(value) is int and value>0 for value in (runtime_bytes,manifest_bytes)),
+            'Measure the runtime payload and canonical manifest bytes.')
+    staging=3*320*1024**2;headroom=1024**3;reserve=staging+headroom
+    required=runtime_bytes+manifest_bytes+reserve
+    require(free_bytes>=required,'Insufficient space for measured runtime/manifest, bounded captures and 1 GiB headroom.')
+    return dict(runtime_bytes=runtime_bytes,manifest_bytes=manifest_bytes,
+                capture_and_staging_bytes=staging,headroom_bytes=headroom,
+                reserve_bytes=reserve,required_bytes=required,free_bytes=free_bytes)
+
+
+def capture_runtime(snapshots,config,storage):
+    inspected=snapshots.inspect(config)
+    require(inspected['inventory_sha256']==RUNTIME_SHA and
+            inspected['total_bytes']==storage['runtime_bytes'] and
+            inspected['manifest_bytes']==storage['manifest_bytes'],
+            'Explicit main505 runtime or measured manifest differs; no fallback.')
+    return snapshots.create(config,RUNTIME_SHA,quiesced=True,reserve_bytes=storage['reserve_bytes'])
 
 
 def source_inventory():
@@ -140,8 +153,9 @@ def main(args):
         require(admin.execute('SELECT 1 FROM pg_database WHERE datname=%s',(database,)).fetchone() is None,
                 'Fresh qualification database already exists; do not reuse it.')
     runtime_manifest,_runtime_sources=inventory(runtime_config)
-    require(sha(canonical(runtime_manifest))==RUNTIME_SHA,'Nominated runtime inventory differs before mutation.')
-    storage=disk_plan(runtime_manifest['total_bytes'],shutil.disk_usage(workspace.parent).free)
+    runtime_manifest_raw=canonical(runtime_manifest)
+    require(sha(runtime_manifest_raw)==RUNTIME_SHA,'Nominated runtime inventory differs before mutation.')
+    storage=disk_plan(runtime_manifest['total_bytes'],len(runtime_manifest_raw),shutil.disk_usage(workspace.parent).free)
     frozen=source_inventory();workspace.mkdir(mode=0o700)
     output=workspace/'qualification';output.mkdir(mode=0o700)
     catalog=workspace/'catalog';source=workspace/'canonical-source-project';source.mkdir()
@@ -255,9 +269,7 @@ def main(args):
             authored=prepare(fixture_result,project,runtime_sha256=RUNTIME_SHA)
             verify_frozen_sources(project)
             snapshots=RuntimeSnapshots(dataset.db,dataset.access,dataset.path)
-            inspected_runtime=snapshots.inspect(runtime_config)
-            require(inspected_runtime['inventory_sha256']==RUNTIME_SHA,'Explicit main505 runtime differs; no fallback.')
-            report['runtime']=snapshots.create(runtime_config,RUNTIME_SHA,quiesced=True)
+            report['runtime']=capture_runtime(snapshots,runtime_config,storage)
             credential=dataset.access.issue(dict(label='Fresh main505 agent author',scopes=['inspect','edit','execute'],ttl_seconds=3600))
         report['actor_id']=credential['identity']['actor_id'];token_path=private('agent-token.private',credential['token'].encode())
         project_files=tree_inventory(project);fixture_files=tree_inventory(source)
