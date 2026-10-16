@@ -391,6 +391,10 @@ def main(args):
         module_spec=importlib.util.spec_from_file_location('main505_legacy_agent',ROOT/'tests/fixtures/agent_legacy_f588.py')
         legacy=importlib.util.module_from_spec(module_spec);module_spec.loader.exec_module(legacy)
         old=legacy.AgentClient(f'http://127.0.0.1:{server.server_port}',credential['token'],report['catalog_id'])
+        legacy_identity=old.call('identity.get',{})
+        require(legacy_identity['status']==200 and legacy_identity['result']['actor_id']==report['actor_id'] and
+                legacy_identity['result']['kind']=='agent','Frozen old client lost its supported identity operation.')
+        save('old-client-identity.json',legacy_identity)
         try:old.call('project_snapshots.get',dict(project_id=opened['id']))
         except legacy.AgentAPIError as error:
             require(error.code=='unknown_operation' and error.status==400,'Wrong old-client operation refusal.')
