@@ -13,8 +13,8 @@
 **Issues:** [issues.md](issues.md)
 
 [Current implementation and actual evidence](../end-to-end-model-development/reports/product-implementation-status.md)
-supersede the older prerequisite/status observations retained below. P2–P4 and
-P6 are merged; P5 and the composed extension branch are verifying. Canonical
+supersede the older prerequisite/status observations retained below. The P1–P6
+PRs are merged; the composed extension branch is verifying. Canonical
 A and independent B have completed actual CPU SDK/cold numerical qualification.
 Full X3/X5 remain pending their final retention/continuity execution; no design
 or fixture result closes those gates.

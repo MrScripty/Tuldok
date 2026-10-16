@@ -16,7 +16,7 @@ and unrelated branches are preserved. Current integration is draft
 | P2 | Immutable Model/recipe material, finite Studies, exact admission and reservations, stopped-store migration/restore and inert UI. | PR70 merged at `8fa4915`; exact source `351f55b` passed lifecycle/catalog/UI. |
 | P3 | Actual CPU TinyCNN training, automatic epoch weights and fixed probes, cold independent inference, correction/new Release/retraining, exact comparison and real browser/agent inspection. [Actual qualification](p3-real-workspace-qualification.md). | PR72 merged at `cfd032fc67f4f3fd8a6b0d401c7fa837a4bcad2e`; exact `767f66f` passed full CI. |
 | P4 | Actual one-fit text/audio evidence and native browser workflows, generic data-only field evidence, canonical scientific Release derivation. [One-fit](p4-one-fit-browser-qualification.md), [canonical source](../../extension-system/reports/p4-canonical-source-qualification.json). | PR73 merged at `61292e4ac4cbd200253fe8a5c19bf1be887af42d`. Exact `1d621e8` passed full lifecycle/catalog/UI, including actual classifier and one-fit browser gates. The earlier exact option-list failure is preserved; its correction requalified in full CI. |
-| P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 exact `ed51510` passed captured-CPU, catalog and workspace UI CI; lifecycle is still running. Its predecessor `407068d` has separate historical qualification. |
+| P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 merged at `9585f3cd15f140bf8c24d9aa33b8f51ef352621e`. Exact `ed51510` passed captured-CPU, full lifecycle, catalog and workspace UI CI. Its predecessor `407068d` has separate historical qualification. |
 | P6 | Shared opt-in interface observation at HTTP/CLI/MCP boundaries, private bounded storage, fail-open passive sink, separate mandatory audit and unchanged caller arguments. [Qualification](p6-observation-qualification.md). | PR74 merged at `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`. |
 
 ## Extension implementation and remaining execution
@@ -85,8 +85,8 @@ classifier continuity remain required execution gates. Their independently
 reviewed drivers and exact four-Run selection are implemented; the actual
 stopped backup/fresh restore is now running. Preparation is not an actual pass.
 
-P4/P5 exact-head CI, final composed CI and independent acceptance review remain
-merge gates. Superseded CI is canceled only after its replacement is published.
+The P1–P6 PRs are merged. Final composed extension CI and independent acceptance
+review remain merge gates. Superseded CI is canceled only after its replacement is published.
 Branches are removed only after safe merge and dependent retargeting.
 
 ## Explicit qualification limits

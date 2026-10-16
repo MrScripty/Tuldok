@@ -277,3 +277,16 @@
   repeated SDK admission. Main canonical A package/fresh verifier and final A/B
   native/restore/disable/continuity qualification continue; no milestone stop
   or unavailable pressure/GPU/physics success is claimed.
+
+### Serial P4/P5 merge closeout
+
+- PR73 exact `1d621e8` passed full lifecycle/catalog/workspace CI, including real
+  classifier and one-fit text/audio browser gates. Merged as `61292e4` at
+  2026-10-16T00:56:14Z. PR75 was retargeted to main before the safely merged
+  P4 remote branch was deleted; local worktrees remain preserved.
+- PR75 exact `ed51510` passed all four checks, including actual captured-CPU
+  package/fresh-consumer qualification and full lifecycle. Merged as `9585f3c`
+  at01:02:57Z. No open PR depended on P5 before its remote branch was deleted.
+- Both main merges are composed into the extension branch without changing its
+  already qualified tree. The P1–P6 PRs are now merged; actual shared A/B
+  retention/client/disable/continuity and composed-extension CI remain in progress.
