@@ -18,7 +18,9 @@ bound authoring as `recipes.inspect/3`, `models.publish/2`,
 Current inspect/edit authority, pinned root identities, no-follow bounded reads,
 exact source/manifest integrity and immutable capture owners remain authoritative.
 The selected HTTP header alone permits the new boundary. Earlier selected
-versions retain owner-only project-v2 access. Unselected owner browser routes,
+versions retain owner-only fresh project-v2 inspection/capture. Verified prior
+Model publication and exact Trial-receipt replay preserve baseline current
+authority and perform no new capture. Unselected owner browser routes,
 legacy project-v1 shapes and legacy discovery are unchanged. Study creation,
 budgets, continuation/approval and capture reconciliation remain owner-only.
 No execution, grant, reservation or admission operation changes.
@@ -57,3 +59,12 @@ Existing owner regression: **42passed,1explicit private actual-runtime skip**
 and `test_extension_bindings.BoundExtensionRecipeTests`). No claim is made that
 the skipped hardware/runtime qualification ran. Historical CPU source/receipts
 and frozen E2/E4 branches remain unchanged.
+
+Independent source review caught and corrected a legacy-version revision race:
+trusted boundary callbacks now authorize the exact chosen draft/graph before new
+capture, while native prior-publication/receipt lookup retains baseline replay.
+A complete caller audit also preserves the old fresh-source boundary on
+`graphs.validate/1` and `runs.submit_external/1`; neither gains a new version.
+Their refused v2 calls are tested before temporary capture or Run mutation.
+Existing complete-Study composition/grant requirements remain mandatory.
+Official MCP test sessions use an explicit30second protocol read deadline.

@@ -1057,6 +1057,8 @@ def make_handler(dataset, observer=None):
                         if parts[2] == 'clone':
                             return self.reply(dataset.pipelines.clone(parts[1], body), 201)
                         if parts[2] == 'validate':
+                            projects.closed(body, ('revision',))
+                            self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.validate',2)
                             return self.reply(dataset.pipelines.validate(parts[1], body))
                         if parts[2] == 'preflight-external':
                             projects.closed(body, ('revision',))
@@ -1067,7 +1069,10 @@ def make_handler(dataset, observer=None):
                     if parts == ['runs', 'approve-external']:
                         return self.reply(dataset.runs.approve_external(body), 201)
                     if parts == ['runs', 'submit-external']:
-                        return self.reply(dataset.runs.submit_external(body), 201)
+                        def graph_guard(graph):
+                            self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                'runs.submit_external',2,graph=graph)
+                        return self.reply(dataset.runs.submit_external(body,_graph_guard=graph_guard), 201)
                     if len(parts) == 3 and parts[0] == 'runs':
                         if parts[2] == 'model-evidence':
                             agent_api.require_selection(self._contract_selection,'runs.model_evidence')

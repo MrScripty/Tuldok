@@ -237,8 +237,13 @@ source for ordinary scoped agents: `recipes.inspect/3`,
 `graphs.create_external/2`, `graphs.preflight_external/2`, `models.publish/2`
 and `studies.prepare_trial/2`. The trusted selected contract header controls this
 boundary; request-body flags cannot opt into it. Earlier selected versions retain
-their owner-only project-v2 behavior and exact contract hashes. Project-v1
-behavior is unchanged. Source capture reconciliation and orphan adoption remain
+their owner-only project-v2 fresh inspection/capture behavior and exact contract
+hashes. Verified prior Model publications and exact actor/key/body Trial receipts
+retain their existing current-authorized replay semantics, without new capture.
+Legacy `graphs.validate/1` and `runs.submit_external/1` retain owner-only fresh
+project-v2 source access; new authoring uses preflight/2 and unchanged Study
+admission instead. Project-v1 behavior is unchanged.
+Source capture reconciliation and orphan adoption remain
 owner-only even with the new publication version.
 
 An agent may inspect declared parameters, create/publish a captured Model, create

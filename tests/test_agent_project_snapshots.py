@@ -1,5 +1,6 @@
 """Negotiated ordinary-agent snapshot authoring; real owners, no executed Run."""
 import copy
+from datetime import timedelta
 from http.server import ThreadingHTTPServer
 import importlib.util
 import json
@@ -191,6 +192,14 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
         self.assertEqual(self.counts(), before)
         graph = self.call('graphs.create_external', self.graph_body(), 201)
         before = self.counts()
+        stage_before = sorted(self.dataset.runs.path.glob('.external-*'))
+        status, result = self.http('graphs.validate',
+            {'graph_id':graph['id'],'revision':graph['revision']},version=1)
+        self.assertEqual((status,result['code']),(403,'forbidden'))
+        status, result = self.http('runs.submit_external',{'request_key':uuid.uuid4().hex,
+            'graph_id':graph['id'],'graph_revision':graph['revision'],'expected_digest':'a'*64},version=1)
+        self.assertEqual((status,result['code']),(403,'forbidden'))
+        self.assertEqual(sorted(self.dataset.runs.path.glob('.external-*')),stage_before)
         status, result = self.http('graphs.preflight_external',
             {'graph_id': graph['id'], 'revision': graph['revision']}, version=1)
         self.assertEqual((status, result['code']), (403, 'forbidden'))
@@ -253,6 +262,9 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
                 self.assertEqual((status,result['code']),(409,'stale'))
                 self.assertEqual(get.call_count,1)
             for name,arguments in (
+                    ('graphs.validate',{'graph_id':graph['id'],'revision':2}),
+                    ('runs.submit_external',{'request_key':uuid.uuid4().hex,'graph_id':graph['id'],
+                        'graph_revision':2,'expected_digest':'a'*64}),
                     ('graphs.preflight_external',{'graph_id':graph['id'],'revision':2}),
                     ('studies.prepare_trial',{'study_id':study['id'],'request_key':uuid.uuid4().hex,
                         'revision':study['revision'],'graph_id':graph['id'],'graph_revision':2,'replicate':0,
@@ -423,7 +435,7 @@ class SnapshotTransportTests(unittest.TestCase):
                 args=[str(self.root/'mcp_stdio.py'),'--config',str(self.config)],
                 cwd=str(self.root),env=self.environment)
             async with stdio_client(params) as (read,write):
-                async with ClientSession(read,write) as session:
+                async with ClientSession(read,write,read_timeout_seconds=timedelta(seconds=30)) as session:
                     await session.initialize()
                     tools = {tool.name for tool in (await session.list_tools()).tools}
                     self.assertTrue({'project_snapshots_list','project_snapshots_open','project_snapshots_get'} <= tools)
