@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/workspace/shared/extension-ab-b-02/reviewed-oracle/cold_oracle.py", line 148, in <module>
+    result = qualify(arguments.fixture, arguments.artifacts, arguments.expected_context_sha256)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/shared/extension-ab-b-02/reviewed-oracle/cold_oracle.py", line 91, in qualify
+    frozen = json.loads((Path(__file__).parent/'oracle-freeze.json').read_text())
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/shared/extension-ab-b-02/reviewed-oracle/oracle-freeze.json'
