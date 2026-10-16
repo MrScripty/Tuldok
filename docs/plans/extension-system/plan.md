@@ -2,15 +2,27 @@
 
 **Plan status:** `Verifying`
 
-**Current phase:** E3/E4 — independent B and retained compatibility qualification
+**Current phase:** E2–E4 — actual A/B qualification and final retention integration
 
-**Next slice:** Finish independent B/current-client and shared A/B retention gates with the integration lead; preserve the completed canonical A evidence and exact runtime provenance.
+**Next slice:** Finish main canonical A packaging, real A/B native inspection and stopped shared A/B restore/disable/continuity qualification; complete exact-head CI and serial integration.
 
 **Acceptance status:** `partial`
 
 **Execution ledger:** [execution-ledger.md](execution-ledger.md)
 
 **Issues:** [issues.md](issues.md)
+
+[Current implementation and actual evidence](../end-to-end-model-development/reports/product-implementation-status.md)
+supersede the older prerequisite/status observations retained below. P2, P3 and
+P6 are merged; P4/P5 and the composed extension branch are verifying. Canonical
+A and independent B have completed actual CPU SDK/cold numerical qualification.
+Full X3/X5 remain pending their final retention/continuity execution; no design
+or fixture result closes those gates.
+
+The separate 0b canonical A package/fresh-inference and
+[A-only stopped retention](reports/e4-canonical-a-retention-qualification.md)
+witnesses have passed. Their exact source/runtime/host provenance remains
+distinct from the lead's 50502 common A/B catalog and pending shared matrix.
 
 ## Objective
 

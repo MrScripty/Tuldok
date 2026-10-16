@@ -90,8 +90,8 @@
 - PR80's independent B consumer is frozen at `311431e`, with 23 synthetic
   validator-only cases. The integration lead owns its actual B bundle, separate
   50502 A/B catalog, native raw/corrected-stage and unrelated-task checks.
-- PR81 separately exercises A-only stopped backup/restore, absent roots,
-  current-access revocation and cold inspection. It cannot close shared A/B
+- PR81 separately passed [A-only stopped backup/restore](reports/e4-canonical-a-retention-qualification.md),
+  absent roots, current-access revocation and cold inspection. It cannot close shared A/B
   upgrade/disable/removal or the full supported-client matrix. Exact-head CI,
   independent review and lead acceptance remain integration/merge gates.
 - Actual CPU/runtime/pressure and authored scalar-A producer preparation is retained

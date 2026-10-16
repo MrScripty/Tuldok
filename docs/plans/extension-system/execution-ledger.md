@@ -235,3 +235,25 @@ started/accepted by creating this documentation.
   witness. Replaced git-history lookup with an exact hash-checked historical host
   fixture; same exec/counterexample assertions. Actual9HTTP and history-free copy
   witness pass; independent exact-byte review clear. Shared workflow/checks unchanged.
+
+## 2026-10-16 — actual canonical A and independent B integration
+
+- Later user authorization selects continuous implementation and qualification;
+  the replacement product lead owns serial integration and merges. P2/P3/P6
+  are now merged; P4/P5 exact-head CI remains in progress. Historical E1 and
+  preparation observations above retain their original scope and date.
+- Composed exact project-v2 contribution binding, declarative human configuration,
+  canonical Release inputs, schema3 generic field evidence, captured context,
+  SDK conformance and canonical inference closure are implemented. Main canonical
+  A Run0ca8523fe44f42bea520e941f79b839b and independent B
+  Run3ceea12b26754accb2c65f3a0aa5038f completed normal finite CPU admission and
+  independent numerical/cold-artifact verification. The B host's149 application
+  files remain unchanged; the author source/package changes its required inputs
+  and producing stages. No source Run or SDK admission was retried for verification.
+- A separate0b-runtime source/native/package/fresh-consumer qualification is
+  committed with exact provenance. Main50502 canonical A packaging is executing
+  on its original finite Study; A/B browser and full stopped shared restore,
+  current authority, restored-only disable/remove, wrong-material refusal and
+  unrelated workflow checks follow serial catalog leases. X3/X5 remain pending.
+- [Product implementation record](../end-to-end-model-development/reports/product-implementation-status.md)
+  records merge state, actual evidence, remaining gates and explicit limits.
