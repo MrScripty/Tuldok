@@ -1,0 +1,288 @@
+{
+  "format": "native_authored_ab_actual_browser_v1",
+  "source_commit": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+  "reviewed_harness_commit": "54d4e6a",
+  "browser": "Chrome/151.0.7922.173",
+  "application_freeze": {
+    "path": "/workspace/shared/extension-b-application-freeze-02.json",
+    "sha256": "7ff4b102389f488fcca66fdc8b3329a3931417563841c091e787f3493e59b3da",
+    "files": 149,
+    "all_matched_before_and_after": true
+  },
+  "authors": [
+    {
+      "author": "a",
+      "run_id": "0ca8523fe44f42bea520e941f79b839b",
+      "receipt_path": "/workspace/shared/extension-ab-native-browser-results-02/a/external-field-evidence/run-MV7AhM/receipt.json",
+      "receipt_sha256": "f01b42d07f2f7375d83d101c8551500fe9fc24e02c88c50333101f04b268ba24",
+      "declared_fields": [
+        {
+          "field_id": "raw",
+          "stage": "train"
+        }
+      ],
+      "checkpoint_sha256s": [
+        "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+        "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+        "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+        "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f"
+      ],
+      "queries": 12,
+      "captures": [
+        {
+          "file": "linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "680f3dd4a5f1ea8582904b0234569b4e7fe980c9ff6106bf6aa06f29b474086c",
+          "bytes": 116312
+        },
+        {
+          "file": "linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "475b3134d7c3f5e0962deea2870099f65069816e88f6cacac72b0c4c48a36942",
+          "bytes": 54001
+        },
+        {
+          "file": "dark-linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "df2f58011308ac2041dffcbdef6195152d173f39a8e19a89562037e48a311f5c",
+          "bytes": 118335
+        },
+        {
+          "file": "dark-linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "65cdee345545002bb69ae0f730f39c3bf8f306d4e07a90dfdcd311002d2a1800",
+          "bytes": 55579
+        },
+        {
+          "file": "declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "575be04709d07dd4e17780be1f78077f274fce2f7b5d9f1495ce63fd4342034f",
+          "bytes": 102190
+        },
+        {
+          "file": "declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "e5256b0ef398194e3f6f571aea2800b5e50dd8277960d06df3859b8337a1e891",
+          "bytes": 50507
+        },
+        {
+          "file": "dark-declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "3878b71c0e30a098f9f12e2e1e45319398b33d57c0f6115d1904b3a9924fc2d8",
+          "bytes": 103567
+        },
+        {
+          "file": "dark-declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "c4f53980e7e2458e72453d820fe3ffa0d6db14ef3bcdfac31ccc1f85e91c1874",
+          "bytes": 50765
+        }
+      ],
+      "dark_checks": [
+        {
+          "width": 1440,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        },
+        {
+          "width": 390,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        }
+      ]
+    },
+    {
+      "author": "b",
+      "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+      "receipt_path": "/workspace/shared/extension-ab-native-browser-results-02/b/external-field-evidence/run-lB15A6/receipt.json",
+      "receipt_sha256": "a024a0a1b2a55d4e02628a8928f5dace0e604ae8f81a704a602e903e78ed7c1f",
+      "declared_fields": [
+        {
+          "field_id": "raw",
+          "stage": "raw_inference"
+        },
+        {
+          "field_id": "corrected",
+          "stage": "boundary_enforcement"
+        }
+      ],
+      "checkpoint_sha256s": [
+        "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+        "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681"
+      ],
+      "queries": 12,
+      "captures": [
+        {
+          "file": "linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "c49deb4ebc49c52ab6d55f2569bee8d90eb08d4f917d132f0bb36627a1e3a596",
+          "bytes": 112270
+        },
+        {
+          "file": "linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "507610c71e819de482149d1b5392869df5a1d6aadf049e08c7a505114e65150d",
+          "bytes": 56208
+        },
+        {
+          "file": "dark-linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "8a9f5c3a6c9fcae82ea6e7c01bed0f540c9065f485f8e7c8b031729997b0a1f4",
+          "bytes": 114370
+        },
+        {
+          "file": "dark-linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "d1766a6cb21bddd3e0a7c61fbda4fd52425ff5a274ca247e68480a85ff0d2c69",
+          "bytes": 57866
+        },
+        {
+          "file": "declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "ec9f9b3142f6005536daf6eac3b42c019ae7c8927dfba7ae123eb5610c35e263",
+          "bytes": 104329
+        },
+        {
+          "file": "declared-field-1-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "5d53d8fae2e70c07a5136c7ada085b466f8643383529e1d1ebf067a488cdbef8",
+          "bytes": 99122
+        },
+        {
+          "file": "declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "3242152857fbc022fcaed136700a37bd892796595d260dc01d874887e52f544d",
+          "bytes": 52388
+        },
+        {
+          "file": "declared-field-1-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "0f7cdfc488b6c28732195f4276c3a5d8f8cf50be06a3997c64736d6f197bdc8b",
+          "bytes": 48461
+        },
+        {
+          "file": "dark-declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "5e7b91cab2028a171e1f98e993aab4335fed253d79f95808c093611af77c3af3",
+          "bytes": 105409
+        },
+        {
+          "file": "dark-declared-field-1-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "2663d1b1159297434c25513357ec93f97fe5e3a90e5829602e94dd673d98e54c",
+          "bytes": 100568
+        },
+        {
+          "file": "dark-declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "48e2964fdaaa7c82fa1f585ac9a8c30eaff17330272c0ed0b523b4a3bd911186",
+          "bytes": 52633
+        },
+        {
+          "file": "dark-declared-field-1-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "sha256": "54064319e1d4faac2e26459bc260386ee9eded79683f07dba1bbc2f4f92fd9db",
+          "bytes": 48615
+        }
+      ],
+      "dark_checks": [
+        {
+          "width": 1440,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        },
+        {
+          "width": 390,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        }
+      ]
+    }
+  ],
+  "log": {
+    "path": "/tmp/native-ab-browser-02.log",
+    "sha256": "34d3aa0b2a5723ed9937ebdf24b612860d77b16705e5fe7fd070e0e5c1cb6cc2"
+  },
+  "producer_execution": false,
+  "new_admission": false,
+  "run_ids_unchanged": true,
+  "access_test": "403 transport substitution only; real backend authority tests are separate",
+  "quality_or_physical_acceptance_claim": false,
+  "catalog_lease": "Released after both browser services and all harness children stopped",
+  "remaining": [
+    "Restored-catalog native disabled/removed selection refusals and retained/unrelated workflow continuity",
+    "Continuous saved-graph keyboard focus boundary; field selectors are independently exercised without per-key focus resets"
+  ]
+}

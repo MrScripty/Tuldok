@@ -1,0 +1,367 @@
+{
+  "source_commit": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+  "source_sha256": {
+    "static/workspace-service.js": "a03e9d4c216bb7ff6719eef4db889a367ec02604cc427b228813f7a3ca398d04",
+    "static/workspace-real.js": "9d7f59f928298d9fd1e851f7823b265eccee3c6a499de8a61f71d838d1a7eb77",
+    "static/workspaces.css": "9f3a91ee6138b3ce958130c55484b7fc5d9f57da68662c0bd3dd786d18c0ad10",
+    "tests/browser_field_evidence.cjs": "7793d7be4d67147b6365d372b024f42607053796c7ac4f48fb6e98472a516973"
+  },
+  "command": "node tests/browser_field_evidence.cjs",
+  "catalog_path": "/workspace/shared/extension-ab-canonical-catalog-02",
+  "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+  "source_receipt": "/workspace/shared/extension-ab-native-browser-inputs-02/b-source.json",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "H3 real retained checkpoints, fixed members, declared stages and all orthogonal slices drive exact numeric probes with shared display and physical scales",
+    "Native keyboard selectors inspect every exact retained field/stage at 1440/390 in light/dark; separate raw and corrected target probes are read, never derived",
+    "H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest"
+  ],
+  "captures": [
+    {
+      "file": "linked-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "declared-field-0-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "declared-field-1-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "declared-field-0-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "declared-field-1-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-declared-field-0-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-declared-field-1-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-declared-field-0-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-declared-field-1-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    }
+  ],
+  "dark_checks": [
+    {
+      "width": 1440,
+      "preference": true,
+      "focus": "field-member",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "color": "rgb(229, 237, 248)"
+    },
+    {
+      "width": 390,
+      "preference": true,
+      "focus": "field-member",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "color": "rgb(229, 237, 248)"
+    }
+  ],
+  "exact_requests": [
+    {
+      "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+      "member_ordinal": 0,
+      "field_id": "corrected",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+      "member_ordinal": 0,
+      "field_id": "corrected",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+      "member_ordinal": 0,
+      "field_id": "corrected",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+      "member_ordinal": 0,
+      "field_id": "corrected",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+      "member_ordinal": 0,
+      "field_id": "corrected",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+      "member_ordinal": 0,
+      "field_id": "corrected",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    }
+  ],
+  "declared_fields": [
+    {
+      "field_id": "raw",
+      "stage": "raw_inference"
+    },
+    {
+      "field_id": "corrected",
+      "stage": "boundary_enforcement"
+    }
+  ],
+  "expected_fields": [
+    {
+      "field_id": "raw",
+      "stage": "raw_inference"
+    },
+    {
+      "field_id": "corrected",
+      "stage": "boundary_enforcement"
+    }
+  ],
+  "declared_field_captures": [
+    {
+      "file": "declared-field-0-1440.jpg",
+      "field_id": "raw",
+      "stage": "raw_inference",
+      "width": 1440,
+      "dark": false,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "declared-field-1-1440.jpg",
+      "field_id": "corrected",
+      "stage": "boundary_enforcement",
+      "width": 1440,
+      "dark": false,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "corrected",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "declared-field-0-390.jpg",
+      "field_id": "raw",
+      "stage": "raw_inference",
+      "width": 390,
+      "dark": false,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "declared-field-1-390.jpg",
+      "field_id": "corrected",
+      "stage": "boundary_enforcement",
+      "width": 390,
+      "dark": false,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "corrected",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "dark-declared-field-0-1440.jpg",
+      "field_id": "raw",
+      "stage": "raw_inference",
+      "width": 1440,
+      "dark": true,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "dark-declared-field-1-1440.jpg",
+      "field_id": "corrected",
+      "stage": "boundary_enforcement",
+      "width": 1440,
+      "dark": true,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "corrected",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "dark-declared-field-0-390.jpg",
+      "field_id": "raw",
+      "stage": "raw_inference",
+      "width": 390,
+      "dark": true,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "dark-declared-field-1-390.jpg",
+      "field_id": "corrected",
+      "stage": "boundary_enforcement",
+      "width": 390,
+      "dark": true,
+      "selectors": {
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "member_ordinal": 0,
+        "field_id": "corrected",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    }
+  ],
+  "producer_execution": false,
+  "existing_actual_run": true,
+  "quality_claim": false,
+  "access_projection_test": "403 transport substitution; backend tests own actual current authority enforcement"
+}
