@@ -663,12 +663,19 @@
   "graphs.save": "da60657d6c3298db8b9bbdfc6d30577125c8a6310573cee5c2feefa3a67e3564",
   "studies.select_candidate": "940d670ae6e4630572d1c5cdeda1cc658a7b73587bedd277af137b77dac3e582",
   "studies.candidate": "d02dda330ac41ef05a1ff4e4d4f9ed04d5a60b24a444a28f1af9904791977799",
+  "studies.candidates": "84eacef1aacffdfcba18ce037f013034ac959f23a617c8b443247c72f89fcfd2",
   "studies.approve": "5ed2d9db58231f14c164a76f1c64157260902d2cd86f5e86433f29fc00f4f408",
   "studies.prepare_package": "6eea96340355a085a4709c180f3ae61bed063a344c3e4ad8b876c53f36ff6f14",
   "studies.prepare_verifier": "cde685bd4e93bb749055bb291501c67520f97dc514b2a4e4c3ba2cd1a10a6528",
   "studies.package_state": "4ad0fd6c580c794ed01a8f94fc9f0ee1e07b09578be940bc02be3581f44449bd"
 } /* MODEL_CONTRACTS_END */;
   window.WorkspaceModelContracts = contracts;
+  // Shared read-only projection. Only the owner response establishes package state.
+  window.WorkspacePackageStateHTML = function (state) {
+    if(!state)return '<p>Package state has not been loaded.</p>';
+    const packages=state.packages||[],verified=state.state==='fresh_verified';
+    return `<div class="package-state-summary"><p><strong>Package: ${packages.length?'complete':'not exported'}.</strong> Fresh inference: ${verified?'verified in a separate consumer Run':'not verified'}.</p>${packages.map(item=>`<p><a href="/api/workspace/runs/${enc(item.run_id)}/artifacts/package.zip" download>Download verified package</a> · ${esc(item.bytes.toLocaleString())} bytes · <span class="field-hash">SHA256 ${esc(item.sha256)}</span><br>Completed package Run <span class="field-hash">${esc(item.run_id)}</span></p>`).join('')}${verified?'<p>Fresh inference reproduced the retained fixed probes. The candidate remains diagnostic.</p>':''}${(state.verifications||[]).map(item=>`<p>Separate fresh verifier Run <span class="field-hash">${esc(item.run_id)}</span> · package <span class="field-hash">${esc(item.receipt.package_sha256)}</span></p>`).join('')}${state.verifications?.length?`<details><summary>Fresh consumer verification receipts</summary><pre>${esc(JSON.stringify(state.verifications,null,2))}</pre></details>`:''}</div>`;
+  };
   window.WorkspaceModel = function ({api, announce, openRun, openRecord, getIntent, getView}) {
     let definition = null, releases = [], studies = [], root = null, busy = false,
       message = '', failed = false, evidence = null, evidenceError = '', comparison = null,
@@ -840,11 +847,11 @@
     }
     function exportHTML() {
       if(!contracts['studies.package_state'])return '<p>Package preparation is unavailable in this installed interface. No package or fresh verification is claimed.</p>';
-      const packages=packageState?.packages||[],verified=packageState?.state==='fresh_verified';
-      return `<section class="model-export"><h4>Package and fresh inference</h4>${packageError?`<p class="error-panel" role="alert">Export state unavailable: ${esc(packageError)}</p>`:packageState?`<p><strong>Package: ${packages.length?'complete':'not exported'}.</strong> Fresh inference: ${verified?'verified in a separate consumer Run':'not verified'}.</p>${packages.map(item=>`<p><a href="${esc(item.url)}" download>Download verified package</a> · ${esc(item.bytes.toLocaleString())} bytes · SHA ${esc(item.sha256.slice(0,12))}</p>`).join('')}${verified?'<p>Fresh inference reproduced the retained fixed probes. The candidate remains diagnostic.</p>':''}`:'<p>Export state has not been loaded.</p>'}
+      const packages=packageState?.packages||[];
+      return `<section class="model-export"><h4>Package and fresh inference</h4>${packageError?`<p class="error-panel" role="alert">Export state unavailable: ${esc(packageError)}</p>`:window.WorkspacePackageStateHTML(packageState)}
       <button id="model-export-refresh" ${exportBusy?'disabled':''}>Refresh export state</button>
       ${!owner()?'<p>Preparing and approving these local operations requires the owner session.</p>':!exportSetup?`<button id="model-export-setup" ${exportBusy?'disabled':''}>Load export setup</button>`:!exportSetup.roots.length?'<p>No project root is configured for this local server. Configure an allowed project root before preparing export.</p>':!exportJob?`<form id="model-export-form"><fieldset ${exportBusy?'disabled':''}><legend>Prepare one finite operation</legend><div class="model-fields"><label>Operation<select id="model-export-mode"><option value="package" ${exportDraft.mode==='package'?'selected':''}>Export package</option><option value="verifier" ${exportDraft.mode==='verifier'?'selected':''} ${!packages.length?'disabled':''}>Verify fresh inference</option></select></label><label>Configured root<select id="model-export-root">${exportSetup.roots.map(alias=>`<option value="${esc(alias)}" ${exportDraft.root===alias?'selected':''}>${esc(alias)}</option>`).join('')}</select></label><label>New directory<input id="model-export-directory" required maxlength="120" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,119}" value="${esc(exportDraft.directory)}"></label><label>Exact CPU runtime snapshot SHA256<input id="model-export-runtime" required minlength="64" maxlength="64" pattern="[a-f0-9]{64}" value="${esc(exportDraft.runtime)}"></label>${packages.length?`<label>Package for fresh verification<select id="model-export-package">${packages.map(item=>`<option value="${esc(item.run_id)}" ${item.run_id===exportDraft.packageRun?'selected':''}>${esc(item.sha256.slice(0,12))} · Run ${esc(item.run_id.slice(0,12))}</option>`).join('')}</select></label>`:''}</div><p class="footnote">Use an existing captured CPU runtime. Preparation writes a new operation project and immutable trial; approval and execution remain separate actions.</p><button id="model-export-prepare">Prepare operation</button></fieldset></form>`:`<div class="model-export-prepared"><h5>${exportJob.mode==='package'?'Package':'Fresh verifier'} operation</h5>${exportJob.prepared?`<p>Prepared trial ${esc(exportJob.prepared.trial.id.slice(0,12))}</p><p class="model-hash">Exact material SHA256 ${esc(exportJob.prepared.trial.material.sha256)}</p><details><summary>Inspect prepared operation</summary><pre>${esc(JSON.stringify(exportJob.prepared,null,2))}</pre></details>${exportJob.run?`<p>Admitted Run ${esc(exportJob.run.id.slice(0,12))}</p><button id="model-export-open">Inspect operation Run →</button><button id="model-export-next" ${exportBusy?'disabled':''}>Prepare another operation</button>`:exportJob.approval?`<p>Exact one-use approval ${esc(exportJob.approval.id.slice(0,12))}</p><button id="model-export-start" class="primary" ${exportBusy?'disabled':''}>${exportJob.admission?'Reconcile exact admission':'Start approved operation'}</button>`:`<button id="model-export-approve" ${exportBusy||exportJob.approvalUnknown?'disabled':''}>Approve this exact operation</button>${exportJob.approvalUnknown?'<p class="error-panel">Approval acknowledgement is unresolved. Inspect execution grants before issuing another approval.</p>':''}`}`:`${exportJob.preparationUnknown?'<p>The original preparation acknowledgement is unresolved. Reconcile the same request before changing inputs.</p>':''}<button id="model-export-resume" ${exportBusy?'disabled':''}>Reconcile operation preparation</button>${exportJob.failureKnown&&!exportJob.preparationUnknown?'<button id="model-export-revise">Revise preparation inputs</button>':''}`}</div>`}
-      ${packageState?.verifications?.length?`<details><summary>Fresh consumer verification receipts</summary><pre>${esc(JSON.stringify(packageState.verifications,null,2))}</pre></details>`:''}</section>`;
+      </section>`;
     }
     function saveExport(job) {history.replaceState({...history.state,modelExports:{...history.state?.modelExports,[job.candidate_id]:job}},'');}
     function bindExport(node,run,rerender,current) {
@@ -953,6 +960,63 @@
         finally{if(compareBusy===token){compareBusy=false;if(current())rerender();}}
       });
     }
+  };
+
+  // Passive external evidence inspection shares the existing package-state owner.
+  // Candidate discovery is an authorized Run-scoped query, never artifact inference.
+  window.WorkspaceCandidatePackageEvidence = function ({api}) {
+    let generation=0,intent=0,runId=null,busy=false,error='',refs=[],states=new Map(),selected='',next=null;
+    const identity=()=>window.TuldokAuth?.identity()?.credential_id;
+    const id=value=>typeof value==='string'&&/^[a-f0-9]{32}$/.test(value);
+    function clear(){refs=[];states=new Map();selected='';next=null;error='';}
+    function validState(value,ref,run){
+      return value&&['selected','package_complete','fresh_verified'].includes(value.state)&&
+        value.candidate?.ref?.id===ref.id&&value.candidate.ref.sha256===ref.sha256&&
+        value.candidate.ref.catalog_id===ref.catalog_id&&value.candidate.run_id===run.id&&
+        value.candidate.candidate?.run_id===run.id&&value.candidate.candidate.id===ref.id&&
+        Array.isArray(value.packages)&&value.packages.length<=100&&Array.isArray(value.verifications)&&value.verifications.length<=100;
+    }
+    async function load(run,current,append=false){
+      if(!current())return;
+      const own=++intent,version=generation,credential=identity();runId=run?.id||null;
+      const valid=()=>current()&&own===intent&&version===generation&&credential===identity()&&runId===run?.id;
+      const cursor=append?next:null;
+      if(!append)clear();busy=true;
+      if(!run||run.state!=='completed'){busy=false;return;}
+      try{
+        const page=await api('runs/'+enc(run.id)+'/candidates?limit=20'+(cursor?'&cursor='+enc(cursor):''));if(!valid())return;
+        if(page.run_id!==run.id||!Array.isArray(page.candidates)||page.candidates.length>20||
+          page.candidates.some(ref=>ref.kind!=='candidate'||!id(ref.id)||!id(ref.catalog_id)||typeof ref.sha256!=='string'||!/^[a-f0-9]{64}$/.test(ref.sha256)||run.dataset_id&&ref.catalog_id!==run.dataset_id)||
+          page.next_cursor!==null&&!id(page.next_cursor))throw Error('The retained candidate index does not match this Run.');
+        if(refs.length+page.candidates.length>100)throw Error('Inspect at most 100 retained candidates in this view.');
+        for(const ref of page.candidates){
+          if(refs.some(item=>item.id===ref.id))throw Error('The retained candidate index repeated an identity.');
+          const value=await api('candidates/'+enc(ref.id)+'/package-state');if(!valid())return;
+          if(!validState(value,ref,run))throw Error('Package evidence does not belong to this exact source Run and candidate.');
+          refs.push(ref);states.set(ref.id,value);
+        }
+        next=page.next_cursor;
+        const rank={selected:0,package_complete:1,fresh_verified:2};
+        if(!states.has(selected))selected=[...refs].sort((a,b)=>rank[states.get(b.id).state]-rank[states.get(a.id).state]||a.id.localeCompare(b.id))[0]?.id||'';
+      }catch(problem){if(valid()){clear();error=problem.message;}}
+      finally{if(valid())busy=false;}
+    }
+    return {
+      invalidate(){generation++;intent++;runId=null;busy=false;clear();},
+      load,
+      html(run){
+        if(!run||run.id!==runId)return '';
+        const state=states.get(selected),candidate=state?.candidate;
+        return `<section class="model-evidence external-package-evidence" aria-labelledby="external-package-heading"><h3 id="external-package-heading">Retained candidate and inference evidence</h3><p>Current authorized records for this source Run. Package completeness and fresh inference verification are separate from field interpretation and candidate diagnostics.</p>${busy?'<p role="status">Loading exact retained candidate and package receipts…</p>':error?`<p class="error-panel" role="alert">Package evidence unavailable: ${esc(error)}</p><p>No cached package or verifier result is shown.</p>`:!candidate?'<p class="external-package-empty">No retained candidate package evidence is available for this Run. Package: not established. Fresh inference: not verified. Field plots do not establish export support.</p>':`<label>Retained candidate<select id="external-package-candidate">${refs.map(ref=>`<option value="${esc(ref.id)}" ${ref.id===selected?'selected':''}>${esc(ref.id.slice(0,12))} · ${esc(states.get(ref.id).state)}</option>`).join('')}</select></label><p>Diagnostic candidate <span class="field-hash">${esc(candidate.ref.id)}</span><br>Source Run <span class="field-hash">${esc(candidate.run_id)}</span><br>Checkpoint <span class="field-hash">${esc(candidate.checkpoint.sha256)}</span></p><p>${esc(candidate.candidate.limitations.join(' '))}</p>${window.WorkspacePackageStateHTML(state)}<div class="actions">${state.packages.map(item=>`<button type="button" data-package-open-run="${esc(item.run_id)}">Open package Run</button>`).join('')}${state.verifications.map(item=>`<button type="button" data-package-open-run="${esc(item.run_id)}">Open fresh verifier Run</button>`).join('')}</div>`}<div class="actions"><button id="external-package-refresh" type="button" aria-disabled="${busy}" aria-busy="${busy}">Refresh retained package evidence</button>${next?`<button id="external-package-more" type="button" aria-disabled="${busy}">Load more retained candidates</button>`:''}</div><p class="footnote">Inspection only. This panel cannot build a package, approve material or admit a Run. No model-quality or physical acceptance is inferred.</p></section>`;
+      },
+      bind(root,run,rerender,current,openRun){
+        async function refresh(append){if(busy||!current()||run?.id!==runId)return;const task=load(run,current,append);rerender();await task;if(current())rerender();}
+        root.querySelector('#external-package-refresh')?.addEventListener('click',()=>refresh(false));
+        root.querySelector('#external-package-more')?.addEventListener('click',()=>refresh(true));
+        root.querySelector('#external-package-candidate')?.addEventListener('change',event=>{if(busy||!current()||!states.has(event.target.value))return;selected=event.target.value;rerender();});
+        for(const button of root.querySelectorAll('[data-package-open-run]'))button.addEventListener('click',()=>{if(current()&&!busy)openRun(button.dataset.packageOpenRun);});
+      },
+    };
   };
 })();
 

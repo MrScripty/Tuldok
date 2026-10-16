@@ -22,6 +22,7 @@ const errors = [],
   posts = [],
   captures = [],
   checks = [], compareRequests = [];
+let packageInspection=null;
 let ws, send, evaluate, serverErrors = "";
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function until(fn, message = "Timed out") {
@@ -248,6 +249,8 @@ function launch(command, args, options) {
     if(name.includes("evidence"))await evaluate('document.querySelector(".model-evidence").scrollIntoView({block:"start"})');
     if(name.includes('field'))await evaluate('document.querySelector(".field-evidence")?.scrollIntoView({block:"start"})');
     if(name.includes('declared-field'))await evaluate('document.querySelector(".field-pair")?.scrollIntoView({block:"start"})');
+    if(name.includes('external-package'))await evaluate('document.querySelector(".external-package-evidence")?.scrollIntoView({block:"start"})');
+    if(name.includes('external-package-summary'))await evaluate('document.querySelector(".external-package-evidence .package-state-summary")?.scrollIntoView({block:"start"})');
     if (name.startsWith("catalog"))
       await evaluate(
         'document.getElementById("catalog-frame").contentWindow.scrollTo(0,0)',
@@ -306,6 +309,39 @@ function launch(command, args, options) {
     assert.ok(expected.every(item=>item&&Object.keys(item).sort().join(',')==='field_id,stage'&&typeof item.field_id==='string'&&item.field_id&&typeof item.stage==='string'&&item.stage));
     const signature=items=>items.map(item=>JSON.stringify([item.field_id,item.stage])).sort();
     assert.deepEqual(signature(uniqueFields),signature(expected),'Actual retained field/stage identities differ from the reviewed source');
+  }
+  if(process.env.TULDOK_EXTERNAL_PACKAGE_RECEIPT){
+    const expectedPath=path.resolve(process.env.TULDOK_EXTERNAL_PACKAGE_RECEIPT),expected=JSON.parse(fs.readFileSync(expectedPath,'utf8'));
+    const candidatePin=await evaluate('WorkspaceModelContracts["studies.candidates"]');
+    const candidatesResponse=await fetch(base+'/api/workspace/runs/'+sourceRun+'/candidates?limit=20',{headers:{'Tuldok-Operation-Contract':'studies.candidates/1/'+candidatePin}});assert.equal(candidatesResponse.status,200);
+    const candidates=await candidatesResponse.json();assert.equal(candidates.run_id,sourceRun);
+    const matched=expected.source_run_id===sourceRun;
+    await until(()=>text('.external-package-evidence').then(value=>matched?value?.includes('Fresh inference: verified in a separate consumer Run'):value?.includes('No retained candidate package evidence')),'Owned retained package state did not load');
+    assert.equal(await evaluate('!!document.querySelector(".external-package-evidence #model-export-setup,.external-package-evidence #model-export-prepare,.external-package-evidence #model-export-approve,.external-package-evidence #model-export-start,.external-package-evidence form")'),false);
+    packageInspection={source_receipt:expectedPath,source_receipt_sha256:require('node:crypto').createHash('sha256').update(fs.readFileSync(expectedPath)).digest('hex'),run_id:sourceRun,candidate_index:candidates,passive:true,captures:[]};
+    if(matched){
+      assert.ok(candidates.candidates.some(ref=>ref.id===expected.candidate_id));
+      await nativeOption('#external-package-candidate',expected.candidate_id,false);
+      const statePin=await evaluate('WorkspaceModelContracts["studies.package_state"]'),response=await fetch(base+'/api/workspace/candidates/'+expected.candidate_id+'/package-state',{headers:{'Tuldok-Operation-Contract':'studies.package_state/1/'+statePin}});assert.equal(response.status,200);
+      const state=await response.json();assert.equal(state.state,'fresh_verified');assert.equal(state.candidate.run_id,sourceRun);assert.equal(state.candidate.ref.id,expected.candidate_id);
+      const item=state.packages.find(row=>row.run_id===expected.package_run_id),verification=state.verifications.find(row=>row.run_id===expected.verifier_run_id);assert.ok(item&&verification);assert.equal(item.bytes,expected.package_bytes);assert.equal(item.sha256,expected.package_sha256);assert.equal(verification.receipt.verified,true);assert.equal(verification.receipt.package_sha256,item.sha256);
+      const shown=await text('.external-package-evidence');for(const identity of [expected.candidate_id,expected.package_run_id,expected.verifier_run_id,expected.package_sha256])assert.ok(shown.includes(identity),identity);
+      const link=await evaluate(`document.querySelector('.external-package-evidence a[download]')?.href`);assert.equal(new URL(link).pathname,'/api/workspace/runs/'+item.run_id+'/artifacts/package.zip');
+      const download=await fetch(link);assert.equal(download.status,200);const raw=Buffer.from(await download.arrayBuffer());assert.equal(raw.length,item.bytes);assert.equal(require('node:crypto').createHash('sha256').update(raw).digest('hex'),item.sha256);
+      packageInspection.state=state;packageInspection.whole_zip={bytes:raw.length,sha256:item.sha256,url:new URL(link).pathname};
+    }else{
+      assert.ok(expected.B_study.reservations.some(row=>row.run_id===sourceRun),'The absent-package witness must select the actual independent B Run');assert.deepEqual(candidates.candidates,[]);
+      assert.match(await text('.external-package-evidence'),/Package: not established\. Fresh inference: not verified/);assert.equal(await evaluate('!!document.querySelector(".external-package-evidence a[download]")'),false);assert.equal(await evaluate('!!document.getElementById("field-prediction")'),true);packageInspection.state='no_retained_candidate';
+    }
+    for(const dark of [false,true]){
+      await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:dark?'dark':'light'}]});
+      for(const width of [1440,390]){
+        const name=(dark?'dark-':'')+'external-package-'+(matched?'verified':'absent')+'-'+width;await screenshot(name,width,width===390?844:900);packageInspection.captures.push({file:name+'.jpg',dark,width});
+        if(matched){const name=(dark?'dark-':'')+'external-package-summary-'+width;await screenshot(name,width,width===390?844:900);packageInspection.captures.push({file:name+'.jpg',dark,width});}
+      }
+    }
+    await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]});
+    check(matched?'Actual external A source interprets retained candidate/package completeness and separate fresh verifier; whole ZIP hash matches; no build/admission controls':'Actual independent B keeps raw/corrected fields while absent candidate/package/fresh verification remain explicit');
   }
   const exactRequests=[];
   for(const entry of index.checkpoint_index.entries){
@@ -445,7 +481,7 @@ function launch(command, args, options) {
   const finalRuns=await(await fetch(base+'/api/workspace/runs')).json();assert.deepEqual(finalRuns.map(item=>item.id).sort(),initialRuns.map(item=>item.id).sort(),'Field inspection must not admit or execute another Run');
   assert.ok(posts.every(url=>url.endsWith('/model-evidence')),'Read-only field inspection used a mutation route');
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_sha256:sourceHashes,command:'node tests/browser_field_evidence.cjs',catalog_path:data,run_id:sourceRun,source_receipt:path.resolve(process.env.TULDOK_FIELD_BROWSER_RECEIPT),browser:(await send('Browser.getVersion')).product,checks,captures,dark_checks:darkChecks,exact_requests:exactRequests,declared_fields:uniqueFields,expected_fields:sourceReceipt.expected_fields||null,declared_field_captures:declaredCaptures,restored_checks:restoredResults,retained_counts:beforeCounts,producer_execution:false,existing_actual_run:true,quality_claim:false,access_projection_test:'403 transport substitution; backend tests own actual current authority enforcement'},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_sha256:sourceHashes,command:'node tests/browser_field_evidence.cjs',catalog_path:data,project_roots:projectRoots,run_id:sourceRun,source_receipt:path.resolve(process.env.TULDOK_FIELD_BROWSER_RECEIPT),browser:(await send('Browser.getVersion')).product,checks,captures,dark_checks:darkChecks,exact_requests:exactRequests,declared_fields:uniqueFields,expected_fields:sourceReceipt.expected_fields||null,declared_field_captures:declaredCaptures,restored_checks:restoredResults,retained_counts:beforeCounts,package_inspection:packageInspection,producer_execution:false,existing_actual_run:true,quality_claim:false,access_projection_test:'403 transport substitution; backend tests own actual current authority enforcement'},null,2));
   console.log('PASS actual external field browser:',report);
 })().catch(async error=>{
   console.error(error);console.error('Application stderr:',serverErrors);

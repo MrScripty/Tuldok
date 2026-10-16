@@ -434,6 +434,11 @@ model_operation('studies.select_candidate','POST','/api/workspace/studies/{study
     scopes=('inspect','edit'),mutation=True)
 model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
     {'candidate_id':ID},output=_CANDIDATE_RESULT)
+model_operation('studies.candidates','GET','/api/workspace/runs/{run_id}/candidates',
+    {'run_id':ID,'cursor':ID,'limit':integer(1,20)},['run_id'],
+    output=obj({'run_id':ID,'candidates':array(material_ref('candidate'),20),
+                'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}))
+_OPERATIONS[-1]['query']=['cursor','limit']
 _PACKAGE_PREPARE_FIELDS={'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'candidate_id':ID,
     'root':REF,'directory':ARTIFACT,'runtime_snapshot_sha256':SHA}
 _PACKAGE_PREPARED_FIELDS={'state':const('prepared'),'candidate_id':ID,'trial':_TRIAL,
