@@ -237,7 +237,7 @@ class ModelDefinitions:
         return inspected['definition']['entrypoint'],sources
 
     @authorized('edit','models.publish')
-    def publish(self,model_id,body):
+    def publish(self,model_id,body,*,_source_guard=None):
         closed(body,('revision',),('reconcile_capture',));natural(body['revision'],'Model revision',1)
         reconcile=body.get('reconcile_capture',False)
         if type(reconcile) is not bool:raise WorkbenchError('Capture reconciliation must be boolean.')
@@ -247,9 +247,14 @@ class ModelDefinitions:
             prior=self.db.execute('SELECT document FROM model_materials WHERE id=%s AND revision=%s',
                                   (model_id,body['revision'])).fetchone()
         if prior:
-            return self.material(retained_json(prior[0])['ref'],verify=True)
+            retained=self.material(retained_json(prior[0])['ref'],verify=True)
+            if _source_guard is not None:_source_guard(retained['material'])
+            return retained
         draft=self.get(model_id)
         if draft['revision']!=body['revision']:raise WorkbenchError('Model changed. Reload.','stale',409)
+        # Trusted boundary callback checks this exact immutable revision, never
+        # a separately fetched latest draft or any caller-supplied body flag.
+        if _source_guard is not None:_source_guard(draft)
         entrypoint,sources=self._sources(draft)
         payloads={};material={'format':'model_material_v1','catalog_id':self.db.dataset_id,
             'model_definition_id':model_id,'model_definition_revision':draft['revision'],'task':draft['task'],

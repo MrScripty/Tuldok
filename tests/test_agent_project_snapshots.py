@@ -219,6 +219,47 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
         self.assertEqual(self.call('studies.create', body, 403)['code'], 'forbidden')
         self.assertEqual(self.counts(), before)
 
+    def test_model_source_guard_uses_exact_revision_and_preserves_published_replay(self):
+        legacy = copy.deepcopy(self.fixture.manifest)
+        legacy.update(schema_version=1,id=uuid.uuid4().hex)
+        del legacy['extensions']
+        (self.fixture.project/'legacy.json').write_text(json.dumps(legacy))
+        self.dataset.projects.open({'root':'fixture','manifest_path':'legacy.json'})
+        draft = self.call('models.create',self.fixture.body(),201)
+        published = self.call('models.publish',{'model_id':draft['id'],'revision':1})
+        newer = copy.deepcopy(draft)
+        newer['source_selector']['project_id'] = legacy['id']
+        self.dataset.models.save(draft['id'],{'revision':1,'document':newer})
+        self.assertEqual(self.call('models.publish',{'model_id':draft['id'],'revision':1}),published)
+        # The latest draft now points at v1; the retained requested revision is v2.
+        before = self.counts()
+        status,result = self.http('models.publish',{'model_id':draft['id'],'revision':1},version=1)
+        self.assertEqual((status,result['code']),(403,'forbidden'))
+        self.assertEqual(self.counts(),before)
+
+    def test_future_revision_cannot_pass_an_old_source_gate(self):
+        draft = self.call('models.create',self.fixture.body(),201)
+        graph = self.call('graphs.create_external',self.graph_body(),201)
+        before = self.counts()
+        with patch.object(subprocess,'Popen',side_effect=AssertionError('Refused static operation must not execute')):
+            # A speculative future revision must fail before a second read could
+            # observe a concurrent save switching v1 source to bound v2 source.
+            with patch.object(self.dataset.models,'get',return_value=draft) as get:
+                status,result = self.http('models.publish',{'model_id':draft['id'],'revision':2},version=1)
+                self.assertEqual((status,result['code']),(409,'stale'))
+                self.assertEqual(get.call_count,1)
+            for name,arguments in (
+                    ('graphs.preflight_external',{'graph_id':graph['id'],'revision':2}),
+                    ('studies.prepare_trial',{'study_id':uuid.uuid4().hex,'request_key':uuid.uuid4().hex,
+                        'revision':1,'graph_id':graph['id'],'graph_revision':2,'replicate':0,
+                        'model':{'kind':'model','catalog_id':self.dataset.db.dataset_id,
+                            'id':uuid.uuid4().hex,'revision':1,'sha256':'a'*64}})):
+                with self.subTest(operation=name), patch.object(self.dataset.pipelines,'get',return_value=graph) as get:
+                    status,result = self.http(name,arguments,version=1)
+                    self.assertEqual((status,result['code']),(409,'stale'))
+                    self.assertEqual(get.call_count,1)
+        self.assertEqual(self.counts(),before)
+
     def test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget(self):
         """Tiny non-runnable runtime bytes prove static capture, never CPU execution."""
         from runtime_snapshots import RuntimeSnapshots
@@ -259,9 +300,14 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
                 'limits':dict(attempt_slots=1,admitted_wall_seconds=60,
                               retained_bytes=1048576,peak_staging_bytes=1048576)})
             before = self.counts()
-            trial = self.call('studies.prepare_trial',{'study_id':study['id'],'revision':study['revision'],
+            trial_arguments = {'study_id':study['id'],'revision':study['revision'],
                 'request_key':uuid.uuid4().hex,'graph_id':graph['id'],'graph_revision':graph['revision'],
-                'model':model['ref'],'replicate':0},201)
+                'model':model['ref'],'replicate':0}
+            trial = self.call('studies.prepare_trial',trial_arguments,201)
+            newer = copy.deepcopy(graph)
+            newer['name'] = 'Later saved draft does not alter the Trial receipt'
+            self.dataset.pipelines.save(graph['id'],{'revision':graph['revision'],'document':newer})
+            self.assertEqual(self.call('studies.prepare_trial',trial_arguments,201),trial)
             state = self.call('studies.get',{'study_id':study['id']})['study']
             self.assertFalse(state['open'])
             self.assertEqual(state['admission_epoch'],0)

@@ -604,8 +604,13 @@ def make_handler(dataset, observer=None):
             if saved['manifest']['schema_version'] == 2:
                 dataset.access.require(scope, operation, project_id, owner_only=True)
 
-        def _graph_snapshot_contract_access(self, graph_id, operation, version, scope='inspect'):
+        def _graph_snapshot_contract_access(self, graph_id, revision, operation, version, scope='inspect'):
+            selected = self._contract_selection
+            if selected is not None and selected[0] == operation and selected[1] >= version:
+                return
             graph = dataset.pipelines.get(graph_id)
+            if graph['revision'] != revision:
+                raise WorkbenchError('Graph changed. Reload.', 'stale', 409)
             if graph.get('recipe') == 'external_recipe':
                 configuration, _parameters = pipeline.recipe_contract.graph_parameters(graph)
                 self._snapshot_contract_access(configuration['project_id'], operation, version, scope)
@@ -976,11 +981,11 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.models.save(parts[1],body))
                     if len(parts)==3 and parts[0]=='models' and parts[2]=='publish':
                         agent_api.require_selection(self._contract_selection,'models.publish')
-                        draft = dataset.models.get(parts[1])
-                        if draft['kind'] == 'captured_source':
-                            self._snapshot_contract_access(draft['source_selector']['project_id'],
-                                                           'models.publish',2,'edit')
-                        return self.reply(dataset.models.publish(parts[1],body))
+                        def source_guard(source):
+                            if source['kind'] == 'captured_source':
+                                self._snapshot_contract_access(source['source_selector']['project_id'],
+                                                               'models.publish',2,'edit')
+                        return self.reply(dataset.models.publish(parts[1],body,_source_guard=source_guard))
                     if parts in (['model-material'],['recipe-material']):
                         model=parts==['model-material'];name='models.material' if model else 'recipes.material'
                         agent_api.require_selection(self._contract_selection,name);projects.closed(body,('ref',))
@@ -1006,7 +1011,8 @@ def make_handler(dataset, observer=None):
                         if operation:
                             agent_api.require_selection(self._contract_selection,operation)
                             if parts[2]=='prepare-trial':
-                                self._graph_snapshot_contract_access(body['graph_id'],'studies.prepare_trial',2,'edit')
+                                self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                                                     'studies.prepare_trial',2,'edit')
                                 return self.reply(dataset.studies.prepare_trial(parts[1],body),201)
                             if parts[2]=='continue':return self.reply(dataset.studies.continue_study(parts[1],body))
                             if parts[2]=='approve':return self.reply(dataset.studies.approve(parts[1],body),201)
@@ -1052,7 +1058,7 @@ def make_handler(dataset, observer=None):
                             return self.reply(dataset.pipelines.validate(parts[1], body))
                         if parts[2] == 'preflight-external':
                             projects.closed(body, ('revision',))
-                            self._graph_snapshot_contract_access(parts[1],'graphs.preflight_external',2)
+                            self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.preflight_external',2)
                             return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)
