@@ -57,7 +57,7 @@ def read_report(path):
 
 def guard_output(report,destination,selected,output):
     """Refuse every original/catalog/source tree before creating a receipt."""
-    protected=[Path(report['source']),destination,ROOT,
+    protected=[Path(report['source']),Path(report['output']),destination,ROOT,
                Path(report['output'])/'restored-only-b-source',
                *[Path(value) for value in selected.get('current_roots',{}).values()]]
     for path in protected:transfer.separate_paths(path,output)
@@ -190,7 +190,13 @@ def main(args):
                         dataset.studies.get(study['id'])==settled and
                         dataset.runs.model_evidence(run['id'])==evidence,
                         'Cold actual classifier Run/Model/material/Study/evidence differs.')
-                cold=[];locked=[]
+                manifest_raw,_=dataset.runs.artifact(run['id'],'artifact-manifest.json')
+                manifest=retention.evidence.decode(manifest_raw)
+                payloads={row['name'] for row in manifest['artifacts']}
+                require(len(payloads)==len(manifest['artifacts']) and
+                    payloads=={row['name'] for row in run['artifacts']}-{'artifact-manifest.json'},
+                    'Classifier publication payload inventory differs.')
+                cold=[];locked=[];captures=[]
                 for item in run['artifacts']:
                     if item['locked']:
                         try:dataset.runs.artifact(run['id'],item['name'])
@@ -199,15 +205,20 @@ def main(args):
                             locked.append(item['name']);continue
                         raise RuntimeError('Protected classifier test output was disclosed.')
                     raw,_=dataset.runs.artifact(run['id'],item['name'])
-                    captured,capture=dataset.runs.capture_artifact(run['id'],item['name'],item['sha256'])
                     with dataset.runs.open_artifact(run['id'],item['name']) as (stream,metadata):
                         digest=hashlib.sha256();count=0
                         while piece:=stream.read(1024**2):digest.update(piece);count+=len(piece)
-                    require(raw==captured and len(raw)==count==metadata['bytes']==item['bytes'] and
-                            hashlib.sha256(raw).hexdigest()==digest.hexdigest()==capture['measured_sha256']==item['sha256'],
-                            'Cold actual classifier whole/stream/capture identity differs.')
+                    require(len(raw)==count==metadata['bytes']==item['bytes'] and
+                            hashlib.sha256(raw).hexdigest()==digest.hexdigest()==item['sha256'],
+                            'Cold actual classifier whole/stream identity differs.')
+                    if item['name'] in payloads:
+                        captured,capture=dataset.runs.capture_artifact(run['id'],item['name'],item['sha256'])
+                        require(raw==captured and capture['measured_sha256']==item['sha256'],'Declared payload capture differs.')
+                        captures.append(item['name'])
                     cold.append({key:item[key] for key in ('name','bytes','sha256')})
-                save('cold-custody.json',{'state':'passed','whole_stream_capture':cold,'protected_locked':locked,
+                save('cold-custody.json',{'state':'passed','whole_stream':cold,'captured_payloads':captures,
+                                         'outer_manifest':'whole_and_stream_only; excluded by builtin publication-source contract',
+                                         'protected_locked':locked,
                                          'process_and_scheduler_blocked':True})
                 available=dataset.projects.roots;dataset.projects.roots={}
                 try:require(retention.selected_reads(dataset,selected)==before,'Historical A/B source/package meaning changed.')
@@ -225,7 +236,7 @@ def main(args):
                 expected_fields=row['expected_fields'],restored_checks=checks))
         state.update(state='passed',admission_state='completed',historical_A_B_package_unchanged=True,
             built_in_epoch=1,study_id=study['id'],trial_id=trial['id'],graph_id=graph['id'],release_id=release['id'],
-            cold_exact_objects=True,cold_whole_stream_capture_count=len(cold),protected_locked=locked,
+            cold_exact_objects=True,cold_whole_stream_count=len(cold),declared_payload_capture_count=len(captures),protected_locked=locked,
             owner_admission=True,delegated_grant_used=False,charged=settled['charged'],native_checks=checks,calls=calls)
         save('receipt.json',state)
         print('PASS actual restored classifier '+run['id']+' '+str(output),flush=True)
