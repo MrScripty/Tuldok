@@ -78,12 +78,21 @@ separate saved-graph selector focus defect is fixed and independently qualified
 with [actual old/fixed Chromium evidence](../../extension-system/reports/graph-keyboard-focus-qualification.md),
 including moved-focus and navigation negatives. The strict final browser harness
 allows one initial focus and requires preservation after every native key.
-The final stopped shared A/B backup,
-fresh restore, root-absent reads/current-authority matrix, restored-only B
-disable/remove, A history, wrong-material admission refusal and unrelated
-classifier continuity remain required execution gates. Their independently
-reviewed drivers and exact four-Run selection are implemented; the actual
-stopped backup/fresh restore is now running. Preparation is not an actual pass.
+The stopped shared A/B backup and fresh restore passed on the exact four-Run
+selection: 42 SQL tables, five sequences, 22,849 filesystem entries and 61
+artifacts retain their original meaning and custody. Root-absent warm/cold
+reads, 34 revoked reads and six unentered download streams passed without
+execution. The immutable core receipt is `ecc35409c853deb72a8ad84b7c8ecf84f59ec9c0e884cf52fc6a851e4694bcee`;
+its state remains `rootless_retention_verified_disable_pending`.
+
+[Actual restored official interfaces](../../extension-system/reports/restored-ab-official-interface-qualification.md)
+passed three A/B stage projections and two whole contexts across HTTP, CLI and
+MCP, with current revocation and unchanged four-Run accounting. A separate
+actual fresh unspent A grant presented for B returned the exact reviewed-material
+403 refusal without adding a Run, reservation or consumption. Independent
+reviews checked the core and interface receipts. Restored-only B disable/remove,
+unrelated classifier execution and final restored native inspection are the
+remaining serial execution gates; the combined E4 acceptance is not yet passed.
 
 The P1–P6 PRs are merged. Final composed extension CI and independent acceptance
 review remain merge gates. Superseded CI is canceled only after its replacement is published.
