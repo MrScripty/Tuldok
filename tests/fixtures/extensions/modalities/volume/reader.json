@@ -1,0 +1,46 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-volume:reader",
+  "implementation": {
+    "entrypoint": "read",
+    "source": "volume/volume_worker.py"
+  },
+  "kind": "reader",
+  "label": "volume inert source inventory sentinel",
+  "ports": [
+    {
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "contract": {
+        "id": "example.modality-volume:values",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "values",
+      "units": "dimensionless"
+    },
+    {
+      "axes": [],
+      "contract": {
+        "id": "example.modality-volume:geometry",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "geometry",
+      "units": "m"
+    }
+  ],
+  "requires": [
+    {
+      "id": "example.modality-volume:descriptor",
+      "sha256": "51719f8660e9593ce55e076b93ef047bed98f8abf80a084b6a21080821ca020b",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

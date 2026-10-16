@@ -1,0 +1,22 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-image:metadata",
+  "kind": "view",
+  "label": "image opaque metadata declaration",
+  "requires": [
+    {
+      "id": "example.modality-image:descriptor",
+      "sha256": "cc8bd4054eef396ff7689bc7aa742dd6da441256287294edb2be55b2e641be96",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0",
+  "view": {
+    "label": "Opaque descriptor; execution and semantic query unavailable",
+    "primitive": "metadata",
+    "query": {
+      "id": "example.modality-image:opaque-query",
+      "version": "1.0.0"
+    }
+  }
+}

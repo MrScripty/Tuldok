@@ -1,0 +1,30 @@
+{
+  "coordinate_frame": "sensor_lh_xyz",
+  "coordinate_units": "mm",
+  "payload": [
+    [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        2,
+        3
+      ]
+    ],
+    [
+      [
+        4,
+        5,
+        6
+      ]
+    ]
+  ],
+  "record_offsets": [
+    0,
+    2,
+    3
+  ]
+}

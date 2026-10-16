@@ -1,0 +1,151 @@
+{
+  "defaults": {
+    "centering": "cell",
+    "coordinate_frame": "world_rh_xyz",
+    "coordinate_units": "m",
+    "layout": "c_order_zyx",
+    "payload": [
+      [
+        [
+          0.0,
+          1.0
+        ],
+        [
+          2.0,
+          3.0
+        ]
+      ],
+      [
+        [
+          4.0,
+          5.0
+        ],
+        [
+          6.0,
+          7.0
+        ]
+      ]
+    ],
+    "spacing_xyz": [
+      1,
+      1,
+      1
+    ],
+    "timeline": "not_applicable"
+  },
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-volume:descriptor",
+  "kind": "task",
+  "label": "volume bounded opaque descriptor",
+  "parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "centering": {
+        "enum": [
+          "cell"
+        ],
+        "maxLength": 4,
+        "type": "string"
+      },
+      "coordinate_frame": {
+        "enum": [
+          "world_rh_xyz"
+        ],
+        "maxLength": 12,
+        "type": "string"
+      },
+      "coordinate_units": {
+        "enum": [
+          "m"
+        ],
+        "maxLength": 1,
+        "type": "string"
+      },
+      "layout": {
+        "enum": [
+          "c_order_zyx"
+        ],
+        "maxLength": 11,
+        "type": "string"
+      },
+      "payload": {
+        "items": {
+          "items": {
+            "items": {
+              "maximum": 10,
+              "minimum": -10,
+              "type": "number"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "maxItems": 2,
+        "minItems": 2,
+        "type": "array"
+      },
+      "spacing_xyz": {
+        "items": {
+          "enum": [
+            1
+          ],
+          "type": "number"
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "type": "array"
+      },
+      "timeline": {
+        "enum": [
+          "not_applicable"
+        ],
+        "maxLength": 14,
+        "type": "string"
+      }
+    },
+    "required": [
+      "payload",
+      "centering",
+      "layout",
+      "coordinate_frame",
+      "coordinate_units",
+      "spacing_xyz",
+      "timeline"
+    ],
+    "type": "object"
+  },
+  "ports": [
+    {
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "contract": {
+        "id": "example.modality-volume:values",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "values",
+      "units": "dimensionless"
+    },
+    {
+      "axes": [],
+      "contract": {
+        "id": "example.modality-volume:geometry",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "geometry",
+      "units": "m"
+    }
+  ],
+  "requires": [],
+  "version": "1.0.0"
+}
