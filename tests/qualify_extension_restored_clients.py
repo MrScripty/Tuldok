@@ -36,6 +36,7 @@ from qualify_scientific_restore import compare,snapshot
 RETENTION_SHA='e3f4fc3d3be14050bc129c13dcf08dd3b77f0a4d4d82be4d27177dc377b9ae63'
 P5_SHA='008920a6ed2c8ec061b7c6c0140c20e67f170e57f9297512176981db07955d26'
 BASELINE_SHA='0cafe285d90a459af375488f253971d01966654d79904e83c7c5c1ca91be3cbe'
+HISTORICAL_COMMIT='8673509d5430e6aa1162986f4d7b1c071aa1c82e'
 LEGACY={
  'agent_legacy_f588.py':('agent_api.py','820ec62f22d49aa5834c05858d865bcf109529689a54bdc06ebc3e186c955dd2'),
  'cli_legacy_f588.py':('project_cli.py','8df37da8a88ff7f97e62a2ac056a06594cbf62109a29e6dcd6d28a6e5edc6528'),
@@ -78,17 +79,53 @@ def log(message):
     print(message,flush=True)
 
 
+def historical_tree(root):
+    """Check the complete authentic read-only P1 checkout; never import old owners."""
+    env={key:value for key,value in os.environ.items() if not key.startswith('TULDOK_')}
+    def git(*arguments):
+        return subprocess.check_output(['git','-C',str(root),*arguments],env=env,timeout=30)
+    require(git('rev-parse','HEAD').decode().strip()==HISTORICAL_COMMIT,'Exact historical P1 checkout required.')
+    inventory={}
+    for row in git('ls-tree','-rz','HEAD').split(b'\0'):
+        if not row:continue
+        head,name=row.split(b'\t',1);mode,kind,wanted=head.decode().split();name=name.decode()
+        require(kind=='blob' and mode in ('100644','100755') and not Path(name).is_absolute() and '..' not in Path(name).parts,
+                'Only exact regular historical source files are supported.')
+        path=root/name;raw=regular(path,64*1024*1024)
+        require(not path.stat().st_mode&0o222 and not path.parent.stat().st_mode&0o222 and
+            hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==wanted,
+            'Historical tracked bytes or read-only source mode differs.')
+        inventory[name]=dict(bytes=len(raw),sha256=digest(raw),git_blob=wanted)
+    require(inventory and all(name in inventory for name in ('agent_api.py','project_cli.py','mcp_stdio.py')),
+            'Complete historical transport source closure required.')
+    observed=set()
+    for base,directories,files in os.walk(root,followlinks=False):
+        require(not Path(base).is_symlink() and not Path(base).stat().st_mode&0o222,
+                'Historical checkout directories must remain read-only.')
+        for name in directories:
+            require(not (Path(base)/name).is_symlink(),'Historical directory symlinks are unsupported.')
+        for name in files:observed.add(str((Path(base)/name).relative_to(root)))
+    require(observed==set(inventory)|{'.git'},'Historical checkout contains extra or missing files.')
+    return dict(commit=HISTORICAL_COMMIT,tree=git('rev-parse','HEAD^{tree}').decode().strip(),
+                files=inventory,inventory_sha256=transfer.digest(inventory),read_only=True)
+
+
 class Clients:
     def __init__(self,args,dataset,owner,endpoint,output,report,p5):
         self.args,self.dataset,self.owner=args,dataset,owner
         self.endpoint,self.output,self.report,self.p5=endpoint,output,report,p5
         self.sequence=0;self.tokens=[];self.entries={};self.launches=[]
         self.child_env={key:value for key,value in os.environ.items() if not key.startswith('TULDOK_')}
-        self.legacy=output/'legacy-f588';self.legacy.mkdir(mode=0o700)
-        for name,(target,wanted) in LEGACY.items():
-            raw=regular(ROOT/'tests/fixtures'/name,1024*1024)
-            require(digest(raw)==wanted,'Frozen retained client source differs.')
-            path=self.legacy/target;path.write_bytes(raw);path.chmod(0o400)
+        self.child_env['PYTHONDONTWRITEBYTECODE']='1'
+        if args.historical_root is not None:
+            self.legacy=args.historical_root.resolve()
+            self.historical=historical_tree(self.legacy)
+        else:
+            self.legacy=output/'legacy-f588';self.legacy.mkdir(mode=0o700)
+            for name,(target,wanted) in LEGACY.items():
+                raw=regular(ROOT/'tests/fixtures'/name,1024*1024)
+                require(digest(raw)==wanted,'Frozen retained client source differs.')
+                path=self.legacy/target;path.write_bytes(raw);path.chmod(0o400)
         for root in (ROOT,self.legacy):
             for name in ('project_cli.py','mcp_stdio.py','agent_api.py'):
                 path=root/name;self.entries[str(path)]=digest(regular(path,1024*1024))
@@ -178,7 +215,7 @@ class Clients:
         from mcp.client.stdio import stdio_client
         errors=stack.enter_context((self.output/(label+'-mcp-stderr.private')).open('w+'))
         parameters=StdioServerParameters(command=str(self.args.agent_python),
-            args=[str(root/'mcp_stdio.py'),'--config',str(config)],cwd=str(root))
+            args=[str(root/'mcp_stdio.py'),'--config',str(config)],cwd=str(root),env={'PYTHONDONTWRITEBYTECODE':'1'})
         reader,writer=await stack.enter_async_context(stdio_client(parameters,errlog=errors))
         session=await stack.enter_async_context(ClientSession(reader,writer,read_timeout_seconds=timedelta(seconds=240)))
         await session.initialize()
@@ -318,6 +355,62 @@ class Clients:
             agent_lock_sha256=digest(regular(ROOT/'requirements-agent.lock',1024*1024)),
             client_environment={name:importlib.metadata.version(name) for name in ('mcp','anyio','jsonschema','psycopg','Pillow')})
 
+    async def exercise_historical(self):
+        """Only supported P1 executable reads; current-v2 matrix is separately retained."""
+        first,config=self.issue('Historical P1 restored A inspect reader')
+        successor,next_config=self.issue('Independent historical P1 successor reader')
+        require(first['identity']['actor_id']!=successor['identity']['actor_id'],'Independent historical successor required.')
+        self.report['reader_identities']={label:{key:value['identity'][key] for key in ('actor_id','credential_id')}
+            for label,value in (('revoked',first),('successor',successor))}
+        self.report['historical_checkout']=self.historical
+        async def reads(credential,configuration,label,expected=None):
+            client=agent_api.AgentClient.from_config(configuration)
+            arguments=dict(run_id=self.p5['source_run_id'])
+            async with AsyncExitStack() as stack:
+                session=await self.session(stack,configuration,self.legacy,label)
+                http=client.call('runs.get',arguments)
+                require(http['status']==200 and self.cli(configuration,'runs.get',arguments,root=self.legacy)==http['result'] and
+                    await self.mcp(session,'runs.get',arguments)==http,'Historical executable/current HTTP Run results differ.')
+                run=http['result'];require(run['state']=='completed' and run['custody_phase']=='drained','Completed historical Run required.')
+                item=next(row for row in run['artifacts'] if row['sha256']==self.p5['fresh_verification']['weights_sha256'])
+                values=[http];assembled=bytearray();size=(item['bytes']+1)//2
+                require(2<=item['bytes']<=1024*1024,'Bounded historical artifact required.')
+                for offset in (0,size):
+                    request=dict(run_id=run['id'],name=item['name'],expected_sha256=item['sha256'],offset=offset,max_bytes=size)
+                    value=client.call('runs.artifact_chunk',request)
+                    require(value['status']==200 and await self.mcp(session,'runs.artifact_chunk',request)==value,
+                            'Historical MCP/current HTTP segment differs.')
+                    agent_api.validate_segment(value['result'],request)
+                    assembled.extend(base64.b64decode(value['result']['data_base64'],validate=True));values.append(value)
+                require(len(assembled)==item['bytes'] and digest(assembled)==item['sha256'],'Historical whole fitted-state hash differs.')
+                self.download(configuration,run['id'],item,root=self.legacy)
+                if expected is not None:require(values==expected,'Historical successor changed retained meaning.')
+                for index,value in enumerate(values):
+                    path=self.output/f'{label}-{index:02d}-result.json';save(path,value)
+                    self.report['calls'].append(dict(phase=label,operation='runs.get' if index==0 else 'runs.artifact_chunk',
+                        result_sha256=transfer.digest(value),private_result=path.name))
+                self.report['whole_artifacts'].append(dict(phase=label,run_id=run['id'],name=item['name'],bytes=item['bytes'],sha256=item['sha256'],segments=2))
+                if expected is None:
+                    with self.owner.bound(self.dataset):self.dataset.access.revoke(credential['identity']['credential_id'])
+                    require(client.call('runs.get',arguments)['status']==401,'Historical reader HTTP revocation differs.')
+                    self.cli(configuration,'runs.get',arguments,root=self.legacy,refused=True)
+                    await self.mcp(session,'runs.get',arguments,refused=True)
+                    await self.mcp(session,'runs.artifact_chunk',request,refused=True)
+                    self.download(configuration,run['id'],item,root=self.legacy,refused=True)
+                    self.report['historical_reused_session_revoked']=True
+                return values
+        log('Authentic historical P1 CLI/MCP reads and reused-session revocation, through HTTP only')
+        expected=await reads(first,config,'historical-current')
+        await reads(successor,next_config,'historical-successor',expected)
+        require(all(digest(regular(Path(path),1024*1024))==wanted for path,wanted in self.entries.items()),'Transport source changed.')
+        for path in self.output.glob('*-mcp-stderr.private'):
+            raw=regular(path,2*1024*1024)
+            require(all(token.encode() not in raw for token in self.tokens),'Credential leaked from historical MCP diagnostics.')
+        self.report.update(historical_only=True,successor_reader_exact=True,transport_sources=self.entries,
+            transport_children=self.launches,credential_scope=['inspect'],mcp_sdk=importlib.metadata.version('mcp'),
+            transport_children_catalog_environment='absent',historical_store_access='HTTP only; no old Dataset or Metadata',
+            historical_features='Frozen P1 Run/artifact operations only; no field2/package-state tool claim')
+
 
 def main(args):
     output=args.output.resolve();output.mkdir(parents=True,mode=0o700,exist_ok=False)
@@ -361,7 +454,9 @@ def main(args):
             thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
             clients=Clients(args,dataset,owner,'http://127.0.0.1:'+str(server.server_port),output,report,p5)
             with patch('subprocess.Popen',side_effect=clients.launch_guard(subprocess.Popen)):
-                asyncio.run(asyncio.wait_for(clients.exercise(),timeout=1800))
+                asyncio.run(asyncio.wait_for(clients.exercise_historical() if args.historical_root is not None else clients.exercise(),timeout=1800))
+            if args.historical_root is not None:
+                require(historical_tree(clients.legacy)==clients.historical,'Historical checkout source closure changed.')
             require(dataset.runs._thread is None,'Client reads started the Runs scheduler.')
             server.shutdown();server.server_close();thread.join(timeout=5);require(not thread.is_alive(),'HTTP server did not stop.')
             server=None;dataset.close();dataset=None
@@ -391,4 +486,5 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ('restored-catalog','retention-receipt','p5-receipt','source-baseline','agent-python','output'):
         parser.add_argument('--'+name,type=Path,required=True)
+    parser.add_argument('--historical-root',type=Path,help='Exact complete read-only P1 checkout; run only supported historical client cases.')
     main(parser.parse_args())
