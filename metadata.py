@@ -20,8 +20,8 @@ import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
 
-SCHEMA_VERSION = 9
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
+SCHEMA_VERSION = 10
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 MANIFEST = '.tuldok.json'
 CATALOG_VERSION_DDL = '''CREATE TABLE catalog_version (
     version INTEGER PRIMARY KEY, dataset_id TEXT NOT NULL,
@@ -461,7 +461,7 @@ INDEXES = (
 def tables_for_version(version):
     if type(version) is not int or version not in SUPPORTED_SCHEMA_VERSIONS:
         raise StorageError('Unsupported PostgreSQL catalog version.')
-    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES_V7, 8: TABLES_V8, 9: TABLES}[version]
+    return {1: TABLES_V1, 2: TABLES_V2, 3: TABLES_V3, 4: TABLES_V4, 5: TABLES_V5, 6: TABLES_V6, 7: TABLES_V7, 8: TABLES_V8, 9: TABLES_V9, 10: TABLES}[version]
 
 
 def definition_hash(version=SCHEMA_VERSION):
@@ -648,4 +648,15 @@ MODEL_DEVELOPMENT_TABLES = {
         actor_id TEXT NOT NULL, operation_id TEXT NOT NULL, request_key TEXT NOT NULL, request_sha256 TEXT NOT NULL,
         document TEXT NOT NULL, PRIMARY KEY(actor_id,operation_id,request_key))""",
 }
-TABLES = {**TABLES_V8, **MODEL_DEVELOPMENT_TABLES}
+TABLES_V9 = {**TABLES_V8, **MODEL_DEVELOPMENT_TABLES}
+
+# Lineage annotates immutable trials; historical trial/material bytes stay exact.
+EXPERIMENT_LINEAGE_TABLES = {
+    'model_trial_lineage': """CREATE TABLE model_trial_lineage (
+        trial_id TEXT PRIMARY KEY REFERENCES model_trials(id),
+        parent_trial_id TEXT REFERENCES model_trials(id),
+        baseline_trial_id TEXT REFERENCES model_trials(id), document TEXT NOT NULL,
+        CHECK(parent_trial_id IS NULL OR parent_trial_id <> trial_id),
+        CHECK(baseline_trial_id IS NULL OR baseline_trial_id <> trial_id))""",
+}
+TABLES = {**TABLES_V9, **EXPERIMENT_LINEAGE_TABLES}

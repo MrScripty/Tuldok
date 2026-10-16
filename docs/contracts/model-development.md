@@ -3,7 +3,7 @@
 Pipeline owns editable execution configuration and immutable compositions. Model
 Definitions owns architecture/source and preprocessing/output policies. Runs owns
 attempts, fitted state, process custody and published bytes. Experiments owns
-finite membership, limits and selection intent; it never spawns a worker.
+finite membership, limits, selection intent and [experiment lineage](experiment-lineage.md); it never spawns a worker.
 
 This implementation supports inert captured external source, exact finite external
 attempts and the separately versioned model-aware TinyCNN classifier described
