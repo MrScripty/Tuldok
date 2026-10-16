@@ -610,7 +610,7 @@ def make_handler(dataset, observer=None):
                 return
             graph = dataset.pipelines.get(graph_id)
             if graph['revision'] != revision:
-                raise WorkbenchError('Graph changed. Reload.', 'stale', 409)
+                raise workbench.WorkbenchError('Graph changed. Reload.', 'stale', 409)
             if graph.get('recipe') == 'external_recipe':
                 configuration, _parameters = pipeline.recipe_contract.graph_parameters(graph)
                 self._snapshot_contract_access(configuration['project_id'], operation, version, scope)
