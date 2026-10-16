@@ -152,7 +152,10 @@ recovery receipt
 independent authority/accounting review `0555fa43...` and independent
 artifact/oracle/cleanup review `f5100a90...`. Numerical fixture acceptance is
 separate from physical validity, useful-model quality and package distribution.
-The late package-UI actual/reviewed proof is also composed. Still open: final
-composed independent review, exact-head [PR78 CI](https://github.com/MrScripty/Tuldok/pull/78/checks)
-and lead integration. No CI, merge or universal extension pass follows from
-this source-specific appendix.
+The late package-UI actual/reviewed proof is composed. Final composed review,
+all five exact-head PR78 checks and lead integration are now complete at
+implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` and merge `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2`. The
+[product status](../../end-to-end-model-development/reports/product-implementation-status.md)
+links each run and final review. This later integration evidence is separate
+from the source-specific numerical receipt and does not confer universal
+extension, physical-validity or distribution acceptance.

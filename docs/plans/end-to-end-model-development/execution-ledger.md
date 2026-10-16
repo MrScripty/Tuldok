@@ -321,3 +321,27 @@
   [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks) and lead
   integration. No future CI, main merge, physical validity, useful-model quality,
   new hardware capability or distribution right is claimed.
+
+### 2026-10-16 — Selected extension implementation accepted
+
+PR78 implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` passed all five
+checks: [lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38855021995),
+[SDK](https://github.com/MrScripty/Tuldok/actions/runs/38855022003),
+[catalog](https://github.com/MrScripty/Tuldok/actions/runs/38855022034),
+[workspace UI](https://github.com/MrScripty/Tuldok/actions/runs/38855022023) and
+[captured CPU](https://github.com/MrScripty/Tuldok/actions/runs/38855021942).
+The integration lead merged it as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at
+`2026-10-16T06:18:08Z`, after [final external source review](https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6208731010) (review SHA256 `f1c128d4d3a78495f717df536b401484ab7b9822c75c4be81a8dc5502c96e221`).
+These checks qualify that implementation head. A later documentation closeout
+has its own source/CI identity; these run results do not claim CI for that follow-up.
+
+- The selected P1–P6/E1–E4 implementation and X1–X5 qualification are complete;
+  no selected functional or integration gate remains open. The original design
+  acceptance and old implementation pause remain historical, superseded by
+  implementation authorization and these actual gates.
+- This metadata closeout does not run inference, training, clients, tests or
+  runtime capture, and does not edit any raw receipt or source freeze. Older
+  fullfalse/pending reports remain immutable evidence of their original scope.
+- Follow-up documentation source/CI is distinct from PR78 implementation checks.
+  Physics, new hardware/modalities, public distribution and hostile isolation
+  are not silently activated by acceptance.

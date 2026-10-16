@@ -47,8 +47,8 @@
 - Severity: medium; no application risk in this draft.
 - Owner/boundary: primary documentation integration owner.
 - Disposition: M0 is accepted and X1–X5 have named reviewed functional witnesses.
-  Overall product acceptance remains partial pending final composed review,
-  exact-head PR78 CI and lead integration. Current evidence is in I7.
+  Overall selected implementation acceptance is satisfied after final composed
+  review, exact-head PR78 CI and lead integration. Current evidence is in I7.
 - Verification: adopted plan structural check plus lifecycle/authority review in executor.
 - Historical M0 resolution: independent review/checks passed and local material commit
   `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` was verified; M0 Accepted,
@@ -89,13 +89,14 @@
   follows. Ordinary workflow regression remains its separate inherited gate.
 - Revisit: unsupported keyword, divergent interpretation or new schema consumer.
 
-## I7 — Accepted implementation and remaining current qualification
+## I7 — Accepted implementation and final integration
 
-- Current status base: local composition `d61ef320`; final integration/CI authority
-  is [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks). Functional
-  qualification is complete at the named sources below. This documentation
-  does not claim that this local composition is the final published PR head or
-  has passed final CI. The lead owns serial integration.
+- Current integration: [PR78](https://github.com/MrScripty/Tuldok/pull/78), checked
+  implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b`, merged by the lead as
+  `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at `2026-10-16T06:18:08Z`.
+  All five exact-head checks and final composed review are recorded in the
+  [plan acceptance](plan.md#final-acceptance) and product status. Earlier local
+  receipt identities remain exact; a metadata follow-up does not inherit CI.
 - P1–P6 are implemented, qualified at their named sources and merged. The original
   E1 browser/HTTP inspection remains accepted with its narrow scope. Legacy v1
   grammar/projections and the old-binary/new-v2-store restriction are unchanged.
@@ -140,11 +141,11 @@
   is sealed at `6905fc8`; the real selected-read/revocation regression at
   `c0efd4f` has independent review SHA256
   `d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
-  This proof is composed; final serial integration remains lead-owned.
+  This proof is composed into the accepted implementation.
 - Corpus `4f2c45a` closes the descriptor-envelope fixture obligation only (I6).
-  Named functional qualification is complete. Exact-head composed CI,
-  independent composed review and lead acceptance remain open. Earlier immutable
-  E4/shared-matrix partial dispositions retain their historical scope.
+  Named functional qualification, exact-head composed CI, independent composed
+  review and lead acceptance are complete. Earlier immutable E4/shared-matrix
+  partial dispositions retain their historical scope.
 - Pressure physical result remains 0/16; periodic pressure checkpoints/probes,
   protected scientific test, unsupported hardware and redistribution are not
   passed or silently added requirements.

@@ -1,5 +1,27 @@
 # Model-development implementation ledger
 
+## 2026-10-16 — P1–P6 and composed implementation accepted
+
+- P1–P6 now have completed source-specific actual/independent-review/CI gates and
+  merged PRs. P2 PR70 merged `8fa4915` from checked `351f55b`; P3 PR72 merged
+  `cfd032fc` from checked `767f66f`; P4 PR73 merged `61292e4` from checked
+  `1d621e8`; P5 PR75 merged `9585f3c` from checked `ed51510`; P6 PR74 merged
+  `9a3d331`. Full hashes, exact source/Run/client/browser evidence, retained
+  failures and scope limits are in the
+  [product record](../end-to-end-model-development/reports/product-implementation-status.md). P1 PR66 history below stays unchanged.
+- Final PR78 implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b`
+  passed all five exact-head checks and lead merge
+  `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at `2026-10-16T06:18:08Z`.
+  The [extension closeout](../extension-system/plan.md#final-acceptance) links
+  all five run URLs and final external composed-source review. A later metadata
+  follow-up does not inherit those implementation CI results.
+- Acceptance I1–I6 and milestones P1–P6 are satisfied; original P2-era pending
+  entries are historical records, not the current status. No old raw receipt,
+  failed run or original baseline was changed or promoted to a pass.
+- No runtime, numerical, client or catalog execution occurred in this status
+  closeout. GPU, new platforms, scientific physical validity, hard quotas,
+  hostile-code isolation and public distribution remain separately gated.
+
 ## 2026-10-15 — Authority, baseline and P1 admission
 
 - User authorized full implementation P1–P6/E1–E4, feature branches/draft PRs,

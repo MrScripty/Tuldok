@@ -1,5 +1,30 @@
 # Implementation issues
 
+## Current dispositions after implementation qualification
+
+P1–P6 and their named actual gates are accepted and merged. PR78 composed head
+`29f535b5b8d43a5945d3cbd43017bdd8a33be36b` passed all five checks and the lead
+merged it as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at `2026-10-16T06:18:08Z`.
+The [implementation plan](plan.md) and
+[product record](../end-to-end-model-development/reports/product-implementation-status.md) bind exact source/merge identities and reports.
+These current dispositions supersede the historical finding text below.
+
+| Findings | Current disposition and retained verification |
+| --- | --- |
+| I1, I2, I5, I6 | Resolved by negotiated bounds, lazy complete selected-request validation, exact operation/material receipt binding and unchanged legacy dispatch. [P1](reports/p1-verification.md) and [P2](reports/p2-verification.md) retain source-specific negatives; later full CI and merges are in product status. |
+| I3 | Actual isolated PostgreSQL/CPU and pinned optional MCP environments were provisioned for qualification. P3/P4/P5 actual producers and independent consumers passed. GPU/physics remain explicitly unqualified; fixture presence alone is never runtime proof. |
+| I4 | Parent relay/shared handoff and one serial integration owner resolved coordination; cross-thread messenger availability is not a product execution requirement. Historical relay observations below are unchanged. |
+| I7 | P1 acceptance reran under the pinned MCP1.30 closure. Earlier MCP1.29 observations retain their supporting-only status. |
+| I8–I12 | Resolved P2 postcommit custody, bounded documents/pages, anchored orphan inventory, Study-scoped receipt keys and full-composition approval. Actual PostgreSQL rollback/race/unknown/cold checks and merge `8fa4915` are recorded in P2 verification/product status. |
+| I13 | Kept production spec/material refusal and corrected only the complete capacity fixture. The failed predecessor remains recorded; later checked source `351f55b` and merged P2 qualification close the then-pending CI gate. |
+
+No known selected implementation issue remains open at these accepted sources.
+Future semantic, runtime, access or custody changes require new qualification.
+This closeout does not edit any raw failure or claim physics, hard quotas or
+hostile-code isolation.
+
+## Historical findings and original dispositions
+
 | ID | Owner / evidence | Disposition and verification |
 | --- | --- | --- |
 | I1 | Agent transport; old8MiB segment expands beyond draft8MiB response ceiling | Select16MiB negotiated limit consistent with actual existing receive bound; preserve frozen legacy metadata, test maximum declared segment behavior. |

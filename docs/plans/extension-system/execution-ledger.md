@@ -1,5 +1,27 @@
 # Extension-system execution ledger
 
+## 2026-10-16 — Selected implementation accepted after final integration
+
+PR78 implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` passed all five
+checks: [lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38855021995),
+[SDK](https://github.com/MrScripty/Tuldok/actions/runs/38855022003),
+[catalog](https://github.com/MrScripty/Tuldok/actions/runs/38855022034),
+[workspace UI](https://github.com/MrScripty/Tuldok/actions/runs/38855022023) and
+[captured CPU](https://github.com/MrScripty/Tuldok/actions/runs/38855021942).
+The integration lead merged it as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at
+`2026-10-16T06:18:08Z`, after [final external source review](https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6208731010) (review SHA256 `f1c128d4d3a78495f717df536b401484ab7b9822c75c4be81a8dc5502c96e221`).
+These checks qualify that implementation head. A later documentation closeout
+has its own source/CI identity; these run results do not claim CI for that follow-up.
+
+- X1–X5 are satisfied at the named sources. Ordinary-agent authoring, late
+  package/fresh-verification UI and inert descriptor corpus are included in the
+  reviewed composition; no further selected implementation gate is pending.
+- This later acceptance does not edit or promote old raw/core/shared-matrix
+  partial receipts, repeat any admission, reinterpret finite accounting or
+  substitute 0b and main50502 runtime/catalog identities.
+- No new runtime, numerical execution, code or test change occurred in this
+  metadata closeout. The follow-up documentation's own CI remains separate.
+
 ## 2026-10-16 — Functional gates qualified; final source CI/integration pending
 
 This entry supersedes the earlier current-status checkpoint below without

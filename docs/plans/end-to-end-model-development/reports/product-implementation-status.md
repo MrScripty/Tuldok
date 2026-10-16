@@ -7,8 +7,12 @@ is superseded by that authorization; their design acceptance is not product proo
 
 The integration lead owns serial merges. Work uses isolated branches and actual
 CPU/PostgreSQL/browser fixtures, with independent review. Original local `work`
-and unrelated branches are preserved. Current integration is draft
-[PR78](https://github.com/MrScripty/Tuldok/pull/78).
+and unrelated branches are preserved. The lead merged
+[PR78](https://github.com/MrScripty/Tuldok/pull/78) as
+`63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at `2026-10-16T06:18:08Z`, after all five
+checks passed for exact implementation head
+`29f535b5b8d43a5945d3cbd43017bdd8a33be36b`. Selected implementation acceptance
+is complete; any metadata follow-up has its own source/CI identity.
 
 | Slice | Implemented behavior and actual evidence | Integration state |
 | --- | --- | --- |
@@ -19,7 +23,7 @@ and unrelated branches are preserved. Current integration is draft
 | P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 merged at `9585f3cd15f140bf8c24d9aa33b8f51ef352621e`. Exact `ed51510` passed captured-CPU, full lifecycle, catalog and workspace UI CI. Its predecessor `407068d` has separate historical qualification. |
 | P6 | Shared opt-in interface observation at HTTP/CLI/MCP boundaries, private bounded storage, fail-open passive sink, separate mandatory audit and unchanged caller arguments. [Qualification](p6-observation-qualification.md). | PR74 merged at `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`. |
 
-## Extension implementation and final integration
+## Accepted extension implementation
 
 The integration contains exact project-v2 contribution binding, inert declarative
 Model configuration, generic canonical field-input policy and schema3 evidence,
@@ -124,7 +128,7 @@ unchanged plus five explicit late UI/backend changes. Its
 is sealed at `6905fc8`; the focused real-read/revocation regression at `c0efd4f`
 has independent review SHA256
 `d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
-The proof is composed; final integration remains lead-owned.
+The late proof is included in the accepted PR78 implementation.
 The older exact 149-file and 148-plus-one/44-capture proofs remain unchanged.
 
 Ordinary-agent discovery/open/bound-source authoring now has its own
@@ -155,12 +159,22 @@ and `64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508` has the same source tree as
 `d61ef320` (`df72714e12de271ab5790959de2dbe3a891e639b`). These are tree-equivalence
 claims, not identical commit IDs or a claim that PR78 already points to them.
 
-The P1–P6 PRs are merged and the named extension functional gates are qualified.
-Final composed extension CI, independent composed acceptance review and lead
-integration remain open. The authoritative final source/checks are
-[PR78](https://github.com/MrScripty/Tuldok/pull/78/checks); no future CI or merge
-result is inferred from the actual local qualifications. Earlier immutable
-shared-matrix `full_E4_pass:false` and core pending-state receipts are not rewritten. Superseded CI is canceled only after its replacement is published.
+The P1–P6 PRs are merged and the selected E1–E4 implementation is accepted.
+PR78 implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` passed all five
+checks: [lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38855021995),
+[SDK](https://github.com/MrScripty/Tuldok/actions/runs/38855022003),
+[catalog](https://github.com/MrScripty/Tuldok/actions/runs/38855022034),
+[workspace UI](https://github.com/MrScripty/Tuldok/actions/runs/38855022023) and
+[captured CPU](https://github.com/MrScripty/Tuldok/actions/runs/38855021942).
+The integration lead merged it as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at
+`2026-10-16T06:18:08Z`, after [final external source review](https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6208731010) (review SHA256 `f1c128d4d3a78495f717df536b401484ab7b9822c75c4be81a8dc5502c96e221`).
+These checks qualify that implementation head. A later documentation closeout
+has its own source/CI identity; these run results do not claim CI for that follow-up.
+
+All named functional witnesses and final composed review/CI/integration gates
+are complete. Earlier immutable shared-matrix `full_E4_pass:false` and core
+pending-state receipts are not rewritten. The failed original qualifiers and
+later successful same-Run verification retain their exact source chronology.
 Branches are removed only after safe merge and dependent retargeting.
 
 ## Explicit qualification limits
