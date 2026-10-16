@@ -64,15 +64,15 @@ the separate product gates following the table.
 | A2 | Dependency-ordered implementation slices have exact write sets, useful runnable/viewable checkpoints, negative conformance cases and migration/consumer dispositions. | focused | not-applicable | manual | satisfied | [Independent review](reports/independent-review.md) and [current checks](reports/plan-verification.md) |
 | A3 | Runtime, custody, grant, protected-evidence, privacy and unsupported-platform boundaries preserve current contracts without sandbox or reproducibility overclaims. | contract | not-applicable | manual | satisfied | [Independent review](reports/independent-review.md) and [current checks](reports/plan-verification.md) |
 
-Future product acceptance remains pending and keeps overall acceptance partial
-after the documentation claims pass:
+Product acceptance uses the actual implementation evidence below. Overall
+acceptance remains partial until the remaining X3/X5 execution gates pass:
 
 | ID | Observable criterion | Kind | Environment | Mode | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| X1 | Catalog/open/preview/edit/preflight/history execute no extension/runtime code and isolate a malformed package. | contract | representative | either | pending | E1/E2 real HTTP/browser, disposable PostgreSQL/Linux |
-| X2 | Real independent CPU model uses exact normal admission/custody, verified publication and common evidence queries/views. | integration | required-real | either | pending | E2 qualified runtime, real producer and independent consumer |
+| X1 | Catalog/open/preview/edit/preflight/history execute no extension/runtime code and isolate a malformed package. | contract | representative | either | satisfied | [E1](reports/e1-implementation.md), [actual native A/B](reports/native-author-ab-actual-browser.md), current inert-catalog CI |
+| X2 | Real independent CPU model uses exact normal admission/custody, verified publication and common evidence queries/views. | integration | required-real | either | satisfied | [Canonical A](reports/canonical-a-50502-qualification.md), [independent B](reports/independent-b-50502-qualification.md), [independent cold consumer](reports/independent-b-actual-cold-consumer.md) |
 | X3 | Independent B changes required I/O and stages without application-owner edits; A history and unrelated tasks still work. | integration | required-real | either | pending | E3 real A/B change-locality gate |
-| X4 | SDK validates without app/DB/Torch startup and separately runs conformance through normal authorized Runs. | contract | representative | either | pending | E3 independent author and provisioned validator closure |
+| X4 | SDK validates without app/DB/Torch startup and separately runs conformance through normal authorized Runs. | contract | representative | either | satisfied | [Isolated SDK contract gate](reports/e3-sdk-contract-qualification.md), [actual canonical A SDK](reports/canonical-a-50502-qualification.md), [actual independent B SDK](reports/independent-b-50502-qualification.md) |
 | X5 | Upgrade/disable/removal, supported clients, cold reads, backup/restore and fresh inference retain meaning/current access. | integration | required-real | either | pending | E4 and accepted PR62 P5 |
 
 ## Scope
