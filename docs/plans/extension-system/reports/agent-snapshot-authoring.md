@@ -1,7 +1,7 @@
 # Negotiated snapshot discovery and bound-source authoring
 
-Status: implemented; independent source review, final composed CI and real CPU
-qualification remain separate acceptance gates. Base:
+Status: implemented, locally verified and independently source-reviewed; final
+composed CI and real CPU qualification remain separate acceptance gates. Base:
 `afc45dc50530c4b6bfcdf1f2d8c2f2361e2837bc`
 (`integration/model-development-extension-base`). The integration lead owns all
 merges and composes this branch with the separate canonical package UI repair.
@@ -68,3 +68,29 @@ A complete caller audit also preserves the old fresh-source boundary on
 Their refused v2 calls are tested before temporary capture or Run mutation.
 Existing complete-Study composition/grant requirements remain mandatory.
 Official MCP test sessions use an explicit30second protocol read deadline.
+
+Terminal verification on stable production `06ebaf2` at test head `f68678c`:
+
+- **75passed,0skipped**,326.715s: new15-case snapshot/authoring suite plus existing
+  Model, selected HTTP, bound HTTP, Study and project CLI suites. This includes
+  official MCP/CLI parity and existing real neutral-process custody/grant tests;
+  those neutral fixtures establish no numerical CPU qualification.
+- Fresh base environment without MCP: **14passed,1optional SDK skip**,83.607s.
+  All ordinary HTTP and registry cases execute; only the official SDK case skips.
+- Root/P2 requested an explicit1MiB reserve for the tiny non-runnable static
+  fixture so their environment can run it without a test-runner wrapper. That
+  test-only followup **passed1/1**,7.797s. The75-case run passed the same case
+  with the original6GiB default. Production and CLI defaults remain6GiB;
+  measured capture-byte accounting, owner/quiescence checks and actual runtime
+  qualification are unchanged. The followup was independently reviewed.
+
+[Machine verification](agent-snapshot-authoring.json) retains exact terminal logs
+with SHA256s, interpreter/package versions, production source hashes and the
+92-contract baseline. Independent source/complete caller review is
+[clear](https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6207075507), including
+two independently run pure registry tests. Superseded runs that overlapped source
+corrections correctly refused changed host hashes; earlier incomplete negative
+arguments were also corrected. Those failed logs remain private and are excluded
+from the passing results above. No production source changed during the final
+successful combined run. Hosted CI is still pending; no main505 CPU execution or
+final product acceptance is claimed here.

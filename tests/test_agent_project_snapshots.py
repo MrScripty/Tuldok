@@ -324,7 +324,10 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
                              site_packages=str(packages),packages=names)
         with patch.object(subprocess,'Popen',side_effect=AssertionError('Static preparation must not execute')):
             runtimes = RuntimeSnapshots(self.dataset.db,self.dataset.access,self.dataset.path)
-            descriptor = runtimes.create(configuration,runtimes.inspect(configuration)['inventory_sha256'],quiesced=True)
+            # Explicit reserve for tiny non-runnable fixture bytes only; the
+            # production six-GiB default and actual CPU qualification are separate.
+            descriptor = runtimes.create(configuration,runtimes.inspect(configuration)['inventory_sha256'],
+                                         quiesced=True,reserve_bytes=1024**2)
             self.fixture.recipe['runtime_snapshot_sha256'] = descriptor['manifest_sha256']
             self.fixture.extension['runtime']['snapshot_sha256'] = descriptor['manifest_sha256']
             self.fixture.manifest['id'] = uuid.uuid4().hex
