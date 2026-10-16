@@ -1,0 +1,41 @@
+{
+  "connectivity": "triangles",
+  "coordinate_frame": "lab_rh_xyz",
+  "coordinate_units": "m",
+  "payload": {
+    "triangles": [
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        0,
+        2,
+        3
+      ]
+    ],
+    "vertices": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ]
+  }
+}

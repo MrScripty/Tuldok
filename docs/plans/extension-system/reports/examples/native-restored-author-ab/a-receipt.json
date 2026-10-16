@@ -1,0 +1,573 @@
+{
+  "source_commit": "c5064d2ca363d1005befeaeac371c6754783ff55",
+  "source_sha256": {
+    "static/workspace-service.js": "a03e9d4c216bb7ff6719eef4db889a367ec02604cc427b228813f7a3ca398d04",
+    "static/workspace-real.js": "7d968878edd253bb7e1409693edce03b66b1787f64cfe83f2b2d8ad380b185e6",
+    "static/workspaces.css": "9f3a91ee6138b3ce958130c55484b7fc5d9f57da68662c0bd3dd786d18c0ad10",
+    "tests/browser_field_evidence.cjs": "20be31359dfffaa14362c20c46617243de533b6acf1d055cf771e875b5ed571e"
+  },
+  "command": "node tests/browser_field_evidence.cjs",
+  "catalog_path": "/workspace/shared/extension-ab-e4-retention-01/restored-catalog",
+  "run_id": "0ca8523fe44f42bea520e941f79b839b",
+  "source_receipt": "/workspace/shared/extension-ab-e4-restored-classifier-recovery-01/native-a-source.json",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "H3 real retained checkpoints, fixed members, declared stages and all orthogonal slices drive exact numeric probes with shared display and physical scales",
+    "Native keyboard selectors inspect every exact retained field/stage at 1440/390 in light/dark; separate raw and corrected target probes are read, never derived",
+    "H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest",
+    "E4 actual disabled/removed new selection refuses natively; retained A/B history and unrelated built-in Run/artifacts/saved graph/create choices remain usable with unchanged execution counts"
+  ],
+  "captures": [
+    {
+      "file": "linked-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "declared-field-0-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "declared-field-0-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-declared-field-0-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-declared-field-0-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-disabled-refusal-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-disabled-refusal-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-removed-refusal-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-removed-refusal-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-retained-a-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-retained-a-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-retained-b-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-retained-b-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-unrelated-built-in-run-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-unrelated-built-in-run-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-unrelated-built-in-pipeline-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "restored-unrelated-built-in-pipeline-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    }
+  ],
+  "dark_checks": [
+    {
+      "width": 1440,
+      "preference": true,
+      "focus": "field-member",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "color": "rgb(229, 237, 248)"
+    },
+    {
+      "width": 390,
+      "preference": true,
+      "focus": "field-member",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "color": "rgb(229, 237, 248)"
+    }
+  ],
+  "exact_requests": [
+    {
+      "checkpoint_sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    }
+  ],
+  "declared_fields": [
+    {
+      "field_id": "raw",
+      "stage": "train"
+    }
+  ],
+  "expected_fields": [
+    {
+      "field_id": "raw",
+      "stage": "train"
+    }
+  ],
+  "declared_field_captures": [
+    {
+      "file": "declared-field-0-1440.jpg",
+      "field_id": "raw",
+      "stage": "train",
+      "width": 1440,
+      "dark": false,
+      "selectors": {
+        "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "declared-field-0-390.jpg",
+      "field_id": "raw",
+      "stage": "train",
+      "width": 390,
+      "dark": false,
+      "selectors": {
+        "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "dark-declared-field-0-1440.jpg",
+      "field_id": "raw",
+      "stage": "train",
+      "width": 1440,
+      "dark": true,
+      "selectors": {
+        "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    },
+    {
+      "file": "dark-declared-field-0-390.jpg",
+      "field_id": "raw",
+      "stage": "train",
+      "width": 390,
+      "dark": true,
+      "selectors": {
+        "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 0,
+        "split": "validation"
+      }
+    }
+  ],
+  "restored_checks": {
+    "refusals": [
+      {
+        "mode": "disabled",
+        "project_id": "4d644685cd39479c886232cb00d76bd0",
+        "recipe_id": "train",
+        "status": 409,
+        "code": "unavailable",
+        "message": "Exact contribution requires one valid enabled provider."
+      },
+      {
+        "mode": "removed",
+        "project_id": "26df02b6fb2a4858a818ee9c1ef8b014",
+        "recipe_id": "train",
+        "status": 409,
+        "code": "unavailable",
+        "message": "Exact contribution requires one valid enabled provider."
+      }
+    ],
+    "retained_runs": [
+      {
+        "run_id": "0ca8523fe44f42bea520e941f79b839b",
+        "fields": [
+          {
+            "field_id": "raw",
+            "stage": "train"
+          }
+        ],
+        "checkpoints": [
+          {
+            "sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 16,
+              "physical_time": null,
+              "wall_elapsed_ms": 18
+            }
+          },
+          {
+            "sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 32,
+              "physical_time": null,
+              "wall_elapsed_ms": 21
+            }
+          },
+          {
+            "sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 48,
+              "physical_time": null,
+              "wall_elapsed_ms": 23
+            }
+          },
+          {
+            "sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 64,
+              "physical_time": null,
+              "wall_elapsed_ms": 25
+            }
+          }
+        ]
+      },
+      {
+        "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+        "fields": [
+          {
+            "field_id": "raw",
+            "stage": "raw_inference"
+          },
+          {
+            "field_id": "corrected",
+            "stage": "boundary_enforcement"
+          }
+        ],
+        "checkpoints": [
+          {
+            "sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 32,
+              "physical_time": null,
+              "wall_elapsed_ms": 8
+            }
+          },
+          {
+            "sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 64,
+              "physical_time": null,
+              "wall_elapsed_ms": 10
+            }
+          }
+        ]
+      }
+    ],
+    "unrelated": {
+      "run_id": "3c65c663843f4afb85baba776fc7cb23",
+      "graph_id": "01fc3ea6981943fa8afdb1f3c02c96cb",
+      "release_id": "3bb3a9e2132aa908e7fd08f798b047999f6707705b62bf784e644ee3a6d44d9a",
+      "artifacts": [
+        {
+          "name": "metrics.json",
+          "sha256": "36b60937de22f83cecaf1c781ddd279401f49310ab16489f11f49bf7a84ce702",
+          "bytes": 1404
+        },
+        {
+          "name": "predictions-validation.json",
+          "sha256": "e51d46c1974f2338ceb33547f73ed0c36bc170519217fd3dff620afd9fdf8f35",
+          "bytes": 2612
+        },
+        {
+          "name": "checkpoint.pt",
+          "sha256": "fa546c71306731ee9f3ac12d0ec683bf40af5ccdd5098597eb6eeda070985ba4",
+          "bytes": 6375
+        },
+        {
+          "name": "checkpoint-epoch-0001.json",
+          "sha256": "be72d740d45a41169838a6f696a083937753c330addab82406034ca43a2403f8",
+          "bytes": 526
+        },
+        {
+          "name": "checkpoints.json",
+          "sha256": "0916e5dababe4c0232a2943e10dc8b5f62bf2751efbb4af326b132b74f85e081",
+          "bytes": 574
+        },
+        {
+          "name": "fitted-transform.json",
+          "sha256": "6ef6f1167d13ea15822909c8e88a04deeebad848012d4c0c3ca4e7edf17f63bc",
+          "bytes": 68
+        },
+        {
+          "name": "metric-definitions.json",
+          "sha256": "3d776892f269d89746879c4d25537e00b85537928b219772922899f43e4275fa",
+          "bytes": 1724
+        },
+        {
+          "name": "model-definition.json",
+          "sha256": "438355260004c56f48fae57ef70e73f2da2c5dcf9f26abea6513af39f7d06cd6",
+          "bytes": 448
+        },
+        {
+          "name": "model-evidence.json",
+          "sha256": "e4f8fe50499dfa902b3e78e59c98416d9321e35b3d298fd2f321f9573e728370",
+          "bytes": 2161
+        },
+        {
+          "name": "observations.json",
+          "sha256": "3bbc3c00cca8e04fc5e4ae3d9fd41777313d6ed195a570e63badf0fa46572ed4",
+          "bytes": 1255
+        },
+        {
+          "name": "output-policy.json",
+          "sha256": "ee8f417a377b4c02aeafda8d604525de180fe0712ca0a97359806ab7b904b5ab",
+          "bytes": 65
+        },
+        {
+          "name": "probe.json",
+          "sha256": "c00c30be2fbd37fe70d0321936167c5c21f6a8c588bf403b008afa70a78437ef",
+          "bytes": 2426
+        },
+        {
+          "name": "probes-epoch-0001.json",
+          "sha256": "251388eabc9c1d72e25a682d973ff290dfe516c2e8c87e91a869bf26731a10b8",
+          "bytes": 652
+        },
+        {
+          "name": "profile.json",
+          "sha256": "863654f4ea603c538779c06ec6a0a2332698c10834d49727beaf05681cfd5e7b",
+          "bytes": 898
+        },
+        {
+          "name": "validation-logits.json",
+          "sha256": "f577c8d533fbfaed262c23b5dc286bea6a6bd48c7deb9fbf7332a36a69e89b0a",
+          "bytes": 647
+        },
+        {
+          "name": "weights-epoch-0001.pt",
+          "sha256": "fa546c71306731ee9f3ac12d0ec683bf40af5ccdd5098597eb6eeda070985ba4",
+          "bytes": 6375
+        },
+        {
+          "name": "artifact-manifest.json",
+          "sha256": "f834b52b35c7cdae2753c732e0c1d7cd6e81dc386fe7d4b95f01c8d1e5303396",
+          "bytes": 3437
+        }
+      ],
+      "recipe_choices": [
+        "image_classification",
+        "image_validate_export",
+        "image_classification_model_v2"
+      ]
+    }
+  },
+  "retained_counts": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "producer_execution": false,
+  "existing_actual_run": true,
+  "quality_claim": false,
+  "access_projection_test": "403 transport substitution; backend tests own actual current authority enforcement"
+}

@@ -1,0 +1,100 @@
+{
+  "format": "extension_scalar_canonical_cold_oracle_v3",
+  "state": "valid",
+  "scope": "Actual authored scalar numerical state/probes only; no physical or product acceptance",
+  "fixture_sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+  "canonical_release_sha256": "8952f10c7878c758c40f8db329f68263716dfeb6c43196e0e66c1a77253db459",
+  "oracle_sha256": "573f142de868d13649dcdb6cc109fd629385b8ce48a1968399c0f86cb77feed9",
+  "context_sha256": "afb25d4ee59a2a1a998eeafe9b65be9683e89ab3729de527dcfc81a1ea28476c",
+  "run_id": "610afd2bb09b4c1588b23a628d5756d3",
+  "composition": {
+    "catalog_id": "1139df50423642f0b5f579aa4b26bc8b",
+    "id": "67a28c7765f6762ec32f5d3f6da9b8de79cb795401d50ef69c12e4ce23808c77",
+    "kind": "recipe_material",
+    "sha256": "67a28c7765f6762ec32f5d3f6da9b8de79cb795401d50ef69c12e4ce23808c77"
+  },
+  "model": {
+    "catalog_id": "1139df50423642f0b5f579aa4b26bc8b",
+    "id": "fbf721657b664285bb9a0a1c863446c1",
+    "kind": "model",
+    "revision": 1,
+    "sha256": "3a127bd4a572c8ff1fe5eb5e49e9e4b11f5d10c6749829092f611ee9a60808c8"
+  },
+  "population_mean": 0.734375,
+  "population_std": 0.946441732556738,
+  "observations": [
+    {
+      "optimizer_update": 16,
+      "reference_mse": 0.0005756206595554737,
+      "maximum_weight_error": 1.1102230246251565e-16,
+      "maximum_reconstruction_error": 0.0,
+      "maximum_analytic_prediction_error": 2.220446049250313e-16,
+      "weights_sha256": "ca4dff91416d81d97b11c2fbfa44381a3054de4ca49ae3454976608c557fe5a9",
+      "prediction_sha256": "c61fa262b12ea1a7556ea2f8abf1cdc7ab729812035f52d6f60212d00fc154d9"
+    },
+    {
+      "optimizer_update": 32,
+      "reference_mse": 4.560536716183977e-07,
+      "maximum_weight_error": 1.1102230246251565e-16,
+      "maximum_reconstruction_error": 0.0,
+      "maximum_analytic_prediction_error": 2.220446049250313e-16,
+      "weights_sha256": "67d16d3a1ec44ff3dcbe868da6bb9b7faa604fd0c83b9f49faf18075a202fc16",
+      "prediction_sha256": "509e487ca7ab5c0501a51e01eed3d89845ed34c054276816feeb0d8056ac1c62"
+    },
+    {
+      "optimizer_update": 48,
+      "reference_mse": 3.613229441027695e-10,
+      "maximum_weight_error": 5.551115123125783e-17,
+      "maximum_reconstruction_error": 0.0,
+      "maximum_analytic_prediction_error": 2.220446049250313e-16,
+      "weights_sha256": "6b2dd55f14b2f7b6e4bde0ad7909a06c4f5253c58c929a96685199be6690225b",
+      "prediction_sha256": "58c3c0913fdacbcd7b3211ae4a689f031cac5e34965ccc2ede7326e3080e9b6a"
+    },
+    {
+      "optimizer_update": 64,
+      "reference_mse": 2.862695293846856e-13,
+      "maximum_weight_error": 5.551115123125783e-17,
+      "maximum_reconstruction_error": 0.0,
+      "maximum_analytic_prediction_error": 2.220446049250313e-16,
+      "weights_sha256": "c1c3e6a42ed3b3c1c4a2e3ebc8eb5d9bb31baf1d1f95ba020fc1ba0ee0425158",
+      "prediction_sha256": "c327ea15a50b705e4881b55f3c26b4f4fa497ba19365c9785d413d2c08f96ed4"
+    }
+  ],
+  "artifact_sha256": {
+    "canonical-derivation.json": "b050f509d630d591a500b1dd7f8f8419ca411852faf14a2b6b99cd05b2c3a59c",
+    "checkpoint-16.json": "92cb8e8937e324d6c0222df0bb823cfd90b0b28683384305f8a5cd91fa179c18",
+    "checkpoint-32.json": "f687634e766211100217b32870f7835f99ca87d1fbded7e885fd398569db179b",
+    "checkpoint-48.json": "d116f5850b53627ab967c0ff867291320c007a731849199f650f1957b417b2da",
+    "checkpoint-64.json": "0eda3cebe54acc04be3a44be6070d538969c5c963d08bac6c979622befc1d8ec",
+    "checkpoints.json": "645c08b98df652892a88cc5db8ab16ce564d79497ce48a8e1b779cba71f9b0ba",
+    "diagnostics.json": "133cf3c9373adf40b519a05389b1305bd4668289a661521d8ef9fc622a6efa10",
+    "execution-context.json": "afb25d4ee59a2a1a998eeafe9b65be9683e89ab3729de527dcfc81a1ea28476c",
+    "field-index.json": "0d62915905965eab17d7562fc1e270f99b053dd005ade1d6c921ad7a21abf481",
+    "fitted-transform.json": "af605e5df703a8aae91c1ccd55fdfc5b2b975495ce00406e8d4779ea35c03f70",
+    "input-initial.npy": "f9e9838679f8b4c123e908382469312decc6b71055727b806baf47b27c3ff189",
+    "metric-definitions.json": "cbdec991e60e3f1a4b6e522cc4ea7026823cc92931ee864047d60e7eefc5fc0b",
+    "model-definition.json": "3d26a34394abfcd002872406d162cbffcb5d783aecbd67aeddf24c68f7b537c4",
+    "model-evidence.json": "9553d5dd43d92b44da1fbfc889e53bc589a0f1a161ef9c841f72cc4f0d133675",
+    "observations.json": "2a32c9ee5b147c5adda4d8d7b7aa44144cd0854679a27847c45b1b94af8cd4d6",
+    "output-policy.json": "537bf58ece53fcd6f3c389bf8a0f9b988db440e73ff340ab71eaf19d8caa303c",
+    "prediction-16.npy": "c61fa262b12ea1a7556ea2f8abf1cdc7ab729812035f52d6f60212d00fc154d9",
+    "prediction-32.npy": "509e487ca7ab5c0501a51e01eed3d89845ed34c054276816feeb0d8056ac1c62",
+    "prediction-48.npy": "58c3c0913fdacbcd7b3211ae4a689f031cac5e34965ccc2ede7326e3080e9b6a",
+    "prediction-64.npy": "c327ea15a50b705e4881b55f3c26b4f4fa497ba19365c9785d413d2c08f96ed4",
+    "probe.json": "4144cb25b3ed0b782fec9783ec8ccb2343af36d10feea42a2dc3366d8fba2874",
+    "profile.json": "65c591118344738a575c41c1239027553b3f48f9b1f9129739cc044cb6d84a23",
+    "reference.npy": "a3d5ed68f9f45badf5146729e9b3004e10718705f6b033472525e88b41bca9b0",
+    "train-0-initial.npy": "f2570680ab0edcf478d027c3050149f8fe39949a1cf39d629256da674d55ef51",
+    "train-0-reference.npy": "edecab2e4664a603c25c0b7f99151c52fc63f42f98b2f11badde48dc15c0f6cb",
+    "train-1-initial.npy": "f1f95da722543ad1cd830d0173020f26f23127fc8eda4a2548bbc99b6564e556",
+    "train-1-reference.npy": "35c8a59267ac4d1201a045535529e530526ec8100a60530e3adc361914e11b94",
+    "transform.npy": "ad95a8b96e46a03a9dffe84fcd8560c98c68face6e5ac48412b6f645508a17ec",
+    "weights-16.npy": "ca4dff91416d81d97b11c2fbfa44381a3054de4ca49ae3454976608c557fe5a9",
+    "weights-32.npy": "67d16d3a1ec44ff3dcbe868da6bb9b7faa604fd0c83b9f49faf18075a202fc16",
+    "weights-48.npy": "6b2dd55f14b2f7b6e4bde0ad7909a06c4f5253c58c929a96685199be6690225b",
+    "weights-64.npy": "c1c3e6a42ed3b3c1c4a2e3ebc8eb5d9bb31baf1d1f95ba020fc1ba0ee0425158"
+  },
+  "absolute_tolerance": 1e-10,
+  "relative_tolerance": 1e-10,
+  "product_acceptance": "not_established"
+}

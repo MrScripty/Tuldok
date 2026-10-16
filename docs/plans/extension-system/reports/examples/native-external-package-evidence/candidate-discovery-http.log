@@ -1,0 +1,7 @@
+test_run_candidate_discovery_pages_exact_retained_refs_over_selected_http (test_candidate_selection.ActualCandidateSelectionTests.test_run_candidate_discovery_pages_exact_retained_refs_over_selected_http) ... ok
+test_run_candidate_discovery_rechecks_current_inspect_authority_before_refs (test_candidate_selection.ActualCandidateSelectionTests.test_run_candidate_discovery_rechecks_current_inspect_authority_before_refs) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 33.457s
+
+OK

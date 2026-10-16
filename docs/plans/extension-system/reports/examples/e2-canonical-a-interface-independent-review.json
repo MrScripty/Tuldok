@@ -1,0 +1,20 @@
+{
+  "state": "passed",
+  "run_id": "610afd2bb09b4c1588b23a628d5756d3",
+  "public_receipt_sha256": "8687e4d2d980c9b5e80d5a6c20e767d36b7a36485067ea5644fa6131b3eb47ac",
+  "negative_receipt_sha256": "cff603411f3e934d5c91494947f40d6a2f0ba6f76081a8102bc73496e4bdad4b",
+  "browser_receipt_sha256": "7a9d190cb27067fc51f16bc810422d014636b07fe6b57407fc7216759df5ecd9",
+  "public_plane_pairs": 12,
+  "cold_values_compared": 384,
+  "restored_artifacts": 32,
+  "negative_gate_counts": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "wrong_task_boundary": "201 draft,409 stale Model publish; before capture/material by current source",
+  "browser_captures": 8,
+  "scope": "Same canonical A Run API/native-browser/retained-negative evidence; no all-slice-index coverage, B,50502,physical quality or backend revocation claim",
+  "source_note": "Negative driver hash matches4069803; recorded hostddd056 precedes that driver commit. Browser403 uses explicitly disclosed transport substitution."
+}

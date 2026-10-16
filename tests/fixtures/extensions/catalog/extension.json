@@ -1,0 +1,56 @@
+{
+  "format": "tuldok_extension_v1",
+  "package": {
+    "id": "example.field",
+    "version": "1.0.0"
+  },
+  "label": "Example field declarations",
+  "license": {
+    "id": "private-test-fixture",
+    "notices": [
+      {
+        "path": "NOTICE.txt",
+        "sha256": "ea27dafb6e2ffb7e4e7d0c32ec5bf830cb1bb58538c353ab3e4b222889dfa261",
+        "bytes": 62
+      }
+    ]
+  },
+  "sources": [
+    {
+      "path": "worker.py",
+      "sha256": "36b0e127d0f530a2f048fe07030150405a25a97d182da493a55ec3b8aa6804d2",
+      "bytes": 148
+    }
+  ],
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "runtime": {
+    "profile": "captured-cpu-v1"
+  },
+  "effects": [
+    "filesystem"
+  ],
+  "resources": {
+    "wall_seconds": 60,
+    "source_bytes": 4096,
+    "output_bytes": 4096
+  },
+  "contributions": [
+    {
+      "id": "example.field:model",
+      "version": "1.0.0",
+      "kind": "model",
+      "path": "model.json",
+      "sha256": "ab3939c83f9de9251d9b1cdd987ff22a9909efcb79410dea3644fe9c39df38ef",
+      "bytes": 520
+    }
+  ]
+}

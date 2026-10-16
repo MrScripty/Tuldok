@@ -1,0 +1,1 @@
+Independent B authored fixture and numerical source. Private local QA only. No redistribution license is inferred. NumPy and the captured CPU runtime retain their separately inventoried upstream notices. No physical solver or diffusion claim.

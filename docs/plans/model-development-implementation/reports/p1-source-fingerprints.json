@@ -1,0 +1,18 @@
+{
+  "baseline": "d788e08f3813af8b6bd054218556abb9e7df431c",
+  "files": {
+    "agent_api.py": "0b75fbf71496958aa55f940148ec932777cc91a82feb90df60b5ceb0444029a2",
+    "app.py": "48b7d1167abbf67b3ff8580681ba6443c9c0bcdb02cb3874d9e441d3c58d54bc",
+    "docs/contracts/agent-operations.md": "6a4b0a83960b500b41932c74393f7eafaa5064e6259a7dbece205630a4765541",
+    "docs/contracts/project-cli.md": "3af84bb95c0a8a34224b95f29f8cf75f0026fa4ea2a85a1b2862e3a8cd71be36",
+    "mcp_stdio.py": "f5e939c1d299e7233b4dc6ebb82c8e7ebdcbf8ab67b29c7c549b7820847f5916",
+    "requirements.txt": "3c1ff46e80fbb1511087f76c0af33b8ccfd261876f13a87b54ada1d188b17545",
+    "tests/fixtures/agent_legacy_f588.py": "820ec62f22d49aa5834c05858d865bcf109529689a54bdc06ebc3e186c955dd2",
+    "tests/fixtures/cli_legacy_f588.py": "8df37da8a88ff7f97e62a2ac056a06594cbf62109a29e6dcd6d28a6e5edc6528",
+    "tests/fixtures/http_legacy_f588.py": "f7ad26b167e7d0820d830e4841ca70533f1615a0f4b640c500da076cacb83af3",
+    "tests/fixtures/mcp_legacy_f588.py": "7a87261212474b06dad85ab7f8ab8693c20cd0fec90ded0ba034f2adf0ced344",
+    "tests/test_agent_api.py": "1c1eda9a673a77a77f02703db6ee4d2f0152fdfca55febff17943c373d0208a2",
+    "tests/test_agent_negotiation.py": "12e8175f8ec6ea2597909a389958690eb32fd49987d782cc8afb2926008a9e58",
+    "tests/test_mcp_stdio.py": "d61577fff04c92871263c6441852b6afea3f2bddf0c1c4ceef302de0412e271f"
+  }
+}

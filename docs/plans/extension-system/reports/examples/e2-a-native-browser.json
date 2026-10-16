@@ -1,0 +1,168 @@
+{
+  "source_commit": "b377a89d2619eaf94f657ffdc1b89d298526f314",
+  "source_sha256": {
+    "static/workspace-service.js": "d1e90826974238070ff3b8ff4209a958978e6dd17def5bfeb937eedd75b65968",
+    "static/workspace-real.js": "7db1d10f94e4ee204866e6f10d0516d942f2befccbe9ef40ed2861bc3e8d70a2",
+    "static/workspaces.css": "9d6e9ca637ab66c4163c102c7ff4d0490c8f1274d867373d85e5c47eb4f107a3",
+    "tests/browser_field_evidence.cjs": "a9411cad34c35174f8bc2067d530d7edae5715400645744d0388ce62032111f2"
+  },
+  "command": "node tests/browser_field_evidence.cjs",
+  "catalog_path": "/workspace/Tuldok-extension-e2/build/qa/extension-e2-contract/actual-a-catalog",
+  "run_id": "29682a74c2c744548bba1e95e9cf212c",
+  "source_receipt": "/workspace/Tuldok-extension-e2/build/qa/extension-e2-contract/browser-source-receipt.json",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    "H3 real retained checkpoints, fixed members, declared stages and all orthogonal slices drive exact numeric probes with shared display and physical scales",
+    "H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest"
+  ],
+  "captures": [
+    {
+      "file": "linked-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "linked-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-field-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    },
+    {
+      "file": "dark-linked-field-390.jpg",
+      "width": 390,
+      "height": 844,
+      "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+      "quality": 85
+    }
+  ],
+  "dark_checks": [
+    {
+      "width": 1440,
+      "preference": true,
+      "focus": "field-member",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "color": "rgb(229, 237, 248)"
+    },
+    {
+      "width": 390,
+      "preference": true,
+      "focus": "field-member",
+      "outline": "solid",
+      "outlineWidth": "3px",
+      "color": "rgb(229, 237, 248)"
+    }
+  ],
+  "exact_requests": [
+    {
+      "checkpoint_sha256": "12e77114bef451dbebd46228c04407413f6985b1fe159de2e3111d32a801198a",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "12e77114bef451dbebd46228c04407413f6985b1fe159de2e3111d32a801198a",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "12e77114bef451dbebd46228c04407413f6985b1fe159de2e3111d32a801198a",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "e8b917e2ef41d183d5db4719c632fcd536750dc7f9d91322dbafb2777fe3b592",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "e8b917e2ef41d183d5db4719c632fcd536750dc7f9d91322dbafb2777fe3b592",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "e8b917e2ef41d183d5db4719c632fcd536750dc7f9d91322dbafb2777fe3b592",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "3a6bb9dc2c3e787c9422d6ee5075f843c4583d4c39328f2cd2fb2a5512d8d3e1",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "3a6bb9dc2c3e787c9422d6ee5075f843c4583d4c39328f2cd2fb2a5512d8d3e1",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "3a6bb9dc2c3e787c9422d6ee5075f843c4583d4c39328f2cd2fb2a5512d8d3e1",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "88643871f74a54be8d0d1a60685c04bd30c027a6c99652697e375930b6cbb4a1",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "z",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "88643871f74a54be8d0d1a60685c04bd30c027a6c99652697e375930b6cbb4a1",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "y",
+      "index": 3,
+      "split": "validation"
+    },
+    {
+      "checkpoint_sha256": "88643871f74a54be8d0d1a60685c04bd30c027a6c99652697e375930b6cbb4a1",
+      "member_ordinal": 0,
+      "field_id": "raw",
+      "axis": "x",
+      "index": 3,
+      "split": "validation"
+    }
+  ],
+  "producer_execution": false,
+  "existing_actual_run": true,
+  "quality_claim": false,
+  "access_projection_test": "403 transport substitution; backend tests own actual current authority enforcement"
+}

@@ -1,0 +1,47 @@
+{
+  "format": "native_restored_domain_after_v1",
+  "read_utc": "2026-10-16T02:03:42.419618+00:00",
+  "catalog_path": "/workspace/shared/extension-ab-e4-retention-01/restored-catalog",
+  "database_name": "tuldok_ab_retention_310748830d324325bc17d8046378afe2",
+  "before_a": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "before_b": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "explicit_after": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "owner_handoff_counts_match": true,
+  "all_ten_counts_unchanged": true,
+  "access_admissions_before": 5,
+  "access_admissions_after": 5,
+  "remaining_application_browser_processes": []
+}

@@ -1,0 +1,484 @@
+{
+  "format": "extension_local_scalar_a_50502_qualification_v1",
+  "state": "authored_runtime_qa_passed",
+  "date": "2026-10-15",
+  "scope": "Actual authored scalar A on explicitly nominated50502 runtime; not0b15/canonical Release/physical/fresh-package acceptance",
+  "actual_host_commit": "91e1a6ee2d7c0f470ff5c5aaf844d7e5d428cab4",
+  "examples_dependency_commit": "8f894e41ce41ec46bc7aceba75fb3a9fcaa0ba2c",
+  "driver_correction_commit": "5172f572997f9bccbc0a26c11c16c5af043618e1",
+  "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+  "catalog_path": "/workspace/shared/extension-a-50502-catalog-01",
+  "run_id": "87a0cfd1bfe6498793f9b46dc95b4950",
+  "study_id": "a7b87df86f9e4ff2b18dc5e496731030",
+  "trial_id": "bfeb8b41290d4f2b9fed8b59c88e3ca0",
+  "model": {
+    "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+    "id": "62b7f2755f2d4692bc7182bb2de94fe6",
+    "kind": "model",
+    "revision": 1,
+    "sha256": "eba92da2c0dd2ebbcbcf22e4cfd4586e2fbf3747bc91176245cd9713e1a196dc"
+  },
+  "material": {
+    "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+    "id": "f37434415d306b86f1ebeeed6592f1f5e04b633ec56b71c4aaa6ac1083933697",
+    "kind": "recipe_material",
+    "sha256": "f37434415d306b86f1ebeeed6592f1f5e04b633ec56b71c4aaa6ac1083933697"
+  },
+  "runtime": {
+    "profile": "captured_cpu_python_v1",
+    "manifest_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "manifest_bytes": 3825828,
+    "file_count": 20804,
+    "total_bytes": 896562621,
+    "python_version": "3.12",
+    "packages": {
+      "filelock": "4.2.0",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "nomination": {
+    "recipe_sha256": "4cebb6b2083e48e32234f7ba9f29ca6c7684c51d8d90ed028e37535c9d233508",
+    "extension_sha256": "2ee193ea7ad63f57d79f62a05d2f6e47c4bc06781c4c50437c80cf0a0271ebbb",
+    "inference_source_sha256": "b77face4f2e51345a565216fc5139271aa02bd17577ac099706393b3149acc2c",
+    "inference_contract_sha256": "9588ee2632a90dc647e65b4f2b6289ef78338de29ec3f16480f02f6ea02f7dd8"
+  },
+  "source_driver_sha256": "7e19110ed1134c43135ab4f0780f4032b872035896cc3b385b3e045cd7b6625c",
+  "oracle": {
+    "format": "extension_scalar_cold_oracle_v2",
+    "state": "valid",
+    "scope": "Actual authored scalar numerical state/probes only; no physical or product acceptance",
+    "fixture_sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+    "oracle_sha256": "ccfbe3bc92badf265ea882382d392e05daca091f5694f528f268ec3d6e38764b",
+    "context_sha256": "0d85ea8d9abc56b042cec50fd7d057cca89b154211adbe0e41e04d5912f3ff36",
+    "run_id": "87a0cfd1bfe6498793f9b46dc95b4950",
+    "composition": {
+      "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+      "id": "f37434415d306b86f1ebeeed6592f1f5e04b633ec56b71c4aaa6ac1083933697",
+      "kind": "recipe_material",
+      "sha256": "f37434415d306b86f1ebeeed6592f1f5e04b633ec56b71c4aaa6ac1083933697"
+    },
+    "model": {
+      "catalog_id": "6538a60c4e944279b799299aa27d1d6a",
+      "id": "62b7f2755f2d4692bc7182bb2de94fe6",
+      "kind": "model",
+      "revision": 1,
+      "sha256": "eba92da2c0dd2ebbcbcf22e4cfd4586e2fbf3747bc91176245cd9713e1a196dc"
+    },
+    "population_mean": 0.734375,
+    "population_std": 0.946441732556738,
+    "observations": [
+      {
+        "optimizer_update": 16,
+        "reference_mse": 0.0003409493191531819,
+        "maximum_weight_error": 0.0,
+        "maximum_reconstruction_error": 0.0,
+        "maximum_analytic_prediction_error": 2.220446049250313e-16,
+        "weights_sha256": "faf2703fe66b1dfeb8300bd21599ca01337bc251c1385167d0dbfbde53781fdf",
+        "prediction_sha256": "60083245aea71b858dc32a5e005c6e325a9a6c61bd27f3fc3ca6076f2853e25b"
+      },
+      {
+        "optimizer_update": 32,
+        "reference_mse": 2.7012788066999807e-07,
+        "maximum_weight_error": 5.551115123125783e-17,
+        "maximum_reconstruction_error": 0.0,
+        "maximum_analytic_prediction_error": 2.220446049250313e-16,
+        "weights_sha256": "1f36436f5f1eeff56d2b6ea6f1acc98cc97e9076ef5a18192231d1abafa49df0",
+        "prediction_sha256": "6aab8439dc5e434d4e2b29734ed14d56383d59afc550ecca16b2821c737faca1"
+      },
+      {
+        "optimizer_update": 48,
+        "reference_mse": 2.140173562940283e-10,
+        "maximum_weight_error": 0.0,
+        "maximum_reconstruction_error": 0.0,
+        "maximum_analytic_prediction_error": 2.220446049250313e-16,
+        "weights_sha256": "b03f226ff34ab75b7362d821961b888647646821421e32d9a88a27e446c593d2",
+        "prediction_sha256": "55778d56e4a7c8654fdfb39d30a433bc4c638650bbd9ae5a7ec9e56870aec771"
+      },
+      {
+        "optimizer_update": 64,
+        "reference_mse": 1.6956201885603723e-13,
+        "maximum_weight_error": 0.0,
+        "maximum_reconstruction_error": 0.0,
+        "maximum_analytic_prediction_error": 2.220446049250313e-16,
+        "weights_sha256": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c",
+        "prediction_sha256": "01567b2d1f0b714b366466a5782be220b0ab1496779be493b6a94725ff303b11"
+      }
+    ],
+    "artifact_sha256": {
+      "checkpoint-16.json": "21bc4c4dce4d5b59158e3315fb1118c560b3e29b6c8a9c1f479b011b72a67087",
+      "checkpoint-32.json": "dd012a969685ad6180839ea3faa15caca4ae5c79d2fed91f1c7b14690d1facf2",
+      "checkpoint-48.json": "3c439e67ad7b87d9a70a545095162ac4ec8c54c87c94a8012c8b691e2b797b3b",
+      "checkpoint-64.json": "6b7ce4212150e7af090abe69738553d50c41a129247e673e310d754c87d8d75c",
+      "checkpoints.json": "23023286a8825671d8bfc65ccb58ee06de529649646a6ab20428704186690ce9",
+      "diagnostics.json": "cf50c71b9be0fbed7c9d999d8673d22365b23126f3df939936082d1fb2594d62",
+      "execution-context.json": "0d85ea8d9abc56b042cec50fd7d057cca89b154211adbe0e41e04d5912f3ff36",
+      "field-index.json": "8333c54ea67f6236c62ac83dde1f909f5f8df48d87223ec26153645da23dde74",
+      "fitted-transform.json": "0690be1dfb765d2e66355815ce79f2e5a81f3bacced1a6cfe142ad03fe263014",
+      "input-initial.npy": "d01e96e8ce04ba7dda08aa34d0dc9fa23594d26ebc3e2002dea2d3ae93891b1e",
+      "metric-definitions.json": "fcba61475e5df9e15124f579c86060ecaca546167860b212439ec2196d92d915",
+      "model-definition.json": "23e4877bca9a47f22d33474d978a367b49845e77ac07364c78a046d44d8579ac",
+      "model-evidence.json": "2ce8e6890a02acc12016c7e144fd6ec52845880fa4785fde576fb8d1cdbbd45d",
+      "observations.json": "541e4c20ab998379bd897753daa2df926ec6a912934749417c619be73a28458b",
+      "output-policy.json": "b9c3fb43c1726e86802b44fe2cd2c1946b0945d7a2a5d8c57fd522052302dd3f",
+      "prediction-16.npy": "60083245aea71b858dc32a5e005c6e325a9a6c61bd27f3fc3ca6076f2853e25b",
+      "prediction-32.npy": "6aab8439dc5e434d4e2b29734ed14d56383d59afc550ecca16b2821c737faca1",
+      "prediction-48.npy": "55778d56e4a7c8654fdfb39d30a433bc4c638650bbd9ae5a7ec9e56870aec771",
+      "prediction-64.npy": "01567b2d1f0b714b366466a5782be220b0ab1496779be493b6a94725ff303b11",
+      "probe.json": "ec171d897e1a40de5287a71bae153c4384529d1d3473c096c05db61250bbfe78",
+      "profile.json": "a4b089e909d099c7a0c9f5b3fd3b2dd01e6ff4e6aa2c9092e9112b951a0cf091",
+      "reference.npy": "f73e4a9e73f04c6c7029d5290db376515adfeab8604ff351d4a010c8e88afe53",
+      "transform.npy": "ad95a8b96e46a03a9dffe84fcd8560c98c68face6e5ac48412b6f645508a17ec",
+      "weights-16.npy": "faf2703fe66b1dfeb8300bd21599ca01337bc251c1385167d0dbfbde53781fdf",
+      "weights-32.npy": "1f36436f5f1eeff56d2b6ea6f1acc98cc97e9076ef5a18192231d1abafa49df0",
+      "weights-48.npy": "b03f226ff34ab75b7362d821961b888647646821421e32d9a88a27e446c593d2",
+      "weights-64.npy": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c"
+    },
+    "absolute_tolerance": 1e-10,
+    "relative_tolerance": 1e-10,
+    "product_acceptance": "not_established"
+  },
+  "custody": {
+    "state": "completed_drained",
+    "captured_files": 9,
+    "captured_bytes": 92294,
+    "execution_context_sha256": "0d85ea8d9abc56b042cec50fd7d057cca89b154211adbe0e41e04d5912f3ff36",
+    "whole_hash_hot_downloads": 27,
+    "whole_hash_cold_downloads": 27
+  },
+  "public_field_state": "verified",
+  "retained_negatives": {
+    "state": "passed",
+    "scope": "Actual retained source/context/profile/Task/legacy-admission negatives; no new execution or public contract2/UI claim",
+    "host_commit": "8f894e41ce41ec46bc7aceba75fb3a9fcaa0ba2c",
+    "driver_sha256": "e502249159799a62232848000e266a6bedbf7f415e2435fff35f7def63df752c",
+    "run_id": "87a0cfd1bfe6498793f9b46dc95b4950",
+    "counts_before": {
+      "workspace_runs": 1,
+      "access_execution_consumptions": 1,
+      "access_execution_grants": 1,
+      "model_attempt_reservations": 1
+    },
+    "counts_after": {
+      "workspace_runs": 1,
+      "access_execution_consumptions": 1,
+      "access_execution_grants": 1,
+      "model_attempt_reservations": 1
+    },
+    "checks": [
+      {
+        "check": "New variant refuses executable-only legacy submission before implicit grant/Run/reservation",
+        "state": "passed"
+      },
+      {
+        "check": "Actual changed project source refuses retained-material preflight without admission effects",
+        "state": "passed"
+      },
+      {
+        "check": "Changed retained profile refuses material and actual cold Run reads",
+        "state": "passed"
+      },
+      {
+        "check": "whole artifact",
+        "state": "refused",
+        "code": "unavailable"
+      },
+      {
+        "check": "stream artifact",
+        "state": "refused",
+        "code": "unavailable"
+      },
+      {
+        "check": "artifact segment",
+        "state": "refused",
+        "code": "unavailable"
+      },
+      {
+        "check": "artifact capture",
+        "state": "refused",
+        "code": "unavailable"
+      },
+      {
+        "check": "model evidence query",
+        "state": "refused",
+        "code": "unavailable"
+      },
+      {
+        "check": "Run input inventory",
+        "state": "unavailable; no artifacts"
+      },
+      {
+        "check": "scientific test selector",
+        "state": "refused",
+        "code": "unsupported"
+      },
+      {
+        "check": "Actual published wrong-Task Model refuses normal HTTP Study preparation before grant/reservation/Run",
+        "state": "passed"
+      }
+    ],
+    "all_original_artifacts_restored": true
+  },
+  "browser": {
+    "source_commit": "5172f572997f9bccbc0a26c11c16c5af043618e1",
+    "source_sha256": {
+      "static/workspace-service.js": "d1e90826974238070ff3b8ff4209a958978e6dd17def5bfeb937eedd75b65968",
+      "static/workspace-real.js": "7db1d10f94e4ee204866e6f10d0516d942f2befccbe9ef40ed2861bc3e8d70a2",
+      "static/workspaces.css": "9d6e9ca637ab66c4163c102c7ff4d0490c8f1274d867373d85e5c47eb4f107a3",
+      "tests/browser_field_evidence.cjs": "658e7f55153f0335d434dac1c00ceb8df2f9722ffac312f3373f6934e746c52f"
+    },
+    "command": "node tests/browser_field_evidence.cjs",
+    "run_id": "87a0cfd1bfe6498793f9b46dc95b4950",
+    "browser": "Chrome/151.0.7922.173",
+    "checks": [
+      "H3 real retained checkpoints, fixed members, declared stages and all orthogonal slices drive exact numeric probes with shared display and physical scales",
+      "H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest"
+    ],
+    "captures": [
+      {
+        "file": "linked-field-1440.jpg",
+        "width": 1440,
+        "height": 900,
+        "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+        "quality": 85
+      },
+      {
+        "file": "linked-field-390.jpg",
+        "width": 390,
+        "height": 844,
+        "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+        "quality": 85
+      },
+      {
+        "file": "dark-linked-field-1440.jpg",
+        "width": 1440,
+        "height": 900,
+        "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+        "quality": 85
+      },
+      {
+        "file": "dark-linked-field-390.jpg",
+        "width": 390,
+        "height": 844,
+        "mode": "real execution on explicitly authored CC0 inputs; no model-quality claim",
+        "quality": 85
+      }
+    ],
+    "dark_checks": [
+      {
+        "width": 1440,
+        "preference": true,
+        "focus": "field-member",
+        "outline": "solid",
+        "outlineWidth": "3px",
+        "color": "rgb(229, 237, 248)"
+      },
+      {
+        "width": 390,
+        "preference": true,
+        "focus": "field-member",
+        "outline": "solid",
+        "outlineWidth": "3px",
+        "color": "rgb(229, 237, 248)"
+      }
+    ],
+    "exact_requests": [
+      {
+        "checkpoint_sha256": "21bc4c4dce4d5b59158e3315fb1118c560b3e29b6c8a9c1f479b011b72a67087",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "21bc4c4dce4d5b59158e3315fb1118c560b3e29b6c8a9c1f479b011b72a67087",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "y",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "21bc4c4dce4d5b59158e3315fb1118c560b3e29b6c8a9c1f479b011b72a67087",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "x",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "dd012a969685ad6180839ea3faa15caca4ae5c79d2fed91f1c7b14690d1facf2",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "dd012a969685ad6180839ea3faa15caca4ae5c79d2fed91f1c7b14690d1facf2",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "y",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "dd012a969685ad6180839ea3faa15caca4ae5c79d2fed91f1c7b14690d1facf2",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "x",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "3c439e67ad7b87d9a70a545095162ac4ec8c54c87c94a8012c8b691e2b797b3b",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "3c439e67ad7b87d9a70a545095162ac4ec8c54c87c94a8012c8b691e2b797b3b",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "y",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "3c439e67ad7b87d9a70a545095162ac4ec8c54c87c94a8012c8b691e2b797b3b",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "x",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "6b7ce4212150e7af090abe69738553d50c41a129247e673e310d754c87d8d75c",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "z",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "6b7ce4212150e7af090abe69738553d50c41a129247e673e310d754c87d8d75c",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "y",
+        "index": 3,
+        "split": "validation"
+      },
+      {
+        "checkpoint_sha256": "6b7ce4212150e7af090abe69738553d50c41a129247e673e310d754c87d8d75c",
+        "member_ordinal": 0,
+        "field_id": "raw",
+        "axis": "x",
+        "index": 3,
+        "split": "validation"
+      }
+    ],
+    "producer_execution": false,
+    "existing_actual_run": true,
+    "quality_claim": false,
+    "access_projection_test": "403 transport substitution; backend tests own actual current authority enforcement"
+  },
+  "offline_inference": {
+    "format": "scalar_a_actual_state_inference_diagnostic_v1",
+    "state": "passed",
+    "run_id": "87a0cfd1bfe6498793f9b46dc95b4950",
+    "scope": "Offline inference-only reconstruction from whole-hash downloaded actual A state; not an admitted P5 fresh package consumer",
+    "source_sha256": "b77face4f2e51345a565216fc5139271aa02bd17577ac099706393b3149acc2c",
+    "contract_sha256": "9588ee2632a90dc647e65b4f2b6289ef78338de29ec3f16480f02f6ea02f7dd8",
+    "independent_oracle_sha256": "ccfbe3bc92badf265ea882382d392e05daca091f5694f528f268ec3d6e38764b",
+    "request_bindings": "Actual selected descriptor, fitted-transform state and permitted validation input artifact",
+    "absolute_tolerance": 1e-10,
+    "relative_tolerance": 1e-10,
+    "observations": [
+      {
+        "checkpoint_sha256": "21bc4c4dce4d5b59158e3315fb1118c560b3e29b6c8a9c1f479b011b72a67087",
+        "optimizer_update": 16,
+        "maximum_absolute_error": 0.0,
+        "weights_sha256": "faf2703fe66b1dfeb8300bd21599ca01337bc251c1385167d0dbfbde53781fdf",
+        "output_sha256": "1bd5b898681184231ea175a198813776d223e2cfbbcc8ae8b70f31365aa9cb65",
+        "cli_result": {
+          "bytes": 640,
+          "sha256": "1bd5b898681184231ea175a198813776d223e2cfbbcc8ae8b70f31365aa9cb65",
+          "state": "written"
+        }
+      },
+      {
+        "checkpoint_sha256": "dd012a969685ad6180839ea3faa15caca4ae5c79d2fed91f1c7b14690d1facf2",
+        "optimizer_update": 32,
+        "maximum_absolute_error": 0.0,
+        "weights_sha256": "1f36436f5f1eeff56d2b6ea6f1acc98cc97e9076ef5a18192231d1abafa49df0",
+        "output_sha256": "579946241b8f19ff1a30f8a6adbb572d2550516851056279d27587e4ef45ff31",
+        "cli_result": {
+          "bytes": 640,
+          "sha256": "579946241b8f19ff1a30f8a6adbb572d2550516851056279d27587e4ef45ff31",
+          "state": "written"
+        }
+      },
+      {
+        "checkpoint_sha256": "3c439e67ad7b87d9a70a545095162ac4ec8c54c87c94a8012c8b691e2b797b3b",
+        "optimizer_update": 48,
+        "maximum_absolute_error": 0.0,
+        "weights_sha256": "b03f226ff34ab75b7362d821961b888647646821421e32d9a88a27e446c593d2",
+        "output_sha256": "8fef9ffb9c945c1af65c90ed179f6625bf7ada814b1c775c70b19bf7aa61391a",
+        "cli_result": {
+          "bytes": 640,
+          "sha256": "8fef9ffb9c945c1af65c90ed179f6625bf7ada814b1c775c70b19bf7aa61391a",
+          "state": "written"
+        }
+      },
+      {
+        "checkpoint_sha256": "6b7ce4212150e7af090abe69738553d50c41a129247e673e310d754c87d8d75c",
+        "optimizer_update": 64,
+        "maximum_absolute_error": 0.0,
+        "weights_sha256": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c",
+        "output_sha256": "d549e1f5a6f5c58a931c78022112369d324cf7bd56b2dfc9c98e7b38b9833e1f",
+        "cli_result": {
+          "bytes": 640,
+          "sha256": "d549e1f5a6f5c58a931c78022112369d324cf7bd56b2dfc9c98e7b38b9833e1f",
+          "state": "written"
+        }
+      }
+    ],
+    "physical_acceptance": "not_established",
+    "fresh_package_acceptance": "not_established"
+  },
+  "raw_receipts": {
+    "positive": {
+      "path": "/workspace/shared/extension-a-50502-qualification-01/receipt.json",
+      "sha256": "8358a29c8c105a3cb580acc01b13975ecf2a4bd88cec7d5ad1f95bbbd0daf9f7"
+    },
+    "retained_negatives": {
+      "path": "/workspace/shared/extension-a-50502-retained-negatives-02/receipt.json",
+      "sha256": "0adc71dddd6b81be76f8d22c8a6dc2f2835cf2cb3e2ec659181ce7e74e379953"
+    },
+    "browser": {
+      "path": "/workspace/shared/extension-a-50502-browser-01/external-field-evidence/run-OAbiWH/receipt.json",
+      "sha256": "930218243792169a0fb394020b734e8c03859cd7ee5d1214c1735a5038a3999a"
+    },
+    "offline_inference": {
+      "path": "/workspace/shared/extension-a-50502-inference-check-01/receipt.json",
+      "sha256": "0f5feea570c4ea6e3af89693407da0b4409c05ebf5c692c93f260bee7a286e69"
+    }
+  },
+  "remaining": [
+    "Original0b15 runtime was not qualified by this run.",
+    "Input is authored Project fixture, not canonical Release/family/split derivation acceptance.",
+    "Physical/model-quality acceptance is not established.",
+    "Fresh admitted P5 package/consumer and independent selected CLI/MCP checks are separate gates."
+  ]
+}

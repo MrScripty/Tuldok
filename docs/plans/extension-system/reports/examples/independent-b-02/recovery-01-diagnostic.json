@@ -1,0 +1,14 @@
+{
+  "exception": "RuntimeError: Verification resume cannot call a mutation route.",
+  "failed_method": "POST",
+  "failed_operation": "models.material",
+  "failed_path": "/api/workspace/model-material",
+  "format": "extension_author_verification_recovery_diagnostic_v1",
+  "host_commit": "685837aa844046d60e1961672199603063394193",
+  "no_admission_or_sdk": true,
+  "oracle_state": "valid",
+  "reason": "Verification-only raw route allowlist omitted existing read-only material POST; stopped before HTTP dispatch.",
+  "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+  "source_fix": "3affe90bc258c1327fde49faf57bceb852cc2759",
+  "state": "verification_incomplete_no_admission"
+}

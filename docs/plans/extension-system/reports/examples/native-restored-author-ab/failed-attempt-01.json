@@ -1,0 +1,44 @@
+{
+  "state": "failed_test_only",
+  "source_commit": "8e63a9c",
+  "harness_sha256": "6fdcc93d640558551f16c3d14b225b359427ddcda10b655902d535a319841cde",
+  "log": "/tmp/native-ab-restored-browser-01.log",
+  "log_sha256": "137feeafd05daebfc08db2cd496fc9db80bbf4c8c2cb010a14507f3d2654194a",
+  "captures": "/workspace/shared/extension-ab-native-restored-results-01/a/external-field-evidence/run-UV6e9Y",
+  "failure": "Legacy Project GET used for saved v2 snapshot; detail.recipes undefined at harness410",
+  "completed": [
+    "H3",
+    "strict native selectors and1440/390lightdark",
+    "H6",
+    "actual disabledprovider native refusal observed"
+  ],
+  "b_started": false,
+  "post_failure_domain_counts": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "known_handoff_counts_unchanged": true,
+  "remaining_app_browser_processes": [],
+  "retry": "Only after test route correction and independent review; existing bounds unchanged",
+  "handoff_full_ten_table_baseline": {
+    "workspace_runs": 5,
+    "access_execution_grants": 5,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 5,
+    "model_definition_drafts": 5,
+    "model_materials": 5,
+    "workspace_graphs": 5,
+    "model_studies": 5,
+    "model_trials": 7,
+    "workspace_recipe_materials": 7
+  },
+  "full_ten_table_counts_unchanged": true
+}

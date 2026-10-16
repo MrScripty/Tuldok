@@ -1,0 +1,48 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-points:reader",
+  "implementation": {
+    "entrypoint": "read",
+    "source": "points/points_worker.py"
+  },
+  "kind": "reader",
+  "label": "points inert source inventory sentinel",
+  "ports": [
+    {
+      "axes": [
+        "record",
+        "point",
+        "xyz"
+      ],
+      "contract": {
+        "id": "example.modality-points:point_records",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "point_records",
+      "units": "mm"
+    },
+    {
+      "axes": [
+        "record_boundary"
+      ],
+      "contract": {
+        "id": "example.modality-points:record_offsets",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "record_offsets",
+      "units": "point_index"
+    }
+  ],
+  "requires": [
+    {
+      "id": "example.modality-points:descriptor",
+      "sha256": "770a3e958b608d4e31862ef359e5eda2f5bf92ddf6d77518f570a4f8dbad993e",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

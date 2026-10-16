@@ -1,0 +1,19 @@
+{
+  "channel_layout": "mono",
+  "clock": "sample_index",
+  "payload": [
+    [
+      0.0
+    ],
+    [
+      0.25
+    ],
+    [
+      -0.25
+    ],
+    [
+      0.0
+    ]
+  ],
+  "sample_rate_hz": 16000
+}

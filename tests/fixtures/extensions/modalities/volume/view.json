@@ -1,0 +1,22 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-volume:metadata",
+  "kind": "view",
+  "label": "volume opaque metadata declaration",
+  "requires": [
+    {
+      "id": "example.modality-volume:descriptor",
+      "sha256": "51719f8660e9593ce55e076b93ef047bed98f8abf80a084b6a21080821ca020b",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0",
+  "view": {
+    "label": "Opaque descriptor; execution and semantic query unavailable",
+    "primitive": "metadata",
+    "query": {
+      "id": "example.modality-volume:opaque-query",
+      "version": "1.0.0"
+    }
+  }
+}

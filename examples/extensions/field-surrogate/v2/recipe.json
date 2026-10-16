@@ -1,0 +1,539 @@
+{
+  "schema_version": 2,
+  "format": "external_model_evidence_recipe_v1",
+  "id": "scalar-a-evidence-v2",
+  "name": "Captured authored scalar A evidence",
+  "version": 1,
+  "runtime": "captured_cpu_python_v1",
+  "runtime_snapshot_sha256": "0b15b611ead55bd5fa6f2f7bbcc56870f6e9f9f60f2192d989e7473ef8af1826",
+  "sources": [
+    {
+      "path": "producer.py",
+      "sha256": "563ccc91c5c0f4fc4dda6d2dc0e8c5526fbc9e26ef9278165c5ab51d0eb95774"
+    },
+    {
+      "path": "evidence_writer.py",
+      "sha256": "320c2db43c2b64cc6c7f2fff5f21c8a25f1c611d9bc4dd5b8f4c151c2075619e"
+    },
+    {
+      "path": "task.json",
+      "sha256": "23bbadd9cf6f647219367243f375beafdc51c9cb2f706077577080a01bf0c2da"
+    },
+    {
+      "path": "extension.json",
+      "sha256": "3641238eee64e54c77548b4ba92afd094cd52dc1d95f319c8a0f10a45b0be744"
+    },
+    {
+      "path": "NOTICE.txt",
+      "sha256": "8bdadd8f6a5163591c4485653678f5184ae1caaf7f4a45dae2f901fe44d1c12d"
+    }
+  ],
+  "entrypoint": "producer.py",
+  "arguments": [
+    {
+      "input": "fixture"
+    },
+    {
+      "model_evidence_context": true
+    },
+    {
+      "output_dir": true
+    }
+  ],
+  "parameters": {
+    "learning_rate": {
+      "type": "number",
+      "default": 0.1,
+      "min": 0.001,
+      "max": 0.5
+    },
+    "updates": {
+      "type": "integer",
+      "default": 64,
+      "min": 64,
+      "max": 64
+    }
+  },
+  "inputs": {
+    "fixture": {
+      "max_bytes": 65536
+    }
+  },
+  "outputs": [
+    {
+      "path": "execution-context.json",
+      "role": "model_context",
+      "max_bytes": 65536,
+      "required": true
+    },
+    {
+      "path": "model-evidence.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "model-definition.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "profile.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "probe.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "metric-definitions.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoints.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "observations.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "field-index.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "fitted-transform.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "output-policy.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "diagnostics.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "transform.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "reference.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "input-initial.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "weights-16.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "prediction-16.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoint-16.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "weights-32.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "prediction-32.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoint-32.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "weights-48.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "prediction-48.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoint-48.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "weights-64.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "prediction-64.npy",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    },
+    {
+      "path": "checkpoint-64.json",
+      "role": "model_evidence",
+      "max_bytes": 32768,
+      "required": true
+    }
+  ],
+  "environment": {},
+  "resources": {
+    "wall_seconds": 60,
+    "max_output_bytes": 1048576
+  },
+  "model_evidence": {
+    "format": "extension_field_policy_v1",
+    "task": {
+      "id": "example.scalar-a:task",
+      "revision": 2,
+      "definition": {
+        "format": "tuldok_contribution_v1",
+        "id": "example.scalar-a:task",
+        "version": "2.0.0",
+        "kind": "task",
+        "label": "Authored dimensionless standalone scalar mapping",
+        "requires": [],
+        "ports": [
+          {
+            "id": "initial",
+            "direction": "input",
+            "contract": {
+              "id": "example.scalar-a:scalar-field",
+              "version": "2.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "target",
+            "direction": "target",
+            "contract": {
+              "id": "example.scalar-a:scalar-field",
+              "version": "2.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          },
+          {
+            "id": "prediction",
+            "direction": "output",
+            "contract": {
+              "id": "example.scalar-a:scalar-field",
+              "version": "2.0.0"
+            },
+            "encoding": "npy",
+            "axes": [
+              "z",
+              "y",
+              "x"
+            ],
+            "units": "dimensionless"
+          }
+        ],
+        "stages": [
+          {
+            "id": "train",
+            "version": "2.0.0",
+            "inputs": [
+              "initial",
+              "target"
+            ],
+            "outputs": [
+              "prediction"
+            ],
+            "clock": "optimizer_update",
+            "failure_policy": "fail"
+          }
+        ]
+      }
+    },
+    "adapter_sha256": "1c0f5e17dec97cb3100a8d0cbec57bd734d6621b80142cf9249545acde853d4d",
+    "profile": {
+      "id": "example.scalar-a.fixed-validation",
+      "revision": 2,
+      "probe_selection": {
+        "role": "validation",
+        "algorithm": "sha256_rank_v1",
+        "namespace": "example.scalar-a-validation-v2",
+        "seed": 0,
+        "count": 1
+      },
+      "capture": {
+        "clock": "optimizer_update",
+        "interval": 16,
+        "retain_selected": true,
+        "max_snapshots": 4
+      },
+      "required_capabilities": [
+        "checkpoints",
+        "fixed_validation_predictions",
+        "scalar_history",
+        "field_pairs"
+      ],
+      "optional_capabilities": [],
+      "limits": {
+        "manifest_bytes": 65536,
+        "shard_bytes": 65536,
+        "total_output_bytes": 1048576
+      }
+    },
+    "probe": {
+      "data_input": "fixture",
+      "candidates": [
+        {
+          "frozen_reference": {
+            "input": "fixture",
+            "sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+            "member_id": "validation-0",
+            "split": "validation"
+          },
+          "input_sha256": "fb2a54168d0579a74de72c672c92548510ae6e35ab7edc7795a29483fb5d40ea",
+          "target_sha256": "01575b8581ca92622705e8a456e00c220cb58fd19c17a8a50e08363538c0e9bf"
+        }
+      ]
+    },
+    "probe_inputs": [
+      {
+        "member_id": "validation-0",
+        "fields": [
+          {
+            "field_id": "initial",
+            "artifact": "input-initial.npy"
+          }
+        ]
+      }
+    ],
+    "fit_members": [
+      {
+        "input": "fixture",
+        "sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+        "member_id": "train-0",
+        "split": "train"
+      },
+      {
+        "input": "fixture",
+        "sha256": "3c25603d4d95cd904b0d09582daadf000c0977af7bcdcea39ef2c6deffe86e5f",
+        "member_id": "train-1",
+        "split": "train"
+      }
+    ],
+    "fields": [
+      {
+        "id": "raw",
+        "contract": {
+          "format": "field_adapter_contract_v1",
+          "owner": "Authored dimensionless scalar; no physics claim",
+          "adapter": {
+            "name": "example.scalar-a",
+            "version": 2
+          },
+          "source_sha256": "1c0f5e17dec97cb3100a8d0cbec57bd734d6621b80142cf9249545acde853d4d",
+          "inputs": [
+            {
+              "field_id": "initial",
+              "dtype": "<f8",
+              "shape_zyx": [
+                4,
+                4,
+                4
+              ],
+              "centering": "cell",
+              "stage": "input",
+              "units": "dimensionless",
+              "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+            }
+          ],
+          "output": {
+            "field_id": "prediction",
+            "dtype": "<f8",
+            "shape_zyx": [
+              4,
+              4,
+              4
+            ],
+            "centering": "cell",
+            "stage": "post_train_mapping",
+            "units": "dimensionless",
+            "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744"
+          },
+          "time_mode": "standalone"
+        },
+        "geometry": {
+          "shape_xyz": [
+            4,
+            4,
+            4
+          ],
+          "origin_xyz": [
+            0,
+            0,
+            0
+          ],
+          "spacing_xyz": [
+            1,
+            1,
+            1
+          ],
+          "orientation": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "units": "m"
+        },
+        "gauge_policy": {
+          "format": "authored_scalar_gauge_v1",
+          "operation": "identity",
+          "field_units": "dimensionless"
+        }
+      }
+    ],
+    "field_outputs": [
+      {
+        "clock": 16,
+        "field_id": "raw",
+        "member_id": "validation-0",
+        "prediction": "prediction-16.npy",
+        "reference": "reference.npy"
+      },
+      {
+        "clock": 32,
+        "field_id": "raw",
+        "member_id": "validation-0",
+        "prediction": "prediction-32.npy",
+        "reference": "reference.npy"
+      },
+      {
+        "clock": 48,
+        "field_id": "raw",
+        "member_id": "validation-0",
+        "prediction": "prediction-48.npy",
+        "reference": "reference.npy"
+      },
+      {
+        "clock": 64,
+        "field_id": "raw",
+        "member_id": "validation-0",
+        "prediction": "prediction-64.npy",
+        "reference": "reference.npy"
+      }
+    ],
+    "metric_definitions": [
+      {
+        "id": "reference_mse",
+        "semantic_version": 1,
+        "split": "validation",
+        "units": "dimensionless_squared",
+        "direction": "minimize",
+        "reduction": "mean_cell_squared_error_over_validation_members",
+        "population_sha256": "60ed6d5e18ce69764f91ce970e70e7012456d1666d1423507a537c8a8feb1743",
+        "domain": {
+          "minimum": 0,
+          "maximum": 1000000000000.0
+        },
+        "undefined_rule": "not_applicable",
+        "evaluator_sha256": "1c0f5e17dec97cb3100a8d0cbec57bd734d6621b80142cf9249545acde853d4d",
+        "preprocessing_sha256": "5a807da9f7d474d7c836503803da380d148a7bdd55cc70ba7f083708f5570662"
+      }
+    ],
+    "model_specification": {
+      "format": "authored_affine_scalar_v2",
+      "trainable_parameters": [
+        "scale",
+        "offset"
+      ],
+      "input_fields": [
+        "initial"
+      ],
+      "output_fields": [
+        "prediction"
+      ]
+    },
+    "preprocessing_policy": {
+      "kind": "population_standardization",
+      "fit_scope": "train",
+      "fields": [
+        "initial"
+      ],
+      "fit_members": [
+        "train-0",
+        "train-1"
+      ]
+    },
+    "output_policy": {
+      "kind": "standalone_scalar",
+      "stage": "post_train_mapping",
+      "gauge_policy_sha256": "eebad83e29c2a6015a62c52d390abeff1ef2925d6e5e0f85f46fcdd226b25744",
+      "units": "dimensionless"
+    }
+  }
+}

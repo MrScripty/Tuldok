@@ -1,0 +1,442 @@
+{
+  "format": "extension_modality_descriptor_corpus_v1",
+  "modalities": [
+    {
+      "assumptions": [
+        "RGB channel order",
+        "HWC axes",
+        "integer code values; no PNG decoder"
+      ],
+      "config_sha256": "263e95f859c8d9324512df20321a0316f3d722e9340a2856eee2a006a9d587f5",
+      "descriptor_identity": {
+        "id": "example.modality-image:descriptor",
+        "sha256": "cc8bd4054eef396ff7689bc7aa742dd6da441256287294edb2be55b2e641be96",
+        "version": "1.0.0"
+      },
+      "file_sha256": {
+        "config.json": "263e95f859c8d9324512df20321a0316f3d722e9340a2856eee2a006a9d587f5",
+        "descriptor.json": "cc8bd4054eef396ff7689bc7aa742dd6da441256287294edb2be55b2e641be96",
+        "extension.json": "951a6708364fcdcf2435ee5c46edee9365688cb45d4574ab9a01cfa95f078ac7",
+        "image_worker.py": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869",
+        "reader.json": "3be8eebc58922f52ab0568b489f7e4e470d2c03ba875fd01f28ca7481f90cefb",
+        "view.json": "4a4402f9b4880cd8ab4f0e7f3fd3ac6a787cf0e1f48f89522865fa27d9b96690"
+      },
+      "manifest": "image/extension.json",
+      "manifest_sha256": "951a6708364fcdcf2435ee5c46edee9365688cb45d4574ab9a01cfa95f078ac7",
+      "modality": "image",
+      "negative_cases": {
+        "bad_path": [
+          "payload",
+          0,
+          0,
+          0
+        ],
+        "bad_value": "255",
+        "identity_path": [
+          "channel_order"
+        ],
+        "identity_value": "bgr",
+        "overflow_path": [
+          "payload"
+        ],
+        "overflow_value": [
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "package": {
+        "id": "example.modality-image",
+        "version": "1.0.0"
+      },
+      "resolved_config_digest": "e955188e8f887f8a433bc9c7f4bbfb6a1d383f75442bd882b65666561580a453",
+      "root": "image"
+    },
+    {
+      "assumptions": [
+        "ragged token sequences",
+        "exact tokenizer digest",
+        "ordered class vocabulary; no padding/conversion"
+      ],
+      "config_sha256": "662173f78dda7c124298e74cf314cc1dc7afd5af6891b6d2428e02817aed7d84",
+      "descriptor_identity": {
+        "id": "example.modality-text:descriptor",
+        "sha256": "63ae47f3328591f9f27089533093a50587ffecea72c83f4dfc39cca2ebf06aca",
+        "version": "1.0.0"
+      },
+      "file_sha256": {
+        "config.json": "662173f78dda7c124298e74cf314cc1dc7afd5af6891b6d2428e02817aed7d84",
+        "descriptor.json": "63ae47f3328591f9f27089533093a50587ffecea72c83f4dfc39cca2ebf06aca",
+        "extension.json": "a3d52c118f7a6b75282eb676ae28e6db5c0c325d445c3c791b196b5063b0d1ab",
+        "reader.json": "0e12cde520fc128f7bcd9d99ba5272b7f89ff7da71587d7d0a2566ee3102d69c",
+        "text_worker.py": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869",
+        "view.json": "4fe9a6991044f44b27b2561d19532a9678979aa0edfa8f93285479b9d8bc16a0"
+      },
+      "manifest": "text/extension.json",
+      "manifest_sha256": "a3d52c118f7a6b75282eb676ae28e6db5c0c325d445c3c791b196b5063b0d1ab",
+      "modality": "text",
+      "negative_cases": {
+        "bad_path": [
+          "payload",
+          0,
+          0
+        ],
+        "bad_value": 2.5,
+        "identity_path": [
+          "tokenizer_sha256"
+        ],
+        "identity_value": "0000000000000000000000000000000000000000000000000000000000000000",
+        "overflow_path": [
+          "payload",
+          0
+        ],
+        "overflow_value": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "package": {
+        "id": "example.modality-text",
+        "version": "1.0.0"
+      },
+      "resolved_config_digest": "3ce53daefa7e7d6e65a3b24705da60524048df47f741407d8914e529e8305f79",
+      "root": "text"
+    },
+    {
+      "assumptions": [
+        "sample index clock",
+        "16000 Hz sample rate",
+        "mono normalized amplitude; no resampling"
+      ],
+      "config_sha256": "7f24efedc1ab28a5f31a5566cb456469f172a0f76a653b1687b9cf8f94a01419",
+      "descriptor_identity": {
+        "id": "example.modality-audio:descriptor",
+        "sha256": "242c06c2bd31a74101b6c552d03bf6663e2e542b35437d8add738f28f70019d5",
+        "version": "1.0.0"
+      },
+      "file_sha256": {
+        "audio_worker.py": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869",
+        "config.json": "7f24efedc1ab28a5f31a5566cb456469f172a0f76a653b1687b9cf8f94a01419",
+        "descriptor.json": "242c06c2bd31a74101b6c552d03bf6663e2e542b35437d8add738f28f70019d5",
+        "extension.json": "1212afc457972e63be45785b49c1868e8b9a10af8bc11324d659b6db70607ce2",
+        "reader.json": "677806106e7afe12f2f6c9208c022e310dbbaa420bcda391c5bba877555d2205",
+        "view.json": "b2b6e84b1b9b1bb0c10c1e9c63c7dc2892842b77fe0be24258abfdefa5eb35d8"
+      },
+      "manifest": "audio/extension.json",
+      "manifest_sha256": "1212afc457972e63be45785b49c1868e8b9a10af8bc11324d659b6db70607ce2",
+      "modality": "audio",
+      "negative_cases": {
+        "bad_path": [
+          "payload",
+          1,
+          0
+        ],
+        "bad_value": "0.25",
+        "identity_path": [
+          "sample_rate_hz"
+        ],
+        "identity_value": 48000,
+        "overflow_path": [
+          "payload"
+        ],
+        "overflow_value": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ]
+      },
+      "package": {
+        "id": "example.modality-audio",
+        "version": "1.0.0"
+      },
+      "resolved_config_digest": "437a268882187887050c1065562ab039d4471dfca1fca05a32303a75b10241ef",
+      "root": "audio"
+    },
+    {
+      "assumptions": [
+        "bounded indexed triangle connectivity",
+        "right-handed lab XYZ frame",
+        "meters; no adjacency/solver inference"
+      ],
+      "config_sha256": "96d820a7f69532e91098dc7e5e90450af1d4eb7b1e61bb59e07ff3ca77ccdb4e",
+      "descriptor_identity": {
+        "id": "example.modality-mesh:descriptor",
+        "sha256": "4329a6b5d3fb3e2c74ed4d2d28a4b4bcade0aa9409a3a7ec70b12eaeee8a2881",
+        "version": "1.0.0"
+      },
+      "file_sha256": {
+        "config.json": "96d820a7f69532e91098dc7e5e90450af1d4eb7b1e61bb59e07ff3ca77ccdb4e",
+        "descriptor.json": "4329a6b5d3fb3e2c74ed4d2d28a4b4bcade0aa9409a3a7ec70b12eaeee8a2881",
+        "extension.json": "066499553178715872821bdae39a6f2d0b21f6a71a55a82b4fb5102e4733bbd9",
+        "mesh_worker.py": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869",
+        "reader.json": "d6d41eb8990e2a0826f35c7e98313f6f2d48d381f4e917d5500559098f2781a7",
+        "view.json": "9b6ecf274fbb3c2a439ea7ea365bce6f597e3704fdfd0aa297954394734f5414"
+      },
+      "manifest": "mesh/extension.json",
+      "manifest_sha256": "066499553178715872821bdae39a6f2d0b21f6a71a55a82b4fb5102e4733bbd9",
+      "modality": "mesh",
+      "negative_cases": {
+        "bad_path": [
+          "payload",
+          "triangles",
+          0,
+          0
+        ],
+        "bad_value": 1.5,
+        "identity_path": [
+          "coordinate_frame"
+        ],
+        "identity_value": "world_lh_xyz",
+        "overflow_path": [
+          "payload",
+          "vertices"
+        ],
+        "overflow_value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "package": {
+        "id": "example.modality-mesh",
+        "version": "1.0.0"
+      },
+      "resolved_config_digest": "32484dce65d9102307c68fe51e4667ccc65b8d351343a752eb9cd872e1f449cf",
+      "root": "mesh"
+    },
+    {
+      "assumptions": [
+        "ragged point records",
+        "explicit record offsets",
+        "left-handed sensor XYZ in mm; no voxelization"
+      ],
+      "config_sha256": "a67cafe57fe16da5b78ec95317f8007d52a942e4c943c5681e6b397d9b5fef31",
+      "descriptor_identity": {
+        "id": "example.modality-points:descriptor",
+        "sha256": "770a3e958b608d4e31862ef359e5eda2f5bf92ddf6d77518f570a4f8dbad993e",
+        "version": "1.0.0"
+      },
+      "file_sha256": {
+        "config.json": "a67cafe57fe16da5b78ec95317f8007d52a942e4c943c5681e6b397d9b5fef31",
+        "descriptor.json": "770a3e958b608d4e31862ef359e5eda2f5bf92ddf6d77518f570a4f8dbad993e",
+        "extension.json": "1e4f3638386d4fe2c7091b7a4b86af5c32144eaf2ae824774473ae0a8ca8b438",
+        "points_worker.py": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869",
+        "reader.json": "21efabcb91d7943d3f40a50f64e4bbe96eef9bd2b11f02c438973a3ba25e29da",
+        "view.json": "17d4cd1ef11a480112220d072be881d7fef981bf13dc00545b51a4f5f1ec9ddc"
+      },
+      "manifest": "points/extension.json",
+      "manifest_sha256": "1e4f3638386d4fe2c7091b7a4b86af5c32144eaf2ae824774473ae0a8ca8b438",
+      "modality": "points",
+      "negative_cases": {
+        "bad_path": [
+          "payload",
+          0,
+          0,
+          0
+        ],
+        "bad_value": "0",
+        "identity_path": [
+          "coordinate_units"
+        ],
+        "identity_value": "m",
+        "overflow_path": [
+          "payload",
+          0
+        ],
+        "overflow_value": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "package": {
+        "id": "example.modality-points",
+        "version": "1.0.0"
+      },
+      "resolved_config_digest": "602b561d7f515c42f74ca739e9551d1e45d6e80e4f4da4bb034af2881399cf7c",
+      "root": "points"
+    },
+    {
+      "assumptions": [
+        "dense C-order ZYX cell volume",
+        "unit spacing in meters and world frame",
+        "dimensionless values; standalone with no physical timeline"
+      ],
+      "config_sha256": "832c4cd4d2eb8830c9b72e515823e926943747d76a91f5b96fe8238dca3d5fd9",
+      "descriptor_identity": {
+        "id": "example.modality-volume:descriptor",
+        "sha256": "51719f8660e9593ce55e076b93ef047bed98f8abf80a084b6a21080821ca020b",
+        "version": "1.0.0"
+      },
+      "file_sha256": {
+        "config.json": "832c4cd4d2eb8830c9b72e515823e926943747d76a91f5b96fe8238dca3d5fd9",
+        "descriptor.json": "51719f8660e9593ce55e076b93ef047bed98f8abf80a084b6a21080821ca020b",
+        "extension.json": "c55b428bf45b3870d92b323b0d1a218e4501604f6b69eb1341b286394fa79a24",
+        "reader.json": "91c2016ee8da95b7b372f397bedbc3f0417024aa0296533294a1bb0af0aab4cf",
+        "view.json": "473698ca72da73ed11d7d32cdbfb044241181e746d5f52c71c69de3f9c7cdaad",
+        "volume_worker.py": "732c284e8187a0c43c96da21707c40fec9448bc1219c4b8eec970dd4014b0869"
+      },
+      "manifest": "volume/extension.json",
+      "manifest_sha256": "c55b428bf45b3870d92b323b0d1a218e4501604f6b69eb1341b286394fa79a24",
+      "modality": "volume",
+      "negative_cases": {
+        "bad_path": [
+          "payload",
+          0,
+          0,
+          0
+        ],
+        "bad_value": false,
+        "identity_path": [
+          "centering"
+        ],
+        "identity_value": "node",
+        "overflow_path": [
+          "payload"
+        ],
+        "overflow_value": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "package": {
+        "id": "example.modality-volume",
+        "version": "1.0.0"
+      },
+      "resolved_config_digest": "f1637fd24e70da19d22e87b55c47d8dd84001a53f624ada5d3434c3ab7f7248b",
+      "root": "volume"
+    }
+  ],
+  "scope": "Inert structural contract, bounded parameter defaults and exact byte identities only; no semantic decoding, trainer, renderer, Run or physical claim"
+}

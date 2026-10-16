@@ -12,6 +12,8 @@ import sys
 import tempfile
 
 from agent_api import AgentAPIError, AgentClient, REQUEST_LIMIT, decode, verify_artifact
+from mcp_observer import (add_interface_options, configured_interface, observe_begin,
+                          observe_stage, observe_selection, observe_close, outcome)
 
 
 def read_arguments(path):
@@ -53,18 +55,20 @@ def download(client, run_id, name, expected_sha256, destination):
         os.unlink(provisional)
 
 
-def invoke(client, operation, arguments):
-    envelope = client.call(operation, arguments)
+def invoke(client, operation, arguments, *, observer=None, observation=None):
+    envelope = (client.call(operation, arguments, observer=observer, observation=observation)
+                if observer is not None else client.call(operation, arguments))
     if envelope['status'] >= 400:
         error = envelope['result']
         raise AgentAPIError(error['error'], error['code'], envelope['status'])
-    return envelope['result']
+    return envelope
 
 
 def parser():
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument('--config', type=Path, required=True,
                         help='Private existing AgentClient endpoint/catalog/token-file configuration')
+    add_interface_options(result)
     commands = result.add_subparsers(dest='command', required=True)
     opening = commands.add_parser('open', help='Register/inspect a project without executing its code')
     opening.add_argument('--root', required=True)
@@ -94,17 +98,67 @@ def parser():
     artifact.add_argument('--name', required=True)
     artifact.add_argument('--expected-sha256', required=True)
     artifact.add_argument('--out', type=Path, required=True)
+    operation = commands.add_parser('call', help='Call one locally registered compatible operation with bounded JSON arguments')
+    operation.add_argument('--operation', required=True)
+    operation.add_argument('--arguments', type=Path, required=True)
     return result
 
 
-def main(argv=None):
-    args = parser().parse_args(argv)
+def _write_output(stream, value, observer, observation, *, status=200, failed=False,
+                  http_status=None, observed_outcome=None):
+    raw = (json.dumps(value, ensure_ascii=True, allow_nan=False,
+                      **({} if failed else {'indent': 2})) + '\n').encode('ascii')
+    classified = observed_outcome or outcome(status)
+    observe_stage(observer, observation, 'returned', outcome=classified,
+                  envelope_status=status, http_status=http_status)
+    written = 0
     try:
+        try:
+            fd = stream.fileno()
+        except (AttributeError, OSError, ValueError):
+            fd = None
+        if fd is None:
+            count = stream.write(raw.decode('ascii'))
+            written = len(raw) if count is None else count
+            stream.flush()
+            if written != len(raw):
+                raise OSError('incomplete-output')
+        else:
+            view = memoryview(raw)
+            while view:
+                count = os.write(fd, view)
+                if count <= 0:
+                    raise OSError('incomplete-output')
+                written += count
+                view = view[count:]
+    except (OSError, ValueError):
+        observe_stage(observer, observation, 'terminal', outcome='unknown',
+                      response_bytes=written, delivery='incomplete')
+        return False
+    observe_stage(observer, observation, 'terminal', outcome=classified,
+                  envelope_status=status, http_status=http_status, response_bytes=written, delivery='written')
+    return True
+
+
+def main(argv=None, *, observer=None):
+    args = parser().parse_args(argv)
+    owned_observer = observer is None
+    if owned_observer:
+        observer = configured_interface(args, 'cli')
+    observation = observe_begin(observer, args.command if args.command in ('status', 'download') else 'call')
+    try:
+        status, http_status = 200, None
         client = AgentClient.from_config(args.config)
         if args.command == 'download':
+            observe_selection(observer, observation, 'runs.artifact_chunk',
+                              {'run_id': args.run_id, 'name': args.name, 'expected_sha256': args.expected_sha256})
+            for phase in ('validated', 'admitted', 'dispatch'):
+                observe_stage(observer, observation, phase)
             result = download(client, args.run_id, args.name, args.expected_sha256, args.out)
         else:
-            if args.command == 'open':
+            if args.command == 'call':
+                operation, arguments = args.operation, read_arguments(args.arguments)
+            elif args.command == 'open':
                 operation, arguments = 'projects.open', dict(root=args.root, manifest_path=args.manifest)
             elif args.command == 'inspect':
                 operation, arguments = 'projects.get', dict(project_id=args.project_id)
@@ -123,15 +177,24 @@ def main(argv=None):
             else:
                 operation = 'runs.cancel' if args.command == 'cancel' else 'runs.progress' if args.progress else 'runs.get'
                 arguments = dict(run_id=args.run_id)
-            result = invoke(client, operation, arguments)
-        print(json.dumps(result, ensure_ascii=True, allow_nan=False, indent=2))
-        return 0
+            envelope = invoke(client, operation, arguments, observer=observer, observation=observation)
+            result, status = envelope['result'], envelope['status']
+            http_status = status
+        return 0 if _write_output(sys.stdout, result, observer, observation, status=status, http_status=http_status) else 1
     except AgentAPIError as error:
-        print(json.dumps({'code': error.code, 'error': str(error), 'status': error.status}), file=sys.stderr)
+        _write_output(sys.stderr, {'code': error.code, 'error': str(error), 'status': error.status},
+                      observer, observation, status=error.status, failed=True, observed_outcome=(
+                          'transport-error' if error.code in ('transport', 'response_too_large') else
+                          'registry-refusal' if error.code == 'registry_mismatch' else
+                          'permission-refusal' if error.status in (401, 403) else 'call-error'))
         return 1
     except OSError:
-        print(json.dumps({'code': 'unavailable', 'error': 'Local file operation failed; inspect saved state before retrying.'}), file=sys.stderr)
+        _write_output(sys.stderr, {'code': 'unavailable', 'error': 'Local file operation failed; inspect saved state before retrying.'},
+                      observer, observation, status=503, failed=True)
         return 1
+    finally:
+        if owned_observer and observer is not None:
+            observe_close(observer)
 
 
 if __name__ == '__main__':

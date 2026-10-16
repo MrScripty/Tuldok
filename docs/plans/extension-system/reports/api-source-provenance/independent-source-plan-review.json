@@ -1,0 +1,141 @@
+{
+  "commit_rows": [
+    {
+      "declared_paths": 1,
+      "ordered_original_parents": [
+        "afc45dc50530c4b6bfcdf1f2d8c2f2361e2837bc"
+      ],
+      "original": "55ea957b6ab48603c494a8f2a7d7617c112924e1",
+      "tree": "1bedf20fe3882b98c98d1e78fdc1bfd582e24ce5"
+    },
+    {
+      "declared_paths": 10,
+      "ordered_original_parents": [
+        "55ea957b6ab48603c494a8f2a7d7617c112924e1",
+        "00865e9e25244aa77b41d00e2f678b5bea80679d"
+      ],
+      "original": "356f2b2e8eb9a33a92c5bed6bbcca6206577da39",
+      "tree": "43748daf6b0985aeaeb4e69fbc3ad2e47099d7ee"
+    },
+    {
+      "declared_paths": 40,
+      "ordered_original_parents": [
+        "356f2b2e8eb9a33a92c5bed6bbcca6206577da39",
+        "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a"
+      ],
+      "original": "7c5ae71941fb9f44f20d602f76218356a7dba8cc",
+      "tree": "89d82c798a8249beb9a9b00a3f4c9fbed06477ba"
+    },
+    {
+      "declared_paths": 2,
+      "ordered_original_parents": [
+        "7c5ae71941fb9f44f20d602f76218356a7dba8cc",
+        "6c4ff13a2a593c5c13916d382364bec424265205"
+      ],
+      "original": "0150582cc56305dc302248fe59260b37205fb1ac",
+      "tree": "ddcb519e7627257880bd892592727823e049a812"
+    },
+    {
+      "declared_paths": 1,
+      "ordered_original_parents": [
+        "0150582cc56305dc302248fe59260b37205fb1ac",
+        "c0efd4f36f88cd1e5750d0ec3a4ca0fc6581c58c"
+      ],
+      "original": "40e0d8b13e31505e0403a1100b14711e9eaf1885",
+      "tree": "08012254bd0f781505a3701b64f39288be231b3d"
+    },
+    {
+      "declared_paths": 14,
+      "ordered_original_parents": [
+        "40e0d8b13e31505e0403a1100b14711e9eaf1885",
+        "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863"
+      ],
+      "original": "94783988a6595503c1899b8bbc25d4306e923b50",
+      "tree": "50046f397734c002733fc835843606a1bcb576aa"
+    },
+    {
+      "declared_paths": 5,
+      "ordered_original_parents": [
+        "94783988a6595503c1899b8bbc25d4306e923b50"
+      ],
+      "original": "5d5e10316d5f39fed11a32fcb2ae315b818cf7ad",
+      "tree": "70c94e514f4c1db50fd763831faae6231d57f443"
+    },
+    {
+      "declared_paths": 2,
+      "ordered_original_parents": [
+        "5d5e10316d5f39fed11a32fcb2ae315b818cf7ad",
+        "d72cb9b5f6601b90dfb0b0dda662c8eab448424e"
+      ],
+      "original": "bd1c19dbb136ce01b9686f11177808c4cc9551ab",
+      "tree": "95f4aeb892833a5b6bebbbafff88651abb76175d"
+    },
+    {
+      "declared_paths": 16,
+      "ordered_original_parents": [
+        "bd1c19dbb136ce01b9686f11177808c4cc9551ab",
+        "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975"
+      ],
+      "original": "45d10367c38260d77df5c19f3105b35b6d072a15",
+      "tree": "46c676eb6441563953ea54235055962b9466bb58"
+    },
+    {
+      "declared_paths": 3,
+      "ordered_original_parents": [
+        "45d10367c38260d77df5c19f3105b35b6d072a15",
+        "da9f57d8cca0f4b27634da87e7ab606c8c866648"
+      ],
+      "original": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "tree": "a6bef5761c75f89af8d7cc2e3f8c01a828f4f284"
+    },
+    {
+      "declared_paths": 1,
+      "ordered_original_parents": [
+        "e1bc02a68355876ec64e5e1e272019c2018b5c63"
+      ],
+      "original": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "tree": "df72714e12de271ab5790959de2dbe3a891e639b"
+    },
+    {
+      "declared_paths": 1,
+      "ordered_original_parents": [
+        "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "2b786501dbbcb6db734d9df074ecac0976d87dae"
+      ],
+      "original": "d61ef3204bc0edd2ea14579a327a954bd2075219",
+      "tree": "df72714e12de271ab5790959de2dbe3a891e639b"
+    }
+  ],
+  "exact_tree_rebuild_count": 12,
+  "existing_reviewed_workflow_objects_reused": [
+    {
+      "blob": "b6ab5fe78fedcf792a979a216f90e08e51a00b89",
+      "path": ".github/workflows/tests.yml"
+    },
+    {
+      "blob": "36523f021226d557c86044e2d86ba43fccfad25e",
+      "path": ".github/workflows/extension-sdk.yml"
+    }
+  ],
+  "format": "independent_git_api_source_plan_review_v1",
+  "limitations": [
+    "No API writes or remote visibility checks performed by reviewer. Source plan does not itself include the final chosen branch name or returned mapping; those must be bound and checked at execution.",
+    "No approval for retrying the rejected persistent transport workflow. This review concerns ordinary repository source publication only."
+  ],
+  "plan_bytes": 22925,
+  "plan_sha256": "8b96901e02369afab97e0ec3bff59e69307f062bb020cb20d48ab10b5d04cabc",
+  "published_component_parent_count": 9,
+  "required_execution_postconditions": [
+    "Use ordinary create_blob/create_tree/create_commit only; no workflow execution, token permissions or settings change.",
+    "Verify each create_tree returned SHA equals original exact tree before creating its commit.",
+    "Pass ordered parents mapped only for the 12 recreated rows; retain all9 original published component parents exactly.",
+    "Record original-to-published commit mapping plus author/committer/date differences and original source/tree in provenance; do not claim new commit SHAs are the originally tested identities.",
+    "Use atomic create_ref for one explicit fresh review branch; do not update main, PR78 or any existing ref. Stop if ref exists or acknowledgement unknown; inspect before retry.",
+    "Preserve original e1bc/d61 DAG and hash-bound read-only bundle/manifest separately; the bundle is source evidence and must never be installed as an Actions execution bridge.",
+    "Final PR78 publication, source-specific recovery/docs and exact-head CI remain separate lead operations."
+  ],
+  "source_head": "d61ef3204bc0edd2ea14579a327a954bd2075219",
+  "source_tree": "df72714e12de271ab5790959de2dbe3a891e639b",
+  "state": "source_plan_clear_execution_postconditions_required",
+  "transport_workflow_present": false
+}

@@ -1,6 +1,6 @@
 """Versioned agent operations and bounded client of the existing local HTTP owner.
 
-Import/discovery use only the standard library. Optional jsonschema is loaded by
+Import/discovery use only the standard library. Pinned jsonschema is loaded by
 argument validation, never by the application discovery route.
 """
 import base64
@@ -17,7 +17,7 @@ import socket
 import stat
 import time
 import threading
-from urllib.parse import quote, urlencode, urlsplit
+from urllib.parse import parse_qsl, quote, unquote, urlencode, urlsplit
 
 REGISTRY_VERSION = 1
 REQUEST_LIMIT = 1024 * 1024
@@ -284,25 +284,655 @@ EXCLUSIONS = ['owner review and execution grants', 'credential administration', 
               'saved search/selection mutations', 'alternate release projections', 'arbitrary files/URLs', 'non-Run binary download tools']
 LIMITS = {'request_bytes': REQUEST_LIMIT, 'http_response_bytes': RESPONSE_LIMIT, 'mcp_response_bytes': MCP_RESPONSE_LIMIT,
           'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT, 'artifact_segment_bytes': 8*1024*1024}
-_PAYLOAD = {'version': REGISTRY_VERSION, 'operations': _OPERATIONS, 'limits': LIMITS, 'exclusions': EXCLUSIONS}
+# These IDs and bytes belong to installed f588 strict clients. New operations
+# belong to the same registry but never silently enter the legacy projection.
+_LEGACY_IDS = ('context.get', 'identity.get', 'projects.list', 'recipes.list', 'releases.list', 'releases.inputs', 'graphs.list', 'runs.list', 'run_inputs.list', 'projects.get', 'projects.open', 'projects.evidence', 'recipes.inspect', 'data.query', 'data.get', 'data.history', 'data.audio', 'data.mesh', 'data.pointcloud', 'data.responses', 'data.preferences', 'data.volume', 'data.scientific', 'data.import_image', 'data.import_text', 'data.import_audio', 'data.import_mesh', 'data.import_pointcloud', 'data.import_volume', 'data.import_sequence', 'data.import_project_scientific', 'data.import_run_scientific', 'data.save_draft', 'responses.save_draft', 'proposals.caption_list', 'proposals.caption_get', 'proposals.caption_decide', 'proposals.classification_list', 'proposals.classification_get', 'proposals.classification_decide', 'releases.preview', 'releases.freeze', 'graphs.get', 'graphs.create', 'graphs.create_external', 'graphs.save', 'graphs.clone', 'graphs.validate', 'graphs.preflight_external', 'runs.get', 'runs.progress', 'runs.predictions', 'runs.submit_external', 'runs.cancel', 'runs.expose_test', 'runs.artifact_chunk')
+_LEGACY_DIGEST = 'cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8'
+_legacy_by_id = {op['operation_id']: op for op in _OPERATIONS}
+_PAYLOAD = {'version': 1, 'operations': [copy.deepcopy(_legacy_by_id[name]) for name in _LEGACY_IDS],
+            'limits': copy.deepcopy(LIMITS), 'exclusions': copy.deepcopy(EXCLUSIONS)}
 REGISTRY_DIGEST = hashlib.sha256(encoded(_PAYLOAD)).hexdigest()
+if REGISTRY_DIGEST != _LEGACY_DIGEST:
+    raise RuntimeError('Frozen legacy agent contract changed; preserve its actual projection.')
+
+# Additive contracts share the registry owner while the actual legacy projection
+# above remains frozen. Model-aware trainer/evidence capabilities are not added here.
+SAFE_NAT = integer(0, 2**53-1)
+SAFE_POS = integer(1, 2**53-1)
+KEY = {'type':'string','pattern':'^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$'}
+def material_ref(kind, revision=False):
+    fields={'kind':const(kind),'catalog_id':ID,'id':SHA if kind in ('recipe_material','runtime','release') else ID,
+            'sha256':SHA}
+    if revision:fields['revision']=SAFE_POS
+    return obj(fields)
+
+MODEL_REF=material_ref('model',True)
+MATERIAL_REF=material_ref('recipe_material')
+POLICY_REF=material_ref('selection_policy',True)
+TASK_REF=obj({'kind':const('task'),'catalog_id':ID,'id':text(64),'revision':SAFE_POS,'sha256':SHA})
+JSON_OBJECT={'type':'object','maxProperties':128}
+MODEL_FIELDS={'name':text(120),'task':TASK_REF,'kind':{'enum':['template','captured_source']},
+    'specification':JSON_OBJECT,'source_selector':{'oneOf':[{'type':'null'},obj({'project_id':ID,'recipe_id':REF,'expected_sha256':SHA})]},
+    'preprocessing_policy':JSON_OBJECT,'output_policy':JSON_OBJECT}
+MODEL_DRAFT=obj(dict(MODEL_FIELDS,format=const('model_draft_v1'),id=ID,revision=SAFE_POS))
+BUDGET=obj({key:SAFE_POS for key in ('attempt_slots','admitted_wall_seconds','retained_bytes','peak_staging_bytes')})
+SELECTION_POLICY=obj({'format':const('selection_policy_v1'),'metric_definition_sha256':SHA,
+    'checkpoint_rule':{'enum':['selected','last','explicit']},'replicate_reduce':{'enum':['individual','mean']},
+    'required_capabilities':array(text(64),64),'numerical_acceptance':{'enum':['required','diagnostic']},'tie_break':const('trial_id')})
+def model_operation(name,method,path,properties=None,required=None,*,output=None,scopes=('inspect',),mutation=False,
+                    query=(),description=None):
+    register(name,method,path,properties,required,scopes=scopes,mutation=mutation,query=query,description=description)
+    _OPERATIONS[-1]['outputSchema']={'type':'object','oneOf':[
+        obj({'status':integer(200,299),'result':output or {'type':'object'}}),
+        obj({'status':integer(400,599),'result':obj({'error':text(1000),'code':text(120)},required=['error'])})]}
+
+for _name,_path,_key in [('models','models','model_id'),('studies','studies','study_id')]:
+    model_operation(_name+'.list','GET','/api/workspace/'+_path,output=array({'type':'object'},10000))
+    model_operation(_name+'.get','GET','/api/workspace/'+_path+'/{'+_key+'}',{_key:ID})
+model_operation('models.create','POST','/api/workspace/models',MODEL_FIELDS,scopes=('inspect','edit'),mutation=True,output=MODEL_DRAFT)
+model_operation('models.save','POST','/api/workspace/models/{model_id}',{'model_id':ID,'revision':SAFE_POS,'document':MODEL_DRAFT},
+                scopes=('inspect','edit'),mutation=True,output=MODEL_DRAFT)
+model_operation('models.publish','POST','/api/workspace/models/{model_id}/publish',
+                {'model_id':ID,'revision':SAFE_POS,'reconcile_capture':{'type':'boolean'}},['model_id','revision'],scopes=('inspect','edit'),mutation=True)
+model_operation('models.material','POST','/api/workspace/model-material',{'ref':MODEL_REF})
+model_operation('recipes.material','POST','/api/workspace/recipe-material',{'ref':MATERIAL_REF})
+model_operation('studies.trial','GET','/api/workspace/trials/{trial_id}',{'trial_id':ID})
+model_operation('studies.create','POST','/api/workspace/studies',{'name':text(120),'limits':BUDGET,'policy':SELECTION_POLICY},
+                scopes=('inspect','edit'),mutation=True)
+model_operation('studies.save','POST','/api/workspace/studies/{study_id}',
+                {'study_id':ID,'revision':SAFE_POS,'name':text(120),'limits':BUDGET,'policy':POLICY_REF},scopes=('inspect','edit'),mutation=True)
+model_operation('studies.prepare_trial','POST','/api/workspace/studies/{study_id}/prepare-trial',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'graph_id':ID,'graph_revision':SAFE_POS,'model':MODEL_REF,'replicate':SAFE_NAT,
+                 'reconcile_capture':{'type':'boolean'}},['study_id','request_key','revision','graph_id','graph_revision','model','replicate'],
+                scopes=('inspect','edit'),mutation=True)
+model_operation('studies.continue','POST','/api/workspace/studies/{study_id}/continue',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'admission_epoch':SAFE_NAT},scopes=('inspect','execute'),mutation=True)
+model_operation('studies.approve','POST','/api/workspace/studies/{study_id}/approve',
+                {'study_id':ID,'trial_id':ID,'expected_material_sha256':SHA,'consumer_actor_id':ID,'ttl_seconds':integer(60,3600)},
+                ['study_id','trial_id','expected_material_sha256','consumer_actor_id'],scopes=('inspect','approve-execution'),mutation=True)
+model_operation('studies.admit','POST','/api/workspace/studies/{study_id}/admit',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'admission_epoch':SAFE_NAT,'trial_id':ID,'approval_id':ID,'parent_run_id':ID},
+                ['study_id','request_key','revision','admission_epoch','trial_id'],scopes=('inspect','execute'),mutation=True)
+model_operation('studies.stop','POST','/api/workspace/studies/{study_id}/stop',
+                {'study_id':ID,'request_key':KEY,'revision':SAFE_POS},scopes=('inspect','cancel'),mutation=True)
+model_operation('studies.reconcile','POST','/api/workspace/studies/{study_id}/reconcile',{'study_id':ID},mutation=True)
+# Stable typed output bodies participate in each new contract identity.
+_BLOB=obj({'name':text(80),'sha256':SHA,'bytes':SAFE_NAT,'media_type':text(80)})
+_MODEL_MATERIAL=obj({'format':const('model_material_v1'),'catalog_id':ID,'model_definition_id':ID,
+    'model_definition_revision':SAFE_POS,'task':TASK_REF,'kind':{'enum':['template','captured_source']},
+    'entrypoint':text(1000),'source_selector':MODEL_FIELDS['source_selector'],
+    'source_closure':array(obj({'import_path':text(1000),'blob':_BLOB}),64,1),
+    'specification':_BLOB,'preprocessing_policy':_BLOB,'output_policy':_BLOB})
+_STUDY=obj({'format':const('study_v1'),'id':ID,'revision':SAFE_POS,'name':text(120),'admission_epoch':SAFE_NAT,
+    'open':{'type':'boolean'},'state':{'enum':['draft','open','stopping','stopped','unknown']},'limits':BUDGET,
+    'policy':POLICY_REF,'membership_revision':SAFE_POS,'trial_ids':array(ID,10000),
+    'stop_receipt_id':{'oneOf':[ID,{'type':'null'}]}})
+_TRIAL=obj({'format':const('trial_v1'),'id':ID,'study_id':ID,'material':MATERIAL_REF,'replicate':SAFE_NAT})
+_CHARGE=obj({key:SAFE_NAT for key in BUDGET['properties']})
+_RESERVATION=obj({'id':ID,'study_id':ID,'admission_epoch':SAFE_NAT,'request_key':KEY,'actor_id':ID,'trial_id':ID,
+    'parent_run_id':{'oneOf':[ID,{'type':'null'}]},'run_id':ID,'request_sha256':SHA,'material_sha256':SHA,
+    'envelope':BUDGET,'state':{'enum':['reserved','running','settled','unknown']},'settled':{'oneOf':[_CHARGE,{'type':'null'}]}})
+_STUDY_VIEW=obj({'study':_STUDY,'reservations':array(_RESERVATION,100),'charged':_CHARGE})
+_DEFINITION_REF=lambda kind:obj({'kind':const(kind),'catalog_id':ID,'id':text(64),'revision':SAFE_POS,'sha256':SHA})
+_RECIPE_MATERIAL=obj({'format':const('recipe_material_v1'),'catalog_id':ID,'recipe_id':ID,'recipe_revision':SAFE_POS,
+    'recipe_document':_BLOB,'executable_sha256':SHA,'model':MODEL_REF,'data':array(material_ref('release'),64),
+    'trainer':_DEFINITION_REF('trainer'),'evaluation_profile':_DEFINITION_REF('profile'),'resolved_profile':_BLOB,
+    'runtime':material_ref('runtime'),'captures':array(_BLOB,128,1),'resource_envelope':BUDGET})
+_RECIPE_FIELDS={'name':text(120),'task':TASK_REF,'data':array(material_ref('release'),64,1),'model':MODEL_REF,
+    'trainer':_DEFINITION_REF('trainer'),'parameters':JSON_OBJECT,'evaluation_profile':_DEFINITION_REF('profile'),
+    'runtime':material_ref('runtime'),'layout':{'type':'object','maxProperties':10,
+        'additionalProperties':obj({'x':{'type':'number','minimum':-10000,'maximum':10000},
+                                    'y':{'type':'number','minimum':-10000,'maximum':10000}})}}
+_RECIPE_DRAFT=obj(dict(_RECIPE_FIELDS,format=const('recipe_draft_v2'),id=ID,revision=SAFE_POS))
+model_operation('recipes.list_drafts','GET','/api/workspace/model-recipes',output=array(_RECIPE_DRAFT,10000))
+model_operation('recipes.get','GET','/api/workspace/model-recipes/{recipe_id}',{'recipe_id':ID},output=_RECIPE_DRAFT)
+model_operation('recipes.create','POST','/api/workspace/model-recipes',_RECIPE_FIELDS,
+                scopes=('inspect','edit'),mutation=True,output=_RECIPE_DRAFT)
+model_operation('recipes.save','POST','/api/workspace/model-recipes/{recipe_id}',
+                {'recipe_id':ID,'revision':SAFE_POS,'document':_RECIPE_DRAFT},scopes=('inspect','edit'),mutation=True,output=_RECIPE_DRAFT)
+_NEW_OUTPUTS={'models.list':array(MODEL_DRAFT,10000),'models.get':MODEL_DRAFT,
+    'models.publish':obj({'ref':MODEL_REF,'material':_MODEL_MATERIAL}),
+    'models.material':obj({'ref':MODEL_REF,'material':_MODEL_MATERIAL}),
+    'recipes.material':obj({'ref':MATERIAL_REF,'material':_RECIPE_MATERIAL}),
+    'studies.list':array(_STUDY_VIEW,10000),'studies.get':_STUDY_VIEW,'studies.trial':_TRIAL,
+    'studies.create':_STUDY,'studies.save':_STUDY,'studies.prepare_trial':_TRIAL,'studies.continue':_STUDY,
+    'studies.admit':obj({'reservation':_RESERVATION,'run':_RUN}),
+    'studies.approve':obj({'id':ID,'catalog_id':ID,'approver_actor_id':ID,'approver_credential_id':ID,
+        'consumer_actor_id':ID,'material_sha256':SHA,'created_at':SAFE_NAT,'expires_at':SAFE_NAT,'revoked_at':{'type':'null'}}),
+    'studies.stop':obj({'receipt':obj({'study_id':ID,'stop_receipt_id':ID,'admission_epoch':SAFE_NAT,'run_ids':array(ID,10000)}),
+                        'status':_STUDY_VIEW}),'studies.reconcile':_STUDY_VIEW}
+for _op in _OPERATIONS:
+    if _op['operation_id'] in _NEW_OUTPUTS:
+        _op['outputSchema']['oneOf'][0]['properties']['result']=_NEW_OUTPUTS[_op['operation_id']]
+_PAGE_CURSOR={'oneOf':[ID,{'type':'null'}]}
+_STUDY_PAGE=obj({'offset':SAFE_NAT,'limit':integer(1,100),'total':SAFE_NAT,'study_revision':SAFE_POS,
+                 'next_offset':{'oneOf':[SAFE_NAT,{'type':'null'}]}})
+_STUDY_VIEW['properties']['page']=_STUDY_PAGE
+_STUDY_VIEW['required'].append('page')
+_STUDY_SUMMARY=copy.deepcopy(_STUDY)
+_STUDY_SUMMARY['properties'].pop('trial_ids');_STUDY_SUMMARY['required'].remove('trial_ids')
+_STUDY_SUMMARY['properties']['trial_count']=integer(0,10000);_STUDY_SUMMARY['required'].append('trial_count')
+_COLLECTION_OUTPUTS={'models.list':obj({'models':array(MODEL_DRAFT,20),'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}),
+    'recipes.list_drafts':obj({'recipes':array(_RECIPE_DRAFT,20),'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}),
+    'studies.list':obj({'studies':array(_STUDY_SUMMARY,20),'limit':integer(1,20),'next_cursor':_PAGE_CURSOR})}
+for _op in _OPERATIONS:
+    if _op['operation_id'] in _COLLECTION_OUTPUTS:
+        _op['inputSchema']=obj({'cursor':ID,'limit':integer(1,20)},[]);_op['query']=['cursor','limit']
+        _op['outputSchema']['oneOf'][0]['properties']['result']=_COLLECTION_OUTPUTS[_op['operation_id']]
+    elif _op['operation_id']=='studies.get':
+        _op['inputSchema']=obj({'study_id':ID,'offset':SAFE_NAT,'limit':integer(1,100),'revision':SAFE_POS},['study_id'])
+        _op['query']=['offset','limit','revision']
+_OWNER_OPERATION_IDS={'studies.create','studies.save','studies.continue','studies.approve'}
+_MODEL_RECEIPT_IDS={'studies.prepare_trial','studies.continue','studies.admit','studies.stop'}
+_MODEL_RECEIPT_IDS.add('studies.select_candidate')
+_MODEL_RECEIPT_IDS.update({'studies.record_lineage','studies.branch_trial','studies.prepare_branch'})
+_CANDIDATE=obj({'format':const('candidate_v1'),'id':ID,'study_id':ID,'trial_id':ID,'run_id':ID,
+    'checkpoint_sha256':SHA,'evaluation_sha256':SHA,'policy':POLICY_REF,
+    'decision':{'enum':['qualified','diagnostic']},'limitations':array(text(500),64)})
+_CANDIDATE_RESULT=obj({'ref':material_ref('candidate'),'candidate':_CANDIDATE,'run_id':ID,'checkpoint':_BLOB})
+model_operation('studies.select_candidate','POST','/api/workspace/studies/{study_id}/select-candidate',
+    {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'trial_id':ID,'run_id':ID,'checkpoint_sha256':SHA},
+    ['study_id','request_key','revision','trial_id','run_id'],output=_CANDIDATE_RESULT,
+    scopes=('inspect','edit'),mutation=True)
+model_operation('studies.candidate','GET','/api/workspace/candidates/{candidate_id}',
+    {'candidate_id':ID},output=_CANDIDATE_RESULT)
+model_operation('studies.candidates','GET','/api/workspace/runs/{run_id}/candidates',
+    {'run_id':ID,'cursor':ID,'limit':integer(1,20)},['run_id'],
+    output=obj({'run_id':ID,'candidates':array(material_ref('candidate'),20),
+                'limit':integer(1,20),'next_cursor':_PAGE_CURSOR}))
+_OPERATIONS[-1]['query']=['cursor','limit']
+_PACKAGE_PREPARE_FIELDS={'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'candidate_id':ID,
+    'root':REF,'directory':ARTIFACT,'runtime_snapshot_sha256':SHA}
+_PACKAGE_PREPARED_FIELDS={'state':const('prepared'),'candidate_id':ID,'trial':_TRIAL,
+    'graph':_GRAPH,'model':MODEL_REF,'runtime_snapshot_sha256':SHA}
+for _action in ('package','verifier'):
+    _fields=dict(_PACKAGE_PREPARE_FIELDS);_result=dict(_PACKAGE_PREPARED_FIELDS)
+    if _action=='verifier':
+        _fields.update(package_run_id=ID,package_sha256=SHA)
+        _result.update(package_run_id=ID,package_sha256=SHA)
+    _name='studies.prepare_'+_action
+    model_operation(_name,'POST','/api/workspace/studies/{study_id}/prepare-'+_action,
+                    _fields,output=obj(_result),scopes=('inspect','edit'),mutation=True)
+    _OWNER_OPERATION_IDS.add(_name);_MODEL_RECEIPT_IDS.add(_name)
+model_operation('studies.package_state','GET','/api/workspace/candidates/{candidate_id}/package-state',
+    {'candidate_id':ID},output=obj({'candidate':_CANDIDATE_RESULT,
+        'state':{'enum':['selected','package_complete','fresh_verified']},
+        'packages':array(obj({'run_id':ID,'sha256':SHA,'bytes':SAFE_POS,'artifact_name':const('package.zip'),
+                              'url':text(512)}),100),
+        'verifications':array(obj({'run_id':ID,'receipt':{'type':'object','maxProperties':64}}),100)}))
+# Model evidence has a task-owned decoder. The public projection binds the
+# complete result variant while retaining its bounded, versioned domain bodies.
+_EVIDENCE_DOCUMENT={'type':'object','maxProperties':128}
+_EVIDENCE_RESULT={'oneOf':[
+    obj({'state':const('unsupported'),'reason':text(1000)}),
+    obj({'state':const('verified'),'manifest':_EVIDENCE_DOCUMENT,
+         'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
+         'metric_definitions':{'type':['object','array']},
+         'metric_definition_hashes':{'type':'object','maxProperties':64,
+             'propertyNames':text(64),'additionalProperties':SHA},
+         'observations':array(_EVIDENCE_DOCUMENT,1000),
+         'model_definition':_EVIDENCE_DOCUMENT,
+         'checkpoint':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]},
+         'predictions':{'oneOf':[{'type':'null'},_EVIDENCE_DOCUMENT]}})]}
+model_operation('runs.model_evidence','POST','/api/workspace/runs/{run_id}/model-evidence',
+                {'run_id':ID,'checkpoint_sha256':SHA},['run_id'],output=_EVIDENCE_RESULT)
+model_operation('runs.compare_model_evidence','POST','/api/workspace/runs/{run_id}/compare-model-evidence',
+                {'run_id':ID,'other_run_id':ID},output=obj({
+                    'state':{'enum':['compatible','incompatible']},'run_ids':array(ID,2,2),
+                    'reasons':array(text(1000),64),
+                    'metrics':array(obj({'metric_id':text(64),
+                        'values':array({'type':'number'},2,2),
+                        'direction':{'enum':['minimize','maximize','none']},'units':text(80)}),64)}))
+# Snapshot projections describe inert declarations, not runtime or execution grants.
+_SNAPSHOT_SUMMARY={'id':ID,'name':text(120),'root':text(160),
+    'manifest_path':text(512),'manifest_sha256':SHA,'schema_version':{'enum':[1,2]}}
+_SNAPSHOT_REFERENCE=obj({'id':REF,'label':text(160),'path':text(512),'sha256':SHA,
+    'status':{'enum':['available','missing','unavailable','present_unqualified','unverified']},
+    'integrity':{'enum':['unverified','verified','mismatch']},'reason':text(1000),
+    'bytes':SAFE_NAT,'observed_sha256':SHA},['id','label','status'])
+_DECLARATION_STATE={'enum':['valid','invalid','unavailable','unsupported']}
+_DECLARED_RUNTIME=obj({'profile':text(64),'snapshot_sha256':SHA},['profile'])
+_DECLARED_RESOURCES=obj({'wall_seconds':integer(1,86400),
+    'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})
+_UNQUALIFIED_FACET=obj({'state':const('unavailable'),'reason':text(1000)})
+_SNAPSHOT_CONTRIBUTION=obj({'id':text(129),'version':text(32),
+    'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
+    'path':text(512),'sha256':SHA,'bytes':SAFE_NAT,'state':_DECLARATION_STATE,
+    'definition':JSON_OBJECT,'reason':text(1000)},
+    ['id','version','kind','path','sha256','bytes','state'])
+_SNAPSHOT_PACKAGE=obj({'id':REF,'label':text(160),'path':text(512),'sha256':SHA,
+    'enabled':{'type':'boolean'},'discovered':{'type':'boolean'},'state':_DECLARATION_STATE,
+    'integrity':{'enum':['unverified','verified','mismatch']},
+    'contributions':array(_SNAPSHOT_CONTRIBUTION,64),
+    'host':{'oneOf':[_UNQUALIFIED_FACET,obj({'state':{'enum':['compatible','unsupported']},
+        'required':array(obj({'id':text(80),'version':text(32)}),64)})]},
+    'runtime':_UNQUALIFIED_FACET,'permission':_UNQUALIFIED_FACET,
+    'observed_sha256':SHA,'reason':text(1000),
+    'package':obj({'id':text(64),'version':text(32)}),'declared_runtime':_DECLARED_RUNTIME,
+    'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
+    'resources':_DECLARED_RESOURCES},
+    ['id','label','path','sha256','enabled','discovered','state','integrity',
+     'contributions','host','runtime','permission'])
+_SNAPSHOT_CATALOG=obj({'mode':const('inspection'),'execution':const('unsupported'),
+    'schema_sha256':obj({name:SHA for name in ('extension','contribution','parameter')},[]),
+    'bytes_inspected':integer(0,8*1024**2),'inspection_budget_consumed':integer(0,8*1024**2),
+    'packages':array(_SNAPSHOT_PACKAGE,64)})
+_SNAPSHOT_FIELDS=dict(_SNAPSHOT_SUMMARY,mode=const('inspection'),execution=const('unsupported'),
+    manifest_status={'enum':['unavailable','unchanged','changed','missing']},
+    **{name:array(_SNAPSHOT_REFERENCE,64) for name in ('data','recipes','evidence','requirements')})
+_SNAPSHOT_VIEW={'oneOf':[obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1))),
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG))]}
+model_operation('project_snapshots.list','GET','/api/workspace/project-snapshots',
+    {'cursor':ID,'limit':integer(1,20)},[],query=('cursor','limit'),
+    output=obj({'mode':const('inspection'),'roots':array(text(160),10000),
+        'projects':array(obj(_SNAPSHOT_SUMMARY),20),'limit':integer(1,20),
+        'next_cursor':{'oneOf':[{'type':'null'},ID]}}),
+    description='List bounded immutable v1/v2 project snapshots and configured root aliases; no code or runtime execution.')
+model_operation('project_snapshots.get','GET','/api/workspace/project-snapshots/{project_id}',
+    {'project_id':ID},output=_SNAPSHOT_VIEW,
+    description='Inspect exact saved v1/v2 declarations through current scoped, rooted, bounded readers; no source blobs or execution.')
+model_operation('project_snapshots.open','POST','/api/workspace/project-snapshots',
+    {'root':text(160),'manifest_path':text(512)},scopes=('inspect','edit'),mutation=True,
+    output=_SNAPSHOT_VIEW,
+    description='Register and inspect an explicit configured-root v1/v2 manifest; inert metadata only, never approval or execution.')
+# These E1 routes already have a supported unselected owner-browser consumer.
+# Their domain dispatch keeps that owner gate; ordinary agents select contracts.
+_LINEAGE_REF=obj({'catalog_id':ID,'trial_id':ID,'material_sha256':SHA})
+_NULL={'type':'null'}
+_LINEAGE_TARGET=obj({'metric_id':text(80),'metric_definition_sha256':{'oneOf':[SHA,_NULL]},
+    'direction':{'enum':['minimize','maximize','target']},
+    'threshold':{'oneOf':[{'type':'number','minimum':-(2**53-1),'maximum':2**53-1},_NULL]},
+    'acceptance':text(2000)})
+_LINEAGE_INTENT=obj({'ancestry':{'enum':['unknown','root','derived']},
+    'parent':{'oneOf':[_LINEAGE_REF,_NULL]},'baseline':{'oneOf':[_LINEAGE_REF,_NULL]},
+    'cohort':text(120),'hypothesis':text(2000),'change_summary':text(2000),'target':_LINEAGE_TARGET})
+_LINEAGE_RECORD=obj({'format':const('trial_lineage_v1'),'trial':_LINEAGE_REF,'intent':_LINEAGE_INTENT,
+    'actor_id':ID,'recorded_at':text(80),'timing':{'enum':['before_admission','retrospective']}})
+_LINEAGE_RUN=obj({'id':ID,'state':{'enum':['queued','running','cancelling','completed','failed','cancelled','interrupted','unknown']},
+    'parent_run_id':{'oneOf':[ID,_NULL]},'created_at':text(80),'finished_at':{'oneOf':[text(80),_NULL]},
+    'validation':{'type':'object','maxProperties':4,'additionalProperties':{'type':'number'}}})
+_LINEAGE_NODE=obj({'trial':_TRIAL,'lineage':{'oneOf':[_LINEAGE_RECORD,_NULL]},
+    'study':obj({'id':ID,'name':text(120)}),'recipe':obj({'id':ID,'revision':SAFE_POS}),
+    'model':MODEL_REF,'attempt_count':SAFE_NAT,'runs':array(_LINEAGE_RUN,5),'runs_truncated':{'type':'boolean'}})
+model_operation('studies.lineage','GET','/api/workspace/experiment-lineage',
+    {'cursor':ID,'limit':integer(1,20),'revision':SHA,'cohort':text(120)},[],
+    query=('cursor','limit','revision','cohort'),
+    output=obj({'revision':SHA,'nodes':array(_LINEAGE_NODE,20),'related':array(_LINEAGE_REF,40),
+        'next_cursor':_PAGE_CURSOR,'limit':integer(1,20),'cohort':{'oneOf':[text(120),_NULL]}}),
+    description='Read a revision-pinned page of exact Trial ancestry and authored targets; Run summaries are saved metadata, not artifact verification.')
+model_operation('studies.lineage_trial','GET','/api/workspace/experiment-lineage/{trial_id}',
+    {'trial_id':ID},output=_LINEAGE_NODE)
+model_operation('studies.record_lineage','POST','/api/workspace/experiment-lineage',
+    {'request_key':KEY,'revision':SHA,'trial':_LINEAGE_REF,'intent':_LINEAGE_INTENT},
+    scopes=('inspect','edit'),mutation=True,output=_LINEAGE_RECORD,
+    description='Record immutable authored intent and exact ancestry once; historical admissions are explicitly retrospective. Never execute.')
+model_operation('studies.branch_trial','POST','/api/workspace/experiment-lineage/branch',
+    {'request_key':KEY,'name':text(120),'intent':_LINEAGE_INTENT,'new_study_name':text(120)},
+    ['request_key','name','intent'],scopes=('inspect','edit'),mutation=True,
+    output=obj({'request_key':KEY,'graph':_GRAPH,'model':MODEL_REF,'parent':_LINEAGE_REF,
+        'intent':_LINEAGE_INTENT,'study_id':ID,
+        'source':obj({'id':ID,'revision':SAFE_POS,'material':MATERIAL_REF})}),
+    description='Clone the exact retained Trial recipe; optional new Study remains owner-only with inherited finite policy/limits. No grant or Run.')
+model_operation('studies.prepare_branch','POST','/api/workspace/studies/{study_id}/prepare-branch',
+    {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'branch_request_key':KEY,
+     'graph_revision':SAFE_POS,'replicate':SAFE_NAT,'model':MODEL_REF},
+    ['study_id','request_key','revision','branch_request_key','graph_revision','replicate'],
+    scopes=('inspect','edit'),mutation=True,output=_TRIAL,
+    description='Prepare edited branch material and attach immutable exact lineage atomically; existing capture, authority and admission rules apply.')
+
+_OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
+# Explicit locally implemented versions. No remotely supplied code or routes.
+_CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# A distinct graph contract accepts typed TinyCNN architecture. Existing
+# installed v1 clients retain their exact grammar and discovery digest.
+_model_create=copy.deepcopy(_CONTRACTS['graphs.create'][1])
+_model_create['inputSchema']['properties']['recipe']['enum'].append('image_classification_model_v2')
+_CONTRACTS['graphs.create'][2]=_model_create
+_model_graph=copy.deepcopy(graph_schema()['oneOf'][0])
+_model_graph['properties']['recipe']=const('image_classification_model_v2')
+_model_graph['required'].append('recipe')
+for _node_schema in _model_graph['properties']['nodes']['items']['oneOf']:
+    if _node_schema['properties']['type']==const('train'):
+        _node_schema['properties']['parameters']['properties'].update({
+            'widths':array(integer(4,64),3,3),'input_size':{'enum':[32,64,96]},'head':const('linear')})
+        _node_schema['properties']['parameters']['required'].extend(['widths','input_size','head'])
+_model_save=copy.deepcopy(_CONTRACTS['graphs.save'][1])
+_model_save['inputSchema']['properties']['document']['oneOf'].append(_model_graph)
+_CONTRACTS['graphs.save'][2]=_model_save
+_exact_comparison=copy.deepcopy(_CONTRACTS['runs.compare_model_evidence'][1])
+_exact_comparison['inputSchema']=obj({'run_id':ID,'other_run_id':ID,
+    **{key:SHA for key in ('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256',
+        'other_evaluation_sha256','metric_definition_sha256','other_metric_definition_sha256')},
+    'metric_id':text(64),'mode':{'enum':['paired','side_by_side']}})
+_CLOCKS=obj({'optimizer_update':{'oneOf':[SAFE_NAT,{'type':'null'}]},
+    'epoch':{'oneOf':[SAFE_POS,{'type':'null'}]},'fit_pass':{'oneOf':[SAFE_POS,{'type':'null'}]},
+    'physical_time':{'oneOf':[text(64),{'type':'null'}]},'wall_elapsed_ms':SAFE_NAT})
+_OBSERVED_OR_UNDEFINED={'oneOf':[obj({'state':const('observed'),'value':{'type':'number'},'sample_count':SAFE_POS}),
+    obj({'state':const('undefined'),'reason':text(64)})]}
+_EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
+    'mode':{'enum':['paired','side_by_side']},'sides':array(obj({'run_id':ID,'evaluation_sha256':SHA,
+        'checkpoint_sha256':SHA,'metric_definition_sha256':SHA,'metric_id':text(64),'split':const('validation'),
+        'clocks':_CLOCKS,'units':text(80),'direction':{'enum':['minimize','maximize','none']},
+        'result':_OBSERVED_OR_UNDEFINED}),2,2),
+    'reasons':array(text(1000),64),'delta':{'oneOf':[{'type':'null'},
+        obj({'state':const('observed'),'value':{'type':'number'},'units':text(80)}),
+        obj({'state':const('undefined'),'reason':text(64)})]}})
+_exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
+_exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
+_CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+# One-fit recipes are independently versioned from the already selected image
+# contract. Retain exact v1/v2 pins for clients deployed before this slice.
+_one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
+_one_fit_create['inputSchema']['properties']['recipe']['enum'].extend(
+    ['text_classification_model_v2','audio_classification_model_v2'])
+_CONTRACTS['graphs.create'][3]=_one_fit_create
+_one_fit_save=copy.deepcopy(_CONTRACTS['graphs.save'][2])
+for _recipe in ('text_classification','audio_classification'):
+    _one_fit_graph=next(copy.deepcopy(item) for item in graph_schema()['oneOf']
+                        if item['properties']['recipe']==const(_recipe))
+    _one_fit_graph['properties']['recipe']=const(_recipe+'_model_v2')
+    _one_fit_save['inputSchema']['properties']['document']['oneOf'].append(_one_fit_graph)
+_CONTRACTS['graphs.save'][3]=_one_fit_save
+# Field evidence is selected explicitly; classifier version1 remains exact.
+_field_query=copy.deepcopy(_CONTRACTS['runs.model_evidence'][1])
+_field_query['inputSchema']={'type':'object','oneOf':[
+    obj({'run_id':ID,'split':const('validation')},['run_id']),
+    obj({'run_id':ID,'checkpoint_sha256':SHA,'split':const('validation')},['run_id','checkpoint_sha256']),
+    obj({'run_id':ID,'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),
+         'field_id':REF,'axis':{'enum':['x','y','z']},'index':integer(0,127),'split':const('validation')},
+        ['run_id','checkpoint_sha256','member_ordinal','field_id','axis','index'])]}
+_field_vector=array({'type':'number'},3,3)
+_field_shape=array(integer(1,128),3,3)
+_field_grid=obj({'shape_xyz':_field_shape,'origin_xyz':_field_vector,
+    'spacing_xyz':array({'type':'number','exclusiveMinimum':0},3,3),
+    'orientation':array(_field_vector,3,3),'units':text(80)})
+_field_matrix=array(array({'type':'number'},128,1),128,1)
+_field_slice=obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
+    'axis':{'enum':['x','y','z']},'index':integer(0,127),'shape_zyx':_field_shape,'grid':_field_grid,
+    'stage':text(160),'units':text(80),'dtype':const('<f8'),'centering':const('cell'),
+    'gauge_policy_sha256':SHA,'gauge_policy':_EVIDENCE_DOCUMENT,'time_units':const('not_applicable'),
+    'prediction':_field_matrix,'reference':_field_matrix,
+    'row_axis':{'enum':['x','y','z']},'column_axis':{'enum':['x','y','z']},
+    'physical_origin':_field_vector,'physical_row_step':_field_vector,'physical_column_step':_field_vector})
+_field_fields={'state':const('verified'),
+    'validation':const('structural_and_identity_closure; numerical_acceptance_is_separate'),
+    'manifest':_EVIDENCE_DOCUMENT,'checkpoint_index':_EVIDENCE_DOCUMENT,'probe':_EVIDENCE_DOCUMENT,
+    'metric_definitions':array(_EVIDENCE_DOCUMENT,16,1),
+    'metric_definition_hashes':{'type':'object','maxProperties':16,'propertyNames':text(64),'additionalProperties':SHA},
+    'observations':array(_EVIDENCE_DOCUMENT,128,1),'model_definition':_EVIDENCE_DOCUMENT,
+    'fields':array(obj({'checkpoint_sha256':SHA,'member_ordinal':integer(0,7),'field_id':REF,
+                       'stage':text(160),'shape_zyx':_field_shape,'units':text(80)}),256,1),
+    'checkpoints':array(_EVIDENCE_DOCUMENT,8,1),'checkpoint':_EVIDENCE_DOCUMENT,'field':_field_slice}
+_field_result=copy.deepcopy(_EVIDENCE_RESULT)
+_field_result['oneOf'].append(obj(_field_fields,[key for key in _field_fields if key not in ('checkpoint','field')]))
+_field_query['outputSchema']['oneOf'][0]['properties']['result']=_field_result
+_field_query['description']='Read exact retained classifier or validation field evidence through its task-owned decoder; no inference or test exposure.'
+_CONTRACTS['runs.model_evidence'][2]=_field_query
+# Project extension capture has an explicit inspector contract. Historical
+# recipe clients keep their selected-only grammar and cannot opt into binding
+# by supplying a field in the request body.
+_contribution_ref=obj({'id':text(129),'version':text(32),'sha256':SHA})
+_extension_binding=obj({'format':const('tuldok_extension_binding_v1'),
+    'project':obj({'id':ID,'manifest_sha256':SHA,'manifest_path':text(512)}),
+    'schema_sha256':obj({key:SHA for key in ('extension','contribution','parameter')}),
+    'selections':array(_contribution_ref,64,1),
+    'contributions':array(obj({'id':text(129),'version':text(32),'sha256':SHA,
+        'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
+        'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA,
+            'runtime':obj({'profile':const('captured_cpu_python_v1'),'snapshot_sha256':SHA},['profile']),
+            'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
+            'resources':obj({'wall_seconds':integer(1,86400),
+                'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})}),
+        'definition':{'type':'object','maxProperties':64}}),64,1),
+    'inventory':array(obj({'path':text(512),'sha256':SHA,'bytes':integer(0,8*1024**2)}),64,1)})
+_bound_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][1])
+_inspection_fields={'definition':{'type':'object','maxProperties':32},
+    'receipt':obj({'project_id':ID,'manifest_sha256':SHA,'reference_id':REF,'path':text(512),'measured_sha256':SHA}),
+    'parameter_definitions':{'type':'object','maxProperties':32},
+    'inputs':{'type':'object','maxProperties':32},'outputs':array({'type':'object','maxProperties':8},96,1),
+    'runtime':{'enum':['system_python','captured_cpu_python_v1']}}
+_bound_inspection['outputSchema']['oneOf'][0]['properties']['result']={'oneOf':[
+    obj(_inspection_fields),obj(dict(_inspection_fields,extension_binding=_extension_binding,
+                                   model_task=TASK_REF,selection_policy=SELECTION_POLICY))]}
+_bound_inspection['description']='Inspect exact selected recipe and inert project extension contribution binding; no imports, runtime probing or admission.'
+_CONTRACTS['recipes.inspect'][2]=_bound_inspection
+# Old selected contracts retain their owner-only v2 source boundary. These
+# versions admit ordinary scoped static authoring; execution still needs its grant.
+for _name,_old,_new in (('recipes.inspect',2,3),('graphs.create_external',1,2),
+        ('graphs.preflight_external',1,2),('models.publish',1,2),('studies.prepare_trial',1,2)):
+    _scoped=copy.deepcopy(_CONTRACTS[_name][_old])
+    _scoped['description']+=' Ordinary inspect/edit agents may use exact project-v2 source; no execution or approval authority is conferred.'
+    _CONTRACTS[_name][_new]=_scoped
+CONTRACT_HEADER = 'Tuldok-Operation-Contract'
+CAPABILITIES_LIMIT = 1024 * 1024
+MAX_OPERATIONS = 256
+MAX_CONTRACTS = 4
 
 
 def discovery():
     return copy.deepcopy(dict(_PAYLOAD, digest=REGISTRY_DIGEST))
 
 
-def tool_definitions():
-    return [{'name': op['mcp_name'], 'description': op['description'] + ' Required scopes: ' + ', '.join(op['scopes']) + '.', 'inputSchema': copy.deepcopy(op['inputSchema']),
-             'outputSchema': copy.deepcopy(op['outputSchema']), 'annotations': {'readOnlyHint': not op['side_effects'],
-             'destructiveHint': op['side_effects'], 'idempotentHint': False, 'openWorldHint': op['operation_id'] == 'runs.submit_external'}} for op in _OPERATIONS]
+def _semantic_schema(schema):
+    """Exclude schema prose without stripping data-property names or const values."""
+    if not isinstance(schema, dict):
+        return copy.deepcopy(schema)
+    result = {}
+    for key, value in schema.items():
+        if key in ('description', 'title', '$comment'):
+            continue
+        if key in ('properties', 'patternProperties', '$defs', 'dependentSchemas'):
+            result[key] = {name: _semantic_schema(child) for name, child in value.items()}
+        elif key in ('allOf', 'anyOf', 'oneOf', 'prefixItems'):
+            result[key] = [_semantic_schema(child) for child in value]
+        elif key in ('items', 'contains', 'not', 'if', 'then', 'else', 'propertyNames',
+                     'additionalProperties', 'unevaluatedProperties', 'unevaluatedItems'):
+            result[key] = _semantic_schema(value)
+        else:
+            result[key] = copy.deepcopy(value)
+    return result
 
 
-def operation(name):
+def contract(name, version=1):
+    try:
+        op = copy.deepcopy(_CONTRACTS[name][version])
+    except (KeyError, TypeError):
+        raise AgentAPIError('Operation contract is not locally supported.', 'contract_mismatch', 409) from None
+    retry = ('read' if not op['side_effects'] else 'receipt' if name == 'runs.submit_external' or name in _MODEL_RECEIPT_IDS
+             else 'cas' if name in ('data.save_draft', 'responses.save_draft', 'graphs.save',
+                                   'proposals.caption_decide', 'proposals.classification_decide','models.save','studies.save','recipes.save') else 'never')
+    public = {'version': version, 'input_schema': _semantic_schema(op['inputSchema']),
+              'output_schema': _semantic_schema(op['outputSchema']), 'scopes': op['scopes'],
+              'authority': 'owner' if name in _OWNER_OPERATION_IDS else 'agent', 'effects': 'mutation' if op['side_effects'] else 'read',
+              'retry': retry, 'bounds': {'request_bytes': REQUEST_LIMIT, 'response_bytes': RESPONSE_LIMIT,
+                                       'inline_decoded_bytes': INLINE_LIMIT, 'json_depth': DEPTH_LIMIT}}
+    identity = dict(public, id=name, method=op['method'], path=op['path'], query=op['query'],
+                    injected=op['injected'], binary_fields=op['binary_fields'], mcp_name=op['mcp_name'])
+    public['sha256'] = hashlib.sha256(encoded(identity)).hexdigest()
+    return public
+
+
+def capabilities(catalog_id):
+    if type(catalog_id) is not str or not re.fullmatch('[a-f0-9]{32}', catalog_id):
+        raise AgentAPIError('Invalid capability catalog identity.', 'registry_invalid', 503)
+    if len(_CONTRACTS) > MAX_OPERATIONS:
+        raise AgentAPIError('Operation registry exceeds its capability bound.', 'registry_invalid', 503)
+    operations = []
+    for name, versions in _CONTRACTS.items():
+        if not 1 <= len(versions) <= MAX_CONTRACTS:
+            raise AgentAPIError('Contract version count exceeds its bound.', 'registry_invalid', 503)
+        operations.append({'id': name, 'contracts': [contract(name, version) for version in sorted(versions)],
+                           'availability': 'available'})
+    value = {'format': 'agent_capabilities_v1', 'envelope_version': 1, 'catalog_id': catalog_id,
+             'operations': operations, 'limits': {'request_bytes': REQUEST_LIMIT,
+                  'response_bytes': RESPONSE_LIMIT, 'max_operations': MAX_OPERATIONS}}
+    if len(encoded(value)) > CAPABILITIES_LIMIT:
+        raise AgentAPIError('Capabilities exceed the manifest byte bound.', 'registry_invalid', 503)
+    return value
+
+
+def negotiate(remote, catalog_id):
+    """Validate a bounded envelope, then select only exact local contract intersections."""
+    _finite(remote)
+    if (type(remote) is not dict or set(remote) != {'format', 'envelope_version', 'catalog_id', 'operations', 'limits'}
+            or remote['format'] != 'agent_capabilities_v1' or type(remote['envelope_version']) is not int
+            or remote['envelope_version'] != 1 or remote['catalog_id'] != catalog_id
+            or type(remote['operations']) is not list or len(remote['operations']) > MAX_OPERATIONS
+            or remote['limits'] != {'request_bytes': REQUEST_LIMIT, 'response_bytes': RESPONSE_LIMIT,
+                                     'max_operations': MAX_OPERATIONS}
+            or len(encoded(remote)) > CAPABILITIES_LIMIT):
+        raise AgentAPIError('Malformed or incompatible capability envelope.', 'capabilities_invalid', 502)
+    selected, names = {}, set()
+    keys = {'version', 'sha256', 'input_schema', 'output_schema', 'scopes', 'authority', 'effects', 'retry', 'bounds'}
+    for op in remote['operations']:
+        if (type(op) is not dict or set(op) != {'id', 'contracts', 'availability'}
+                or type(op['id']) is not str or not re.fullmatch(r'[a-z][a-z0-9_.]{0,79}', op['id'])
+                or op['id'] in names or op['availability'] not in ('available', 'unsupported', 'unavailable')
+                or type(op['contracts']) is not list or not 1 <= len(op['contracts']) <= MAX_CONTRACTS):
+            raise AgentAPIError('Malformed operation capability.', 'capabilities_invalid', 502)
+        names.add(op['id']); versions = set(); matches = []
+        for item in op['contracts']:
+            if (type(item) is not dict or set(item) != keys or type(item['version']) is not int
+                    or not 1 <= item['version'] <= 2**53-1 or item['version'] in versions
+                    or type(item['sha256']) is not str or not re.fullmatch('[a-f0-9]{64}', item['sha256'])
+                    or type(item['input_schema']) is not dict or type(item['output_schema']) is not dict
+                    or type(item['scopes']) is not list or len(item['scopes']) > 16
+                    or any(type(scope) is not str or not 1 <= len(scope) <= 40 for scope in item['scopes'])
+                    or item['authority'] not in ('agent', 'owner') or item['effects'] not in ('read', 'mutation')
+                    or item['retry'] not in ('read', 'cas', 'receipt', 'never') or type(item['bounds']) is not dict):
+                raise AgentAPIError('Malformed operation contract.', 'capabilities_invalid', 502)
+            bounds = item['bounds']
+            if (len(set(item['scopes'])) != len(item['scopes']) or
+                    set(bounds) != {'request_bytes','response_bytes','inline_decoded_bytes','json_depth'} or
+                    any(type(value) is not int or not 1 <= value <= 2**53-1 for value in bounds.values())):
+                raise AgentAPIError('Malformed operation contract bounds or scopes.', 'capabilities_invalid', 502)
+            try:
+                _validator(item['input_schema'])
+                _validator(item['output_schema'])
+            except AgentAPIError as error:
+                if error.code == 'dependency_missing':
+                    raise
+                raise AgentAPIError('Unsupported operation schema declaration.', 'capabilities_invalid', 502) from None
+            except ValueError:
+                raise AgentAPIError('Invalid operation schema declaration.', 'capabilities_invalid', 502) from None
+            versions.add(item['version'])
+            if op['id'] in _CONTRACTS and item['version'] in _CONTRACTS[op['id']]:
+                local = contract(op['id'], item['version'])
+                if item == local:
+                    matches.append(item['version'])
+        if matches and op['availability'] == 'available':
+            selected[op['id']] = max(matches)
+    return selected
+
+
+def selected_header(name, version=1):
+    return name + '/' + str(version) + '/' + contract(name, version)['sha256']
+
+
+def _route_matches(op, method, target):
+    parsed = urlsplit(target)
+    pattern = re.sub(r'\\\{([^}]+)\\\}', r'([^/]+)', re.escape(op['path']))
+    return method == op['method'] and not parsed.fragment and re.fullmatch(pattern, parsed.path)
+
+
+def select_request(headers, method, target):
+    values = headers.get_all(CONTRACT_HEADER, [])
+    if not values:
+        new_route = any(name not in _LEGACY_IDS and name not in _OWNER_SNAPSHOT_HTTP_IDS and _route_matches(op, method, target)
+                        for name, versions in _CONTRACTS.items() for op in versions.values())
+        legacy_route = any(_route_matches(op, method, target) for op in _PAYLOAD['operations'])
+        if new_route and not legacy_route:
+            raise AgentAPIError('This operation requires an exact contract selection.', 'contract_mismatch', 409)
+        return None
+    if len(values) != 1 or type(values[0]) is not str or len(values[0]) > 180:
+        raise AgentAPIError('Use one exact operation contract header.', 'contract_mismatch', 409)
+    match = re.fullmatch(r'([a-z][a-z0-9_.]{0,79})/([1-9][0-9]{0,15})/([a-f0-9]{64})', values[0])
+    if not match:
+        raise AgentAPIError('Malformed operation contract selection.', 'contract_mismatch', 409)
+    name, version, digest = match[1], int(match[2]), match[3]
+    current = contract(name, version)
+    op = copy.deepcopy(_CONTRACTS[name][version])
+    parsed = urlsplit(target)
+    pattern = re.sub(r'\\\{([^}]+)\\\}', r'([^/]+)', re.escape(op['path']))
+    if digest != current['sha256'] or method != op['method'] or parsed.fragment or not re.fullmatch(pattern, parsed.path):
+        raise AgentAPIError('Selected contract does not match this request.', 'contract_mismatch', 409)
+    return (name, version, digest)
+
+
+def require_selection(selection, name):
+    """A shared-route new variant must call this before entering its domain owner."""
+    if (selection is None or selection[0] != name or
+            contract(selection[0], selection[1])['sha256'] != selection[2]):
+        raise AgentAPIError('This variant requires its exact operation contract.', 'contract_mismatch', 409)
+
+
+def validate_selected(selection, method, target, body):
+    if selection is None:
+        return
+    name, version, digest = selection
+    if contract(name, version)['sha256'] != digest:
+        raise AgentAPIError('Selected operation contract changed.', 'contract_mismatch', 409)
+    op = _CONTRACTS[name][version]
+    template = op['path']; fields = re.findall(r'\{([^}]+)\}', template)
+    pattern = re.sub(r'\\\{([^}]+)\\\}', r'([^/]+)', re.escape(template))
+    parsed = urlsplit(target); match = re.fullmatch(pattern, parsed.path)
+    if method != op['method'] or match is None:
+        raise AgentAPIError('Selected route changed.', 'contract_mismatch', 409)
+    try:
+        pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=64)
+    except ValueError:
+        raise AgentAPIError('Invalid selected query representation.', 'contract_mismatch', 409) from None
+    if len({key for key, _ in pairs}) != len(pairs) or any(key not in op['query'] for key, _ in pairs):
+        raise AgentAPIError('Unexpected or duplicate selected query.', 'contract_mismatch', 409)
+    if method == 'GET':
+        if body is not None:
+            raise AgentAPIError('Selected GET requests have no body.', 'contract_mismatch', 409)
+        arguments = {}
+    else:
+        if type(body) is not dict:
+            raise AgentAPIError('Selected request requires an object.', 'contract_mismatch', 409)
+        arguments = copy.deepcopy(body)
+        for key, value in op['injected'].items():
+            if key not in arguments or encoded(arguments.pop(key)) != encoded(value):
+                raise AgentAPIError('Selected injected fields differ.', 'contract_mismatch', 409)
+    if set(arguments).intersection(fields + op['query']):
+        raise AgentAPIError('Selected arguments appear in two locations.', 'contract_mismatch', 409)
+    arguments.update({key: unquote(value) for key, value in zip(fields, match.groups())})
+    properties = op['inputSchema'].get('properties', {})
+    for key, value in pairs:
+        if properties.get(key, {}).get('type') in ('integer', 'number'):
+            try:
+                value = decode(value)
+            except AgentAPIError:
+                raise AgentAPIError('Invalid numeric query representation.', 'contract_mismatch', 409) from None
+        arguments[key] = value
+    checked = validate_arguments(name, arguments, version=version)
+    expected_method, expected_target, expected_body = project_request(name, checked, version=version)
+    if (expected_method != method or urlsplit(expected_target).path != parsed.path
+            or sorted(parse_qsl(urlsplit(expected_target).query, keep_blank_values=True)) != sorted(pairs)
+            or encoded(expected_body) != encoded(body)):
+        raise AgentAPIError('Request differs from its selected representation.', 'contract_mismatch', 409)
+    return arguments
+
+
+def tool_definitions(selected=None):
+    chosen = ({name: max(versions) for name, versions in _CONTRACTS.items()}
+              if selected is None else selected)
+    operations = [_CONTRACTS[name][version] for name, version in chosen.items()]
+    return [{'name': op['mcp_name'], 'description': op['description'] + ' Required scopes: ' + ', '.join(op['scopes']) + '.',
+             'inputSchema': copy.deepcopy(op['inputSchema']), 'outputSchema': copy.deepcopy(op['outputSchema']),
+             'annotations': {'readOnlyHint': not op['side_effects'], 'destructiveHint': op['side_effects'],
+                             'idempotentHint': False, 'openWorldHint': op['operation_id'] == 'runs.submit_external'}}
+            for op in operations]
+
+
+def operation(name, version=None):
     if type(name) is not str or name not in _LOOKUP:
         raise AgentAPIError('Unknown agent operation.', 'unknown_operation')
-    return copy.deepcopy(_LOOKUP[name])
+    op = _LOOKUP[name]
+    versions = _CONTRACTS[op['operation_id']]
+    return copy.deepcopy(versions[max(versions) if version is None else version])
 
 
 def _finite(value, depth=0):
@@ -344,8 +974,9 @@ def decode(raw):
 def _validator(schema):
     try:
         from jsonschema import Draft202012Validator
+        from jsonschema.exceptions import SchemaError
     except ImportError:
-        raise AgentAPIError('Install the documented optional agent dependencies.', 'dependency_missing', 503) from None
+        raise AgentAPIError('Install the documented base JSON Schema dependency.', 'dependency_missing', 503) from None
     # Checked-in schemas contain no references; no network/file retrieval exists.
     def check(value):
         if isinstance(value, dict):
@@ -357,26 +988,30 @@ def _validator(schema):
             for child in value:
                 check(child)
     check(schema)
-    Draft202012Validator.check_schema(schema)
+    try:
+        Draft202012Validator.check_schema(schema)
+    except SchemaError:
+        raise AgentAPIError('Registry schema is invalid.', 'registry_invalid', 503) from None
     return Draft202012Validator(schema)
 
 
 def validate_registry():
-    for op in _OPERATIONS:
-        _validator(op['inputSchema'])
-        _validator(op['outputSchema'])
+    for versions in _CONTRACTS.values():
+        for op in versions.values():
+            _validator(op['inputSchema'])
+            _validator(op['outputSchema'])
     return REGISTRY_DIGEST
 
 
-def validate_output(name, envelope):
+def validate_output(name, envelope, version=None):
     _finite(envelope)
-    if next(_validator(operation(name)['outputSchema']).iter_errors(envelope), None) is not None:
+    if next(_validator(operation(name, version)['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
     return envelope
 
 
-def validate_arguments(name, arguments):
-    op = operation(name)
+def validate_arguments(name, arguments, version=None):
+    op = operation(name, version)
     _finite(arguments)
     if len(encoded(arguments)) > REQUEST_LIMIT:
         raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
@@ -403,9 +1038,9 @@ def validate_arguments(name, arguments):
     return copy.deepcopy(arguments)
 
 
-def project_request(name, arguments):
-    op = operation(name)
-    arguments = validate_arguments(name, arguments)
+def project_request(name, arguments, version=None):
+    op = operation(name, version)
+    arguments = validate_arguments(name, arguments, version)
     segments = re.findall(r'\{([^}]+)\}', op['path'])
     path = op['path']
     for key in segments:
@@ -465,6 +1100,8 @@ class AgentClient:
         self.host, self.port = parsed.hostname, parsed.port
         self._token, self.catalog_id, self.timeout = token, expected_catalog_id, timeout
         self._ready = False
+        self._selected = None
+        self._legacy = False
 
     @classmethod
     def from_config(cls, path):
@@ -477,7 +1114,7 @@ class AgentClient:
             raise AgentAPIError('Invalid private credential file.', 'configuration') from None
         return cls(config['endpoint'], token, config['catalog_id'], config.get('timeout', 120))
 
-    def _request(self, method, path, body=None):
+    def _request(self, method, path, body=None, selection=None):
         connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, self.timeout))
         deadline = time.monotonic() + self.timeout
         sockets = []
@@ -496,6 +1133,8 @@ class AgentClient:
             if raw is not None and len(raw) > REQUEST_LIMIT:
                 raise AgentAPIError('Request exceeds the agent transport bound.', 'too_large', 413)
             headers = {'Authorization': 'Bearer '+self._token, 'Accept': 'application/json', 'Accept-Encoding': 'identity', 'Connection': 'close'}
+            if selection is not None:
+                headers[CONTRACT_HEADER] = selected_header(*selection)
             if raw is not None:
                 headers['Content-Type'] = 'application/json'
             connection.connect()
@@ -517,7 +1156,7 @@ class AgentClient:
                     or response.getheader('Content-Type', '').split(';')[0].strip() != 'application/json'):
                 raise AgentAPIError('HTTP response framing or content type is unsupported.', 'transport', 502)
             length = int(lengths[0])
-            if length > RESPONSE_LIMIT:
+            if length > (CAPABILITIES_LIMIT if path == '/api/agent/capabilities' else RESPONSE_LIMIT):
                 raise AgentAPIError('HTTP response exceeds the agent receive bound.', 'response_too_large', 413)
             data = bytearray()
             while len(data) < length:
@@ -574,21 +1213,76 @@ class AgentClient:
         context = self._request('GET', '/api/workspace/context')
         if context['status'] != 200 or not isinstance(context['result'], dict) or context['result'].get('dataset_id') != self.catalog_id:
             raise AgentAPIError('Configured catalog does not match HTTP service.', 'catalog_mismatch', 409)
-        self._check_discovery()
+        envelope = self._request('GET', '/api/agent/capabilities')
+        missing_route = (envelope['status'] == 404 and (
+            envelope['result'].get('code') == 'route_not_found' or
+            envelope['result'] == {'code': 'http_error', 'error': 'Not found.'}))
+        missing_method = (envelope['status'] == 405 and
+                          envelope['result'].get('code') == 'method_not_allowed')
+        if missing_route or missing_method:
+            self._check_discovery()
+            self._legacy = True
+            self._selected = {name: 1 for name in _LEGACY_IDS}
+        elif envelope['status'] != 200:
+            raise AgentAPIError(envelope['result']['error'], envelope['result']['code'], envelope['status'])
+        else:
+            self._selected = negotiate(envelope['result'], self.catalog_id)
         self._ready = True
-        return {'identity': value, 'discovery': discovery()}
+        return {'identity': value, 'discovery': discovery(), 'mode': 'legacy' if self._legacy else 'negotiated',
+                'operations': sorted(self._selected)}
 
-    def call(self, name, arguments):
-        op = operation(name)
-        method, path, body = project_request(name, arguments)
+    def selected_contracts(self):
         if not self._ready:
             self.bootstrap()
-        if op['side_effects']:
+        return dict(self._selected)
+
+    def tool_definitions(self):
+        return tool_definitions(self.selected_contracts())
+
+    def call(self, name, arguments, *, observer=None, observation=None):
+        from mcp_observer import observe_stage, observe_selection
+        # Reject local invalid input before bootstrap/network side effects.
+        op = operation(name)
+        errors = []
+        for local_version in sorted(_CONTRACTS[op['operation_id']], reverse=True):
+            try:
+                validate_arguments(name, arguments, local_version)
+                break
+            except AgentAPIError as error:
+                errors.append(error)
+        else:
+            raise errors[0]
+        if not self._ready:
+            self.bootstrap()
+        if op['operation_id'] not in self._selected:
+            raise AgentAPIError('Operation has no compatible available contract.', 'operation_unsupported', 409)
+        version = self._selected[op['operation_id']]
+        method, path, body = project_request(name, arguments, version)
+        observe_selection(observer, observation, name, arguments, None if self._legacy else version)
+        observe_stage(observer, observation, 'validated')
+        if self._legacy and op['side_effects']:
             self._check_discovery()
-        result = validate_output(name, self._request(method, path, body))
+        selection = None if self._legacy else (op['operation_id'], version)
+        observe_stage(observer, observation, 'admitted')
+        observe_stage(observer, observation, 'dispatch')
+        envelope = self._request(method, path, body, selection=selection)
+        result = validate_output(name, envelope, version)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
         return result
+
+
+def observation_operation(method, target, headers):
+    """Local allowlist lookup only; raw routes/headers never leave this boundary."""
+    try:
+        selected = select_request(headers, method, target)
+        if selected is not None:
+            return selected[:2]
+    except AgentAPIError:
+        return None, None
+    matches = [op['operation_id'] for op in _PAYLOAD['operations']
+               if _route_matches(op, method, target)]
+    return (matches[0], None) if len(matches) == 1 else (None, None)
 
 
 def dispatch(client, name, arguments):

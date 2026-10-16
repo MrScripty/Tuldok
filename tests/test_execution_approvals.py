@@ -140,7 +140,7 @@ class ExecutionApprovals(unittest.TestCase):
     def test_two_connections_cannot_consume_same_grant_twice(self):
         db, access, owner, agent = self.authority()
         grant = self.grant(access, owner, agent)
-        peer = Metadata(db.path, create=False)
+        peer = Metadata(db.path, create=False, schema_version=db.schema_version)
         self.addCleanup(peer.close)
         barrier = threading.Barrier(2)
         outcomes = []
@@ -165,7 +165,7 @@ class ExecutionApprovals(unittest.TestCase):
     def test_concurrent_revocation_and_consumption_serialize(self):
         db, access, owner, agent = self.authority()
         grant = self.grant(access, owner, agent)
-        peer = Metadata(db.path, create=False)
+        peer = Metadata(db.path, create=False, schema_version=db.schema_version)
         self.addCleanup(peer.close)
         other = Access(peer, peer.path)
         barrier = threading.Barrier(2)
@@ -208,7 +208,7 @@ class ExecutionApprovals(unittest.TestCase):
                     admission = access._consume_external_run(grant['id'], MATERIAL, 'run1', REQUEST)
                     db.execute('INSERT INTO workspace_runs VALUES (%s,%s,%s,%s)',
                                ('run1', 'stable-key', REQUEST, '{"state":"queued"}'))
-        peer = Metadata(db.path, create=False)
+        peer = Metadata(db.path, create=False, schema_version=db.schema_version)
         self.addCleanup(peer.close)
         self.assertEqual(peer.execute('SELECT admission_id FROM access_execution_consumptions').fetchone()[0], admission)
         self.assertEqual(peer.execute('SELECT request_key FROM workspace_runs').fetchone()[0], 'stable-key')

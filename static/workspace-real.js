@@ -7,9 +7,22 @@
     short = (s) => String(s || "").slice(0, 12),
     encoded = encodeURIComponent,
     terminal = new Set(["completed", "failed", "cancelled", "interrupted", "unknown"]);
-  async function api(route, body) {
-    const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, body === undefined ? {} : {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  async function api(route, body, selectedVersion) {
+    const headers = {"Content-Type": "application/json"};
+    const path = route.split('?')[0].split('/');
+    const modelRecipe=body?.recipe||body?.document?.recipe;
+    const modelGraph=['image_classification_model_v2','text_classification_model_v2','audio_classification_model_v2'].includes(modelRecipe);
+    const operation = path[0]==='experiment-lineage' ? (path.length===1?(body===undefined?'studies.lineage':'studies.record_lineage'):path[1]==='branch'?'studies.branch_trial':'studies.lineage_trial') : path[0]==='graphs'&&modelGraph ? (path.length===1?'graphs.create':'graphs.save') : path[0] === 'models' ? (path.length === 1 ? (body === undefined ? 'models.list' : 'models.create') : path[2] === 'publish' ? 'models.publish' : body === undefined ? 'models.get' : 'models.save') :
+      path[0] === 'studies' ? (path.length === 1 ? (body === undefined ? 'studies.list' : 'studies.create') : path[2] ? ({'prepare-branch':'studies.prepare_branch','prepare-trial':'studies.prepare_trial',continue:'studies.continue',admit:'studies.admit',reconcile:'studies.reconcile',approve:'studies.approve','prepare-package':'studies.prepare_package','prepare-verifier':'studies.prepare_verifier','select-candidate':'studies.select_candidate'})[path[2]] : body === undefined ? 'studies.get' : 'studies.save') :
+      path[0] === 'candidates' ? (path[2]==='package-state'?'studies.package_state':'studies.candidate') : path[0] === 'runs' && path[2] === 'candidates' ? 'studies.candidates' : path[0] === 'runs' && path[2] === 'model-evidence' ? 'runs.model_evidence' : path[0] === 'runs' && path[2] === 'compare-model-evidence' ? 'runs.compare_model_evidence' : null;
+    if (operation) {
+      const version=operation==='runs.model_evidence'&&selectedVersion===2?2:operation==='runs.compare_model_evidence'?2:operation.startsWith('graphs.')?(modelRecipe==='image_classification_model_v2'?2:3):1;
+      const sha = window.WorkspaceModelContracts?.[version===3||operation==='runs.model_evidence'&&version===2?operation+'/'+version:operation];
+      if (!sha) throw Error('This model operation has no supported local contract: ' + operation);
+      headers['Tuldok-Operation-Contract'] = operation + '/' + version + '/' + sha;
+    }
+    const response = await (globalThis.TuldokAuth?.fetch || fetch)("/api/workspace/" + route, {
+      ...(body === undefined ? {} : {method: "POST", body: JSON.stringify(body)}), headers,
     });
     const value = await response.json();
     if (!response.ok) {
@@ -31,6 +44,18 @@
       changeGraph:change,render:renderPipeline,refresh:loadPipeline,
       onImported:openImportedRecord,
       onRun:result=>{run=result;runId=result.id;predictions=null;predictionError=null;remember();status("External attempt admitted with exact material approval.");openRun();}});
+    const model = WorkspaceModel({api, announce, openRecord, getIntent:()=>loadGeneration, getView:()=>view,
+      openRun:result=>{run=result;runId=result.id;remember();if(view==='runs')loadRuns(runId);else openRun();}});
+    const fieldEvidence = window.WorkspaceFieldEvidence({api,announce});
+    const candidatePackages = window.WorkspaceCandidatePackageEvidence({api});
+    const lineage = window.WorkspaceExperimentLineage({api,announce,getIntent:()=>loadGeneration,getView:()=>view,getGraph:()=>graph,isDirty:()=>dirty(),
+      openRecipe:async(id,current)=>{if(await openGraph(id,current)){if(!graphs.some(item=>item.id===graph.id))graphs.push(copy(graph));if(current())renderPipeline();}},openRun:async(id,current)=>{if(await openRunById(id,current))openRun();},
+      compare:async(id,baseline,current)=>{if(await openRunById(id,current)){model.queueComparison(id,baseline);openRun();}}});
+    function mountModel() {
+      const container=document.createElement('div');container.id='real-model-root';pipelineRoot.prepend(container);
+      model.configure({definitions,releases,context});model.mount(container);
+      const lineageRoot=document.createElement('div');lineageRoot.id='real-lineage-root';pipelineRoot.prepend(lineageRoot);lineage.mount(lineageRoot,context);
+    }
     function remember() {
       history.replaceState({ ...history.state, realWorkspace: { version: 1, graphId, runId, pendingSubmission } }, "");
     }
@@ -67,15 +92,21 @@
     }
     async function action(fn) {
       if (busy) return;
+      const actionView = view, actionIntent = loadGeneration;
+      const actionRoot = view === "pipeline" ? pipelineRoot : view === "runs" ? runsRoot : null;
+      const focusedId = actionRoot?.contains(document.activeElement) ? document.activeElement.id : null;
       busy = true;
       for (const root of [pipelineRoot, runsRoot]) root.querySelectorAll("button,input,select").forEach(e => e.disabled = true);
       try { await fn(); } catch (error) {
         status(error.message + (error.code === "commit_unknown" ? " The acknowledgement was lost. Reload saved state before another write." : ""), true);
       } finally {
         busy = false;
+        const restore = focusedId && view === actionView && loadGeneration === actionIntent && document.activeElement === document.body;
         // Keep the error/status outside the replaced panels.
         if (view === "pipeline") renderPipeline();
         else if (view === "runs") renderRuns();
+        if (restore && document.activeElement === document.body)
+          actionRoot.querySelector("#" + CSS.escape(focusedId))?.focus({ preventScroll: true });
       }
     }
     async function loadPipeline() {
@@ -89,6 +120,8 @@
           const chosen = graphs.find(g => g.id === graphId) || graphs[0];
           if (chosen) adopt(chosen);
         }
+        await model.refresh(()=>generation===loadGeneration&&view==='pipeline');
+        if(generation!==loadGeneration||view!=='pipeline')return;
         renderPipeline();
       } catch (error) {
         if (generation !== loadGeneration || view !== "pipeline") return;
@@ -126,9 +159,9 @@
       pointcloud_validate_export: {name: "Point cloud", unit: "point clouds", source: "native point order and properties"},
       volume_validate_export: {name: "Volume", unit: "volumes", source: "native voxel arrays and declared affine"}};
     const integrityKind = document => integrityKinds[document?.recipe];
-    const audioRecipe = document => document?.recipe === "audio_classification";
-    const sourceUnit = recipe => integrityKinds[recipe] ? integrityKinds[recipe].unit : recipe === "audio_classification" ? "WAV intervals" : recipe === "text_classification" ? "texts" : "images";
-    const trainingTitle = document => audioRecipe(document) ? "Fit audio features + logistic regression" : document?.recipe === "text_classification" ? "Fit TF-IDF + Naive Bayes" : titles.train;
+    const audioRecipe = document => document?.recipe?.startsWith("audio_classification");
+    const sourceUnit = recipe => integrityKinds[recipe] ? integrityKinds[recipe].unit : recipe?.startsWith("audio_classification") ? "WAV intervals" : recipe?.startsWith("text_classification") ? "texts" : "images";
+    const trainingTitle = document => audioRecipe(document) ? "Fit audio features + logistic regression" : document?.recipe?.startsWith("text_classification") ? "Fit TF-IDF + Naive Bayes" : titles.train;
     function differencesHTML() {
       if (!graph) return "";
       const original = JSON.parse(saved), installed = definitions.recipes?.find(item => item.id === (graph.recipe || "image_classification")), changes = [];
@@ -152,8 +185,8 @@
     function renderPipeline() {
       if (!definitions) return;
       if(external.isGraph(graph)){
-        external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}});
-        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}return;
+        retainFocus(pipelineRoot, () => external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}}));
+        if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}mountModel();return;
       }
       const integrity = integrityKind(graph);
       const title = {...titles, train: trainingTitle(graph), ...(integrity ? {validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"} : {})};
@@ -171,9 +204,9 @@
         ${graph ? `<div class="panel"><div class="panel-title"><div><span class="eyebrow">EDITABLE RECIPE · V${esc(graph.recipe_version)}</span><h2>${esc(graph.name)}</h2></div><span class="badge ${dirty() ? "amber" : "green"}" id="real-dirty">${dirty() ? "Unsaved changes" : "Saved r" + graph.revision}</span></div>
         <div class="real-graph-layout"><div class="panel-pad"><div class="real-nodes" aria-label="Recipe nodes">${graph.nodes.map((n, i) => `<button id="real-node-${esc(n.id)}" data-node="${esc(n.id)}" aria-pressed="${n.id === selectedNode}"><span class="node-index">${i + 1}</span><span><strong>${esc(title[n.type] || n.type)}</strong><small>Definition v${n.definition_version}</small></span>${i < graph.nodes.length - 1 ? '<span aria-hidden="true">↓</span>' : ""}</button>`).join("")}</div>
         <details class="real-connections"><summary>Edit typed connections</summary>${expectedEdges().map((edge, i) => `<label><input type="checkbox" data-edge="${i}" ${graph.edges.some(e => edgeKey(e) === edgeKey(edge)) ? "checked" : ""}>${esc(edge.from)} → ${esc(edge.to)}<small>${esc(edge.output)}</small></label>`).join("")}<p class="muted">Disconnecting a stage creates an invalid draft. Save and validate to inspect server errors.</p></details></div>
-        <section class="panel-pad real-inspector"><span class="eyebrow">NODE INSPECTOR</span><h2>${esc(title[node.type] || node.type)}</h2><p>${esc(node.type === "train" && audioRecipe(graph) ? "Measure eight fixed features of the exact source channel and interval, then fit training-only scaling and logistic regression. Original WAVs stay unchanged. No ASR, resampling or downmix." : node.type === "train" && graph.recipe === "text_classification" ? "Fit vocabulary, IDF and Naive Bayes once on training text only. No pretrained model or downloads. Validation and test use that frozen transform." : (integrity ? {release: `Exact reviewed ${integrity.unit} from an immutable ${integrity.classification ? "classification" : "canonical"} release.`, validate: integrity.classification ? `Verify ${integrity.source}, hashes and protected-family scope. No training or model-quality qualification.` : `Verify ${integrity.source}, hashes, units and selected-record family scope. No training or physics certification.`, publish: "Publish the integrity report and hashes; retain the unchanged frozen release."}[node.type] : explanations[node.type]) || "Unsupported node definition.")}</p>
+        <section class="panel-pad real-inspector"><span class="eyebrow">NODE INSPECTOR</span><h2>${esc(title[node.type] || node.type)}</h2><p>${esc(node.type === "train" && audioRecipe(graph) ? "Measure eight fixed features of the exact source channel and interval, then fit training-only scaling and logistic regression. Original WAVs stay unchanged. No ASR, resampling or downmix." : node.type === "train" && graph.recipe?.startsWith("text_classification") ? "Fit vocabulary, IDF and Naive Bayes once on training text only. No pretrained model or downloads. Validation and test use that frozen transform." : (integrity ? {release: `Exact reviewed ${integrity.unit} from an immutable ${integrity.classification ? "classification" : "canonical"} release.`, validate: integrity.classification ? `Verify ${integrity.source}, hashes and protected-family scope. No training or model-quality qualification.` : `Verify ${integrity.source}, hashes, units and selected-record family scope. No training or physics certification.`, publish: "Publish the integrity report and hashes; retain the unchanged frozen release."}[node.type] : explanations[node.type]) || "Unsupported node definition.")}</p>
         <label>Recipe name<input id="real-name" value="${esc(graph.name)}" maxlength="120"></label>
-        ${node.type === "train" ? Object.entries(node.parameters).map(([key, value]) => `<label>${esc(key.replaceAll("_", " "))}<input id="real-param-${esc(key)}" data-param="${esc(key)}" type="number" step="${recipeDefinition().parameter_bounds[key]?.type === "number" ? "any" : "1"}" min="${recipeDefinition().parameter_bounds[key]?.minimum ?? ""}" max="${recipeDefinition().parameter_bounds[key]?.maximum ?? ""}" value="${esc(value)}"></label>`).join("") : ""}
+        ${node.type === "train" ? Object.entries(node.parameters).filter(([key])=>!["widths","input_size","head"].includes(key)).map(([key, value]) => `<label>${esc(key.replaceAll("_", " "))}<input id="real-param-${esc(key)}" data-param="${esc(key)}" type="number" step="${recipeDefinition().parameter_bounds[key]?.type === "number" ? "any" : "1"}" min="${recipeDefinition().parameter_bounds[key]?.minimum ?? ""}" max="${recipeDefinition().parameter_bounds[key]?.maximum ?? ""}" value="${esc(value)}"></label>`).join("") : ""}
         ${node.type === "release" ? `<label>Frozen release<select id="real-release">${releaseOptions(node.parameters.release_id)}</select></label><p class="muted">${esc(node.parameters.release_id)}</p>` : ""}
         <p class="footnote">Changing a draft never changes an existing run. Recipe limits and release eligibility are checked by the server.</p></section></div>
         <details class="panel-pad"><summary>Recipe changes and definitions</summary><div id="real-differences">${differencesHTML()}</div></details>
@@ -196,7 +229,7 @@
         const body = { name: pipelineRoot.querySelector("#real-create-name").value, release_id, recipe: pipelineRoot.querySelector("#real-create-recipe").value };
         action(async () => { const result = await api("graphs", body); graphs.push(result); adopt(result); status("Recipe created. Inspect parameters, then validate."); });
       };
-      if (!graph) return;
+      if (!graph) {mountModel();return;}
       pipelineRoot.querySelectorAll("[data-node]").forEach(button => button.onclick = () => { selectedNode = button.dataset.node; renderPipeline(); pipelineRoot.querySelector("#real-node-" + CSS.escape(selectedNode)).focus(); });
       pipelineRoot.querySelector("#real-name").oninput = event => change(() => graph.name = event.target.value, false);
       pipelineRoot.querySelectorAll("[data-param]").forEach(input => input.oninput = () => change(() => node.parameters[input.dataset.param] = input.value === "" ? null : Number(input.value), false));
@@ -245,6 +278,7 @@
         split = "validation"; selectedCell = null; predictions = null; predictionError = null; remember();
         status("Durable run admitted. Its graph and release are frozen."); openRun();
       });
+      mountModel();
       if (busy) pipelineRoot.querySelectorAll("button,input,select").forEach(e => e.disabled = true);
     }
     function meshSummaryHTML(summary) {
@@ -268,6 +302,7 @@
     function artifactURL(name) { return `/api/workspace/runs/${encoded(run.id)}/artifacts/${encoded(name)}`; }
     async function loadRuns(chosen = runId, quiet = false) {
       const generation = ++runGeneration,session=window.TuldokAuth?.identity()?.credential_id;
+      candidatePackages.invalidate();
       const current=()=>generation===runGeneration&&view==='runs'&&session===window.TuldokAuth?.identity()?.credential_id;
       if (!quiet) runsRoot.innerHTML = '<p class="real-status" role="status">Loading durable run receipts…</p>';
       try {
@@ -294,9 +329,16 @@
           catch (error) { rowsError = error.message; }
         }
         if (!current()) return;
+        await model.load(detail,current);
+        if (!current()) return;
+        await fieldEvidence.load(detail,current);
+        if (!current()) return;
+        const packageRead=candidatePackages.load(detail&&external.isGraph(detail.graph)?detail:null,current);
         runs = list; run = detail; runProgress = progress; runId = id || null; predictions = rows; predictionError = rowsError; remember(); renderRuns();
+        packageRead.then(()=>{if(current())renderRuns();});
       } catch (error) {
         if (!current()) return;
+        if ([401,403].includes(error.status)) {run=null;runs=[];predictions=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();renderRuns();status(error.message,true);return;}
         if (!quiet) runsRoot.innerHTML = `<div class="error-panel" role="alert">${esc(error.message)}<p>No work has been resubmitted.</p><button id="real-runs-retry">Refresh saved runs</button></div>`;
         else status("Run refresh failed: " + error.message + " Saved results are retained; use Refresh to retry.", true);
         runsRoot.querySelector("#real-runs-retry")?.addEventListener("click", () => loadRuns(chosen));
@@ -315,10 +357,12 @@
         ${run.error ? `<p class="error-panel" role="alert">${esc(run.error.code)}: ${esc(run.error.message)}</p>` : ""}
         ${run.artifact_status?.status === "unavailable" ? `<p class="error-panel" role="alert">Published artifacts unavailable: ${esc(run.artifact_status.message)}. Saved run identity is retained.</p>` : ""}
         ${!terminal.has(run.state) ? `<div class="real-running"><span class="running-dot" aria-hidden="true"></span><div><strong>${esc(run.progress.stage || run.state)}</strong><p>${externalRun?"Recipe-reported progress appears below when available. Remaining duration is unknown.":"Total work and remaining duration are unknown."} Cancellation completes only after the worker has stopped.</p></div></div><button id="real-cancel" ${run.state === "cancelling" ? "disabled" : ""}>${run.state === "cancelling" ? "Waiting for worker to stop" : "Cancel run"}</button>` : ""}
-        ${!externalRun && ["failed", "cancelled", "interrupted"].includes(run.state) ? `<button id="real-retry-run">Start a fresh ${integrity ? "validation" : "training"} attempt</button><p class="muted">Reuses verified frozen input.${integrity ? "" : " Partial checkpoints are never resumed."}</p>` : ""}
+        ${!externalRun && !run.study_membership && ["failed", "cancelled", "interrupted"].includes(run.state) ? `<button id="real-retry-run">Start a fresh ${integrity ? "validation" : "training"} attempt</button><p class="muted">Reuses verified frozen input.${integrity ? "" : " Partial checkpoints are never resumed."}</p>` : ""}
+        ${run.study_membership&&["failed","cancelled","interrupted"].includes(run.state)?'<p>This finite-study attempt has stopped. Prepare another exact trial in <a href="#pipeline">Pipeline</a> before starting new training.</p>':""}
         ${run.state === "unknown" ? '<p class="error-panel">Execution outcome is unresolved. Automatic retry is unavailable; reconcile process and storage state first.</p>' : ""}
         ${!externalRun && !integrity && (run.current_test_exposure?.exposed || run.prior_test_exposure?.exposed) ? '<p class="error-panel">This release contains previously exposed/reused test material. Results cannot be presented as fresh holdout evidence.</p>' : ""}
         ${externalRun ? external.runHTML(run,runProgress) : integrity ? integritySummaryHTML(run.graph, run.validation_summary) : ""}
+        ${!externalRun&&!integrity?model.html(run,predictions):""}${externalRun?candidatePackages.html(run)+fieldEvidence.html(run):""}
         ${metrics ? `<div class="metric-grid"><div class="metric"><strong>${(metrics.accuracy * 100).toFixed(1)}%</strong><span>Validation accuracy</span></div><div class="metric"><strong>${metrics.examples}</strong><span>Validation examples</span></div><div class="metric"><strong>${metrics.macro_f1.toFixed(3)}</strong><span>Validation macro F1</span></div></div>` : ""}
         <div class="${externalRun?'':'run-columns'}">${!externalRun?`<section><h3>Stage evidence</h3>${(run.node_attempts || []).map((stage, i) => `<div class="attempt"><span class="node-index">${i + 1}</span><span>${esc(stage.type === "train" ? trainingTitle(run.graph) : (integrity ? {release: "Frozen release", validate: `Validate ${integrity.name.toLowerCase()} integrity`, publish: "Publish integrity report"}[stage.type] : titles[stage.type]) || stage.type)}</span><small>${esc(stage.state)}</small></div>`).join("")}<details><summary>Bounded progress log</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details></section>`:`<details id="external-lifecycle-events" data-external-disclosure><summary>Run lifecycle events</summary><pre>${esc((run.events || []).map(e => `${e.at} [${e.state}] ${e.message}`).join("\n"))}</pre></details>`}<section><h3>${run.artifact_status?.status==='receipt_verified'?'Recorded outputs; verified on download':'Verified artifacts'}</h3>${run.artifacts.length ? `<ul class="real-artifacts">${run.artifacts.map(a => `<li>${a.locked ? `<span>${esc(a.name)} · test access locked</span>` : `<a href="${artifactURL(a.name)}" download>${esc(a.name)}</a>`}<small>${a.role ? esc(a.role) + " · " : ""}${a.bytes.toLocaleString()} bytes · SHA ${esc(short(a.sha256))}</small>${external.artifactActionHTML(run,a)}</li>`).join("")}</ul>` : '<p class="muted">No published artifacts yet.</p>'}<p class="footnote">${run.artifact_status?.status==='receipt_verified'?'Output receipt verified. Payload bytes are checked individually when requested.':'Every artifact read verifies its frozen hash.'}</p></section></div>
         ${run.state === "completed" && !externalRun && !integrity ? `<section class="real-predictions"><div class="panel-title"><h3>Per-example predictions</h3><span class="badge ${split === "test" ? "amber" : ""}">${esc(split)}${split === "test" ? " · exposed" : ""}</span></div><div class="actions"><button id="real-validation-predictions" ${split === "validation" ? "disabled" : ""}>Validation examples</button><button id="real-test-predictions">${run.test_exposure?.exposed ? "Open exposed test results" : "Expose test results…"}</button></div>${predictionsHTML()}</section>` : ""}
@@ -357,6 +401,10 @@
         const prediction = predictions.rows.find(p => p.id === button.dataset.correctRecord);
         openRecord({ ...prediction, run_id: run.id, release_id: run.release_id });
       });
+      const displayedRun=runId,displayedGeneration=runGeneration,credential=window.TuldokAuth?.identity()?.credential_id;
+      fieldEvidence.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
+      model.bind(runsRoot,run,runs,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id);
+      candidatePackages.bind(runsRoot,run,renderRuns,()=>view==='runs'&&runId===displayedRun&&runGeneration===displayedGeneration&&credential===window.TuldokAuth?.identity()?.credential_id,id=>loadRuns(id));
       if (busy) runsRoot.querySelectorAll("button,input,select").forEach(e => e.disabled = true);
     }
     function predictionsHTML() {
@@ -368,23 +416,31 @@
         filtered = selectedCell ? rows.filter(r => `${r.truth_index}:${r.predicted_index}` === selectedCell) : rows;
       return `<p class="muted">Rows are frozen targets; columns are model predictions. Select a count to inspect exact examples.</p><div class="real-table-wrap"><table class="real-matrix"><thead><tr><th scope="col">Target / prediction</th>${vocabulary.map(v => `<th scope="col">${esc(v.label)}</th>`).join("")}</tr></thead><tbody>${vocabulary.map((v, a) => `<tr><th scope="row">${esc(v.label)}</th>${vocabulary.map((w, b) => `<td><button data-real-cell="${a}:${b}" aria-label="${esc(v.label)} predicted ${esc(w.label)}: ${counts[a][b]} examples" ${a !== b && counts[a][b] ? 'class="error-cell"' : ""}>${counts[a][b]}</button></td>`).join("")}</tr>`).join("")}</tbody></table></div><h3 id="real-examples-heading" tabindex="-1">${selectedCell ? "Selected cell" : "All " + split + " examples"} · ${filtered.length}</h3>${!filtered.length ? '<p>No examples in this cell.</p>' : filtered.map(p => `<div class="prediction"><strong>${esc(p.truth_label)} → ${esc(p.predicted_label)}</strong><p>${esc(short(p.id))} · source r${p.source_revision} · frozen annotation r${p.revision}</p>${p.start_frame !== undefined ? `<p class="audio-result-reference">Source channel ${p.channel + 1} (index ${p.channel}) · frames [${p.start_frame}, ${p.end_frame}) · ${p.sample_rate_hz} Hz<br><span class="muted">Original WAV ${esc(short(p.source_sha256))} · PCM ${esc(short(p.pcm_sha256))}</span></p>` : ""}<p class="muted">${p.current_record?.revision ? `Current annotation r${p.current_record.revision}${p.current_record.changed ? " · changed since this run" : ""}` : "Current record unavailable"}</p><button data-correct-record="${esc(p.id)}" ${p.current_record?.revision ? "" : "disabled"}>Open current record in Data →</button><p class="footnote">Editing creates a new current revision. This prediction and its frozen target remain unchanged.</p></div>`).join("")}`;
     }
-    window.addEventListener('tuldok-session',()=>{
-      ++runGeneration;clearTimeout(timer);runProgress=null;
-      if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
-    });
-    return {
-      isDirty: dirty,
-      async openGraph(id,isCurrent=()=>true){
+    async function openGraph(id,isCurrent=()=>true){
         if(dirty()&&!confirm("Discard unsaved recipe changes to open this graph?"))return false;
         if(busy)throw Error("Finish the current Pipeline action before opening another graph.");
         const previous=graph,previousState=JSON.stringify(graph);
         const document=await api("graphs/"+encoded(id));
         if(!isCurrent()||graph!==previous||JSON.stringify(graph)!==previousState)return false;
         adopt(document);return true;
-      },
+    }
+    async function openRunById(id,isCurrent=()=>true){
+        const credential=window.TuldokAuth?.identity()?.credential_id,selected=await api('runs/'+encoded(id));
+        if(!isCurrent()||credential!==window.TuldokAuth?.identity()?.credential_id)return false;
+        if(selected.id!==id)throw Error('The admitted Run could not be identified.');
+        ++runGeneration;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();run=selected;runId=id;predictions=null;predictionError=null;remember();return true;
+    }
+    window.addEventListener('tuldok-session',()=>{
+      ++runGeneration;++loadGeneration;clearTimeout(timer);lineage.sessionChanged();runProgress=null;model.invalidate();fieldEvidence.invalidate();candidatePackages.invalidate();model.sessionChanged();
+      if(view==='pipeline'){definitions=null;graph=null;graphs=[];releases=[];pipelineRoot.innerHTML='<p>Session changed. Refreshing current catalog…</p>';if(window.TuldokAuth?.identity())loadPipeline();}
+      if(view==='runs'){run=null;runs=[];renderRuns();if(window.TuldokAuth?.identity())loadRuns();}
+    });
+    return {
+      isDirty: dirty,
+      openGraph,openRunById,
       identity: () => context?.dataset_id,
       async show(next) {
-        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);
+        view = next; ++loadGeneration; ++runGeneration; clearTimeout(timer);lineage.invalidate();model.invalidate(next==='runs');fieldEvidence.invalidate();candidatePackages.invalidate();
         if (next === "pipeline") {
           if (definitions && graph) renderPipeline(); else await loadPipeline();
         } else if (next === "runs") await loadRuns();

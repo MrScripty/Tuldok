@@ -53,4 +53,3 @@ The earlier dataset editor remains at `/workbench`; the book-corner capture stud
 - [Training evaluation guide](docs/research/training-evaluation/README.md)
 
 AI assistance is optional. Inspect the selected provider and data it receives before submitting a request. Model output still needs human review.
-

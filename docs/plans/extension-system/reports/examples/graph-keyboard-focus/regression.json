@@ -1,0 +1,41 @@
+{
+  "state": "passed",
+  "scope": "Inert private Project graph metadata only; no recipe execution or scientific qualification",
+  "source_commit": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+  "workspace_real_sha256": "7d968878edd253bb7e1409693edce03b66b1787f64cfe83f2b2d8ad380b185e6",
+  "harness_sha256": "f051f89d05ca862ac493d3672a651d748dc3bf3d616bd93a85cca9a056bc7e9f",
+  "native_keys": [
+    "Home",
+    "ArrowDown",
+    "ArrowDown"
+  ],
+  "programmatic_focus_calls_in_journey": 1,
+  "values": [
+    "d19f4ade8e03449bb816540fd0055052",
+    "a16d7d58ebf04c93bf25a34b961a505e",
+    "d3066c3b45254aac8baf37362b8cbb8d"
+  ],
+  "observed": [
+    {
+      "focus": true,
+      "value": "d19f4ade8e03449bb816540fd0055052",
+      "active": "SELECT"
+    },
+    {
+      "focus": true,
+      "value": "a16d7d58ebf04c93bf25a34b961a505e",
+      "active": "SELECT"
+    },
+    {
+      "focus": true,
+      "value": "d3066c3b45254aac8baf37362b8cbb8d",
+      "active": "SELECT"
+    }
+  ],
+  "negativeChecks": [
+    "held graph read preserves separately moved focus",
+    "held graph read does not restore hidden Pipeline focus after navigation"
+  ],
+  "recipe_runs": 0,
+  "browser": "Chrome/151.0.7922.173"
+}

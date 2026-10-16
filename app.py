@@ -26,9 +26,13 @@ import sequence_batch_import
 import meshes
 import spatial_assets
 import pipeline
+import model_definitions
+import experiments
 import projects
 import access
 import agent_api
+from mcp_observer import (add_interface_options, configured_interface, observe_begin, observe_stage,
+                          observe_selection, observe_request_bytes, observe_close, outcome)
 from access import authorized
 from http.cookies import SimpleCookie, CookieError
 import runs
@@ -38,6 +42,7 @@ import io
 import ipaddress
 import json
 import math
+import re
 import shutil
 from metadata import Metadata, StorageError, CommitOutcomeUnknown
 import tempfile
@@ -166,6 +171,8 @@ class Dataset:
                 self.text_classification_proposals = text_classification_proposals.TextClassificationProposals(self.workbench)
                 self.pipelines = pipeline.Pipelines(self)
                 self.runs = runs.Runs(self, self.pipelines)
+                self.models = model_definitions.ModelDefinitions(self)
+                self.studies = experiments.Experiments(self)
         except BaseException:
             if hasattr(self, 'projects'):
                 self.projects.close()
@@ -420,14 +427,67 @@ class Dataset:
             raise
 
 
-def make_handler(dataset):
+def make_handler(dataset, observer=None):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
 
+        def _observe_request(self, handler):
+            name, version = (agent_api.observation_operation(self.command, self.path, self.headers)
+                             if observer is not None else (None, None))
+            self._observation_operation, self._observation_version = name, version
+            self._observation = observe_begin(observer, self.command, name, selected_version=version)
+            self._observation_finished = False
+            try:
+                return handler()
+            finally:
+                if not self._observation_finished:
+                    observe_stage(observer, self._observation, 'terminal', outcome='unknown', delivery='incomplete')
+                    self._observation_finished = True
+
+        def _observe_dispatch(self, body=None):
+            observe_selection(observer, getattr(self, '_observation', None),
+                              self._observation_operation, body, self._observation_version)
+            for phase in ('validated', 'admitted', 'dispatch'):
+                observe_stage(observer, getattr(self, '_observation', None), phase)
+
+        def _write_observed(self, chunks, status):
+            observation = getattr(self, '_observation', None)
+            written = 0
+            try:
+                for raw in chunks:
+                    view = memoryview(raw)
+                    while view:
+                        count = self.connection.send(view)
+                        if count <= 0:
+                            raise BrokenPipeError()
+                        written += count
+                        view = view[count:]
+            except (OSError, ConnectionError):
+                self.close_connection = True
+                observe_stage(observer, observation, 'terminal', outcome='unknown',
+                              response_bytes=written, delivery='incomplete')
+            else:
+                observe_stage(observer, observation, 'terminal', outcome=outcome(status),
+                              envelope_status=status, http_status=status,
+                              response_bytes=written, delivery='written')
+            self._observation_finished = True
+
         def reply(self, data, status=200, content_type='application/json', headers=()):
+            selected = getattr(self, '_contract_selection', None)
+            if selected is not None and content_type == 'application/json':
+                try:
+                    agent_api.validate_output(selected[0], {'status': status, 'result': data}, selected[1])
+                    data = agent_api.encoded(data)
+                    if len(data) > agent_api.RESPONSE_LIMIT:
+                        raise agent_api.AgentAPIError('Selected result exceeds its bound.')
+                except agent_api.AgentAPIError:
+                    data, status = {'error': 'Selected result is invalid; inspect durable state before retrying.',
+                                    'code': 'contract_output'}, 502
             if content_type == 'application/json' and not isinstance(data, bytes):
                 data = json.dumps(data).encode()
+            observe_stage(observer, getattr(self, '_observation', None), 'returned',
+                          outcome=outcome(status), envelope_status=status, http_status=status)
             self.send_response(status)
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(data)))
@@ -436,28 +496,25 @@ def make_handler(dataset):
             for key, value in headers:
                 self.send_header(key, value)
             self.end_headers()
-            try:
-                self.wfile.write(data)
-            except (BrokenPipeError, ConnectionResetError):
-                pass
+            self._write_observed((data,), status)
 
         def reply_stream(self, stream, metadata):
             # The owner has already verified a private spool before HTTP success.
+            observe_stage(observer, getattr(self, '_observation', None), 'returned',
+                          outcome='success', envelope_status=200, http_status=200)
             self.send_response(200)
             self.send_header('Content-Type', metadata['media_type'])
             self.send_header('Content-Length', str(metadata['bytes']))
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
-            try:
+            def chunks():
                 while True:
                     raw = stream.read(65536)
                     if not raw:
-                        break
-                    self.wfile.write(raw)
-            except (OSError, ConnectionError):
-                # Headers are committed; never append a JSON error to payload.
-                self.close_connection = True
+                        return
+                    yield raw
+            self._write_observed(chunks(), 200)
 
         def project_access(self):
             # This opt-in file inspection surface is local-only until actor authentication.
@@ -494,9 +551,12 @@ def make_handler(dataset):
                 length = int(self.headers.get('Content-Length', '0'))
                 if not 0 < length <= 16384:
                     raise ValueError()
-                body = projects.decode(self.rfile.read(length))
+                raw = self.rfile.read(length)
+                observe_request_bytes(observer, getattr(self, '_observation', None), len(raw))
+                body = projects.decode(raw)
                 if not isinstance(body, dict):
                     raise ValueError()
+                self._observe_dispatch(body)
                 return body
             except (ValueError, workbench.WorkbenchError):
                 raise access.AccessError('Access requests require a bounded JSON object.', 'invalid', 400) from None
@@ -510,9 +570,75 @@ def make_handler(dataset):
                 return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
             return self.reply({'error': str(error), 'code': error.code}, error.status)
 
+        def _model_page_query(self, *, study=False):
+            query=parse_qs(urlsplit(self.path).query)
+            allowed=('offset','limit','revision') if study else ('cursor','limit')
+            if set(query)-set(allowed) or any(len(values)!=1 for values in query.values()):
+                raise workbench.WorkbenchError('Invalid page query.')
+            result={}
+            for key,values in query.items():
+                if key=='cursor':result[key]=values[0]
+                elif not re.fullmatch('[0-9]{1,16}',values[0]):raise workbench.WorkbenchError('Invalid numeric page query.')
+                else:result[key]=int(values[0])
+            return result
+
+        def _lineage_page_query(self):
+            try:
+                query = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=4)
+            except ValueError as error:
+                raise workbench.WorkbenchError('Invalid lineage page query.') from error
+            if set(query) - {'cursor', 'limit', 'revision', 'cohort'} or any(len(v) != 1 for v in query.values()):
+                raise workbench.WorkbenchError('Invalid lineage page query.')
+            result = {key: values[0] for key, values in query.items()}
+            if 'limit' in result:
+                if not re.fullmatch('[0-9]{1,2}', result['limit']):
+                    raise workbench.WorkbenchError('Invalid lineage page limit.')
+                result['limit'] = int(result['limit'])
+            return result
+
+        def _select_contract(self):
+            selected = agent_api.select_request(self.headers, self.command, self.path)
+            if selected is not None:
+                lengths = self.headers.get_all('Content-Length', [])
+                if (self.headers.get_all('Transfer-Encoding', []) or len(lengths) > 1
+                        or (lengths and not re.fullmatch('[0-9]{1,10}', lengths[0]))
+                        or (self.command == 'GET' and lengths and int(lengths[0]) != 0)
+                        or (self.command == 'POST' and (len(lengths) != 1 or
+                            not 0 < int(lengths[0]) <= agent_api.REQUEST_LIMIT))):
+                    raise agent_api.AgentAPIError('Selected request framing is unsupported.', 'contract_mismatch', 409)
+            self._contract_selection = selected
+            return selected
+
+        def _snapshot_contract_access(self, project_id, operation, version, scope='inspect'):
+            # Older wire contracts keep E1's owner-only v2 source boundary.
+            selected = self._contract_selection
+            if selected is not None and selected[0] == operation and selected[1] >= version:
+                return
+            saved = dataset.projects._saved(project_id, extensions=True)
+            if saved['manifest']['schema_version'] == 2:
+                dataset.access.require(scope, operation, project_id, owner_only=True)
+
+        def _graph_snapshot_contract_access(self, graph_id, revision, operation, version, scope='inspect', *, graph=None):
+            selected = self._contract_selection
+            if selected is not None and selected[0] == operation and selected[1] >= version:
+                return
+            if graph is None:
+                graph = dataset.pipelines.get(graph_id)
+            if graph['revision'] != revision:
+                raise workbench.WorkbenchError('Graph changed. Reload.', 'stale', 409)
+            if graph.get('recipe') == 'external_recipe':
+                configuration, _parameters = pipeline.recipe_contract.graph_parameters(graph)
+                self._snapshot_contract_access(configuration['project_id'], operation, version, scope)
+
         def do_GET(self):
+            return self._observe_request(self._handle_GET)
+
+        def _handle_GET(self):
+            self._contract_selection = None
             try:
                 if not urlsplit(self.path).path.startswith('/api/'):
+                    self._select_contract()
+                    self._observe_dispatch()
                     return self._get()
                 token, _bearer = self._credential()
                 with dataset.access.bind(token):
@@ -522,9 +648,14 @@ def make_handler(dataset):
                     except access.AccessError as error:
                         dataset.access.denial(error, 'http.get', urlsplit(self.path).path[:512])
                         raise
+                    selected = self._select_contract()
+                    agent_api.validate_selected(selected, self.command, self.path, None)
+                    self._observe_dispatch()
                     if urlsplit(self.path).path == '/api/access/session':
                         return self.reply(dataset.access.identity())
                     return self._get()
+            except agent_api.AgentAPIError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except access.AccessError as error:
                 return self._access_error(error)
             except CommitOutcomeUnknown:
@@ -533,9 +664,14 @@ def make_handler(dataset):
                 return self.reply({'error': 'Metadata storage is unavailable.', 'code': 'storage'}, 503)
 
         def do_POST(self):
+            return self._observe_request(self._handle_POST)
+
+        def _handle_POST(self):
+            self._contract_selection = None
             try:
                 path = urlsplit(self.path).path
                 if path == '/api/access/session':
+                    self._select_contract()
                     self._same_origin(True)
                     body = self._access_body()
                     if set(body) != {'token'}:
@@ -550,6 +686,7 @@ def make_handler(dataset):
                     except access.AccessError as error:
                         dataset.access.denial(error, 'http.post', path)
                         raise
+                    self._select_contract()
                     if path == '/api/access/logout':
                         self._access_body()
                         dataset.access.logout()
@@ -563,6 +700,8 @@ def make_handler(dataset):
                         projects.closed(self._access_body(), ())
                         return self.reply(dataset.access.revoke_execution(path.split('/')[-2]))
                     return self._post()
+            except agent_api.AgentAPIError as error:
+                return self.reply({'error': str(error), 'code': error.code}, error.status)
             except access.AccessError as error:
                 return self._access_error(error)
             except CommitOutcomeUnknown:
@@ -575,10 +714,56 @@ def make_handler(dataset):
             try:
                 if path == '/api/agent/operations':
                     return self.reply(agent_api.discovery())
-                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                if path == '/api/agent/capabilities':
+                    return self.reply(agent_api.capabilities(dataset.db.dataset_id))
+                if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/')
+                        or path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/')):
                     self.project_access()
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['experiment-lineage']:
+                        agent_api.require_selection(self._contract_selection,'studies.lineage')
+                        return self.reply(dataset.studies.lineage.list(**self._lineage_page_query()))
+                    if len(parts) == 2 and parts[0] == 'experiment-lineage':
+                        agent_api.require_selection(self._contract_selection,'studies.lineage_trial')
+                        return self.reply(dataset.studies.lineage.get(parts[1]))
+                    if parts == ['models']:
+                        agent_api.require_selection(self._contract_selection,'models.list')
+                        return self.reply(dataset.models.list(**self._model_page_query()))
+                    if parts == ['model-recipes']:
+                        agent_api.require_selection(self._contract_selection,'recipes.list_drafts')
+                        return self.reply(dataset.pipelines.list_recipes(**self._model_page_query()))
+                    if len(parts)==2 and parts[0]=='model-recipes':
+                        agent_api.require_selection(self._contract_selection,'recipes.get')
+                        return self.reply(dataset.pipelines.get_recipe(parts[1]))
+                    if len(parts)==2 and parts[0]=='models':
+                        agent_api.require_selection(self._contract_selection,'models.get')
+                        return self.reply(dataset.models.get(parts[1]))
+                    if parts == ['studies']:
+                        agent_api.require_selection(self._contract_selection,'studies.list')
+                        return self.reply(dataset.studies.list(**self._model_page_query()))
+                    if len(parts)==2 and parts[0]=='studies':
+                        agent_api.require_selection(self._contract_selection,'studies.get')
+                        return self.reply(dataset.studies.get(parts[1],**self._model_page_query(study=True)))
+                    if len(parts)==2 and parts[0]=='candidates':
+                        agent_api.require_selection(self._contract_selection,'studies.candidate')
+                        return self.reply(dataset.studies.candidate(parts[1]))
+                    if len(parts)==3 and parts[0]=='candidates' and parts[2]=='package-state':
+                        agent_api.require_selection(self._contract_selection,'studies.package_state')
+                        return self.reply(dataset.studies.package_state(parts[1]))
+                    if len(parts)==2 and parts[0]=='trials':
+                        agent_api.require_selection(self._contract_selection,'studies.trial')
+                        return self.reply(dataset.studies.trial(parts[1]))
+                    if parts == ['project-snapshots']:
+                        if self._contract_selection is not None:
+                            agent_api.require_selection(self._contract_selection,'project_snapshots.list')
+                            return self.reply(dataset.projects.list_snapshot_catalog(**self._model_page_query()))
+                        return self.reply(dataset.projects.list_snapshots())
+                    if len(parts) == 2 and parts[0] == 'project-snapshots':
+                        if self._contract_selection is not None:
+                            agent_api.require_selection(self._contract_selection,'project_snapshots.get')
+                            return self.reply(dataset.projects.inspect_snapshot(parts[1]))
+                        return self.reply(dataset.projects.get_snapshot(parts[1]))
                     if parts == ['projects']:
                         return self.reply(dataset.projects.list())
                     if len(parts) == 2 and parts[0] == 'projects':
@@ -587,7 +772,11 @@ def make_handler(dataset):
                         return self.reply(dataset.projects.evidence(parts[1], parts[3]))
                     if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'recipes':
                         query = parse_qs(urlsplit(self.path).query)
-                        return self.reply(dataset.pipelines.inspect_external_recipe(parts[1], parts[3], query.get('expected_sha256', [''])[-1]))
+                        selected = self._contract_selection
+                        version = selected[1] if selected is not None and selected[0] == 'recipes.inspect' else 1
+                        self._snapshot_contract_access(parts[1],'recipes.inspect',3)
+                        return self.reply(dataset.pipelines.inspect_external_recipe(
+                            parts[1], parts[3], query.get('expected_sha256', [''])[-1], contract_version=version))
                     if parts == ['context']:
                         return self.reply({'version': 1, 'mode': 'real', 'dataset_id': dataset.db.dataset_id,
                                            'recipe': 'image_classification_v1', 'execution': 'optional_local_cpu'})
@@ -605,6 +794,9 @@ def make_handler(dataset):
                         return self.reply(dataset.runs.list())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'candidates':
+                        agent_api.require_selection(self._contract_selection,'studies.candidates')
+                        return self.reply(dataset.studies.candidates(parts[1],**self._model_page_query()))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'progress':
                         return self.reply(dataset.runs.external_progress(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'predictions':
@@ -741,6 +933,8 @@ def make_handler(dataset):
                     '/workspaces': ('workspaces.html', 'text/html'),
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
+                    '/experiment-lineage.js': ('experiment-lineage.js', 'text/javascript'),
+                    '/experiment-lineage.css': ('experiment-lineage.css', 'text/css'),
                     '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
@@ -776,7 +970,8 @@ def make_handler(dataset):
                     raise ValueError('Send JSON.')
                 length = int(self.headers.get('Content-Length', '0'))
                 path = urlsplit(self.path).path
-                if path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/'):
+                if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/')
+                        or path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/')):
                     self.project_access()
                 limit = native_detection_import.MAX_PREPARE_REQUEST if path == '/api/workbench/native-detection-import/prepare' else native_detection_import.MAX_REQUEST if path == '/api/workbench/native-detection-import/row' else saved_searches.MAX_REQUEST if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else meshes.MAX_REQUEST if path == '/api/workbench/mesh-import' else rheon_sequences.MAX_REQUEST if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else MAX_BODY
                 if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import'):
@@ -786,12 +981,90 @@ def make_handler(dataset):
                 if not 0 < length <= limit:
                     raise ValueError('Request is too large or empty.')
                 raw_body = self.rfile.read(length)
-                body = projects.decode(raw_body) if (path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                observe_request_bytes(observer, getattr(self, '_observation', None), len(raw_body))
+                body = projects.decode(raw_body) if (path == '/api/workspace/project-snapshots' or path.startswith('/api/workspace/project-snapshots/') or path == '/api/workspace/projects' or path.startswith('/api/workspace/projects/') or (path.startswith('/api/workspace/runs/') and ('/import-data/' in path or '/artifact-segment/' in path))) else spatial_assets.parse_request(raw_body) if path in ('/api/workbench/pointcloud-import', '/api/workbench/volume-import') else native_detection_import.parse_request(raw_body) if path in ('/api/workbench/native-detection-import/prepare', '/api/workbench/native-detection-import/row') else saved_searches.parse_request(raw_body) if path == '/api/workbench/searches' or path.startswith('/api/workbench/searches/') else sequence_batch_import.parse_request(raw_body) if path in ('/api/workbench/sequence-import', '/api/workbench/sequence-import-item') else meshes.parse_json(raw_body) if path == '/api/workbench/mesh-import' else json.loads(raw_body)
+                if getattr(self, '_contract_selection', None) is not None:
+                    # Strict JSON at the selected boundary, preserving ordinary HTTP semantics.
+                    body = agent_api.decode(raw_body)
+                    agent_api.validate_selected(self._contract_selection, self.command, self.path, body)
                 if not isinstance(body, dict):
                     raise ValueError('Expected an object.')
+                self._observe_dispatch(body)
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['models']:
+                        agent_api.require_selection(self._contract_selection,'models.create')
+                        return self.reply(dataset.models.create(body),201)
+                    if parts == ['model-recipes']:
+                        agent_api.require_selection(self._contract_selection,'recipes.create')
+                        return self.reply(dataset.pipelines.create_recipe(body),201)
+                    if len(parts)==2 and parts[0]=='model-recipes':
+                        agent_api.require_selection(self._contract_selection,'recipes.save')
+                        return self.reply(dataset.pipelines.save_recipe(parts[1],body))
+                    if len(parts)==2 and parts[0]=='models':
+                        agent_api.require_selection(self._contract_selection,'models.save')
+                        return self.reply(dataset.models.save(parts[1],body))
+                    if len(parts)==3 and parts[0]=='models' and parts[2]=='publish':
+                        agent_api.require_selection(self._contract_selection,'models.publish')
+                        def source_guard(source):
+                            if source['kind'] == 'captured_source':
+                                self._snapshot_contract_access(source['source_selector']['project_id'],
+                                                               'models.publish',2,'edit')
+                        return self.reply(dataset.models.publish(parts[1],body,_source_guard=source_guard))
+                    if parts in (['model-material'],['recipe-material']):
+                        model=parts==['model-material'];name='models.material' if model else 'recipes.material'
+                        agent_api.require_selection(self._contract_selection,name);projects.closed(body,('ref',))
+                        return self.reply(dataset.models.material(body['ref'],verify=True) if model else
+                                          dataset.pipelines.recipe_material(body['ref'],verify=True))
+                    if parts == ['experiment-lineage']:
+                        agent_api.require_selection(self._contract_selection,'studies.record_lineage')
+                        return self.reply(dataset.studies.lineage.record(body),201)
+                    if parts == ['experiment-lineage','branch']:
+                        agent_api.require_selection(self._contract_selection,'studies.branch_trial')
+                        return self.reply(dataset.studies.lineage.branch(body),201)
+                    if len(parts)==3 and parts[0]=='studies' and parts[2]=='prepare-branch':
+                        agent_api.require_selection(self._contract_selection,'studies.prepare_branch')
+                        def lineage_graph_guard(graph):
+                            self._graph_snapshot_contract_access(graph['id'],graph['revision'],
+                                'studies.prepare_branch',1,'edit',graph=graph)
+                        return self.reply(dataset.studies.lineage.prepare(parts[1],body,
+                                          _graph_guard=lineage_graph_guard),201)
+                    if parts == ['studies']:
+                        agent_api.require_selection(self._contract_selection,'studies.create')
+                        return self.reply(dataset.studies.create(body),201)
+                    if len(parts)==2 and parts[0]=='studies':
+                        agent_api.require_selection(self._contract_selection,'studies.save')
+                        return self.reply(dataset.studies.save(parts[1],body))
+                    if len(parts)==3 and parts[0]=='studies':
+                        if parts[2] in ('prepare-package','prepare-verifier'):
+                            name=parts[2].replace('-','_')
+                            agent_api.require_selection(self._contract_selection,'studies.'+name)
+                            return self.reply(getattr(dataset.studies,name)(parts[1],body),201)
+                        if parts[2]=='select-candidate':
+                            agent_api.require_selection(self._contract_selection,'studies.select_candidate')
+                            return self.reply(dataset.studies.select_candidate(parts[1],body),201)
+                        operation={'prepare-trial':'studies.prepare_trial','continue':'studies.continue',
+                                   'approve':'studies.approve',
+                                   'admit':'studies.admit','stop':'studies.stop','reconcile':'studies.reconcile'}.get(parts[2])
+                        if operation:
+                            agent_api.require_selection(self._contract_selection,operation)
+                            if parts[2]=='prepare-trial':
+                                def graph_guard(graph):
+                                    self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                        'studies.prepare_trial',2,'edit',graph=graph)
+                                return self.reply(dataset.studies.prepare_trial(parts[1],body,_graph_guard=graph_guard),201)
+                            if parts[2]=='continue':return self.reply(dataset.studies.continue_study(parts[1],body))
+                            if parts[2]=='approve':return self.reply(dataset.studies.approve(parts[1],body),201)
+                            if parts[2]=='admit':return self.reply(dataset.studies.admit(parts[1],body,selection=self._contract_selection),201)
+                            if parts[2]=='stop':return self.reply(dataset.studies.stop(parts[1],body))
+                            projects.closed(body,())
+                            return self.reply(dataset.studies.reconcile(parts[1]))
+                    if parts == ['project-snapshots']:
+                        if self._contract_selection is not None:
+                            agent_api.require_selection(self._contract_selection,'project_snapshots.open')
+                            return self.reply(dataset.projects.register_snapshot(body), 201)
+                        return self.reply(dataset.projects.open_snapshot(body), 201)
                     if parts == ['projects']:
                         return self.reply(dataset.projects.open(body), 201)
                     if len(parts) == 4 and parts[0] == 'projects' and parts[2] == 'import-data':
@@ -808,26 +1081,47 @@ def make_handler(dataset):
                     if len(parts) == 4 and parts[0] == 'runs' and parts[2] == 'artifact-segment':
                         return self.reply(dataset.runs.artifact_segment(parts[1], parts[3], body))
                     if parts == ['graphs']:
+                        if body.get('recipe') in tuple(pipeline.MODEL_RECIPES):
+                            agent_api.require_selection(self._contract_selection,'graphs.create')
                         return self.reply(dataset.pipelines.create(body), 201)
                     if parts == ['graphs', 'external']:
+                        self._snapshot_contract_access(body.get('project_id'),'graphs.create_external',2,'edit')
                         return self.reply(dataset.pipelines.create_external(body), 201)
                     if len(parts) == 2 and parts[0] == 'graphs':
+                        if isinstance(body.get('document'),dict) and body['document'].get('recipe') in tuple(pipeline.MODEL_RECIPES):
+                            agent_api.require_selection(self._contract_selection,'graphs.save')
                         return self.reply(dataset.pipelines.save(parts[1], body))
                     if len(parts) == 3 and parts[0] == 'graphs':
                         if parts[2] == 'clone':
                             return self.reply(dataset.pipelines.clone(parts[1], body), 201)
                         if parts[2] == 'validate':
+                            projects.closed(body, ('revision',))
+                            self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.validate',2)
                             return self.reply(dataset.pipelines.validate(parts[1], body))
                         if parts[2] == 'preflight-external':
                             projects.closed(body, ('revision',))
+                            self._graph_snapshot_contract_access(parts[1],body['revision'],'graphs.preflight_external',2)
                             return self.reply(dataset.pipelines.preflight_external(parts[1], body['revision']))
                     if parts == ['runs']:
                         return self.reply(dataset.runs.submit(body), 201)
                     if parts == ['runs', 'approve-external']:
                         return self.reply(dataset.runs.approve_external(body), 201)
                     if parts == ['runs', 'submit-external']:
-                        return self.reply(dataset.runs.submit_external(body), 201)
+                        def graph_guard(graph):
+                            self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                'runs.submit_external',2,graph=graph)
+                        return self.reply(dataset.runs.submit_external(body,_graph_guard=graph_guard), 201)
                     if len(parts) == 3 and parts[0] == 'runs':
+                        if parts[2] == 'model-evidence':
+                            agent_api.require_selection(self._contract_selection,'runs.model_evidence')
+                            return self.reply(dataset.runs.model_evidence(parts[1],body,contract_version=self._contract_selection[1]))
+                        if parts[2] == 'compare-model-evidence':
+                            agent_api.require_selection(self._contract_selection,'runs.compare_model_evidence')
+                            if self._contract_selection[1]==2:
+                                choices={key:value for key,value in body.items() if key!='other_run_id'}
+                                return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id'],choices))
+                            projects.closed(body,('other_run_id',))
+                            return self.reply(dataset.runs.compare_model_evidence(parts[1],body['other_run_id']))
                         if parts[2] == 'cancel':
                             return self.reply(dataset.runs.cancel(parts[1]))
                         if parts[2] == 'retry':
@@ -974,6 +1268,7 @@ def make_handler(dataset):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    add_interface_options(parser)
     parser.add_argument('--data', type=Path, default=ROOT / 'data')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8091)
@@ -990,7 +1285,8 @@ def main():
         dataset = Dataset(args.data, project_roots=roots)
     except (StorageError, workbench.WorkbenchError) as error:
         parser.exit(2, str(error) + "\n")
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset))
+    observer = configured_interface(args, 'http')
+    server = ThreadingHTTPServer((args.host, args.port), make_handler(dataset, observer))
     print('Tuldok: http://' + args.host + ':' + str(server.server_port), flush=True)
     try:
         server.serve_forever()
@@ -999,6 +1295,8 @@ def main():
     finally:
         server.server_close()
         dataset.close()
+        if observer is not None:
+            observe_close(observer)
 
 
 if __name__ == '__main__':

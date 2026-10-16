@@ -1,0 +1,34 @@
+{
+  "centering": "cell",
+  "coordinate_frame": "world_rh_xyz",
+  "coordinate_units": "m",
+  "layout": "c_order_zyx",
+  "payload": [
+    [
+      [
+        0.0,
+        1.0
+      ],
+      [
+        2.0,
+        3.0
+      ]
+    ],
+    [
+      [
+        4.0,
+        5.0
+      ],
+      [
+        6.0,
+        7.0
+      ]
+    ]
+  ],
+  "spacing_xyz": [
+    1,
+    1,
+    1
+  ],
+  "timeline": "not_applicable"
+}

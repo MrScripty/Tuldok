@@ -1,0 +1,1 @@
+Private authored QA package: code and dimensionless fixture created for Tuldok extension qualification. No physical solver/model/data claim. Runtime notices and redistribution rights require separate complete-package qualification.

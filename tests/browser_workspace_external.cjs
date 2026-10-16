@@ -42,7 +42,7 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   async function key(key,code=key,modifiers=0){for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code,modifiers,windowsVirtualKeyCode:{Enter:13,Escape:27,Tab:9,a:65}[key]||0,...(type==='keyDown'&&key==='Enter'?{text:'\r',unmodifiedText:'\r'}:{})});}
   async function fill(selector,value){await click(selector);await key('a','KeyA',2);await send('Input.insertText',{text:value});}
   const select=(selector,value)=>evaluate(`(()=>{const e=${element(selector)};e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
-  async function nav(view){await click('#nav-'+view);await until(()=>evaluate(`!document.getElementById('view-${view}').hidden && !document.getElementById('project-${view}-root').hidden`));await until(()=>text(`#project-${view}-root`).then(value=>value?.includes('PROJECT · INSPECTION ONLY')));}
+  async function nav(view){await click('#nav-'+view);await until(()=>evaluate(`!document.getElementById('view-${view}').hidden && !document.getElementById('project-${view}-root').hidden`));await until(()=>text(`#project-${view}-root`).then(value=>value?.includes('PROJECT · SAVED SNAPSHOT')));}
   async function capture(name,width,selector){await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate(`${element(selector)}.scrollIntoView({block:'start'})`);await pause(80);assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'Project viewport overflow '+name);const file=name+'.jpg';fs.writeFileSync(path.join(report,file),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));captures.push({file,width,height:900,selector,qualification:'Neutral process execution only; no scientific qualification'});}
   const check=value=>{checks.push(value);console.log('PASS',value);};
   async function reload(){const previous=(await send('Page.getFrameTree')).frameTree.frame;await send('Page.reload');await until(()=>tracker.reloaded(previous),'Main document reload not observed');}
@@ -50,7 +50,7 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   await send('Page.enable');await send('Page.setLifecycleEventsEnabled',{enabled:true});await send('Runtime.enable');await send('Network.enable');
   const offlineCanary=process.env.LD_PRELOAD?JSON.parse(execFileSync('python3',['-c',"import sys;sys.path.insert(0,'tests');from test_workspace_offline import CANARY;exec(CANARY)"],{cwd:root,encoding:'utf8'})):null;
   await fixtureAuth.browser(send,'http://127.0.0.1:'+port);
-  await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('!!document.getElementById("open-project")'));
+  await send('Page.navigate',{url:base+'/workspaces'});await until(()=>evaluate('typeof document.getElementById("open-project")?.onclick==="function"'),'Project controls are not bound');
   await openProject('project.json',project.name,project.id);await nav('pipeline');
   await click('[data-project-recipe="neutral"]');await until(()=>evaluate('!!document.querySelector("[data-external-input=sample]")'));
   await select('[data-external-input="sample"]','sample');await fill('#external-create-name','Neutral exact bytes');

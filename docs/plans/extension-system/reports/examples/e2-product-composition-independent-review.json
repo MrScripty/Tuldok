@@ -1,0 +1,37 @@
+{
+  "state": "passed_read_only_composition_review",
+  "head": "0509900c349239d66a18126eb83697297eb14a0b",
+  "published_product": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+  "changed_paths": [
+    "tests/qualify_extension_fields.py"
+  ],
+  "equal_tracked_files": 1385,
+  "application_root_python_files_equal": 76,
+  "static_files_equal": 45,
+  "sdk_parser_and_recovery_identical_to_product": true,
+  "sdk_files_sha256": {
+    "tuldok_extension_sdk/__main__.py": "04fe0dae5ffef0344573272c60950f4e55f73005283cf4177cdf5dada126b18d",
+    "tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+    "tests/test_extension_sdk.py": "25e97c454549f8967eec488d4d5eb170ac7c3bb3a580d6d8e7b3662f8a5869cf",
+    "tests/qualify_extension_canonical.py": "56304531d02bed867ecee8acc9c5e9d5b963760b23c6ef29d8f747eaf9669278"
+  },
+  "residual_qualifier_sha256": "c41e0056847afdf60490740ec0a4f4a110820e95247693a4dde6812911e36854",
+  "canonical_complete_root_map_probe": true,
+  "legacy_wrong_task_branch_AST_exact": true,
+  "frozen_source_and_consumer_sha256": {
+    "examples/extensions/field-surrogate/v3-canonical/producer.py": "bcd801264bf05675cc6b2c5207848f723a38090b5bee6211543040831b801922",
+    "examples/extensions/field-surrogate/v3-canonical/cold_oracle.py": "573f142de868d13649dcdb6cc109fd629385b8ce48a1968399c0f86cb77feed9",
+    "examples/extensions/field-surrogate/v3-canonical/infer.py": "15f6bc0da835f4a3f8a54a2abf0552e8a0b6c69a1ac2e6baceebb9288a0b8b15",
+    "examples/extensions/field-surrogate/v3-canonical/inference-contract.json": "d60b93699f978c125a567734ef4d610cb4027b3b2f047c31e6d579677121da1d",
+    "tests/extension_b_numerical_oracle.py": "85bb7de396aec2fbbca5feab038a2d9ce55acff8d50bac7a7b83c87611bc3f32",
+    "tests/test_extension_b_numerical_oracle.py": "2c59b4e1692959869180e40ab784acb0b8a00dd8ce4737c30d47f5e016df32f2",
+    "tests/extension_b_cold_consumer.py": "36cfa31271cdbd426d314b04a9d643e7810212ed548e75af5785591caffc63b0",
+    "tests/extension_b_evidence_contract.py": "f97bc0fb4f43c477bf31928f4769edf4737bb6f4870961a2f257877c59878aec"
+  },
+  "independent_b_report_sha256": "73fc61e5a94810e66d760100873a3539279cad707c184a71bda4c2a3409bd4a5",
+  "independent_b_execution_attribution": "Published product report records main-owned actual retained consumer execution; frozen kernel/consumer authorship remains prior independent preparation. Reviewer did not rerun or inspect B producer.",
+  "limitations": [
+    "Only task-private tests/qualify_extension_fields.py differs from product; it preserves explicit canonical root map, earlier bound wrong-Task Model publication refusal and honest source_mode.",
+    "No app/database/catalog/runtime opened or Run replayed; affected owner tests are parent-run separately."
+  ]
+}
