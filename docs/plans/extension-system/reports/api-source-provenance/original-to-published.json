@@ -1,0 +1,289 @@
+{
+  "commits": [
+    {
+      "original": "55ea957b6ab48603c494a8f2a7d7617c112924e1",
+      "original_parents": [
+        "afc45dc50530c4b6bfcdf1f2d8c2f2361e2837bc"
+      ],
+      "parents": [
+        "afc45dc50530c4b6bfcdf1f2d8c2f2361e2837bc"
+      ],
+      "published": "4899bd21ecf4b956357f18e075c8dfc598afc133",
+      "published_author": {
+        "date": "2026-10-16T03:35:41Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:35:41Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "1bedf20fe3882b98c98d1e78fdc1bfd582e24ce5"
+    },
+    {
+      "original": "356f2b2e8eb9a33a92c5bed6bbcca6206577da39",
+      "original_parents": [
+        "55ea957b6ab48603c494a8f2a7d7617c112924e1",
+        "00865e9e25244aa77b41d00e2f678b5bea80679d"
+      ],
+      "parents": [
+        "4899bd21ecf4b956357f18e075c8dfc598afc133",
+        "00865e9e25244aa77b41d00e2f678b5bea80679d"
+      ],
+      "published": "6a1138d8a82c38ed287a0401f977902146ce9af9",
+      "published_author": {
+        "date": "2026-10-16T03:35:57Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:35:57Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "43748daf6b0985aeaeb4e69fbc3ad2e47099d7ee"
+    },
+    {
+      "original": "7c5ae71941fb9f44f20d602f76218356a7dba8cc",
+      "original_parents": [
+        "356f2b2e8eb9a33a92c5bed6bbcca6206577da39",
+        "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a"
+      ],
+      "parents": [
+        "6a1138d8a82c38ed287a0401f977902146ce9af9",
+        "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a"
+      ],
+      "published": "78657010352542ad3ea9b35011470e76a1566a6a",
+      "published_author": {
+        "date": "2026-10-16T03:36:06Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:06Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "89d82c798a8249beb9a9b00a3f4c9fbed06477ba"
+    },
+    {
+      "original": "0150582cc56305dc302248fe59260b37205fb1ac",
+      "original_parents": [
+        "7c5ae71941fb9f44f20d602f76218356a7dba8cc",
+        "6c4ff13a2a593c5c13916d382364bec424265205"
+      ],
+      "parents": [
+        "78657010352542ad3ea9b35011470e76a1566a6a",
+        "6c4ff13a2a593c5c13916d382364bec424265205"
+      ],
+      "published": "f7c7ce041f3fc20cb4f08d23273ae05b23062eaa",
+      "published_author": {
+        "date": "2026-10-16T03:36:15Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:15Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "ddcb519e7627257880bd892592727823e049a812"
+    },
+    {
+      "original": "40e0d8b13e31505e0403a1100b14711e9eaf1885",
+      "original_parents": [
+        "0150582cc56305dc302248fe59260b37205fb1ac",
+        "c0efd4f36f88cd1e5750d0ec3a4ca0fc6581c58c"
+      ],
+      "parents": [
+        "f7c7ce041f3fc20cb4f08d23273ae05b23062eaa",
+        "c0efd4f36f88cd1e5750d0ec3a4ca0fc6581c58c"
+      ],
+      "published": "e4071853955f6ce99c9c4b4e66f8944e1f8bdbdd",
+      "published_author": {
+        "date": "2026-10-16T03:36:24Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:24Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "08012254bd0f781505a3701b64f39288be231b3d"
+    },
+    {
+      "original": "94783988a6595503c1899b8bbc25d4306e923b50",
+      "original_parents": [
+        "40e0d8b13e31505e0403a1100b14711e9eaf1885",
+        "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863"
+      ],
+      "parents": [
+        "e4071853955f6ce99c9c4b4e66f8944e1f8bdbdd",
+        "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863"
+      ],
+      "published": "3f11601a6f674d026e920daee0ca585912cba788",
+      "published_author": {
+        "date": "2026-10-16T03:36:37Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:37Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "50046f397734c002733fc835843606a1bcb576aa"
+    },
+    {
+      "original": "5d5e10316d5f39fed11a32fcb2ae315b818cf7ad",
+      "original_parents": [
+        "94783988a6595503c1899b8bbc25d4306e923b50"
+      ],
+      "parents": [
+        "3f11601a6f674d026e920daee0ca585912cba788"
+      ],
+      "published": "b8c2bf82cec3c1118f4c19478d3db3045c355c2c",
+      "published_author": {
+        "date": "2026-10-16T03:36:45Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:45Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "70c94e514f4c1db50fd763831faae6231d57f443"
+    },
+    {
+      "original": "bd1c19dbb136ce01b9686f11177808c4cc9551ab",
+      "original_parents": [
+        "5d5e10316d5f39fed11a32fcb2ae315b818cf7ad",
+        "d72cb9b5f6601b90dfb0b0dda662c8eab448424e"
+      ],
+      "parents": [
+        "b8c2bf82cec3c1118f4c19478d3db3045c355c2c",
+        "d72cb9b5f6601b90dfb0b0dda662c8eab448424e"
+      ],
+      "published": "536797c040b72cb23b4dc30e6fc33769a78a406f",
+      "published_author": {
+        "date": "2026-10-16T03:36:52Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:52Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "95f4aeb892833a5b6bebbbafff88651abb76175d"
+    },
+    {
+      "original": "45d10367c38260d77df5c19f3105b35b6d072a15",
+      "original_parents": [
+        "bd1c19dbb136ce01b9686f11177808c4cc9551ab",
+        "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975"
+      ],
+      "parents": [
+        "536797c040b72cb23b4dc30e6fc33769a78a406f",
+        "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975"
+      ],
+      "published": "cc4e58571f82db83d1a1dd64611399ac316ebb2a",
+      "published_author": {
+        "date": "2026-10-16T03:36:59Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:36:59Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "46c676eb6441563953ea54235055962b9466bb58"
+    },
+    {
+      "original": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "original_parents": [
+        "45d10367c38260d77df5c19f3105b35b6d072a15",
+        "da9f57d8cca0f4b27634da87e7ab606c8c866648"
+      ],
+      "parents": [
+        "cc4e58571f82db83d1a1dd64611399ac316ebb2a",
+        "da9f57d8cca0f4b27634da87e7ab606c8c866648"
+      ],
+      "published": "3349af525478d74fb13b87e8c2dc32939d3c6cbb",
+      "published_author": {
+        "date": "2026-10-16T03:37:07Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:37:07Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "a6bef5761c75f89af8d7cc2e3f8c01a828f4f284"
+    },
+    {
+      "original": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "original_parents": [
+        "e1bc02a68355876ec64e5e1e272019c2018b5c63"
+      ],
+      "parents": [
+        "3349af525478d74fb13b87e8c2dc32939d3c6cbb"
+      ],
+      "published": "ce106880100e7e1713ef58b28186115824a59002",
+      "published_author": {
+        "date": "2026-10-16T03:37:14Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:37:14Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "df72714e12de271ab5790959de2dbe3a891e639b"
+    },
+    {
+      "original": "d61ef3204bc0edd2ea14579a327a954bd2075219",
+      "original_parents": [
+        "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+        "2b786501dbbcb6db734d9df074ecac0976d87dae"
+      ],
+      "parents": [
+        "3349af525478d74fb13b87e8c2dc32939d3c6cbb",
+        "ce106880100e7e1713ef58b28186115824a59002"
+      ],
+      "published": "64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508",
+      "published_author": {
+        "date": "2026-10-16T03:37:23Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "published_committer": {
+        "date": "2026-10-16T03:37:23Z",
+        "email": "TheEnvironmentGuy@protonmail.com",
+        "name": "Puma"
+      },
+      "tree": "df72714e12de271ab5790959de2dbe3a891e639b"
+    }
+  ],
+  "format": "source_tree_preserving_api_publication_v1",
+  "metadata_disposition": "GitHub API assigns author/committer metadata; original local commits preserved separately. Exact source trees and ordered parent correspondence verified.",
+  "original_head": "d61ef3204bc0edd2ea14579a327a954bd2075219",
+  "original_source_host": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+  "published_head": "64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508",
+  "published_source_host": "3349af525478d74fb13b87e8c2dc32939d3c6cbb",
+  "review_branch": "review/model-development-composed-source-0319",
+  "scope": "Data-only provenance for exact source-tree correspondence; no workflow, execution, permissions, CI or numerical acceptance is supplied by this bundle.",
+  "source_bundle": {
+    "bytes": 20436,
+    "file": "original-local-commits.bundle",
+    "head": "d61ef3204bc0edd2ea14579a327a954bd2075219",
+    "sha256": "b536e9dbb2dc7e75500774e67f5a9f91d18f03029b66525494cb9a9c70dc1219"
+  },
+  "source_host_tree": "a6bef5761c75f89af8d7cc2e3f8c01a828f4f284"
+}

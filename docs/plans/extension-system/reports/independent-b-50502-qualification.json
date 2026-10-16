@@ -1,0 +1,695 @@
+{
+  "format": "independent_b_decisive_qualification_v1",
+  "state": "passed",
+  "date_utc": "2026-10-16",
+  "scope": "One source B SDK conformance attempt plus retained numerical/cold-read verification; no physical or generalization qualification",
+  "catalog_id": "0c227f756dcb4a51863597e5e53aa02c",
+  "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+  "trial_id": "11a355fbc67f49c3a9cdf42087f09baa",
+  "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+  "source_author_commit": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+  "source_host_commit": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+  "verification_host_commit": "3affe90bc258c1327fde49faf57bceb852cc2759",
+  "identities": {
+    "recipe_sha256": "7d089b3fe85191e5dbb3c222899e8b9629f4889708a10b854c533b73b0796416",
+    "provider_sha256": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+    "project_sha256": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887",
+    "adapter_closure_sha256": "e3b54b4af4ef1e41fd258ee0e4ed00b015dee20e3a4e420a7213810e812081e2",
+    "graph_id": "76c849cd82cc4fc8980be10794d2299c",
+    "graph_revision": 1,
+    "material_sha256": "6d19d4d06efabbdff713fd4148c38d5f9171773c01fba85b00e3156ee094e9e4",
+    "model_sha256": "9f631c81de088351b582609c8d9059911d1383606e5b2594081595fed1aba673",
+    "profile_definition_sha256": "7fff8d79994888029fd3a6b5c008a74206d6a93ceed2b778f4e257b09dd6ae90",
+    "runtime_sha256": "f74c644751dc1c038a85009a72da416118af1bb570f3e77b2c6aae52b3a6c3f2",
+    "task_sha256": "e9c29d420a8cb614e64c927142cf533406a66c7d52d6d78d8358c04aa2c4b560"
+  },
+  "runtime": {
+    "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "profile": "captured_cpu_python_v1",
+    "python_version": "3.12",
+    "numpy": "2.5.4"
+  },
+  "sdk": {
+    "state": "passed",
+    "contract_state": "passed",
+    "numerical": "not_evaluated",
+    "exit_status_observed_by_author": 0,
+    "invocations": 1,
+    "admissions": 1
+  },
+  "application_freeze": {
+    "file_count": 149,
+    "source": {
+      "path": "/workspace/shared/extension-b-application-freeze-02.json",
+      "bytes": 13937,
+      "sha256": "7ff4b102389f488fcca66fdc8b3329a3931417563841c091e787f3493e59b3da"
+    },
+    "postcheck": {
+      "path": "/workspace/shared/extension-b-application-freeze-02-postcheck.json",
+      "bytes": 39029,
+      "sha256": "512cb5f1ef79b26d64de384734a3dd8f0258e37247e9ad13355e18dda9acdc0b"
+    },
+    "postcheck_state": true,
+    "postcheck_host_commit": "d5e01e354ecde403f776f1c7fb4efd635494b722",
+    "scope": "Application Python, SDK, static UI, extension schemas and dependency declarations. Tests/docs/author packages remain outside application-owner edits.",
+    "verification": "Root-owned complete149-file postcheck records all expected/actual SHA256 matches; author verifies receipt identity, not application bytes; P6 does not claim an independent source reread"
+  },
+  "author_source_freeze": {
+    "file_count": 18,
+    "inventory_sha256": "de73d348bd34a1be19a37c419ab834f520fb008a84b15096d536a17852a6b859",
+    "files": {
+      "NOTICE.txt": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223",
+      "README.md": "ac678cb209713698e6db924c5de1197a8083ee6bc42c92fbecf597150579d2a1",
+      "author-report.json": "b400fcedc569b0e8dbbbc8fa46694187dae2926630dde0be439f0bd2395e8422",
+      "cold_oracle.py": "8f3b6a922820bdec7f57738231c125fb210f49cb6f40efb8eda950b48db80b67",
+      "evaluator.json": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+      "extension.json": "1f8cf0e8d7e9ec4e9c1a053087a923d6a338e926c77d5281558eaba2c5ea164f",
+      "fixture.json": "5ab71e1f6a24caf039df419d60d1d39a3592bf25079a7a6f9503779069dc16fe",
+      "model.json": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+      "oracle-freeze.json": "8c4ab0d00051f747038a2a178a5411a49b7bf1891cebca84527741da1dbb3bfd",
+      "producer.py": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+      "project.json": "87a6d82c3327e2907bbeba626f9571bd3c97c06a22fccd79e4459cc104e62887",
+      "recipe.json": "7d089b3fe85191e5dbb3c222899e8b9629f4889708a10b854c533b73b0796416",
+      "task.json": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+      "test_author_numerics.py": "d7331cd7a856353d055ed74cf0baf8ca1b8be0a0a6eb859b4a419e62948155f9",
+      "trainer.json": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+      "tuldok_extension_sdk/__init__.py": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+      "tuldok_extension_sdk/evidence.py": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+      "view.json": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c"
+    },
+    "all_unchanged_at_report": true
+  },
+  "chronology": [
+    {
+      "stage": "original_source_attempt",
+      "state": "sdk_passed_verifier_incomplete",
+      "reason": "Reviewed oracle snapshot omitted oracle-freeze.json; FileNotFoundError after successful source Run. Original failure bytes retained."
+    },
+    {
+      "stage": "single_accounting_settlement",
+      "state": "passed",
+      "reason": "One owner studies.reconcile settled existing completed B reservation; no additional charge or admission."
+    },
+    {
+      "stage": "verification_recovery_01",
+      "state": "verification_incomplete_no_admission",
+      "oracle_state": "valid",
+      "reason": "Read-only guard refused POST models.material /api/workspace/model-material before HTTP dispatch; read-only material POST omitted from allowlist."
+    },
+    {
+      "stage": "verification_recovery_02",
+      "state": "passed",
+      "reason": "Existing completed Run only: original SDK/current HTTP/cold HTTP whole hashes, frozen oracle and unchanged domain counts verified; no admission or SDK retry."
+    }
+  ],
+  "accounting": {
+    "format": "independent_b_accounting_receipt_extract_v1",
+    "source": {
+      "path": "/workspace/shared/extension-ab-b-02-accounting-recovery-01/receipt.json",
+      "bytes": 239001,
+      "sha256": "3674058e3912b7f0e29a86a8ebbf12d5e510edb163873a5e75b77c6a6892608b"
+    },
+    "action": "one_existing_completed_run_accounting_reconciliation",
+    "state": "passed",
+    "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+    "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+    "additional_charge": false,
+    "no_admission_or_sdk": true,
+    "counts_before": {
+      "access_execution_consumptions": 2,
+      "access_execution_grants": 2,
+      "model_attempt_reservations": 2,
+      "model_studies": 2,
+      "model_trials": 2,
+      "workspace_runs": 2
+    },
+    "counts_after": {
+      "access_execution_consumptions": 2,
+      "access_execution_grants": 2,
+      "model_attempt_reservations": 2,
+      "model_studies": 2,
+      "model_trials": 2,
+      "workspace_runs": 2
+    },
+    "reservation_before": {
+      "actor_id": "a09ecfc3230143bc804fdcb3cd7a872f",
+      "admission_epoch": 1,
+      "envelope": {
+        "admitted_wall_seconds": 197,
+        "attempt_slots": 1,
+        "peak_staging_bytes": 5995018,
+        "retained_bytes": 4366403
+      },
+      "id": "bbebc65daffc406087e9fc02feb1bb0c",
+      "material_sha256": "6d19d4d06efabbdff713fd4148c38d5f9171773c01fba85b00e3156ee094e9e4",
+      "parent_run_id": null,
+      "request_key": "sdk-admit-c12e4508163b450790c6218430c8dfef",
+      "request_sha256": "a389b9192a5cbdfb0b66c54f0f0f10c09d4d19165bf7e3e081ea85b537a2f90d",
+      "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+      "settled": null,
+      "state": "reserved",
+      "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+      "trial_id": "11a355fbc67f49c3a9cdf42087f09baa"
+    },
+    "reservation_after": {
+      "actor_id": "a09ecfc3230143bc804fdcb3cd7a872f",
+      "admission_epoch": 1,
+      "envelope": {
+        "admitted_wall_seconds": 197,
+        "attempt_slots": 1,
+        "peak_staging_bytes": 5995018,
+        "retained_bytes": 4366403
+      },
+      "id": "bbebc65daffc406087e9fc02feb1bb0c",
+      "material_sha256": "6d19d4d06efabbdff713fd4148c38d5f9171773c01fba85b00e3156ee094e9e4",
+      "parent_run_id": null,
+      "request_key": "sdk-admit-c12e4508163b450790c6218430c8dfef",
+      "request_sha256": "a389b9192a5cbdfb0b66c54f0f0f10c09d4d19165bf7e3e081ea85b537a2f90d",
+      "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+      "settled": {
+        "admitted_wall_seconds": 197,
+        "attempt_slots": 1,
+        "peak_staging_bytes": 5995018,
+        "retained_bytes": 4366403
+      },
+      "state": "settled",
+      "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+      "trial_id": "11a355fbc67f49c3a9cdf42087f09baa"
+    },
+    "charged": {
+      "admitted_wall_seconds": 197,
+      "attempt_slots": 1,
+      "peak_staging_bytes": 5995018,
+      "retained_bytes": 4366403
+    }
+  },
+  "domain_counts_before": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "domain_counts_after": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "artifacts": {
+    "count": 26,
+    "copies": 3,
+    "whole_hash_comparisons": 78,
+    "state": "verified",
+    "entries": [
+      {
+        "bytes": 519,
+        "name": "checkpoint-32.json",
+        "sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/checkpoint-32.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/checkpoint-32.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/checkpoint-32.json"
+        }
+      },
+      {
+        "bytes": 520,
+        "name": "checkpoint-64.json",
+        "sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/checkpoint-64.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/checkpoint-64.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/checkpoint-64.json"
+        }
+      },
+      {
+        "bytes": 1047,
+        "name": "checkpoints.json",
+        "sha256": "4001a5e5c216dba63fa3c0cfd24ce2ac7db1028eb97d366cc69682ef4284c8cc",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/checkpoints.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/checkpoints.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/checkpoints.json"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "corrected-32.npy",
+        "sha256": "92b9db9fe7e16b38a6aa96fa0ac7d24a9ac09c3faa59d94803c57f1b8b049aa2",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/corrected-32.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/corrected-32.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/corrected-32.npy"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "corrected-64.npy",
+        "sha256": "94b5d33d43ce35f86d1e64dbb649c9ab415487c0f85abafe6d2d29c9f0868305",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/corrected-64.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/corrected-64.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/corrected-64.npy"
+        }
+      },
+      {
+        "bytes": 488,
+        "name": "diagnostics.json",
+        "sha256": "0df6a2444c05a69a8d8fefefcaf21bc9a3316da75b815d0d094230b80a809c81",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/diagnostics.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/diagnostics.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/diagnostics.json"
+        }
+      },
+      {
+        "bytes": 11994,
+        "name": "execution-context.json",
+        "sha256": "1233354af8146f2c9d70a4fddd5232f78161110a6de70dd4cfc650a3bbbbdc6b",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/execution-context.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/execution-context.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/execution-context.json"
+        }
+      },
+      {
+        "bytes": 3198,
+        "name": "field-index.json",
+        "sha256": "03fbb68da58755a65a25bba3e1b424f3ed1cc34f4831d681a69729235e5fc4c4",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/field-index.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/field-index.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/field-index.json"
+        }
+      },
+      {
+        "bytes": 498,
+        "name": "fitted-transform.json",
+        "sha256": "847f2ffa5379fc8eda805968812f66bdd2420471d482707840e43349930871da",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/fitted-transform.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/fitted-transform.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/fitted-transform.json"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "input-boundary_mask.npy",
+        "sha256": "70b7c6570b98e9beef3aa7097f91be77b6f958cb4ea8d904c09a3ea5dd2ea473",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/input-boundary_mask.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/input-boundary_mask.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/input-boundary_mask.npy"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "input-initial.npy",
+        "sha256": "bab60f6876d2af5270fb9350dd1207b8a25116f4ca59904b0eb46799f1a941e5",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/input-initial.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/input-initial.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/input-initial.npy"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "input-source.npy",
+        "sha256": "12cb0dd5680bfdc6b99ed215f40a662d3ceae9452122bd8eac6f8c49880c9de6",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/input-source.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/input-source.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/input-source.npy"
+        }
+      },
+      {
+        "bytes": 1072,
+        "name": "metric-definitions.json",
+        "sha256": "2f5b2682d0bf0173429faa6898f3ce0b5cd211dff81fec82c20464e91a0f7a46",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/metric-definitions.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/metric-definitions.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/metric-definitions.json"
+        }
+      },
+      {
+        "bytes": 384,
+        "name": "model-definition.json",
+        "sha256": "26f713e5f49c1b0c3ad2d678f702d6c74e32b7b01f4d1bb0cca518913d372ff2",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/model-definition.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/model-definition.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/model-definition.json"
+        }
+      },
+      {
+        "bytes": 2022,
+        "name": "model-evidence.json",
+        "sha256": "fa9eef719752682cf86a929c32640c8886b127ea0dbe9edd74c68efa17f6c42c",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/model-evidence.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/model-evidence.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/model-evidence.json"
+        }
+      },
+      {
+        "bytes": 1766,
+        "name": "observations.json",
+        "sha256": "6ebf40841eeee03656567adb7c1205c28d733a20e223536fbd731b2ce3d75041",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/observations.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/observations.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/observations.json"
+        }
+      },
+      {
+        "bytes": 331,
+        "name": "output-policy.json",
+        "sha256": "34bb8ecc5ef0eeda916bcd438e079da21610f39a390ac189813d848d37b42df7",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/output-policy.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/output-policy.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/output-policy.json"
+        }
+      },
+      {
+        "bytes": 652,
+        "name": "probe.json",
+        "sha256": "6dcf2ad49aa0b80123338f9ed5f73da7d5cee30521e401cc45ecb3437bf31b72",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/probe.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/probe.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/probe.json"
+        }
+      },
+      {
+        "bytes": 953,
+        "name": "profile.json",
+        "sha256": "64000a6e8a68db9330f223937fb3e77124fdf51462277dd60c01592c74e4df80",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/profile.json",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/profile.json",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/profile.json"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "raw-32.npy",
+        "sha256": "7dfed4208e78ba24b94a049e6e158bdcef54f7cdca3bb3b004e7265bee392b3c",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/raw-32.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/raw-32.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/raw-32.npy"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "raw-64.npy",
+        "sha256": "f6be67ac9f5d2cc5e3790c19b8cae8672745824b8f817413ea91c8ff564cba98",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/raw-64.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/raw-64.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/raw-64.npy"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "reference-corrected.npy",
+        "sha256": "dee8f98aa4c26097dd44849879399472ca9c10cf6938ca1f1953234e09abc80f",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/reference-corrected.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/reference-corrected.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/reference-corrected.npy"
+        }
+      },
+      {
+        "bytes": 640,
+        "name": "reference-raw.npy",
+        "sha256": "d56d84c3e2eddc10a7223c86c027c74a3acbd451d5636ffaf4e75c4d934e21fc",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/reference-raw.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/reference-raw.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/reference-raw.npy"
+        }
+      },
+      {
+        "bytes": 160,
+        "name": "transform.npy",
+        "sha256": "168d7574fc119a76854729f0d6a103e60fe03695400986dfa26dd900b417506e",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/transform.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/transform.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/transform.npy"
+        }
+      },
+      {
+        "bytes": 152,
+        "name": "weights-32.npy",
+        "sha256": "79a8959f3499220b16deadb59efd7392ab3657bc530891fe9e8ac4a5694af1c6",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/weights-32.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/weights-32.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/weights-32.npy"
+        }
+      },
+      {
+        "bytes": 152,
+        "name": "weights-64.npy",
+        "sha256": "172eb15a569006851000cd16aaaae042618828432508b89dcd36712719080455",
+        "verified_copies": {
+          "sdk": "/workspace/shared/extension-ab-b-02/sdk-artifacts/weights-64.npy",
+          "current_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/artifacts/weights-64.npy",
+          "cold_http": "/workspace/shared/extension-ab-b-02-verification-recovery-02/cold-artifacts/weights-64.npy"
+        }
+      }
+    ]
+  },
+  "numerical_oracle": {
+    "absolute_tolerance": 1e-10,
+    "format": "independent_b_numerical_oracle_v1",
+    "observations": [
+      {
+        "field": "raw",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 32,
+        "reconstruction_maximum_error": 2.220446049250313e-16,
+        "reference_target_mse": 1.4472054366887254e-06
+      },
+      {
+        "field": "corrected",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 32,
+        "reconstruction_maximum_error": 2.220446049250313e-16,
+        "reference_target_mse": 1.7336691075130304e-07
+      },
+      {
+        "field": "raw",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 64,
+        "reconstruction_maximum_error": 2.220446049250313e-16,
+        "reference_target_mse": 7.329544376552364e-12
+      },
+      {
+        "field": "corrected",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 64,
+        "reconstruction_maximum_error": 5.551115123125783e-17,
+        "reference_target_mse": 8.736419045724307e-13
+      }
+    ],
+    "physical_qualification": "not_established",
+    "product_conformance": "not_established",
+    "relative_tolerance": 1e-10,
+    "state": "valid"
+  },
+  "evidence_inventory": {
+    "recovery-summary.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02-verification-recovery-02/recovery-summary.json",
+        "bytes": 4315,
+        "sha256": "0d710cba6ea1a405f4bc8252ccf0ae224bfcf37f079b814c33c5ab3b4bc8cef0"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/recovery-summary.json",
+        "bytes": 4315,
+        "sha256": "0d710cba6ea1a405f4bc8252ccf0ae224bfcf37f079b814c33c5ab3b4bc8cef0"
+      }
+    },
+    "recovery-02-receipt.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02-verification-recovery-02/receipt.json",
+        "bytes": 7027,
+        "sha256": "6c46560ffcec5600188dc3824a0f35a73637219fa5cf7be073e78ede5a63d85b"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/recovery-02-receipt.json",
+        "bytes": 7027,
+        "sha256": "6c46560ffcec5600188dc3824a0f35a73637219fa5cf7be073e78ede5a63d85b"
+      }
+    },
+    "sdk-result.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02/sdk-result.json",
+        "bytes": 4618,
+        "sha256": "cd1facc41a6622e030f26cca653e07ab3de35395e234a8fc5c95d6c4c88c55fa"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/sdk-result.json",
+        "bytes": 4618,
+        "sha256": "cd1facc41a6622e030f26cca653e07ab3de35395e234a8fc5c95d6c4c88c55fa"
+      }
+    },
+    "prepared.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02/prepared.json",
+        "bytes": 12685,
+        "sha256": "299aee5f314cb095494062d4f715c433645f156905e56262b0ae546afaa0f5cf"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/prepared.json",
+        "bytes": 12685,
+        "sha256": "299aee5f314cb095494062d4f715c433645f156905e56262b0ae546afaa0f5cf"
+      }
+    },
+    "author-review-freeze.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02/review-freeze.json",
+        "bytes": 1628,
+        "sha256": "55b0308b758f0eca2ce01798ea3148a365db05f108182ebe2f32bcb5ecdd9c38"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/author-review-freeze.json",
+        "bytes": 1628,
+        "sha256": "55b0308b758f0eca2ce01798ea3148a365db05f108182ebe2f32bcb5ecdd9c38"
+      }
+    },
+    "application-owner-freeze.json": {
+      "original": {
+        "path": "/workspace/shared/extension-b-application-freeze-02.json",
+        "bytes": 13937,
+        "sha256": "7ff4b102389f488fcca66fdc8b3329a3931417563841c091e787f3493e59b3da"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/application-owner-freeze.json",
+        "bytes": 13937,
+        "sha256": "7ff4b102389f488fcca66fdc8b3329a3931417563841c091e787f3493e59b3da"
+      }
+    },
+    "application-owner-postcheck.json": {
+      "original": {
+        "path": "/workspace/shared/extension-b-application-freeze-02-postcheck.json",
+        "bytes": 39029,
+        "sha256": "512cb5f1ef79b26d64de384734a3dd8f0258e37247e9ad13355e18dda9acdc0b"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/application-owner-postcheck.json",
+        "bytes": 39029,
+        "sha256": "512cb5f1ef79b26d64de384734a3dd8f0258e37247e9ad13355e18dda9acdc0b"
+      }
+    },
+    "original-failure.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02/failure.json",
+        "bytes": 1028,
+        "sha256": "802530c875faa10efdd7ca2f636e62f1de489c95afac3f0f1c9b9448216eba95"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/original-failure.json",
+        "bytes": 1028,
+        "sha256": "802530c875faa10efdd7ca2f636e62f1de489c95afac3f0f1c9b9448216eba95"
+      }
+    },
+    "original-oracle-stderr.txt": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02/oracle-diagnostic-stderr.txt",
+        "bytes": 1224,
+        "sha256": "204c9e7a1c9b7882c6a84e2c34949d34b9676a0dbe610d07f0eb127cbb334cd4"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/original-oracle-stderr.txt",
+        "bytes": 1224,
+        "sha256": "204c9e7a1c9b7882c6a84e2c34949d34b9676a0dbe610d07f0eb127cbb334cd4"
+      }
+    },
+    "recovery-01-diagnostic.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02-verification-recovery-01/diagnostic.json",
+        "bytes": 673,
+        "sha256": "9bfcbc7f00cff3e9b9dd62c08766df6716ece77a3c49daf64d446ddd7f8195e7"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/recovery-01-diagnostic.json",
+        "bytes": 673,
+        "sha256": "9bfcbc7f00cff3e9b9dd62c08766df6716ece77a3c49daf64d446ddd7f8195e7"
+      }
+    },
+    "recovery-01-failure.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02-verification-recovery-01/failure.json",
+        "bytes": 177,
+        "sha256": "b20a91fe2b6edde6fe6faba71cbf54d05ad38dff566e05a520ba24106fb7a913"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/recovery-01-failure.json",
+        "bytes": 177,
+        "sha256": "b20a91fe2b6edde6fe6faba71cbf54d05ad38dff566e05a520ba24106fb7a913"
+      }
+    },
+    "oracle.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02-verification-recovery-02/oracle.json",
+        "bytes": 1219,
+        "sha256": "fd7bf8a198aad4618e6940c0d892f98e6a7009e3b62a81e8c3b598186525de1d"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/oracle.json",
+        "bytes": 1219,
+        "sha256": "fd7bf8a198aad4618e6940c0d892f98e6a7009e3b62a81e8c3b598186525de1d"
+      }
+    },
+    "p6-independent-review.json": {
+      "original": {
+        "path": "/tmp/p6-independent-b-recovery-review.json",
+        "bytes": 2851,
+        "sha256": "6cc06b17a0910e4af5a58cbe7e40064dcb4f002be3f26ed7c1981b8ee2fda0a5"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/p6-independent-review.json",
+        "bytes": 2851,
+        "sha256": "6cc06b17a0910e4af5a58cbe7e40064dcb4f002be3f26ed7c1981b8ee2fda0a5"
+      }
+    },
+    "settlement-extract.json": {
+      "original": {
+        "path": "/workspace/shared/extension-ab-b-02-accounting-recovery-01/receipt.json",
+        "bytes": 239001,
+        "sha256": "3674058e3912b7f0e29a86a8ebbf12d5e510edb163873a5e75b77c6a6892608b"
+      },
+      "retained": {
+        "path": "examples/independent-b-02/settlement-extract.json",
+        "bytes": 2774,
+        "sha256": "b820d565dbedacaf36c092bef1bc82c7899dd617919a7901cc415e2b67e74c05"
+      },
+      "projection": "Selected accounting fields only; original receipt remains authoritative"
+    }
+  },
+  "verification": {
+    "mode": "Offline read-only source-receipt and retained-file review; no SDK/oracle/host process rerun, no catalog mutation",
+    "assertions": [
+      "Every summary-linked receipt SHA256 and byte count matches",
+      "All 18 authored package bytes match initial review freeze",
+      "All 26 artifacts match receipt SHA256/size in all three download sets",
+      "Oracle and dependency hashes match original frozen author bytes",
+      "One settled B reservation and unchanged shared counts; SDK state passed versus oracle valid"
+    ],
+    "p6_review": "examples/independent-b-02/p6-independent-review.json"
+  },
+  "limitations": [
+    "Independent numerical oracle explicitly reports product_conformance not_established",
+    "Physical validity, diffusion, generalization and further E3 lifecycle/UI claims are not established by this report",
+    "Application source was frozen for source execution; separate verification helper fixes are identified by verification_host_commit"
+  ]
+}

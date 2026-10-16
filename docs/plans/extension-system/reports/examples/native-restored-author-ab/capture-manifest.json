@@ -1,0 +1,1072 @@
+{
+  "format": "native_restored_authored_ab_captures_v1",
+  "state": "passed_actual",
+  "capture_count": 44,
+  "authors": [
+    {
+      "author": "a",
+      "run_id": "0ca8523fe44f42bea520e941f79b839b",
+      "receipt_path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/receipt.json",
+      "receipt_sha256": "05da164aacc443ea119db15dd3cd78c6aea911baa5f371a9762060ab8fad0c61",
+      "source_receipt": "/workspace/shared/extension-ab-e4-restored-classifier-recovery-01/native-a-source.json",
+      "source_receipt_sha256": "5bb0d03d0e1722d58d593d05ab88d3aac08d0b348d6acc7518499b2178e6586d",
+      "source_commit": "c5064d2ca363d1005befeaeac371c6754783ff55",
+      "source_sha256": {
+        "static/workspace-service.js": "a03e9d4c216bb7ff6719eef4db889a367ec02604cc427b228813f7a3ca398d04",
+        "static/workspace-real.js": "7d968878edd253bb7e1409693edce03b66b1787f64cfe83f2b2d8ad380b185e6",
+        "static/workspaces.css": "9f3a91ee6138b3ce958130c55484b7fc5d9f57da68662c0bd3dd786d18c0ad10",
+        "tests/browser_field_evidence.cjs": "20be31359dfffaa14362c20c46617243de533b6acf1d055cf771e875b5ed571e"
+      },
+      "captures": [
+        {
+          "file": "linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/linked-field-1440.jpg",
+          "sha256": "56ceeb37cfe8b02fadc8aea02a22d51168104697de72e918287874c58e1f5d0f",
+          "bytes": 122503,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/linked-field-390.jpg",
+          "sha256": "475b3134d7c3f5e0962deea2870099f65069816e88f6cacac72b0c4c48a36942",
+          "bytes": 54001,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/dark-linked-field-1440.jpg",
+          "sha256": "4d0b3efbb6068ee63ca6fce5833785e1eee117d5dea4ae2cf0fb69b12eb04851",
+          "bytes": 124997,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/dark-linked-field-390.jpg",
+          "sha256": "65cdee345545002bb69ae0f730f39c3bf8f306d4e07a90dfdcd311002d2a1800",
+          "bytes": 55579,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/declared-field-0-1440.jpg",
+          "sha256": "575be04709d07dd4e17780be1f78077f274fce2f7b5d9f1495ce63fd4342034f",
+          "bytes": 102190,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/declared-field-0-390.jpg",
+          "sha256": "e5256b0ef398194e3f6f571aea2800b5e50dd8277960d06df3859b8337a1e891",
+          "bytes": 50507,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/dark-declared-field-0-1440.jpg",
+          "sha256": "3878b71c0e30a098f9f12e2e1e45319398b33d57c0f6115d1904b3a9924fc2d8",
+          "bytes": 103567,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/dark-declared-field-0-390.jpg",
+          "sha256": "a3c45462a4b40aecf729fb90e858853b63cb2dc9650ecda3b0f4bf984e7042da",
+          "bytes": 50765,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "restored-disabled-refusal-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-disabled-refusal-1440.jpg",
+          "sha256": "7fe6bb0dffdb612b026595ece4a93fc72c05cab5c8437c4dcf27bb486ded9aac",
+          "bytes": 95682,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-disabled-refusal-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-disabled-refusal-390.jpg",
+          "sha256": "49387b0aadb84c7a2659ae42089e9b60c2ae8bce5456b163a8f864c2bd45b102",
+          "bytes": 50307,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-removed-refusal-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-removed-refusal-1440.jpg",
+          "sha256": "cb9762d82ad19470030365275d3f4b2941765b618553e17de1808404048cf128",
+          "bytes": 94900,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-removed-refusal-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-removed-refusal-390.jpg",
+          "sha256": "12bb0a2b6f89e257f4fc0b719003ac015fe536c10864c99aa569051b35a9450b",
+          "bytes": 48715,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-retained-a-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-retained-a-field-1440.jpg",
+          "sha256": "8d03d79ba3a130397c3addce45e398cc80da2b7a35596b139d36790df720d47e",
+          "bytes": 122988,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-retained-a-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-retained-a-field-390.jpg",
+          "sha256": "8d5c0adad73072a745392ee55457d0a57f050c733401a99bf348fc61fd88c7e2",
+          "bytes": 54056,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-retained-b-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-retained-b-field-1440.jpg",
+          "sha256": "402e8a44b429669872991bec53338a6a1538727a8fd1db840bf38f9c416aee7a",
+          "bytes": 121486,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-retained-b-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-retained-b-field-390.jpg",
+          "sha256": "d9d43e844fab62cd2392140304d81166f775a5d4c2e25563b714585e34211c24",
+          "bytes": 55900,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-unrelated-built-in-run-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-unrelated-built-in-run-1440.jpg",
+          "sha256": "f7d91d12c85f4eadc9540ef8aa895695264181557a240cc8cae3afbc238a3860",
+          "bytes": 116192,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        },
+        {
+          "file": "restored-unrelated-built-in-run-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-unrelated-built-in-run-390.jpg",
+          "sha256": "2d6364e44c478b7e9c80c37fd193ab8c30612b760c6aa2a1525b3b66ea74b91e",
+          "bytes": 50489,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        },
+        {
+          "file": "restored-unrelated-built-in-pipeline-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-unrelated-built-in-pipeline-1440.jpg",
+          "sha256": "7c5c2fe714a6d24e951cf46e9e275202c1074536460bcfc5abd58999355ad07d",
+          "bytes": 118838,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        },
+        {
+          "file": "restored-unrelated-built-in-pipeline-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/a/external-field-evidence/run-6kQo4D/restored-unrelated-built-in-pipeline-390.jpg",
+          "sha256": "5c2d0fd5ae97c8d3b8e422a33d74184efcfe273b25d67f95fd4ae8d3b2398dc3",
+          "bytes": 53566,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        }
+      ],
+      "exact_requests": [
+        {
+          "checkpoint_sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        }
+      ],
+      "declared_fields": [
+        {
+          "field_id": "raw",
+          "stage": "train"
+        }
+      ],
+      "dark_checks": [
+        {
+          "width": 1440,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        },
+        {
+          "width": 390,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        }
+      ],
+      "expected_fields": [
+        {
+          "field_id": "raw",
+          "stage": "train"
+        }
+      ],
+      "checks": [
+        "H3 real retained checkpoints, fixed members, declared stages and all orthogonal slices drive exact numeric probes with shared display and physical scales",
+        "Native keyboard selectors inspect every exact retained field/stage at 1440/390 in light/dark; separate raw and corrected target probes are read, never derived",
+        "H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest",
+        "E4 actual disabled/removed new selection refuses natively; retained A/B history and unrelated built-in Run/artifacts/saved graph/create choices remain usable with unchanged execution counts"
+      ]
+    },
+    {
+      "author": "b",
+      "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+      "receipt_path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/receipt.json",
+      "receipt_sha256": "51e17c6d9f7c44e30472170ed795a749788fb2a70877fd5fe6e791b2c01c2c95",
+      "source_receipt": "/workspace/shared/extension-ab-e4-restored-classifier-recovery-01/native-b-source.json",
+      "source_receipt_sha256": "5f21488b91b05977f093e174e9a28151ecf54fb254bfd5736e49b71fa1a55866",
+      "source_commit": "c5064d2ca363d1005befeaeac371c6754783ff55",
+      "source_sha256": {
+        "static/workspace-service.js": "a03e9d4c216bb7ff6719eef4db889a367ec02604cc427b228813f7a3ca398d04",
+        "static/workspace-real.js": "7d968878edd253bb7e1409693edce03b66b1787f64cfe83f2b2d8ad380b185e6",
+        "static/workspaces.css": "9f3a91ee6138b3ce958130c55484b7fc5d9f57da68662c0bd3dd786d18c0ad10",
+        "tests/browser_field_evidence.cjs": "20be31359dfffaa14362c20c46617243de533b6acf1d055cf771e875b5ed571e"
+      },
+      "captures": [
+        {
+          "file": "linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/linked-field-1440.jpg",
+          "sha256": "671eb2edb9765ced6800111cfe872391d9b360aee4ae8ebc31d3107ea58d2116",
+          "bytes": 118400,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/linked-field-390.jpg",
+          "sha256": "507610c71e819de482149d1b5392869df5a1d6aadf049e08c7a505114e65150d",
+          "bytes": 56208,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-linked-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/dark-linked-field-1440.jpg",
+          "sha256": "99ea45a10aa0dd631eb59a1a2d5ed247f4c34b106331053d910f1655112ddb5a",
+          "bytes": 121042,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-linked-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/dark-linked-field-390.jpg",
+          "sha256": "d1766a6cb21bddd3e0a7c61fbda4fd52425ff5a274ca247e68480a85ff0d2c69",
+          "bytes": 57866,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/declared-field-0-1440.jpg",
+          "sha256": "cb10949c785f36c9bd251cd9a87f421b4cce394839b876bfeb05197aae33b889",
+          "bytes": 104329,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "declared-field-1-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/declared-field-1-1440.jpg",
+          "sha256": "5d53d8fae2e70c07a5136c7ada085b466f8643383529e1d1ebf067a488cdbef8",
+          "bytes": 99122,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/declared-field-0-390.jpg",
+          "sha256": "3242152857fbc022fcaed136700a37bd892796595d260dc01d874887e52f544d",
+          "bytes": 52388,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "declared-field-1-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/declared-field-1-390.jpg",
+          "sha256": "0f7cdfc488b6c28732195f4276c3a5d8f8cf50be06a3997c64736d6f197bdc8b",
+          "bytes": 48461,
+          "theme": "light",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-declared-field-0-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/dark-declared-field-0-1440.jpg",
+          "sha256": "5e7b91cab2028a171e1f98e993aab4335fed253d79f95808c093611af77c3af3",
+          "bytes": 105409,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-declared-field-1-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/dark-declared-field-1-1440.jpg",
+          "sha256": "5b415d13b663e320cb1401a2c424b2dd8b31afb370209ec18e2fac5375179d8a",
+          "bytes": 100584,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-declared-field-0-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/dark-declared-field-0-390.jpg",
+          "sha256": "48e2964fdaaa7c82fa1f585ac9a8c30eaff17330272c0ed0b523b4a3bd911186",
+          "bytes": 52633,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "dark-declared-field-1-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/dark-declared-field-1-390.jpg",
+          "sha256": "54064319e1d4faac2e26459bc260386ee9eded79683f07dba1bbc2f4f92fd9db",
+          "bytes": 48615,
+          "theme": "dark",
+          "evidence_scope": "actual retained field evidence"
+        },
+        {
+          "file": "restored-disabled-refusal-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-disabled-refusal-1440.jpg",
+          "sha256": "7fe6bb0dffdb612b026595ece4a93fc72c05cab5c8437c4dcf27bb486ded9aac",
+          "bytes": 95682,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-disabled-refusal-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-disabled-refusal-390.jpg",
+          "sha256": "49387b0aadb84c7a2659ae42089e9b60c2ae8bce5456b163a8f864c2bd45b102",
+          "bytes": 50307,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-removed-refusal-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-removed-refusal-1440.jpg",
+          "sha256": "cb9762d82ad19470030365275d3f4b2941765b618553e17de1808404048cf128",
+          "bytes": 94900,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-removed-refusal-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-removed-refusal-390.jpg",
+          "sha256": "12bb0a2b6f89e257f4fc0b719003ac015fe536c10864c99aa569051b35a9450b",
+          "bytes": 48715,
+          "theme": "dark",
+          "evidence_scope": "actual current disabled/removed provider refusal; no preparation or admission controls"
+        },
+        {
+          "file": "restored-retained-a-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-retained-a-field-1440.jpg",
+          "sha256": "8d03d79ba3a130397c3addce45e398cc80da2b7a35596b139d36790df720d47e",
+          "bytes": 122988,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-retained-a-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-retained-a-field-390.jpg",
+          "sha256": "8d5c0adad73072a745392ee55457d0a57f050c733401a99bf348fc61fd88c7e2",
+          "bytes": 54056,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-retained-b-field-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-retained-b-field-1440.jpg",
+          "sha256": "402e8a44b429669872991bec53338a6a1538727a8fd1db840bf38f9c416aee7a",
+          "bytes": 121486,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-retained-b-field-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-retained-b-field-390.jpg",
+          "sha256": "d9d43e844fab62cd2392140304d81166f775a5d4c2e25563b714585e34211c24",
+          "bytes": 55900,
+          "theme": "dark",
+          "evidence_scope": "actual retained A/B field history after disabled/removed new selection refusal"
+        },
+        {
+          "file": "restored-unrelated-built-in-run-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-unrelated-built-in-run-1440.jpg",
+          "sha256": "f7d91d12c85f4eadc9540ef8aa895695264181557a240cc8cae3afbc238a3860",
+          "bytes": 116192,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        },
+        {
+          "file": "restored-unrelated-built-in-run-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-unrelated-built-in-run-390.jpg",
+          "sha256": "2d6364e44c478b7e9c80c37fd193ab8c30612b760c6aa2a1525b3b66ea74b91e",
+          "bytes": 50489,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        },
+        {
+          "file": "restored-unrelated-built-in-pipeline-1440.jpg",
+          "width": 1440,
+          "height": 900,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-unrelated-built-in-pipeline-1440.jpg",
+          "sha256": "7c5c2fe714a6d24e951cf46e9e275202c1074536460bcfc5abd58999355ad07d",
+          "bytes": 118838,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        },
+        {
+          "file": "restored-unrelated-built-in-pipeline-390.jpg",
+          "width": 390,
+          "height": 844,
+          "mode": "actual retained authored field evidence; private QA rights, no quality or physics claim",
+          "quality": 85,
+          "path": "/workspace/shared/extension-ab-native-restored-results-02/b/external-field-evidence/run-593w8l/restored-unrelated-built-in-pipeline-390.jpg",
+          "sha256": "5c2d0fd5ae97c8d3b8e422a33d74184efcfe273b25d67f95fd4ae8d3b2398dc3",
+          "bytes": 53566,
+          "theme": "dark",
+          "evidence_scope": "actual unrelated completed built-in Run/artifacts/saved graph/create choices; no new execution"
+        }
+      ],
+      "exact_requests": [
+        {
+          "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+          "member_ordinal": 0,
+          "field_id": "corrected",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+          "member_ordinal": 0,
+          "field_id": "corrected",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+          "member_ordinal": 0,
+          "field_id": "corrected",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+          "member_ordinal": 0,
+          "field_id": "raw",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+          "member_ordinal": 0,
+          "field_id": "corrected",
+          "axis": "z",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+          "member_ordinal": 0,
+          "field_id": "corrected",
+          "axis": "y",
+          "index": 3,
+          "split": "validation"
+        },
+        {
+          "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+          "member_ordinal": 0,
+          "field_id": "corrected",
+          "axis": "x",
+          "index": 3,
+          "split": "validation"
+        }
+      ],
+      "declared_fields": [
+        {
+          "field_id": "raw",
+          "stage": "raw_inference"
+        },
+        {
+          "field_id": "corrected",
+          "stage": "boundary_enforcement"
+        }
+      ],
+      "dark_checks": [
+        {
+          "width": 1440,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        },
+        {
+          "width": 390,
+          "preference": true,
+          "focus": "field-member",
+          "outline": "solid",
+          "outlineWidth": "3px",
+          "color": "rgb(229, 237, 248)"
+        }
+      ],
+      "expected_fields": [
+        {
+          "field_id": "raw",
+          "stage": "raw_inference"
+        },
+        {
+          "field_id": "corrected",
+          "stage": "boundary_enforcement"
+        }
+      ],
+      "checks": [
+        "H3 real retained checkpoints, fixed members, declared stages and all orthogonal slices drive exact numeric probes with shared display and physical scales",
+        "Native keyboard selectors inspect every exact retained field/stage at 1440/390 in light/dark; separate raw and corrected target probes are read, never derived",
+        "H6 standalone physical geometry, explicit unsupported difference/test/physical acceptance and late/denied-query exclusion remain honest",
+        "E4 actual disabled/removed new selection refuses natively; retained A/B history and unrelated built-in Run/artifacts/saved graph/create choices remain usable with unchanged execution counts"
+      ]
+    }
+  ],
+  "shared_restored_checks": {
+    "refusals": [
+      {
+        "mode": "disabled",
+        "project_id": "4d644685cd39479c886232cb00d76bd0",
+        "recipe_id": "train",
+        "status": 409,
+        "code": "unavailable",
+        "message": "Exact contribution requires one valid enabled provider."
+      },
+      {
+        "mode": "removed",
+        "project_id": "26df02b6fb2a4858a818ee9c1ef8b014",
+        "recipe_id": "train",
+        "status": 409,
+        "code": "unavailable",
+        "message": "Exact contribution requires one valid enabled provider."
+      }
+    ],
+    "retained_runs": [
+      {
+        "run_id": "0ca8523fe44f42bea520e941f79b839b",
+        "fields": [
+          {
+            "field_id": "raw",
+            "stage": "train"
+          }
+        ],
+        "checkpoints": [
+          {
+            "sha256": "adb660f8228bf9ec1c57dd1431cee3681c73ba94d0a8d28404cf74825332bbad",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 16,
+              "physical_time": null,
+              "wall_elapsed_ms": 18
+            }
+          },
+          {
+            "sha256": "99ca10782df19589aa3bba2de478d0cdd32ed0caa782518e96eceacfafcca619",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 32,
+              "physical_time": null,
+              "wall_elapsed_ms": 21
+            }
+          },
+          {
+            "sha256": "db8c30ee0ba30129be6d67d22d8c39dd72135f26e3cd584d54dc20c68e7c8d83",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 48,
+              "physical_time": null,
+              "wall_elapsed_ms": 23
+            }
+          },
+          {
+            "sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 64,
+              "physical_time": null,
+              "wall_elapsed_ms": 25
+            }
+          }
+        ]
+      },
+      {
+        "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+        "fields": [
+          {
+            "field_id": "raw",
+            "stage": "raw_inference"
+          },
+          {
+            "field_id": "corrected",
+            "stage": "boundary_enforcement"
+          }
+        ],
+        "checkpoints": [
+          {
+            "sha256": "d877dece7907eac0af719d4eaad6264612a4d11fa0fdeeccfa281e3fd9284dc6",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 32,
+              "physical_time": null,
+              "wall_elapsed_ms": 8
+            }
+          },
+          {
+            "sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+            "clocks": {
+              "epoch": null,
+              "fit_pass": null,
+              "optimizer_update": 64,
+              "physical_time": null,
+              "wall_elapsed_ms": 10
+            }
+          }
+        ]
+      }
+    ],
+    "unrelated": {
+      "run_id": "3c65c663843f4afb85baba776fc7cb23",
+      "graph_id": "01fc3ea6981943fa8afdb1f3c02c96cb",
+      "release_id": "3bb3a9e2132aa908e7fd08f798b047999f6707705b62bf784e644ee3a6d44d9a",
+      "artifacts": [
+        {
+          "name": "metrics.json",
+          "sha256": "36b60937de22f83cecaf1c781ddd279401f49310ab16489f11f49bf7a84ce702",
+          "bytes": 1404
+        },
+        {
+          "name": "predictions-validation.json",
+          "sha256": "e51d46c1974f2338ceb33547f73ed0c36bc170519217fd3dff620afd9fdf8f35",
+          "bytes": 2612
+        },
+        {
+          "name": "checkpoint.pt",
+          "sha256": "fa546c71306731ee9f3ac12d0ec683bf40af5ccdd5098597eb6eeda070985ba4",
+          "bytes": 6375
+        },
+        {
+          "name": "checkpoint-epoch-0001.json",
+          "sha256": "be72d740d45a41169838a6f696a083937753c330addab82406034ca43a2403f8",
+          "bytes": 526
+        },
+        {
+          "name": "checkpoints.json",
+          "sha256": "0916e5dababe4c0232a2943e10dc8b5f62bf2751efbb4af326b132b74f85e081",
+          "bytes": 574
+        },
+        {
+          "name": "fitted-transform.json",
+          "sha256": "6ef6f1167d13ea15822909c8e88a04deeebad848012d4c0c3ca4e7edf17f63bc",
+          "bytes": 68
+        },
+        {
+          "name": "metric-definitions.json",
+          "sha256": "3d776892f269d89746879c4d25537e00b85537928b219772922899f43e4275fa",
+          "bytes": 1724
+        },
+        {
+          "name": "model-definition.json",
+          "sha256": "438355260004c56f48fae57ef70e73f2da2c5dcf9f26abea6513af39f7d06cd6",
+          "bytes": 448
+        },
+        {
+          "name": "model-evidence.json",
+          "sha256": "e4f8fe50499dfa902b3e78e59c98416d9321e35b3d298fd2f321f9573e728370",
+          "bytes": 2161
+        },
+        {
+          "name": "observations.json",
+          "sha256": "3bbc3c00cca8e04fc5e4ae3d9fd41777313d6ed195a570e63badf0fa46572ed4",
+          "bytes": 1255
+        },
+        {
+          "name": "output-policy.json",
+          "sha256": "ee8f417a377b4c02aeafda8d604525de180fe0712ca0a97359806ab7b904b5ab",
+          "bytes": 65
+        },
+        {
+          "name": "probe.json",
+          "sha256": "c00c30be2fbd37fe70d0321936167c5c21f6a8c588bf403b008afa70a78437ef",
+          "bytes": 2426
+        },
+        {
+          "name": "probes-epoch-0001.json",
+          "sha256": "251388eabc9c1d72e25a682d973ff290dfe516c2e8c87e91a869bf26731a10b8",
+          "bytes": 652
+        },
+        {
+          "name": "profile.json",
+          "sha256": "863654f4ea603c538779c06ec6a0a2332698c10834d49727beaf05681cfd5e7b",
+          "bytes": 898
+        },
+        {
+          "name": "validation-logits.json",
+          "sha256": "f577c8d533fbfaed262c23b5dc286bea6a6bd48c7deb9fbf7332a36a69e89b0a",
+          "bytes": 647
+        },
+        {
+          "name": "weights-epoch-0001.pt",
+          "sha256": "fa546c71306731ee9f3ac12d0ec683bf40af5ccdd5098597eb6eeda070985ba4",
+          "bytes": 6375
+        },
+        {
+          "name": "artifact-manifest.json",
+          "sha256": "f834b52b35c7cdae2753c732e0c1d7cd6e81dc386fe7d4b95f01c8d1e5303396",
+          "bytes": 3437
+        }
+      ],
+      "recipe_choices": [
+        "image_classification",
+        "image_validate_export",
+        "image_classification_model_v2"
+      ]
+    }
+  },
+  "original_catalog_opened": false,
+  "original_root_aliases_used": [],
+  "effective_native_roots": {
+    "retention-b": "/workspace/shared/extension-ab-e4-retention-01/restored-only-b-source"
+  },
+  "rootless_history_proof_roots": {},
+  "browser": "Chrome/151.0.7922.173",
+  "strict_one_initial_focus": true,
+  "programmatic_focus_resets_between_option_keys": false,
+  "new_approval_or_admission": false,
+  "new_producer_execution": false,
+  "quality_or_physical_acceptance_claim": false,
+  "field_themes": "Actual A/B field captures at1440/390 lightanddark; restored refusal/history/built-in continuity captures retain final dark preference",
+  "denial_scope": "403 transport substitution for UI clearing only; provider selection409refusals are actual owner responses",
+  "preserved_failed_attempt": "/workspace/shared/extension-ab-native-restored-results-01/attempt-01-capture-manifest.json",
+  "log": {
+    "path": "/workspace/shared/extension-ab-native-restored-results-02/attempt-02.log",
+    "sha256": "9bc21845ab018d69147d0abdd19872632090d88e10ccc06ae392888469635b0f"
+  },
+  "domain_after": "native-domain-after.json",
+  "application_source": "native-source-manifest.json",
+  "independent_review": "pending final P6file-only review"
+}

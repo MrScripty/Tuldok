@@ -1,0 +1,35 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-image:reader",
+  "implementation": {
+    "entrypoint": "read",
+    "source": "image/image_worker.py"
+  },
+  "kind": "reader",
+  "label": "image inert source inventory sentinel",
+  "ports": [
+    {
+      "axes": [
+        "height",
+        "width",
+        "channel"
+      ],
+      "contract": {
+        "id": "example.modality-image:pixels",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "pixels",
+      "units": "uint8_code_value"
+    }
+  ],
+  "requires": [
+    {
+      "id": "example.modality-image:descriptor",
+      "sha256": "cc8bd4054eef396ff7689bc7aa742dd6da441256287294edb2be55b2e641be96",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

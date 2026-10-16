@@ -1,0 +1,101 @@
+{
+  "defaults": {
+    "channel_layout": "mono",
+    "clock": "sample_index",
+    "payload": [
+      [
+        0.0
+      ],
+      [
+        0.25
+      ],
+      [
+        -0.25
+      ],
+      [
+        0.0
+      ]
+    ],
+    "sample_rate_hz": 16000
+  },
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-audio:descriptor",
+  "kind": "task",
+  "label": "audio bounded opaque descriptor",
+  "parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "channel_layout": {
+        "enum": [
+          "mono"
+        ],
+        "maxLength": 4,
+        "type": "string"
+      },
+      "clock": {
+        "enum": [
+          "sample_index"
+        ],
+        "maxLength": 12,
+        "type": "string"
+      },
+      "payload": {
+        "items": {
+          "items": {
+            "maximum": 1,
+            "minimum": -1,
+            "type": "number"
+          },
+          "maxItems": 1,
+          "minItems": 1,
+          "type": "array"
+        },
+        "maxItems": 8,
+        "minItems": 1,
+        "type": "array"
+      },
+      "sample_rate_hz": {
+        "enum": [
+          16000
+        ],
+        "type": "integer"
+      }
+    },
+    "required": [
+      "payload",
+      "sample_rate_hz",
+      "clock",
+      "channel_layout"
+    ],
+    "type": "object"
+  },
+  "ports": [
+    {
+      "axes": [
+        "sample",
+        "channel"
+      ],
+      "contract": {
+        "id": "example.modality-audio:samples",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "samples",
+      "units": "normalized_amplitude"
+    },
+    {
+      "axes": [],
+      "contract": {
+        "id": "example.modality-audio:sample_clock",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "sample_clock",
+      "units": "sample_index"
+    }
+  ],
+  "requires": [],
+  "version": "1.0.0"
+}

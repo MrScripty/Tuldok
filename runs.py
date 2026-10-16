@@ -27,7 +27,7 @@ import release_validation
 import psycopg
 from metadata import CommitOutcomeUnknown
 from workbench import WorkbenchError, encode, timestamp, text_value
-from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment
+from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment, model_aware_graph, model_contract
 
 ACTIVE = ('queued', 'running', 'cancelling')
 TERMINAL = ('completed', 'failed', 'cancelled', 'interrupted', 'unknown')
@@ -96,6 +96,51 @@ class Runs:
             if self.runtime_owner:
                 self._recover()
 
+    def _study_attempt_metadata(self, trial, limit=5):
+        """Bounded saved status for experiment overviews, without byte verification.
+
+        Full retained execution/context and artifact inspection stays in _load/get.
+        This projection proves catalog and reservation identities only; callers
+        must label outcomes as saved metadata and link to the full Run inspector.
+        """
+        from model_definitions import retained_json, natural, text
+        natural(limit, 'Attempt overview limit', 1, 5)
+        count = self.db.execute('SELECT count(*) FROM model_attempt_reservations WHERE trial_id=%s',
+                                (trial['id'],)).fetchone()[0]
+        natural(count, 'Attempt count')
+        rows = self.db.execute('SELECT r.id,r.study_id,r.actor_id,r.request_sha256,r.trial_id,r.run_id,'
+            'r.document AS reservation,w.request_key AS run_key,w.request_sha256 AS run_sha,w.document AS run_document '
+            'FROM model_attempt_reservations r LEFT JOIN workspace_runs w ON w.id=r.run_id WHERE r.trial_id=%s '
+            "ORDER BY w.document::jsonb->>'created_at' DESC,w.id DESC LIMIT %s", (trial['id'],limit)).fetchall()
+        result = []
+        for row in rows:
+            reservation = retained_json(row['reservation'])
+            run = retained_json(row['run_document'], 8*1024**2) if row['run_document'] is not None else None
+            if (type(reservation) is not dict or not isinstance(run,dict) or run.get('schema_version') != 1 or run.get('mode') != 'real' or
+                    run.get('id') != row['run_id'] or run.get('dataset_id') != self.db.dataset_id or
+                    run.get('actor_id') != row['actor_id'] or run.get('request_sha256') != row['request_sha256'] or
+                    run.get('request_sha256') != row['run_sha'] or run.get('request_key') != row['run_key'] or
+                    run.get('state') not in (*ACTIVE,*TERMINAL) or row['study_id'] != trial['study_id'] or
+                    any(reservation.get(key) != row[key] for key in ('id','study_id','actor_id','request_sha256','trial_id','run_id')) or
+                    reservation.get('material_sha256') != trial['material']['sha256'] or
+                    run.get('parent_run_id') != reservation.get('parent_run_id')):
+                raise WorkbenchError('Saved attempt overview identity differs.', 'unavailable', 409)
+            parent = run.get('parent_run_id')
+            if parent is not None: identifier(parent, 'Retry parent Run')
+            text(run.get('created_at'), 'Run creation time', 80)
+            if run.get('finished_at') is not None: text(run['finished_at'], 'Run finish time', 80)
+            saved_metrics = run.get('metrics')
+            if saved_metrics is not None and type(saved_metrics) is not dict:
+                raise WorkbenchError('Saved validation summary is malformed.', 'unavailable', 409)
+            metrics = (saved_metrics or {}).get('validation', {})
+            if type(metrics) is not dict:
+                raise WorkbenchError('Saved validation summary is malformed.', 'unavailable', 409)
+            summary = {key:metrics[key] for key in ('accuracy','loss','macro_f1','balanced_accuracy')
+                       if type(metrics.get(key)) in (int,float) and math.isfinite(metrics[key])}
+            result.append({'id':run['id'],'state':run['state'],'parent_run_id':parent,
+                'created_at':run['created_at'],'finished_at':run.get('finished_at'),'validation':summary})
+        return count,result
+
     def _load(self, run_id):
         identifier(run_id, 'Run ID')
         row = self.db.execute('SELECT request_key,request_sha256,document FROM workspace_runs WHERE id=%s', (run_id,)).fetchone()
@@ -121,7 +166,8 @@ class Runs:
                         or Path(declared).name != '.external-' + run['id']
                         or Path(declared).parent.name != 'workspace-runs'):
                     raise ValueError('Invalid retained external staging location.')
-                recipe_contract.validate_spec(run['material'], run['spec'], declared)
+                admitted_context=self._extension_context(run) if self._extension(run) else None
+                recipe_contract.validate_spec(run['material'], run['spec'], declared,context=admitted_context)
                 if (run['graph'].get('recipe') != 'external_recipe'
                         or run['material']['catalog_id'] != self.db.dataset_id
                         or digest(run['material']) != run['material_sha256']
@@ -136,8 +182,46 @@ class Runs:
                         or identity.get('request_sha256') != run['request_sha256']
                         or identity.get('spec_sha256') != hashlib.sha256(recipe_process.encoded(run['spec'])).hexdigest()):
                     raise ValueError('Invalid external custodian identity.')
+                association=self.db.execute('SELECT t.material_sha256,r.actor_id,r.request_sha256 FROM model_attempt_reservations r '
+                                            'JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',
+                                            (run['id'],)).fetchone()
+                # A retained Study association owns this requirement: removing
+                # the JSON marker must not downgrade its Run to legacy custody.
+                if association is not None or 'approval_material_sha256' in run:
+                    approved=run.get('approval_material_sha256')
+                    if type(approved) is not str or not re.fullmatch('[a-f0-9]{64}',approved):
+                        raise ValueError('Invalid composed approval identity.')
+                    grant=self.db.execute('SELECT g.material_sha256,g.consumer_actor_id,g.catalog_id,'
+                                          'c.run_id,c.admission_id,c.request_sha256 FROM access_execution_grants g '
+                                          'JOIN access_execution_consumptions c ON c.grant_id=g.id WHERE g.id=%s',
+                                          (run['approval_id'],)).fetchone()
+                    if (grant is None or grant['material_sha256']!=approved or grant['consumer_actor_id']!=run['actor_id'] or
+                            grant['catalog_id']!=self.db.dataset_id or grant['run_id']!=run['id'] or
+                            grant['admission_id']!=run['admission_id'] or grant['request_sha256']!=run['request_sha256']):
+                        raise ValueError('Composed approval differs from its retained consumption.')
+                    if (association is None or association['material_sha256']!=approved or association['actor_id']!=run['actor_id'] or
+                            association['request_sha256']!=run['request_sha256']):
+                        raise ValueError('Composed approval differs from its retained study association.')
+                    self._approved_composition(approved,run['graph'],run['material_sha256'])
             elif 'execution_kind' in run:
                 raise ValueError('Unknown execution kind.')
+            if model_aware_graph(run['graph']):
+                owner = model_contract(run['graph'])
+                context=run['evidence_context']
+                if (context['adapter_sha256']!=run['runtime']['adapter_definition_sha256']
+                        or context['model_definition']!=owner.model_definition(run['parameters'])
+                        or context['profile']!=owner.profile(self.db.dataset_id,context['model_sha256'],run['parameters'],
+                            sum(row['split']=='validation' for row in run['source_records']))):
+                    raise ValueError('Retained classifier evidence context differs.')
+                association=self.db.execute('SELECT r.study_id,r.trial_id,r.actor_id,r.request_sha256,t.material_sha256 '
+                    'FROM model_attempt_reservations r JOIN model_trials t ON t.id=r.trial_id WHERE r.run_id=%s',(run_id,)).fetchone()
+                if association is not None:
+                    if (run.get('actor_id')!=association['actor_id'] or run.get('approval_material_sha256')!=association['material_sha256']
+                            or context['material_sha256']!=association['material_sha256'] or run['request_sha256']!=association['request_sha256']):
+                        raise ValueError('Built-in Study association differs from its authoritative receipt.')
+                    self._approved_composition(association['material_sha256'],run['graph'],run['graph_sha256'])
+                elif run.get('approval_material_sha256') is not None:
+                    raise ValueError('Unexpected built-in Study marker.')
             return run
         except (ValueError, KeyError, TypeError):
             raise WorkbenchError('Stored run envelope is invalid; refusing to guess execution state.', 'unavailable', 409) from None
@@ -221,18 +305,26 @@ class Runs:
 
     def _public(self, run):
         if self._external(run):
+            from candidate_packages import authorize_transitive_inputs
+            authorize_transitive_inputs(self,run)
             keys = ('schema_version', 'mode', 'id', 'dataset_id', 'request_key', 'state', 'created_at',
                     'started_at', 'finished_at', 'graph', 'graph_revision', 'graph_sha256', 'parameters',
                     'attempt', 'parent_run_id', 'events', 'error', 'progress', 'node_attempts',
                     'quality_claim', 'execution_kind', 'result_kind', 'material', 'material_sha256',
                     'approval_id', 'actor_id', 'custody_phase')
             result = {key: copy.deepcopy(run[key]) for key in keys}
+            if 'approval_material_sha256' in run:result['approval_material_sha256']=run['approval_material_sha256']
+            association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
+            if association is not None:result['study_membership']=dict(association)
             result['artifacts'] = [dict(item, locked=False,
                 url=f"/api/workspace/runs/{run['id']}/artifacts/{item['name']}") for item in run['artifacts']]
             return result
         hidden = {'source_records', 'release_path', 'worker', 'python', 'request_sha256', 'graph_document_sha256',
-                  'worker_command', 'supervisor', 'process_phase', 'admission_id'}
+                  'worker_command', 'supervisor', 'process_phase', 'admission_id', 'evidence_context'}
         result = {key: copy.deepcopy(value) for key, value in run.items() if key not in hidden}
+        association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
+        if association is not None or run['graph'].get('recipe')==image_training.MODEL_RECIPE:
+            result['study_membership']=dict(association) if association is not None else None
         result['test_exposure'] = {'exposed': bool(run['exposure_events']), 'event_count': len(run['exposure_events'])}
         result['current_test_exposure'] = ({'exposed': False, 'events': []} if self._validation_run(run)
                                            else self.pipelines.exposures(run['source_records']))
@@ -319,7 +411,7 @@ class Runs:
         return self._public(run)
 
     @authorized('inspect', 'runs.submit_external')
-    def submit_external(self, body):
+    def submit_external(self, body, *, _graph_guard=None):
         """The sole agent execution exception consumes an exact owner grant."""
         context = self.access.require_external_submission()
         closed(body, ('request_key', 'graph_id', 'graph_revision', 'expected_digest'), ('approval_id',))
@@ -328,6 +420,8 @@ class Runs:
             receipt = self._external_receipt(key, request_hash, context.actor_id)
         if receipt:
             return self._reconcile_receipt(receipt)
+        if _graph_guard is not None:
+            _graph_guard(self.pipelines.get(body['graph_id']))
         self._available()
         if self._external_blocked:
             raise WorkbenchError('External descendant cessation is unknown for this host boot.', 'unavailable', 409)
@@ -335,52 +429,14 @@ class Runs:
         staging = self.path / ('.external-' + run_id)
         try:
             captured = self.pipelines.capture_external(body['graph_id'], body['graph_revision'], body['expected_digest'], staging)
-            graph = captured['graph']
-            spec = dict(captured['spec'], attempt_id=run_id, request_sha256=request_hash)
             with self.lock, self.db.transaction():
                 self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
                 receipt = self._external_receipt(key, request_hash, context.actor_id)
                 if receipt:
                     self.db.on_commit(lambda: shutil.rmtree(staging, ignore_errors=True))
                 else:
-                    # Captured/validated resource policy owns this bound. Check
-                    # after both reconciliation opportunities, before consuming
-                    # approval or persisting admission; failure uses normal cleanup.
-                    if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
-                        required_bytes = 2 * spec['max_output_bytes'] + 1024**3
-                        try:
-                            available_bytes = shutil.disk_usage(self.path).free
-                        except OSError as error:
-                            raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
-                        if available_bytes < required_bytes:
-                            raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
-                    if self.pipelines._get(graph['id']) != graph:
-                        raise WorkbenchError('Graph changed during capture.', 'stale', 409)
-                    if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
-                        raise WorkbenchError('The local queue is full (8 attempts).', 'unavailable', 409)
-                    grant_id = body.get('approval_id')
-                    if grant_id is None:
-                        grant_id = self.access.grant_execution(body['expected_digest'], context.actor_id)['id']
-                    admission_id = self.access._consume_external_run(grant_id, body['expected_digest'], run_id, request_hash)
-                    run = {'schema_version': 1, 'mode': 'real', 'execution_kind': 'external_recipe',
-                           'result_kind': 'external_recipe', 'id': run_id, 'dataset_id': self.db.dataset_id,
-                           'request_key': key, 'request_sha256': request_hash, 'actor_id': context.actor_id,
-                           'admission_id': admission_id, 'approval_id': grant_id,
-                           'state': 'queued', 'created_at': timestamp(), 'started_at': None, 'finished_at': None,
-                           'graph': graph, 'graph_revision': graph['revision'], 'graph_sha256': execution_digest(graph),
-                           'graph_document_sha256': digest(graph), 'material': captured['material'],
-                           'material_sha256': captured['material_sha256'], 'spec': spec,
-                           'outputs': captured['outputs'], 'parameters': next(node['parameters'] for node in graph['nodes'] if node['type'] == 'execute'),
-                           'attempt': 1, 'parent_run_id': None, 'events': [], 'artifacts': [], 'metrics': None,
-                           'error': None, 'worker': None, 'custody_phase': 'prepared', 'custody_identity': None,
-                           'custody_receipt_sha256': None, 'quality_claim': False,
-                           'progress': {'stage': 'queued', 'completed': None, 'total': None},
-                           'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
-                    self._event(run, 'queued', 'Exact owner-approved external recipe admitted.')
-                    self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
-                                    (run_id, key, request_hash, encode(run)))
-                    self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
-                                      'approval_id': grant_id, 'request_sha256': request_hash})
+                    run = self._admit_external_prepared(body, captured, run_id, staging,
+                                                        wake_on_commit=False)
         except CommitOutcomeUnknown:
             # Neither delete captured files nor dispatch after ambiguous admission.
             raise
@@ -389,10 +445,141 @@ class Runs:
             raise
         if receipt:
             return self._reconcile_receipt(receipt)
+        self._wake_external(run_id)
+        return self._public(run)
+
+    def _wake_external(self, run_id):
         with self.lock:
             self._confirmed_external.add(run_id)
         self._start()
-        return self._public(run)
+
+    def _approved_composition(self,sha,graph,execution_material_sha256):
+        from model_definitions import retained_json
+        row=self.db.execute('SELECT document FROM workspace_recipe_materials WHERE sha256=%s',(sha,)).fetchone()
+        if row is None:raise WorkbenchError('Approved composed material is unavailable.','unavailable',409)
+        value=retained_json(row[0]);closed(value,('ref','material'));material=value['material']
+        if (digest(material)!=sha or value['ref']!={'kind':'recipe_material','catalog_id':self.db.dataset_id,'id':sha,'sha256':sha} or
+                material.get('format')!='recipe_material_v1' or material.get('catalog_id')!=self.db.dataset_id or
+                material.get('recipe_id')!=graph['id'] or material.get('recipe_revision')!=graph['revision'] or
+                material.get('executable_sha256')!=execution_material_sha256):
+            raise WorkbenchError('Approved composed material differs from execution.','unavailable',409)
+        return value
+
+    @staticmethod
+    def _extension(run):
+        material=run.get('material')
+        recipe=material.get('recipe') if type(material) is dict else None
+        import recipe_contract
+        return run.get('execution_kind')=='external_recipe' and recipe_contract.is_evidence(recipe)
+
+    def _extension_context(self,run, *, with_captured_inputs=False):
+        """Rederive the exact admitted context; never authorize from its copy."""
+        import extension_evidence
+        composition=self._approved_composition(run.get('approval_material_sha256'),run['graph'],run['material_sha256'])
+        retained=self.pipelines._retained_extension_static(composition,with_captured_inputs=with_captured_inputs)
+        static,captured=retained if with_captured_inputs else (retained,None)
+        context=extension_evidence.validate_context(run.get('extension_context'),run,composition,static)
+        return (context,captured) if with_captured_inputs else context
+
+    def _verify_extension(self,directory,run):
+        import extension_evidence
+        context,captured=self._extension_context(run,with_captured_inputs=True)
+        return extension_evidence.verify(directory,run,context,captured=captured)
+
+    @authorized('inspect', 'runs.lookup_external_receipt')
+    def lookup_external_receipt(self, request_key, request_hash):
+        """Current-actor receipt read; this operation never wakes queued work."""
+        if (type(request_key) is not str or not REQUEST_KEY.fullmatch(request_key) or
+                type(request_hash) is not str or not re.fullmatch('[a-f0-9]{64}', request_hash)):
+            raise WorkbenchError('Receipt lookup requires an exact key and SHA256.')
+        context = self.access._context()
+        with self.lock:
+            return self._external_receipt(request_key, request_hash, context.actor_id)
+
+    def _admit_external_prepared(self, body, captured, run_id, staging, *,
+                                 check_current=True, request_hash=None, parent=None,
+                                 wake_on_commit=True, approval_material_sha256=None):
+        """Runs-owned insert inside an existing outer transaction; never wake early."""
+        if not self.db.in_transaction:
+            raise RuntimeError('Prepared admission requires an owned outer transaction.')
+        context = self.access.require_external_submission()
+        self._available()
+        if self._external_blocked:
+            raise WorkbenchError('External descendant cessation is unknown.', 'unavailable', 409)
+        key, original_hash = self._request(body, tuple(body))
+        request_hash = original_hash if request_hash is None else request_hash
+        approved_sha = body['expected_digest'] if approval_material_sha256 is None else approval_material_sha256
+        if type(approved_sha) is not str or not re.fullmatch('[a-f0-9]{64}',approved_sha):
+            raise WorkbenchError('Exact approved material SHA256 is required.')
+        graph = captured['graph']
+        if approval_material_sha256 is not None:self._approved_composition(approved_sha,graph,captured['material_sha256'])
+        spec = dict(captured['spec'], attempt_id=run_id, request_sha256=request_hash)
+        import recipe_contract
+        if (digest(captured['material']) != body['expected_digest'] or
+                captured['material_sha256'] != body['expected_digest'] or
+                captured['material']['graph_execution_sha256'] != execution_digest(graph)):
+            raise WorkbenchError('Prepared execution identity differs.', 'stale', 409)
+        self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
+        extension_context=None
+        if recipe_contract.is_evidence(captured['material']['recipe']):
+            if approval_material_sha256 is None:
+                raise WorkbenchError('Model evidence requires the complete Study composition grant.','unsupported',409)
+            import extension_evidence
+            composition=self._approved_composition(approved_sha,graph,captured['material_sha256'])
+            static=self.pipelines._retained_extension_static(composition)
+            extension_context=extension_evidence.context(static,composition['ref'],run_id,request_hash)
+            path=staging/extension_evidence.CONTEXT_PATH
+            with path.open('xb') as output:
+                output.write(extension_evidence.canonical(extension_context));output.flush()
+                os.fchmod(output.fileno(),0o400);os.fsync(output.fileno())
+            _sync(path.parent);_sync(staging)
+            spec=dict(recipe_contract.spec_for_material(captured['material'],staging,context=extension_context),
+                      attempt_id=run_id,request_sha256=request_hash)
+        recipe_contract.validate_spec(captured['material'], spec, str(staging),context=extension_context)
+        # Captured/validated resource policy owns this bound. Check
+        # after both reconciliation opportunities, before consuming
+        # approval or persisting admission; failure uses normal cleanup.
+        if spec.get('resource_profile') == 'captured_cpu_large_outputs_v1':
+            required_bytes = 2 * spec['max_output_bytes'] + 1024**3
+            try:
+                available_bytes = shutil.disk_usage(self.path).free
+            except OSError as error:
+                raise WorkbenchError('Execution storage capacity is unavailable.', 'unavailable', 409) from error
+            if available_bytes < required_bytes:
+                raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
+        if check_current and self.pipelines._get(graph['id']) != graph:
+            raise WorkbenchError('Graph changed during capture.', 'stale', 409)
+        if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
+            raise WorkbenchError('The local queue is full (8 attempts).', 'unavailable', 409)
+        grant_id = body.get('approval_id')
+        if grant_id is None:
+            grant_id = self.access.grant_execution(approved_sha, context.actor_id)['id']
+        admission_id = self.access._consume_external_run(grant_id, approved_sha, run_id, request_hash)
+        run = {'schema_version': 1, 'mode': 'real', 'execution_kind': 'external_recipe',
+               'result_kind': 'external_recipe', 'id': run_id, 'dataset_id': self.db.dataset_id,
+               'request_key': key, 'request_sha256': request_hash, 'actor_id': context.actor_id,
+               'admission_id': admission_id, 'approval_id': grant_id,
+               'state': 'queued', 'created_at': timestamp(), 'started_at': None, 'finished_at': None,
+               'graph': graph, 'graph_revision': graph['revision'], 'graph_sha256': execution_digest(graph),
+               'graph_document_sha256': digest(graph), 'material': captured['material'],
+               'material_sha256': captured['material_sha256'], 'spec': spec,
+               'outputs': captured['outputs'], 'parameters': next(node['parameters'] for node in graph['nodes'] if node['type'] == 'execute'),
+               'attempt': parent['attempt']+1 if parent else 1, 'parent_run_id': parent['id'] if parent else None, 'events': [], 'artifacts': [], 'metrics': None,
+               'error': None, 'worker': None, 'custody_phase': 'prepared', 'custody_identity': None,
+               'custody_receipt_sha256': None, 'quality_claim': False,
+               'progress': {'stage': 'queued', 'completed': None, 'total': None},
+               'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if extension_context is not None:run['extension_context']=extension_context
+        if approval_material_sha256 is not None:
+            run['approval_material_sha256']=approved_sha
+        self._event(run, 'queued', 'Exact owner-approved external recipe admitted.')
+        self.db.execute('INSERT INTO workspace_runs(id,request_key,request_sha256,document) VALUES(%s,%s,%s,%s)',
+                        (run_id, key, request_hash, encode(run)))
+        self.access.audit('runs.admit_external', run_id, {'material_sha256': run['material_sha256'],
+                          'approved_material_sha256':approved_sha,'approval_id': grant_id, 'request_sha256': request_hash})
+        if wake_on_commit:
+            self.db.on_commit(lambda: self._wake_external(run_id))
+        return run
 
     def _external_directory(self, run):
         return self.path / ('.external-' + run['id'])
@@ -566,6 +753,8 @@ class Runs:
             run = self._load(run_id)
         if not self._external(run):
             raise WorkbenchError('Progress diagnostics require an external Run.', 'unsupported', 400)
+        from candidate_packages import authorize_transitive_inputs
+        authorize_transitive_inputs(self,run)
         result = {'schema_version':1, 'run_id':run['id'], 'state':run['state'],
                   'custody_phase':run['custody_phase'], 'evidence':'unavailable',
                   'streams':{'stdout':None,'stderr':None}, 'progress':None,
@@ -639,6 +828,11 @@ class Runs:
                                   'sha256':item['sha256'],'media_type':item.get('media_type','application/octet-stream')})
         finally:
             os.close(source_descriptor)
+        if self._extension(run):
+            import extension_evidence
+            from candidate_packages import authorize_material_inputs
+            authorize_material_inputs(self,run['material'])
+            self._verify_extension(destination,dict(run,artifacts=artifacts))
         receipt_raw = encode(receipt).encode()
         manifest = {'schema_version': 1, 'run_id': run['id'], 'material_sha256': run['material_sha256'],
                     'request_sha256': run['request_sha256'], 'custody_receipt_sha256': hashlib.sha256(receipt_raw).hexdigest(),
@@ -669,7 +863,7 @@ class Runs:
                 self._event(run, 'running', 'Starting the approved custodian; recipe waits behind its launch barrier.')
                 run['started_at'] = timestamp()
                 self._save(run)
-            if recipe_contract.host_identity() != run['material']['host_files']:
+            if recipe_contract.recipe_host_identity(run['material']['recipe']) != run['material']['host_files']:
                 raise WorkbenchError('Recipe host changed after approval. Reopen and review a new attempt.', 'stale', 409)
             handle = recipe_process.launch(run['spec'], self._external_directory(run) / 'custody')
             preparation_seconds = recipe_process.CPU_READY_SECONDS if 'cpu_snapshot' in run['spec'] else recipe_process.READY_SECONDS
@@ -744,6 +938,8 @@ class Runs:
     def _external_inventory(self, run):
         import recipe_process
         import recipe_contract
+        from candidate_packages import authorize_transitive_inputs
+        authorize_transitive_inputs(self,run)
         directory = self.path / run['id']
         descriptor = None
         try:
@@ -789,6 +985,12 @@ class Runs:
                 info = os.stat(item['name'], dir_fd=descriptor, follow_symlinks=False)
                 if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size != item['bytes']:
                     raise ValueError('Artifact inventory changed.')
+            if self._extension(run):
+                import extension_evidence
+                # All download/segment/capture/summary accessors share this
+                # structural gate and current transitive input authorization.
+                for item in run['artifacts']:self._copy_verified(descriptor,item['name'],item)
+                self._verify_extension(directory,run)
             return run['artifacts']
         except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
             raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
@@ -970,11 +1172,11 @@ class Runs:
             self._start()
         return receipt
 
-    def _admit(self, key, request_hash, graph, validation, release, parent=None):
+    def _admit(self, key, request_hash, graph, validation, release, parent=None, *, run_id=None, composition=None):
         queued = sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs'))
         if queued >= 8:
             raise WorkbenchError('The local queue is full (8 attempts). Wait or cancel a queued attempt.', 'unavailable', 409)
-        run_id = uuid.uuid4().hex
+        run_id = run_id or uuid.uuid4().hex
         parameters = next((node['parameters'] for node in graph['nodes'] if node['type'] == 'train'), {})
         run = {'schema_version': 1, 'mode': 'real', 'id': run_id, 'dataset_id': self.db.dataset_id,
                'request_key': key, 'request_sha256': request_hash, 'state': 'queued',
@@ -993,6 +1195,20 @@ class Runs:
                'exposure_events': [], 'quality_claim': False,
                'progress': {'stage': 'queued', 'completed': None, 'total': None},
                'node_attempts': [{'node_id': node['id'], 'type': node['type'], 'state': 'pending'} for node in graph['nodes']]}
+        if model_aware_graph(graph):
+            owner = model_contract(graph)
+            model_sha = composition['ref']['sha256'] if composition else None
+            definition = owner.model_definition(parameters)
+            model_identity = composition['material']['model']['sha256'] if composition else digest(definition)
+            run['evidence_context'] = {'model_sha256':model_identity,
+                'material_sha256':model_sha or digest({'graph':graph,'runtime':validation['runtime'],'release':release['sha256']}),
+                'adapter_sha256':validation['runtime']['adapter_definition_sha256'],
+                'model_definition':definition,
+                'profile':owner.profile(self.db.dataset_id,model_identity,parameters,
+                    sum(row['split']=='validation' for row in release['manifest']['records']))}
+            run['evidence_context']['metric_definitions']=owner.metric_definitions(run['evidence_context'],release['manifest'])
+            if composition:
+                run.update(actor_id=self.access._context().actor_id, approval_material_sha256=model_sha)
         if self._validation_run(run):
             run.update(result_kind='release_validation', validation_summary=copy.deepcopy(release['validation_summary']))
         recipe = graph.get('recipe', 'image_classification')
@@ -1127,6 +1343,11 @@ class Runs:
                    'graph_sha256': run['graph_sha256'], 'release_id': run['release_id'],
                    'release_sha256': run['release_sha256'], 'release_path': release['path'],
                    'output_dir': str(output), 'parameters': run['parameters'], 'parent_pid': os.getpid()}
+            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+                job.update(schema_version=2,evidence_context=run['evidence_context'])
+            elif model_aware_graph(run['graph']):
+                from one_fit_evidence import job_for_run
+                job.update(job_for_run(run, output), parent_pid=os.getpid(), release_path=release['path'])
             job_path = stage / 'job.json'
             job_path.write_text(encode(job))
             definition_files = run['runtime']['definition_files']
@@ -1205,6 +1426,32 @@ class Runs:
             if process.returncode != 0:
                 raise WorkbenchError(f'CPU trainer exited with status {process.returncode}; no results were published.', 'failed', 409)
             artifacts, metrics = self._verify_directory(run, output)
+            if model_aware_graph(run['graph']):
+                # Only the owned pinned CPU subprocess may load retained state.
+                process.stdout.close()
+                command = [run['python'], str(worker_path), '--verify-evidence', str(job_path)]
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                           start_new_session=True, env=training_environment())
+                owner = process_identity(process.pid)
+                if owner is None:
+                    process.wait(timeout=10)
+                    raise WorkbenchError('Checkpoint verifier exited before custody was recorded.', 'failed', 409)
+                with self.lock,self.db.transaction():
+                    current=self._load(run_id);current['worker']=owner;current['worker_command']=command;self._save(current)
+                until=time.monotonic()+90
+                while process.poll() is None:
+                    with self.lock: current=self._load(run_id)
+                    if current['state']=='cancelling' or self._stop.is_set():
+                        self._drain(process,owner);self._finish(run_id,'cancelled','Checkpoint verification cancelled; no outputs published.');return
+                    if time.monotonic()>until:
+                        self._drain(process,owner);raise WorkbenchError('Checkpoint verifier exceeded its90-second bound.','failed',409)
+                    self._wake.wait(.1);self._wake.clear()
+                process.wait()
+                try:os.killpg(process.pid,0)
+                except ProcessLookupError:pass
+                else:raise WorkbenchError('Checkpoint verifier cessation is unknown.','unknown',409)
+                if process.returncode:
+                    raise WorkbenchError('Retained checkpoints failed independent fixed-probe reconstruction.','failed',409)
             for path in output.iterdir():
                 with path.open('rb') as handle:
                     os.fsync(handle.fileno())
@@ -1391,6 +1638,12 @@ class Runs:
     def _payloads(self, run):
         if self._validation_run(run):
             return release_validation.PAYLOADS
+        if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+            import model_evidence
+            return model_evidence.payload_names(run['parameters']['epochs'])
+        if model_aware_graph(run['graph']):
+            from one_fit_evidence import payload_names
+            return payload_names()
         return PAYLOADS if adapter_for_graph(run['graph']) is image_training else PAYLOADS - {'checkpoint.pt'} | {'model.json'}
 
     def _reference_keys(self, run):
@@ -1404,6 +1657,7 @@ class Runs:
         if directory.is_symlink() or not directory.is_dir():
             raise WorkbenchError('Published artifact directory is unavailable.', 'unavailable', 409)
         payload_names = self._payloads(run)
+        one_fit = model_aware_graph(run['graph']) and adapter_for_graph(run['graph']) is not image_training
         paths = list(directory.iterdir())
         if {path.name for path in paths} != payload_names | {'artifact-manifest.json'} or any(path.is_symlink() or not path.is_file() for path in paths):
             raise WorkbenchError('Artifact files do not match the closed result contract.', 'unavailable', 409)
@@ -1416,30 +1670,32 @@ class Runs:
             if manifest['schema_version'] != 1 or manifest['source_identity'] != self._identity(run) or manifest['adapter'] != run['adapter']:
                 raise ValueError('Artifact identity mismatch.')
             artifacts = manifest['artifacts']
-            if len(artifacts) != 5 or {item['name'] for item in artifacts} != payload_names:
+            if len(artifacts) != len(payload_names) or {item['name'] for item in artifacts} != payload_names:
                 raise ValueError('Artifact inventory mismatch.')
             payloads = {}
             for item in artifacts:
                 closed(item, ('name', 'sha256', 'bytes', 'media_type', 'split'))
-                expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'] in ('metrics.json', 'predictions-validation.json') else None
+                expected_split = 'test' if item['name'] in TEST_FILES else 'validation' if item['name'] in ('metrics.json', 'predictions-validation.json') or item['name'].startswith('probes-epoch-') else None
+                if one_fit and item['name'] in ('probe.json', 'probe-inputs.json', 'probes-fit-0001.json', 'observations.json'):
+                    expected_split = 'validation'
                 expected_media = 'application/json' if item['name'].endswith('.json') else 'application/octet-stream'
                 if item['split'] != expected_split or item['media_type'] != expected_media:
                     raise ValueError('Artifact media type or split differs from its declared role.')
                 contents = (directory / item['name']).read_bytes()
                 if type(item['bytes']) is not int or len(contents) != item['bytes'] or hashlib.sha256(contents).hexdigest() != item['sha256']:
                     raise ValueError('Artifact hash mismatch.')
-                if item['name'].endswith('.json'):
-                    payload = json.loads(contents)
+                if item['name'].endswith('.json') and item['name'] in PAYLOADS - {'checkpoint.pt'} | {'model.json'}:
+                    payload = image_training._json(contents,'Training artifact')
                     if payload['schema_version'] != 1 or payload['source_identity'] != self._identity(run) or payload['adapter'] != run['adapter']:
                         raise ValueError('Artifact source identity mismatch.')
                     payloads[item['name']] = payload
             metrics = payloads['metrics.json']
             closed(metrics, ('schema_version', 'source_identity', 'adapter', 'parameters', 'transform', 'class_vocabulary',
-                             'class_to_idx', 'validation', 'history', 'best_epoch', 'runtime'))
+                             'class_to_idx', 'validation', 'runtime', *(['clocks'] if one_fit else ['history', 'best_epoch'])))
             self._vocabulary(run, metrics)
             if any(metrics['runtime'].get(key) != value for key, value in run['runtime']['runtime'].items()):
                 raise ValueError('Executed runtime differs from the admission fingerprint.')
-            if metrics['parameters'] != run['parameters'] or metrics['transform'] != adapter_for_graph(run['graph']).TRANSFORM:
+            if metrics['parameters'] != run['parameters'] or metrics['transform'] != (image_training.transform_for_parameters(run['parameters']) if run['graph'].get('recipe') == image_training.MODEL_RECIPE else adapter_for_graph(run['graph']).TRANSFORM):
                 raise ValueError('Default metrics are inconsistent or disclose test results.')
             if adapter_for_graph(run['graph']) is not image_training:
                 adapter = adapter_for_graph(run['graph'])
@@ -1448,16 +1704,17 @@ class Runs:
                 if model['parameters'] != run['parameters'] or model['transform'] != adapter.TRANSFORM:
                     raise ValueError('JSON model differs from the admitted recipe.')
             self._metric(metrics['validation'], 'validation', run)
-            if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= self._fit_count(run):
-                raise ValueError('Selected checkpoint epoch is invalid.')
-            if not isinstance(metrics['history'], list) or len(metrics['history']) != self._fit_count(run):
-                raise ValueError('Training history does not contain the admitted epoch count.')
-            for epoch, entry in enumerate(metrics['history'], 1):
-                closed(entry, ('epoch', 'training_loss', 'validation'))
-                if (type(entry['epoch']) is not int or entry['epoch'] != epoch or type(entry['training_loss']) not in (int, float)
-                        or not 0 <= entry['training_loss'] <= 1e12 or not math.isfinite(entry['training_loss'])):
-                    raise ValueError('Training history is invalid.')
-                self._metric(entry['validation'], 'validation', run)
+            if not one_fit:
+                if type(metrics['best_epoch']) is not int or not 1 <= metrics['best_epoch'] <= self._fit_count(run):
+                    raise ValueError('Selected checkpoint epoch is invalid.')
+                if not isinstance(metrics['history'], list) or len(metrics['history']) != self._fit_count(run):
+                    raise ValueError('Training history does not contain the admitted epoch count.')
+                for epoch, entry in enumerate(metrics['history'], 1):
+                    closed(entry, ('epoch', 'training_loss', 'validation'))
+                    if (type(entry['epoch']) is not int or entry['epoch'] != epoch or type(entry['training_loss']) not in (int, float)
+                            or not 0 <= entry['training_loss'] <= 1e12 or not math.isfinite(entry['training_loss'])):
+                        raise ValueError('Training history is invalid.')
+                    self._metric(entry['validation'], 'validation', run)
             closed(payloads['test-metrics.json'], ('schema_version', 'source_identity', 'adapter', 'split', 'metrics'))
             if payloads['test-metrics.json']['split'] != 'test':
                 raise ValueError('Test metrics have the wrong split.')
@@ -1467,6 +1724,12 @@ class Runs:
                 expected_metric = metrics['validation'] if split == 'validation' else payloads['test-metrics.json']['metrics']
                 if matrix != expected_metric['confusion_matrix']:
                     raise ValueError('Per-example predictions disagree with the reported confusion matrix.')
+            if run['graph'].get('recipe') == image_training.MODEL_RECIPE:
+                import model_evidence
+                model_evidence.verify(directory,run,metrics)
+            elif one_fit:
+                import one_fit_evidence
+                one_fit_evidence.verify(directory,run,metrics)
             inventory = copy.deepcopy(artifacts)
             inventory.append({'name': 'artifact-manifest.json', 'sha256': hashlib.sha256(manifest_bytes).hexdigest(),
                               'bytes': len(manifest_bytes), 'media_type': 'application/json', 'split': None})
@@ -1560,7 +1823,35 @@ class Runs:
         with self.lock:
             run = self._load(run_id)
         if not self._external(run):
-            raise WorkbenchError('Scientific import requires a completed external Run.', 'unsupported', 400)
+            if run.get('graph', {}).get('recipe') != 'image_classification_model_v2':
+                raise WorkbenchError('Capture requires a qualified classifier evidence or external Run.', 'unsupported', 400)
+            if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
+                raise WorkbenchError('Invalid artifact input byte bound.')
+            if name == 'release.zip':
+                raise WorkbenchError('Mixed private/protected releases are not model evidence inputs.', 'unsupported', 409)
+            artifacts = self._verified_artifacts(run)
+            item = next((item for item in artifacts if item['name'] == name), None)
+            if item is None or item['bytes'] > max_bytes:
+                raise WorkbenchError('Classifier artifact is unavailable or exceeds its capture bound.', 'unavailable', 409)
+            if item['sha256'] != expected_sha256:
+                raise WorkbenchError('Artifact differs from expected SHA256.', 'conflict', 409)
+            raw, _media_type = self.artifact(run_id, name)
+            manifest_raw = self._read_regular(self.path / run_id / 'artifact-manifest.json', 65536)
+            context = run['evidence_context']
+            source = {'schema_version': 2, 'kind': 'builtin_classifier_publication_v1',
+                'catalog_id': run['dataset_id'], 'run_id': run_id, 'request_sha256': run['request_sha256'],
+                'material_sha256': context['material_sha256'], 'graph_sha256': run['graph_sha256'],
+                'release_sha256': run['release_sha256'], 'adapter_sha256': context['adapter_sha256'],
+                'artifact_name': name, 'artifact_role': 'model_evidence', 'artifact_bytes': len(raw),
+                'measured_sha256': hashlib.sha256(raw).hexdigest(),
+                'artifact_manifest_sha256': hashlib.sha256(manifest_raw).hexdigest(),
+                'artifact_manifest_base64': base64.b64encode(manifest_raw).decode('ascii'),
+                'population': 'test' if name in TEST_FILES else 'validation' if item.get('split') == 'validation' else 'train'}
+            try:
+                recipe_process.validate_artifact_source(source, expected_sha256, len(raw))
+            except recipe_process.ProcessError as error:
+                raise WorkbenchError('Classifier publication source differs.', 'unavailable', 409) from error
+            return raw, source
         if type(max_bytes) is not int or not 0 < max_bytes <= MAX_ARTIFACT_BYTES:
             raise WorkbenchError('Invalid artifact input byte bound.')
         item = self._selected_external(run, name, max_bytes=max_bytes)
@@ -1592,9 +1883,9 @@ class Runs:
     def artifact_segment(self, run_id, name, body):
         """Read a bounded segment; only the client can verify the whole digest.
 
-        This new, explicitly weaker read contract does not change artifact(),
-        open_artifact() or capture_artifact() and never spools/hashes all payloads.
-        Every call rechecks credentials and retained completed custody.
+        Every call rechecks credentials. External Runs use retained custody;
+        qualified built-ins verify their complete published evidence inventory.
+        The returned segment still requires client-side whole-hash verification.
         """
         closed(body, ('expected_sha256', 'offset', 'max_bytes'))
         expected = body['expected_sha256']
@@ -1609,12 +1900,18 @@ class Runs:
             raise WorkbenchError('Artifact segment requires a declared flat output name.')
         with self.lock:
             run = self._load(run_id)
-        if not self._external(run):
-            raise WorkbenchError('Artifact segments support completed external Runs only.', 'unsupported', 400)
-        inventory = self._external_inventory(run)
+        if self._external(run):
+            inventory = self._external_inventory(run)
+        else:
+            adapter = adapter_for_graph(run['graph'])
+            if run['graph'].get('recipe') != getattr(adapter, 'MODEL_RECIPE', None):
+                raise WorkbenchError('Artifact segments require a qualified model-evidence or external Run.', 'unsupported', 400)
+            if name in TEST_FILES and not run['exposure_events']:
+                raise WorkbenchError('Record an explicit test-set exposure before opening test results.', 'conflict', 409)
+            inventory = self._verified_artifacts(run)
         item = next((item for item in inventory if item['name'] == name), None)
         if item is None:
-            raise WorkbenchError('Unknown external artifact.', 'unavailable', 404)
+            raise WorkbenchError('Unknown published artifact.', 'unavailable', 404)
         if item['sha256'] != expected:
             raise WorkbenchError('Artifact differs from the expected whole SHA256.', 'conflict', 409)
         if offset > item['bytes']:
@@ -1669,10 +1966,6 @@ class Runs:
             if len(raw) != item['bytes'] or hashlib.sha256(raw).hexdigest() != item['sha256']:
                 raise WorkbenchError('Artifact changed during read.', 'unavailable', 409)
             return raw, item['media_type']
-        if name not in PAYLOADS | release_validation.PAYLOADS | {'model.json', 'artifact-manifest.json', 'release.zip'}:
-            raise WorkbenchError('Unknown run artifact.', 'unavailable', 404)
-        with self.lock:
-            run = self._load(run_id)
         if name not in self._payloads(run) | {'artifact-manifest.json', 'release.zip'}:
             raise WorkbenchError('Unknown artifact for this recipe.', 'unavailable', 404)
         if name == 'release.zip':
@@ -1732,6 +2025,100 @@ class Runs:
             except WorkbenchError:
                 row['current_record'] = {'id': row['id'], 'status': 'unavailable'}
         return result
+
+    @authorized('inspect', 'runs.model_evidence')
+    def model_evidence(self, run_id, body=None, *, contract_version=None):
+        body={} if body is None else body
+        with self.lock:run=self._load(run_id)
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2)):
+            raise WorkbenchError('Unsupported model evidence query contract.','unsupported',409)
+        if self._extension(run):
+            self._external_inventory(run)
+            if contract_version==1:
+                closed(body,(),('checkpoint_sha256',))
+                return {'state':'unsupported','reason':'Scientific field evidence requires its explicit selected query contract.'}
+            import extension_evidence
+            return extension_evidence.query(self._verify_extension(self.path/run_id,run),body)
+        if contract_version==2:
+            closed(body,(),('checkpoint_sha256','split'))
+            if body.get('split','validation')!='validation':
+                raise WorkbenchError('Model evidence only supports validation queries.','unsupported',409)
+            body={key:value for key,value in body.items() if key!='split'}
+        closed(body,(),('checkpoint_sha256',))
+        selected=body.get('checkpoint_sha256')
+        if selected is not None and (type(selected) is not str or not re.fullmatch('[a-f0-9]{64}',selected)):
+            raise WorkbenchError('Checkpoint selection requires its descriptor SHA256.')
+        with self.lock:run=self._load(run_id)
+        if not model_aware_graph(run['graph']):
+            return {'state':'unsupported','reason':'This retained adapter did not capture model_evidence_v1.'}
+        self._verified_artifacts(run)
+        import model_evidence
+        if adapter_for_graph(run['graph']) is image_training:
+            evaluator = model_evidence
+        else:
+            import one_fit_evidence as evaluator
+        result,descriptors,predictions=evaluator.verify(self.path/run_id,run,run['metrics'])
+        result.update(checkpoint=None,predictions=None,metric_definition_hashes={item['id']:model_evidence.digest(item) for item in result['metric_definitions']})
+        if selected is not None:
+            entries=result['checkpoint_index']['entries']
+            match=[i for i,item in enumerate(entries) if item['checkpoint']['sha256']==selected]
+            if not match:raise WorkbenchError('Checkpoint does not belong to this Run.','not_found',404)
+            result.update(checkpoint=descriptors[match[0]],predictions=predictions[match[0]])
+        return result
+
+    @authorized('inspect', 'runs.compare_model_evidence')
+    def compare_model_evidence(self, run_id, other_run_id, body=None):
+        import model_evidence
+        identifier(other_run_id,'Comparison Run ID')
+        evidence=[self.model_evidence(item) for item in (run_id,other_run_id)]
+        if body is not None:
+            closed(body,('checkpoint_sha256','other_checkpoint_sha256','evaluation_sha256','other_evaluation_sha256',
+                         'metric_id','metric_definition_sha256','other_metric_definition_sha256','mode'))
+            if body['mode'] not in ('paired','side_by_side'):
+                raise WorkbenchError('Choose paired or side_by_side comparison mode.')
+            text_value(body['metric_id'],'Metric ID',64)
+            for key,value in body.items():
+                if key.endswith('sha256') and (type(value) is not str or not re.fullmatch('[a-f0-9]{64}',value)):
+                    raise WorkbenchError('Comparison identities require exact SHA256 values.')
+            if any(value['state']!='verified' for value in evidence):
+                raise WorkbenchError('Exact comparison requires verified checkpoint evidence.','unsupported',409)
+            with self.lock:
+                for index,selected_id in enumerate((run_id,other_run_id)):
+                    selected_run=self._load(selected_id)
+                    item=next((artifact for artifact in selected_run['artifacts'] if artifact['name']=='model-evidence.json'),None)
+                    expected=body[('other_' if index else '')+'evaluation_sha256']
+                    if item is None or item['sha256']!=expected:
+                        raise WorkbenchError('Exact comparison evaluation snapshot differs.','stale',409)
+            try:return model_evidence.compare_evidence(evidence,[run_id,other_run_id],body)
+            except (ValueError,KeyError,TypeError) as error:
+                raise WorkbenchError('Exact comparison refused: '+str(error)[:200],'invalid',409) from None
+        reasons=[];metrics=[]
+        if any(item['state']!='verified' for item in evidence):
+            reasons.append('Both Runs require verified model_evidence_v1.')
+        else:
+            left,right=evidence
+            if left['manifest']['task']['sha256']!=right['manifest']['task']['sha256']:
+                reasons.append('Task semantics differ.')
+            if left['model_definition']['preprocessing_policy']!=right['model_definition']['preprocessing_policy']:
+                reasons.append('Preprocessing policies differ.')
+            if left['model_definition']['output_policy']!=right['model_definition']['output_policy']:
+                reasons.append('Output policies differ.')
+            if sorted((model_evidence.canonical(item['frozen_reference']) for item in left['probe']['members'])) != sorted(
+                    model_evidence.canonical(item['frozen_reference']) for item in right['probe']['members']):
+                reasons.append('Frozen validation membership differs.')
+            with self.lock:
+                runs=[self._load(item) for item in (run_id,other_run_id)]
+            if runs[0]['metrics']['class_vocabulary']!=runs[1]['metrics']['class_vocabulary']:
+                reasons.append('Frozen class vocabulary or order differs.')
+            if left['metric_definitions']!=right['metric_definitions']:
+                reasons.append('Metric semantics or validation population differ.')
+            if not reasons:
+                for definition in left['metric_definitions']:
+                    metrics.append({'metric_id':definition['id'],'values':[run['metrics']['validation'][definition['id']] for run in runs],
+                                    'direction':definition['direction'],'units':definition['units']})
+        return {'state':'incompatible' if reasons else 'compatible','run_ids':[run_id,other_run_id],
+                'reasons':reasons,'metrics':metrics}
+
 
     def close(self):
         self._closed = True

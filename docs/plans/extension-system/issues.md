@@ -1,12 +1,14 @@
 # Extension-system issues and dispositions
 
-## I1 — PR62 production seams are not implemented evidence
+## I1 — PR62 design alone is not production evidence
 
 - Severity: high for product activation; no blocker to the plan.
 - Evidence: pinned PR62 D4 identifies documentation design and future P1–P6 work.
 - Owner/boundary: registry/model/evidence/Run implementation owners.
 - Disposition: E2 requires accepted P1/P2/P3 and P4 generic field evidence; E4 package
-  claims require accepted P5. No implicit prerequisite implementation in extension slices.
+  claims require accepted P5. P1–P6 implementations are now merged and qualified
+  at their recorded sources; current remaining extension work is tracked in I7.
+  Historical design acceptance alone is never implementation proof.
 - Verification: actual source/qualification receipts before dependent slice admission.
 - Revisit trigger: PR62 integration or implementation changes these seams.
 
@@ -19,24 +21,36 @@
   record is historical only. Do not claim a fresh consultation or upgrade.
 - Verification: source/template structure and independent plan review.
 
-## I3 — Product runtime/numerical/cost evidence remains pending
+## I3 — Executable extension runtime/numerical/cost qualification
 
-- Severity: high for X2/X3 activation.
+- Severity: qualification boundary; the named CPU X2/X3 witnesses are complete.
 - Owner/boundary: qualified captured CPU runtime and model/evidence owners.
-- Disposition: E2 real producer/consumer/custody/cost gate; capability stays unavailable
-  until it passes. Fixtures cannot close physical-model or unsupported runtime claims.
-- Verification: exact captured runtime, actual checkpoints/probes, independent oracle,
-  receipt-backed publication, measured selected profile bounds and cold inspection.
-- Revisit trigger: actual runtime availability or profile/workload incompatibility.
+- Disposition: PR76 retains actual canonical A source/cold/numerical/custody and
+  finite-cost evidence on exact 0b runtime. The separate main 50502
+  [canonical A](reports/canonical-a-50502-qualification.md),
+  [independent B](reports/independent-b-50502-qualification.md) and
+  [independent B cold consumer](reports/independent-b-actual-cold-consumer.md)
+  also passed. B source/mask inputs, 32/64 checkpoints and raw/corrected stages
+  were exercised under an unchanged 149-file application freeze. Its original
+  tests-only oracle/recovery failures remain preserved; no admission retry or
+  core numerical edit was used to close them.
+- Verification: exact runtime/source identities, actual checkpoints/probes,
+  independent oracles, retained whole bytes and finite envelopes are in those
+  receipts. Runtime portable manifest and full composition descriptor are distinct.
+  Synthetic fixtures still do not qualify physics, generalization or hardware.
+- Prerequisite evidence: PR68/69 pressure/runtime and authored scalar preparation
+  remain historical prerequisites, not substitutes for the later E2 path.
+- Revisit trigger: a new runtime/profile/workload or changed numerical meaning.
 
 ## I4 — Documentation lifecycle and local integration
 
 - Severity: medium; no application risk in this draft.
 - Owner/boundary: primary documentation integration owner.
-- Disposition: after reviewed local documentation commit, mark M0 accepted; retain overall
-  product plan Planned/partial with E1 as the next separately authorized slice. Never mark product X1–X5 satisfied from docs.
+- Disposition: M0 is accepted and X1–X5 have named reviewed functional witnesses.
+  Overall selected implementation acceptance is satisfied after final composed
+  review, exact-head PR78 CI and lead integration. Current evidence is in I7.
 - Verification: adopted plan structural check plus lifecycle/authority review in executor.
-- Resolution: independent review/checks passed and local material commit
+- Historical M0 resolution: independent review/checks passed and local material commit
   `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` was verified; M0 Accepted,
   product Planned/partial and E1 unstarted. No push.
 - Revisit trigger: new scope/authority or actual product slice admission.
@@ -51,7 +65,12 @@
   validation, quiesced pre-v2 backup/pairing and rollback into a new destination.
   Do not claim old binary refuses a saved v2 row; no live downgrade or DDL assumed.
 - Revisit: requirement for machine enforcement or failure of actual restore;
-  re-plan Metadata before v2 use. Product verification remains pending E1/E4.
+  re-plan Metadata before v2 use. E1 reader/counterexample/quiesced backup/restore
+  witnesses passed. Later [A/B stopped restore and retained-state proofs](reports/e4-ab-final-qualification.md)
+  also passed, including original-source parity and complete A package/fresh
+  reconstruction. These do not change the unsupported old-binary pairing or
+  stand in for the separately qualified new agent-authoring path or final
+  composed CI.
 
 ## I6 — SDK and host need one complete validation authority
 
@@ -61,17 +80,72 @@
   lock; E3 exact source-captured copies/hash/corpus conformance. Existing
   jsonschema4.26.0 closure is separately provisioned. Missing validator reports
   unavailable without importing app/DB/Torch or installing at startup.
+- Current additional proof: six inert image/text/audio/mesh/points/volume
+  descriptor families at `4f2c45a`, 8 focused plus 24 existing SDK/catalog cases,
+  independently reviewed under SHA256
+  `80e219b4b3e264e7653ad83409fd69e5b75cac0c66455051b8499b39b6564980`.
+  Shared projections, authored bounds, malformed/dependency refusals and inert
+  metadata fallback are covered; no new trainer, renderer or numerical meaning
+  follows. Ordinary workflow regression remains its separate inherited gate.
 - Revisit: unsupported keyword, divergent interpretation or new schema consumer.
 
-## I7 — E1 integration and later executable prerequisites
+## I7 — Accepted implementation and final integration
 
-- Owner: lead thread01a13f2b-3678-73df-8bce-2f57a04de00b for all merges/shared files.
-- E1 static schemas/catalog/HTTP/UI and real local checks implemented; independent
-  review fixes applied. Exact-head CI and lead serial app.py integration remain.
-- P1 capabilities/operation negotiation is in progress, not accepted in observed
-  main d788e08. E1 new routes are owner-only/unregistered; legacy operations stay
-  v1-only. No agent execution is added. E2 awaits P1–P3/P4 generic evidence; E4 P5.
-- Current light stylesheet is unchanged because the lead owns shared visual work;
-  dark theme is not claimed by E1 browser receipts. Revisit at P3 integration.
-- No actual extension CPU numerical, hardware, fresh inference or complete Run
-  restore gate is satisfied by the authored inspection fixtures.
+- Current integration: [PR78](https://github.com/MrScripty/Tuldok/pull/78), checked
+  implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b`, merged by the lead as
+  `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at `2026-10-16T06:18:08Z`.
+  All five exact-head checks and final composed review are recorded in the
+  [plan acceptance](plan.md#final-acceptance) and product status. Earlier local
+  receipt identities remain exact; a metadata follow-up does not inherit CI.
+- P1–P6 are implemented, qualified at their named sources and merged. The original
+  E1 browser/HTTP inspection remains accepted with its narrow scope. Legacy v1
+  grammar/projections and the old-binary/new-v2-store restriction are unchanged.
+- Normal SDK admission passed for canonical A and independently authored B using
+  owner-prepared exact Trials. The distinct ordinary-agent workflow is now
+  qualified after [PR86](https://github.com/MrScripty/Tuldok/pull/86) source
+  `da9f57d8` review and actual frozen host `e1bc02a`. The agent authored Model,
+  graph and Trial through official CLI/MCP/negotiated operations; the owner
+  supplied the finite Study and one exact grant. Run
+  `ae5cc100fcb84c59932cedc3cba60bdb` completed with 32 whole artifacts.
+  The original post-SDK context-key failure is preserved; reviewed recovery
+  `16c1165` settled the existing reservation and passed rootless cold/oracle/
+  current-revocation checks without another admission or training.
+  [Qualification and sanitized proof](reports/main505-agent-authoring-qualification.md)
+  bind recovery SHA256
+  `d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+  Earlier 12-case/pre-correction observations remain historical in the ledger.
+- PR76 at `6da68df` retains the exact 0b A source/package/separate-verifier and
+  masked-consumer witnesses. Its three settled slots / 771 seconds / 55,405,809
+  retained bytes / 102,988,554 staging bytes are unchanged, with no amendment.
+  The distinct main 50502 A Study has three settled slots / 771 seconds /
+  55,405,825 retained bytes / 102,988,586 staging bytes. Do not substitute one
+  runtime/catalog receipt for the other.
+- Main 50502 B actual source/cold and frozen `311431e` independent consumer
+  passed. Original A/B stages, shared stopped backup/restore, cross-material grant
+  refusal, current-access revocation, disabled/removed B selection, official
+  HTTP/CLI/MCP, one unrelated classifier and 44 restored native captures passed.
+  The final bookend SHA256
+  `1589d5396ca45e5ec8758029288ea9a228d9f54e9b3ed7426ee748b3bb953cc6`
+  keeps all original source state unchanged and restored 39 domain tables equal
+  to the classifier-recovery boundary. [Shared matrix](reports/e4-ab-final-qualification.md)
+  preserves its partial overall-acceptance disposition; the core's historical
+  `rootless_retention_verified_disable_pending` state is not rewritten.
+- The later canonical A package/fresh-verifier UI at `00865e9` is implemented and
+  its two actual owner-browser journeys completed 56 captures. Final independent
+  review SHA256 is
+  `d26dbef42c29e3745686a388a43c33b2401822e8a56207c82f855bb433ceb1f2`;
+  whole ZIP, selected verifier and all retained counts agree. B remains honestly
+  unsupported for packaging. The late source proves 144 prior application files
+  unchanged plus five explicit UI/backend deltas; it does not retrofit the earlier
+  exact 149-file or later 148-plus-one proofs. Its [separate report](reports/native-external-package-evidence.md)
+  is sealed at `6905fc8`; the real selected-read/revocation regression at
+  `c0efd4f` has independent review SHA256
+  `d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
+  This proof is composed into the accepted implementation.
+- Corpus `4f2c45a` closes the descriptor-envelope fixture obligation only (I6).
+  Named functional qualification, exact-head composed CI, independent composed
+  review and lead acceptance are complete. Earlier immutable E4/shared-matrix
+  partial dispositions retain their historical scope.
+- Pressure physical result remains 0/16; periodic pressure checkpoints/probes,
+  protected scientific test, unsupported hardware and redistribution are not
+  passed or silently added requirements.

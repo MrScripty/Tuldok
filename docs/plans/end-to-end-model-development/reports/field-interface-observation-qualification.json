@@ -1,0 +1,90 @@
+{
+  "format": "field_interface_observation_qualification_v1",
+  "state": "passed",
+  "scope": "Actual retained private QA scalar A field query; no new execution admission or numerical/physical/product acceptance.",
+  "producer_host_commit": "91e1a6ee2d7c0f470ff5c5aaf844d7e5d428cab4",
+  "parity_source_commit": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+  "host_runtime_files_identical": {
+    "app.py": "a99293b8efab6a281805cdf6e85da7cbb862c0341b07d190489b175b75bc53b7",
+    "agent_api.py": "987e45b889337e92b7ad575c4e3eb7bbc7cbfd46d7f685d3033f341cf1aa102c",
+    "project_cli.py": "64ebe8544da5b83f46d3025ef02c1bcd79aeb055b7c93a4b67cdf90023c1a15c",
+    "mcp_stdio.py": "e3b45393186149a3be060d95d98b73121700408b93a893034088a30741e67980",
+    "mcp_observer.py": "f138c2bb20cb2677e46ce1a96637971efbc5a7c6975113c1177e104c766512ab",
+    "extension_evidence.py": "690eb37c26491409be51aa2bda34cc991caaf9778916b506c0a1d6503dd9ff86",
+    "metadata.py": "8b1878aefd2f6857a48d69ddfe0ae2c84db8e20dc2ee2fd3f58b48b83678955e",
+    "access.py": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4"
+  },
+  "source_delta_scope": [
+    "private QA inference-v2 example files",
+    "qualification legacy-refusal test fixture",
+    "retained qualification reports"
+  ],
+  "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "operation": "runs.model_evidence",
+  "contract_version": 2,
+  "contract_sha256": "48c1b942f8e7a102a83bf63806fb425576690f4bfbca841203d54edbca4a59f9",
+  "interfaces_full_result_equal": [
+    "agent_http",
+    "cli_disabled",
+    "cli_healthy",
+    "cli_corrupt",
+    "mcp_disabled",
+    "mcp_healthy",
+    "mcp_corrupt"
+  ],
+  "cli_success_stderr": "empty in disabled/healthy/corrupt modes",
+  "disabled_observation": "No CLI or MCP database created.",
+  "corrupt_observation": "CLI and MCP sentinel bytes remained unchanged; successful field results equal disabled mode.",
+  "domain_counts_before": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "domain_counts_after": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "private_operator_readers": {
+    "http.sqlite": {
+      "state": "healthy",
+      "schema_version": 2,
+      "retained_starts": 28,
+      "retained_terminals": 28,
+      "unfinished": 0
+    },
+    "healthy-cli.sqlite": {
+      "state": "healthy",
+      "schema_version": 2,
+      "retained_starts": 1,
+      "retained_terminals": 1,
+      "unfinished": 0
+    },
+    "healthy-mcp.sqlite": {
+      "state": "healthy",
+      "schema_version": 2,
+      "retained_starts": 3,
+      "retained_terminals": 3,
+      "unfinished": 0
+    }
+  },
+  "private_store_exclusions_checked": [
+    "credential material",
+    "original project absolute path",
+    "Run identity",
+    "checkpoint identity",
+    "probe input identity",
+    "probe target identity"
+  ],
+  "private_store_identity_scan": "absent in all healthy passive SQLite stores",
+  "observer_selection": "every field interaction retained exact selected operation version 2 and contract SHA",
+  "result_sha256": "56b89cc900ed90d3ebb82308e450c4e7a8cf75ba364d643ca3a8a7fd506fe9a3",
+  "cleanup": "Independent read-only credential revoked, owner session logged out, and HTTP/MCP child processes closed.",
+  "acceptance_limits": [
+    "This is retained-field interface and passive observation qualification.",
+    "The read-only agent has inspect scope only and cannot admit execution.",
+    "Numerical, physics, canonical-release and broad product acceptance are not evaluated here."
+  ]
+}

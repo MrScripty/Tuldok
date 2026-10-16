@@ -1,0 +1,72 @@
+{
+  "state": "passed",
+  "scope": "Actual retained source/context/profile/Task/legacy-admission negatives; no new execution or public contract2/UI claim",
+  "host_commit": "a55a32188239dd90f8a6fc4be32a1644390277ae",
+  "driver_sha256": "c29ae9def8d7f736519c6eb4a083026b3abc928d3776fb26cb00b7e13b9f58c6",
+  "run_id": "29682a74c2c744548bba1e95e9cf212c",
+  "counts_before": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "counts_after": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "checks": [
+    {
+      "check": "New variant refuses executable-only legacy submission before grant consumption/Run/reservation",
+      "state": "passed"
+    },
+    {
+      "check": "Actual changed project source refuses retained-material preflight without admission effects",
+      "state": "passed"
+    },
+    {
+      "check": "Changed retained profile refuses material and actual cold Run reads",
+      "state": "passed"
+    },
+    {
+      "check": "whole artifact",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "stream artifact",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "artifact segment",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "artifact capture",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "model evidence query",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "Run input inventory",
+      "state": "unavailable; no artifacts"
+    },
+    {
+      "check": "scientific test selector",
+      "state": "refused",
+      "code": "unsupported"
+    },
+    {
+      "check": "Actual published wrong-Task Model refuses normal HTTP Study preparation before grant/reservation/Run",
+      "state": "passed"
+    }
+  ],
+  "all_original_artifacts_restored": true
+}

@@ -1,0 +1,48 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-mesh:reader",
+  "implementation": {
+    "entrypoint": "read",
+    "source": "mesh/mesh_worker.py"
+  },
+  "kind": "reader",
+  "label": "mesh inert source inventory sentinel",
+  "ports": [
+    {
+      "axes": [
+        "vertex",
+        "xyz"
+      ],
+      "contract": {
+        "id": "example.modality-mesh:vertices",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "vertices",
+      "units": "m"
+    },
+    {
+      "axes": [
+        "face",
+        "corner"
+      ],
+      "contract": {
+        "id": "example.modality-mesh:triangles",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "triangles",
+      "units": "vertex_index"
+    }
+  ],
+  "requires": [
+    {
+      "id": "example.modality-mesh:descriptor",
+      "sha256": "4329a6b5d3fb3e2c74ed4d2d28a4b4bcade0aa9409a3a7ec70b12eaeee8a2881",
+      "version": "1.0.0"
+    }
+  ],
+  "version": "1.0.0"
+}

@@ -291,3 +291,88 @@
   On this correction, the original plan structural checker, 15 Markdown files,
   268 local links, 129 anchors, HTML/table/fence structure, exact two-file scope
   and whitespace checks pass. No application test is implied by these checks.
+
+## 2026-10-16 — authorized product implementation
+
+- The user superseded the historical design-only pause with P1–P6/E1–E4
+  implementation, actual validation, parallel isolated work and serial merge
+  authority. The active integration lead preserves unrelated local branches.
+- P1/P2/P3/P6 are merged after independent review and exact-head CI. P4/P5 are
+  implemented and verifying; current source/CI identities and actual CPU,
+  browser, agent, correction, package and observation receipts are in
+  [the product implementation record](reports/product-implementation-status.md).
+- Main canonical A and independent B each completed one actual finite SDK source
+  attempt, independently checked numerical evidence and whole-artifact cold reads.
+  All149 decisive B application files still match the frozen host. Original
+  verification failures and accounting recovery remain preserved, without a
+  repeated SDK admission. Main canonical A package/fresh verifier and final A/B
+  native/restore/disable/continuity qualification continue; no milestone stop
+  or unavailable pressure/GPU/physics success is claimed.
+
+### Serial P4/P5 merge closeout
+
+- PR73 exact `1d621e8` passed full lifecycle/catalog/workspace CI, including real
+  classifier and one-fit text/audio browser gates. Merged as `61292e4` at
+  2026-10-16T00:56:14Z. PR75 was retargeted to main before the safely merged
+  P4 remote branch was deleted; local worktrees remain preserved.
+- PR75 exact `ed51510` passed all four checks, including actual captured-CPU
+  package/fresh-consumer qualification and full lifecycle. Merged as `9585f3c`
+  at01:02:57Z. No open PR depended on P5 before its remote branch was deleted.
+- Both main merges are composed into the extension branch without changing its
+  already qualified tree. The P1–P6 PRs are now merged; actual shared A/B
+  retention/client/disable/continuity and composed-extension CI remain in progress.
+
+### Extension functional qualification closeout; final integration remains open
+
+- P1–P6 are merged. Canonical A and independently authored B source/cold gates,
+  main A charged package/separate verifier/masked consumer and shared A/B
+  retention/official-client/disable/unrelated-classifier/native witnesses passed
+  at their recorded sources. The final shared bookend preserves original source
+  state and restored business state. Historical core pending and shared-matrix
+  overall-false receipts are unchanged.
+- The six-modality descriptor corpus `4f2c45a` passed 8 focused plus 24 existing
+  SDK/catalog cases, zero skips; independent review `80e219b4...` covers bounded
+  shared declarations and inert opaque metadata only. Ordinary workflow
+  execution remains supported by its separate actual/CI witnesses.
+- Late external package UI `00865e9` and report `6905fc8` are composed: 56 actual
+  captures, exact A ZIP/verifier, honest unsupported B packaging and unchanged
+  retained counts. The 144-plus-five source scope is separate from the old
+  149-file and 148-plus-one proofs.
+- The separately reviewed [ordinary-agent authoring qualification](../extension-system/reports/main505-agent-authoring-qualification.md)
+  now proves agent Model/graph/Trial authoring on frozen host `e1bc02a` and one
+  exact-grant SDK Run `ae5cc100fcb84c59932cedc3cba60bdb`, with 32 artifacts.
+  The initial post-SDK operator failure remains preserved. Same-Run recovery
+  `16c1165` settled the existing reservation and passed rootless cold, independent
+  oracle, stale-identity and current HTTP/CLI/MCP revocation checks; no new
+  admission or training occurred. Recovery receipt SHA256 is
+  `d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+  Final authority/accounting and artifact/oracle/source/cleanup reviews cleared.
+- Named extension functional gates are qualified; overall acceptance remains
+  partial pending independent composed review, exact-head
+  [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks) and lead
+  integration. No future CI, main merge, physical validity, useful-model quality,
+  new hardware capability or distribution right is claimed.
+
+### 2026-10-16 — Selected extension implementation accepted
+
+PR78 implementation head `29f535b5b8d43a5945d3cbd43017bdd8a33be36b` passed all five
+checks: [lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38855021995),
+[SDK](https://github.com/MrScripty/Tuldok/actions/runs/38855022003),
+[catalog](https://github.com/MrScripty/Tuldok/actions/runs/38855022034),
+[workspace UI](https://github.com/MrScripty/Tuldok/actions/runs/38855022023) and
+[captured CPU](https://github.com/MrScripty/Tuldok/actions/runs/38855021942).
+The integration lead merged it as `63b277ebe3a1d4403ef1c64e307b7ef4d7c490a2` at
+`2026-10-16T06:18:08Z`, after [final external source review](https://github.com/MrScripty/Tuldok/pull/86#issuecomment-6208731010) (review SHA256 `f1c128d4d3a78495f717df536b401484ab7b9822c75c4be81a8dc5502c96e221`).
+These checks qualify that implementation head. A later documentation closeout
+has its own source/CI identity; these run results do not claim CI for that follow-up.
+
+- The selected P1–P6/E1–E4 implementation and X1–X5 qualification are complete;
+  no selected functional or integration gate remains open. The original design
+  acceptance and old implementation pause remain historical, superseded by
+  implementation authorization and these actual gates.
+- This metadata closeout does not run inference, training, clients, tests or
+  runtime capture, and does not edit any raw receipt or source freeze. Older
+  fullfalse/pending reports remain immutable evidence of their original scope.
+- Follow-up documentation source/CI is distinct from PR78 implementation checks.
+  Physics, new hardware/modalities, public distribution and hostile isolation
+  are not silently activated by acceptance.

@@ -1,0 +1,29 @@
+{
+  "state": "passed",
+  "package_sha256": "78e806a13cc7aad3463cef794e5c47c5e85333c0244f235367f398c3c4f8f9a2",
+  "task_format": "package_canonical_scalar_a_task_v1",
+  "members": 70,
+  "source_paths": [
+    "infer.py",
+    "published-source-0000.bin",
+    "published-source-0001.bin",
+    "published-source-0002.bin",
+    "published-source-0003.bin",
+    "published-source-0004.bin",
+    "published-source-0005.bin",
+    "published-source-0006.bin",
+    "published-source-0007.bin",
+    "published-source-0008.bin",
+    "published-source-0009.bin",
+    "published-source-0010.bin",
+    "published-source-0011.bin",
+    "published-source-0012.bin",
+    "published-source-0013.bin",
+    "published-source-0014.bin",
+    "published-source-0015.bin",
+    "published-source-0016.bin",
+    "recipe_process.py"
+  ],
+  "lineage_count": 31,
+  "producer_or_application_or_numerical_import": false
+}

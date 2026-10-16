@@ -1,0 +1,115 @@
+{
+  "all_sdk_current_and_cold_whole_hashes_verified": true,
+  "artifact_count": 26,
+  "catalog_id": "0c227f756dcb4a51863597e5e53aa02c",
+  "charged": {
+    "admitted_wall_seconds": 197,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 5995018,
+    "retained_bytes": 4366403
+  },
+  "domain_counts_after": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "domain_counts_before": {
+    "access_execution_consumptions": 2,
+    "access_execution_grants": 2,
+    "model_attempt_reservations": 2,
+    "model_studies": 2,
+    "model_trials": 2,
+    "workspace_runs": 2
+  },
+  "first_recovery_diagnostic": {
+    "bytes": 673,
+    "path": "/workspace/shared/extension-ab-b-02-verification-recovery-01/diagnostic.json",
+    "sha256": "9bfcbc7f00cff3e9b9dd62c08766df6716ece77a3c49daf64d446ddd7f8195e7"
+  },
+  "first_recovery_failure": {
+    "bytes": 177,
+    "path": "/workspace/shared/extension-ab-b-02-verification-recovery-01/failure.json",
+    "sha256": "b20a91fe2b6edde6fe6faba71cbf54d05ad38dff566e05a520ba24106fb7a913"
+  },
+  "format": "extension_author_existing_run_recovery_v1",
+  "no_admission_or_sdk_retry": true,
+  "oracle": {
+    "absolute_tolerance": 1e-10,
+    "format": "independent_b_numerical_oracle_v1",
+    "observations": [
+      {
+        "field": "raw",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 32,
+        "reconstruction_maximum_error": 2.220446049250313e-16,
+        "reference_target_mse": 1.4472054366887254e-06
+      },
+      {
+        "field": "corrected",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 32,
+        "reconstruction_maximum_error": 2.220446049250313e-16,
+        "reference_target_mse": 1.7336691075130304e-07
+      },
+      {
+        "field": "raw",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 64,
+        "reconstruction_maximum_error": 2.220446049250313e-16,
+        "reference_target_mse": 7.329544376552364e-12
+      },
+      {
+        "field": "corrected",
+        "gradient_state_maximum_error": 4.996003610813204e-16,
+        "optimizer_update": 64,
+        "reconstruction_maximum_error": 5.551115123125783e-17,
+        "reference_target_mse": 8.736419045724307e-13
+      }
+    ],
+    "physical_qualification": "not_established",
+    "product_conformance": "not_established",
+    "relative_tolerance": 1e-10,
+    "state": "valid"
+  },
+  "original_diagnostic_stderr": {
+    "bytes": 1224,
+    "path": "/workspace/shared/extension-ab-b-02/oracle-diagnostic-stderr.txt",
+    "sha256": "204c9e7a1c9b7882c6a84e2c34949d34b9676a0dbe610d07f0eb127cbb334cd4"
+  },
+  "original_failure": {
+    "bytes": 1028,
+    "path": "/workspace/shared/extension-ab-b-02/failure.json",
+    "sha256": "802530c875faa10efdd7ca2f636e62f1de489c95afac3f0f1c9b9448216eba95"
+  },
+  "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+  "scope": "Actual B source Run, owner accounting settlement, frozen independent numerical oracle and whole-artifact cold reads; physical and product conformance remain separate.",
+  "settlement": {
+    "bytes": 239001,
+    "path": "/workspace/shared/extension-ab-b-02-accounting-recovery-01/receipt.json",
+    "sha256": "3674058e3912b7f0e29a86a8ebbf12d5e510edb163873a5e75b77c6a6892608b"
+  },
+  "source_host_commit": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+  "source_prepared": {
+    "bytes": 12685,
+    "path": "/workspace/shared/extension-ab-b-02/prepared.json",
+    "sha256": "299aee5f314cb095494062d4f715c433645f156905e56262b0ae546afaa0f5cf"
+  },
+  "source_sdk": {
+    "bytes": 4618,
+    "path": "/workspace/shared/extension-ab-b-02/sdk-result.json",
+    "sha256": "cd1facc41a6622e030f26cca653e07ab3de35395e234a8fc5c95d6c4c88c55fa"
+  },
+  "source_sdk_admissions": 1,
+  "state": "passed",
+  "study_id": "f6c70cb21c45449488a89cc97ea62d7b",
+  "successful_verification": {
+    "bytes": 7027,
+    "path": "/workspace/shared/extension-ab-b-02-verification-recovery-02/receipt.json",
+    "sha256": "6c46560ffcec5600188dc3824a0f35a73637219fa5cf7be073e78ede5a63d85b"
+  },
+  "trial_id": "11a355fbc67f49c3a9cdf42087f09baa",
+  "verification_host_commit": "3affe90bc258c1327fde49faf57bceb852cc2759"
+}

@@ -1,0 +1,243 @@
+{
+  "schema": "extension_a_producer_preparation_v1",
+  "observed_date": "2026-10-15",
+  "scope": "explicitly authored dimensionless existing-recipe producer preparation; no extension activation or generic model/evidence acceptance",
+  "pre_execution_source_commit": "38c16f65ec8143a157e37bc41c73e064a535ee79",
+  "fixture_sha256": "0074fd7a67701a94babd9abf9e166d3435427bb032ba9b49c9d63636b397f2f3",
+  "worker_sha256": "cbd8e940b782071682bf1ee498715c2c7610577695d956f12777571039c55caf",
+  "oracle_sha256": "0f6128d76ab7da277448449ea90534b111d8190893c38ef75fa1b2889d5528a7",
+  "managed_checks": [
+    "All supplied stages completed under exact actor-bound one-use grants and captured CPU custody; complete CLI downloads verified.",
+    "Catalog/service reopen preserves every completed Run and exact whole-hash-verified artifact through the CLI; no replay."
+  ],
+  "stage": {
+    "name": "prepare",
+    "run_id": "9808a102ab274276b8b79082a2b785d2",
+    "graph_id": "718687c87d9449b7936d5a63726e435f",
+    "material_sha256": "bb4216ab6f2018171677adaed540c4628d48270b3c32634661ad79de0cb8d784",
+    "approval_id": "56443c2d36c14de2bea7c05e515a621f",
+    "runtime_snapshot_sha256": "0b15b611ead55bd5fa6f2f7bbcc56870f6e9f9f60f2192d989e7473ef8af1826",
+    "state": "completed",
+    "custody_phase": "drained"
+  },
+  "captures": {
+    "input/fixture": {
+      "bytes": 8219,
+      "sha256": "0074fd7a67701a94babd9abf9e166d3435427bb032ba9b49c9d63636b397f2f3"
+    },
+    "runtime-bootstrap/recipe_process.py": {
+      "bytes": 54470,
+      "sha256": "9bf5de04bef27a86ad239e05d9d105985d966a2b114350c3c8e3a92053b1a999"
+    },
+    "runtime-bootstrap/snapshot.json": {
+      "bytes": 1175,
+      "sha256": "470d9f5af47834bf0fe5cde29928214df3bc3c8037386371eb21e3f8c7fdbd81"
+    },
+    "source/producer.py": {
+      "bytes": 5109,
+      "sha256": "cbd8e940b782071682bf1ee498715c2c7610577695d956f12777571039c55caf"
+    }
+  },
+  "resources": {
+    "max_output_bytes": 65536,
+    "wall_seconds": 60
+  },
+  "recipe": {
+    "schema_version": 1,
+    "format": "external_recipe_v1",
+    "id": "scalar-a-producer-preparation",
+    "name": "Authored dimensionless scalar producer preparation",
+    "version": 1,
+    "runtime": "captured_cpu_python_v1",
+    "runtime_snapshot_sha256": "0b15b611ead55bd5fa6f2f7bbcc56870f6e9f9f60f2192d989e7473ef8af1826",
+    "sources": [
+      {
+        "path": "producer.py",
+        "sha256": "cbd8e940b782071682bf1ee498715c2c7610577695d956f12777571039c55caf"
+      }
+    ],
+    "entrypoint": "producer.py",
+    "arguments": [
+      {
+        "input": "fixture"
+      },
+      {
+        "output_dir": true
+      }
+    ],
+    "parameters": {},
+    "inputs": {
+      "fixture": {
+        "max_bytes": 65536
+      }
+    },
+    "outputs": [
+      {
+        "path": "transform.npy",
+        "role": "preprocessing",
+        "max_bytes": 8192,
+        "required": true
+      },
+      {
+        "path": "weights-16.npy",
+        "role": "checkpoint",
+        "max_bytes": 8192,
+        "required": true
+      },
+      {
+        "path": "weights-64.npy",
+        "role": "checkpoint",
+        "max_bytes": 8192,
+        "required": true
+      },
+      {
+        "path": "prediction-16.npy",
+        "role": "predictions",
+        "max_bytes": 8192,
+        "required": true
+      },
+      {
+        "path": "prediction-64.npy",
+        "role": "predictions",
+        "max_bytes": 8192,
+        "required": true
+      },
+      {
+        "path": "diagnostics.json",
+        "role": "training_result",
+        "max_bytes": 8192,
+        "required": true
+      }
+    ],
+    "environment": {},
+    "resources": {
+      "wall_seconds": 60,
+      "max_output_bytes": 65536
+    }
+  },
+  "project": {
+    "schema_version": 1,
+    "id": "986c9ad036d1476a9dcfd48be2baa923",
+    "name": "Authored scalar A producer preparation only",
+    "data": [
+      {
+        "id": "fixture",
+        "label": "Frozen dimensionless authored fixture",
+        "path": "fixture.json",
+        "sha256": "0074fd7a67701a94babd9abf9e166d3435427bb032ba9b49c9d63636b397f2f3"
+      }
+    ],
+    "recipes": [
+      {
+        "id": "prepare",
+        "label": "Producer preparation, no host extension binding",
+        "path": "recipe.json",
+        "sha256": "7a65445b77f9ebc559ca844fe96e6a1f22dac068020ee337f5ffe9a77c1e2e64"
+      }
+    ],
+    "evidence": [],
+    "requirements": []
+  },
+  "run_times": {
+    "created_at": "2026-10-15T18:41:32.914334+00:00",
+    "started_at": "2026-10-15T18:41:33.142016+00:00",
+    "finished_at": "2026-10-15T18:42:03.238195+00:00"
+  },
+  "custody_receipt_sha256": "d9075008c92cacde30f70fd492f14fda6b55df906606645fa6ea278c1ab95a2f",
+  "artifacts": [
+    {
+      "sha256": "60083245aea71b858dc32a5e005c6e325a9a6c61bd27f3fc3ca6076f2853e25b",
+      "bytes": 640,
+      "verification": "whole_sha256_verified",
+      "run_id": "9808a102ab274276b8b79082a2b785d2",
+      "name": "prediction-16.npy"
+    },
+    {
+      "sha256": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c",
+      "bytes": 144,
+      "verification": "whole_sha256_verified",
+      "run_id": "9808a102ab274276b8b79082a2b785d2",
+      "name": "weights-64.npy"
+    },
+    {
+      "sha256": "b04494a51601d3ed2fceb427acf733bef3a302e5f9ad1353b066dfe2003ce426",
+      "bytes": 690,
+      "verification": "whole_sha256_verified",
+      "run_id": "9808a102ab274276b8b79082a2b785d2",
+      "name": "diagnostics.json"
+    },
+    {
+      "sha256": "01567b2d1f0b714b366466a5782be220b0ab1496779be493b6a94725ff303b11",
+      "bytes": 640,
+      "verification": "whole_sha256_verified",
+      "run_id": "9808a102ab274276b8b79082a2b785d2",
+      "name": "prediction-64.npy"
+    },
+    {
+      "sha256": "ad95a8b96e46a03a9dffe84fcd8560c98c68face6e5ac48412b6f645508a17ec",
+      "bytes": 144,
+      "verification": "whole_sha256_verified",
+      "run_id": "9808a102ab274276b8b79082a2b785d2",
+      "name": "transform.npy"
+    },
+    {
+      "sha256": "faf2703fe66b1dfeb8300bd21599ca01337bc251c1385167d0dbfbde53781fdf",
+      "bytes": 144,
+      "verification": "whole_sha256_verified",
+      "run_id": "9808a102ab274276b8b79082a2b785d2",
+      "name": "weights-16.npy"
+    }
+  ],
+  "worker_cost": {
+    "elapsed_seconds": 0.0021349340004235273,
+    "peak_rss_bytes": 274771968
+  },
+  "cost_scope": "elapsed main after imports includes fitting/serialization of six tiny files; RSS is Linux process high-water including captured runtime bootstrap/imports; no separate serialization or aggregate-RSS measurement",
+  "independent_cold_oracle": {
+    "format": "extension_a_cold_oracle_v1",
+    "state": "valid",
+    "scope": "producer-preparation-only",
+    "fixture_sha256": "0074fd7a67701a94babd9abf9e166d3435427bb032ba9b49c9d63636b397f2f3",
+    "oracle_sha256": "0f6128d76ab7da277448449ea90534b111d8190893c38ef75fa1b2889d5528a7",
+    "artifact_sha256": {
+      "diagnostics.json": "b04494a51601d3ed2fceb427acf733bef3a302e5f9ad1353b066dfe2003ce426",
+      "prediction-16.npy": "60083245aea71b858dc32a5e005c6e325a9a6c61bd27f3fc3ca6076f2853e25b",
+      "prediction-64.npy": "01567b2d1f0b714b366466a5782be220b0ab1496779be493b6a94725ff303b11",
+      "transform.npy": "ad95a8b96e46a03a9dffe84fcd8560c98c68face6e5ac48412b6f645508a17ec",
+      "weights-16.npy": "faf2703fe66b1dfeb8300bd21599ca01337bc251c1385167d0dbfbde53781fdf",
+      "weights-64.npy": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c"
+    },
+    "fit_member_ids": [
+      "train-0",
+      "train-1"
+    ],
+    "probe_member_id": "validation-0",
+    "population_mean": 0.734375,
+    "population_std": 0.946441732556738,
+    "absolute_tolerance": 1e-10,
+    "relative_tolerance": 1e-10,
+    "observations": [
+      {
+        "update": 16,
+        "reference_mse": 0.0003409493191531819,
+        "max_weight_abs_error": 0.0,
+        "max_reconstruction_abs_error": 0.0,
+        "max_analytic_prediction_abs_error": 2.220446049250313e-16,
+        "weights_sha256": "faf2703fe66b1dfeb8300bd21599ca01337bc251c1385167d0dbfbde53781fdf",
+        "prediction_sha256": "60083245aea71b858dc32a5e005c6e325a9a6c61bd27f3fc3ca6076f2853e25b"
+      },
+      {
+        "update": 64,
+        "reference_mse": 1.6956201885603723e-13,
+        "max_weight_abs_error": 0.0,
+        "max_reconstruction_abs_error": 0.0,
+        "max_analytic_prediction_abs_error": 2.220446049250313e-16,
+        "weights_sha256": "3953a773075790e0482343ef16f92eb6c894852bb65ad490e4fde98cb5a59e7c",
+        "prediction_sha256": "01567b2d1f0b714b366466a5782be220b0ab1496779be493b6a94725ff303b11"
+      }
+    ],
+    "product_acceptance": "not_established"
+  },
+  "e2_e3_acceptance": "not_established: no extension binding, generic model/evidence query, automatic view, agent operation or B proof",
+  "retained_bytes": 2402
+}

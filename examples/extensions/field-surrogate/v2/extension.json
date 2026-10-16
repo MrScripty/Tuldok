@@ -1,0 +1,62 @@
+{
+  "format": "tuldok_extension_v1",
+  "package": {
+    "id": "example.scalar-a",
+    "version": "2.0.0"
+  },
+  "label": "Scalar A with explicit captured evidence",
+  "license": {
+    "id": "LicenseRef-Private-Authoring",
+    "notices": [
+      {
+        "path": "NOTICE.txt",
+        "sha256": "8bdadd8f6a5163591c4485653678f5184ae1caaf7f4a45dae2f901fe44d1c12d",
+        "bytes": 232
+      }
+    ]
+  },
+  "sources": [
+    {
+      "path": "producer.py",
+      "sha256": "563ccc91c5c0f4fc4dda6d2dc0e8c5526fbc9e26ef9278165c5ab51d0eb95774",
+      "bytes": 4585
+    },
+    {
+      "path": "evidence_writer.py",
+      "sha256": "320c2db43c2b64cc6c7f2fff5f21c8a25f1c611d9bc4dd5b8f4c151c2075619e",
+      "bytes": 5318
+    }
+  ],
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "runtime": {
+    "profile": "captured_cpu_python_v1",
+    "snapshot_sha256": "0b15b611ead55bd5fa6f2f7bbcc56870f6e9f9f60f2192d989e7473ef8af1826"
+  },
+  "effects": [
+    "filesystem"
+  ],
+  "resources": {
+    "wall_seconds": 60,
+    "source_bytes": 65536,
+    "output_bytes": 1048576
+  },
+  "contributions": [
+    {
+      "id": "example.scalar-a:task",
+      "version": "2.0.0",
+      "kind": "task",
+      "path": "task.json",
+      "sha256": "23bbadd9cf6f647219367243f375beafdc51c9cb2f706077577080a01bf0c2da",
+      "bytes": 1330
+    }
+  ]
+}

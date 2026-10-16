@@ -24,6 +24,8 @@ import text_classification_export as projection
 from frozen_classification import validate_families
 
 ADAPTER = {'name': 'tfidf_multinomial_nb_cpu', 'version': 1}
+MODEL_ADAPTER = dict(ADAPTER, version=2)
+MODEL_RECIPE = 'text_classification_model_v2'
 PARAMETER_BOUNDS = {
     'max_features': {'minimum': 64, 'maximum': 4096, 'default': 1024, 'type': 'integer'},
     'alpha': {'minimum': 0.01, 'maximum': 10, 'default': 1, 'type': 'number'},
@@ -50,10 +52,15 @@ def validate_parameters(value):
 def _checked_job(value):
     fields = {'schema_version', 'dataset_id', 'run_id', 'graph_sha256', 'release_id',
               'release_sha256', 'release_path', 'output_dir', 'parameters', 'parent_pid'}
-    if not isinstance(value, dict) or set(value) != fields:
-        _invalid('Training job must contain exactly the version 1 job fields.')
-    if type(value['schema_version']) is not int or value['schema_version'] != 1:
-        raise TrainingError('unsupported', 'Only training job schema version 1 is supported.')
+    if not isinstance(value, dict) or type(value.get('schema_version')) is not int or value['schema_version'] not in (1, 2):
+        raise TrainingError('unsupported', 'Only training job schemas 1 and 2 are supported.')
+    if value['schema_version'] == 2:
+        fields |= {'adapter', 'evidence'}
+    if set(value) != fields:
+        _invalid('Training job fields differ from its selected schema.')
+    if value['schema_version'] == 2:
+        from one_fit_evidence import validate_job_selection
+        validate_job_selection(value, ADAPTER)
     for key in ('dataset_id', 'run_id'):
         if not isinstance(value[key], str) or not IDENTIFIER.fullmatch(value[key]):
             _invalid(f'{key} must be a canonical 32-character identifier.')
@@ -169,7 +176,7 @@ def inspect_release(path, expected_sha256):
         raise TrainingError('invalid', 'Frozen text ZIP or metadata cannot be decoded.') from error
 
 
-def probe_runtime():
+def probe_runtime(model_aware=False):
     runtime, problems = {'python': platform.python_version(), 'device': 'cpu', 'threads': 1}, []
     if sys.platform != 'linux':
         problems.append({'code': 'unsupported', 'message': 'The supervised text adapter requires Linux.'})
@@ -192,7 +199,7 @@ def probe_runtime():
                 problems.append({'code': 'unavailable', 'message': 'CPU math libraries must be limited to one thread.'})
         except Exception:
             problems.append({'code': 'unavailable', 'message': 'The pinned local text runtime could not load.'})
-    return {'schema_version': 1, 'available': not problems, 'adapter': dict(ADAPTER), 'runtime': runtime, 'problems': problems}
+    return {'schema_version': 1, 'available': not problems, 'adapter': dict(MODEL_ADAPTER if model_aware else ADAPTER), 'runtime': runtime, 'problems': problems}
 
 
 def _vectorizer(max_features, vocabulary=None):
@@ -207,7 +214,7 @@ def validate_model(model):
     """Decode a data-only model; no imported or uploaded executable checkpoint."""
     required = {'schema_version', 'source_identity', 'adapter', 'parameters', 'transform', 'class_vocabulary',
                 'class_to_idx', 'vocabulary', 'idf', 'class_log_prior', 'feature_log_prob'}
-    if not isinstance(model, dict) or set(model) != required or type(model['schema_version']) is not int or model['schema_version'] != 1 or model['adapter'] != ADAPTER or type(model['adapter'].get('version')) is not int:
+    if not isinstance(model, dict) or set(model) != required or type(model['schema_version']) is not int or model['schema_version'] != 1 or model['adapter'] not in (ADAPTER, dict(ADAPTER, version=2)) or type(model['adapter'].get('version')) is not int:
         _invalid('Unsupported text model envelope.')
     identity = model['source_identity']
     if not isinstance(identity, dict) or set(identity) != {'dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256'}:
@@ -258,6 +265,47 @@ def predict_model(model, texts):
     return np.exp(scores - logsumexp(scores, axis=1)[:, None])
 
 
+def verify_evidence(directory, job):
+    """Validate v2 evidence against the exact frozen release and JSON reader."""
+    job = _checked_job(job)
+    if job['schema_version'] != 2:
+        raise TrainingError('unsupported', 'Historical one-fit results have no model evidence snapshot.')
+    from one_fit_evidence import verify_directory
+    manifest = inspect_release(job['release_path'], job['release_sha256'])
+    from model_evidence import read_document
+    saved = validate_model(read_document(Path(directory), 'model.json'))
+    _verify_fit_statistics(saved, [row['text'] for row in manifest['records'] if row['split'] == 'train'])
+    manifest = dict(manifest, records=[dict(row, content_sha256=row['content_hash']) for row in manifest['records']])
+    inputs = [row['text'] for row in manifest['records'] if row['split'] == 'validation']
+    return verify_directory(directory, job=job, adapter=ADAPTER, manifest=manifest,
+                            reference_keys=REFERENCE_KEYS, expected_inputs=inputs)
+
+
+def _verify_fit_statistics(model, texts):
+    """Recompute train-only counts and IDF without fitting another estimator."""
+    from collections import Counter
+    import numpy as np
+    analyzer = _vectorizer(model['parameters']['max_features']).build_analyzer()
+    documents = [Counter(analyzer(text)) for text in texts]
+    frequency = Counter()
+    for document in documents:
+        frequency.update(document)
+    terms = sorted(frequency)
+    limit = model['parameters']['max_features']
+    # Match the pinned vectorizer's lexically sorted columns and NumPy tie
+    # ordering for its frequency cap, rather than selecting held-out features.
+    if len(terms) > limit:
+        indices = (-np.array([frequency[term] for term in terms], dtype=np.int64)).argsort()[:limit]
+        terms = sorted(terms[int(index)] for index in indices)
+    vocabulary = {term: index for index, term in enumerate(terms)}
+    frequency = np.array([1 + sum(term in document for document in documents) for term in terms], dtype=np.float64)
+    expected_idf = np.full_like(frequency, 1 + len(documents)) / frequency
+    np.log(expected_idf, out=expected_idf)
+    expected_idf += 1
+    if model['vocabulary'] != vocabulary or not np.array_equal(model['idf'], expected_idf):
+        raise TrainingError('failed', 'Frozen text vocabulary/IDF differ from exact training-only statistics.')
+
+
 def train(job):
     job = _checked_job(job)
     guard_parent(job['parent_pid'])
@@ -275,7 +323,8 @@ def train(job):
         _invalid('The run owner must supply an existing empty output directory.')
     params = job['parameters']
     identity = {key: job[key] for key in ('dataset_id', 'run_id', 'graph_sha256', 'release_id', 'release_sha256')}
-    envelope = {'schema_version': 1, 'adapter': dict(ADAPTER), 'source_identity': identity}
+    selected = job['schema_version'] == 2
+    envelope = {'schema_version': 1, 'adapter': dict(job['adapter'] if selected else ADAPTER), 'source_identity': identity}
     vocabulary, mapping = manifest['class_vocabulary'], manifest['class_to_idx']
     splits = {split: [row for row in manifest['records'] if row['split'] == split] for split in projection.SPLITS}
     vectorizer = _vectorizer(params['max_features'])
@@ -285,6 +334,7 @@ def train(job):
     except ValueError as error:
         raise TrainingError('invalid', 'Training text contains no usable two-character word tokens.') from error
     model = MultinomialNB(alpha=params['alpha']).fit(x, [row['class_index'] for row in splits['train']])
+    fitted_elapsed = time.monotonic() - started
     saved = {**envelope, 'parameters': params, 'transform': TRANSFORM, 'class_vocabulary': vocabulary,
              'class_to_idx': mapping, 'vocabulary': {key: int(index) for key, index in vectorizer.vocabulary_.items()},
              'idf': vectorizer.idf_.tolist(), 'class_log_prior': model.class_log_prior_.tolist(),
@@ -316,20 +366,38 @@ def train(job):
     test, test_rows = evaluate('test')
     runtime = dict(readiness['runtime'], elapsed_seconds=time.monotonic() - started,
                    peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)
-    _write_json(output / 'metrics.json', {**envelope, 'parameters': params, 'transform': TRANSFORM,
+    metrics = {**envelope, 'parameters': params, 'transform': TRANSFORM,
                 'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'validation': validation,
                 'history': [{'epoch': 1, 'training_loss': training['loss'], 'validation': validation}],
-                'best_epoch': 1, 'runtime': runtime})
+                'best_epoch': 1, 'runtime': runtime}
+    if selected:
+        from one_fit_evidence import fit_clocks
+        metrics.pop('history')
+        metrics.pop('best_epoch')
+        metrics['clocks'] = fit_clocks(fitted_elapsed)
+    _write_json(output / 'metrics.json', metrics)
     _write_json(output / 'test-metrics.json', {**envelope, 'split': 'test', 'metrics': test})
     for split, rows in (('validation', validation_rows), ('test', test_rows)):
         _write_json(output / f'predictions-{split}.json', {**envelope, 'split': split,
                     'class_vocabulary': vocabulary, 'class_to_idx': mapping, 'rows': rows})
+    if selected:
+        from one_fit_evidence import capture
+        capture_manifest = dict(manifest, records=[dict(row, content_sha256=row['content_hash']) for row in manifest['records']])
+        capture(output, job=job, adapter=ADAPTER, manifest=capture_manifest, reference_keys=REFERENCE_KEYS,
+                saved=saved, inputs=[row['text'] for row in splits['validation']], validation=validation,
+                rows=validation_rows, clocks=metrics['clocks'])
     artifacts = []
     for name, split in (('metrics.json', 'validation'), ('test-metrics.json', 'test'),
                         ('predictions-validation.json', 'validation'), ('predictions-test.json', 'test'), ('model.json', None)):
         raw = (output / name).read_bytes()
         artifacts.append({'name': name, 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
                           'media_type': 'application/json', 'split': split})
+    if selected:
+        from one_fit_evidence import CAPTURE_NAMES
+        for name in sorted(CAPTURE_NAMES):
+            raw = (output / name).read_bytes()
+            artifacts.append({'name': name, 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
+                              'media_type': 'application/json', 'split': 'validation' if name in ('probe.json', 'probe-inputs.json', 'probes-fit-0001.json', 'observations.json') else None})
     _write_json(output / 'artifact-manifest.json', {**envelope, 'artifacts': artifacts})
     _emit('completed', epochs=1)
 
@@ -341,17 +409,24 @@ def main():
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument('--probe', action='store_true')
     action.add_argument('--job', type=Path)
+    action.add_argument('--verify-evidence', type=Path)
+    parser.add_argument('--model-aware', action='store_true')
     args = parser.parse_args()
     try:
         if args.probe:
-            result = probe_runtime()
+            result = probe_runtime(args.model_aware)
             print(json.dumps(result, allow_nan=False), flush=True)
             return 0 if result['available'] else 2
-        with args.job.open('rb') as handle:
+        with (args.verify_evidence or args.job).open('rb') as handle:
             raw = handle.read(MAX_JOB_BYTES + 1)
         if len(raw) > MAX_JOB_BYTES:
             _invalid('Training job exceeds 16 KiB.')
-        train(_json(raw, 'Text training job'))
+        job = _json(raw, 'Text training job')
+        if args.verify_evidence:
+            guard_parent(job['parent_pid'])
+            verify_evidence(job['output_dir'], job)
+        else:
+            train(job)
         return 0
     except TrainingError as error:
         _emit('failed', outcome=error.outcome, message=str(error)[:400])

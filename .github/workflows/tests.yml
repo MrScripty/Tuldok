@@ -28,6 +28,10 @@ jobs:
       TULDOK_DATABASE_URL: postgresql://tuldok_test:isolated-ci-fixture@127.0.0.1:5432/tuldok_test
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the exact authored fixture used by canonical Release qualification
+        run: |
+          git fetch --no-tags --depth=1 origin 057c8abf571d62331486dc56ef43064e72f9d03a
+          git cat-file -e 057c8abf571d62331486dc56ef43064e72f9d03a:examples/extensions/field-surrogate/v2/fixture.json
       - name: Check out pinned schema3 source for retained-run qualification
         uses: actions/checkout@v4
         with:
@@ -42,11 +46,15 @@ jobs:
           node-version: '24'
       - name: Install independent WAV consumer
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -r requirements.txt -r requirements-spatial-qualification.txt
       - run: python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json
       - run: python -m venv build/workspace-training
-      - run: build/workspace-training/bin/python -m pip install -r requirements-training.txt
+      - run: build/workspace-training/bin/python -m pip install -r requirements.txt -r requirements-training.txt
       - run: build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt
+      - name: Verify one-fit evidence in the provisioned CPU training interpreter
+        run: |
+          build/workspace-training/bin/python -c "import numpy, sklearn, psycopg"
+          build/workspace-training/bin/python -m unittest discover -s tests -p test_one_fit_evidence.py -v
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py
       - run: build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py
@@ -57,6 +65,12 @@ jobs:
       - run: build/workspace-agent/bin/python -m pip install --require-hashes -r requirements-agent.lock
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py
+      - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py
+      - run: node --check static/experiment-lineage.js
+      - run: node tests/test_experiment_lineage_controller.cjs
       - run: build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py
       - run: python -m unittest discover -s tests
       - run: node --check static/auth.js
@@ -72,7 +86,14 @@ jobs:
           BROWSER: /usr/bin/google-chrome
       - run: node --check static/workspace-external.js
       - run: node tests/test_workspace_external_controller.cjs
+      - run: node tests/test_workspace_external_package_controller.cjs
+      - run: node tests/test_workspace_extension_author.cjs
+      - run: node tests/test_workspace_typed_parameters.cjs
       - run: node tests/browser_workspace_external.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Verify continuous saved-graph keyboard focus and navigation isolation
+        run: node tests/browser_workspace_graph_focus.cjs
         env:
           BROWSER: /usr/bin/google-chrome
       - run: node --check static/workspace-projects.js
@@ -284,6 +305,22 @@ jobs:
         env:
           BROWSER: /usr/bin/google-chrome
           LD_PRELOAD: ${{ github.workspace }}/build/qa/workspace-offline.so
+      - name: Qualify automatic classifier evidence and independent CPU reconstruction
+        run: python tests/qualify_model_development.py --task image --fixture tests/fixtures/model_development --output build/qa/model-development-cpu
+      - name: Exercise finite model development through the real browser
+        run: node tests/browser_model_development.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+      - name: Exercise actual one-fit text model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: text
+      - name: Exercise actual one-fit audio model evidence in the browser
+        run: node tests/browser_one_fit_model_evidence.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
+          TULDOK_ONE_FIT_TASK: audio
       - uses: actions/upload-artifact@v4
         if: always()
         with:

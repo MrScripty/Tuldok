@@ -1,0 +1,40 @@
+{
+  "all_ordered_parent_correspondences_verified": true,
+  "each_source_tree_verified": true,
+  "exact_source_tree": "df72714e12de271ab5790959de2dbe3a891e639b",
+  "format": "independent_git_api_source_publication_result_review_v1",
+  "head_full_tree_git_diff_quiet": true,
+  "limits": [
+    "Original commit IDs and metadata differ from API publication; only exact tree identity and ordered parent correspondence are asserted.",
+    "Original DAG bundle/provenance-file publication remains a later data-only lead operation.",
+    "No final recovery, functional completion, final PR78 CI or merge result is inferred.",
+    "Rejected transport workflow was not created/run; this result does not approve retrying it."
+  ],
+  "map_bytes": 4145,
+  "map_sha256": "94245f1716a532558dafde7bfae131f4f61bbdf0a7c8ebd791122ff2f01a3f09",
+  "mapped_commit_count": 12,
+  "metadata_disposition": "GitHub API assigns author/committer metadata; original local commits preserved separately. Exact source trees and ordered parent correspondence verified.",
+  "original_head": "d61ef3204bc0edd2ea14579a327a954bd2075219",
+  "original_identity_and_tree_trailers_verified": true,
+  "public_ref": "refs/heads/review/model-development-composed-source-0319",
+  "public_ref_read_scope": "Reviewer independently ran anonymous read-only git ls-remote; observed exact64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508.",
+  "published_component_parents_preserved": [
+    "00865e9e25244aa77b41d00e2f678b5bea80679d",
+    "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+    "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+    "6c4ff13a2a593c5c13916d382364bec424265205",
+    "afc45dc50530c4b6bfcdf1f2d8c2f2361e2837bc",
+    "c0efd4f36f88cd1e5750d0ec3a4ca0fc6581c58c",
+    "d72cb9b5f6601b90dfb0b0dda662c8eab448424e",
+    "da9f57d8cca0f4b27634da87e7ab606c8c866648",
+    "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975"
+  ],
+  "published_review_head": "64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508",
+  "scope": "Source object/provenance map and public review-ref inspection only; no API writes, main/PR78 update, workflow execution, runtime/model/catalog/client or admission activity.",
+  "state": "clear",
+  "tested_e1bc_mapping": {
+    "original": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+    "published": "3349af525478d74fb13b87e8c2dc32939d3c6cbb",
+    "tree": "a6bef5761c75f89af8d7cc2e3f8c01a828f4f284"
+  }
+}

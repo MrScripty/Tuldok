@@ -129,3 +129,51 @@ split mismatches, and reports reproduced predictions and actual metrics. It must
 never refit on holdout or silently regenerate splits. Generic process fixtures
 do not establish neural optimization, pressure quality, native physics acceptance,
 GPU use or remote execution.
+
+## Registered model-development calls
+
+`python project_cli.py --config PRIVATE_CONFIG call --operation models.get --arguments model.json`
+uses the same installed registry, exact capability selection and bounded JSON
+argument reader. For example, `model.json` contains `{"model_id":"OPAQUE_ID"}`.
+`recipes.material` accepts `{"ref":RETAINED_MATERIAL_REF}` and `studies.get`
+accepts `{"study_id":"OPAQUE_ID"}`. All print the same domain result available
+through selected HTTP and structured MCP. No project code executes on inspection.
+Only locally registered operations are callable; this is not an arbitrary URL or
+route dispatcher. Existing AgentClient requires an active agent credential, and
+owner-only study control still requires authenticated owner HTTP actions.
+
+Snapshot discovery and registration use the same generic command, for example:
+
+```sh
+python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots.list --arguments page.json
+python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots.open --arguments opening.json
+python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots.get --arguments project.json
+```
+
+Here `page.json` is `{"limit":20}`, `opening.json` is
+`{"root":"research","manifest_path":"project.json"}` and `project.json` is
+`{"project_id":"OPAQUE_ID"}`. Files contain arguments only; credentials stay in
+the private client configuration. These operations select their additive v1
+contracts. Existing legacy project commands keep their original operations.
+The recipe inspection command negotiates `recipes.inspect/3`; generic calls
+also negotiate `models.publish/2`, `graphs.create_external/2`,
+`graphs.preflight_external/2` and `studies.prepare_trial/2` when supported.
+These versions authorize static source authoring with current inspect/edit
+scopes. They do not authorize owner Study control or execution; see the
+[snapshot and authoring boundary](agent-operations.md#negotiated-project-snapshots-and-bound-authoring).
+An owner credential cannot be substituted into AgentClient bootstrap.
+
+## Optional operator observations
+
+Ordinary commands require no telemetry arguments or setup. The operator may
+explicitly select a fresh private v2 store with `--observe-v2-database` before
+the subcommand. Retention/configuration, independent health inspection, private
+storage and failure semantics are owned by the [shared observation contract](mcp-observer.md#shared-interface-observation-v2).
+Collection defaults off. Recording failure does not alter command results,
+consume another grant or authorize a retry. A written output terminal proves
+only local stdout/stderr acceptance; partial delivery remains unknown.
+
+Configured observation preserves a single JSON stderr failure diagnostic exactly.
+It emits no operator-health lines into that command channel, including when
+observer configuration/storage fails. Invoke the independent operator reader
+separately to inspect store health; CLI health emission is quiet by default.

@@ -1,0 +1,72 @@
+{
+  "state": "passed",
+  "scope": "Actual retained source/context/profile/Task/legacy-admission negatives; no new execution or public contract2/UI claim",
+  "host_commit": "ddd05613502c285fd4d27a5365fe090dd86003fb",
+  "driver_sha256": "c41e0056847afdf60490740ec0a4f4a110820e95247693a4dde6812911e36854",
+  "run_id": "610afd2bb09b4c1588b23a628d5756d3",
+  "counts_before": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "counts_after": {
+    "workspace_runs": 1,
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1
+  },
+  "checks": [
+    {
+      "check": "New variant refuses executable-only legacy submission before implicit grant/Run/reservation",
+      "state": "passed"
+    },
+    {
+      "check": "Actual changed project source refuses retained-material preflight without admission effects",
+      "state": "passed"
+    },
+    {
+      "check": "Changed retained profile refuses material and actual cold Run reads",
+      "state": "passed"
+    },
+    {
+      "check": "whole artifact",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "stream artifact",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "artifact segment",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "artifact capture",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "model evidence query",
+      "state": "refused",
+      "code": "unavailable"
+    },
+    {
+      "check": "Run input inventory",
+      "state": "unavailable; no artifacts"
+    },
+    {
+      "check": "scientific test selector",
+      "state": "refused",
+      "code": "unsupported"
+    },
+    {
+      "check": "Actual bound wrong-Task draft refuses owner HTTP Model publication before material/grant/reservation/Run",
+      "state": "passed"
+    }
+  ],
+  "all_original_artifacts_restored": true
+}

@@ -1,0 +1,124 @@
+{
+  "defaults": {
+    "coordinate_frame": "sensor_lh_xyz",
+    "coordinate_units": "mm",
+    "payload": [
+      [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      [
+        [
+          4,
+          5,
+          6
+        ]
+      ]
+    ],
+    "record_offsets": [
+      0,
+      2,
+      3
+    ]
+  },
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-points:descriptor",
+  "kind": "task",
+  "label": "points bounded opaque descriptor",
+  "parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "coordinate_frame": {
+        "enum": [
+          "sensor_lh_xyz"
+        ],
+        "maxLength": 13,
+        "type": "string"
+      },
+      "coordinate_units": {
+        "enum": [
+          "mm"
+        ],
+        "maxLength": 2,
+        "type": "string"
+      },
+      "payload": {
+        "items": {
+          "items": {
+            "items": {
+              "maximum": 10,
+              "minimum": -10,
+              "type": "number"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "type": "array"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "type": "array"
+        },
+        "maxItems": 2,
+        "minItems": 1,
+        "type": "array"
+      },
+      "record_offsets": {
+        "items": {
+          "maximum": 6,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "type": "array"
+      }
+    },
+    "required": [
+      "payload",
+      "record_offsets",
+      "coordinate_frame",
+      "coordinate_units"
+    ],
+    "type": "object"
+  },
+  "ports": [
+    {
+      "axes": [
+        "record",
+        "point",
+        "xyz"
+      ],
+      "contract": {
+        "id": "example.modality-points:point_records",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "point_records",
+      "units": "mm"
+    },
+    {
+      "axes": [
+        "record_boundary"
+      ],
+      "contract": {
+        "id": "example.modality-points:record_offsets",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "record_offsets",
+      "units": "point_index"
+    }
+  ],
+  "requires": [],
+  "version": "1.0.0"
+}

@@ -1,0 +1,99 @@
+{
+  "format": "tuldok_extension_v1",
+  "package": {
+    "id": "example.scalar-b-independent",
+    "version": "1.0.0"
+  },
+  "label": "Independent author B scalar package",
+  "license": {
+    "id": "LicenseRef-Private-Authoring",
+    "notices": [
+      {
+        "path": "NOTICE.txt",
+        "sha256": "803c5ef691aa2a4af5646030945a9720330dbf15542fca629ea451ebedd0c223",
+        "bytes": 243
+      }
+    ]
+  },
+  "sources": [
+    {
+      "path": "producer.py",
+      "sha256": "da8b6db81bdda04ee4fc9e8a6ddb54836f6db367c9dc90c5abefbf62c838301b",
+      "bytes": 8005
+    },
+    {
+      "path": "tuldok_extension_sdk/__init__.py",
+      "sha256": "b7e0b3167de54dd1ce8bf5209af92ee0bcab9ba6eb6fc9f8c7db4e3fea96fc18",
+      "bytes": 86
+    },
+    {
+      "path": "tuldok_extension_sdk/evidence.py",
+      "sha256": "94e17b5f0e21bdfddf24771e223e85fced6561f73da1fac55250906cf8d4de23",
+      "bytes": 23066
+    }
+  ],
+  "host_contracts": [
+    {
+      "id": "tuldok:extension",
+      "version": "1.0.0"
+    },
+    {
+      "id": "tuldok:project",
+      "version": "2.0.0"
+    }
+  ],
+  "runtime": {
+    "profile": "captured_cpu_python_v1",
+    "snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d"
+  },
+  "effects": [
+    "filesystem"
+  ],
+  "resources": {
+    "wall_seconds": 60,
+    "source_bytes": 131072,
+    "output_bytes": 1048576
+  },
+  "contributions": [
+    {
+      "id": "example.scalar-b-independent:task",
+      "version": "1.0.0",
+      "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac",
+      "kind": "task",
+      "path": "task.json",
+      "bytes": 2912
+    },
+    {
+      "id": "example.scalar-b-independent:model",
+      "version": "1.0.0",
+      "sha256": "aa2a9f8015f6b93d2dd6d64e94ea9913967c4f9c92a58d238b01493a0e25e9ba",
+      "kind": "model",
+      "path": "model.json",
+      "bytes": 2558
+    },
+    {
+      "id": "example.scalar-b-independent:trainer",
+      "version": "1.0.0",
+      "sha256": "a6e8bb1cf0fa1ba3b7e6fdda99929ef7a04ca759b83c2c820bc31865337c354b",
+      "kind": "trainer",
+      "path": "trainer.json",
+      "bytes": 3567
+    },
+    {
+      "id": "example.scalar-b-independent:evaluator",
+      "version": "1.0.0",
+      "sha256": "f79383ccf75ba35eba93c48efff968bec75647bff68eda4c9039dac9c01f439b",
+      "kind": "evaluator",
+      "path": "evaluator.json",
+      "bytes": 2573
+    },
+    {
+      "id": "example.scalar-b-independent:view",
+      "version": "1.0.0",
+      "sha256": "5d4020ca28bc0654377c2c7c425e3abb779238135c0868d70e3ba9cd5cc34e6c",
+      "kind": "view",
+      "path": "view.json",
+      "bytes": 544
+    }
+  ]
+}

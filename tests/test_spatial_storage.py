@@ -63,17 +63,17 @@ class SpatialStorage(unittest.TestCase):
         with self.assertRaisesRegex(StorageError, 'Stop all'):
             upgrade_catalog(old.path)
         result = upgrade_catalog(old.path, quiesced=True)
-        self.assertEqual(result['migration'], 'execution-approvals-7-to-8')
+        self.assertEqual(result['migration'], 'experiment-lineage-9-to-10')
         current = Metadata(old.path, create=False)
         self.addCleanup(current.close)
-        self.assertEqual(current.schema_version, 8)
+        self.assertEqual(current.schema_version, 10)
         self.assertEqual(summaries({k:v for k,v in read_catalog(current).items() if k in before}), before)
         with current.transaction():
             current.execute("""INSERT INTO workbench_records
                 (id,kind,content_hash,groups_json,parents_json,provenance_json,task,review,revision,created_at,updated_at)
                 VALUES ('science','field_sequence','hash','[]','[]','{}','field_sequence_fields','draft',1,'now','now')""")
         backup = self.root / 'backup6'
-        self.assertEqual(backup_catalog(current.path, backup, quiesced=True)['schema_version'], 8)
+        self.assertEqual(backup_catalog(current.path, backup, quiesced=True)['schema_version'], 10)
 
     def test_failed_schema6_transition_rolls_back_exact_schema5(self):
         import psycopg
@@ -148,7 +148,7 @@ class SpatialStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             upgrade_catalog(path)
         result = upgrade_catalog(path, quiesced=True)
-        self.assertEqual(result['migration'], 'execution-approvals-7-to-8')
+        self.assertEqual(result['migration'], 'experiment-lineage-9-to-10')
         current = Metadata(path, create=False)
         self.addCleanup(current.close)
         after = read_catalog(current)
@@ -192,7 +192,7 @@ class SpatialStorage(unittest.TestCase):
         dataset.close()
         backup = self.root / 'scientific-backup'
         receipt = backup_catalog(path, backup, quiesced=True)
-        self.assertEqual(receipt['schema_version'], 8)
+        self.assertEqual(receipt['schema_version'], 10)
         filename = 'field_sequence/' + row['id'] + '/source.zip'
         self.assertEqual(receipt['files'][filename]['sha256'], hashlib.sha256(raw).hexdigest())
         backup_files = tree_manifest(backup)

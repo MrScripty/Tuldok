@@ -1,0 +1,152 @@
+{
+  "defaults": {
+    "connectivity": "triangles",
+    "coordinate_frame": "lab_rh_xyz",
+    "coordinate_units": "m",
+    "payload": {
+      "triangles": [
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          2,
+          3
+        ]
+      ],
+      "vertices": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    }
+  },
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-mesh:descriptor",
+  "kind": "task",
+  "label": "mesh bounded opaque descriptor",
+  "parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "connectivity": {
+        "enum": [
+          "triangles"
+        ],
+        "maxLength": 9,
+        "type": "string"
+      },
+      "coordinate_frame": {
+        "enum": [
+          "lab_rh_xyz"
+        ],
+        "maxLength": 10,
+        "type": "string"
+      },
+      "coordinate_units": {
+        "enum": [
+          "m"
+        ],
+        "maxLength": 1,
+        "type": "string"
+      },
+      "payload": {
+        "additionalProperties": false,
+        "properties": {
+          "triangles": {
+            "items": {
+              "items": {
+                "maximum": 3,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "type": "array"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "type": "array"
+          },
+          "vertices": {
+            "items": {
+              "items": {
+                "maximum": 10,
+                "minimum": -10,
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "type": "array"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "vertices",
+          "triangles"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "payload",
+      "coordinate_frame",
+      "coordinate_units",
+      "connectivity"
+    ],
+    "type": "object"
+  },
+  "ports": [
+    {
+      "axes": [
+        "vertex",
+        "xyz"
+      ],
+      "contract": {
+        "id": "example.modality-mesh:vertices",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "vertices",
+      "units": "m"
+    },
+    {
+      "axes": [
+        "face",
+        "corner"
+      ],
+      "contract": {
+        "id": "example.modality-mesh:triangles",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "triangles",
+      "units": "vertex_index"
+    }
+  ],
+  "requires": [],
+  "version": "1.0.0"
+}

@@ -184,7 +184,7 @@ class AccessContract(unittest.TestCase):
     def test_concurrent_exchange_exactly_one_session(self):
         db, access, _, _ = self.owner()
         login = access._local_owner_token()
-        peer_db = Metadata(db.path, create=False)
+        peer_db = Metadata(db.path, create=False, schema_version=db.schema_version)
         self.addCleanup(peer_db.close)
         peer = Access(peer_db, db.path)
         outcomes = []
@@ -229,7 +229,7 @@ class AccessContract(unittest.TestCase):
         before = summaries(read_catalog(db))
         with self.assertRaises(StorageError):
             Metadata(db.path, create=False)
-        self.assertEqual(upgrade_catalog(db.path, quiesced=True)['schema_version'], 8)
+        self.assertEqual(upgrade_catalog(db.path, quiesced=True)['schema_version'], 10)
         db.close()
         db = Metadata(db.path, create=False)
         self.addCleanup(db.close)

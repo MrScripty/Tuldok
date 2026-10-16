@@ -1,0 +1,21 @@
+{
+  "format": "external_retained_package_native_attempt_v1",
+  "source_commit": "00865e9e25244aa77b41d00e2f678b5bea80679d",
+  "harness_sha256": "37cf2848e046f3a16a7495258d8a83763dc11bbebda9bcf3e545ffcd942976a0",
+  "handoff_sha256": "761c68d33e2e5b6a3224ca1257e9022881f2774da710d3a3f940c77fcd96a2cb",
+  "config_sha256": {
+    "a": "5bb0d03d0e1722d58d593d05ab88d3aac08d0b348d6acc7518499b2178e6586d",
+    "b": "5f21488b91b05977f093e174e9a28151ecf54fb254bfd5736e49b71fa1a55866"
+  },
+  "started_at": 1792117955.3835156,
+  "no_new_admission": true,
+  "a": {
+    "returncode": 0,
+    "log_sha256": "6770df06407bfe48d58b374d55984342c91ff58ca81c65abd2eb4ae47bbe9813"
+  },
+  "b": {
+    "returncode": 0,
+    "log_sha256": "f6b82fe1c8acc2dbcab89524f1c1f9f2d7cc2126dad965228db7b234c123144e"
+  },
+  "finished_at": 1792118912.2733414
+}

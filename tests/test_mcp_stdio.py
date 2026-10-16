@@ -64,6 +64,25 @@ def initialize(version='2025-06-18'):
 
 
 class FramingTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'Linux pipe capacity controls required')
+    def test_output_pipe_capacity_is_bounded_and_optional(self):
+        import fcntl
+        from unittest.mock import patch
+        read_fd, write_fd = os.pipe()
+        self.addCleanup(os.close, read_fd)
+        self.addCleanup(os.close, write_fd)
+        original = fcntl.fcntl(write_fd, fcntl.F_GETPIPE_SZ)
+        actual = bridge.prepare_output_pipe(write_fd)
+        self.assertGreaterEqual(actual, original)
+        self.assertLessEqual(actual, max(original, bridge.OUTPUT_PIPE_BYTES))
+        def unavailable(fd, action, *values):
+            if action == fcntl.F_SETPIPE_SZ:
+                raise PermissionError('Authored unavailable capacity')
+            return 65536
+        with patch('fcntl.fcntl', side_effect=unavailable):
+            self.assertEqual(bridge.prepare_output_pipe(write_fd), 65536)
+        self.assertIsNone(bridge.prepare_output_pipe(-1))
+
     def test_strict_json_bounds_unicode_duplicates_and_finite_values(self):
         self.assertEqual(bridge.parse_frame(b'{"id":1}\n'), {'id': 1})
         bad = [b'{"x":1,"x":2}\n', b'{"x":NaN}\n', b'{"x":1e999}\n',
@@ -126,6 +145,16 @@ class FramingTests(unittest.TestCase):
 
 @unittest.skipUnless(SDK_AVAILABLE, 'Optional MCP environment required; skipped tests are not protocol qualification')
 class SDKProcessTests(unittest.TestCase):
+    def test_bound_recipe_uses_the_same_selected_contract(self):
+        import agent_api as api
+        from mcp.types import Tool
+        selected=api.negotiate(api.capabilities('b'*32),'b'*32)
+        definition=next(item for item in api.tool_definitions(selected)
+                        if item['name']==api.operation('recipes.inspect')['mcp_name'])
+        tool=Tool.model_validate(definition)
+        self.assertEqual(tool.outputSchema,api.operation('recipes.inspect',2)['outputSchema'])
+        self.assertEqual(tool.inputSchema,api.operation('recipes.inspect',2)['inputSchema'])
+
     def start(self, **env):
         process = subprocess.Popen([sys.executable, '-c', CHILD], cwd=ROOT,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,

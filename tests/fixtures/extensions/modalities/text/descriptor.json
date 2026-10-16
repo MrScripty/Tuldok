@@ -1,0 +1,110 @@
+{
+  "defaults": {
+    "class_order": [
+      "negative",
+      "positive"
+    ],
+    "padding": "none",
+    "payload": [
+      [
+        2,
+        5,
+        3
+      ],
+      [
+        2,
+        7,
+        8,
+        3
+      ]
+    ],
+    "tokenizer_sha256": "915c9ae1628b75d4e2d249cce10f8a7b31b4ef2b87592b126e4966e01ffc492d"
+  },
+  "format": "tuldok_contribution_v1",
+  "id": "example.modality-text:descriptor",
+  "kind": "task",
+  "label": "text bounded opaque descriptor",
+  "parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "class_order": {
+        "items": {
+          "enum": [
+            "negative",
+            "positive"
+          ],
+          "maxLength": 8,
+          "type": "string"
+        },
+        "maxItems": 2,
+        "minItems": 2,
+        "type": "array"
+      },
+      "padding": {
+        "enum": [
+          "none"
+        ],
+        "maxLength": 4,
+        "type": "string"
+      },
+      "payload": {
+        "items": {
+          "items": {
+            "maximum": 15,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "type": "array"
+        },
+        "maxItems": 3,
+        "minItems": 1,
+        "type": "array"
+      },
+      "tokenizer_sha256": {
+        "enum": [
+          "915c9ae1628b75d4e2d249cce10f8a7b31b4ef2b87592b126e4966e01ffc492d"
+        ],
+        "maxLength": 64,
+        "type": "string"
+      }
+    },
+    "required": [
+      "payload",
+      "tokenizer_sha256",
+      "padding",
+      "class_order"
+    ],
+    "type": "object"
+  },
+  "ports": [
+    {
+      "axes": [
+        "sequence",
+        "token"
+      ],
+      "contract": {
+        "id": "example.modality-text:tokens",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "tokens",
+      "units": "token_id"
+    },
+    {
+      "axes": [],
+      "contract": {
+        "id": "example.modality-text:tokenizer",
+        "version": "1.0.0"
+      },
+      "direction": "input",
+      "encoding": "json",
+      "id": "tokenizer",
+      "units": "identity"
+    }
+  ],
+  "requires": [],
+  "version": "1.0.0"
+}

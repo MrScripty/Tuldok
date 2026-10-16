@@ -1,0 +1,125 @@
+{
+  "format": "tuldok_contribution_v1",
+  "id": "example.scalar-b-independent:model",
+  "version": "1.0.0",
+  "kind": "model",
+  "label": "Independent B model",
+  "requires": [
+    {
+      "id": "example.scalar-b-independent:task",
+      "version": "1.0.0",
+      "sha256": "0321eb32c4286c76c1fb85ef947aafc01acf1c529d342bb0760f2540fdc964ac"
+    }
+  ],
+  "ports": [
+    {
+      "id": "initial",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "source",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "boundary_mask",
+      "direction": "input",
+      "contract": {
+        "id": "example.scalar-b-independent:boundary-mask",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "raw_target",
+      "direction": "target",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "corrected_target",
+      "direction": "target",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "raw",
+      "direction": "output",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    },
+    {
+      "id": "corrected",
+      "direction": "output",
+      "contract": {
+        "id": "example.scalar-b-independent:scalar-field",
+        "version": "1.0.0"
+      },
+      "encoding": "npy",
+      "axes": [
+        "z",
+        "y",
+        "x"
+      ],
+      "units": "dimensionless"
+    }
+  ],
+  "implementation": {
+    "source": "producer.py",
+    "entrypoint": "infer"
+  }
+}

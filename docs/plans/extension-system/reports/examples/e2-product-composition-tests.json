@@ -1,0 +1,14 @@
+{
+  "host_commit": "0509900c349239d66a18126eb83697297eb14a0b",
+  "modules": [
+    "test_qualify_extension_author",
+    "test_qualify_extension_ab_retention",
+    "test_qualify_extension_cross_grant",
+    "test_extension_sdk_conformance",
+    "test_extension_canonical_driver",
+    "test_canonical_candidate_packages"
+  ],
+  "exit_code": 0,
+  "database": "tuldok_e2_composition_8a384300b29b4c768846080b8259d9d9",
+  "database_retained": true
+}
