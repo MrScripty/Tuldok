@@ -26,8 +26,10 @@ from psycopg.conninfo import make_conninfo
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 import agent_api
+import backup_metadata as transfer
 from app import Dataset,make_handler
 from auth_helpers import ExplicitOwnerFixture
+from workbench import WorkbenchError
 import qualify_extension_ab_retention as retention
 from qualify_model_development import populate,freeze
 
@@ -53,6 +55,14 @@ def read_report(path):
     return value,destination,database,hashlib.sha256(raw).hexdigest()
 
 
+def guard_output(report,destination,selected,output):
+    """Refuse every original/catalog/source tree before creating a receipt."""
+    protected=[Path(report['source']),destination,ROOT,
+               Path(report['output'])/'restored-only-b-source',
+               *[Path(value) for value in selected.get('current_roots',{}).values()]]
+    for path in protected:transfer.separate_paths(path,output)
+
+
 def main(args):
     report,destination,database,report_sha=read_report(args.retention_report)
     require(report_sha==args.retention_report_sha256,'Select the exact reviewed stopped restore report.')
@@ -67,12 +77,14 @@ def main(args):
             'Actual restored B disable/removal refusals must precede continuity.')
     selected=retention.load_selection(args.selection)
     require(selected['catalog_id']==report['baseline']['dataset_id'],'Reviewed retention catalog differs.')
+    require(hashlib.sha256(args.selection.read_bytes()).hexdigest()==report['selection_sha256'] and
+            selected['references'].get('current_roots')==report['reviewed_references'].get('current_roots'),
+            'Select the exact qualified retention selection and original root reference.')
     runtime=args.runtime_python.absolute()
     require(runtime.is_file() and os.environ.get('TULDOK_TRAINING_PYTHON')==str(runtime),
             'Explicitly select the actual supported CPU training interpreter; no fallback.')
     output=args.output.resolve();require(not output.exists(),'Choose an absent classifier evidence destination.')
-    require(destination not in output.parents and output not in destination.parents,
-            'Keep new test receipts outside the restored catalog.')
+    guard_output(report,destination,selected,output)
     output.mkdir(mode=0o700,parents=True)
     connection=make_conninfo(os.environ['TULDOK_DATABASE_URL'],dbname=database)
     retained_root=Path(report['output'])/'restored-only-b-source'
@@ -154,6 +166,8 @@ def main(args):
         evidence=call('runs.model_evidence',{'run_id':run['id']})
         require(evidence['state']=='verified' and len(evidence['checkpoint_index']['entries'])==1,
                 'Actual one-epoch built-in evidence unavailable.')
+        require(evidence['checkpoint_index']['entries'][0]['clocks']['epoch']==1,
+                'Actual classifier checkpoint must identify its one epoch.')
         save('evidence.json',evidence)
         settled=call('studies.reconcile',{'study_id':study['id']})
         require(settled['charged']['attempt_slots']==1 and len(settled['reservations'])==1 and
@@ -162,12 +176,43 @@ def main(args):
         save('study.json',settled)
         deadline=time.monotonic()+15
         while dataset.runs._thread is not None and time.monotonic()<deadline:time.sleep(.05)
-        with owner.bound(dataset),patch('subprocess.Popen',side_effect=AssertionError('Historical reads must not execute')),\
+        material=call('recipes.material',{'ref':trial['material']})
+        server.shutdown();server.server_close();thread.join(timeout=5);server=thread=None
+        with owner.bound(dataset):dataset.access.logout()
+        dataset.close();dataset=None
+        with patch('subprocess.Popen',side_effect=AssertionError('Cold reads must not execute')),\
                 patch('runs.Runs._start',side_effect=AssertionError('Historical reads must not schedule')):
-            available=dataset.projects.roots;dataset.projects.roots={}
-            try:require(retention.selected_reads(dataset,selected)==before,'Historical A/B source/package meaning changed.')
-            finally:dataset.projects.roots=available
-            releasedoc=next(row for row in dataset.pipelines.releases() if row['id']==release['id'])
+            dataset=Dataset(destination,dsn=connection,project_roots=roots)
+            owner=ExplicitOwnerFixture.bootstrap(dataset)
+            with owner.bound(dataset):
+                require(dataset.runs.get(run['id'])==run and dataset.models.material(model['ref'],verify=True)==model and
+                        dataset.pipelines.recipe_material(trial['material'],verify=True)==material and
+                        dataset.studies.get(study['id'])==settled and
+                        dataset.runs.model_evidence(run['id'])==evidence,
+                        'Cold actual classifier Run/Model/material/Study/evidence differs.')
+                cold=[];locked=[]
+                for item in run['artifacts']:
+                    if item['locked']:
+                        try:dataset.runs.artifact(run['id'],item['name'])
+                        except WorkbenchError as error:
+                            require((error.code,error.status)==('conflict',409),'Wrong protected test refusal.')
+                            locked.append(item['name']);continue
+                        raise RuntimeError('Protected classifier test output was disclosed.')
+                    raw,_=dataset.runs.artifact(run['id'],item['name'])
+                    captured,capture=dataset.runs.capture_artifact(run['id'],item['name'],item['sha256'])
+                    with dataset.runs.open_artifact(run['id'],item['name']) as (stream,metadata):
+                        digest=hashlib.sha256();count=0
+                        while piece:=stream.read(1024**2):digest.update(piece);count+=len(piece)
+                    require(raw==captured and len(raw)==count==metadata['bytes']==item['bytes'] and
+                            hashlib.sha256(raw).hexdigest()==digest.hexdigest()==capture['measured_sha256']==item['sha256'],
+                            'Cold actual classifier whole/stream/capture identity differs.')
+                    cold.append({key:item[key] for key in ('name','bytes','sha256')})
+                save('cold-custody.json',{'state':'passed','whole_stream_capture':cold,'protected_locked':locked,
+                                         'process_and_scheduler_blocked':True})
+                available=dataset.projects.roots;dataset.projects.roots={}
+                try:require(retention.selected_reads(dataset,selected)==before,'Historical A/B source/package meaning changed.')
+                finally:dataset.projects.roots=available
+                releasedoc=next(row for row in dataset.pipelines.releases() if row['id']==release['id'])
         recipe_id=selected['b']['model']['material']['source_selector']['recipe_id']
         checks=dict(disposable_restored_catalog=True,refusals=[dict(mode=row['mode'],project_id=row['project_id'],recipe_id=recipe_id)
             for row in disabled['new_selection_refusals']],retained_runs=[
@@ -180,6 +225,7 @@ def main(args):
                 expected_fields=row['expected_fields'],restored_checks=checks))
         state.update(state='passed',admission_state='completed',historical_A_B_package_unchanged=True,
             built_in_epoch=1,study_id=study['id'],trial_id=trial['id'],graph_id=graph['id'],release_id=release['id'],
+            cold_exact_objects=True,cold_whole_stream_capture_count=len(cold),protected_locked=locked,
             owner_admission=True,delegated_grant_used=False,charged=settled['charged'],native_checks=checks,calls=calls)
         save('receipt.json',state)
         print('PASS actual restored classifier '+run['id']+' '+str(output),flush=True)

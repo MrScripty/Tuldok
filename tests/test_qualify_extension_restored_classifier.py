@@ -9,6 +9,19 @@ import qualify_extension_restored_classifier as driver
 
 
 class RestoredClassifierGuards(unittest.TestCase):
+    def test_receipts_cannot_be_written_under_any_original_or_restored_tree(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            report={'source':str(root/'original-catalog'),'output':str(root/'e4')}
+            selected={'current_roots':{'author':str(root/'original-author')}}
+            destination=root/'e4/restored-catalog'
+            for parent in (Path(report['source']),destination,driver.ROOT,root/'original-author',root/'e4/restored-only-b-source'):
+                output=parent/'new-report'
+                with self.subTest(parent=parent),self.assertRaises(driver.transfer.StorageTransferError):
+                    driver.guard_output(report,destination,selected,output)
+                self.assertFalse(output.exists())
+            driver.guard_output(report,destination,selected,root/'separate-report')
+
     def test_only_a_passed_actual_rootless_restore_with_new_destination_is_selected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);output=root/'output';destination=output/'restored-catalog'
