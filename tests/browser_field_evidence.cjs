@@ -355,15 +355,14 @@ function launch(command, args, options) {
   async function nativeOption(selector,value,fieldSettled=true){
     const values=await evaluate(`Array.from(${element(selector)}.options,option=>option.value)`),ordinal=values.indexOf(String(value));
     assert.ok(ordinal>=0,'Missing actual native option '+selector+' '+value);
+    await focus(selector);
     for(let i=0;i<=ordinal;i++){
-      // A selected saved graph replaces its native select synchronously.
-      // Reacquire real focus for each key instead of dispatching to a detached node.
-      await focus(selector);
       assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true,'Real keyboard focus '+selector);
       await key(i===0?'Home':'ArrowDown');
-      await until(()=>evaluate(`${element(selector)}?.value===${JSON.stringify(values[i])}&&${fieldSettled?"!!document.getElementById('field-load')&&!document.getElementById('field-load').disabled":"true"}`),'Native selector did not settle '+selector);
+      await until(()=>evaluate(`${element(selector)}?.value===${JSON.stringify(values[i])}&&!${element(selector)}.disabled&&${fieldSettled?"!!document.getElementById('field-load')&&!document.getElementById('field-load').disabled":"true"}`),'Native selector did not settle '+selector);
+      assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true,'Native selector preserves keyboard focus '+selector);
     }
-    await focus(selector);assert.equal(await evaluate(`document.activeElement===${element(selector)}`),true);await key('Tab');
+    await key('Tab');
   }
   const captureCheckpoint=index.checkpoint_index.entries.find(item=>item.selected)||index.checkpoint_index.entries.at(-1),captureMember=index.probe.members[0];
   const declaredCaptures=[];

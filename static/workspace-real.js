@@ -87,15 +87,21 @@
     }
     async function action(fn) {
       if (busy) return;
+      const actionView = view, actionIntent = loadGeneration;
+      const actionRoot = view === "pipeline" ? pipelineRoot : view === "runs" ? runsRoot : null;
+      const focusedId = actionRoot?.contains(document.activeElement) ? document.activeElement.id : null;
       busy = true;
       for (const root of [pipelineRoot, runsRoot]) root.querySelectorAll("button,input,select").forEach(e => e.disabled = true);
       try { await fn(); } catch (error) {
         status(error.message + (error.code === "commit_unknown" ? " The acknowledgement was lost. Reload saved state before another write." : ""), true);
       } finally {
         busy = false;
+        const restore = focusedId && view === actionView && loadGeneration === actionIntent && document.activeElement === document.body;
         // Keep the error/status outside the replaced panels.
         if (view === "pipeline") renderPipeline();
         else if (view === "runs") renderRuns();
+        if (restore && document.activeElement === document.body)
+          actionRoot.querySelector("#" + CSS.escape(focusedId))?.focus({ preventScroll: true });
       }
     }
     async function loadPipeline() {
@@ -174,7 +180,7 @@
     function renderPipeline() {
       if (!definitions) return;
       if(external.isGraph(graph)){
-        external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}});
+        retainFocus(pipelineRoot, () => external.renderPipeline(pipelineRoot,{graph,graphs,busy,choose:id=>{if(dirty()&&!confirm("Discard unsaved recipe changes?")){renderPipeline();return;}action(async()=>adopt(await api("graphs/"+encoded(id))));}}));
         if(notice){const target=pipelineRoot.querySelector('.real-status');target.textContent=notice;target.classList.toggle('error-panel',noticeError);}mountModel();return;
       }
       const integrity = integrityKind(graph);
