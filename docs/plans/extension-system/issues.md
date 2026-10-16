@@ -46,8 +46,9 @@
 
 - Severity: medium; no application risk in this draft.
 - Owner/boundary: primary documentation integration owner.
-- Disposition: M0 is accepted; keep full product X1–X5 partial until their named
-  implementation gates pass. Current E1 acceptance and next-slice state are in I7.
+- Disposition: M0 is accepted and X1–X5 have named reviewed functional witnesses.
+  Overall product acceptance remains partial pending final composed review,
+  exact-head PR78 CI and lead integration. Current evidence is in I7.
 - Verification: adopted plan structural check plus lifecycle/authority review in executor.
 - Historical M0 resolution: independent review/checks passed and local material commit
   `ccf01ae8d95340e29c89dfa8b39ba718aa9535ef` was verified; M0 Accepted,
@@ -68,7 +69,8 @@
   witnesses passed. Later [A/B stopped restore and retained-state proofs](reports/e4-ab-final-qualification.md)
   also passed, including original-source parity and complete A package/fresh
   reconstruction. These do not change the unsupported old-binary pairing or
-  qualify the still-pending new agent-authoring path and final composed CI.
+  stand in for the separately qualified new agent-authoring path or final
+  composed CI.
 
 ## I6 — SDK and host need one complete validation authority
 
@@ -89,21 +91,28 @@
 
 ## I7 — Accepted implementation and remaining current qualification
 
-- Current status source: local composition `0150582`; final integration/CI authority
-  is [PR78](https://github.com/MrScripty/Tuldok/pull/78). This documentation update
-  does not claim that unpublished working source or this local composition is the
-  current published head or has passed final CI. The lead owns serial integration.
+- Current status base: local composition `d61ef320`; final integration/CI authority
+  is [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks). Functional
+  qualification is complete at the named sources below. This documentation
+  does not claim that this local composition is the final published PR head or
+  has passed final CI. The lead owns serial integration.
 - P1–P6 are implemented, qualified at their named sources and merged. The original
   E1 browser/HTTP inspection remains accepted with its narrow scope. Legacy v1
   grammar/projections and the old-binary/new-v2-store restriction are unchanged.
-- Normal SDK admission already passed for canonical A and independently authored
-  B using owner-prepared exact Trials. This is distinct from the still-unqualified
-  ordinary-agent discovery/open/bound-model authoring path. Its published
-  [PR86 candidate](https://github.com/MrScripty/Tuldok/pull/86), exact head
-  `831ac7095790fcd0544c1afa15bf1c578a69a2c6`, is under revision-authority/receipt
-  review. Earlier 12 focused cases passed in 67.377 seconds before the later
-  corrections; they are historical observations, not current activation evidence.
-  No fresh 50502 actual agent-authoring Run is recorded yet.
+- Normal SDK admission passed for canonical A and independently authored B using
+  owner-prepared exact Trials. The distinct ordinary-agent workflow is now
+  qualified after [PR86](https://github.com/MrScripty/Tuldok/pull/86) source
+  `da9f57d8` review and actual frozen host `e1bc02a`. The agent authored Model,
+  graph and Trial through official CLI/MCP/negotiated operations; the owner
+  supplied the finite Study and one exact grant. Run
+  `ae5cc100fcb84c59932cedc3cba60bdb` completed with 32 whole artifacts.
+  The original post-SDK context-key failure is preserved; reviewed recovery
+  `16c1165` settled the existing reservation and passed rootless cold/oracle/
+  current-revocation checks without another admission or training.
+  [Qualification and sanitized proof](reports/main505-agent-authoring-qualification.md)
+  bind recovery SHA256
+  `d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+  Earlier 12-case/pre-correction observations remain historical in the ledger.
 - PR76 at `6da68df` retains the exact 0b A source/package/separate-verifier and
   masked-consumer witnesses. Its three settled slots / 771 seconds / 55,405,809
   retained bytes / 102,988,554 staging bytes are unchanged, with no amendment.
@@ -131,11 +140,11 @@
   is sealed at `6905fc8`; the real selected-read/revocation regression at
   `c0efd4f` has independent review SHA256
   `d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
-  Serial composition remains lead-owned.
+  This proof is composed; final serial integration remains lead-owned.
 - Corpus `4f2c45a` closes the descriptor-envelope fixture obligation only (I6).
-  The remaining functional qualification is the new ordinary-agent workflow,
-  followed by sealed-proof composition, exact-head composed CI,
-  independent review and lead acceptance. Overall E4/plan acceptance stays open.
+  Named functional qualification is complete. Exact-head composed CI,
+  independent composed review and lead acceptance remain open. Earlier immutable
+  E4/shared-matrix partial dispositions retain their historical scope.
 - Pressure physical result remains 0/16; periodic pressure checkpoints/probes,
   protected scientific test, unsupported hardware and redistribution are not
   passed or silently added requirements.

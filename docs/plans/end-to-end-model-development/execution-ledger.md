@@ -290,3 +290,34 @@
 - Both main merges are composed into the extension branch without changing its
   already qualified tree. The P1–P6 PRs are now merged; actual shared A/B
   retention/client/disable/continuity and composed-extension CI remain in progress.
+
+### Extension functional qualification closeout; final integration remains open
+
+- P1–P6 are merged. Canonical A and independently authored B source/cold gates,
+  main A charged package/separate verifier/masked consumer and shared A/B
+  retention/official-client/disable/unrelated-classifier/native witnesses passed
+  at their recorded sources. The final shared bookend preserves original source
+  state and restored business state. Historical core pending and shared-matrix
+  overall-false receipts are unchanged.
+- The six-modality descriptor corpus `4f2c45a` passed 8 focused plus 24 existing
+  SDK/catalog cases, zero skips; independent review `80e219b4...` covers bounded
+  shared declarations and inert opaque metadata only. Ordinary workflow
+  execution remains supported by its separate actual/CI witnesses.
+- Late external package UI `00865e9` and report `6905fc8` are composed: 56 actual
+  captures, exact A ZIP/verifier, honest unsupported B packaging and unchanged
+  retained counts. The 144-plus-five source scope is separate from the old
+  149-file and 148-plus-one proofs.
+- The separately reviewed [ordinary-agent authoring qualification](../extension-system/reports/main505-agent-authoring-qualification.md)
+  now proves agent Model/graph/Trial authoring on frozen host `e1bc02a` and one
+  exact-grant SDK Run `ae5cc100fcb84c59932cedc3cba60bdb`, with 32 artifacts.
+  The initial post-SDK operator failure remains preserved. Same-Run recovery
+  `16c1165` settled the existing reservation and passed rootless cold, independent
+  oracle, stale-identity and current HTTP/CLI/MCP revocation checks; no new
+  admission or training occurred. Recovery receipt SHA256 is
+  `d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+  Final authority/accounting and artifact/oracle/source/cleanup reviews cleared.
+- Named extension functional gates are qualified; overall acceptance remains
+  partial pending independent composed review, exact-head
+  [PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks) and lead
+  integration. No future CI, main merge, physical validity, useful-model quality,
+  new hardware capability or distribution right is claimed.

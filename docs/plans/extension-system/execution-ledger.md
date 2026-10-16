@@ -1,6 +1,53 @@
 # Extension-system execution ledger
 
-## 2026-10-16 — Current composed qualification; final agent/CI work remains
+## 2026-10-16 — Functional gates qualified; final source CI/integration pending
+
+This entry supersedes the earlier current-status checkpoint below without
+changing any dated observation, failed attempt or immutable machine receipt.
+Local status base is `d61ef320`; final source/CI authority remains
+[PR78 checks](https://github.com/MrScripty/Tuldok/pull/78/checks).
+
+- The named X1–X5 functional witnesses are qualified. Canonical A and independent
+  B source/numerical SDK gates, main A package/separate verifier/masked consumer,
+  the shared restore/client/disable/classifier/native matrix, the six-modality
+  descriptor corpus and the late package UI each retain their named source and
+  runtime provenance. They do not infer a final composed CI or merge result.
+- [Ordinary-agent authoring](reports/main505-agent-authoring-qualification.md)
+  is now separately qualified after PR86 source `da9f57d8` review on frozen host
+  `e1bc02a68355876ec64e5e1e272019c2018b5c63`. The agent authored Model, graph and
+  Trial through official CLI/MCP/negotiated operations. The owner provided the
+  finite Study, reviewed continuation and one exact grant; no owner-authored
+  Model/graph/Trial or owner AgentClient bootstrap stood in for that workflow.
+- Exactly one Run `ae5cc100fcb84c59932cedc3cba60bdb` completed and drained with
+  32 artifacts, checkpoints16/32/48/64 and nondefault initialization
+  `scale=-0.375`, `offset=0.5`. The original driver exited1 after SDK success on
+  a wrong context-key lookup. Its failure and original wire-status limitations
+  remain preserved; reviewed recovery `16c1165` exited0 on the same Run, with
+  no new admission or training. Recovery receipt SHA256 is
+  `d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+- The recovery explicitly settled the existing reservation and issued/revoked
+  an inspect-only reader. Only the two existing settlement tables changed;
+  after settlement, all 39 domain tables stayed equal across inspection. Final
+  counts are one Run/grant/consumption/reservation/Study/Trial and two Projects.
+  The one-slot charge is 197 admitted wall seconds, 4,495,496 retained bytes and
+  6,217,084 peak staging bytes: finite envelopes, not measured OS resource use.
+- All 32 cold whole files match SDK downloads; rootless warm/cold projections,
+  the independent stdlib oracle, stale-identity409 and current HTTP/CLI/MCP401
+  checks passed. Independent final review hashes are
+  `0555fa43aa9e0692862d9317108f383c62ef31f142db94b8e6459e990e512add`
+  (authority/accounting) and
+  `f5100a907eec2f0b9f84b66faa9af2e96bc65667adce43a4bb60bf9d0bfcf0bc`
+  (artifacts/oracle/source/cleanup). Services stopped and private configs were
+  removed. This isolated case contains only the fixed synthetic authored fixture.
+- Late package UI proof `6905fc8` is composed; its 56 captures and selected-read
+  revocation addendum remain separate from the older 149-file and 148-plus-one
+  proofs. The original core pending-state and shared-matrix
+  `full_E4_pass:false`/partial dispositions are immutable historical records.
+- Overall acceptance remains partial for final independent composed review,
+  exact-head PR78 CI and lead integration. No new hardware, physics, B packaging,
+  hard quota, hostile-code isolation or public-distribution claim is added.
+
+## 2026-10-16 — Earlier composed checkpoint; agent/CI qualification was pending
 
 This entry supersedes the earlier checkpoint statuses below. Those dated records,
 including failed verification attempts and then-unavailable prerequisites, remain

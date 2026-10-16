@@ -19,7 +19,7 @@ and unrelated branches are preserved. Current integration is draft
 | P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 merged at `9585f3cd15f140bf8c24d9aa33b8f51ef352621e`. Exact `ed51510` passed captured-CPU, full lifecycle, catalog and workspace UI CI. Its predecessor `407068d` has separate historical qualification. |
 | P6 | Shared opt-in interface observation at HTTP/CLI/MCP boundaries, private bounded storage, fail-open passive sink, separate mandatory audit and unchanged caller arguments. [Qualification](p6-observation-qualification.md). | PR74 merged at `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`. |
 
-## Extension implementation and remaining execution
+## Extension implementation and final integration
 
 The integration contains exact project-v2 contribution binding, inert declarative
 Model configuration, generic canonical field-input policy and schema3 evidence,
@@ -124,22 +124,43 @@ unchanged plus five explicit late UI/backend changes. Its
 is sealed at `6905fc8`; the focused real-read/revocation regression at `c0efd4f`
 has independent review SHA256
 `d5a61c41228ccb70b342058afecfceeca0bfd5b3464f9ed97d0cf401c032e4cb`.
-Serial integration remains lead-owned;
-the older exact 149-file and 148-plus-one/44-capture proofs remain unchanged.
+The proof is composed; final integration remains lead-owned.
+The older exact 149-file and 148-plus-one/44-capture proofs remain unchanged.
 
-Ordinary-agent discovery/open/bound-source authoring is the remaining functional
-qualification. Published [PR86](https://github.com/MrScripty/Tuldok/pull/86)
-candidate head `831ac7095790fcd0544c1afa15bf1c578a69a2c6` is under
-revision-authority/receipt review. Twelve focused cases passed in 67.377 seconds
-at an earlier checkpoint, before the later corrections; they are not proof of
-this current source. The isolated fresh-50502
-qualifier is composed, but no new actual public agent-authoring Run is recorded.
-Owner-prepared SDK admission cannot stand in for that workflow. Final status
-must use the reviewed new source and its own actual receipt, without retrofitting
-any earlier frozen A/B or UI proof.
+Ordinary-agent discovery/open/bound-source authoring now has its own
+[actual 50502 qualification](../../extension-system/reports/main505-agent-authoring-qualification.md)
+and [sanitized machine proof](../../extension-system/reports/main505-agent-authoring-qualification.json),
+separate from earlier owner-prepared Trials. Reviewed PR86 source `da9f57d8`
+was composed into frozen host `e1bc02a`. The agent authored Model, graph and
+Trial through official CLI/MCP/negotiated operations; the owner supplied an
+empty closed finite Study, reviewed continuation and one exact execution grant.
+Run `ae5cc100fcb84c59932cedc3cba60bdb` completed/drained with 32 whole artifacts
+and nondefault initialization `scale=-0.375`, `offset=0.5`. The original driver
+failed after SDK success on an incorrect context-key lookup. Reviewed same-Run
+recovery `16c1165` settled the existing reservation, then passed rootless
+warm/cold reads, independent numerical reconstruction, stale-identity refusal
+and current HTTP/CLI/MCP revocation checks, with no new admission or training.
+Recovery receipt SHA256 is
+`d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`.
+Its one settled test envelope is 197 admitted wall seconds, 4,495,496 retained
+bytes and 6,217,084 peak staging bytes, not measured resource use. The new case
+uses only a fixed synthetic authored fixture in an isolated test namespace.
+Original failure evidence and earlier frozen A/B/UI proofs remain unchanged.
 
-The P1–P6 PRs are merged. Final composed extension CI and independent acceptance
-review remain merge gates. Superseded CI is canceled only after its replacement is published.
+Original local host `e1bc02a` and composed source `d61ef320` are the receipt
+identities. Ordinary GitHub API publication recreated commit metadata while
+preserving exact trees and ordered mapped parents: the public review source
+`3349af525478d74fb13b87e8c2dc32939d3c6cbb` has the same source tree as `e1bc02a`,
+and `64d8c6df18d4c87f0a1cc06edc8353ac6cbb9508` has the same source tree as
+`d61ef320` (`df72714e12de271ab5790959de2dbe3a891e639b`). These are tree-equivalence
+claims, not identical commit IDs or a claim that PR78 already points to them.
+
+The P1–P6 PRs are merged and the named extension functional gates are qualified.
+Final composed extension CI, independent composed acceptance review and lead
+integration remain open. The authoritative final source/checks are
+[PR78](https://github.com/MrScripty/Tuldok/pull/78/checks); no future CI or merge
+result is inferred from the actual local qualifications. Earlier immutable
+shared-matrix `full_E4_pass:false` and core pending-state receipts are not rewritten. Superseded CI is canceled only after its replacement is published.
 Branches are removed only after safe merge and dependent retargeting.
 
 ## Explicit qualification limits

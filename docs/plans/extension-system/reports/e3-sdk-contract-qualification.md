@@ -110,8 +110,11 @@ context/evidence, hot/cold whole downloads and independent numerical checks.
 Canonical Release-derived inputs and B's required source/mask/raw/corrected policy
 are now exercised, not remaining hypothetical SDK prerequisites. The distinct
 0b [canonical A source](e2-canonical-a-cpu-qualification.md) is separately retained.
-Owner-prepared exact Trials and explicit grants remain part of these witnesses;
-they do not prove ordinary-agent snapshot/model authoring.
+Owner-prepared exact Trials and explicit grants remain part of these witnesses.
+The later [ordinary-agent authoring qualification](main505-agent-authoring-qualification.md)
+separately proves snapshot discovery/open/get, selected recipe inspection,
+agent-created/published Model, graph/preflight and Trial authoring. It does not
+retrofit those operations into the earlier A/B source witnesses.
 
 B's original missing held oracle-freeze dependency and first read-only recovery
 route refusal are preserved in its report. Verification recovered the same Run;
@@ -137,7 +140,19 @@ renderer, numerical query or semantic conversion is qualified. This is E3's
 explicit descriptor-envelope fixture obligation, not a substitute for actual
 ordinary workflows or their composed regression suites.
 
-Still open: the new ordinary-agent discovery/open/bound-model authoring path,
-review of its revision/receipt corrections and fresh 50502 public qualification; late
-package-UI proof composition; final composed CI and lead
-acceptance. No unreviewed new API or fresh agent Run is activated by this appendix.
+The new ordinary-agent workflow passed at frozen host `e1bc02a` after PR86
+source review. Exactly one SDK admission completed Run
+`ae5cc100fcb84c59932cedc3cba60bdb` with 32 verified artifacts. Its initial
+post-SDK operator KeyError remains preserved; reviewed same-Run recovery
+`16c1165` settled the existing reservation and passed cold/oracle/current-access
+checks without repeating SDK admission or training. The
+[sanitized machine proof](main505-agent-authoring-qualification.json) binds
+recovery receipt
+`d7b3c378a060ca604547a2c82cff657d22d3f90e83cf47d4b4c2630fde5c3c88`,
+independent authority/accounting review `0555fa43...` and independent
+artifact/oracle/cleanup review `f5100a90...`. Numerical fixture acceptance is
+separate from physical validity, useful-model quality and package distribution.
+The late package-UI actual/reviewed proof is also composed. Still open: final
+composed independent review, exact-head [PR78 CI](https://github.com/MrScripty/Tuldok/pull/78/checks)
+and lead integration. No CI, merge or universal extension pass follows from
+this source-specific appendix.
