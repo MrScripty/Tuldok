@@ -10,6 +10,7 @@ from contextlib import nullcontext, redirect_stdout
 import io
 import stat
 import sys
+import subprocess
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -19,6 +20,65 @@ from tuldok_extension_sdk.evidence import canonical
 
 
 class ExtensionAuthorDriverTests(unittest.TestCase):
+    def test_oracle_sibling_freeze_is_held_checked_and_executable_without_author_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);package=root/'package';package.mkdir();reviewed=self.package(package)
+            oracle=b'''import hashlib,json
+from pathlib import Path
+p=Path(__file__).parent
+f=json.loads((p/'oracle-freeze.json').read_bytes())
+assert hashlib.sha256(Path(__file__).read_bytes()).hexdigest()==f['oracle_sha256']
+assert hashlib.sha256((p/'fixture.json').read_bytes()).hexdigest()==f['fixture_sha256']
+print('held sibling dependency verified')
+'''
+            self.replace_review(package,reviewed,oracle,b'{"initial_fixture":true}')
+            args=self.arguments(root,package);args.output.mkdir();operator=driver.Operator(args)
+            blobs=driver.review_package(package,reviewed)[2]
+            operator.retain_review(driver.agent_api.encoded(reviewed),blobs)
+            held=driver.regular(args.output/'reviewed-oracle/oracle-freeze.json')
+            self.assertEqual(driver.sha(held),reviewed['files']['oracle-freeze.json'])
+            (package/'oracle-freeze.json').write_bytes(b'{"unreviewed":true}')
+            oracle_path,_=operator.oracle_inputs()
+            result=subprocess.run([sys.executable,'-I','-S','-B',str(oracle_path)],capture_output=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr.decode())
+            path=args.output/'reviewed-oracle/oracle-freeze.json';path.chmod(0o600);path.write_bytes(b'{}')
+            with self.assertRaisesRegex(RuntimeError,'Retained frozen oracle input changed'):operator.oracle_inputs()
+
+    def test_resume_recovers_only_original_reviewed_missing_dependency(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);package=root/'package';package.mkdir();reviewed=self.package(package)
+            args=self.arguments(root,package,'original');args.output.mkdir();original=driver.Operator(args)
+            raw=driver.agent_api.encoded(reviewed);blobs=driver.review_package(package,reviewed)[2]
+            original.retain_review(raw,blobs)
+            missing=args.output/'reviewed-oracle/oracle-freeze.json';missing.unlink()
+            prepared={'reviewed_inventory_sha256':driver.sha(raw),'project_files':reviewed['files']}
+            prepared_raw=driver.agent_api.encoded(prepared);(args.output/'prepared.json').write_bytes(prepared_raw)
+            (args.output/'failure.json').write_bytes(b'{"original_failure":true}')
+            resumed_args=self.arguments(root,package,'resumed');resumed_args.output.mkdir()
+            resumed=driver.VerificationOperator(resumed_args)
+            recovery=driver.resume_review(resumed,args.output,prepared,driver.sha(prepared_raw))
+            self.assertEqual(recovery['oracle_dependencies']['oracle-freeze.json'],reviewed['files']['oracle-freeze.json'])
+            self.assertFalse(missing.exists())
+            self.assertEqual((args.output/'failure.json').read_bytes(),b'{"original_failure":true}')
+            self.assertEqual(driver.document(resumed_args.output/'review-freeze.json')['files'],reviewed['files'])
+            resumed.oracle_inputs()
+            (package/'oracle-freeze.json').write_bytes(b'{"coordinated_new_review":true}')
+            failed_args=self.arguments(root,package,'refused');failed_args.output.mkdir()
+            with self.assertRaisesRegex(RuntimeError,'Original reviewed oracle dependency differs'):
+                driver.resume_review(driver.VerificationOperator(failed_args),args.output,prepared,driver.sha(prepared_raw))
+
+    def test_verification_resume_has_no_preparation_sdk_or_mutation_dispatch(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);args=self.arguments(root,root/'package');operator=driver.VerificationOperator(args)
+            with self.assertRaisesRegex(RuntimeError,'cannot prepare'):operator.prepare({})
+            with self.assertRaisesRegex(RuntimeError,'read operations only'):operator.http('studies.admit',{})
+            with self.assertRaisesRegex(RuntimeError,'mutation route'):operator.raw('POST','/api/workspace/studies/'+'a'*32+'/admit',{})
+            args.resume_verification=root/'original'
+            with patch.object(driver,'frozen_host',return_value='b'*40),patch.object(driver,'resume_verification',return_value='read-only') as resume, \
+                    patch.object(driver.subprocess,'run',side_effect=AssertionError('No SDK execution')):
+                self.assertEqual(driver.main(args),'read-only')
+                resume.assert_called_once_with(args,'b'*40)
+
     def arguments(self, root, package, output='output'):
         cli = root/'cli.py'
         cli.write_bytes(b'# representative trusted CLI; never executed\n')
