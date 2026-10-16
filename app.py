@@ -604,11 +604,12 @@ def make_handler(dataset, observer=None):
             if saved['manifest']['schema_version'] == 2:
                 dataset.access.require(scope, operation, project_id, owner_only=True)
 
-        def _graph_snapshot_contract_access(self, graph_id, revision, operation, version, scope='inspect'):
+        def _graph_snapshot_contract_access(self, graph_id, revision, operation, version, scope='inspect', *, graph=None):
             selected = self._contract_selection
             if selected is not None and selected[0] == operation and selected[1] >= version:
                 return
-            graph = dataset.pipelines.get(graph_id)
+            if graph is None:
+                graph = dataset.pipelines.get(graph_id)
             if graph['revision'] != revision:
                 raise workbench.WorkbenchError('Graph changed. Reload.', 'stale', 409)
             if graph.get('recipe') == 'external_recipe':
@@ -1011,9 +1012,10 @@ def make_handler(dataset, observer=None):
                         if operation:
                             agent_api.require_selection(self._contract_selection,operation)
                             if parts[2]=='prepare-trial':
-                                self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
-                                                                     'studies.prepare_trial',2,'edit')
-                                return self.reply(dataset.studies.prepare_trial(parts[1],body),201)
+                                def graph_guard(graph):
+                                    self._graph_snapshot_contract_access(body['graph_id'],body['graph_revision'],
+                                        'studies.prepare_trial',2,'edit',graph=graph)
+                                return self.reply(dataset.studies.prepare_trial(parts[1],body,_graph_guard=graph_guard),201)
                             if parts[2]=='continue':return self.reply(dataset.studies.continue_study(parts[1],body))
                             if parts[2]=='approve':return self.reply(dataset.studies.approve(parts[1],body),201)
                             if parts[2]=='admit':return self.reply(dataset.studies.admit(parts[1],body,selection=self._contract_selection),201)

@@ -130,7 +130,7 @@ class Experiments:
         return value
 
     @authorized('edit','studies.prepare_trial')
-    def prepare_trial(self,study_id,body,*,_publish=None):
+    def prepare_trial(self,study_id,body,*,_publish=None,_graph_guard=None):
         closed(body,('request_key','revision','graph_id','graph_revision','model','replicate'),('reconcile_capture',));body=checked_json(body)
         request_key(body['request_key']);natural(body['replicate'],'Replicate')
         actor=self.access._context().actor_id;sha=digest({'study_id':study_id,'body':body})
@@ -138,7 +138,9 @@ class Experiments:
             receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
             if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
-        prepare=(self.dataset.pipelines.prepare_builtin_material if model_aware_graph(self.dataset.pipelines.get(body['graph_id']))
+        graph=self.dataset.pipelines.get(body['graph_id'])
+        if _graph_guard is not None:_graph_guard(graph)
+        prepare=(self.dataset.pipelines.prepare_builtin_material if model_aware_graph(graph)
                  else self.dataset.pipelines.prepare_external_material)
         prepared=prepare(body['graph_id'],body['graph_revision'],body['model'],
                                             reconcile_capture=body.get('reconcile_capture',False))

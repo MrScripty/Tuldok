@@ -240,6 +240,10 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
     def test_future_revision_cannot_pass_an_old_source_gate(self):
         draft = self.call('models.create',self.fixture.body(),201)
         graph = self.call('graphs.create_external',self.graph_body(),201)
+        study = self.dataset.studies.create({'name':'Closed owner revision guard test',
+            'policy':self.fixture.inspect(2)['selection_policy'],
+            'limits':dict(attempt_slots=1,admitted_wall_seconds=60,
+                          retained_bytes=1048576,peak_staging_bytes=1048576)})
         before = self.counts()
         with patch.object(subprocess,'Popen',side_effect=AssertionError('Refused static operation must not execute')):
             # A speculative future revision must fail before a second read could
@@ -250,8 +254,8 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
                 self.assertEqual(get.call_count,1)
             for name,arguments in (
                     ('graphs.preflight_external',{'graph_id':graph['id'],'revision':2}),
-                    ('studies.prepare_trial',{'study_id':uuid.uuid4().hex,'request_key':uuid.uuid4().hex,
-                        'revision':1,'graph_id':graph['id'],'graph_revision':2,'replicate':0,
+                    ('studies.prepare_trial',{'study_id':study['id'],'request_key':uuid.uuid4().hex,
+                        'revision':study['revision'],'graph_id':graph['id'],'graph_revision':2,'replicate':0,
                         'model':{'kind':'model','catalog_id':self.dataset.db.dataset_id,
                             'id':uuid.uuid4().hex,'revision':1,'sha256':'a'*64}})):
                 with self.subTest(operation=name), patch.object(self.dataset.pipelines,'get',return_value=graph) as get:
@@ -259,6 +263,32 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
                     self.assertEqual((status,result['code']),(409,'stale'))
                     self.assertEqual(get.call_count,1)
         self.assertEqual(self.counts(),before)
+
+    def test_old_v1_project_trial_receipt_survives_later_graph_revision(self):
+        from test_experiments import StudyTests
+        case = StudyTests('runTest')
+        self.addCleanup(case.doCleanups)
+        case.setUp()
+        with case.owner.bound(case.dataset):
+            actor = case.dataset.access.issue({'label':'Legacy v1 author','scopes':['inspect','edit']})
+            body = {'study_id':case.study['id'],'revision':case.study['revision'],
+                'request_key':uuid.uuid4().hex,'graph_id':case.graph['id'],
+                'graph_revision':case.graph['revision'],'model':case.model['ref'],'replicate':0}
+        prior_base,self.base = self.base,case.server()
+        try:
+            with patch.object(subprocess,'Popen',side_effect=AssertionError('Legacy static preparation is inert')):
+                status,trial = self.http('studies.prepare_trial',body,version=1,token=actor['token'])
+                self.assertEqual(status,201,trial)
+                with case.owner.bound(case.dataset):
+                    newer = copy.deepcopy(case.graph)
+                    newer['name'] = 'Later graph revision preserves original receipt'
+                    case.dataset.pipelines.save(case.graph['id'],{'revision':1,'document':newer})
+                status,repeated = self.http('studies.prepare_trial',body,version=1,token=actor['token'])
+                self.assertEqual((status,repeated),(201,trial))
+            self.assertEqual(case.dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0],0)
+            self.assertEqual(case.dataset.db.execute('SELECT count(*) FROM access_execution_consumptions').fetchone()[0],0)
+        finally:
+            self.base = prior_base
 
     def test_agent_graph_preflight_and_trial_preparation_are_inert_under_owner_budget(self):
         """Tiny non-runnable runtime bytes prove static capture, never CPU execution."""
