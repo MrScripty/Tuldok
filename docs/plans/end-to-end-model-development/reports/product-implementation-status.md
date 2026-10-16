@@ -50,8 +50,10 @@ manifest identity never substitutes for the full captured runtime reference.
   also passes on the actual26 cold artifacts without importing the producer,
   application or database. Its kernel was frozen before inspecting B's producer.
 - The decisive B application freeze covers149 application/SDK/UI/schema/
-  dependency files at `e5d1d79`. Every file still matches after B execution and
-  recovery. Tests, documentation and author packages are outside that scope.
+  dependency files at `e5d1d79`. All149 matched after B execution, recovery,
+  main packaging and original native inspection. Tests, documentation and author
+  packages are outside that scope. A later, separately qualified one-file UI
+  focus correction is recorded below; it does not retrofit the frozen proof.
 - A separate exact0b runtime qualification completed canonical A source,
   native/public inspection, charged package and fresh verifier, plus a consumer
   with checkout/catalog/cache absent. [Source](../../extension-system/reports/e2-canonical-a-cpu-qualification.md),
@@ -72,8 +74,11 @@ retains all31 lineages,17 sources and unchanged finite accounting.
 [Actual A/B native captures](../../extension-system/reports/native-author-ab-actual-browser.md)
 also passed against the frozen application: A8 captures and B12,12 exact queries
 each, continuous field-selector keys and1440/390 light/dark inspection. The
-separate saved-graph selector focus defect is being independently repaired;
-programmatic per-key refocusing is not an accessibility pass. The final stopped shared A/B backup,
+separate saved-graph selector focus defect is fixed and independently qualified
+with [actual old/fixed Chromium evidence](../../extension-system/reports/graph-keyboard-focus-qualification.md),
+including moved-focus and navigation negatives. The strict final browser harness
+allows one initial focus and requires preservation after every native key.
+The final stopped shared A/B backup,
 fresh restore, root-absent reads/current-authority matrix, restored-only B
 disable/remove, A history, wrong-material admission refusal and unrelated
 classifier continuity remain required execution gates. Their independently
