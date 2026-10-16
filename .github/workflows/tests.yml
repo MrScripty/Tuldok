@@ -88,6 +88,10 @@ jobs:
       - run: node tests/browser_workspace_external.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - name: Verify continuous saved-graph keyboard focus and navigation isolation
+        run: node tests/browser_workspace_graph_focus.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node --check static/workspace-projects.js
       - run: node tests/browser_workspace_project.cjs
         env:
