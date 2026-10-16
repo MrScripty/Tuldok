@@ -1,0 +1,228 @@
+{
+  "format": "restored_ab_official_interface_qualification_v1",
+  "state": "passed",
+  "source_commit": "3e193164fc0ade11c07282491bf7ebe586dc15fa",
+  "source_file_sha256": {
+    "app.py": "78ca377e568cbf5a7fa98403a3b4c91e50c5364ca48780438d1add080c6227f6",
+    "agent_api.py": "de06bec9a80dc581edaf020ef6d48a4119eef33a637465ac1e7ce7a8d2b069b4",
+    "project_cli.py": "64ebe8544da5b83f46d3025ef02c1bcd79aeb055b7c93a4b67cdf90023c1a15c",
+    "mcp_stdio.py": "e3b45393186149a3be060d95d98b73121700408b93a893034088a30741e67980",
+    "mcp_observer.py": "f138c2bb20cb2677e46ce1a96637971efbc5a7c6975113c1177e104c766512ab",
+    "extension_evidence.py": "d1fa2be0131a833d68254b96119ac1e1811be41d1e00a8a525d5eb2ad81e8f3c",
+    "runs.py": "9091d44ea1a0dad5efd2df946abfc848575a2e8787e04cf271b54e5fca63cc54",
+    "access.py": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4",
+    "static/workspace-real.js": "9d7f59f928298d9fd1e851f7823b265eccee3c6a499de8a61f71d838d1a7eb77"
+  },
+  "harness_sha256": "cf74d93faa5382b32ea52a1316bd307353f577cc2f3d686155189369863179bd",
+  "retention_report_sha256": "ecc35409c853deb72a8ad84b7c8ecf84f59ec9c0e884cf52fc6a851e4694bcee",
+  "selection_sha256": "12f5d62b1af6500c910ba0bc19eee6a6b662cf522c4bad758c99f526c7da3007",
+  "catalog_id": "0c227f756dcb4a51863597e5e53aa02c",
+  "field_contract": {
+    "version": 2,
+    "sha256": "48c1b942f8e7a102a83bf63806fb425576690f4bfbca841203d54edbca4a59f9"
+  },
+  "field_proofs": [
+    {
+      "label": "a",
+      "query": {
+        "run_id": "0ca8523fe44f42bea520e941f79b839b",
+        "axis": "z",
+        "checkpoint_sha256": "0d384ad0fca7ca6c1e2ae56577df98eb8b94cc8a9bdcde5ee77279c392ee6f2f",
+        "field_id": "raw",
+        "index": 2,
+        "member_ordinal": 0
+      },
+      "stage": "train",
+      "projection_sha256": "fce195d13b60e8500ec36143dd3e68d0260dc9ec1497c0381c36c36990b55288",
+      "interfaces": [
+        "selected_agent_http_v2",
+        "official_project_cli",
+        "official_mcp_sdk"
+      ]
+    },
+    {
+      "label": "b",
+      "query": {
+        "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+        "axis": "z",
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "field_id": "raw",
+        "index": 2,
+        "member_ordinal": 0
+      },
+      "stage": "raw_inference",
+      "projection_sha256": "5557ed1709fad67fd74213820f9c2dac02cdd416842a56b65295a0852b3996d3",
+      "interfaces": [
+        "selected_agent_http_v2",
+        "official_project_cli",
+        "official_mcp_sdk"
+      ]
+    },
+    {
+      "label": "b",
+      "query": {
+        "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+        "axis": "z",
+        "checkpoint_sha256": "270d83343e147f884a0b98774e1ecf44ec75190eb7e2bd40924f4d9779a0c681",
+        "field_id": "corrected",
+        "index": 2,
+        "member_ordinal": 0
+      },
+      "stage": "boundary_enforcement",
+      "projection_sha256": "49b35770f6495cd0da8a9e23fb663aff4b2e0c8cc082f624650f64410f5a8ad9",
+      "interfaces": [
+        "selected_agent_http_v2",
+        "official_project_cli",
+        "official_mcp_sdk"
+      ]
+    }
+  ],
+  "whole_proofs": [
+    {
+      "label": "a",
+      "run_id": "0ca8523fe44f42bea520e941f79b839b",
+      "name": "execution-context.json",
+      "bytes": 10176,
+      "sha256": "f65522bd7b601b8613941795f4e6f6e9b879bc4a57f909f61c2f621de2f0ae22",
+      "interfaces": [
+        "http_whole",
+        "official_cli_verified_download",
+        "official_mcp_validated_segments_whole_sha256"
+      ]
+    },
+    {
+      "label": "b",
+      "run_id": "3ceea12b26754accb2c65f3a0aa5038f",
+      "name": "execution-context.json",
+      "bytes": 11994,
+      "sha256": "1233354af8146f2c9d70a4fddd5232f78161110a6de70dd4cfc650a3bbbbdc6b",
+      "interfaces": [
+        "http_whole",
+        "official_cli_verified_download",
+        "official_mcp_validated_segments_whole_sha256"
+      ]
+    }
+  ],
+  "actual_credential_revocation": [
+    {
+      "label": "a",
+      "operation": "runs.model_evidence",
+      "field_id": "raw",
+      "http_status": 401,
+      "cli_status": 401,
+      "cli_refusal_stage": "fresh process credential bootstrap",
+      "mcp_status": 401
+    },
+    {
+      "label": "b",
+      "operation": "runs.model_evidence",
+      "field_id": "raw",
+      "http_status": 401,
+      "cli_status": 401,
+      "cli_refusal_stage": "fresh process credential bootstrap",
+      "mcp_status": 401
+    },
+    {
+      "label": "b",
+      "operation": "runs.model_evidence",
+      "field_id": "corrected",
+      "http_status": 401,
+      "cli_status": 401,
+      "cli_refusal_stage": "fresh process credential bootstrap",
+      "mcp_status": 401
+    },
+    {
+      "label": "a",
+      "operation": "artifact_whole_or_segment",
+      "http_status": 401,
+      "cli_status": 401,
+      "cli_refusal_stage": "fresh process credential bootstrap",
+      "mcp_status": 401
+    },
+    {
+      "label": "b",
+      "operation": "artifact_whole_or_segment",
+      "http_status": 401,
+      "cli_status": 401,
+      "cli_refusal_stage": "fresh process credential bootstrap",
+      "mcp_status": 401
+    }
+  ],
+  "legacy_selected_wire": [
+    {
+      "label": "a",
+      "request": "summary",
+      "contract_version": 1,
+      "contract_sha256": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
+      "status": 200,
+      "response": {
+        "reason": "Scientific field evidence requires its explicit selected query contract.",
+        "state": "unsupported"
+      },
+      "transport": "public HTTP with shipped selected_header encoder"
+    },
+    {
+      "label": "a",
+      "request": "field_selector",
+      "contract_version": 1,
+      "contract_sha256": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
+      "status": 400,
+      "response": {
+        "code": "invalid",
+        "error": "Arguments do not match the operation schema."
+      },
+      "transport": "public HTTP with shipped selected_header encoder"
+    },
+    {
+      "label": "b",
+      "request": "summary",
+      "contract_version": 1,
+      "contract_sha256": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
+      "status": 200,
+      "response": {
+        "reason": "Scientific field evidence requires its explicit selected query contract.",
+        "state": "unsupported"
+      },
+      "transport": "public HTTP with shipped selected_header encoder"
+    },
+    {
+      "label": "b",
+      "request": "field_selector",
+      "contract_version": 1,
+      "contract_sha256": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb",
+      "status": 400,
+      "response": {
+        "code": "invalid",
+        "error": "Arguments do not match the operation schema."
+      },
+      "transport": "public HTTP with shipped selected_header encoder"
+    }
+  ],
+  "legacy_scope": "Current CLI/MCP negotiate v2 and expose no forced-v1 option; v1 results above are actual explicitly pinned HTTP, not an old binary or fabricated classifier history",
+  "server_execution_tripwires": [
+    "runs.Runs._start",
+    "recipe_process.launch",
+    "subprocess.Popen (HTTP child only)"
+  ],
+  "domain_counts_before": {
+    "workspace_runs": 4,
+    "access_execution_grants": 4,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 4,
+    "model_studies": 2,
+    "model_trials": 4
+  },
+  "domain_counts_after": {
+    "workspace_runs": 4,
+    "access_execution_grants": 4,
+    "access_execution_consumptions": 4,
+    "model_attempt_reservations": 4,
+    "model_studies": 2,
+    "model_trials": 4
+  },
+  "project_roots": {},
+  "collector": "disabled; no observation store activated",
+  "scope": "Restored-copy current selected field and bounded whole-artifact parity through official clients; no new execution, grant, admission, numerical or physical acceptance claim.",
+  "credential_config_removed": true,
+  "server_drained": true
+}
