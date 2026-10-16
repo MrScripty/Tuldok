@@ -16,7 +16,7 @@ and unrelated branches are preserved. Current integration is draft
 | P2 | Immutable Model/recipe material, finite Studies, exact admission and reservations, stopped-store migration/restore and inert UI. | PR70 merged at `8fa4915`; exact source `351f55b` passed lifecycle/catalog/UI. |
 | P3 | Actual CPU TinyCNN training, automatic epoch weights and fixed probes, cold independent inference, correction/new Release/retraining, exact comparison and real browser/agent inspection. [Actual qualification](p3-real-workspace-qualification.md). | PR72 merged at `cfd032fc67f4f3fd8a6b0d401c7fa837a4bcad2e`; exact `767f66f` passed full CI. |
 | P4 | Actual one-fit text/audio evidence and native browser workflows, generic data-only field evidence, canonical scientific Release derivation. [One-fit](p4-one-fit-browser-qualification.md), [canonical source](../../extension-system/reports/p4-canonical-source-qualification.json). | PR73 exact `1d621e8` is verifying. Earlier lifecycle passed steps1–135, then exposed an exact browser option-list assertion; its tests-only correction passes the actual local browser and is rerunning full CI. |
-| P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 exact `ed51510` is verifying on P4. Its predecessor `407068d` passed actual captured-CPU CI; that result does not qualify the new combined head. |
+| P5 | Charged candidate package and separate fresh verifier, exact source/weights/transform/runtime/notices closure, current transitive access and native controls. [Classifier browser](p5-native-package-qualification.md), [historical authored field package](p5-scientific-a-package-qualification.md). | PR75 exact `ed51510` passed captured-CPU, catalog and workspace UI CI; lifecycle is still running. Its predecessor `407068d` has separate historical qualification. |
 | P6 | Shared opt-in interface observation at HTTP/CLI/MCP boundaries, private bounded storage, fail-open passive sink, separate mandatory audit and unchanged caller arguments. [Qualification](p6-observation-qualification.md). | PR74 merged at `9a3d33100a9cacfaa7af91cd4b7e8b971287f9ff`. |
 
 ## Extension implementation and remaining execution
@@ -60,13 +60,25 @@ manifest identity never substitutes for the full captured runtime reference.
   Those actual results apply to their named0b runtime/source/catalog, not to
   the main50502 A/B catalog.
 
-Main50502 A packaging and its separately charged fresh verifier are in progress
-using the two remaining slots of A's original finite three-slot Study. Real A/B
-native captures follow that write lease. The final stopped shared A/B backup,
+Main50502 A packaging and its separately charged fresh verifier passed using
+the two remaining slots of A's original finite three-slot Study. Package Run
+`6924591425a84ef19d926b6b63b9e7da` and verifier
+`cb7935abed6c488bbcb8e434cc90fc29` completed/drained/settled. The whole269,170-byte
+ZIP has SHA `7a17efbbc2af6e5a95eca9fcaf8bac08c9e22840e12986b1480f85b7e3f72aec`;
+all64 native values match exactly in both the charged and filesystem-masked
+fresh consumer. [Qualification](../../extension-system/reports/canonical-a-50502-package-qualification.md)
+retains all31 lineages,17 sources and unchanged finite accounting.
+
+[Actual A/B native captures](../../extension-system/reports/native-author-ab-actual-browser.md)
+also passed against the frozen application: A8 captures and B12,12 exact queries
+each, continuous field-selector keys and1440/390 light/dark inspection. The
+separate saved-graph selector focus defect is being independently repaired;
+programmatic per-key refocusing is not an accessibility pass. The final stopped shared A/B backup,
 fresh restore, root-absent reads/current-authority matrix, restored-only B
 disable/remove, A history, wrong-material admission refusal and unrelated
-classifier continuity remain required execution gates. Their test drivers and
-selection preparation are implemented; preparation is not an actual pass.
+classifier continuity remain required execution gates. Their independently
+reviewed drivers and exact four-Run selection are implemented; the actual
+stopped backup/fresh restore is now running. Preparation is not an actual pass.
 
 P4/P5 exact-head CI, final composed CI and independent acceptance review remain
 merge gates. Superseded CI is canceled only after its replacement is published.
