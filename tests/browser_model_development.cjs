@@ -16,11 +16,11 @@ const root = path.resolve(__dirname, ".."),
   report = qaDirectory(root, "model-development"),
   temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tuldok-model-development-")),
   children = [];
-const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/workspaces.css','tests/browser_model_development.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
+const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/experiment-lineage.js','static/experiment-lineage.css','static/workspaces.css','static/workspaces.html','experiment_lineage.py','agent_api.py','app.py','experiments.py','pipeline.py','runs.py','metadata.py','upgrade_metadata.py','tests/browser_model_development.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
 const errors = [],
   posts = [],
   captures = [],
-  checks = [], compareRequests = [];
+  checks = [], compareRequests = [], lineageProof = {};
 let ws, send, evaluate, serverErrors = "";
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function until(fn, message = "Timed out") {
@@ -229,6 +229,8 @@ function launch(command, args, options) {
     });
     await evaluate("window.scrollTo(0,0)");
     if(name.startsWith("prepared"))await evaluate('document.querySelector("#real-model-root").scrollIntoView({block:"start"})');
+    if(name.startsWith("lineage-detail"))await evaluate('document.querySelector("#lineage-detail").scrollIntoView({block:"start"})');
+    else if(name.startsWith("lineage"))await evaluate('document.querySelector("#real-lineage-root").scrollIntoView({block:"start"})');
     if(name.includes("evidence"))await evaluate('document.querySelector(".model-evidence").scrollIntoView({block:"start"})');
     if (name.startsWith("catalog"))
       await evaluate(
@@ -337,7 +339,36 @@ function launch(command, args, options) {
     for(let i=0;i<3;i++)await fill('#model-width-'+i,String(width*(i+1)));
     await select('#model-size','32');await fill('#model-epochs',String(epochs));
   }
-  async function train(name,release,width=8,epochs=3){
+  const capabilityResponse=await fetch(base+'/api/agent/capabilities');
+  assert.equal(capabilityResponse.status,200);
+  const capabilities=await capabilityResponse.json();
+  async function selectedGet(operation,route){
+    const contract=capabilities.operations.find(item=>item.id===operation)?.contracts.find(item=>item.version===1);
+    assert.ok(contract,'Installed selected contract: '+operation);
+    const response=await fetch(base+'/api/workspace/'+route,{headers:{'Tuldok-Operation-Contract':operation+'/1/'+contract.sha256}});
+    assert.equal(response.status,200,await response.clone().text());return response.json();
+  }
+  async function activate(selector){
+    await until(()=>evaluate(`(()=>{const element=document.querySelector(${JSON.stringify(selector)});return element&&!element.disabled;})()`),'Enabled control unavailable: '+selector);
+    await focus(selector);assert.equal(await evaluate('document.activeElement===document.querySelector('+JSON.stringify(selector)+')'),true);
+    await key('Enter');
+  }
+  async function refreshLineage(trialId){
+    await activate('#lineage-refresh');
+    await until(()=>evaluate('!document.getElementById("lineage-refresh").disabled'),'Lineage page did not settle');
+    await until(()=>evaluate(`!!document.querySelector('[data-lineage-node="${trialId}"]')`),'Exact lineage Trial unavailable');
+    await activate('[data-lineage-node="'+trialId+'"]');
+    await until(()=>evaluate(`document.querySelector('[data-lineage-node="${trialId}"]')?.getAttribute('aria-pressed')==='true'`),'Selected lineage identity unavailable');
+  }
+  async function fillIntent(change){
+    await fill('#lineage-cohort','Authored same-release CPU lineage');
+    await fill('#lineage-hypothesis','Changing the finite trainer schedule preserves exact validation membership.');
+    await fill('#lineage-change',change);
+    await fill('#lineage-metric','loss');await select('#lineage-direction','minimize');
+    await fill('#lineage-threshold','0.5');
+    await fill('#lineage-acceptance','Diagnostic workflow fixture: inspect exact validation evidence; no model-quality claim.');
+  }
+  async function train(name,release,width=8,epochs=3,beforeStart=null){
     await configure(name,release,width,epochs);
     const before=(await(await fetch(base+'/api/workspace/runs')).json()).length;
     await focus('#model-prepare');await key('Enter');
@@ -346,6 +377,7 @@ function launch(command, args, options) {
     assert.equal(await evaluate('document.querySelector("#model-width-0").matches(":disabled")'),true);
     await screenshot('prepared-'+name+'-1440',1440,900);
     await screenshot('prepared-'+name+'-390',390,844);
+    if(beforeStart)await beforeStart();
     await focus('#model-start');await key('Enter');
     await until(()=>evaluate('!document.getElementById("view-runs").hidden'));
     await until(()=>text('#real-run-state').then(value=>['completed','failed','unknown'].includes(value)), 'Actual CPU worker did not finish');
@@ -354,7 +386,21 @@ function launch(command, args, options) {
     const run=(await(await fetch(base+'/api/workspace/runs')).json()).find(item=>item.graph.name===name);
     assert.ok(run);return run;
   }
-  const run=await train('First TinyCNN',releaseId),predictionURL=base+'/api/workspace/runs/'+run.id+'/predictions?split=validation',
+  const run=await train('First TinyCNN',releaseId,8,3,async()=>{
+    const prepared=await evaluate('history.state.modelTrial');
+    assert.ok(prepared?.trial?.id&&prepared?.study?.id);
+    await refreshLineage(prepared.trial.id);await activate('#lineage-record');
+    await fillIntent('Root: three actual CPU epochs with frozen authored validation membership.');
+    await focus('#lineage-ancestry');await key('End');await key('Tab');
+    await activate('#lineage-intent-submit');
+    await until(async()=>!!(await selectedGet('studies.lineage_trial','experiment-lineage/'+prepared.trial.id)).lineage);
+    const parent=await selectedGet('studies.lineage_trial','experiment-lineage/'+prepared.trial.id);
+    assert.equal(parent.lineage.timing,'before_admission');assert.equal(parent.lineage.intent.ancestry,'root');
+    assert.equal(parent.lineage.intent.parent,null);assert.equal(parent.attempt_count,0);
+    assert.equal(parent.lineage.intent.target.metric_id,'loss');assert.equal(parent.lineage.intent.target.threshold,0.5);
+    lineageProof.parent_before_admission=parent;
+    await screenshot('lineage-root-1440',1440,900);await screenshot('lineage-root-390',390,844);
+  }),predictionURL=base+'/api/workspace/runs/'+run.id+'/predictions?split=validation',
     originalPredictions=await(await fetch(predictionURL)).json();
   const query=async(id,body={})=>{
     const sha=await evaluate('WorkspaceModelContracts["runs.model_evidence"]');
@@ -393,8 +439,50 @@ function launch(command, args, options) {
   await until(()=>pausedRequest);await nav('pipeline');
   await send('Fetch.continueRequest',{requestId:pausedRequest});await send('Fetch.disable');pausedRequest=null;
   assert.equal(await evaluate('document.getElementById("view-runs").hidden'),true);
-  await until(()=>evaluate('!!document.getElementById("model-new")'));await click('#model-new');
-  const second=await train('Second TinyCNN',releaseId,12,2);
+  const parentTrial=run.study_membership.trial_id;
+  assert.equal(parentTrial,lineageProof.parent_before_admission.trial.id);
+  const beforeBranchRuns=(await(await fetch(base+'/api/workspace/runs')).json()).length;
+  const parentBeforeBranch=await selectedGet('studies.lineage_trial','experiment-lineage/'+parentTrial);
+  await refreshLineage(parentTrial);await activate('#lineage-branch');
+  await fillIntent('Derived branch: two epochs and seed 23; unchanged frozen Model and validation population.');
+  await fill('#lineage-name','Second TinyCNN');
+  if(!await evaluate('document.getElementById("lineage-new-study").checked'))await click('#lineage-new-study');
+  await fill('#lineage-study-name','Separate CPU branch Study');
+  await activate('#lineage-intent-submit');await activate('#lineage-open-recipe');
+  await until(()=>text('#real-dirty').then(value=>value?.includes('Saved r1')));
+  await activate('#real-node-train');await fill('#real-param-epochs','2');await fill('#real-param-seed','23');
+  await activate('#real-save');await until(()=>text('#real-dirty').then(value=>value?.includes('Saved r2')));
+  assert.equal((await(await fetch(base+'/api/workspace/runs')).json()).length,beforeBranchRuns,'Branch cloning and editing do not admit work');
+  await activate('#lineage-prepare');
+  await until(async()=>{const page=await selectedGet('studies.lineage','experiment-lineage');return page.nodes.some(node=>node.lineage?.intent.parent?.trial_id===parentTrial);});
+  const branchPage=await selectedGet('studies.lineage','experiment-lineage');
+  const child=branchPage.nodes.find(node=>node.lineage?.intent.parent?.trial_id===parentTrial);
+  assert.ok(child);assert.notEqual(child.study.id,parentBeforeBranch.study.id);
+  assert.equal(child.lineage.timing,'before_admission');assert.equal(child.lineage.intent.baseline.trial_id,parentTrial);
+  assert.equal(child.lineage.intent.parent.material_sha256,parentBeforeBranch.trial.material.sha256);
+  assert.equal(child.lineage.intent.baseline.material_sha256,parentBeforeBranch.trial.material.sha256);
+  assert.deepEqual(child.model,parentBeforeBranch.model);assert.equal(child.attempt_count,0);
+  assert.equal(child.lineage.intent.cohort,parentBeforeBranch.lineage.intent.cohort);
+  assert.equal(child.lineage.intent.target.threshold,0.5);
+  assert.equal((await(await fetch(base+'/api/workspace/runs')).json()).length,beforeBranchRuns,'Prepared branch is inert');
+  await screenshot('lineage-prepared-branch-1440',1440,900);await screenshot('lineage-prepared-branch-390',390,844);
+  await activate('#lineage-start');
+  await until(()=>evaluate('!document.getElementById("view-runs").hidden'));
+  await until(()=>text('#real-run-state').then(value=>['completed','failed','unknown'].includes(value)),'Branched CPU worker did not finish');
+  assert.equal(await text('#real-run-state'),'completed',await text('#real-runs-root'));
+  await until(()=>evaluate('document.querySelectorAll("[data-model-checkpoint]").length===2'));
+  const second=(await(await fetch(base+'/api/workspace/runs')).json()).find(item=>item.study_membership?.trial_id===child.trial.id);
+  assert.ok(second);assert.equal(second.parent_run_id,null,'Research branch is not a retry');
+  assert.equal(second.graph.nodes.find(node=>node.type==='train').parameters.epochs,2);
+  assert.equal(second.graph.nodes.find(node=>node.type==='train').parameters.seed,23);
+  assert.notEqual(second.study_membership.study_id,run.study_membership.study_id);
+  assert.deepEqual(await selectedGet('studies.lineage_trial','experiment-lineage/'+parentTrial),parentBeforeBranch,'Branch preserves parent Trial, intent and completed evidence summary');
+  lineageProof.child_before_admission=child;lineageProof.parent_run_id=run.id;lineageProof.child_run_id=second.id;
+  check('Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge');
+  // Enter comparison from the declared baseline in the actual lineage view.
+  await nav('pipeline');await refreshLineage(child.trial.id);await activate('#lineage-compare');
+  await until(()=>evaluate('!document.getElementById("view-runs").hidden'));
+  await until(()=>evaluate('document.getElementById("model-compare-run")?.value==='+JSON.stringify(run.id)),'Lineage comparison did not select its exact completed baseline');
   async function compareTo(other,evidence,mode='paired'){
     await select('#model-compare-run',other.id);
     const checkpoint=evidence.checkpoint_index.entries.find(item=>item.selected).checkpoint.sha256;
@@ -405,6 +493,19 @@ function launch(command, args, options) {
   await compareTo(run,evidence);
   await until(()=>text('.model-evidence').then(value=>value?.includes('Identical compatible validation membership')));
   check('Compatible frozen validation membership supports measured comparison across actual trained models');
+  await nav('pipeline');await refreshLineage(child.trial.id);
+  const completedChild=await selectedGet('studies.lineage_trial','experiment-lineage/'+child.trial.id);
+  assert.equal(completedChild.runs.length,1);assert.equal(completedChild.runs[0].state,'completed');assert.equal(completedChild.runs[0].id,second.id);
+  lineageProof.child_completed=completedChild;
+  const childDetail=await text('#lineage-detail');
+  for(const authored of [child.lineage.intent.cohort,child.lineage.intent.hypothesis,child.lineage.intent.change_summary,child.lineage.intent.target.acceptance])assert.ok(childDetail.includes(authored),'Selected detail shows the exact authored intent');
+  await screenshot('lineage-two-studies-1440',1440,900);await screenshot('lineage-two-studies-390',390,844);
+  await screenshot('lineage-detail-completed-1440',1440,900);await screenshot('lineage-detail-completed-390',390,844);
+  await reload();await until(()=>evaluate('!!document.getElementById("lineage-refresh")'));
+  await refreshLineage(child.trial.id);
+  assert.deepEqual(await selectedGet('studies.lineage_trial','experiment-lineage/'+child.trial.id),completedChild,'Reload preserves exact cross-Study lineage');
+  check('Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload');
+  await nav('runs');await until(()=>evaluate('!!document.querySelector(\'[data-real-run="'+run.id+'"]\')'));
   // The correction bridge opens the current record from frozen model probes.
   await click('[data-real-run="'+run.id+'"]');await until(()=>evaluate('!!document.getElementById("model-probe")'));
   await select('#model-probe',example.id);await focus('#model-correct');await key('Enter');
@@ -428,7 +529,11 @@ function launch(command, args, options) {
   await until(async()=>{const href=await evaluate(`${doc(true)}.querySelector('#release-result a')?.href`);return href&&href!==download;});
   const correctedDownload=await evaluate(`${doc(true)}.querySelector('#release-result a').href`),correctedId=/([a-f0-9]{64})/.exec(correctedDownload)[1];
   await key('Escape');await nav('pipeline');await click('#real-refresh');
-  await until(()=>evaluate('!!document.getElementById("model-new")'));await click('#model-new');
+  // The explicit reload above may restore a clean configuration form instead
+  // of a resolved preparation journal. Both must lead to the same new trial.
+  await until(()=>evaluate('!!document.getElementById("model-new")||!!document.getElementById("model-form")'));
+  if(await evaluate('!!document.getElementById("model-new")'))await click('#model-new');
+  await until(()=>evaluate('!document.getElementById("model-prepare").disabled'));
   const third=await train('Corrected TinyCNN',correctedId,8,2);
   await compareTo(run,evidence);
   await until(()=>text('.model-evidence').then(value=>value?.includes('paired delta is unavailable')));
@@ -468,8 +573,21 @@ function launch(command, args, options) {
     darkChecks.push({width,...colors});await screenshot('dark-linked-evidence-'+width,width,width===390?844:900);
   }
   check('Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout');
+  await nav('pipeline');await refreshLineage(child.trial.id);
+  for(const width of [1440,390]){
+    await screenshot('lineage-dark-two-studies-'+width,width,width===390?844:900);
+    await screenshot('lineage-detail-dark-'+width,width,width===390?844:900);
+    await focus('[data-lineage-node="'+child.trial.id+'"]');await key('Tab');
+    assert.equal(await evaluate('document.getElementById("real-lineage-root").contains(document.activeElement)'),true,'Native keyboard remains in the lineage controls');
+    const colors=await evaluate(`(()=>{const c=getComputedStyle(document.activeElement),p=getComputedStyle(document.querySelector('.lineage-panel'));return {width:innerWidth,text:p.color,background:p.backgroundColor,outline:c.outlineStyle,outlineWidth:c.outlineWidth,outlineColor:c.outlineColor};})()`);
+    const luminance=color=>{const channels=color.match(/[0-9.]+/g).slice(0,3).map(v=>{v=Number(v)/255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;});return channels[0]*0.2126+channels[1]*0.7152+channels[2]*0.0722;};
+    const ratio=(a,b)=>(Math.max(luminance(a),luminance(b))+0.05)/(Math.min(luminance(a),luminance(b))+0.05);
+    colors.textContrast=ratio(colors.text,colors.background);colors.focusContrast=ratio(colors.outlineColor,colors.background);
+    assert.ok(colors.textContrast>=4.5&&colors.focusContrast>=3&&colors.outline!=='none'&&parseFloat(colors.outlineWidth)>=2,JSON.stringify(colors));
+    (lineageProof.dark_checks??=[]).push(colors);
+  }
   assert.deepEqual(errors,[]);assert.ok(!serverErrors.includes('Traceback'),serverErrors);
-  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_model_development.cjs',source_sha256:sourceHashes,dark_checks:darkChecks,catalog_path:path.join(temporary,'data'),browser:(await send('Browser.getVersion')).product,checks,captures,compare_selectors:compareRequests,run_ids:[run.id,second.id,third.id],release_ids:[releaseId,correctedId],training:true,quality_claim:false,fixture_provenance:'12 CC0 authored independent images imported and reviewed through ordinary Data UI',access_projection_test:'403 transport substitution; backend tests own actual revoke enforcement'},null,2));
+  fs.writeFileSync(path.join(report,'receipt.json'),JSON.stringify({source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),command:'node tests/browser_model_development.cjs',source_sha256:sourceHashes,dark_checks:darkChecks,catalog_path:path.join(temporary,'data'),browser:(await send('Browser.getVersion')).product,checks,captures,lineage:lineageProof,compare_selectors:compareRequests,run_ids:[run.id,second.id,third.id],release_ids:[releaseId,correctedId],training:true,quality_claim:false,fixture_provenance:'12 CC0 authored independent images imported and reviewed through ordinary Data UI',access_projection_test:'403 transport substitution; backend tests own actual revoke enforcement'},null,2));
   console.log('PASS real model development gate:',report);
 })().catch(async error=>{
   console.error(error);console.error('Application stderr:',serverErrors);

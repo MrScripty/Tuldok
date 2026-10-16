@@ -425,6 +425,7 @@ for _op in _OPERATIONS:
 _OWNER_OPERATION_IDS={'studies.create','studies.save','studies.continue','studies.approve'}
 _MODEL_RECEIPT_IDS={'studies.prepare_trial','studies.continue','studies.admit','studies.stop'}
 _MODEL_RECEIPT_IDS.add('studies.select_candidate')
+_MODEL_RECEIPT_IDS.update({'studies.record_lineage','studies.branch_trial','studies.prepare_branch'})
 _CANDIDATE=obj({'format':const('candidate_v1'),'id':ID,'study_id':ID,'trial_id':ID,'run_id':ID,
     'checkpoint_sha256':SHA,'evaluation_sha256':SHA,'policy':POLICY_REF,
     'decision':{'enum':['qualified','diagnostic']},'limitations':array(text(500),64)})
@@ -536,6 +537,49 @@ model_operation('project_snapshots.open','POST','/api/workspace/project-snapshot
     description='Register and inspect an explicit configured-root v1/v2 manifest; inert metadata only, never approval or execution.')
 # These E1 routes already have a supported unselected owner-browser consumer.
 # Their domain dispatch keeps that owner gate; ordinary agents select contracts.
+_LINEAGE_REF=obj({'catalog_id':ID,'trial_id':ID,'material_sha256':SHA})
+_NULL={'type':'null'}
+_LINEAGE_TARGET=obj({'metric_id':text(80),'metric_definition_sha256':{'oneOf':[SHA,_NULL]},
+    'direction':{'enum':['minimize','maximize','target']},
+    'threshold':{'oneOf':[{'type':'number','minimum':-(2**53-1),'maximum':2**53-1},_NULL]},
+    'acceptance':text(2000)})
+_LINEAGE_INTENT=obj({'ancestry':{'enum':['unknown','root','derived']},
+    'parent':{'oneOf':[_LINEAGE_REF,_NULL]},'baseline':{'oneOf':[_LINEAGE_REF,_NULL]},
+    'cohort':text(120),'hypothesis':text(2000),'change_summary':text(2000),'target':_LINEAGE_TARGET})
+_LINEAGE_RECORD=obj({'format':const('trial_lineage_v1'),'trial':_LINEAGE_REF,'intent':_LINEAGE_INTENT,
+    'actor_id':ID,'recorded_at':text(80),'timing':{'enum':['before_admission','retrospective']}})
+_LINEAGE_RUN=obj({'id':ID,'state':{'enum':['queued','running','cancelling','completed','failed','cancelled','interrupted','unknown']},
+    'parent_run_id':{'oneOf':[ID,_NULL]},'created_at':text(80),'finished_at':{'oneOf':[text(80),_NULL]},
+    'validation':{'type':'object','maxProperties':4,'additionalProperties':{'type':'number'}}})
+_LINEAGE_NODE=obj({'trial':_TRIAL,'lineage':{'oneOf':[_LINEAGE_RECORD,_NULL]},
+    'study':obj({'id':ID,'name':text(120)}),'recipe':obj({'id':ID,'revision':SAFE_POS}),
+    'model':MODEL_REF,'attempt_count':SAFE_NAT,'runs':array(_LINEAGE_RUN,5),'runs_truncated':{'type':'boolean'}})
+model_operation('studies.lineage','GET','/api/workspace/experiment-lineage',
+    {'cursor':ID,'limit':integer(1,20),'revision':SHA,'cohort':text(120)},[],
+    query=('cursor','limit','revision','cohort'),
+    output=obj({'revision':SHA,'nodes':array(_LINEAGE_NODE,20),'related':array(_LINEAGE_REF,40),
+        'next_cursor':_PAGE_CURSOR,'limit':integer(1,20),'cohort':{'oneOf':[text(120),_NULL]}}),
+    description='Read a revision-pinned page of exact Trial ancestry and authored targets; Run summaries are saved metadata, not artifact verification.')
+model_operation('studies.lineage_trial','GET','/api/workspace/experiment-lineage/{trial_id}',
+    {'trial_id':ID},output=_LINEAGE_NODE)
+model_operation('studies.record_lineage','POST','/api/workspace/experiment-lineage',
+    {'request_key':KEY,'revision':SHA,'trial':_LINEAGE_REF,'intent':_LINEAGE_INTENT},
+    scopes=('inspect','edit'),mutation=True,output=_LINEAGE_RECORD,
+    description='Record immutable authored intent and exact ancestry once; historical admissions are explicitly retrospective. Never execute.')
+model_operation('studies.branch_trial','POST','/api/workspace/experiment-lineage/branch',
+    {'request_key':KEY,'name':text(120),'intent':_LINEAGE_INTENT,'new_study_name':text(120)},
+    ['request_key','name','intent'],scopes=('inspect','edit'),mutation=True,
+    output=obj({'request_key':KEY,'graph':_GRAPH,'model':MODEL_REF,'parent':_LINEAGE_REF,
+        'intent':_LINEAGE_INTENT,'study_id':ID,
+        'source':obj({'id':ID,'revision':SAFE_POS,'material':MATERIAL_REF})}),
+    description='Clone the exact retained Trial recipe; optional new Study remains owner-only with inherited finite policy/limits. No grant or Run.')
+model_operation('studies.prepare_branch','POST','/api/workspace/studies/{study_id}/prepare-branch',
+    {'study_id':ID,'request_key':KEY,'revision':SAFE_POS,'branch_request_key':KEY,
+     'graph_revision':SAFE_POS,'replicate':SAFE_NAT,'model':MODEL_REF},
+    ['study_id','request_key','revision','branch_request_key','graph_revision','replicate'],
+    scopes=('inspect','edit'),mutation=True,output=_TRIAL,
+    description='Prepare edited branch material and attach immutable exact lineage atomically; existing capture, authority and admission rules apply.')
+
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.

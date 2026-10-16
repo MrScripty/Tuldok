@@ -349,6 +349,39 @@ class Pipelines:
                                'document_sha256': digest(graph), 'execution_sha256': execution_digest(graph)})
         return graph
 
+    @authorized('edit', 'pipeline.clone_retained')
+    def clone_retained(self, ref, name, *, _publish=None):
+        """Branch the immutable Trial recipe, never a subsequently edited draft.
+
+        Capture verification does no runtime probe. The callback joins the graph
+        insert's transaction so Experiments can retain its exact request receipt.
+        """
+        from model_definitions import read_owned_blob, retained_json
+        value = self.recipe_material(ref, verify=True)
+        material = value['material']
+        raw = read_owned_blob(self.material_path, ref['sha256'], material['recipe_document'], 2*1024**2)
+        snapshot = retained_json(raw.decode(), 2*1024**2)
+        if snapshot.get('format') not in ('builtin_recipe_snapshot_v1', 'external_recipe_snapshot_v1',
+                                         'external_model_evidence_snapshot_v1'):
+            raise WorkbenchError('Retained recipe snapshot is unsupported.', 'unsupported', 409)
+        graph = decode_graph(snapshot['graph'])
+        if graph['id'] != material['recipe_id'] or graph['revision'] != material['recipe_revision']:
+            raise WorkbenchError('Retained recipe graph identity differs.', 'unavailable', 409)
+        if snapshot['format'] == 'builtin_recipe_snapshot_v1' and (
+                execution_digest(graph) != material['executable_sha256'] or
+                snapshot['validation']['execution_sha256'] != material['executable_sha256']):
+            raise WorkbenchError('Retained recipe execution identity differs.', 'unavailable', 409)
+        source = {'id': graph['id'], 'revision': graph['revision'], 'material': ref}
+        graph.update(id=uuid.uuid4().hex, revision=1, name=text_value(name, 'Recipe name', 120))
+        with self.lock, self.db.transaction():
+            self.access.require('edit', 'pipeline.clone_retained')
+            self.db.execute('INSERT INTO workspace_graphs(id,revision,document) VALUES(%s,%s,%s)',
+                            (graph['id'], 1, encode(graph)))
+            self.access.audit('pipeline.clone_retained', graph['id'], source)
+            if _publish is not None:
+                _publish(graph, source)
+        return graph
+
     @authorized('inspect', 'pipeline.inspect_release')
     def inspect_release(self, release_id, *, private=False, recipe=None):
         selected_recipe = recipe
@@ -905,7 +938,12 @@ class Pipelines:
         return value
 
     @authorized('inspect', 'recipes.material')
-    def recipe_material(self, ref, *, verify=False):
+    def _recipe_material_record(self, ref):
+        """Validate saved material identities without opening or disclosing captures.
+
+        Overview owners may expose references under current catalog inspection.
+        Public material/byte access still reauthorizes transitive inputs below.
+        """
         from model_definitions import reference,retained_json,natural,read_owned_blob,ModelDefinitions
         ref=reference(ref,'recipe_material',self.db.dataset_id)
         with self.lock:
@@ -938,6 +976,11 @@ class Pipelines:
             raise WorkbenchError('Recipe inventory exceeds its bound.','unavailable',409)
         if material['recipe_document']['name']!='recipe.json' or material['resolved_profile']['name']!='profile.json':
             raise WorkbenchError('Recipe document names differ.','unavailable',409)
+        return value
+
+    def recipe_material(self, ref, *, verify=False):
+        from model_definitions import read_owned_blob,retained_json,ModelDefinitions
+        value=self._recipe_material_record(ref);material=value['material']
         if material['trainer']['id'] in ('external_recipe_v1',recipe_contract.EVIDENCE_FORMAT):
             # Current disclosure of retained captures follows all Run inputs,
             # independently from their historical integrity and exact grant.
@@ -957,6 +1000,7 @@ class Pipelines:
             authorize_material_inputs(self.dataset.runs,preflight['material'])
             if evidence:self._retained_extension_static(value)
         if verify:
+            inventory=[material['recipe_document'],material['resolved_profile'],*material['captures']]
             for item in inventory:read_owned_blob(self.material_path,ref['sha256'],item,recipe_contract.CPU_CAPTURE_BYTES)
             (getattr(self.dataset,'models',None) or ModelDefinitions(self.dataset)).material(material['model'],verify=True)
         return value

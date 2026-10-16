@@ -96,6 +96,51 @@ class Runs:
             if self.runtime_owner:
                 self._recover()
 
+    def _study_attempt_metadata(self, trial, limit=5):
+        """Bounded saved status for experiment overviews, without byte verification.
+
+        Full retained execution/context and artifact inspection stays in _load/get.
+        This projection proves catalog and reservation identities only; callers
+        must label outcomes as saved metadata and link to the full Run inspector.
+        """
+        from model_definitions import retained_json, natural, text
+        natural(limit, 'Attempt overview limit', 1, 5)
+        count = self.db.execute('SELECT count(*) FROM model_attempt_reservations WHERE trial_id=%s',
+                                (trial['id'],)).fetchone()[0]
+        natural(count, 'Attempt count')
+        rows = self.db.execute('SELECT r.id,r.study_id,r.actor_id,r.request_sha256,r.trial_id,r.run_id,'
+            'r.document AS reservation,w.request_key AS run_key,w.request_sha256 AS run_sha,w.document AS run_document '
+            'FROM model_attempt_reservations r LEFT JOIN workspace_runs w ON w.id=r.run_id WHERE r.trial_id=%s '
+            "ORDER BY w.document::jsonb->>'created_at' DESC,w.id DESC LIMIT %s", (trial['id'],limit)).fetchall()
+        result = []
+        for row in rows:
+            reservation = retained_json(row['reservation'])
+            run = retained_json(row['run_document'], 8*1024**2) if row['run_document'] is not None else None
+            if (type(reservation) is not dict or not isinstance(run,dict) or run.get('schema_version') != 1 or run.get('mode') != 'real' or
+                    run.get('id') != row['run_id'] or run.get('dataset_id') != self.db.dataset_id or
+                    run.get('actor_id') != row['actor_id'] or run.get('request_sha256') != row['request_sha256'] or
+                    run.get('request_sha256') != row['run_sha'] or run.get('request_key') != row['run_key'] or
+                    run.get('state') not in (*ACTIVE,*TERMINAL) or row['study_id'] != trial['study_id'] or
+                    any(reservation.get(key) != row[key] for key in ('id','study_id','actor_id','request_sha256','trial_id','run_id')) or
+                    reservation.get('material_sha256') != trial['material']['sha256'] or
+                    run.get('parent_run_id') != reservation.get('parent_run_id')):
+                raise WorkbenchError('Saved attempt overview identity differs.', 'unavailable', 409)
+            parent = run.get('parent_run_id')
+            if parent is not None: identifier(parent, 'Retry parent Run')
+            text(run.get('created_at'), 'Run creation time', 80)
+            if run.get('finished_at') is not None: text(run['finished_at'], 'Run finish time', 80)
+            saved_metrics = run.get('metrics')
+            if saved_metrics is not None and type(saved_metrics) is not dict:
+                raise WorkbenchError('Saved validation summary is malformed.', 'unavailable', 409)
+            metrics = (saved_metrics or {}).get('validation', {})
+            if type(metrics) is not dict:
+                raise WorkbenchError('Saved validation summary is malformed.', 'unavailable', 409)
+            summary = {key:metrics[key] for key in ('accuracy','loss','macro_f1','balanced_accuracy')
+                       if type(metrics.get(key)) in (int,float) and math.isfinite(metrics[key])}
+            result.append({'id':run['id'],'state':run['state'],'parent_run_id':parent,
+                'created_at':run['created_at'],'finished_at':run.get('finished_at'),'validation':summary})
+        return count,result
+
     def _load(self, run_id):
         identifier(run_id, 'Run ID')
         row = self.db.execute('SELECT request_key,request_sha256,document FROM workspace_runs WHERE id=%s', (run_id,)).fetchone()

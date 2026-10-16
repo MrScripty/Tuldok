@@ -680,6 +680,7 @@
     let definition = null, releases = [], studies = [], root = null, busy = false,
       message = '', failed = false, evidence = null, evidenceError = '', comparison = null,
       checkpoint = null, probe = null, compareId = '', generation = 0, queryIntent = 0, detailPredictions = null, studyDetail = null, candidate = null, candidateBusy = false, candidateError = '', foreignPending = false, compareTarget = null, compareTargetRun = null, compareCheckpoint = '', compareMetric = '', compareMode = 'paired', compareBusy = false, compareIntent = 0, compareTargetIntent = 0, checkpointBusy = false, checkpointIntent = 0, packageState = null, packageError = '', exportSetup = null, exportJob = null, exportBusy = false, exportDraft = {mode:'package',root:'',directory:'',runtime:'',packageRun:''};
+    let pendingComparison=null;
     let config = {name: 'TinyCNN experiment', release: '', widths: [16,32,64], input_size: 96, epochs: 3, seed: 17};
     let journal = history.state?.modelTrial || null;
     const identity = () => window.TuldokAuth?.identity();
@@ -785,12 +786,14 @@
       journal.run=result.run;journal.admission=null;remember();notice('Durable finite attempt admitted. Epoch evidence appears after verified publication.');openRun(result.run);
     }
     return {
+      queueComparison(runId,id){pendingComparison={runId,id,credential:identity()?.credential_id};},
       configure(value) {definition=value.definitions?.recipes?.find(item=>item.id===recipe);releases=value.releases;const saved=history.state?.modelTrial;if(!journal&&saved?.actor===identity()?.actor_id){journal=saved;foreignPending=false;}},
-      sessionChanged() {studies=[];studyDetail=null;message='';exportDraft={mode:'package',root:'',directory:'',runtime:'',packageRun:''};config={name:'TinyCNN experiment',release:'',widths:[16,32,64],input_size:96,epochs:3,seed:17};const saved=history.state?.modelTrial;foreignPending=!!(saved&&saved.actor!==identity()?.actor_id&&(saved.admission||saved.uncertain));if(journal?.actor!==identity()?.actor_id)journal=null;},
+      sessionChanged() {pendingComparison=null;studies=[];studyDetail=null;message='';exportDraft={mode:'package',root:'',directory:'',runtime:'',packageRun:''};config={name:'TinyCNN experiment',release:'',widths:[16,32,64],input_size:96,epochs:3,seed:17};const saved=history.state?.modelTrial;foreignPending=!!(saved&&saved.actor!==identity()?.actor_id&&(saved.admission||saved.uncertain));if(journal?.actor!==identity()?.actor_id)journal=null;},
       mount(node) {root=node;render();},
       async refresh(current) {try{const result=await api('studies');if(current())studies=result.studies;}catch(error){if(current())notice('Saved studies unavailable: '+error.message,true);}},
-      invalidate() {generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;packageState=null;packageError='';exportSetup=null;exportJob=null;},
+      invalidate(preserveComparison=false) {if(!preserveComparison)pendingComparison=null;generation++;queryIntent++;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;evidence=null;comparison=null;checkpoint=null;probe=null;evidenceError='';detailPredictions=null;candidate=null;candidateError='';compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareBusy=false;packageState=null;packageError='';exportSetup=null;exportJob=null;},
       async load(run,current) {
+        if(pendingComparison&&(pendingComparison.runId!==run?.id||pendingComparison.credential!==identity()?.credential_id))pendingComparison=null;
         const intent=++queryIntent;compareIntent++;compareTargetIntent++;checkpointIntent++;checkpointBusy=false;
         evidence=null;comparison=null;evidenceError='';candidate=null;candidateError='';packageState=null;packageError='';exportJob=null;compareTarget=null;compareTargetRun=null;compareCheckpoint='';compareId='';compareBusy=false;
         if(!evidenceRecipes.has(run?.graph?.recipe)||run.state!=='completed')return;
@@ -947,6 +950,7 @@
         catch(error){if(current()&&intent===compareTargetIntent)comparison={reasons:[error.message]};}
         finally{if(compareBusy===token){compareBusy=false;if(current())rerender();}}
       });
+      if(pendingComparison?.runId===run.id&&pendingComparison.credential===identity()?.credential_id&&select&&[...select.options].some(option=>option.value===pendingComparison.id)){select.value=pendingComparison.id;pendingComparison=null;select.dispatchEvent(new Event('change'));}
       for(const [id,update] of [['model-compare-checkpoint',value=>compareCheckpoint=value],['model-compare-metric',value=>compareMetric=value],['model-compare-mode',value=>compareMode=value]])node.querySelector('#'+id)?.addEventListener('change',event=>{update(event.target.value);clearComparison();rerender();});
       node.querySelector('#model-compare-form')?.addEventListener('submit',async event=>{
         event.preventDefault();if(compareBusy||checkpointBusy||!compareId||!compareTarget||!compareCheckpoint||!compareMetric)return;const intent=++compareIntent,token={kind:'comparison'};compareBusy=token;rerender();

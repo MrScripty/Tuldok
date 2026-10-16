@@ -33,6 +33,8 @@ def request_key(value):
 class Experiments:
     def __init__(self,dataset):
         self.dataset=dataset;self.db=dataset.db;self.lock=dataset.lock;self.access=dataset.access
+        from experiment_lineage import TrialLineage
+        self.lineage=TrialLineage(self)
 
     def _study(self,study_id):
         identifier(study_id)
@@ -130,12 +132,13 @@ class Experiments:
         return value
 
     @authorized('edit','studies.prepare_trial')
-    def prepare_trial(self,study_id,body,*,_publish=None,_graph_guard=None):
+    def prepare_trial(self,study_id,body,*,_publish=None,_graph_guard=None,
+                      _operation_id='studies.prepare_trial',_request_sha=None):
         closed(body,('request_key','revision','graph_id','graph_revision','model','replicate'),('reconcile_capture',));body=checked_json(body)
         request_key(body['request_key']);natural(body['replicate'],'Replicate')
-        actor=self.access._context().actor_id;sha=digest({'study_id':study_id,'body':body})
+        actor=self.access._context().actor_id;sha=_request_sha or digest({'study_id':study_id,'body':body})
         with self.lock:
-            receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
+            receipt=self._receipt(actor,_operation_id,body['request_key'],sha)
             if receipt:return receipt
             study=self._study(study_id);self._expected(study,body)
         graph=self.dataset.pipelines.get(body['graph_id'])
@@ -146,7 +149,7 @@ class Experiments:
                                             reconcile_capture=body.get('reconcile_capture',False))
         try:
             with self.lock,self.db.transaction():
-                receipt=self._receipt(actor,'studies.prepare_trial',body['request_key'],sha)
+                receipt=self._receipt(actor,_operation_id,body['request_key'],sha)
                 if receipt:
                     self.db.on_commit(lambda:shutil.rmtree(prepared['staging'],ignore_errors=True));return receipt
                 self.access.require('edit','studies.prepare_trial',study_id)
@@ -163,7 +166,7 @@ class Experiments:
                 self.db.execute('INSERT INTO model_study_memberships VALUES(%s,%s,%s)',
                                 (study_id,study['membership_revision'],encode({'trial_ids':study['trial_ids']})))
                 self._write(study,'studies.prepare_trial',{'trial_id':value['id']})
-                self._save_receipt(actor,'studies.prepare_trial',body['request_key'],sha,value)
+                self._save_receipt(actor,_operation_id,body['request_key'],sha,value)
                 # Trusted owner composition may attach its bounded receipt to
                 # this same final commit, after all expensive capture finished.
                 if _publish is not None:_publish(value)

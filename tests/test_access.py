@@ -229,7 +229,7 @@ class AccessContract(unittest.TestCase):
         before = summaries(read_catalog(db))
         with self.assertRaises(StorageError):
             Metadata(db.path, create=False)
-        self.assertEqual(upgrade_catalog(db.path, quiesced=True)['schema_version'], 9)
+        self.assertEqual(upgrade_catalog(db.path, quiesced=True)['schema_version'], 10)
         db.close()
         db = Metadata(db.path, create=False)
         self.addCleanup(db.close)

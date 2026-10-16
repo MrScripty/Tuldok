@@ -20,7 +20,8 @@ window.a={id:'c'.repeat(32),state:'completed',graph:g,graph_revision:1,attempt:1
 window.b={...structuredClone(a),id:'d'.repeat(32),test_exposure:{exposed:false}};window.list=[a];
 window.fetch=async(url,options)=>{const route=url.replace('/api/workspace/','');calls.push(route);let value,status=200;
 // Match the image_training.PARAMETER_BOUNDS published by Pipelines.definitions.
-if(route==='definitions')value={recipe:types,nodes:types.map(type=>({type,input:'i',output:'o'})),parameter_bounds:{
+if(route.startsWith('experiment-lineage?'))value={revision:'f'.repeat(64),nodes:[],related:[],next_cursor:null,limit:20,cohort:null};
+else if(route==='definitions')value={recipe:types,nodes:types.map(type=>({type,input:'i',output:'o'})),parameter_bounds:{
 epochs:{minimum:1,maximum:5,default:1,type:'integer'},
 batch_size:{minimum:1,maximum:16,default:8,type:'integer'},
 learning_rate:{minimum:0.00001,maximum:0.01,default:0.001,type:'number'},
@@ -33,6 +34,7 @@ else if(route.includes('/predictions')){if(route.includes(b.id)&&route.endsWith(
 else value={};return {ok:status===200,status,json:async()=>structuredClone(value)}};`);
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-external.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-service.js'),'utf8'));
+await ev(fs.readFileSync(path.resolve(__dirname,'../static/experiment-lineage.js'),'utf8'));
 await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-real.js'),'utf8'));
 await ev(`window.real=WorkspaceReal({pipelineRoot:document.getElementById('p'),runsRoot:document.getElementById('r'),announce:s=>notes.push(s),openRecord:()=>{},openRun:()=>real.show('runs')});real.show('runs')`);
 if(!await ev(`!!document.getElementById('real-test-predictions')`))throw Error(await ev(`document.getElementById('r').innerText`));

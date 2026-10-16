@@ -582,6 +582,20 @@ def make_handler(dataset, observer=None):
                 else:result[key]=int(values[0])
             return result
 
+        def _lineage_page_query(self):
+            try:
+                query = parse_qs(urlsplit(self.path).query, keep_blank_values=True, max_num_fields=4)
+            except ValueError as error:
+                raise workbench.WorkbenchError('Invalid lineage page query.') from error
+            if set(query) - {'cursor', 'limit', 'revision', 'cohort'} or any(len(v) != 1 for v in query.values()):
+                raise workbench.WorkbenchError('Invalid lineage page query.')
+            result = {key: values[0] for key, values in query.items()}
+            if 'limit' in result:
+                if not re.fullmatch('[0-9]{1,2}', result['limit']):
+                    raise workbench.WorkbenchError('Invalid lineage page limit.')
+                result['limit'] = int(result['limit'])
+            return result
+
         def _select_contract(self):
             selected = agent_api.select_request(self.headers, self.command, self.path)
             if selected is not None:
@@ -707,6 +721,12 @@ def make_handler(dataset, observer=None):
                     self.project_access()
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['experiment-lineage']:
+                        agent_api.require_selection(self._contract_selection,'studies.lineage')
+                        return self.reply(dataset.studies.lineage.list(**self._lineage_page_query()))
+                    if len(parts) == 2 and parts[0] == 'experiment-lineage':
+                        agent_api.require_selection(self._contract_selection,'studies.lineage_trial')
+                        return self.reply(dataset.studies.lineage.get(parts[1]))
                     if parts == ['models']:
                         agent_api.require_selection(self._contract_selection,'models.list')
                         return self.reply(dataset.models.list(**self._model_page_query()))
@@ -913,6 +933,8 @@ def make_handler(dataset, observer=None):
                     '/workspaces': ('workspaces.html', 'text/html'),
                     '/workspaces.css': ('workspaces.css', 'text/css'),
                     '/workspaces.js': ('workspaces.js', 'text/javascript'),
+                    '/experiment-lineage.js': ('experiment-lineage.js', 'text/javascript'),
+                    '/experiment-lineage.css': ('experiment-lineage.css', 'text/css'),
                     '/workspace-real.js': ('workspace-real.js', 'text/javascript'),
                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
@@ -995,6 +1017,19 @@ def make_handler(dataset, observer=None):
                         agent_api.require_selection(self._contract_selection,name);projects.closed(body,('ref',))
                         return self.reply(dataset.models.material(body['ref'],verify=True) if model else
                                           dataset.pipelines.recipe_material(body['ref'],verify=True))
+                    if parts == ['experiment-lineage']:
+                        agent_api.require_selection(self._contract_selection,'studies.record_lineage')
+                        return self.reply(dataset.studies.lineage.record(body),201)
+                    if parts == ['experiment-lineage','branch']:
+                        agent_api.require_selection(self._contract_selection,'studies.branch_trial')
+                        return self.reply(dataset.studies.lineage.branch(body),201)
+                    if len(parts)==3 and parts[0]=='studies' and parts[2]=='prepare-branch':
+                        agent_api.require_selection(self._contract_selection,'studies.prepare_branch')
+                        def lineage_graph_guard(graph):
+                            self._graph_snapshot_contract_access(graph['id'],graph['revision'],
+                                'studies.prepare_branch',1,'edit',graph=graph)
+                        return self.reply(dataset.studies.lineage.prepare(parts[1],body,
+                                          _graph_guard=lineage_graph_guard),201)
                     if parts == ['studies']:
                         agent_api.require_selection(self._contract_selection,'studies.create')
                         return self.reply(dataset.studies.create(body),201)
