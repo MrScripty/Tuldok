@@ -904,7 +904,14 @@ def _outputs(spec):
     if root.is_symlink() or not root.is_dir():
         raise ProcessError('Output directory changed.')
     for path in root.iterdir():
-        info=path.lstat();count+=1;total+=info.st_size
+        try:
+            info=path.lstat()
+        except FileNotFoundError:
+            # A recipe may atomically publish or rename a regular output while
+            # this live scan runs. The next scan and final publication validate
+            # the surviving inventory; other observation errors remain fatal.
+            continue
+        count+=1;total+=info.st_size
         if count>count_limit or not stat.S_ISREG(info.st_mode) or info.st_size>file_limit or total>spec['max_output_bytes']:
             raise ProcessError('Output inventory exceeded its admitted bound.')
 

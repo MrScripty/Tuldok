@@ -1,0 +1,28 @@
+{
+  "format": "output-inventory-rename-verification-v1",
+  "status": "passed",
+  "failed_run_id": "786bdd62edb845fe8950c4a952bbcc78",
+  "failed_custody_outcome": "failed",
+  "failed_custody_reason": "output_limit",
+  "leader_returncode": -15,
+  "stderr_bytes": 0,
+  "historical_exact_observation_exception_retained": false,
+  "deterministic_real_rename_repro": "FileNotFoundError at listed child lstat before fix; passes after fix",
+  "unchanged_bounds_and_other_errors_tested": true,
+  "test_count": 39,
+  "secure_fixture_umask": "077",
+  "initial_full_suite_attempt": {
+    "tests": 29,
+    "errors": 3,
+    "cause": "default writable group directory permissions rejected by existing exact CPU snapshot contract; repeated under secure077",
+    "model_or_deployment_failure": false
+  },
+  "reviews": {
+    "spec": "passed; no material findings",
+    "standards": "passed; no material findings"
+  },
+  "source_sha256": "247c573d6a9bfdc4e189b3a940650c91102cb40273751225f0fef6dd79999e6f",
+  "test_sha256": "f89c0e7985d4a9a44f7dca26d9a747cc1ee272719b6cf5577a14adac816f7e3c",
+  "live_deployed": false,
+  "unpublished_weights_reused": false
+}
