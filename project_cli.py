@@ -75,6 +75,13 @@ def parser():
     opening.add_argument('--manifest', required=True)
     inspecting = commands.add_parser('inspect', help='Inspect a registered project')
     inspecting.add_argument('--project-id', required=True)
+    evidence = commands.add_parser('evidence', help='Preview bounded external project evidence')
+    evidence.add_argument('--project-id', required=True)
+    evidence.add_argument('--reference-id', required=True)
+    importing = commands.add_parser('import-data', help='Import an exact inspected scientific data reference')
+    importing.add_argument('--project-id', required=True)
+    importing.add_argument('--reference-id', required=True)
+    importing.add_argument('--expected-sha256', required=True)
     recipe = commands.add_parser('recipe', help='Inspect an exact recipe and its typed parameters')
     recipe.add_argument('--project-id', required=True)
     recipe.add_argument('--reference-id', required=True)
@@ -159,9 +166,14 @@ def main(argv=None, *, observer=None):
             if args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
             elif args.command == 'open':
-                operation, arguments = 'projects.open', dict(root=args.root, manifest_path=args.manifest)
+                operation, arguments = 'project_snapshots.open', dict(root=args.root, manifest_path=args.manifest)
             elif args.command == 'inspect':
-                operation, arguments = 'projects.get', dict(project_id=args.project_id)
+                operation, arguments = 'project_snapshots.get', dict(project_id=args.project_id)
+            elif args.command in ('evidence', 'import-data'):
+                operation = 'projects.evidence' if args.command == 'evidence' else 'data.import_project_scientific'
+                arguments = dict(project_id=args.project_id, reference_id=args.reference_id)
+                if args.command == 'import-data':
+                    arguments['expected_sha256'] = args.expected_sha256
             elif args.command == 'recipe':
                 operation, arguments = 'recipes.inspect', dict(project_id=args.project_id,
                     reference_id=args.reference_id, expected_sha256=args.expected_sha256)

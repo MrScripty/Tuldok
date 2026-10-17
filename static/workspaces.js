@@ -90,6 +90,8 @@ window.workspaceEscape = (value) =>
       );
     catalogContext = remembered.catalog || null;
   }
+  const requestedProject = new URLSearchParams(location.search).get("project");
+  if (!remembered && /^[a-f0-9]{32}$/.test(requestedProject || "")) source = "project:" + requestedProject;
   if (source.startsWith("project:")) {
     const option=document.createElement("option");option.value=source;option.textContent="Remembered project";$("dataset").append(option);$("dataset").value=source;
   }

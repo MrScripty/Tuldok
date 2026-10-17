@@ -1141,3 +1141,8 @@ details > p {
 #extension-model-dialog dd{margin:0;overflow-wrap:anywhere}
 #extension-model-dialog button{margin:.25rem 0}
 @media(prefers-color-scheme:dark){#extension-model-dialog{background:#17212c;color:#edf3fa;border:1px solid #617286}#extension-model-dialog input,#extension-model-dialog select{background:#111a24;color:#edf3fa;border:1px solid #738498}#extension-model-dialog button{background:#243445;color:#edf3fa;border-color:#738498}#extension-model-dialog .author-parameters,#extension-model-dialog .author-contributions li{border-color:#617286}}
+
+.project-live-activity{overflow-wrap:anywhere}
+.project-live-activity h3{margin-top:0}
+.project-live-activity progress{display:block;width:100%;height:12px;margin:12px 0}
+.project-live-activity small{display:block;margin-top:12px;color:var(--muted)}

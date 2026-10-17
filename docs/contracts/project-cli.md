@@ -31,6 +31,9 @@ PYTHON=/path/to/agent-environment/bin/python
 CONFIG=/private/tuldok-agent.json
 $PYTHON project_cli.py --config "$CONFIG" open --root research --manifest project.json
 $PYTHON project_cli.py --config "$CONFIG" inspect --project-id PROJECT_ID
+$PYTHON project_cli.py --config "$CONFIG" evidence --project-id PROJECT_ID --reference-id activity
+$PYTHON project_cli.py --config "$CONFIG" import-data --project-id PROJECT_ID \
+  --reference-id capture --expected-sha256 DATA_SHA256
 $PYTHON project_cli.py --config "$CONFIG" recipe --project-id PROJECT_ID \
   --reference-id train --expected-sha256 RECIPE_SHA256
 $PYTHON project_cli.py --config "$CONFIG" prepare --arguments graph-inputs.json
@@ -154,7 +157,13 @@ Here `page.json` is `{"limit":20}`, `opening.json` is
 `{"root":"research","manifest_path":"project.json"}` and `project.json` is
 `{"project_id":"OPAQUE_ID"}`. Files contain arguments only; credentials stay in
 the private client configuration. These operations select their additive v1
-contracts. Existing legacy project commands keep their original operations.
+contracts. The dedicated `open` and `inspect` commands select the same current
+snapshot operations, including project v2. `inspect` includes bounded external
+activity when the manifest declares evidence id `activity`. `evidence` previews
+one ordinary evidence reference; `import-data` explicitly captures and imports
+a selected scientific data reference by its observed hash. Both work with
+current v2 projects through existing API owners. Failed/stale observations remain
+external evidence and cannot become execution or scientific acceptance.
 The recipe inspection command negotiates `recipes.inspect/3`; generic calls
 also negotiate `models.publish/2`, `graphs.create_external/2`,
 `graphs.preflight_external/2` and `studies.prepare_trial/2` when supported.

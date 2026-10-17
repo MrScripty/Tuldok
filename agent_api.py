@@ -517,11 +517,25 @@ _SNAPSHOT_CATALOG=obj({'mode':const('inspection'),'execution':const('unsupported
     'schema_sha256':obj({name:SHA for name in ('extension','contribution','parameter')},[]),
     'bytes_inspected':integer(0,8*1024**2),'inspection_budget_consumed':integer(0,8*1024**2),
     'packages':array(_SNAPSHOT_PACKAGE,64)})
+# External activity is a bounded projection of ordinary evidence id "activity".
+# It cannot make a Run or establish custody or scientific acceptance.
+_ACTIVITY_COMMON={'authority':const('external_observation'),'reference_id':const('activity')}
+_ACTIVITY={'oneOf':[
+    obj(dict(_ACTIVITY_COMMON,available=const(False),reason=text(1000))),
+    obj(dict(_ACTIVITY_COMMON,available=const(True),schema_version=const(1),
+        producer=text(120),sequence=SAFE_NAT,updated_at=text(80),
+        state={'enum':['idle','running','completed','failed','cancelled']},
+        phase=text(120),message=text(1000),
+        progress=obj({'completed':SAFE_NAT,'total':{'oneOf':[SAFE_NAT,{'type':'null'}]}}),
+        age_s={'type':'number','minimum':0},stale={'type':'boolean'},sha256=SHA))]}
 _SNAPSHOT_FIELDS=dict(_SNAPSHOT_SUMMARY,mode=const('inspection'),execution=const('unsupported'),
     manifest_status={'enum':['unavailable','unchanged','changed','missing']},
     **{name:array(_SNAPSHOT_REFERENCE,64) for name in ('data','recipes','evidence','requirements')})
-_SNAPSHOT_VIEW={'oneOf':[obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1))),
-    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG))]}
+_SNAPSHOT_VIEW={'oneOf':[
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1),activity=_ACTIVITY),
+        list(_SNAPSHOT_FIELDS)),
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG,activity=_ACTIVITY),
+        list(_SNAPSHOT_FIELDS)+['extensions'])]}
 model_operation('project_snapshots.list','GET','/api/workspace/project-snapshots',
     {'cursor':ID,'limit':integer(1,20)},[],query=('cursor','limit'),
     output=obj({'mode':const('inspection'),'roots':array(text(160),10000),
@@ -680,7 +694,7 @@ _extension_binding=obj({'format':const('tuldok_extension_binding_v1'),
     'contributions':array(obj({'id':text(129),'version':text(32),'sha256':SHA,
         'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
         'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA,
-            'runtime':obj({'profile':const('captured_cpu_python_v1'),'snapshot_sha256':SHA},['profile']),
+            'runtime':obj({'profile':{'enum':['captured_cpu_python_v1','managed_torch_python_v1']},'snapshot_sha256':SHA},['profile']),
             'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
             'resources':obj({'wall_seconds':integer(1,86400),
                 'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})}),
@@ -691,7 +705,7 @@ _inspection_fields={'definition':{'type':'object','maxProperties':32},
     'receipt':obj({'project_id':ID,'manifest_sha256':SHA,'reference_id':REF,'path':text(512),'measured_sha256':SHA}),
     'parameter_definitions':{'type':'object','maxProperties':32},
     'inputs':{'type':'object','maxProperties':32},'outputs':array({'type':'object','maxProperties':8},96,1),
-    'runtime':{'enum':['system_python','captured_cpu_python_v1']}}
+    'runtime':{'enum':['system_python','captured_cpu_python_v1','managed_torch_python_v1']}}
 _bound_inspection['outputSchema']['oneOf'][0]['properties']['result']={'oneOf':[
     obj(_inspection_fields),obj(dict(_inspection_fields,extension_binding=_extension_binding,
                                    model_task=TASK_REF,selection_policy=SELECTION_POLICY))]}

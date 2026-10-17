@@ -17,7 +17,7 @@ const sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');
 const bundlePath=path.join(projectRoot,'fields.zip');
 const fixtureArgs=['tests/qualify_scientific_fields.py','--output',bundlePath,'--build-only',...(captureRoot?['--capture-root',captureRoot]:[])];
 execFileSync('python3',fixtureArgs,{cwd:root});const source=fs.readFileSync(bundlePath),sourceHash=sha(source);
-const first={schema_version:1,id:'c'.repeat(32),name:captureRoot?'Native capture transport only':'Rotated noncubic authored fields',data:[{id:'fields',label:'Generic scientific bundle',path:'fields.zip'}],recipes:[],evidence:[],requirements:[]};
+const first={schema_version:2,extensions:[],id:'c'.repeat(32),name:captureRoot?'Native capture transport only':'Rotated noncubic authored fields',data:[{id:'fields',label:'Generic scientific bundle',path:'fields.zip'}],recipes:[],evidence:[],requirements:[]};
 const manifestRaw=JSON.stringify(first);fs.writeFileSync(path.join(projectRoot,'tuldok.project.json'),manifestRaw);
 const inspections=[],captures=[],checks=[],requests=[],errors=[],children=[],tracker=pageLoadTracker();const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws,send,evaluate,serverErrors='';
 async function until(fn,message='Timed out'){for(let i=0;i<600;i++){const value=await fn();if(value)return value;await pause(100);}throw Error(message);}

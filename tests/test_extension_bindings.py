@@ -95,14 +95,16 @@ class ExtensionBindingTests(unittest.TestCase):
         self.assertEqual(before, {path.name: path.read_bytes() for path in self.external.iterdir()})
         self.assertEqual(self.dataset.runs.list(), [])
         self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM access_execution_grants').fetchone()[0], 0)
-        for call in (
-            lambda: self.dataset.projects.read_data_reference(snapshot[0], 'x', '0'*64, 32),
-            lambda: self.dataset.projects.read_recipe_reference(snapshot[0], 'x', '0'*64),
-            lambda: self.dataset.projects.read_recipe_sources(snapshot[0], [{'path':'worker.py','sha256':'0'*64}]),
-        ):
-            with self.assertRaises(WorkbenchError) as caught:
-                call()
-            self.assertEqual(caught.exception.code, 'unsupported')
+        with self.assertRaises(WorkbenchError) as caught:
+            self.dataset.projects.read_recipe_reference(snapshot[0], 'x', '0'*64)
+        self.assertEqual(caught.exception.code, 'not_found')
+        with self.assertRaises(WorkbenchError) as caught:
+            self.dataset.projects.read_recipe_sources(snapshot[0], [{'path':'worker.py','sha256':'0'*64}])
+        self.assertEqual(caught.exception.code, 'stale')
+
+        with self.assertRaises(WorkbenchError) as caught:
+            self.dataset.projects.read_data_reference(snapshot[0], 'x', '0'*64, 32)
+        self.assertEqual(caught.exception.code, 'not_found')
 
     def test_internal_snapshot_reference_wrappers_and_current_manifest(self):
         data, recipe, source = b'inert data', b'{"format":"inert"}', (self.external/'worker.py').read_bytes()

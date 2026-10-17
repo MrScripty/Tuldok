@@ -921,6 +921,7 @@ def make_handler(dataset, observer=None):
                 assets.update({
                     '/auth.js': ('auth.js', 'text/javascript'),
                     '/auth.css': ('auth.css', 'text/css'),
+                    '/workspace-project-activity.js': ('workspace-project-activity.js', 'text/javascript'),
                     '/workspace-projects.js': ('workspace-projects.js', 'text/javascript'),
                     '/workbench-layout.js': ('workbench-layout.js', 'text/javascript'),
                     '/workbench-layout.css': ('workbench-layout.css', 'text/css'),
