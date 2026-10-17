@@ -8,6 +8,7 @@ import stat
 import struct
 
 from projects import closed, decode, relative_path
+from recipe_process import CUDA_WALL_SECONDS_LIMIT
 from workbench import WorkbenchError, encode
 
 NAME = re.compile(r'[A-Za-z][A-Za-z0-9_-]{0,63}')
@@ -210,7 +211,8 @@ def decode_definition(raw):
         bounded_int(output['max_bytes'], 1, 512 * 1024 * 1024 if large else MAX_CAPTURE_BYTES, 'Output bytes')
     if value['environment'] != {}:
         raise WorkbenchError('Initial runtime admits no project environment overrides.', 'unsupported', 400)
-    bounded_int(value['resources']['wall_seconds'], 1, 2400 if large else 600, 'Wall seconds')
+    wall_limit=2400 if large else CUDA_WALL_SECONDS_LIMIT if value['runtime']==TORCH_PROFILE and value['runtime_device']=='cuda' else 600
+    bounded_int(value['resources']['wall_seconds'], 1, wall_limit, 'Wall seconds')
     bounded_int(value['resources']['max_output_bytes'], 1, 4 * 1024**3 if large else MAX_CAPTURE_BYTES, 'Output bytes')
     if evidence:
         if value['arguments'].count({'model_evidence_context':True}) != 1:

@@ -23,6 +23,7 @@ READY_SECONDS = 10
 GRACE_SECONDS = 3
 CLEANUP_SECONDS = 10
 STREAM_LIMIT = 1024 * 1024
+CUDA_WALL_SECONDS_LIMIT = 1800
 OUTPUT_LIMIT = 64 * 1024 * 1024
 CAPTURE_FILE_LIMIT = 64 * 1024 * 1024
 LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
@@ -428,6 +429,8 @@ def validate_spec(value):
     if sum(item['bytes'] for item in files) > capture_limit or sum(item['bytes'] for item in runtime) > 512 * 1024 * 1024:
         raise ProcessError('Runtime/source closure exceeds its byte bound.')
     wall_limit, output_limit = 600, OUTPUT_LIMIT
+    if 'torch_runtime' in value and argv[7]=='cuda':
+        wall_limit=CUDA_WALL_SECONDS_LIMIT
     if 'resource_profile' in value:
         if value['resource_profile'] != LARGE_OUTPUT_PROFILE or 'cpu_snapshot' not in value:
             raise ProcessError('Large outputs require the explicit qualified CPU resource profile.')

@@ -136,7 +136,7 @@ def file_record(path, *, checkpoint=None):
         self.assertEqual(custody.validate_spec(spec), spec)
         for change in ({'env': {'CUDA_VISIBLE_DEVICES': ''}}, {'cpu_snapshot': {}},
                        {'resource_profile': custody.LARGE_OUTPUT_PROFILE},
-                       {'wall_seconds': 601}, {'torch_runtime': dict(self.descriptor, extra=True)}):
+                       {'wall_seconds': custody.CUDA_WALL_SECONDS_LIMIT+1}, {'torch_runtime': dict(self.descriptor, extra=True)}):
             with self.subTest(change=change), self.assertRaises(custody.ProcessError):
                 custody.validate_spec(dict(spec, **change))
         for index, value in ((7, 'auto'), (7, 'CPU'), (4, '/tmp/torch_runtime.py'),
@@ -149,6 +149,12 @@ def file_record(path, *, checkpoint=None):
         changed['captured_files'][1]['sha256'] = 'f'*64
         with self.assertRaises(custody.ProcessError):
             custody.validate_spec(changed)
+
+    def test_finite_cuda_deadline_keeps_cpu_deadline_unchanged(self):
+        spec=self.spec('cuda');spec['wall_seconds']=1800
+        self.assertEqual(custody.validate_spec(spec)['wall_seconds'],1800)
+        spec=self.spec('cpu');spec['wall_seconds']=601
+        with self.assertRaises(custody.ProcessError):custody.validate_spec(spec)
 
     def test_missing_or_changed_inventory_refused_after_go_without_child_or_cpu_retry(self):
         for mutation in ('missing', 'changed'):
