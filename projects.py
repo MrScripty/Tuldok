@@ -1,6 +1,7 @@
 """Read-only project inspection; catalog registration never executes project code."""
 from access import authorized
 import extension_contract
+import project_activity
 from contextlib import contextmanager
 import hashlib
 import json
@@ -313,7 +314,10 @@ class Projects:
                 result['manifest_status'] = 'missing'
             except (OSError, WorkbenchError):
                 pass
-        budget = [INSPECTION_LIMIT]
+        activity_ref = next((ref for ref in saved['manifest']['evidence']
+                             if ref['id'] == project_activity.REFERENCE_ID), None)
+        # Reserve the ordinary evidence preview budget within this request's bound.
+        budget = [INSPECTION_LIMIT - (TEXT_LIMIT if activity_ref is not None else 0)]
         for group in GROUPS:
             result[group] = []
             for ref in saved['manifest'][group]:
@@ -345,17 +349,26 @@ class Projects:
                     raise kind('Referenced bytes cannot be safely read within bounds.', 'unavailable') from None
             result['schema_version'] = 2
             result['extensions'] = extension_contract.catalog(saved['manifest']['extensions'], read_extension)
+        if activity_ref is not None:
+            observation = {'authority': 'external_observation', 'reference_id': activity_ref['id']}
+            try:
+                evidence = self._evidence(saved, activity_ref['id'])
+                observed = project_activity.activity(decode(evidence['text'].encode('utf-8')))
+                result['activity'] = {**observed, **observation, 'sha256': evidence['sha256']}
+            except WorkbenchError as error:
+                result['activity'] = {**observation, 'available': False, 'reason': str(error)}
         return result
 
     def _snapshot_identity(self, saved, path):
-        """Compare the current rooted path, including every parent directory."""
+        """Compare rooted handles and selected file metadata, excluding sibling churn."""
         if not self._bound(saved):
             raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
         directory = self.roots[saved['root']][0]
         root = os.fstat(directory)
         if [root.st_dev, root.st_ino] != saved['root_identity']:
             raise WorkbenchError('Original project root changed.', 'conflict', 409)
-        descriptors, identities = [], [(root.st_dev, root.st_ino)]
+        descriptors, identities = [], [(root.st_dev, root.st_ino, root.st_mode,
+                                        root.st_uid, root.st_gid)]
         try:
             parts = relative_path(path).split('/')
             for index, part in enumerate(parts):
@@ -367,8 +380,13 @@ class Projects:
                 info = os.fstat(directory)
                 if index == len(parts) - 1 and not stat.S_ISREG(info.st_mode):
                     raise WorkbenchError('Only regular snapshot files can be captured.', 'unsupported', 400)
-                identities.append((info.st_dev, info.st_ino, info.st_size,
-                                   info.st_mtime_ns, info.st_ctime_ns))
+                identity = (info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid)
+                # Directory size/timestamps describe all entries, including unrelated
+                # concurrent publications. Keep handle, type and permission identity;
+                # the selected regular file retains its full content-race metadata.
+                if index == len(parts) - 1:
+                    identity += (info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+                identities.append(identity)
             return identities
         finally:
             for descriptor in reversed(descriptors):
@@ -416,7 +434,9 @@ class Projects:
     @authorized('inspect', 'projects.read_data_reference')
     def read_data_reference(self, project_id, reference_id, expected_sha256, limit):
         """Capture a selected saved reference; source owners interpret its bytes."""
-        return self._read_data_reference(project_id, reference_id, expected_sha256, limit)
+        saved = self._saved(project_id, extensions=True)
+        return self._read_data_reference(project_id, reference_id, expected_sha256, limit,
+                                         extensions=saved['manifest']['schema_version'] == 2)
 
     def _read_data_reference(self, project_id, reference_id, expected_sha256, limit, *, extensions=False):
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
@@ -446,7 +466,9 @@ class Projects:
 
     @authorized('inspect', 'projects.read_recipe_reference')
     def read_recipe_reference(self, project_id, reference_id, expected_sha256):
-        return self._read_recipe_reference(project_id, reference_id, expected_sha256)
+        saved = self._saved(project_id, extensions=True)
+        return self._read_recipe_reference(project_id, reference_id, expected_sha256,
+                                           extensions=saved['manifest']['schema_version'] == 2)
 
     def _read_recipe_reference(self, project_id, reference_id, expected_sha256, *, extensions=False):
         if not isinstance(expected_sha256, str) or not SHA.fullmatch(expected_sha256):
@@ -474,7 +496,9 @@ class Projects:
 
     @authorized('inspect', 'projects.read_recipe_sources')
     def read_recipe_sources(self, project_id, sources):
-        return self._read_recipe_sources(project_id, sources)
+        saved = self._saved(project_id, extensions=True)
+        return self._read_recipe_sources(project_id, sources,
+                                         extensions=saved['manifest']['schema_version'] == 2)
 
     def _read_recipe_sources(self, project_id, sources, *, extensions=False):
         saved = self._snapshot_saved(project_id)[0] if extensions else self._saved(project_id)
@@ -507,7 +531,10 @@ class Projects:
 
     @authorized('inspect', 'projects.evidence')
     def evidence(self, project_id, reference_id):
-        saved = self._saved(project_id)
+        return self._evidence(self._saved(project_id, extensions=True), reference_id)
+
+    def _evidence(self, saved, reference_id):
+        """Read saved evidence declarations; mutable observations keep their measured hash."""
         if not self._bound(saved):
             raise WorkbenchError('Original project root is not configured.', 'unavailable', 409)
         ref = next((entry for entry in saved['manifest']['evidence'] if entry['id'] == reference_id), None)

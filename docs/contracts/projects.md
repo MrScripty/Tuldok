@@ -1,4 +1,4 @@
-# Project inspection v1
+# Project inspection and live observation
 
 Owner: `projects.py:Projects`; PostgreSQL schema5 owns immutable registration
 snapshots. HTTP and the workspace UI project the same owner. Opening inspects references without importing records. A separate explicit action may import a conforming scientific field bundle; recipe references remain non-executable and external evidence is not a Tuldok Run.
@@ -25,13 +25,14 @@ to the configured root, **not** the manifest's directory:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "8bd3793c538d4a0bba1d1e0c675a86d3",
   "name": "Pressure experiment",
   "data": [{"id": "capture", "label": "Trajectory capture", "path": "lab/runs/capture.npz"}],
   "recipes": [{"id": "driver", "label": "Experiment driver", "path": "lab/scripts/trajectory_experiment.py"}],
   "evidence": [{"id": "freeze", "label": "Frozen protocol", "path": "lab/experiments/trajectory-v2/freeze.json"}],
-  "requirements": [{"id": "torch", "label": "Compatible PyTorch environment"}]
+  "requirements": [{"id": "torch", "label": "Compatible PyTorch environment"}],
+  "extensions": []
 }
 ```
 
@@ -122,7 +123,9 @@ POST `/api/workspace/projects/{id}/import-data/{reference_id}` selects only a sa
 
 ## Explicit project v2 extension inspection
 
-Project v1 and its legacy HTTP/agent operations remain closed and unchanged.
+Current lab projects use schema 2. The separate upstream v1 list/open/get
+operations remain limited to schema 1; evidence preview and scientific data
+import accept current schema 2 through their existing operations.
 [Extensions](extensions.md) defines project v2's exact immutable `extensions`
 references and the unselected owner-only `/api/workspace/project-snapshots`
 browser/HTTP projection. The separately negotiated `project_snapshots.list/get/open`
@@ -137,3 +140,59 @@ silently project saved v2 as v1. Stop all writers and retain a complete verified
 pre-v2 backup before first v2 use; pair post-v2 stores only with the new binary.
 Rollback requires restoration of that pre-v2 state into a new database/schema and
 destination. See the extension contract's cutover procedure and executable test.
+
+## Live external activity
+
+A current project publishes live activity as an ordinary evidence reference:
+
+```json
+{"id":"activity","label":"Live activity","path":"runs/current/activity.json"}
+```
+
+The evidence ID selects this projection. The path is relative to the configured
+root and follows the same no-follow, regular-file and 64 KiB preview boundary.
+An omitted expected `sha256` permits a mutable observation; a declared hash is
+still enforced. The manifest and its registered identity remain immutable.
+There is no `activity_path` manifest field, historical snapshot decoder, new
+catalog or activity endpoint. Obsolete manifest fields are rejected by normal
+registration; only the offline one-time migration consumes the old form.
+
+The producer publishes strict JSON with exactly these fields:
+
+```json
+{"schema_version":1,"producer":"Pressure lab","sequence":1,
+ "updated_at":"2026-10-16T00:00:00+00:00","state":"running",
+ "phase":"evaluate","message":"Observed external progress",
+ "progress":{"completed":1,"total":4}}
+```
+
+`producer` and `phase` are nonempty text bounded at 120 characters; `message`
+is bounded at 1000. Text excludes controls and lone surrogates. `sequence`,
+`completed` and a non-null `total` are integers in [0, 2^53); `total` must be
+at least `completed`, or null when unknown. `updated_at` is a UTC ISO timestamp.
+States are `idle`, `running`, `completed`, `failed`, `cancelled`. Producers own
+sequence and publication; readers do not invent a Run identity or acceptance.
+
+Current snapshot detail includes optional `activity` when this reference exists.
+A valid observation returns its publication plus `available:true`, measured
+`sha256`, `reference_id:activity`, `authority:external_observation`, `age_s` and
+`stale`. Running observations older than ten seconds are stale. Failed producers
+stay failed. Invalid, missing, changed, oversized or unsafe evidence produces
+`available:false`, a bounded reason, reference ID and the same external authority;
+other project inspection remains usable. No evidence reference means no activity
+projection. Ordinary evidence preview still returns the exact text and hash with
+`scientific_verification:not_performed`. Refresh observes current bytes only;
+it does not claim execution, Tuldok custody, numerical validity or model promotion.
+
+The existing scientific import route accepts current v2 data references. It
+captures the unchanged registered manifest and rooted file identity, checks the
+selected and declared data hashes, and delegates bundle validation/publication
+to the scientific data owner. A changed manifest requires a new project snapshot.
+
+
+Current v2 recipe/source capture also supports ordinary managed Torch external
+recipes. A bound evidence recipe still requires v2 and its selected contribution
+closure. Ordinary managed recipes use the same unchanged-manifest proof and
+rooted, no-follow source capture, allowing a typed trainer and an ordinary CPU
+restore to share one current project. No historical manifest interpretation or
+source-selection alias is added.

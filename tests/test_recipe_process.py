@@ -150,7 +150,8 @@ class CustodyTests(unittest.TestCase):
     def test_source_drift_after_ready_does_not_execute(self):
         handle=self.start(self.spec());self.input.write_bytes(b'drift')
         handle.go(handle.ready);receipt=self.finish(handle)
-        self.assertFalse(receipt['go_received']);self.assertEqual(receipt['outcome'],'failed')
+        self.assertTrue(receipt['go_received']);self.assertEqual(receipt['outcome'],'failed')
+        self.assertIsNone(receipt['leader_returncode'])
         self.assertFalse((self.output/'result.txt').exists())
 
     def test_spec_rejects_invalid_bounds_and_executable_hash_before_spawn(self):
@@ -165,6 +166,7 @@ class CustodyTests(unittest.TestCase):
         handle.channel.send(b'{"type":"go","type":"cancel"}')
         receipt=self.finish(handle)
         self.assertFalse(receipt['go_received']);self.assertTrue(receipt['drained'])
+        self.assertIsNone(receipt['leader_returncode'])
         handle=self.start(self.spec())
         (handle.directory/'receipt.tmp').write_bytes(b'collision')
         handle.go(handle.ready)
@@ -217,7 +219,8 @@ class CustodyTests(unittest.TestCase):
         spec=self.spec();spec['runtime_files']=[dict(path=str(runtime),bytes=8,sha256=hashlib.sha256(b'original').hexdigest())]
         handle=self.start(spec);runtime.write_bytes(b'mutation');handle.go(handle.ready)
         receipt=self.finish(handle)
-        self.assertFalse(receipt['go_received']);self.assertTrue(receipt['drained'])
+        self.assertTrue(receipt['go_received']);self.assertTrue(receipt['drained'])
+        self.assertIsNone(receipt['leader_returncode'])
 
     def test_closed_controller_channel_reports_lost_once_and_cancel_is_idempotent(self):
         for _ in range(10):
@@ -480,7 +483,7 @@ def verify_cpu_snapshot(descriptor, *, checkpoint=None):
             self.assertFalse(any(event['type']=='started' for event in events))
             receipt=custody.load_receipt(handle.directory/'receipt.json',handle.expected_identity)
             self.assertEqual(receipt['outcome'],'cancelled');self.assertTrue(receipt['drained'])
-            self.assertIsNone(receipt['leader_returncode']);self.assertFalse(receipt['go_received'])
+            self.assertIsNone(receipt['leader_returncode']);self.assertTrue(receipt['go_received'])
         finally:
             handle.close_control()
 

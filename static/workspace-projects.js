@@ -2,7 +2,33 @@
 // Projects project server-owned references. Opening never admits an execution.
 window.WorkspaceProjects = function ({select, roots, announce, switchSource, contextChanged, openCatalogRecord, openExternalGraph, openExternalRun}) {
   const $=id=>document.getElementById(id), esc=value=>window.workspaceEscape(value);
-  let active=null, view=null, detail=null, generation=0, controller=null, evidenceController=null;
+  let active=null, view=null, detail=null, generation=0, controller=null, evidenceController=null, selectedEvidence=null;
+  const activityView=WorkspaceProjectActivity({read:(id,signal)=>api('/'+encodeURIComponent(id),{signal}),onDetail:next=>{
+    const before=detail,old=before?.evidence.find(ref=>ref.id===selectedEvidence),current=next.evidence.find(ref=>ref.id===selectedEvidence);
+    detail=next;
+    const group=view==='data'?'data':view==='pipeline'?'recipes':'evidence';
+    if(JSON.stringify(before?.[group])!==JSON.stringify(next[group])){
+      const list=roots[view].querySelector('.project-reference-list');
+      const focus=list.contains(document.activeElement)?document.activeElement:null;
+      const action=focus&&['projectImport','projectRecipe','projectEvidence'].find(key=>focus.dataset[key]);
+      const focusId=focus?.closest('[data-project-reference]')?.dataset.projectReference;
+      const expanded=[...list.querySelectorAll('[data-project-reference] details[open]')].map(node=>node.closest('[data-project-reference]').dataset.projectReference);
+      list.innerHTML=next[group].length?`<ul class="project-references">${next[group].map(item=>reference(item,category())).join('')}</ul>`:'<p class="muted">No references declared.</p>';
+      bindReferences(roots[view]);
+      for(const node of list.querySelectorAll('[data-project-reference]')){
+        if(expanded.includes(node.dataset.projectReference))node.querySelector('details').open=true;
+        if(node.dataset.projectReference===focusId){
+          const replacement=action?[...node.querySelectorAll('button')].find(button=>button.dataset[action]):node.querySelector('summary');
+          if(replacement&&!replacement.disabled)replacement.focus({preventScroll:true});
+        }
+      }
+    }
+    if(selectedEvidence&&old&&(old.observed_sha256!==current?.observed_sha256||old.status!==current?.status)){
+      if(current?.status==='available'&&current.integrity!=='mismatch')loadEvidence(selectedEvidence,false);
+      else {evidenceController?.abort();evidenceController=null;roots[view].querySelector('.project-evidence-output').textContent='Selected evidence is unavailable or differs from its declared identity.';}
+    }
+  }});
+  let recipeGeneration=0;
   let importTarget=null, importing=false, importGeneration=0;
   let entries=[], aliases=[], listGeneration=0, opening=false, openGeneration=0;
   const externalCreator=WorkspaceExternalProject({onCreated:openExternalGraph,announce});
@@ -37,7 +63,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     }catch(error){if(epoch===listGeneration)$('project-open-status').textContent=error.message;}
   }
   function reference(item, category) {
-    return `<li class="project-reference"><div><strong>${esc(item.label)}</strong><span class="badge ${item.status==='available'&&item.integrity==='verified'?'':'amber'}">${esc(item.status)} · ${esc(item.integrity)}</span></div><p class="project-path">${esc(item.path)}</p>${item.reason?`<p>${esc(item.reason)}</p>`:''}${item.bytes!==undefined?`<small>${esc(item.bytes)} bytes</small>`:''}${category==='data'?`<button type="button" data-project-import="${esc(item.id)}" ${item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||''))?'disabled':''}>Import fields</button>`:''}${category==='bound'?`<button type="button" data-project-model="${esc(item.id)}" ${item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||''))?'disabled':''}>Inspect bound model recipe</button>`:''}${category==='pipeline'?`<button type="button" data-project-recipe="${esc(item.id)}" ${item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||''))?'disabled':''}>Create execution graph</button>`:''}${category==='evidence'&&item.status==='available'?`<button type="button" data-project-evidence="${esc(item.id)}">Inspect external evidence</button>`:''}<details><summary>Reference identity</summary><pre>${esc(JSON.stringify({id:item.id,expected_sha256:item.sha256,observed_sha256:item.observed_sha256},null,2))}</pre></details></li>`;
+    return `<li class="project-reference" data-project-reference="${esc(item.id)}"><div><strong>${esc(item.label)}</strong><span class="badge ${item.status==='available'&&item.integrity==='verified'?'':'amber'}">${esc(item.status)} · ${esc(item.integrity)}</span></div><p class="project-path">${esc(item.path)}</p>${item.reason?`<p>${esc(item.reason)}</p>`:''}${item.bytes!==undefined?`<small>${esc(item.bytes)} bytes</small>`:''}${category==='data'?`<button type="button" data-project-import="${esc(item.id)}" ${item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||''))?'disabled':''}>Import fields</button>`:''}${category==='pipeline'?`<button type="button" data-project-recipe="${esc(item.id)}" ${item.status!=='available'||item.integrity==='mismatch'||!(/^[a-f0-9]{64}$/.test(item.observed_sha256||''))?'disabled':''}>Inspect recipe</button>`:''}${category==='evidence'&&item.status==='available'?`<button type="button" data-project-evidence="${esc(item.id)}">Inspect external evidence</button>`:''}<details><summary>Reference identity</summary><pre>${esc(JSON.stringify({id:item.id,expected_sha256:item.sha256,observed_sha256:item.observed_sha256},null,2))}</pre></details></li>`;
   }
   function extensions(catalog) {
     if(!catalog)return '';
@@ -45,20 +71,38 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     const packages=catalog.packages.map(item=>`<li class="project-reference"><div><strong>${esc(item.label)}</strong><span class="badge amber">${esc(item.state)} · ${esc(item.integrity)}</span></div>${item.package?`<p>${esc(item.package.id)} @ ${esc(item.package.version)}</p>`:''}<p class="project-path">${esc(item.path)}</p>${item.reason?`<p>${esc(item.reason)}</p>`:''}<dl><dt>Host contracts</dt><dd>${esc(item.host.state)}</dd><dt>Runtime qualification</dt><dd>${esc(item.runtime.state)} · ${esc(item.runtime.reason)}</dd><dt>Current permission</dt><dd>${esc(item.permission.state)} · ${esc(item.permission.reason)}</dd></dl><details><summary>Package and contribution identity</summary><pre>${esc(JSON.stringify({expected_sha256:item.sha256,observed_sha256:item.observed_sha256,contributions:item.contributions},null,2))}</pre></details></li>`).join('');
     return `<section class="panel panel-pad project-extensions"><h2>Project extensions</h2><p>Only this snapshot's listed packages are enabled. Inspection executes no package code. Declarations do not qualify a runtime or authorize a Run.</p>${packages?`<ul class="project-references">${packages}</ul>`:'<p class="muted">No extensions enabled in this snapshot.</p>'}</section>`;
   }
+  function category(){return view==='pipeline'?'pipeline':view==='runs'?'evidence':view;}
+  async function inspectRecipe(item,button){
+    const epoch=++recipeGeneration,project=detail,selection=generation;button.disabled=true;
+    try{
+      const pin=window.WorkspaceExtensionAuthorContracts?.['recipes.inspect/2'];
+      if(!pin)throw Error('Current recipe inspection is unavailable.');
+      const value=await api('/'+encodeURIComponent(project.id)+'/recipes/'+encodeURIComponent(item.id)+'?expected_sha256='+encodeURIComponent(item.observed_sha256),{headers:{'Tuldok-Operation-Contract':'recipes.inspect/2/'+pin}});
+      if(epoch!==recipeGeneration||selection!==generation||detail?.id!==project.id||detail.manifest_sha256!==project.manifest_sha256||detail.recipes.find(ref=>ref.id===item.id)?.observed_sha256!==item.observed_sha256||detail.recipes.find(ref=>ref.id===item.id)?.integrity==='mismatch'||active!==project.id||view!=='pipeline')return;
+      const definition=value.definition;
+      if(definition?.schema_version===3&&definition.format==='external_model_evidence_recipe_v2'&&value.extension_binding?.format==='tuldok_extension_binding_v1')await modelAuthor.open(project,item);
+      else if(definition?.schema_version===1&&definition.format==='external_recipe_v1'&&!value.extension_binding)await externalCreator.open(project,item);
+      else throw Error('This inspected recipe variant is not supported by the current browser.');
+    }catch(error){if(epoch===recipeGeneration&&selection===generation&&view==='pipeline')announce(error.message,true);}
+    finally{if(button.isConnected)button.disabled=false;}
+  }
+  function bindReferences(root){
+    for(const button of root.querySelectorAll('[data-project-evidence]'))button.onclick=()=>loadEvidence(button.dataset.projectEvidence);
+    for(const button of root.querySelectorAll('[data-project-recipe]'))button.onclick=()=>inspectRecipe(detail.recipes.find(item=>item.id===button.dataset.projectRecipe),button);
+    for(const button of root.querySelectorAll('[data-project-import]'))button.onclick=()=>openImport(button.dataset.projectImport);
+  }
   function render() {
     if(!active||!view)return;
     const root=roots[view];
+    activityView.stop();selectedEvidence=null;
     if(!detail){root.innerHTML='<p role="status">Loading project references…</p>';return;}
     const changed=detail.manifest_status!=='unchanged';
     const items=view==='data'?detail.data:view==='pipeline'?detail.recipes:detail.evidence;
     const title=view==='data'?'Referenced data':view==='pipeline'?'Referenced recipes':'External evidence';
-    const note=detail.schema_version===2?(view==='pipeline'?'Inspect the exact bound task, model, trainer, evaluator and view. Only an explicitly bound model recipe can prepare a finite Study trial; approval and admission are separate actions.':'Snapshot v2 data and external evidence remain inspection-only. Inspect a bound model recipe in Pipeline to prepare a finite Study trial.'):view==='data'?'Import supported scientific fields explicitly into the catalog. Saved project references remain unchanged.':view==='pipeline'?'Referenced files are not executable here. Inspect a declared recipe and explicitly create a saved execution graph. Preflight and material approval are required before execution.':'External evidence is not a Tuldok-completed run or scientific qualification.';
-    root.innerHTML=`<div class="panel panel-pad project-header"><div><span class="eyebrow">PROJECT · SAVED SNAPSHOT</span><h2>${esc(detail.name)}</h2><p>${esc(detail.root)} / ${esc(detail.manifest_path)}</p></div><button type="button" class="project-refresh">Refresh references</button></div>${changed?`<p class="callout" role="status">Manifest ${esc(detail.manifest_status)}. Saved references remain unchanged; a different manifest requires a new project ID.</p>`:''}<section class="panel panel-pad"><h2>${title}</h2><p>${note}</p>${items.length?`<ul class="project-references">${items.map(item=>reference(item,detail.schema_version===2?(view==='pipeline'?'bound':'inspection'):view==='runs'?'evidence':view)).join('')}</ul>`:`<p class="muted">No ${title.toLowerCase()} declared.</p>`}</section>${view==='data'?`<section class="panel panel-pad"><h2>Runtime requirements</h2><p class="muted">Presence does not qualify a runtime.</p>${detail.requirements.length?`<ul class="project-references">${detail.requirements.map(item=>`<li><strong>${esc(item.label)}</strong><span class="badge amber">${esc(item.status)}</span>${item.path?`<p class="project-path">${esc(item.path)}</p>`:''}${item.reason?`<p>${esc(item.reason)}</p>`:''}</li>`).join('')}</ul>`:'<p class="muted">No requirements declared.</p>'}</section>`:''}${extensions(detail.extensions)}<div class="project-evidence-output" aria-live="polite"></div><details class="project-identity"><summary>Saved manifest identity</summary><p class="project-path">${esc(detail.manifest_sha256)}</p><p>Project inspection grants no execution permission. Recipes require separate exact preflight and approval.</p></details>`;
+    const note=view==='data'?'Import supported scientific fields explicitly into the catalog. Saved project references remain unchanged.':view==='pipeline'?'Inspect the declared recipe. Bound model recipes prepare a finite Study trial; ordinary recipes create a saved execution graph. Exact preflight, review and approval are separate actions before execution.':'External evidence is not a Tuldok-completed run or scientific qualification.';
+    root.innerHTML=`<div class="panel panel-pad project-header"><div><span class="eyebrow">PROJECT · SAVED SNAPSHOT</span><h2>${esc(detail.name)}</h2><p>${esc(detail.root)} / ${esc(detail.manifest_path)}</p></div><button type="button" class="project-refresh">Refresh references</button></div>${changed?`<p class="callout" role="status">Manifest ${esc(detail.manifest_status)}. Saved references remain unchanged; a different manifest requires a new project ID.</p>`:''}<section class="panel panel-pad"><h2>${title}</h2><p>${note}</p><div class="project-reference-list">${items.length?`<ul class="project-references">${items.map(item=>reference(item,category())).join('')}</ul>`:`<p class="muted">No ${title.toLowerCase()} declared.</p>`}</div></section>${view==='data'?`<section class="panel panel-pad"><h2>Runtime requirements</h2><p class="muted">Presence does not qualify a runtime.</p>${detail.requirements.length?`<ul class="project-references">${detail.requirements.map(item=>`<li><strong>${esc(item.label)}</strong><span class="badge amber">${esc(item.status)}</span>${item.path?`<p class="project-path">${esc(item.path)}</p>`:''}${item.reason?`<p>${esc(item.reason)}</p>`:''}</li>`).join('')}</ul>`:'<p class="muted">No requirements declared.</p>'}</section>`:''}${extensions(detail.extensions)}<div class="project-evidence-output" aria-live="polite"></div><details class="project-identity"><summary>Saved manifest identity</summary><p class="project-path">${esc(detail.manifest_sha256)}</p><p>Project inspection grants no execution permission. Recipes require separate exact preflight and approval.</p></details>`;
     root.querySelector('.project-refresh').onclick=()=>loadDetail(active,true);
-    for(const button of root.querySelectorAll('[data-project-evidence]'))button.onclick=()=>loadEvidence(button.dataset.projectEvidence);
-    for(const button of root.querySelectorAll('[data-project-model]'))button.onclick=()=>modelAuthor.open(detail,detail.recipes.find(item=>item.id===button.dataset.projectModel));
-    for(const button of root.querySelectorAll('[data-project-recipe]'))button.onclick=()=>externalCreator.open(detail,detail.recipes.find(item=>item.id===button.dataset.projectRecipe));
-    for(const button of root.querySelectorAll('[data-project-import]'))button.onclick=()=>openImport(button.dataset.projectImport);
+    bindReferences(root);activityView.start(detail,root);
     contextChanged();
   }
   async function loadDetail(id, refresh=false) {
@@ -77,7 +121,8 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
       }
     }finally{if(controller===request)controller=null;}
   }
-  async function loadEvidence(id) {
+  async function loadEvidence(id,focus=true) {
+    selectedEvidence=id;
     evidenceController?.abort();const request=new AbortController();evidenceController=request;
     const project=active,epoch=generation,root=roots[view],output=root.querySelector('.project-evidence-output');
     output.textContent='Loading external evidence…';
@@ -86,7 +131,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
       if(evidenceController!==request||epoch!==generation||project!==active||view!=='runs')return;
       if(value.id!==id||value.external!==true||typeof value.text!=='string')throw Error('Unsupported external evidence response.');
       output.innerHTML=`<section class="panel panel-pad"><h3 tabindex="-1">${esc(value.label)} · external evidence</h3><p class="muted">Referenced source text; not a Tuldok run or scientific validation.</p><p class="project-path">SHA256 ${esc(value.sha256)}</p><pre>${esc(value.text)}</pre></section>`;
-      output.querySelector('h3').focus({preventScroll:true});
+      if(focus)output.querySelector('h3').focus({preventScroll:true});
     }catch(error){if(evidenceController===request&&epoch===generation&&error.name!=='AbortError')output.textContent=error.message;}
     finally{if(evidenceController===request)evidenceController=null;}
   }
@@ -133,7 +178,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
     }catch(error){if(epoch===openGeneration)$('project-open-status').textContent=error.message+' Refresh saved projects before repeating an opening whose reply was lost.';}
     finally{opening=false;$('project-open-submit').disabled=!aliases.length;}
   };
-  window.addEventListener('pagehide',()=>{generation++;listGeneration++;openGeneration++;importGeneration++;controller?.abort();evidenceController?.abort();});
+  window.addEventListener('pagehide',()=>{activityView.stop();generation++;listGeneration++;openGeneration++;importGeneration++;controller?.abort();evidenceController?.abort();});
   return {
     initialize:refreshList,
     label:()=>detail?.name||entries.find(entry=>'project:'+entry.id===currentSource())?.name||'Project',
@@ -142,6 +187,7 @@ window.WorkspaceProjects = function ({select, roots, announce, switchSource, con
       for(const [name,root] of Object.entries(roots))root.hidden=!id||name!==next;
       if(id===active&&next===view)return;
       externalCreator.cancel();modelAuthor.cancel();importGeneration++;$('project-import-dialog').close();
+      activityView.stop();selectedEvidence=null;
       const changed=id!==active;active=id;view=next;generation++;controller?.abort();evidenceController?.abort();controller=null;evidenceController=null;
       if(changed)detail=null;
       if(!id)return;
