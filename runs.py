@@ -863,7 +863,7 @@ class Runs:
             with self.lock, self.db.transaction():
                 run = self._load(run_id)
                 self.access.require_job('runs', run_id, run['admission_id'], run['request_sha256'])
-                if run['state'] != 'queued' or self._external_blocked:
+                if run['state'] != 'queued' or self._blocked or self._external_blocked or self._stop.is_set():
                     return
                 if run['spec']['cwd'] != str(self._external_directory(run)):
                     raise WorkbenchError('Restored execution paths cannot be dispatched. Approve a new attempt.', 'stale', 409)
@@ -889,7 +889,7 @@ class Runs:
                             self._save(run)
                         with self.lock, self.db.transaction():
                             run = self._load(run_id)
-                            if run['state'] == 'cancelling' or self._stop.is_set():
+                            if run['state'] == 'cancelling' or self._stop.is_set() or self._blocked or self._external_blocked:
                                 handle.cancel('cancelled')
                                 continue
                             run['custody_phase'] = 'go_intent'
@@ -1347,6 +1347,10 @@ class Runs:
             with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
                 with self.lock, self.db.transaction():
                     current = self._load(admitted['id'])
+                    # Executor submission is provisional. This transaction is
+                    # the dispatch decision shared with sibling unknown fences.
+                    if current['state'] != 'queued' or self._blocked or self._external_blocked or self._stop.is_set():
+                        return
                     current['execution_resources'] = {'device': claim[0], 'memory_reservation_bytes': claim[1],
                         'cpu_affinity': list(cpus), 'host_memory_reserve_bytes': self._capacity.reserve_bytes}
                     self._save(current)
@@ -1376,7 +1380,7 @@ class Runs:
         with self.lock, self.db.transaction():
             run = self._load(run_id)
             self.access.require_job('runs', run_id, run.get('admission_id'), run['request_sha256'])
-            if run['state'] != 'queued':
+            if run['state'] != 'queued' or self._blocked or self._external_blocked or self._stop.is_set():
                 return
             self._event(run, 'running', 'Verifying frozen release and adapter before starting the CPU worker.')
             run['started_at'] = timestamp()
@@ -1421,6 +1425,10 @@ class Runs:
                 current = self._load(run_id)
                 current['execution_test_exposure'] = self.pipelines.exposures(current['source_records'])
                 self._save(current)
+                if self._blocked or self._external_blocked:
+                    self._event(current, 'interrupted', 'Sibling custody became unknown before worker creation.')
+                    self._save(current)
+                    return
                 if current['state'] == 'cancelling' or self._stop.is_set():
                     self._event(current, 'cancelled', 'Cancelled before worker process creation.')
                     self._save(current)
