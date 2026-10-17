@@ -1,6 +1,6 @@
 # Output inventory rename race
 
-Status: Active. Owner: root. User authority: Tuldok improvements needed by the
+Status: Accepted. Terminal; no further implementation slice. Owner: root. User authority: Tuldok improvements needed by the
 ongoing CUDA/CPU model sequence. Separate infrastructure branch, no model edits.
 
 Run786bdd62edb845fe8950c4a952bbcc78 reached5000updates then drained with reason
@@ -21,6 +21,17 @@ Verify deterministic rename, subsequent oversize rejection, other-error rejectio
 existing exact output bounds and Linux custody lifecycle tests. Deploy only with
 no active catalog Runs, preserving all prior states and exact owner/catalog.
 Close the failed Study and admit one fresh late-arm fit from initialization;
-retain original successful early fit and fresh CPUrestore, read-only recovery.
+retain original successful early fit and fresh CPUrestore, ordinary hash-verified collection.
 Standards MCP snapshot:v1:f2c192e8-4ff4-41a9-b019-8e6b050c27a7 applies; independent
 Standards and Spec reviews required before completion. No push or merge.
+
+
+Completed39custody/runtime tests under secure077fixture permissions; both
+independent reviews passed. Deployed exact709d0ddf49f8af207116d3b7abb8486f26d28fe3
+as current-06 with zero active Runs,27.721982285s switch, all20prior Run states
+and owner/catalog/capacity settings preserved. EarlyCUDA+CPUrestore collected
+normally before switch; no readback recovery or retraining was needed. Failed
+lateStudy02 stop acknowledged; a client postcondition used the wrong response
+level, then verified nested study.open=false from its durable acknowledgment
+without mutation replay. Fresh lateStudy03 belongs to the lab experiment, not
+this completed infrastructure change. No weights/datasets/credentials committed.
