@@ -26,6 +26,17 @@ def definition(source=b'raise RuntimeError("preflight must never execute")\n'):
 
 
 class ContractTests(unittest.TestCase):
+    def test_execution_reservations_are_bounded_and_captured(self):
+        value = definition()
+        value['resources'].update(cpu_cores=12, memory_bytes=24 * 1024 ** 3)
+        self.assertEqual(contract.decode_definition(json.dumps(value).encode()), value)
+        for name, bad in [('cpu_cores', 0), ('cpu_cores', True), ('cpu_cores', 257),
+                          ('memory_bytes', -1), ('memory_bytes', True), ('memory_bytes', 1024 ** 4 + 1)]:
+            changed = copy.deepcopy(value)
+            changed['resources'][name] = bad
+            with self.subTest(name=name, value=bad), self.assertRaises(WorkbenchError):
+                contract.decode_definition(json.dumps(changed).encode())
+
     def test_parameters_and_closed_tokens(self):
         value=definition()
         self.assertEqual(contract.decode_definition(json.dumps(value).encode()),value)

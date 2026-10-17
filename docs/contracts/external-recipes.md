@@ -98,7 +98,10 @@ retry means a fresh preflight, key and approval, not reuse of the old grant.
 
 ## Process custody and recovery
 
-The sole Runs queue starts one pinned single-threaded Linux subreaper helper.
+The sole Runs supervisor starts one pinned single-threaded Linux subreaper helper
+per dispatched attempt. Resource-aware dispatch can overlap independent helpers;
+each has its own control channel, process identity, custody directory and receipt.
+See [Run resource scheduling](workspace-runs.md) for CPU, CUDA and memory budgets.
 A private bounded socket protocol carries READY, GO, cancellation and custody
 receipts; recipe stdout cannot declare completion. The helper and executable
 bytes use sealed descriptors. Recipe code receives its own stdin/stdout/stderr,

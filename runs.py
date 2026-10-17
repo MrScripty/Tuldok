@@ -91,6 +91,8 @@ class Runs:
         self._external_blocked = False
         self._confirmed_external = set()
         self._closed = False
+        from run_capacity import Capacity
+        self._capacity = Capacity.configured()
         with self.lock:
             self.runtime_owner = self.db.claim_runtime('workspace_runs')
             if self.runtime_owner:
@@ -313,6 +315,8 @@ class Runs:
                     'quality_claim', 'execution_kind', 'result_kind', 'material', 'material_sha256',
                     'approval_id', 'actor_id', 'custody_phase')
             result = {key: copy.deepcopy(run[key]) for key in keys}
+            if 'execution_resources' in run:
+                result['execution_resources'] = copy.deepcopy(run['execution_resources'])
             if 'approval_material_sha256' in run:result['approval_material_sha256']=run['approval_material_sha256']
             association=self.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',(run['id'],)).fetchone()
             if association is not None:result['study_membership']=dict(association)
@@ -520,6 +524,9 @@ class Runs:
                 captured['material']['graph_execution_sha256'] != execution_digest(graph)):
             raise WorkbenchError('Prepared execution identity differs.', 'stale', 409)
         self.db.on_rollback(lambda: shutil.rmtree(staging, ignore_errors=True))
+        claim = self._capacity.claim({'material': captured['material']})
+        if claim[2] > len(self._capacity.cores):
+            raise WorkbenchError('Recipe CPU reservation exceeds this supervisor CPU pool.', 'unsupported', 409)
         extension_context=None
         if recipe_contract.is_evidence(captured['material']['recipe']):
             if approval_material_sha256 is None:
@@ -1279,49 +1286,86 @@ class Runs:
 
     def _start(self):
         with self._thread_lock:
+            if self._closed or self._stop.is_set():
+                return
             if self._thread is None:
                 self._thread = threading.Thread(target=self._loop, name='workspace-runs', daemon=True)
                 self._thread.start()
         self._wake.set()
 
     def _loop(self):
-        while not self._stop.is_set():
-            if self._blocked or not self.runtime_owner:
-                self._wake.wait(.25)
-                self._wake.clear()
-                continue
+        from concurrent.futures import ThreadPoolExecutor
+        from run_capacity import available_memory, MAX_ATTEMPTS
+        # Only this coordinator owns futures/reservations. Each attempt retains
+        # its existing independent process custodian and exact job context.
+        with ThreadPoolExecutor(max_workers=MAX_ATTEMPTS, thread_name_prefix='workspace-attempt') as executor:
+            active = {}
             try:
-                with self.lock:
-                    queued = [self._load(row[0]) for row in self.db.execute('SELECT id FROM workspace_runs')]
-                    queued = sorted((run for run in queued if run['state'] == 'queued' and
-                                    (not self._external(run) or (not self._external_blocked and run['id'] in self._confirmed_external))),
-                                    key=lambda run: (run['created_at'], run['id']))
+                while not self._stop.is_set():
+                    for run_id, (future, _, _) in list(active.items()):
+                        if future.done():
+                            future.result()
+                            del active[run_id]
+                    with self.lock:
+                        blocked = self._blocked or self._external_blocked or not self.runtime_owner
+                    if blocked:
+                        self._wake.wait(.25)
+                        self._wake.clear()
+                        continue
+                    with self.lock:
+                        queued = [self._load(row[0]) for row in self.db.execute('SELECT id FROM workspace_runs')]
+                        queued = sorted((run for run in queued if run['state'] == 'queued' and run['id'] not in active
+                                         and (not self._external(run) or run['id'] in self._confirmed_external)),
+                                        key=lambda run: (run['created_at'], run['id']))
+                    try:
+                        headroom = available_memory()
+                    except (OSError, ValueError, KeyError, StopIteration):
+                        headroom = 0
+                    for run in queued:
+                        claim = self._capacity.claim(run)
+                        with self.lock:
+                            blocked = self._blocked or self._external_blocked
+                        if self._stop.is_set() or blocked:
+                            break
+                        if self._capacity.admits(claim, [item[1] for item in active.values()], headroom):
+                            used = {cpu for _, _, cpus in active.values() for cpu in cpus}
+                            cpus = tuple(cpu for cpu in self._capacity.cores if cpu not in used)[:claim[2]]
+                            active[run['id']] = (executor.submit(self._run_attempt, run, cpus, claim), claim, cpus)
+                    self._wake.wait(.05 if active else .25)
+                    self._wake.clear()
+            finally:
+                # On coordinator/storage failure, active attempts observe stop
+                # and drain before executor shutdown releases ownership.
+                self._stop.set()
+
+    def _run_attempt(self, admitted, cpus, claim):
+        affinity = os.sched_getaffinity(0)
+        try:
+            # Linux affinity belongs to this executor thread. Children inherit it;
+            # other attempts and the HTTP/coordinator threads remain independent.
+            os.sched_setaffinity(0, cpus)
+            with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
+                with self.lock, self.db.transaction():
+                    current = self._load(admitted['id'])
+                    current['execution_resources'] = {'device': claim[0], 'memory_reservation_bytes': claim[1],
+                        'cpu_affinity': list(cpus), 'host_memory_reserve_bytes': self._capacity.reserve_bytes}
+                    self._save(current)
+                self._execute(admitted['id'])
+        except Exception:
+            try:
+                with self.access._reconcile(), self.lock, self.db.transaction():
+                    run = self._load(admitted['id'])
+                    if run['state'] in ACTIVE:
+                        run['error'] = {'code': 'failed', 'message': 'Run supervisor could not complete this attempt.'}
+                        state = self._external_recovery_state(run) if self._external(run) else 'failed'
+                        self._external_blocked |= state == 'unknown' and self._external(run)
+                        self._event(run, state, run['error']['message'])
+                        self._save(run)
             except psycopg.Error:
                 self._stop.set()
-                return
-            if not queued:
-                self._wake.wait(.25)
-                self._wake.clear()
-                continue
-            try:
-                admitted = queued[0]
-                with self.access._job('runs', admitted['id'], admitted.get('admission_id'), admitted['request_sha256']):
-                    self._execute(admitted['id'])
-            except Exception as error:
-                try:
-                    with self.access._reconcile(), self.lock, self.db.transaction():
-                        run = self._load(queued[0]['id'])
-                        if run['state'] in ACTIVE:
-                            run['error'] = {'code': 'failed', 'message': 'Run supervisor could not complete this attempt.'}
-                            state = self._external_recovery_state(run) if self._external(run) else 'failed'
-                            self._external_blocked |= state == 'unknown' and self._external(run)
-                            self._event(run, state, run['error']['message'])
-                            self._save(run)
-                except psycopg.Error:
-                    # _execute's finally owns child drainage even when persistence
-                    # disappears. The retained active row reconciles on reopening.
-                    self._stop.set()
-                    return
+        finally:
+            os.sched_setaffinity(0, affinity)
+            self._wake.set()
 
     def _execute(self, run_id):
         with self.lock:
@@ -2132,12 +2176,14 @@ class Runs:
 
 
     def close(self):
-        self._closed = True
-        self._stop.set()
-        self._wake.set()
-        if self._thread is not None:
-            self._thread.join(timeout=60)
-            if self._thread.is_alive():
+        with self._thread_lock:
+            self._closed = True
+            self._stop.set()
+            self._wake.set()
+            thread = self._thread
+        if thread is not None:
+            thread.join(timeout=60)
+            if thread.is_alive():
                 raise RuntimeError('Training supervisor did not drain; metadata must remain open.')
         if self.runtime_owner:
             try:

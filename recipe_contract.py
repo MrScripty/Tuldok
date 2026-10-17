@@ -188,7 +188,11 @@ def decode_definition(raw):
             if not evidence or arg is not True:raise WorkbenchError('Model context requires its explicit recipe version.')
         elif kind not in ('output_dir', 'input_evidence') or arg is not True:
             raise WorkbenchError('Unsupported argument token.')
-    closed(value['resources'], ('wall_seconds', 'max_output_bytes'), ('profile',))
+    closed(value['resources'], ('wall_seconds', 'max_output_bytes'), ('profile', 'cpu_cores', 'memory_bytes'))
+    if 'cpu_cores' in value['resources']:
+        bounded_int(value['resources']['cpu_cores'], 1, 256, 'CPU core reservation')
+    if 'memory_bytes' in value['resources']:
+        bounded_int(value['resources']['memory_bytes'], 64 * 1024 * 1024, 1024 ** 4, 'Memory reservation bytes')
     large = 'profile' in value['resources']
     if large and (value['resources']['profile'] != LARGE_OUTPUT_PROFILE or value['runtime'] != CPU_PROFILE):
         raise WorkbenchError('Large outputs require the declared captured CPU resource profile.')
