@@ -1,6 +1,6 @@
 # Finite CUDA training deadline
 
-Status: Active. User authorized Tuldok improvements needed for the ongoing
+Status: Accepted. Terminal; no further implementation slice. User authorized Tuldok improvements needed for the ongoing
 CUDA-training/CPU-inference sequence. One bounded slice extends only explicitly
 managed CUDA execution from600 to1800seconds. Ordinary CPU remains600seconds;
 captured CPU large-output profile remains2400seconds. One CUDA slot, memory
@@ -16,3 +16,8 @@ spec dialect, runtime installation or model arithmetic. Verify rejection above
 the CUDA limit and unchanged CPU restriction, plus lifecycle cancellation/drain.
 Deploy only after isolated verification and no live active Runs. Do not replay
 any unknown mutation or overwrite completed migration gates.
+
+Qualified23 isolated tests and both independent reviews. Deployed exact1688f7d
+as current-05 after confirming zero active Runs;15.765s switch and all nine
+existing Run states preserved. Original catalog and owner session retained.
+Scientific fits continue in the lab plan, not this completed infrastructure plan.
