@@ -1543,12 +1543,19 @@ class Runs:
                 try:
                     self._drain(process, owner)
                 except (WorkbenchError, OSError, subprocess.SubprocessError):
-                    self._blocked = True
-                    with self.lock, self.db.transaction():
-                        current = self._load(run_id)
-                        current['error'] = {'code': 'unknown', 'message': 'Worker cessation could not be confirmed.'}
-                        self._event(current, 'unknown', current['error']['message'])
-                        self._save(current)
+                    try:
+                        with self.lock:
+                            self._blocked = True
+                            with self.db.transaction():
+                                current = self._load(run_id)
+                                current['error'] = {'code': 'unknown', 'message': 'Worker cessation could not be confirmed.'}
+                                self._event(current, 'unknown', current['error']['message'])
+                                self._save(current)
+                    except BaseException:
+                        # CatalogLock acquisition can itself fail after storage
+                        # loss. Stop dispatch even when no durable fence is possible.
+                        self._stop.set()
+                        raise
             if process is not None and process.stdout is not None:
                 process.stdout.close()
 

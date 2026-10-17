@@ -1,6 +1,6 @@
 # Concurrent local CPU and CUDA Runs
 
-Status: Active; operation start. User authorized simultaneous CPU Runs alongside
+Status: Accepted; operation start. User authorized simultaneous CPU Runs alongside
 one CUDA fit and continuing the pressure-model sequence. Owner: root; branch
 performance/concurrent-cpu-cuda-20261017, base8af5a6a1e288e5b2f86a75b53cab93ca71222a04.
 Retain this branch for review/integration; existing PR89 and its source branch
@@ -36,11 +36,20 @@ attempts; existing storage-loss/restart/unknown-state lifecycle tests. Actual CU
 computation and CPU analysis overlap must be observed in the lab before deployment
 is qualified for that workload. Source/Spec review and exact staged diff required.
 
-Current phase: Verifying. Next slice: final source-frozen lifecycle suite and
-independent review. Existing actual process tests passed; GPU-slot dispatch was
-simulated in that focused test and does not prove actual CUDA execution. The old
+Current phase: terminal for scheduler implementation and hardware qualification.
+Next slice: none in this plan; deployment and model experiments continue in the
+linked lab plan. All required process checks and both independent review axes
+pass. Real CUDA pressure training overlapped managed CPU computation for1.2556s;
+the one-update checkpoint restored on CPU with zero updates and CUDA uninitialized.
+Exact restored weights/normalization/history and joined executor workers are
+recorded in actual-device-overlap-03.json (270.023s total). The old
 TinyCNN runtime is unavailable locally; its test fails at runtime preflight before
 the scheduler. No package install or fallback to the lab's CUDA runtime is used.
+
+Independent review found a late dispatch/fence race and one uncoordinated drain
+fence writer. The real red startup regression, passing13-case built-in lifecycle
+receipt10,14-case external/concurrency receipt09 and the final review retain both
+findings and their closure. Commit correction preserves the original history.
 
 Related scientific plan: rheon-surrogate-lab/docs/plans/pressure-throughput-feedback-v1/plan.md.
 Standards route snapshot:v1:bc3877fc-df9b-41cc-9a60-ec680a5ccf55,
