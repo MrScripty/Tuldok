@@ -68,3 +68,47 @@ The earlier live 7–8 s / one-core measurements remain valid observations of th
 running coordinator. Do not pair the later fast receipt as a healthy baseline.
 After activation, require an actual fresh completed attempt and post-completion
 read measurements. No claim of an exact paired speedup or full-pipeline speedup.
+
+
+Activation: qualified source eed2b84d21050943d211defffc3133609422950a copied
+into current-07 using the unchanged 193-file inventory. Only runs.py product bytes
+differ. Confirmed no active/unknown Runs, gracefully ceased the exact previous
+PID, then started one owner with unchanged arguments/environment/interpreter.
+HTTP/session/catalog checks passed; all 55 existing Run document hashes preserved.
+Transition took 18.003 s. Procedure source and receipts are retained by the lab.
+
+Actual Pumas CPU qualification: existing C67 graph, identical material digest,
+one journaled approval and submission, zero optimizer updates. New Run
+29472d8e679a48b1933d4683e401ad02 completed with drained custody. Approval 13.937 s,
+admission 27.849 s, completion from controller start 78.097 s; all readback done
+in 100.273 s. Ten artifacts whole-hash verified; nine expected immutable outputs
+match original C67 restore exactly, including weights and predictions. The tenth,
+receipt.json, differs only in elapsed_s, per_case_inference_s and peak_rss_bytes.
+No CUDA training, numerical change, promotion or scientific-history replacement.
+
+Original HTTP reproduction now passes its two-second diagnostic trigger: selected
+old Run reads 0.443/0.446 s and old 189-byte artifact reads 0.393/0.394 s, versus
+earlier 7.351/8.271 s and 7.889/7.674 s with the old coordinator actually running.
+Same client script hash; same owner/catalog/Run/artifact. Additional three-sample
+readback medians: Run .527 s, artifact .476 s (see ranges). Its first measurements
+were near the end of restore-artifact collection; the original two-sample rerun
+was fully quiescent. Idle app uses 0 CPU seconds in 3.000 s after both benchmarks,
+three threads remain and service log has no coordinator exception. This combines
+real attempt completion, live process continuity and targeted event-wakeup tests;
+an idle server alone is not the evidence. Measurements are observations, not an
+exact paired speedup, universal latency SLA or whole-training throughput claim.
+
+Remaining source preparation: paired current graph preflight 15.104 -> 14.263 s,
+no substantive change. New restore artifact reads take ~2.1–2.3 s each because
+that workload has a different captured input closure; do not substitute selected
+old-Run .4 s reads for all artifacts. Historical C67 admission was 210.781 s;
+retain as context, not a controlled before/after timing. Further preparation
+optimization must preserve current material, authorization and custody checks.
+
+Environment: Linux x86_64, Core Ultra 9 275HX, 24 logical CPUs, ~62 GiB RAM;
+application CPython 3.12, PostgreSQL 16; actual managed pressure restore uses the
+existing Pumas-qualified runtime and exact existing one-CPU resource claim.
+Capacity settings remain six CPU slots, 4 GiB per CPU Run, 8 GiB per CUDA Run,
+8 GiB reserve. The task-created private PostgreSQL test service was stopped after
+qualification. No debug instrumentation, profiler package or credential added to
+product/deployment. Existing RES-1 and ENV-1 are explicitly separate limitations.

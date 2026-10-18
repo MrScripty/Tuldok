@@ -1,6 +1,6 @@
 # Tuldok request latency
 
-Status: Active — implementation. Canonical operation: start this performance plan.
+Status: Complete — scoped repair activated and qualified locally.
 Jeremy paused the next model experiment and authorized improving Tuldok's speed.
 Objective: remove the measured idle-looking waits from ordinary local Run reads,
 artifact readback and the affected preparation/admission path without weakening
@@ -63,12 +63,13 @@ from the named branch; when its purpose ends, remove it only if clean and after
 recording the protected head and branch disposition. Never prune other worktrees.
 Coding-standards snapshot: snapshot:v1:ffcfc3f8-b52a-434e-b57f-d259a0355711.
 
-Current acceptance: baseline/cause and repair regressions satisfied; live activation
-and representative after-update workload qualification pending.
-Exactly one next slice: activate the qualified source with no active Runs, qualify
-one fresh zero-update CPU restore to warm the coordinator, and measure identical
-known-Run reads and preflight before/after. Ledger: execution-ledger.md;
-findings: issues.md; evidence: reports/.
+Current acceptance: baseline/cause, red-before-green scheduling regressions,
+local activation, real CPU restore and healthy post-attempt HTTP measurements are
+satisfied. See execution-ledger.md and reports/. No model training was started.
+A new performance slice would first profile remaining graph preparation and
+approval/admission source-validation costs; it is not included in this repair.
+Existing coordinator lock-timeout resilience is a separate retained finding.
+
 
 
 Bounded caller inventory: _loop, _admit_external_prepared, built-in _submit and
@@ -115,3 +116,16 @@ the fixed coordinator must be quiet after an actual attempt has finished.
 Composed-design applicability: existing Runs remains the single coordination,
 capacity and custody owner. The new private selector serves four existing callers;
 no new production architectural owner or duplicate durable state is introduced.
+
+
+Terminal resource disposition: after this final documentation commit, remove only
+the clean task-created worktree, protecting its exact head on
+performance/catalog-request-latency-20261018. The surrogate lab acceptance report
+records the exact protected OID and confirms removed-reachable. The deployed
+current-07 is an independent immutable copy of the qualified eed2b84 source.
+Retained proposal contract: Jeremy owns review/integration into the existing
+fix/output-inventory-rename-20261017 integration line (base 225f8e8). Keep the
+proposal unchanged for review; no automatic synchronization/rebase/push. Consumers
+are the local current-07 deployment and this lab qualification. Retire the proposal
+after accepted integration or explicit disposition. Upstream main integration
+must also account for the existing CUDA/concurrency changes inherited at base.

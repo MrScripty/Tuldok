@@ -3,7 +3,8 @@
 PERF-1 (high, owner Runs, fix-now): constant full-history validation under the
 catalog lock in _loop and queue-capacity checks. Real minimal HTTP read plus
 unchanged queue-scan profile and targeted regressions identify it. Selected-state
-routing and idle event waiting are implemented; live qualification remains.
+routing and idle event waiting are implemented and live qualification passed.
+Resolved in eed2b84; no claim that all preparation latency is removed.
 
 ENV-1 (qualification limitation, owner legacy image adapter): the pinned CPU
 training runtime is absent from this application environment. One existing
