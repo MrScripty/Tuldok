@@ -228,6 +228,18 @@ class Runs:
         except (ValueError, KeyError, TypeError):
             raise WorkbenchError('Stored run envelope is invalid; refusing to guess execution state.', 'unavailable', 409) from None
 
+    def _in_states(self, states):
+        """Route queue candidates by saved state; fully validate every selection.
+
+        Terminal history is still validated by explicit reads and startup recovery.
+        Coordination must not reopen its immutable source closures on every poll.
+        """
+        with self.lock:
+            rows = self.db.execute(
+                "SELECT id FROM workspace_runs WHERE document::jsonb->>'state' = ANY(%s)",
+                (list(states),)).fetchall()
+            return [self._load(row[0]) for row in rows]
+
     def _save(self, run):
         self.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (encode(run), run['id']))
         action = 'runs.reconcile' if self.access.identity().get('mode') == 'system' else 'runs.update'
@@ -556,7 +568,7 @@ class Runs:
                 raise WorkbenchError('Insufficient storage for declared outputs, publication copy and reserve.', 'unavailable', 409)
         if check_current and self.pipelines._get(graph['id']) != graph:
             raise WorkbenchError('Graph changed during capture.', 'stale', 409)
-        if sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs')) >= 8:
+        if len(self._in_states(ACTIVE)) >= 8:
             raise WorkbenchError('The local queue is full (8 attempts).', 'unavailable', 409)
         grant_id = body.get('approval_id')
         if grant_id is None:
@@ -1191,7 +1203,7 @@ class Runs:
         return receipt
 
     def _admit(self, key, request_hash, graph, validation, release, parent=None, *, run_id=None, composition=None):
-        queued = sum(self._load(row[0])['state'] in ACTIVE for row in self.db.execute('SELECT id FROM workspace_runs'))
+        queued = len(self._in_states(ACTIVE))
         if queued >= 8:
             raise WorkbenchError('The local queue is full (8 attempts). Wait or cancel a queued attempt.', 'unavailable', 409)
         run_id = run_id or uuid.uuid4().hex
@@ -1313,7 +1325,7 @@ class Runs:
                         self._wake.clear()
                         continue
                     with self.lock:
-                        queued = [self._load(row[0]) for row in self.db.execute('SELECT id FROM workspace_runs')]
+                        queued = self._in_states(('queued',))
                         queued = sorted((run for run in queued if run['state'] == 'queued' and run['id'] not in active
                                          and (not self._external(run) or run['id'] in self._confirmed_external)),
                                         key=lambda run: (run['created_at'], run['id']))
@@ -1331,7 +1343,9 @@ class Runs:
                             used = {cpu for _, _, cpus in active.values() for cpu in cpus}
                             cpus = tuple(cpu for cpu in self._capacity.cores if cpu not in used)[:claim[2]]
                             active[run['id']] = (executor.submit(self._run_attempt, run, cpus, claim), claim, cpus)
-                    self._wake.wait(.05 if active else .25)
+                    # With no pending work only admission/stop can change the queue.
+                    # Queued resource waits still retry when headroom changes.
+                    self._wake.wait(.05 if active else .25 if queued else None)
                     self._wake.clear()
             finally:
                 # On coordinator/storage failure, active attempts observe stop
@@ -2203,8 +2217,7 @@ class Runs:
         if self.runtime_owner:
             try:
                 with self.lock, self.db.transaction():
-                    for row in self.db.execute('SELECT id FROM workspace_runs'):
-                        run = self._load(row[0])
+                    for run in self._in_states(('queued',)):
                         if run['state'] == 'queued':
                             self._event(run, 'cancelled', 'Application closed before this queued attempt started.')
                             self._save(run)
