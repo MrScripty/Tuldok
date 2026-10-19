@@ -1,0 +1,21 @@
+{
+  "base_head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+  "change": "Load the actual phase-timing factory before WorkspaceReal in the isolated mocked-transport browser fixture. Product and all assertions are unchanged.",
+  "observed_red": "TypeError window.WorkspacePhaseTimings is not a function before the first assertion; localredexit1 matches original hosted PR106old4a9 step147.",
+  "green": {
+    "command": "BROWSER=/usr/bin/chromium node tests/browser_workspace_recovery.cjs",
+    "exit": 0,
+    "pass_witnesses": 4,
+    "scope": "Actual Chromium/DOM with explicitly mocked transport; no backend/training/science claim"
+  },
+  "source_hashes": {
+    "tests/browser_workspace_recovery.cjs": "4bf72e4da8e087128304687af5f1277a83cafa8d8b2413cd67a33fae83a056e5",
+    "static/workspace-phase-timings.js": "2230164b2b7200ef941e4f0c65a02b66ed16d477e483029d02306c403c58071e",
+    "static/workspace-real.js": "527fdbf6e92304684127abab0fbba3bd0a6b38fa9fbd2db84ff23c42949b49ec"
+  },
+  "limits": [
+    "Independent exact-source check pending.",
+    "Current-head hosted lifecycle still required.",
+    "Later scientific factory introduced by PR106 needs its own fixture composition."
+  ]
+}
