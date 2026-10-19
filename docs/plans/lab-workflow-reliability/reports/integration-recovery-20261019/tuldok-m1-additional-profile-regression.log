@@ -1,0 +1,91 @@
+test_bound_managed_cpu_keeps_current_profile_without_snapshot_relabel (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_bound_managed_cpu_keeps_current_profile_without_snapshot_relabel) ... ERROR
+test_bound_managed_device_capture_and_exact_pre_admission_revalidation (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_bound_managed_device_capture_and_exact_pre_admission_revalidation) ... ERROR
+test_cuda_training_deadline_is_finite_and_cpu_remains_bounded (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_cuda_training_deadline_is_finite_and_cpu_remains_bounded) ... ERROR
+test_managed_evidence_requires_current_bound_variant_and_no_native_sources (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_managed_evidence_requires_current_bound_variant_and_no_native_sources) ... ERROR
+test_changed_required_input_and_nonbinary_mask_refuse_even_with_repaired_blobs (test_extension_b_evidence_contract.IndependentBContractWitnesses.test_changed_required_input_and_nonbinary_mask_refuse_even_with_repaired_blobs) ... ok
+test_complete_zero_state_proves_structure_only (test_extension_b_evidence_contract.IndependentBContractWitnesses.test_complete_zero_state_proves_structure_only) ... ok
+test_independently_selected_context_and_identity_refuse_changed_bytes (test_extension_b_evidence_contract.IndependentBContractWitnesses.test_independently_selected_context_and_identity_refuse_changed_bytes) ... ok
+test_malformed_shapes_and_current_public_field_projection_refuse (test_extension_b_evidence_contract.IndependentBContractWitnesses.test_malformed_shapes_and_current_public_field_projection_refuse) ... ok
+test_missing_required_source_mask_and_reordered_targets_refuse_coherent_context (test_extension_b_evidence_contract.IndependentBContractWitnesses.test_missing_required_source_mask_and_reordered_targets_refuse_coherent_context) ... ok
+test_whole_hash_repaired_swapped_reference_stages_still_refuse_admitted_targets (test_extension_b_evidence_contract.IndependentBContractWitnesses.test_whole_hash_repaired_swapped_reference_stages_still_refuse_admitted_targets) ... ok
+
+======================================================================
+ERROR: test_bound_managed_cpu_keeps_current_profile_without_snapshot_relabel (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_bound_managed_cpu_keeps_current_profile_without_snapshot_relabel)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-m1/tests/test_extension_bindings.py", line 376, in setUp
+    self.dataset=Dataset(self.root/'catalog',project_roots={'fixture':self.project})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/app.py", line 152, in __init__
+    self.db = Metadata(self.path, dsn=dsn)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 191, in __init__
+    self._initialize(path, dsn, create=create, dataset_id=dataset_id,
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 198, in _initialize
+    self.dsn = connection_info(dsn)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 61, in connection_info
+    raise StorageError('Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.')
+metadata.StorageError: Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.
+
+======================================================================
+ERROR: test_bound_managed_device_capture_and_exact_pre_admission_revalidation (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_bound_managed_device_capture_and_exact_pre_admission_revalidation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-m1/tests/test_extension_bindings.py", line 376, in setUp
+    self.dataset=Dataset(self.root/'catalog',project_roots={'fixture':self.project})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/app.py", line 152, in __init__
+    self.db = Metadata(self.path, dsn=dsn)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 191, in __init__
+    self._initialize(path, dsn, create=create, dataset_id=dataset_id,
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 198, in _initialize
+    self.dsn = connection_info(dsn)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 61, in connection_info
+    raise StorageError('Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.')
+metadata.StorageError: Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.
+
+======================================================================
+ERROR: test_cuda_training_deadline_is_finite_and_cpu_remains_bounded (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_cuda_training_deadline_is_finite_and_cpu_remains_bounded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-m1/tests/test_extension_bindings.py", line 376, in setUp
+    self.dataset=Dataset(self.root/'catalog',project_roots={'fixture':self.project})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/app.py", line 152, in __init__
+    self.db = Metadata(self.path, dsn=dsn)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 191, in __init__
+    self._initialize(path, dsn, create=create, dataset_id=dataset_id,
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 198, in _initialize
+    self.dsn = connection_info(dsn)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 61, in connection_info
+    raise StorageError('Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.')
+metadata.StorageError: Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.
+
+======================================================================
+ERROR: test_managed_evidence_requires_current_bound_variant_and_no_native_sources (test_bound_torch_recipe_contract.BoundTorchRecipeContractTests.test_managed_evidence_requires_current_bound_variant_and_no_native_sources)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-m1/tests/test_extension_bindings.py", line 376, in setUp
+    self.dataset=Dataset(self.root/'catalog',project_roots={'fixture':self.project})
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/app.py", line 152, in __init__
+    self.db = Metadata(self.path, dsn=dsn)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 191, in __init__
+    self._initialize(path, dsn, create=create, dataset_id=dataset_id,
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 198, in _initialize
+    self.dsn = connection_info(dsn)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-m1/metadata.py", line 61, in connection_info
+    raise StorageError('Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.')
+metadata.StorageError: Set TULDOK_DATABASE_URL for your local PostgreSQL database; see docs/contracts/local-storage.md.
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.511s
+
+FAILED (errors=4)

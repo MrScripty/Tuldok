@@ -539,10 +539,10 @@
     "branch": "feature/lab-preflight-output-bounds-20261019",
     "worktree": "/workspace/Tuldok-lab-preflight-m1",
     "base": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
-    "head": "cbc648deed222879e8f7654a5e6283c581eabb9f",
+    "head": "750332ac64244526127075feb14cb8db268a7ab9",
     "pr": 92,
     "draft": true,
-    "publication": "confirmed;fetchintoindependentcloneconfirmedcommit",
+    "publication": "confirmedFFpush; PR92bodyupdated exacthead",
     "scope": "requiredfieldpayload file/shard/aggregatecapacityrefusal; sharedfilenamescountonce",
     "focused_tests": {
       "tests": 43,
@@ -555,10 +555,47 @@
       "skips": 1
     },
     "real_postgres": "pending hosted no-effecttest",
-    "independent_review": "pending existingextensionsreviewer; no newworker",
+    "independent_review": {
+      "state": "all production/test/CI followups independentlycleared",
+      "supporting_module_tests": {
+        "passed": 9,
+        "skipped": 1
+      },
+      "real_postgres": "actual hostedexecutionrequired"
+    },
     "full_M1": "incomplete;structuredreport/indexeddiagnostics/recoverypending",
     "separatePR91": "unchanged/unmergedb446d9a",
-    "plan_copy": "8originalplanfilesfromb446copiedtoimplementationbranch;statusActive onlyimplementationcopy"
+    "plan_copy": "8originalplanfilesfromb446copiedtoimplementationbranch;statusActive onlyimplementationcopy",
+    "lifecycle": {
+      "superseded_run": 39302733843,
+      "superseded_head": "cbc648d",
+      "cancellation": "normalrequestsubmitted; notacceptedevidence",
+      "current_run": "awaitdiscovery750332a"
+    },
+    "prior_head": "cbc648deed222879e8f7654a5e6283c581eabb9f",
+    "followups": {
+      "6245e12": "valid rawProjecthash plus positive graphcreation control; independentlycleared",
+      "750332a": "early existingCI PGfocusedgate; independentlycleared"
+    },
+    "additional_profile_group": {
+      "tests": 10,
+      "passed": 6,
+      "setup_errors": 4,
+      "cause": "PostgreSQLnotconfigured; Datasetsetupfailedbeforechangedcode",
+      "log": "tuldok-m1-additional-profile-regression.log"
+    },
+    "followup_module": {
+      "tests": 10,
+      "passed": 9,
+      "skipped": 1,
+      "seconds": 0.127
+    }
   },
-  "updated_at": "2026-10-19T18:28:41.138032+00:00"
+  "updated_at": "2026-10-19T18:36:13.373697+00:00",
+  "cleanup_dependency_chain": [
+    "89->90;retarget90tomainbefore89branchdelete",
+    "90->92;retarget92tomainbefore90branchdelete",
+    "91independentmainbase;preserve",
+    "checkpointbranchretainedpersistentarchive;notordinaryfeaturecleanup"
+  ]
 }

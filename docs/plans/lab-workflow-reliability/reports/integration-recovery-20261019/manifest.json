@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 23050,
-      "sha256": "25e58e84b87f4a6fa15b1c62e0a6e7dde9d286801e354d75af7ea0f115104600"
+      "bytes": 24291,
+      "sha256": "da0ce0040aa7b4fca99a6c513fd8627ee99280f60fcfa7facc7674fb65498e1d"
     },
     {
       "path": "tuldok-20261019-protected-local-heads.txt",
@@ -115,9 +115,19 @@
       "path": "tuldok-registry-root-review-tests.log",
       "bytes": 3698,
       "sha256": "59e730ed30e61922bdc482aa99e3be5393c84cda7b934ea4888134fa56c2c91a"
+    },
+    {
+      "path": "tuldok-m1-additional-profile-regression.log",
+      "bytes": 8044,
+      "sha256": "982b1b2b33d8c682cf8d8b6e01463173b71871609d1a7c227bea1bbd80270eff"
+    },
+    {
+      "path": "tuldok-m1-preflight-fixture-followup.log",
+      "bytes": 1988,
+      "sha256": "9bf6119347a416cabb826dbb2d2d75c2200d215f6f470048c0ddcc1d52f057e8"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
-  "later_implementation_head": "cbc648deed222879e8f7654a5e6283c581eabb9f",
+  "later_implementation_head": "750332ac64244526127075feb14cb8db268a7ab9",
   "later_implementation_pr": 92
 }

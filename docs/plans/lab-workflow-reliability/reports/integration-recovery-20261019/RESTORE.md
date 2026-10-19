@@ -22,3 +22,14 @@ Remote PR and CI state may have advanced: recheck exact heads, results and merge
 status before any publication or integration. Old failed or skipped gates are
 not acceptance. Retain all unrelated branches/worktrees; their inventory here
 is preservation evidence, not authority to modify or delete them.
+
+## Restore the separately published M1 implementation
+
+The manifest records the exact later implementation head and branch. Fetch the
+recorded branch from the same repository, verify that the recorded commit is
+present, and create the recovery worktree from that exact SHA. If the feature
+branch was safely deleted after a merge, fetch main and establish the recorded
+commit's ancestry there before using it. Do not substitute the latest tree for
+the recorded source without reviewing its changes. This checkpoint and the
+implementation/plan branches remain separate; fetching is not product merge
+or acceptance. Check fresh CI and independent-review disposition after restore.
