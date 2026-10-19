@@ -149,11 +149,16 @@ class SDKProcessTests(unittest.TestCase):
         import agent_api as api
         from mcp.types import Tool
         selected=api.negotiate(api.capabilities('b'*32),'b'*32)
-        definition=next(item for item in api.tool_definitions(selected)
-                        if item['name']==api.operation('recipes.inspect')['mcp_name'])
-        tool=Tool.model_validate(definition)
-        self.assertEqual(tool.outputSchema,api.operation('recipes.inspect',2)['outputSchema'])
-        self.assertEqual(tool.inputSchema,api.operation('recipes.inspect',2)['inputSchema'])
+        self.assertEqual(selected['recipes.inspect'],4)
+        for contracts in ({'recipes.inspect':2},{'recipes.inspect':3},selected):
+            version=contracts['recipes.inspect']
+            with self.subTest(version=version):
+                definition=next(item for item in api.tool_definitions(contracts)
+                                if item['name']==api.operation('recipes.inspect')['mcp_name'])
+                tool=Tool.model_validate(definition)
+                contract=api.operation('recipes.inspect',version)
+                self.assertEqual(tool.outputSchema,contract['outputSchema'])
+                self.assertEqual(tool.inputSchema,contract['inputSchema'])
 
     def start(self, **env):
         process = subprocess.Popen([sys.executable, '-c', CHILD], cwd=ROOT,
