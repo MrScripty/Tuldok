@@ -1,7 +1,8 @@
 # M5 consumer workflow implementation and qualification
 
-Status: implemented; actual HTTP qualification pending, independent review and
-root serial publication/integration pending. This report is supporting evidence
+Status: implemented and qualified in the scoped actual HTTP groups below;
+root integrated-source review, CI and serial publication/integration remain
+pending. This report is supporting evidence
 for the admitted `docs/plans/lab-workflow-reliability/plan.md` M5/C6/T6 work;
 it does not accept the whole plan or replace shared plan/ledger authority.
 
@@ -185,7 +186,36 @@ resume test preserves the corrupted unvisited file, refuses it on explicit
 recheck, then completes after the user explicitly moves that file aside. The
 actual Trial test now injects a wrong-catalog201 only after real HTTP admission,
 then explicitly reconciles the original exact identity; one Run/grant/reservation
-is required throughout. Affected actual qualification is pending on the fix head.
+is required throughout.
+
+`http-review-fixes-source.json` pins the affected rerun to
+`875038ade24a8a37c1431fbe0f8e4c2625e20a5e` and its exact file hashes.
+`http-review-fixes.log` records all5 affected actual HTTP tests passing in82.269s:
+the two-artifact cancellation/corruption repro, blocked segment Event interruption
+and cleanup, segment interruption/resume/whole-hash/no-clobber, retained Trial
+acknowledgement/reconciliation, and attached Ref resume/revocation. The five
+fresh fixtures used the existing private Unix-socket PostgreSQL cluster and
+actual authenticated loopback HTTP; each closed its catalog before dropping only
+its newly created schema. This rerun contains no classifier training.
+
+Independent M1 review rechecked the same `875038a` source: all18 focused tests
+passed, the original cancelled-resume repro returned stopped, and a valid strict
+AgentClient Study baseline plus eight independently schema-valid contradictory
+acknowledgements (including membership) each preserved unknown, the exact manifest
+and one dispatch. Its root-owned receipts remain separate from this author report.
+The earlier full12 pass remains attributed to `cb68bc0`; it is not relabeled as
+a full-suite pass on `875038a`.
+
+`legacy-client-cli-contracts-source.json` pins the final compatibility gate to
+the same `875038a` source and exact production/test hashes.
+`legacy-client-cli-contracts.log` records all35 tests passing in203.608s:
+registry/client/output/parity, exact operation negotiation and legacy refusal
+behavior, plus existing CLI selection and private atomic download publication.
+This group ran after the affected actual gate and before M4's next paired quiet
+matrix; its owner held that matrix until the explicit CPU release. No further
+heavy tests ran here after that release. Final receipt changes contain no product
+source changes, so the qualified production hashes remain those in the source
+receipts. `git diff --check` passed before the receipt commit.
 
 Root owns an additional ordinary comparison-v2 response correlation guard in the
 canonical AgentClient, separately from this branch's two fixes. It will be
