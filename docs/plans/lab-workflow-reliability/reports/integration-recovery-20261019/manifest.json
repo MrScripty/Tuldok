@@ -163,8 +163,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 37520,
-      "sha256": "1e44df76baac3b47f8364b1e65920414267e4d9da516c23fa7a9d7e4380d6488"
+      "bytes": 37287,
+      "sha256": "58beb667b9ffee12b04a63c4d1de29d5d84f7974bc9c6aa1006eb4cd7ad18ef0"
     },
     {
       "path": "tuldok-pr92-final-qualified-evidence.json",
@@ -209,5 +209,12 @@
     "pr": 95,
     "restore_verified": true
   },
-  "main_after_pr92": "2f333f960b80ca7fe23c90269b32f647b2c827a8"
+  "main_after_pr92": "2f333f960b80ca7fe23c90269b32f647b2c827a8",
+  "publication_recovery_implementation": {
+    "branch": "feature/lab-publication-recovery-20261019",
+    "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+    "parent": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+    "pr": 96,
+    "restore_verified": true
+  }
 }

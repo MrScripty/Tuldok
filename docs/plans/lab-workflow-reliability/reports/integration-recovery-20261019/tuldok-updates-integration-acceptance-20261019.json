@@ -154,6 +154,12 @@
       "outcome": "confirmed",
       "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
       "base": "main"
+    },
+    {
+      "action": "Publish reviewed recovery core and dependent draft PR96",
+      "outcome": "confirmed",
+      "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+      "base": "feature/lab-publication-continuation-20261019"
     }
   ],
   "protected_original_heads": 82,
@@ -673,14 +679,13 @@
     "Diagnose any further CI failure; serialmerge89 then90 afterretarget, postmergeCI, safelycleanup only5ownedworktrees/branches.",
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
-  "current_resume": [
-    "Main c7f3575 includes reviewed PR89/90, exact tested tree equality verified. PR92 remains at750332a/base main, PR93at635c1f8/base92, PR94at0039a330/base93, PR95ate9336ed/base94. Do not rewrite reviewed source heads.",
-    "Parent owns passive hosted CI; root owns active implementation, archived acceptance, serial merge/retarget/postmerge checks and safe cleanup. Existing reviewer reused, no duplicate workers.",
-    "Local PostgreSQL17.6 now available on task-owned private Unix socket; fresh real boundary tests passed at92/93/94 and C2 source95. Earlier unavailable records are historical. No real lab catalog opened.",
-    "Continue full C2 bounded publication continuation/current-authority/accounting/exact recovered-result readers from published source95; no compute replay or adoption of changed outputs. FullM1 remains pending.",
-    "Merge only actual fully qualified exact heads, inspect archived results, retarget dependents before source retirement and complete required main-push qualification before terminal cleanup.",
-    "Preserve durable checkpoint, PR91 separate unmerged, original82heads/96worktrees and prior77retarget denial. No CUDA/scientific improvement claim."
-  ],
+  "current_resume": {
+    "worktree": "/workspace/Tuldok-lab-publication-interfaces-m1",
+    "branch": "feature/lab-publication-interfaces-20261019",
+    "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+    "next": "Implement negotiated exact publication status/action/result/segment and SDK/CLI/UI/lineage integration; full C2/M1 pending",
+    "parent_role": "passive hosted CI monitoring; root serial acceptance/retarget/merge and source"
+  },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
   "pr89_accepted_and_merged": {
     "source_sha": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
@@ -902,12 +907,25 @@
   "publication_recovery_in_progress": {
     "branch": "feature/lab-publication-recovery-20261019",
     "base": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
-    "state": "uncommitted active core; not full C2 acceptance",
+    "state": "published independently reviewed draft core; hosted pending",
     "actual_pg_core_tests": 10,
     "core_seconds": 49.832,
     "actual_study_charge_conservation_tests": 1,
     "study_seconds": 4.249,
     "independent_review": "follow-up active; no full feature clearance",
-    "pending": "wire/UI/CLI/SDK/lineage/backup and semantic/fault qualification"
+    "pending": "wire/UI/CLI/SDK/lineage/backup and semantic/fault qualification",
+    "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+    "pr": 96,
+    "restore_verified": true,
+    "expanded_tests": {
+      "passed": 46,
+      "skipped": 0,
+      "seconds": 91.547
+    },
+    "early_ci_tests": {
+      "passed": 22,
+      "skipped": 0,
+      "seconds": 81.968
+    }
   }
 }
