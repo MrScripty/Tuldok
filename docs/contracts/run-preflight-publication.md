@@ -26,11 +26,13 @@ fresh preparation/admission; retaining the report does not extend proof lifetime
 
 Each check has a bounded code, owner, phase, state, evidence SHA256, named boundary
 and explanation. The wire limit is 16 checks, 160 characters per boundary and 240
-per explanation. The current producer emits ten checks:
+per explanation. The producer emits ten checks, plus the current storage
+observation when the selected recipe uses the large-output resource profile:
 
 | Checks | State | Meaning |
 | --- | --- | --- |
 | `source_inputs`, `runtime_inventory`, `host_closure`, `output_contract`, `capture_authority` | checked | The actual fresh preparation path verified these declarations/captured bytes/current observations. Cold structural validation alone cannot produce this report. |
+| `storage_capacity` (large-output profile only) | checked | Runs observed sufficient free bytes on its destination filesystem for its existing two-output-copy plus 1 GiB envelope, adding pending captured bytes and the existing generated model-context limit before staging. The bounded explanation exposes observed available/required/pending bytes; its evidence hash binds that observation. |
 | `authority_admission` | deferred | Runs must check current actor/grant/request identity and any Study budget/reservation atomically. |
 | `resource_availability` | deferred | Current queue/capacity/storage and reservations remain the existing owners' checks. |
 | `runtime_ready_go` | deferred | Dispatch/READY/GO must recheck mutable installation and actual selected device readiness. |
@@ -67,3 +69,21 @@ Refs and new result readers remain pending M1 work. This report does not recover
 publish, promote or reinterpret a failed Run, nor replay compute or consume grants.
 Those capabilities require their separate storage/custody/authority acceptance
 before being advertised.
+
+## Current large-output storage observation
+
+Selected v3 preflight checks the existing `captured_cpu_large_outputs_v1`
+policy through Runs after fresh material preparation and before the final graph
+recheck/report. Unknown capacity or insufficient free space refuses with the
+existing typed `unavailable` result, without staging, admission, grant use,
+reservation or process creation. Other resource profiles have no new capacity
+claim. Old selected v1/v2 and headerless preflight behavior stays unchanged.
+
+Before staging, required free bytes are `pending captures + 2 × declared maximum
+output bytes + 1 GiB`. Pending captures include the exact material inventory and,
+for model evidence, its existing generated-context byte limit. At admission those
+captures/context have already been written, so the same owner checks its original
+`2 × declared maximum output bytes + 1 GiB` bound. These observations reserve no
+space and do not account for future concurrent consumers. The later admission
+recheck and publication's separate actual-output-bytes plus 512 MiB check remain
+required. A passing observation cannot promise durable publication or recovery.
