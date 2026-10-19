@@ -1,0 +1,179 @@
+{
+  "main": "300f12df6f48e028fd9379911703f7c89337952a",
+  "merged": [
+    {
+      "name": "docs/e4-ab-final-qualification",
+      "sha": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14"
+    },
+    {
+      "name": "docs/e4-core-cross-grant-qualification",
+      "sha": "a479be12130845abca6387f1dacb7c464139215a"
+    },
+    {
+      "name": "docs/extension-system-plan",
+      "sha": "f3f2d2b93914364d5926b1fedf5e40fd4baff873"
+    },
+    {
+      "name": "docs/model-development-d1",
+      "sha": "f99182c03da1e070081718ef6829eaeac3c82640"
+    },
+    {
+      "name": "feat/extension-e1-manifest-catalog",
+      "sha": "e65f0c9624cce43e443579932cfd78d9dbc1c908"
+    },
+    {
+      "name": "feat/extension-sdk-inert-validator",
+      "sha": "536af2ddf2f31f7e4662b3777697e5018b6f1c04"
+    },
+    {
+      "name": "feature/extension-e2-host-context",
+      "sha": "a64bd7413d2ab92d0382af96141868b28677d483"
+    },
+    {
+      "name": "feature/model-development-p1",
+      "sha": "4431f40f8c5a32276017476d7901b520ca101d79"
+    },
+    {
+      "name": "fix/ci-bound-mcp-environment",
+      "sha": "b3eda6895c45f040d68421300cd921da64c40366"
+    },
+    {
+      "name": "plan/rheon-v2-readiness-20261013",
+      "sha": "ef4a56fb5cc8fa9614c9a85c4f54c9f7e25ad914"
+    }
+  ],
+  "unique": [
+    {
+      "name": "docs/canonical-a-505-package-qualification",
+      "sha": "4972941e0e37ad9cfcc548bd6831d70c0799ef42"
+    },
+    {
+      "name": "docs/independent-b-decisive-qualification",
+      "sha": "70845e383879e06a9337478b5d661b1516ac3c94"
+    },
+    {
+      "name": "feature/approved-external-recipes-20261013",
+      "sha": "7d590605006f48f6c3f710b91a75ad4455d0a9d7"
+    },
+    {
+      "name": "feature/bounded-mesh-acquisition-20261009",
+      "sha": "dd7661d8bff789a5de3b88addb4ea88370466ea7"
+    },
+    {
+      "name": "feature/canonical-a-package",
+      "sha": "503d177089bfc12fa4e49e3a7389b7838b8640c0"
+    },
+    {
+      "name": "feature/extension-canonical-fixture",
+      "sha": "6534cd4c882aa5075b6a5dc545df142bf20c35db"
+    },
+    {
+      "name": "feature/extension-inference-author-contract",
+      "sha": "cbf781fdcf8dee476daac172a27bfaf0e514eb7a"
+    },
+    {
+      "name": "feature/extension-sdk-evidence",
+      "sha": "251b52ebbf888c7b725cce3e519b78b449077195"
+    },
+    {
+      "name": "feature/field-surrogate-b-independent",
+      "sha": "db5ce541feb78ca371dc3b6607f27c5725c16518"
+    },
+    {
+      "name": "feature/generic-project-opening-20261013",
+      "sha": "46384fca492f72a3588cc79309a703d54cd3675b"
+    },
+    {
+      "name": "feature/model-development-p4-browser",
+      "sha": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9"
+    },
+    {
+      "name": "feature/model-development-p5-field",
+      "sha": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9"
+    },
+    {
+      "name": "feature/native-mesh-consumer-20261009",
+      "sha": "b4f89fa04dd97622db9a21c3d33188e5086efa51"
+    },
+    {
+      "name": "feature/native-pointcloud-consumer-20261009",
+      "sha": "97b8f5ad6cbe6cac218dac48c6b3d6f8036f91a3"
+    },
+    {
+      "name": "feature/native-scientific-generation-20261013",
+      "sha": "c7c696bda48cc2917253ffbcf4d01f763196eecc"
+    },
+    {
+      "name": "feature/rheon-v2-consumer-20261013",
+      "sha": "51bec9ea89f03357473aca0d40f2fa8251598a25"
+    },
+    {
+      "name": "feature/scientific-autonomous-evaluation-20261013",
+      "sha": "fb3a5a00fe525b5131e45b9e9fa7bc07a9a19024"
+    },
+    {
+      "name": "feature/scientific-cpu-comparison-20261013",
+      "sha": "05ea66e4b14e7e23b2d153f98380d44686cb53ed"
+    },
+    {
+      "name": "feature/scientific-field-sequences-20261013",
+      "sha": "2476a7daa339597557d29eb6e691327895d8c48c"
+    },
+    {
+      "name": "feature/scientific-frozen-training-20261013",
+      "sha": "28c666f115ca8fac7daf29096e91493ff7b0cc10"
+    },
+    {
+      "name": "feature/scientific-restore-qualification-20261013",
+      "sha": "2a44442aa8223e48c165f2175c81a870894a62c4"
+    },
+    {
+      "name": "feature/scoped-agent-operations-20261013",
+      "sha": "5c0e7f92914e5aeac6ec939e3a667fc85b22aa90"
+    },
+    {
+      "name": "feature/scoped-local-actors-20261013",
+      "sha": "d3c0e09908643b1b05a307a4c573df1458b97b29"
+    },
+    {
+      "name": "fix/author-oracle-resume",
+      "sha": "3affe90bc258c1327fde49faf57bceb852cc2759"
+    },
+    {
+      "name": "fix/candidate-packages-distro-python",
+      "sha": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7"
+    },
+    {
+      "name": "fix/sdk-conformance-public-graph",
+      "sha": "d368acdf236a6f3cac8176a634bd9d79c7223d70"
+    },
+    {
+      "name": "handoff/qualified-dataset-source",
+      "sha": "53f61bb7c9ed042fcb2ece9c89aac3c5926485ea"
+    },
+    {
+      "name": "integration/rheon-lab-current-20261016",
+      "sha": "8af5a6a1e288e5b2f86a75b53cab93ca71222a04"
+    },
+    {
+      "name": "performance/catalog-request-latency-20261018",
+      "sha": "de0f1b833f1922b4a86c12036405fe8cd795b4a0"
+    },
+    {
+      "name": "plan/generic-scientific-projects-20261013",
+      "sha": "fd3f6a93b9c7f2d7d8056298a02d3f9b362e9b3c"
+    },
+    {
+      "name": "test/extension-author-qualification",
+      "sha": "3ee438e23d98281b65a04425ff2f72a3ddbed0de"
+    },
+    {
+      "name": "test/extension-bound-http",
+      "sha": "75b0262d8aed3c788c76e0497968b426fe999864"
+    },
+    {
+      "name": "test/p5-captured-runtime-ci",
+      "sha": "1aa4822865338b92e0a1813db1666a13b8920bda"
+    }
+  ]
+}

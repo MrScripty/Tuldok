@@ -1,0 +1,120 @@
+{
+  "format": "tuldok_integration_recovery_checkpoint_v1",
+  "scope": "Task-owned public repository source and review evidence only; no catalogs, runtime data, credentials or unrelated worktrees",
+  "source_tree": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+  "pr89_head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+  "separate_plan_head": "b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb",
+  "separate_plan_ref": "docs/lab-workflow-reliability-plan",
+  "files": [
+    {
+      "path": "tuldok-updates-integration-acceptance-20261019.json",
+      "bytes": 21730,
+      "sha256": "2f22c40bcc4395b9f1d3232ea8518641990b78ef66f6e6b6751826b98ad8abd9"
+    },
+    {
+      "path": "tuldok-20261019-protected-local-heads.txt",
+      "bytes": 7004,
+      "sha256": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8"
+    },
+    {
+      "path": "tuldok-20261019-protected-worktrees.txt",
+      "bytes": 13053,
+      "sha256": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+    },
+    {
+      "path": "tuldok-20261019-preservation-audit-current.json",
+      "bytes": 373,
+      "sha256": "65b8509e451554714a9c7b0f6920830db069f25fa3980f1f76662ded8e06e46d"
+    },
+    {
+      "path": "tuldok-20261019-public-heads-updated.txt",
+      "bytes": 3887,
+      "sha256": "c1df131ceb4437fa2c55a15b1a3b51071d8d42c0648af4a33ff4c57f1da88eb2"
+    },
+    {
+      "path": "tuldok-branch-ancestry-before-20261019.json",
+      "bytes": 5384,
+      "sha256": "9b99d9a34878ee56d7f1c9891f97a416dd5a3ddd9f60039e31f541aacde6ae31"
+    },
+    {
+      "path": "tuldok-pr89-review-body.md",
+      "bytes": 2591,
+      "sha256": "f19fa8ea520f51756e61171a04bc35b158e188d749d81d0bbd24366b2c2bbb03"
+    },
+    {
+      "path": "tuldok-performance-review-body.md",
+      "bytes": 2163,
+      "sha256": "a54ca6edf0f872b1f5264fa6f1aafcab4620aaf3577ecbd8e6539dd7966d89d5"
+    },
+    {
+      "path": "tuldok-mcp-isolated-timeout-cases.log",
+      "bytes": 747,
+      "sha256": "96ba0e2a4a07722c8d8bc96e304902fc7832eef46bd81358ca15c494c72b60bc"
+    },
+    {
+      "path": "tuldok-mcp-main-baseline-suite.log",
+      "bytes": 9374,
+      "sha256": "b13f4d2547def0e84b81b928073a9fbd972cdc0c8d82a2ca8cd3cd19e94a9139"
+    },
+    {
+      "path": "tuldok-mcp-selected-contract-final.log",
+      "bytes": 6674,
+      "sha256": "c5b5298bcb1ccddd2cc42fa52bda6742adf4aaa22e534b76a0db4ef9ce219b08"
+    },
+    {
+      "path": "tuldok-mcp-selected-contract-repair.log",
+      "bytes": 3929,
+      "sha256": "3d64730a31f4fce921d0e02ab053d573890a6d942b571cdc6a77261dc5911ce1"
+    },
+    {
+      "path": "tuldok-performance-root-review-tests.log",
+      "bytes": 7115,
+      "sha256": "1f4e2b67067f39e3b11397f613c306b8834e16311a67b0a6c29fa4176d5ab4f9"
+    },
+    {
+      "path": "tuldok-pr89-combined-contract-registry.log",
+      "bytes": 5430,
+      "sha256": "6625ad145385afb62a17e86b2ee68d1b341bd216bdc0249f68bf5ee6154326ba"
+    },
+    {
+      "path": "tuldok-pr89-root-browser-final.log",
+      "bytes": 2125,
+      "sha256": "c6ad2f7ceff616edaa197c8cb141cc7c5d350103077711612fbe96489d08a7f5"
+    },
+    {
+      "path": "tuldok-project-inspect-v4-browser-final.log",
+      "bytes": 2125,
+      "sha256": "c6ad2f7ceff616edaa197c8cb141cc7c5d350103077711612fbe96489d08a7f5"
+    },
+    {
+      "path": "tuldok-project-inspect-v4-browser.log",
+      "bytes": 2125,
+      "sha256": "c6ad2f7ceff616edaa197c8cb141cc7c5d350103077711612fbe96489d08a7f5"
+    },
+    {
+      "path": "tuldok-project-observation-green-final.log",
+      "bytes": 1849,
+      "sha256": "34a7d397b94ad72d876f6aaa60c96c0e8cd4d15efd340d44f3d999918fd2e493"
+    },
+    {
+      "path": "tuldok-project-observation-green.log",
+      "bytes": 1494,
+      "sha256": "91050917d4514a8625ff3a84a2305f2e73048873fcbf2cfd637a3b884a76ed48"
+    },
+    {
+      "path": "tuldok-project-observation-red-final.log",
+      "bytes": 2963,
+      "sha256": "b6d0c49940b1e3ccb6195ae4ae23b1ca1d8c56677cb3ba465d0e3769ffd29fac"
+    },
+    {
+      "path": "tuldok-project-observation-red.log",
+      "bytes": 2226,
+      "sha256": "560fa9d409fe4dbf957ae1a936d328edb3ffc4ea3ea4db37918d31fc1cec6e1e"
+    },
+    {
+      "path": "tuldok-registry-root-review-tests.log",
+      "bytes": 3698,
+      "sha256": "59e730ed30e61922bdc482aa99e3be5393c84cda7b934ea4888134fa56c2c91a"
+    }
+  ]
+}

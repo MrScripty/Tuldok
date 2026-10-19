@@ -1,0 +1,69 @@
+{
+  "scope": "Actual JavaScript/Chromium lifecycle and focus with synthetic observations; no catalog, execution or scientific qualification",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    {
+      "name": "Auto evidence refresh preserves focus inside the preview",
+      "passed": false
+    },
+    {
+      "name": "A completed background refresh does not steal separately moved focus",
+      "passed": true
+    },
+    {
+      "name": "Missing selected evidence clears stale text and retains preview focus",
+      "passed": false
+    },
+    {
+      "name": "Same-identity polling preserves the pending inner inspection",
+      "passed": true
+    },
+    {
+      "name": "changed recipe hash cancels the inner inspection before authoring",
+      "passed": false
+    },
+    {
+      "name": "declared identity mismatch cancels the inner inspection before authoring",
+      "passed": false
+    },
+    {
+      "name": "unavailable recipe cancels the inner inspection before authoring",
+      "passed": false
+    },
+    {
+      "name": "missing recipe cancels the inner inspection before authoring",
+      "passed": false
+    },
+    {
+      "name": "changed manifest identity cancels the inner inspection before authoring",
+      "passed": false
+    },
+    {
+      "name": "Project-context changes cancel the inner inspection",
+      "passed": true
+    }
+  ],
+  "mutations": 0
+}
+AssertionError [ERR_ASSERTION]: Project observation regressions
++ actual - expected
+
++ [
++   'Auto evidence refresh preserves focus inside the preview',
++   'Missing selected evidence clears stale text and retains preview focus',
++   'changed recipe hash cancels the inner inspection before authoring',
++   'declared identity mismatch cancels the inner inspection before authoring',
++   'unavailable recipe cancels the inner inspection before authoring',
++   'missing recipe cancels the inner inspection before authoring',
++   'changed manifest identity cancels the inner inspection before authoring'
++ ]
+- []
+
+    at /workspace/Tuldok-live-project-fix/tests/browser_workspace_project_observation.cjs:93:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Array],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

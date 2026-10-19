@@ -1,0 +1,384 @@
+worktree /workspace/Tuldok
+HEAD 8673509d5430e6aa1162986f4d7b1c071aa1c82e
+branch refs/heads/work
+
+worktree /workspace/Tuldok-ab-retention
+HEAD 31283de32913f3c3e716e7fdb2c4c57fa3d4d59f
+branch refs/heads/test/e4-ab-retention
+
+worktree /workspace/Tuldok-activation-ci-fix
+HEAD 9228b09cc14177cbe6e35592c16517c4da7f1bb7
+branch refs/heads/test/model-activation-ci
+
+worktree /workspace/Tuldok-agent-snapshots-review
+HEAD f68678c7f9ad893dac8bcdfe6c2dd7529ba88975
+detached
+
+worktree /workspace/Tuldok-api-source-provenance
+HEAD 1cbf4187e970e4cc9fa132346c8c488facf1ebc0
+branch refs/heads/docs/product-api-source-provenance
+
+worktree /workspace/Tuldok-author-browser
+HEAD e4bfaa8c7c942121671365998b1fa3a3ba277e26
+branch refs/heads/test/extension-author-native-browser
+
+worktree /workspace/Tuldok-author-freeze-test
+HEAD b410d85ea9d9c299263fc564fc170e43905c5e58
+branch refs/heads/test/author-review-freeze
+
+worktree /workspace/Tuldok-author-qualification
+HEAD 3ee438e23d98281b65a04425ff2f72a3ddbed0de
+branch refs/heads/test/extension-author-qualification
+
+worktree /workspace/Tuldok-author-resume
+HEAD 3affe90bc258c1327fde49faf57bceb852cc2759
+branch refs/heads/fix/author-oracle-resume
+
+worktree /workspace/Tuldok-author-ui
+HEAD 0ca0687a6220592b6158932a0e9f54f4e8c80687
+branch refs/heads/feature/extension-model-author-workspace
+
+worktree /workspace/Tuldok-b-cold-independent-review
+HEAD 1411debf1b87e82330eed4ebf09840da52e52253
+branch refs/heads/qa/independent-b-cold-actual
+
+worktree /workspace/Tuldok-b-host-corrected
+HEAD 6ad3480be032be4565ad6b4add41ba9476e96cc3
+branch refs/heads/review/independent-b-host-corrected
+
+worktree /workspace/Tuldok-b-host-review
+HEAD 97e2bdf6284e290b319b8f7bce8702914a898107
+branch refs/heads/review/independent-b-host-compatibility
+
+worktree /workspace/Tuldok-b-independent
+HEAD db5ce541feb78ca371dc3b6607f27c5725c16518
+branch refs/heads/feature/field-surrogate-b-independent
+
+worktree /workspace/Tuldok-b-public-sdk-host
+HEAD e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c
+branch refs/heads/qa/independent-b-sdk-frozen
+
+worktree /workspace/Tuldok-b-qualification-docs
+HEAD 70845e383879e06a9337478b5d661b1516ac3c94
+branch refs/heads/docs/independent-b-decisive-qualification
+
+worktree /workspace/Tuldok-b-refusals
+HEAD 2266a79b6925faef6edf6c87c49168858b68bf36
+branch refs/heads/test/x3-b-semantic-refusals
+
+worktree /workspace/Tuldok-bound-http
+HEAD 75b0262d8aed3c788c76e0497968b426fe999864
+branch refs/heads/test/extension-bound-http
+
+worktree /workspace/Tuldok-candidate-permissions
+HEAD f1438b38e42aaece9c263244a64929ec26f85bfc
+branch refs/heads/test/p5-transitive-authority
+
+worktree /workspace/Tuldok-canonical-a-report
+HEAD 9e6f2ffc45ec5e00554759ff356fe44f6e82fab0
+branch refs/heads/docs/canonical-a-50502-qualification
+
+worktree /workspace/Tuldok-canonical-author-qa
+HEAD e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c
+branch refs/heads/test/canonical-author-50502-review
+
+worktree /workspace/Tuldok-canonical-final-review
+HEAD 8f6ca00cb87e7ef862be810e9297b8b8a180642a
+branch refs/heads/test/extension-canonical-final-review
+
+worktree /workspace/Tuldok-canonical-glue
+HEAD a546a6e9caf8295bd6e329aab73042645188a528
+branch refs/heads/feat/e2-canonical-owner-glue
+
+worktree /workspace/Tuldok-canonical-independent-review
+HEAD 53a2ffd6df4474746d359ed296e1bd7bb788b7f0
+branch refs/heads/test/extension-canonical-independent-review
+
+worktree /workspace/Tuldok-canonical-inference-review
+HEAD f83ab83bb316f691efbd3b74cf99cb12a7737b07
+detached
+
+worktree /workspace/Tuldok-canonical-masked-actual
+HEAD ab7d9359681c3953b17fb738a73a6bf5cbb4f43f
+detached
+
+worktree /workspace/Tuldok-canonical-owner-review
+HEAD 48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a
+branch refs/heads/test/canonical-owner-review
+
+worktree /workspace/Tuldok-canonical-package-actual
+HEAD ab7d9359681c3953b17fb738a73a6bf5cbb4f43f
+branch refs/heads/test/canonical-a-package-actual
+
+worktree /workspace/Tuldok-canonical-package-report
+HEAD 4972941e0e37ad9cfcc548bd6831d70c0799ef42
+branch refs/heads/docs/canonical-a-505-package-qualification
+
+worktree /workspace/Tuldok-e2-api
+HEAD 5a2b079f0a017957276fec3404c52c9d586f0667
+branch refs/heads/feature/extension-field-api
+
+worktree /workspace/Tuldok-e2-author-review
+HEAD 057c8abf571d62331486dc56ef43064e72f9d03a
+detached
+
+worktree /workspace/Tuldok-e2-binding-api
+HEAD a8dad44661d64bb88c6cdedb5386c34583c5b130
+branch refs/heads/feature/extension-bound-recipe-api
+
+worktree /workspace/Tuldok-e2-glue-review
+HEAD a43f3124239c2baff2c1ae3b0a20f987cfb1607a
+detached
+
+worktree /workspace/Tuldok-e2-review
+HEAD 057c8abf571d62331486dc56ef43064e72f9d03a
+detached
+
+worktree /workspace/Tuldok-e2-ui
+HEAD 1bd85834d0b9e220430c44848017b1d75146b576
+branch refs/heads/feature/model-development-fields-native
+
+worktree /workspace/Tuldok-e4-core-report
+HEAD a479be12130845abca6387f1dacb7c464139215a
+branch refs/heads/docs/e4-core-cross-grant-qualification
+
+worktree /workspace/Tuldok-e4-execution
+HEAD c8e63278379d884dee6b9aec8b813bf8a20e1215
+branch refs/heads/test/e4-ab-retention-execution
+
+worktree /workspace/Tuldok-e4-final-report
+HEAD 0f213dc43e3fe970c21fe34407e0fcbf6358bc14
+branch refs/heads/docs/e4-ab-final-qualification
+
+worktree /workspace/Tuldok-e4-retention
+HEAD 850f1d2e2285e7e95193d3e8615e1a8e1fc03f44
+branch refs/heads/feature/extension-a-retention
+
+worktree /workspace/Tuldok-experiment-lineage
+HEAD ee07e415cb3291c7a4b75939414345cba54abef7
+branch refs/heads/feature/experiment-lineage
+
+worktree /workspace/Tuldok-extension-bindings
+HEAD 12c98cb9495e0f7202ff10420d18506e6de8c780
+branch refs/heads/feat/e1-e2-contribution-bindings
+
+worktree /workspace/Tuldok-extension-canonical
+HEAD 6534cd4c882aa5075b6a5dc545df142bf20c35db
+branch refs/heads/feature/extension-canonical-fixture
+
+worktree /workspace/Tuldok-extension-final-acceptance
+HEAD 4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764
+branch refs/heads/docs/extension-final-acceptance
+
+worktree /workspace/Tuldok-extension-final-functional-status
+HEAD 50e69f512e81899b9703e6a8d03c7d9f5c05115c
+branch refs/heads/docs/extension-final-functional-status
+
+worktree /workspace/Tuldok-extension-inference
+HEAD c8f5def68c1f8109cb8af11bb8452cf0c1b84792
+branch refs/heads/feature/extension-inference-product
+
+worktree /workspace/Tuldok-extension-local-qa
+HEAD 346b9f90c4339cdb8c3b942dadafb4c591bc385d
+branch refs/heads/test/extension-local-50502-qualification
+
+worktree /workspace/Tuldok-extension-modalities
+HEAD 4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a
+branch refs/heads/test/extension-modality-descriptors
+
+worktree /workspace/Tuldok-extension-retention
+HEAD 8e9eef5680c8ace144b8ba5defbc1e67a941ffd2
+branch refs/heads/feature/extension-retention-product
+
+worktree /workspace/Tuldok-extension-runtime
+HEAD c24cd26e205011814e928ea58790ef777f9b0b40
+branch refs/heads/feature/extension-runtime-nomination
+
+worktree /workspace/Tuldok-extension-status-cleanup
+HEAD 8c94afe46bc4ace177b669a723099bb039b7a157
+branch refs/heads/docs/extension-current-status-cleanup
+
+worktree /workspace/Tuldok-extension-x3-acceptance
+HEAD f7c7d39451e8e973a6ef20453c6e54041fe6bc97
+branch refs/heads/docs/extension-x3-acceptance
+
+worktree /workspace/Tuldok-external-browser-readiness
+HEAD 2b786501dbbcb6db734d9df074ecac0976d87dae
+branch refs/heads/test/external-browser-handler-readiness
+
+worktree /workspace/Tuldok-external-package-ui
+HEAD 6905fc8a124ba856dd70d4e8a9e4d0f0265e8863
+branch refs/heads/feature/external-candidate-evidence-view
+
+worktree /workspace/Tuldok-final-publication
+HEAD ed31eadc3c2c29f03e59cb72b965b87af494bf1b
+branch refs/heads/integration/model-development-final-publication
+
+worktree /workspace/Tuldok-graph-focus
+HEAD ecb4e8e21d8103822d6b53bfafb60f94c283cb20
+branch refs/heads/fix/external-graph-keyboard-focus
+
+worktree /workspace/Tuldok-graph-focus-old
+HEAD f994228cdc7495d0ee29d1527fbe975acc62be5d
+detached
+
+worktree /workspace/Tuldok-graph-focus-regression
+HEAD 6702be2e08420d781e60665b15f27bc974160552
+branch refs/heads/test/external-graph-focus-regression
+
+worktree /workspace/Tuldok-inference-review
+HEAD c8f5def68c1f8109cb8af11bb8452cf0c1b84792
+detached
+
+worktree /workspace/Tuldok-legacy-p3-qa
+HEAD f1ecf7888a8dfa5b67ac8b087034226d533c682e
+detached
+
+worktree /workspace/Tuldok-main505-agent-authoring
+HEAD e1bc02a68355876ec64e5e1e272019c2018b5c63
+branch refs/heads/test/main505-agent-authoring
+
+worktree /workspace/Tuldok-main505-agent-authoring-recovery
+HEAD 3a821f4580769cc52c9ccb2d23596af07c11d511
+branch refs/heads/test/main505-agent-authoring-recovery
+
+worktree /workspace/Tuldok-model-browser-fix
+HEAD 9b978533bba9fb3b12163302ca1679238b08220d
+branch refs/heads/test/model-browser-candidate-readiness
+
+worktree /workspace/Tuldok-native-ab-actual
+HEAD e958db578da805f4352d282c02430edc78985a3c
+branch refs/heads/test/native-author-ab-actual
+
+worktree /workspace/Tuldok-native-ab-browser
+HEAD 01a3d0786596d14ffab882de58a05a7bb009b571
+branch refs/heads/test/native-author-ab-evidence
+
+worktree /workspace/Tuldok-native-ab-retention
+HEAD c005d9f3884eeecfe53fd428f139b10139bd3e07
+branch refs/heads/test/native-ab-retention-ui
+
+worktree /workspace/Tuldok-one-fit-host-ci
+HEAD 487722a01994f3c881f584a45fbb02c59dff6cd8
+branch refs/heads/test/one-fit-host-dependencies
+
+worktree /workspace/Tuldok-operator-runtime-fix
+HEAD e831573a2b5c84be1fcb047c6b6703984aaeea3b
+branch refs/heads/fix/operator-runtime-identity
+
+worktree /workspace/Tuldok-p2-final
+HEAD 351f55b76a2545592618a98eb68276eb9d38b713
+branch refs/heads/integration/model-development-p2-final
+
+worktree /workspace/Tuldok-p2-review-fix
+HEAD ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02
+branch refs/heads/fix/p2-cold-composition-marker
+
+worktree /workspace/Tuldok-p3
+HEAD 767f66f8c9435561e68aee216b0dc54808997908
+branch refs/heads/feature/model-development-p3
+
+worktree /workspace/Tuldok-p3-activation-verify
+HEAD 13f0126a3d4014b8cf96df96b48243e17557bf30
+detached
+
+worktree /workspace/Tuldok-p3-decoder-fix
+HEAD 144d8a70a2ef3849584cce822e00588f45c4106b
+branch refs/heads/fix/p3-strict-evidence-decoding
+
+worktree /workspace/Tuldok-p4
+HEAD 1d621e826aab89a24afed9e8927e7e5cd15564c9
+branch refs/heads/feature/model-development-p4
+
+worktree /workspace/Tuldok-p4-browser
+HEAD 3b49e605af5ca7bb3d552b00117c73cfc0642dc9
+branch refs/heads/feature/model-development-p4-browser
+
+worktree /workspace/Tuldok-p4-export-browser-fix
+HEAD 6998e7165eeaf496fe84b55d5d58082331883fff
+branch refs/heads/fix/p4-export-browser-recipe-set
+
+worktree /workspace/Tuldok-p5
+HEAD 407068d7c8f5aa0d1b4d81ced692ad01ab3db799
+branch refs/heads/feature/model-development-p5
+
+worktree /workspace/Tuldok-p5-canonical-a
+HEAD 503d177089bfc12fa4e49e3a7389b7838b8640c0
+branch refs/heads/feature/canonical-a-package
+
+worktree /workspace/Tuldok-p5-canonical-final-review
+HEAD 4bd003c786949368bb6b9e45e9502c22897ddabd
+detached
+
+worktree /workspace/Tuldok-p5-canonical-review
+HEAD 4af7157d4ee73532cd0fca27b03b86a1a9d3b344
+detached
+
+worktree /workspace/Tuldok-p5-ci
+HEAD 1aa4822865338b92e0a1813db1666a13b8920bda
+branch refs/heads/test/p5-captured-runtime-ci
+
+worktree /workspace/Tuldok-p5-ci-runtime
+HEAD aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7
+branch refs/heads/fix/candidate-packages-distro-python
+
+worktree /workspace/Tuldok-p5-field
+HEAD f2fb38d4c704fc0156b08d5bbbd488719e7a22f9
+branch refs/heads/feature/model-development-p5-field
+
+worktree /workspace/Tuldok-p5-p4-composition
+HEAD ed515101e2ef92cb03c0e9e67e6886250af6db8f
+branch refs/heads/integration/p5-after-p4-prep
+
+worktree /workspace/Tuldok-p6
+HEAD 8743bdff702c313a76ebaf3296064ad30ca417eb
+branch refs/heads/feature/model-development-p6
+
+worktree /workspace/Tuldok-p6-agent-api-review
+HEAD f68678c7f9ad893dac8bcdfe6c2dd7529ba88975
+detached
+
+worktree /workspace/Tuldok-p6-field-qa
+HEAD f6530ad7dcd814df264d43b7699b41e1fb870277
+branch refs/heads/qa/field-interface-observation
+
+worktree /workspace/Tuldok-prep-review
+HEAD 387b6eeec1eceef2629c746e5e940a51bbb48dbd
+detached
+
+worktree /workspace/Tuldok-prep68
+HEAD 78a1b9c1ca328a63d7b285789dc8924fbc234ce6
+branch refs/heads/integration/extension-pressure-current-main
+
+worktree /workspace/Tuldok-prep69
+HEAD c4599171d940e85d3a97a96c29ef9da8b79c0c48
+branch refs/heads/integration/extension-scalar-current-main
+
+worktree /workspace/Tuldok-product
+HEAD d18396a9b9d0e794cd23664af169dc9d437c5a0e
+branch refs/heads/integration/model-development-product
+
+worktree /workspace/Tuldok-release-authority
+HEAD 983256dd8c6899d85fd2b59baee6da70cbbef76b
+branch refs/heads/test/frozen-release-authority
+
+worktree /workspace/Tuldok-restored-interface-qa
+HEAD b772f44a8ea4b95755dfa2da27084f74b733e4ab
+branch refs/heads/qa/restored-ab-official-interfaces
+
+worktree /workspace/Tuldok-sdk-canonical
+HEAD 8e70f1ee954d56b4f4fc414998146d59901dfaa2
+branch refs/heads/fix/extension-sdk-utf8-canonical
+
+worktree /workspace/Tuldok-sdk-evidence
+HEAD 251b52ebbf888c7b725cce3e519b78b449077195
+branch refs/heads/feature/extension-sdk-evidence
+
+worktree /workspace/Tuldok-sdk-graph-fix
+HEAD d368acdf236a6f3cac8176a634bd9d79c7223d70
+branch refs/heads/fix/sdk-conformance-public-graph
+
+worktree /workspace/Tuldok-ui
+HEAD 198879274c61dbfa1d27b9bcb851fce4364c7c1f
+branch refs/heads/feature/model-development-workspace
+

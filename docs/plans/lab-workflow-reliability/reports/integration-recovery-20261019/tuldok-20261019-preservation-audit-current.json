@@ -1,0 +1,13 @@
+{
+  "protected_heads": 82,
+  "protected_worktrees": 96,
+  "head_differences": {},
+  "worktree_differences": {},
+  "additional_worktrees": [
+    "/workspace/Tuldok-lab-integration-review",
+    "/workspace/Tuldok-live-project-fix",
+    "/workspace/Tuldok-project-contract-fix",
+    "/workspace/Tuldok-request-latency-review",
+    "/workspace/Tuldok-torch-registry-fix"
+  ]
+}

@@ -1,0 +1,531 @@
+{
+  "repository": "MrScripty/Tuldok",
+  "original_main": "300f12df6f48e028fd9379911703f7c89337952a",
+  "source_pr89_head": "8af5a6a1e288e5b2f86a75b53cab93ca71222a04",
+  "source_performance_head": "de0f1b833f1922b4a86c12036405fe8cd795b4a0",
+  "root_contract_registry_batch": {
+    "tested_head": "dfcd6224592988f92706d5d9ac7b6a805cf676d5",
+    "tests": 28,
+    "result": "passed",
+    "seconds": 194.074,
+    "log": "/tmp/tuldok-pr89-combined-contract-registry.log"
+  },
+  "independent_contract_review": {
+    "commit": "a339759b487e67851966899a506f14f7d2dc3d74",
+    "result": "no_blockers",
+    "pure_tests_passed": 10,
+    "actual_main_full_contracts_compared": 106
+  },
+  "independent_registry_ui_review": {
+    "commits": [
+      "abd68106ea5acfbac96e64adb21dadb05eaffc61",
+      "72000fbd3f3a2fd2298ecb763c9cacf49dce98b5"
+    ],
+    "result": "no_blockers",
+    "registry_asset_pure_tests_passed": 10,
+    "chromium_checks_passed": 14,
+    "mutations": 0
+  },
+  "performance_helper_checks": {
+    "tested_head": "de0f1b833f1922b4a86c12036405fe8cd795b4a0",
+    "passed": 40,
+    "log": "/tmp/tuldok-performance-root-review-tests.log",
+    "scope": "capacity, managed inventory/process helpers, fake installed assets; no real CUDA/scientific computation"
+  },
+  "local_postgres": {
+    "state": "unavailable",
+    "reason": "package proxy returned403 on ordinary and approved fetch; no packages installed, no catalog opened; no retry ongoing"
+  },
+  "cuda": {
+    "available": false,
+    "fresh_computation_claim": false
+  },
+  "required_pending": [
+    "fresh exact-head hosted CI (including fullMCP and previously skipped downstreamsteps)",
+    "serial merges/dependencyretarget",
+    "post-merge CI",
+    "safe merged-taskcleanup"
+  ],
+  "external_mutations": [
+    {
+      "action": "fast-forward source PR89 branch",
+      "outcome": "confirmed",
+      "before": "8af5a6a1e288e5b2f86a75b53cab93ca71222a04",
+      "after": "980b0ce70190d3f9679219a040825b2e79cd24e2"
+    },
+    {
+      "action": "fast-forward full performance branch",
+      "outcome": "confirmed",
+      "before": "de0f1b833f1922b4a86c12036405fe8cd795b4a0",
+      "after": "ba85787027455b0e4b0347270e29c2d3a35b148d"
+    },
+    {
+      "action": "update PR89 review description",
+      "outcome": "confirmed",
+      "url": "https://github.com/MrScripty/Tuldok/pull/89"
+    },
+    {
+      "action": "create dependent draft PR90",
+      "outcome": "confirmed",
+      "url": "https://github.com/MrScripty/Tuldok/pull/90",
+      "base": "integration/rheon-lab-current-20261016"
+    },
+    {
+      "action": "fast-forward PR89 reviewed MCP test repair",
+      "outcome": "confirmed",
+      "after": "33069a859836953960a06dfd6001cba54aba0aa0"
+    },
+    {
+      "action": "fast-forward dependent PR90 preserving originalperformancepatch",
+      "outcome": "confirmed",
+      "after": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f"
+    },
+    {
+      "action": "fast-forward PR89 second reviewed contract fixture repair",
+      "outcome": "confirmed",
+      "before": "33069a859836953960a06dfd6001cba54aba0aa0",
+      "after": "cd5c029a6d4bde8a570064bac6687cb17394a1ac"
+    },
+    {
+      "action": "fast-forward PR90 composed second repair",
+      "outcome": "confirmed",
+      "before": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
+      "after": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114"
+    }
+  ],
+  "protected_original_heads": 82,
+  "pr89_reviewed_head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+  "pr90_reviewed_head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+  "performance_patch_preservation": {
+    "equal": true,
+    "sha256": "a1058108d14c24776ef58b207e5964f50206abd2eb67c32cdd870c3fb72533dc",
+    "current_local_base": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+    "current_local_head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114"
+  },
+  "final_browser": {
+    "tested_head": "980b0ce70190d3f9679219a040825b2e79cd24e2",
+    "passed": 16,
+    "mutations": 0,
+    "log": "/tmp/tuldok-pr89-root-browser-final.log"
+  },
+  "final_browser_pin_registry": "passed; all published/current pins canonical",
+  "final_controller_transport_checks": "passed; external, authoring, exact numeric and typed parameters",
+  "ui_followup_independent_review": {
+    "commit": "4030e32c435b51ab8b3188ca960c5750467fa654",
+    "result": "no_remaining_blockers"
+  },
+  "preservation": {
+    "original_heads": 82,
+    "changed_original_heads": {},
+    "original_worktrees": 96,
+    "changed_original_worktrees": {}
+  },
+  "retained_task_worktrees": [
+    {
+      "path": "/workspace/Tuldok-lab-integration-review",
+      "branch": "integration/rheon-lab-review-20261019",
+      "head": "33069a859836953960a06dfd6001cba54aba0aa0",
+      "status": "",
+      "disposition": "retained-protected pending required CI and merge"
+    },
+    {
+      "path": "/workspace/Tuldok-request-latency-review",
+      "branch": "integration/request-latency-review-20261019",
+      "head": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
+      "status": "",
+      "disposition": "retained-protected pending required CI and merge"
+    },
+    {
+      "path": "/workspace/Tuldok-live-project-fix",
+      "branch": "fix/live-project-observation-fences-20261019",
+      "head": "4030e32c435b51ab8b3188ca960c5750467fa654",
+      "status": "",
+      "disposition": "retained-protected pending required CI and merge"
+    },
+    {
+      "path": "/workspace/Tuldok-project-contract-fix",
+      "branch": "fix/managed-project-contract-compatibility-20261019",
+      "head": "a339759b487e67851966899a506f14f7d2dc3d74",
+      "status": "",
+      "disposition": "retained-protected pending required CI and merge"
+    },
+    {
+      "path": "/workspace/Tuldok-torch-registry-fix",
+      "branch": "fix/managed-torch-registry-durability-20261019",
+      "head": "abd68106ea5acfbac96e64adb21dadb05eaffc61",
+      "status": "",
+      "disposition": "retained-protected pending required CI and merge"
+    }
+  ],
+  "checkpoint_at": "2026-10-19T16:14:34.627801+00:00",
+  "state": "fresh_exact_head_CI_pending",
+  "hosted_runs": [
+    {
+      "id": 39282700306,
+      "name": "Inert extension catalog",
+      "head_sha": "980b0ce70190d3f9679219a040825b2e79cd24e2",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39282700306",
+      "jobs": [
+        {
+          "id": 118159937339,
+          "status": "queued",
+          "conclusion": null,
+          "runner_id": null,
+          "runner_name": null,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "id": 39282700354,
+      "name": "M1 workspace interface",
+      "head_sha": "980b0ce70190d3f9679219a040825b2e79cd24e2",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39282700354",
+      "jobs": [
+        {
+          "id": 118159937544,
+          "status": "queued",
+          "conclusion": null,
+          "runner_id": null,
+          "runner_name": null,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "id": 39282700376,
+      "name": "Dataset lifecycle tests",
+      "head_sha": "980b0ce70190d3f9679219a040825b2e79cd24e2",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39282700376",
+      "jobs": [
+        {
+          "id": 118159937508,
+          "status": "queued",
+          "conclusion": null,
+          "runner_id": null,
+          "runner_name": null,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "id": 39282700377,
+      "name": "Candidate package captured CPU",
+      "head_sha": "980b0ce70190d3f9679219a040825b2e79cd24e2",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39282700377",
+      "jobs": [
+        {
+          "id": 118159937567,
+          "status": "queued",
+          "conclusion": null,
+          "runner_id": null,
+          "runner_name": null,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "id": 39282746032,
+      "name": "Candidate package captured CPU",
+      "head_sha": "ba85787027455b0e4b0347270e29c2d3a35b148d",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39282746032",
+      "jobs": [
+        {
+          "id": 118160121189,
+          "status": "queued",
+          "conclusion": null,
+          "runner_id": null,
+          "runner_name": null,
+          "steps": []
+        }
+      ]
+    },
+    {
+      "id": 39282746045,
+      "name": "Dataset lifecycle tests",
+      "head_sha": "ba85787027455b0e4b0347270e29c2d3a35b148d",
+      "status": "queued",
+      "conclusion": null,
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39282746045",
+      "jobs": [
+        {
+          "id": 118160120307,
+          "status": "queued",
+          "conclusion": null,
+          "runner_id": null,
+          "runner_name": null,
+          "steps": []
+        }
+      ]
+    }
+  ],
+  "github_status": {
+    "url": "https://www.githubstatus.com/api/v2/summary.json",
+    "verified_via": "web tool at16:12 UTC; direct shell proxy request unavailable403, not retried",
+    "updated_at": "2026-10-19T15:56:34.118Z",
+    "actions": "degraded_performance",
+    "incident": {
+      "id": "8tzbpcnl75jp",
+      "name": "Degraded availability for GitHub Actions, GitHub Pages and Webhooks",
+      "status": "investigating",
+      "started_at": "2026-10-19T15:49:25.822Z",
+      "reported_impact": "workflow processing delays"
+    }
+  },
+  "blocker": null,
+  "resume": [
+    "Do not merge until all relevant exact-head PR89(33069a8) andPR90(429d0c4) CIjobs settle success. Current source runs89:39286812518/538/482/519,90:39286833487/738. Lifecycle jobs118175676315/118175770705. Independent monitor /root/mcp_contract_ci_review active read-only.",
+    "Fetch/recheck current main and sourceheads beforewrites. Mainlast300f12df6f48e028fd9379911703f7c89337952a. Rootownsserialmerges; normal merge_method=merge preservesfulloriginalde0ancestry. Exactrequestfiles:/tmp/tuldok-pr89-merge-request.json,/tmp/tuldok-pr90-retarget-request.json,/tmp/tuldok-pr90-merge-request.json.",
+    "Merge89expected33069a8, verifymergeparents/treeequalreviewedhead; retarget90basefromintegration/rheon-lab-current-20261016 to main beforedeleting89branch. Verifyunchangedhead/diff/tree and anynewchecks. RequirepostmergeCI; do not mergefailed/pendingheads.",
+    "Mark90readyonlyafterallheadCIgreen and retargetverified; normalmergeexpected429d0c4; verifyactualparents/tree. Requireallapplicablemainpushworkflowsgreen, includingexistingextensionSDK.",
+    "Repoautodeletefalse. CheckopenPRdepsbeforeleaseguardeddeleteonlyfullymergedremote89/performancebranches. SeparatePR91docs/lab-workflow-reliability-plan base main MUSTstayunmerged/unmodified; preserveitsbranch/worktree. PreserveoldPR43/53+allolduniquehistory+previousdenied77cbf/a64refs; no retries/bypasses.",
+    "AfterallpostmergeCIgreen, cleanupONLYownfivecleanretainedtaskworktrees/branches afterexactheadsancestorofmain. Original82heads/96worktreesunchangedguardrequired; extra newplanresources notowned. /workspace/Tuldok-experiment-lineage HEADee07 originalprotectedcheckout usableforcleanupcommands. No genericprune/reset.",
+    "No realcatalogopened/converterexecuted. LocalPGpackageproxy403 unresolved; CUDAunavailable. HistoricalCUDA/science receipts inspectedonly. LocalMCPfull19timeboundsunreliable onunchangedmain too; receipts recordallfailures, isolatedpassandfreshhostMCPstepgreen. Do notcountskips/historicalhardwareasfreshpass."
+  ],
+  "resumed_after_parent_message": "2026-10-19T16:29:00Z",
+  "latest_ci_failure": {
+    "source_heads": {
+      "PR89": "980b0ce70190d3f9679219a040825b2e79cd24e2",
+      "PR90": "ba85787027455b0e4b0347270e29c2d3a35b148d"
+    },
+    "failing_case": "test_mcp_stdio.SDKProcessTests.test_bound_recipe_uses_the_same_selected_contract",
+    "cause": "test expected recipes.inspectv2 while canonical current self-negotiation selects4; schemas differ by explicit managedTorch variants",
+    "hosted_agent_checks": {
+      "PR89": {
+        "passed": 74,
+        "skipped": 0,
+        "seconds": 609.96
+      },
+      "PR90": {
+        "passed": 74,
+        "skipped": 0,
+        "seconds": 611.92
+      }
+    },
+    "downstream_lifecycle_steps": "skipped due failed MCP step; not accepted as passed"
+  },
+  "local_mcp_schema_repair": {
+    "commit": "33069a859836953960a06dfd6001cba54aba0aa0",
+    "performance_composition": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
+    "scope": "one test file only; current full selection4 plus explicit retained2/3 exact SDK schema checks",
+    "independent_review": "no blockers",
+    "focused_changed_case": "passed1 in3.409s",
+    "initial_full_runs": "both18/19pass; unchanged preinitialization protocolcase exceeded8sec bound during concurrent suites",
+    "isolated_unchanged_case": "passed1 in3.898s",
+    "solo_full_final": {
+      "result": "failed4 of19; allfirst-replytimeouts in unchanged protocolcases; changedcasepassed",
+      "seconds": 95.78,
+      "diagnosis": "independent bounded main/current startupvalidation timing pending; no timingbounds weakened"
+    },
+    "log": "/tmp/tuldok-mcp-selected-contract-final.log",
+    "independent_startup_comparison": {
+      "baseline_contracts": 106,
+      "current_contracts": 109,
+      "baseline_total_wall_s": [
+        4.332767,
+        4.377117
+      ],
+      "current_total_wall_s": [
+        4.60361,
+        4.572176
+      ],
+      "registry_mean_delta_s": 0.212,
+      "interpretation": "measured current startup stays below8sec; doesnotestablishcauseoffullsuitefirstreplytimeouts",
+      "production_bridge_unchanged_from_main": true
+    },
+    "isolated_four_fullrun_timeout_cases": {
+      "passed": 4,
+      "seconds": 31.093,
+      "log": "/tmp/tuldok-mcp-isolated-timeout-cases.log"
+    },
+    "unchanged_main_full_baseline": {
+      "source": "300f12df6f48e028fd9379911703f7c89337952a",
+      "tests": 19,
+      "failures": 7,
+      "seconds": 104.309,
+      "failure_mode": "No protocolreply first-response timeouts in unchanged tests",
+      "log": "/tmp/tuldok-mcp-main-baseline-suite.log",
+      "files": {
+        "mcp_stdio.py": "e3b45393186149a3be060d95d98b73121700408b93a893034088a30741e67980",
+        "agent_api.py": "e63d366705bc6e5b54c7abaabc6ef86fc76a0a10ae871b319835edc3f3882f91",
+        "tests/test_mcp_stdio.py": "cf6d132dceb5db59e181f87c9a6cc8413ff2809c491aeea1b1e7764169577219"
+      },
+      "disposition": "temporary3filepublicsourcecopyremoved; exactsource remainsreachablefrommain; logretained"
+    }
+  },
+  "current_exact_head_runs": {
+    "PR89": [
+      39286812538,
+      39286812518,
+      39286812482,
+      39286812519
+    ],
+    "PR90": [
+      39286833738,
+      39286833487
+    ]
+  },
+  "status_reporting_correction": "The16:14API snapshot reported queued/no steps, but later fetched job logs show execution16:05\u201316:18. Treat the old queued snapshot as delayed GitHub status reporting, not proof that no execution had happened. Current-head merges still require settled successful checks.",
+  "separate_lab_feedback_plan": {
+    "owner_thread": "01a140a3-c8fe-73c6-909c-db876d23201e",
+    "scope": "PR91 preserved; separate boundedM1implementation now authorized on explicit composeddependencies after verifieddurablebackup; do not mergeplan/implementation beforequalification",
+    "dependency_baseline": {
+      "PR89": "33069a859836953960a06dfd6001cba54aba0aa0",
+      "PR90": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
+      "main": "300f12df6f48e028fd9379911703f7c89337952a"
+    },
+    "cleanup_requirement": "Check all openPR bases including new plan before sourcebranch deletion; coordinate any needed retarget after product merges.",
+    "pull_request": 91,
+    "branch": "docs/lab-workflow-reliability-plan",
+    "base": "main",
+    "disposition": "preserveunmodified/unmerged; sourcebranchcleanupdoesnotaffectbase",
+    "implementation_authorized_by_later_user_instruction": true,
+    "plan_head": "b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb"
+  },
+  "fresh_hosted_gate_progress": {
+    "PR89": {
+      "head": "33069a859836953960a06dfd6001cba54aba0aa0",
+      "job": 118175676315,
+      "agent_step": "success16:48:48Z",
+      "mcp_step": "success16:49:35Z"
+    },
+    "PR90": {
+      "head": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
+      "job": 118175770705,
+      "agent_step": "success16:48:53Z",
+      "mcp_step": "success16:49:39Z",
+      "overall": "failure at full Python discovery31"
+    },
+    "counts_and_skips": "awaitcompletedjoblogs",
+    "overall": "PR90 failed stale unsupported-version test fixture; PR89 lastknown full discovery inprogress; no merge accepted",
+    "latest": "Both exact heads passed lifecycle steps1\u201330; full Python discovery31 running at17:20UTC; no failed step. All other current-head jobs successful. Unchanged main remains300f12d."
+  },
+  "repository_merge_settings": {
+    "allow_merge_commit": true,
+    "delete_branch_on_merge": false
+  },
+  "preservation_audit_current": {
+    "protected_heads": 82,
+    "protected_worktrees": 96,
+    "differences": 0,
+    "report": "/tmp/tuldok-20261019-preservation-audit-current.json"
+  },
+  "fresh_completed_jobs_independent_log_review": {
+    "heads": [
+      "33069a859836953960a06dfd6001cba54aba0aa0",
+      "429d0c4ff44dba16bc95313d2a0980169dbc9b9f"
+    ],
+    "captured_cpu": {
+      "jobs": [
+        118175675711,
+        118175772275
+      ],
+      "result": "success",
+      "browser_model_development_named_checks": 13,
+      "browser_candidate_package_named_checks": 2,
+      "actual_cpu_producer": "finite training, three checkpoint/probe sets, child/correction trials",
+      "captured_runtime": "torch2.8.0+cpu/torchvision0.23.0+cpu; TinyCNN forward inference; no training/resume claim",
+      "skip_markers": 0,
+      "cuda_claim": false
+    },
+    "catalog": {
+      "job": 118175675218,
+      "unittest": 41,
+      "skips": 0,
+      "browser_named_checks": 5,
+      "scope": "inert inspection, no Run/grant/action"
+    },
+    "workspace_ui": {
+      "job": 118175676089,
+      "unittest": 2,
+      "skips": 0,
+      "browser_named_checks": 18,
+      "scope": "fixture-labelled/no-POST interactions and real catalog edits; no training claim"
+    }
+  },
+  "disconnect_recovery_1726": {
+    "workspace": "confirmed responsive; clean33069; receipt intact",
+    "github": "confirmed bothPRs open/unmerged exact reviewed heads",
+    "uncertain_integration_writes": false,
+    "blocking": false
+  },
+  "current_full_discovery_failure": {
+    "head": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
+    "job": 118175770705,
+    "run": 39286833487,
+    "tests": 1535,
+    "failures": 1,
+    "skipped": 72,
+    "case": "BoundExtensionRecipeTests.test_contradictory_provider_runtime_pin_and_legacy_contract_types_refuse",
+    "subtest": "version=4",
+    "assertion": "WorkbenchError not raised",
+    "cause": "negative fixture still lists newly supported inspectionv4",
+    "downstream_browser": "not executed; not passed"
+  },
+  "second_contract_fixture_repair": {
+    "files": [
+      "tests/test_extension_bindings.py",
+      "tests/test_extension_bound_api.py"
+    ],
+    "production_changes": false,
+    "state": "independently cleared, committed andpublished; freshCIrequired",
+    "pure_tests": {
+      "passed": 3,
+      "seconds": 3.345
+    },
+    "real_postgres": "not locallyavailable; hosted gate required",
+    "pr89_local_head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+    "pr90_local_head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+    "independent_review": "no blockers; exact diff reviewed; closure/managedruntime negative cases preserved"
+  },
+  "authentication_blocker": {
+    "state": "resolved: existing configured gh read and bothFFpushes succeeded18:21UTC",
+    "observed": "gh read-only GitHub jobstatus HTTP401 Bad credentials at~17:31UTC",
+    "last_healthy": "17:29pairedreads and archivedlogfetch",
+    "uncertain_write": false,
+    "blocked_actions": [
+      "publish reviewed testrepair",
+      "fresh hostedCI",
+      "serial merges and retarget",
+      "postmergeCI and safe cleanup"
+    ],
+    "local_work": "review and commit can continue",
+    "denied": false
+  },
+  "local_reviewed_heads_pending_publication": {
+    "PR89": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+    "PR90": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114"
+  },
+  "resume_after_auth_restoration": [
+    "Verify remote89=33069a859836953960a06dfd6001cba54aba0aa0 and90=429d0c4ff44dba16bc95313d2a0980169dbc9b9f before publication; no prior pending writes.",
+    "Publish localcd5c029 and76d3c6a as fastforward exactlease pushes, require completefresh headCI; old fullPython failure is not accepted.",
+    "Diagnose any further CI failure; serialmerge89 then90 afterretarget, postmergeCI, safelycleanup only5ownedworktrees/branches.",
+    "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
+  ],
+  "authentication_recheck": {
+    "time": "2026-10-19T17:33:48.272023+00:00",
+    "requested_by_parent": true,
+    "action": "one read-only gh api repos/MrScripty/Tuldok/pulls/90 using existing configured workspace authentication",
+    "result": "HTTP401 Bad credentials",
+    "writes_attempted": false,
+    "credential_changes": false,
+    "state": "platform access restoration pending",
+    "required_action": "Platform must refresh/rebind the existing managed GitHub CLI credential for this workspace; parent connector remains healthy but workspace configured access still401."
+  },
+  "authentication_recheck_recovery": {
+    "time": "2026-10-19T18:21:15.622119+00:00",
+    "read": "success",
+    "new_credentials": false,
+    "permissions_expanded": false
+  }
+}

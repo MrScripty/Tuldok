@@ -1,0 +1,51 @@
+{
+  "scope": "Actual JavaScript/Chromium lifecycle and focus with synthetic observations; no catalog, execution or scientific qualification",
+  "browser": "Chrome/151.0.7922.173",
+  "checks": [
+    {
+      "name": "Auto evidence refresh preserves focus inside the preview",
+      "passed": true
+    },
+    {
+      "name": "A completed background refresh does not steal separately moved focus",
+      "passed": true
+    },
+    {
+      "name": "Missing selected evidence clears stale text and retains preview focus",
+      "passed": true
+    },
+    {
+      "name": "Same-identity polling preserves the pending inner inspection",
+      "passed": true
+    },
+    {
+      "name": "changed recipe hash cancels the inner inspection before authoring",
+      "passed": true
+    },
+    {
+      "name": "declared identity mismatch cancels the inner inspection before authoring",
+      "passed": true
+    },
+    {
+      "name": "unavailable recipe cancels the inner inspection before authoring",
+      "passed": true
+    },
+    {
+      "name": "missing recipe cancels the inner inspection before authoring",
+      "passed": true
+    },
+    {
+      "name": "changed manifest identity cancels the inner inspection before authoring",
+      "passed": true
+    },
+    {
+      "name": "changed manifest source cancels the inner inspection before authoring",
+      "passed": true
+    },
+    {
+      "name": "Project-context changes cancel the inner inspection",
+      "passed": true
+    }
+  ],
+  "mutations": 0
+}

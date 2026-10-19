@@ -1,0 +1,9 @@
+test_duplicate_pending_id_refusal_does_not_consume_original_reply (test_mcp_stdio.SDKProcessTests.test_duplicate_pending_id_refusal_does_not_consume_original_reply) ... ok
+test_final_encoded_oversize_is_explicit_tool_error (test_mcp_stdio.SDKProcessTests.test_final_encoded_oversize_is_explicit_tool_error) ... ok
+test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic (test_mcp_stdio.SDKProcessTests.test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic) ... ok
+test_real_sdk_lifecycle_versions_and_closed_capabilities (test_mcp_stdio.SDKProcessTests.test_real_sdk_lifecycle_versions_and_closed_capabilities) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 31.093s
+
+OK

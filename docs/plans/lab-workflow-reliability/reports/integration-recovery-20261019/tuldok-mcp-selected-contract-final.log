@@ -1,0 +1,75 @@
+test_final_encoding_cap_counts_structured_and_text_copies (test_mcp_stdio.FramingTests.test_final_encoding_cap_counts_structured_and_text_copies) ... ok
+test_invalid_ids_unknown_notifications_and_methods (test_mcp_stdio.FramingTests.test_invalid_ids_unknown_notifications_and_methods) ... ok
+test_malformed_tool_names_and_arguments_are_typed_refusals (test_mcp_stdio.FramingTests.test_malformed_tool_names_and_arguments_are_typed_refusals) ... ok
+test_nul_in_initialize_metadata_and_object_keys_is_refused (test_mcp_stdio.FramingTests.test_nul_in_initialize_metadata_and_object_keys_is_refused) ... ok
+test_output_pipe_capacity_is_bounded_and_optional (test_mcp_stdio.FramingTests.test_output_pipe_capacity_is_bounded_and_optional) ... ok
+test_profile_negotiates_only_admitted_version_and_requires_notification (test_mcp_stdio.FramingTests.test_profile_negotiates_only_admitted_version_and_requires_notification) ... ok
+test_strict_json_bounds_unicode_duplicates_and_finite_values (test_mcp_stdio.FramingTests.test_strict_json_bounds_unicode_duplicates_and_finite_values) ... ok
+test_bound_recipe_uses_the_same_selected_contract (test_mcp_stdio.SDKProcessTests.test_bound_recipe_uses_the_same_selected_contract) ... ok
+test_completed_request_id_can_be_reused_for_a_distinct_call (test_mcp_stdio.SDKProcessTests.test_completed_request_id_can_be_reused_for_a_distinct_call) ... ok
+test_duplicate_pending_id_refusal_does_not_consume_original_reply (test_mcp_stdio.SDKProcessTests.test_duplicate_pending_id_refusal_does_not_consume_original_reply) ... FAIL
+test_eof_and_oversized_line_are_bounded (test_mcp_stdio.SDKProcessTests.test_eof_and_oversized_line_are_bounded) ... ok
+test_final_encoded_oversize_is_explicit_tool_error (test_mcp_stdio.SDKProcessTests.test_final_encoded_oversize_is_explicit_tool_error) ... FAIL
+test_invalid_schema_is_protocol_error_and_never_dispatched (test_mcp_stdio.SDKProcessTests.test_invalid_schema_is_protocol_error_and_never_dispatched) ... ok
+test_official_sdk_client_negotiation_list_and_call (test_mcp_stdio.SDKProcessTests.test_official_sdk_client_negotiation_list_and_call) ... ok
+test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic (test_mcp_stdio.SDKProcessTests.test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic) ... FAIL
+test_real_sdk_lifecycle_versions_and_closed_capabilities (test_mcp_stdio.SDKProcessTests.test_real_sdk_lifecycle_versions_and_closed_capabilities) ... 
+  test_real_sdk_lifecycle_versions_and_closed_capabilities (test_mcp_stdio.SDKProcessTests.test_real_sdk_lifecycle_versions_and_closed_capabilities) (version='2025-06-18') ... FAIL
+test_selected_tools_and_older_selected_schema_are_used_by_real_sdk (test_mcp_stdio.SDKProcessTests.test_selected_tools_and_older_selected_schema_are_used_by_real_sdk) ... ok
+test_serial_calls_refuse_overlap_and_do_not_retry_on_exception (test_mcp_stdio.SDKProcessTests.test_serial_calls_refuse_overlap_and_do_not_retry_on_exception) ... ok
+test_unknown_method_malformed_json_and_incomplete_initialization (test_mcp_stdio.SDKProcessTests.test_unknown_method_malformed_json_and_incomplete_initialization) ... ok
+
+======================================================================
+FAIL: test_duplicate_pending_id_refusal_does_not_consume_original_reply (test_mcp_stdio.SDKProcessTests.test_duplicate_pending_id_refusal_does_not_consume_original_reply)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 278, in test_duplicate_pending_id_refusal_does_not_consume_original_reply
+    self.ready(process)
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 201, in ready
+    value = self.read(process)
+            ^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 192, in read
+    self.assertTrue(ready, 'No protocol reply')
+AssertionError: [] is not true : No protocol reply
+
+======================================================================
+FAIL: test_final_encoded_oversize_is_explicit_tool_error (test_mcp_stdio.SDKProcessTests.test_final_encoded_oversize_is_explicit_tool_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 320, in test_final_encoded_oversize_is_explicit_tool_error
+    self.ready(process)
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 201, in ready
+    value = self.read(process)
+            ^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 192, in read
+    self.assertTrue(ready, 'No protocol reply')
+AssertionError: [] is not true : No protocol reply
+
+======================================================================
+FAIL: test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic (test_mcp_stdio.SDKProcessTests.test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 304, in test_partial_frame_at_eof_has_one_parse_refusal_and_no_raw_diagnostic
+    self.assertEqual(self.read(process), {'jsonrpc': '2.0', 'id': None, 'error': {
+                     ^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 192, in read
+    self.assertTrue(ready, 'No protocol reply')
+AssertionError: [] is not true : No protocol reply
+
+======================================================================
+FAIL: test_real_sdk_lifecycle_versions_and_closed_capabilities (test_mcp_stdio.SDKProcessTests.test_real_sdk_lifecycle_versions_and_closed_capabilities) (version='2025-06-18')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 211, in test_real_sdk_lifecycle_versions_and_closed_capabilities
+    self.ready(process, version)
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 201, in ready
+    value = self.read(process)
+            ^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-integration-review/tests/test_mcp_stdio.py", line 192, in read
+    self.assertTrue(ready, 'No protocol reply')
+AssertionError: [] is not true : No protocol reply
+
+----------------------------------------------------------------------
+Ran 19 tests in 95.780s
+
+FAILED (failures=4)
