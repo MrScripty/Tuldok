@@ -1214,9 +1214,9 @@
     "105": "43591e14c64540d4110b74971430e13762909bd7",
     "106": "e17875a926c89aa00cc9d313ce30c89a398b8e83",
     "107": "07dde98df856619cab929eb9dc8d3275151c69bd",
-    "108": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
-    "109": "98380228a7edb8eefb4715cba27ca76722756cf9",
-    "110": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625"
+    "108": "9285a0aea722593ad2084eb3afa4b0c3d1855c80",
+    "109": "3471e1ffceae924e87db733e78f669fd933ad9a4",
+    "110": "ecdeab94edb4f0d91c820c06f765d8bbfe7ce9d9"
   },
   "m6_active": {
     "agent": "/root/scientific_comparison_m6",
@@ -1575,5 +1575,138 @@
     "104_106": "wholehistory normallymerged; ONLY6evidencefilecontentchanges sincefixturealreadycorrectin104",
     "109_110_108": "pendingnormalhistorycompositionaftercompletedmatrix/actualgates; theirfixturealreadycorrect",
     "fresh_hosted": "pendingcorrectedheads; oldfailedjobsnotacceptance"
-  }
+  },
+  "main_after_pr99": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+  "pr99_accepted_and_merged": {
+    "pr": 99,
+    "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+    "merge": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+    "tree": "6d9059b51ed8efae9ad32fff9012fdcb9d489ec2",
+    "tree_equal": true,
+    "parents": [
+      "51c081cd8534728e91e3b76294b8526b6ee47269",
+      "e0357c20af9c9213422eb95861ef385c9caed2dd"
+    ],
+    "retarget100": "main confirmed; head4e533 unchanged"
+  },
+  "pr100_final_qualified": {
+    "pr": 100,
+    "head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+    "base_at_acceptance": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+    "tested_base": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+    "source_and_current_pr_merge_tree": "a70465a7b20d69350b9078fe285eeda90166320f",
+    "state": "All relevant hosted checks passed; independent log review clear",
+    "lifecycle": {
+      "run": 39330889183,
+      "job": 118328479727,
+      "success_steps": 164,
+      "full_discovery": {
+        "command": "python -m unittest discover -s tests",
+        "errors": 0,
+        "failures": 0,
+        "passed_non_skipped": 1529,
+        "ran": 1601,
+        "ran_log_line": "2026-10-19T22:56:06.5811504Z Ran 1601 tests in 2156.490s",
+        "seconds": 2156.49,
+        "skipped": 72,
+        "summary": "OK (skipped=72)"
+      }
+    },
+    "cpu": {
+      "run": 39330889194,
+      "job": 118328479538,
+      "success_steps": 13,
+      "scope": [
+        "The provisioned CPU interpreter drives browser_model_development: actual finite training, three checkpoint/probe sets, explicit comparison selections, lineage, changed-membership refusal and denial/navigation fencing.",
+        "Existing owner preparation/capture and separate fresh captured CPU consumer complete with three charged slots, while source candidate remains diagnostic and package-complete/fresh-verification remain separate UI states.",
+        "Captured runtime scope is TinyCNN forward inference with Torch/NumPy/Pillow; preparation explicitly excludes torchvision and unused optional components. No captured training/resume or CUDA/scientific-quality acceptance inferred."
+      ]
+    },
+    "new_lineage_witness": {
+      "actual_browser_PASS_log_lines": [
+        "2026-10-19T22:57:04.3096993Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-snwtYV"
+      ],
+      "actual_browser_report_path": "build/qa/workspace-publication-lineage/run-snwtYV",
+      "asserted_scope": [
+        "Fresh real neutral Model/Study/Trial/admission and custodian publication copy fault.",
+        "Explicit pinned status2 lineage read with no automatic publication-status fanout or recovery controls in lineage.",
+        "Original interrupted Run retained beside separate published state/exact Ref; navigation clears old metadata; fresh read returns same Ref.",
+        "Existing Run panel owns one explicit recovery; keyboard exact Ref link reopens original Run and performs actual result verification; no compute retry/submit/branch/select-candidate.",
+        "1440/390 layouts without horizontal overflow and no runtime exceptions.",
+        "Fixture must exit0 after server/catalog/schema cleanup before PASS; domain assertions preserve full Study charge/reservation, full reservation document, lineage projection, Run events/counts/original interrupted state and legacy failed artifact refusal."
+      ],
+      "controller_PASS_log_lines": [
+        "2026-10-19T22:56:55.9018360Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences"
+      ],
+      "evidence_basis": "Exact checked-out source assertions inspected plus completed hosted PASS line; this reviewer did not download or relabel older committed domain receipts as current CI artifacts.",
+      "exact_source_sha256": {
+        "tests/browser_workspace_publication_lineage.cjs": "212f21fd4f713320468e8966442f3f95ec3df836c3ac5ff8fee4e9c1ce1de401",
+        "tests/publication_lineage_browser_fixture.py": "2d258b29eefbd0c0b3c99240369ab8fb8f0a849ab54966b9f751e67d8d95d948",
+        "tests/test_workspace_publication_lineage.cjs": "48a1484158ae647e87259c94e5460d3e8995621c7df78c1ef11f383b59dff396"
+      },
+      "no_science_claim": "Neutral byte custody/UI evidence; no model training, numerical quality, CUDA or scientific winner inferred from this lineage fixture."
+    },
+    "limits": [
+      "This independently completes lifecycle and captured-CPU log review only; root owns other required checks, serial merge, archive and post-merge acceptance.",
+      "74 skipped unittest executions are retained explicitly; no claim all discovered tests executed without skips.",
+      "Current lineage CI artifact contents were not downloaded. Domain-conservation scope is grounded in exact source assertions which must pass before hosted browser PASS, not invented current artifact values.",
+      "Retarget main has identical base tree but a different commit identity; actual tested checkout/head/base recorded separately.",
+      "No private heavy execution, remote mutation, rerun or passive polling performed."
+    ],
+    "independent_review": "tuldok-pr100-independent-ci-review.json"
+  },
+  "m4_root_numerical_acceptance": {
+    "measured_head": "98380228a7edb8eefb4715cba27ca76722756cf9",
+    "validated_evidence_files": 33,
+    "source_file_hashes_match_frozen_git_and_current_branch": 12,
+    "workers": 18,
+    "pairs": 54,
+    "cells": [
+      {
+        "cell": "publication/1/56",
+        "pairs": 9,
+        "median_batch_over_individual": 2.123120907124119,
+        "median_delta_ms": 233.869478,
+        "all_faster": false
+      },
+      {
+        "cell": "publication/20/56",
+        "pairs": 9,
+        "median_batch_over_individual": 0.7096021274040349,
+        "median_delta_ms": -861.957893,
+        "all_faster": true
+      },
+      {
+        "cell": "run/1/55",
+        "pairs": 9,
+        "median_batch_over_individual": 2.5770123200509945,
+        "median_delta_ms": 234.170113,
+        "all_faster": false
+      },
+      {
+        "cell": "run/1/8",
+        "pairs": 9,
+        "median_batch_over_individual": 2.7168680248543833,
+        "median_delta_ms": 302.027694,
+        "all_faster": false
+      },
+      {
+        "cell": "run/20/55",
+        "pairs": 9,
+        "median_batch_over_individual": 0.6952015660752813,
+        "median_delta_ms": -508.007857,
+        "all_faster": true
+      },
+      {
+        "cell": "run/20/8",
+        "pairs": 9,
+        "median_batch_over_individual": 0.6997106035417096,
+        "median_delta_ms": -448.562977,
+        "all_faster": true
+      }
+    ],
+    "state": "independently recomputed from retained raw pairs; whole hashes/events/counts/no-replay invariants verified",
+    "scope": "measured low-level same-catalog neutral small-output transport; no generic/facade/science/hardware qualification"
+  },
+  "final_local_qualification": "All authored generic implementation and relevant final local actual gates complete. Remaining hosted/serial integration; PUB-1 original failure bytes and SCI-1 owned lab criteria/pair remain missing inputs. No hardware/science acceptance invented."
 }

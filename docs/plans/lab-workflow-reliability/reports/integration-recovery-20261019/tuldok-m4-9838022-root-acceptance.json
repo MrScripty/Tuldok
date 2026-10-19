@@ -1,0 +1,53 @@
+{
+  "measured_head": "98380228a7edb8eefb4715cba27ca76722756cf9",
+  "validated_evidence_files": 33,
+  "source_file_hashes_match_frozen_git_and_current_branch": 12,
+  "workers": 18,
+  "pairs": 54,
+  "cells": [
+    {
+      "cell": "publication/1/56",
+      "pairs": 9,
+      "median_batch_over_individual": 2.123120907124119,
+      "median_delta_ms": 233.869478,
+      "all_faster": false
+    },
+    {
+      "cell": "publication/20/56",
+      "pairs": 9,
+      "median_batch_over_individual": 0.7096021274040349,
+      "median_delta_ms": -861.957893,
+      "all_faster": true
+    },
+    {
+      "cell": "run/1/55",
+      "pairs": 9,
+      "median_batch_over_individual": 2.5770123200509945,
+      "median_delta_ms": 234.170113,
+      "all_faster": false
+    },
+    {
+      "cell": "run/1/8",
+      "pairs": 9,
+      "median_batch_over_individual": 2.7168680248543833,
+      "median_delta_ms": 302.027694,
+      "all_faster": false
+    },
+    {
+      "cell": "run/20/55",
+      "pairs": 9,
+      "median_batch_over_individual": 0.6952015660752813,
+      "median_delta_ms": -508.007857,
+      "all_faster": true
+    },
+    {
+      "cell": "run/20/8",
+      "pairs": 9,
+      "median_batch_over_individual": 0.6997106035417096,
+      "median_delta_ms": -448.562977,
+      "all_faster": true
+    }
+  ],
+  "state": "independently recomputed from retained raw pairs; whole hashes/events/counts/no-replay invariants verified",
+  "scope": "measured low-level same-catalog neutral small-output transport; no generic/facade/science/hardware qualification"
+}

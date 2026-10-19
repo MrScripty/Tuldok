@@ -307,6 +307,11 @@
       "sha256": "0a4a22e09290503364d9ab1bc1d6b2efa9105f235385594abeef95e0dcf47033"
     },
     {
+      "path": "tuldok-m4-9838022-root-acceptance.json",
+      "bytes": 1545,
+      "sha256": "6acb7a369ccdf7679172a96b9e124d9a3853ff9fc0ae65b9c825879ac77d699d"
+    },
+    {
       "path": "tuldok-m4-99741e5-cleanup-independent.json",
       "bytes": 175,
       "sha256": "886c4e11cffdc75d9dfc04417fcc5ed45bfe7a5c42672bdcddb3ca3807049d21"
@@ -552,6 +557,26 @@
       "sha256": "c1f47f916b206eef483de6b0c75bc4e8845135374b72f49931628bfa5ec14baf"
     },
     {
+      "path": "tuldok-pr100-final-qualified-evidence.json",
+      "bytes": 4667,
+      "sha256": "faad17c4160062cb8f8b0f2091397bbb600721033ce6ffa2e78883b181a5979d"
+    },
+    {
+      "path": "tuldok-pr100-independent-ci-review.json",
+      "bytes": 52591,
+      "sha256": "a9fa07acf640a1129ff0f2a396c305d27999ce2ef14d47628d0057e55d37851a"
+    },
+    {
+      "path": "tuldok-pr100-qualified-cpu.log",
+      "bytes": 60261,
+      "sha256": "e806e994a144a4d1dc1514cd6af1553ebe53626fbbf9e0b8aed317a072c9a6c1"
+    },
+    {
+      "path": "tuldok-pr100-qualified-lifecycle.log",
+      "bytes": 599490,
+      "sha256": "604e9cec49cd3788482614356cb1a6e2086533c111784cee371fb62279dc7932"
+    },
+    {
       "path": "tuldok-pr102-controller-fixture-independent-review.json",
       "bytes": 6290,
       "sha256": "ca19f57258c5f7bc3d01c62ec20ba80e3ab595ca0481b3e7b75f0bca80203d42"
@@ -727,6 +752,11 @@
       "sha256": "263194089f30b73d9ba97180a9c6166cbd373d72c1c177ee85fa44539cf017a5"
     },
     {
+      "path": "tuldok-pr99-merged-tree.json",
+      "bytes": 315,
+      "sha256": "ae3744f6a5413399ed2545878b60e6d186a2e997aa41d99753038485b00218d4"
+    },
+    {
       "path": "tuldok-pr99-native-text-cleanup-final-source.log",
       "bytes": 5917,
       "sha256": "9dd31cf5a670bf1a713b9e0c7e39a83fcf292749cec60adba06a212694dbfa74"
@@ -793,8 +823,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 72502,
-      "sha256": "f4beee526705d0fc8546d7f2fd86839d57c323c4428e506bfefd371cc308bcee"
+      "bytes": 79782,
+      "sha256": "f8fc04d183ec50f4445a08b925e11b59198f88d5e5bb3bc959199da8c963fea1"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",

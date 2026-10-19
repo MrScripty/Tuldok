@@ -1,0 +1,66 @@
+{
+  "pr": 100,
+  "head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+  "base_at_acceptance": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+  "tested_base": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+  "source_and_current_pr_merge_tree": "a70465a7b20d69350b9078fe285eeda90166320f",
+  "state": "All relevant hosted checks passed; independent log review clear",
+  "lifecycle": {
+    "run": 39330889183,
+    "job": 118328479727,
+    "success_steps": 164,
+    "full_discovery": {
+      "command": "python -m unittest discover -s tests",
+      "errors": 0,
+      "failures": 0,
+      "passed_non_skipped": 1529,
+      "ran": 1601,
+      "ran_log_line": "2026-10-19T22:56:06.5811504Z Ran 1601 tests in 2156.490s",
+      "seconds": 2156.49,
+      "skipped": 72,
+      "summary": "OK (skipped=72)"
+    }
+  },
+  "cpu": {
+    "run": 39330889194,
+    "job": 118328479538,
+    "success_steps": 13,
+    "scope": [
+      "The provisioned CPU interpreter drives browser_model_development: actual finite training, three checkpoint/probe sets, explicit comparison selections, lineage, changed-membership refusal and denial/navigation fencing.",
+      "Existing owner preparation/capture and separate fresh captured CPU consumer complete with three charged slots, while source candidate remains diagnostic and package-complete/fresh-verification remain separate UI states.",
+      "Captured runtime scope is TinyCNN forward inference with Torch/NumPy/Pillow; preparation explicitly excludes torchvision and unused optional components. No captured training/resume or CUDA/scientific-quality acceptance inferred."
+    ]
+  },
+  "new_lineage_witness": {
+    "actual_browser_PASS_log_lines": [
+      "2026-10-19T22:57:04.3096993Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-snwtYV"
+    ],
+    "actual_browser_report_path": "build/qa/workspace-publication-lineage/run-snwtYV",
+    "asserted_scope": [
+      "Fresh real neutral Model/Study/Trial/admission and custodian publication copy fault.",
+      "Explicit pinned status2 lineage read with no automatic publication-status fanout or recovery controls in lineage.",
+      "Original interrupted Run retained beside separate published state/exact Ref; navigation clears old metadata; fresh read returns same Ref.",
+      "Existing Run panel owns one explicit recovery; keyboard exact Ref link reopens original Run and performs actual result verification; no compute retry/submit/branch/select-candidate.",
+      "1440/390 layouts without horizontal overflow and no runtime exceptions.",
+      "Fixture must exit0 after server/catalog/schema cleanup before PASS; domain assertions preserve full Study charge/reservation, full reservation document, lineage projection, Run events/counts/original interrupted state and legacy failed artifact refusal."
+    ],
+    "controller_PASS_log_lines": [
+      "2026-10-19T22:56:55.9018360Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences"
+    ],
+    "evidence_basis": "Exact checked-out source assertions inspected plus completed hosted PASS line; this reviewer did not download or relabel older committed domain receipts as current CI artifacts.",
+    "exact_source_sha256": {
+      "tests/browser_workspace_publication_lineage.cjs": "212f21fd4f713320468e8966442f3f95ec3df836c3ac5ff8fee4e9c1ce1de401",
+      "tests/publication_lineage_browser_fixture.py": "2d258b29eefbd0c0b3c99240369ab8fb8f0a849ab54966b9f751e67d8d95d948",
+      "tests/test_workspace_publication_lineage.cjs": "48a1484158ae647e87259c94e5460d3e8995621c7df78c1ef11f383b59dff396"
+    },
+    "no_science_claim": "Neutral byte custody/UI evidence; no model training, numerical quality, CUDA or scientific winner inferred from this lineage fixture."
+  },
+  "limits": [
+    "This independently completes lifecycle and captured-CPU log review only; root owns other required checks, serial merge, archive and post-merge acceptance.",
+    "74 skipped unittest executions are retained explicitly; no claim all discovered tests executed without skips.",
+    "Current lineage CI artifact contents were not downloaded. Domain-conservation scope is grounded in exact source assertions which must pass before hosted browser PASS, not invented current artifact values.",
+    "Retarget main has identical base tree but a different commit identity; actual tested checkout/head/base recorded separately.",
+    "No private heavy execution, remote mutation, rerun or passive polling performed."
+  ],
+  "independent_review": "tuldok-pr100-independent-ci-review.json"
+}
