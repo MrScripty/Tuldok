@@ -244,7 +244,11 @@ class ActualPhaseTimingTests(unittest.TestCase):
             preparation = client.call('graphs.preparation_timings', {'graph_id': case.graph['id'], 'revision': 1})
             self.assertEqual(preparation['status'], 200, preparation)
             self.assertEqual(preparation['result']['selection'], 'latest_actor_graph_revision_observation')
-            self.assertIsNone(preparation['result']['observation'])  # Agent did not prepare; no other actor's history.
+            # queued() actually captured under this agent before admission.
+            self.assertEqual(preparation['result']['actor_id'], case.agent['identity']['actor_id'])
+            self.assertEqual(preparation['result']['observation']['operation'], 'graphs.capture_external')
+            self.assertEqual(preparation['result']['observation']['material_sha256'], run['material_sha256'])
+            self.assertEqual(preparation['result']['observation']['clock_id'], preparation['result']['records'][0]['clock_id'])
             from urllib.request import Request, urlopen
             from urllib.error import HTTPError
             with self.assertRaises(HTTPError) as missing_selection:

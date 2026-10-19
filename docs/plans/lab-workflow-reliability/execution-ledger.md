@@ -387,3 +387,12 @@ forged clock/operation mappings are refused. Old preflight projections remain
 unchanged and these volatile diagnostics never identify a specific earlier reply
 from graph/revision alone. This is a coherent source followup before final
 qualification, not an acceptance claim for initial206aeb6.
+
+The exactfc1ca36 affected group ran 53 cases in 57.348 seconds: 52 passed and
+one newly added HTTP assertion incorrectly expected no submitting-agent
+preparation history. Admission actually captured under that actor, and the
+product correctly returned its exact capture operation/material/clock. The
+harness now asserts that real correlation. The existing separate-actor witness
+already verifies unknown history for another actor. No production source changed
+for this correction. The failed exact-head log is preserved; final qualification
+uses the corrected test head.
