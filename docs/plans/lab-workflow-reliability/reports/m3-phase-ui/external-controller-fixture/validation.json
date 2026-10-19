@@ -1,0 +1,16 @@
+{
+  "state": "local controlled fixture correction qualified; fresh hosted pending",
+  "source_head": "775f3251f9ecf6f7ac4d20b2e633e2c7dcb43844",
+  "source_sha256": {
+    "tests/test_workspace_external_controller.cjs": "ee71d4e479e8ef6787dd071918954494cbfec4f00649efaba09e8a5b95efaae0"
+  },
+  "scope": "test-only: load actual phase module, browser APIs and inert child DOM methods; product and original assertions unchanged",
+  "failure": "controlled composition failed before assertions with missing WorkspacePhaseTimings factory. First import repair reached original passing assertions but asynchronous coordinator render exposed missing child root.contains; final inert DOM methods corrected that fixture gap. Intermediate failure observed but not retained as separate file.",
+  "independent_review": "scientific_comparison_m6: no removed/weakened assertions or product changes; clear",
+  "tests": {
+    "command": "node tests/test_workspace_external_controller.cjs",
+    "exit_code": 0,
+    "log": "tuldok-pr104-external-composition-final-source.log"
+  },
+  "limitations": "mock transport and inert DOM; prior exact real Chromium lifecycle receipt remains separately scoped; no new science/runtime claim"
+}
