@@ -66,13 +66,13 @@ class WorkflowHTTPTests(AgentHTTPCase):
         self.assertNotIn(self.agent['token'], result.stdout + result.stderr)
         return json.loads(result.stdout or result.stderr)
 
-    def manifest(self, key='workflow-http-stable'):
+    def submission_manifest(self, key='workflow-http-stable'):
         grant = self.approve()
         return self.workflow.submission_manifest(self.graph['id'], self.graph['revision'],
             approval_id=grant['id'], request_key=key)
 
     def completed(self):
-        submitted = self.workflow.submit(self.manifest())
+        submitted = self.workflow.submit(self.submission_manifest())
         self.assertEqual(submitted['state'], 'acknowledged', submitted)
         run = submitted['envelope']['result']
         terminal = self.workflow.monitor(run['id'], timeout=40, interval=.02, max_interval=.1)
@@ -134,7 +134,7 @@ class WorkflowHTTPTests(AgentHTTPCase):
         self.assertEqual(unsupported['code'], 'unsupported')
 
     def test_lost_successful_submit_reply_reconciles_same_identity_and_conflict_never_admits_again(self):
-        manifest = self.manifest('http-lost-submit-reply')
+        manifest = self.submission_manifest('http-lost-submit-reply')
         self.client.bootstrap()
         request = self.client._request
         delivered = []
@@ -162,11 +162,11 @@ class WorkflowHTTPTests(AgentHTTPCase):
         self.assertEqual(self.counts(), (1, 1))
 
     def test_actual_http_commit_unknown_then_revoked_reconciliation_stays_unknown(self):
-        manifest = self.manifest('http-committed-but-uncertain')
+        manifest = self.submission_manifest('http-committed-but-uncertain')
         submit = self.dataset.runs.submit_external
         committed = []
-        def commit_then_lose(body):
-            run = submit(body)
+        def commit_then_lose(body, **kwargs):
+            run = submit(body, **kwargs)
             committed.append(run['id'])
             raise CommitOutcomeUnknown('Injected uncertainty after successful real admission commit.')
         with patch.object(self.dataset.runs, 'submit_external', side_effect=commit_then_lose):
@@ -251,7 +251,7 @@ class WorkflowHTTPTests(AgentHTTPCase):
         self.assertEqual(self.workflow.submit(manifest)['state'], 'refused')
         inspector = self.issue_http(['inspect'])
         denied = WorkflowClient(AgentClient(self.root, inspector['token'], self.client.catalog_id))
-        manifest = self.manifest('insufficient-scope-client')
+        manifest = self.submission_manifest('insufficient-scope-client')
         refusal = denied.submit(manifest)
         self.assertEqual((refusal['state'], refusal['envelope']['status']), ('refused', 403))
         self.assertEqual(self.counts(), (0, 0))
@@ -390,7 +390,7 @@ print(json.dumps(dict(result, elapsed=time.monotonic()-started)))
             graph = self.dataset.pipelines.create_external(dict(self.graph_body(), parameters={'mode': 'sleep'}))
             self.graph = graph
             self.preflight = self.dataset.pipelines.preflight_external(graph['id'], graph['revision'])
-        manifest = self.manifest('monitor-cancel-neutral')
+        manifest = self.submission_manifest('monitor-cancel-neutral')
         run = self.workflow.submit(manifest)['envelope']['result']
         self.await_state(run['id'], {'running'})
         deadline = self.cli('monitor', '--run-id', run['id'], '--timeout', .02, expected=1)

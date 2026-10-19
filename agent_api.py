@@ -711,6 +711,12 @@ model_operation('runs.publication_model_evidence', 'POST', '/api/workspace/publi
     {'ref': PUBLICATION_RESULT_REF, 'selectors': JSON_OBJECT}, ['ref'])
 model_operation('runs.compare_publication_evidence', 'POST', '/api/workspace/publication-results/compare-model-evidence',
     {'ref': PUBLICATION_RESULT_REF, 'other_ref': PUBLICATION_RESULT_REF, 'selection': JSON_OBJECT})
+_SCIENTIFIC_OPERAND = {'oneOf': [obj({'kind':const('completed_run'), 'catalog_id':ID, 'run_id':ID}),
+    obj({'kind':const('publication_result'), 'ref':PUBLICATION_RESULT_REF})]}
+model_operation('runs.compare_scientific_evidence', 'POST', '/api/workspace/scientific-comparison',
+    {'operands':array(_SCIENTIFIC_OPERAND,2,2), 'selection':JSON_OBJECT,
+     'point':obj({'field_id':REF, **{axis:integer(0,127) for axis in 'xyz'}})},
+    output=JSON_OBJECT, description='Read exact retained validation field-point diagnostics and scalar compatibility; no scientific criterion or compute is invented.')
 
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
@@ -759,6 +765,26 @@ _EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
 _exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
 _exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
 _CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+_scientific = _CONTRACTS['runs.compare_scientific_evidence'][1]
+_scientific['inputSchema']['properties']['selection'] = obj({key:copy.deepcopy(value)
+    for key,value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id','other_run_id')})
+_SCIENTIFIC_VALUE = {'oneOf':[obj({'state':const('missing'),'reason':text(120)}),
+    obj({'state':const('observed'),'member_ordinal':integer(0,7),'prediction':{'type':'number'},
+         'reference':{'type':'number'},'units':text(80)})]}
+_UNKNOWN_SCIENCE = obj({'state':const('unknown'),'reason':text(160)})
+_scientific['outputSchema']['oneOf'][0]['properties']['result'] = obj({
+    'format':const('scientific_comparison_v1'), 'scalar':copy.deepcopy(_EXACT_COMPARISON_RESULT),
+    'point':copy.deepcopy(_scientific['inputSchema']['properties']['point']),
+    'cases':array(obj({'case':JSON_OBJECT,'values':array(_SCIENTIFIC_VALUE,2,2),
+        'prediction_delta':{'oneOf':[{'type':'null'},obj({'value':{'type':'number'},'units':text(80)})]},
+        'acceptance':_UNKNOWN_SCIENCE}),16),
+    'coverage':obj({key:integer(0,16) for key in ('baseline','candidate','matched','union')}),
+    'interpretation':const('retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance'),
+    'criterion':_UNKNOWN_SCIENCE,
+    'operands':array(obj({'operand':_SCIENTIFIC_OPERAND,'original_run_state':text(32),
+        'model':JSON_OBJECT,'material':JSON_OBJECT,'study_membership':{'type':['object','null']},
+        'configuration':JSON_OBJECT,'timings':JSON_OBJECT,'memory':_UNKNOWN_SCIENCE,
+        'artifacts':array(JSON_OBJECT,256),'custody':const('managed_run_artifacts')}),2,2)})
 _publication_comparison = _CONTRACTS['runs.compare_publication_evidence'][1]
 _publication_comparison['inputSchema']['properties']['selection'] = obj({key: copy.deepcopy(value)
     for key, value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id', 'other_run_id')})
@@ -1607,6 +1633,12 @@ class AgentClient:
                 raise AgentAPIError('Coordinator recovery acknowledgement differs from its exact request.', 'transport', 502)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
+        if op['operation_id'] == 'runs.artifact_segments' and result['status'] < 400:
+            validate_artifact_segments(result['result'], arguments)
+            if any(item['status'] == 200 and item['source']['kind'] == 'publication'
+                   and item['source']['ref']['catalog_id'] != self.catalog_id
+                   for item in result['result']['items']):
+                raise AgentAPIError('Collection publication belongs to another catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_artifact_chunk' and result['status'] < 400:
             if arguments['ref']['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Publication segment belongs to another catalog.', 'transport', 502)
@@ -1616,6 +1648,16 @@ class AgentClient:
                 raise AgentAPIError('Recovered publication does not match the requested Ref/catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_model_evidence' and result['status'] < 400:
             validate_publication_evidence(result['result'], arguments, self.catalog_id)
+        if op['operation_id'] == 'runs.compare_model_evidence' and version == 2 and result['status'] < 400:
+            value = result['result']
+            if value['mode'] != arguments['mode']:
+                raise AgentAPIError('Comparison mode differs from its exact request.', 'transport', 502)
+            for index, side in enumerate(value['sides']):
+                prefix = 'other_' if index else ''
+                if (side['run_id'] != arguments[prefix + 'run_id'] or side['metric_id'] != arguments['metric_id']
+                        or any(side[key] != arguments[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))):
+                    raise AgentAPIError('Comparison side differs from its exact selection.', 'transport', 502)
         if op['operation_id'] == 'runs.compare_publication_evidence' and result['status'] < 400:
             refs = [arguments['ref'], arguments['other_ref']]; value = result['result']
             if value['result_refs'] != refs or any(ref['catalog_id'] != self.catalog_id for ref in refs):
@@ -1627,6 +1669,20 @@ class AgentClient:
                                ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))
                         or value['comparison']['mode'] != choices['mode']):
                     raise AgentAPIError('Recovered comparison side differs from its exact selection.', 'transport', 502)
+        if op['operation_id'] == 'runs.compare_scientific_evidence' and result['status'] < 400:
+            value, choices = result['result'], arguments['selection']
+            operands = arguments['operands']
+            if (value['point'] != arguments['point'] or value['scalar']['mode'] != choices['mode']
+                    or [item['operand'] for item in value['operands']] != operands):
+                raise AgentAPIError('Scientific comparison differs from its exact ordered request.', 'transport', 502)
+            for index, (operand, side) in enumerate(zip(operands, value['scalar']['sides'], strict=True)):
+                source = operand['ref'] if operand['kind'] == 'publication_result' else operand
+                prefix = 'other_' if index else ''
+                if (source['catalog_id'] != self.catalog_id or side['run_id'] != source['run_id']
+                        or side['metric_id'] != choices['metric_id']
+                        or any(side[key] != choices[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))):
+                    raise AgentAPIError('Scientific comparison side differs from its exact selection/catalog.', 'transport', 502)
         if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and result['status'] < 400:
             value = result['result']
             identity = ('run_id',) if op['operation_id'] == 'runs.phase_timings' else ('graph_id',)

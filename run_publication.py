@@ -654,3 +654,79 @@ def compare_evidence(runs, ref, other_ref, body):
     _read_check(runs, deadline)
     for item in (ref, other_ref): _current_read(runs, item['run_id'])
     return {'result_refs': [copy.deepcopy(ref), copy.deepcopy(other_ref)], 'comparison': comparison}
+
+
+@_reader_boundary
+def compare_scientific(runs, body):
+    """Read both supported custody forms through their existing authoritative owners."""
+    closed(body, ('operands', 'selection', 'point'))
+    _require(type(body['operands']) is list and len(body['operands']) == 2,
+             'Select an exact baseline and candidate.', 'invalid')
+    selection = body['selection']
+    closed(selection, ('checkpoint_sha256', 'other_checkpoint_sha256', 'evaluation_sha256',
+        'other_evaluation_sha256', 'metric_id', 'metric_definition_sha256', 'other_metric_definition_sha256', 'mode'))
+    _require(selection['mode'] in ('paired', 'side_by_side') and type(selection['metric_id']) is str
+             and 1 <= len(selection['metric_id']) <= 64
+             and all(_hash(value) for key, value in selection.items() if key.endswith('sha256')),
+             'Select exact checkpoint, evaluation and metric identities.', 'invalid')
+    deadline = time.monotonic() + WALL_SECONDS
+    selected = []; metadata = []
+    for index, operand in enumerate(body['operands']):
+        _require(type(operand) is dict, 'Invalid comparison operand.', 'invalid')
+        if operand.get('kind') == 'publication_result':
+            closed(operand, ('kind', 'ref'))
+            value, run, verified = _evidence(runs, operand['ref'], deadline)
+            artifacts = value['artifacts']
+        elif operand.get('kind') == 'completed_run':
+            closed(operand, ('kind', 'catalog_id', 'run_id'))
+            _require(operand['catalog_id'] == runs.db.dataset_id, 'Comparison catalog differs.', 'stale')
+            identifier(operand['run_id'], 'Comparison Run ID')
+            runs.access.require('inspect', 'runs.compare_scientific_evidence', operand['run_id'])
+            with runs.lock: run = runs._load(operand['run_id'])
+            _require(run['state'] == 'completed' and runs._extension(run),
+                     'Use an exact attached publication Ref for a recovered failed Run; legacy evidence is unsupported.', 'unsupported')
+            runs._external_inventory(run)
+            verified = runs._verify_extension(runs.path / run['id'], run,
+                                             checkpoint=lambda: _read_check(runs, deadline))
+            artifacts = run['artifacts']
+        else:
+            _require(False, 'Unsupported comparison operand kind.', 'unsupported')
+        item = next((row for row in artifacts if row['name'] == 'model-evidence.json'), None)
+        expected = selection[('other_' if index else '')+'evaluation_sha256']
+        _require(item is not None and item['sha256'] == expected, 'Exact evaluation identity differs.', 'stale')
+        selected.append((run, verified, copy.deepcopy(artifacts)))
+        context = run['extension_context']
+        association = runs.db.execute('SELECT study_id,trial_id FROM model_attempt_reservations WHERE run_id=%s',
+                                      (run['id'],)).fetchone()
+        membership = (dict(association, catalog_id=runs.db.dataset_id,
+                           material_sha256=context['composition']['sha256']) if association is not None else None)
+        metadata.append({'operand':copy.deepcopy(operand), 'original_run_state':run['state'],
+            'model':copy.deepcopy(context['static']['model']), 'material':copy.deepcopy(context['composition']),
+            'study_membership':membership,
+            'configuration':copy.deepcopy(context['static']['policy']['model_specification']),
+            'timings':runs.phase_timings(run['id']),
+            'memory':{'state':'unknown','reason':'memory_measurement_not_retained_by_profile'},
+            'artifacts':copy.deepcopy(artifacts), 'custody':'managed_run_artifacts'})
+        _read_check(runs, deadline)
+    import extension_evidence
+    comparison = extension_evidence.compare_scientific([item[1] for item in selected],
+        [item[0]['extension_context'] for item in selected], selection, body['point'])
+    # Authority can change while bytes are read. Fence both operands after all
+    # projection/timing work, through the same owners used for the initial read.
+    for operand, (run, _, artifacts) in zip(body['operands'], selected, strict=True):
+        if operand['kind'] == 'publication_result':
+            current = result(runs, operand['ref'], deadline=deadline, _verify_payloads=False)
+            _require(current['artifacts'] == artifacts, 'Publication inventory changed during comparison.', 'stale')
+            _current_read(runs, run['id'])
+        else:
+            runs.access.require('inspect', 'runs.compare_scientific_evidence', run['id'])
+            with runs.lock: current = runs._load(run['id'])
+            _require(current['state'] == 'completed' and current['artifacts'] == artifacts,
+                     'Completed Run inventory changed during comparison.', 'stale')
+            runs._external_inventory(current)
+        _read_check(runs, deadline)
+    for run, _, _ in selected:
+        _current_read(runs, run['id'])
+    comparison['operands'] = metadata
+    _require(len(encode(comparison).encode()) <= 2*1024**2, 'Comparison exceeds its response bound.')
+    return comparison

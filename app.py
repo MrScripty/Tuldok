@@ -958,6 +958,7 @@ def make_handler(dataset, observer=None):
                     '/workspace-external.js': ('workspace-external.js', 'text/javascript'),
                     '/workspace-phase-timings.js': ('workspace-phase-timings.js', 'text/javascript'),
                     '/workspace-service.js': ('workspace-service.js', 'text/javascript'),
+                    '/workspace-scientific-comparison.js': ('workspace-scientific-comparison.js', 'text/javascript'),
                     '/workspace-fixtures.json': ('workspace-fixtures.json', 'application/json'),
                     '/pipeline-editor.js': ('pipeline-editor.js', 'text/javascript'),
                     '/runs-view.js': ('runs-view.js', 'text/javascript'),
@@ -1015,6 +1016,9 @@ def make_handler(dataset, observer=None):
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if parts == ['scientific-comparison']:
+                        agent_api.require_selection(self._contract_selection, 'runs.compare_scientific_evidence')
+                        return self.reply(dataset.runs.compare_scientific_evidence(body))
                     if parts == ['artifact-segments']:
                         agent_api.require_selection(self._contract_selection, 'runs.artifact_segments')
                         guards = []

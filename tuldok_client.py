@@ -11,6 +11,7 @@ import math
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import tempfile
 import threading
@@ -299,7 +300,11 @@ class WorkflowClient:
             for item in artifacts:
                 validate_arguments('runs.artifact_chunk', {
                     'run_id': source.get('run_id', source.get('ref', {}).get('run_id')),
-                    'name': item['name'], 'expected_sha256': item['sha256'], 'offset': 0, 'max_bytes': 1})
+                    'name': 'inventory-entry', 'expected_sha256': item['sha256'], 'offset': 0, 'max_bytes': 1})
+                # Public inventory metadata can include artifact-manifest.json,
+                # which the segment operation deliberately cannot select.
+                if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', item['name']):
+                    raise ValueError()
                 if type(item['bytes']) is not int or not 0 <= item['bytes'] <= MAX_COLLECTION_BYTES:
                     raise ValueError()
                 inventory.append({key: item[key] for key in ('name', 'sha256', 'bytes')})
@@ -322,7 +327,7 @@ class WorkflowClient:
             raise AgentAPIError('Selected artifacts are missing or exceed the aggregate collection bound.')
         body = {'format': 'workflow_collection_manifest_v1', 'catalog_id': self.client.catalog_id,
                 'source': source, 'inventory_sha256': _digest(inventory), 'items': items}
-        return dict(body, sha256=_digest(body))
+        return self._validate_collection(dict(body, sha256=_digest(body)))
 
     def _validate_collection(self, manifest):
         _closed(manifest, ('format', 'catalog_id', 'source', 'inventory_sha256', 'items', 'sha256'))
