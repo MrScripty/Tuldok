@@ -115,7 +115,20 @@ offset zero; no unverified prefix is retained or reused. No missing segment is
 zero-filled. A changed inventory refuses the entire stale selection. Initial
 inventory or resume validation failures raise a typed error; retain the earlier
 receipt for inspection. CLI output can be saved for later resume, without token
-material. Event cancellation stops collection only, never compute.
+material. Event cancellation stops collection only, never compute. A pre-set
+event validates the local manifest and returns stopped before bootstrap/inventory
+requests or local publication. Its items are outstanding, or retain the exact
+previous resume proofs; it claims no fresh authorization/verification. Later
+stops/partial results also preserve unvisited prior item outcomes. A subsequent
+explicit resume rechecks them before claiming collection complete.
+
+When an event is supplied, collection uses the same canonical AgentClient read
+context in cancellation-only mode: each request keeps its finite configured
+request deadline, cancellation is checked during bootstrap and socket reads, and
+the request watchdog is joined. No separate overall collection timeout is added.
+Connection setup may take up to the configured connect bound (at most5seconds),
+and local validation/hash steps remain cooperative. Without an event, ordinary
+finite configured per-request timeouts remain unchanged.
 
 ## Exact comparison
 

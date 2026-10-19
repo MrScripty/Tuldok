@@ -31,6 +31,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL and actual HTTP')
 class WorkflowHTTPTests(AgentHTTPCase):
+    wall_seconds = 60  # Separate CLI bootstrap must fit before explicit cancel.
+
     def setUp(self):
         super().setUp()
         self.agent = self.issue_http(['inspect', 'edit', 'execute', 'cancel'])
@@ -108,6 +110,23 @@ class WorkflowHTTPTests(AgentHTTPCase):
         resumed = self.cli('collect', '--manifest', self.path/'collection.json', '--directory', destination,
                            '--resume', self.file('collection-receipt.json', receipt))
         self.assertEqual(resumed['state'], 'complete')
+        self.assertEqual(self.counts(), (1, 1))
+        # Existing commands and frozen consumer use this same real saved Run.
+        self.assertEqual(self.cli('status', '--run-id', run_id)['state'], 'completed')
+        self.assertEqual(self.cli('submit', '--arguments', self.file('old-submission.json',
+            submitted['manifest']['arguments']))['id'], run_id)
+        old_download = self.path/'old-command-download.bin'
+        old_receipt = self.cli('download', '--run-id', run_id, '--name', 'result.txt',
+            '--expected-sha256', manifest['items'][0]['sha256'], '--out', old_download)
+        self.assertEqual(old_receipt['verification'], 'whole_sha256_verified')
+        self.assertEqual(old_download.read_bytes(), self.input)
+        from test_agent_negotiation import LEGACY
+        old_client = LEGACY.AgentClient(self.root, self.agent['token'], self.client.catalog_id)
+        self.assertEqual(old_client.call('runs.get', {'run_id': run_id})['result']['state'], 'completed')
+        frozen = old_client.call('runs.artifact_chunk', {'run_id': run_id, 'name': 'result.txt',
+            'expected_sha256': manifest['items'][0]['sha256'], 'offset': 0, 'max_bytes': 7})
+        self.assertEqual(frozen['status'], 200)
+        self.assertEqual(base64.b64decode(frozen['result']['data_base64']), self.input[:7])
         self.assertEqual(self.counts(), (1, 1))
         # The neutral recipe has no evidence profile; comparison cannot invent one.
         unsupported = self.cli('comparison-manifest', '--run-id', run_id, '--other-run-id', run_id,
@@ -244,6 +263,45 @@ class WorkflowHTTPTests(AgentHTTPCase):
         self.assertEqual((refused['state'], refused['envelope']['status']), ('refused', 401))
         self.assertEqual(requests.call_count, 1)
         self.assertEqual(self.counts(), (0, 0))
+
+    def test_collection_event_interrupts_actual_blocked_segment_and_cleans_provisional(self):
+        run = self.completed()
+        manifest = self.workflow.collection_manifest(run_id=run['id'], names=['result.txt'])
+        destination = self.path/'stopped-artifact'; destination.mkdir(mode=0o700)
+        handler = self.server.RequestHandlerClass
+        original_post = handler.do_POST
+        entered, release, stop = threading.Event(), threading.Event(), threading.Event()
+        requests = []
+        def blocked(instance):
+            if '/artifact-segment/' in instance.path:
+                requests.append(instance.path)
+                entered.set(); release.wait(10)
+            try:
+                original_post(instance)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+        def cancel_after_enter():
+            if entered.wait(10):
+                stop.set()
+        trigger = threading.Thread(target=cancel_after_enter)
+        trigger.start()
+        started = time.monotonic()
+        try:
+            with patch.object(handler, 'do_POST', blocked):
+                receipt = self.workflow.collect(manifest, destination, cancelled=stop, chunk_bytes=7)
+        finally:
+            release.set(); trigger.join(5)
+        self.assertTrue(entered.is_set())
+        self.assertEqual(receipt['state'], 'stopped')
+        self.assertEqual(receipt['items'][0]['error']['code'], 'stopped')
+        self.assertEqual(len(requests), 1)
+        self.assertLess(time.monotonic()-started, 2)
+        self.assertEqual(list(destination.iterdir()), [])
+        self.assertFalse(any(thread.name == 'agent-read-budget' for thread in threading.enumerate()))
+        resumed = self.workflow.collect(manifest, destination, resume=receipt, chunk_bytes=7)
+        self.assertEqual(resumed['state'], 'complete')
+        self.assertEqual((destination/'result.txt').read_bytes(), self.input)
+        self.assertEqual(self.counts(), (1, 1))
 
     def test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation(self):
         # A fresh consumer process includes first validator import/registry work.
@@ -407,6 +465,9 @@ class RetainedWorkflowHTTPTests(unittest.TestCase):
         self.assertEqual(collected['state'], 'complete', collected)
         self.assertEqual((destination/'result.txt').read_bytes(), fixture.input)
         self.assertEqual(collected['items'][0]['receipt']['result_ref'], ref)
+        resumed = workflow.collect(manifest, destination, resume=collected, chunk_bytes=7)
+        self.assertEqual(resumed['state'], 'complete')
+        self.assertEqual(resumed['items'][0]['receipt']['result_ref'], ref)
         with fixture.owner.bound(fixture.dataset):
             fixture.dataset.access.revoke(fixture.agent['identity']['credential_id'])
         with patch.object(workflow.client, '_request', wraps=workflow.client._request) as requests:

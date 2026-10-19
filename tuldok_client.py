@@ -5,6 +5,7 @@ AgentClient while a workflow runs; callers must not share it concurrently.
 Execution, disclosure, comparison and grants remain server-owned.
 """
 import copy
+from contextlib import nullcontext
 import hashlib
 import math
 import json
@@ -124,7 +125,9 @@ def _verified_local(path, item):
             checksum.update(raw)
             remaining -= len(raw)
         after = os.fstat(fd)
-        if (remaining or checksum.hexdigest() != item['sha256']
+        current = os.stat(path, follow_symlinks=False)
+        if ((current.st_dev, current.st_ino) != (after.st_dev, after.st_ino)
+                or remaining or checksum.hexdigest() != item['sha256']
                 or (before.st_size, before.st_mtime_ns, before.st_ctime_ns) !=
                    (after.st_size, after.st_mtime_ns, after.st_ctime_ns)):
             raise AgentAPIError('Resumed artifact differs from its exact whole hash.', 'artifact_mismatch', 409)
@@ -321,23 +324,39 @@ class WorkflowClient:
                 'source': source, 'inventory_sha256': _digest(inventory), 'items': items}
         return dict(body, sha256=_digest(body))
 
-    def _check_collection(self, manifest):
+    def _validate_collection(self, manifest):
         _closed(manifest, ('format', 'catalog_id', 'source', 'inventory_sha256', 'items', 'sha256'))
         if (manifest['format'] != 'workflow_collection_manifest_v1' or manifest['catalog_id'] != self.client.catalog_id
                 or manifest['sha256'] != _digest({k: v for k, v in manifest.items() if k != 'sha256'})
                 or type(manifest['source']) is not dict or type(manifest['items']) is not list
                 or not 1 <= len(manifest['items']) <= MAX_ITEMS):
             raise AgentAPIError('Invalid collection manifest.')
+        source = manifest['source']
+        if set(source) == {'run_id'}:
+            operation = 'runs.artifact_chunk'
+        elif set(source) == {'ref'}:
+            operation = 'runs.publication_artifact_chunk'
+        else:
+            raise AgentAPIError('Select one exact Run or publication Ref.')
+        inventory_hash = manifest['inventory_sha256']
+        if (type(inventory_hash) is not str or len(inventory_hash) != 64
+                or any(char not in '0123456789abcdef' for char in inventory_hash)):
+            raise AgentAPIError('Invalid collection inventory identity.')
         names = []
         for item in manifest['items']:
             _closed(item, ('name', 'sha256', 'bytes'))
             if type(item['bytes']) is not int or not 0 <= item['bytes'] <= MAX_COLLECTION_BYTES:
                 raise AgentAPIError('Invalid collection item byte bound.')
-            if type(item['name']) is not str:
-                raise AgentAPIError('Invalid artifact name.')
+            validate_arguments(operation, dict(source, name=item['name'], expected_sha256=item['sha256'],
+                offset=0, max_bytes=1))
+            if 'ref' in source and source['ref']['catalog_id'] != self.client.catalog_id:
+                raise AgentAPIError('Collection publication belongs to another catalog.', 'conflict', 409)
             names.append(item['name'])
         if len(set(names)) != len(names) or sum(item['bytes'] for item in manifest['items']) > MAX_COLLECTION_BYTES:
             raise AgentAPIError('Collection exceeds unique item or aggregate bounds.')
+        return copy.deepcopy(manifest)
+
+    def _check_collection(self, manifest):
         # Fresh transitive disclosure and exact inventory, including on resume.
         inventory = self._inventory(manifest['source'])
         if (_digest(inventory) != manifest['inventory_sha256']
@@ -351,7 +370,7 @@ class WorkflowClient:
             raise AgentAPIError('Collection cancellation must be a threading.Event.')
         if type(chunk_bytes) is not int or not 1 <= chunk_bytes <= 8*1024*1024:
             raise AgentAPIError('Invalid bounded collection segment size.')
-        manifest = self._check_collection(manifest)
+        manifest = self._validate_collection(manifest)
         # No batch operation exists in the installed registry. Do not probe an
         # invented route or fall back in response to an operation failure.
         previous = {}
@@ -365,41 +384,58 @@ class WorkflowClient:
                         or result.get('state') not in ('verified', 'refused', 'outstanding')):
                     raise AgentAPIError('Invalid resume item.')
                 previous[result['name']] = result
-        directory = Path(directory)
-        if not directory.is_dir() or directory.is_symlink():
-            raise AgentAPIError('Collection destination must be an existing regular directory.')
-        results, halted = [], False
-        for item in manifest['items']:
-            name = item['name']
-            destination = directory / name
-            if halted or (cancelled is not None and cancelled.is_set()):
-                results.append({'name': name, 'state': 'outstanding'})
-                halted = True
-                continue
-            try:
-                if previous.get(name, {}).get('state') == 'verified':
-                    # Reauthorize this artifact even when no local write is needed.
-                    source = manifest['source']
-                    operation = 'runs.publication_artifact_chunk' if 'ref' in source else 'runs.artifact_chunk'
-                    _invoke(self.client, operation, dict(source, name=name, expected_sha256=item['sha256'], offset=0, max_bytes=1))
-                    _verified_local(destination, item)
-                    receipt = {'run_id': source.get('run_id', source.get('ref', {}).get('run_id')),
-                               'name': name, 'output': str(destination), 'sha256': item['sha256'],
-                               'bytes': item['bytes'], 'verification': 'whole_sha256_verified'}
-                else:
-                    source = manifest['source']
-                    receipt = download(self.client, source.get('run_id', source.get('ref', {}).get('run_id')),
-                        name, item['sha256'], destination, result_ref=source.get('ref'), chunk_bytes=chunk_bytes,
-                        cancelled=cancelled, expected_bytes=item['bytes'])
-                results.append({'name': name, 'state': 'verified', 'receipt': receipt})
-            except (AgentAPIError, OSError) as error:
-                if isinstance(error, OSError):
-                    error = AgentAPIError('Local collection file operation failed.', 'unavailable', 503)
-                results.append({'name': name, 'state': 'outstanding' if error.code == 'stopped' else 'refused', 'error': _error(error)})
-                halted = True
-        state = ('complete' if all(item['state'] == 'verified' for item in results) else
-                 'stopped' if cancelled is not None and cancelled.is_set() else 'partial')
-        return {'format': 'workflow_collection_receipt_v1', 'manifest': manifest, 'state': state, 'items': results}
+        def stopped():
+            return {'format': 'workflow_collection_receipt_v1', 'manifest': manifest, 'state': 'stopped',
+                    'items': [copy.deepcopy(previous.get(item['name'], {'name': item['name'], 'state': 'outstanding'}))
+                              for item in manifest['items']]}
+        if cancelled is not None and cancelled.is_set():
+            return stopped()
+        try:
+            budget = self.client.read_budget(None, cancelled) if cancelled is not None else nullcontext()
+            with budget:
+                self._check_collection(manifest)
+                directory = Path(directory)
+                if not directory.is_dir() or directory.is_symlink():
+                    raise AgentAPIError('Collection destination must be an existing regular directory.')
+                results, halted = [], False
+                for item in manifest['items']:
+                    name = item['name']
+                    destination = directory / name
+                    if halted or (cancelled is not None and cancelled.is_set()):
+                        results.append(copy.deepcopy(previous.get(name, {'name': name, 'state': 'outstanding'})))
+                        halted = True
+                        continue
+                    try:
+                        if previous.get(name, {}).get('state') == 'verified':
+                            # Reauthorize this artifact even when no local write is needed.
+                            source = manifest['source']
+                            operation = 'runs.publication_artifact_chunk' if 'ref' in source else 'runs.artifact_chunk'
+                            _invoke(self.client, operation, dict(source, name=name, expected_sha256=item['sha256'], offset=0, max_bytes=1))
+                            _verified_local(destination, item)
+                            receipt = {'run_id': source.get('run_id', source.get('ref', {}).get('run_id')),
+                                       'name': name, 'output': str(destination), 'sha256': item['sha256'],
+                                       'bytes': item['bytes'], 'verification': 'whole_sha256_verified'}
+                            if 'ref' in source:
+                                receipt['result_ref'] = copy.deepcopy(source['ref'])
+                        else:
+                            source = manifest['source']
+                            receipt = download(self.client, source.get('run_id', source.get('ref', {}).get('run_id')),
+                                name, item['sha256'], destination, result_ref=source.get('ref'), chunk_bytes=chunk_bytes,
+                                cancelled=cancelled, expected_bytes=item['bytes'])
+                        results.append({'name': name, 'state': 'verified', 'receipt': receipt})
+                    except (AgentAPIError, OSError) as error:
+                        if isinstance(error, OSError):
+                            error = AgentAPIError('Local collection file operation failed.', 'unavailable', 503)
+                        results.append({'name': name, 'state': 'outstanding' if error.code == 'stopped' else 'refused', 'error': _error(error)})
+                        halted = True
+                state = ('complete' if all(item['state'] == 'verified' for item in results) else
+                         'stopped' if cancelled is not None and cancelled.is_set() else 'partial')
+                return {'format': 'workflow_collection_receipt_v1', 'manifest': manifest, 'state': state, 'items': results}
+
+        except AgentAPIError as error:
+            if error.code == 'stopped':
+                return stopped()
+            raise
 
     def comparison_manifest(self, run_id, other_run_id, *, checkpoint_sha256, other_checkpoint_sha256,
                             metric_id, mode='paired', result_ref=None, other_result_ref=None):

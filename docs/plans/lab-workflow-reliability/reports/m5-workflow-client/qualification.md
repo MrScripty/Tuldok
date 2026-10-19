@@ -78,3 +78,29 @@ runtime or application startup failure.
 Actual HTTP tests and final source/commit attribution will be appended after
 the benchmark owner's quiet window and focused qualification. Missing or failing
 acceptance stays visible; no CI or full-plan acceptance is claimed here.
+
+## Independent review follow-up before HTTP qualification
+
+Root reviewed source commit `d04d9be64b115d491a005ddb59fb868f3e2dea1a` and found no
+new blocking client/CLI issue after its earlier hash/uncertainty/deadline fixes.
+It requested prompt pre-set collection cancellation. Root explicitly approved
+cancellation-only `read_budget(deadline=None, cancelled=Event)`, preserving finite
+configured per-request deadlines and the same canonical watchdog/socket owner.
+Collection now validates the local closed manifest and returns stopped before
+bootstrap when already cancelled. An explicit resume retains earlier item proofs;
+stopped/unvisited proofs make no fresh authorization/verification claim. Current
+bootstrap and segment reads observe that event through the same request owner.
+No request parallelism or alternate transport is introduced.
+
+Follow-up source also retains publication-result Ref provenance on resumed local
+successes and refuses destination inode replacement during local whole hashing.
+`focused-followup.log` records14 focused tests, including pre-stopped/no-network
+collection and the pathname replacement race. The actual HTTP test covers a
+blocked artifact response, Event cancellation, provisional cleanup and explicit
+resume. Existing CLI `submit/status/download` and a frozen legacy AgentClient
+now read the same genuinely completed Run inside the disposable HTTP fixture.
+
+The selected existing interpreter's installed metadata is Python3.12.14,
+psycopg3.3.6, jsonschema4.26.0, NumPy2.5.4, Torch2.8.0+cpu,
+torchvision0.23.0+cpu and scikit-learn1.7.2. The optional existing classifier
+fixture uses the built-in runtime directly and creates no runtime snapshot/copy.

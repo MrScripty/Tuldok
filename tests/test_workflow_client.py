@@ -34,7 +34,7 @@ class ConsumerFixture(SegmentFixture):
     @contextmanager
     def read_budget(self, deadline, cancelled=None):
         original = self.timeout
-        self.timeout = min(original, max(.000001, deadline-time.monotonic()))
+        self.timeout = original if deadline is None else min(original, max(.000001, deadline-time.monotonic()))
         try:
             yield self
         finally:
@@ -184,6 +184,23 @@ assert 'jsonschema' not in sys.modules
         self.assertEqual(value['state'], 'requested')
         self.assertFalse(value['drained'])
 
+    def test_pre_stopped_collection_never_bootstraps_and_retains_prior_item_proofs(self):
+        client = ConsumerFixture(); workflow = WorkflowClient(client)
+        manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin'])
+        stop = threading.Event(); stop.set()
+        client.requests.clear()
+        fresh = workflow.collect(manifest, '.', cancelled=stop)
+        self.assertEqual(fresh['state'], 'stopped')
+        self.assertEqual(fresh['items'], [{'name': 'one.bin', 'state': 'outstanding'}])
+        self.assertEqual(client.requests, [])
+        with tempfile.TemporaryDirectory() as directory:
+            receipt = workflow.collect(manifest, directory)
+            client.requests.clear()
+            stopped = workflow.collect(manifest, directory, resume=receipt, cancelled=stop)
+            self.assertEqual(stopped['state'], 'stopped')
+            self.assertEqual(stopped['items'], receipt['items'])
+            self.assertEqual(client.requests, [])
+
     def test_interrupted_segments_resume_at_zero_with_whole_hash_and_current_authority(self):
         client = ConsumerFixture()
         workflow = WorkflowClient(client)
@@ -250,6 +267,28 @@ assert 'jsonschema' not in sys.modules
                 else:
                     self.assertFalse(target.exists())
                 self.assertFalse(any(path.name.startswith('.tuldok') for path in Path(directory).iterdir()))
+
+    def test_resume_rejects_destination_replacement_during_whole_hash_verification(self):
+        client = ConsumerFixture(); workflow = WorkflowClient(client)
+        manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin'])
+        with tempfile.TemporaryDirectory() as directory:
+            receipt = workflow.collect(manifest, directory)
+            target = Path(directory)/'one.bin'
+            read = os.read
+            changed = []
+            def replace(descriptor, size):
+                raw = read(descriptor, size)
+                if not changed:
+                    replacement = Path(directory)/'replacement'
+                    replacement.write_bytes(b'preserved concurrent replacement')
+                    replacement.replace(target)
+                    changed.append(True)
+                return raw
+            with patch('tuldok_client.os.read', side_effect=replace):
+                resumed = workflow.collect(manifest, directory, resume=receipt)
+            self.assertEqual(resumed['state'], 'partial')
+            self.assertEqual(resumed['items'][0]['error']['code'], 'artifact_mismatch')
+            self.assertEqual(target.read_bytes(), b'preserved concurrent replacement')
 
     def test_changed_inventory_local_success_and_closed_manifests_refuse(self):
         client = ConsumerFixture(); workflow = WorkflowClient(client)

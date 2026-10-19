@@ -1333,14 +1333,17 @@ class AgentClient:
         self._read_context = threading.local()
 
     @contextmanager
-    def read_budget(self, deadline, cancelled=None):
+    def read_budget(self, deadline=None, cancelled=None):
         """Bound a serial read workflow, including bootstrap, with one deadline.
 
         The canonical request owner observes cancellation and joins its socket
-        watchdog. Mutation dispatch is prohibited inside this read-only context.
+        watchdog. A cancellation-only context keeps each configured request
+        deadline. Mutation dispatch is prohibited inside this read-only context.
         """
-        if type(deadline) not in (int, float) or not math.isfinite(deadline):
+        if deadline is not None and (type(deadline) not in (int, float) or not math.isfinite(deadline)):
             raise AgentAPIError('Read deadline must be finite.')
+        if deadline is None and cancelled is None:
+            raise AgentAPIError('Select a read deadline or cancellation event.')
         if cancelled is not None and not isinstance(cancelled, threading.Event):
             raise AgentAPIError('Read cancellation must be a threading.Event.')
         if getattr(self._read_context, 'value', None) is not None:
@@ -1358,7 +1361,7 @@ class AgentClient:
             deadline, cancelled = budget
             if cancelled is not None and cancelled.is_set():
                 raise AgentAPIError('Read workflow stopped; compute cancellation was not requested.', 'stopped', 409)
-            if time.monotonic() >= deadline:
+            if deadline is not None and time.monotonic() >= deadline:
                 raise AgentAPIError('Read workflow deadline reached; execution state is unchanged.', 'deadline', 408)
         return budget
 
@@ -1375,7 +1378,9 @@ class AgentClient:
 
     def _request(self, method, path, body=None, selection=None):
         budget = self._check_read_budget()
-        deadline = min(time.monotonic() + self.timeout, budget[0]) if budget is not None else time.monotonic() + self.timeout
+        deadline = time.monotonic() + self.timeout
+        if budget is not None and budget[0] is not None:
+            deadline = min(deadline, budget[0])
         request_timeout = max(0.000001, deadline - time.monotonic())
         connection = http.client.HTTPConnection(self.host, self.port, timeout=min(5, request_timeout))
         sockets = []
