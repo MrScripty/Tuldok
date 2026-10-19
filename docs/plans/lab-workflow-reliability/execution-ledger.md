@@ -414,3 +414,21 @@ partial. The real completed-result witness includes that exact empty sample and
 continues to require unchanged public Run/result bytes. Final timing-module
 qualification covers the refined reader; prior53-case evidence is retained with
 its actual source head rather than attributed to this followup.
+
+## 2026-10-19 — M4 baseline-only harness qualification
+
+An isolated branch from exact production96c2ade adds only a bounded neutral
+workflow measurement harness, reporting tests and documentation/evidence. The
+first exploratory three preflights repeated the full current system-runtime
+identity (1315 files, 64,063,492 bytes) with equal material. These are exploratory
+same-process samples, not cache, OS-cold, lab or performance-improvement claims.
+
+Pilot01 failed before execution because the harness used unsupported recipe
+parameter keys; corrected to supported min/max. Its constructor failure occurred
+before the harness had its final ownership cleanup guard; no unknown schema was
+inferred or deleted. The task cluster may retain that small failed-fixture schema
+until its owner disposes of the cluster. Pilot02 passed one-artifact empty/two-Run
+cells. Pilot03 passed one-artifact integrity and real same-Run copy recovery, then
+its two-artifact proof check exposed filesystem inventory order. The comparison
+now checks exact unique path/bytes/SHA mappings, preserving duplicate/hash
+refusal. All original failures/raw logs are retained separately from final runs.
