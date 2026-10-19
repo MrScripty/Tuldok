@@ -530,3 +530,23 @@ loads. Injected A/B/A authority loss refuses at both domain and post-serializati
 boundaries; duplicate late credential revocation/shutdown discard bytes. M1
 independently cleared the narrow source and passed all10 current pure cases.
 No wall-time improvement is inferred before new same-head paired measurements.
+
+
+The refined fixed-source98380228a7edb8eefb4715cba27ca76722756cf9 matrix completed
+exit0 with all54 pairs/108 arms,18 eligible processes and six empty-history
+unavailable controls. Both exact fresh schemas/temporary directories were removed;
+all whole hashes, events/accounting and source/harness identities match. All27
+twenty-artifact pairs were faster: median paired ratios0.700/0.695 for Run
+histories8/55 and0.710 for attached Ref at total history56. First n3 medians are
+0.714/0.700/0.710, warm n6 medians0.662/0.649/0.712. One-artifact medians still
+regress2.717/2.577/2.123. No observations/outliers were removed. Raw data, all
+first/warm/order strata and owner/resource distributions are retained under
+`reports/m4-bounded-collection/paired-9838022/`.
+
+The lead admitted scoped retention for explicit bounded many-small twenty-item
+collection on this evidence. Default individual collection stays unchanged;
+performance for2–19 items, other sizes, remote/scientific workloads or the
+separately owned facade is unmeasured. No generic workflow/science gain, cache,
+automatic threshold or full M4/T5 acceptance follows. The original negative997
+matrix remains immutable. The qualified source is983, even when report-only
+normal compositions later advance the branch tip.
