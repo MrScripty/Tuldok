@@ -28,6 +28,12 @@ function fixture(){
   for(const transition of ['navigate','session']){const f=fixture(),held=deferred();f.handler(()=>held.promise);f.select();assert.equal(f.calls.length,1);f[transition]();assert.equal(f.calls[0].signal.aborted,true);held.resolve(result());await flush();assert.equal(f.timers.size,0);assert.equal(f.ui.html(),'');}
   const stale=fixture(),held=deferred();stale.handler(()=>held.promise);stale.select();stale.handler(async()=>result({run_id:'9'.repeat(32)}));stale.select('9'.repeat(32));await flush();held.resolve(result());await flush();assert.equal(stale.calls[0].signal.aborted,true);assert.match(stale.ui.html(),/<table>/);assert.equal(stale.calls.length,2);
   const refused=fixture();refused.handler(async()=>{const error=Error('Current inspection refused');error.status=403;throw error;});refused.select();await flush();assert.equal(refused.timers.size,0);assert.match(refused.ui.html(),/Current inspection refused/);
+  const sameSelection=fixture(),oldGeneration=deferred();let generation=1;
+  sameSelection.handler(()=>oldGeneration.promise);sameSelection.ui.select({kind:'run',id:run},()=>generation===1);
+  generation=2;sameSelection.handler(async()=>result({records:[record({spans:[span({elapsed_ms:11})]})]}));
+  sameSelection.ui.select({kind:'run',id:run},()=>generation===2);assert.equal(sameSelection.calls.length,1,'Same-selection reads remain sequential across load generations');await flush();
+  oldGeneration.resolve(result({records:[record({spans:[span({elapsed_ms:777})]})]}));await flush();
+  assert.equal(sameSelection.calls[0].signal.aborted,false);assert.equal(sameSelection.calls.length,2);assert.doesNotMatch(sameSelection.ui.html(),/>777</);assert.match(sameSelection.ui.html(),/>11</);
   const single=fixture(),pending=deferred();single.handler(()=>pending.promise);single.select();single.select();assert.equal(single.calls.length,1);pending.resolve(result());await flush();assert.equal(single.timers.size,1);
   console.log('PASS phase identity/clock/duration/wait validation, latest-preparation labeling, bounded sequential refresh, abort and stale delivery/session cleanup');
 })().catch(error=>{console.error(error);process.exitCode=1;});

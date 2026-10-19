@@ -35,7 +35,7 @@ window.WorkspacePhaseTimings=function({api,render,identity=()=>window.TuldokAuth
   }
   async function refresh(){
     if(!selection||request)return;
-    const own=epoch,credential=session(),valid=()=>own===epoch&&credential===session()&&current();
+    const own=epoch,credential=session(),selectedCurrent=current,valid=()=>own===epoch&&credential===session()&&selectedCurrent();
     if(!valid())return;
     if(timer!==null)unschedule(timer);timer=null;
     if(reads>=30||now()-started>=75000){paused=true;render();return;}
@@ -47,16 +47,22 @@ window.WorkspacePhaseTimings=function({api,render,identity=()=>window.TuldokAuth
     }catch(error){if(valid()){value=null;message=error.message||'Timing read unavailable.';if([401,403].includes(error.status))paused=true;}}
     finally{
       if(request===controller)request=null;
-      if(valid()){
+      if(own===epoch&&credential===session()&&current()){
+        // A newer load of the same selection waits for this bounded read to
+        // settle, discards its old predicate, then obtains fresh evidence.
+        if(!selectedCurrent()){refresh();return;}
         paused=paused||reads>=30||now()-started>=75000;render();
         if(!paused)timer=schedule(()=>{timer=null;refresh();},2000);
       }
     }
   }
   function select(next,isCurrent,restartWindow=false){
-    const same=selection&&JSON.stringify(next)===JSON.stringify(selection);
+    const same=selection&&JSON.stringify(next)===JSON.stringify(selection),previousCurrent=current;
     current=isCurrent;
-    if(same){if(restartWindow)restart();else if(!request&&timer===null&&!paused)refresh();return;}
+    if(same){
+      if(!previousCurrent()){value=null;message='';}
+      if(restartWindow)restart();else if(!request&&timer===null&&!paused)refresh();return;
+    }
     invalidate();current=isCurrent;selection=structuredClone(next);reads=0;started=now();refresh();
   }
   function restart(){if(!selection)return;request?.abort();request=null;epoch++;reads=0;started=now();paused=false;refresh();}
