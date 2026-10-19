@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -134,6 +135,7 @@ def qualify(args, receipt):
         expected_runtime_sha256=args.expected_runtime_sha256, runtime_config_sha256=sha(args.runtime_config.read_bytes()),
         owner_selected_reserve_bytes=args.reserve_bytes, publication_reserve_bytes=PUBLICATION_RESERVE,
         training_executed=False, numerical_acceptance='not_evaluated', checks=[])
+    receipt['source_head'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     dataset = None
     schema = None
     with tempfile.TemporaryDirectory(prefix='tuldok-publication-synthetic-', dir=args.temporary_parent) as temporary:
@@ -256,6 +258,8 @@ def qualify(args, receipt):
                     require(dataset.runs.recover_publication(body) == recovered, 'Same request did not converge')
                 require('.external-' + run['id'] + '/output' in verified_paths, 'Source semantics were bypassed')
                 require(run['id'] in verified_paths, 'Destination/reader semantics were bypassed')
+                if args.publication_interfaces:
+                    qualify_interfaces(dataset, owner, recovered['result_ref'], root, receipt)
                 require(counts(dataset) == baseline_counts, 'Recovery changed Run/grant/reservation counts')
                 after = dataset.studies.reconcile(study['id'])
                 require(after['charged'] == before['charged'] and after['reservations'] == before['reservations'],
@@ -299,6 +303,67 @@ def qualify(args, receipt):
                 receipt['temporary_schema_removed'] = True
 
 
+def qualify_interfaces(dataset, owner, ref, root, receipt):
+    """Actual Ref query/comparison and sealed CLI SDK; only synthetic values."""
+    from http.server import ThreadingHTTPServer
+    import threading
+    import agent_api
+    from app import make_handler
+    inspector = dataset.access.issue({'label': 'Synthetic publication evidence inspector', 'scopes': ['inspect']})
+    server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(dataset))
+    worker = threading.Thread(target=server.serve_forever, daemon=True); worker.start()
+    try:
+        endpoint = 'http://127.0.0.1:' + str(server.server_port)
+        client = agent_api.AgentClient(endpoint, inspector['token'], dataset.db.dataset_id)
+        with patch('recipe_process.launch', side_effect=AssertionError('Evidence query/comparison replayed compute')):
+            response = client.call('runs.publication_model_evidence', {'ref': ref})
+            require(response['status'] == 200 and response['result']['result_ref'] == ref, 'Exact HTTP evidence Ref differs')
+            evidence = response['result']['evidence']
+            require(evidence['state'] == 'verified', 'Recovered synthetic evidence did not verify over HTTP')
+            entries = evidence['checkpoint_index']['entries']; metric = evidence['metric_definitions'][0]
+            selectors = {'checkpoint_sha256': entries[0]['checkpoint']['sha256'], 'member_ordinal': 0,
+                         'field_id': evidence['fields'][0]['field_id'], 'axis': 'z', 'index': 0}
+            field = client.call('runs.publication_model_evidence', {'ref': ref, 'selectors': selectors})
+            require(field['status'] == 200 and field['result']['evidence']['field']['prediction'] ==
+                    field['result']['evidence']['field']['reference'], 'Synthetic exact field slice differs')
+            result = dataset.runs.publication_result(ref)
+            evaluation = next(item['sha256'] for item in result['artifacts'] if item['name'] == 'model-evidence.json')
+            selection = {'checkpoint_sha256': entries[0]['checkpoint']['sha256'],
+                'other_checkpoint_sha256': entries[-1]['checkpoint']['sha256'], 'evaluation_sha256': evaluation,
+                'other_evaluation_sha256': evaluation, 'metric_id': metric['id'],
+                'metric_definition_sha256': evidence['metric_definition_hashes'][metric['id']],
+                'other_metric_definition_sha256': evidence['metric_definition_hashes'][metric['id']], 'mode': 'paired'}
+            compared = client.call('runs.compare_publication_evidence', {'ref': ref, 'other_ref': ref, 'selection': selection})
+            require(compared['status'] == 200 and compared['result']['result_refs'] == [ref, ref], 'Exact comparison Refs differ')
+            comparison = compared['result']['comparison']
+            require(comparison['state'] == 'compatible' and comparison['delta']['value'] == 0,
+                    'Synthetic fixture comparison arithmetic differs; no science inference is intended')
+            refused = client.call('runs.compare_publication_evidence', {'ref': ref, 'other_ref': ref,
+                'selection': dict(selection, evaluation_sha256='f' * 64)})
+            require(refused['status'] == 409 and refused['result']['code'] == 'stale', 'Foreign evaluation was accepted')
+            token_path = root / 'inspector-token'; token_path.write_text(inspector['token']); token_path.chmod(0o600)
+            config_path = root / 'inspector-config.json'
+            config_path.write_text(encode({'endpoint': endpoint, 'catalog_id': dataset.db.dataset_id, 'token_file': str(token_path)}))
+            config_path.chmod(0o600)
+            ref_path = root / 'result-ref.json'; ref_path.write_text(encode(ref))
+            selection_path = root / 'comparison-selection.json'; selection_path.write_text(encode(selection))
+            sdk = subprocess.run([sys.executable, '-m', 'tuldok_extension_sdk', 'compare-publication',
+                '--config', str(config_path), '--cli', str(ROOT / 'project_cli.py'),
+                '--cli-sha256', sha((ROOT / 'project_cli.py').read_bytes()), '--ref', str(ref_path),
+                '--other-ref', str(ref_path), '--selection', str(selection_path), '--deadline-seconds', '120'],
+                cwd=ROOT, capture_output=True, timeout=130)
+            require(sdk.returncode == 0, 'Sealed public-CLI SDK comparison refused: ' + sdk.stdout.decode()[:500])
+            sdk_result = json.loads(sdk.stdout)
+            require(sdk_result['state'] == 'compared' and sdk_result['result_refs'] == [ref, ref]
+                    and sdk_result['numerical'] == 'not_evaluated', 'SDK exact comparison result differs')
+        receipt['publication_interfaces'] = {'http_evidence': 'verified', 'http_exact_field_slice': 'verified',
+            'exact_ref_paired_comparison': 'compatible_synthetic_fixture_only', 'foreign_evaluation': 'refused_stale',
+            'sealed_cli_sdk_comparison': 'compared', 'numerical_acceptance': 'not_evaluated'}
+    finally:
+        server.shutdown(); server.server_close(); worker.join(5)
+        require(not worker.is_alive(), 'Qualification HTTP server did not drain')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--runtime-config', required=True, type=Path)
@@ -306,6 +371,7 @@ def main():
     parser.add_argument('--reserve-bytes', required=True, type=int)
     parser.add_argument('--temporary-parent', type=Path, default=Path('/workspace'))
     parser.add_argument('--report', required=True, type=Path)
+    parser.add_argument('--publication-interfaces', action='store_true', help='Also qualify current selected evidence/compare and SDK interfaces')
     args = parser.parse_args()
     receipt = {'state': 'in_progress', 'driver_sha256': sha(Path(__file__).read_bytes())}
     started = time.monotonic()
