@@ -542,6 +542,11 @@
       "sha256": "3d64730a31f4fce921d0e02ab053d573890a6d942b571cdc6a77261dc5911ce1"
     },
     {
+      "path": "tuldok-obsolete-ci-cancellation-run-ids.json",
+      "bytes": 1487,
+      "sha256": "5e2de3dbec66591acc8849b1efe3a8fcf5d4d6dea071341b394e7ac5c4830544"
+    },
+    {
       "path": "tuldok-open-stack-review-disposition.json",
       "bytes": 19675,
       "sha256": "d291033acdbba7335ab376cd5d56fa75fbdf64696504b598d220b509ec374b70"
@@ -585,6 +590,11 @@
       "path": "tuldok-pr-publication-ui-body.md",
       "bytes": 2186,
       "sha256": "c1f47f916b206eef483de6b0c75bc4e8845135374b72f49931628bfa5ec14baf"
+    },
+    {
+      "path": "tuldok-pr-stack-restored-access-status.json",
+      "bytes": 19620,
+      "sha256": "92d9e92ec87e5d2662f4a0c1d179f1cc002a3f562f42c9fb77e57b619eca93fe"
     },
     {
       "path": "tuldok-pr100-final-qualified-evidence.json",
@@ -640,6 +650,21 @@
       "path": "tuldok-pr101-qualified-lifecycle.log",
       "bytes": 608021,
       "sha256": "631ceb1448ca0a37ffa0dbdeee2490a44956cdd14dbcade14d2b8f50e387ffcb"
+    },
+    {
+      "path": "tuldok-pr102-b407-cpu-captured-cpu.log",
+      "bytes": 58795,
+      "sha256": "fcd1c21827b98b6d33265301507247b022d577714639f068c892adac53a0d324"
+    },
+    {
+      "path": "tuldok-pr102-b407-cpu-independent-review.json",
+      "bytes": 11224,
+      "sha256": "c9d2d63dd3c3c5799eeefddc72b524076cc8152fd7fdb6dd37abfe9fd22512a9"
+    },
+    {
+      "path": "tuldok-pr102-b407-cpu-metadata.json",
+      "bytes": 7575,
+      "sha256": "a9a058e67ff6192dcc26d66fb48e96ffba3dedfbcbc78f1332467b3dd69096cd"
     },
     {
       "path": "tuldok-pr102-controller-fixture-independent-review.json",
@@ -705,6 +730,26 @@
       "path": "tuldok-pr106-browser-composition-red.log",
       "bytes": 556,
       "sha256": "da6c8514eaecb33d987273fed51792938659a323840ac83a0b8f72056a5f71a1"
+    },
+    {
+      "path": "tuldok-pr106-fc034a0-cpu-independent-metadata.json",
+      "bytes": 3051,
+      "sha256": "d120875a7d376048bbeb8b339e9cf61dbb83e48fb065828a2cbc77d19f2f42be"
+    },
+    {
+      "path": "tuldok-pr106-fc034a0-cpu-independent-raw.log",
+      "bytes": 60148,
+      "sha256": "08c4a2634dccbc04708c730ae8d2028cc31c96a9fb3bfcfe9e80dffd5bd3abfd"
+    },
+    {
+      "path": "tuldok-pr106-fc034a0-cpu-independent-review.json",
+      "bytes": 8076,
+      "sha256": "22a50f3e3f00547982dc6e2efa16b522c6b44e5314cb639690d834fb580d63b8"
+    },
+    {
+      "path": "tuldok-pr106-fc034a0-cpu-independent-runtime.json",
+      "bytes": 2161,
+      "sha256": "1cc36a1a8681df83f308c269e777af64e6837ea5cd638dcd834a16bacc8ecdbd"
     },
     {
       "path": "tuldok-pr106-old4a9-ci-failure-disposition.json",
@@ -1032,6 +1077,11 @@
       "sha256": "66bf03c425315cdc231e3ddbae59d9892ee5ee307a85a6b8efa06c93a8bdb4d9"
     },
     {
+      "path": "tuldok-superseded-ci-fixture-repair-restored-access-disposition.json",
+      "bytes": 21082,
+      "sha256": "eff2f8707c3bc9fcfae1655ecc74b798ad60d186a4a845b98bf03fb220eb53d8"
+    },
+    {
       "path": "tuldok-superseded-ci-independent-disposition.json",
       "bytes": 47658,
       "sha256": "eaab6020e65a74047d66aa4811cb7f418f83e96c6f5c7e8402d1da9c3dd55ccd"
@@ -1068,8 +1118,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 161195,
-      "sha256": "dd2a51dd6ca4b8fcef8e90f4d95f925a4a5b5f43d8e3e14f847afea62d784c91"
+      "bytes": 204645,
+      "sha256": "0b0dd04bc990bf514aa0632ca44595a08c4cfe65f72b90517767b0ccd11b2f6e"
     },
     {
       "path": "tuldok-workspace-real-direct-loader-audit.json",

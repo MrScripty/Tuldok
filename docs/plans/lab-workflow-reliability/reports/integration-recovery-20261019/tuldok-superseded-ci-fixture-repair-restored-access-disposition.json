@@ -1,0 +1,467 @@
+{
+  "acceptance_limit": "Cancellation states only. No test pass/count, missing-test, code acceptance, runner capacity or merge-readiness inference.",
+  "accepted_request_runs": [
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39341887645,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:19.758431+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:53Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341887645",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39341887765,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:20.354423+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:05Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341887765",
+      "workflow": "M1 workspace interface"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "id": 39341888115,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "pr": 110,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:22.350397+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-batch-client-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:11Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888115",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39341888477,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:14.694496+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:50Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888477",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39341888515,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:12.962519+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:02Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888515",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39341888743,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:17.222464+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:03Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888743",
+      "workflow": "Static extension authoring kit"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39341888745,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:17.870455+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:56Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888745",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "id": 39341888917,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "pr": 104,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:11.198542+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-phase-panel-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:48:43Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888917",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "381bfccdad516010e83f6051f098a5835fb8aac3",
+      "id": 39341888937,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "pr": 104,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:12.378526+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-phase-panel-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:48:39Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888937",
+      "workflow": "Candidate package captured CPU"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39341889182,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:18.450448+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:08Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889182",
+      "workflow": "Static extension authoring kit"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+      "id": 39341889255,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "pr": 108,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:19.162439+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-indexed-diagnostics-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:50:18Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889255",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39341889444,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:21.070414+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:07Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889444",
+      "workflow": "M1 workspace interface"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+      "id": 39341889666,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "pr": 109,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:21.678406+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-bounded-collection-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:09Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889666",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39341889978,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:13.574511+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:48:48Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889978",
+      "workflow": "Candidate package captured CPU"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "id": 39341889992,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "pr": 105,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:14.146503+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-workflow-client-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:48:45Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341889992",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+      "id": 39341890032,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "pr": 110,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:22.950390+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-batch-client-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:13Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890032",
+      "workflow": "Dataset lifecycle tests"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39341890228,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:15.250489+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:45Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890228",
+      "workflow": "Candidate package captured CPU"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39341890270,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:15.894481+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:48:53Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890270",
+      "workflow": "M1 workspace interface"
+    },
+    {
+      "event": "pull_request",
+      "fixed_head_at_request": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39341890290,
+      "independent_action": "GET only; no cancellation/retry/rerun.",
+      "independent_conclusion": "cancelled",
+      "independent_status": "completed",
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "read_response_file_mtime_utc": "2026-10-19T23:54:16.626472+00:00",
+      "reads_this_pass": 1,
+      "source_branch": "feature/lab-field-comparison-20261019",
+      "terminal_verified": true,
+      "updated_at": "2026-10-19T23:49:05Z",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341890290",
+      "workflow": "Dataset lifecycle tests"
+    }
+  ],
+  "client": "Existing /usr/bin/gh api via tools.exec_command; GET repos/MrScripty/Tuldok/actions/runs/{accepted_id}. No named GitHub MCP or alternate auth.",
+  "format": "tuldok_fixture_repair_restored_access_disposition_v1",
+  "historical401_receipt": {
+    "meaning": "Its denied-read snapshot remains historical evidence; this separate receipt records the restored-access result.",
+    "path": "/tmp/tuldok-superseded-ci-fixture-repair-independent-disposition.json",
+    "preserved_unchanged_this_pass": true,
+    "sha256": "66bf03c425315cdc231e3ddbae59d9892ee5ee307a85a6b8efa06c93a8bdb4d9"
+  },
+  "local_exclusion_verification": {
+    "all_recorded_action_ids_within_exact20_candidates": true,
+    "completed_before_batch_excluded": 2,
+    "limit": "No new protected/main/current-head queries; local receipt scope verified. Live fixed heads were not remotely rechecked in this pass because authorization allowed only19 accepted IDs.",
+    "main_push_unrelated_or_pr102_103_107_recorded_actions": [],
+    "new_current_head_runs_protected": 30,
+    "pr102_103_107_runs_excluded": 3,
+    "protected_and_action_id_intersection": []
+  },
+  "observed_at_utc": "2026-10-19T23:55:04.884654+00:00",
+  "previously_terminal_untouched": [
+    {
+      "cancellation_not_sent": true,
+      "fixed_head_at_request": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+      "id": 39341888569,
+      "independent_new_remote_status_read": false,
+      "old_head": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "pr": 106,
+      "root_recorded_conclusion": "success",
+      "root_recorded_status_before": "completed",
+      "url": "https://github.com/MrScripty/Tuldok/actions/runs/39341888569",
+      "verification_source": "Local supplied script/receipt; latest authorization limited remote reads to the19 accepted requests."
+    }
+  ],
+  "raw_evidence": {
+    "/tmp/tuldok-fixture-repair-restored-read-attempts.json": {
+      "bytes": 1314,
+      "sha256": "1a56347c2449ca3d2f13fa0e3dc3c017e62ac75f895e52c6f80e20f7967a79d7"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341887645.json": {
+      "bytes": 12511,
+      "sha256": "251b27b7927f744d5796465afc0a2acaa7b5f147873bffe35df38c6840c4a01f"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341887765.json": {
+      "bytes": 12518,
+      "sha256": "ec60cc5884ca89dbbadee6c4647ba2af3f39d7ca625d3547f734898a700e4862"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888115.json": {
+      "bytes": 12512,
+      "sha256": "396c4ed426587646f27cb2b879c241d87842a4952fcc5035d8920687566ca3d5"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888477.json": {
+      "bytes": 12520,
+      "sha256": "b0b3890075e4a35ff9ed6fa2fb908648f04b30413922c7a94d5d095d398916d4"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888515.json": {
+      "bytes": 12495,
+      "sha256": "3547bc57b231c72e77b44de3b25daf8a00c0f74c8e85b0d0b02d0cb48e557568"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888743.json": {
+      "bytes": 12528,
+      "sha256": "85070968d3935c4b763f681a73656b2f6fe527117cd40861d479343679a2d431"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888745.json": {
+      "bytes": 12514,
+      "sha256": "0d32cc1b10f0e9eb637b8f044d5d83684b08dbfab686888ffb2e21fb3d44014f"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888917.json": {
+      "bytes": 12508,
+      "sha256": "dee9632fee6884265ac4e4fcc51f8093a05d12d0f9176ff9c3e73cdc81498232"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341888937.json": {
+      "bytes": 12528,
+      "sha256": "73d8d8408c7e8ceeeae235111bc10820cdfcc0247ff8048c9b00966486b8ca49"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341889182.json": {
+      "bytes": 12528,
+      "sha256": "409a53f9e249d94bdf6b385cac892e67d2eb44307bac50237765461a9a706615"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341889255.json": {
+      "bytes": 12514,
+      "sha256": "94d7052349438d31c97befed316c9e3734ac063b444af0f0ab2ba541c4d3dd68"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341889444.json": {
+      "bytes": 12518,
+      "sha256": "8b098737883255caf1093bf04b916579b88555be9d5c7cec01effbe55105ca44"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341889666.json": {
+      "bytes": 12511,
+      "sha256": "cc16d89fd96dfec71cfbbcae8e3f8880d81dfd0202eb4920fd6198332dd2c7b0"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341889978.json": {
+      "bytes": 12515,
+      "sha256": "9478f2d90245e4f12cc4f6ad9d1f6ae16e9b4495cddc47e5d8794df72f9fdf12"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341889992.json": {
+      "bytes": 12495,
+      "sha256": "ed3d9dc1c735a8c5094ec6c8105e5e0a93d10cff7555a04dc5218c485fc6b71a"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341890032.json": {
+      "bytes": 12512,
+      "sha256": "e5f64c42d103e8f187c911554390714184c2352e566647acb88d37b82d7ce97b"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341890228.json": {
+      "bytes": 12540,
+      "sha256": "2f96289008c52dfd8515e960e6cfe14780d9c456ea0d447c4151867ea8de6f12"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341890270.json": {
+      "bytes": 12527,
+      "sha256": "b4dab9654ddaac605268d7c465f21096d881fe362c81344ffbafd4151bd16a31"
+    },
+    "/tmp/tuldok-fixture-repair-restored-run-statuses/39341890290.json": {
+      "bytes": 12520,
+      "sha256": "a81c53ae5bb6a06b19081e631af0176341ce87e5ca80940f386596994700153d"
+    },
+    "/tmp/tuldok-superseded-ci-fixture-repair-cancellation-results.json": {
+      "bytes": 10361,
+      "sha256": "0b1e19f8370aa86e9dad20394c08b4386fa6ff22b5bfd5997cfca878b9d7244b"
+    },
+    "/tmp/tuldok-superseded-ci-fixture-repair-candidates.json": {
+      "bytes": 50138,
+      "sha256": "e9dc5ee21731521ec3f0e2fbf78c9ab45abaa2f8652a8b013b5e80ac70f04a70"
+    },
+    "/tmp/tuldok-superseded-ci-fixture-repair-independent-disposition.json": {
+      "bytes": 25591,
+      "sha256": "66bf03c425315cdc231e3ddbae59d9892ee5ee307a85a6b8efa06c93a8bdb4d9"
+    }
+  },
+  "read_only": true,
+  "remote_mutation_by_independent_reviewer": false,
+  "restoration_basis": "Parent authorized one bounded recheck after root reported successful existing /usr/bin/gh API read of main at23:53UTC; no credential inspection/change.",
+  "summary": {
+    "accepted_requests": 19,
+    "all20_batch_rows_dispositioned": true,
+    "all_accepted_requests_terminal": true,
+    "fresh_live_head_recheck_performed": false,
+    "independent_remote_reads": 19,
+    "independently_completed_cancelled": 19,
+    "previously_terminal_untouched_from_root_receipt": 1,
+    "still_pending_among_accepted_requests": 0
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "pr": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "url": "https://github.com/MrScripty/Tuldok/pull/102",
+      "number": 102,
+      "state": "open",
+      "merged": false,
+      "mergeable": true,
+      "draft": true,
+      "body": "The existing Runs view now exposes exact coordinator state/generation, current readiness/fence, last update, original fault and saved recovery receipt. A current owner can explicitly recover a faulted/blocked coordinator using the exact generation and a stable tab-retained request key. After an unknown reply, the panel reads saved health without dispatching another mutation. New faults require a fresh explicit current-generation request once the old recovery is completed.\n\nThis draft targets main after the accepted PR101 merge and normal-composes the whole immutable/cold recovery-ack fixes. Both coordinator operations are exactly pinned. Closed catalog/actor/body-hash/generation/readiness validation, current owner controls, bounded tab storage, stale read/write/session/navigation fences, finite request deadlines and AbortController/listener cleanup preserve the existing server authority. Coordinator health is rendered independently even when the Run list read fails. It introduces no new health-poll timer, compute retry, grant or reservation.\n\nLocal production source38c7844: controlled controller checks and2 canonical-pin unittests passed; existing mocked image-recovery browser passed. Real PostgreSQL17/Chromium151 journey passed actual separate advisory-lock timeout/fault, keyboard owner recovery, deliberately dropped successful HTTP reply, saved-read reconciliation without another POST, one first neutral GO from the original queue, unchanged admission identity and1Run/1grant/1consumption, fresh reload/mouse refresh, and1440/390 layouts. Existing real neutral publication pause/reload/same-key resume/whole-hash download browser also passed. Both fixtures closed and dropped only their owned fresh schemas.\n\nExact source hashes, browser/domain receipts, screenshots and retained logs: `docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/validation.json`. Independent final source/test/docs review is clear. Hosted exact-head/post-merge qualification remains pending; full M2 acceptance is not yet closed. M3 timing is active separately. These are neutral process/UI witnesses with no CUDA, model-training or scientific acceptance claim.\n\nIndependent review identified and cleared a delivery-boundary correction at exact production source3c2b8d1: a new current-generation request that never reached the server can retry its exact saved body despite an older completed receipt; an incompatible incomplete receipt remains refused. The failing witness is retained and the corrected positive/negative controller cases passed. The real PostgreSQL/Chromium coordinator journey passed again at3c2b8d1; earlier publication/browser regression evidence remains attributed to38c7844.\n\nThe corrected head b4070b6 imports the real browser APIs and inert DOM methods needed by the controller test VM; product code and assertions are unchanged. Original hosted failure and local/independent whole-script red/green evidence are retained under reports/m2-coordinator-ui/ci-controller-fixture. Corrected-head hosted acceptance remains pending.\n",
+      "title": "Expose coordinator health and exact owner recovery in Runs",
+      "base": "main",
+      "base_sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+      "head": "feature/lab-coordinator-panel-20261019",
+      "head_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+      "head_repo_id": 1369762795,
+      "head_repo_full_name": "MrScripty/Tuldok",
+      "merge_commit_sha": "ec26aedd8c6185ccfab34b89c5130fde54e60870",
+      "user": {
+        "login": "MrScripty",
+        "name": "MrScripty",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+        "id": 10446793
+      },
+      "requested_reviewers": null,
+      "requested_team_reviewers": null,
+      "diff": null,
+      "comments": null,
+      "created_at": "2026-10-19T21:18:05Z",
+      "updated_at": "2026-10-19T23:30:10Z",
+      "closed_at": null,
+      "merged_at": null,
+      "commits": 9,
+      "changed_files": 38,
+      "additions": 3091,
+      "deletions": 15,
+      "display_url": "https://github.com/MrScripty/Tuldok/pull/102",
+      "display_title": "Expose coordinator health and exact owner recovery in Runs"
+    },
+    "isError": false
+  },
+  "job": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "jobs": [
+        {
+          "id": 118358463828,
+          "name": "captured-cpu",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 39339868182,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Initialize containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Explicitly provision the supported CPU runtime before qualification",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Exercise actual classifier preparation and training through the browser",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Stop containers",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  }
+}

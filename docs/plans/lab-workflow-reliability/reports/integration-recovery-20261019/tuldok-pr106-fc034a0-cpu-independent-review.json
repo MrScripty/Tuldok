@@ -1,0 +1,216 @@
+{
+  "reviewed_at_utc": "2026-10-19T23:56:52.557984+00:00",
+  "result": "CLEAR for this completed captured-CPU job only; no blocking checkout/runtime/scope finding.",
+  "repository": "MrScripty/Tuldok",
+  "pr": 106,
+  "source": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+  "run": {
+    "id": 39343581425,
+    "name": "Candidate package captured CPU",
+    "event": "pull_request",
+    "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "path": ".github/workflows/candidate-packages.yml",
+    "created_at": "2026-10-19T23:45:59Z",
+    "updated_at": "2026-10-19T23:52:57Z"
+  },
+  "job_id": 118370715162,
+  "job_name": "captured-cpu",
+  "all_13_steps_completed_success": true,
+  "steps": [
+    {
+      "name": "Set up job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 1
+    },
+    {
+      "name": "Initialize containers",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 2
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 3
+    },
+    {
+      "name": "Run actions/setup-node@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 4
+    },
+    {
+      "name": "Explicitly provision the supported CPU runtime before qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 5
+    },
+    {
+      "name": "Exercise actual classifier preparation and training through the browser",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 6
+    },
+    {
+      "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 7
+    },
+    {
+      "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 8
+    },
+    {
+      "name": "Run actions/upload-artifact@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 9
+    },
+    {
+      "name": "Post Run actions/setup-node@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 16
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 17
+    },
+    {
+      "name": "Stop containers",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 18
+    },
+    {
+      "name": "Complete job",
+      "status": "completed",
+      "conclusion": "success",
+      "number": 19
+    }
+  ],
+  "checkout": {
+    "sha": "1ff433d2a42c83833e02636e69f33b4fce546b61",
+    "tree": "483a580bc0b27964e8e4b5ba4f20422ddcbe8b31",
+    "parents": [
+      "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "fc034a0f096a73798ec22fa3088406cd68b4c5a4"
+    ],
+    "content_tree_equals_fc034a0": true,
+    "proof": "MCP commit metadata tree483a580b matches local fc034a0 tree; full log checkout/log-1 confirms PR merge1ff433d with exact parentsa635be3 andfc034a0."
+  },
+  "actual_cpu_training": {
+    "scope": "Separate provisioned full CPU runtime, actual browser training before inference-subset capture.",
+    "evidence_log_lines": [
+      454,
+      464,
+      465,
+      466,
+      467,
+      468,
+      469,
+      470,
+      471,
+      472,
+      473,
+      474,
+      475,
+      476,
+      477
+    ],
+    "witnesses": [
+      "Actual finite training emits three checkpoint/probe sets; test remains locked.",
+      "Second Study branches from exact retained parent and trains once; no retry edge.",
+      "Correction creates a reviewed revision/new Release/trained Trial; original evidence immutable; changed membership refuses paired deltas.",
+      "Exact selected comparisons, stale response/denied-read recovery and1440/390 keyboard/dark layout pass."
+    ],
+    "training_run_ids": [
+      "38968a2eff09445fb8849631833ae113",
+      "a35349a86982484e9bf523ba7ea55188",
+      "0ee3d4c789764ed4bd8b6b83e3da909a"
+    ],
+    "model_browser_receipt_sha256": "84627b7c59da876d4d776b09146bc67022a899e708541afbba68f194f3c2ae60"
+  },
+  "captured_forward_inference": {
+    "profile": "captured_cpu_python_v1",
+    "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+    "file_count": 21042,
+    "total_bytes": 823402896,
+    "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+    "inventory_sha256": "b776b9c76fca8eef115796864ac4246fb02ee551fd22339e4ca4651fd371aa39",
+    "versions": {
+      "filelock": "4.2.4",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    },
+    "source_sha256": {
+      "candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+      "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"
+    },
+    "all_four_recorded_source_hashes_equal_fc034a0": {
+      "candidate_packages.py": true,
+      "recipe_process.py": true,
+      "runtime_snapshots.py": true,
+      "tests/prepare_candidate_runtime.py": true
+    },
+    "scope_fixed_before_inventory": [
+      "torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.",
+      "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.",
+      "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."
+    ],
+    "witnesses": [
+      "Exact expected-inventory SHA passed to runtime_snapshots create by browser fixture source line46.",
+      "Actual charged Study-admitted package and separate captured CPU consumer complete; three charged slots.",
+      "Package-complete and fresh-inference-verified states stay distinct; source candidate remains diagnostic.",
+      "Browser fixture source line347 checks full downloaded package SHA256; retained job PASS covers that assertion. Raw package receipt itself was not independently downloaded by this review."
+    ],
+    "evidence_log_lines": [
+      496,
+      510,
+      511,
+      512,
+      513
+    ]
+  },
+  "qa_artifact_upload": {
+    "id": 12230220943,
+    "bytes": 3775008,
+    "sha256": "9c8896a1f9f7d2c530ae833ac8f28ba30cb173486c48f7dd19cc68899d996884",
+    "meaning": "Uploaded QA artifact ZIP digest from full job log; not a model-package digest. Artifact contents not downloaded in this review."
+  },
+  "retained": {
+    "raw_log": "/tmp/tuldok-pr106-fc034a0-cpu-independent-raw.log",
+    "raw_log_bytes": 60148,
+    "raw_log_sha256": "08c4a2634dccbc04708c730ae8d2028cc31c96a9fb3bfcfe9e80dffd5bd3abfd",
+    "decoded_characters": 58468,
+    "metadata": "/tmp/tuldok-pr106-fc034a0-cpu-independent-metadata.json",
+    "runtime_record": "/tmp/tuldok-pr106-fc034a0-cpu-independent-runtime.json"
+  },
+  "review_method": "Ordinary connected GitHub MCP decoded-log/run-jobs/GET run and exact commit metadata reads plus local exact-source/hash inspection. No test execution, remote mutation or credential change; all reads succeeded without auth errors.",
+  "limits": [
+    "Accept only this completed run39343581425/job118370715162 atfc034a0 content tree.",
+    "No lifecycle, scientific/CUDA/physics/model-quality, full-plan or other queued/duplicate-job acceptance.",
+    "Captured subset qualifies TinyCNN forward inference only, not training/resume; actual training is separately witnessed earlier in this same job.",
+    "Duplicate queued job preserved; root owns serial merges."
+  ]
+}

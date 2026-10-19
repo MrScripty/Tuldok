@@ -1,0 +1,113 @@
+{
+  "repo": "MrScripty/Tuldok",
+  "source": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+  "run": {
+    "id": 39343581425,
+    "name": "Candidate package captured CPU",
+    "event": "pull_request",
+    "head_sha": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "path": ".github/workflows/candidate-packages.yml",
+    "created_at": "2026-10-19T23:45:59Z",
+    "updated_at": "2026-10-19T23:52:57Z"
+  },
+  "checkout": {
+    "sha": "1ff433d2a42c83833e02636e69f33b4fce546b61",
+    "tree": "483a580bc0b27964e8e4b5ba4f20422ddcbe8b31",
+    "parents": [
+      "a635be3dcb7187eec17266714631a4e0485a20b7",
+      "fc034a0f096a73798ec22fa3088406cd68b4c5a4"
+    ]
+  },
+  "job": {
+    "id": 118370715162,
+    "name": "captured-cpu",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 39343581425,
+    "logs_url": null,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Initialize containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Run actions/setup-node@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Explicitly provision the supported CPU runtime before qualification",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Exercise actual classifier preparation and training through the browser",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Run actions/upload-artifact@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Post Run actions/setup-node@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      },
+      {
+        "name": "Stop containers",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19
+      }
+    ]
+  },
+  "decoded_log_character_count": 58468
+}

@@ -1,0 +1,45 @@
+{
+  "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+  "excluded_unused_scope": [
+    "torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.",
+    "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.",
+    "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."
+  ],
+  "file_count": 21042,
+  "format": "candidate_ci_runtime_preparation_v1",
+  "interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+  "inventory_sha256": "b776b9c76fca8eef115796864ac4246fb02ee551fd22339e4ca4651fd371aa39",
+  "model_browser_receipt": {
+    "catalog_path": "/tmp/tuldok-model-development-pH5jQJ/data",
+    "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-0NH6U9/receipt.json",
+    "run_ids": [
+      "38968a2eff09445fb8849631833ae113",
+      "a35349a86982484e9bf523ba7ea55188",
+      "0ee3d4c789764ed4bd8b6b83e3da909a"
+    ],
+    "sha256": "84627b7c59da876d4d776b09146bc67022a899e708541afbba68f194f3c2ae60"
+  },
+  "profile": "captured_cpu_python_v1",
+  "rights": "Upstream metadata/notices are retained; no new redistribution permission is asserted.",
+  "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+  "source_sha256": {
+    "candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+    "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+    "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"
+  },
+  "total_bytes": 823402896,
+  "versions": {
+    "filelock": "4.2.4",
+    "fsspec": "2026.9.0",
+    "jinja2": "3.1.6",
+    "markupsafe": "3.0.4",
+    "mpmath": "1.3.0",
+    "networkx": "3.7",
+    "numpy": "2.5.4",
+    "pillow": "12.3.0",
+    "sympy": "1.14.0",
+    "torch": "2.8.0+cpu",
+    "typing-extensions": "4.16.0"
+  }
+}

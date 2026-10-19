@@ -1,0 +1,220 @@
+{
+  "access_and_actions": {
+    "authorization_errors": 0,
+    "credential_changes": false,
+    "gh_archive_calls": 0,
+    "local_tests": 0,
+    "ordinary_authorized_MCP_calls": 3,
+    "passive_polls": 0,
+    "remote_mutations": 0,
+    "reruns": 0
+  },
+  "actual_browser_commands": [
+    "2026-10-19T23:38:54.5597327Z node tests/browser_model_development.cjs",
+    "2026-10-19T23:40:07.7390749Z node tests/browser_candidate_package.cjs"
+  ],
+  "actual_checkout": {
+    "current_pr_base_branch": "main",
+    "current_pr_base_sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+    "merge_base_sha_at_execution": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+    "merge_head_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "old_and_current_base_tree_sha": "3f8aa3a5f91e85a22fed9119a13e6e52a17d1f95",
+    "old_base_is_ancestor_of_requested_head": true,
+    "ref": "refs/remotes/pull/102/merge",
+    "scope": "Job actually tested exactb407 in a synthetic merge into old263base. Current retargetedmain8c9 has identical base tree; literal8c9 checkout not claimed.",
+    "synthetic_merge_sha": "ec26aedd8c6185ccfab34b89c5130fde54e60870"
+  },
+  "all_step_conclusions": [
+    {
+      "conclusion": "success",
+      "name": "Set up job",
+      "number": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Initialize containers",
+      "number": 2,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/checkout@v4",
+      "number": 3,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/setup-node@v4",
+      "number": 4,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Explicitly provision the supported CPU runtime before qualification",
+      "number": 5,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Exercise actual classifier preparation and training through the browser",
+      "number": 6,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+      "number": 7,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+      "number": 8,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/upload-artifact@v4",
+      "number": 9,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Post Run actions/setup-node@v4",
+      "number": 16,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Post Run actions/checkout@v4",
+      "number": 17,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Stop containers",
+      "number": 18,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Complete job",
+      "number": 19,
+      "status": "completed"
+    }
+  ],
+  "browser_PASS_marker_count": 17,
+  "browser_PASS_markers": [
+    "2026-10-19T23:39:04.1783104Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-19T23:39:08.5386908Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-19T23:39:08.9102196Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-19T23:39:09.4812639Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-19T23:39:28.1562527Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "2026-10-19T23:39:28.3104411Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "2026-10-19T23:39:42.7334245Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "2026-10-19T23:39:43.2920220Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+    "2026-10-19T23:39:44.2086093Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "2026-10-19T23:40:01.0230211Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "2026-10-19T23:40:01.0601163Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "2026-10-19T23:40:01.3235465Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "2026-10-19T23:40:01.6581627Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+    "2026-10-19T23:40:02.2001268Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-XpDM3h",
+    "2026-10-19T23:41:05.6708468Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots",
+    "2026-10-19T23:41:05.6709081Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic",
+    "2026-10-19T23:41:05.6847976Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-gj3bv8"
+  ],
+  "evidence": {
+    "directory_mode": "0o700",
+    "metadata": "/tmp/tuldok-pr102-b407-cpu-evidence/metadata.json",
+    "metadata_sha256": "a9a058e67ff6192dcc26d66fb48e96ffba3dedfbcbc78f1332467b3dd69096cd",
+    "private_directory": "/tmp/tuldok-pr102-b407-cpu-evidence",
+    "raw_log": "/tmp/tuldok-pr102-b407-cpu-evidence/captured-cpu.log",
+    "raw_log_bytes": 58795,
+    "raw_log_mode": "0o600",
+    "raw_log_sha256": "fcd1c21827b98b6d33265301507247b022d577714639f068c892adac53a0d324"
+  },
+  "format": "pr102_b407_captured_cpu_independent_review_v1",
+  "job_conclusion": "success",
+  "job_id": 118358463828,
+  "job_status": "completed",
+  "job_url": "https://github.com/MrScripty/Tuldok/actions/runs/39339868182/job/118358463828",
+  "limits": [
+    "No test_workspace_external_controller.cjs invocation in this CPU job: corrected controller fixture not independently qualified here.",
+    "No phase timing or coordinator fault/lost-reply browser qualification inferred from a generic model-development success.",
+    "No lifecycle job fetched/polled or declared passed; root owns separate lifecycle and serial merge gates.",
+    "No CUDA/scientific-quality winner/universal captured package support or full reliability-plan acceptance claim.",
+    "Current CI artifact payloads were not downloaded; completed log/step metadata and runtime preparation record are retained."
+  ],
+  "pr_number": 102,
+  "pr_url": "https://github.com/MrScripty/Tuldok/pull/102",
+  "qualified_scope": [
+    "Supported provisioned Python3.12 CPU runtime drives actual finite classifier preparation/training with three checkpoint/probe sets, explicit frozen split/coverage, exact comparisons and retained lineage interactions.",
+    "Source candidate remains diagnostic; package preparation and exact approval inert until explicit Study admission. Existing owner capture plus separate captured CPU consumer complete with three charged slots.",
+    "Package-complete and fresh-inference-verified remain distinct UI outcomes. Captured runtime supports TinyCNN forward inference with Torch2.8.0+cpu/NumPy/Pillow; no captured training/resume claim.",
+    "Runtime inventory21042files/823402896bytes exactSHAce76c4e5dc27b9c092a5f45b49cabbcdd0679eb7bd496a87b4deee3699fa4574; fixed exclusions and four exact source hashes retained. This is scope/accounting evidence, not timing/performance or redistribution permission."
+  ],
+  "requested_exact_head": "b4070b60b0119c73284c4832610cc82ef471963a",
+  "review_result": "Clear for completed captured-CPU classifier/package regression scope only; no controller/phase/lifecycle qualification inferred",
+  "reviewed_at_utc": "2026-10-19T23:54:58.854336+00:00",
+  "run_id": 39339868182,
+  "runtime_preparation_receipt": {
+    "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+    "excluded_unused_scope": [
+      "torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.",
+      "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.",
+      "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."
+    ],
+    "file_count": 21042,
+    "format": "candidate_ci_runtime_preparation_v1",
+    "interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+    "inventory_sha256": "ce76c4e5dc27b9c092a5f45b49cabbcdd0679eb7bd496a87b4deee3699fa4574",
+    "model_browser_receipt": {
+      "catalog_path": "/tmp/tuldok-model-development-6xbc8L/data",
+      "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-XpDM3h/receipt.json",
+      "run_ids": [
+        "748800e601ef4ec3a07a72d198c42f9b",
+        "2c167e5c39d74a31826a24b71d84c9e8",
+        "604c24bcf1d44c78a6beaebd50d76a9e"
+      ],
+      "sha256": "671b30f7298c6ccca63b8b4970d8b1485e21d4dfb833c2266ed3d5d0572b57b4"
+    },
+    "profile": "captured_cpu_python_v1",
+    "rights": "Upstream metadata/notices are retained; no new redistribution permission is asserted.",
+    "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+    "source_sha256": {
+      "candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+      "recipe_process.py": "247c573d6a9bfdc4e189b3a940650c91102cb40273751225f0fef6dd79999e6f",
+      "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"
+    },
+    "total_bytes": 823402896,
+    "versions": {
+      "filelock": "4.2.4",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "runtime_source_sha256_checked_against_exact_b407": true,
+  "step_counts": {
+    "failure": 0,
+    "skipped": 0,
+    "success": 13
+  },
+  "unittest_counts": {
+    "errors": null,
+    "failed": null,
+    "passed": null,
+    "ran": null,
+    "reason": "Captured-CPU browser job contains no unittest outcome summary;17 PASS markers are browser assertions/summaries, not17 unit tests.",
+    "skipped": null
+  }
+}
