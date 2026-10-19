@@ -23,6 +23,7 @@ READY_SECONDS = 10
 GRACE_SECONDS = 3
 CLEANUP_SECONDS = 10
 STREAM_LIMIT = 1024 * 1024
+CUDA_WALL_SECONDS_LIMIT = 1800
 OUTPUT_LIMIT = 64 * 1024 * 1024
 CAPTURE_FILE_LIMIT = 64 * 1024 * 1024
 LARGE_OUTPUT_PROFILE = 'captured_cpu_large_outputs_v1'
@@ -428,6 +429,8 @@ def validate_spec(value):
     if sum(item['bytes'] for item in files) > capture_limit or sum(item['bytes'] for item in runtime) > 512 * 1024 * 1024:
         raise ProcessError('Runtime/source closure exceeds its byte bound.')
     wall_limit, output_limit = 600, OUTPUT_LIMIT
+    if 'torch_runtime' in value and argv[7]=='cuda':
+        wall_limit=CUDA_WALL_SECONDS_LIMIT
     if 'resource_profile' in value:
         if value['resource_profile'] != LARGE_OUTPUT_PROFILE or 'cpu_snapshot' not in value:
             raise ProcessError('Large outputs require the explicit qualified CPU resource profile.')
@@ -901,7 +904,14 @@ def _outputs(spec):
     if root.is_symlink() or not root.is_dir():
         raise ProcessError('Output directory changed.')
     for path in root.iterdir():
-        info=path.lstat();count+=1;total+=info.st_size
+        try:
+            info=path.lstat()
+        except FileNotFoundError:
+            # A recipe may atomically publish or rename a regular output while
+            # this live scan runs. The next scan and final publication validate
+            # the surviving inventory; other observation errors remain fatal.
+            continue
+        count+=1;total+=info.st_size
         if count>count_limit or not stat.S_ISREG(info.st_mode) or info.st_size>file_limit or total>spec['max_output_bytes']:
             raise ProcessError('Output inventory exceeded its admitted bound.')
 

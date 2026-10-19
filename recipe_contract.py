@@ -8,6 +8,7 @@ import stat
 import struct
 
 from projects import closed, decode, relative_path
+from recipe_process import CUDA_WALL_SECONDS_LIMIT
 from workbench import WorkbenchError, encode
 
 NAME = re.compile(r'[A-Za-z][A-Za-z0-9_-]{0,63}')
@@ -188,7 +189,11 @@ def decode_definition(raw):
             if not evidence or arg is not True:raise WorkbenchError('Model context requires its explicit recipe version.')
         elif kind not in ('output_dir', 'input_evidence') or arg is not True:
             raise WorkbenchError('Unsupported argument token.')
-    closed(value['resources'], ('wall_seconds', 'max_output_bytes'), ('profile',))
+    closed(value['resources'], ('wall_seconds', 'max_output_bytes'), ('profile', 'cpu_cores', 'memory_bytes'))
+    if 'cpu_cores' in value['resources']:
+        bounded_int(value['resources']['cpu_cores'], 1, 256, 'CPU core reservation')
+    if 'memory_bytes' in value['resources']:
+        bounded_int(value['resources']['memory_bytes'], 64 * 1024 * 1024, 1024 ** 4, 'Memory reservation bytes')
     large = 'profile' in value['resources']
     if large and (value['resources']['profile'] != LARGE_OUTPUT_PROFILE or value['runtime'] != CPU_PROFILE):
         raise WorkbenchError('Large outputs require the declared captured CPU resource profile.')
@@ -206,7 +211,8 @@ def decode_definition(raw):
         bounded_int(output['max_bytes'], 1, 512 * 1024 * 1024 if large else MAX_CAPTURE_BYTES, 'Output bytes')
     if value['environment'] != {}:
         raise WorkbenchError('Initial runtime admits no project environment overrides.', 'unsupported', 400)
-    bounded_int(value['resources']['wall_seconds'], 1, 2400 if large else 600, 'Wall seconds')
+    wall_limit=2400 if large else CUDA_WALL_SECONDS_LIMIT if value['runtime']==TORCH_PROFILE and value['runtime_device']=='cuda' else 600
+    bounded_int(value['resources']['wall_seconds'], 1, wall_limit, 'Wall seconds')
     bounded_int(value['resources']['max_output_bytes'], 1, 4 * 1024**3 if large else MAX_CAPTURE_BYTES, 'Output bytes')
     if evidence:
         if value['arguments'].count({'model_evidence_context':True}) != 1:

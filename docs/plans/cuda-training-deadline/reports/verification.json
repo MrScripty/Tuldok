@@ -1,0 +1,18 @@
+{
+  "format": "tuldok_cuda_deadline_verification_v1",
+  "status": "passed",
+  "tests_receipt_sha256": "6f93018099e46569f961fc0f201f12c555b674ee1a5caa649a47f43c3627cdca",
+  "source_sha256": {
+    "recipe_process.py": "c73b96a1eb006f75f98fa66119f4ccb6eb5421123d48bcde48c08138372ebc57",
+    "recipe_contract.py": "5c3072c7f528f042ceae4375ec9cf8ce404a6f60e71234054ba4aab32d2738bc",
+    "tests/test_torch_runtime_lifecycle.py": "d370a56576fef912d5c013d8b2e4b3476d2eb4a324f139592323d89da058cafa",
+    "tests/test_bound_torch_recipe_contract.py": "b817e31f9b0a05cf8ea32a0159a1cc1468e3c4f558294183ec3db1210357a7a2"
+  },
+  "limits": {
+    "managed_cuda": 1800,
+    "ordinary_cpu": 600,
+    "captured_cpu_large": 2400
+  },
+  "runtime_imported": false,
+  "optimizer_updates": 0
+}

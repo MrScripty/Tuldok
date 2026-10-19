@@ -19,7 +19,36 @@ catalog transaction serialize competing admissions.
 A committed queued receipt whose acknowledgment was lost wakes the existing
 owned, unblocked queue when the caller explicitly reconciles the same request.
 It never creates a second run. Restarted catalogs do not replay old queue entries.
-There are at most eight active admitted attempts and one active training child.
+There are at most eight active admitted attempts. The single catalog supervisor
+dispatches independent attempts concurrently through an owned executor: at most
+one CUDA attempt and a configurable number of CPU attempts. `run_capacity.py`
+owns resource selection; `Runs` retains admission, job authorization, execution,
+publication and recovery. A queued CUDA attempt cannot block an eligible CPU
+attempt behind it. Unknown custody fences all further dispatch until recovery.
+
+`TULDOK_CPU_RUN_SLOTS` selects 1–7 CPU attempts (default up to seven, derived from
+available CPUs with two reserved for interactive work). CPU placements are disjoint
+within this supervisor and inherited by child processes. Recipes can reserve
+`resources.cpu_cores` (1–256); otherwise CPU attempts receive one core and CUDA
+attempts up to two. Numerical thread settings remain with their adapter. Affinity
+is cooperative trusted-local placement, not a security sandbox. Placement and
+admission budgets are retained as `execution_resources` on each dispatched Run.
+
+`TULDOK_CPU_RUN_MEMORY_MIB`, `TULDOK_CUDA_RUN_MEMORY_MIB` and
+`TULDOK_RUN_MEMORY_RESERVE_MIB` select positive budgets of at least64 MiB; defaults
+are1024/4096/1024 MiB. A recipe's optional `resources.memory_bytes` can increase
+its reservation but cannot reduce the operator floor. Dispatch requires current
+host/cgroup available memory to cover all active reservations, the new attempt
+and the host reserve. Missing memory observation leaves work queued. Reservations
+are conservative admission accounting, not per-process OS memory limits or an
+OOM guarantee; trusted recipes must separately bound their allocations. The
+64 GiB lab profile selects4096/8192/8192 MiB and explicit per-recipe budgets
+for larger CPU batches. Other applications and catalogs do not share these leases.
+
+The coordinator holds every executor future until the attempt finishes its
+publication/cessation path. Shutdown requests cancellation of every active
+attempt and joins the entire executor before releasing catalog metadata. Restart
+reconciles each durable attempt independently and never replays old queue entries.
 
 `list()` and `get(id)` return real mode, dataset/run IDs, saved graph snapshot,
 graph and release SHA, graph revision, adapter/runtime/parameters, attempt and
@@ -175,7 +204,7 @@ and produce reasons without comparative metric values. Current record editing
 continues through Workbench; retained inputs and prior evidence stay immutable.
 
 Built-in model-aware trials use the same owner-only Runs admission, finite Study
-reservation transaction, eight-attempt queue and one worker. A membership/budget
+reservation transaction and eight-attempt queue with resource-aware dispatch. A membership/budget
 or external execution grant cannot launch a built-in trainer as an agent. The
 supervisor captures and checks the new evidence automatically; users configure
 neither logging nor manual artifact imports. Runtime installation is separate

@@ -1,0 +1,42 @@
+{
+  "umask": "077",
+  "suites": [
+    {
+      "command": [
+        "/media/jeremy/OrangeCream/Linux Software/repos/owned/graphics-3d/rheon-surrogate-lab/runs/dependency-migration-v1/app-env/bin/python3.12",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_recipe_process.py",
+        "-v"
+      ],
+      "cwd": "/media/jeremy/OrangeCream/Linux Software/repos/owned/graphics-3d/rheon-surrogate-lab/runs/dependency-migration-v1/Tuldok",
+      "elapsed_s": 15.626875494999695,
+      "returncode": 0,
+      "output": "test_cancel_during_delayed_go_verification_drains_before_fork (test_recipe_process.CpuSnapshotContractTests.test_cancel_during_delayed_go_verification_drains_before_fork) ... ok\ntest_canonical_roundtrip_without_live_packages (test_recipe_process.CpuSnapshotContractTests.test_canonical_roundtrip_without_live_packages) ... ok\ntest_cpu_capture_and_input_bounds_are_profile_specific (test_recipe_process.CpuSnapshotContractTests.test_cpu_capture_and_input_bounds_are_profile_specific) ... ok\ntest_cpu_exact_aggregate_boundaries_and_per_input_limit (test_recipe_process.CpuSnapshotContractTests.test_cpu_exact_aggregate_boundaries_and_per_input_limit) ... ok\ntest_cpu_launch_environment_is_fresh_unicode_capable_and_locale_closed (test_recipe_process.CpuSnapshotContractTests.test_cpu_launch_environment_is_fresh_unicode_capable_and_locale_closed) ... ok\ntest_cpu_launch_vector_requires_bound_descriptor (test_recipe_process.CpuSnapshotContractTests.test_cpu_launch_vector_requires_bound_descriptor) ... ok\ntest_directory_and_preparation_budget_are_bounded (test_recipe_process.CpuSnapshotContractTests.test_directory_and_preparation_budget_are_bounded) ... ok\ntest_large_output_scan_has_exact_file_total_and_count_bounds_without_large_writes (test_recipe_process.CpuSnapshotContractTests.test_large_output_scan_has_exact_file_total_and_count_bounds_without_large_writes) ... ok\ntest_large_resource_profile_requires_full_cpu_identity_and_keeps_input_bounds (test_recipe_process.CpuSnapshotContractTests.test_large_resource_profile_requires_full_cpu_identity_and_keeps_input_bounds) ... ok\ntest_manifest_change_and_kind_mismatch_refused (test_recipe_process.CpuSnapshotContractTests.test_manifest_change_and_kind_mismatch_refused) ... ok\ntest_mutated_bytes_mode_missing_and_unlisted_refused (test_recipe_process.CpuSnapshotContractTests.test_mutated_bytes_mode_missing_and_unlisted_refused) ... ok\ntest_output_scan_does_not_ignore_other_observation_errors (test_recipe_process.CpuSnapshotContractTests.test_output_scan_does_not_ignore_other_observation_errors) ... ok\ntest_output_scan_tolerates_a_regular_file_renamed_after_listing (test_recipe_process.CpuSnapshotContractTests.test_output_scan_tolerates_a_regular_file_renamed_after_listing) ... ok\ntest_pure_bounds_paths_modes_and_descriptor_binding (test_recipe_process.CpuSnapshotContractTests.test_pure_bounds_paths_modes_and_descriptor_binding) ... ok\ntest_symlink_and_hardlink_file_custody_refused (test_recipe_process.CpuSnapshotContractTests.test_symlink_and_hardlink_file_custody_refused) ... ok\ntest_virtual_torch_origins_are_exact_and_captured (test_recipe_process.CpuSnapshotContractTests.test_virtual_torch_origins_are_exact_and_captured) ... ok\ntest_artifact_source_cold_identity_and_completed_custody (test_recipe_process.CustodyTests.test_artifact_source_cold_identity_and_completed_custody) ... ok\ntest_barrier_complete_exact_output_and_cold_receipt (test_recipe_process.CustodyTests.test_barrier_complete_exact_output_and_cold_receipt) ... ok\ntest_cancel_before_go_and_controller_loss (test_recipe_process.CustodyTests.test_cancel_before_go_and_controller_loss) ... ok\ntest_closed_controller_channel_reports_lost_once_and_cancel_is_idempotent (test_recipe_process.CustodyTests.test_closed_controller_channel_reports_lost_once_and_cancel_is_idempotent) ... ok\ntest_controller_eof_after_go_drains_escaped_child (test_recipe_process.CustodyTests.test_controller_eof_after_go_drains_escaped_child) ... ok\ntest_helper_death_preserves_unknown_even_when_leader_is_dead (test_recipe_process.CustodyTests.test_helper_death_preserves_unknown_even_when_leader_is_dead) ... ok\ntest_malformed_control_and_receipt_loss_never_claim_completion (test_recipe_process.CustodyTests.test_malformed_control_and_receipt_loss_never_claim_completion) ... ok\ntest_native_policy_absence_is_closed_and_receipt_is_pure (test_recipe_process.CustodyTests.test_native_policy_absence_is_closed_and_receipt_is_pure) ... ok\ntest_output_and_runtime_drift_bounds (test_recipe_process.CustodyTests.test_output_and_runtime_drift_bounds) ... ok\ntest_setsid_double_fork_and_term_resistance_are_drained (test_recipe_process.CustodyTests.test_setsid_double_fork_and_term_resistance_are_drained) ... ok\ntest_source_drift_after_ready_does_not_execute (test_recipe_process.CustodyTests.test_source_drift_after_ready_does_not_execute) ... ok\ntest_spec_rejects_invalid_bounds_and_executable_hash_before_spawn (test_recipe_process.CustodyTests.test_spec_rejects_invalid_bounds_and_executable_hash_before_spawn) ... ok\ntest_wall_and_stream_limits_and_nonzero_exit (test_recipe_process.CustodyTests.test_wall_and_stream_limits_and_nonzero_exit) ... ok\n\n----------------------------------------------------------------------\nRan 29 tests in 15.356s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/media/jeremy/OrangeCream/Linux Software/repos/owned/graphics-3d/rheon-surrogate-lab/runs/dependency-migration-v1/app-env/bin/python3.12",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_torch_runtime_lifecycle.py",
+        "-v"
+      ],
+      "cwd": "/media/jeremy/OrangeCream/Linux Software/repos/owned/graphics-3d/rheon-surrogate-lab/runs/dependency-migration-v1/Tuldok",
+      "elapsed_s": 2.4478574179956922,
+      "returncode": 0,
+      "output": "test_cancel_during_inventory_drains_without_fork_and_retains_cold_identity (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_cancel_during_inventory_drains_without_fork_and_retains_cold_identity) ... ok\ntest_captured_bootstrap_drift_after_ready_refuses_recipe_entry (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_captured_bootstrap_drift_after_ready_refuses_recipe_entry) ... ok\ntest_controller_loss_during_inventory_drains_without_fork (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_controller_loss_during_inventory_drains_without_fork) ... ok\ntest_exact_managed_spec_requires_one_profile_device_and_captured_identity (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_exact_managed_spec_requires_one_profile_device_and_captured_identity) ... ok\ntest_finite_cuda_deadline_keeps_cpu_deadline_unchanged (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_finite_cuda_deadline_keeps_cpu_deadline_unchanged) ... ok\ntest_inventory_deadline_fails_and_drains_before_child_wall_clock (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_inventory_deadline_fails_and_drains_before_child_wall_clock) ... ok\ntest_managed_context_drift_after_ready_drains_without_recipe_entry (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_managed_context_drift_after_ready_drains_without_recipe_entry) ... ok\ntest_managed_context_is_reverified_after_child_exit_before_completion (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_managed_context_is_reverified_after_child_exit_before_completion) ... ok\ntest_managed_context_keeps_one_exact_bounded_captured_argument (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_managed_context_keeps_one_exact_bounded_captured_argument) ... ok\ntest_missing_or_changed_inventory_refused_after_go_without_child_or_cpu_retry (test_torch_runtime_lifecycle.ManagedInventoryCustodyTests.test_missing_or_changed_inventory_refused_after_go_without_child_or_cpu_retry) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 2.237s\n\nOK\n"
+    }
+  ],
+  "passed": true
+}

@@ -68,3 +68,12 @@ class BoundTorchRecipeContractTests(TestCase):
             if changed['schema_version']==2:changed.pop('extension_selection')
             with self.assertRaises(WorkbenchError):
                 recipe_contract.decode_definition(json.dumps(changed).encode())
+
+    def test_cuda_training_deadline_is_finite_and_cpu_remains_bounded(self):
+        self.managed()
+        value=copy.deepcopy(self.recipe);value['resources']['wall_seconds']=1800
+        self.assertEqual(recipe_contract.decode_definition(json.dumps(value).encode())['resources']['wall_seconds'],1800)
+        for device,seconds in (('cuda',1801),('cpu',601)):
+            value['runtime_device']=device;value['resources']['wall_seconds']=seconds
+            with self.subTest(device=device),self.assertRaises(WorkbenchError):
+                recipe_contract.decode_definition(json.dumps(value).encode())

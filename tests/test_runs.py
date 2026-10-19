@@ -9,6 +9,7 @@ import signal
 import subprocess
 import sys
 import time
+import threading
 import unittest
 import uuid
 from unittest.mock import patch
@@ -21,6 +22,39 @@ from workbench import WorkbenchError, encode, timestamp
 
 
 class RunTests(WorkspaceCase):
+    def test_sibling_unknown_between_capacity_check_and_entry_prevents_worker_start(self):
+        run = self.submit_queued()
+        owner = self.dataset.runs
+        from run_capacity import Capacity
+        admit = Capacity.admits
+        fence, spawned = threading.Event(), threading.Event()
+        popen = subprocess.Popen
+
+        def late_fence(capacity, claim, active, available):
+            allowed = admit(capacity, claim, active, available)
+            with self.dataset.lock:
+                owner._external_blocked = True
+            fence.set()
+            return allowed
+
+        def sleeping_worker(*_args, **kwargs):
+            child = popen([sys.executable, '-c', 'import time; time.sleep(30)'], **kwargs)
+            spawned.set()
+            return child
+
+        # The sibling's unknown outcome is injected precisely after the last
+        # coordinator observation; the target uses the real builtin worker path.
+        with patch.object(self.pipelines, 'probe', return_value=self.ready()), \
+             patch.object(Capacity, 'admits', autospec=True, side_effect=late_fence), \
+             patch('runs.subprocess.Popen', side_effect=sleeping_worker):
+            try:
+                owner._start()
+                self.assertTrue(fence.wait(5))
+                self.assertFalse(spawned.wait(1), 'a worker started after unknown sibling custody')
+                self.assertEqual(owner.get(run['id'])['state'], 'queued')
+            finally:
+                owner.close()
+
     def body(self, key='contract-request-0001'):
         return {'request_key': key, 'graph_id': self.graph['id'], 'graph_revision': self.graph['revision'],
                 'validation_token': self.validate()['validation_token']}

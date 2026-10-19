@@ -376,6 +376,29 @@ class CpuSnapshotContractTests(unittest.TestCase):
         large['captured_files'].append(dict(path=str(self.base/'source/oversize'),bytes=64*1024*1024+1,sha256='e'*64))
         with self.assertRaisesRegex(custody.ProcessError,'captured file size'):custody.validate_spec(large)
 
+    def test_output_scan_tolerates_a_regular_file_renamed_after_listing(self):
+        output=self.base/'rename-output';output.mkdir()
+        profile=output/'profile.json';profile.write_bytes(b'original profile')
+        spec={'output_dir':str(output),'max_output_bytes':32}
+        original=Path.lstat
+        def rename_then_stat(path):
+            if path==profile:profile.rename(output/'training-profile.json')
+            return original(path)
+        with patch.object(Path,'lstat',rename_then_stat):custody._outputs(spec)
+        custody._outputs(spec)
+        (output/'training-profile.json').write_bytes(b'x'*33)
+        with self.assertRaises(custody.ProcessError):custody._outputs(spec)
+
+    def test_output_scan_does_not_ignore_other_observation_errors(self):
+        output=self.base/'unreadable-output';output.mkdir()
+        item=output/'result';item.write_bytes(b'x')
+        original=Path.lstat
+        def deny_file(path):
+            if path==item:raise PermissionError('fixture observation denied')
+            return original(path)
+        with patch.object(Path,'lstat',deny_file),self.assertRaises(PermissionError):
+            custody._outputs({'output_dir':str(output),'max_output_bytes':32})
+
     def test_large_output_scan_has_exact_file_total_and_count_bounds_without_large_writes(self):
         output=self.base/'large-output';output.mkdir()
         spec=dict(self.cpu_spec(),resource_profile=custody.LARGE_OUTPUT_PROFILE,

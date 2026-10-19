@@ -99,3 +99,10 @@ snapshot as a bound trainer. This keeps fresh CPU restore and its typed Run
 artifact inputs in the current Project contract. Bound evidence still requires
 Project v2; unbound field-evidence recipes and other ordinary runtime profiles
 are not admitted through this Project v2 path.
+
+Explicit managed CUDA recipes may reserve1–1800seconds of execution. Ordinary
+CPU recipes retain their600second bound. The neutral custody owner and recipe
+admission share the CUDA maximum; operators still choose a smaller exact
+per-attempt deadline. Exceeding the requested deadline stops/drains the attempt
+and is not a numerical accuracy result. Installed-runtime verification before
+leader creation retains its separate finite preparation allowance.
