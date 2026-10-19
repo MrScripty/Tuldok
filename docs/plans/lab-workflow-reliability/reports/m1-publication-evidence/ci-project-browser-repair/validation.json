@@ -1,0 +1,39 @@
+{
+  "failed_head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+  "run": 39320650281,
+  "job": 118293498592,
+  "failed_gate": "node tests/browser_workspace_project.cjs",
+  "cause": "After catalog reload the restored catalog value was visible before async project options. The harness assigned an absent project option, yielding empty select value and Fixture Runs; actual held project-list response reproduced exactcondition.",
+  "source": "eb2ebe5b75d4ae69f1bb182c9757d30deee55f96",
+  "fix": "One test file only: wait for actual enabled rendered option and dataset onchange before dispatch; regression holds real read-only project-list response and checks catalog selection remains until release. Existing project/link/reload/noeffect assertions unchanged.",
+  "independent_review": "clear; reviewed one-filedelta/node syntax; exactrun outcome separate",
+  "actual_browser": "passed complete readonlysynthetic project journey at exacteb2 with disposablePG17/Chromium151 including held-listcase, reload, serverrestart, unchangedsourcebytes/noexecution",
+  "distinct_failure": "Not the PR99 ENOTEMPTY cleanup failure; no assumption that PR99 repair resolves this run.",
+  "pending": [
+    "fresh corrected exact-head hosted lifecycle",
+    "normal composition and dependent requalification",
+    "postmerge mainqualification"
+  ],
+  "files": {
+    "browser-receipt.json": {
+      "bytes": 3553,
+      "sha256": "418b9f0bc1a588a087b5a052fd96fd7470993eb7dc80d7a7de8b3328b98fab23"
+    },
+    "tuldok-pr98-project-options-final-source.log": {
+      "bytes": 1282,
+      "sha256": "d13de72f6734fb1147318f67a2700a51cd9382aff81e6e2f21ba2ec0c2e19b00"
+    },
+    "tuldok-pr98-project-options-held-green.log": {
+      "bytes": 1282,
+      "sha256": "eac133c2a74bca27894f816569b57853072cce95e9db23783471b3c5d77b490c"
+    },
+    "tuldok-pr98-project-options-held-red.log": {
+      "bytes": 1904,
+      "sha256": "9740f572811966a55bedc82e739749a19f3a10a9f41d430a47430b7bfe1c9c8e"
+    },
+    "tuldok-pr98-project-original-hosted-failure.log": {
+      "bytes": 3619,
+      "sha256": "929e078fef8d96abe9bea8c39be765bdc786b6a5b8d52a1d9bd12deac153c84b"
+    }
+  }
+}

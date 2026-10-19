@@ -1,0 +1,12 @@
+PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct
+PASS Current snapshot activity refreshes without navigation and retains saved manifest identity
+PASS Malformed publisher status is unavailable, then recovers without fabricating progress
+PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers
+PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers
+PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim
+PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime
+PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence
+PASS Registered current project opens through a shareable project link
+PASS A project link initializes navigation once; explicit later catalog selection survives reload
+PASS Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted
+PASS read-only project browser: /workspace/Tuldok-lab-publication-evidence-m1/build/qa/workspace-project/run-7RJKJe

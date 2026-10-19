@@ -1,0 +1,73 @@
+{
+  "source_commit": "eb2ebe5b75d4ae69f1bb182c9757d30deee55f96",
+  "dirty": false,
+  "command": "node tests/browser_workspace_project.cjs",
+  "qualification": "Generic synthetic project UI/lifecycle only",
+  "actual_lab_source": null,
+  "project_file_hashes": {
+    "alpha/data.json": "b4ce3cdbbc38a800a5c94cb5a19c63a20d66f7d66e2725ecd36b8e7c2f879a70",
+    "alpha/recipe.py": "acc0fb68b3a717a405510704c11f511272a5ba0f07663c9a7332611d4a865855",
+    "alpha/report.md": "eb5a076586c59eabfffed64cd4447ac0cb6800d17094666c17b7f5a96516f6e5",
+    "alpha.project.json": "3f606d9b01d38bd7d6ede7efaade4a5e68855e69458d16fa47dc86fca68c9f37",
+    "beta/data.txt": "37db6957d5b32141f37051d6ea915e32e7d84638a31abd5af8e8c0d180ac937e",
+    "beta/report.md": "1bbc8e85704e222c29f19d8a3edd0e0118b66969a08fc3568de5577b18fade38",
+    "beta.project.json": "1233874b32686fc7cda7aa6319a07a5eac0d78fcf9b18a5b0894719846a88a12",
+    "live/activity.json": "d7f80b84b15e88ca280c985c936ef5a4d00f1708e573fc564cbb283e9bc7d518",
+    "live/source.txt": "25b68ff94561f2ef482acc828d75d6f147ddc6e75ca529306c03fd2e2c681335"
+  },
+  "checks": [
+    "Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct",
+    "Current snapshot activity refreshes without navigation and retains saved manifest identity",
+    "Malformed publisher status is unavailable, then recovers without fabricating progress",
+    "Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers",
+    "Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers",
+    "Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim",
+    "Held old refresh cannot overwrite another project; switching stops the old polling lifetime",
+    "Two projects with shared reference ID stay isolated; switching clears previous external evidence",
+    "Registered current project opens through a shareable project link",
+    "A project link initializes navigation once; explicit later catalog selection survives reload",
+    "Browser reload and server restart retain project selection/catalog; all source/copy bytes unchanged and no execution submitted"
+  ],
+  "captures": [
+    {
+      "file": "project-data-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#project-data-root",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-data-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-data-root",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-pipeline-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-pipeline-root",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-evidence-1440.jpg",
+      "width": 1440,
+      "height": 900,
+      "selector": "#project-runs-root .project-evidence-output",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    },
+    {
+      "file": "project-evidence-390.jpg",
+      "width": 390,
+      "height": 900,
+      "selector": "#project-runs-root .project-evidence-output",
+      "qualification": "Synthetic project UI/lifecycle fixture only"
+    }
+  ],
+  "offline_canary": null,
+  "execution_submitted": false,
+  "source_mutation": false,
+  "authored_publisher_updates": true,
+  "browser": "Chrome/151.0.7922.173"
+}

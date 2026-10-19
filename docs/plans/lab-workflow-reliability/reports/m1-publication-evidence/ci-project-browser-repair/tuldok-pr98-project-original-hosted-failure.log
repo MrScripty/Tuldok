@@ -1,0 +1,31 @@
+2026-10-19T21:37:37.7236945Z ##[group]Run node tests/browser_workspace_project.cjs
+2026-10-19T21:37:37.7237366Z [36;1mnode tests/browser_workspace_project.cjs[0m
+2026-10-19T21:37:37.7301138Z shell: /usr/bin/bash -e {0}
+2026-10-19T21:37:37.7301396Z env:
+2026-10-19T21:37:37.7301810Z   TULDOK_TRAINING_PYTHON: /home/runner/work/Tuldok/Tuldok/build/workspace-training/bin/python
+2026-10-19T21:37:37.7302550Z   TULDOK_NATIVE_READER_PYTHON: /home/runner/work/Tuldok/Tuldok/build/workspace-training/bin/python
+2026-10-19T21:37:37.7303354Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_test
+2026-10-19T21:37:37.7303748Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:37:37.7304397Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-19T21:37:37.7304848Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:37:37.7305245Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:37:37.7305674Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:37:37.7306097Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-19T21:37:37.7306466Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:37:37.7306729Z ##[endgroup]
+2026-10-19T21:37:40.2101576Z PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct
+2026-10-19T21:37:40.9258262Z PASS Current snapshot activity refreshes without navigation and retains saved manifest identity
+2026-10-19T21:37:42.9536002Z PASS Malformed publisher status is unavailable, then recovers without fabricating progress
+2026-10-19T21:37:45.9890131Z PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers
+2026-10-19T21:37:49.2050728Z PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers
+2026-10-19T21:37:49.5563973Z PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim
+2026-10-19T21:37:51.7919261Z PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime
+2026-10-19T21:37:52.1674795Z PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence
+2026-10-19T21:37:52.3001123Z PASS Registered current project opens through a shareable project link
+2026-10-19T21:38:53.2183184Z Error: Timed out
+2026-10-19T21:38:53.2184366Z     at until (/home/runner/work/Tuldok/Tuldok/tests/browser_workspace_project.cjs:22:138)
+2026-10-19T21:38:53.2185624Z     at async /home/runner/work/Tuldok/Tuldok/tests/browser_workspace_project.cjs:147:48
+2026-10-19T21:38:53.2186406Z Application stderr: 
+2026-10-19T21:38:53.2203485Z {"url":"http://127.0.0.1:38233/workspaces?project=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#runs","body":"Local owner · owner\nSession\nSign out\nSkip to workspace\nt.\nTuldok\n● Local\nClassic workbench ↗\nCorner studio ↗\nCONTEXT\nDataset\nInterface fixtures\nCurrent local catalog\nAuthored project Alpha · project\nAuthored project Beta · project\nOpen project\nCurrent catalog handle · loading existing Data owner\nLocal preview\n01\nData\n02\nPipeline\n03\nRuns\n\nFixture runs · browser-local examples only.\n\nEVIDENCE, AT EACH STEP\nRuns\nTuldok · Dataset-centered workspaces\nFixtures are isolated examples. Current catalog runs use an optional local CPU runtime."}
+2026-10-19T21:38:53.2675763Z ##[error]Process completed with exit code 1.
+2026-10-19T21:38:53.3074019Z ##[group]Run actions/upload-artifact@v4
