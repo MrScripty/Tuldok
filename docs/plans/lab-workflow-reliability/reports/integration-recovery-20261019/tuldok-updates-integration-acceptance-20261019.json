@@ -1214,9 +1214,9 @@
     "105": "9f852f58bb8c4551c24348c4ec4d4f64f6e33bf4",
     "106": "0e7b3cbf5047107e7d62b95f3d202ecf4aab9b85",
     "107": "07dde98df856619cab929eb9dc8d3275151c69bd",
-    "108": "653a6ed707e04935ad21d809f16c1fa5698ebe23",
-    "109": "99741e5807e4260c58b53badafc5b6c549421645",
-    "110": "cef327a50d60cefc86e4418d10b4032a5ca52805"
+    "108": "70dcaeb0382a97d051275319881acf589bfb931d",
+    "109": "98380228a7edb8eefb4715cba27ca76722756cf9",
+    "110": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625"
   },
   "m6_active": {
     "agent": "/root/scientific_comparison_m6",
@@ -1432,5 +1432,41 @@
     "source": "fd42361f043c201290c5b6297a384652320044ed",
     "state": "8actualHTTPCLI passed145.991s; finalreceiptcommit+independentassertionauditpending",
     "quiet": "Allqueuedroot/M5/M6heavygatesfinished; M4newcorrectness/perfownsnextwindow"
+  },
+  "m4_refined_qualification": {
+    "source": "98380228a7edb8eefb4715cba27ca76722756cf9",
+    "correctness": "Independently10purePASS0.352s; actualinitial16 had15passes+1test-envelopeTypeError, correctedONLYaffectedshutdown1PASS6.439s; originalfailedlogretained; productionhashunchanged",
+    "review": "tuldok-m4-refinement-independent-review.json",
+    "final_source_proof": "tuldok-m4-refinement-frozen-source.json",
+    "performance": "Newfullsamehead983matrixrunningquiet; one-itemregressionstillobserved. No usefulgain/retentionclaim untilfull20/Refresults."
+  },
+  "batch_consumer_final_independent_review": {
+    "qualified_source": "fd42361f043c201290c5b6297a384652320044ed",
+    "receipt_source": "c2ffebf1aaf846a89ec3654ca7e0807aa7df39b4",
+    "current_composed": "4d5e1afa0ba9aa65eb2d3f0421d5cef5a36f8625",
+    "actual": "8pass145.991s",
+    "independent": "clear inclbothschemaabsenceSELECTs; limitsreceipt",
+    "pending": "3affectedactualafternewproducerquietexit+hosted/serial"
+  },
+  "indexed_final_composition": {
+    "remote": "70dcaeb0382a97d051275319881acf589bfb931d",
+    "local_fixture_ownership_fix": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
+    "base_pr": 110,
+    "normal_merge": "356854ffb7a98859d8c06ef8fc49b4ba2c7dc708",
+    "conflicts": "Onlydocsectionconflict; retainedbothindexedcontractandscientificRefparagraph. No productconflicts.",
+    "root_added_test": "ActualC2sameRef viaWorkflowClientcollect_batch(index+2shards wholeSHA/mode0600/oneSDKbatch/nosegmentfallback) and scientificsameRefdelta0unknowncriterion; afterhelperoriginalcounts/charge/reservation/eventsconservation",
+    "review": "70helperindependentlyclearaftermissingmkdirfixed; finalmetadataUUIDpreregistrationreviewpending",
+    "actual": "2actualC2casespendingquietrelease; no exactcomposedacceptanceclaim",
+    "old_unknown_schemas": "Original2unownednamespacecandidatesremainuntouched; newfixturespreregisterexactUUIDbeforeconstructors"
+  },
+  "preservation_final_independent": {
+    "receipt": "tuldok-20261019-preservation-audit-final-review.json",
+    "protected_refs": 82,
+    "changed_refs": 0,
+    "missing_refs": 0,
+    "original_worktrees": 96,
+    "changed_or_missing_registrations": 0,
+    "original_paths_all_exist": true,
+    "cleanup": "NONE; originalworknotdeleted/pruned/edited"
   }
 }

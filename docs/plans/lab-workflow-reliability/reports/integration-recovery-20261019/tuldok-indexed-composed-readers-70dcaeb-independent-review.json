@@ -1,0 +1,47 @@
+{
+  "checks_run": [
+    "Read frozen git source and fixture/auth/owner implementations only",
+    "Built-in compile(source) and small AST/source ordering/assertion checks; no imports/application/runtime/DB/test execution"
+  ],
+  "evidence_hashes": {
+    "access.py": "50681dd5b2aaba01a311a7465b15161ca264fa4ca9812b95f15914adb5d808f4",
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "tests/auth_helpers.py": "27a40542686a8a56df04601d765b0d4bf815d65d327b49931696a0ed161b5a7e",
+    "tests/qualify_publication_synthetic.py": "8756816e6434b3860bdb6027df52f43eb2344bcaed15b518f93061a38f59ee18",
+    "tests/test_indexed_diagnostics.py": "af764dc4c1dbb1e7127293968adabbbcf7d77b80ba843a2b51d50a882785a439",
+    "tests/test_indexed_diagnostics_publication.py": "480000ff8e7e4d4d7d97793eb9700170935a7ccf4150fb6b675af07f8759af57",
+    "tuldok_client.py": "8ca08eb0a5fea9017dd56be0487b6c608e0375f10fcb83e1b26f5ac915c2ca03"
+  },
+  "finding_and_resolution": {
+    "original_finding": "49559c8 selected an absent destination directory; canonical collect_batch requires an existing regular directory, so the new helper would fail before any batch request.",
+    "root_fix": "70dcaeb0382a97d051275319881acf589bfb931d",
+    "verified_resolution": "output.mkdir(mode=0o700) now precedes collect_batch; no reviewer author-file edits."
+  },
+  "format": "indexed_composed_reader_independent_source_review_v1",
+  "limits": [
+    "Actual two C2 cases are pending root execution after M4 quiet release; no actual pass inferred from source review.",
+    "Batch count assertion observes AgentClient.call operations, not raw HTTP requests; canonical transport source has no automatic retries/fallback and server owners are separately qualified.",
+    "Scientific witness compares identical operands and one case point; it does not validate differing operands, numerical quality, training, runtime performance or a scientific winner.",
+    "Synthetic producer serialization occurs in harness before /usr/bin/true child; dummy0.0 package metadata is not an admitted scientific/training runtime witness.",
+    "No hard-real-time/cancellation latency or whole-plan acceptance claim from this helper review."
+  ],
+  "meaningful_assertions": [
+    "Cold reopened Dataset from existing C2 setup is served through real loopback HTTP; cold AgentClient negotiates with a newly issued actual inspect-only agent bearer, not an owner token or fake client.",
+    "Helper is called inside explicit owner.bind scope to issue credential; Access.bind releases lock before yielding its ContextVar context. No main-thread dataset lock held across blocking HTTP requests was found.",
+    "Batch manifest pins exact recovered Ref and declared diagnostic index plus two shard names. One batch SDK operation and zero ordinary/publication single-segment operations asserted; complete receipt/item and directory inventories required.",
+    "Every locally published index/shard is checked against original publication inventory whole bytes/SHA256 and mode0600. No segment hash is mistaken for whole verification.",
+    "Scientific call uses the same exact recovered Ref twice, explicit first checkpoint, evaluation inventory SHA, canonical owner metric-definition digest and ordered operands/point echo assertions. Synthetic arrays have shape4x4x4, so point1,2,3 is valid.",
+    "Expected prediction delta0 is a same-evidence protocol diagnostic only; criterion must remain unknown. No scientific criterion or fitted model claim is introduced.",
+    "Existing no-replay recipe_process.launch guard spans helper. Copy fault, retained source/destination semantic checks and cold exact-Ref reader remain in original test.",
+    "Original post-helper charged/reservations, full reservation document, Run/graph/grant/consumption/reservation counts and original Run events assertions remain. Credential/audit creation is expected and outside those compute-accounting counts.",
+    "Finally shuts down/closes HTTP server and joins/asserts serving thread stopped before fresh catalog close/DROP in registered test cleanups. Only the exact schema recorded during fresh setup is dropped; temp directory cleanup follows."
+  ],
+  "original_helper_source": "49559c8426232f963ecafd76d02b01e51d052431",
+  "result": "Clear for source/test design after explicit directory repair; actual two-case qualification still pending",
+  "reviewed_at_utc": "2026-10-19T23:02:38.402398+00:00",
+  "reviewed_file": "tests/test_indexed_diagnostics_publication.py",
+  "reviewed_file_sha256": "480000ff8e7e4d4d7d97793eb9700170935a7ccf4150fb6b675af07f8759af57",
+  "reviewed_source": "70dcaeb0382a97d051275319881acf589bfb931d",
+  "reviewed_tree": "e249e29649d35cb9b7e33b951023bf0219c5afc2",
+  "reviewer": "M5 consumer author independent review"
+}

@@ -1,0 +1,15 @@
+{
+  "source": "98380228a7edb8eefb4715cba27ca76722756cf9",
+  "state": "final frozen producer source matches independently reviewed source/test bytes",
+  "sha256": {
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "tests/test_run_artifact_segments.py": "e6cf7ec4fb1571bed04b6d3e091fd91f0a9cff2411f536d816c7cde7103bd895"
+  },
+  "normal_composition": {
+    "parents": [
+      "9a6e853a8ac68a65804d1017ddde361d5046cbbe",
+      "0e7b3cbf5047107e7d62b95f3d202ecf4aab9b85"
+    ],
+    "tree": "0b8e11db8f883dbff95335ee767d79cd9a572653"
+  }
+}
