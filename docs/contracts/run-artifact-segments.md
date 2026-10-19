@@ -52,3 +52,14 @@ or a performance improvement. Paired same-candidate-head/catalog/inventory
 individual/batch measurements with alternating order remain pending.
 
 Current pin: `510198cf8617f297b45b5b5100692e76aa3de5f865019730843b18d1d8ee7e39`.
+
+The separately committed paired harness alternates individual/batch calls on
+the same candidate head, catalog and exact inventory. Each eligible cell uses
+three fresh application processes and two warm pairs per process (n=3 first
+pairs and n=6 warm pairs). Empty history has no eligible artifact and is recorded
+unavailable. Normal completed histories are 8 and 55; additional attached-Ref
+pairs use the same inventory after one real copy fault/recovery, so total history
+includes that original interrupted Run. Bootstrap is measured separately and
+excluded from both arms. Failed/corrupt/partial replies cannot count as improved
+samples. Same-head whole hashes, events and admission/accounting counts must
+match, and no compute can run during paired reads. Final costs remain pending.

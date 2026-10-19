@@ -475,3 +475,18 @@ Logs remain in `reports/m4-bounded-collection/`. This coherent checkpoint is for
 immutable backup/independent review; wider regressions, paired performance and
 candidate retention are pending. No improvement, cache, science or hosted pass
 is inferred.
+
+Frozen007e3de canonical reader regressions passed five cases in50.872 seconds,
+zero skips: real cold ordinary download/restart, actual >8 MiB recovered bounded
+segments with whole-scan tripwire, revocation during segment capture, prior
+publication contracts and exact evidence selector correlation. The independent
+reviewer found no blocking producer issue and independently passed five pure
+cases/122 full-contract equality; consumer request/configured-catalog correlation
+remains required. A two-artifact paired pilot passed actual normal and attached
+Ref whole-hash equality and exact own-schema cleanup. It is not final performance
+evidence. Two focused reporting tests reject a changed whole hash and all
+partial/service failures without fallback.
+
+The original before.log is retained byte-for-byte, including terminal trailing
+whitespace on line2 reported by cumulative cached-diff checking; that raw-evidence
+exception is not a source-whitespace pass. No failure log was rewritten.

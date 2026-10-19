@@ -1,0 +1,4 @@
+{"progress": "paired", "source": "unavailable", "artifacts": 2, "history": 0, "process": 0}
+{"progress": "real_history", "artifacts": 2, "completed": 1, "target": 1}
+{"progress": "paired", "source": "run", "artifacts": 2, "history": 1, "process": 0}
+{"progress": "paired", "source": "publication", "artifacts": 2, "history": 2, "process": 0}
