@@ -1,0 +1,33 @@
+{
+  "documentation_paths": [
+    "docs/plans/lab-workflow-reliability/execution-ledger.md",
+    "docs/plans/lab-workflow-reliability/issues.md",
+    "docs/plans/lab-workflow-reliability/plan.md",
+    "docs/plans/lab-workflow-reliability/reports/baseline-and-standards.md",
+    "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md",
+    "docs/plans/lab-workflow-reliability/reports/independent-plan-review.md",
+    "docs/plans/lab-workflow-reliability/reports/validation.json",
+    "docs/plans/lab-workflow-reliability/reports/validation.md"
+  ],
+  "format": "documentation_plan_validation_v1",
+  "limits": [
+    "Structural validation and local documentation checks only; no Engine certification or product acceptance.",
+    "External references independently inspected via GitHub/Git, not exercised as product behavior.",
+    "No application/catalog/runtime/hardware tests run."
+  ],
+  "material_sha256": {
+    "docs/plans/lab-workflow-reliability/issues.md": "5263b33da1a5c85e3794c8f34f4f3bb9b2bcfa8d8c1ea1ba36a19fad3340b471",
+    "docs/plans/lab-workflow-reliability/plan.md": "62d33606c5829d7bb26562985fdc8d13e8f8f3e7380ab5ef9e31fabd96752af3",
+    "docs/plans/lab-workflow-reliability/reports/baseline-and-standards.md": "60a887e2169ad9966242dc70c6edb133df115d9f809debb4549cb131ff12f4a4",
+    "docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md": "815dc87cfb438b83563c3671e0c91ab8ae51fc5b035cf030a7544eb8dfe257c5"
+  },
+  "passed": true,
+  "plan_sha256": "62d33606c5829d7bb26562985fdc8d13e8f8f3e7380ab5ef9e31fabd96752af3",
+  "relative_link_failures": [],
+  "relative_links_checked": 23,
+  "scope_failures": [],
+  "source_revision": "dcc56f26e884ade260770beceba2501d3746200d",
+  "structural_diagnostic": null,
+  "structural_validator_sha256": "c7266c0564b9ee02944fc4eb12d66cc20d604fd4ddb7f051ed77d01e9fe4466e",
+  "whitespace_failures": []
+}

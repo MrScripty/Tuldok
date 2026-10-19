@@ -235,6 +235,7 @@ def validate_policy(value, definition):
         for key in ('prediction','reference'):
             name(binding[key]);require(binding[key] in outputs and outputs[binding[key]]['required'],'Bound field output is not declared required.')
     require(actual==expected,'Field output coverage differs.')
+    _validate_field_output_bounds(value, outputs, limits)
     definitions=value['metric_definitions'];require(type(definitions) is list and 1<=len(definitions)<=16,'Declare bounded metric meanings.')
     metric_ids=set();population=digest(sorted([item['frozen_reference'] for item in candidates],key=canonical))
     for metric in definitions:
@@ -251,6 +252,30 @@ def validate_policy(value, definition):
         import extension_canonical
         extension_canonical.validate_declaration(value['canonical'],value,definition)
     return value
+
+
+def _validate_field_output_bounds(policy, outputs, limits):
+    """Refuse provably impossible payloads; headers and variable evidence remain runtime checks."""
+    minimums = {}
+
+    def field_payload(filename, field):
+        width = 4 if field['dtype'] == '<f4' else 8
+        minimum = math.prod(field['shape_zyx']) * width
+        require(minimum <= outputs[filename]['max_bytes'],
+                'Required field artifact ' + filename + ' cannot fit its declared output bound.', 'unsupported')
+        require(minimum <= limits['shard_bytes'],
+                'Required field artifact ' + filename + ' cannot fit the admitted shard bound.', 'unsupported')
+        minimums[filename] = max(minimums.get(filename, 0), minimum)
+
+    for row in policy['probe_inputs']:
+        for item, field in zip(row['fields'], policy['fields'][0]['contract']['inputs'], strict=True):
+            field_payload(item['artifact'], field)
+    fields = {field['id']: field['contract']['output'] for field in policy['fields']}
+    for binding in policy['field_outputs']:
+        for role in ('prediction', 'reference'):
+            field_payload(binding[role], fields[binding['field_id']])
+    require(sum(minimums.values()) <= limits['total_output_bytes'],
+            'Required field payloads cannot fit the admitted aggregate output bound.', 'unsupported')
 
 
 @boundary
