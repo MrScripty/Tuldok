@@ -1,0 +1,22 @@
+{
+  "base_head": "5a1feac9f27e23e471c6b57d1f74c026c01c3dd6",
+  "normally_composed_root_followup": "5f1aa49af2935100b60743fb1929cb2727ac6275",
+  "source_head": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb",
+  "source_manifest_sha256": "2da5580cff271caaabebf7773ec193563d239a497886d4caa902d5c3f6dbf099",
+  "source_sha256": {
+    ".github/workflows/tests.yml": "48b4c0610a9206e79ec061c3f1bf084063d55f758eb6d934382141203f3a2364",
+    "agent_api.py": "8ee3136aabca634a0f41471116fa1141b4cbc15aea493a063484528403c984f4",
+    "app.py": "75c54e547d139f921b34678a8448aa65125bf274a3460cd8b8131b1185f0077d",
+    "docs/contracts/run-phase-timings.md": "5e23bddab87223d09eb9e22ce42ba0ef34911d21b54ceca65645c5457ecbbad1",
+    "docs/plans/lab-workflow-reliability/execution-ledger.md": "d4ee0d3349c1b501915a8484a37195cd26df7d6ea78dce35a42b1c6887d5eb90",
+    "docs/plans/lab-workflow-reliability/plan.md": "274fc86ca9f150664846f29b4d0628105c2a3a7d1633f4d7d2a634d0e453b930",
+    "phase_timings.py": "03406d957da7da1305a07793a3be0830f2169c02971fdd9fb2e855f54ac627bc",
+    "pipeline.py": "07f5b491767941bf68668da8e82282b78858fe310e9ec74c6d91a8e38534faeb",
+    "project_cli.py": "b944559dc52ab511be82f99d9d93fd3cee600c4845ab4ba5427ad921083869ca",
+    "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+    "run_publication.py": "41e7eeb7f9efe3743cf19465c36ffadf9713117829273e6e0091707e78e66dee",
+    "runs.py": "6aece3b50722f23b97457fd398cd94a45bca598e7affc0db6ea5f3dd98ba6b08",
+    "tests/fixtures/agent_contract_hashes_phase5a1feac.json": "4579cd477ebdb43bd9bca6692d97b851eff369c3a880c8dcd2c156c002e844c2",
+    "tests/test_run_phase_timings.py": "1449522265e9ef22a25b9ca4d4d06825cf031e5849b0915b9ee0dd17cd146c26"
+  }
+}

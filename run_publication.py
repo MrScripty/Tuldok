@@ -9,6 +9,7 @@ import re
 import shutil
 import stat
 import time
+import phase_timings
 import uuid
 
 from metadata import CommitOutcomeUnknown
@@ -389,8 +390,11 @@ def recover(runs, body):
             _require(current_continuation is None or current_continuation['cancel_revision'] == previous['cancel_revision'],
                      'Publication cancellation superseded this continuation request.', 'cancelled')
             run['publication_continuation'] = continuation; runs._save(run)
-        _verify_source(runs, run, proof, deadline)
-        manifest = _publish(runs, run, proof, deadline)
+        clock = runs._phase_clock(run['id'])
+        with phase_timings.observe(clock, 'recovery_verification', 'validating_outputs'):
+            _verify_source(runs, run, proof, deadline)
+        with phase_timings.observe(clock, 'recovery_publication', 'copying_outputs'):
+            manifest = _publish(runs, run, proof, deadline)
         _check(runs, deadline)
         runs.access.require('approve-execution', 'runs.recover_publication', run['id'], owner_only=True)
         authorize_transitive_inputs(runs, run)

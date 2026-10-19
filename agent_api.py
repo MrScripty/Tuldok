@@ -630,6 +630,42 @@ model_operation('runs.cancel_publication', 'POST', '/api/workspace/runs/{run_id}
     scopes=('inspect', 'cancel'), mutation=True)
 _OWNER_OPERATION_IDS.update(('runs.recover_publication', 'runs.cancel_publication'))
 _MODEL_RECEIPT_IDS.add('runs.recover_publication')
+_PHASE_MAX_MS = 7*24*60*60*1000
+_PHASE_NAMES = ['catalog_lock_wait', 'prepare', 'capture', 'queue', 'launch_verification', 'custodian_preparation',
+    'go_wait', 'runtime_verification', 'leader_lifetime', 'drain', 'output_validation',
+    'publication', 'recovery_verification', 'recovery_publication']
+_PHASE_OWNERS = {
+    'pipeline': {'prepare', 'capture'},
+    'runs': {'catalog_lock_wait', 'queue', 'launch_verification', 'output_validation',
+             'publication', 'recovery_verification', 'recovery_publication'},
+    'custodian': {'custodian_preparation', 'go_wait', 'runtime_verification', 'leader_lifetime', 'drain'},
+}
+_PHASE_SPAN = obj({'sequence': integer(1, 2**31-1), 'phase': {'enum': _PHASE_NAMES},
+    'state': {'enum': ['open', 'measured', 'incomplete']},
+    'started_offset_ms': integer(0, _PHASE_MAX_MS),
+    'ended_offset_ms': {'oneOf': [{'type': 'null'}, integer(0, _PHASE_MAX_MS)]},
+    'elapsed_ms': integer(0, _PHASE_MAX_MS), 'wait_reason': {'enum': [None,
+        'catalog_lock', 'capacity', 'preparing_material', 'capturing_inputs', 'scheduler', 'verifying_captures',
+        'owner_go', 'leader', 'descendants', 'validating_outputs', 'copying_outputs']}})
+_PHASE_RECORD = obj({'format': const('owner_phase_timings_v1'),
+    'owner': {'enum': ['pipeline', 'runs', 'custodian']}, 'clock_id': ID,
+    'observed_at_ms': SAFE_NAT, 'dropped_spans': integer(0, 2**31-1), 'spans': array(_PHASE_SPAN, 32, 1)})
+model_operation('runs.phase_timings', 'GET', '/api/workspace/runs/{run_id}/phase-timings', {'run_id': ID},
+    output=obj({'format': const('run_phase_timings_v1'), 'catalog_id': ID, 'run_id': ID,
+        'original_run_state': {'enum': ['queued', 'running', 'cancelling', 'completed', 'failed', 'cancelled', 'interrupted', 'unknown']},
+        'evidence': {'enum': ['owner_observed', 'partial', 'unknown_granularity', 'unavailable']},
+        'records': array(_PHASE_RECORD, 4)}),
+    description='Bounded owner-clock observations; overlapping spans are not additive, incomplete history is never reconstructed. No readiness or result authority.')
+model_operation('graphs.preparation_timings', 'POST', '/api/workspace/graphs/{graph_id}/preparation-timings',
+    {'graph_id': ID, 'revision': integer(1, 2**31-1)},
+    output=obj({'format': const('graph_preparation_timings_v1'), 'catalog_id': ID, 'graph_id': ID,
+        'graph_revision': integer(1, 2**31-1), 'actor_id': ID,
+        'selection': const('latest_actor_graph_revision_observation'),
+        'observation': {'oneOf': [{'type': 'null'}, obj({
+            'operation': {'enum': ['graphs.preflight_external', 'graphs.capture_external']},
+            'clock_id': ID, 'material_sha256': {'oneOf': [{'type': 'null'}, SHA]}})]},
+        'evidence': {'enum': ['owner_observed', 'unknown_granularity']}, 'records': array(_PHASE_RECORD, 1)}),
+    description='Latest volatile exact actor/graph/revision preparation observation, including before a Run exists; never starts preparation.')
 _COORDINATOR_HEALTH = obj({'format': const('run_coordinator_health_v1'), 'catalog_id': ID,
     'generation': integer(1, 2**31-1),
     'state': {'enum': ['healthy', 'idle', 'blocked', 'recovering', 'stopped', 'faulted']},
@@ -1141,6 +1177,32 @@ def validate_output(name, envelope, version=None):
     op = operation(name, version)
     if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and envelope['status'] < 400:
+        value = envelope['result']; records = value['records']
+        if len({item['clock_id'] for item in records}) != len(records):
+            raise AgentAPIError('Owner timing clocks are duplicated.', 'transport', 502)
+        for record in records:
+            spans = record['spans']
+            if len({item['sequence'] for item in spans}) != len(spans):
+                raise AgentAPIError('Owner timing sequences are duplicated.', 'transport', 502)
+            for item in spans:
+                if (item['phase'] not in _PHASE_OWNERS[record['owner']]
+                        or item['started_offset_ms']+item['elapsed_ms'] > _PHASE_MAX_MS
+                        or (item['state'] == 'measured') != (item['ended_offset_ms'] is not None)
+                        or item['state'] == 'measured' and item['ended_offset_ms']-item['started_offset_ms'] != item['elapsed_ms']
+                        or item['state'] != 'open' and item['wait_reason'] is not None):
+                    raise AgentAPIError('Owner timing span is inconsistent.', 'transport', 502)
+        if op['operation_id'] == 'graphs.preparation_timings':
+            observation = value['observation']
+            if ((not records) != (observation is None) or observation is not None and
+                    (observation['clock_id'] != records[0]['clock_id'] or any(
+                        item['phase'] != ('prepare' if observation['operation'] == 'graphs.preflight_external' else 'capture')
+                        for item in records[0]['spans']))):
+                raise AgentAPIError('Latest preparation observation has inconsistent operation/clock identity.', 'transport', 502)
+        if (not records and value['evidence'] in ('owner_observed', 'partial')
+                or records and value['evidence'] in ('unknown_granularity', 'unavailable')
+                or op['operation_id'] == 'graphs.preparation_timings' and any(item['owner'] != 'pipeline' for item in records)):
+            raise AgentAPIError('Owner timing evidence is inconsistent.', 'transport', 502)
     if op['operation_id'] == 'runs.publication_result' and envelope['status'] < 400:
         value = envelope['result']; ref = value['result_ref']; source = value['source_ref']
         canonical = lambda item: json.dumps(item, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode('utf-8')
@@ -1470,6 +1532,12 @@ class AgentClient:
                                ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))
                         or value['comparison']['mode'] != choices['mode']):
                     raise AgentAPIError('Recovered comparison side differs from its exact selection.', 'transport', 502)
+        if op['operation_id'] in ('runs.phase_timings', 'graphs.preparation_timings') and result['status'] < 400:
+            value = result['result']
+            identity = ('run_id',) if op['operation_id'] == 'runs.phase_timings' else ('graph_id',)
+            if (value['catalog_id'] != self.catalog_id or any(value[key] != arguments[key] for key in identity)
+                    or op['operation_id'] == 'graphs.preparation_timings' and value['graph_revision'] != arguments['revision']):
+                raise AgentAPIError('Owner timing observation differs from its requested identity.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_status' and result['status'] < 400:
             value = result['result']; source = value['source_ref']; continuation = value['continuation']
             if (value['run_id'] != arguments['run_id'] or source is not None and
