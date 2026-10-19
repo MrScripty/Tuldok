@@ -1,0 +1,714 @@
+diff --git a/agent_api.py b/agent_api.py
+index 27a24d5..fc2877f 100644
+--- a/agent_api.py
++++ b/agent_api.py
+@@ -630,6 +630,19 @@ model_operation('runs.cancel_publication', 'POST', '/api/workspace/runs/{run_id}
+     scopes=('inspect', 'cancel'), mutation=True)
+ _OWNER_OPERATION_IDS.update(('runs.recover_publication', 'runs.cancel_publication'))
+ _MODEL_RECEIPT_IDS.add('runs.recover_publication')
++_COORDINATOR_HEALTH = obj({'format': const('run_coordinator_health_v1'),
++    'generation': integer(1, 2**31-1),
++    'state': {'enum': ['healthy', 'idle', 'blocked', 'recovering', 'stopped', 'faulted']},
++    'updated_at': text(64), 'admission_ready': {'type': 'boolean'},
++    'fault': {'oneOf': [{'type': 'null'}, obj({'category': text(80), 'at': text(64)})]}})
++model_operation('runs.coordinator_health', 'GET', '/api/workspace/coordinator', {}, output=_COORDINATOR_HEALTH,
++    description='Current Runs-owned coordinator readiness and bounded fault; ordinary idle event waiting is healthy.')
++model_operation('runs.recover_coordinator', 'POST', '/api/workspace/coordinator/recover',
++    {'expected_generation': integer(1, 2**31-1), 'request_key': KEY}, output=_COORDINATOR_HEALTH,
++    scopes=('inspect', 'approve-execution'), mutation=True,
++    description='Explicit owner recovery of one stopped coordinator generation; reconcile original custody without compute replay.')
++_OWNER_OPERATION_IDS.add('runs.recover_coordinator')
++_MODEL_RECEIPT_IDS.add('runs.recover_coordinator')
+ model_operation('runs.publication_result', 'POST', '/api/workspace/publication-results',
+     {'ref': PUBLICATION_RESULT_REF}, output=_PUBLICATION_RESULT)
+ _PUBLICATION_SEGMENT = copy.deepcopy(SEGMENT_SCHEMA)
+diff --git a/app.py b/app.py
+index 4074e25..c2d1747 100644
+--- a/app.py
++++ b/app.py
+@@ -795,6 +795,9 @@ def make_handler(dataset, observer=None):
+                         return self.reply(dataset.runs.input_candidates())
+                     if parts == ['runs']:
+                         return self.reply(dataset.runs.list())
++                    if parts == ['coordinator']:
++                        agent_api.require_selection(self._contract_selection, 'runs.coordinator_health')
++                        return self.reply(dataset.runs.coordinator_health())
+                     if len(parts) == 2 and parts[0] == 'runs':
+                         return self.reply(dataset.runs.get(parts[1]))
+                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'publication':
+@@ -1000,6 +1003,9 @@ def make_handler(dataset, observer=None):
+                 path = urlsplit(self.path).path
+                 if path.startswith('/api/workspace/'):
+                     parts = path.removeprefix('/api/workspace/').split('/')
++                    if parts == ['coordinator', 'recover']:
++                        agent_api.require_selection(self._contract_selection, 'runs.recover_coordinator')
++                        return self.reply(dataset.runs.recover_coordinator(body))
+                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] in ('recover-publication', 'cancel-publication'):
+                         operation = 'runs.recover_publication' if parts[2] == 'recover-publication' else 'runs.cancel_publication'
+                         agent_api.require_selection(self._contract_selection, operation)
+diff --git a/metadata.py b/metadata.py
+index 5505b19..a9d275a 100644
+--- a/metadata.py
++++ b/metadata.py
+@@ -14,6 +14,7 @@ import os
+ from pathlib import Path
+ import stat
+ import threading
++import time
+ import uuid
+ 
+ import psycopg
+@@ -147,6 +148,28 @@ class CatalogLock:
+         finally:
+             self.mutex.release()
+ 
++    @contextmanager
++    def bounded(self, deadline, cancelled=None):
++        """Recovery acquires local ownership with a deadline and never waits for a peer backend."""
++        while not self.mutex.acquire(timeout=min(.1, max(0, deadline-time.monotonic()))):
++            if (cancelled and cancelled()) or time.monotonic() >= deadline:
++                raise StorageError('Catalog command ownership did not become available within the recovery deadline.')
++        entered = False
++        try:
++            if (cancelled and cancelled()) or time.monotonic() >= deadline:
++                raise StorageError('Catalog command ownership was cancelled or reached its deadline.')
++            if not self.depth and not self.metadata.connection.execute(
++                    'SELECT pg_try_advisory_lock(%s)', (self.metadata._lock_key,)).fetchone()[0]:
++                raise StorageError('A peer still owns the catalog command lock; recovery remains fenced.')
++            self.depth += 1
++            entered = True
++            yield self
++        finally:
++            if entered:
++                self.__exit__(None, None, None)
++            else:
++                self.mutex.release()
++
+ 
+ class Metadata:
+     def __init__(self, path, dsn=None, *, create=True, dataset_id=None,
+@@ -376,6 +399,15 @@ class Metadata:
+                     (_key(self.schema + ':worker:' + name),)).fetchone()[0])
+             return self._runtime_claims[name]
+ 
++    def runtime_owned(self, name):
++        """Observe this session's existing lock without stacking or claiming a peer's lock."""
++        if self.connection.closed or not self._runtime_claims.get(name):
++            return False
++        key = _key(self.schema + ':worker:' + name) & ((1 << 64) - 1)
++        return bool(self.execute("SELECT EXISTS(SELECT 1 FROM pg_locks WHERE locktype='advisory' "
++            "AND pid=pg_backend_pid() AND granted AND objsubid=1 AND classid=%s::oid AND objid=%s::oid)",
++            (key >> 32, key & 0xffffffff)).fetchone()[0])
++
+     def _signature(self, schema=None):
+         """Catalog structures, not formatted CREATE strings, detect unsupported drift."""
+         schema = schema or self.schema
+diff --git a/runs.py b/runs.py
+index 76d7807..7f6eafe 100644
+--- a/runs.py
++++ b/runs.py
+@@ -25,7 +25,7 @@ import text_training
+ import audio_training
+ import release_validation
+ import psycopg
+-from metadata import CommitOutcomeUnknown
++from metadata import CommitOutcomeUnknown, StorageError
+ from workbench import WorkbenchError, encode, timestamp, text_value
+ from pipeline import closed, digest, execution_digest, identifier, adapter_for_graph, adapter_identity_for_graph, source_content_hash, training_environment, model_aware_graph, model_contract
+ 
+@@ -87,7 +87,7 @@ class Runs:
+         self.path.mkdir(exist_ok=True)
+         self._wake, self._stop = threading.Event(), threading.Event()
+         self._thread = None
+-        self._thread_lock = threading.Lock()
++        self._thread_lock = threading.RLock()
+         self._publication_lock = threading.Lock()
+         self._publication_cancel = threading.Event()
+         self._publication_active = None
+@@ -101,6 +101,8 @@ class Runs:
+             self.runtime_owner = self.db.claim_runtime('workspace_runs')
+             if self.runtime_owner:
+                 self._recover()
++        from run_coordinator import Coordinator
++        self._coordinator = Coordinator(self)
+ 
+     def _study_attempt_metadata(self, trial, limit=5):
+         """Bounded saved status for experiment overviews, without byte verification.
+@@ -463,6 +465,7 @@ class Runs:
+             raise WorkbenchError('Another application owns this catalog’s training supervisor.', 'unavailable', 409)
+         if self._blocked:
+             raise WorkbenchError('A prior worker has unconfirmed cessation. Close the old application before reopening this catalog.', 'unavailable', 409)
++        self._coordinator.require_ready()
+         if sys.platform != 'linux':
+             raise WorkbenchError('The qualified CPU worker lifecycle currently requires Linux.', 'unsupported', 400)
+ 
+@@ -1450,6 +1453,48 @@ class Runs:
+                 self._thread.start()
+         self._wake.set()
+ 
++    @authorized('inspect', 'runs.coordinator_health')
++    def coordinator_health(self):
++        return self._coordinator.projection()
++
++    def recover_coordinator(self, body):
++        # The coordinator bounds catalog/lifecycle ownership before authorizing;
++        # ordinary decorators acquire the catalog mutex without a deadline.
++        return self._coordinator.recover(body)
++
++    def _reconcile_coordinator(self, deadline):
++        """Same-application recovery preserves only acknowledged, never-started queue items."""
++        blocked = external_blocked = False
++        with self.access._reconcile(), self._coordinator.catalog(deadline), self.db.transaction():
++            self._coordinator.check_deadline(deadline)
++            milliseconds = max(1, int((deadline-time.monotonic())*1000))
++            self.db.execute("SELECT set_config('statement_timeout',%s,true)", (str(milliseconds),))
++            if not self.runtime_owner or not self.db.runtime_owned('workspace_runs'):
++                raise WorkbenchError('Current PostgreSQL session does not own this coordinator.', 'unavailable', 409)
++            # Preserve unknown fences. A missing receipt on this boot is never
++            # repaired by a joined Python thread or an empty process scan.
++            for run in self._in_states((*ACTIVE, 'unknown')):
++                self._coordinator.check_deadline(deadline)
++                if run['state'] == 'queued' and (
++                    (self._external(run) and run['id'] in self._confirmed_external and
++                     run['custody_phase'] == 'prepared' and run.get('custody_identity') is None) or
++                    (not self._external(run) and run['process_phase'] == 'not_started')):
++                    continue
++                if self._external(run):
++                    state = self._external_recovery_state(run)
++                    external_blocked |= state == 'unknown'
++                else:
++                    worker = run.get('worker')
++                    state = ('interrupted' if run['process_phase'] == 'not_started' else
++                             'interrupted' if worker and process_status(worker) == 'ceased' else
++                             'unknown' if worker else self._reconcile_start(run))
++                    blocked |= state == 'unknown'
++                self._event(run, state, 'Coordinator recovery reconciled this original attempt; compute was not replayed.')
++                self._save(run)
++        # Clear old fences only after the authoritative reconciliation COMMIT
++        # acknowledged, and only if no retained attempt remains uncertain.
++        self._blocked, self._external_blocked = blocked, external_blocked
++
+     def _loop(self):
+         from concurrent.futures import ThreadPoolExecutor
+         from run_capacity import available_memory, MAX_ATTEMPTS
+@@ -1466,6 +1511,7 @@ class Runs:
+                     with self.lock:
+                         blocked = self._blocked or self._external_blocked or not self.runtime_owner
+                     if blocked:
++                        self._coordinator.transition('blocked')
+                         self._wake.wait(.25)
+                         self._wake.clear()
+                         continue
+@@ -1490,8 +1536,12 @@ class Runs:
+                             active[run['id']] = (executor.submit(self._run_attempt, run, cpus, claim), claim, cpus)
+                     # With no pending work only admission/stop can change the queue.
+                     # Queued resource waits still retry when headroom changes.
++                    self._coordinator.transition('healthy' if active or queued else 'idle')
+                     self._wake.wait(.05 if active else .25 if queued else None)
+                     self._wake.clear()
++            except Exception as error:
++                self._coordinator.fault('catalog_lock_timeout' if isinstance(error, psycopg.errors.LockNotAvailable) else
++                                        'storage' if isinstance(error, psycopg.Error) else 'coordinator_exception')
+             finally:
+                 # On coordinator/storage failure, active attempts observe stop
+                 # and drain before executor shutdown releases ownership.
+@@ -1534,7 +1584,7 @@ class Runs:
+                         self._event(run, state, run['error']['message'])
+                         self._save(run)
+             except psycopg.Error:
+-                self._stop.set()
++                self._coordinator.fault('attempt_reconciliation_storage')
+         finally:
+             os.sched_setaffinity(0, affinity)
+             self._wake.set()
+@@ -2359,26 +2409,30 @@ class Runs:
+ 
+ 
+     def close(self):
++        deadline = time.monotonic() + 60
+         with self._thread_lock:
+             self._closed = True
+             self._stop.set()
+             self._wake.set()
+             thread = self._thread
++        self._coordinator.transition('stopped')
+         if thread is not None:
+-            thread.join(timeout=60)
++            thread.join(timeout=max(0, deadline-time.monotonic()))
+             if thread.is_alive():
+                 raise RuntimeError('Training supervisor did not drain; metadata must remain open.')
+-        if not self._publication_lock.acquire(timeout=60):
++        if not self._publication_lock.acquire(timeout=max(0, deadline-time.monotonic())):
+             raise RuntimeError('Publication recovery did not drain; metadata must remain open.')
+         self._publication_lock.release()
+         if self.runtime_owner:
+             try:
+-                with self.lock, self.db.transaction():
++                with self.lock.bounded(deadline), self.db.transaction():
++                    self.db.execute("SELECT set_config('statement_timeout',%s,true)",
++                                    (str(max(1, int((deadline-time.monotonic())*1000))),))
+                     for run in self._in_states(('queued',)):
+                         if run['state'] == 'queued':
+                             self._event(run, 'cancelled', 'Application closed before this queued attempt started.')
+                             self._save(run)
+-            except psycopg.Error:
++            except (psycopg.Error, StorageError):
+                 # Drain local resources independently of database availability.
+                 # No successful durable transition is claimed after a lost write.
+                 pass
+diff --git a/run_coordinator.py b/run_coordinator.py
+new file mode 100644
+index 0000000..fca172d
+--- /dev/null
++++ b/run_coordinator.py
+@@ -0,0 +1,229 @@
++"""Runs-owned, bounded local coordinator journal; never process/custody authority."""
++import json
++import os
++import stat
++import threading
++import time
++import uuid
++from contextlib import contextmanager
++
++from workbench import WorkbenchError, encode, timestamp
++
++LIMIT = 16 * 1024
++
++
++class Coordinator:
++    def __init__(self, runs):
++        self.runs = runs
++        self.lock = threading.RLock()
++        self.recovery = threading.Lock()
++        self.journal_ok = True
++        self.value = {'format': 'run_coordinator_v1', 'catalog_id': runs.db.dataset_id,
++                      'generation': 1, 'state': 'idle', 'updated_at': timestamp(),
++                      'fault': None, 'request': None}
++        if runs.runtime_owner:
++            try:
++                with self.directory() as descriptor:
++                    try:
++                        file = os.open('.coordinator-v1.json', os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
++                                       dir_fd=descriptor)
++                    except FileNotFoundError:
++                        file = None
++                    if file is not None:
++                        with os.fdopen(file, 'rb') as stream:
++                            info = os.fstat(stream.fileno())
++                            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_size > LIMIT:
++                                raise ValueError('Invalid coordinator journal file.')
++                            old = json.loads(stream.read(LIMIT + 1))
++                            if (type(old) is not dict or old.get('format') != 'run_coordinator_v1' or
++                                    old.get('catalog_id') != runs.db.dataset_id or
++                                    type(old.get('generation')) is not int or not 1 <= old['generation'] < 2**31):
++                                raise ValueError('Invalid coordinator journal identity.')
++                            # Reopen still uses ordinary durable Run/custody reconciliation.
++                            # Old readiness and request acknowledgements never revive a thread.
++                            self.value['generation'] = old['generation'] + 1
++                self.save()
++            except (OSError, ValueError, TypeError):
++                self.journal_ok = False
++                self.fault('journal_unavailable')
++
++    def directory(self):
++        @contextmanager
++        def opened():
++            descriptor = os.open(self.runs.path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
++            try:
++                info = os.fstat(descriptor)
++                if info.st_uid != os.getuid():
++                    raise OSError('Coordinator directory owner differs.')
++                yield descriptor
++            finally:
++                os.close(descriptor)
++        return opened()
++
++    def save(self):
++        """Atomic private replacement and directory sync, bounded independently of history."""
++        if not self.journal_ok:
++            raise OSError('Original coordinator journal is unavailable; retain it for inspection.')
++        raw = encode(self.value).encode('utf-8')
++        if len(raw) > LIMIT:
++            raise ValueError('Coordinator journal exceeds its bound.')
++        with self.directory() as descriptor:
++            temporary = '.coordinator-' + uuid.uuid4().hex
++            try:
++                file = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
++                               0o600, dir_fd=descriptor)
++                with os.fdopen(file, 'wb') as stream:
++                    stream.write(raw)
++                    stream.flush()
++                    os.fsync(stream.fileno())
++                os.replace(temporary, '.coordinator-v1.json', src_dir_fd=descriptor, dst_dir_fd=descriptor)
++                os.fsync(descriptor)
++            finally:
++                try:
++                    os.unlink(temporary, dir_fd=descriptor)
++                except FileNotFoundError:
++                    pass
++
++    def transition(self, state):
++        with self.lock:
++            if self.runs._stop.is_set() and state != 'stopped':
++                return
++            if self.value['state'] == state:
++                return
++            self.value.update(state=state, updated_at=timestamp())
++            try:
++                self.save()
++            except (OSError, ValueError):
++                self.fault('journal_unavailable')
++
++    def fault(self, code):
++        with self.lock:
++            self.runs._stop.set()
++            self.runs._wake.set()
++            if self.value['fault'] is None:
++                self.value['fault'] = {'category': code, 'at': timestamp()}
++            self.value.update(state='faulted', updated_at=timestamp())
++            try:
++                self.save()
++            except (OSError, ValueError):
++                pass  # Memory fence survives an unacknowledged journal write.
++
++    def projection(self):
++        with self.lock:
++            value = self.value
++            thread = self.runs._thread
++            dead = thread is not None and not thread.is_alive()
++            ready = (not self.runs._closed and self.runs.runtime_owner and
++                     not self.runs._stop.is_set() and not dead and
++                     value['state'] not in ('faulted', 'recovering', 'stopped') and
++                     not self.runs._blocked and not self.runs._external_blocked)
++            state = ('stopped' if self.runs._closed else 'recovering' if value['state'] == 'recovering' else
++                     'faulted' if dead and not ready else
++                     'blocked' if value['state'] != 'faulted' and
++                     (self.runs._blocked or self.runs._external_blocked or not self.runs.runtime_owner) else value['state'])
++            return {'format': 'run_coordinator_health_v1', 'generation': value['generation'],
++                    'state': state, 'updated_at': value['updated_at'],
++                    'fault': value['fault'], 'admission_ready': bool(ready)}
++
++    def require_ready(self):
++        if not self.projection()['admission_ready']:
++            raise WorkbenchError('Run coordinator is fenced; inspect its health and explicitly recover as owner.',
++                                 'unavailable', 409)
++
++    def recover(self, body):
++        from pipeline import closed, digest
++        from runs import REQUEST_KEY
++        closed(body, ('expected_generation', 'request_key'))
++        generation, key = body['expected_generation'], body['request_key']
++        if type(generation) is not int or not 1 <= generation < 2**31 or type(key) is not str or not REQUEST_KEY.fullmatch(key):
++            raise WorkbenchError('Recovery requires the exact generation and stable request key.', 'invalid', 400)
++        deadline = time.monotonic() + 60
++        with self.catalog(deadline):
++            owner = self.runs.access.require('approve-execution', 'runs.recover_coordinator', owner_only=True)
++        request = {'actor_id': owner.actor_id, 'request_key': key,
++                   'request_sha256': digest({'catalog_id': self.runs.db.dataset_id,
++                       'operation': 'runs.recover_coordinator', 'actor_id': owner.actor_id, 'body': body}),
++                   'expected_generation': generation, 'completed_generation': None}
++        while not self.recovery.acquire(timeout=.1):
++            self.check_deadline(deadline)
++        entered = False
++        try:
++            self.check_deadline(deadline)
++            with self.bounded(self.lock, deadline):
++                old = self.value['request']
++                if old and old['request_key'] == key:
++                    if any(old[field] != request[field] for field in ('actor_id', 'request_sha256', 'expected_generation')):
++                        raise WorkbenchError('Recovery key belongs to another actor or request.', 'conflict', 409)
++                    if old['completed_generation'] == self.value['generation'] and self.projection()['admission_ready']:
++                        return self.projection()
++                elif generation != self.value['generation']:
++                    raise WorkbenchError('Coordinator generation changed; inspect current health.', 'stale', 409)
++                if not self.journal_ok:
++                    raise WorkbenchError('Original coordinator journal needs owner inspection before reopen.', 'unavailable', 409)
++                if self.projection()['admission_ready']:
++                    raise WorkbenchError('Coordinator is already ready.', 'conflict', 409)
++                self.value['request'] = request
++                entered = True
++                self.value.update(state='recovering', updated_at=timestamp())
++                self.save()
++            # No catalog or lifecycle lock is held while the old executor drains.
++            thread = self.runs._thread
++            while thread is not None and thread.is_alive():
++                self.check_deadline(deadline)
++                thread.join(timeout=.1)
++            self.check_deadline(deadline)
++            self.runs._reconcile_coordinator(deadline)
++            with self.catalog(deadline), self.bounded(self.runs._thread_lock, deadline):
++                self.check_deadline(deadline)
++                self.runs.access.require('approve-execution', 'runs.recover_coordinator', owner_only=True)
++                if not self.runs.runtime_owner or not self.runs.db.runtime_owned('workspace_runs'):
++                    raise WorkbenchError('Current PostgreSQL session lost coordinator ownership.', 'unavailable', 409)
++                if self.runs._blocked or self.runs._external_blocked:
++                    raise WorkbenchError('Durable custody remains uncertain; execution stays fenced.', 'unavailable', 409)
++                with self.bounded(self.lock, deadline):
++                    self.value['generation'] += 1
++                    self.value.update(state='idle', updated_at=timestamp())
++                    self.save()
++                # Only this serialized, reconciled recovery may replace a stopped
++                # generation. Application close is checked under the same lock.
++                self.runs._thread = None
++                self.runs._stop.clear()
++                self.runs._start()
++                if not self.runs._thread or not self.runs._thread.is_alive():
++                    raise WorkbenchError('Replacement coordinator did not establish ownership.', 'unavailable', 409)
++                with self.bounded(self.lock, deadline):
++                    request['completed_generation'] = self.value['generation']
++                    self.save()
++            return self.projection()
++        except Exception:
++            if entered:
++                self.fault('recovery_failed')
++            raise
++        finally:
++            self.recovery.release()
++
++    def check_deadline(self, deadline):
++        if self.runs._closed:
++            raise WorkbenchError('Application shutdown has fenced coordinator recovery.', 'unavailable', 409)
++        if time.monotonic() >= deadline:
++            raise WorkbenchError('Coordinator recovery did not establish drainage within its wall bound.', 'unavailable', 409)
++
++    @contextmanager
++    def catalog(self, deadline):
++        from metadata import StorageError
++        try:
++            with self.runs.lock.bounded(deadline, cancelled=lambda: self.runs._closed):
++                self.check_deadline(deadline)
++                yield
++        except StorageError as error:
++            raise WorkbenchError(str(error), 'unavailable', 409) from error
++
++    @contextmanager
++    def bounded(self, lock, deadline):
++        while not lock.acquire(timeout=min(.1, max(0, deadline-time.monotonic()))):
++            self.check_deadline(deadline)
++        try:
++            self.check_deadline(deadline)
++            yield
++        finally:
++            lock.release()
+diff --git a/tests/test_run_coordinator_recovery.py b/tests/test_run_coordinator_recovery.py
+new file mode 100644
+index 0000000..7f033ca
+--- /dev/null
++++ b/tests/test_run_coordinator_recovery.py
+@@ -0,0 +1,215 @@
++"""Real PostgreSQL coordinator failure/replacement; neutral custody, no science claim."""
++from concurrent.futures import ThreadPoolExecutor
++from http.server import ThreadingHTTPServer
++import json
++import os
++import threading
++import time
++import copy
++from pathlib import Path
++import unittest
++from unittest.mock import patch
++from urllib.request import Request, urlopen
++
++import psycopg
++import agent_api
++from app import make_handler
++from metadata import connection_info
++from test_external_runs import ExternalCase
++from workbench import WorkbenchError
++
++
++@unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL')
++class CoordinatorRecoveryTests(ExternalCase):
++    def wait_for(self, predicate, message):
++        deadline = time.monotonic() + 10
++        while time.monotonic() < deadline:
++            if predicate():
++                return
++            time.sleep(.02)
++        self.fail(message)
++
++    def lock_fault(self):
++        runs = self.dataset.runs
++        # Real separate backend holds precisely the catalog command lock. The
++        # disposable test session uses a shorter configured server lock timeout.
++        self.dataset.db.connection.execute("SET lock_timeout='150ms'")
++        with psycopg.connect(connection_info(), autocommit=True) as other:
++            other.execute('SELECT pg_advisory_lock(%s)', (self.dataset.db._lock_key,))
++            runs._start()
++            self.wait_for(lambda: runs._coordinator.projection()['state'] == 'faulted',
++                          'real advisory-lock timeout did not fault the coordinator')
++            self.assertTrue(runs._stop.is_set())
++            other.execute('SELECT pg_advisory_unlock(%s)', (self.dataset.db._lock_key,))
++        runs._thread.join(5)
++        self.assertFalse(runs._thread.is_alive())
++
++    def test_real_lock_timeout_http_health_fences_and_concurrent_owner_recovery(self):
++        runs = self.dataset.runs
++        queued = self.queued(self.body(approval=self.approve()))
++        with self.dataset.lock:
++            original = runs._load(queued['id'])
++        self.lock_fault()
++        server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
++        worker = threading.Thread(target=server.serve_forever, daemon=True)
++        worker.start()
++        try:
++            request = Request(f'http://127.0.0.1:{server.server_port}/api/workspace/coordinator',
++                              headers={**self.owner.headers, agent_api.CONTRACT_HEADER:
++                                       agent_api.selected_header('runs.coordinator_health', 1)})
++            with urlopen(request, timeout=5) as response:
++                health = json.load(response)
++            self.assertEqual(health['state'], 'faulted')
++            self.assertEqual(health['fault']['category'], 'catalog_lock_timeout')
++            self.assertFalse(health['admission_ready'])
++            with self.owner.bound(self.dataset), self.assertRaises(WorkbenchError):
++                runs._available()
++            body = {'expected_generation': health['generation'], 'request_key': 'recover-lock-0001'}
++
++            def recover():
++                with self.owner.bound(self.dataset):
++                    return runs.recover_coordinator(body)
++
++            with patch('run_capacity.available_memory', return_value=0), ThreadPoolExecutor(2) as executor:
++                replies = list(executor.map(lambda _: recover(), range(2)))
++                self.assertEqual([r['generation'] for r in replies], [health['generation'] + 1] * 2)
++                self.assertTrue(all(r['admission_ready'] for r in replies))
++                with self.dataset.lock:
++                    retained = runs._load(queued['id'])
++                self.assertEqual(retained, original)
++                self.assertEqual(runs._confirmed_external, {queued['id']})
++                self.assertTrue(runs._thread.is_alive())
++        finally:
++            server.shutdown(); server.server_close(); worker.join(5)
++            self.assertFalse(worker.is_alive())
++
++    def test_refused_recovery_never_stops_a_healthy_coordinator(self):
++        runs = self.dataset.runs
++        runs._start()
++        for generation in (1, 999):
++            with self.owner.bound(self.dataset), self.assertRaises(WorkbenchError):
++                runs.recover_coordinator({'expected_generation': generation, 'request_key': 'refused-healthy-0001'})
++            self.assertFalse(runs._stop.is_set())
++            self.assertTrue(runs._thread.is_alive())
++
++    def test_runtime_session_lock_loss_stays_fenced_without_reclaim(self):
++        from metadata import _key
++        runs = self.dataset.runs
++        self.lock_fault()
++        key = _key(self.dataset.db.schema + ':worker:workspace_runs')
++        self.dataset.db.connection.execute('SELECT pg_advisory_unlock(%s)', (key,))
++        with self.owner.bound(self.dataset), self.assertRaises(WorkbenchError):
++            runs.recover_coordinator({'expected_generation': 1, 'request_key': 'lost-owner-0001'})
++        self.assertFalse(self.dataset.db.runtime_owned('workspace_runs'))
++        self.assertTrue(runs._stop.is_set())
++        self.assertFalse(runs._thread.is_alive())
++
++    def test_close_wins_while_recovery_waits_for_owned_thread(self):
++        runs = self.dataset.runs
++        released = threading.Event()
++        runs._thread = threading.Thread(target=lambda: released.wait(5), daemon=True)
++        runs._thread.start()
++        runs._coordinator.fault('coordinator_exception')
++        errors = []
++
++        def recover():
++            try:
++                with self.owner.bound(self.dataset):
++                    runs.recover_coordinator({'expected_generation': 1, 'request_key': 'close-race-0001'})
++            except WorkbenchError as error:
++                errors.append(error)
++
++        recovery = threading.Thread(target=recover)
++        recovery.start()
++        self.wait_for(lambda: runs._coordinator.value['state'] == 'recovering', 'recovery never began joining')
++        closer = threading.Thread(target=runs.close)
++        closer.start()
++        self.wait_for(lambda: runs._closed, 'close did not fence recovery')
++        released.set()
++        recovery.join(5); closer.join(5)
++        self.assertFalse(recovery.is_alive()); self.assertFalse(closer.is_alive())
++        self.assertEqual(len(errors), 1)
++        self.assertTrue(runs._stop.is_set())
++        self.assertEqual(runs._coordinator.projection()['state'], 'stopped')
++        self.assertFalse(runs._thread.is_alive())
++
++    def test_failed_replacement_start_keeps_same_request_retryable(self):
++        runs = self.dataset.runs
++        self.lock_fault()
++        body = {'expected_generation': 1, 'request_key': 'start-failure-0001'}
++        with self.owner.bound(self.dataset), patch.object(runs, '_start', side_effect=RuntimeError('thread resource unavailable')):
++            with self.assertRaises(RuntimeError):
++                runs.recover_coordinator(body)
++        self.assertIsNone(runs._coordinator.value['request']['completed_generation'])
++        self.assertTrue(runs._stop.is_set())
++        with self.owner.bound(self.dataset):
++            recovered = runs.recover_coordinator(body)
++        self.assertTrue(recovered['admission_ready'])
++        self.assertTrue(runs._thread.is_alive())
++
++    def test_actual_active_custodian_drains_before_recovery_without_second_go(self):
++        import recipe_process
++        from runs import process_status
++        runs = self.dataset.runs
++        graph = copy.deepcopy(self.graph)
++        graph['nodes'][1]['parameters']['mode'] = 'sleep'
++        with self.owner.bound(self.dataset):
++            self.graph = self.dataset.pipelines.save(graph['id'], {'revision': graph['revision'], 'document': graph})
++            self.preflight = self.dataset.pipelines.preflight_external(self.graph['id'], self.graph['revision'])
++        run = self.queued(self.body(approval=self.approve()))
++        go = recipe_process.Handle.go
++        calls = []
++
++        def counted_go(handle, helper):
++            calls.append(handle)
++            return go(handle, helper)
++
++        with patch.object(recipe_process.Handle, 'go', counted_go):
++            runs._start()
++            def started():
++                with self.owner.bound(self.dataset):
++                    return runs.get(run['id'])['custody_phase'] == 'go_intent'
++            self.wait_for(started, 'actual neutral helper did not reach GO')
++            with self.dataset.lock:
++                helper = runs._load(run['id'])['custody_identity']['helper']
++                before = self.dataset.db.execute('SELECT count(*) FROM access_execution_consumptions').fetchone()[0]
++            self.dataset.db.connection.execute("SET lock_timeout='150ms'")
++            with psycopg.connect(connection_info(), autocommit=True) as other:
++                other.execute('SELECT pg_advisory_lock(%s)', (self.dataset.db._lock_key,))
++                runs._wake.set()
++                self.wait_for(lambda: runs._coordinator.projection()['state'] == 'faulted', 'active coordinator did not fault')
++                other.execute('SELECT pg_advisory_unlock(%s)', (self.dataset.db._lock_key,))
++            runs._thread.join(10)
++            self.assertFalse(runs._thread.is_alive())
++            self.assertEqual(process_status(helper), 'ceased')
++            with self.owner.bound(self.dataset), patch('recipe_process.launch', side_effect=AssertionError('recovery replayed compute')):
++                recovered = runs.recover_coordinator({'expected_generation': 1, 'request_key': 'active-drain-0001'})
++                current = runs.get(run['id'])
++            self.assertTrue(recovered['admission_ready'])
++            self.assertIn(current['state'], ('cancelled', 'interrupted'))
++            self.assertTrue(runs._external_drain_receipt(runs._load(run['id'])))
++            self.assertEqual(len(calls), 1)
++            self.assertEqual(self.dataset.db.execute('SELECT count(*) FROM access_execution_consumptions').fetchone()[0], before)
++
++    def test_same_boot_missing_receipt_stays_unknown_and_fenced(self):
++        import recipe_process
++        from test_external_runs import sha
++        runs = self.dataset.runs
++        run = self.queued(self.body(approval=self.approve()))
++        # Authored crash envelope, explicitly no claim that this PID ran. Same
++        # boot and missing exact receipt must stay unknown even with no process.
++        with self.owner.bound(self.dataset), self.dataset.lock, self.dataset.db.transaction():
++            retained = runs._load(run['id'])
++            retained.update(state='running', custody_phase='go_intent', custody_identity={
++                'attempt_id': retained['id'], 'request_sha256': retained['request_sha256'],
++                'spec_sha256': sha(recipe_process.encoded(retained['spec'])),
++                'helper': {'pid': 2147483647, 'start_ticks': '1',
++                           'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip()}})
++            self.dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (json.dumps(retained), run['id']))
++        runs._coordinator.fault('coordinator_exception')
++        with self.owner.bound(self.dataset), patch('recipe_process.launch', side_effect=AssertionError('unknown replayed')):
++            with self.assertRaises(WorkbenchError):
++                runs.recover_coordinator({'expected_generation': 1, 'request_key': 'missing-receipt-0001'})
++            self.assertEqual(runs.get(run['id'])['state'], 'unknown')
++        self.assertTrue(runs._external_blocked)
++        self.assertTrue(runs._stop.is_set())

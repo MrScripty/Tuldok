@@ -1,0 +1,52 @@
+{
+  "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+  "pr": 95,
+  "lifecycle": {
+    "run": 39312817510,
+    "job": 118266542370,
+    "conclusion": "success",
+    "all_158_steps_success": true,
+    "summaries": [
+      "2026-10-19T19:40:43.7003020Z Ran 30 tests in 6.657s",
+      "2026-10-19T19:40:43.7003315Z OK",
+      "2026-10-19T19:41:40.6851051Z Ran 15 tests in 18.583s",
+      "2026-10-19T19:41:40.6851411Z OK",
+      "2026-10-19T19:41:41.3290289Z Ran 11 tests in 0.429s",
+      "2026-10-19T19:41:41.3290601Z OK",
+      "2026-10-19T19:41:41.5117262Z Ran 9 tests in 0.081s",
+      "2026-10-19T19:41:41.5117646Z OK",
+      "2026-10-19T19:41:44.6250022Z Ran 12 tests in 2.949s",
+      "2026-10-19T19:41:44.6250319Z OK (skipped=1)",
+      "2026-10-19T19:41:45.0142677Z Ran 9 tests in 0.255s",
+      "2026-10-19T19:41:45.0142881Z OK (skipped=1)",
+      "2026-10-19T19:48:39.7464383Z Ran 74 tests in 407.109s",
+      "2026-10-19T19:48:39.7464689Z OK",
+      "2026-10-19T19:49:10.7458058Z Ran 19 tests in 30.818s",
+      "2026-10-19T19:49:10.7458267Z OK",
+      "2026-10-19T19:50:22.7864043Z Ran 22 tests in 71.852s",
+      "2026-10-19T19:50:22.7864389Z OK",
+      "2026-10-19T19:52:50.7635210Z Ran 24 tests in 147.516s",
+      "2026-10-19T19:52:50.7635499Z OK",
+      "2026-10-19T19:54:18.8272489Z Ran 34 tests in 87.570s",
+      "2026-10-19T19:54:18.8272820Z OK",
+      "2026-10-19T19:54:46.4921391Z Ran 13 tests in 27.085s",
+      "2026-10-19T19:54:46.4921706Z OK",
+      "2026-10-19T19:54:57.5297634Z Ran 5 tests in 10.398s",
+      "2026-10-19T19:54:57.5297907Z OK",
+      "2026-10-19T20:22:33.1900925Z Ran 1571 tests in 1654.530s",
+      "2026-10-19T20:22:33.1901214Z OK (skipped=72)"
+    ]
+  },
+  "captured_cpu": {
+    "run": 39312817597,
+    "job": 118266543067,
+    "conclusion": "success",
+    "all_13_steps_success": true,
+    "scope": "Actual upstream CPU browser training, Study-admitted captured inference subset and fresh separate CPU forward inference; no captured training/CUDA/science claim."
+  },
+  "limitations": [
+    "Full suite skipped 72 tests; isolated agent74 and MCP19 passed without skips.",
+    "Server ConnectionResetError logged during full suite; no unittest failure/error and all steps succeeded.",
+    "Publication source prerequisite only; dependent continuation/UI/indexed diagnostic acceptance separate."
+  ]
+}

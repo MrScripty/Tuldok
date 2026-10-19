@@ -668,7 +668,7 @@
       "seconds": 0.127
     }
   },
-  "updated_at": "2026-10-19T18:38:30.025727+00:00",
+  "updated_at": "2026-10-19T21:00:00Z",
   "cleanup_dependency_chain": [
     "89->90;retarget90tomainbefore89branchdelete",
     "90->92;retarget92tomainbefore90branchdelete",
@@ -685,10 +685,14 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": {
-    "root_worktree": "/workspace/Tuldok-lab-publication-evidence-m1",
-    "root_head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
-    "next": "M1remainingC1/refusal diagnostics, indexeddiagnostics and M2RES1 whileisolatedUI/lineageworkercontinues",
-    "parent_role": "passiveCI; root serialintegration+source",
+    "root_worktree": "/workspace/Tuldok-lab-coordinator-m2",
+    "base": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+    "branch": "feature/lab-coordinator-recovery-20261019",
+    "state": "active uncommitted M2 implementation; scoped patch retained for recovery, not release acceptance",
+    "tests": "initial4 passed6.087s, refined4 passed5.419s, regression12 passed24.331s; expanded7 initial6pass1GO harness signature failure, corrected run pending",
+    "parent_role": "passive hosted CI; root source and serial integration",
+    "worker": "existing reviewer read-only M2; next isolated M1 lineage slice after review",
+    "missing_input": "Original private diagnostic-failure receipt and SCI criteria question pending; dependent claims only blocked",
     "no_science_or_cuda_claim": true
   },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
@@ -1007,6 +1011,27 @@
     "subsequent_review_fixes": "415f5e124c6bf3bc66a05b427c01e83c5f5d01b8 separately qualified; independent4pass; affectedowner28pass",
     "status_v2": "actual3pass9.618; finalsmalladdonreviewpending",
     "hosted": "pending",
-    "ui": "isolatedworker active; branch feature/lab-publication-run-panel-20261019"
+    "ui": "isolatedworker active; branch feature/lab-publication-run-panel-20261019",
+    "status2_independent_review": "clear; 1 actual PG case11.831s"
+  },
+  "main_after_pr95": "27ba22b377336c59fbd45feaa7f597d0a1fdcf0f",
+  "pr95_accepted_and_merged": {
+    "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+    "merge": "27ba22b377336c59fbd45feaa7f597d0a1fdcf0f",
+    "tested_tree": "0ac4fc3afb06848fbe30238ba1ba62bdafd8f8ab",
+    "tree_equal": true,
+    "retarget96": "main",
+    "source96": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+    "receipt": "tuldok-pr95-final-qualified-evidence.json"
+  },
+  "publication_ui": {
+    "pr": 99,
+    "head": "61d2c2d706cac4515860a9571db85451be2ecaa8",
+    "base": "feature/lab-publication-evidence-20261019",
+    "independent_root_review": "clear",
+    "root_controller_and_pin": "passed",
+    "root_actual_pg_chromium": "passed",
+    "first_root_browser_failure": "ambient python3 missing psycopg; corrected PATH only; retained log",
+    "hosted": "pending; parent passive monitor"
   }
 }
