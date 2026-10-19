@@ -1,0 +1,52 @@
+{
+  "scope": "Exact recovered field queries/comparison, status/2 and SDK comparison; full M1 remains pending",
+  "base_pr97": "0da7a811d252cc4c6774260b98ee2a707efec517",
+  "actual_composed_subject": "904922ce867f1304a75a21ae6e040607a2d9ba7e",
+  "actual_composed_result": {
+    "state": "passed",
+    "seconds": 117.976,
+    "driver_sha256": "8756816e6434b3860bdb6027df52f43eb2344bcaed15b518f93061a38f59ee18",
+    "interfaces": {
+      "exact_ref_paired_comparison": "compatible_synthetic_fixture_only",
+      "foreign_evaluation": "refused_stale",
+      "http_evidence": "verified",
+      "http_exact_field_slice": "verified",
+      "numerical_acceptance": "not_evaluated",
+      "sealed_cli_sdk_comparison": "compared"
+    },
+    "training_executed": false,
+    "numerical_acceptance": "not_evaluated",
+    "own_cleanup_confirmed": true
+  },
+  "subsequent_review_fixes_subject": "415f5e124c6bf3bc66a05b427c01e83c5f5d01b8",
+  "review_fixes": "Restore typed decoder boundary; correlate requested checkpoint and complete field slice without retry",
+  "independent_final_tests": {
+    "passed": 4,
+    "skipped": 0,
+    "seconds": 0.466
+  },
+  "affected_owner_and_compatibility": {
+    "passed": 28,
+    "skipped": 0,
+    "seconds": 3.469
+  },
+  "status_v2_pg_http_and_prior_contracts": {
+    "passed": 3,
+    "skipped": 0,
+    "seconds": 9.618
+  },
+  "prior_full_contracts_equal": 115,
+  "corrected_transport_legacy_command": {
+    "passed": 15,
+    "skipped": 0,
+    "seconds": 132.252
+  },
+  "pending": [
+    "hosted exact-head CI",
+    "final additive status/2 source review",
+    "Run panel and lineage integration",
+    "indexed diagnostics",
+    "full M1-M6 acceptance",
+    "genuine science/hardware/lab gates as applicable"
+  ]
+}

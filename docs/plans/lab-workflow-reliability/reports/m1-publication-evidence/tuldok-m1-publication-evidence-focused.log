@@ -1,0 +1,8 @@
+test_neutral_recovered_result_does_not_gain_field_evidence (test_run_publication_http.PublicationHTTPTests.test_neutral_recovered_result_does_not_gain_field_evidence) ... ok
+test_revocation_during_segment_capture_prevents_disclosure (test_run_publication_http.PublicationHTTPTests.test_revocation_during_segment_capture_prevents_disclosure) ... ok
+test_exact_field_comparison_uses_authoritative_policies_and_geometry (test_extension_field_evidence.ExtensionEvidenceContractTests.test_exact_field_comparison_uses_authoritative_policies_and_geometry) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 24.434s
+
+OK

@@ -191,3 +191,11 @@ SHA256 checks before `state: collected`; numerical acceptance remains
 `not_evaluated`. An existing destination refuses and a failed partial collection
 is retained for inspection. The command uses the existing private CLI/config
 rules, finite command deadline and a 4 GiB total collection ceiling.
+
+`compare-publication` uses the same `--config`, `--cli`, `--cli-sha256` and
+`--deadline-seconds`, plus `--ref`, `--other-ref` and `--selection` JSON files.
+It selects both exact checkpoint/evaluation/metric-definition identities and
+`paired` or `side_by_side` mode. The host checks current authority and semantic
+compatibility; the SDK correlates both labelled sides. It performs no admission,
+recovery, model loading, inference or promotion. `numerical: not_evaluated`
+describes scientific acceptance independently of returned comparison arithmetic.

@@ -815,6 +815,12 @@ for _variant in _managed_inspection['outputSchema']['oneOf'][0]['properties']['r
         _provider_runtime=_contribution['properties']['provider']['properties']['runtime']
         _provider_runtime['properties']['profile']={'enum':['captured_cpu_python_v1','managed_torch_python_v1']}
 _CONTRACTS['recipes.inspect'][4]=_managed_inspection
+_publication_status_request = copy.deepcopy(_CONTRACTS['runs.publication_status'][1])
+_publication_status_output = _publication_status_request['outputSchema']['oneOf'][0]['properties']['result']
+_publication_status_output['properties']['continuation_request'] = {'oneOf': [{'type': 'null'},
+    obj({'actor_id': ID, 'request_key': KEY, 'request_sha256': SHA})]}
+_publication_status_output['required'].append('continuation_request')
+_CONTRACTS['runs.publication_status'][2] = _publication_status_request
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
@@ -1437,6 +1443,18 @@ class AgentClient:
                     (source['run_id'] != arguments['run_id'] or source['catalog_id'] != self.catalog_id)
                     or continuation is not None and continuation['run_id'] != arguments['run_id']):
                 raise AgentAPIError('Publication status does not match the requested Run/catalog.', 'transport', 502)
+            if version == 2:
+                request = value['continuation_request']
+                if (continuation is None) != (request is None):
+                    raise AgentAPIError('Publication status request/continuation presence differs.', 'transport', 502)
+                if request is not None:
+                    body = {'run_id': arguments['run_id'], 'source_ref': source, 'request_key': request['request_key']}
+                    expected = hashlib.sha256(encoded({'actor_id': request['actor_id'],
+                        'operation': 'runs.recover_publication', 'body': body})).hexdigest()
+                    if (source is None or request['request_sha256'] != expected
+                            or continuation['original_run_state'] != value['original_run_state']
+                            or (continuation['state'] == 'published') != (continuation['result_ref'] is not None)):
+                        raise AgentAPIError('Publication status request identity is inconsistent.', 'transport', 502)
         if op['operation_id'] in ('runs.recover_publication', 'runs.cancel_publication') and result['status'] < 400:
             value = result['result']; ref = value['result_ref']
             if (value['run_id'] != arguments['run_id'] or (value['state'] == 'published') != (ref is not None)

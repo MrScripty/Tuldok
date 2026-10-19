@@ -799,7 +799,7 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.runs.get(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'publication':
                         agent_api.require_selection(self._contract_selection, 'runs.publication_status')
-                        return self.reply(dataset.runs.publication_status(parts[1]))
+                        return self.reply(dataset.runs.publication_status(parts[1], contract_version=self._contract_selection[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'candidates':
                         agent_api.require_selection(self._contract_selection,'studies.candidates')
                         return self.reply(dataset.studies.candidates(parts[1],**self._model_page_query()))

@@ -1,0 +1,8 @@
+test_all_prior_full_publication_and_legacy_contracts_remain_equal (test_run_publication_http.PublicationContractCompatibilityTests.test_all_prior_full_publication_and_legacy_contracts_remain_equal) ... ok
+test_exact_checkpoint_and_slice_replies_are_correlated_without_retry (test_run_publication_http.PublicationContractCompatibilityTests.test_exact_checkpoint_and_slice_replies_are_correlated_without_retry) ... ok
+test_malformed_target_decoder_context_keeps_typed_refusal (test_extension_field_evidence.ExtensionEvidenceContractTests.test_malformed_target_decoder_context_keeps_typed_refusal) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.478s
+
+OK

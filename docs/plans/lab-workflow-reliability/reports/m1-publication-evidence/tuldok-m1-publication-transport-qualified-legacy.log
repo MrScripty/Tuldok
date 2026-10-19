@@ -1,0 +1,20 @@
+test_all_operation_schemas_and_route_projections (test_agent_api.RegistryTests.test_all_operation_schemas_and_route_projections) ... ok
+test_bindings_known_graph_drafts_and_no_executable_topology_requirement (test_agent_api.RegistryTests.test_bindings_known_graph_drafts_and_no_executable_topology_requirement) ... ok
+test_discovery_is_stdlib_only_in_cold_process (test_agent_api.RegistryTests.test_discovery_is_stdlib_only_in_cold_process) ... ok
+test_draft_tasks_and_no_human_or_programmatic_review (test_agent_api.RegistryTests.test_draft_tasks_and_no_human_or_programmatic_review) ... ok
+test_exposure_grant_and_projection (test_agent_api.RegistryTests.test_exposure_grant_and_projection) ... ok
+test_import_bytes_bound_is_aggregate (test_agent_api.RegistryTests.test_import_bytes_bound_is_aggregate) ... ok
+test_integer_unicode_nonfinite_and_closed_subobjects (test_agent_api.RegistryTests.test_integer_unicode_nonfinite_and_closed_subobjects) ... ok
+test_segment_reassembly_and_whole_hash_tamper (test_agent_api.OutputTests.test_segment_reassembly_and_whole_hash_tamper) ... ok
+test_typed_error_and_success_shapes (test_agent_api.OutputTests.test_typed_error_and_success_shapes) ... ok
+test_image_forwards_exact_raw_base64 (test_agent_api.ParityRegressionTests.test_image_forwards_exact_raw_base64) ... ok
+test_revoked_discovery_preserves_http_status_and_code_without_mutation (test_agent_api.ParityRegressionTests.test_revoked_discovery_preserves_http_status_and_code_without_mutation) ... ok
+test_authentication_and_invalid_capabilities_never_select_legacy_dispatch (test_agent_project_cli.CommandSelectionTests.test_authentication_and_invalid_capabilities_never_select_legacy_dispatch) ... ok
+test_invalid_command_arguments_refuse_before_capability_bootstrap (test_agent_project_cli.CommandSelectionTests.test_invalid_command_arguments_refuse_before_capability_bootstrap) ... ok
+test_open_and_inspect_select_snapshots_or_published_legacy_operations_before_dispatch (test_agent_project_cli.CommandSelectionTests.test_open_and_inspect_select_snapshots_or_published_legacy_operations_before_dispatch) ... ok
+test_selected_command_failure_never_retries_the_legacy_operation (test_agent_project_cli.CommandSelectionTests.test_selected_command_failure_never_retries_the_legacy_operation) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 132.252s
+
+OK

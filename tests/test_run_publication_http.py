@@ -115,6 +115,25 @@ class PublicationHTTPTests(unittest.TestCase):
             self.assertNotIn('publication_continuation', self.dataset.runs._load(self.run['id']))
         self.assertEqual(agent_api.contract('runs.recover_publication')['authority'], 'owner')
 
+    def test_selected_status_v2_exposes_exact_request_and_v1_projection_is_unchanged(self):
+        body = self.case.body(self.run)
+        code, recovered = self.request('runs.recover_publication', body)
+        self.assertEqual(code, 200, recovered)
+        legacy_code, legacy = self.request('runs.publication_status', {'run_id': self.run['id']})
+        self.assertEqual(legacy_code, 200)
+        self.assertNotIn('continuation_request', legacy)
+        selected = self.client.call('runs.publication_status', {'run_id': self.run['id']})
+        self.assertEqual(selected['status'], 200)
+        self.assertEqual({key: value for key, value in selected['result'].items() if key != 'continuation_request'}, legacy)
+        request = selected['result']['continuation_request']
+        self.assertEqual(request['actor_id'], self.fixture.owner.identity['actor_id'])
+        self.assertEqual(request['request_key'], body['request_key'])
+        bad = copy.deepcopy(selected); bad['result']['continuation_request']['request_key'] = 'different-valid-request'
+        with patch.object(self.client, '_request', return_value=bad) as called:
+            with self.assertRaises(agent_api.AgentAPIError) as caught:
+                self.client.call('runs.publication_status', {'run_id': self.run['id']})
+            self.assertEqual(caught.exception.code, 'transport'); self.assertEqual(called.call_count, 1)
+
     def test_neutral_recovered_result_does_not_gain_field_evidence(self):
         code, recovered = self.request('runs.recover_publication', self.case.body(self.run))
         self.assertEqual(code, 200, recovered)

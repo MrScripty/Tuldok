@@ -77,6 +77,13 @@ PublicationOwnerClient is restricted to these publication operations. Default
 AgentClient continues refusing owner credentials. Existing selected operation
 contracts and frozen legacy discovery remain unchanged.
 
+Selected-v1 `runs.publication_model_evidence` and
+`runs.compare_publication_evidence` expose exact recovered field evidence and
+paired/side-by-side comparison through
+[their result-Ref contract](run-preflight-publication.md#exact-recovered-field-evidence-and-comparison).
+These inspect operations reuse supported verifiers and require explicit complete
+identities. Old failed Run/evidence/candidate gates remain unchanged.
+
 Registry restrictions narrower than HTTP are explicit: canonical freeze requires
 preview_token; draft annotations only; graph edits describe known node parameter
 variants rather than arbitrary future types; inline import bytes are at most

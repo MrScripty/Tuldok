@@ -424,9 +424,11 @@ class Runs:
         return run_publication.result(self, ref)
 
     @authorized('inspect', 'runs.publication_status')
-    def publication_status(self, run_id):
+    def publication_status(self, run_id, *, contract_version=None):
         import run_publication
-        return run_publication.status(self, run_id)
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1, 2)):
+            raise WorkbenchError('Unsupported publication status contract.', 'unsupported', 409)
+        return run_publication.status(self, run_id, include_request=contract_version == 2)
 
     @authorized('inspect', 'runs.publication_artifact')
     def publication_artifact(self, ref, name, expected_sha256):

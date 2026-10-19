@@ -228,7 +228,7 @@ def _status(run):
             'result_ref': copy.deepcopy(continuation['result_ref'])}
 
 
-def status(runs, run_id):
+def status(runs, run_id, *, include_request=False):
     """Bounded saved metadata; current byte verification belongs to recovery/read."""
     identifier(run_id, 'Run ID')
     with runs.lock:
@@ -239,13 +239,18 @@ def status(runs, run_id):
     eligible = (runs._external(run) and run['state'] in ('failed', 'interrupted') and not run['artifacts']
                 and run.get('publication_source') is not None and type(fault) is dict
                 and fault['code'] in ('unavailable', 'storage', 'commit_unknown'))
-    return {'run_id': run_id, 'original_run_state': run['state'], 'verification': 'saved_metadata_only',
+    value = {'run_id': run_id, 'original_run_state': run['state'], 'verification': 'saved_metadata_only',
             'eligibility': 'requires_verification' if eligible else 'unavailable',
             'source_ref': copy.deepcopy(run.get('publication_source')),
             'original_fault': copy.deepcopy(fault),
             'continuation': _status(run) if run.get('publication_continuation') is not None else None,
             'limits': {'wall_seconds': WALL_SECONDS, 'max_attempts': MAX_ATTEMPTS,
                        'copy_bytes': run['spec']['max_output_bytes'] if runs._external(run) else 0}}
+    if include_request:
+        continuation = run.get('publication_continuation')
+        value['continuation_request'] = (None if continuation is None else
+            {key: continuation[key] for key in ('actor_id', 'request_key', 'request_sha256')})
+    return value
 
 
 def _publish(runs, run, proof, deadline):

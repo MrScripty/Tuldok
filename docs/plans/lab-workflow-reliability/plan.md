@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — qualify explicit publication transport and CLI/SDK collection; full evidence comparison, browser/lineage and indexed diagnostics remain pending
+**Current phase:** M1 — qualify exact recovered field evidence and SDK comparison; browser/lineage and indexed diagnostics remain pending
 
-**Next slice:** Qualify negotiated publication interfaces and independent actual synthetic extension recovery, then implement exact evidence comparison, Run panel and lineage integration.
+**Next slice:** Complete exact composed synthetic custody/semantic/HTTP/SDK comparison qualification and independent review, then implement Run panel and lineage integration.
 
 **Acceptance status:** `pending`
 
