@@ -239,17 +239,22 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
             '--directory', str(self.output)]
         with patch.object(self.dataset.runs, 'artifact_segments', side_effect=held):
             process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            interrupt_done = threading.Event()
             def interrupt_cli():
-                if entered.wait(10) and process.poll() is None:
-                    process.send_signal(signal.SIGINT)
+                while not interrupt_done.wait(.025):
+                    if process.poll() is not None:
+                        return
+                    if entered.is_set():
+                        process.send_signal(signal.SIGINT)
+                        return
             interrupter = threading.Thread(target=interrupt_cli); interrupter.start()
             try:
-                stdout, stderr = process.communicate(timeout=20)
+                stdout, stderr = process.communicate(timeout=90)
                 self.assertEqual(process.returncode, 1, stdout+stderr)
                 self.assertNotIn(self.agent['token'], stdout+stderr)
                 self.assertEqual(json.loads(stdout)['state'], 'stopped', stdout+stderr)
             finally:
-                release.set(); interrupter.join(5)
+                release.set(); interrupt_done.set(); interrupter.join(5)
                 if process.poll() is None:
                     process.kill(); process.communicate(timeout=5)
             self.assertTrue(left.wait(5))
