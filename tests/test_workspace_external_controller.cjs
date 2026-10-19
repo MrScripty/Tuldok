@@ -12,7 +12,7 @@ function fixture(){
   const root={innerHTML:'',querySelector:node,querySelectorAll:selector=>fields[selector]||[]};
   const window={workspaceEscape:value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\"','&quot;'),TuldokAuth:{identity:()=>actor},addEventListener:(name,fn)=>listeners[name]=fn};
   const context={window,history,crypto,structuredClone,confirm:()=>true};vm.runInNewContext(source,context);
-  const api=async(route,body)=>{calls.push({route,body:structuredClone(body)});if(route.endsWith('preflight-external'))return {valid:true,graph_revision:1,material_sha256:'a'.repeat(64),parameter_definitions:{},material:{},outputs:[],runtime:{}};return handler(route,body);};
+  const api=async(route,body,version)=>{calls.push({route,body:structuredClone(body),...(version===undefined?{}:{version})});if(route.endsWith('preflight-external'))return {valid:true,graph_revision:1,material_sha256:'a'.repeat(64),parameter_definitions:{},material:{},outputs:[],runtime:{}};return handler(route,body,version);};
   let latest;
   const ui=window.WorkspaceExternal({api,action:fn=>latest=fn(),status:value=>notices.push(value),getGraph:()=>graph,getIntent:()=>intent,getRunId:()=>runId,isDirty:()=>dirty,replaceGraph:value=>adopted.push(value),changeGraph:fn=>{fn();dirty=true;ui.invalidate();ui.dirtyChanged(root);},render:()=>{},refresh:()=>{},onRun:value=>opened.push(value),onImported:async id=>imported.push(id)});
   const render=()=>ui.renderPipeline(root,{graph,graphs:[graph],busy:false,choose:()=>{}});
@@ -53,7 +53,7 @@ function fixture(){
   blocked.revokeEdit();assert.match(blocked.ui.artifactActionHTML(run,artifact),/disabled/);await assert.rejects(blocked.ui.importArtifact(run,artifact),/permission/);assert.equal(blocked.calls.length,0);
   const uncertain=fixture();uncertain.setHandler(async()=>{throw Error('acknowledgement lost');});await assert.rejects(uncertain.ui.importArtifact(run,artifact),/inspect Data/);assert.equal(uncertain.calls.length,1);assert.deepEqual(uncertain.imported,[]);
   const bindingUI=fixture(),helpers=bindingUI.window.WorkspaceExternalInputs;
-  const candidate={release_id:'c'.repeat(64),sha256:'c'.repeat(64),bytes:20,status:'available'},project={data:[{id:'source',label:'Source',status:'available',integrity:'verified',observed_sha256:'b'.repeat(64),bytes:10}]};
+  const candidate={release_id:'c'.repeat(64),sha256:'c'.repeat(64),bytes:20,status:'available'},project={schema_version:2,extensions:{packages:[]},data:[{id:'source',label:'Source',status:'available',integrity:'verified',observed_sha256:'b'.repeat(64),bytes:10}]};
   const choices=helpers.choices(project,[candidate,{...candidate,release_id:'d'.repeat(64),status:'unavailable',reason:'Missing archive'}]);
   assert.deepEqual(structuredClone(helpers.binding('project_reference',choices.project_reference[0])),{reference_id:'source',expected_sha256:'b'.repeat(64)});
   assert.deepEqual(structuredClone(helpers.binding('frozen_release',choices.frozen_release[0])),{kind:'frozen_release',release_id:candidate.release_id,expected_sha256:candidate.sha256});
@@ -62,8 +62,46 @@ function fixture(){
   assert.match(helpers.html({},{sample:{max_bytes:5}},choices),/disabled.*exceeds slot limit/);
   await bindingUI.review();
   bindingUI.window.TuldokAuth.fetch=async()=>({ok:true,json:async()=>({releases:[candidate]})});
-  bindingUI.setHandler(async route=>route==='projects/p'?project:route.includes('/recipes/')?{inputs:{sample:{max_bytes:100}}}:({id:'g',revision:2}));
+  bindingUI.setHandler(async route=>route==='project-snapshots/p'?project:route.includes('/recipes/')?{inputs:{sample:{max_bytes:100}}}:({id:'g',revision:2}));
   await bindingUI.click('#external-input-choices');
+  assert.equal(bindingUI.calls.find(call=>call.route.includes('/recipes/')).version,4,'Saved external graph input choices select the current recipe contract');
+  assert.equal(bindingUI.calls.find(call=>call.route==='project-snapshots/p').version,2,'Current project data choices select the scoped v1/v2 snapshot contract');
+  assert.ok(!bindingUI.calls.some(call=>call.route==='projects/p'),'Current project data choices must not use the v1-only project route');
+  const deniedChoices=fixture();deniedChoices.window.TuldokAuth.fetch=async()=>({ok:true,json:async()=>({releases:[],runs:[]})});
+  deniedChoices.setHandler(async route=>{if(route==='project-snapshots/p')throw Object.assign(Error('Inspect access denied'),{status:403,code:'forbidden'});return {inputs:{sample:{max_bytes:100}}};});
+  await assert.rejects(deniedChoices.click('#external-input-choices'),/Inspect access denied/);deniedChoices.render();
+  assert.match(deniedChoices.root.innerHTML,/Load project data, frozen releases and completed Run artifacts/,'Denied inspection must not adopt input choices');
+  assert.ok(!deniedChoices.calls.some(call=>call.route==='projects/p'),'Denied current inspection must not fall back to legacy project reads');
+  // Exercise the actual shared HTTP adapter, including refusal without a pin/version.
+  const realSource=fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-real.js'),'utf8');
+  const apiBlock=realSource.slice(realSource.indexOf('  async function api('),realSource.indexOf('  window.WorkspaceReal ='));
+  const wire=[],pin='0080ae0e39bf758b9c96c3208ef1614a9335f257731cfde935a23d8b486dedb1';
+  const snapshotPin='770e999697f069af13e9cf0d48daaf930ee26db4d7415169edecb414f68bdd01';
+  const transportWindow={WorkspaceExtensionAuthorContracts:{'recipes.inspect/4':pin,'project_snapshots.get/2':snapshotPin},TuldokAuth:{fetch:async(url,options)=>{wire.push({url,options});return {ok:true,json:async()=>({inputs:{}})};}}};
+  const currentAPI=vm.runInNewContext('(()=>{'+apiBlock+'return api;})()',{window:transportWindow,TuldokAuth:transportWindow.TuldokAuth});
+  const recipeRoute='projects/p/recipes/r?expected_sha256='+'a'.repeat(64);
+  await currentAPI(recipeRoute,undefined,4);
+  assert.equal(wire[0].options.headers['Tuldok-Operation-Contract'],'recipes.inspect/4/'+pin);
+  await assert.rejects(currentAPI(recipeRoute),/Current recipe inspection is unavailable/);
+  await assert.rejects(currentAPI(recipeRoute,undefined,2),/Current recipe inspection is unavailable/);
+  delete transportWindow.WorkspaceExtensionAuthorContracts['recipes.inspect/4'];
+  await assert.rejects(currentAPI(recipeRoute,undefined,4),/Current recipe inspection is unavailable/);
+  assert.equal(wire.length,1,'An unavailable selected contract must not issue a legacy request');
+  await currentAPI('project-snapshots/p',undefined,2);
+  assert.equal(wire[1].options.headers['Tuldok-Operation-Contract'],'project_snapshots.get/2/'+snapshotPin);
+  await assert.rejects(currentAPI('project-snapshots/p'),/Current project inspection is unavailable/);
+  await assert.rejects(currentAPI('project-snapshots/p',undefined,1),/Current project inspection is unavailable/);
+  delete transportWindow.WorkspaceExtensionAuthorContracts['project_snapshots.get/2'];
+  await assert.rejects(currentAPI('project-snapshots/p',undefined,2),/Current project inspection is unavailable/);
+  assert.equal(wire.length,2,'An unavailable snapshot contract must not issue an owner-only or legacy request');
+  transportWindow.WorkspaceExtensionAuthorContracts['recipes.inspect/4']=pin;
+  transportWindow.WorkspaceExtensionAuthorContracts['project_snapshots.get/2']=snapshotPin;
+  for(const [route,version] of [[recipeRoute,4],['project-snapshots/p',2]])for(const [status,code] of [[401,'unauthorized'],[403,'forbidden'],[409,'unsupported']]){
+    const before=wire.length;
+    transportWindow.TuldokAuth.fetch=async()=>{wire.push({rejected:true});return {ok:false,status,json:async()=>({code,error:'Selected contract refused'})};};
+    await assert.rejects(currentAPI(route,undefined,version),error=>error.status===status&&error.code===code&&error.message==='Selected contract refused');
+    assert.equal(wire.length,before+1,'A selected contract rejection must not retry another version or owner route');
+  }
   const kind={value:'project_reference',getAttribute:()=> 'sample'},select={value:'source',getAttribute:()=> 'sample'},hint={getAttribute:()=> 'sample'};
   bindingUI.fields['[data-external-input-kind]']=[kind];bindingUI.fields['[data-external-input]']=[select];bindingUI.fields['[data-external-input-hash]']=[hint];bindingUI.render();
   kind.value='frozen_release';kind.onchange();assert.equal(bindingUI.graph.nodes[0].parameters.inputs.sample,undefined);

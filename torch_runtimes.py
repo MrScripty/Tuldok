@@ -5,6 +5,7 @@ import re
 import uuid
 
 from access import authorized
+from runtime_snapshots import sync_directory
 from workbench import WorkbenchError
 import torch_runtime as runtime
 
@@ -32,12 +33,15 @@ class TorchRuntimes:
             target=self.path/(identity+'.json')
             if not target.exists():
                 temporary=self.path/('.register-'+uuid.uuid4().hex)
-                with temporary.open('xb') as stream:stream.write(raw);stream.flush();os.fsync(stream.fileno())
-                temporary.chmod(0o400)
+                with temporary.open('xb') as stream:
+                    stream.write(raw);stream.flush();os.fchmod(stream.fileno(),0o400);os.fsync(stream.fileno())
                 try:os.link(temporary,target)
                 except FileExistsError:pass
                 finally:temporary.unlink()
             result,_raw=self.get(identity,verify=False)
+            # Retrying an existing publication must also establish durability
+            # before the catalog can acknowledge the registration.
+            sync_directory(self.path);sync_directory(self.path.parent)
             with self.db.transaction():self.access.audit('torch_runtimes.create',identity,{'file_count':len(manifest['files']),'total_bytes':manifest['total_bytes']})
             return result
         except (OSError,ValueError) as error:raise WorkbenchError(str(error),'unavailable',409) from error

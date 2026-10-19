@@ -762,7 +762,10 @@ def make_handler(dataset, observer=None):
                     if len(parts) == 2 and parts[0] == 'project-snapshots':
                         if self._contract_selection is not None:
                             agent_api.require_selection(self._contract_selection,'project_snapshots.get')
-                            return self.reply(dataset.projects.inspect_snapshot(parts[1]))
+                            result = dataset.projects.inspect_snapshot(parts[1])
+                            if self._contract_selection[1] == 1:
+                                result.pop('activity', None)
+                            return self.reply(result)
                         return self.reply(dataset.projects.get_snapshot(parts[1]))
                     if parts == ['projects']:
                         return self.reply(dataset.projects.list())
@@ -1064,7 +1067,10 @@ def make_handler(dataset, observer=None):
                     if parts == ['project-snapshots']:
                         if self._contract_selection is not None:
                             agent_api.require_selection(self._contract_selection,'project_snapshots.open')
-                            return self.reply(dataset.projects.register_snapshot(body), 201)
+                            result = dataset.projects.register_snapshot(body)
+                            if self._contract_selection[1] == 1:
+                                result.pop('activity', None)
+                            return self.reply(result, 201)
                         return self.reply(dataset.projects.open_snapshot(body), 201)
                     if parts == ['projects']:
                         return self.reply(dataset.projects.open(body), 201)
