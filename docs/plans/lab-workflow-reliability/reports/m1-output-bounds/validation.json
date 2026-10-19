@@ -1,0 +1,46 @@
+{
+  "scope": "M1 first bounded required field array capacity refusal; not fullA1/M1",
+  "source_base": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+  "main_unmerged_dependency": true,
+  "plan_source": "b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb",
+  "red": {
+    "tests": 10,
+    "failures": 5,
+    "skipped": 1,
+    "method": "new regressions executed before production edit"
+  },
+  "focused": {
+    "tests": 43,
+    "passed": 40,
+    "skipped": 3,
+    "seconds": 4.611,
+    "command": "PYTHONPATH=tests /workspace/tuldok-runtime/bin/python -m unittest test_run_preflight_publication test_extension_field_evidence test_extension_sdk_evidence test_extension_bound_api -v"
+  },
+  "boundary": "actual recipe decoder, field policy, synthetic evidence writer/verifier/cold reader; no project compute",
+  "real_postgres_no_effect": "pending hosted execution; skipped locally",
+  "independent_review": "pending existing reviewer thread",
+  "full_M1_acceptance": "pending; no publication recovery, indexed diagnostic, hardware or science claim",
+  "durability": {
+    "repository_checkpoint": "96afae56ca41c2a90f87ea3bc6a27ee4ed6291b5",
+    "branch": "checkpoint/lab-integration-20261019",
+    "restoration": "fresh standalone clone verified22 evidence sizes/SHA256, task ancestry and exact separateplanfetch"
+  },
+  "schema_inventory": {
+    "metadata_current": 10,
+    "metadata_supported": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "backup_reader": "backup_metadata.py supported schema dispatch",
+    "this_slice_changes_persistence": false,
+    "before_future_persistent_recovery": "full stopped-writer migration/backup/restore consumer inventory and real acceptance still required"
+  }
+}

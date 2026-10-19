@@ -22,6 +22,22 @@ actual project references or frozen release archives consumed by the recipe.
 Changed input bindings or execution parameters require a new preflight; layout
 and name remain presentation fields.
 
+For the existing explicit field-evidence profiles, policy validation also refuses
+required prediction, reference or retained probe-input arrays whose fixed payload
+cannot fit their declared file bound or selected evidence shard bound. It counts
+each required filename once against the profile's aggregate output ceiling,
+including shared reference files. These capacity contradictions return the
+existing typed `unsupported` outcome before graph/material preparation can reach
+execution admission. A valid declaration is unchanged; operation identities,
+stored formats and profile limits are unchanged.
+
+This is a conservative payload lower bound from declared shape and dtype.
+NPY headers, required JSON/context, variable diagnostics and actual produced
+bytes still require their existing bounded validation. Declared maxima are
+limits rather than predicted sizes; their sum is not a minimum storage claim.
+Passing this check is neither complete preflight readiness nor a reservation,
+publication guarantee or scientific qualification.
+
 The initial `system_python` profile uses `/usr/bin/python3` with `-I -S -B` and a
 pinned finite interpreter, standard-library, bytecode and native-library closure.
 The installation owner must differ from the app user; files and ancestors cannot

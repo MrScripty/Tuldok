@@ -1,0 +1,28 @@
+# Lab workflow reliability issues
+
+| ID | Severity / evidence | Objective and owner | Disposition / verification / revisit |
+| --- | --- | --- | --- |
+| RES-1 | High availability/safety boundary; PR90 retained findings describe advisory-lock timeout terminating `_loop`, while `_start` retains a dead assigned thread. | A3; Runs coordinator owner. | Fix in M2 after integration baseline is verified. Inject actual PostgreSQL lock timeout and active custody failure; prove unhealthy/readiness fence, no duplicate coordinator or GO, safe drainage/reconciliation. Never count an exited coordinator as idle performance. |
+| PUB-1 | High lost-work cost; lab reports completed training with diagnostic evidence beyond selected shard bounds. Exact private failure is not present here. | A1/A2; evidence profile and Runs publication owners. | M1 classifies one preserved failure before changing profiles. Bounded indexed producer output plus explicit same-Run publication continuation; invalid historical outputs stay invalid. Re-plan if mandatory data cannot fit admitted limits. |
+| DEP-1 | Integration dependency; PR89/90 are open at the recorded SHAs, not merged. | All milestones; repository lead. | Verify current merged baseline/CI and remove duplicate tasks before implementation. Plan author changes neither branch. Revisit on any semantic dependency change. |
+| PERF-2 | Measurement need; historical artifact timings are single-workload observations, preflight/restore still costly. | A5; performance owner. | M3 exposes phases; M4 measures cold/warm/history-size costs before retaining cache or batch machinery. No invented target/general speedup. |
+| SCI-1 | Missing actual compatible baseline/candidate pair and fresh CUDA/scientific evidence. | A7 and any hardware-specific claim; lab/evidence owner. | Deterministic compatible/mismatch UI fixtures may proceed, labeled correctly. Lab-specific acceptance stays unavailable until exact artifacts, case/split/units/metrics and hardware procedure exist. No training rerun is authorized by plan creation. |
+| TOOL-1 | Standards tooling limitation; no MCP tools exposed; application-purpose invocation returns unavailable. | Plan validation; documentation author. | Use exact checked-in structural validator and manual policy/contract review, retaining tool outcome. Do not claim full Engine or application compliance certification. Revisit if a supported application connection becomes available. |
+| REVIEW-R1 | Blocking draft-contract gap; existing artifact/evidence/candidate readers require completed Run state. | Recovery usability/compatibility; Runs and evidence/selection owners. | Resolved in the reviewed plan: exact versioned attached result Ref for new readers, old failed projections unchanged, candidate/package promotion and new recovered-input bindings unsupported initially; T2/T7 cover all dispositions. Product work remains pending. |
+| REVIEW-R2 | Review recommendation: scientific per-case pass/fail was not explicit beside training pass-counts. | Scientific interpretation; criterion/evidence owner. | Resolved in C6/T7 with owned criterion Ref, units/threshold/direction, qualified/diagnostic distinction and pass/fail/unknown; no invented criterion. |
+| REVIEW-R3 | Review recommendation: publication recovery needed explicit independent operation bounds. | Resources/recovery; Runs owner. | Resolved in C2/T2 with finite wall/I/O/copy/concurrency/history limits, paused exhaustion and unchanged original compute envelope. Implementation must verify those proposed limits. |
+
+No unrelated product issue is silently repaired by this documentation branch.
+
+## M1 implementation disposition — 2026-10-19
+
+- DEP-1: later user instruction authorizes isolated development on composed
+  PR89/90 head76d3c6a. They remain unmerged CI dependencies; merge qualification
+  is still required. Original plan-author resources are preserved.
+- PUB-1: deterministic capacity contradictions are addressed first. The absent
+  private lab receipt still gates its specific classification; publication
+  continuation, indexed diagnostics and actual post-drain/reopen proof remain
+  pending. No invalid retained output is adopted or reinterpreted.
+- PERSIST-1: task recovery is now backed by repository checkpoint96afae5,
+  verified by fresh clone/hash/reachability checks. Retain checkpoint branch;
+  do not delete it as an ordinary merged feature branch.

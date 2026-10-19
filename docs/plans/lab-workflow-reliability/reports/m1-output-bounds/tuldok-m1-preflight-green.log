@@ -1,0 +1,15 @@
+test_impossible_declaration_refuses_before_graph_run_or_grant_effect (test_run_preflight_publication.BoundOutputPreflightIntegrationTests.test_impossible_declaration_refuses_before_graph_run_or_grant_effect) ... skipped 'Requires disposable PostgreSQL and the extension validator'
+test_aggregate_counts_unique_required_arrays (test_run_preflight_publication.FieldOutputPreflightTests.test_aggregate_counts_unique_required_arrays) ... ok
+test_declared_maxima_are_not_claimed_as_required_output_sizes (test_run_preflight_publication.FieldOutputPreflightTests.test_declared_maxima_are_not_claimed_as_required_output_sizes) ... ok
+test_existing_valid_definition_is_unchanged_and_executes_nothing (test_run_preflight_publication.FieldOutputPreflightTests.test_existing_valid_definition_is_unchanged_and_executes_nothing) ... ok
+test_existing_writer_verifier_and_cold_read_still_round_trip (test_run_preflight_publication.FieldOutputPreflightTests.test_existing_writer_verifier_and_cold_read_still_round_trip) ... ok
+test_prediction_payload_must_fit_its_own_file_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_prediction_payload_must_fit_its_own_file_bound) ... ok
+test_probe_face_array_must_fit_the_profile_shard_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_probe_face_array_must_fit_the_profile_shard_bound) ... ok
+test_probe_input_payload_must_fit_its_own_file_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_probe_input_payload_must_fit_its_own_file_bound) ... ok
+test_reference_payload_must_fit_its_own_file_bound (test_run_preflight_publication.FieldOutputPreflightTests.test_reference_payload_must_fit_its_own_file_bound) ... ok
+test_shared_reference_is_not_charged_once_per_checkpoint (test_run_preflight_publication.FieldOutputPreflightTests.test_shared_reference_is_not_charged_once_per_checkpoint) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.108s
+
+OK (skipped=1)
