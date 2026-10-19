@@ -1,0 +1,31 @@
+{
+  "scope": "Neutral real CPU custody and publication UI; no scientific acceptance",
+  "counts_before": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 0
+  },
+  "counts_after": {
+    "workspace_runs": 1,
+    "access_execution_grants": 1,
+    "access_execution_consumptions": 1,
+    "model_attempt_reservations": 0
+  },
+  "events_unchanged": true,
+  "original_run_state": "interrupted",
+  "publication_state": "published",
+  "attempt_count": 2,
+  "result_ref": {
+    "catalog_id": "5abf20322d60436dbe3540141043138c",
+    "custody_receipt_sha256": "1431dd1e30991eca8e644fccfbdacbc9f640cf0e2efbb41065e00b8358470357",
+    "inventory_sha256": "84afb1364c2ecd99dbc7b34258f2d331b576f8e49b96aebd980cd73dd1450d84",
+    "kind": "recovered_publication_result",
+    "material_sha256": "c1978ccb5e383516b53ab3a3b58681b93ba4973820fa98534d9cf7658b90783b",
+    "run_id": "350e9fbe856c4e4ea6ad22dc2fb5c0d5",
+    "schema_version": 1,
+    "sha256": "15741d156c377164acc419476e3c2126eb9de69eef6dc49ae2eca6ed67a37569"
+  },
+  "input_sha256": "54ae9355f214d827afd4ec287ff813d3af22683a52c10e9ed1ea62507cfa4d10",
+  "legacy_artifact_refused": true
+}

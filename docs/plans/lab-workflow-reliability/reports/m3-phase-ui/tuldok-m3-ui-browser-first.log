@@ -1,0 +1,113 @@
+Error: Timed out
+    at until (/workspace/Tuldok-lab-phase-ui-m3/tests/browser_run_phase_timings.cjs:13:124)
+    at async /workspace/Tuldok-lab-phase-ui-m3/tests/browser_run_phase_timings.cjs:41:3
+Fixture stderr: 
+Local owner · owner
+Session
+Sign out
+Skip to workspace
+t.
+Tuldok
+/ Workspaces
+● Local
+Classic workbench ↗
+Corner studio ↗
+CONTEXT
+Dataset
+Interface fixtures
+Current local catalog
+Neutral fixture; no scientific claim · project
+Open project
+fixture-dataset-v1 · 0 selected · authored CC0 examples · release fixture-release-v1
+Local preview
+01
+Data
+02
+Pipeline
+03
+Runs
+Inspect → compose → understand
+
+Fixture pipeline · browser-local examples only.
+
+REPRODUCIBLE INTENT
+Pipeline
+
+Edit the graph. Inspect each boundary.
+
+Fixture pipeline. Graphs save only in this browser. All outputs are authored examples. Real execution is unavailable until PostgreSQL migration and M2 qualification pass.
+
+Recipe name
+v1 · revision 1
+Saved fixture
+Undo
+Redo
+Clone recipe
+Save draft
+Graph · keyboard-operable node list
+5 nodes
+01 / node-1
+Frozen release
+Fixture · definition v1
+02 / node-2
+Validate image export
+Fixture · definition v1
+03 / node-3
+Train TinyCNN
+Fixture · definition v1
+04 / node-4
+Evaluate
+Fixture · definition v1
+05 / node-5
+Publish artifacts
+Fixture · definition v1
+Add node
+Frozen release
+Validate image export
+Train TinyCNN
+Evaluate
+Publish artifacts
+Transcribe audio · unavailable
+Add
+Typed connections · 4 edges
+Validate fixture graph
+Run real pipeline · unavailable
+
+Validation stale or not run. Changes invalidate the previous result.
+
+Fixture outcome
+Completed · authored metrics
+Running · unknown progress
+Failed · example error
+Cancelled
+Unknown · reconciliation needed
+Record fixture run →
+NODE INSPECTOR
+Frozen release
+
+Exact authored fixture release; no live selection is captured.
+
+Definition
+release / v1
+Input port
+None — source
+Output port
+image_release_v1
+Remove selected node
+Output preview
+Fixture · sample 1 of 1
+
+fixture-release-v1 · no truncation · stale / unvalidated
+
+{
+  "mode": "fixture",
+  "node": "release",
+  "definition_version": 1,
+  "release": "fixture-release-v1",
+  "sample": {
+    "type": "image_release_v1",
+    "value": "Authored preview only"
+  }
+}
+Tuldok · Dataset-centered workspaces
+Fixtures are isolated examples. Current catalog runs use an optional local CPU runtime.
