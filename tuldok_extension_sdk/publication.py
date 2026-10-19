@@ -70,3 +70,30 @@ def collect(client, ref, output):
     require(time.monotonic() < client.deadline, 'Publication collection deadline elapsed.', 'unavailable')
     return {'format': 'extension_sdk_publication_collection_v1', 'state': 'collected', 'result_ref': ref,
             'artifacts': inventory, 'verification': 'whole_sha256_verified', 'numerical': 'not_evaluated'}
+
+
+@boundary
+def compare(client, ref, other_ref, selection):
+    """Read exact paired/side-by-side semantics; never select a candidate."""
+    result_reference(ref); result_reference(other_ref)
+    require(ref['catalog_id'] == other_ref['catalog_id'], 'Choose results from one catalog.', 'unsupported')
+    closed(selection, ('checkpoint_sha256', 'other_checkpoint_sha256', 'evaluation_sha256',
+        'other_evaluation_sha256', 'metric_id', 'metric_definition_sha256',
+        'other_metric_definition_sha256', 'mode'), 'Exact comparison selection')
+    for key, value in selection.items():
+        if key.endswith('sha256'): sha(value)
+    require(selection['mode'] in ('paired', 'side_by_side'), 'Choose paired or side_by_side comparison.')
+    value = client.call('runs.compare_publication_evidence', {'ref': ref, 'other_ref': other_ref, 'selection': selection})
+    require(type(value) is dict and value.get('result_refs') == [ref, other_ref], 'Comparison returned different results.')
+    comparison = value['comparison']
+    require(comparison['mode'] == selection['mode'] and len(comparison['sides']) == 2,
+            'Comparison returned a different selection.')
+    for index, (side, selected_ref) in enumerate(zip(comparison['sides'], (ref, other_ref), strict=True)):
+        prefix = 'other_' if index else ''
+        require(side['run_id'] == selected_ref['run_id'] and side['metric_id'] == selection['metric_id']
+                and all(side[key] == selection[prefix + key] for key in
+                    ('checkpoint_sha256', 'evaluation_sha256', 'metric_definition_sha256')),
+                'Comparison side differs from its exact selection.')
+    require(time.monotonic() < client.deadline, 'Publication comparison deadline elapsed.', 'unavailable')
+    return {'format': 'extension_sdk_publication_comparison_v1', 'state': 'compared',
+            'result_refs': value['result_refs'], 'comparison': comparison, 'numerical': 'not_evaluated'}

@@ -570,6 +570,29 @@ def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
 
 
 @boundary
+@boundary
+def compare(verified, contexts, body):
+    """Reuse exact scalar comparison with the authoritative field policies."""
+    require(type(verified) is list and len(verified) == 2 and type(contexts) is list and len(contexts) == 2,
+            'Select two verified extension results.')
+    projections = []; policies = []; run_ids = []
+    for value, context in zip(verified, contexts, strict=True):
+        require(value.get('state') == 'verified' and value['manifest']['producer']['run_id'] == context['run_id'],
+                'Comparison context differs from verified extension evidence.')
+        policy = context['static']['policy']; policies.append(policy); run_ids.append(context['run_id'])
+        projection = copy.deepcopy({key: item for key, item in value.items() if not key.startswith('_')})
+        # A field model specification is not a classifier model definition.
+        # Supply only the two policies from its independently verified context.
+        projection['model_definition'] = {key: policy[key] for key in ('preprocessing_policy', 'output_policy')}
+        projections.append(projection)
+    import model_evidence
+    result = model_evidence.compare_evidence(projections, run_ids, body)
+    if not identical(policies[0]['fields'], policies[1]['fields']):
+        result['reasons'].append('Field contracts, geometry or gauge semantics differ.')
+        result.update(state='incompatible', delta=None)
+    return result
+
+
 def verify_target_payload(definition, policy, member, field, raw):
     """Check one finite reference payload against the explicit recipe semantics.
 

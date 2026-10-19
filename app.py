@@ -1008,6 +1008,12 @@ def make_handler(dataset, observer=None):
                     if parts == ['publication-results']:
                         agent_api.require_selection(self._contract_selection, 'runs.publication_result')
                         return self.reply(dataset.runs.publication_result(body['ref']))
+                    if parts == ['publication-results', 'model-evidence']:
+                        agent_api.require_selection(self._contract_selection, 'runs.publication_model_evidence')
+                        return self.reply(dataset.runs.publication_model_evidence(body['ref'], body.get('selectors')))
+                    if parts == ['publication-results', 'compare-model-evidence']:
+                        agent_api.require_selection(self._contract_selection, 'runs.compare_publication_evidence')
+                        return self.reply(dataset.runs.compare_publication_evidence(body['ref'], body['other_ref'], body['selection']))
                     if len(parts) == 3 and parts[:2] == ['publication-results', 'artifact-segment']:
                         agent_api.require_selection(self._contract_selection, 'runs.publication_artifact_chunk')
                         return self.reply(dataset.runs.publication_artifact_segment(body['ref'], parts[2],

@@ -638,6 +638,10 @@ _PUBLICATION_SEGMENT['required'].append('result_ref')
 model_operation('runs.publication_artifact_chunk', 'POST', '/api/workspace/publication-results/artifact-segment/{name}',
     {'ref': PUBLICATION_RESULT_REF, 'name': ARTIFACT, 'expected_sha256': SHA, 'offset': integer(),
      'max_bytes': integer(1, 8*1024*1024)}, output=_PUBLICATION_SEGMENT)
+model_operation('runs.publication_model_evidence', 'POST', '/api/workspace/publication-results/model-evidence',
+    {'ref': PUBLICATION_RESULT_REF, 'selectors': JSON_OBJECT}, ['ref'])
+model_operation('runs.compare_publication_evidence', 'POST', '/api/workspace/publication-results/compare-model-evidence',
+    {'ref': PUBLICATION_RESULT_REF, 'other_ref': PUBLICATION_RESULT_REF, 'selection': JSON_OBJECT})
 
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
@@ -686,6 +690,11 @@ _EXACT_COMPARISON_RESULT=obj({'state':{'enum':['compatible','incompatible']},
 _exact_comparison['outputSchema']['oneOf'][0]['properties']['result']=_EXACT_COMPARISON_RESULT
 _exact_comparison['description']='Compare explicitly selected checkpoint/evaluation/metric identities; paired deltas require compatible populations and semantics.'
 _CONTRACTS['runs.compare_model_evidence'][2]=_exact_comparison
+_publication_comparison = _CONTRACTS['runs.compare_publication_evidence'][1]
+_publication_comparison['inputSchema']['properties']['selection'] = obj({key: copy.deepcopy(value)
+    for key, value in _exact_comparison['inputSchema']['properties'].items() if key not in ('run_id', 'other_run_id')})
+_publication_comparison['outputSchema']['oneOf'][0]['properties']['result'] = obj({
+    'result_refs': array(PUBLICATION_RESULT_REF, 2, 2), 'comparison': copy.deepcopy(_EXACT_COMPARISON_RESULT)})
 # One-fit recipes are independently versioned from the already selected image
 # contract. Retain exact v1/v2 pins for clients deployed before this slice.
 _one_fit_create=copy.deepcopy(_CONTRACTS['graphs.create'][2])
@@ -734,6 +743,14 @@ _field_result['oneOf'].append(obj(_field_fields,[key for key in _field_fields if
 _field_query['outputSchema']['oneOf'][0]['properties']['result']=_field_result
 _field_query['description']='Read exact retained classifier or validation field evidence through its task-owned decoder; no inference or test exposure.'
 _CONTRACTS['runs.model_evidence'][2]=_field_query
+_publication_query = _CONTRACTS['runs.publication_model_evidence'][1]
+_publication_selectors = copy.deepcopy(_field_query['inputSchema'])
+for _variant in _publication_selectors['oneOf']:
+    _variant['properties'].pop('run_id')
+    _variant['required'].remove('run_id')
+_publication_query['inputSchema']['properties']['selectors'] = _publication_selectors
+_publication_query['outputSchema']['oneOf'][0]['properties']['result'] = obj({
+    'result_ref': PUBLICATION_RESULT_REF, 'evidence': copy.deepcopy(_field_result)})
 # Project extension capture has an explicit inspector contract. Historical
 # recipe clients keep their selected-only grammar and cannot opt into binding
 # by supplying a field in the request body.
@@ -1401,6 +1418,23 @@ class AgentClient:
         if op['operation_id'] == 'runs.publication_result' and result['status'] < 400:
             if result['result']['result_ref'] != arguments['ref'] or arguments['ref']['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Recovered publication does not match the requested Ref/catalog.', 'transport', 502)
+        if op['operation_id'] == 'runs.publication_model_evidence' and result['status'] < 400:
+            value = result['result']; ref = arguments['ref']
+            producer = value['evidence'].get('manifest', {}).get('producer', {})
+            if (value['result_ref'] != ref or ref['catalog_id'] != self.catalog_id
+                    or producer.get('catalog_id') != ref['catalog_id'] or producer.get('run_id') != ref['run_id']):
+                raise AgentAPIError('Recovered evidence does not match the requested result/catalog.', 'transport', 502)
+        if op['operation_id'] == 'runs.compare_publication_evidence' and result['status'] < 400:
+            refs = [arguments['ref'], arguments['other_ref']]; value = result['result']
+            if value['result_refs'] != refs or any(ref['catalog_id'] != self.catalog_id for ref in refs):
+                raise AgentAPIError('Recovered comparison does not match the requested result Refs/catalog.', 'transport', 502)
+            for index, (side, ref) in enumerate(zip(value['comparison']['sides'], refs, strict=True)):
+                prefix = 'other_' if index else ''; choices = arguments['selection']
+                if (side['run_id'] != ref['run_id'] or side['metric_id'] != choices['metric_id']
+                        or any(side[key] != choices[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))
+                        or value['comparison']['mode'] != choices['mode']):
+                    raise AgentAPIError('Recovered comparison side differs from its exact selection.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_status' and result['status'] < 400:
             value = result['result']; source = value['source_ref']; continuation = value['continuation']
             if (value['run_id'] != arguments['run_id'] or source is not None and

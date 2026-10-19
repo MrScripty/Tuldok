@@ -18,6 +18,15 @@ import agent_api
 from app import make_handler
 
 
+class PublicationContractCompatibilityTests(unittest.TestCase):
+    def test_all_prior_full_publication_and_legacy_contracts_remain_equal(self):
+        previous = json.loads((Path(__file__).with_name('fixtures') / 'agent_contracts_publication0da7a81.json').read_text())
+        for operation, versions in previous.items():
+            for version, expected in versions.items():
+                with self.subTest(operation=operation, version=version):
+                    self.assertEqual(agent_api.contract(operation, int(version)), expected)
+
+
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL')
 class PublicationHTTPTests(unittest.TestCase):
     def setUp(self):
@@ -77,6 +86,36 @@ class PublicationHTTPTests(unittest.TestCase):
             self.assertGreaterEqual(code, 400, value)
             self.assertNotIn('publication_continuation', self.dataset.runs._load(self.run['id']))
         self.assertEqual(agent_api.contract('runs.recover_publication')['authority'], 'owner')
+
+    def test_neutral_recovered_result_does_not_gain_field_evidence(self):
+        code, recovered = self.request('runs.recover_publication', self.case.body(self.run))
+        self.assertEqual(code, 200, recovered)
+        response = self.client.call('runs.publication_model_evidence', {'ref': recovered['result_ref']})
+        self.assertEqual(response['status'], 409)
+        self.assertEqual(response['result']['code'], 'unsupported')
+
+    def test_revocation_during_segment_capture_prevents_disclosure(self):
+        code, recovered = self.request('runs.recover_publication', self.case.body(self.run))
+        self.assertEqual(code, 200, recovered)
+        self.client.bootstrap()
+        with self.dataset.access.bind(self.fixture.agent['token']):
+            credential = self.dataset.access.identity()['credential_id']
+        read = os.pread; revoked = []
+        payload = str(self.dataset.runs.path / self.run['id'] / 'result.txt')
+        def revoke(descriptor, count, offset):
+            raw = read(descriptor, count, offset)
+            if os.readlink('/proc/self/fd/' + str(descriptor)) == payload and not revoked:
+                with self.fixture.owner.bound(self.dataset): self.dataset.access.revoke(credential)
+                revoked.append(True)
+            return raw
+        with patch('run_publication.os.pread', side_effect=revoke):
+            response = self.client.call('runs.publication_artifact_chunk', {'ref': recovered['result_ref'],
+                'name': 'result.txt', 'expected_sha256': hashlib.sha256(self.fixture.input).hexdigest(),
+                'offset': 0, 'max_bytes': 7})
+        self.assertTrue(revoked)
+        self.assertIn(response['status'], (401, 403))
+        self.assertNotIn('data_base64', response['result'])
+        self.assertEqual(self.dataset.runs._load(self.run['id'])['publication_continuation']['state'], 'published')
 
     def test_corrupt_or_foreign_result_reply_refuses_without_alternate_request(self):
         code, recovered = self.request('runs.recover_publication', self.case.body(self.run))

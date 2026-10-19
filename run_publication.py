@@ -37,6 +37,13 @@ def _read_check(runs, deadline):
     _require(time.monotonic() < deadline, 'Recovered result reader reached its wall budget.')
 
 
+def _current_read(runs, run_id):
+    runs.access.require('inspect', 'runs.publication_result', run_id)
+    with runs.lock: run = runs._load(run_id)
+    from candidate_packages import authorize_transitive_inputs
+    authorize_transitive_inputs(runs, run)
+
+
 def _reader_boundary(function):
     @wraps(function)
     def checked(*args, **kwargs):
@@ -517,6 +524,7 @@ def result(runs, ref, *, deadline=None, checkpoint=None, _verify_payloads=True):
     finally:
         os.close(destination)
     guard()
+    _current_read(runs, ref['run_id'])
     return dict(value, result_ref=copy.deepcopy(ref))
 
 
@@ -537,6 +545,7 @@ def artifact(runs, ref, name, expected_sha256):
     _require(len(raw) == item['bytes'] and hashlib.sha256(raw).hexdigest() == expected_sha256,
              'Recovered artifact changed during capture.')
     _read_check(runs, deadline)
+    _current_read(runs, ref['run_id'])
     return raw, item
 
 
@@ -581,6 +590,7 @@ def artifact_segment(runs, ref, name, body):
         if descriptor is not None: os.close(descriptor)
         if directory is not None: os.close(directory)
     _read_check(runs, deadline)
+    _current_read(runs, ref['run_id'])
     next_offset = offset + len(raw)
     return {'result_ref': copy.deepcopy(ref), 'run_id': ref['run_id'], 'name': name,
             'expected_sha256': expected, 'total_bytes': item['bytes'], 'media_type': item['media_type'],
@@ -588,3 +598,46 @@ def artifact_segment(runs, ref, name, body):
             'eof': next_offset == item['bytes'], 'segment_sha256': hashlib.sha256(raw).hexdigest(),
             'data_base64': base64.b64encode(raw).decode('ascii'),
             'verification': 'segment_read_whole_hash_unverified'}
+
+
+def _evidence(runs, ref, deadline):
+    value = result(runs, ref, deadline=deadline, _verify_payloads=False)
+    with runs.lock: run = runs._load(ref['run_id'])
+    _require(runs._extension(run), 'Recovered result has no supported extension field evidence.', 'unsupported')
+    verified = runs._verify_extension(runs.path / run['id'], dict(run, artifacts=value['artifacts']),
+                                     checkpoint=lambda: _read_check(runs, deadline))
+    return value, run, verified
+
+
+@_reader_boundary
+def model_evidence(runs, ref, body=None):
+    import extension_evidence
+    deadline = time.monotonic() + WALL_SECONDS
+    _, _, verified = _evidence(runs, ref, deadline)
+    projection = extension_evidence.query(verified, body)
+    _read_check(runs, deadline)
+    _current_read(runs, ref['run_id'])
+    return {'result_ref': copy.deepcopy(ref), 'evidence': projection}
+
+
+@_reader_boundary
+def compare_evidence(runs, ref, other_ref, body):
+    closed(body, ('checkpoint_sha256', 'other_checkpoint_sha256', 'evaluation_sha256', 'other_evaluation_sha256',
+                  'metric_id', 'metric_definition_sha256', 'other_metric_definition_sha256', 'mode'))
+    _require(body['mode'] in ('paired', 'side_by_side') and type(body['metric_id']) is str
+             and 1 <= len(body['metric_id']) <= 64
+             and all(_hash(value) for key, value in body.items() if key.endswith('sha256')),
+             'Exact checkpoint, evaluation and metric identities are required.', 'invalid')
+    deadline = time.monotonic() + WALL_SECONDS
+    selected = [_evidence(runs, item, deadline) for item in (ref, other_ref)]
+    contexts = []
+    for index, (value, run, _) in enumerate(selected):
+        item = next((item for item in value['artifacts'] if item['name'] == 'model-evidence.json'), None)
+        _require(item is not None and item['sha256'] == body[('other_' if index else '') + 'evaluation_sha256'],
+                 'Exact recovered evaluation identity differs.', 'stale')
+        contexts.append(run['extension_context'])
+    import extension_evidence
+    comparison = extension_evidence.compare([item[2] for item in selected], contexts, body)
+    _read_check(runs, deadline)
+    for item in (ref, other_ref): _current_read(runs, item['run_id'])
+    return {'result_refs': [copy.deepcopy(ref), copy.deepcopy(other_ref)], 'comparison': comparison}
