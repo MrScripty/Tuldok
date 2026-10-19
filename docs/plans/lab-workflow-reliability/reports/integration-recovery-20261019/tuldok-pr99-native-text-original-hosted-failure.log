@@ -1,0 +1,67 @@
+2026-10-19T21:29:50.4807785Z ##[group]Run node tests/browser_native_text_import.cjs
+2026-10-19T21:29:50.4807997Z [36;1mnode tests/browser_native_text_import.cjs[0m
+2026-10-19T21:29:50.4860276Z shell: /usr/bin/bash -e {0}
+2026-10-19T21:29:50.4860447Z env:
+2026-10-19T21:29:50.4860654Z   TULDOK_TRAINING_PYTHON: /home/runner/work/Tuldok/Tuldok/build/workspace-training/bin/python
+2026-10-19T21:29:50.4860989Z   TULDOK_NATIVE_READER_PYTHON: /home/runner/work/Tuldok/Tuldok/build/workspace-training/bin/python
+2026-10-19T21:29:50.4861407Z   TULDOK_DATABASE_URL: ***127.0.0.1:5432/tuldok_test
+2026-10-19T21:29:50.4861605Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:29:50.4861830Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib/pkgconfig
+2026-10-19T21:29:50.4862065Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:29:50.4862269Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:29:50.4862494Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.15/x64
+2026-10-19T21:29:50.4862694Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.15/x64/lib
+2026-10-19T21:29:50.4862871Z   BROWSER: /usr/bin/google-chrome
+2026-10-19T21:29:50.4863011Z ##[endgroup]
+2026-10-19T21:29:52.3752682Z [54804:54825:1019/212952.374741:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.3787320Z [54804:54825:1019/212952.378481:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.3801997Z [54804:54825:1019/212952.378501:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.3803413Z [54804:54825:1019/212952.378505:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.3989383Z [54804:54825:1019/212952.398269:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.4174242Z 
+2026-10-19T21:29:52.4175182Z DevTools listening on ws://127.0.0.1:33015/devtools/browser/a0478463-9ec6-4a9d-ae95-a92277619be4
+2026-10-19T21:29:52.4575110Z [54804:54804:1019/212952.457067:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.4620940Z [54804:54825:1019/212952.457202:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.4683655Z [54804:54804:1019/212952.457970:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.4687735Z [54804:54804:1019/212952.457989:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.4707001Z [54804:54804:1019/212952.458413:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.4750418Z [54804:54825:1019/212952.460434:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.4805881Z [54804:54825:1019/212952.460445:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.4843608Z [54804:54804:1019/212952.478696:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.4944135Z [54804:54804:1019/212952.491904:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.4949315Z [54804:54825:1019/212952.491997:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.4969797Z [54804:54804:1019/212952.492029:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.5019613Z [54804:54804:1019/212952.501728:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.Properties.GetAll: object_path= /org/freedesktop/UPower/devices/DisplayDevice: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+2026-10-19T21:29:52.5111500Z [54804:54804:1019/212952.508618:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.5196096Z [54804:54825:1019/212952.508692:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.5233655Z [54804:54804:1019/212952.517411:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.5333974Z [54804:54825:1019/212952.517522:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+2026-10-19T21:29:52.5337825Z [54804:54804:1019/212952.529311:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+2026-10-19T21:29:52.5752618Z Native browser stage: navigation
+2026-10-19T21:29:52.8793352Z Native browser stage: initial import
+2026-10-19T21:29:53.2102300Z Native browser stage: duplicates
+2026-10-19T21:29:53.3225745Z Native browser stage: stop
+2026-10-19T21:29:53.5415705Z Native browser stage: preparation stop
+2026-10-19T21:29:53.7550459Z Native browser stage: response loss
+2026-10-19T21:29:53.9727305Z Native browser stage: review
+2026-10-19T21:29:54.5444942Z Native browser stage: selection
+2026-10-19T21:29:54.7275851Z [54804:54826:1019/212954.727284:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+2026-10-19T21:29:54.7427399Z [54804:54826:1019/212954.742254:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+2026-10-19T21:29:54.7428850Z [54804:54826:1019/212954.742334:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+2026-10-19T21:29:55.0331218Z Native browser stage: reload/back
+2026-10-19T21:29:55.4679685Z Native classification Chromium: actual ZIP imports, review/export roundtrip, duplicate preservation, Stop, delayed refresh, lost-response lookup, dirty editor/filter/selection preservation, reload/back and narrow layout passed.
+2026-10-19T21:29:55.7861331Z node:fs:1282
+2026-10-19T21:29:55.7872587Z   return binding.rmSync(getValidatedPath(path), opts.maxRetries, opts.recursive, opts.retryDelay);
+2026-10-19T21:29:55.7891565Z                  ^
+2026-10-19T21:29:55.7930486Z 
+2026-10-19T21:29:55.7932233Z Error: ENOTEMPTY, Directory not empty: /tmp/tuldok-native-text-browser-M9lc94 '/tmp/tuldok-native-text-browser-M9lc94'
+2026-10-19T21:29:55.7950561Z     at Object.rmSync (node:fs:1282:18)
+2026-10-19T21:29:55.7951463Z     at /home/runner/work/Tuldok/Tuldok/tests/browser_native_text_import.cjs:133:355 {
+2026-10-19T21:29:55.7952020Z   errno: 39,
+2026-10-19T21:29:55.7952203Z   code: 'ENOTEMPTY',
+2026-10-19T21:29:55.7952470Z   path: '/tmp/tuldok-native-text-browser-M9lc94',
+2026-10-19T21:29:55.7952741Z   syscall: 'rm'
+2026-10-19T21:29:55.7952921Z }
+2026-10-19T21:29:55.7953087Z 
+2026-10-19T21:29:55.7954043Z Node.js v24.21.0
+2026-10-19T21:29:55.9874423Z ##[error]Process completed with exit code 1.

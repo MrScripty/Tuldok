@@ -232,8 +232,8 @@
       "disposition": "retained-protected pending required CI and merge"
     }
   ],
-  "checkpoint_at": "2026-10-19T21:36:01.033821+00:00",
-  "state": "active source implementation; serial merges96/97 confirmed; hosted dependent qualification pending",
+  "checkpoint_at": "2026-10-19T21:45:05.348153+00:00",
+  "state": "PR99originalhostfailure diagnosed/repaired; fresh99-103exactCIpending; phaseUI+M4continue",
   "hosted_runs": [
     {
       "id": 39282700306,
@@ -1023,25 +1023,25 @@
   },
   "publication_ui": {
     "pr": 99,
-    "head": "61d2c2d706cac4515860a9571db85451be2ecaa8",
+    "head": "5ce38d00d54e20e7807f24586a88b0347f9b6f45",
     "base": "feature/lab-publication-evidence-20261019",
     "independent_root_review": "clear",
     "root_controller_and_pin": "passed",
     "root_actual_pg_chromium": "passed",
     "first_root_browser_failure": "ambient python3 missing psycopg; corrected PATH only; retained log",
-    "hosted": "pending; parent passive monitor"
+    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
   },
   "publication_lineage": {
     "pr": 100,
-    "head": "be9dba61f0d8d37a3d694c90b244c6ad6942285b",
+    "head": "9bef0c765228dc18ea266de16100d1cc74481141",
     "base": "feature/lab-publication-run-panel-20261019",
     "independent_root": "clear; source/tests/docs+actualrootStudyPG/Chromiumbrowser passed",
     "root_log": "tuldok-m1-publication-lineage-root-browser.log",
-    "hosted": "pending"
+    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
   },
   "coordinator_core": {
     "pr": 101,
-    "head": "5f1aa49af2935100b60743fb1929cb2727ac6275",
+    "head": "837dcb0462cf142be31c6f8f6cc0b57adc14ae15",
     "branch": "feature/lab-coordinator-recovery-20261019",
     "base": "feature/lab-publication-lineage-20261019",
     "core_source": "3280ebee9e4f6964cdbf73c1480ff15866962de7",
@@ -1056,7 +1056,7 @@
       "independent": "6/9.084s+2/1.768s; separateactual2Dataset andsimultaneous2cleanupfault witnesses;118oldfullcontracts+legacydiscoveryequal"
     },
     "final_head_group": "exact5a17passed52.642s; latercurrent/coldackchangesseparatelyqualified3/3.853s and3/2.265s, hostedlatest5f pending",
-    "hosted": "pending",
+    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix",
     "full_m2": "incomplete; coordinatorUI next; no scientific/hardware claim"
   },
   "pr97_archived_acceptance": {
@@ -1078,14 +1078,14 @@
     "pr": 102,
     "branch": "feature/lab-coordinator-panel-20261019",
     "source": "3c2b8d1ccc90572b371d1c7ce6d91e4a5a920a64",
-    "head": "a7efd450bd3bd7f7992dbe839ea4d3d5f04f0b02",
+    "head": "bcab4e6b2ed1a30b562adb74e5c522e019b5051c",
     "state": "published independent review clear; delivery-boundary fix and exact-source browser passed; hosted pending",
     "base": "feature/lab-coordinator-recovery-20261019",
     "actualbrowser": "passed exact3c actualPG17/Chromium151 lockfault/lostreply/readreconcile/originalGO/sameidentity/reload/1440+390",
     "regression": "prior38c actual publication browser passed; source attribution preserved",
     "evidence": "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/validation.json",
     "corecomposition": "whole5f normalmerged; noPython/APIproductionchanges",
-    "hosted": "pending"
+    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
   },
   "main_after_pr96": "c4322a4832356af796692cd6536adef637a8c6d4",
   "main_after_pr97": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
@@ -1114,27 +1114,58 @@
   },
   "phase_timing_active": {
     "pr": 103,
-    "head": "c8a327f0289577a5d671253b079616e60541ea98",
+    "head": "b906ba6990fadfb27715b69dd9ba06e527273888",
     "source": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb",
     "composed_source": "96c2adebc3a46b9fe92b179097474e08474689c3",
     "base": "feature/lab-coordinator-panel-20261019",
     "review": "root full source/consumerclear; finalemptyhelpersamplefix included",
     "tests": "authored14pass35.783s final5c; previous53pass59.147s bdcc; root9pass23.377s5c; composed15pass40.190s96c; allzero skips",
     "state": "published draft; hosted/fullM3browserpending",
-    "report": "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/integration-validation.json"
+    "report": "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/integration-validation.json",
+    "hosted": "fresh head pending after normal-composed reviewed ancestor nativebrowsercleanupfix"
   },
   "phase_ui_active": {
     "worktree": "/workspace/Tuldok-lab-phase-ui-m3",
     "branch": "feature/lab-phase-panel-20261019",
-    "head": "fa225c0aa0c68f109dddf10c49557ccb48dd1c56",
-    "state": "whole core normallycomposed; UIcontroller+canonicalpinpass; actualbrowserfirstjourneyrunning, newtests uncommitted",
+    "head": "31494ec1697804f63d670ffd85e1109271e3239e",
+    "state": "branchpushed; independentreviewfinalsame-selectionfollowuppending; exactfinalbrowserrunning",
     "writes": "staticphase/real/external/html/css; appstaticrouteonly; focusedcontroller/pin/browser/fixture+CI/docs",
-    "no_claim": "fullM3 acceptance remainspending"
+    "no_claim": "fullM3 acceptance remainspending",
+    "browser_source8e": "actualphase inclkeyboardfocus/scroll andactualcoordinatorfault/lostreply journeys passed8e; publicationregressionpassed53c",
+    "last_source_review_finding": "Same-selection oldreadadoptedmutable newloadpredicate at8e; fixcapturesoriginalpredicate andsequentialfreshread, originalreadcap/windowpreserved; controlledrootcasepassed314",
+    "unrelated_native_composition": "wholeb906 sourcecomposednormal91fb; actualnativebrowserexit0 at91fb; productionfilesunchanged from8e across91fb"
   },
   "m4_active": {
     "worker": "/root/mcp_contract_ci_review",
     "worktree": "/workspace/Tuldok-lab-benchmark-baseline-m4",
     "branch": "test/lab-workflow-baseline-20261019",
     "state": "controlled actual T5 baseline only; no production/cache edits before measurement"
+  },
+  "pr99_cleanup_failure_repair": {
+    "old_head": "61d2c2d706cac4515860a9571db85451be2ecaa8",
+    "run": 39322436106,
+    "job": 118299619333,
+    "cause": "Native browser assertionspassed;finallycleanup kill+sleep200ms thenrmSyncraisedENOTEMPTY",
+    "repair_source": "4cfc028a76a65bd3215dc213d4eef414a0802486",
+    "published_head": "5ce38d00d54e20e7807f24586a88b0347f9b6f45",
+    "independent_review": "clear",
+    "controlled_test": "passed actual delayed300msfinalwrite+ignoredTERM+alreadyexited",
+    "actual_browser": "complete realPG17/Chromium151 nativeimport/review/export/lostreply/reload/navigation/layoutincludingexit0 at4cfc",
+    "pending": "freshcorrected exacthead hosted lifecycle+postmerge qualification; no ancestor accepted",
+    "receipt": "tuldok-pr99-cleanup-repair-validation.json"
+  },
+  "fresh_dependent_heads_after_cleanup": {
+    "99": "5ce38d00d54e20e7807f24586a88b0347f9b6f45",
+    "100": "9bef0c765228dc18ea266de16100d1cc74481141",
+    "101": "837dcb0462cf142be31c6f8f6cc0b57adc14ae15",
+    "102": "bcab4e6b2ed1a30b562adb74e5c522e019b5051c",
+    "103": "b906ba6990fadfb27715b69dd9ba06e527273888"
+  },
+  "executor_access": {
+    "verified_at": "2026-10-19T21:42:45Z",
+    "shell": "success",
+    "git_local": "success",
+    "git_remote_read": "success",
+    "callback": "parentreporteddisconnection; actualexecutorverifiedworking, no credential/workerrecreation"
   }
 }
