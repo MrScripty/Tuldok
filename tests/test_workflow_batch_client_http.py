@@ -192,6 +192,7 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
         self.assertFalse(any('/artifact-segment/' in row['path'] for row in self.calls()))
 
     def test_actual_cancellation_interrupts_held_http_read_without_cancel_or_retry(self):
+        watchdogs_before = {thread.ident for thread in threading.enumerate() if thread.name == 'agent-read-budget'}
         entered = threading.Event(); release = threading.Event(); stop = threading.Event()
         original = self.dataset.runs.artifact_segments
         def held(body, **kwargs):
@@ -218,7 +219,8 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
         self.assertFalse(worker.is_alive())
         self.assertEqual(list(self.output.iterdir()), [])
         self.assertFalse(any('/cancel' in row['path'] or '/artifact-segment/' in row['path'] for row in self.calls()))
-        self.assertFalse(any(thread.name == 'tuldok-agent-read-watchdog' for thread in threading.enumerate()))
+        self.assertFalse(any(thread.name == 'agent-read-budget' and thread.ident not in watchdogs_before
+                             for thread in threading.enumerate()))
 
     def test_actual_cli_known_collision_refuses_before_bootstrap_and_race_preserves_sentinel(self):
         destination = self.output/self.manifest['items'][0]['name']
@@ -245,7 +247,7 @@ class BatchPublicationHTTPTests(unittest.TestCase):
     def test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted(self):
         from test_run_artifact_segments import ArtifactSegmentsHTTPTests
         fixture = ArtifactSegmentsHTTPTests('runTest')
-        fixture.setUp(); self.addCleanup(fixture.doCleanups)
+        self.addCleanup(fixture.doCleanups); fixture.setUp()
         client = AgentClient(fixture.endpoint, fixture.fixture.agent['token'], fixture.dataset.db.dataset_id)
         workflow = WorkflowClient(client)
         manifest = workflow.collection_manifest(result_ref=fixture.ref, names=['result.txt'])
