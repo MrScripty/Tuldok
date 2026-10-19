@@ -129,6 +129,19 @@ assert 'jsonschema' not in sys.modules
         self.assertEqual(caught.exception.code, 'operation_unsupported')
         self.assertEqual(client.requests, [])
 
+    def test_exact_comparison_refuses_v1_without_implicit_operand_fallback(self):
+        client = ConsumerFixture(); workflow = WorkflowClient(client)
+        args = {'run_id': RUN, 'other_run_id': RUN, 'metric_id': 'loss', 'mode': 'paired',
+            **{key: 'c'*64 for key in ('checkpoint_sha256', 'other_checkpoint_sha256',
+                'evaluation_sha256', 'other_evaluation_sha256', 'metric_definition_sha256',
+                'other_metric_definition_sha256')}}
+        manifest = _manifest(CATALOG, 'runs.compare_model_evidence', args, 'workflow_comparison_manifest_v1')
+        client.selected_contracts = lambda: {'runs.compare_model_evidence': 1}
+        with self.assertRaises(AgentAPIError) as caught:
+            workflow.compare(manifest)
+        self.assertEqual(caught.exception.code, 'operation_unsupported')
+        self.assertEqual(client.requests, [])
+
     def test_material_digest_uses_domain_utf8_canonical_json_for_unicode(self):
         client = ConsumerFixture(); workflow = WorkflowClient(client)
         material = {'catalog_id': CATALOG, 'note': 'Unicode λ 😀'}

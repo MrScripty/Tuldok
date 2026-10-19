@@ -104,3 +104,9 @@ The selected existing interpreter's installed metadata is Python3.12.14,
 psycopg3.3.6, jsonschema4.26.0, NumPy2.5.4, Torch2.8.0+cpu,
 torchvision0.23.0+cpu and scikit-learn1.7.2. The optional existing classifier
 fixture uses the built-in runtime directly and creates no runtime snapshot/copy.
+
+A final capability regression (`focused-comparison.log`, 15 focused tests) makes
+an exact comparison against a v1-only server explicitly `operation_unsupported`
+before dispatch, rather than relying on the older schema's argument rejection.
+It cannot downgrade to implicit checkpoint/evaluation selection. This changes no
+server operation version or wire schema.

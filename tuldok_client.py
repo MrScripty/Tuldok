@@ -477,4 +477,8 @@ class WorkflowClient:
 
     def compare(self, manifest):
         manifest = _check_manifest(manifest, self.client.catalog_id, 'workflow_comparison_manifest_v1', COMPARISONS)
-        return self.client.call(manifest['operation'], manifest['arguments'])
+        operation = manifest['operation']
+        selected = self.client.selected_contracts()
+        if operation not in selected or (operation == 'runs.compare_model_evidence' and selected[operation] < 2):
+            raise AgentAPIError('Exact comparison has no compatible available contract.', 'operation_unsupported', 409)
+        return self.client.call(operation, manifest['arguments'])
