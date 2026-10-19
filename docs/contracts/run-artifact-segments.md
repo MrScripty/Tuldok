@@ -63,3 +63,13 @@ includes that original interrupted Run. Bootstrap is measured separately and
 excluded from both arms. Failed/corrupt/partial replies cannot count as improved
 samples. Same-head whole hashes, events and admission/accounting counts must
 match, and no compute can run during paired reads. Final costs remain pending.
+
+The measurement checkout normally composes root92546d7, including the canonical
+AgentClient request-aware decoder/configured-publication-catalog checks and the
+M6 operation. Both arms use that same composed client. The harness avoids a
+second redundant request-aware decode, retains explicit whole SHA256 equality,
+and records delegating inclusive `_load`/inventory/segment/result owner counters.
+A composed one-artifact pilot passed both normal and attached-Ref first/warm pairs
+with alternating order and own-schema cleanup. Eleven relevant pure/correlation
+cases passed. Exact final source/harness hashes are recorded at measurement start;
+these composed measurements are not attributed to production007 alone.

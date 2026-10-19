@@ -7,6 +7,7 @@ recorded unavailable rather than inventing a successful zero-history read.
 import argparse
 import base64
 import copy
+from contextlib import ExitStack
 import importlib
 import json
 import os
@@ -39,7 +40,9 @@ def collect_batch(client, source, expected):
         for index,item in enumerate(expected)]}
     envelope=client.call('runs.artifact_segments',request)
     if envelope['status']!=200:raise AssertionError('Batch service refused: '+str(envelope['status']))
-    value=agent_api.validate_artifact_segments(envelope['result'],request)
+    # Canonical AgentClient.call already checks request-aware order/source/Ref
+    # and segment identity. Match the individual helper's single consumer boundary.
+    value=envelope['result']
     receipts=[]
     for item,outcome in zip(expected,value['items']):
         if outcome['status']!=200:raise AssertionError('Unexpected batch item refusal: '+outcome['error']['code'])
@@ -62,6 +65,24 @@ def collect_individual(client, source, expected):
     return receipts
 
 
+def collection_observers(dataset,metrics):
+    """Inclusive owner counters, delegating unchanged arguments/results."""
+    import run_publication
+    stack=ExitStack()
+    def wrap(owner,name,label):
+        original=getattr(owner,name)
+        def observed(*args,**kwargs):
+            metrics.counts[label+'.calls']+=1;start=time.perf_counter_ns()
+            try:return original(*args,**kwargs)
+            finally:metrics.stages.append({'owner':label,'inclusive_wall_ns':time.perf_counter_ns()-start})
+        stack.enter_context(patch.object(owner,name,observed))
+    for name in ('_load','_external_inventory','artifact_segment'):
+        wrap(dataset.runs,name,'runs.'+name)
+    for name in ('result','artifact_segment'):
+        wrap(run_publication,name,'run_publication.'+name)
+    return stack
+
+
 def worker(config,destination,repeats):
     metrics=Metrics();metrics.labels={'artifacts':config['artifacts'],'terminal_history':config['history'],
         'condition':'fresh_process','source_kind':config['source']['kind'] if config['source'] else 'unavailable'}
@@ -82,22 +103,23 @@ def worker(config,destination,repeats):
             metrics.observe('client.bootstrap',client.bootstrap)
             run_id=config['source'].get('run_id') or config['source']['ref']['run_id']
             with dataset.access.bind(config['owner_token']): events=copy.deepcopy(dataset.runs._load(run_id)['events'])
-            for cycle in range(repeats+1):
-                order=['individual','batch'] if (config['sample']+cycle)%2==0 else ['batch','individual']
-                metrics.labels={'artifacts':config['artifacts'],'terminal_history':config['history'],
-                    'condition':'first_pair_fresh_process' if cycle==0 else 'warm_pair_same_process',
-                    'cycle':cycle,'source_kind':config['source']['kind'],'sample':config['sample'],'order':order}
-                results={};walls={}
-                for arm in order:
-                    function=collect_individual if arm=='individual' else collect_batch
-                    results[arm]=metrics.observe('collection.'+config['source']['kind']+'.'+arm,
-                        lambda function=function:function(client,config['source'],config['expected']))
-                    walls[arm]=metrics.rows[-1]['wall_ns']
-                    metrics.rows[-1]['detail']={'whole_sha256_receipts':results[arm]}
-                if results['individual']!=results['batch']:raise AssertionError('Paired whole artifact identities differ.')
-                pairs.append({'cycle':cycle,'order':order,'individual_wall_ns':walls['individual'],
-                    'batch_wall_ns':walls['batch'],'batch_over_individual':walls['batch']/walls['individual'],
-                    'whole_artifacts_equal':True})
+            with collection_observers(dataset,metrics):
+                for cycle in range(repeats+1):
+                    order=['individual','batch'] if (config['sample']+cycle)%2==0 else ['batch','individual']
+                    metrics.labels={'artifacts':config['artifacts'],'terminal_history':config['history'],
+                        'condition':'first_pair_fresh_process' if cycle==0 else 'warm_pair_same_process',
+                        'cycle':cycle,'source_kind':config['source']['kind'],'sample':config['sample'],'order':order}
+                    results={};walls={}
+                    for arm in order:
+                        function=collect_individual if arm=='individual' else collect_batch
+                        results[arm]=metrics.observe('collection.'+config['source']['kind']+'.'+arm,
+                            lambda function=function:function(client,config['source'],config['expected']))
+                        walls[arm]=metrics.rows[-1]['wall_ns']
+                        metrics.rows[-1]['detail']={'whole_sha256_receipts':results[arm]}
+                    if results['individual']!=results['batch']:raise AssertionError('Paired whole artifact identities differ.')
+                    pairs.append({'cycle':cycle,'order':order,'individual_wall_ns':walls['individual'],
+                        'batch_wall_ns':walls['batch'],'batch_over_individual':walls['batch']/walls['individual'],
+                        'whole_artifacts_equal':True})
             after=counts(dataset)
             if before!=after:raise AssertionError('Paired collection changed admission/accounting counts.')
             with dataset.access.bind(config['owner_token']):
