@@ -6,7 +6,7 @@
   "dependencies": {
     "canonical_batch_transport": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
     "batch_service": "007e3de6bb51689f4208ca67c5e84683509960e7",
-    "final_m5": "40d7f61732c45c7c329b0061ae29154612784168"
+    "final_m5": "5634968dca2666392b6d69c12c12a0f391e51f5b"
   },
   "checks": [
     {
@@ -32,11 +32,53 @@
   "source_inspection": {
     "all_prior_WorkflowClient_methods_ast_equal_to_final_m5": true,
     "only_added_method": "collect_batch",
-    "old_collect_loop_authored_edits": false
+    "old_collect_loop_authored_edits": false,
+    "all_prior_WorkflowClient_methods_ast_equal_to_final_m5_563": true
   },
   "actual_http_cli": {
-    "outcome": "pending",
-    "reason": "M4 paired measurement quiet window; actual8-case test source prepared, no acceptance claimed"
+    "outcome": "pass",
+    "tests": 8,
+    "seconds": 145.991,
+    "source": "fd42361f043c201290c5b6297a384652320044ed",
+    "log": "actual-attempt-01/actual-http-cli.log",
+    "source_capture": "actual-attempt-01/source.json",
+    "first_attempt": true,
+    "no_failures_or_retries": true,
+    "after_m4_quiet_release": true,
+    "concurrency": "Parent scientific reader and M5 single comparison gates allowed concurrently; no performance claim.",
+    "cases": [
+      "actual attached publication Ref with original interrupted Run unchanged",
+      "held HTTP SDK Event and clean CLI real SIGINT cancellation",
+      "clean CLI known destination collision and actual-delivery local race",
+      "actual response valid segment hash with wrong whole bytes; source mismatch",
+      "actual per-item server refusal; typed partial receipt; explicit ordinary CLI resume",
+      "actual credential revocation before final HTTP delivery fence",
+      "SDK20 selected whole artifacts in one batch",
+      "clean CLI20 selected whole artifacts and explicit ordinary resume reauthorization"
+    ],
+    "cleanup": [
+      "actual-attempt-01/cleanup-publication.json",
+      "actual-attempt-01/cleanup-twenty.json",
+      "actual-attempt-01/cleanup-independent.json"
+    ]
   },
-  "independent_review": "pending"
+  "independent_review": {
+    "outcome": "source clear; final evidence audit requested",
+    "reviewer": "/root/workflow_client_m5",
+    "frozen_source": "a4ff908fca0ef72ca58554e1473fce2bcfc2d7a8",
+    "receipt_owner_path": "docs/plans/lab-workflow-reliability/reports/m5-workflow-client/batch-consumer-independent-review.json",
+    "scope": "Independent read-only source review, no independent test execution claim."
+  },
+  "qualified_source": "fd42361f043c201290c5b6297a384652320044ed",
+  "evidence_sha256": {
+    "actual-attempt-01/actual-http-cli.log": "749b91b5d4910a935e93c796c0bb99f127238c61e533b7e72906a2ad12bd97c9",
+    "actual-attempt-01/cleanup-independent.json": "c74d8c8900b0dcc3913c84baec6875637e778db42681d1d3a1810505d7095b02",
+    "actual-attempt-01/cleanup-publication.json": "1c7136b4878d80fc74206de38946f5af8ea2c6a24d40e1b25aabed10ebd49995",
+    "actual-attempt-01/cleanup-twenty.json": "9e3d86ec1e1ad9433b980881576a5149d0d819b2c91a1a3575058f3463532427",
+    "actual-attempt-01/source.json": "4a052d178bea9c6c601b4962056e5118372b161cb8a69618a5f6f9619af1b944"
+  },
+  "remaining_acceptance": [
+    "Root final CI and serial integration/remote publication.",
+    "Batch service usefulness/performance disposition remains owned by M4 and root; this consumer supplies no speedup claim."
+  ]
 }
