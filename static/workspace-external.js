@@ -202,3 +202,159 @@ window.WorkspaceExternalProject=function({onCreated,announce}){
   }};
   function copy(value){return structuredClone(value);}
 };
+
+// Same-Run publication presentation. Runs remains the authority for byte custody,
+// eligibility, cancellation and attachment; no compute or promotion is admitted here.
+window.WorkspacePublicationContracts = {
+  'runs.publication_status/2': 'd26adbe3218a97719fe36613bec4bf9f8fd021bac5bfeb52caa2bcfe4760f7fe',
+  'runs.recover_publication/1': '5a8f6c1dd91abf16ab00b0b7b31a6532d265bfbfc481af2a295d8370df5575f9',
+  'runs.cancel_publication/1': '04767a30954a7de03de27d5971400120f0f772d8ce70ad88690c38e6890fdf4a',
+  'runs.publication_result/1': 'fcdee230c0a3f03c6f6bea9a955617368d7ea18678d3da0b31df787e69f9cb17',
+  'runs.publication_artifact_chunk/1': '6cdbc3fa18b569558918eab1672386546d05c70e98bf31f2694ece8d889bf9d2',
+  'runs.publication_model_evidence/1': 'd2f34f0df4d54b82bf4f52508de405f6d743d404c78648d6c4c19c65e7e4f1d2'
+};
+window.WorkspacePublication = function ({api, render, identity=()=>window.TuldokAuth?.identity(),
+  schedule=setTimeout, unschedule=clearTimeout, getStorage=()=>window.sessionStorage}) {
+  const esc=window.workspaceEscape, enc=encodeURIComponent, clone=structuredClone;
+  const hash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+  const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+  const canonical=value=>JSON.stringify(ordered(value));
+  const same=(a,b)=>canonical(a)===canonical(b);
+  async function digest(value){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value)))),byte=>byte.toString(16).padStart(2,'0')).join('');}
+  let epoch=0, timer=null, selected=null, saved=null, result=null, evidence=null, message='', busy=false, cancelBusy=false, reading=false, storageError='', current=()=>false;
+  const actor=()=>identity(), session=()=>JSON.stringify([actor()?.catalog_id,actor()?.actor_id,actor()?.credential_id]);
+  function stop(){if(timer!==null)unschedule(timer);timer=null;}
+  function invalidate(){epoch++;stop();selected=null;saved=null;result=null;evidence=null;message='';busy=false;cancelBusy=false;reading=false;storageError='';current=()=>false;}
+  function snapshot(){const generation=epoch, credential=session();return ()=>generation===epoch&&credential===session()&&current();}
+  function owner(scope){return actor()?.kind==='owner'&&actor()?.scopes?.includes('inspect')&&actor()?.scopes?.includes(scope);}
+  function key(){return [selected.dataset_id,actor()?.actor_id,selected.id].join(':');}
+  const storeKey='tuldok.publication.requests.v1';
+  function requests(){
+    const raw=getStorage().getItem(storeKey);
+    if(raw&&raw.length>1024*1024)throw Error('Publication request storage exceeds its bound.');
+    const values=raw?JSON.parse(raw):{};
+    if(!values||typeof values!=='object'||Array.isArray(values)||Object.keys(values).length>1024)throw Error('Publication request storage is invalid.');
+    return values;
+  }
+  function pending(){
+    try{
+      const value=requests()[key()]||history.state?.publicationRequests?.[key()]||null;
+      if(value&&(Object.keys(value).sort().join(',')!=='request_key,run_id,source_ref'||value.run_id!==selected.id||!source(value.source_ref)||!(/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(value.request_key||''))))throw Error('Invalid retained publication request.');
+      return value;
+    }
+    catch{storageError='Publication request storage is unavailable. Restore tab storage before recovery; inspect saved status meanwhile.';return null;}
+  }
+  function retain(value){
+    const values={...requests(),[key()]:clone(value)},raw=JSON.stringify(values);
+    if(raw.length>1024*1024||Object.keys(values).length>1024)throw Error('Publication request storage exceeds its bound.');
+    getStorage().setItem(storeKey,raw);
+    history.replaceState({...history.state,publicationRequests:{...history.state?.publicationRequests,[key()]:clone(value)}},'');
+  }
+  function source(value){return value?.kind==='external_publication_source'&&value.schema_version===1&&value.catalog_id===selected.dataset_id&&value.run_id===selected.id&&hash(value.sha256);}
+  function ref(value){return value?.kind==='recovered_publication_result'&&value.schema_version===1&&value.catalog_id===selected.dataset_id&&value.run_id===selected.id&&['sha256','inventory_sha256','material_sha256','custody_receipt_sha256'].every(k=>hash(value[k]));}
+  async function checkStatus(value){
+    if(value?.run_id!==selected.id||value.original_run_state!==selected.state||value.verification!=='saved_metadata_only'||!['requires_verification','unavailable'].includes(value.eligibility)||!value.limits||value.limits.max_attempts!==20||value.limits.wall_seconds!==60||!Number.isSafeInteger(value.limits.copy_bytes)||value.limits.copy_bytes<0||value.source_ref!==null&&!source(value.source_ref))throw Error('Publication status differs from this exact Run.');
+    const c=value.continuation, request=value.continuation_request;
+    if(c&&(!['recovering','paused','blocked','published'].includes(c.state)||c.run_id!==selected.id||c.original_run_state!==selected.state||!Number.isInteger(c.attempt_count)||c.attempt_count<1||c.attempt_count>20||c.result_ref!==null&&!ref(c.result_ref)||(c.state==='published')!==(c.result_ref!==null)))throw Error('Publication continuation identity differs.');
+    if(c&&(!request||!(/^[a-f0-9]{32}$/.test(request.actor_id||''))||!(/^[A-Za-z0-9][A-Za-z0-9_.:-]{7,127}$/.test(request.request_key||''))||!hash(request.request_sha256))||!c&&request!==null)throw Error('Publication request identity is unavailable.');
+    if(value.original_fault&&value.original_fault.source_sha256!==value.source_ref?.sha256)throw Error('Publication fault differs from its retained source.');
+    if(request&&request.request_sha256!==await digest({actor_id:request.actor_id,operation:'runs.recover_publication',body:{run_id:selected.id,source_ref:value.source_ref,request_key:request.request_key}}))throw Error('Publication request hash differs from its exact actor, key and source.');
+    return value;
+  }
+  function body(){
+    const request=saved?.continuation_request;
+    if(request){
+      if(request.actor_id!==actor()?.actor_id)throw Error('Only the original publication actor can resume this request.');
+      const retained=pending();
+      if(retained&&(!same(retained.source_ref,saved.source_ref)||retained.request_key!==request.request_key))throw Error('Saved browser request conflicts with the retained continuation. Inspect the exact request before continuing.');
+      return {run_id:selected.id,source_ref:clone(saved.source_ref),request_key:request.request_key};
+    }
+    const retained=pending();
+    if(retained){if(!same(retained.source_ref,saved.source_ref))throw Error('Retained request source changed.');return clone(retained);}
+    return {run_id:selected.id,source_ref:clone(saved.source_ref),request_key:crypto.randomUUID()};
+  }
+  async function refresh(isCurrent=snapshot()){
+    if(reading)return;reading=true;const id=selected.id;
+    try{const value=await api('runs/'+enc(id)+'/publication',undefined,2);if(!isCurrent())return;const checked=await checkStatus(value);if(!isCurrent())return;if(result&&!same(result.result_ref,checked.continuation?.result_ref)){result=null;evidence=null;}saved=checked;message='';if(!busy&&checked.continuation?.state!=='recovering')stop();}
+    catch(error){if(isCurrent()){saved=null;result=null;evidence=null;message=error.message;}}
+    finally{if(isCurrent()){reading=false;render();}}
+  }
+  function poll(isCurrent, deadline){
+    stop();if(!isCurrent()||Date.now()>=deadline)return;
+    timer=schedule(async()=>{timer=null;if(!isCurrent())return;await refresh(isCurrent);if(isCurrent()&&(busy||saved?.continuation?.state==='recovering'))poll(isCurrent,deadline);},1500);
+  }
+  async function load(run,isCurrent){
+    invalidate();if(run?.graph?.recipe!=='external_recipe')return;
+    selected=run;current=isCurrent;pending();await refresh(snapshot());
+    if(current()&&saved?.continuation?.state==='recovering')poll(snapshot(),Date.now()+75000);
+  }
+  async function recover(){
+    const isCurrent=snapshot();if(!isCurrent()||busy||!owner('approve-execution')||!saved||saved.eligibility!=='requires_verification')return;
+    let request;
+    try{pending();if(storageError)throw Error(storageError);request=body();retain(request);}catch(error){message=error.message;render();return;}
+    // Persist before dispatch. An unknown acknowledgement never authorizes a new key.
+    busy=true;message='Verifying retained bytes and publishing this original attempt…';render();poll(isCurrent,Date.now()+75000);
+    try{const value=await api('runs/'+enc(request.run_id)+'/recover-publication',{source_ref:request.source_ref,request_key:request.request_key},1);if(!isCurrent())return;if(value.run_id!==request.run_id)throw Error('Publication acknowledgement identifies another Run.');message='Publication response received. Inspecting saved status…';}
+    catch(error){if(isCurrent())message=error.message+' The exact request is retained. Refresh status or reconcile this same request.';}
+    finally{if(isCurrent()){busy=false;stop();const previous=message;await refresh(isCurrent);if(isCurrent()){if(saved?.continuation?.state!=='published')message=previous;render();if(saved?.continuation?.state==='recovering')poll(isCurrent,Date.now()+75000);}}}
+  }
+  async function cancel(){
+    const isCurrent=snapshot(), request=saved?.continuation_request;
+    if(!isCurrent()||cancelBusy||!owner('cancel')||!request||saved?.continuation?.state==='published')return;
+    cancelBusy=true;render();
+    try{await api('runs/'+enc(selected.id)+'/cancel-publication',{request_key:request.request_key},1);if(!isCurrent())return;message='Pause requested. Checking saved publication state…';await refresh(isCurrent);}
+    catch(error){if(isCurrent()){message=error.message+' Inspect saved status before repeating cancellation.';render();}}
+    finally{if(isCurrent()){cancelBusy=false;render();}}
+  }
+  async function inspect(){
+    const isCurrent=snapshot(), reference=saved?.continuation?.result_ref;if(!isCurrent()||!reference||busy)return;
+    busy=true;message='Verifying the attached result and retained bytes…';render();
+    try{const value=await api('publication-results',{ref:reference},1);if(!isCurrent())return;
+      if(!same(value.result_ref,reference)||!same(value.source_ref,saved.source_ref)||value.run_id!==selected.id||value.catalog_id!==selected.dataset_id||value.original_run_state!==selected.state||!Array.isArray(value.artifacts)||value.artifacts.length>96||value.artifacts.some(a=>!hash(a.sha256)||!Number.isSafeInteger(a.bytes)||a.bytes<0||a.bytes>512*1024**2||typeof a.name!=='string'||!a.name.match(/^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$/)))throw Error('Recovered result identity or artifact inventory differs.');
+      const document=clone(value);delete document.result_ref;if(await digest(document)!==reference.sha256)throw Error('Recovered result content differs from its exact Ref.');
+      if(!isCurrent())return;result=value;message='Attached result inspected. Original Run state is unchanged.';
+    }catch(error){if(isCurrent()){result=null;evidence=null;message=error.message;}}
+    finally{if(isCurrent()){busy=false;render();}}
+  }
+  async function inspectEvidence(){
+    const isCurrent=snapshot(), reference=result?.result_ref;if(!isCurrent()||!reference||busy)return;
+    busy=true;message='Inspecting exact recovered field evidence…';render();
+    try{const value=await api('publication-results/model-evidence',{ref:reference},1);if(!isCurrent())return;
+      if(!same(value.result_ref,reference)||value.evidence?.state!=='verified'||value.evidence.validation!=='structural_and_identity_closure; numerical_acceptance_is_separate'||value.evidence?.manifest?.producer?.run_id!==selected.id||value.evidence?.manifest?.producer?.catalog_id!==selected.dataset_id)throw Error('Recovered field evidence identifies another result.');
+      evidence=value.evidence;message='Structural and identity evidence inspected. Numerical acceptance is separate.';
+    }catch(error){if(isCurrent()){evidence=null;message=error.message;}}
+    finally{if(isCurrent()){busy=false;render();}}
+  }
+  async function download(name){
+    const isCurrent=snapshot(), item=result?.artifacts.find(a=>a.name===name), reference=result?.result_ref;
+    if(!isCurrent()||busy||!item||item.bytes>8*1024**2)return;
+    busy=true;message='Reading bounded segments; whole SHA256 verification is pending…';render();
+    const deadline=Date.now()+120000,chunks=[];let offset=0;
+    try{do{
+      if(!isCurrent())return;if(Date.now()>=deadline)throw Error('Artifact download reached its finite deadline.');
+      const value=await api('publication-results/artifact-segment/'+enc(name),{ref:reference,expected_sha256:item.sha256,offset,max_bytes:1024*1024},1,deadline-Date.now());
+      if(!isCurrent())return;if(Date.now()>=deadline)throw Error('Artifact download reached its finite deadline.');
+      if(!same(value.result_ref,reference)||value.run_id!==selected.id||value.name!==name||value.expected_sha256!==item.sha256||value.total_bytes!==item.bytes||value.offset!==offset||!Number.isInteger(value.bytes)||value.bytes<0||value.bytes>1024*1024||value.next_offset!==offset+value.bytes||value.next_offset>item.bytes||value.eof!==(value.next_offset===item.bytes)||value.bytes===0&&!value.eof)throw Error('Artifact segment differs from its exact selection.');
+      const bytes=Uint8Array.from(atob(value.data_base64),c=>c.charCodeAt(0));if(bytes.length!==value.bytes)throw Error('Artifact segment byte count differs.');chunks.push(bytes);offset=value.next_offset;
+    }while(offset<item.bytes);
+    const bytes=new Uint8Array(item.bytes);let at=0;for(const chunk of chunks){bytes.set(chunk,at);at+=chunk.length;}
+    const measured=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+    if(!isCurrent())return;if(Date.now()>=deadline)throw Error('Artifact download reached its finite deadline.');if(measured!==item.sha256)throw Error('Whole artifact SHA256 differs; no download was exposed.');
+    const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));
+    try{const link=document.createElement('a');link.href=url;link.download=name;document.body.append(link);link.click();link.remove();}finally{URL.revokeObjectURL(url);}
+    message='Downloaded '+name+' after whole SHA256 verification.';
+    }catch(error){if(isCurrent())message=error.message;}
+    finally{if(isCurrent()){busy=false;render();}}
+  }
+  function html(run){
+    if(!selected||selected.id!==run?.id||selected.dataset_id!==run.dataset_id)return '';
+    const c=saved?.continuation, request=saved?.continuation_request, ownRequest=!request||request.actor_id===actor()?.actor_id;
+    const canRecover=!storageError&&owner('approve-execution')&&ownRequest&&saved?.eligibility==='requires_verification'&&c?.state!=='published'&&(c?.attempt_count||0)<20;
+    return `<section id="publication-panel" aria-labelledby="publication-title"><h3 id="publication-title">Original-attempt publication</h3><p id="publication-message" role="status">${esc(message||storageError)}</p>${saved?`<p id="publication-eligibility">Saved metadata: ${esc(saved.eligibility)}. Current bytes still require verification.</p><p>Original Run: <strong>${esc(saved.original_run_state)}</strong>. Publication never changes this label.</p>${saved.original_fault?`<p id="publication-fault">Original publication fault: ${esc(saved.original_fault.code)} · ${esc(saved.original_fault.message)}</p>`:''}<p id="publication-attempt-status">${c?`${esc(c.state)} · attempt ${c.attempt_count} of ${saved.limits.max_attempts}${c.cancel_requested?' · pause requested':''}`:'No publication continuation recorded.'} · ${saved.limits.wall_seconds}s per attempt · output copy bound ${saved.limits.copy_bytes.toLocaleString()} bytes</p><div class="actions"><button id="publication-refresh" ${reading?'disabled':''}>Refresh publication status</button>${canRecover?`<button id="publication-recover" ${busy?'disabled':''}>${pending()||request?'Reconcile same publication request':'Recover publication'}</button>`:''}${owner('cancel')&&request&&c?.state!=='published'?`<button id="publication-cancel" ${cancelBusy?'disabled':''}>Pause publication</button>`:''}${c?.result_ref?`<button id="publication-inspect" ${busy?'disabled':''}>Inspect exact published result</button>`:''}</div>${!owner('approve-execution')?'<p>Recovery requires a current owner with execution approval.</p>':!ownRequest?'<p>Resume requires the original publication actor. The current owner may pause this exact continuation.</p>':''}${saved.source_ref?`<details><summary>Exact retained source Ref</summary><pre>${esc(JSON.stringify(saved.source_ref,null,2))}</pre></details>`:''}${c?.result_ref?`<details id="publication-result-ref"><summary>Exact published result Ref</summary><pre>${esc(JSON.stringify(c.result_ref,null,2))}</pre></details>`:''}`:'<p>Publication status unavailable. Refresh saved runs to inspect again.</p>'}${result?`<div id="publication-inspected"><h4>Inspected recovered artifacts</h4><p>Verified from the attached result Ref. Legacy failed Run downloads and promotion remain unavailable.</p><ul>${result.artifacts.map(a=>`<li>${esc(a.name)} · ${a.bytes.toLocaleString()} bytes · <span class="project-path">SHA256 ${esc(a.sha256)}</span>${a.bytes<=8*1024**2?`<button data-publication-download="${esc(a.name)}" ${busy?'disabled':''}>Download ${esc(a.name)} with whole SHA256 verification</button>`:'<p>Use the sealed CLI with this exact Ref for artifacts above the 8 MiB browser limit.</p>'}</li>`).join('')}</ul><button id="publication-evidence" ${busy?'disabled':''}>Inspect exact field evidence</button></div>`:''}${evidence?`<details id="publication-evidence-result" open><summary>Recovered field evidence · structural identity only</summary><pre>${esc(JSON.stringify(evidence,null,2))}</pre></details>`:''}</section>`;
+  }
+  function bind(root){
+    for(const [id,fn] of [['publication-refresh',()=>refresh()],['publication-recover',recover],['publication-cancel',cancel],['publication-inspect',inspect],['publication-evidence',inspectEvidence]])root.querySelector('#'+id)?.addEventListener('click',fn);
+    root.querySelectorAll('[data-publication-download]').forEach(button=>button.addEventListener('click',()=>download(button.dataset.publicationDownload)));
+  }
+  return {load,invalidate,html,bind};
+};
