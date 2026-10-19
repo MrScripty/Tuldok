@@ -40,6 +40,48 @@ def digest(value):
     return hashlib.sha256(encode(value).encode()).hexdigest()
 
 
+def _external_preflight_report(graph, prepared):
+    """Project fresh prepare() proofs; this is neither admission nor a retained proof cache."""
+    material = prepared['material']
+    runtime = material.get('torch_runtime', material.get('cpu_snapshot', material['runtime']))
+    runtime_sha = digest(runtime)
+    outputs_sha = digest({'outputs': material['recipe']['outputs'], 'resources': material['resources']})
+    checks = []
+
+    def check(code, owner, phase, state, evidence, boundary, detail):
+        checks.append({'code': code, 'owner': owner, 'phase': phase, 'state': state,
+                       'evidence_sha256': evidence, 'boundary': boundary, 'detail': detail})
+
+    check('source_inputs', 'pipeline', 'preparation', 'checked', digest(material['captures']),
+          'Pipeline material preparation', 'Selected source and input bytes were captured with exact hashes and declared size limits.')
+    check('runtime_inventory', 'pipeline', 'preparation', 'checked', runtime_sha,
+          'Pipeline runtime verification', 'The selected runtime inventory was verified during preparation; this does not prove future device readiness.')
+    check('host_closure', 'pipeline', 'preparation', 'checked', digest(material['host_files']),
+          'Pipeline current host identity', 'Imported host code matched its current files during preparation; dispatch must recheck mutable facts.')
+    check('output_contract', 'pipeline', 'preparation', 'checked', outputs_sha,
+          'Recipe and evidence policy validation', 'Output declarations and supported fixed-field capacity bounds were validated; actual produced sizes remain unknown.')
+    check('capture_authority', 'pipeline', 'preparation', 'checked',
+          digest({'project': material['project'], 'inputs': material['inputs']}),
+          'Current source and input capture owners', 'Preparation used current inspection and input disclosure authority; no execution approval was consumed.')
+    for code, phase, evidence, boundary, detail in (
+            ('authority_admission', 'admission', prepared['material_sha256'], 'Runs atomic admission',
+             'Current actor, exact grant, request identity and any Study reservation or budget must be checked at admission.'),
+            ('resource_availability', 'admission', digest(material['resources']), 'Runs resource admission and publication',
+             'Queue capacity, current storage and resource reservations are not reserved by preflight and must be checked by their owners.'),
+            ('runtime_ready_go', 'dispatch', runtime_sha, 'Runs dispatch and runtime READY/GO',
+             'Mutable installed bytes and actual selected device readiness must be rechecked before execution; no device fallback is implied.'),
+            ('custody_completion', 'execution', prepared['material_sha256'], 'Runs process custody and drainage',
+             'Actual execution, cancellation and terminal drainage remain unobserved; this report starts no process and sends no GO.'),
+            ('output_publication', 'publication', outputs_sha, 'Runs output verification and durable publication',
+             'Actual output shapes, bytes, hashes, evidence and current disclosure must pass verification and durable publication.')):
+        check(code, 'runs', phase, 'deferred', evidence, boundary, detail)
+    report = {'format': 'external_preflight_report_v1', 'state': 'prepared', 'admission': 'not_reserved',
+              'catalog_id': material['catalog_id'], 'graph_id': graph['id'], 'graph_revision': graph['revision'],
+              'execution_sha256': prepared['execution_sha256'], 'material_sha256': prepared['material_sha256'],
+              'checks': checks}
+    return dict(report, sha256=digest(report))
+
+
 def identifier(value, label='Identifier'):
     if not isinstance(value, str) or not ID.fullmatch(value):
         raise WorkbenchError(label + ' must be an opaque 32-character identifier.')
@@ -268,7 +310,9 @@ class Pipelines:
         return graph
 
     @authorized('inspect', 'pipeline.preflight_external')
-    def preflight_external(self, graph_id, revision):
+    def preflight_external(self, graph_id, revision, *, contract_version=None):
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1, 2, 3)):
+            raise WorkbenchError('Unsupported external preflight version.', 'unsupported', 409)
         graph = self.get(graph_id)
         if graph.get('recipe') != 'external_recipe' or type(revision) is not int or graph['revision'] != revision:
             raise WorkbenchError('External graph changed or is unavailable.', 'stale', 409)
@@ -276,6 +320,8 @@ class Pipelines:
                                                     getattr(self.dataset, 'external_runtime_profile', None), releases=self.dataset.releases, runs=getattr(self.dataset, 'runs', None))
         if self.get(graph_id) != graph:
             raise WorkbenchError('Graph changed during preflight.', 'stale', 409)
+        if contract_version == 3:
+            result = dict(result, preflight_report=_external_preflight_report(graph, result))
         return result
 
     @authorized('inspect', 'pipeline.capture_external')

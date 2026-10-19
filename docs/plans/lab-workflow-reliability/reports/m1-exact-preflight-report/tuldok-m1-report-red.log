@@ -1,0 +1,69 @@
+test_clone_or_revision_changes_report_without_claiming_new_execution (test_run_preflight_report.PreflightReportTests.test_clone_or_revision_changes_report_without_claiming_new_execution) ... ERROR
+test_mutable_execution_facts_are_explicitly_deferred (test_run_preflight_report.PreflightReportTests.test_mutable_execution_facts_are_explicitly_deferred) ... ERROR
+test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives (test_run_preflight_report.PreflightReportTests.test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives) ... ERROR
+test_report_binds_exact_material_graph_and_its_own_content (test_run_preflight_report.PreflightReportTests.test_report_binds_exact_material_graph_and_its_own_content) ... ERROR
+test_report_preserves_prepared_material_and_approval_identity (test_run_preflight_report.PreflightReportTests.test_report_preserves_prepared_material_and_approval_identity) ... ERROR
+
+======================================================================
+ERROR: test_clone_or_revision_changes_report_without_claiming_new_execution (test_run_preflight_report.PreflightReportTests.test_clone_or_revision_changes_report_without_claiming_new_execution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 43, in test_clone_or_revision_changes_report_without_claiming_new_execution
+    original = self.report()
+               ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 24, in report
+    return pipeline._external_preflight_report(self.graph, self.prepared)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'pipeline' has no attribute '_external_preflight_report'
+
+======================================================================
+ERROR: test_mutable_execution_facts_are_explicitly_deferred (test_run_preflight_report.PreflightReportTests.test_mutable_execution_facts_are_explicitly_deferred)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 51, in test_mutable_execution_facts_are_explicitly_deferred
+    report = self.report()
+             ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 24, in report
+    return pipeline._external_preflight_report(self.graph, self.prepared)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'pipeline' has no attribute '_external_preflight_report'
+
+======================================================================
+ERROR: test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives (test_run_preflight_report.PreflightReportTests.test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 63, in test_new_wire_contract_requires_closed_bounded_report_and_old_overlap_survives
+    result = dict(self.prepared, preflight_report=self.report())
+                                                  ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 24, in report
+    return pipeline._external_preflight_report(self.graph, self.prepared)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'pipeline' has no attribute '_external_preflight_report'
+
+======================================================================
+ERROR: test_report_binds_exact_material_graph_and_its_own_content (test_run_preflight_report.PreflightReportTests.test_report_binds_exact_material_graph_and_its_own_content)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 27, in test_report_binds_exact_material_graph_and_its_own_content
+    report = self.report()
+             ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 24, in report
+    return pipeline._external_preflight_report(self.graph, self.prepared)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'pipeline' has no attribute '_external_preflight_report'
+
+======================================================================
+ERROR: test_report_preserves_prepared_material_and_approval_identity (test_run_preflight_report.PreflightReportTests.test_report_preserves_prepared_material_and_approval_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 38, in test_report_preserves_prepared_material_and_approval_identity
+    self.report()
+  File "/workspace/Tuldok-lab-preflight-report-m1/tests/test_run_preflight_report.py", line 24, in report
+    return pipeline._external_preflight_report(self.graph, self.prepared)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'pipeline' has no attribute '_external_preflight_report'
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+FAILED (errors=5)

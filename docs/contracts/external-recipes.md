@@ -92,6 +92,12 @@ permissions, environment and limits. Imported host code must match its current
 files. Dispatch rechecks the approved host identity; the helper checks captured
 and runtime files before READY and again before GO.
 
+Selected preflight v3 also returns a bounded
+[exact preparation report](run-preflight-publication.md), with material/graph
+identity and explicit deferred admission, resource, device, custody and publication
+checks. V1/v2 and headerless projections remain unchanged. A report is not approval
+or a reservation and cannot replace the later owner checks.
+
 An owner approves a specific material digest for one consuming actor for
 60–3,600 seconds. The grant is nonsecret. An agent needs live `inspect` and
 `execute` scopes plus that explicit grant. Existing classification, generation

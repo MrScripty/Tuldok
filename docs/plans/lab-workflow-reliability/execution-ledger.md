@@ -82,3 +82,36 @@
   before long training/agent/full suites. This directly affected workflow is
   added to the slice write set; read-only permissions and existing full suite
   remain unchanged. Hosted result remains pending.
+
+## 2026-10-19 — Exact successful-preparation report slice
+
+- User requested visible active implementation at 19:00 UTC. Parent takes passive
+  CI monitoring; reused existing reviewer for source review, with no new worker.
+- Created a separate dependent branch/worktree at reviewed PR92 head 750332a,
+  preserving PR89/90/92. Wrote five regression tests first: all five errored before
+  the report implementation. Added selected preflight3, bounded checked/deferred
+  facts, exact report/material identity and client request correlation without
+  changing approval material, old v1/v2 projections, storage or runtime authority.
+- Added domain ordering/drift/failure/version tests, Unicode canonical-identity
+  and self-consistent foreign-catalog response witnesses. Existing published 106
+  contract identities and frozen discovery remain verified unchanged.
+- Extended the existing real PostgreSQL/HTTP/AgentClient static preparation case
+  to check exact v1/v2/headerless legacy projection, report binding and unchanged
+  graph/Run/grant/reservation counts. This actual boundary remains locally
+  unavailable, not passed. The supported early CI step now selects both preflight
+  modules; full suites remain intact.
+- PR89 archived qualification independently cleared: 74 agent/19 MCP all passed,
+  full 1513 tests with 72 skips, required browser and CPU workflows successful.
+  Merged exact cd5c029 as fb26e3c; tree equality verified. Retargeted PR90 to main
+  without changing 76d3c6a. Five main-push checks started; post-merge acceptance
+  and remaining PR90/92 qualification are parent-monitored and pending.
+- No CUDA/lab scientific claim, failed-Run recovery, grant consumption, process
+  execution or catalog migration is introduced by this report slice.
+
+- Final report/registry core: 14 passed in 12.035s. Broader affected API,
+  report, output-capacity, registry and transport group: 42 ran, 40 passed,
+  2 unavailable-environment skips in 83.543s. Separate CLI regression: 23
+  passed, 2 PostgreSQL setup errors; these cases remain unavailable.
+  [Exact retained logs and limits](reports/m1-exact-preflight-report/validation.json)
+  distinguish these results. Independent source/test/document review cleared
+  the bounded slice for dependent draft publication, without merge acceptance.

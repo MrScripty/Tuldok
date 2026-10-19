@@ -726,6 +726,25 @@ for _name,_old,_new in (('recipes.inspect',2,3),('graphs.create_external',1,2),
     _scoped=copy.deepcopy(_CONTRACTS[_name][_old])
     _scoped['description']+=' Ordinary inspect/edit agents may use exact project-v2 source; no execution or approval authority is conferred.'
     _CONTRACTS[_name][_new]=_scoped
+# Preparation reporting is selected independently; installed v1/v2 identities remain frozen.
+PREFLIGHT_REPORT = obj({'format': const('external_preflight_report_v1'), 'state': const('prepared'),
+    'admission': const('not_reserved'), 'catalog_id': ID, 'graph_id': ID,
+    'graph_revision': integer(1), 'execution_sha256': SHA, 'material_sha256': SHA, 'sha256': SHA,
+    'checks': array(obj({'code': text(64), 'owner': {'enum': ['pipeline', 'runs']},
+        'phase': {'enum': ['preparation', 'admission', 'dispatch', 'execution', 'publication']},
+        'state': {'enum': ['checked', 'deferred']}, 'evidence_sha256': SHA,
+        'boundary': text(160), 'detail': text(240)}), 16, 1)})
+_preflight_report_contract = copy.deepcopy(_CONTRACTS['graphs.preflight_external'][2])
+_preflight_result = _preflight_report_contract['outputSchema']['oneOf'][0]['properties']['result']
+_preflight_result['properties']['preflight_report'] = PREFLIGHT_REPORT
+_preflight_result['properties']['valid'] = const(True)
+_preflight_result['properties']['status'] = const('valid')
+_preflight_result['properties']['execution_sha256'] = SHA
+_preflight_result['properties']['graph_revision'] = integer(1)
+_preflight_result['properties']['material'] = projected({'catalog_id': ID, 'graph_execution_sha256': SHA})
+_preflight_result['required'].extend(('preflight_report', 'execution_sha256', 'graph_revision', 'status'))
+_preflight_report_contract['description'] += ' Return a bounded exact-material preparation report with deferred admission, device, custody and publication checks; no reservation or execution.'
+_CONTRACTS['graphs.preflight_external'][3] = _preflight_report_contract
 # Managed Torch extends the recipe/runtime variants without rewriting the
 # independently deployed v2/v3 inspection contracts.
 _managed_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][3])
@@ -1037,8 +1056,24 @@ def validate_registry():
 
 def validate_output(name, envelope, version=None):
     _finite(envelope)
-    if next(_validator(operation(name, version)['outputSchema']).iter_errors(envelope), None) is not None:
+    op = operation(name, version)
+    if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if (op['operation_id'] == 'graphs.preflight_external'
+            and (version == 3 or version is None) and envelope['status'] < 400):
+        result = envelope['result']; report = result['preflight_report']; material = result['material']
+        # Domain content identity uses UTF-8 canonical JSON, independently of ASCII wire encoding.
+        def content_sha(value):
+            return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
+                                             ensure_ascii=False, allow_nan=False).encode('utf-8')).hexdigest()
+        if (report['sha256'] != content_sha({key: value for key, value in report.items() if key != 'sha256'})
+                or report['material_sha256'] != result['material_sha256']
+                or result['material_sha256'] != content_sha(material)
+                or report['catalog_id'] != material['catalog_id']
+                or report['execution_sha256'] != result['execution_sha256']
+                or result['execution_sha256'] != material['graph_execution_sha256']
+                or report['graph_revision'] != result['graph_revision']):
+            raise AgentAPIError('Exact preflight report identity is inconsistent.', 'transport', 502)
     return envelope
 
 
@@ -1301,6 +1336,11 @@ class AgentClient:
         result = validate_output(name, envelope, version)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
+        if op['operation_id'] == 'graphs.preflight_external' and version == 3 and result['status'] < 400:
+            report = result['result']['preflight_report']
+            if (report['graph_id'] != arguments['graph_id'] or report['graph_revision'] != arguments['revision']
+                    or report['catalog_id'] != self.catalog_id):
+                raise AgentAPIError('Preflight report does not match the requested graph or catalog.', 'transport', 502)
         return result
 
 

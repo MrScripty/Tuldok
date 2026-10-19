@@ -1,0 +1,70 @@
+{
+  "slice": "exact successful-preparation reporting, partial C1/T1 only",
+  "base": "750332ac64244526127075feb14cb8db268a7ab9",
+  "branch": "feature/lab-exact-preflight-report-20261019",
+  "regression_witness": {
+    "before": "five tests errored before production changes",
+    "after": "14 tests passed in 12.035 seconds, including three frozen-registry tests"
+  },
+  "local_unavailable": {
+    "postgresql": "No local PostgreSQL server; exact HTTP/authority no-effect acceptance requires hosted PostgreSQL 17.",
+    "client_regression": {
+      "ran": 25,
+      "passed": 23,
+      "setup_errors": 2,
+      "cases": [
+        "ProjectCLIHTTPTests.test_missing_grant_invalid_selection_and_stale_source_leave_no_run",
+        "ProjectCLIHTTPTests.test_open_prepare_approve_run_and_download_share_real_saved_owners"
+      ],
+      "cause": "Dataset setup cannot connect to PostgreSQL; no assertion failure or passing claim for these cases."
+    }
+  },
+  "independent_review": {
+    "agent": "/root/mcp_contract_ci_review",
+    "source_tests": "No code/test blockers; independently ran focused contract and request-binding tests.",
+    "documentation": "No finding; successful preparation and later owner checks separated, old identities preserved.",
+    "final_clearance": "No blockers; final exact 11-file subject fingerprint 33b5a6bf5aa196f14bc9bac80cb8f263d50dbfb4283924fc6302e27a52281e6a acknowledged."
+  },
+  "required_pending": [
+    "Actual hosted PostgreSQL HTTP/AgentClient legacy projection and unchanged owner state",
+    "Complete exact-head lifecycle and required other CI",
+    "Serial dependency integration and post-merge qualification"
+  ],
+  "claims_excluded": [
+    "full M1 or A1 acceptance",
+    "same-Run failed publication recovery",
+    "new process, admission, grant use, runtime readiness or science acceptance",
+    "fresh CUDA computation"
+  ],
+  "files": [
+    {
+      "path": "tuldok-m1-report-client-regression.log",
+      "bytes": 8078,
+      "sha256": "9a0709cd3a7142c72438fbd19651285d8ba919bbd423211484aae5c680a65f26"
+    },
+    {
+      "path": "tuldok-m1-report-final-core.log",
+      "bytes": 2726,
+      "sha256": "979d18ee27a0b58ab04844ee8a94a884498277354f32968f36494f13b12091ea"
+    },
+    {
+      "path": "tuldok-m1-report-publication-check.log",
+      "bytes": 7243,
+      "sha256": "e92d4c26ceed68e486f8b921eb40cc28f067fb2b23877f438127ba4ece1ac9e4"
+    },
+    {
+      "path": "tuldok-m1-report-red.log",
+      "bytes": 5531,
+      "sha256": "fe21e663e4c56b578165209c1d7d74593925157b9dde8f62ff45f0dfe8b3ab3b"
+    }
+  ],
+  "final_affected_group": {
+    "ran": 42,
+    "passed": 40,
+    "skipped": 2,
+    "seconds": 83.543,
+    "result": "OK",
+    "scope": "Agent API, report, field-output publication, frozen registry and transport boundary",
+    "skips": "Existing real PostgreSQL and official MCP transport cases unavailable locally."
+  }
+}
