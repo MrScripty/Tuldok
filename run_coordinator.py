@@ -193,7 +193,7 @@ class Coordinator:
                 if old and old['request_key'] == key:
                     if any(old[field] != request[field] for field in ('actor_id', 'request_sha256', 'expected_generation')):
                         raise WorkbenchError('Recovery key belongs to another actor or request.', 'conflict', 409)
-                    if old['completed_generation'] == self.value['generation']:
+                    if old['completed_generation'] is not None:
                         return self.projection()
                 elif generation != self.value['generation']:
                     raise WorkbenchError('Coordinator generation changed; inspect current health.', 'stale', 409)
