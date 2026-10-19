@@ -1,0 +1,47 @@
+{
+  "assessment": "Harness expected a returned legacy evidence state; production correctly refused with unavailable409. Overall qualification did not pass.",
+  "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+  "capture_capacity": {
+    "free_bytes": 2079129600,
+    "manifest_bytes": 3825828,
+    "payload_bytes": 896562621,
+    "required_bytes": 1705694817
+  },
+  "checks": [],
+  "driver_sha256": "18ddb96d8dc5719d13d55e0910e195694541f12fa32381e3fd758756cd0665bf",
+  "error": "Retained external result cannot be verified.",
+  "error_type": "WorkbenchError",
+  "expected_runtime_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "free_after_capture_bytes": 1119698944,
+  "numerical_acceptance": "not_evaluated",
+  "output_bound_bytes": 1048576,
+  "output_file_count": 27,
+  "owner_selected_reserve_bytes": 805306368,
+  "producer_sha256": "2cb3183f8fcebd17c5b0930454741b2c3d37e252eed006532f5e8b360793de80",
+  "publication_reserve_bytes": 536870912,
+  "recipe_sha256": "92848ee4cbb023e2ff4aa059c49d7d03ab9163f82c17c5586e798940417e1b2f",
+  "runtime": {
+    "file_count": 20804,
+    "manifest_bytes": 3825828,
+    "manifest_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "packages": {
+      "filelock": "4.2.0",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    },
+    "total_bytes": 896562621
+  },
+  "runtime_config_sha256": "39a492bd06ac2635025925e3a647bdde199ca2e73419f24f5fee2a7371b2d11a",
+  "scope": "Synthetic serialization through real CPU custody and semantic recovery; no training or numerical acceptance",
+  "seconds": 146.119,
+  "state": "failed",
+  "training_executed": false
+}

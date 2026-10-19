@@ -1,0 +1,27 @@
+Inspecting explicitly nominated runtime
+Capturing runtime into fresh disposable catalog
+Executing synthetic serialization through actual custodian
+Recovering original Run with real source/destination semantic verification
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/runs.py", line 1102, in _external_inventory
+    raise ValueError('Only completed Runs publish artifacts.')
+ValueError: Only completed Runs publish artifacts.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/tests/qualify_publication_synthetic.py", line 292, in <module>
+    main()
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/tests/qualify_publication_synthetic.py", line 279, in main
+    qualify(args, receipt)
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/tests/qualify_publication_synthetic.py", line 252, in qualify
+    require(dataset.runs.model_evidence(run['id'], {})['state'] != 'verified', 'Legacy evidence gate widened')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/access.py", line 73, in guarded
+    return function(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/runs.py", line 2257, in model_evidence
+    self._external_inventory(run)
+  File "/workspace/Tuldok-lab-publication-semantic-witness-m1/runs.py", line 1150, in _external_inventory
+    raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
+workbench.WorkbenchError: Retained external result cannot be verified.
