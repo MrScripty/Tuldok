@@ -27,6 +27,15 @@ ROOT = Path(__file__).resolve().parents[1]
 BATCH_PATH = '/api/workspace/artifact-segments'
 
 
+def record_cleanup(label, value):
+    report = os.environ.get('TULDOK_BATCH_CLEANUP_REPORT')
+    if report:
+        path = Path(report)
+        path = path.with_name(path.stem+'-'+label+path.suffix)
+        with path.open('x') as stream:
+            json.dump(value, stream, sort_keys=True)
+
+
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL and actual HTTP')
 class BatchWorkflowHTTPTests(unittest.TestCase):
     @classmethod
@@ -49,10 +58,7 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
             raise AssertionError('Fresh batch consumer schema was not removed.')
         # Optional report path is selected by the qualification runner, never a
         # catalog lookup or a pre-existing schema inferred by this fixture.
-        report = os.environ.get('TULDOK_BATCH_CLEANUP_REPORT')
-        if report:
-            with open(report, 'x') as stream:
-                json.dump(cleaned, stream, sort_keys=True)
+        record_cleanup('twenty', cleaned)
 
     @classmethod
     def counts(cls):
@@ -251,7 +257,14 @@ class BatchPublicationHTTPTests(unittest.TestCase):
     def test_exact_attached_publication_ref_uses_batch_and_original_run_remains_interrupted(self):
         from test_run_artifact_segments import ArtifactSegmentsHTTPTests
         fixture = ArtifactSegmentsHTTPTests('runTest')
-        self.addCleanup(fixture.doCleanups); fixture.setUp()
+        def cleanup():
+            fixture.doCleanups()
+            if hasattr(fixture, 'schema'):
+                import psycopg
+                with psycopg.connect(fixture.dsn, autocommit=True) as connection:
+                    self.assertIsNone(connection.execute('SELECT to_regnamespace(%s)', (fixture.schema,)).fetchone()[0])
+                record_cleanup('publication', {'schema': fixture.schema, 'dropped': True})
+        self.addCleanup(cleanup); fixture.setUp()
         client = AgentClient(fixture.endpoint, fixture.fixture.agent['token'], fixture.dataset.db.dataset_id)
         workflow = WorkflowClient(client)
         manifest = workflow.collection_manifest(result_ref=fixture.ref, names=['result.txt'])
