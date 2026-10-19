@@ -26,7 +26,8 @@ successful authorized items. The free consumer decoder
 `agent_api.validate_artifact_segments(value,request)` checks order, exact source,
 selectors, Ref, arithmetic and segment hash. Callers must still verify complete
 whole hashes and discard provisional data on failure. No fallback or retry is
-implied; client integration is separately owned and remains pending here.
+implied. The canonical AgentClient also checks request correlation and the
+configured catalog for successful publication items.
 
 Reads are sequential, buffered and share a 60-second owner deadline. Existing
 catalog command ownership and SQL deadlines are reused. Optional domain
@@ -34,67 +35,82 @@ cancellation and owned shutdown are checked between items and through canonical
 copy/semantic checkpoints. There is no persistent cancellation request, mutation
 retry or new compute authority. The request rechecks current inspection and
 transitive authority for every item, then every distinct exact successful source
-before domain return, retaining last-occurrence order. HTTP repeats the delivery fence after output-schema validation and
-serialization. Current credential loss, delivery authority loss, shutdown,
+before domain return, retaining last-occurrence order. HTTP repeats the delivery
+fence after output-schema validation and serialization. Current credential loss, delivery authority loss, shutdown,
 cancellation or exhausted budget discards all buffered bytes. Individual
 ordinary readers retain their previous defaults; optional private checkpoints
 only support this new operation.
 
-Initial qualification passed eight tests in 47.251 seconds with zero skips:
-real disposable PostgreSQL and neutral custody for mixed completed Run/recovered
-Ref collection, whole hashes, typed partial errors, legacy gate, headerless
-refusal, unchanged accounting/events, actual credential revocation after
-serialization and injected current transitive denial at delivery; pure caps,
-correlation, shutdown/cancellation/deadline and full prior-contract equality.
-The initial missing-method red witness is retained. This checkpoint does not
-claim independent clearance, hosted acceptance, broader regression completion
-or a performance improvement. Paired same-candidate-head/catalog/inventory
-individual/batch measurements with alternating order remain pending.
+The batch layer passes a private external-only flag, defaulting false, to the
+canonical decorated Run reader. Eligibility is checked immediately after that
+reader's own load, before built-in dispatch. Every item retains independent
+initial authorization, retained-inventory verification and its canonical read.
+Each final stage rebuilds exact-source identities in last-occurrence order
+(A,B,A becomes B,A), then reloads current Run/transitive authority and exact
+published attachment. No loaded Run, authority result or seen set is reused
+between domain return, HTTP delivery or requests. These remain sequential
+current checks, not an atomic snapshot of every source's permissions.
 
 Current pin: `510198cf8617f297b45b5b5100692e76aa3de5f865019730843b18d1d8ee7e39`.
 
-The separately committed paired harness alternates individual/batch calls on
-the same candidate head, catalog and exact inventory. Each eligible cell uses
-three fresh application processes and two warm pairs per process (n=3 first
-pairs and n=6 warm pairs). Empty history has no eligible artifact and is recorded
-unavailable. Normal completed histories are 8 and 55; additional attached-Ref
-pairs use the same inventory after one real copy fault/recovery, so total history
-includes that original interrupted Run. Bootstrap is measured separately and
-excluded from both arms. Failed/corrupt/partial replies cannot count as improved
-samples. Same-head whole hashes, events and admission/accounting counts must
-match, and no compute can run during paired reads. Final costs remain pending.
+## Local qualification
 
-The measurement checkout normally composes root92546d7, including the canonical
-AgentClient request-aware decoder/configured-publication-catalog checks and the
-M6 operation. Both arms use that same composed client. The harness avoids a
-second redundant request-aware decode, retains explicit whole SHA256 equality,
-and records delegating inclusive `_load`/inventory/segment/result owner counters.
-A composed one-artifact pilot passed both normal and attached-Ref first/warm pairs
-with alternating order and own-schema cleanup. Eleven relevant pure/correlation
-cases passed. Exact final source/harness hashes are recorded at measurement start;
-these composed measurements are not attributed to production007 alone.
+The initial eight-case actual PostgreSQL/neutral custody and pure group passed,
+as did five canonical reader regressions. The refined sixteen-case module ran
+with fifteen passes and one new harness error after already proving shutdown
+returned HTTP 409 with no items. Only its assertion changed to the established top-level
+error code; the affected actual case then passed. Both logs are retained.
+Actual qualification covers repeated canonical reads and fresh final proofs,
+A/B/A authority loss at domain and post-serialization boundaries, duplicate late
+credential revocation/shutdown, mixed exact Run/Ref partial outcomes, legacy
+failed-Run refusal and unchanged accounting/events. Independent source review
+was clear and all ten current pure cases passed, including all 122 prior full
+contracts, source identity, default reader behavior, cancellation and deadlines.
+This does not claim hosted acceptance or complete M4/T5 qualification.
 
-The full frozen99741e5 matrix subsequently completed with exit0: 54 pairs /108
-collection arms, all exact whole hashes, unchanged counts/events and both exact
-owned schema/temporary-directory cleanup checks. Six empty-history workers were
-unavailable rather than successful reads. Every eligible cell has n3 first pairs
-and n6 warm pairs. All six pooled median paired batch/individual ratios exceed1:
-one-artifact Run2.723/2.852 at histories8/55, twenty-artifact Run1.910/1.874,
-and attached Ref1.877/1.034 at total history56. These are negative latency
-results; request reduction alone does not qualify a performance improvement.
-Full first/warm distributions, resources, source attribution and the partial
-quiet-window overlap are retained under `reports/m4-bounded-collection/paired-99741e5/`.
-No sample/outlier was filtered. A separately admitted narrow refinement may remove
-repeated request-local source loads, preserving initial canonical checks and
-independent domain/HTTP final authority; it requires new review/qualification.
+## Measured collection cost
 
-The request-local refinement removes only the outer Run eligibility load: the
-canonical decorated reader receives a private external-only flag defaulting
-false and refuses unsupported built-ins immediately after its own load. Each
-item still performs its canonical authorization/inventory/read. Each final stage
-rebuilds exact-source identities in last-occurrence order (A,B,A becomes B,A),
-then reloads current Run/transitive authority and exact attached Ref. No loaded
-Run, authority result or seen set survives between domain return, HTTP delivery
-or requests. Current global checks and shared checkpoints remain on every stage.
-Actual repeated ordinary reads observe N+2U loads, with U distinct exact sources;
-this structural reduction alone is not a wall-time improvement claim.
+The full frozen `9838022` same-head/catalog/inventory matrix completed with 54
+pairs/108 collection arms. Every eligible cell has three first pairs in fresh
+application processes and six warm pairs. Order alternates; a first pair's
+second arm already follows its first arm. Bootstrap, population and real same-Run
+copy recovery are excluded from collection pairs. Each arm reads 327,680 raw bytes
+in one or twenty artifacts. No OS/PostgreSQL cache flush or exclusive host is
+claimed. The fixture executes neutral byte copying, with no training or science
+claim. Whole hashes, counts/events, source/harness identity and both exact owned
+schema/temporary-directory cleanup checks all matched.
+
+Ratios below are batch/individual wall time computed within each pair. Values
+below 1 are faster. These small descriptive samples have no confidence interval
+or latency-budget acceptance.
+
+| Source | Total terminal history | Artifacts | First median ratio (n=3) | Warm median ratio (n=6) | Faster pairs /9 |
+|---|---:|---:|---:|---:|---:|
+| run | 8 | 1 | 2.667 | 2.843 | 0 |
+| run | 8 | 20 | 0.714 | 0.662 | 9 |
+| run | 55 | 1 | 2.016 | 2.612 | 0 |
+| run | 55 | 20 | 0.700 | 0.649 | 9 |
+| publication | 56 | 1 | 1.657 | 2.138 | 0 |
+| publication | 56 | 20 | 0.710 | 0.712 | 9 |
+
+All 27 twenty-artifact pairs were faster; all one-artifact cells regress. For the
+simple ordinary source without transitive Run loads, twenty canonical reads and
+inventory checks remain, with 20 individual loads versus 22 batch loads and 20
+requests versus 1. Publication readers retain all their original subloads.
+
+Retain this operation for explicit bounded collection under the measured many
+small twenty-artifact condition. Default individual collection remains unchanged.
+Performance for 2–19 artifacts, different sizes, scientific outputs, remote
+networks and the separately owned collection facade is not established here.
+No automatic threshold/selection, fallback, cross-call cache or generic workflow
+speedup follows. The first full `99741e5` candidate matrix is retained as a negative
+result, without rewriting or excluding its regressions.
+
+Full first/warm/arm-order distributions, process CPU/RSS/I/O, HTTP body counts,
+inclusive owner counters/times, raw integrity receipts and exact source hashes
+are in [the refined report](../plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-9838022/results.md).
+The [earlier negative report](../plans/lab-workflow-reliability/reports/m4-bounded-collection/paired-99741e5/results.md)
+and [correctness history](../plans/lab-workflow-reliability/reports/m4-bounded-collection/refinement/qualification.json)
+remain separate. PostgreSQL backend CPU and SQL command counts were not measured;
+RSS/HWM values are snapshots/lifetime values rather than phase peaks, and
+inclusive owner timings must not be added.

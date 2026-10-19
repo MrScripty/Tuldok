@@ -500,3 +500,13 @@ refinement only after archival, with independent exact-source final fences in
 last-occurrence order and all initial canonical checks preserved. Refined
 correctness and a new same-head paired matrix remain pending; no cross-call
 mutable-runtime cache or automatic collection selection is admitted.
+
+
+M4 refined9838022 completed all54 same-head pairs. The lead admitted retention
+only for explicit bounded collection under the measured many-small twenty-item
+condition: all27 such pairs faster, median paired ratios0.700/0.695/0.710. Every
+one-item cell still regresses. Keep default individual collection unchanged,
+retain both full matrices and all outliers, and make no automatic threshold,
+facade/general workflow/science speedup or complete M4/T5 claim. The scoped
+paired evidence and independent source/correctness review are complete; hosted
+acceptance and broader C4 reuse/invalidation work remain separate.

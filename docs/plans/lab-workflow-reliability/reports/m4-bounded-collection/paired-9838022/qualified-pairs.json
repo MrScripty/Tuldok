@@ -1,0 +1,7820 @@
+{
+  "arm_resource_distributions": [
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 688,
+        "median": 688,
+        "min": 688,
+        "n": 9,
+        "p90_nearest_rank": 688
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 438441,
+        "median": 438441,
+        "min": 438441,
+        "n": 9,
+        "p90_nearest_rank": 438441
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 179.707148,
+          "median": 91.432169,
+          "min": 76.730722,
+          "n": 9,
+          "p90_nearest_rank": 179.707148
+        },
+        "run_publication.result": {
+          "max": 118.818277,
+          "median": 57.674617,
+          "min": 44.575471,
+          "n": 9,
+          "p90_nearest_rank": 118.818277
+        },
+        "runs._load": {
+          "max": 244.55555,
+          "median": 143.522338,
+          "min": 125.199255,
+          "n": 9,
+          "p90_nearest_rank": 244.55555
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66008,
+        "median": 66008,
+        "min": 65872,
+        "n": 9,
+        "p90_nearest_rank": 66008
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 5,
+          "median": 5,
+          "min": 5,
+          "n": 9,
+          "p90_nearest_rank": 5
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 332817,
+          "min": 332817,
+          "n": 9,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 9,
+          "min": 9,
+          "n": 9,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 707.758000000001,
+        "median": 504.56000000000046,
+        "min": 413.64000000000004,
+        "n": 9,
+        "p90_nearest_rank": 707.758000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66008,
+        "median": 66008,
+        "min": 65680,
+        "n": 9,
+        "p90_nearest_rank": 66008
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 754.36983,
+        "median": 522.294837,
+        "min": 432.565103,
+        "n": 9,
+        "p90_nearest_rank": 754.36983
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 612,
+        "median": 612,
+        "min": 612,
+        "n": 9,
+        "p90_nearest_rank": 612
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437835,
+        "median": 437835,
+        "min": 437835,
+        "n": 9,
+        "p90_nearest_rank": 437835
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 223.602211,
+          "median": 118.065042,
+          "min": 69.84678,
+          "n": 9,
+          "p90_nearest_rank": 223.602211
+        },
+        "run_publication.result": {
+          "max": 177.743236,
+          "median": 94.683816,
+          "min": 43.985621,
+          "n": 9,
+          "p90_nearest_rank": 177.743236
+        },
+        "runs._load": {
+          "max": 138.074989,
+          "median": 104.851267,
+          "min": 65.53689,
+          "n": 9,
+          "p90_nearest_rank": 138.074989
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66008,
+        "median": 66004,
+        "min": 65872,
+        "n": 9,
+        "p90_nearest_rank": 66008
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 9,
+          "p90_nearest_rank": 3
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 332817,
+          "min": 332817,
+          "n": 9,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 9,
+          "min": 9,
+          "n": 9,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 402.91499999999945,
+        "median": 281.7640000000009,
+        "min": 195.37199999999928,
+        "n": 9,
+        "p90_nearest_rank": 402.91499999999945
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66008,
+        "median": 66004,
+        "min": 65684,
+        "n": 9,
+        "p90_nearest_rank": 66008
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 422.291487,
+        "median": 294.949373,
+        "min": 201.827214,
+        "n": 9,
+        "p90_nearest_rank": 422.291487
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 688,
+        "median": 688,
+        "min": 688,
+        "n": 3,
+        "p90_nearest_rank": 688
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 438441,
+        "median": 438441,
+        "min": 438441,
+        "n": 3,
+        "p90_nearest_rank": 438441
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 147.429265,
+          "median": 125.687873,
+          "min": 81.456124,
+          "n": 3,
+          "p90_nearest_rank": 147.429265
+        },
+        "run_publication.result": {
+          "max": 94.540431,
+          "median": 90.703573,
+          "min": 53.602584,
+          "n": 3,
+          "p90_nearest_rank": 94.540431
+        },
+        "runs._load": {
+          "max": 209.727912,
+          "median": 194.436461,
+          "min": 126.968753,
+          "n": 3,
+          "p90_nearest_rank": 209.727912
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66008,
+        "median": 66008,
+        "min": 65872,
+        "n": 3,
+        "p90_nearest_rank": 66008
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 5,
+          "median": 5,
+          "min": 5,
+          "n": 3,
+          "p90_nearest_rank": 5
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 332817,
+          "min": 332817,
+          "n": 3,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 9,
+          "min": 9,
+          "n": 3,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 702.9119999999995,
+        "median": 617.6469999999995,
+        "min": 413.64000000000004,
+        "n": 3,
+        "p90_nearest_rank": 702.9119999999995
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66008,
+        "median": 66008,
+        "min": 65680,
+        "n": 3,
+        "p90_nearest_rank": 66008
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 754.36983,
+        "median": 648.435191,
+        "min": 432.565103,
+        "n": 3,
+        "p90_nearest_rank": 754.36983
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 612,
+        "median": 612,
+        "min": 612,
+        "n": 3,
+        "p90_nearest_rank": 612
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437835,
+        "median": 437835,
+        "min": 437835,
+        "n": 3,
+        "p90_nearest_rank": 437835
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 223.602211,
+          "median": 148.285768,
+          "min": 118.065042,
+          "n": 3,
+          "p90_nearest_rank": 223.602211
+        },
+        "run_publication.result": {
+          "max": 177.743236,
+          "median": 101.998017,
+          "min": 94.683816,
+          "n": 3,
+          "p90_nearest_rank": 177.743236
+        },
+        "runs._load": {
+          "max": 138.074989,
+          "median": 120.221554,
+          "min": 69.059362,
+          "n": 3,
+          "p90_nearest_rank": 138.074989
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66004,
+        "median": 66000,
+        "min": 65872,
+        "n": 3,
+        "p90_nearest_rank": 66004
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 3,
+          "p90_nearest_rank": 3
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 452227,
+          "median": 452227,
+          "min": 332817,
+          "n": 3,
+          "p90_nearest_rank": 452227
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 11,
+          "median": 11,
+          "min": 9,
+          "n": 3,
+          "p90_nearest_rank": 11
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 402.91499999999945,
+        "median": 301.82699999999926,
+        "min": 248.33299999999952,
+        "n": 3,
+        "p90_nearest_rank": 402.91499999999945
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66004,
+        "median": 66000,
+        "min": 65684,
+        "n": 3,
+        "p90_nearest_rank": 66004
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 422.291487,
+        "median": 315.763484,
+        "min": 261.022579,
+        "n": 3,
+        "p90_nearest_rank": 422.291487
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 688,
+        "median": 688.0,
+        "min": 688,
+        "n": 6,
+        "p90_nearest_rank": 688
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 438441,
+        "median": 438441.0,
+        "min": 438441,
+        "n": 6,
+        "p90_nearest_rank": 438441
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 179.707148,
+          "median": 89.332919,
+          "min": 76.730722,
+          "n": 6,
+          "p90_nearest_rank": 179.707148
+        },
+        "run_publication.result": {
+          "max": 118.818277,
+          "median": 57.597216,
+          "min": 44.575471,
+          "n": 6,
+          "p90_nearest_rank": 118.818277
+        },
+        "runs._load": {
+          "max": 244.55555,
+          "median": 141.5617525,
+          "min": 125.199255,
+          "n": 6,
+          "p90_nearest_rank": 244.55555
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66008,
+        "median": 66008.0,
+        "min": 65872,
+        "n": 6,
+        "p90_nearest_rank": 66008
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 5,
+          "median": 5.0,
+          "min": 5,
+          "n": 6,
+          "p90_nearest_rank": 5
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 332817,
+          "median": 332817.0,
+          "min": 332817,
+          "n": 6,
+          "p90_nearest_rank": 332817
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9.0,
+          "min": 9,
+          "n": 6,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 707.758000000001,
+        "median": 491.7424999999996,
+        "min": 414.6920000000011,
+        "n": 6,
+        "p90_nearest_rank": 707.758000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66008,
+        "median": 66008.0,
+        "min": 65684,
+        "n": 6,
+        "p90_nearest_rank": 66008
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 727.578991,
+        "median": 508.4302625,
+        "min": 434.606971,
+        "n": 6,
+        "p90_nearest_rank": 727.578991
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 612,
+        "median": 612.0,
+        "min": 612,
+        "n": 6,
+        "p90_nearest_rank": 612
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437835,
+        "median": 437835.0,
+        "min": 437835,
+        "n": 6,
+        "p90_nearest_rank": 437835
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 138.1331,
+          "median": 94.12796800000001,
+          "min": 69.84678,
+          "n": 6,
+          "p90_nearest_rank": 138.1331
+        },
+        "run_publication.result": {
+          "max": 112.919311,
+          "median": 63.1333635,
+          "min": 43.985621,
+          "n": 6,
+          "p90_nearest_rank": 112.919311
+        },
+        "runs._load": {
+          "max": 130.330927,
+          "median": 87.1653905,
+          "min": 65.53689,
+          "n": 6,
+          "p90_nearest_rank": 130.330927
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66008,
+        "median": 66008.0,
+        "min": 65872,
+        "n": 6,
+        "p90_nearest_rank": 66008
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "run_publication.result.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3.0,
+          "min": 3,
+          "n": 6,
+          "p90_nearest_rank": 3
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 332817,
+          "median": 332817.0,
+          "min": 332817,
+          "n": 6,
+          "p90_nearest_rank": 332817
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9.0,
+          "min": 9,
+          "n": 6,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 320.9469999999999,
+        "median": 248.2670000000001,
+        "min": 195.37199999999928,
+        "n": 6,
+        "p90_nearest_rank": 320.9469999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66008,
+        "median": 66008.0,
+        "min": 65684,
+        "n": 6,
+        "p90_nearest_rank": 66008
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 333.263558,
+        "median": 259.133699,
+        "min": 201.827214,
+        "n": 6,
+        "p90_nearest_rank": 333.263558
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 13541,
+        "median": 13541,
+        "min": 13541,
+        "n": 9,
+        "p90_nearest_rank": 13541
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 466753,
+        "median": 466753,
+        "min": 466753,
+        "n": 9,
+        "p90_nearest_rank": 466753
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 2267.51286,
+          "median": 1555.383847,
+          "min": 1490.12695,
+          "n": 9,
+          "p90_nearest_rank": 2267.51286
+        },
+        "run_publication.result": {
+          "max": 1476.74848,
+          "median": 1025.838485,
+          "min": 996.790194,
+          "n": 9,
+          "p90_nearest_rank": 1476.74848
+        },
+        "runs._load": {
+          "max": 2232.194989,
+          "median": 1540.28671,
+          "min": 1482.408084,
+          "n": 9,
+          "p90_nearest_rank": 2232.194989
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67952,
+        "median": 67924,
+        "min": 65920,
+        "n": 9,
+        "p90_nearest_rank": 67952
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 62,
+          "median": 62,
+          "min": 62,
+          "n": 9,
+          "p90_nearest_rank": 62
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704202,
+          "median": 584792,
+          "min": 584792,
+          "n": 9,
+          "p90_nearest_rank": 704202
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 106,
+          "median": 104,
+          "min": 104,
+          "n": 9,
+          "p90_nearest_rank": 106
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 2614.5680000000016,
+        "median": 1911.7289999999994,
+        "min": 1841.6800000000007,
+        "n": 9,
+        "p90_nearest_rank": 2614.5680000000016
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66956,
+        "median": 66816,
+        "min": 65920,
+        "n": 9,
+        "p90_nearest_rank": 66956
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 2823.755044,
+        "median": 2033.697043,
+        "min": 1961.554562,
+        "n": 9,
+        "p90_nearest_rank": 2823.755044
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 12220,
+        "median": 12220,
+        "min": 12220,
+        "n": 9,
+        "p90_nearest_rank": 12220
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 9,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 455440,
+        "median": 455440,
+        "min": 455440,
+        "n": 9,
+        "p90_nearest_rank": 455440
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1925.195228,
+          "median": 1671.285107,
+          "min": 1568.41471,
+          "n": 9,
+          "p90_nearest_rank": 1925.195228
+        },
+        "run_publication.result": {
+          "max": 1297.09796,
+          "median": 1113.439216,
+          "min": 1074.894924,
+          "n": 9,
+          "p90_nearest_rank": 1297.09796
+        },
+        "runs._load": {
+          "max": 1802.845391,
+          "median": 1562.970385,
+          "min": 1470.305979,
+          "n": 9,
+          "p90_nearest_rank": 1802.845391
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67952,
+        "median": 66980,
+        "min": 65924,
+        "n": 9,
+        "p90_nearest_rank": 67952
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 60,
+          "median": 60,
+          "min": 60,
+          "n": 9,
+          "p90_nearest_rank": 60
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704203,
+          "median": 584792,
+          "min": 584792,
+          "n": 9,
+          "p90_nearest_rank": 704203
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 107,
+          "median": 104,
+          "min": 104,
+          "n": 9,
+          "p90_nearest_rank": 107
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3188.800000000003,
+        "median": 2763.382999999997,
+        "min": 2588.3330000000014,
+        "n": 9,
+        "p90_nearest_rank": 3188.800000000003
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67360,
+        "median": 66264,
+        "min": 65924,
+        "n": 9,
+        "p90_nearest_rank": 67360
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3442.262158,
+        "median": 2966.059171,
+        "min": 2759.286829,
+        "n": 9,
+        "p90_nearest_rank": 3442.262158
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 13541,
+        "median": 13541,
+        "min": 13541,
+        "n": 3,
+        "p90_nearest_rank": 13541
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 466753,
+        "median": 466753,
+        "min": 466753,
+        "n": 3,
+        "p90_nearest_rank": 466753
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1817.994063,
+          "median": 1580.479318,
+          "min": 1555.383847,
+          "n": 3,
+          "p90_nearest_rank": 1817.994063
+        },
+        "run_publication.result": {
+          "max": 1279.603492,
+          "median": 1025.838485,
+          "min": 1011.344746,
+          "n": 3,
+          "p90_nearest_rank": 1279.603492
+        },
+        "runs._load": {
+          "max": 1797.666235,
+          "median": 1571.982484,
+          "min": 1540.28671,
+          "n": 3,
+          "p90_nearest_rank": 1797.666235
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67952,
+        "median": 66068,
+        "min": 65920,
+        "n": 3,
+        "p90_nearest_rank": 67952
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 62,
+          "median": 62,
+          "min": 62,
+          "n": 3,
+          "p90_nearest_rank": 62
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704202,
+          "median": 584792,
+          "min": 584792,
+          "n": 3,
+          "p90_nearest_rank": 704202
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 106,
+          "median": 104,
+          "min": 104,
+          "n": 3,
+          "p90_nearest_rank": 106
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 2183.8649999999984,
+        "median": 1952.1589999999999,
+        "min": 1911.7289999999994,
+        "n": 3,
+        "p90_nearest_rank": 2183.8649999999984
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66948,
+        "median": 66068,
+        "min": 65920,
+        "n": 3,
+        "p90_nearest_rank": 66948
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 2301.360142,
+        "median": 2106.238414,
+        "min": 2032.28831,
+        "n": 3,
+        "p90_nearest_rank": 2301.360142
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 12220,
+        "median": 12220,
+        "min": 12220,
+        "n": 3,
+        "p90_nearest_rank": 12220
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 3,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 455440,
+        "median": 455440,
+        "min": 455440,
+        "n": 3,
+        "p90_nearest_rank": 455440
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1791.559688,
+          "median": 1727.124371,
+          "min": 1676.821926,
+          "n": 3,
+          "p90_nearest_rank": 1791.559688
+        },
+        "run_publication.result": {
+          "max": 1207.705642,
+          "median": 1145.762677,
+          "min": 1129.068786,
+          "n": 3,
+          "p90_nearest_rank": 1207.705642
+        },
+        "runs._load": {
+          "max": 1650.498157,
+          "median": 1598.685716,
+          "min": 1538.320077,
+          "n": 3,
+          "p90_nearest_rank": 1650.498157
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67188,
+        "median": 66064,
+        "min": 65924,
+        "n": 3,
+        "p90_nearest_rank": 67188
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 60,
+          "median": 60,
+          "min": 60,
+          "n": 3,
+          "p90_nearest_rank": 60
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 704203,
+          "median": 704203,
+          "min": 584792,
+          "n": 3,
+          "p90_nearest_rank": 704203
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 107,
+          "median": 107,
+          "min": 104,
+          "n": 3,
+          "p90_nearest_rank": 107
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 2919.4399999999996,
+        "median": 2850.3089999999993,
+        "min": 2738.5240000000003,
+        "n": 3,
+        "p90_nearest_rank": 2919.4399999999996
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67188,
+        "median": 66064,
+        "min": 65924,
+        "n": 3,
+        "p90_nearest_rank": 67188
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3101.920068,
+        "median": 3015.646909,
+        "min": 2968.196307,
+        "n": 3,
+        "p90_nearest_rank": 3101.920068
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 13541,
+        "median": 13541.0,
+        "min": 13541,
+        "n": 6,
+        "p90_nearest_rank": 13541
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 466753,
+        "median": 466753.0,
+        "min": 466753,
+        "n": 6,
+        "p90_nearest_rank": 466753
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 2267.51286,
+          "median": 1543.884338,
+          "min": 1490.12695,
+          "n": 6,
+          "p90_nearest_rank": 2267.51286
+        },
+        "run_publication.result": {
+          "max": 1476.74848,
+          "median": 1020.327579,
+          "min": 996.790194,
+          "n": 6,
+          "p90_nearest_rank": 1476.74848
+        },
+        "runs._load": {
+          "max": 2232.194989,
+          "median": 1523.5865840000001,
+          "min": 1482.408084,
+          "n": 6,
+          "p90_nearest_rank": 2232.194989
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67952,
+        "median": 67934.0,
+        "min": 66068,
+        "n": 6,
+        "p90_nearest_rank": 67952
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 62,
+          "median": 62.0,
+          "min": 62,
+          "n": 6,
+          "p90_nearest_rank": 62
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 584792,
+          "median": 584792.0,
+          "min": 584792,
+          "n": 6,
+          "p90_nearest_rank": 584792
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 104,
+          "median": 104.0,
+          "min": 104,
+          "n": 6,
+          "p90_nearest_rank": 104
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 2614.5680000000016,
+        "median": 1891.9625000000005,
+        "min": 1841.6800000000007,
+        "n": 6,
+        "p90_nearest_rank": 2614.5680000000016
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66956,
+        "median": 66844.0,
+        "min": 66068,
+        "n": 6,
+        "p90_nearest_rank": 66956
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 2823.755044,
+        "median": 2026.8627115,
+        "min": 1961.554562,
+        "n": 6,
+        "p90_nearest_rank": 2823.755044
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 12220,
+        "median": 12220.0,
+        "min": 12220,
+        "n": 6,
+        "p90_nearest_rank": 12220
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20.0,
+        "min": 20,
+        "n": 6,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 455440,
+        "median": 455440.0,
+        "min": 455440,
+        "n": 6,
+        "p90_nearest_rank": 455440
+      },
+      "inclusive_owner_wall_ms": {
+        "run_publication.artifact_segment": {
+          "max": 1925.195228,
+          "median": 1654.7042729999998,
+          "min": 1568.41471,
+          "n": 6,
+          "p90_nearest_rank": 1925.195228
+        },
+        "run_publication.result": {
+          "max": 1297.09796,
+          "median": 1098.899672,
+          "min": 1074.894924,
+          "n": 6,
+          "p90_nearest_rank": 1297.09796
+        },
+        "runs._load": {
+          "max": 1802.845391,
+          "median": 1546.0915300000001,
+          "min": 1470.305979,
+          "n": 6,
+          "p90_nearest_rank": 1802.845391
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67952,
+        "median": 67462.0,
+        "min": 66068,
+        "n": 6,
+        "p90_nearest_rank": 67952
+      },
+      "owner_call_counts": {
+        "run_publication.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "run_publication.result.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 60,
+          "median": 60.0,
+          "min": 60,
+          "n": 6,
+          "p90_nearest_rank": 60
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 584793,
+          "median": 584792.0,
+          "min": 584792,
+          "n": 6,
+          "p90_nearest_rank": 584793
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 105,
+          "median": 104.0,
+          "min": 104,
+          "n": 6,
+          "p90_nearest_rank": 105
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 3188.800000000003,
+        "median": 2739.6169999999993,
+        "min": 2588.3330000000014,
+        "n": 6,
+        "p90_nearest_rank": 3188.800000000003
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67360,
+        "median": 66312.0,
+        "min": 66068,
+        "n": 6,
+        "p90_nearest_rank": 67360
+      },
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ms": {
+        "max": 3442.262158,
+        "median": 2934.755031,
+        "min": 2759.286829,
+        "n": 6,
+        "p90_nearest_rank": 3442.262158
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 9,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 9,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.294548,
+          "median": 0.565436,
+          "min": 0.397402,
+          "n": 9,
+          "p90_nearest_rank": 1.294548
+        },
+        "runs._load": {
+          "max": 107.468075,
+          "median": 82.097318,
+          "min": 75.246468,
+          "n": 9,
+          "p90_nearest_rank": 107.468075
+        },
+        "runs.artifact_segment": {
+          "max": 45.134426,
+          "median": 31.010968,
+          "min": 26.018198,
+          "n": 9,
+          "p90_nearest_rank": 45.134426
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66112,
+        "median": 66088,
+        "min": 65348,
+        "n": 9,
+        "p90_nearest_rank": 66112
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 9,
+          "p90_nearest_rank": 3
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 575.1500000000007,
+        "median": 437.18199999999996,
+        "min": 365.0380000000002,
+        "n": 9,
+        "p90_nearest_rank": 575.1500000000007
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66112,
+        "median": 66088,
+        "min": 65348,
+        "n": 9,
+        "p90_nearest_rank": 66112
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 595.338828,
+        "median": 455.423471,
+        "min": 377.343647,
+        "n": 9,
+        "p90_nearest_rank": 595.338828
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 9,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 9,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 48.537847,
+          "median": 0.677558,
+          "min": 0.378638,
+          "n": 9,
+          "p90_nearest_rank": 48.537847
+        },
+        "runs._load": {
+          "max": 47.61864,
+          "median": 23.816425,
+          "min": 21.152094,
+          "n": 9,
+          "p90_nearest_rank": 47.61864
+        },
+        "runs.artifact_segment": {
+          "max": 81.257703,
+          "median": 29.605839,
+          "min": 26.841426,
+          "n": 9,
+          "p90_nearest_rank": 81.257703
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66108,
+        "median": 66088,
+        "min": 65348,
+        "n": 9,
+        "p90_nearest_rank": 66108
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 196.10399999999885,
+        "median": 161.47500000000062,
+        "min": 146.7210000000012,
+        "n": 9,
+        "p90_nearest_rank": 196.10399999999885
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66108,
+        "median": 66088,
+        "min": 65348,
+        "n": 9,
+        "p90_nearest_rank": 66108
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 202.233884,
+        "median": 168.792133,
+        "min": 153.13838,
+        "n": 9,
+        "p90_nearest_rank": 202.233884
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 3,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 3,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.294548,
+          "median": 0.490856,
+          "min": 0.397402,
+          "n": 3,
+          "p90_nearest_rank": 1.294548
+        },
+        "runs._load": {
+          "max": 96.293597,
+          "median": 87.980166,
+          "min": 75.65557,
+          "n": 3,
+          "p90_nearest_rank": 96.293597
+        },
+        "runs.artifact_segment": {
+          "max": 31.392486,
+          "median": 30.948475,
+          "min": 29.035408,
+          "n": 3,
+          "p90_nearest_rank": 31.392486
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66108,
+        "median": 66088,
+        "min": 65348,
+        "n": 3,
+        "p90_nearest_rank": 66108
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 3,
+          "p90_nearest_rank": 3
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 515.8710000000004,
+        "median": 498.66599999999937,
+        "min": 399.8070000000009,
+        "n": 3,
+        "p90_nearest_rank": 515.8710000000004
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66108,
+        "median": 66088,
+        "min": 65348,
+        "n": 3,
+        "p90_nearest_rank": 66108
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 539.309096,
+        "median": 512.480704,
+        "min": 423.78972,
+        "n": 3,
+        "p90_nearest_rank": 539.309096
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 3,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 3,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 48.537847,
+          "median": 28.376373,
+          "min": 0.378638,
+          "n": 3,
+          "p90_nearest_rank": 48.537847
+        },
+        "runs._load": {
+          "max": 29.767072,
+          "median": 26.045533,
+          "min": 21.152094,
+          "n": 3,
+          "p90_nearest_rank": 29.767072
+        },
+        "runs.artifact_segment": {
+          "max": 81.257703,
+          "median": 53.216613,
+          "min": 29.605839,
+          "n": 3,
+          "p90_nearest_rank": 81.257703
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66104,
+        "median": 66080,
+        "min": 65348,
+        "n": 3,
+        "p90_nearest_rank": 66104
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 449538,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 196.10399999999885,
+        "median": 178.3559999999991,
+        "min": 161.421,
+        "n": 3,
+        "p90_nearest_rank": 196.10399999999885
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66104,
+        "median": 66080,
+        "min": 65348,
+        "n": 3,
+        "p90_nearest_rank": 66104
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 202.233884,
+        "median": 183.09514,
+        "min": 168.792133,
+        "n": 3,
+        "p90_nearest_rank": 202.233884
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228.0,
+        "min": 228,
+        "n": 6,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478.0,
+        "min": 437478,
+        "n": 6,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.60012,
+          "median": 0.5725425,
+          "min": 0.500277,
+          "n": 6,
+          "p90_nearest_rank": 0.60012
+        },
+        "runs._load": {
+          "max": 107.468075,
+          "median": 81.542846,
+          "min": 75.246468,
+          "n": 6,
+          "p90_nearest_rank": 107.468075
+        },
+        "runs.artifact_segment": {
+          "max": 45.134426,
+          "median": 31.045668499999998,
+          "min": 26.018198,
+          "n": 6,
+          "p90_nearest_rank": 45.134426
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66112,
+        "median": 66088.0,
+        "min": 65348,
+        "n": 6,
+        "p90_nearest_rank": 66112
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3.0,
+          "min": 3,
+          "n": 6,
+          "p90_nearest_rank": 3
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330128,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330128
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 575.1500000000007,
+        "median": 427.4284999999999,
+        "min": 365.0380000000002,
+        "n": 6,
+        "p90_nearest_rank": 575.1500000000007
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66112,
+        "median": 66088.0,
+        "min": 65348,
+        "n": 6,
+        "p90_nearest_rank": 66112
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 595.338828,
+        "median": 443.035956,
+        "min": 377.343647,
+        "n": 6,
+        "p90_nearest_rank": 595.338828
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116.0,
+        "min": 116,
+        "n": 6,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332.0,
+        "min": 437332,
+        "n": 6,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 1.042143,
+          "median": 0.6604165,
+          "min": 0.479187,
+          "n": 6,
+          "p90_nearest_rank": 1.042143
+        },
+        "runs._load": {
+          "max": 47.61864,
+          "median": 23.775477,
+          "min": 23.143745,
+          "n": 6,
+          "p90_nearest_rank": 47.61864
+        },
+        "runs.artifact_segment": {
+          "max": 52.796777,
+          "median": 28.178669499999998,
+          "min": 26.841426,
+          "n": 6,
+          "p90_nearest_rank": 52.796777
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66108,
+        "median": 66088.0,
+        "min": 65348,
+        "n": 6,
+        "p90_nearest_rank": 66108
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330128,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330128
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 182.2340000000001,
+        "median": 156.36350000000016,
+        "min": 146.7210000000012,
+        "n": 6,
+        "p90_nearest_rank": 182.2340000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66108,
+        "median": 66088.0,
+        "min": 65348,
+        "n": 6,
+        "p90_nearest_rank": 66108
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 186.447706,
+        "median": 159.9479,
+        "min": 153.13838,
+        "n": 6,
+        "p90_nearest_rank": 186.447706
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 9,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 9,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.780802,
+          "median": 0.495722,
+          "min": 0.40407,
+          "n": 9,
+          "p90_nearest_rank": 0.780802
+        },
+        "runs._load": {
+          "max": 108.625111,
+          "median": 78.744643,
+          "min": 66.338064,
+          "n": 9,
+          "p90_nearest_rank": 108.625111
+        },
+        "runs.artifact_segment": {
+          "max": 50.26501,
+          "median": 29.699242,
+          "min": 24.32047,
+          "n": 9,
+          "p90_nearest_rank": 50.26501
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66048,
+        "median": 65964,
+        "min": 65276,
+        "n": 9,
+        "p90_nearest_rank": 66048
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 9,
+          "p90_nearest_rank": 3
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 591.0090000000017,
+        "median": 380.579999999999,
+        "min": 369.2889999999991,
+        "n": 9,
+        "p90_nearest_rank": 591.0090000000017
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66048,
+        "median": 65964,
+        "min": 65276,
+        "n": 9,
+        "p90_nearest_rank": 66048
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 608.833461,
+        "median": 394.816239,
+        "min": 378.891287,
+        "n": 9,
+        "p90_nearest_rank": 608.833461
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 9,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 9,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 35.010523,
+          "median": 0.756588,
+          "min": 0.418554,
+          "n": 9,
+          "p90_nearest_rank": 35.010523
+        },
+        "runs._load": {
+          "max": 47.111271,
+          "median": 25.701814,
+          "min": 23.594339,
+          "n": 9,
+          "p90_nearest_rank": 47.111271
+        },
+        "runs.artifact_segment": {
+          "max": 61.969761,
+          "median": 47.212781,
+          "min": 27.052589,
+          "n": 9,
+          "p90_nearest_rank": 61.969761
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66048,
+        "median": 65964,
+        "min": 65280,
+        "n": 9,
+        "p90_nearest_rank": 66048
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 9,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449539,
+          "median": 330128,
+          "min": 330128,
+          "n": 9,
+          "p90_nearest_rank": 449539
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 9,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 209.2499999999999,
+        "median": 193.15900000000013,
+        "min": 140.75300000000072,
+        "n": 9,
+        "p90_nearest_rank": 209.2499999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66048,
+        "median": 65964,
+        "min": 65280,
+        "n": 9,
+        "p90_nearest_rank": 66048
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 216.076912,
+        "median": 196.625429,
+        "min": 143.119793,
+        "n": 9,
+        "p90_nearest_rank": 216.076912
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228,
+        "min": 228,
+        "n": 3,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478,
+        "min": 437478,
+        "n": 3,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.631666,
+          "median": 0.561678,
+          "min": 0.406907,
+          "n": 3,
+          "p90_nearest_rank": 0.631666
+        },
+        "runs._load": {
+          "max": 99.136743,
+          "median": 78.744643,
+          "min": 69.33108,
+          "n": 3,
+          "p90_nearest_rank": 99.136743
+        },
+        "runs.artifact_segment": {
+          "max": 47.724417,
+          "median": 29.699242,
+          "min": 24.846513,
+          "n": 3,
+          "p90_nearest_rank": 47.724417
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66048,
+        "median": 65964,
+        "min": 65276,
+        "n": 3,
+        "p90_nearest_rank": 66048
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3,
+          "min": 3,
+          "n": 3,
+          "p90_nearest_rank": 3
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449538,
+          "median": 330129,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449538
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 7,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 591.0090000000017,
+        "median": 386.93599999999975,
+        "min": 378.91599999999846,
+        "n": 3,
+        "p90_nearest_rank": 591.0090000000017
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66048,
+        "median": 65964,
+        "min": 65276,
+        "n": 3,
+        "p90_nearest_rank": 66048
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 608.833461,
+        "median": 396.488934,
+        "min": 389.210505,
+        "n": 3,
+        "p90_nearest_rank": 608.833461
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116,
+        "min": 116,
+        "n": 3,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332,
+        "min": 437332,
+        "n": 3,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 35.010523,
+          "median": 32.752348,
+          "min": 0.418554,
+          "n": 3,
+          "p90_nearest_rank": 35.010523
+        },
+        "runs._load": {
+          "max": 40.868695,
+          "median": 24.579129,
+          "min": 23.823222,
+          "n": 3,
+          "p90_nearest_rank": 40.868695
+        },
+        "runs.artifact_segment": {
+          "max": 61.969761,
+          "median": 60.402435,
+          "min": 47.212781,
+          "n": 3,
+          "p90_nearest_rank": 61.969761
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66044,
+        "median": 65964,
+        "min": 65280,
+        "n": 3,
+        "p90_nearest_rank": 66044
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1,
+          "min": 1,
+          "n": 3,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 449539,
+          "median": 449538,
+          "min": 330128,
+          "n": 3,
+          "p90_nearest_rank": 449539
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 9,
+          "median": 9,
+          "min": 7,
+          "n": 3,
+          "p90_nearest_rank": 9
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 209.2499999999999,
+        "median": 198.36900000000134,
+        "min": 193.15900000000013,
+        "n": 3,
+        "p90_nearest_rank": 209.2499999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66044,
+        "median": 65964,
+        "min": 65280,
+        "n": 3,
+        "p90_nearest_rank": 66044
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 213.231262,
+        "median": 200.770254,
+        "min": 196.625429,
+        "n": 3,
+        "p90_nearest_rank": 213.231262
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 228,
+        "median": 228.0,
+        "min": 228,
+        "n": 6,
+        "p90_nearest_rank": 228
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437478,
+        "median": 437478.0,
+        "min": 437478,
+        "n": 6,
+        "p90_nearest_rank": 437478
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.780802,
+          "median": 0.4798555,
+          "min": 0.40407,
+          "n": 6,
+          "p90_nearest_rank": 0.780802
+        },
+        "runs._load": {
+          "max": 108.625111,
+          "median": 81.2997095,
+          "min": 66.338064,
+          "n": 6,
+          "p90_nearest_rank": 108.625111
+        },
+        "runs.artifact_segment": {
+          "max": 50.26501,
+          "median": 29.6790775,
+          "min": 24.32047,
+          "n": 6,
+          "p90_nearest_rank": 50.26501
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66048,
+        "median": 65964.0,
+        "min": 65284,
+        "n": 6,
+        "p90_nearest_rank": 66048
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 3,
+          "median": 3.0,
+          "min": 3,
+          "n": 6,
+          "p90_nearest_rank": 3
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330129,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330129
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 589.2749999999993,
+        "median": 377.49749999999904,
+        "min": 369.2889999999991,
+        "n": 6,
+        "p90_nearest_rank": 589.2749999999993
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66048,
+        "median": 65964.0,
+        "min": 65284,
+        "n": 6,
+        "p90_nearest_rank": 66048
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 606.953045,
+        "median": 393.844911,
+        "min": 378.891287,
+        "n": 6,
+        "p90_nearest_rank": 606.953045
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 1,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 116,
+        "median": 116.0,
+        "min": 116,
+        "n": 6,
+        "p90_nearest_rank": 116
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 437332,
+        "median": 437332.0,
+        "min": 437332,
+        "n": 6,
+        "p90_nearest_rank": 437332
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 0.849505,
+          "median": 0.7332525000000001,
+          "min": 0.515473,
+          "n": 6,
+          "p90_nearest_rank": 0.849505
+        },
+        "runs._load": {
+          "max": 47.111271,
+          "median": 26.938329,
+          "min": 23.594339,
+          "n": 6,
+          "p90_nearest_rank": 47.111271
+        },
+        "runs.artifact_segment": {
+          "max": 50.97307,
+          "median": 31.71503,
+          "min": 27.052589,
+          "n": 6,
+          "p90_nearest_rank": 50.97307
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66048,
+        "median": 65964.0,
+        "min": 65280,
+        "n": 6,
+        "p90_nearest_rank": 66048
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs._load.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        },
+        "runs.artifact_segment.calls": {
+          "max": 1,
+          "median": 1.0,
+          "min": 1,
+          "n": 6,
+          "p90_nearest_rank": 1
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 330129,
+          "median": 330128.0,
+          "min": 330128,
+          "n": 6,
+          "p90_nearest_rank": 330129
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 7,
+          "median": 7.0,
+          "min": 7,
+          "n": 6,
+          "p90_nearest_rank": 7
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 207.21700000000004,
+        "median": 160.6380000000001,
+        "min": 140.75300000000072,
+        "n": 6,
+        "p90_nearest_rank": 207.21700000000004
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66048,
+        "median": 65964.0,
+        "min": 65280,
+        "n": 6,
+        "p90_nearest_rank": 66048
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 216.076912,
+        "median": 165.4320165,
+        "min": 143.119793,
+        "n": 6,
+        "p90_nearest_rank": 216.076912
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 9,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 9,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 19.990404,
+          "median": 15.812445,
+          "min": 12.337931,
+          "n": 9,
+          "p90_nearest_rank": 19.990404
+        },
+        "runs._load": {
+          "max": 694.556648,
+          "median": 574.4005,
+          "min": 498.933625,
+          "n": 9,
+          "p90_nearest_rank": 694.556648
+        },
+        "runs.artifact_segment": {
+          "max": 700.316072,
+          "median": 558.510721,
+          "min": 477.562817,
+          "n": 9,
+          "p90_nearest_rank": 700.316072
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67740,
+        "median": 65816,
+        "min": 65032,
+        "n": 9,
+        "p90_nearest_rank": 67740
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 22,
+          "median": 22,
+          "min": 22,
+          "n": 9,
+          "p90_nearest_rank": 22
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417052,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1112.8839999999993,
+        "median": 973.8309999999999,
+        "min": 861.5190000000003,
+        "n": 9,
+        "p90_nearest_rank": 1112.8839999999993
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66892,
+        "median": 64804,
+        "min": 64020,
+        "n": 9,
+        "p90_nearest_rank": 66892
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1200.082695,
+        "median": 1037.960159,
+        "min": 924.092873,
+        "n": 9,
+        "p90_nearest_rank": 1200.082695
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 9,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 9,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 9,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 50.72274,
+          "median": 17.018698,
+          "min": 14.190137,
+          "n": 9,
+          "p90_nearest_rank": 50.72274
+        },
+        "runs._load": {
+          "max": 958.706741,
+          "median": 539.399649,
+          "min": 490.340786,
+          "n": 9,
+          "p90_nearest_rank": 958.706741
+        },
+        "runs.artifact_segment": {
+          "max": 1083.431216,
+          "median": 605.680811,
+          "min": 536.645629,
+          "n": 9,
+          "p90_nearest_rank": 1083.431216
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67740,
+        "median": 65624,
+        "min": 65032,
+        "n": 9,
+        "p90_nearest_rank": 67740
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417052,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 2197.051,
+        "median": 1351.8550000000005,
+        "min": 1279.9089999999999,
+        "n": 9,
+        "p90_nearest_rank": 2197.051
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67156,
+        "median": 64912,
+        "min": 64188,
+        "n": 9,
+        "p90_nearest_rank": 67156
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 2407.616259,
+        "median": 1454.033602,
+        "min": 1372.65585,
+        "n": 9,
+        "p90_nearest_rank": 2407.616259
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 3,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 3,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 17.841991,
+          "median": 15.812445,
+          "min": 15.545052,
+          "n": 3,
+          "p90_nearest_rank": 17.841991
+        },
+        "runs._load": {
+          "max": 608.309368,
+          "median": 574.4005,
+          "min": 574.381484,
+          "n": 3,
+          "p90_nearest_rank": 608.309368
+        },
+        "runs.artifact_segment": {
+          "max": 599.066149,
+          "median": 563.739273,
+          "min": 558.510721,
+          "n": 3,
+          "p90_nearest_rank": 599.066149
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67740,
+        "median": 65624,
+        "min": 65032,
+        "n": 3,
+        "p90_nearest_rank": 67740
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 22,
+          "median": 22,
+          "min": 22,
+          "n": 3,
+          "p90_nearest_rank": 22
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 417052,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1112.8839999999993,
+        "median": 976.3689999999999,
+        "min": 973.8309999999999,
+        "n": 3,
+        "p90_nearest_rank": 1112.8839999999993
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66892,
+        "median": 64716,
+        "min": 64020,
+        "n": 3,
+        "p90_nearest_rank": 66892
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1182.744447,
+        "median": 1056.073069,
+        "min": 1037.960159,
+        "n": 3,
+        "p90_nearest_rank": 1182.744447
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 3,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 3,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 3,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 50.72274,
+          "median": 47.807501,
+          "min": 17.302712,
+          "n": 3,
+          "p90_nearest_rank": 50.72274
+        },
+        "runs._load": {
+          "max": 655.357719,
+          "median": 539.399649,
+          "min": 525.027675,
+          "n": 3,
+          "p90_nearest_rank": 655.357719
+        },
+        "runs.artifact_segment": {
+          "max": 766.006043,
+          "median": 605.680811,
+          "min": 591.098796,
+          "n": 3,
+          "p90_nearest_rank": 766.006043
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66836,
+        "median": 65624,
+        "min": 65032,
+        "n": 3,
+        "p90_nearest_rank": 66836
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536463,
+          "median": 536463,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536463
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 67,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1378.0220000000006,
+        "median": 1342.9100000000003,
+        "min": 1327.9170000000004,
+        "n": 3,
+        "p90_nearest_rank": 1378.0220000000006
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66248,
+        "median": 64712,
+        "min": 64188,
+        "n": 3,
+        "p90_nearest_rank": 66248
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1690.333748,
+        "median": 1454.033602,
+        "min": 1445.513652,
+        "n": 3,
+        "p90_nearest_rank": 1690.333748
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341.0,
+        "min": 4341,
+        "n": 6,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493.0,
+        "min": 447493,
+        "n": 6,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 19.990404,
+          "median": 15.41395,
+          "min": 12.337931,
+          "n": 6,
+          "p90_nearest_rank": 19.990404
+        },
+        "runs._load": {
+          "max": 694.556648,
+          "median": 562.4881405,
+          "min": 498.933625,
+          "n": 6,
+          "p90_nearest_rank": 694.556648
+        },
+        "runs.artifact_segment": {
+          "max": 700.316072,
+          "median": 543.332449,
+          "min": 477.562817,
+          "n": 6,
+          "p90_nearest_rank": 700.316072
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67740,
+        "median": 66150.0,
+        "min": 65624,
+        "n": 6,
+        "p90_nearest_rank": 67740
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 22,
+          "median": 22.0,
+          "min": 22,
+          "n": 6,
+          "p90_nearest_rank": 22
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417052,
+          "median": 417052.0,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417052
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1104.9319999999996,
+        "median": 952.0394999999996,
+        "min": 861.5190000000003,
+        "n": 6,
+        "p90_nearest_rank": 1104.9319999999996
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66880,
+        "median": 65142.0,
+        "min": 64716,
+        "n": 6,
+        "p90_nearest_rank": 66880
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 1200.082695,
+        "median": 1018.3089545,
+        "min": 924.092873,
+        "n": 6,
+        "p90_nearest_rank": 1200.082695
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300.0,
+        "min": 2300,
+        "n": 6,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20.0,
+        "min": 20,
+        "n": 6,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380.0,
+        "min": 445380,
+        "n": 6,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 30.766113,
+          "median": 16.4252925,
+          "min": 14.190137,
+          "n": 6,
+          "p90_nearest_rank": 30.766113
+        },
+        "runs._load": {
+          "max": 958.706741,
+          "median": 546.046468,
+          "min": 490.340786,
+          "n": 6,
+          "p90_nearest_rank": 958.706741
+        },
+        "runs.artifact_segment": {
+          "max": 1083.431216,
+          "median": 600.1399135,
+          "min": 536.645629,
+          "n": 6,
+          "p90_nearest_rank": 1083.431216
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67740,
+        "median": 65720.0,
+        "min": 65032,
+        "n": 6,
+        "p90_nearest_rank": 67740
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417052,
+          "median": 417052.0,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417052
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 2197.051,
+        "median": 1388.5275000000001,
+        "min": 1279.9089999999999,
+        "n": 6,
+        "p90_nearest_rank": 2197.051
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 67156,
+        "median": 64994.0,
+        "min": 64192,
+        "n": 6,
+        "p90_nearest_rank": 67156
+      },
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ms": {
+        "max": 2407.616259,
+        "median": 1484.552885,
+        "min": 1372.65585,
+        "n": 6,
+        "p90_nearest_rank": 2407.616259
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 9,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 9,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 9,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 19.304011,
+          "median": 14.713092,
+          "min": 13.705662,
+          "n": 9,
+          "p90_nearest_rank": 19.304011
+        },
+        "runs._load": {
+          "max": 616.075692,
+          "median": 548.626557,
+          "min": 500.529145,
+          "n": 9,
+          "p90_nearest_rank": 616.075692
+        },
+        "runs.artifact_segment": {
+          "max": 601.083739,
+          "median": 533.022743,
+          "min": 487.127864,
+          "n": 9,
+          "p90_nearest_rank": 601.083739
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67892,
+        "median": 66096,
+        "min": 65356,
+        "n": 9,
+        "p90_nearest_rank": 67892
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 22,
+          "median": 22,
+          "min": 22,
+          "n": 9,
+          "p90_nearest_rank": 22
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536462,
+          "median": 417053,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536462
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 66,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 66
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1133.4280000000008,
+        "median": 909.590999999999,
+        "min": 879.343,
+        "n": 9,
+        "p90_nearest_rank": 1133.4280000000008
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66836,
+        "median": 66096,
+        "min": 64752,
+        "n": 9,
+        "p90_nearest_rank": 66836
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 1202.231909,
+        "median": 968.213505,
+        "min": 927.686866,
+        "n": 9,
+        "p90_nearest_rank": 1202.231909
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "all_pairs",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 9,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 9,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 9,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 68.374348,
+          "median": 17.210805,
+          "min": 13.911619,
+          "n": 9,
+          "p90_nearest_rank": 68.374348
+        },
+        "runs._load": {
+          "max": 721.443629,
+          "median": 558.002592,
+          "min": 465.834921,
+          "n": 9,
+          "p90_nearest_rank": 721.443629
+        },
+        "runs.artifact_segment": {
+          "max": 808.185507,
+          "median": 654.90356,
+          "min": 512.339919,
+          "n": 9,
+          "p90_nearest_rank": 808.185507
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67088,
+        "median": 66076,
+        "min": 65824,
+        "n": 9,
+        "p90_nearest_rank": 67088
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 9,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536464,
+          "median": 417053,
+          "min": 417052,
+          "n": 9,
+          "p90_nearest_rank": 536464
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 64,
+          "min": 64,
+          "n": 9,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1603.158000000001,
+        "median": 1411.9819999999993,
+        "min": 1233.4909999999993,
+        "n": 9,
+        "p90_nearest_rank": 1603.158000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 9,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66272,
+        "median": 65556,
+        "min": 64752,
+        "n": 9,
+        "p90_nearest_rank": 66272
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 1710.239766,
+        "median": 1531.59229,
+        "min": 1310.326194,
+        "n": 9,
+        "p90_nearest_rank": 1710.239766
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341,
+        "min": 4341,
+        "n": 3,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1,
+        "min": 1,
+        "n": 3,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493,
+        "min": 447493,
+        "n": 3,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 19.304011,
+          "median": 18.492623,
+          "min": 14.626788,
+          "n": 3,
+          "p90_nearest_rank": 19.304011
+        },
+        "runs._load": {
+          "max": 616.075692,
+          "median": 586.36516,
+          "min": 581.101544,
+          "n": 3,
+          "p90_nearest_rank": 616.075692
+        },
+        "runs.artifact_segment": {
+          "max": 601.083739,
+          "median": 563.535482,
+          "min": 563.446821,
+          "n": 3,
+          "p90_nearest_rank": 601.083739
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66096,
+        "median": 65824,
+        "min": 65356,
+        "n": 3,
+        "p90_nearest_rank": 66096
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 22,
+          "median": 22,
+          "min": 22,
+          "n": 3,
+          "p90_nearest_rank": 22
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536462,
+          "median": 417053,
+          "min": 417052,
+          "n": 3,
+          "p90_nearest_rank": 536462
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 66,
+          "median": 64,
+          "min": 64,
+          "n": 3,
+          "p90_nearest_rank": 66
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1133.4280000000008,
+        "median": 955.6389999999992,
+        "min": 952.3909999999995,
+        "n": 3,
+        "p90_nearest_rank": 1133.4280000000008
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66096,
+        "median": 65356,
+        "min": 64752,
+        "n": 3,
+        "p90_nearest_rank": 66096
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 1202.231909,
+        "median": 1057.219524,
+        "min": 1005.193715,
+        "n": 3,
+        "p90_nearest_rank": 1202.231909
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "first_pair_fresh_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300,
+        "min": 2300,
+        "n": 3,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20,
+        "min": 20,
+        "n": 3,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380,
+        "min": 445380,
+        "n": 3,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 68.374348,
+          "median": 51.141894,
+          "min": 31.388661,
+          "n": 3,
+          "p90_nearest_rank": 68.374348
+        },
+        "runs._load": {
+          "max": 721.443629,
+          "median": 576.362521,
+          "min": 558.002592,
+          "n": 3,
+          "p90_nearest_rank": 721.443629
+        },
+        "runs.artifact_segment": {
+          "max": 808.185507,
+          "median": 669.099753,
+          "min": 665.980204,
+          "n": 3,
+          "p90_nearest_rank": 808.185507
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 66084,
+        "median": 66076,
+        "min": 65824,
+        "n": 3,
+        "p90_nearest_rank": 66084
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20,
+          "min": 20,
+          "n": 3,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 536464,
+          "median": 536463,
+          "min": 417053,
+          "n": 3,
+          "p90_nearest_rank": 536464
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 67,
+          "median": 67,
+          "min": 65,
+          "n": 3,
+          "p90_nearest_rank": 67
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1603.158000000001,
+        "median": 1411.9819999999993,
+        "min": 1403.3690000000008,
+        "n": 3,
+        "p90_nearest_rank": 1603.158000000001
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0,
+          "min": 0,
+          "n": 3,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66084,
+        "median": 65556,
+        "min": 64752,
+        "n": 3,
+        "p90_nearest_rank": 66084
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 1710.239766,
+        "median": 1531.59229,
+        "min": 1510.092986,
+        "n": 3,
+        "p90_nearest_rank": 1710.239766
+      }
+    },
+    {
+      "arm": "batch",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 4341,
+        "median": 4341.0,
+        "min": 4341,
+        "n": 6,
+        "p90_nearest_rank": 4341
+      },
+      "http_requests": {
+        "max": 1,
+        "median": 1.0,
+        "min": 1,
+        "n": 6,
+        "p90_nearest_rank": 1
+      },
+      "http_response_body_bytes": {
+        "max": 447493,
+        "median": 447493.0,
+        "min": 447493,
+        "n": 6,
+        "p90_nearest_rank": 447493
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 15.276424,
+          "median": 14.5828565,
+          "min": 13.705662,
+          "n": 6,
+          "p90_nearest_rank": 15.276424
+        },
+        "runs._load": {
+          "max": 557.739565,
+          "median": 540.926882,
+          "min": 500.529145,
+          "n": 6,
+          "p90_nearest_rank": 557.739565
+        },
+        "runs.artifact_segment": {
+          "max": 535.769203,
+          "median": 521.1231435,
+          "min": 487.127864,
+          "n": 6,
+          "p90_nearest_rank": 535.769203
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67892,
+        "median": 66848.0,
+        "min": 65824,
+        "n": 6,
+        "p90_nearest_rank": 67892
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 22,
+          "median": 22.0,
+          "min": 22,
+          "n": 6,
+          "p90_nearest_rank": 22
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417053,
+          "median": 417052.5,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417053
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 923.0530000000005,
+        "median": 902.1189999999988,
+        "min": 879.343,
+        "n": 6,
+        "p90_nearest_rank": 923.0530000000005
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66836,
+        "median": 66134.0,
+        "min": 64752,
+        "n": 6,
+        "p90_nearest_rank": 66836
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 984.968382,
+        "median": 956.5278095,
+        "min": 927.686866,
+        "n": 6,
+        "p90_nearest_rank": 984.968382
+      }
+    },
+    {
+      "arm": "individual",
+      "artifacts": 20,
+      "condition": "warm_pair_same_process",
+      "http_request_body_bytes": {
+        "max": 2300,
+        "median": 2300.0,
+        "min": 2300,
+        "n": 6,
+        "p90_nearest_rank": 2300
+      },
+      "http_requests": {
+        "max": 20,
+        "median": 20.0,
+        "min": 20,
+        "n": 6,
+        "p90_nearest_rank": 20
+      },
+      "http_response_body_bytes": {
+        "max": 445380,
+        "median": 445380.0,
+        "min": 445380,
+        "n": 6,
+        "p90_nearest_rank": 445380
+      },
+      "inclusive_owner_wall_ms": {
+        "runs._external_inventory": {
+          "max": 31.525234,
+          "median": 15.354546,
+          "min": 13.911619,
+          "n": 6,
+          "p90_nearest_rank": 31.525234
+        },
+        "runs._load": {
+          "max": 636.237974,
+          "median": 523.0839975,
+          "min": 465.834921,
+          "n": 6,
+          "p90_nearest_rank": 636.237974
+        },
+        "runs.artifact_segment": {
+          "max": 706.804263,
+          "median": 574.251232,
+          "min": 512.339919,
+          "n": 6,
+          "p90_nearest_rank": 706.804263
+        }
+      },
+      "lifetime_hwm_after_kib": {
+        "max": 67088,
+        "median": 66086.0,
+        "min": 65824,
+        "n": 6,
+        "p90_nearest_rank": 67088
+      },
+      "owner_call_counts": {
+        "runs._external_inventory.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs._load.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        },
+        "runs.artifact_segment.calls": {
+          "max": 20,
+          "median": 20.0,
+          "min": 20,
+          "n": 6,
+          "p90_nearest_rank": 20
+        }
+      },
+      "proc_io_delta": {
+        "cancelled_write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "rchar": {
+          "max": 417053,
+          "median": 417052.0,
+          "min": 417052,
+          "n": 6,
+          "p90_nearest_rank": 417053
+        },
+        "read_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "syscr": {
+          "max": 64,
+          "median": 64.0,
+          "min": 64,
+          "n": 6,
+          "p90_nearest_rank": 64
+        },
+        "syscw": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "wchar": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "write_bytes": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "process_and_waited_children_cpu_ms": {
+        "max": 1578.431999999999,
+        "median": 1377.0969999999988,
+        "min": 1233.4909999999993,
+        "n": 6,
+        "p90_nearest_rank": 1578.431999999999
+      },
+      "resource_io_blocks_delta": {
+        "children_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "children_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_inblock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        },
+        "self_oublock": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 6,
+          "p90_nearest_rank": 0
+        }
+      },
+      "rss_after_kib": {
+        "max": 66272,
+        "median": 65560.0,
+        "min": 64948,
+        "n": 6,
+        "p90_nearest_rank": 66272
+      },
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ms": {
+        "max": 1679.886379,
+        "median": 1465.9554695000002,
+        "min": 1310.326194,
+        "n": 6,
+        "p90_nearest_rank": 1679.886379
+      }
+    }
+  ],
+  "availability": {
+    "eligible_workers": 18,
+    "empty_history_unavailable_workers": 6,
+    "unavailable_files": [
+      "unavailable-artifacts-1-history-0-process-0.json",
+      "unavailable-artifacts-1-history-0-process-1.json",
+      "unavailable-artifacts-1-history-0-process-2.json",
+      "unavailable-artifacts-20-history-0-process-0.json",
+      "unavailable-artifacts-20-history-0-process-1.json",
+      "unavailable-artifacts-20-history-0-process-2.json"
+    ]
+  },
+  "counts": {
+    "aggregate_raw_bytes_per_arm": 327680,
+    "artifacts_per_arm": [
+      1,
+      20
+    ],
+    "collection_arms": 108,
+    "eligible_cells": 6,
+    "first_pairs": 18,
+    "pairs": 54,
+    "warm_pairs": 36
+  },
+  "invariants": {
+    "exact_recorded_owned_cleanup_checks": [
+      {
+        "dropped": true,
+        "owned_temporary_directory_removed": true,
+        "schema": "catalog_a160667f63dc4c29b5f53f49aa5a838b"
+      },
+      {
+        "dropped": true,
+        "owned_temporary_directory_removed": true,
+        "schema": "catalog_799f18cb732548b185f1cc1d7ec01a82"
+      }
+    ],
+    "no_child_compute_during_collection": true,
+    "original_events_and_run_grant_consumption_reservation_counts_unchanged": true,
+    "source_and_harness_stable": true,
+    "whole_hash_and_inventory_equality_all_arms": true
+  },
+  "kind": "full_predeclared_matrix_no_filtered_pairs",
+  "limits": [
+    "No OS/PG cache flush or cache implementation.",
+    "First pair alternates order; its second arm follows the first in the same process.",
+    "CPU covers app/HTTP/client/waitedchildren, not PostgreSQL backend CPU.",
+    "RSS/HWM are snapshots/lifetime values.",
+    "Observer I/O and inclusive owner timings are not additive phase peaks.",
+    "Whole hashes match; no science acceptance.",
+    "Original production_base field records branch admission ancestry2d8b7d7; actual measured source is composed9838022 with exact source_sha256.",
+    "All known heavy gates reported complete before this coordinated window; small pure checks were permitted and no exclusive-host claim is made. Per-arm UTC starts were not recorded.",
+    "No confidence interval or latency-budget acceptance; n3 first / n6 warm are descriptive.",
+    "Do not sum inclusive owner spans. All outliers retained."
+  ],
+  "measured_head": "98380228a7edb8eefb4715cba27ca76722756cf9",
+  "paired_distributions": [
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "all_pairs",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 438.606346,
+            "median": 323.531244,
+            "min": 227.345464,
+            "n": 4,
+            "p90_nearest_rank": 438.606346
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.389034414124972,
+            "median": 2.2187033208834874,
+            "min": 1.7707948712947426,
+            "n": 4,
+            "p90_nearest_rank": 2.389034414124972
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 335.125696,
+            "median": 232.779757,
+            "min": 171.542524,
+            "n": 5,
+            "p90_nearest_rank": 335.125696
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.2146250308276727,
+            "median": 2.00558758362653,
+            "min": 1.5355156591162824,
+            "n": 5,
+            "p90_nearest_rank": 2.2146250308276727
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 438.606346,
+        "median": 233.869478,
+        "min": 171.542524,
+        "n": 9,
+        "p90_nearest_rank": 438.606346
+      },
+      "raw_files": [
+        "publication-artifacts-1-history-56-process-0.json",
+        "publication-artifacts-1-history-56-process-1.json",
+        "publication-artifacts-1-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.389034414124972,
+        "median": 2.123120907124119,
+        "min": 1.5355156591162824,
+        "n": 9,
+        "p90_nearest_rank": 2.389034414124972
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "first_pair_fresh_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 438.606346,
+            "median": 438.606346,
+            "min": 438.606346,
+            "n": 1,
+            "p90_nearest_rank": 438.606346
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.389034414124972,
+            "median": 2.389034414124972,
+            "min": 2.389034414124972,
+            "n": 1,
+            "p90_nearest_rank": 2.389034414124972
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 226.143704,
+            "median": 198.843114,
+            "min": 171.542524,
+            "n": 2,
+            "p90_nearest_rank": 226.143704
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 1.657194196215493,
+            "median": 1.5963549276658877,
+            "min": 1.5355156591162824,
+            "n": 2,
+            "p90_nearest_rank": 1.657194196215493
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 438.606346,
+        "median": 226.143704,
+        "min": 171.542524,
+        "n": 3,
+        "p90_nearest_rank": 438.606346
+      },
+      "raw_files": [
+        "publication-artifacts-1-history-56-process-0.json",
+        "publication-artifacts-1-history-56-process-1.json",
+        "publication-artifacts-1-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.389034414124972,
+        "median": 1.657194196215493,
+        "min": 1.5355156591162824,
+        "n": 3,
+        "p90_nearest_rank": 2.389034414124972
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "warm_pair_same_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 413.19301,
+            "median": 233.869478,
+            "min": 227.345464,
+            "n": 3,
+            "p90_nearest_rank": 413.19301
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.3142857346428563,
+            "median": 2.123120907124119,
+            "min": 1.7707948712947426,
+            "n": 3,
+            "p90_nearest_rank": 2.3142857346428563
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 335.125696,
+            "median": 271.247663,
+            "min": 232.779757,
+            "n": 3,
+            "p90_nearest_rank": 335.125696
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.2146250308276727,
+            "median": 2.1533615927532943,
+            "min": 2.00558758362653,
+            "n": 3,
+            "p90_nearest_rank": 2.2146250308276727
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 413.19301,
+        "median": 252.55857049999997,
+        "min": 227.345464,
+        "n": 6,
+        "p90_nearest_rank": 413.19301
+      },
+      "raw_files": [
+        "publication-artifacts-1-history-56-process-0.json",
+        "publication-artifacts-1-history-56-process-1.json",
+        "publication-artifacts-1-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.3142857346428563,
+        "median": 2.138241249938707,
+        "min": 1.7707948712947426,
+        "n": 6,
+        "p90_nearest_rank": 2.3142857346428563
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 9,
+      "condition": "all_pairs",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -793.265191,
+            "median": -888.2741135,
+            "min": -930.128864,
+            "n": 4,
+            "p90_nearest_rank": -793.265191
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7325524727368967,
+            "median": 0.6989732674644992,
+            "min": 0.6830789444270766,
+            "n": 4,
+            "p90_nearest_rank": 0.7325524727368967
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -618.507114,
+            "median": -800.559926,
+            "min": -983.358599,
+            "n": 5,
+            "p90_nearest_rank": -618.507114
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.8203195789249936,
+            "median": 0.7370372016514997,
+            "min": 0.6739145434880884,
+            "n": 5,
+            "p90_nearest_rank": 0.8203195789249936
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -618.507114,
+        "median": -861.957893,
+        "min": -983.358599,
+        "n": 9,
+        "p90_nearest_rank": -618.507114
+      },
+      "raw_files": [
+        "publication-artifacts-20-history-56-process-0.json",
+        "publication-artifacts-20-history-56-process-1.json",
+        "publication-artifacts-20-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.8203195789249936,
+        "median": 0.7096021274040349,
+        "min": 0.6739145434880884,
+        "n": 9,
+        "p90_nearest_rank": 0.8203195789249936
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 3,
+      "condition": "first_pair_fresh_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -861.957893,
+            "median": -861.957893,
+            "min": -861.957893,
+            "n": 1,
+            "p90_nearest_rank": -861.957893
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7096021274040349,
+            "median": 0.7096021274040349,
+            "min": 0.7096021274040349,
+            "n": 1,
+            "p90_nearest_rank": 0.7096021274040349
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -800.559926,
+            "median": -891.9592625,
+            "min": -983.358599,
+            "n": 2,
+            "p90_nearest_rank": -800.559926
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7419147146121755,
+            "median": 0.7079146290501319,
+            "min": 0.6739145434880884,
+            "n": 2,
+            "p90_nearest_rank": 0.7419147146121755
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -800.559926,
+        "median": -861.957893,
+        "min": -983.358599,
+        "n": 3,
+        "p90_nearest_rank": -800.559926
+      },
+      "raw_files": [
+        "publication-artifacts-20-history-56-process-0.json",
+        "publication-artifacts-20-history-56-process-1.json",
+        "publication-artifacts-20-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.7419147146121755,
+        "median": 0.7096021274040349,
+        "min": 0.6739145434880884,
+        "n": 3,
+        "p90_nearest_rank": 0.7419147146121755
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 6,
+      "condition": "warm_pair_same_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -793.265191,
+            "median": -914.590334,
+            "min": -930.128864,
+            "n": 3,
+            "p90_nearest_rank": -793.265191
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7325524727368967,
+            "median": 0.6883444075249634,
+            "min": 0.6830789444270766,
+            "n": 3,
+            "p90_nearest_rank": 0.7325524727368967
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -618.507114,
+            "median": -725.589786,
+            "min": -878.843031,
+            "n": 3,
+            "p90_nearest_rank": -618.507114
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.8203195789249936,
+            "median": 0.7370372016514997,
+            "min": 0.6905915449422084,
+            "n": 3,
+            "p90_nearest_rank": 0.8203195789249936
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -618.507114,
+        "median": -836.0541109999999,
+        "min": -930.128864,
+        "n": 6,
+        "p90_nearest_rank": -618.507114
+      },
+      "raw_files": [
+        "publication-artifacts-20-history-56-process-0.json",
+        "publication-artifacts-20-history-56-process-1.json",
+        "publication-artifacts-20-history-56-process-2.json"
+      ],
+      "source_kind": "publication",
+      "total_terminal_history": 56,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.8203195789249936,
+        "median": 0.7115720088395525,
+        "min": 0.6830789444270766,
+        "n": 6,
+        "p90_nearest_rank": 0.8203195789249936
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "all_pairs",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 425.829899,
+            "median": 346.24415,
+            "min": 302.027694,
+            "n": 4,
+            "p90_nearest_rank": 425.829899
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 3.5121384549600925,
+            "median": 3.0760178295339955,
+            "min": 2.9689439951140244,
+            "n": 4,
+            "p90_nearest_rank": 3.5121384549600925
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 337.075212,
+            "median": 244.200735,
+            "min": 222.297086,
+            "n": 5,
+            "p90_nearest_rank": 337.075212
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.7168680248543833,
+            "median": 2.433744060921158,
+            "min": 2.3097545700025934,
+            "n": 5,
+            "p90_nearest_rank": 2.7168680248543833
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 425.829899,
+        "median": 302.027694,
+        "min": 222.297086,
+        "n": 9,
+        "p90_nearest_rank": 425.829899
+      },
+      "raw_files": [
+        "run-artifacts-1-history-8-process-0.json",
+        "run-artifacts-1-history-8-process-1.json",
+        "run-artifacts-1-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.5121384549600925,
+        "median": 2.7168680248543833,
+        "min": 2.3097545700025934,
+        "n": 9,
+        "p90_nearest_rank": 3.5121384549600925
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "first_pair_fresh_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 343.688571,
+            "median": 343.688571,
+            "min": 343.688571,
+            "n": 1,
+            "p90_nearest_rank": 343.688571
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 3.03616462978165,
+            "median": 3.03616462978165,
+            "min": 3.03616462978165,
+            "n": 1,
+            "p90_nearest_rank": 3.03616462978165
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 337.075212,
+            "median": 288.884896,
+            "min": 240.69458,
+            "n": 2,
+            "p90_nearest_rank": 337.075212
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.666759325059494,
+            "median": 2.490673406099347,
+            "min": 2.3145874871392,
+            "n": 2,
+            "p90_nearest_rank": 2.666759325059494
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 343.688571,
+        "median": 337.075212,
+        "min": 240.69458,
+        "n": 3,
+        "p90_nearest_rank": 343.688571
+      },
+      "raw_files": [
+        "run-artifacts-1-history-8-process-0.json",
+        "run-artifacts-1-history-8-process-1.json",
+        "run-artifacts-1-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.03616462978165,
+        "median": 2.666759325059494,
+        "min": 2.3145874871392,
+        "n": 3,
+        "p90_nearest_rank": 3.03616462978165
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "warm_pair_same_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 425.829899,
+            "median": 348.799729,
+            "min": 302.027694,
+            "n": 3,
+            "p90_nearest_rank": 425.829899
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 3.5121384549600925,
+            "median": 3.1158710292863407,
+            "min": 2.9689439951140244,
+            "n": 3,
+            "p90_nearest_rank": 3.5121384549600925
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 262.918388,
+            "median": 244.200735,
+            "min": 222.297086,
+            "n": 3,
+            "p90_nearest_rank": 262.918388
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.7168680248543833,
+            "median": 2.433744060921158,
+            "min": 2.3097545700025934,
+            "n": 3,
+            "p90_nearest_rank": 2.7168680248543833
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 425.829899,
+        "median": 282.47304099999997,
+        "min": 222.297086,
+        "n": 6,
+        "p90_nearest_rank": 425.829899
+      },
+      "raw_files": [
+        "run-artifacts-1-history-8-process-0.json",
+        "run-artifacts-1-history-8-process-1.json",
+        "run-artifacts-1-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 3.5121384549600925,
+        "median": 2.842906009984204,
+        "min": 2.3097545700025934,
+        "n": 6,
+        "p90_nearest_rank": 3.5121384549600925
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "all_pairs",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 395.602199,
+            "median": 307.5925045,
+            "min": 232.353499,
+            "n": 4,
+            "p90_nearest_rank": 395.602199
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.855272980563235,
+            "median": 2.70164524745421,
+            "min": 2.5770123200509945,
+            "n": 4,
+            "p90_nearest_rank": 2.855272980563235
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 401.296033,
+            "median": 222.655676,
+            "min": 188.440251,
+            "n": 5,
+            "p90_nearest_rank": 401.296033
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.9512878705054804,
+            "median": 2.293302438840189,
+            "min": 1.938586504951077,
+            "n": 5,
+            "p90_nearest_rank": 2.9512878705054804
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 401.296033,
+        "median": 234.170113,
+        "min": 188.440251,
+        "n": 9,
+        "p90_nearest_rank": 401.296033
+      },
+      "raw_files": [
+        "run-artifacts-1-history-55-process-0.json",
+        "run-artifacts-1-history-55-process-1.json",
+        "run-artifacts-1-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.9512878705054804,
+        "median": 2.5770123200509945,
+        "min": 1.938586504951077,
+        "n": 9,
+        "p90_nearest_rank": 2.9512878705054804
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "first_pair_fresh_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 395.602199,
+            "median": 395.602199,
+            "min": 395.602199,
+            "n": 1,
+            "p90_nearest_rank": 395.602199
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.855272980563235,
+            "median": 2.855272980563235,
+            "min": 2.855272980563235,
+            "n": 1,
+            "p90_nearest_rank": 2.855272980563235
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 199.863505,
+            "median": 194.151878,
+            "min": 188.440251,
+            "n": 2,
+            "p90_nearest_rank": 199.863505
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.016468246332472,
+            "median": 1.9775273756417744,
+            "min": 1.938586504951077,
+            "n": 2,
+            "p90_nearest_rank": 2.016468246332472
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 395.602199,
+        "median": 199.863505,
+        "min": 188.440251,
+        "n": 3,
+        "p90_nearest_rank": 395.602199
+      },
+      "raw_files": [
+        "run-artifacts-1-history-55-process-0.json",
+        "run-artifacts-1-history-55-process-1.json",
+        "run-artifacts-1-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.855272980563235,
+        "median": 2.016468246332472,
+        "min": 1.938586504951077,
+        "n": 3,
+        "p90_nearest_rank": 2.855272980563235
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 1,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 0,
+      "condition": "warm_pair_same_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": 379.413515,
+            "median": 235.771494,
+            "min": 232.353499,
+            "n": 3,
+            "p90_nearest_rank": 379.413515
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.755918813760167,
+            "median": 2.647371681148253,
+            "min": 2.5770123200509945,
+            "n": 3,
+            "p90_nearest_rank": 2.755918813760167
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": 401.296033,
+            "median": 234.170113,
+            "min": 222.655676,
+            "n": 3,
+            "p90_nearest_rank": 401.296033
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 2.9512878705054804,
+            "median": 2.4755198043243793,
+            "min": 2.293302438840189,
+            "n": 3,
+            "p90_nearest_rank": 2.9512878705054804
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": 401.296033,
+        "median": 234.9708035,
+        "min": 222.655676,
+        "n": 6,
+        "p90_nearest_rank": 401.296033
+      },
+      "raw_files": [
+        "run-artifacts-1-history-55-process-0.json",
+        "run-artifacts-1-history-55-process-1.json",
+        "run-artifacts-1-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 2.9512878705054804,
+        "median": 2.6121920005996238,
+        "min": 2.293302438840189,
+        "n": 6,
+        "p90_nearest_rank": 2.9512878705054804
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 9,
+      "condition": "all_pairs",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -257.654885,
+            "median": -419.00178,
+            "min": -534.014439,
+            "n": 4,
+            "p90_nearest_rank": -257.654885
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.8214201332182904,
+            "median": 0.7019009899132478,
+            "min": 0.6517227439106333,
+            "n": 4,
+            "p90_nearest_rank": 0.8214201332182904
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -377.05667,
+            "median": -507.589301,
+            "min": -1207.533564,
+            "n": 5,
+            "p90_nearest_rank": -377.05667
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7334132469050871,
+            "median": 0.6997106035417096,
+            "min": 0.4984526460618158,
+            "n": 5,
+            "p90_nearest_rank": 0.7334132469050871
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -257.654885,
+        "median": -448.562977,
+        "min": -1207.533564,
+        "n": 9,
+        "p90_nearest_rank": -257.654885
+      },
+      "raw_files": [
+        "run-artifacts-20-history-8-process-0.json",
+        "run-artifacts-20-history-8-process-1.json",
+        "run-artifacts-20-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.8214201332182904,
+        "median": 0.6997106035417096,
+        "min": 0.4984526460618158,
+        "n": 9,
+        "p90_nearest_rank": 0.8214201332182904
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 3,
+      "condition": "first_pair_fresh_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -389.440583,
+            "median": -389.440583,
+            "min": -389.440583,
+            "n": 1,
+            "p90_nearest_rank": -389.440583
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7305867139606925,
+            "median": 0.7305867139606925,
+            "min": 0.7305867139606925,
+            "n": 1,
+            "p90_nearest_rank": 0.7305867139606925
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -416.073443,
+            "median": -461.831372,
+            "min": -507.589301,
+            "n": 2,
+            "p90_nearest_rank": -416.073443
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7138488117278049,
+            "median": 0.7067797076347573,
+            "min": 0.6997106035417096,
+            "n": 2,
+            "p90_nearest_rank": 0.7138488117278049
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -389.440583,
+        "median": -416.073443,
+        "min": -507.589301,
+        "n": 3,
+        "p90_nearest_rank": -389.440583
+      },
+      "raw_files": [
+        "run-artifacts-20-history-8-process-0.json",
+        "run-artifacts-20-history-8-process-1.json",
+        "run-artifacts-20-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.7305867139606925,
+        "median": 0.7138488117278049,
+        "min": 0.6997106035417096,
+        "n": 3,
+        "p90_nearest_rank": 0.7305867139606925
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 6,
+      "condition": "warm_pair_same_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -257.654885,
+            "median": -448.562977,
+            "min": -534.014439,
+            "n": 3,
+            "p90_nearest_rank": -257.654885
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.8214201332182904,
+            "median": 0.6732152658658032,
+            "min": 0.6517227439106333,
+            "n": 3,
+            "p90_nearest_rank": 0.8214201332182904
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -377.05667,
+            "median": -600.848489,
+            "min": -1207.533564,
+            "n": 3,
+            "p90_nearest_rank": -377.05667
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7334132469050871,
+            "median": 0.6063382729595129,
+            "min": 0.4984526460618158,
+            "n": 3,
+            "p90_nearest_rank": 0.7334132469050871
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -257.654885,
+        "median": -491.28870800000004,
+        "min": -1207.533564,
+        "n": 6,
+        "p90_nearest_rank": -257.654885
+      },
+      "raw_files": [
+        "run-artifacts-20-history-8-process-0.json",
+        "run-artifacts-20-history-8-process-1.json",
+        "run-artifacts-20-history-8-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 8,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.8214201332182904,
+        "median": 0.6624690048882182,
+        "min": 0.4984526460618158,
+        "n": 6,
+        "p90_nearest_rank": 0.8214201332182904
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 4,
+        "individual/batch": 5
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 9,
+      "condition": "all_pairs",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -346.616112,
+            "median": -466.2516955,
+            "min": -611.515034,
+            "n": 4,
+            "p90_nearest_rank": -346.616112
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7357712839302355,
+            "median": 0.6990812984895307,
+            "min": 0.6027064194762234,
+            "n": 4,
+            "p90_nearest_rank": 0.7357712839302355
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -362.457802,
+            "median": -526.398575,
+            "min": -694.917997,
+            "n": 5,
+            "p90_nearest_rank": -362.457802
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7233835333066692,
+            "median": 0.6563063300612463,
+            "min": 0.5751618289825718,
+            "n": 5,
+            "p90_nearest_rank": 0.7233835333066692
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -346.616112,
+        "median": -508.007857,
+        "min": -694.917997,
+        "n": 9,
+        "p90_nearest_rank": -346.616112
+      },
+      "raw_files": [
+        "run-artifacts-20-history-55-process-0.json",
+        "run-artifacts-20-history-55-process-1.json",
+        "run-artifacts-20-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.7357712839302355,
+        "median": 0.6952015660752813,
+        "min": 0.5751618289825718,
+        "n": 9,
+        "p90_nearest_rank": 0.7357712839302355
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 1,
+        "individual/batch": 2
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 3,
+      "condition": "first_pair_fresh_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -508.007857,
+            "median": -508.007857,
+            "min": -508.007857,
+            "n": 1,
+            "p90_nearest_rank": -508.007857
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7029610309037803,
+            "median": 0.7029610309037803,
+            "min": 0.7029610309037803,
+            "n": 1,
+            "p90_nearest_rank": 0.7029610309037803
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -452.873462,
+            "median": -489.63601850000003,
+            "min": -526.398575,
+            "n": 2,
+            "p90_nearest_rank": -452.873462
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.700102267742074,
+            "median": 0.6782042989016601,
+            "min": 0.6563063300612463,
+            "n": 2,
+            "p90_nearest_rank": 0.700102267742074
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -452.873462,
+        "median": -508.007857,
+        "min": -526.398575,
+        "n": 3,
+        "p90_nearest_rank": -452.873462
+      },
+      "raw_files": [
+        "run-artifacts-20-history-55-process-0.json",
+        "run-artifacts-20-history-55-process-1.json",
+        "run-artifacts-20-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.7029610309037803,
+        "median": 0.700102267742074,
+        "min": 0.6563063300612463,
+        "n": 3,
+        "p90_nearest_rank": 0.7029610309037803
+      }
+    },
+    {
+      "arm_orders": {
+        "batch/individual": 3,
+        "individual/batch": 3
+      },
+      "artifacts": 20,
+      "batch_equal_pairs": 0,
+      "batch_faster_pairs": 6,
+      "condition": "warm_pair_same_process",
+      "order_strata": {
+        "batch/individual": {
+          "paired_wall_delta_ms": {
+            "max": -346.616112,
+            "median": -424.495534,
+            "min": -611.515034,
+            "n": 3,
+            "p90_nearest_rank": -346.616112
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7357712839302355,
+            "median": 0.6952015660752813,
+            "min": 0.6027064194762234,
+            "n": 3,
+            "p90_nearest_rank": 0.7357712839302355
+          }
+        },
+        "individual/batch": {
+          "paired_wall_delta_ms": {
+            "max": -362.457802,
+            "median": -690.784436,
+            "min": -694.917997,
+            "n": 3,
+            "p90_nearest_rank": -362.457802
+          },
+          "wall_ratio_batch_over_individual": {
+            "max": 0.7233835333066692,
+            "median": 0.5863303580009562,
+            "min": 0.5751618289825718,
+            "n": 3,
+            "p90_nearest_rank": 0.7233835333066692
+          }
+        }
+      },
+      "paired_wall_delta_ms_batch_minus_individual": {
+        "max": -346.616112,
+        "median": -518.0052840000001,
+        "min": -694.917997,
+        "n": 6,
+        "p90_nearest_rank": -346.616112
+      },
+      "raw_files": [
+        "run-artifacts-20-history-55-process-0.json",
+        "run-artifacts-20-history-55-process-1.json",
+        "run-artifacts-20-history-55-process-2.json"
+      ],
+      "source_kind": "run",
+      "total_terminal_history": 55,
+      "wall_ratio_batch_over_individual": {
+        "max": 0.7357712839302355,
+        "median": 0.6489539927757524,
+        "min": 0.5751618289825718,
+        "n": 6,
+        "p90_nearest_rank": 0.7357712839302355
+      }
+    }
+  ]
+}
