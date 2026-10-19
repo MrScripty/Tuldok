@@ -575,12 +575,21 @@ class BoundExtensionRecipeTests(unittest.TestCase):
         with self.assertRaises(WorkbenchError):recipe_contract.validate_bound_sources(self.recipe,binding,changed)
 
     def test_contradictory_provider_runtime_pin_and_legacy_contract_types_refuse(self):
-        for version in (True,1.0,'2',4):
-            with self.subTest(version=version),self.assertRaises(WorkbenchError):self.inspect(version)
+        import agent_api
+        for version in (True,1.0,'2',5):
+            with self.subTest(version=version),self.assertRaises(WorkbenchError) as caught:
+                self.inspect(version)
+            self.assertEqual(caught.exception.code,'unsupported')
+        for version in (2,3,4):
+            with self.subTest(valid_version=version):
+                inspected=self.inspect(version)
+                agent_api.validate_output('recipes.inspect',{'status':200,'result':inspected},version)
         self.extension['runtime']['snapshot_sha256']='f'*64
         self._rebind_definitions()
-        with self.assertRaises(WorkbenchError) as caught:self.inspect(2)
-        self.assertEqual(caught.exception.code,'stale')
+        for version in (2,3,4):
+            with self.subTest(stale_version=version),self.assertRaises(WorkbenchError) as caught:
+                self.inspect(version)
+            self.assertEqual(caught.exception.code,'stale')
 
     def test_provider_runtime_and_resource_requirements_intersect_before_publication(self):
         original=copy.deepcopy(self.extension)
