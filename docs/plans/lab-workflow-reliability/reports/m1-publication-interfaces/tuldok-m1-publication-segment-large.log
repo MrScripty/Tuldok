@@ -1,0 +1,6 @@
+test_actual_large_recovered_artifact_uses_bounded_segments_without_full_scans (test_run_publication_http.PublicationHTTPTests.test_actual_large_recovered_artifact_uses_bounded_segments_without_full_scans) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 14.583s
+
+OK

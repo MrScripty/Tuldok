@@ -1,0 +1,38 @@
+test_headerless_or_nonowner_mutation_refuses_without_continuation (test_run_publication_http.PublicationHTTPTests.test_headerless_or_nonowner_mutation_refuses_without_continuation) ... ERROR
+test_owner_recovers_and_agent_collects_exact_result_over_real_http (test_run_publication_http.PublicationHTTPTests.test_owner_recovers_and_agent_collects_exact_result_over_real_http) ... ERROR
+
+======================================================================
+ERROR: test_headerless_or_nonowner_mutation_refuses_without_continuation (test_run_publication_http.PublicationHTTPTests.test_headerless_or_nonowner_mutation_refuses_without_continuation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/tests/test_run_publication_http.py", line 71, in test_headerless_or_nonowner_mutation_refuses_without_continuation
+    code, value = self.request('runs.recover_publication', body, owner=owner, selected=selected)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/tests/test_run_publication_http.py", line 35, in request
+    method, path, body = agent_api.project_request(operation, arguments, 1)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/agent_api.py", line 1109, in project_request
+    op = operation(name, version)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/agent_api.py", line 983, in operation
+    raise AgentAPIError('Unknown agent operation.', 'unknown_operation')
+agent_api.AgentAPIError: Unknown agent operation.
+
+======================================================================
+ERROR: test_owner_recovers_and_agent_collects_exact_result_over_real_http (test_run_publication_http.PublicationHTTPTests.test_owner_recovers_and_agent_collects_exact_result_over_real_http)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/tests/test_run_publication_http.py", line 45, in test_owner_recovers_and_agent_collects_exact_result_over_real_http
+    status = self.client.call('runs.publication_status', {'run_id': self.run['id']})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/agent_api.py", line 1312, in call
+    op = operation(name)
+         ^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-interfaces-m1/agent_api.py", line 983, in operation
+    raise AgentAPIError('Unknown agent operation.', 'unknown_operation')
+agent_api.AgentAPIError: Unknown agent operation.
+
+----------------------------------------------------------------------
+Ran 2 tests in 7.140s
+
+FAILED (errors=2)

@@ -1,0 +1,9 @@
+test_actual_large_recovered_artifact_uses_bounded_segments_without_full_scans (test_run_publication_http.PublicationHTTPTests.test_actual_large_recovered_artifact_uses_bounded_segments_without_full_scans) ... ok
+test_explicit_owner_cli_recovers_and_agent_cli_verifies_download (test_run_publication_http.PublicationHTTPTests.test_explicit_owner_cli_recovers_and_agent_cli_verifies_download) ... ok
+test_headerless_or_nonowner_mutation_refuses_without_continuation (test_run_publication_http.PublicationHTTPTests.test_headerless_or_nonowner_mutation_refuses_without_continuation) ... ok
+test_owner_recovers_and_agent_collects_exact_result_over_real_http (test_run_publication_http.PublicationHTTPTests.test_owner_recovers_and_agent_collects_exact_result_over_real_http) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 70.531s
+
+OK

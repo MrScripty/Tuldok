@@ -433,6 +433,11 @@ class Runs:
         import run_publication
         return run_publication.artifact(self, ref, name, expected_sha256)
 
+    @authorized('inspect', 'runs.publication_artifact_chunk')
+    def publication_artifact_segment(self, ref, name, body):
+        import run_publication
+        return run_publication.artifact_segment(self, ref, name, body)
+
     def _receipt(self, key, request_hash):
         row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()
         if row:
