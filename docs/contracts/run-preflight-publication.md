@@ -66,7 +66,8 @@ dispatch. No catalog schema, retained evidence format or migration changes.
 
 The Runs-owned continuation core below is implemented separately from preflight.
 Selected HTTP/agent operations and CLI/SDK collection are implemented below;
-browser/lineage integration and indexed diagnostics remain pending M1 work.
+Indexed diagnostics remain pending M1 work; the existing Run-panel and lineage
+controls below have separate browser qualification.
 The exact Ref evidence/comparison methods below have separate qualification.
 The preflight report itself grants no recovery or publication authority.
 
@@ -238,6 +239,65 @@ through the explicitly selected sealed public CLI. It collects no model state,
 performs no inference/admission/recovery and marks numerical acceptance
 `not_evaluated`. Compatible fixture arithmetic establishes comparison behavior,
 not the scientific validity or performance of any model.
+
+## Existing Run-panel publication controls
+
+The current catalog's existing external Run panel selects `publication_status/2`
+and exact selected-v1 recovery, cancellation, result, artifact-segment and field
+inspection contracts. Missing or incompatible pins fail closed. Saved metadata
+eligibility is displayed as requiring current byte verification; it does not
+claim output readiness. The original failed/interrupted label, publication fault,
+source Ref, finite attempt count and output copy bound stay visible.
+
+Only a current owner may recover or pause publication. Recovery also requires
+the retained original publication actor. The browser saves its source Ref and
+request key before dispatch in catalog/actor/Run-scoped tab session storage,
+mirrored into history. Unavailable or corrupt request storage disables recovery. Unknown write
+acknowledgements retain that exact request. Selected status/2 can reconcile a
+CLI-origin continuation using its actual actor/key/hash; the panel checks this
+hash against the exact source and request body. Existing foreign-actor requests
+can be paused by the current owner, but cannot be resumed under a new actor or
+key. Navigation, Run selection and session changes fence late responses and
+release panel polling; any server mutation already in progress remains owned by
+Runs. Polling is bounded to 75 seconds per observation window and never retries
+recovery automatically. Manual status refresh or same-request reconciliation is
+explicit.
+
+Published result inspection verifies its exact Ref/content identity before
+showing artifact and field-inspection controls. Browser downloads use selected
+segments, correlate the exact Ref/name/hash/offset and expose bytes only after
+whole SHA256 verification. Each artifact is limited to 8 MiB in the browser,
+with a 120-second download budget and at most 75 seconds per HTTP request.
+Larger artifacts remain available through the sealed CLI's existing bounds.
+Neutral results retain the typed unsupported field-evidence response. The panel
+never retries compute, selects a candidate, imports a binding or widens legacy
+failed-Run readers. Field metadata is structural/identity evidence; numerical
+acceptance remains separate.
+
+## Publication links in existing experiment lineage
+
+The existing Trial detail keeps its actual saved failed/interrupted Run outcome.
+For each such attempt in the bounded latest-five window, an explicit **Inspect
+saved publication status** action reads selected `publication_status/2`. It never
+fans out status reads when the graph loads and starts no publication polling.
+The lineage and Run panel share one closed metadata/source/result-Ref/request-hash
+decoder, correlating the original Run, catalog and original outcome. Contradictory
+metadata refuses instead of manufacturing an empty or ready result.
+
+Publication state and the exact recovered Ref appear separately from the
+original Run label. Both remain labelled saved metadata. **Open original Run to
+inspect this Ref** opens that same Run's existing panel, where current owner
+recovery/pause and explicit byte inspection remain owned. Lineage supplies no
+recovery, replay, promotion or import action. Selecting another node, refreshing
+the graph, navigating or changing session clears inspected publication metadata;
+late responses are fenced before disclosure.
+
+A fresh real neutral Model/Study/Trial/admission/custodian fixture qualifies this
+link through a retained copy fault and same-Run recovery. Its Study reservation,
+conservative charge, original lineage projection, Run state and lifecycle events
+remain unchanged. This is byte-custody and interaction evidence, with no
+numerical producer, model-quality or scientific acceptance claim. Existing
+lineage contracts, ancestry, intent and attempt schemas are unchanged.
 
 ## Current large-output storage observation
 

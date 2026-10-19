@@ -270,3 +270,61 @@
   independently ran all 6 new cases successfully. [Exact retained evidence](reports/m1-publication-source/validation.json)
   distinguishes these from recovery commands/readers, indexed diagnostic capture
   and full A1/A2/M1, which remain pending.
+
+### M1 existing Run-panel publication UI (independent implementation)
+
+Implemented in a separate task-owned worktree/branch from reviewed `415f5e1`,
+then fast-forwarded the root-authored additive status/2 `d07e928`. The root API
+addon was independently reviewed read-only and its actual PostgreSQL selected
+v2/v1 equality and forged-key refusal case passed 1/1 in 11.831 seconds.
+
+The UI uses exact contract pins, saved metadata eligibility, retained original
+state/fault/source, owner actions with original actor/request identity, finite
+status observation, exact result inspection and whole-hash browser download.
+Controlled transport witnesses cover unknown acknowledgements, same-request
+reuse across fresh history entries, unavailable tab-storage refusal, stale
+read/write fencing, identity/hash refusal and timer cleanup. The
+neutral browser witness exercises real custody/copy failure, owner pause/resume
+through a fresh document, unchanged original state/counts/events, exact result
+inspection/download and unsupported neutral field evidence. These are custody
+and interaction facts, with no numerical producer or scientific acceptance.
+
+An initial browser harness readiness check accessed the dataset control before
+the new document existed. It failed before the UI journey; the corrected check
+waits for that control. The first failure transcript and corrected browser
+receipts are retained with this slice. An additional focused controller test
+caught an undefined deadline check accidentally placed in result inspection
+while tightening download timeouts; it was corrected before source commit.
+No production assertions or resource bounds were weakened.
+
+The existing CI workflow adds only the new focused Node controller and neutral
+browser steps, using the existing PostgreSQL/Chromium/dependencies. Root review,
+hosted qualification, lineage integration and indexed diagnostics remain
+pending; this implementation is not self-cleared.
+
+### M1 publication links in existing experiment lineage
+
+Implemented separately from reviewed UI `61d2c2d`. The selected Trial's bounded
+failed/interrupted attempts expose explicit saved status/2 inspection and a link
+to the original Run's exact recovered Ref inspector. Original outcomes and
+publication states stay separate. Lineage performs only explicit reads; no
+status fanout, new polling owner, recovery, compute replay, candidate selection
+or import is introduced. The existing panel and lineage reuse one closed
+source/Ref/status/request-hash decoder instead of maintaining independent
+versions. No Python domain/API or lineage contract changes occur.
+
+Controlled Node tests cover original-state/Ref correlation, no fanout/mutation,
+unknown/extra/malformed identities, source/request-hash contradictions and late
+navigation/session responses. Existing lineage and Run-panel controller tests
+continue to pass. A new fresh PostgreSQL17/Chromium fixture creates a real
+neutral Model, Study, Trial, intent, grant and actual custodian copy fault; it
+uses the existing Run panel for recovery, then follows a fresh lineage Ref link
+back to the real result verifier. It checks unchanged Study reservation/charge,
+lineage projection, counts, events, original state and legacy failed reader
+refusal. No numerical producer, training or science claim is made.
+
+The initial Node harness used a synthetic button click where the existing
+lineage refresh is a form submission. That harness call was corrected to submit
+the form, preserving all product assertions. The actual first neutral browser
+journey passed. Exact-source qualification, receipts and root independent review
+follow; hosted acceptance, indexed diagnostics and full M1 remain pending.

@@ -1,0 +1,40 @@
+{
+  "state": "passed",
+  "source_head": "513ee0768906f8052769b2e19adfcc44deafcbae",
+  "base": "61d2c2d706cac4515860a9571db85451be2ecaa8",
+  "branch": "feature/lab-publication-lineage-20261019",
+  "scope": "Explicit existing-lineage publication metadata and exact original-Run Ref links; neutral Model/Study/Trial/custody only",
+  "checks": {
+    "controlled_lineage": "passed; explicitselected2/no fanout/no mutation, originaloutcome/Refidentity, malformed/extra/source/hash refusal and stale navigation/session fences",
+    "controlled_panel_regression": "passed with shared closed decoder",
+    "existing_lineage_regression": "passed",
+    "canonical_publication_pins": "1 unittest passed, zero skips",
+    "actual_lineage_browser": "passed exactsource with fresh real PostgreSQL17/neutral Model+Study+Trial+intent+grant+custodian and Chromium151, real originalRun recovery and exactRef link to byte verifier,1440/390 nooverflow",
+    "actual_panel_browser_regression": "passed exactsource; original pause/freshreload/samekey resume/wholeSHA download journey with shareddecoder",
+    "fixture_cleanup": "both processes exited0 after owned temp catalog cleanup and explicit owned schema DROP"
+  },
+  "conservation": [
+    "one Run/grant/consumption/reservation unchanged in lineage fixture",
+    "entire conservative Study charge and reservation document unchanged",
+    "original lineage projection, interrupted Run label and lifecycle events unchanged",
+    "legacy failed artifact refusal preserved"
+  ],
+  "pending": [
+    "root independent source/test/docs review",
+    "hosted exact-head qualification",
+    "indexed diagnostics",
+    "full M1 acceptance"
+  ],
+  "source_sha256": {
+    ".github/workflows/tests.yml": "23f5c9504283ece6486f6b276efdf578f28d5362dee7dbeae1985e15448eca7f",
+    "static/experiment-lineage.js": "085ee3cc990f1986db357e1e8f7bace0c16a2257bca9443ff412c464d91a53db",
+    "static/workspace-external.js": "3a1a441438aee5b081732e4ecdafcefdae034d6d7e404f843a7a21694e73ed2d",
+    "tests/test_workspace_publication_controller.cjs": "77737b7757169ec231a9be4744a3b51dd82215e52085143469eddabfaf1a31fc",
+    "tests/test_workspace_publication_lineage.cjs": "48a1484158ae647e87259c94e5460d3e8995621c7df78c1ef11f383b59dff396",
+    "tests/browser_workspace_publication_lineage.cjs": "212f21fd4f713320468e8966442f3f95ec3df836c3ac5ff8fee4e9c1ce1de401",
+    "tests/publication_lineage_browser_fixture.py": "2d258b29eefbd0c0b3c99240369ab8fb8f0a849ab54966b9f751e67d8d95d948",
+    "docs/contracts/run-preflight-publication.md": "1a1775cd9cbb328f8699658fa82f81a61a4d4b2532afa3608108ab59b18fcb06",
+    "docs/plans/lab-workflow-reliability/plan.md": "7b9c01d278924bf8347be74def480e16bfc938800e8d3e30cf52319342450f56",
+    "docs/plans/lab-workflow-reliability/execution-ledger.md": "308ad4275bcadcbcbc4a924f44b78d913f9c23623c86f19222026b6c0dd0d76c"
+  }
+}

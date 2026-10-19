@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — qualify exact recovered field evidence and SDK comparison; browser/lineage and indexed diagnostics remain pending
+**Current phase:** M1 — qualify publication links in existing lineage; indexed diagnostics remain pending
 
-**Next slice:** Complete exact composed synthetic custody/semantic/HTTP/SDK comparison qualification and independent review, then implement Run panel and lineage integration.
+**Next slice:** Independently review the exact lineage branch and qualify the composed UI; then implement indexed diagnostics.
 
 **Acceptance status:** `pending`
 
@@ -419,3 +419,24 @@ product evidence. No dependency or application test is weakened for this plan.
 - Acceptance status: `pending`
 - Deferred follow-ups: CUDA/scientific claims require their actual inputs; no promise of new hardware or physical validity is admitted.
 - Final status: `Active` — no A1–A8 completion claim.
+
+### M1 Run-panel admission
+
+Task-owned branch `feature/lab-publication-run-panel-20261019` starts at reviewed
+`415f5e1` and includes the normal fast-forward of additive selected status/2
+`d07e928`. The UI write set is `static/workspace-external.js`,
+`static/workspace-real.js`, focused controller/pin/browser tests and their neutral
+fixture, the existing CI workflow, this plan/ledger, the canonical publication
+doc and bounded receipts. No Python domain/API or persisted/public contract is
+changed by this UI slice. Root owns independent review and serial integration;
+hosted qualification and full M1 acceptance remain pending.
+
+### M1 lineage publication-link admission
+
+Isolated branch `feature/lab-publication-lineage-20261019` starts at reviewed UI
+`61d2c2d`. Its write set is the existing lineage JS and shared publication JS
+read-only decoder, focused Node/browser tests plus their genuine neutral Study
+fixture, the existing CI workflow, this plan/ledger, canonical publication doc
+and bounded evidence. No Python domain/API, persisted schema, lineage wire
+contract or original outcome is changed. Root retains independent review and
+serial integration ownership. Hosted acceptance and full M1 remain pending.
