@@ -92,16 +92,19 @@ class BoundOutputPreflightIntegrationTests(unittest.TestCase):
         fixture = fixtures.BoundExtensionRecipeTests('runTest')
         self.addCleanup(fixture.doCleanups)
         fixture.setUp()
+        dataset = fixture.dataset
+        body = {'name': 'Field output capacity control', **fixture.selector, 'inputs': {
+            'fixture': {'reference_id': 'fixture', 'expected_sha256': fixture.manifest['data'][0]['sha256']}}}
+        with patch('subprocess.Popen', side_effect=AssertionError('Graph preparation launched compute')):
+            control = dataset.pipelines.create_external(body)
+        self.assertEqual(control['recipe'], 'external_recipe')
         fixture.recipe['outputs'][next(i for i, row in enumerate(fixture.recipe['outputs'])
                                       if row['path'] == 'prediction-16.npy')]['max_bytes'] = 511
         fixture._rebind_definitions()
-        dataset = fixture.dataset
+        body.update(fixture.selector)
         before = {table: dataset.db.execute('SELECT count(*) FROM ' + table).fetchone()[0]
                   for table in ('workspace_graphs', 'workspace_runs', 'access_execution_grants',
                                 'access_execution_consumptions', 'model_attempt_reservations')}
-        body = {'name': 'Impossible field output', **fixture.selector, 'inputs': {
-            'fixture': {'reference_id': 'fixture', 'expected_sha256':
-                        fixture.recipe['model_evidence']['probe']['candidates'][0]['input_sha256']}}}
         with patch('subprocess.Popen', side_effect=AssertionError('Rejected declaration launched compute')):
             with self.assertRaises(WorkbenchError) as caught:
                 dataset.pipelines.create_external(body)
