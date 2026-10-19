@@ -17,7 +17,7 @@ import tempfile
 import threading
 import time
 
-from agent_api import (AgentAPIError, AgentClient, encoded, validate_arguments,
+from agent_api import (AgentAPIError, AgentClient, contract, encoded, validate_arguments,
                        verify_artifact, verify_publication_artifact)
 
 MAX_ITEMS = 20
@@ -37,6 +37,12 @@ def _digest(value):
         return hashlib.sha256(encoded(value)).hexdigest()
     except (TypeError, ValueError, RecursionError):
         raise AgentAPIError('Invalid bounded workflow JSON.') from None
+
+
+def _domain_digest(value):
+    # workbench.encode / pipeline.digest: domain content uses canonical UTF-8.
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
+        ensure_ascii=False, allow_nan=False).encode('utf-8')).hexdigest()
 
 
 def _error(error):
@@ -150,8 +156,7 @@ class WorkflowClient:
         prepared = _invoke(self.client, 'graphs.preflight_external', {'graph_id': graph_id, 'revision': revision})
         if (prepared['material']['catalog_id'] != self.client.catalog_id
                 or prepared['graph_revision'] != revision
-                or hashlib.sha256(json.dumps(prepared['material'], sort_keys=True, separators=(',', ':'),
-                    ensure_ascii=False, allow_nan=False).encode('utf-8')).hexdigest() != prepared['material_sha256']):
+                or _domain_digest(prepared['material']) != prepared['material_sha256']):
             raise AgentAPIError('Selected preflight material differs.', 'conflict', 409)
         args = {'graph_id': graph_id, 'graph_revision': revision,
                 'expected_digest': prepared['material_sha256'], 'approval_id': approval_id, 'request_key': request_key}
@@ -202,9 +207,24 @@ class WorkflowClient:
                     raise ValueError()
             else:
                 reservation = envelope['result']['reservation']
+                run = envelope['result']['run']
+                # experiments.Experiments.admit/1 owns this receipt identity.
+                # Correlate its canonical request; do not reproduce budget policy.
+                request_sha = _domain_digest({'operation_id': 'studies.admit', 'version': 1,
+                    'contract_sha256': contract('studies.admit', 1)['sha256'],
+                    'study_id': arguments['study_id'],
+                    'body': {key: value for key, value in arguments.items() if key != 'study_id'}})
                 if (any(reservation[key] != arguments[key] for key in
                         ('study_id', 'trial_id', 'request_key', 'admission_epoch'))
-                        or reservation['run_id'] != envelope['result']['run']['id']):
+                        or reservation['run_id'] != run['id']
+                        or reservation['request_sha256'] != request_sha
+                        or reservation['parent_run_id'] != arguments.get('parent_run_id')
+                        or run['parent_run_id'] != arguments.get('parent_run_id')
+                        or run['dataset_id'] != self.client.catalog_id
+                        or run['approval_id'] != arguments['approval_id']
+                        or run['actor_id'] != reservation['actor_id']
+                        or run['approval_material_sha256'] != reservation['material_sha256']
+                        or any(run['study_membership'][key] != arguments[key] for key in ('study_id', 'trial_id'))):
                     raise ValueError()
         except (KeyError, TypeError, ValueError):
             return dict(receipt, state='unknown', error={'code': 'transport', 'status': 502,
@@ -402,7 +422,7 @@ class WorkflowClient:
                 directory = Path(directory)
                 if not directory.is_dir() or directory.is_symlink():
                     raise AgentAPIError('Collection destination must be an existing regular directory.')
-                results, halted = [], False
+                results, halted, freshly_verified = [], False, 0
                 for item in manifest['items']:
                     name = item['name']
                     destination = directory / name
@@ -428,13 +448,14 @@ class WorkflowClient:
                                 name, item['sha256'], destination, result_ref=source.get('ref'), chunk_bytes=chunk_bytes,
                                 cancelled=cancelled, expected_bytes=item['bytes'])
                         results.append({'name': name, 'state': 'verified', 'receipt': receipt})
+                        freshly_verified += 1
                     except (AgentAPIError, OSError) as error:
                         if isinstance(error, OSError):
                             error = AgentAPIError('Local collection file operation failed.', 'unavailable', 503)
                         results.append({'name': name, 'state': 'outstanding' if error.code == 'stopped' else 'refused', 'error': _error(error)})
                         halted = True
-                state = ('complete' if all(item['state'] == 'verified' for item in results) else
-                         'stopped' if cancelled is not None and cancelled.is_set() else 'partial')
+                state = ('stopped' if cancelled is not None and cancelled.is_set() else
+                         'complete' if freshly_verified == len(manifest['items']) else 'partial')
                 return {'format': 'workflow_collection_receipt_v1', 'manifest': manifest, 'state': state, 'items': results}
 
         except AgentAPIError as error:

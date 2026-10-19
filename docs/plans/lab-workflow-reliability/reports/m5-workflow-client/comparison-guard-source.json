@@ -1,0 +1,24 @@
+{
+  "actual_http": "Pending one existing positive classifier comparison case after M4 paired quiet-window release",
+  "base_commit": "40d7f61732c45c7c329b0061ae29154612784168",
+  "files": {
+    "agent_api.py": "749aed421e9c73cd7abe1fdb6fcaaaa09842ffe9d33888cd6b7a32579dfe4a48",
+    "docs/contracts/workflow-client.md": "3571150636ec9d8f494cb45b4a31ba96fce1fc5672bb430ebd663c6a4e3e2403",
+    "project_cli.py": "450f2c155928361e5db2b4ac5b686f00cb51ce9368ade531c6f97c9b70d7b015",
+    "tests/test_workflow_client.py": "a9f8bfeeabc054e16bfe041ea8b76f41517d8c6b1a93d2085017d11edb018863",
+    "tests/test_workflow_client_http.py": "25c489b8490f457840a2b88d1c9cb5e351e2dd0967eaf7cdd5bed3ee308eae7f",
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+  },
+  "green": {
+    "command": "PATH=/workspace/tuldok-runtime/bin:$PATH PYTHONPATH=tests:. python -m unittest test_workflow_client -v",
+    "result": "EXIT0; 21 tests, 3.047s"
+  },
+  "red": {
+    "command": "PATH=/workspace/tuldok-runtime/bin:$PATH PYTHONPATH=tests:. python -m unittest test_workflow_client.ComparisonReplyTests -v",
+    "production_commit": "40d7f61732c45c7c329b0061ae29154612784168",
+    "result": "EXIT1; 3 tests, 12 assertion failures, 1.382s",
+    "working_test_sha256": "a9f8bfeeabc054e16bfe041ea8b76f41517d8c6b1a93d2085017d11edb018863"
+  },
+  "reviewed_guard_source": "41fb30a629a5733ae87d8bcfe718fad365ef9bef",
+  "scope": "Exact reviewed ten-line AgentClient success-v2 relation guard; self-contained M5 tests and documentation"
+}

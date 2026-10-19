@@ -37,7 +37,9 @@ client/server error. Server 5xx and `commit_unknown` remain uncertain. A later
 authorization/refusal during explicit reconciliation is retained as a bounded
 `reconciliation` observation on the original unknown receipt, because it cannot
 prove the earlier admission had no effect. Only an exact positive acknowledgement
-resolves this facade's unknown outcome. A transport/decoding failure after
+resolves this facade's unknown outcome. Study acknowledgements also bind the
+requested parent, catalog, grant and existing owner's exact contract/request SHA
+and exposed reservation/Run association. A transport/decoding failure after
 dispatch is uncertain even when the
 server may already have committed. There is no automatic retry. Retain the
 receipt and explicitly call `reconcile(unknown_receipt)` with exactly the same
@@ -105,7 +107,9 @@ existing `project_cli.download` is a re-export of this same publication helper.
 
 A `workflow_collection_receipt_v1` retains the exact manifest and ordered
 `verified`, `refused` (with original typed error) and `outstanding` items. The
-whole result is `complete`, `partial` or `stopped`. A failed item stops further
+whole result is `complete`, `partial` or `stopped`. Complete requires a fresh
+verification of every selected item in the current invocation; inherited proofs
+from skipped items cannot make a stopped or partial resume complete. A failed item stops further
 requests; collection never auto-retries it. Earlier verified files remain valid
 local results. Explicit resume reopens each prior verified success without
 following symlinks, checks owner/private regular-file metadata and whole SHA,
@@ -148,6 +152,12 @@ selects no winner, invents no criteria or epoch, and performs no inference. The
 ordinary exact comparison needs its existing v2 contract; a v1-only server cannot
 silently downgrade to the old implicit selection. Compatible/incompatible is a
 comparison result, not a model-quality acceptance claim.
+
+The canonical `AgentClient` correlates successful ordinary v2 replies with the
+requested mode, ordered Run IDs, metric ID and all three hashes on each side.
+A schema-valid reply with a different selection raises a transport error without
+retrying or selecting another operation. Existing low-level v1 replies retain
+their original wire contract.
 
 ## CLI and compatibility
 

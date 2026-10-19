@@ -13,7 +13,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from agent_api import AgentAPIError, AgentClient, encoded
+from agent_api import AgentAPIError, AgentClient, encoded, validate_output
 from test_agent_project_cli import SegmentFixture
 from tuldok_client import WorkflowClient, _manifest
 
@@ -63,6 +63,66 @@ class ConsumerFixture(SegmentFixture):
         if self.after_segment is not None:
             self.after_segment(arguments)
         return value
+
+
+class ComparisonReplyTests(unittest.TestCase):
+    """Real AgentClient validation with controlled, schema-valid HTTP replies."""
+
+    def setUp(self):
+        self.operation = 'runs.compare_model_evidence'
+        self.arguments = {'run_id': RUN, 'other_run_id': 'c'*32, 'metric_id': 'loss', 'mode': 'paired'}
+        for prefix in ('', 'other_'):
+            for key in ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'):
+                self.arguments[prefix + key] = hashlib.sha256((prefix + key).encode()).hexdigest()
+        self.reply = {'status': 200, 'result': {'state': 'compatible', 'mode': 'paired',
+            'sides': [{'run_id': self.arguments[prefix + 'run_id'], 'metric_id': 'loss',
+                **{key: self.arguments[prefix + key] for key in
+                   ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256')},
+                'split': 'validation', 'clocks': {'optimizer_update': None, 'epoch': index + 1,
+                    'fit_pass': None, 'physical_time': None, 'wall_elapsed_ms': 10},
+                'units': 'loss', 'direction': 'minimize',
+                'result': {'state': 'observed', 'value': 1.0, 'sample_count': 2}}
+                for index, prefix in enumerate(('', 'other_'))], 'reasons': [], 'delta': None}}
+
+    def call(self, arguments, reply, version=2):
+        client = AgentClient('http://127.0.0.1:12345', 'x'*32, CATALOG)
+        client._ready = True
+        client._selected = {self.operation: version}
+        # The independent schema oracle proves each relation fault can reach
+        # the response correlation guard; no schema validation is mocked.
+        validate_output(self.operation, reply, version)
+        with patch.object(client, '_request', return_value=copy.deepcopy(reply)) as request:
+            try:
+                return client.call(self.operation, arguments)
+            finally:
+                request.assert_called_once()
+                self.assertEqual(request.call_args.kwargs['selection'], (self.operation, version))
+
+    def test_exact_v2_reply_accepts_requested_mode_and_ordered_operands(self):
+        self.assertEqual(self.call(self.arguments, self.reply), self.reply)
+
+    def test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes(self):
+        faults = []
+        wrong = copy.deepcopy(self.reply); wrong['result']['mode'] = 'side_by_side'; faults.append(wrong)
+        wrong = copy.deepcopy(self.reply); wrong['result']['sides'].reverse(); faults.append(wrong)
+        for index in (0, 1):
+            for key in ('run_id', 'metric_id', 'evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'):
+                wrong = copy.deepcopy(self.reply)
+                wrong['result']['sides'][index][key] = ('d'*32 if key == 'run_id' else
+                    'accuracy' if key == 'metric_id' else 'f'*64)
+                faults.append(wrong)
+        for index, reply in enumerate(faults):
+            with self.subTest(fault=index):
+                with self.assertRaises(AgentAPIError) as caught:
+                    self.call(self.arguments, reply)
+                self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+
+    def test_legacy_v1_reply_keeps_its_existing_wire_contract(self):
+        arguments = {'run_id': RUN, 'other_run_id': 'c'*32}
+        reply = {'status': 200, 'result': {'state': 'compatible',
+            'run_ids': [RUN, 'c'*32], 'reasons': [], 'metrics': [
+                {'metric_id': 'loss', 'values': [1.0, 0.5], 'direction': 'minimize', 'units': 'loss'}]}}
+        self.assertEqual(self.call(arguments, reply, version=1), reply)
 
 
 class WorkflowClientTests(unittest.TestCase):
@@ -319,6 +379,63 @@ assert 'jsonschema' not in sys.modules
             self.assertEqual(resumed['state'], 'partial')
             self.assertEqual(resumed['items'][0]['error']['code'], 'artifact_mismatch')
             self.assertEqual(target.read_bytes(), b'preserved concurrent replacement')
+
+    def test_cancelled_resume_never_completes_from_unvisited_prior_proofs(self):
+        client = ConsumerFixture(); workflow = WorkflowClient(client)
+        manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin', 'two.bin'])
+        with tempfile.TemporaryDirectory() as directory:
+            prior = workflow.collect(manifest, directory)
+            target = Path(directory)/'two.bin'
+            target.write_bytes(b'corrupted after original verified receipt')
+            stop = threading.Event()
+            from tuldok_client import _verified_local
+            def stop_after_first(path, item):
+                _verified_local(path, item)
+                stop.set()
+            client.requests.clear()
+            with patch('tuldok_client._verified_local', side_effect=stop_after_first):
+                current = workflow.collect(manifest, directory, resume=prior, cancelled=stop)
+            self.assertEqual(current['state'], 'stopped')
+            self.assertEqual(current['items'][1], prior['items'][1])
+            self.assertEqual([args['name'] for op,args in client.requests if op == 'runs.artifact_chunk'], ['one.bin'])
+            self.assertEqual(target.read_bytes(), b'corrupted after original verified receipt')
+
+    def test_study_acknowledgement_matches_owner_request_parent_catalog_and_grant(self):
+        from agent_api import contract, validate_output
+        from pipeline import digest
+        args = {'study_id': 'b'*32, 'trial_id': 'c'*32, 'approval_id': 'd'*32,
+            'request_key': 'exact-study-request', 'revision': 1, 'admission_epoch': 1, 'parent_run_id': 'e'*32}
+        expected = digest({'operation_id': 'studies.admit', 'version': 1,
+            'contract_sha256': contract('studies.admit', 1)['sha256'], 'study_id': args['study_id'],
+            'body': {key:value for key,value in args.items() if key != 'study_id'}})
+        reservation = {'id': '1'*32, 'study_id': args['study_id'], 'admission_epoch': 1,
+            'request_key': args['request_key'], 'actor_id': '2'*32, 'trial_id': args['trial_id'],
+            'parent_run_id': args['parent_run_id'], 'run_id': '3'*32, 'request_sha256': expected,
+            'material_sha256': '4'*64, 'envelope': {key:1 for key in
+                ('attempt_slots', 'admitted_wall_seconds', 'retained_bytes', 'peak_staging_bytes')},
+            'state': 'reserved', 'settled': None}
+        reply = {'status': 201, 'result': {'reservation': reservation, 'run': {
+            'id': '3'*32, 'state': 'queued', 'dataset_id': CATALOG, 'approval_id': args['approval_id'],
+            'parent_run_id': args['parent_run_id'], 'actor_id': '2'*32, 'approval_material_sha256': '4'*64,
+            'study_membership': {key:args[key] for key in ('study_id', 'trial_id')}}}}
+        client = AgentClient('http://127.0.0.1:12345', 'x'*32, CATALOG)
+        client._ready = True; client._selected = {'studies.admit': 1}
+        workflow = WorkflowClient(client)
+        manifest = _manifest(CATALOG, 'studies.admit', args, 'workflow_submission_manifest_v1')
+        validate_output('studies.admit', reply, 1)
+        with patch.object(client, '_request', return_value=reply):
+            self.assertEqual(workflow.submit(manifest)['state'], 'acknowledged')
+        for owner,key,value in (('reservation', 'parent_run_id', 'f'*32),
+                ('reservation', 'request_sha256', '0'*64), ('run', 'dataset_id', '9'*32),
+                ('run', 'approval_id', '8'*32), ('run', 'parent_run_id', 'f'*32),
+                ('run', 'actor_id', '8'*32), ('run', 'approval_material_sha256', '8'*64)):
+            changed = copy.deepcopy(reply); changed['result'][owner][key] = value
+            validate_output('studies.admit', changed, 1)  # Schema-valid protocol faults.
+            with self.subTest(owner=owner, key=key), patch.object(client, '_request', return_value=changed) as request:
+                receipt = workflow.submit(manifest)
+            self.assertEqual(receipt['state'], 'unknown')
+            self.assertEqual(receipt['manifest'], manifest)
+            self.assertEqual(request.call_count, 1)
 
     def test_changed_inventory_local_success_and_closed_manifests_refuse(self):
         client = ConsumerFixture(); workflow = WorkflowClient(client)

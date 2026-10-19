@@ -303,6 +303,48 @@ class WorkflowHTTPTests(AgentHTTPCase):
         self.assertEqual((destination/'result.txt').read_bytes(), self.input)
         self.assertEqual(self.counts(), (1, 1))
 
+    def test_cancelled_resume_cannot_complete_with_corrupt_unvisited_prior_success(self):
+        source = ("from pathlib import Path\nimport sys\n"
+            "raw=Path(sys.argv[2]).read_bytes(); out=Path(sys.argv[3])\n"
+            "out.joinpath('one.bin').write_bytes(raw); out.joinpath('two.bin').write_bytes(raw)\n").encode()
+        self.definition['sources'][0]['sha256'] = hashlib.sha256(source).hexdigest()
+        self.definition['outputs'] = [{'path': name, 'role': 'result', 'max_bytes': 4096, 'required': True}
+                                      for name in ('one.bin', 'two.bin')]
+        self.definition_raw = json.dumps(self.definition).encode()
+        self.manifest['id'] = uuid.uuid4().hex
+        self.manifest['recipes'][0]['sha256'] = hashlib.sha256(self.definition_raw).hexdigest()
+        for name, raw in {'recipe.py': source, 'recipe.json': self.definition_raw,
+                          'project.json': json.dumps(self.manifest).encode()}.items():
+            (self.project_path/name).write_bytes(raw)
+        with self.owner.bound(self.dataset):
+            self.dataset.projects.open({'root': 'fixture', 'manifest_path': 'project.json'})
+            self.graph = self.dataset.pipelines.create_external(self.graph_body())
+            self.preflight = self.dataset.pipelines.preflight_external(self.graph['id'], self.graph['revision'])
+        run = self.completed()
+        manifest = self.workflow.collection_manifest(run_id=run['id'], names=['one.bin', 'two.bin'])
+        destination = self.path/'resume-prior'; destination.mkdir(mode=0o700)
+        prior = self.workflow.collect(manifest, destination, chunk_bytes=7)
+        self.assertEqual(prior['state'], 'complete')
+        (destination/'two.bin').write_bytes(b'corrupt local bytes retained for inspection')
+        stop = threading.Event()
+        from tuldok_client import _verified_local
+        def stop_after_first(path, item):
+            _verified_local(path, item)
+            stop.set()
+        with patch('tuldok_client._verified_local', side_effect=stop_after_first):
+            current = self.workflow.collect(manifest, destination, resume=prior, cancelled=stop)
+        self.assertEqual(current['state'], 'stopped')
+        self.assertEqual(current['items'][1], prior['items'][1])
+        refused = self.workflow.collect(manifest, destination, resume=current)
+        self.assertEqual(refused['state'], 'partial')
+        self.assertEqual(refused['items'][1]['error']['code'], 'artifact_mismatch')
+        (destination/'two.bin').rename(destination/'two-corrupt-kept.bin')
+        completed = self.workflow.collect(manifest, destination, resume=refused, chunk_bytes=7)
+        self.assertEqual(completed['state'], 'complete')
+        self.assertEqual((destination/'two.bin').read_bytes(), self.input)
+        self.assertEqual((destination/'two-corrupt-kept.bin').read_bytes(), b'corrupt local bytes retained for inspection')
+        self.assertEqual(self.counts(), (1, 1))
+
     def test_cold_monitor_deadline_and_cancellation_cooperate_during_registry_validation(self):
         # A fresh consumer process includes first validator import/registry work.
         code = """
@@ -437,7 +479,17 @@ class RetainedWorkflowHTTPTests(unittest.TestCase):
             request_key='consumer-trial-exact-once')
         self.assertEqual(manifest['operation'], 'studies.admit')
         self.assertEqual(manifest['arguments']['trial_id'], trial['id'])
-        submitted = workflow.submit(manifest)
+        request = workflow.client._request
+        def wrong_catalog(method, path, body=None, **kwargs):
+            reply = request(method, path, body, **kwargs)
+            if path.endswith('/admit') and reply['status'] < 400:
+                reply = copy.deepcopy(reply)
+                reply['result']['run']['dataset_id'] = '0'*32
+            return reply
+        with patch.object(workflow.client, '_request', side_effect=wrong_catalog):
+            unknown = workflow.submit(manifest)
+        self.assertEqual(unknown['state'], 'unknown', unknown)
+        submitted = workflow.reconcile(unknown)
         self.assertEqual(submitted['state'], 'acknowledged', submitted)
         repeated = workflow.submit(json.loads(json.dumps(manifest)))
         self.assertEqual(repeated['state'], 'acknowledged', repeated)
