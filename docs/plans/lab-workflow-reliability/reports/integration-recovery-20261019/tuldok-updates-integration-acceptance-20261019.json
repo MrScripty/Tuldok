@@ -44,10 +44,11 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "Qualify PR95/96/97/98 exact heads and serially merge/retarget whenready",
-    "Required latestmain265 postmerge workflows before terminalacceptance/cleanup",
-    "Complete Runpanel/lineage/indexed diagnostics and full M1-M6 acceptance",
-    "Preserve82originalheads/96worktrees, PR91 and allunrelatedresources; checkpoint retained"
+    "Finish exact98 onward hosted acceptance and serial merges/retargets",
+    "Required latestmain6f4 postmerge workflows before terminalacceptance/cleanup",
+    "Complete phase timing, measured optimizations, supported client, compatible pair and remaining M1-M6 acceptance",
+    "Specific original diagnostic receipt and lab science acceptance input remains missing; no science/CUDA claim",
+    "Preserve82originalheads/96worktrees, PR91 and unrelated resources; no branch deletion yet"
   ],
   "external_mutations": [
     {
@@ -231,8 +232,8 @@
       "disposition": "retained-protected pending required CI and merge"
     }
   ],
-  "checkpoint_at": "2026-10-19T16:14:34.627801+00:00",
-  "state": "fresh_exact_head_CI_pending",
+  "checkpoint_at": "2026-10-19T21:29:13.418918+00:00",
+  "state": "active source implementation; serial merges96/97 confirmed; hosted dependent qualification pending",
   "hosted_runs": [
     {
       "id": 39282700306,
@@ -358,13 +359,9 @@
   },
   "blocker": null,
   "resume": [
-    "Do not merge until all relevant exact-head PR89(33069a8) andPR90(429d0c4) CIjobs settle success. Current source runs89:39286812518/538/482/519,90:39286833487/738. Lifecycle jobs118175676315/118175770705. Independent monitor /root/mcp_contract_ci_review active read-only.",
-    "Fetch/recheck current main and sourceheads beforewrites. Mainlast300f12df6f48e028fd9379911703f7c89337952a. Rootownsserialmerges; normal merge_method=merge preservesfulloriginalde0ancestry. Exactrequestfiles:/tmp/tuldok-pr89-merge-request.json,/tmp/tuldok-pr90-retarget-request.json,/tmp/tuldok-pr90-merge-request.json.",
-    "Merge89expected33069a8, verifymergeparents/treeequalreviewedhead; retarget90basefromintegration/rheon-lab-current-20261016 to main beforedeleting89branch. Verifyunchangedhead/diff/tree and anynewchecks. RequirepostmergeCI; do not mergefailed/pendingheads.",
-    "Mark90readyonlyafterallheadCIgreen and retargetverified; normalmergeexpected429d0c4; verifyactualparents/tree. Requireallapplicablemainpushworkflowsgreen, includingexistingextensionSDK.",
-    "Repoautodeletefalse. CheckopenPRdepsbeforeleaseguardeddeleteonlyfullymergedremote89/performancebranches. SeparatePR91docs/lab-workflow-reliability-plan base main MUSTstayunmerged/unmodified; preserveitsbranch/worktree. PreserveoldPR43/53+allolduniquehistory+previousdenied77cbf/a64refs; no retries/bypasses.",
-    "AfterallpostmergeCIgreen, cleanupONLYownfivecleanretainedtaskworktrees/branches afterexactheadsancestorofmain. Original82heads/96worktreesunchangedguardrequired; extra newplanresources notowned. /workspace/Tuldok-experiment-lineage HEADee07 originalprotectedcheckout usableforcleanupcommands. No genericprune/reset.",
-    "No realcatalogopened/converterexecuted. LocalPGpackageproxy403 unresolved; CUDAunavailable. HistoricalCUDA/science receipts inspectedonly. LocalMCPfull19timeboundsunreliable onunchangedmain too; receipts recordallfailures, isolatedpassandfreshhostMCPstepgreen. Do notcountskips/historicalhardwareasfreshpass."
+    "Continue source from root coordinator UIa7efd and worker M3bdcc; independently review M3 then whole normal-compose UI before qualification/publishing",
+    "Parent owns passive hosted monitoring. Main6f4 PR96/97 merged equal-tested-trees; next98base main exactd07",
+    "Specific PUB-1 original diagnostic and SCI-1 lab acceptance inputs pending; continue independent implementation"
   ],
   "resumed_after_parent_message": "2026-10-19T16:29:00Z",
   "latest_ci_failure": {
@@ -1000,7 +997,7 @@
     "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
     "branch": "feature/lab-publication-evidence-20261019",
     "pr": 98,
-    "base": "0da7a811d252cc4c6774260b98ee2a707efec517",
+    "base": "main",
     "restore_verified": true,
     "actual_positive": {
       "head": "904922ce867f1304a75a21ae6e040607a2d9ba7e",
@@ -1075,19 +1072,51 @@
     "cpu_job": 118285677198,
     "cpu_steps_success": 13,
     "receipt": "tuldok-pr97-final-qualified-evidence.json",
-    "integration": "Hold untilPR96 qualifies; sourcebranchretained and97draft"
+    "integration": "merged after qualified PR96; PR98 retargetmain confirmed"
   },
   "coordinator_ui": {
     "pr": 102,
     "branch": "feature/lab-coordinator-panel-20261019",
-    "source": "38c7844b3c091a9a21ff9d4b73a56b89945478de",
-    "head": "c725dc2",
-    "state": "cleanpublished receipt-onlyfollowup; independentreviewpending",
+    "source": "3c2b8d1ccc90572b371d1c7ce6d91e4a5a920a64",
+    "head": "a7efd450bd3bd7f7992dbe839ea4d3d5f04f0b02",
+    "state": "published independent review clear; delivery-boundary fix and exact-source browser passed; hosted pending",
     "base": "feature/lab-coordinator-recovery-20261019",
-    "actualbrowser": "PG17/Chromium151 lockfault, keyboardrecover, deliberatelydroppedreply/savedreadreconcile, oneoriginalneutralGO, reload/mouserefresh1440/390 passed exact38c",
-    "regression": "actualpublicationpanel pause/reload/samekeyresume/wholeSHA passed exact38c",
+    "actualbrowser": "passed exact3c actualPG17/Chromium151 lockfault/lostreply/readreconcile/originalGO/sameidentity/reload/1440+390",
+    "regression": "prior38c actual publication browser passed; source attribution preserved",
     "evidence": "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/validation.json",
     "corecomposition": "whole5f normalmerged; noPython/APIproductionchanges",
     "hosted": "pending"
+  },
+  "main_after_pr96": "c4322a4832356af796692cd6536adef637a8c6d4",
+  "main_after_pr97": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+  "pr96_accepted_and_merged": {
+    "merge": "c4322a4832356af796692cd6536adef637a8c6d4",
+    "tested_tree": "826818dbd6c8ad6c34c7834be364b2746cdff3bc",
+    "tested_tree_equal": true,
+    "qualified_receipt": "tuldok-pr96-final-qualified-evidence.json",
+    "merge_tree_receipt": "tuldok-pr96-merged-tree.json"
+  },
+  "pr97_accepted_and_merged": {
+    "merge": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+    "tested_tree": "c88a3af70814da6cd5b040c683888bb9549ebdea",
+    "tested_tree_equal": true,
+    "qualified_receipt": "tuldok-pr97-final-qualified-evidence.json",
+    "merge_tree_receipt": "tuldok-pr97-merged-tree.json"
+  },
+  "main_pr97_postmerge_runs": {
+    "head": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+    "lifecycle": 39327394878,
+    "captured_cpu": 39327394862,
+    "static_kit": 39327394865,
+    "workspace": 39327394779,
+    "catalog": 39327394773,
+    "state": "initial all in_progress; parent owns passive monitor"
+  },
+  "phase_timing_active": {
+    "worktree": "/workspace/Tuldok-lab-phase-timing-m3",
+    "source": "bdcc5ca63df3e9eff3112a1df9c085cb07c4633f",
+    "state": "source frozen for root independent review; worker final53-case actualPG affected qualification running",
+    "previous53": "passed at38853e4; not latestsource claim",
+    "remote": "not yet published"
   }
 }
