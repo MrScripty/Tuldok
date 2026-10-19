@@ -668,7 +668,7 @@
       "seconds": 0.127
     }
   },
-  "updated_at": "2026-10-19T21:00:00Z",
+  "updated_at": "2026-10-19T21:05:08.794120+00:00",
   "cleanup_dependency_chain": [
     "89->90;retarget90tomainbefore89branchdelete",
     "90->92;retarget92tomainbefore90branchdelete",
@@ -685,14 +685,14 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": {
-    "root_worktree": "/workspace/Tuldok-lab-coordinator-m2",
-    "base": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
-    "branch": "feature/lab-coordinator-recovery-20261019",
-    "state": "active uncommitted M2 implementation; scoped patch retained for recovery, not release acceptance",
-    "tests": "initial4 passed6.087s, refined4 passed5.419s, regression12 passed24.331s; expanded7 initial6pass1GO harness signature failure, corrected run pending",
-    "parent_role": "passive hosted CI; root source and serial integration",
-    "worker": "existing reviewer read-only M2; next isolated M1 lineage slice after review",
-    "missing_input": "Original private diagnostic-failure receipt and SCI criteria question pending; dependent claims only blocked",
+    "root_worktree": "/workspace/Tuldok-lab-coordinator-ui-m2",
+    "root_branch": "feature/lab-coordinator-panel-20261019",
+    "base": "5a1feac9f27e23e471c6b57d1f74c026c01c3dd6",
+    "state": "clean new M2UI worktree, no edits yet; sourceinspection complete",
+    "worker": "existing reviewer beginning isolatedM3 timing scopedwriteproposal; nostaticoverlap",
+    "parent_role": "passivehostedCI; root serialintegration+source",
+    "pending_ci": "PR96/97lifecycle;98/99/100/101hosted; currentmain27ba lifecycle",
+    "missing_input": "Original private diagnostic-failure receipt andSCIcriteria questionpending, dependentclaimsblockedonly",
     "no_science_or_cuda_claim": true
   },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
@@ -1033,5 +1033,33 @@
     "root_actual_pg_chromium": "passed",
     "first_root_browser_failure": "ambient python3 missing psycopg; corrected PATH only; retained log",
     "hosted": "pending; parent passive monitor"
+  },
+  "publication_lineage": {
+    "pr": 100,
+    "head": "be9dba61f0d8d37a3d694c90b244c6ad6942285b",
+    "base": "feature/lab-publication-run-panel-20261019",
+    "independent_root": "clear; source/tests/docs+actualrootStudyPG/Chromiumbrowser passed",
+    "root_log": "tuldok-m1-publication-lineage-root-browser.log",
+    "hosted": "pending"
+  },
+  "coordinator_core": {
+    "pr": 101,
+    "head": "5a1feac9f27e23e471c6b57d1f74c026c01c3dd6",
+    "branch": "feature/lab-coordinator-recovery-20261019",
+    "base": "feature/lab-publication-lineage-20261019",
+    "core_source": "3280ebee9e4f6964cdbf73c1480ff15866962de7",
+    "composition": "6ab211e97bd6f5520b0bcabf8504f6a5bb00f930",
+    "review": "independent exact5a scopedclear; ninefilemanifestSHA74a567cee6191e779c4f3ae563db0247aa89ffdb57172e9511e166a8ab7620bc",
+    "evidence": "docs/plans/lab-workflow-reliability/reports/m2-coordinator-core/validation.json",
+    "tests": {
+      "core": "27/108.033s",
+      "composed": "16/52.070s",
+      "custody": "40/74.360s",
+      "finalfixes": "3/2.625s",
+      "independent": "6/9.084s+2/1.768s; separateactual2Dataset andsimultaneous2cleanupfault witnesses;118oldfullcontracts+legacydiscoveryequal"
+    },
+    "final_head_group": "running; retained finalheadlog after completion",
+    "hosted": "pending",
+    "full_m2": "incomplete; coordinatorUI next; no scientific/hardware claim"
   }
 }

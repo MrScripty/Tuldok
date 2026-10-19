@@ -47,6 +47,11 @@
       "sha256": "9bf6119347a416cabb826dbb2d2d75c2200d215f6f470048c0ddcc1d52f057e8"
     },
     {
+      "path": "tuldok-m1-publication-lineage-root-browser.log",
+      "bytes": 129,
+      "sha256": "4fac44074950012cfd7a1e533735e99932a8cc51c367a88da23e3dd25456c384"
+    },
+    {
       "path": "tuldok-m1-publication-recovery-expanded.log",
       "bytes": 2058,
       "sha256": "9f17b8abbe2edaa2c7f54081dffb779e7ed6938e62e101add431333f667606f3"
@@ -77,6 +82,26 @@
       "sha256": "bdf4fbd28b992ff10e034115a5e1e3255994f5705c73d1034c827e69142c8529"
     },
     {
+      "path": "tuldok-m2-coordinator-composed-lineage-browser.log",
+      "bytes": 121,
+      "sha256": "408bc55ffb6686e2a44d81651231241a4222fd0ed46887851ead7f5ae51d12e9"
+    },
+    {
+      "path": "tuldok-m2-coordinator-composed-qualified.log",
+      "bytes": 3099,
+      "sha256": "2ee4cb0e432db86649c315044173d2b12b5f8439631a67c60676ae35ba8e638e"
+    },
+    {
+      "path": "tuldok-m2-coordinator-core-qualification.log",
+      "bytes": 5071,
+      "sha256": "387600d5c877749f6fc30ede1d647083715098b359eabce264ce00f7cb37d8e4"
+    },
+    {
+      "path": "tuldok-m2-coordinator-custody-regression.log",
+      "bytes": 6617,
+      "sha256": "0439885b5f04f63e463b17ecce95d4e2d2960202be9ef8e1481763da7120790b"
+    },
+    {
       "path": "tuldok-m2-coordinator-expanded.log",
       "bytes": 2029,
       "sha256": "3a2cb192ead3ac17777c9d64c445d9540813968603b51a033ed5566e053b21f1"
@@ -95,6 +120,16 @@
       "path": "tuldok-m2-coordinator-regression.log",
       "bytes": 2242,
       "sha256": "7933a0c05e8deb3b7ba9d054c20b09b29823ad57667efccb2749a42962e122d2"
+    },
+    {
+      "path": "tuldok-m2-coordinator-review-fixes-final.log",
+      "bytes": 700,
+      "sha256": "9e9a283354022c65c7392f43fedd9071730f38103536f4ed23e3a9e1e40bfb5d"
+    },
+    {
+      "path": "tuldok-m2-coordinator-validation-at5a.json",
+      "bytes": 4701,
+      "sha256": "6f16ac77eb90f6d81f7a1b06e65ed27f20dd1cc6c3ae58959f69689bd3b5fa38"
     },
     {
       "path": "tuldok-m2-coordinator-work-in-progress.patch",
@@ -130,6 +165,16 @@
       "path": "tuldok-performance-root-review-tests.log",
       "bytes": 7115,
       "sha256": "1f4e2b67067f39e3b11397f613c306b8834e16311a67b0a6c29fa4176d5ab4f9"
+    },
+    {
+      "path": "tuldok-pr-coordinator-core-body.md",
+      "bytes": 2627,
+      "sha256": "9cd21fca4e1ecd4596caf3c62bd80df51201df530ed7137a93943f57776c72cd"
+    },
+    {
+      "path": "tuldok-pr-publication-lineage-body.md",
+      "bytes": 1850,
+      "sha256": "f7570516df42e17f7f39cc8e61715127369911897b86e96b635dcd990fb3145b"
     },
     {
       "path": "tuldok-pr-publication-ui-body.md",
@@ -233,8 +278,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 41680,
-      "sha256": "ca78ce12a161ab79e33badd7727b880d2bc1cbe4673aed8adb3a8556f7f42eca"
+      "bytes": 42966,
+      "sha256": "03f89aab018d4d2ff2895aca19f45537922bfd127de0211f7ff5be4ab4a4ab64"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
