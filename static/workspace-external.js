@@ -49,7 +49,7 @@ window.WorkspaceExternalInputs=(()=>{
   return {choices,binding,html,bind,candidates,catalogs};
 })();
 
-window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,getRunId,isDirty,replaceGraph,changeGraph,render,refresh,onRun,onImported}){
+window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,getRunId,isDirty,replaceGraph,changeGraph,render,refresh,onRun,onImported,observePreparation=()=>{}}){
   const esc=window.workspaceEscape,enc=encodeURIComponent,copy=value=>structuredClone(value);
   const isGraph=graph=>graph?.recipe==='external_recipe';
   let inputChoices=null,inputSpecs={};
@@ -84,6 +84,7 @@ window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,getRunId
     }
     if(!actorPending())throw Error('This unresolved request belongs to another actor. Restore the originating actor to reconcile it.');
     let result;
+    observePreparation(true);
     try{result=await api('runs/submit-external',pending.body);}
     catch(error){
       // A prior ambiguous send may already have committed. Later authorization or
@@ -112,7 +113,7 @@ window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,getRunId
     $('external-save').onclick=()=>action(async()=>{const origin=snapshot(),value=await api('graphs/'+enc(graph.id),{revision:graph.revision,document:copy(graph)});if(current(origin)){replaceGraph(value);status('Saved revision. Preflight and review again.');}else status('Graph revision saved. Current navigation and edits retained.');});
     $('external-reload').onclick=()=>{if(isDirty()&&!confirm('Discard unsaved external recipe edits?'))return;action(async()=>{const origin=snapshot(),value=await api('graphs/'+enc(graph.id));if(current(origin))replaceGraph(value);});};
     $('external-clone').onclick=()=>{if(isDirty()&&!confirm('Clone saved revision and discard unsaved edits?'))return;action(async()=>{const origin=snapshot(),value=await api('graphs/'+enc(graph.id)+'/clone',{name:graph.name.slice(0,112)+' copy'});if(current(origin))replaceGraph(value);else status('Graph '+value.id+' cloned. Current navigation and edits retained.');});};
-    $('external-preflight').onclick=()=>action(async()=>{const origin=snapshot();const value=await api('graphs/'+enc(graph.id)+'/preflight-external',{revision:graph.revision});if(!current(origin))throw Error('Selection or session changed during preflight. Review again.');if(value.valid!==true||value.graph_revision!==graph.revision||!/^[a-f0-9]{64}$/.test(value.material_sha256))throw Error('Unsupported external preflight response.');preflight=value;definitions=value.parameter_definitions;reviewed=false;grant='';grantReceipt=null;status('Preflight captured exact material. Review before submission.');});
+    $('external-preflight').onclick=()=>action(async()=>{const origin=snapshot();observePreparation(true);const value=await api('graphs/'+enc(graph.id)+'/preflight-external',{revision:graph.revision});if(!current(origin))throw Error('Selection or session changed during preflight. Review again.');if(value.valid!==true||value.graph_revision!==graph.revision||!/^[a-f0-9]{64}$/.test(value.material_sha256))throw Error('Unsupported external preflight response.');preflight=value;definitions=value.parameter_definitions;reviewed=false;grant='';grantReceipt=null;status('Preflight captured exact material. Review before submission.');});
     $('external-reviewed')?.addEventListener('change',event=>{reviewed=event.target.checked;render();});
     $('external-recipient')?.addEventListener('input',event=>{recipient=event.target.value;});
     $('external-approval-id')?.addEventListener('input',event=>{grant=event.target.value;$('external-submit').disabled=!actorPending()||!pending&&(!preflight||isDirty()||!grant.trim());});
