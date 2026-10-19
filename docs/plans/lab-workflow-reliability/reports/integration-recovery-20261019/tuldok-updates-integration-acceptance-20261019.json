@@ -41,11 +41,11 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "Complete exact PR90 and PR92 CI with actual archived relevant boundary results",
-    "Serial merge PR90 when qualified, retarget PR92 to main before PR90 source retirement",
-    "Complete exact report slice review/publication and hosted qualification",
-    "Qualify all required main post-merge workflows before terminal cleanup",
-    "Retain checkpoint, original 82 heads/96 worktrees, PR91 and unrelated resources"
+    "Complete exact PR92 and PR93 hosted CI; inspect actual relevant boundary results",
+    "Serial merge PR92 and retarget PR93 before any PR92 source retirement",
+    "Qualify required main post-merge workflows before terminal cleanup",
+    "Continue M1 known pre-compute resource failures, structured diagnostic and same-Run publication continuation",
+    "Retain durable checkpoint, original 82 heads/96 worktrees, PR91 and unrelated resources"
   ],
   "external_mutations": [
     {
@@ -115,6 +115,18 @@
       "outcome": "confirmed",
       "base": "feature/lab-preflight-output-bounds-20261019",
       "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465"
+    },
+    {
+      "action": "Merge PR90 reviewed exact source using normal merge commit",
+      "outcome": "confirmed",
+      "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+      "merge_sha": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c"
+    },
+    {
+      "action": "Retarget PR92 to main before any PR90 source retirement",
+      "outcome": "confirmed",
+      "head": "750332ac64244526127075feb14cb8db268a7ab9",
+      "base": "main"
     }
   ],
   "protected_original_heads": 82,
@@ -633,7 +645,7 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": [
-    "PR89 merged confirmed as fb26e3c; PR90 confirmed retargeted to main with source 76d3c6a unchanged. Do not repeat writes.",
+    "PR89 merged fb26e3c, PR90 merged c7f3575 confirmed, exact tested trees. PR92 confirmed retargeted to main at unchanged750332a. Do not repeat writes.",
     "Parent owns passive CI monitoring, root owns active implementation and serial integrations. Reuse existing independent reviewer.",
     "Await complete exact PR90/92 qualification, archive actual results, merge serially when ready and retarget each dependent before source deletion.",
     "Finish and publish independently reviewed dependent exact preflight report branch; preserve verified remote checkpoint and checked restore.",
@@ -703,5 +715,66 @@
     "head": "876cec37bc45477f697f9223cb2de78c3a3b9c4d",
     "verified_files": 24,
     "restore": "independent clone verified every size and SHA256"
+  },
+  "main_after_pr90": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c",
+  "pr90_accepted_and_merged": {
+    "source": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+    "base": "main",
+    "lifecycle": {
+      "run": 39302006431,
+      "job": 118229327303,
+      "conclusion": "success",
+      "all_steps": "success",
+      "summaries": [
+        "2026-10-19T18:24:57.5303234Z Ran 15 tests in 22.439s",
+        "2026-10-19T18:24:57.5303527Z OK",
+        "2026-10-19T18:24:58.1372737Z Ran 11 tests in 0.420s",
+        "2026-10-19T18:24:58.1373022Z OK",
+        "2026-10-19T18:24:58.3127595Z Ran 9 tests in 0.078s",
+        "2026-10-19T18:24:58.3187580Z OK",
+        "2026-10-19T18:25:01.2714653Z Ran 12 tests in 2.828s",
+        "2026-10-19T18:25:01.2715283Z OK (skipped=1)",
+        "2026-10-19T18:25:01.6364434Z Ran 9 tests in 0.235s",
+        "2026-10-19T18:25:01.6364972Z OK (skipped=1)",
+        "2026-10-19T18:31:50.9991300Z Ran 74 tests in 400.882s",
+        "2026-10-19T18:31:50.9991499Z OK",
+        "2026-10-19T18:32:21.4071723Z Ran 19 tests in 30.230s",
+        "2026-10-19T18:32:21.4072003Z OK",
+        "2026-10-19T18:33:33.3728048Z Ran 22 tests in 71.728s",
+        "2026-10-19T18:33:33.3728291Z OK",
+        "2026-10-19T18:35:56.3377295Z Ran 24 tests in 142.497s",
+        "2026-10-19T18:35:56.3377757Z OK",
+        "2026-10-19T18:37:22.6302536Z Ran 34 tests in 85.826s",
+        "2026-10-19T18:37:22.6302828Z OK",
+        "2026-10-19T18:37:50.6596771Z Ran 13 tests in 27.483s",
+        "2026-10-19T18:37:50.6597028Z OK",
+        "2026-10-19T18:38:01.3793889Z Ran 5 tests in 10.124s",
+        "2026-10-19T18:38:01.3794170Z OK",
+        "2026-10-19T19:04:24.9346948Z Ran 1535 tests in 1582.490s",
+        "2026-10-19T19:04:24.9347163Z OK (skipped=72)"
+      ]
+    },
+    "captured_cpu": {
+      "run": 39302006445,
+      "job": 118229326566,
+      "conclusion": "success",
+      "observed": "Actual finite CPU training, automatic three checkpoint/probe sets, correction/new release and another trained Trial; actual packaging then distinct captured CPU consumer completed, three charged slots."
+    },
+    "scope": "Current composed main-compatible source, prior independent source/contract/performance review; no fresh CUDA/scientific improvement claim.",
+    "merge_sha": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c",
+    "tree_sha": "b9f236c80a0a7bf552132f4b4ecf02c7fad9c703",
+    "tested_tree_equal": true,
+    "independent_review": "Archived acceptance independently clear, no merge blocker."
+  },
+  "post_merge_pr90_runs": {
+    "state": "started; parent owns passive monitoring",
+    "head": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c",
+    "runs": {
+      "lifecycle": 39310022490,
+      "captured_cpu": 39310022680,
+      "catalog": 39310022353,
+      "workspace": 39310022600,
+      "static_kit": 39310022335
+    }
   }
 }

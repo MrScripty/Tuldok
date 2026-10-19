@@ -1,0 +1,45 @@
+{
+  "source": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+  "base": "main",
+  "lifecycle": {
+    "run": 39302006431,
+    "job": 118229327303,
+    "conclusion": "success",
+    "all_steps": "success",
+    "summaries": [
+      "2026-10-19T18:24:57.5303234Z Ran 15 tests in 22.439s",
+      "2026-10-19T18:24:57.5303527Z OK",
+      "2026-10-19T18:24:58.1372737Z Ran 11 tests in 0.420s",
+      "2026-10-19T18:24:58.1373022Z OK",
+      "2026-10-19T18:24:58.3127595Z Ran 9 tests in 0.078s",
+      "2026-10-19T18:24:58.3187580Z OK",
+      "2026-10-19T18:25:01.2714653Z Ran 12 tests in 2.828s",
+      "2026-10-19T18:25:01.2715283Z OK (skipped=1)",
+      "2026-10-19T18:25:01.6364434Z Ran 9 tests in 0.235s",
+      "2026-10-19T18:25:01.6364972Z OK (skipped=1)",
+      "2026-10-19T18:31:50.9991300Z Ran 74 tests in 400.882s",
+      "2026-10-19T18:31:50.9991499Z OK",
+      "2026-10-19T18:32:21.4071723Z Ran 19 tests in 30.230s",
+      "2026-10-19T18:32:21.4072003Z OK",
+      "2026-10-19T18:33:33.3728048Z Ran 22 tests in 71.728s",
+      "2026-10-19T18:33:33.3728291Z OK",
+      "2026-10-19T18:35:56.3377295Z Ran 24 tests in 142.497s",
+      "2026-10-19T18:35:56.3377757Z OK",
+      "2026-10-19T18:37:22.6302536Z Ran 34 tests in 85.826s",
+      "2026-10-19T18:37:22.6302828Z OK",
+      "2026-10-19T18:37:50.6596771Z Ran 13 tests in 27.483s",
+      "2026-10-19T18:37:50.6597028Z OK",
+      "2026-10-19T18:38:01.3793889Z Ran 5 tests in 10.124s",
+      "2026-10-19T18:38:01.3794170Z OK",
+      "2026-10-19T19:04:24.9346948Z Ran 1535 tests in 1582.490s",
+      "2026-10-19T19:04:24.9347163Z OK (skipped=72)"
+    ]
+  },
+  "captured_cpu": {
+    "run": 39302006445,
+    "job": 118229326566,
+    "conclusion": "success",
+    "observed": "Actual finite CPU training, automatic three checkpoint/probe sets, correction/new release and another trained Trial; actual packaging then distinct captured CPU consumer completed, three charged slots."
+  },
+  "scope": "Current composed main-compatible source, prior independent source/contract/performance review; no fresh CUDA/scientific improvement claim."
+}
