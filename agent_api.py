@@ -1618,6 +1618,16 @@ class AgentClient:
                 raise AgentAPIError('Recovered publication does not match the requested Ref/catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_model_evidence' and result['status'] < 400:
             validate_publication_evidence(result['result'], arguments, self.catalog_id)
+        if op['operation_id'] == 'runs.compare_model_evidence' and version == 2 and result['status'] < 400:
+            value = result['result']
+            if value['mode'] != arguments['mode']:
+                raise AgentAPIError('Comparison mode differs from its exact request.', 'transport', 502)
+            for index, side in enumerate(value['sides']):
+                prefix = 'other_' if index else ''
+                if (side['run_id'] != arguments[prefix + 'run_id'] or side['metric_id'] != arguments['metric_id']
+                        or any(side[key] != arguments[prefix + key] for key in
+                               ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'))):
+                    raise AgentAPIError('Comparison side differs from its exact selection.', 'transport', 502)
         if op['operation_id'] == 'runs.compare_publication_evidence' and result['status'] < 400:
             refs = [arguments['ref'], arguments['other_ref']]; value = result['result']
             if value['result_refs'] != refs or any(ref['catalog_id'] != self.catalog_id for ref in refs):

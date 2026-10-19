@@ -90,3 +90,31 @@ class ScientificComparisonClientTests(unittest.TestCase):
         with self.assertRaises(agent_api.AgentAPIError) as caught:
             self.call(arguments, envelope)
         self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+
+    def test_ordinary_exact_v2_comparison_correlates_each_side(self):
+        arguments = dict(self.arguments['selection'],
+                         run_id=self.arguments['operands'][0]['run_id'],
+                         other_run_id=self.arguments['operands'][1]['run_id'])
+        envelope = {'status': 200, 'result': copy.deepcopy(self.envelope['result']['scalar'])}
+        self.client._selected = {'runs.compare_model_evidence': 2}
+        with patch.object(self.client, '_request', return_value=copy.deepcopy(envelope)) as request:
+            self.assertEqual(self.client.call('runs.compare_model_evidence', arguments), envelope)
+        self.assertEqual(request.call_count, 1)
+        mutations = [
+            lambda value: value.update(mode='side_by_side', delta=None),
+            lambda value: value['sides'].reverse(),
+            lambda value: value['sides'][0].update(checkpoint_sha256='f' * 64),
+            lambda value: value['sides'][1].update(evaluation_sha256='e' * 64),
+            lambda value: value['sides'][0].update(metric_definition_sha256='d' * 64),
+            lambda value: value['sides'][1].update(metric_id='different'),
+        ]
+        for mutate in mutations:
+            value = copy.deepcopy(envelope)
+            mutate(value['result'])
+            agent_api.validate_output('runs.compare_model_evidence', value, 2)
+            with self.subTest(mutation=mutate):
+                with patch.object(self.client, '_request', return_value=value) as request:
+                    with self.assertRaises(agent_api.AgentAPIError) as caught:
+                        self.client.call('runs.compare_model_evidence', arguments)
+                self.assertEqual(request.call_count, 1)
+                self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
