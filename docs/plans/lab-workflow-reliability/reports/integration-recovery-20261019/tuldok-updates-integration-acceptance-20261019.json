@@ -232,7 +232,7 @@
       "disposition": "retained-protected pending required CI and merge"
     }
   ],
-  "checkpoint_at": "2026-10-19T21:45:05.348153+00:00",
+  "checkpoint_at": "2026-10-19T21:49:55.192034+00:00",
   "state": "PR99originalhostfailure diagnosed/repaired; fresh99-103exactCIpending; phaseUI+M4continue",
   "hosted_runs": [
     {
@@ -1127,13 +1127,17 @@
   "phase_ui_active": {
     "worktree": "/workspace/Tuldok-lab-phase-ui-m3",
     "branch": "feature/lab-phase-panel-20261019",
-    "head": "31494ec1697804f63d670ffd85e1109271e3239e",
-    "state": "branchpushed; independentreviewfinalsame-selectionfollowuppending; exactfinalbrowserrunning",
+    "head": "3217ef9",
+    "state": "publisheddraft; independentwholeUIdelta+finalsame-selectionclear; exactfinalPG/Chromiumbrowserpassed",
     "writes": "staticphase/real/external/html/css; appstaticrouteonly; focusedcontroller/pin/browser/fixture+CI/docs",
     "no_claim": "fullM3 acceptance remainspending",
     "browser_source8e": "actualphase inclkeyboardfocus/scroll andactualcoordinatorfault/lostreply journeys passed8e; publicationregressionpassed53c",
     "last_source_review_finding": "Same-selection oldreadadoptedmutable newloadpredicate at8e; fixcapturesoriginalpredicate andsequentialfreshread, originalreadcap/windowpreserved; controlledrootcasepassed314",
-    "unrelated_native_composition": "wholeb906 sourcecomposednormal91fb; actualnativebrowserexit0 at91fb; productionfilesunchanged from8e across91fb"
+    "unrelated_native_composition": "wholeb906 sourcecomposednormal91fb; actualnativebrowserexit0 at91fb; productionfilesunchanged from8e across91fb",
+    "pr": 104,
+    "source": "31494ec1697804f63d670ffd85e1109271e3239e",
+    "report": "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/validation.json",
+    "current_pending": "freshcorrectedancestor/dependenthosted+postmergemain"
   },
   "m4_active": {
     "worker": "/root/mcp_contract_ci_review",
@@ -1167,5 +1171,24 @@
     "git_local": "success",
     "git_remote_read": "success",
     "callback": "parentreporteddisconnection; actualexecutorverifiedworking, no credential/workerrecreation"
+  },
+  "m5_active": {
+    "agent": "/root/workflow_client_m5",
+    "model": "gpt-6.1-sol/high",
+    "worktree": "/workspace/Tuldok-lab-workflow-client-m5",
+    "branch": "feature/lab-workflow-client-20261019",
+    "base": "3217ef9",
+    "scope": "thin client/CLI only, no server/API/static/core overlap",
+    "state": "implementationactive; explicitread-onlycollectionresume restarts incomplete artifacts offset0 aftercurrentauthority/inventoryrecheck; no prefixreuse claim"
+  },
+  "pr98_current_failure": {
+    "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+    "run": 39320650281,
+    "job": 118293498592,
+    "gate": "node tests/browser_workspace_project.cjs",
+    "observed": "Passedthroughprojectshareablelink;timeout line147 selectingprojectaftercatalogreload; pagefixtureRuns. Distinctfrom99cleanup.",
+    "diagnosis_state": "Rootcontrolledrealprojectlistheldreproducer running, no confirmedfixyet",
+    "original": "tuldok-pr98-project-original-hosted-failure.log",
+    "state": "Hold98anddescendants pendingexactcorrection/CI"
   }
 }
