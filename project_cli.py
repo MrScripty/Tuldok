@@ -136,6 +136,9 @@ def parser():
     collecting.add_argument('--manifest', type=Path, required=True)
     collecting.add_argument('--directory', type=Path, required=True)
     collecting.add_argument('--resume', type=Path)
+    batching = commands.add_parser('collect-batch', help='Explicit max20 whole artifacts/8 MiB batch; use ordinary collect --resume for partial receipts')
+    batching.add_argument('--manifest', type=Path, required=True)
+    batching.add_argument('--directory', type=Path, required=True)
     comparison = commands.add_parser('comparison-manifest', help='Export exact checkpoint/evaluation/metric operands from selected evidence')
     comparison.add_argument('--run-id', required=True)
     comparison.add_argument('--other-run-id', required=True)
@@ -149,14 +152,14 @@ def parser():
 
 
 WORKFLOW_COMMANDS = frozenset(('submission-manifest', 'submit-workflow', 'reconcile-submission',
-    'monitor', 'cancel-workflow', 'collection-manifest', 'collect', 'comparison-manifest', 'compare'))
+    'monitor', 'cancel-workflow', 'collection-manifest', 'collect', 'collect-batch', 'comparison-manifest', 'compare'))
 
 
 def workflow_command(client, args):
     workflow = WorkflowClient(client)
     stop = threading.Event()
     old_handler = None
-    if args.command in ('monitor', 'collect') and threading.current_thread() is threading.main_thread():
+    if args.command in ('monitor', 'collect', 'collect-batch') and threading.current_thread() is threading.main_thread():
         old_handler = signal.signal(signal.SIGINT, lambda *_: stop.set())
     try:
         if args.command == 'submission-manifest':
@@ -184,6 +187,9 @@ def workflow_command(client, args):
         elif args.command == 'collect':
             value = workflow.collect(read_arguments(args.manifest), args.directory,
                 resume=read_arguments(args.resume) if args.resume else None, cancelled=stop)
+            return value, value['state'] == 'complete'
+        elif args.command == 'collect-batch':
+            value = workflow.collect_batch(read_arguments(args.manifest), args.directory, cancelled=stop)
             return value, value['state'] == 'complete'
         elif args.command == 'comparison-manifest':
             value = workflow.comparison_manifest(args.run_id, args.other_run_id,

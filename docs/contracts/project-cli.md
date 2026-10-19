@@ -233,6 +233,19 @@ incomplete artifacts at offset0. Ctrl-C discards provisional bytes. Use a new
 receipt output path when explicitly resuming; never overwrite the receipt being
 read through shell redirection.
 
+`collect-batch --manifest COLLECTION_MANIFEST.json --directory /private/existing-results`
+explicitly selects whole-artifact batching through `runs.artifact_segments/1`.
+It accepts the same single-source manifest with at most20 selected artifacts and
+at most8MiB aggregate requested bounds (`max(1, bytes)` per artifact). Larger
+selections refuse before dispatch; ordinary `collect` remains the segmented
+path. A complete batch exits0; a partial/stopped batch exits1 with the same
+collection receipt JSON on stdout. Service/authority/transport/decoding errors
+retain the existing stderr diagnostic and exit1. No error triggers fallback or
+retry. The command has no `--resume`; explicitly use ordinary `collect --resume`
+with the saved batch receipt to recheck successes and restart incomplete items.
+Ctrl-C interrupts reads or stops before the next output publication, preserves
+earlier verified outputs and requests no compute cancellation.
+
 `comparison-manifest --run-id BASELINE --other-run-id CANDIDATE
 --checkpoint-sha256 BASELINE_CHECKPOINT --other-checkpoint-sha256 CANDIDATE_CHECKPOINT
 --metric-id METRIC_ID [--mode paired|side_by_side]` exports selected exact operands.

@@ -5,7 +5,7 @@ AgentClient while a workflow runs; callers must not share it concurrently.
 Execution, disclosure, comparison and grants remain server-owned.
 """
 import copy
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 import hashlib
 import math
 import json
@@ -18,10 +18,12 @@ import threading
 import time
 
 from agent_api import (AgentAPIError, AgentClient, encoded, validate_arguments,
-                       verify_artifact, verify_publication_artifact)
+                       verify_artifact, verify_publication_artifact, validate_artifact_segments,
+                       validate_segment, validate_publication_segment)
 
 MAX_ITEMS = 20
 MAX_COLLECTION_BYTES = 512 * 1024 * 1024
+MAX_BATCH_BYTES = 8 * 1024 * 1024
 TERMINAL = frozenset(('completed', 'failed', 'cancelled', 'interrupted', 'unknown'))
 SUBMISSIONS = frozenset(('runs.submit_external', 'studies.admit'))
 COMPARISONS = frozenset(('runs.compare_model_evidence', 'runs.compare_publication_evidence'))
@@ -73,6 +75,27 @@ def _check_manifest(value, catalog_id, kind, operations):
     return copy.deepcopy(value)
 
 
+@contextmanager
+def _private_output(destination, *, before_publish=None):
+    """One private provisional file, file fsync and atomic no-clobber publication."""
+    destination = Path(destination)
+    if os.path.lexists(destination):
+        raise AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409)
+    fd, provisional = tempfile.mkstemp(prefix='.tuldok-download-', dir=destination.parent)
+    try:
+        with os.fdopen(fd, 'wb') as handle:
+            yield handle
+            handle.flush()
+            os.fsync(handle.fileno())
+        if before_publish is not None:
+            before_publish()
+        os.link(provisional, destination, follow_symlinks=False)
+    except FileExistsError:
+        raise AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409) from None
+    finally:
+        os.unlink(provisional)
+
+
 def download(client, run_id, name, expected_sha256, destination, *, result_ref=None,
              chunk_bytes=8*1024*1024, cancelled=None, expected_bytes=None):
     """Verify whole bytes, fsync and atomically link a new private file.
@@ -81,32 +104,21 @@ def download(client, run_id, name, expected_sha256, destination, *, result_ref=N
     collection resumes this item at zero rather than trusting a partial prefix.
     """
     destination = Path(destination)
-    if os.path.lexists(destination):
-        raise AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409)
-    fd, provisional = tempfile.mkstemp(prefix='.tuldok-download-', dir=destination.parent)
-    try:
-        with os.fdopen(fd, 'wb') as handle:
-            def consume(raw):
-                if cancelled is not None and cancelled.is_set():
-                    raise AgentAPIError('Collection stopped; compute cancellation was not requested.', 'stopped', 409)
-                handle.write(raw)
-                if expected_bytes is not None and handle.tell() > expected_bytes:
-                    raise AgentAPIError('Artifact exceeds selected inventory bytes.', 'artifact_mismatch', 409)
-            receipt = (verify_artifact(client, run_id, name, expected_sha256, consume=consume, chunk_bytes=chunk_bytes)
-                       if result_ref is None else verify_publication_artifact(client, result_ref, name,
-                           expected_sha256, consume=consume, chunk_bytes=chunk_bytes))
-            if expected_bytes is not None and receipt['bytes'] != expected_bytes:
-                raise AgentAPIError('Artifact size differs from selected inventory.', 'artifact_mismatch', 409)
+    with _private_output(destination) as handle:
+        def consume(raw):
             if cancelled is not None and cancelled.is_set():
                 raise AgentAPIError('Collection stopped; compute cancellation was not requested.', 'stopped', 409)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.link(provisional, destination, follow_symlinks=False)
-        return dict(receipt, run_id=run_id, name=name, output=str(destination))
-    except FileExistsError:
-        raise AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409) from None
-    finally:
-        os.unlink(provisional)
+            handle.write(raw)
+            if expected_bytes is not None and handle.tell() > expected_bytes:
+                raise AgentAPIError('Artifact exceeds selected inventory bytes.', 'artifact_mismatch', 409)
+        receipt = (verify_artifact(client, run_id, name, expected_sha256, consume=consume, chunk_bytes=chunk_bytes)
+                   if result_ref is None else verify_publication_artifact(client, result_ref, name,
+                       expected_sha256, consume=consume, chunk_bytes=chunk_bytes))
+        if expected_bytes is not None and receipt['bytes'] != expected_bytes:
+            raise AgentAPIError('Artifact size differs from selected inventory.', 'artifact_mismatch', 409)
+        if cancelled is not None and cancelled.is_set():
+            raise AgentAPIError('Collection stopped; compute cancellation was not requested.', 'stopped', 409)
+    return dict(receipt, run_id=run_id, name=name, output=str(destination))
 
 
 def _verified_local(path, item):
@@ -440,6 +452,87 @@ class WorkflowClient:
         except AgentAPIError as error:
             if error.code == 'stopped':
                 return stopped()
+            raise
+
+    def collect_batch(self, manifest, directory, *, cancelled=None):
+        """Explicit one-request whole-artifact collection; never fall back or retry.
+
+        Use ordinary collect for larger selections or explicit receipt resume.
+        Successful outputs preceding an item/local failure remain verified;
+        later buffered items stay outstanding and are never silently retried.
+        """
+        if cancelled is not None and not isinstance(cancelled, threading.Event):
+            raise AgentAPIError('Collection cancellation must be a threading.Event.')
+        manifest = self._validate_collection(manifest)
+        source = manifest['source']
+        batch_source = ({'kind': 'run', 'run_id': source['run_id']} if 'run_id' in source else
+                        {'kind': 'publication', 'ref': copy.deepcopy(source['ref'])})
+        request = {'items': [dict(key='item-'+str(index), source=copy.deepcopy(batch_source),
+                    name=item['name'], expected_sha256=item['sha256'], offset=0,
+                    max_bytes=max(1, item['bytes'])) for index, item in enumerate(manifest['items'])]}
+        if sum(item['max_bytes'] for item in request['items']) > MAX_BATCH_BYTES:
+            raise AgentAPIError('Batch collection exceeds 8 MiB requested whole bytes; use explicit ordinary collect.', 'too_large', 413)
+        validate_arguments('runs.artifact_segments', request, 1)
+        results = [{'name': item['name'], 'state': 'outstanding'} for item in manifest['items']]
+
+        def stopped():
+            if cancelled is not None and cancelled.is_set():
+                raise AgentAPIError('Collection stopped; compute cancellation was not requested.', 'stopped', 409)
+
+        def receipt():
+            state = ('stopped' if cancelled is not None and cancelled.is_set() else
+                     'complete' if all(item['state'] == 'verified' for item in results) else 'partial')
+            return {'format': 'workflow_collection_receipt_v1', 'manifest': manifest, 'state': state, 'items': results}
+
+        try:
+            stopped()
+            directory = Path(directory)
+            if not directory.is_dir() or directory.is_symlink():
+                raise AgentAPIError('Collection destination must be an existing regular directory.')
+            for index, item in enumerate(manifest['items']):
+                if os.path.lexists(directory / item['name']):
+                    error = AgentAPIError('Destination already exists; choose a new file.', 'conflict', 409)
+                    results[index] = {'name': item['name'], 'state': 'refused', 'error': _error(error)}
+                    return receipt()
+            budget = self.client.read_budget(None, cancelled) if cancelled is not None else nullcontext()
+            with budget:
+                if self.client.selected_contracts().get('runs.artifact_segments') != 1:
+                    raise AgentAPIError('Explicit batch collection has no supported negotiated contract.', 'operation_unsupported', 409)
+                self._check_collection(manifest)
+                stopped()
+                value = _invoke(self.client, 'runs.artifact_segments', request)
+                validate_artifact_segments(value, request)
+                for index, (item, outcome, selected) in enumerate(zip(manifest['items'], value['items'], request['items'], strict=True)):
+                    try:
+                        stopped()
+                        if outcome['status'] != 200:
+                            raise AgentAPIError(outcome['error']['message'], outcome['error']['code'], outcome['status'])
+                        segment = outcome['result']
+                        raw = (validate_segment(segment, dict(selected, run_id=source['run_id'])) if 'run_id' in source else
+                               validate_publication_segment(segment, dict(selected, ref=source['ref'])))
+                        if (segment['total_bytes'] != item['bytes'] or len(raw) != item['bytes']
+                                or segment['offset'] != 0 or segment['next_offset'] != item['bytes'] or not segment['eof']
+                                or hashlib.sha256(raw).hexdigest() != item['sha256']):
+                            raise AgentAPIError('Batch item does not match the selected whole length and SHA256.', 'artifact_mismatch', 409)
+                        destination = directory / item['name']
+                        with _private_output(destination, before_publish=stopped) as handle:
+                            handle.write(raw)
+                        proof = {'run_id': source.get('run_id', source.get('ref', {}).get('run_id')),
+                                 'name': item['name'], 'output': str(destination), 'sha256': item['sha256'],
+                                 'bytes': item['bytes'], 'verification': 'whole_sha256_verified'}
+                        if 'ref' in source:
+                            proof['result_ref'] = copy.deepcopy(source['ref'])
+                        results[index] = {'name': item['name'], 'state': 'verified', 'receipt': proof}
+                    except (AgentAPIError, OSError) as error:
+                        if isinstance(error, OSError):
+                            error = AgentAPIError('Local collection file operation failed.', 'unavailable', 503)
+                        results[index] = {'name': item['name'], 'state': 'outstanding' if error.code == 'stopped' else 'refused',
+                                          'error': _error(error)}
+                        break
+                return receipt()
+        except AgentAPIError as error:
+            if error.code == 'stopped':
+                return receipt()
             raise
 
     def comparison_manifest(self, run_id, other_run_id, *, checkpoint_sha256, other_checkpoint_sha256,
