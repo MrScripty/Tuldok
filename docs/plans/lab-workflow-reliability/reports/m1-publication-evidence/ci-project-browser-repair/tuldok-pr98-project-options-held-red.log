@@ -1,0 +1,23 @@
+PASS Project opens through keyboard form; data hashes and missing/present-unqualified/unprobed requirements remain distinct
+PASS Current snapshot activity refreshes without navigation and retains saved manifest identity
+PASS Malformed publisher status is unavailable, then recovers without fabricating progress
+PASS Stale producer status is explicit; a failed observation clears healthy progress and the next read recovers
+PASS Selected evidence updates without taking focus; disappearance clears stale text and restoration recovers
+PASS Pipeline preserves explicit model binding requirements; Runs renders exact external evidence as text without a completion claim
+PASS Held old refresh cannot overwrite another project; switching stops the old polling lifetime
+PASS Two projects with shared reference ID stay isolated; switching clears previous external evidence
+PASS Registered current project opens through a shareable project link
+AssertionError [ERR_ASSERTION]: A not-yet-rendered project option cannot be selected
+
+'' !== 'catalog'
+
+    at /workspace/Tuldok-lab-publication-evidence-m1/tests/browser_workspace_project.cjs:150:27 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: 'catalog',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+Application stderr: 
+{"url":"http://127.0.0.1:36969/workspaces?project=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#runs","body":"Local owner · owner\nSession\nSign out\nSkip to workspace\nt.\nTuldok\n● Local\nClassic workbench ↗\nCorner studio ↗\nCONTEXT\nDataset\nInterface fixtures\nCurrent local catalog\nOpen project\nCurrent catalog handle · loading existing Data owner\nLocal preview\n01\nData\n02\nPipeline\n03\nRuns\n\nFixture runs · browser-local examples only.\n\nEVIDENCE, AT EACH STEP\nRuns\nTuldok · Dataset-centered workspaces\nFixtures are isolated examples. Current catalog runs use an optional local CPU runtime."}
