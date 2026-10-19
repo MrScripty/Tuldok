@@ -287,6 +287,12 @@ jobs:
       - run: node tests/browser_workspace_recovery.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - name: Verify coordinator request identity and stale delivery fences
+        run: node tests/test_workspace_coordinator_controller.cjs
+      - name: Verify real coordinator fault recovery and lost reply in Runs
+        run: node tests/browser_workspace_coordinator.cjs
+        env:
+          BROWSER: /usr/bin/google-chrome
       - run: node tests/browser_workspace_image_run.cjs
         env:
           BROWSER: /usr/bin/google-chrome

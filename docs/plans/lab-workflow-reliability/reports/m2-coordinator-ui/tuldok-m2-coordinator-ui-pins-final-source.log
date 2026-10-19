@@ -1,0 +1,7 @@
+test_coordinator_pins_match_canonical_contracts (test_workspace_coordinator.CoordinatorPanelPins.test_coordinator_pins_match_canonical_contracts) ... ok
+test_publication_panel_pins_are_exact_supported_versions (test_workspace_publication.PublicationPanelPins.test_publication_panel_pins_are_exact_supported_versions) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.004s
+
+OK

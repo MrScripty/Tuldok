@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: A pending current-generation request must reconcile against the older completed receipt
+
+1 !== 2
+
+    at /workspace/Tuldok-lab-coordinator-ui-m2/tests/test_workspace_coordinator_controller.cjs:34:60 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 2,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
