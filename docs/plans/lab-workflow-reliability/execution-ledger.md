@@ -335,3 +335,45 @@ follow; hosted acceptance, indexed diagnostics and full M1 remain pending.
 Implemented Runs-owned generation/health, bounded durable diagnostic/request journal, stop/admission/GO fences and explicit current-owner recovery through selected HTTP/CLI. A joined executor and acknowledged durable custody reconciliation precede one replacement; healthy/stale refusals remain side-effect free, uncertain COMMIT/cleanup/runtime ownership stays fenced, and a secondary opener cannot write the primary journal.
 
 Core source3280ebe passed27 cases108.033s with no skips; normal whole-branch composition6ab211e includes independently reviewed UI/lineage61d2c2d/be9dba6. Composition passed16 cases52.070s and an actual neutralStudy/PG/Chromiumlineage journey; separate original custody/recipe-process40 cases74.360s passed. Final independent review found cleanup masking and peer-journal overwrite boundaries; focused corrected witnesses and exact-source hashes are retained in `reports/m2-coordinator-core/validation.json`. Independent final review and hosted gates remain pending. Existing UI coordinator controls and M3 timing are still separate work; no full milestone, CUDA or scientific acceptance is claimed.
+
+
+### M3 owner phase timing source core — isolated implementation
+
+Started in task-owned `feature/lab-phase-timing-20261019` from exact reviewed
+M2 core `5a1feac9f27e23e471c6b57d1f74c026c01c3dd6`. Normally composed the entire
+root-authored `5f1aa49` immutable-key followup. Independent review caught the
+cold-reopen completed-key edge; the corrected current/cold/unacknowledged-journal
+PostgreSQL cases all passed in the independent group. No M2 source was authored
+in this timing branch.
+
+Added monotonic per-owner clocks, bounded optional Run observations and sealed
+custodian diagnostic sidecar, current-authority selected Run/preparation reads,
+CLI reads and a focused existing-service CI gate. Original full contracts and
+legacy discovery remain frozen. Detailed external preparation, queue/capacity,
+actual dispatch catalog acquisition, custody, validation, publication and recovery
+are instrumented; unknown historical/builtin phases are not reconstructed.
+Publication remains inside its existing catalog boundary, so concurrent timing
+reads may be unavailable until authority can be checked. No readiness/reservation,
+result proof, compute replay, numerical training or science claim is introduced.
+
+The first compatibility run exposed unbound unit substitutions that had no new
+private timing method; the implementation now calls the class helper directly.
+The first pure harness used a nonexistent legacy-discovery helper and initially
+failed to put its mock client into negotiated state; both harness issues were
+corrected with explicit identity-error assertions and a complete prior-document
+hash fixture. The first actual HTTP/CLI harness incorrectly expected the CLI's
+direct result inside an envelope; this assertion was corrected without weakening
+the product checks. All initial failure logs are retained. An expanded 11-case
+source group then passed in 34.478 seconds with zero skips, including actual
+neutral custody/copy-fault/recovery and active capacity-wait/cancellation. Further
+exact-source qualification and receipts follow. Root independent review and
+full live-browser T4/T8/M3 acceptance remain pending.
+
+Root preliminary review caught an omitted-observation counter at the cap when all
+32 spans were open. The refused observation now increments dropped_spans; a new
+witness verifies no open span is fabricated/closed and every omission is counted.
+The broader affected group ran 87 cases in 188.023 seconds: 86 passed and the CLI
+subprocess exceeded the harness's 30-second wait. That harness limit now allows
+90 seconds, within the existing client budget; no production transport, catalog,
+execution or custody bound changed. Final isolated exact-source qualification
+will report actual outcome and wall time without inferring a cause.

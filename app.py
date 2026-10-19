@@ -800,6 +800,9 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.runs.coordinator_health())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'phase-timings':
+                        agent_api.require_selection(self._contract_selection, 'runs.phase_timings')
+                        return self.reply(dataset.runs.phase_timings(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'publication':
                         agent_api.require_selection(self._contract_selection, 'runs.publication_status')
                         return self.reply(dataset.runs.publication_status(parts[1], contract_version=self._contract_selection[1]))
@@ -1128,6 +1131,10 @@ def make_handler(dataset, observer=None):
                             agent_api.require_selection(self._contract_selection,'graphs.save')
                         return self.reply(dataset.pipelines.save(parts[1], body))
                     if len(parts) == 3 and parts[0] == 'graphs':
+                        if parts[2] == 'preparation-timings':
+                            agent_api.require_selection(self._contract_selection, 'graphs.preparation_timings')
+                            projects.closed(body, ('revision',))
+                            return self.reply(dataset.pipelines.preparation_timings(parts[1], body['revision']))
                         if parts[2] == 'clone':
                             return self.reply(dataset.pipelines.clone(parts[1], body), 201)
                         if parts[2] == 'validate':
