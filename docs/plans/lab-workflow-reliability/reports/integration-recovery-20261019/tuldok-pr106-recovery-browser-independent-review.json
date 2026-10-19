@@ -1,0 +1,34 @@
+{
+  "reviewed_source": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+  "comparison_base": "1176ea456fbb7488b6fc9f575043d4e03888d73f",
+  "reviewed_at_utc": "2026-10-19T23:46:03.207008+00:00",
+  "result": "clear; no blocking finding in requested fixture/import/assertion scope",
+  "source_review": {
+    "changed_files": "One scientific factory import line in browser fixture plus three retained red/green/validation report files.",
+    "product_changed_files": [],
+    "all_assertions_and_other_fixture_bytes_identical": true,
+    "proof": "Removing the sole added exact scientific script import line reproduces base fixture byte-for-byte. Changed-file set contains only that fixture and reports.",
+    "host_order": "static/workspaces.html142 loads workspace-scientific-comparison.js before workspace-real.js143, after service/phase/external/lineage dependencies. Fixture loads the same actual scientific module after its dependencies and before WorkspaceReal. Factory body is defined on load and instantiated later; no fake substitute or changed input/assertion."
+  },
+  "independent_execution": {
+    "command": "BROWSER=/usr/bin/chromium node tests/browser_workspace_recovery.cjs",
+    "executions": 1,
+    "exit_code": 0,
+    "pass_witnesses": 4,
+    "log": "/tmp/tuldok-pr106-recovery-browser-independent.log",
+    "log_sha256": "ab23fb83db340e498235e3a95922f64444eef17a24ef213ac4cfedbfb5f528c7",
+    "scope": "Actual Chromium/DOM; explicitly mocked service transport. No PostgreSQL, backend custody, training or scientific acceptance."
+  },
+  "source_sha256": {
+    "tests/browser_workspace_recovery.cjs": "271f1bf999afd91a57ded847b0150f4fcbfb33f772363b65dd02e8335faf8c2e",
+    "static/workspaces.html": "87d1f8893792b5f519047bc9907230093d7a4751f73c3a6f95111fa1d5163216",
+    "static/workspace-scientific-comparison.js": "e2a1068011135bf845c1d962cf1e11147419c8c9ab8da36a80267be427762ade",
+    "static/workspace-real.js": "412292c25672aee240ba453805963198edef2ab72ade4fb755875407fa6bbab2",
+    "static/workspace-phase-timings.js": "2230164b2b7200ef941e4f0c65a02b66ed16d477e483029d02306c403c58071e"
+  },
+  "worktree_status_after": "",
+  "limits": [
+    "Corrected-head required hosted lifecycle/serial integration remain root-owned."
+  ],
+  "mutations": "Only this /tmp review JSON and actual test stdout log; no author file edits, remotes, backend or training tests."
+}

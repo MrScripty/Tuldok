@@ -1,0 +1,71 @@
+[
+  {
+    "pr": 105,
+    "before": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+    "target": "381bfccdad516010e83f6051f098a5835fb8aac3",
+    "after": "a635be3dcb7187eec17266714631a4e0485a20b7",
+    "changed_paths": [
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+      "tests/browser_workspace_recovery.cjs"
+    ]
+  },
+  {
+    "pr": 106,
+    "before": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+    "target": "a635be3dcb7187eec17266714631a4e0485a20b7",
+    "after": "1176ea456fbb7488b6fc9f575043d4e03888d73f",
+    "changed_paths": [
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+      "tests/browser_workspace_recovery.cjs"
+    ]
+  },
+  {
+    "pr": 109,
+    "before": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+    "target": "fc034a0f096a73798ec22fa3088406cd68b4c5a4",
+    "after": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+    "changed_paths": [
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/tuldok-pr106-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/tuldok-pr106-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/validation.json",
+      "tests/browser_workspace_recovery.cjs"
+    ]
+  },
+  {
+    "pr": 110,
+    "before": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+    "target": "0dbaab7da26728d1f6ef43a09d6fafe65fd8c9b6",
+    "after": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+    "changed_paths": [
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/tuldok-pr106-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/tuldok-pr106-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/validation.json",
+      "tests/browser_workspace_recovery.cjs"
+    ]
+  },
+  {
+    "pr": 108,
+    "before": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+    "target": "ff17f438fc328f9100fba6ec9fd9525f6d452410",
+    "after": "83a1e1289f3f7e4f8c3e697c1748a862a69d0897",
+    "changed_paths": [
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/tuldok-pr106-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/tuldok-pr106-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m6/recovery-browser-fixture/validation.json",
+      "tests/browser_workspace_recovery.cjs"
+    ]
+  }
+]

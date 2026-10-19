@@ -1,0 +1,192 @@
+{
+  "checks": "Read-only frozen Git source/reference/byte-equality audit only; no tests or source edits.",
+  "current_pr106_source": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+  "direct_evaluators": [
+    {
+      "disposition": "Blocking fixture composition omission; exact old-hosted failure still applies current sources.",
+      "file": "tests/browser_workspace_recovery.cjs",
+      "phase_module_loaded": false,
+      "scientific_module_loaded": false,
+      "scope": "Real Chromium DOM with mocked service transport; full WorkspaceReal constructed"
+    },
+    {
+      "disposition": "Already complete; prefix extraction does not construct WorkspaceReal.",
+      "file": "tests/test_workspace_external_controller.cjs",
+      "phase_module_loaded_for_full_factory": true,
+      "scientific_module_loaded_for_full_factory": true,
+      "scope": "API-only extracted prefix plus separate full polling VM composition"
+    },
+    {
+      "disposition": "No phase/scientific load needed for this narrower owner test.",
+      "file": "tests/test_workspace_coordinator_controller.cjs",
+      "scope": "Evaluates source declarations then constructs only WorkspaceCoordinator, not WorkspaceReal"
+    }
+  ],
+  "format": "workspace_real_direct_loader_source_audit_v1",
+  "minimal_repair_proposal": {
+    "avoid": "No production optional-factory no-op, replacement factories, removed assertions or new scientific/backend claims.",
+    "change": "Evaluate real static/workspace-phase-timings.js and static/workspace-scientific-comparison.js after current dependencies and before evaluating/constructing WorkspaceReal. Preserve all existing parameter-contract, sticky split, prediction failure and damaged Run assertions and mocked service semantics.",
+    "integration_placement": "Earliest phase import in PR104; scientific import where module is introduced in PR106. Root owns normal whole-branch composition.",
+    "write_set": [
+      "tests/browser_workspace_recovery.cjs"
+    ]
+  },
+  "other_reference_classification": "Browser source hash manifests and normal full-app navigation, Python source assertions/provenance, and frozen legacy HTTP transport fixture are not direct full WorkspaceReal constructor loaders. Current production workspaces.html loads both modules before workspace-real.",
+  "other_references": [
+    {
+      "file": "tests/browser_candidate_package.cjs",
+      "hits": [
+        {
+          "line": 20,
+          "text": "const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/workspaces.css','candidate_packages.py','tests/browser_candidate_package.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));"
+        }
+      ],
+      "sha256": "2adcdff00b7fa92808512872da3ab7d4bb075dc74ee0e69388e648b7129e2eb3"
+    },
+    {
+      "file": "tests/browser_extension_model_author.cjs",
+      "hits": [
+        {
+          "line": 8,
+          "text": "const hashes=Object.fromEntries(['static/workspace-service.js','static/workspace-projects.js','static/workspace-real.js','static/workspaces.js','static/workspaces.css','tests/browser_extension_model_author.cjs'].map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));"
+        }
+      ],
+      "sha256": "ae8c38a7560c6c83f0f3e6fd9781f30557ed6748015dd6856a3ef54d9cdba37f"
+    },
+    {
+      "file": "tests/browser_field_evidence.cjs",
+      "hits": [
+        {
+          "line": 20,
+          "text": "const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/workspaces.css','tests/browser_field_evidence.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));"
+        }
+      ],
+      "sha256": "0b2642a761c42daf6b4f6c3bec4b3f65bb1fb6064cac5e1dfd3baa6179228334"
+    },
+    {
+      "file": "tests/browser_model_development.cjs",
+      "hits": [
+        {
+          "line": 19,
+          "text": "const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/experiment-lineage.js','static/experiment-lineage.css','static/workspaces.css','static/workspaces.html','experiment_lineage.py','agent_api.py','app.py','experiments.py','pipeline.py','runs.py','metadata.py','upgrade_metadata.py','tests/browser_model_development.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));"
+        }
+      ],
+      "sha256": "701b61cff00b2a6d1d23d35e6fb558c02c13df253a90fb8a1eb93a56088555ea"
+    },
+    {
+      "file": "tests/browser_one_fit_model_evidence.cjs",
+      "hits": [
+        {
+          "line": 19,
+          "text": "const sourceHashes=Object.fromEntries(['static/workspace-service.js','static/workspace-real.js','static/workspaces.css','app.py','pipeline.py','runs.py','experiments.py','model_evidence.py','one_fit_evidence.py','text_training.py','audio_training.py','tests/qualify_one_fit.py','tests/browser_one_fit_model_evidence.cjs'].map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));"
+        }
+      ],
+      "sha256": "83220e5db396bb39b3b72064604b9b01259657cd6697983b7a19fd35cd667e96"
+    },
+    {
+      "file": "tests/browser_scientific_comparison.cjs",
+      "hits": [
+        {
+          "line": 109,
+          "text": "source_hashes:Object.fromEntries(['agent_api.py','runs.py','run_publication.py','extension_evidence.py','static/workspace-real.js','static/workspace-scientific-comparison.js','tests/scientific_comparison_fixture.py','tests/browser_scientific_comparison.cjs'].map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')])),requests:requests.filter(row=>row.url.endsWith('/scientific-comparison')).map(row=>({method:row.method,body:JSON.parse(row.body),contract:row.headers['Tuldok-Operation-Contract']})),domain},null,2)+'\\n');"
+        }
+      ],
+      "sha256": "5d97bf5c573b6966264a9b3f0ee034301b7d57212303ef573503041e20fe9075"
+    },
+    {
+      "file": "tests/browser_workspace_graph_focus.cjs",
+      "hits": [
+        {
+          "line": 87,
+          "text": "const result={state:'passed',scope:'Inert private Project graph metadata only; no recipe execution or scientific qualification',source_commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),workspace_real_sha256:sha(fs.readFileSync(path.join(root,'static/workspace-real.js'))),harness_sha256:sha(fs.readFileSync(__filename)),native_keys:['Home','ArrowDown','ArrowDown'],programmatic_focus_calls_in_journey:1,values,observed,negativeChecks,recipe_runs:0,browser:(await send('Browser.getVersion')).product};"
+        }
+      ],
+      "sha256": "5d1564a887dc5a397dc80a5c2bc968b57c457589f5225fbaa1a9c387bf937684"
+    },
+    {
+      "file": "tests/browser_workspace_recovery.cjs",
+      "hits": [
+        {
+          "line": 38,
+          "text": "await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-real.js'),'utf8'));"
+        },
+        {
+          "line": 39,
+          "text": "await ev(`window.real=WorkspaceReal({pipelineRoot:document.getElementById('p'),runsRoot:document.getElementById('r'),announce:s=>notes.push(s),openRecord:()=>{},openRun:()=>real.show('runs')});real.show('runs')`);"
+        }
+      ],
+      "sha256": "77709c8a6624a0cd501e5fb8396244b1e61e4b4590725e1fe085487a49864ee3"
+    },
+    {
+      "file": "tests/fixtures/http_legacy_f588.py",
+      "hits": [
+        {
+          "line": 322,
+          "text": "'/workspace-real.js': ('workspace-real.js', 'text/javascript'),"
+        }
+      ],
+      "sha256": "f7ad26b167e7d0820d830e4841ca70533f1615a0f4b640c500da076cacb83af3"
+    },
+    {
+      "file": "tests/qualify_main505_agent_authoring.py",
+      "hits": [
+        {
+          "line": 116,
+          "text": "tracked=subprocess.check_output(['git','ls-files','*.py','static/workspace-real.js'],cwd=ROOT,text=True).splitlines()"
+        }
+      ],
+      "sha256": "c3598ad5c08be195c1f14e0e522ef8f2aefab78bea1002568b804245a4cd65c3"
+    },
+    {
+      "file": "tests/qualify_restored_ab_interfaces.py",
+      "hits": [
+        {
+          "line": 82,
+          "text": "runtime_files=('app.py','agent_api.py','project_cli.py','mcp_stdio.py','mcp_observer.py','extension_evidence.py','runs.py','access.py','static/workspace-real.js')"
+        }
+      ],
+      "sha256": "cf74d93faa5382b32ea52a1316bd307353f577cc2f3d686155189369863179bd"
+    },
+    {
+      "file": "tests/test_workspace_coordinator.py",
+      "hits": [
+        {
+          "line": 11,
+          "text": "source = (Path(__file__).resolve().parents[1]/'static/workspace-real.js').read_text()"
+        }
+      ],
+      "sha256": "97a8e9256f2ae0e77dc2f969504832b5ff995d17748753ab9cd4d336c29cb9f5"
+    },
+    {
+      "file": "tests/test_workspace_coordinator_controller.cjs",
+      "hits": [
+        {
+          "line": 13,
+          "text": "for(const file of ['workspace-external.js','workspace-real.js'])vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../static',file),'utf8'),context);"
+        }
+      ],
+      "sha256": "30d5a0283883e0c06084b1805fccd00ba6a68d237aeb6e0c5aad0867d049db47"
+    },
+    {
+      "file": "tests/test_workspace_external_controller.cjs",
+      "hits": [
+        {
+          "line": 76,
+          "text": "const realSource=fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-real.js'),'utf8');"
+        },
+        {
+          "line": 170,
+          "text": "vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-real.js'),'utf8'),context);"
+        },
+        {
+          "line": 171,
+          "text": "const workspace=window.WorkspaceReal({pipelineRoot,runsRoot,announce(){}}),loading=workspace.show('runs');await requested.promise;"
+        }
+      ],
+      "sha256": "cdf57655f2adb42e42676af825438a28b32005bbbaeb85bd20e20e24c3593d8e"
+    }
+  ],
+  "result": "One unrepaired direct full-WorkspaceReal loader gap: browser_workspace_recovery lacks both actual module loads. Other direct evaluators have correct narrower scope or complete dependencies.",
+  "reviewed_at_utc": "2026-10-19T23:45:23.846215+00:00",
+  "reviewed_source": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417"
+}

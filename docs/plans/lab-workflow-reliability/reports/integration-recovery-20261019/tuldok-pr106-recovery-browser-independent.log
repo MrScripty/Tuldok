@@ -1,0 +1,7 @@
+PASS: mocked image Pipeline renders exact parameter min/max/step/defaults and ready Validate control. {"validateReady":true,"parameters":[["epochs","1","5","1","1"],["batch_size","1","16","1","8"],["learning_rate","0.00001","0.01","any","0.001"],["seed","0","4294967295","1","42"]],"error":null}
+{"newRunPredictionRequests":["runs/dddddddddddddddddddddddddddddddd/predictions?split=validation"],"completedControlsVisible":true,"visibleText":"Real local runs. Results retain their saved graph and exact admitted inputs. Classification, integrity and external execution receipts retain their own scope and limitations.\n\nDura"}
+PASS: exposed test view on A → new submission B opens validation with completed controls. UI mocked transport only.
+{"state":"completed","hasExposeControl":true,"typedErrorVisible":true}
+PASS: prediction-fetch failure preserves completed run details and controls with inline error.
+{"runButtons":2,"artifactWarning":true,"metricCards":0}
+PASS: damaged selected run retains list/warning, no metrics, and healthy run remains selectable.

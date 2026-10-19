@@ -1,0 +1,61 @@
+{
+  "kind": "Independent exact-source mocked-transport Chromium recovery composition review",
+  "head": "381bfccdad516010e83f6051f098a5835fb8aac3",
+  "parent": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+  "worktree": "/workspace/Tuldok-lab-phase-ui-m3",
+  "clean_after_check": true,
+  "assessment": "CLEAR: one real phase factory load added; existing assertions and product unchanged; all four browser witnesses reproduced",
+  "blockers": [],
+  "source_review": {
+    "only_added_test_line": "await ev(fs.readFileSync(path.resolve(__dirname,'../static/workspace-phase-timings.js'),'utf8'));",
+    "script_after_removing_added_line_byte_identical_parent": true,
+    "product_changed_paths": [],
+    "changed_paths": [
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-green.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/tuldok-pr104-browser-composition-red.log",
+      "docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+      "tests/browser_workspace_recovery.cjs"
+    ],
+    "factory_order": "Actual WorkspacePhaseTimings script executes before WorkspaceReal constructor; no stub replaces product factory.",
+    "source_sha256": {
+      "tests/browser_workspace_recovery.cjs": "4bf72e4da8e087128304687af5f1277a83cafa8d8b2413cd67a33fae83a056e5",
+      "static/workspace-phase-timings.js": "2230164b2b7200ef941e4f0c65a02b66ed16d477e483029d02306c403c58071e",
+      "static/workspace-real.js": "527fdbf6e92304684127abab0fbba3bd0a6b38fa9fbd2db84ff23c42949b49ec"
+    }
+  },
+  "independent_execution": {
+    "command": "BROWSER=/usr/bin/chromium node tests/browser_workspace_recovery.cjs",
+    "executions": 1,
+    "chromium": "151.0.7922.173 Debian13",
+    "node": "v24.19.0",
+    "log": "/tmp/tuldok-pr104-recovery-browser-independent.log",
+    "log_sha256": "ab23fb83db340e498235e3a95922f64444eef17a24ef213ac4cfedbfb5f528c7",
+    "pass_witness_count": 4,
+    "pass_witnesses": [
+      "PASS: mocked image Pipeline renders exact parameter min/max/step/defaults and ready Validate control. {\"validateReady\":true,\"parameters\":[[\"epochs\",\"1\",\"5\",\"1\",\"1\"],[\"batch_size\",\"1\",\"16\",\"1\",\"8\"],[\"learning_rate\",\"0.00001\",\"0.01\",\"any\",\"0.001\"],[\"seed\",\"0\",\"4294967295\",\"1\",\"42\"]],\"error\":null}",
+      "PASS: exposed test view on A \u2192 new submission B opens validation with completed controls. UI mocked transport only.",
+      "PASS: prediction-fetch failure preserves completed run details and controls with inline error.",
+      "PASS: damaged selected run retains list/warning, no metrics, and healthy run remains selectable."
+    ],
+    "error_output_observed": false,
+    "shell_wrapper_exit": 0,
+    "exit_capture_limit": "Node was followed by cat of its retained log in the shell; reported shell exit0 is the final cat exit. Raw Node process exit was not separately saved. All four witnesses and no exception output observed; do not present shell exit as independently captured Node exit. Owner original green receipt separately records Node exit0. No repeat execution performed."
+  },
+  "receipt_audit": {
+    "path": "/workspace/Tuldok-lab-phase-ui-m3/docs/plans/lab-workflow-reliability/reports/m3-phase-ui/recovery-browser-fixture/validation.json",
+    "sha256": "48f643be2b70d6696c737fe92ff152bda7f69eae9eb523ded768e30464d31ebe",
+    "base_head_matches_parent": true,
+    "all_source_hashes_match": true,
+    "four_owner_green_witnesses_match": true,
+    "redlog": "Owner retained local TypeError WorkspacePhaseTimings is not a function during WorkspaceReal initialization, before first explicit test assertion.",
+    "hosted_attribution": "Root supplied oldPR1064a9 lifecycle step147 attribution; this review did not fetch that hosted log.",
+    "scope_accurate": "Actual Chromium/DOM with explicitly mocked service transport. No actual backend/PG, training, custody, scientific execution or acceptance claimed.",
+    "future_scientific_factory": "PR106 later composition requires its own factory load and is not covered by this exact PR104 source."
+  },
+  "limits": [
+    "No source edits, remote writes/deletions, catalog/schema access, training or heavy tests.",
+    "These four UI witnesses cover exact image parameter rendering, exposed-A to new-B validation reset, prediction error isolation, and damaged selected Run navigation/metric refusal; they do not qualify real coordinator recovery.",
+    "Original source receipt pending-independent line describes its authoring-time state; this artifact provides subsequent independent source/witness review."
+  ],
+  "reviewer_changes": "Only /tmp log and this review receipt."
+}
