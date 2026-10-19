@@ -1,0 +1,13 @@
+{
+  "host_cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "observed_at_utc": "2026-10-19T21:56:43.514482+00:00",
+  "packages": {
+    "anyio": "4.15.1",
+    "jsonschema": "4.26.0",
+    "mcp": "1.30.0",
+    "psycopg": "3.3.6",
+    "pydantic": "2.14.1"
+  },
+  "postgresql_server_version": "17.6",
+  "scope": "Read-only server version and installed-package metadata. No catalog content, DSN or credentials retained."
+}

@@ -1,0 +1,26 @@
+{"progress": "measured", "artifacts": 1, "terminal_history": 0, "process_sample": 0}
+{"progress": "real_history", "artifacts": 1, "completed": 1, "target": 2}
+{"progress": "real_history", "artifacts": 1, "completed": 2, "target": 2}
+{"progress": "measured", "artifacts": 1, "terminal_history": 2, "process_sample": 0}
+{"progress": "measured", "artifacts": 2, "terminal_history": 0, "process_sample": 0}
+{"progress": "real_history", "artifacts": 2, "completed": 1, "target": 2}
+{"progress": "real_history", "artifacts": 2, "completed": 2, "target": 2}
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 562, in <module>
+    if __name__=='__main__': main()
+                             ^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 497, in main
+    config=json.loads(args.worker.read_bytes());worker(config,args.out,args.warm_repeats);return
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 345, in worker
+    raise AssertionError('Retained inventory differs.')
+AssertionError: Retained inventory differs.
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 562, in <module>
+    if __name__=='__main__': main()
+                             ^^^^^^
+  File "/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py", line 523, in main
+    subprocess.run(command,cwd=ROOT,check=True,timeout=600)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/workspace/tuldok-runtime/bin/python', '/workspace/Tuldok-lab-benchmark-baseline-m4/tests/benchmark_lab_workflow.py', '--worker', '/tmp/tuldok-m4-owned-8ic1nh80/worker.json', '--out', '/tmp/tuldok-m4-harness-pilot-03/raw/artifacts-2-history-2-process-0.json', '--warm-repeats', '0']' returned non-zero exit status 1.
