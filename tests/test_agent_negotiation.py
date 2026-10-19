@@ -223,6 +223,12 @@ class ActualNegotiatedHTTPTests(AgentHTTPCase):
                     self.assertEqual(result.returncode,0,result.stderr)
                     self.assertEqual(json.loads(result.stdout)['id'],self.manifest['id'])
                     self.assertNotIn(self.agent['token'],result.stdout+result.stderr)
+                    inspected=subprocess.run([sys.executable,str(root/'project_cli.py'),'--config',str(config),
+                        'inspect','--project-id',self.manifest['id']],
+                        capture_output=True,text=True,timeout=30,cwd=root)
+                    self.assertEqual(inspected.returncode,0,inspected.stderr)
+                    self.assertEqual(json.loads(inspected.stdout)['id'],self.manifest['id'])
+                    self.assertNotIn(self.agent['token'],inspected.stdout+inspected.stderr)
 
     @unittest.skipUnless(importlib.util.find_spec('mcp'), 'Explicit optional MCP environment required')
     def test_actual_retained_and_upgraded_mcp_processes_old_new_server_matrix(self):

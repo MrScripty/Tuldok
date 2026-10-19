@@ -156,16 +156,25 @@ python project_cli.py --config PRIVATE_CONFIG call --operation project_snapshots
 Here `page.json` is `{"limit":20}`, `opening.json` is
 `{"root":"research","manifest_path":"project.json"}` and `project.json` is
 `{"project_id":"OPAQUE_ID"}`. Files contain arguments only; credentials stay in
-the private client configuration. These operations select their additive v1
-contracts. The dedicated `open` and `inspect` commands select the same current
-snapshot operations, including project v2. `inspect` includes bounded external
+the private client configuration. These operations select their highest exact
+available contracts. The dedicated `open` and `inspect` commands select the current
+snapshot operation when an exact available contract was negotiated, including
+project v2. If that operation is unavailable and the corresponding published
+`projects.open`/`projects.get` contract is available, the command selects that
+legacy project-v1 operation before dispatch. Authentication or malformed
+capabilities refuse selection, and an operation failure never triggers a second
+call. Snapshot get/open v2 adds the optional activity projection while their
+installed v1 contracts retain their exact closed output without activity.
+`inspect` with snapshot v2 includes bounded external
 activity when the manifest declares evidence id `activity`. `evidence` previews
 one ordinary evidence reference; `import-data` explicitly captures and imports
 a selected scientific data reference by its observed hash. Both work with
 current v2 projects through existing API owners. Failed/stale observations remain
 external evidence and cannot become execution or scientific acceptance.
-The recipe inspection command negotiates `recipes.inspect/3`; generic calls
-also negotiate `models.publish/2`, `graphs.create_external/2`,
+The recipe inspection command negotiates `recipes.inspect/4`, which adds
+managed Torch runtime variants. Installed inspection v2/v3 contracts retain
+their exact CPU output and return typed `unsupported` for managed Torch.
+Generic calls also negotiate `models.publish/2`, `graphs.create_external/2`,
 `graphs.preflight_external/2` and `studies.prepare_trial/2` when supported.
 These versions authorize static source authoring with current inspect/edit
 scopes. They do not authorize owner Study control or execution; see the

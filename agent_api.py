@@ -531,7 +531,9 @@ _ACTIVITY={'oneOf':[
 _SNAPSHOT_FIELDS=dict(_SNAPSHOT_SUMMARY,mode=const('inspection'),execution=const('unsupported'),
     manifest_status={'enum':['unavailable','unchanged','changed','missing']},
     **{name:array(_SNAPSHOT_REFERENCE,64) for name in ('data','recipes','evidence','requirements')})
-_SNAPSHOT_VIEW={'oneOf':[
+_SNAPSHOT_VIEW={'oneOf':[obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1))),
+    obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG))]}
+_ACTIVITY_SNAPSHOT_VIEW={'oneOf':[
     obj(dict(_SNAPSHOT_FIELDS,schema_version=const(1),activity=_ACTIVITY),
         list(_SNAPSHOT_FIELDS)),
     obj(dict(_SNAPSHOT_FIELDS,schema_version=const(2),extensions=_SNAPSHOT_CATALOG,activity=_ACTIVITY),
@@ -598,6 +600,12 @@ _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
 _CONTRACTS = {op['operation_id']: {1: copy.deepcopy(op)} for op in _OPERATIONS}
+# Activity changes the closed output schema, so installed snapshot v1 contracts
+# retain their exact identity and wire projection.
+for _name in ('project_snapshots.get','project_snapshots.open'):
+    _activity_snapshot=copy.deepcopy(_CONTRACTS[_name][1])
+    _activity_snapshot['outputSchema']['oneOf'][0]['properties']['result']=_ACTIVITY_SNAPSHOT_VIEW
+    _CONTRACTS[_name][2]=_activity_snapshot
 # A distinct graph contract accepts typed TinyCNN architecture. Existing
 # installed v1 clients retain their exact grammar and discovery digest.
 _model_create=copy.deepcopy(_CONTRACTS['graphs.create'][1])
@@ -694,7 +702,7 @@ _extension_binding=obj({'format':const('tuldok_extension_binding_v1'),
     'contributions':array(obj({'id':text(129),'version':text(32),'sha256':SHA,
         'kind':{'enum':['task','reader','model','trainer','evaluator','view']},
         'provider':obj({'reference_id':REF,'id':text(64),'version':text(32),'sha256':SHA,
-            'runtime':obj({'profile':{'enum':['captured_cpu_python_v1','managed_torch_python_v1']},'snapshot_sha256':SHA},['profile']),
+            'runtime':obj({'profile':const('captured_cpu_python_v1'),'snapshot_sha256':SHA},['profile']),
             'effects':dict(array({'enum':['filesystem','network','subprocess']},3),uniqueItems=True),
             'resources':obj({'wall_seconds':integer(1,86400),
                 'source_bytes':integer(1,64*1024**2),'output_bytes':integer(1,64*1024**2)})}),
@@ -705,7 +713,7 @@ _inspection_fields={'definition':{'type':'object','maxProperties':32},
     'receipt':obj({'project_id':ID,'manifest_sha256':SHA,'reference_id':REF,'path':text(512),'measured_sha256':SHA}),
     'parameter_definitions':{'type':'object','maxProperties':32},
     'inputs':{'type':'object','maxProperties':32},'outputs':array({'type':'object','maxProperties':8},96,1),
-    'runtime':{'enum':['system_python','captured_cpu_python_v1','managed_torch_python_v1']}}
+    'runtime':{'enum':['system_python','captured_cpu_python_v1']}}
 _bound_inspection['outputSchema']['oneOf'][0]['properties']['result']={'oneOf':[
     obj(_inspection_fields),obj(dict(_inspection_fields,extension_binding=_extension_binding,
                                    model_task=TASK_REF,selection_policy=SELECTION_POLICY))]}
@@ -718,6 +726,16 @@ for _name,_old,_new in (('recipes.inspect',2,3),('graphs.create_external',1,2),
     _scoped=copy.deepcopy(_CONTRACTS[_name][_old])
     _scoped['description']+=' Ordinary inspect/edit agents may use exact project-v2 source; no execution or approval authority is conferred.'
     _CONTRACTS[_name][_new]=_scoped
+# Managed Torch extends the recipe/runtime variants without rewriting the
+# independently deployed v2/v3 inspection contracts.
+_managed_inspection=copy.deepcopy(_CONTRACTS['recipes.inspect'][3])
+for _variant in _managed_inspection['outputSchema']['oneOf'][0]['properties']['result']['oneOf']:
+    _variant['properties']['runtime']={'enum':['system_python','captured_cpu_python_v1','managed_torch_python_v1']}
+    if 'extension_binding' in _variant['properties']:
+        _contribution=_variant['properties']['extension_binding']['properties']['contributions']['items']
+        _provider_runtime=_contribution['properties']['provider']['properties']['runtime']
+        _provider_runtime['properties']['profile']={'enum':['captured_cpu_python_v1','managed_torch_python_v1']}
+_CONTRACTS['recipes.inspect'][4]=_managed_inspection
 CONTRACT_HEADER = 'Tuldok-Operation-Contract'
 CAPABILITIES_LIMIT = 1024 * 1024
 MAX_OPERATIONS = 256
