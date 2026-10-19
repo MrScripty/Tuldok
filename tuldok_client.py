@@ -408,8 +408,8 @@ class WorkflowClient:
         if type(chunk_bytes) is not int or not 1 <= chunk_bytes <= 8*1024*1024:
             raise AgentAPIError('Invalid bounded collection segment size.')
         manifest = self._validate_collection(manifest)
-        # No batch operation exists in the installed registry. Do not probe an
-        # invented route or fall back in response to an operation failure.
+        # Ordinary collection retains individual segmented reads. Explicit
+        # collect_batch selects the separate negotiated batch operation.
         previous = {}
         if resume is not None:
             _closed(resume, ('format', 'manifest', 'state', 'items'))
