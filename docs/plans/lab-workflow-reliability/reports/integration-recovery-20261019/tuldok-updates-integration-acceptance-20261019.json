@@ -41,11 +41,12 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "freshhead89/90lifecycleCI",
-    "independentPR92review/CI",
-    "serial89merge then90retarget+merge whenready",
+    "complete exacthead89/90lifecycleCI",
+    "complete exacthead92lifecycleCI and archivedearlyPGcase/skipconfirmation",
+    "serial89merge then90retarget+mergewhenready",
+    "retarget92tomainbefore90sourcedeletion; no92mergebeforequalified",
     "postmergeCI",
-    "safecleanupmergedtaskbranches only; retaincheckpointand92untilqualified"
+    "safecleanupmergedtaskbranchesonly; retaincheckpointand92untilqualified"
   ],
   "external_mutations": [
     {
@@ -397,12 +398,12 @@
     "PR89": {
       "head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
       "job": 118228240739,
-      "overall": "inprogress MCPobserver; prioragent/MCPsuccess; allfocusedjobs green"
+      "overall": "fullPython31 active; through30success18:32:12Z"
     },
     "PR90": {
       "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
       "job": 118229327303,
-      "overall": "inprogress agentsuite; nofailedstep"
+      "overall": "through29success18:37:50Z; artifacts30 active"
     },
     "overall": "pending; neither acceptedformerge"
   },
@@ -502,12 +503,6 @@
     "PR89": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
     "PR90": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114"
   },
-  "resume_after_auth_restoration": [
-    "Verify remote89=33069a859836953960a06dfd6001cba54aba0aa0 and90=429d0c4ff44dba16bc95313d2a0980169dbc9b9f before publication; no prior pending writes.",
-    "Publish localcd5c029 and76d3c6a as fastforward exactlease pushes, require completefresh headCI; old fullPython failure is not accepted.",
-    "Diagnose any further CI failure; serialmerge89 then90 afterretarget, postmergeCI, safelycleanup only5ownedworktrees/branches.",
-    "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
-  ],
   "authentication_recheck": {
     "time": "2026-10-19T17:33:48.272023+00:00",
     "requested_by_parent": true,
@@ -528,11 +523,12 @@
     "repository": "MrScripty/Tuldok",
     "branch": "checkpoint/lab-integration-20261019",
     "original_checkpoint": "96afae56ca41c2a90f87ea3bc6a27ee4ed6291b5",
-    "tip": "3612e14",
+    "tip": "bf054bfd5e478bde5571b3c27db870ee39c14c7e",
     "restoration": "fresh standaloneclone;22sizes/SHA256 verified;taskrepairancestry verified;separateplanb446fetchedexact",
     "evidence_directory": "docs/plans/lab-workflow-reliability/reports/integration-recovery-20261019",
     "contains_runtime_catalog_data": false,
-    "keep_branch": true
+    "keep_branch": true,
+    "latest_restoration": "freshstandaloneclone fetchedlatestcheckpoint; all24sizes/hashesverified; exact750332aimplementationcommitpresent"
   },
   "m1_implementation": {
     "user_authorization": "later2026-10-19 18:19UTC instruction tocontinuewithpersistentstorage",
@@ -567,10 +563,19 @@
     "separatePR91": "unchanged/unmergedb446d9a",
     "plan_copy": "8originalplanfilesfromb446copiedtoimplementationbranch;statusActive onlyimplementationcopy",
     "lifecycle": {
+      "run": 39303732490,
+      "job": 118235282725,
+      "head": "750332ac64244526127075feb14cb8db268a7ab9",
+      "early_pg_step": {
+        "name": "Verify field output preflight and unchanged admission state",
+        "conclusion": "success",
+        "started_at": "2026-10-19T18:36:08Z",
+        "completed_at": "2026-10-19T18:36:10Z",
+        "counts_skips_and_exact_case_log": "await archived completed job log"
+      },
+      "overall": "inprogress agent23; notaccepted",
       "superseded_run": 39302733843,
-      "superseded_head": "cbc648d",
-      "cancellation": "normalrequestsubmitted; notacceptedevidence",
-      "current_run": "awaitdiscovery750332a"
+      "superseded_conclusion": "cancelled; notacceptedevidence"
     },
     "prior_head": "cbc648deed222879e8f7654a5e6283c581eabb9f",
     "followups": {
@@ -591,11 +596,25 @@
       "seconds": 0.127
     }
   },
-  "updated_at": "2026-10-19T18:36:13.373697+00:00",
+  "updated_at": "2026-10-19T18:38:30.025727+00:00",
   "cleanup_dependency_chain": [
     "89->90;retarget90tomainbefore89branchdelete",
     "90->92;retarget92tomainbefore90branchdelete",
     "91independentmainbase;preserve",
     "checkpointbranchretainedpersistentarchive;notordinaryfeaturecleanup"
+  ],
+  "historical_resume_after_auth_restoration": [
+    "Verify remote89=33069a859836953960a06dfd6001cba54aba0aa0 and90=429d0c4ff44dba16bc95313d2a0980169dbc9b9f before publication; no prior pending writes.",
+    "Publish localcd5c029 and76d3c6a as fastforward exactlease pushes, require completefresh headCI; old fullPython failure is not accepted.",
+    "Diagnose any further CI failure; serialmerge89 then90 afterretarget, postmergeCI, safelycleanup only5ownedworktrees/branches.",
+    "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
+  ],
+  "current_resume": [
+    "Allsourcepublicationconfirmed:89cd5c029,9076d3c6a,92750332a. Do not re-pusholdheads orrepeatoldauthenticationrecovery.",
+    "Existingreviewer/root/mcp_contract_ci_review monitors3freshjobsread-only; no newworkerneeded. Rootsolemergeowner.",
+    "Wait actualcurrentfullCI; inspectfailedlogs andrepairrecoverablefailures; no skipped/cancelledoldruns accepted.",
+    "Merge89normalexactcd5thenpostmergechecks;retarget90before89sourcedelete;merge90exact76dwhenreadythenpostmergechecks.",
+    "Retarget92tomainbefore90sourcedelete; preserve91b446unmergedandcheckpointbranch. Preserveall82originalheads/96worktrees.",
+    "92M1narrowoutputcapacityslice independentlycleared; fullM1/fullA1remainincomplete. NoCUDA/science/recoveryclaim."
   ]
 }

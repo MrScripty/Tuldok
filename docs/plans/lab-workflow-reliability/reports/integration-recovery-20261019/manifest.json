@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 24291,
-      "sha256": "da0ce0040aa7b4fca99a6c513fd8627ee99280f60fcfa7facc7674fb65498e1d"
+      "bytes": 25752,
+      "sha256": "d3f8bce5ef7dd4cd63ef2ee0bf782e615593173cf1801bde1e60ed83ba6d904c"
     },
     {
       "path": "tuldok-20261019-protected-local-heads.txt",
