@@ -471,3 +471,23 @@ with same-size one/many artifacts; retain descriptive distributions, owner CPU/
 RSS/I/O/hash/request/body counts and exact integrity. Caches, batching, runtime
 installation/mutation and representative scientific/CUDA workloads are outside
 this baseline. Candidate reuse/invalidation work requires a later bounded scope.
+
+## M4 bounded collection candidate admission — 2026-10-19
+
+After independently reviewing the frozen descriptive baseline, the lead admitted
+an isolated candidate from PR105 source `2d8b7d79110f210896dcdda8df08f6385cabf2d3`
+in branch `feature/lab-bounded-collection-20261019`. The full baseline branch was
+normally merged locally, preserving immutable baseline `07dde98`. Scoped writes
+are a new selected bounded sequential segment operation in `agent_api.py`, one
+route/delivery fence in `app.py`, Runs orchestration/canonical optional checkpoint
+plumbing, narrow `run_publication.py` shared-deadline plumbing, tests/fixtures,
+paired benchmark support and canonical docs/this plan/evidence. AgentClient class,
+client CLI and consumer integration remain lead/M5-owned.
+
+The selected candidate supports 1–20 exact external-Run or attached-publication
+segment items, <=8 MiB requested aggregate bytes and a shared 60-second wall
+budget, typed ordered partial outcomes and current per-item/final authority.
+It adds no cache, compute or old-contract change. Initial eight-case qualification
+is checkpointed before broader tests and same-head alternating paired performance
+measurement. Retention and full T5 acceptance remain pending those results and
+independent review; historical83d baseline is context, not a paired candidate arm.

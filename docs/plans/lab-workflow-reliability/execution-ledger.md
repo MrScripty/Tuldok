@@ -456,3 +456,22 @@ claim. Candidate selection and any bounded batch reader remain a separate
 lead-owned admission after review; no cache is justified by submillisecond
 proof metadata reads. Actual installed-runtime mutation and candidate
 qualification remain pending.
+
+## 2026-10-19 — Bounded collection candidate checkpoint
+
+The lead independently accepted descriptive baseline07dde98 and admitted a new
+isolated bounded sequential read candidate from PR105 source2d8b7d7. Whole baseline
+history was normally merged as60861fe; no baseline ref/worktree changed. Added
+`runs.artifact_segments/1` for external Runs/attached Refs, bounded20 items/8 MiB/
+60 seconds, canonical readers, typed partial outcomes and current final delivery
+checks after serialization. Client class/CLI remain outside this worker's scope.
+
+Before-change witness ran five tests with missing-method errors/subtest errors;
+all 122 prior full contracts already matched. The initial implementation passed
+five pure cases in0.376s. The expanded eight-case actual PostgreSQL/neutral custody
+and pure group passed47.251s, zero skips, including actual late credential
+revocation and injected final transitive denial with no buffered bytes disclosed.
+Logs remain in `reports/m4-bounded-collection/`. This coherent checkpoint is for
+immutable backup/independent review; wider regressions, paired performance and
+candidate retention are pending. No improvement, cache, science or hosted pass
+is inferred.

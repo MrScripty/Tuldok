@@ -1,0 +1,97 @@
+test_all_existing_full_contracts_remain_equal (test_run_artifact_segments.ArtifactSegmentsTests.test_all_existing_full_contracts_remain_equal) ... ok
+test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) ... 
+  test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=21) ... ERROR
+  test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=2) ... ERROR
+  test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=2) ... ERROR
+  test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=1) ... ERROR
+test_foreign_order_or_identity_is_not_correlated (test_run_artifact_segments.ArtifactSegmentsTests.test_foreign_order_or_identity_is_not_correlated) ... ERROR
+test_ordered_segments_and_typed_partial_failure (test_run_artifact_segments.ArtifactSegmentsTests.test_ordered_segments_and_typed_partial_failure) ... ERROR
+test_shutdown_cancel_and_deadline_discard_buffered_results (test_run_artifact_segments.ArtifactSegmentsTests.test_shutdown_cancel_and_deadline_discard_buffered_results) ... ERROR
+
+======================================================================
+ERROR: test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=21)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 62, in test_caps_duplicate_and_malformed_ref_refuse_before_any_read
+    with self.subTest(items=len(items)),self.assertRaises(WorkbenchError):self.call(fake,{'items':items})
+                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+======================================================================
+ERROR: test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 62, in test_caps_duplicate_and_malformed_ref_refuse_before_any_read
+    with self.subTest(items=len(items)),self.assertRaises(WorkbenchError):self.call(fake,{'items':items})
+                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+======================================================================
+ERROR: test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=2)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 62, in test_caps_duplicate_and_malformed_ref_refuse_before_any_read
+    with self.subTest(items=len(items)),self.assertRaises(WorkbenchError):self.call(fake,{'items':items})
+                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+======================================================================
+ERROR: test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) (items=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 62, in test_caps_duplicate_and_malformed_ref_refuse_before_any_read
+    with self.subTest(items=len(items)),self.assertRaises(WorkbenchError):self.call(fake,{'items':items})
+                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+======================================================================
+ERROR: test_foreign_order_or_identity_is_not_correlated (test_run_artifact_segments.ArtifactSegmentsTests.test_foreign_order_or_identity_is_not_correlated)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 79, in test_foreign_order_or_identity_is_not_correlated
+    request={'items':[item(),item('two')]};fake=self.fake();value=self.call(fake,request)
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+======================================================================
+ERROR: test_ordered_segments_and_typed_partial_failure (test_run_artifact_segments.ArtifactSegmentsTests.test_ordered_segments_and_typed_partial_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 51, in test_ordered_segments_and_typed_partial_failure
+    value=self.call(fake,{'items':[first,second]})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+======================================================================
+ERROR: test_shutdown_cancel_and_deadline_discard_buffered_results (test_run_artifact_segments.ArtifactSegmentsTests.test_shutdown_cancel_and_deadline_discard_buffered_results)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 72, in test_shutdown_cancel_and_deadline_discard_buffered_results
+    self.call(fake,{'items':[item(),item('two')]},_cancelled=cancel)
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 42, in call
+    return Runs.artifact_segments(fake,body,**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'Runs' has no attribute 'artifact_segments'. Did you mean: 'artifact_segment'?
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.361s
+
+FAILED (errors=7)

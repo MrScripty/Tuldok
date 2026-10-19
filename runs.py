@@ -1,5 +1,5 @@
 """Durable admission, one local worker, and verified immutable result custody."""
-from access import authorized
+from access import AccessError, authorized
 import base64
 import copy
 from contextlib import contextmanager
@@ -1212,7 +1212,7 @@ class Runs:
                 # to stop and drain; missing evidence remains unknown on reopen.
                 handle.close_control()
 
-    def _external_inventory(self, run):
+    def _external_inventory(self, run, *, checkpoint=None):
         import recipe_process
         import recipe_contract
         from candidate_packages import authorize_transitive_inputs
@@ -1266,10 +1266,14 @@ class Runs:
                 import extension_evidence
                 # All download/segment/capture/summary accessors share this
                 # structural gate and current transitive input authorization.
-                for item in run['artifacts']:self._copy_verified(descriptor,item['name'],item)
-                self._verify_extension(directory,run)
+                for item in run['artifacts']:
+                    if checkpoint is not None: checkpoint()
+                    self._copy_verified(descriptor,item['name'],item,
+                        cancelled=(lambda: (checkpoint(), False)[1]) if checkpoint is not None else None)
+                self._verify_extension(directory,run,checkpoint=checkpoint)
             return run['artifacts']
         except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
+            if checkpoint is not None and isinstance(error, WorkbenchError): raise
             raise WorkbenchError('Retained external result cannot be verified.', 'unavailable', 409) from error
         finally:
             if descriptor is not None:
@@ -2280,14 +2284,112 @@ class Runs:
                   'custody_receipt_base64': base64.b64encode(receipt_raw).decode('ascii')}
         return raw, source
 
+    def artifact_segments(self, body, *, _cancelled=None, _delivery_guard=None):
+        """Sequential bounded reads; no new publication, cache or whole-hash claim."""
+        import run_publication
+        from candidate_packages import authorize_transitive_inputs
+        deadline = time.monotonic() + 60
+        def checkpoint():
+            if self._closed or self._stop.is_set() or _cancelled is not None and _cancelled():
+                raise WorkbenchError('Artifact collection was cancelled.', 'cancelled', 409)
+            if time.monotonic() >= deadline:
+                raise WorkbenchError('Artifact collection reached its wall budget.', 'deadline', 504)
+        def global_authority():
+            checkpoint()
+            with self._coordinator.catalog(deadline):
+                self.access.require('inspect', 'runs.artifact_segments')
+            checkpoint()
+        global_authority()
+        closed(body, ('items',))
+        items = body['items']
+        if type(items) is not list or not 1 <= len(items) <= 20:
+            raise WorkbenchError('Artifact collection requires 1 through 20 items.')
+        seen, total = set(), 0
+        for request in items:
+            closed(request, ('key', 'source', 'name', 'expected_sha256', 'offset', 'max_bytes'))
+            key, source = request['key'], request['source']
+            if type(key) is not str or not re.fullmatch('[A-Za-z0-9_.:-]{1,64}', key) or key in seen:
+                raise WorkbenchError('Artifact collection keys must be unique bounded identifiers.')
+            seen.add(key)
+            if type(source) is not dict or source.get('kind') not in ('run', 'publication'):
+                raise WorkbenchError('Artifact collection requires an exact Run or publication reference.')
+            if source['kind'] == 'run':
+                closed(source, ('kind', 'run_id')); identifier(source['run_id'], 'Run ID')
+            else:
+                closed(source, ('kind', 'ref')); ref = source['ref']
+                closed(ref, ('kind', 'schema_version', 'catalog_id', 'run_id', 'material_sha256',
+                             'inventory_sha256', 'custody_receipt_sha256', 'sha256'))
+                if ref['kind'] != 'recovered_publication_result' or type(ref['schema_version']) is not int or ref['schema_version'] != 1:
+                    raise WorkbenchError('Unsupported publication reference.')
+                for field in ('catalog_id', 'run_id'): identifier(ref[field], field)
+                if any(not run_publication._hash(ref[field]) for field in ('material_sha256', 'inventory_sha256', 'custody_receipt_sha256', 'sha256')):
+                    raise WorkbenchError('Publication reference hashes are required.')
+            if (type(request['name']) is not str or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9_.-]{0,119}', request['name'])
+                    or request['name'] in ('artifact-manifest.json', 'custody-receipt.json')
+                    or not run_publication._hash(request['expected_sha256'])
+                    or type(request['offset']) is not int or not 0 <= request['offset'] <= 512*1024**2
+                    or type(request['max_bytes']) is not int or not 1 <= request['max_bytes'] <= 8*1024**2):
+                raise WorkbenchError('Artifact collection item needs exact bounded segment selectors.')
+            total += request['max_bytes']
+        if total > 8*1024**2:
+            raise WorkbenchError('Artifact collection requested bytes exceed 8 MiB.', 'too_large', 413)
+        # Freeze caller-owned selectors before any item reads or delivery closure.
+        items = copy.deepcopy(items)
+        outcomes, successful = [], []
+        for request in items:
+            global_authority()
+            source = request['source']; name = request['name']
+            selectors = {key: request[key] for key in ('expected_sha256', 'offset', 'max_bytes')}
+            outcome = {'key': request['key'], 'source': copy.deepcopy(source)}
+            try:
+                with self._coordinator.catalog(deadline):
+                    checkpoint()
+                    if source['kind'] == 'run':
+                        run = self._load(source['run_id'])
+                        if not self._external(run):
+                            raise WorkbenchError('Batch segments currently support external Runs only.', 'unsupported', 400)
+                        value = self.artifact_segment(source['run_id'], name, selectors, _checkpoint=checkpoint)
+                    else:
+                        value = run_publication.artifact_segment(self, source['ref'], name, selectors,
+                            deadline=deadline, checkpoint=checkpoint)
+                    checkpoint()
+                outcome.update(status=200, result=value)
+                successful.append(source)
+            except (WorkbenchError, AccessError) as error:
+                # A revoked credential or stopping owner invalidates the complete
+                # buffered response, rather than becoming a successful partial read.
+                global_authority()
+                outcome.update(status=error.status, error={'code':error.code, 'message':str(error)[:240]})
+            outcomes.append(outcome)
+        def final_authority():
+            global_authority()
+            for source in successful:
+                with self._coordinator.catalog(deadline):
+                    checkpoint()
+                    run_id = source['run_id'] if source['kind'] == 'run' else source['ref']['run_id']
+                    self.access.require('inspect', 'runs.artifact_segments', run_id)
+                    run = self._load(run_id)
+                    authorize_transitive_inputs(self, run)
+                    if source['kind'] == 'publication':
+                        run_publication._result_ref(source['ref'], run)
+                        state = run.get('publication_continuation')
+                        if not state or state['state'] != 'published' or state['result_ref'] != source['ref']:
+                            raise WorkbenchError('Publication result is no longer attached.', 'stale', 409)
+                checkpoint()
+            global_authority()
+        final_authority()
+        if _delivery_guard is not None: _delivery_guard(final_authority)
+        return {'format':'artifact_segments_v1', 'items':outcomes}
+
     @authorized('inspect', 'runs.artifact_segment')
-    def artifact_segment(self, run_id, name, body):
+    def artifact_segment(self, run_id, name, body, *, _checkpoint=None):
         """Read a bounded segment; only the client can verify the whole digest.
 
         Every call rechecks credentials. External Runs use retained custody;
         qualified built-ins verify their complete published evidence inventory.
         The returned segment still requires client-side whole-hash verification.
         """
+        if _checkpoint is not None: _checkpoint()
         closed(body, ('expected_sha256', 'offset', 'max_bytes'))
         expected = body['expected_sha256']
         offset, maximum = body['offset'], body['max_bytes']
@@ -2302,7 +2404,7 @@ class Runs:
         with self.lock:
             run = self._load(run_id)
         if self._external(run):
-            inventory = self._external_inventory(run)
+            inventory = self._external_inventory(run,checkpoint=_checkpoint)
         else:
             adapter = adapter_for_graph(run['graph'])
             if run['graph'].get('recipe') != getattr(adapter, 'MODEL_RECIPE', None):
@@ -2327,6 +2429,7 @@ class Runs:
                     or before.st_nlink != 1 or before.st_size != item['bytes']):
                 raise ValueError('Artifact segment source differs from declared inventory.')
             count = min(maximum, item['bytes'] - offset)
+            if _checkpoint is not None: _checkpoint()
             raw = os.pread(descriptor, count, offset)
             after = os.fstat(descriptor)
             current = os.stat(name, dir_fd=directory, follow_symlinks=False)
@@ -2342,12 +2445,14 @@ class Runs:
             finally:
                 os.close(current_directory)
         except (OSError, ValueError) as error:
+            if _checkpoint is not None and isinstance(error, WorkbenchError): raise
             raise WorkbenchError('Artifact segment is unavailable or changed during read.', 'unavailable', 409) from error
         finally:
             if descriptor is not None:
                 os.close(descriptor)
             if directory is not None:
                 os.close(directory)
+        if _checkpoint is not None: _checkpoint()
         next_offset = offset + len(raw)
         return {'run_id':run_id, 'name':name, 'expected_sha256':expected,
                 'total_bytes':item['bytes'], 'media_type':item['media_type'],

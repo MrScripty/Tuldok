@@ -559,18 +559,22 @@ def artifact(runs, ref, name, expected_sha256):
 
 
 @_reader_boundary
-def artifact_segment(runs, ref, name, body):
+def artifact_segment(runs, ref, name, body, *, deadline=None, checkpoint=None):
     """Current exact-result authority, bounded bytes, provisional whole hash."""
     closed(body, ('expected_sha256', 'offset', 'max_bytes'))
     expected, offset, maximum = body['expected_sha256'], body['offset'], body['max_bytes']
     _require(_hash(expected) and type(offset) is int and 0 <= offset <= 512 * 1024**2
              and type(maximum) is int and 1 <= maximum <= 8 * 1024**2,
              'Publication segment needs exact hash, nonnegative offset and 1 through 8 MiB bound.', 'invalid')
-    deadline = time.monotonic() + WALL_SECONDS
+    deadline = time.monotonic() + WALL_SECONDS if deadline is None else deadline
+    def guard():
+        _read_check(runs, deadline)
+        if checkpoint is not None: checkpoint()
+    guard()
     # An attached immutable inventory permits provisional bounded reads. Full
     # result/semantic verification remains the explicit result reader's promise;
     # segmented clients must verify the reassembled whole digest themselves.
-    value = result(runs, ref, deadline=deadline, _verify_payloads=False)
+    value = result(runs, ref, deadline=deadline, checkpoint=checkpoint, _verify_payloads=False)
     item = next((item for item in value['artifacts'] if item['name'] == name), None)
     _require(item is not None and item['sha256'] == expected, 'Exact recovered artifact identity is required.', 'stale')
     _require(offset <= item['bytes'], 'Publication segment offset exceeds the artifact length.', 'invalid')
@@ -582,7 +586,7 @@ def artifact_segment(runs, ref, name, body):
         before = os.fstat(descriptor)
         _require(stat.S_ISREG(before.st_mode) and before.st_uid == os.getuid()
                  and before.st_nlink == 1 and before.st_size == item['bytes'], 'Recovered segment source changed.')
-        _read_check(runs, deadline)
+        guard()
         raw = os.pread(descriptor, min(maximum, item['bytes'] - offset), offset)
         after = os.fstat(descriptor); current = os.stat(name, dir_fd=directory, follow_symlinks=False)
         keys = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode', 'st_uid', 'st_nlink')
@@ -598,7 +602,7 @@ def artifact_segment(runs, ref, name, body):
     finally:
         if descriptor is not None: os.close(descriptor)
         if directory is not None: os.close(directory)
-    _read_check(runs, deadline)
+    guard()
     _current_read(runs, ref['run_id'])
     next_offset = offset + len(raw)
     return {'result_ref': copy.deepcopy(ref), 'run_id': ref['run_id'], 'name': name,
