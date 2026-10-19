@@ -412,3 +412,58 @@ class CoordinatorRecoveryTests(ExternalCase):
             worker.start(); worker.join(1)
             self.assertFalse(worker.is_alive())
         self.assertEqual(len(errors), 1)
+
+    def test_secondary_opener_cannot_replace_primary_journal_on_recovery_or_close(self):
+        from app import Dataset
+        primary = self.dataset.runs
+        primary._coordinator.fault('coordinator_exception')
+        with self.owner.bound(self.dataset):
+            primary.recover_coordinator({'expected_generation': 1, 'request_key': 'primary-owner-0001'})
+        journal = primary.path / '.coordinator-v1.json'
+        original = journal.read_bytes()
+        peer = Dataset(self.path / 'catalog', project_roots={'fixture': self.project_path})
+        try:
+            self.assertFalse(peer.runs.runtime_owner)
+            with self.owner.bound(peer), self.assertRaises(WorkbenchError):
+                peer.runs.recover_coordinator({'expected_generation': 1, 'request_key': 'peer-refusal-0001'})
+            self.assertEqual(journal.read_bytes(), original)
+        finally:
+            peer.close()
+        self.assertEqual(journal.read_bytes(), original)
+        self.assertEqual(primary._coordinator.value['fault']['category'], 'coordinator_exception')
+
+    def test_unknown_commit_survives_timeout_restore_failure_and_retains_fence(self):
+        runs = self.dataset.runs
+        self.lock_fault()
+        original_transaction = self.dataset.db.transaction
+        connection = self.dataset.db.connection
+        lost, cleanup_failed = [], []
+
+        @contextmanager
+        def unknown(*args, **kwargs):
+            with original_transaction(*args, **kwargs):
+                yield
+            if not lost:
+                lost.append(True)
+                raise CommitOutcomeUnknown('Injected unknown COMMIT followed by cleanup failure.')
+
+        class RestoreFailure:
+            def __getattr__(self, name):
+                return getattr(connection, name)
+
+            def execute(self, statement, parameters=None):
+                if lost and not cleanup_failed and 'set_config' in str(statement) and parameters == ('1min',):
+                    cleanup_failed.append(True)
+                    raise psycopg.OperationalError('Injected timeout restoration failure.')
+                return connection.execute(statement, parameters)
+
+        with self.owner.bound(self.dataset), patch.object(self.dataset.db, 'connection', RestoreFailure()), \
+                patch.object(self.dataset.db, 'transaction', side_effect=unknown), patch.object(runs, '_start') as start:
+            with self.assertRaises(WorkbenchError) as error:
+                runs.recover_coordinator({'expected_generation': 1, 'request_key': 'double-fault-0001'})
+            self.assertEqual(error.exception.code, 'commit_unknown')
+            start.assert_not_called()
+        self.assertTrue(lost)
+        self.assertTrue(cleanup_failed)
+        self.assertTrue(runs._stop.is_set())
+        self.assertIsNone(runs._coordinator.value['request']['completed_generation'])

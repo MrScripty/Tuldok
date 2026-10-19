@@ -296,7 +296,7 @@ are explicit and carry no claim that they exist now.
 
 **Acceptance gate:** T3 and affected PR90 capacity/custody tests on the real PostgreSQL/process boundary. Prove no two coordinators, no duplicate GO, preserved unknown fence and bounded shutdown. Re-plan if recovery needs external custody ownership or changes capacity policy.
 
-**Status:** `Planned`
+**Status:** `Active` — core health/fault fences and explicit serialized HTTP/CLI recovery implemented and locally qualified. Independent final ownership/cleanup review, exact-head hosted checks, existing-UI controls and full T3 acceptance remain pending. See `reports/m2-coordinator-core/validation.json`.
 
 ### M3: Live phase timing and wait visibility
 

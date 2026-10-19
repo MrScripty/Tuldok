@@ -328,3 +328,10 @@ lineage refresh is a form submission. That harness call was corrected to submit
 the form, preserving all product assertions. The actual first neutral browser
 journey passed. Exact-source qualification, receipts and root independent review
 follow; hosted acceptance, indexed diagnostics and full M1 remain pending.
+
+
+## M2 coordinator core implementation — 2026-10-19
+
+Implemented Runs-owned generation/health, bounded durable diagnostic/request journal, stop/admission/GO fences and explicit current-owner recovery through selected HTTP/CLI. A joined executor and acknowledged durable custody reconciliation precede one replacement; healthy/stale refusals remain side-effect free, uncertain COMMIT/cleanup/runtime ownership stays fenced, and a secondary opener cannot write the primary journal.
+
+Core source3280ebe passed27 cases108.033s with no skips; normal whole-branch composition6ab211e includes independently reviewed UI/lineage61d2c2d/be9dba6. Composition passed16 cases52.070s and an actual neutralStudy/PG/Chromiumlineage journey; separate original custody/recipe-process40 cases74.360s passed. Final independent review found cleanup masking and peer-journal overwrite boundaries; focused corrected witnesses and exact-source hashes are retained in `reports/m2-coordinator-core/validation.json`. Independent final review and hosted gates remain pending. Existing UI coordinator controls and M3 timing are still separate work; no full milestone, CUDA or scientific acceptance is claimed.

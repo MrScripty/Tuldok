@@ -16,7 +16,32 @@
     },
     "postgres": "actual disposable17.6",
     "custody": "actual neutral helpers and receipts; CPU resource-headroom control explicitly simulated in queue-release case",
-    "http_cli": "actual selected health and concurrentowner recovery, privatefixture CLI status/recovery, corruptreply no-retry and ownerallowlist refusal"
+    "http_cli": "actual selected health and concurrentowner recovery, privatefixture CLI status/recovery, corruptreply no-retry and ownerallowlist refusal",
+    "composed": {
+      "tests": 16,
+      "seconds": 52.07,
+      "skips": 0,
+      "scope": "source6ab before final independent-review refinements"
+    },
+    "composed_browser": {
+      "source": "6ab211e97bd6f5520b0bcabf8504f6a5bb00f930",
+      "result": "passed actual neutralStudy/PG/Chromiumlineage journey",
+      "scope": "before final independent-review refinements",
+      "log": "tuldok-m2-coordinator-composed-lineage-browser.log"
+    },
+    "custody_regression": {
+      "tests": 40,
+      "seconds": 74.36,
+      "skips": 0,
+      "scope": "source6ab before final cleanup/peerownership refinements"
+    },
+    "review_refinements": {
+      "tests": 3,
+      "seconds": null,
+      "skips": 0,
+      "log": "tuldok-m2-coordinator-review-fixes-final.log",
+      "state": "see exact retained log; no full-suite claim for final refinements"
+    }
   },
   "failure_history": [
     "Initial expanded7:6passed and1GO counter harness signature failure; corrected7 passed13.665s.",
@@ -29,7 +54,9 @@
     "catalog->lifecycle lock order with final currentauthority/runtimeproof",
     "freshunknownfences installed onlyafter acknowledged reconciliationCOMMIT",
     "cancellable catalog/lifecycle waits and remaining per-SQL deadline",
-    "GO send serializes with globalstopfence"
+    "GO send serializes with globalstopfence",
+    "Primary unknownCOMMIT survives secondary timeoutrestore/advisoryunlockfailure; cleanup faults fence and uncertainunlockrefusesruntimeownership untilreopen.",
+    "SecondaryDataset close and failed recovery cannot overwrite primaryjournal; current runtimeownership checked before any requestjournal mutation."
   ],
   "pending": [
     "independent final source/test/docs review",
@@ -41,14 +68,22 @@
     "other M1-M6 acceptance and missing private diagnostic/scientific inputs"
   ],
   "source_sha256": {
-    "run_coordinator.py": "8e1947874bb872769276ebe9f4a0f28ff40653a6a37b626bb7b6b311d13a0c43",
+    "run_coordinator.py": "3b9faf4854bdc5a64efd925dbde3a468418b38aa40818987a1f024fb74e22912",
     "runs.py": "ae126e0d6493d925b171d2c9da874f16d7b76e881160e98f6f6b2e2f144ad0c2",
-    "metadata.py": "3d4b585585c07cc8909c51584551da1342cd801cc0a2640c866154e0bcc4b99d",
+    "metadata.py": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
     "agent_api.py": "b14fa9eca9416199a5b4704b015dd0116d342ebf0d7bb7aeeda085594913e77d",
     "app.py": "38111b4ee39a20b9b41b3b3fe1688f6325a26fb090fae47e4d661d9aa51ebf6b",
     "project_cli.py": "662e6d4ee845cf45f45b658a8626f9d950cb7bca6e5d8a2c5a15a3361010329e",
-    "tests/test_run_coordinator_recovery.py": "4326b22b4ef9ec733d75641ff190c9929095139ea058839e70087cf25191c1ea",
-    ".github/workflows/tests.yml": "e349e747dab77d6daa500dc4cda9d649b08213dc86c3d509cc171ca883cc7ffc",
+    "tests/test_run_coordinator_recovery.py": "c3b2422894cb0d22848e241ae80058da6b53a2cf7c80ddd0e6e44afba2eb8b91",
+    ".github/workflows/tests.yml": "b4f32fa8ca0d9f1325d40791195b5c79a177b02057424bc78e3c12ada3ab44ca",
     "docs/contracts/run-coordinator-recovery.md": "df2b5d4c995ff93db43cc2ba452e991a63c41e2e6bf0246bff89e4ed57899ef9"
+  },
+  "core_source_commit": "3280ebee9e4f6964cdbf73c1480ff15866962de7",
+  "composition_commit": "6ab211e97bd6f5520b0bcabf8504f6a5bb00f930",
+  "composed_lineage": "be9dba61f0d8d37a3d694c90b244c6ad6942285b",
+  "independent_review": {
+    "initial6cases": "passed9.084s actual PG",
+    "simultaneous_cleanup_witness": "reviewer reports unknownCOMMIT retained across both OperationalErrors; flagsTrue, depth0, ContextVarresetNone",
+    "secondary_opener_final_review": "pending"
   }
 }

@@ -92,6 +92,8 @@ class Coordinator:
 
     def save(self):
         """Atomic private replacement and directory sync, bounded independently of history."""
+        if not self.runs.runtime_owner or self.runs.db.connection.closed or getattr(self.runs.db, '_lock_release_unknown', False):
+            raise OSError('This application cannot prove journal ownership; retain the existing owner bytes.')
         if not self.journal_ok:
             raise OSError('Original coordinator journal is unavailable; retain it for inspection.')
         raw = encode(self.value).encode('utf-8')
@@ -121,6 +123,8 @@ class Coordinator:
             if self.value['state'] == state:
                 return
             self.value.update(state=state, updated_at=timestamp())
+            if not self.runs.runtime_owner:
+                return
             try:
                 self.save()
             except (OSError, ValueError):
@@ -171,6 +175,8 @@ class Coordinator:
         deadline = time.monotonic() + 60
         with self.catalog(deadline):
             owner = self.runs.access.require('approve-execution', 'runs.recover_coordinator', owner_only=True)
+            if not self.runs.runtime_owner or not self.runs.db.runtime_owned('workspace_runs'):
+                raise WorkbenchError('Another application owns this coordinator; no recovery request was recorded.', 'unavailable', 409)
         request = {'actor_id': owner.actor_id, 'request_key': key,
                    'request_sha256': digest({'catalog_id': self.runs.db.dataset_id,
                        'operation': 'runs.recover_coordinator', 'actor_id': owner.actor_id, 'body': body}),
@@ -181,6 +187,8 @@ class Coordinator:
         try:
             self.check_deadline(deadline)
             with self.bounded(self.lock, deadline):
+                if not self.runs.runtime_owner or self.runs.db.connection.closed:
+                    raise WorkbenchError('Another application owns this coordinator; no recovery request was recorded.', 'unavailable', 409)
                 old = self.value['request']
                 if old and old['request_key'] == key:
                     if any(old[field] != request[field] for field in ('actor_id', 'request_sha256', 'expected_generation')):
@@ -251,6 +259,9 @@ class Coordinator:
             raise WorkbenchError(str(error), 'commit_unknown', 409) from error
         except StorageError as error:
             raise WorkbenchError(str(error), 'unavailable', 409) from error
+        finally:
+            if getattr(self.runs.db, '_command_cleanup_fault', False) or getattr(self.runs.db, '_lock_release_unknown', False):
+                self.fault('catalog_cleanup_storage')
 
     @contextmanager
     def bounded(self, lock, deadline):

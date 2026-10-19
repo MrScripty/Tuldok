@@ -152,7 +152,12 @@ class CatalogLock:
         self.depth -= 1
         try:
             if not self.depth and not self.metadata.connection.closed:
-                self.metadata.connection.execute('SELECT pg_advisory_unlock(%s)', (self.metadata._lock_key,))
+                try:
+                    self.metadata.connection.execute('SELECT pg_advisory_unlock(%s)', (self.metadata._lock_key,))
+                except BaseException:
+                    self.metadata._lock_release_unknown = True
+                    if error is None:
+                        raise
         finally:
             self.mutex.release()
 
@@ -163,6 +168,7 @@ class CatalogLock:
             if (cancelled and cancelled()) or time.monotonic() >= deadline:
                 raise StorageError('Catalog command ownership did not become available within the recovery deadline.')
         entered = False
+        primary = None
         try:
             if (cancelled and cancelled()) or time.monotonic() >= deadline:
                 raise StorageError('Catalog command ownership was cancelled or reached its deadline.')
@@ -172,9 +178,12 @@ class CatalogLock:
             self.depth += 1
             entered = True
             yield self
+        except BaseException as error:
+            primary = error
+            raise
         finally:
             if entered:
-                self.__exit__(None, None, None)
+                self.__exit__(type(primary), primary, primary.__traceback__ if primary else None)
             else:
                 self.mutex.release()
 
@@ -361,12 +370,22 @@ class Metadata:
             raise RuntimeError('A command deadline requires exclusive catalog ownership.')
         old = self.connection.execute('SHOW statement_timeout').fetchone()[0]
         marker = _COMMAND_DEADLINE.set((self, deadline))
+        primary = None
         try:
             yield
+        except BaseException as error:
+            primary = error
+            raise
         finally:
             _COMMAND_DEADLINE.reset(marker)
             if not self.connection.closed:
-                self.connection.execute("SELECT set_config('statement_timeout',%s,false)", (old,))
+                try:
+                    self.connection.execute("SELECT set_config('statement_timeout',%s,false)", (old,))
+                    self._command_cleanup_fault = False
+                except BaseException:
+                    self._command_cleanup_fault = True
+                    if primary is None:
+                        raise
 
     @contextmanager
     def transaction(self, *, force_rollback=False):
@@ -435,7 +454,7 @@ class Metadata:
 
     def runtime_owned(self, name):
         """Observe this session's existing lock without stacking or claiming a peer's lock."""
-        if self.connection.closed or not self._runtime_claims.get(name):
+        if self.connection.closed or getattr(self, '_lock_release_unknown', False) or not self._runtime_claims.get(name):
             return False
         key = _key(self.schema + ':worker:' + name) & ((1 << 64) - 1)
         return bool(self.execute("SELECT EXISTS(SELECT 1 FROM pg_locks WHERE locktype='advisory' "
