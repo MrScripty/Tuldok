@@ -1,0 +1,47 @@
+{
+  "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+  "branch": "test/lab-publication-semantic-recovery-20261019",
+  "driver": {
+    "bytes": 21620,
+    "path": "tests/qualify_publication_synthetic.py",
+    "sha256": "f66949b81c096b749f169323cbccec80223859236d572580541ca9d14dea39ce"
+  },
+  "files": {
+    "README.md": {
+      "bytes": 2966,
+      "sha256": "2765e49a6595de8d8cd1dacb23986e7dfe5e46772f5baff4d83658ee3fea462c"
+    },
+    "initial-legacy-gate-assertion.json": {
+      "bytes": 1878,
+      "sha256": "02d0b65c4363af5328538a82c09472accff0586704be4c2c4e52adf06281d1de"
+    },
+    "initial-legacy-gate-assertion.log": {
+      "bytes": 1753,
+      "sha256": "e4bcf0d2c5c82297858f1629b3dc6d8a25b4712a6e5af66effdc579ffe9b8a54"
+    },
+    "qualification.json": {
+      "bytes": 4066,
+      "sha256": "384819a4507869a11ad0ef1d931a4fed3e513873d394d4af2a08506199389056"
+    },
+    "qualification.log": {
+      "bytes": 292,
+      "sha256": "049e7a50f03d0b060c1223519be41eae32e6320f5e16d64b56a95db7ee437c0e"
+    }
+  },
+  "initial_attempt": "Harness expectation mismatch at correct typed legacy refusal; retained separately and not counted as passed",
+  "pending": [
+    "negotiated transport/SDK/UI/lineage",
+    "segmented collection",
+    "numerical/scientific acceptance",
+    "CUDA",
+    "full M1"
+  ],
+  "qualification": {
+    "artifact_count": 27,
+    "fresh_disposable_catalog": true,
+    "seconds": 164.443,
+    "state": "passed",
+    "temporary_catalog_and_schema_removed": true
+  },
+  "scope": "Opt-in actual synthetic serialization/custody/semantic recovery only; no training or numerical acceptance"
+}

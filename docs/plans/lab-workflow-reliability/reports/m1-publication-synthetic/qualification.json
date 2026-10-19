@@ -1,0 +1,109 @@
+{
+  "artifact_count": 27,
+  "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+  "capture_capacity": {
+    "free_bytes": 2068889600,
+    "manifest_bytes": 3825828,
+    "payload_bytes": 896562621,
+    "required_bytes": 1705694817
+  },
+  "catalog_id": "81682595019e446c9a7415e62c267b15",
+  "charged": {
+    "admitted_wall_seconds": 197,
+    "attempt_slots": 1,
+    "peak_staging_bytes": 5769020,
+    "retained_bytes": 4220948
+  },
+  "checks": [
+    "real_runtime_capture",
+    "real_model_study_context_custody",
+    "frozen_source_after_copy_fault",
+    "cold_same_run_recovery",
+    "real_source_destination_reader_semantics",
+    "no_compute_replay",
+    "exact_idempotence",
+    "unchanged_counts_reservation_charge_events",
+    "legacy_failed_readers_and_candidate_promotion_refuse"
+  ],
+  "counts": {
+    "access_execution_consumptions": 1,
+    "access_execution_grants": 1,
+    "model_attempt_reservations": 1,
+    "workspace_runs": 1
+  },
+  "custody": {
+    "drained": true,
+    "leader_returncode": 0,
+    "outcome": "completed",
+    "runtime_packages": {
+      "numpy": "2.5.4",
+      "torch": "2.8.0+cpu"
+    },
+    "runtime_snapshot_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "sha256": "c733d5597acc3eee4c18cb76b586f10de092a029940c5fd5aa47f99986442921",
+    "synthetic_complete_marker": true
+  },
+  "driver_sha256": "f66949b81c096b749f169323cbccec80223859236d572580541ca9d14dea39ce",
+  "expected_runtime_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+  "free_after_capture_bytes": 1070768128,
+  "numerical_acceptance": "not_evaluated",
+  "original_state": "interrupted",
+  "output_bound_bytes": 1048576,
+  "output_file_count": 27,
+  "owner_selected_reserve_bytes": 805306368,
+  "producer_sha256": "2cb3183f8fcebd17c5b0930454741b2c3d37e252eed006532f5e8b360793de80",
+  "publication_reserve_bytes": 536870912,
+  "recipe_sha256": "92848ee4cbb023e2ff4aa059c49d7d03ab9163f82c17c5586e798940417e1b2f",
+  "result_ref": {
+    "catalog_id": "81682595019e446c9a7415e62c267b15",
+    "custody_receipt_sha256": "c733d5597acc3eee4c18cb76b586f10de092a029940c5fd5aa47f99986442921",
+    "inventory_sha256": "d3bf689434a584021527069269080a0a7daaa7f4cbe4a24a8c8b627e6947b545",
+    "kind": "recovered_publication_result",
+    "material_sha256": "e059d1b8752959515f5d049e05b0d993224c99eaa804f4e5543b7358ac514e2d",
+    "run_id": "001b7e364c074fc998a84d5d8b18d664",
+    "schema_version": 1,
+    "sha256": "dabca1aa5d4c819ea823d564742fa9cb4490d22fb6e910c2023454150e5f5f9e"
+  },
+  "run_id": "001b7e364c074fc998a84d5d8b18d664",
+  "runtime": {
+    "file_count": 20804,
+    "manifest_bytes": 3825828,
+    "manifest_sha256": "50502c0ba923f3134073188efd55c20b0468c008b1bdfbdc87fd72ea830ffe3d",
+    "packages": {
+      "filelock": "4.2.0",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    },
+    "total_bytes": 896562621
+  },
+  "runtime_config_sha256": "39a492bd06ac2635025925e3a647bdde199ca2e73419f24f5fee2a7371b2d11a",
+  "scope": "Synthetic serialization through real CPU custody and semantic recovery; no training or numerical acceptance",
+  "seconds": 164.443,
+  "semantic_verification_paths": [
+    ".external-001b7e364c074fc998a84d5d8b18d664/output",
+    "001b7e364c074fc998a84d5d8b18d664",
+    "001b7e364c074fc998a84d5d8b18d664",
+    "001b7e364c074fc998a84d5d8b18d664",
+    "001b7e364c074fc998a84d5d8b18d664"
+  ],
+  "source_ref": {
+    "catalog_id": "81682595019e446c9a7415e62c267b15",
+    "kind": "external_publication_source",
+    "run_id": "001b7e364c074fc998a84d5d8b18d664",
+    "schema_version": 1,
+    "sha256": "5a4ec5a672ccee9fe04b986dd355ca3173e4012b2bde9023c6894b49b86c0d35"
+  },
+  "state": "passed",
+  "temporary_catalog_removed": true,
+  "temporary_root": "/workspace/tuldok-publication-synthetic-bpb11tnr",
+  "temporary_schema_removed": true,
+  "training_executed": false
+}
