@@ -197,6 +197,23 @@ assert 'jsonschema' not in sys.modules
         self.assertEqual(value['state'], 'requested')
         self.assertFalse(value['drained'])
 
+    def test_public_inventory_can_include_unselectable_manifest_metadata(self):
+        client = ConsumerFixture(); workflow = WorkflowClient(client)
+        original = client.call
+        def call(operation, arguments):
+            value = original(operation, arguments)
+            if operation == 'runs.get':
+                value['result']['artifacts'].append({'name': 'artifact-manifest.json',
+                    'sha256': 'c'*64, 'bytes': 32})
+            return value
+        client.call = call
+        manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin'])
+        self.assertEqual(manifest['items'][0]['name'], 'one.bin')
+        with self.assertRaises(AgentAPIError):
+            workflow.collection_manifest(run_id=RUN, names=['artifact-manifest.json'])
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(workflow.collect(manifest, directory)['state'], 'complete')
+
     def test_pre_stopped_collection_never_bootstraps_and_retains_prior_item_proofs(self):
         client = ConsumerFixture(); workflow = WorkflowClient(client)
         manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin'])

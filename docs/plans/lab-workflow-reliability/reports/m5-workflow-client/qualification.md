@@ -110,3 +110,39 @@ an exact comparison against a v1-only server explicitly `operation_unsupported`
 before dispatch, rather than relying on the older schema's argument rejection.
 It cannot downgrade to implicit checkpoint/evaluation selection. This changes no
 server operation version or wire schema.
+
+## Actual HTTP attempt01 — failed and retained
+
+The benchmark owner released its quiet window at22:10:55UTC after its matrix
+exited0. Actual HTTP qualification then ran on normal composed source
+`2d8b7d79110f210896dcdda8df08f6385cabf2d3`, which includes whole104
+`1c9f01cb7e4adafd169dd56e95e02f0f5025b35d` through a normal merge. Root published
+that source as draftPR105; actual qualification was explicitly pending.
+`http-attempt-01-source.json` records the exact source/tree/file SHA256s, command
+and installed runtime metadata. `http-attempt-01.log` is the complete failed
+receipt: 12 cases in238.210s, 5 passed and7 errors. It is not overwritten.
+
+Five actual cases passed: clean CLI neutral submit/monitor/collect and existing
+CLI/frozen legacy reads; retained Trial admission with one reservation/consumption;
+attached publication collection/resume and revoked access; cold monitor
+import/registry deadline/cancellation; delayed bootstrap sharing one deadline and
+blocked Run-read Event cancellation. These are genuine supported boundary
+observations, not full T6 acceptance.
+
+Six errors were a fixture name collision: `ExternalCase` already stores its
+project manifest dictionary as `self.manifest`; the new helper method with that
+name was masked, giving `TypeError: 'dict' object is not callable`. Rename it to
+`submission_manifest`. The typed commit-uncertainty injection also preserves the
+real handler's `_graph_guard` keyword argument so the fault occurs after the
+actual admission rather than at a test adapter signature mismatch.
+
+The classifier case exposed a product consumer bug. Built-in Runs legitimately
+include public `artifact-manifest.json` metadata, while the selected segmented
+reader intentionally cannot select that name. Full inventory validation had
+incorrectly applied the selected reader's exclusion to every unselected metadata
+item, refusing a valid retained classifier before comparison. The fix checks
+bounded flat names, hashes and byte counts across the complete public inventory,
+then validates only selected collection items against the exact reader grammar.
+The complete inventory remains hashed, and blocked names cannot be selected.
+`focused-inventory-fix.log` records16 focused passes including this regression.
+Actual rerun remains required; no unsupported numerical/runtime claim is inferred.
