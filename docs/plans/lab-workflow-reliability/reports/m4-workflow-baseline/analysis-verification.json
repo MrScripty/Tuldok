@@ -1,0 +1,25 @@
+{
+  "checked_at_utc": "2026-10-19T22:13:36.870640+00:00",
+  "cleanup_confirmations": 8,
+  "cohort_counts_sum": 760,
+  "cohort_distribution_groups": 281,
+  "cycles": 54,
+  "fresh_workflow_counts_all_one_completed_run_grant_consumption": true,
+  "fresh_workflows": 6,
+  "harness_hash_matches_current": true,
+  "negative_only_outcomes": {
+    "refusal.changed_project_input": 2,
+    "refusal.changed_published_payload": 2,
+    "refusal.partial_failed_selection": 1,
+    "refusal.revoked_inspection": 2,
+    "refusal.runtime_expected_inventory_mismatch": 2
+  },
+  "no_unexpected_error_or_refusal": true,
+  "own_schemas_removed": true,
+  "rows": 760,
+  "source_hashes_match_frozen_git_and_current": true,
+  "unique_worker_pids": 18,
+  "unknown_pilot_schema_not_inspected_or_deleted": true,
+  "worker_runtime_identity_equal": true,
+  "workers": 18
+}

@@ -1,6 +1,6 @@
 # Neutral lab-workflow measured baseline
 
-This C4/T5 slice measures existing owners before any optimization. Production is
+This Linux-only C4/T5 slice measures existing owners before any optimization. Production is
 fixed at `96c2adebc3a46b9fe92b179097474e08474689c3`. The isolated benchmark
 adds no cache, bulk endpoint, runtime installation, admission bypass or product
 change. It copies deterministic neutral bytes through actual process custody;
@@ -11,8 +11,9 @@ and small Project/recipe/input fixtures. It populates terminal history through
 real grants, admission, execution, drainage and publication. History cells are
 0, 8 and 55 genuine completed Runs. A separate fresh-catalog supported workflow
 measures preflight, grant, submit, completion and whole-hash collection together.
-The payload is 327,680 bytes, represented as either one or twenty individually
-hashed artifacts. No managed Torch snapshot is copied. Only a fixture's recorded
+Each layout emits 327,680 bytes as one or twenty individually hashed artifacts.
+The layouts have different deterministic input bytes and recipe declarations;
+exact material equality is required within each layout, not across layouts. No managed Torch snapshot is copied. Only a fixture's recorded
 new schema and temporary directory are eligible for cleanup.
 
 For each artifact/history cell, three fresh sequential application processes
@@ -71,3 +72,10 @@ lab performance, or the plan's acceptance gates. Any future optimization needs
 an explicit owner-scoped follow-up and paired evidence. Authorization, grants,
 free space, readiness, mutable installed-runtime identity and scientific status
 must remain current-owner decisions.
+
+The frozen matrix completed successfully at harness `83d7e8f`, with all 18 read
+processes / 54 cycles, six fresh workflows and both integrity/recovery tails.
+Eight recorded schema/directory cleanup checks passed. See the retained
+[measured results](../plans/lab-workflow-reliability/reports/m4-workflow-baseline/results.md)
+and [complete cohort-qualified distributions](../plans/lab-workflow-reliability/reports/m4-workflow-baseline/qualified-distributions.json).
+Three focused reporting tests passed. The original failed pilots remain separate.

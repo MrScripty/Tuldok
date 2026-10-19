@@ -432,3 +432,27 @@ cells. Pilot03 passed one-artifact integrity and real same-Run copy recovery, th
 its two-artifact proof check exposed filesystem inventory order. The comparison
 now checks exact unique path/bytes/SHA mappings, preserving duplicate/hash
 refusal. All original failures/raw logs are retained separately from final runs.
+
+The frozen harness/source commit `83d7e8f52df92d10d3ff85709da6eff3231a0b06`
+completed the full matrix with exit 0: 18 fresh read processes / 54 cycles,
+0/8/55 genuine completed histories in both one/twenty-artifact layouts, six
+fresh-catalog supported workflows and both actual integrity/same-Run recovery
+tails. Eight exact owned schema and temporary-directory cleanup checks passed.
+The production owner hashes stayed identical to composed source 96c2ade; no
+cache, batch endpoint or domain behavior changed. Three pure reporting tests
+passed. Raw rows, all 281 cohort-qualified distribution groups, source/tooling
+attribution and failed exploratory history are retained under
+`reports/m4-workflow-baseline/`. Qualified reporting separates the initial
+population workflow from the three fresh-catalog workflows by raw filename.
+
+At 55 completed Runs, the one-artifact first-call HTTP list median is 4.392 seconds
+with 10,890,771 body bytes; twenty artifacts median 5.372 seconds with 11,249,316 bytes.
+Whole-hash collection of one 327,680-byte artifact takes median 172.1 ms / one
+request, versus 1492.6 ms / twenty 16 KiB requests; twenty 16 KiB artifacts require
+twenty requests and median 1715.3 ms in default mode. Each first-call cell has
+three samples; warm cells have six. These descriptive measurements identify
+preparation/history/request costs without a speedup, OS-cold, lab or science
+claim. Candidate selection and any bounded batch reader remain a separate
+lead-owned admission after review; no cache is justified by submillisecond
+proof metadata reads. Actual installed-runtime mutation and candidate
+qualification remain pending.
