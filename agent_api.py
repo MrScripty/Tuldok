@@ -660,6 +660,10 @@ model_operation('graphs.preparation_timings', 'POST', '/api/workspace/graphs/{gr
     {'graph_id': ID, 'revision': integer(1, 2**31-1)},
     output=obj({'format': const('graph_preparation_timings_v1'), 'catalog_id': ID, 'graph_id': ID,
         'graph_revision': integer(1, 2**31-1), 'actor_id': ID,
+        'selection': const('latest_actor_graph_revision_observation'),
+        'observation': {'oneOf': [{'type': 'null'}, obj({
+            'operation': {'enum': ['graphs.preflight_external', 'graphs.capture_external']},
+            'clock_id': ID, 'material_sha256': {'oneOf': [{'type': 'null'}, SHA]}})]},
         'evidence': {'enum': ['owner_observed', 'unknown_granularity']}, 'records': array(_PHASE_RECORD, 1)}),
     description='Latest volatile exact actor/graph/revision preparation observation, including before a Run exists; never starts preparation.')
 _COORDINATOR_HEALTH = obj({'format': const('run_coordinator_health_v1'), 'catalog_id': ID,
@@ -1188,6 +1192,13 @@ def validate_output(name, envelope, version=None):
                         or item['state'] == 'measured' and item['ended_offset_ms']-item['started_offset_ms'] != item['elapsed_ms']
                         or item['state'] != 'open' and item['wait_reason'] is not None):
                     raise AgentAPIError('Owner timing span is inconsistent.', 'transport', 502)
+        if op['operation_id'] == 'graphs.preparation_timings':
+            observation = value['observation']
+            if ((not records) != (observation is None) or observation is not None and
+                    (observation['clock_id'] != records[0]['clock_id'] or any(
+                        item['phase'] != ('prepare' if observation['operation'] == 'graphs.preflight_external' else 'capture')
+                        for item in records[0]['spans']))):
+                raise AgentAPIError('Latest preparation observation has inconsistent operation/clock identity.', 'transport', 502)
         if (not records and value['evidence'] in ('owner_observed', 'partial')
                 or records and value['evidence'] in ('unknown_granularity', 'unavailable')
                 or op['operation_id'] == 'graphs.preparation_timings' and any(item['owner'] != 'pipeline' for item in records)):

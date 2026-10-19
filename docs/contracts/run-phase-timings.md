@@ -15,6 +15,17 @@ has unknown granularity. A changed graph revision refuses the old selection.
 Up to 64 actor/graph/revision histories are held in process memory; a newer
 concurrent preparation for the same identity is the latest observation. These
 histories do not supply a durable submission receipt or an execution request key.
+The closed selection label is `latest_actor_graph_revision_observation`. Nullable
+`observation` names the exact operation (`graphs.preflight_external` or
+`graphs.capture_external`), its clock ID (equal to the sole returned pipeline
+clock), and material SHA256 once the owner knows it. Material is null before
+preparation returns. A later failure can retain a known digest with incomplete
+spans; it does not imply successful preflight. An older in-flight reply never
+replaces a newer observation. Another same-actor tab can replace this latest
+observation. Graph/revision alone therefore cannot correlate these diagnostics
+with a specific successful preflight reply. Consumers must match the exact
+operation/material/clock selection and still use the original preflight result
+for its own validity; the old preflight projections do not gain a clock field.
 
 Selected-v1 `runs.phase_timings` gets
 `/api/workspace/runs/{run_id}/phase-timings`. Current inspect and transitive input

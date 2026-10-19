@@ -103,6 +103,7 @@ class OwnerPhaseTimingTests(unittest.TestCase):
         run = self.envelope(self.clock().snapshot())
         graph = {'status': 200, 'result': {'format': 'graph_preparation_timings_v1', 'catalog_id': 'a'*32,
             'actor_id': 'c'*32, 'graph_id': 'd'*32, 'graph_revision': 2,
+            'selection': 'latest_actor_graph_revision_observation', 'observation': None,
             'evidence': 'unknown_granularity', 'records': []}}
         for operation, arguments, good, field, foreign in (
                 ('runs.phase_timings', {'run_id': 'b'*32}, run, 'run_id', 'f'*32),
@@ -159,6 +160,9 @@ class ActualPhaseTimingTests(unittest.TestCase):
                 with case.owner.bound(dataset):
                     value = dataset.pipelines.preparation_timings(case.graph['id'], 1)
                     self.assertEqual(value['evidence'], 'owner_observed')
+                    self.assertEqual(value['observation']['operation'], 'graphs.preflight_external')
+                    self.assertIsNone(value['observation']['material_sha256'])
+                    self.assertEqual(value['observation']['clock_id'], value['records'][0]['clock_id'])
                     self.assertEqual(value['records'][0]['spans'][0]['state'], 'open')
                     self.assertEqual(value['records'][0]['spans'][0]['wait_reason'], 'preparing_material')
                     self.assertEqual(dataset.db.execute('SELECT count(*) FROM workspace_runs').fetchone()[0], 0)
@@ -171,6 +175,7 @@ class ActualPhaseTimingTests(unittest.TestCase):
         with case.owner.bound(dataset):
             measured = dataset.pipelines.preparation_timings(case.graph['id'], 1)
         self.assertEqual(measured['records'][0]['spans'][0]['state'], 'measured')
+        self.assertEqual(measured['observation']['material_sha256'], case.preflight['material_sha256'])
         agent_api.validate_output('graphs.preparation_timings', {'status': 200, 'result': measured})
 
     def test_actual_queue_copy_fault_recovery_and_cold_read_preserve_original_authority(self):
@@ -236,6 +241,17 @@ class ActualPhaseTimingTests(unittest.TestCase):
             self.assertEqual(result['status'], 200, result)
             self.assertEqual(result['result']['evidence'], 'unknown_granularity')
             self.assertEqual(result['result']['records'], [])
+            preparation = client.call('graphs.preparation_timings', {'graph_id': case.graph['id'], 'revision': 1})
+            self.assertEqual(preparation['status'], 200, preparation)
+            self.assertEqual(preparation['result']['selection'], 'latest_actor_graph_revision_observation')
+            self.assertIsNone(preparation['result']['observation'])  # Agent did not prepare; no other actor's history.
+            from urllib.request import Request, urlopen
+            from urllib.error import HTTPError
+            with self.assertRaises(HTTPError) as missing_selection:
+                urlopen(Request(endpoint+'/api/workspace/runs/'+run['id']+'/phase-timings',
+                    headers={'Authorization': 'Bearer '+case.agent['token']}), timeout=15)
+            self.assertEqual(missing_selection.exception.code, 409)
+            missing_selection.exception.close()
             import tempfile
             with tempfile.TemporaryDirectory() as directory:
                 config = Path(directory)/'agent.json'
@@ -353,3 +369,44 @@ class ActualPhaseTimingTests(unittest.TestCase):
             self.assertEqual(runs.phase_timings(run['id'])['evidence'], 'partial')
             self.assertEqual(runs.get(run['id']), completed)
             self.assertEqual(runs.artifact(run['id'], 'result.txt')[0], case.input)
+
+    def test_overlapping_same_actor_preparations_expose_latest_clock_without_rebinding_old_reply(self):
+        import recipe_contract
+        case = self.fixture(); dataset = case.dataset
+        entered = threading.Event(); release = threading.Event(); failures = []; replies = []
+        original = recipe_contract.prepare
+        first_thread = threading.current_thread()
+        def blocked(*args, **kwargs):
+            if threading.current_thread() is not first_thread:
+                entered.set()
+                if not release.wait(10): raise AssertionError('old preparation release timed out')
+            return original(*args, **kwargs)
+        def old_request():
+            try:
+                with case.owner.bound(dataset): replies.append(dataset.pipelines.preflight_external(case.graph['id'], 1))
+            except BaseException as error: failures.append(error)
+        with patch('recipe_contract.prepare', side_effect=blocked):
+            worker = threading.Thread(target=old_request); worker.start()
+            try:
+                self.assertTrue(entered.wait(5))
+                with case.owner.bound(dataset):
+                    older = dataset.pipelines.preparation_timings(case.graph['id'], 1)
+                    fresh_reply = dataset.pipelines.preflight_external(case.graph['id'], 1)
+                    latest = dataset.pipelines.preparation_timings(case.graph['id'], 1)
+                self.assertNotEqual(older['observation']['clock_id'], latest['observation']['clock_id'])
+                self.assertEqual(latest['observation']['material_sha256'], fresh_reply['material_sha256'])
+                self.assertEqual(latest['selection'], 'latest_actor_graph_revision_observation')
+            finally:
+                release.set(); worker.join(10)
+        self.assertFalse(worker.is_alive()); self.assertEqual(failures, []); self.assertEqual(len(replies), 1)
+        with case.owner.bound(dataset): after = dataset.pipelines.preparation_timings(case.graph['id'], 1)
+        self.assertEqual(after['observation'], latest['observation'])
+        self.assertEqual(after['records'][0]['clock_id'], latest['records'][0]['clock_id'])
+        self.assertNotIn('observation', fresh_reply); self.assertNotIn('observation', replies[0])
+        agent_api.validate_output('graphs.preparation_timings', {'status': 200, 'result': after})
+        for mutate in (lambda value: value['observation'].update(clock_id=older['observation']['clock_id']),
+                       lambda value: value['observation'].update(operation='graphs.capture_external'),
+                       lambda value: value.update(observation=None)):
+            bad = copy.deepcopy(after); mutate(bad)
+            with self.assertRaises(agent_api.AgentAPIError):
+                agent_api.validate_output('graphs.preparation_timings', {'status': 200, 'result': bad})

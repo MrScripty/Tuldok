@@ -377,3 +377,13 @@ subprocess exceeded the harness's 30-second wait. That harness limit now allows
 90 seconds, within the existing client budget; no production transport, catalog,
 execution or custody bound changed. Final isolated exact-source qualification
 will report actual outcome and wall time without inferring a cause.
+
+Root review of initial source206aeb6 requested explicit pre-Run correlation: the
+latest actor/graph/revision observation now names its operation, exact owner
+clock and nullable known material digest, with a closed latest-only selection
+label. A real overlapping same-actor preparation witness verifies a later
+observation remains selected even when the earlier request finishes afterward;
+forged clock/operation mappings are refused. Old preflight projections remain
+unchanged and these volatile diagnostics never identify a specific earlier reply
+from graph/revision alone. This is a coherent source followup before final
+qualification, not an acceptance claim for initial206aeb6.

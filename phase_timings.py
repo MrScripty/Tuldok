@@ -81,9 +81,12 @@ class Book:
         with self._lock:
             return self._records.get(key)
 
-    def start(self, key, owner):
+    def start(self, key, owner, *, operation=None):
         with self._lock:
             record = PhaseTimings(owner)
+            if operation is not None:
+                record.operation = operation
+                record.material_sha256 = None
             self._records[key] = record
             self._records.move_to_end(key)
             while len(self._records) > 64: self._records.popitem(last=False)
