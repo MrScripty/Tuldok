@@ -1,0 +1,130 @@
+{
+  "source": {
+    "head": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
+    "tree": "7f64e85f6e8f84db4d9671fbb2cd06dc5d170311",
+    "scope": "Two actual indexed-diagnostic custody/admission cases including new composed SDK batch/scientific readers; explicit pre-child synthetic serialization and actual no-op child, no training/science acceptance",
+    "files": {
+      "tests/test_indexed_diagnostics_publication.py": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11",
+      "extension_evidence.py": "3265173c631453c2ec16a00a2d9c4a61cf0cb6f58f7b2413cd3b872d30ffecc2",
+      "recipe_contract.py": "dc57a657dd59cee5297cbdaf2426a2d147424a1e737cc0dad799b6084b873646",
+      "tuldok_extension_sdk/diagnostics.py": "d2439f8ab20dc7a3b829b547745fd7fa84d320ac4df2930b600cd36014689699",
+      "tuldok_extension_sdk/evidence.py": "53027c44b78fde2db62e736d9b8ed66915b17bfca3fefe36eee30cae59af0a70",
+      "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+      "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+      "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+      "tuldok_client.py": "8ca08eb0a5fea9017dd56be0487b6c608e0375f10fcb83e1b26f5ac915c2ca03",
+      "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4"
+    }
+  },
+  "actual_tests": 2,
+  "seconds": 22.431,
+  "skipped": 0,
+  "state": "passed",
+  "source_unchanged": true,
+  "positive": {
+    "accounting_and_events_unchanged": true,
+    "artifacts": [
+      {
+        "bytes": 948,
+        "media_type": "application/octet-stream",
+        "name": "diagnostic-index.json",
+        "role": "diagnostic_index_v1",
+        "sha256": "351f54de24ac9824a69a641674b1d63246bc2541c2d40f43bfc19bcbd94419d3"
+      },
+      {
+        "bytes": 983,
+        "media_type": "application/octet-stream",
+        "name": "diagnostic-0.json",
+        "role": "diagnostic_shard_v1",
+        "sha256": "bb0f9f8361a1380c02dfad134f2352e40f40da8dfa1b79347c0b3a47aba90543"
+      },
+      {
+        "bytes": 443,
+        "media_type": "application/octet-stream",
+        "name": "diagnostic-1.json",
+        "role": "diagnostic_shard_v1",
+        "sha256": "b98746f69577f240ee39204f4b6030b91c9e46b1a674d4164afb52afc06ef133"
+      }
+    ],
+    "captured_python_producer_executed": false,
+    "composed_readers": {
+      "batch_calls": 1,
+      "batch_collected_exact_artifacts": [
+        "diagnostic-index.json",
+        "diagnostic-0.json",
+        "diagnostic-1.json"
+      ],
+      "comparison": "same exact Ref diagnostic delta zero; no scientific acceptance",
+      "individual_segment_calls": 0
+    },
+    "counts_after": {
+      "access_execution_consumptions": 1,
+      "access_execution_grants": 1,
+      "model_attempt_reservations": 1,
+      "workspace_graphs": 1,
+      "workspace_runs": 1
+    },
+    "counts_before": {
+      "access_execution_consumptions": 1,
+      "access_execution_grants": 1,
+      "model_attempt_reservations": 1,
+      "workspace_graphs": 1,
+      "workspace_runs": 1
+    },
+    "coverage": {
+      "omitted": [
+        {
+          "count": 1,
+          "reason": "capture_budget",
+          "start": 2
+        }
+      ],
+      "omitted_count": 1,
+      "optional_count": 3,
+      "required_count": 2,
+      "retained_optional_count": 2,
+      "retained_required_count": 2,
+      "total_count": 5
+    },
+    "custody_outcome": "completed",
+    "numerical_acceptance": "not_evaluated",
+    "original_state": "interrupted",
+    "result_ref": {
+      "catalog_id": "fc607ffa4125402994f62c319f632faa",
+      "custody_receipt_sha256": "66d76987a01903d9bcfdb06a991d411b729064c0a2a29461ae62d295e5c4edec",
+      "inventory_sha256": "552f458cfd5e606c3f306bf4878946636e2e78bf6a53c6f648074a9aba7d9a1b",
+      "kind": "recovered_publication_result",
+      "material_sha256": "4c17d900d38acccd75a2bf299beda456e8693091b9bb5a8f77056732ae5f801d",
+      "run_id": "d6a762d587d5475d82a56c0dbe4d2384",
+      "schema_version": 1,
+      "sha256": "ff56088bdaaa60497e06eeab578df457e5f1a24b085680f28daa5296e59970fd"
+    },
+    "run_id": "d6a762d587d5475d82a56c0dbe4d2384",
+    "runtime_packages": {
+      "numpy": "0.0",
+      "torch": "0.0"
+    },
+    "runtime_snapshot_sha256": "cd69d4b1de535e6c59efc66b6b376991e7c9afdc2d3e7cefcc8f0ea18523d164",
+    "schema": "catalog_fc607ffa4125402994f62c319f632faa",
+    "scope": "harness SDK serialization; actual no-op metadata runtime custody and semantic recovery",
+    "training_executed": false,
+    "verification_scope": "source_destination_and_cold_exact_ref_reader"
+  },
+  "cleanup": [
+    {
+      "scope": "indexed",
+      "schema": "catalog_b8674cd6642d40c59051fda95a7cb9b5",
+      "independently_absent": true
+    },
+    {
+      "scope": "indexed",
+      "schema": "catalog_fc607ffa4125402994f62c319f632faa",
+      "independently_absent": true
+    }
+  ],
+  "limits": [
+    "Harness-authored captured SDK serialization before actual no-op child, not a captured Python producer/training witness.",
+    "Scientific comparison uses the same exact Ref twice; diagnostic delta zero is not a differing-model scientific acceptance result.",
+    "One SDK batch operation and no individual segment operation are asserted; transport is real HTTP, separate raw HTTP count is covered in prior batch consumer tests."
+  ]
+}

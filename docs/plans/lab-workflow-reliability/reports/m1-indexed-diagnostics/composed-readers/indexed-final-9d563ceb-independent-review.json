@@ -1,0 +1,32 @@
+{
+  "checks_run": [
+    "Read-only frozen source/Metadata inspection",
+    "Built-in compile and stdlib AST/order checks only"
+  ],
+  "format": "indexed_final_fixture_ownership_independent_review_v1",
+  "limits": [
+    "No imports/application/DB/heavy test executed during M4 quiet window.",
+    "Actual2 qualification on9d is still root-owned and pending quiet release.",
+    "Flushed stdout ledger is runner provenance, not a power-loss durability claim."
+  ],
+  "metadata_source_sha256": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+  "prior_review": {
+    "receipt_path": "/tmp/tuldok-indexed-composed-readers-70dcaeb-independent-review.json",
+    "receipt_sha256": "be25642992e49f5a0d89cb5a34a7185470a5ce321443103bf4597ed81c577a04",
+    "source": "70dcaeb0382a97d051275319881acf589bfb931d"
+  },
+  "result": "Clear: exact fresh schema ownership is registered and flushed before Metadata allocation; original composed helper/accounting review remains applicable",
+  "reviewed_at_utc": "2026-10-19T23:03:47.661032+00:00",
+  "reviewed_file": "tests/test_indexed_diagnostics_publication.py",
+  "reviewed_file_sha256": "7e14d96a4d2a5d6e2be5aa884770a8b57a32653e009c890f68291f125551fa11",
+  "reviewed_source": "9d563ceb72fdfa7cb3ce520540b4b002cbe3fba3",
+  "verified": [
+    "UUID identity and catalog_<identity> schema assigned before construction; self.dataset=None and catalog cleanup registered before Metadata(...dataset_id=identity).",
+    "Ledger print uses flush=True before constructor; runner can attribute a later constructor failure to this exact fresh schema, without discovering or guessing older schema identities.",
+    "Metadata honors explicit dataset_id, validates UUID identity and derives exact catalog_<identity> schema. Current owner implementation closes its connection on initialization exception.",
+    "Schema equality asserted and initial Metadata closed before Dataset reopen. Registered cleanup closes self.dataset when present and uses parameterized SQL Identifier for only self.schema.",
+    "DROP SCHEMA IF EXISTS handles failure before schema creation; cleanup does not enumerate, infer, adopt or delete older unknown schemas.",
+    "Cleanup registration follows temporary-directory cleanup registration, so unittest LIFO closes/drops catalog before removing its temporary catalog directory.",
+    "AST equality proves all methods except fixture setUp/cleanup_catalog unchanged from70; composed batch/scientific helper, no-replay and accounting assertions preserved."
+  ]
+}
