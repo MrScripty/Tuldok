@@ -103,7 +103,7 @@ window.WorkspaceExternal=function({api,action,status,getGraph,getIntent,getRunId
     $('external-name').oninput=event=>changeGraph(()=>graph.name=event.target.value,false);
     $('external-input-choices').onclick=()=>action(async()=>{
       const origin=snapshot();
-      const [project,definition,catalog]=await Promise.all([api('projects/'+enc(input.project_id)),api('projects/'+enc(input.project_id)+'/recipes/'+enc(input.recipe_id)+'?expected_sha256='+enc(input.expected_sha256)),window.WorkspaceExternalInputs.catalogs()]);
+      const [project,definition,catalog]=await Promise.all([api('project-snapshots/'+enc(input.project_id),undefined,2),api('projects/'+enc(input.project_id)+'/recipes/'+enc(input.recipe_id)+'?expected_sha256='+enc(input.expected_sha256),undefined,4),window.WorkspaceExternalInputs.catalogs()]);
       if(!current(origin))return;
       inputChoices=window.WorkspaceExternalInputs.choices(project,catalog.releases,catalog.runs);inputSpecs=definition.inputs;status(catalog.errors.length?catalog.errors.join(' ')+' Saved bindings remain unchanged.':'Loaded input choices. Changing a binding requires saving and a new preflight.');
     });
@@ -165,7 +165,16 @@ window.WorkspaceExternalProject=function({onCreated,announce}){
   const esc=window.workspaceEscape,enc=encodeURIComponent;
   let generation=0,busy=false,project=null,reference=null,definition=null,inputChoices=null,bindings={},choicesError="";
   const dialog=document.createElement('dialog');dialog.id='external-create-dialog';dialog.setAttribute('aria-labelledby','external-create-title');document.body.append(dialog);
-  async function api(route,body){const response=await (window.TuldokAuth?.fetch||fetch)('/api/workspace/'+route,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const value=await response.json();if(!response.ok)throw Error(value.error||'External recipe unavailable.');return value;}
+  async function api(route,body,selectedVersion){
+    const headers={'Content-Type':'application/json'};
+    if(selectedVersion!==undefined){
+      const pin=window.WorkspaceExtensionAuthorContracts?.['recipes.inspect/4'];
+      if(selectedVersion!==4||!pin)throw Error('Current recipe inspection is unavailable.');
+      headers['Tuldok-Operation-Contract']='recipes.inspect/4/'+pin;
+    }
+    const response=await (window.TuldokAuth?.fetch||fetch)('/api/workspace/'+route,{headers,...(body===undefined?{}:{method:'POST',body:JSON.stringify(body)})});
+    const value=await response.json();if(!response.ok)throw Error(value.error||'External recipe unavailable.');return value;
+  }
   function cancel(){generation++;if(dialog.open)dialog.close();if(busy)announce('Graph creation may still complete. Inspect saved recipes before repeating it.');}
   window.addEventListener('tuldok-session',cancel);
   dialog.addEventListener('cancel',()=>{generation++;if(busy)announce('Graph creation may still complete. Inspect saved recipes before repeating it.');});
@@ -188,7 +197,7 @@ window.WorkspaceExternalProject=function({onCreated,announce}){
   return {cancel,async open(detail,item){
     if(busy)return;const epoch=++generation;project=copy(detail);reference=copy(item);definition=null;bindings={};choicesError='';inputChoices=null;
     dialog.innerHTML='<h2 id="external-create-title">Inspecting recipe definition…</h2><p role="status">Reading declared fields. No project code is executed.</p><button id="external-create-close">Close</button>';dialog.querySelector('button').onclick=cancel;dialog.showModal();
-    try{const value=await api('projects/'+enc(detail.id)+'/recipes/'+enc(item.id)+'?expected_sha256='+enc(item.observed_sha256));if(epoch!==generation||!dialog.open)return;if(!value.definition||!value.inputs||!value.parameter_definitions)throw Error('Unsupported external recipe definition.');definition=value;const catalog=await window.WorkspaceExternalInputs.catalogs();choicesError=catalog.errors.join(' ');if(epoch!==generation||!dialog.open)return;inputChoices=window.WorkspaceExternalInputs.choices(project,catalog.releases,catalog.runs);render();dialog.querySelector('#external-create-name').focus();}
+    try{const value=await api('projects/'+enc(detail.id)+'/recipes/'+enc(item.id)+'?expected_sha256='+enc(item.observed_sha256),undefined,4);if(epoch!==generation||!dialog.open)return;if(!value.definition||!value.inputs||!value.parameter_definitions)throw Error('Unsupported external recipe definition.');definition=value;const catalog=await window.WorkspaceExternalInputs.catalogs();choicesError=catalog.errors.join(' ');if(epoch!==generation||!dialog.open)return;inputChoices=window.WorkspaceExternalInputs.choices(project,catalog.releases,catalog.runs);render();dialog.querySelector('#external-create-name').focus();}
     catch(error){if(epoch===generation&&dialog.open){dialog.querySelector('p').textContent=error.message;}}
   }};
   function copy(value){return structuredClone(value);}
