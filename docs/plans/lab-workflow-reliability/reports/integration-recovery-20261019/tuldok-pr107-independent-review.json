@@ -1,0 +1,71 @@
+{
+  "pr": 107,
+  "candidate": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+  "assessment": "CLEAR within source/composition and pure regression scope",
+  "blockers": [],
+  "ancestry": {
+    "parents": [
+      "07dde98df856619cab929eb9dc8d3275151c69bd",
+      "5cd2cf60c68dc361c840420441e8f59a52f756d8"
+    ],
+    "normal_whole_merge": true,
+    "both_whole_histories_ancestors": true,
+    "clean": true
+  },
+  "preservation": {
+    "all64_baseline_files_same_git_tree_as07": true,
+    "all64_file_hashes_match_original_proof": true,
+    "measured8_runtime_owners_unchanged83d": true,
+    "harness_reporting_equal83d": true,
+    "five_final_source_manifest_bytes_hashes_equal07": true,
+    "note": "Canonical baseline contract and execution ledger were intentionally finalized at07; they are not claimed equal measured83d docs. Frozen83d raw measurements remain byte-identical in07 archival tree. No remeasurement or performance/speedup conclusion."
+  },
+  "delta_review": {
+    "product_paths_changed": [],
+    "changes_vs07": "Inherited103 whole history adds already reviewed PR98 project-option readiness fixture, PR99 owned-child cleanup fixture/CI invocation, PR102 controller VM fixture correction and retained receipts. Compared103 base, only baseline docs/reports and benchmark harness/reporting test files differ.",
+    "controller_fixture_sha256": "6b19c00e9d00347f01ffbde06a53fa5bfa1d4ff5904612a8f07df9e99f898d3d",
+    "controller_equals_corrected103": true,
+    "semantics": "Only two VM fixture lines add real performance/AbortController and empty child DOM contains/querySelectorAll/querySelector. All polling view/session/none/receipt cases and assertions unchanged; real static modules execute. No test weakening."
+  },
+  "independent_tests": [
+    {
+      "command": "node tests/test_workspace_external_controller.cjs",
+      "exit_code": 0,
+      "tool_wall_seconds": 0.131904305,
+      "result": "PASS all3 terminal witness lines",
+      "scope": "Controlled VM/mock transport only"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=tests:. /workspace/tuldok-runtime/bin/python -m unittest test_benchmark_lab_workflow -v",
+      "tests": 3,
+      "seconds": 0.001,
+      "skips": 0,
+      "result": "PASS",
+      "scope": "Reporting preserves unlike cohorts/refusals, duplicate/changed exact inventories and propagated typed failure."
+    }
+  ],
+  "proof_reviewed": {
+    "path": "/tmp/tuldok-pr107-fixture-base-repair-proof.json",
+    "sha256": "bf169abf6119657ecce47d36b078c89d83d88398274810aa0ff57d73325f6ef4",
+    "all_independently_recomputed_checks_pass": true,
+    "failure_scope": "Original PR107 lifecycle step44 failed; proof explicitly reports its log archive fetch Forbidden, without claiming independent traceback read. This review did not fetch that job or retry archive access."
+  },
+  "supporting_static": {
+    "path": "/tmp/tuldok-pr107-independent-static.json",
+    "sha256": "83763b1ba926777be82d947cce43e20395447b3d62bac4aeb5640a4c8d7ec335"
+  },
+  "logs": [
+    {
+      "path": "/tmp/tuldok-pr107-controller-independent.log",
+      "sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c"
+    },
+    {
+      "path": "/tmp/tuldok-pr107-reporting-independent.log",
+      "sha256": "57fda1f4fc811139b0c6f40476e85d20bf596e3aef771cb6cc53e140bb40c8bc"
+    }
+  ],
+  "limits": [
+    "Read-only source comparison plus explicitly allowed Node/reporting checks. No actual browser, PG, custody, runtime, compute, matrix, cleanup, remote writes or deletion.",
+    "Hosted corrected-head/serial integration acceptance remains parent-owned; existing baseline performance attribution remains83d, not this merge."
+  ]
+}

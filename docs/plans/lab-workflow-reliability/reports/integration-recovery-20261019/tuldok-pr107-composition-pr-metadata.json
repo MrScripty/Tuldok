@@ -1,0 +1,32 @@
+[
+  {
+    "pr": 102,
+    "head": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "base": "main"
+  },
+  {
+    "pr": 104,
+    "head": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+    "base": "test/lab-workflow-baseline-20261019"
+  },
+  {
+    "pr": 107,
+    "head": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+    "base": "feature/lab-phase-timing-20261019"
+  },
+  {
+    "pr": 108,
+    "head": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+    "base": "feature/lab-batch-client-20261019"
+  },
+  {
+    "pr": 109,
+    "head": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+    "base": "feature/lab-field-comparison-20261019"
+  },
+  {
+    "pr": 110,
+    "head": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+    "base": "feature/lab-bounded-collection-20261019"
+  }
+]

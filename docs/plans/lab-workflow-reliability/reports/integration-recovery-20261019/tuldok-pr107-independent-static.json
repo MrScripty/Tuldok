@@ -1,0 +1,541 @@
+{
+  "candidate": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+  "clean": true,
+  "parents": [
+    "07dde98df856619cab929eb9dc8d3275151c69bd",
+    "5cd2cf60c68dc361c840420441e8f59a52f756d8"
+  ],
+  "normal_whole_merge_exact_parents": true,
+  "both_parents_ancestor": true,
+  "proof_path": "/tmp/tuldok-pr107-fixture-base-repair-proof.json",
+  "proof_sha256": "bf169abf6119657ecce47d36b078c89d83d88398274810aa0ff57d73325f6ef4",
+  "baseline_tree_equal_old07": true,
+  "baseline_file_count": 64,
+  "baseline_names_equal_old07": true,
+  "retained_files": [
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/analysis-verification.json",
+      "sha256": "86d33b071735c79928afd9c844b397776a957b8b8ebf3110a0b93c807bd6d87d",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/analysis.json",
+      "sha256": "dc2000c4d9694b8380820540e2051a9c25b220c5995a7cef86c20301508c672f",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/README.md",
+      "sha256": "3f8f58c7711f64d2b59e70cac3927cbf244bc74e45af477c992fe162326ab931",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-exploratory-preflight.json",
+      "sha256": "83ffa6c2f4e1c8f3e44013fd35ba1ca0d6ff1123657a71cb7867b1d08f0b0da8",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-01.log",
+      "sha256": "5e24d84cf12b317e8c08d3ec2ae4d9f46083d37e4014d3eb00076823193d9be7",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-01/environment-start.json",
+      "sha256": "db36234758f9a0c26ceda59fe960b0fed936a3cdd8bfc49958eda6f3831f46b4",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-01/failure.json",
+      "sha256": "248929e0ec8d950bc43e02d92ebccf79802f7cf50c64dbea1aa01e3e100d4184",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-02.log",
+      "sha256": "e6e1cbe1b7fe9fc87907d4a3eaf8b39c462cf28cd8218a9aaa4e27c0eb99d64c",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-02/environment-start.json",
+      "sha256": "292057de914b709b0f0496ebef3eb05cf30d749b6e1be965091f666ae456191f",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-02/raw/artifacts-1-history-0-process-0.json",
+      "sha256": "36b47ebb5dab8ad6bc36fb4ee812cd9eed10d7d38ba7765741cadbd9b1900ca6",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-02/raw/artifacts-1-history-2-process-0.json",
+      "sha256": "5eebaa1f03d5381a079e7ef06e439ef48b067a975cb5cd443e452504d0f5933a",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-02/raw/artifacts-1-real-history-population.json",
+      "sha256": "61e0490981e0857604bfcb5f5440dbd07b1959d4b883e968ce79f668ba542ca8",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-02/summary.json",
+      "sha256": "8a345d96502264d1e0f044ca6981c340206a8f09c287805618744091df05f7b4",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03.log",
+      "sha256": "2be731b99075d6e0607423679d9d525eb7d93248179075d4774a0e8613076c82",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03/environment-start.json",
+      "sha256": "064d1365314327f18d3df66c5ede0693ff465b714ce1a74c8abd9f08a6dbf59d",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03/failure.json",
+      "sha256": "a4e7a89b7ec99b90330b21779222f962d55536537e949c8ba2a16419beea111b",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03/raw/artifacts-1-history-0-process-0.json",
+      "sha256": "28b932f08939e6369daef167662633cedc7524efc7894f7a3029e6d38a28566e",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03/raw/artifacts-1-history-2-process-0.json",
+      "sha256": "562bfb94bb41349a94fc4065df78459a835ab9cb5551f4b24566c3c40cb9285c",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03/raw/artifacts-1-real-history-population.json",
+      "sha256": "5598394bdc153e85bb9db1bc168afb159a4790f7ff64f45c146bfe16796c3682",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-03/raw/artifacts-2-history-0-process-0.json",
+      "sha256": "cefc60d4e7dc3b1f757bed1e9c0bc1365e7a4ed3c241c57ed9afb972d7aba514",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04.log",
+      "sha256": "5bea774ffc576c28e6149cb0d81a26bba2e4c5b7f4d50acd252f730bb7624005",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04/environment-start.json",
+      "sha256": "0bb19c2a259cb58617fa2951a11253fa5e2756b9216ff30c4874026c0fdfb59d",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04/raw/artifacts-2-fresh-workflow-0.json",
+      "sha256": "d9a0624fb69683f4230474c6ef2b1144adfe7909be35ea407a10180ad4b23501",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04/raw/artifacts-2-history-0-process-0.json",
+      "sha256": "97de9eea6276472b3a2be1019b01fe8a8f24eefa87546e023ad851dba9954159",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04/raw/artifacts-2-history-2-process-0.json",
+      "sha256": "814408e641e7de76d3145fe767fc973a638929c9d0e04eecde7e9db967cbc746",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04/raw/artifacts-2-real-history-population.json",
+      "sha256": "fbb12a1d1316b206b25742cc05a722981a7746ef67d6b4bbfe1ef99c5d78694f",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pilot-04/summary.json",
+      "sha256": "4207e9d75c654e1b6e0889733114d2606bec3ed6e63e16377fc7940148f8fa88",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pure-final.log",
+      "sha256": "57fda1f4fc811139b0c6f40476e85d20bf596e3aef771cb6cc53e140bb40c8bc",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/exploratory/tuldok-m4-harness-pure.log",
+      "sha256": "57fda1f4fc811139b0c6f40476e85d20bf596e3aef771cb6cc53e140bb40c8bc",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f.log",
+      "sha256": "1cd97059d678b67845dbfd3b1115ddab7a7b406de50a858edf278b850dd121ee",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/environment-start.json",
+      "sha256": "25704aca76883bcb37a0b8b658f6d73ab795149993eb62485337863b0a226a25",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-fresh-workflow-0.json",
+      "sha256": "6e445fc3eea197f6043fc1bf5ec3864dd7c94fe45bbe42f05805049386a2f92c",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-fresh-workflow-1.json",
+      "sha256": "856d368b521c72124ae1434b58b6ed57ccd3fb6b5718b0b1d083060cdd590fcc",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-fresh-workflow-2.json",
+      "sha256": "c90afb78b221174f4a005eeeb1a3bd09c71604b3fb560eb579137b69d96d3340",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-0-process-0.json",
+      "sha256": "cdab012d46496f69108954f6c623dcf6c4802c2de720a103b1051fc0e2ed2748",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-0-process-1.json",
+      "sha256": "7f08ccd9597328954de2937105061e6531eb5966e8b19c5a78a3ece4506adfb1",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-0-process-2.json",
+      "sha256": "e1336ad8760e0e0325abf0bbc5f1c0c15089fa4e00c14adf94b63185e5d8f21c",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-55-process-0.json",
+      "sha256": "aa15e641ad30dcd9d715f5a6a9356970b692d4174c35c6800f0919471eba4c0c",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-55-process-1.json",
+      "sha256": "2d3264e6065c959f223291d3128b901b8750ae8462771ac7bf031553e1154b0f",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-55-process-2.json",
+      "sha256": "06381588569f0d3401a5617c12dd67ba1a1b0bfd72004d7f72125a1eb0100154",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-8-process-0.json",
+      "sha256": "f04300635fe90555a3d5ff9c11489eb20b19f12052903cbe59edbacb8d990cbb",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-8-process-1.json",
+      "sha256": "8618986394b74a2fd78bcd0935ff8eb799b0036ddf4e6e81e8c5f877d6a39548",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-history-8-process-2.json",
+      "sha256": "b54d720668cfe47e21e4c5d2835004f29a9357a420729d5035002fd7e4814904",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-1-real-history-population.json",
+      "sha256": "3dbc6493ed1076ac444c362748b507e4028075c00df4c3d903851a62c36e4076",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-fresh-workflow-0.json",
+      "sha256": "db7b9690c6268af9c794dce26cd78787e9daa53beff7b42ba2b92f7955b6f839",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-fresh-workflow-1.json",
+      "sha256": "921b618cbb68c1e7e004b377d8ddcab3b3e4606b1f92accf3db1c823d81944e2",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-fresh-workflow-2.json",
+      "sha256": "f69bac9f9756873d25c3d2292a1864c37f386b3fe67467626ead39ddc3ff957b",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-0-process-0.json",
+      "sha256": "334564fd5102f0dc25a8c0a9765bf34b937184689ab8ae1fb82c45562eb1ddd8",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-0-process-1.json",
+      "sha256": "9700ee8e9570224df78c37e8b0edfd9fdcf45bddfd6bb01133423fb09b68977e",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-0-process-2.json",
+      "sha256": "c9f728d761ce7b65ddad8833c3eacf6c8f567ee2e0bdd299398609946bf6a279",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-55-process-0.json",
+      "sha256": "bba0d19f0d04750ef34636a2bbf697b29762e5bf862781db7a7bbff4a309638e",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-55-process-1.json",
+      "sha256": "ff3539f72a880becf8bd489822878d72bb0ac60e4fbb43d5b7c0c0c6c6aa012f",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-55-process-2.json",
+      "sha256": "05d859305867b8cb18e63a6978c83ab8e10db9c0d36e35aa67aab69407ba34a4",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-8-process-0.json",
+      "sha256": "05d901fed91db570d7a667101702d493a258fb4c9bbebc7b5087839fe39f1dd8",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-8-process-1.json",
+      "sha256": "89c420205479027cd19cc764599241fe3d9c0a5ef80d9f1325fd01a2a038baad",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-history-8-process-2.json",
+      "sha256": "697fd4732bb24f205285019e38f7234282ece3c0e17a81ca0cbec2cc8eb2a43d",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/raw/artifacts-20-real-history-population.json",
+      "sha256": "bd3b1703076f5ee45786147da880be078ec4620137ff22be58b3cdac43286146",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/frozen-83d7e8f/summary.json",
+      "sha256": "433960fb7b577dc1c716348424ebf5d0a315fcddca0b9e7f03b8d5e451b785cf",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/qualified-distributions.json",
+      "sha256": "2fb72e23243aac7ad115bfcf5947b6fb158b0b633bd443172c9405224b411b8b",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/reporting-tests-final.log",
+      "sha256": "57fda1f4fc811139b0c6f40476e85d20bf596e3aef771cb6cc53e140bb40c8bc",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/results.md",
+      "sha256": "2d4551ac7884094f3a84eca8d25d5002d146457ca7ba6d8ba7401d4887abc80a",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/root-cleanup-independent.json",
+      "sha256": "9a8f7b1f7a8be296dc773c88658b01c6b8b0b3b247a272e92b72858f3cc1c1a7",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/tooling.json",
+      "sha256": "9f4b1a9a44fe69990b1579b1b0ffead49a0589637bd3c61f920cc24a58d41255",
+      "matches_proof": true,
+      "equals_old07": true
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/validation.json",
+      "sha256": "fe03496bc461f9891d20e604e1f50578f49cf9925d10051b6e7d74e18ca2aa7b",
+      "matches_proof": true,
+      "equals_old07": true
+    }
+  ],
+  "measured_owners": [
+    {
+      "path": "agent_api.py",
+      "sha256": "8ee3136aabca634a0f41471116fa1141b4cbc15aea493a063484528403c984f4",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "app.py",
+      "sha256": "75c54e547d139f921b34678a8448aa65125bf274a3460cd8b8131b1185f0077d",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "metadata.py",
+      "sha256": "893d489f8e5d323ac1eed61350d206bbc1c0375801402f52cc586ac8423d62e4",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "pipeline.py",
+      "sha256": "07f5b491767941bf68668da8e82282b78858fe310e9ec74c6d91a8e38534faeb",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "recipe_contract.py",
+      "sha256": "2c2dd92b1eb71ebef14f9cd16324fa8b959c1b9e725bc5a11b4b64e252ff380a",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "recipe_process.py",
+      "sha256": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "run_publication.py",
+      "sha256": "41e7eeb7f9efe3743cf19465c36ffadf9713117829273e6e0091707e78e66dee",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    },
+    {
+      "path": "runs.py",
+      "sha256": "6aece3b50722f23b97457fd398cd94a45bca598e7affc0db6ea5f3dd98ba6b08",
+      "matches_proof": true,
+      "equals_measured83d": true,
+      "equals_old07": true
+    }
+  ],
+  "source5_manifest": [
+    {
+      "path": "docs/contracts/lab-workflow-baseline.md",
+      "sha256": "2872d18008cd27bd444a6433aaf2f7a61a71d27fda17fa33d9edaae89a962ced",
+      "matches_manifest": true,
+      "equals_final07": true,
+      "equals_measured83d": false
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/execution-ledger.md",
+      "sha256": "acb109ad0a7f5b02ed1b55d68358b6a4065b07e7cd8a467d13865ddd9db9d465",
+      "matches_manifest": true,
+      "equals_final07": true,
+      "equals_measured83d": false
+    },
+    {
+      "path": "docs/plans/lab-workflow-reliability/plan.md",
+      "sha256": "970a93db67dbd2db744eacbda0c2dae9911d0e8f8f91138811811a24232c8e8d",
+      "matches_manifest": true,
+      "equals_final07": true,
+      "equals_measured83d": true
+    },
+    {
+      "path": "tests/benchmark_lab_workflow.py",
+      "sha256": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+      "matches_manifest": true,
+      "equals_final07": true,
+      "equals_measured83d": true
+    },
+    {
+      "path": "tests/test_benchmark_lab_workflow.py",
+      "sha256": "7bee05c44e23c00f272b630e7bce0b5bcd0031023997180c83aeb8da4d092b86",
+      "matches_manifest": true,
+      "equals_final07": true,
+      "equals_measured83d": true
+    }
+  ],
+  "harness_reporting": [
+    {
+      "path": "tests/benchmark_lab_workflow.py",
+      "sha256": "03a955faecf4ef8df4a3cf228a852845e4be379731706f3241d19a3a1281adc1",
+      "equals_measured83d": true
+    },
+    {
+      "path": "tests/test_benchmark_lab_workflow.py",
+      "sha256": "7bee05c44e23c00f272b630e7bce0b5bcd0031023997180c83aeb8da4d092b86",
+      "equals_measured83d": true
+    }
+  ],
+  "unexpected_product_deltas": [],
+  "changed_paths": [
+    ".github/workflows/tests.yml",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-evidence/ci-project-browser-repair/browser-receipt.json",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-evidence/ci-project-browser-repair/tuldok-pr98-project-options-final-source.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-evidence/ci-project-browser-repair/tuldok-pr98-project-options-held-green.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-evidence/ci-project-browser-repair/tuldok-pr98-project-options-held-red.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-evidence/ci-project-browser-repair/tuldok-pr98-project-original-hosted-failure.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-evidence/ci-project-browser-repair/validation.json",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-ui/ci-cleanup-repair/tuldok-pr99-native-text-cleanup-final-source.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-ui/ci-cleanup-repair/tuldok-pr99-native-text-cleanup-qualified.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-ui/ci-cleanup-repair/tuldok-pr99-native-text-original-hosted-failure.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-ui/ci-cleanup-repair/tuldok-pr99-owned-cleanup-controlled.log",
+    "docs/plans/lab-workflow-reliability/reports/m1-publication-ui/ci-cleanup-repair/validation.json",
+    "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/ci-controller-fixture/tuldok-pr102-controller-composition-green.log",
+    "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/ci-controller-fixture/tuldok-pr102-controller-composition-red.log",
+    "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/ci-controller-fixture/tuldok-pr102-controller-fixture-independent-review.json",
+    "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/ci-controller-fixture/tuldok-pr102-controller-independent-green.log",
+    "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/ci-controller-fixture/tuldok-pr102-independent-lifecycle-job-118328520352.log",
+    "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/ci-controller-fixture/validation.json",
+    "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/integration-validation.json",
+    "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/tuldok-m3-core-composed-final.log",
+    "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/tuldok-m3-root-independent-qualification.log",
+    "tests/browser_native_text_import.cjs",
+    "tests/browser_owned_cleanup.cjs",
+    "tests/browser_workspace_project.cjs",
+    "tests/test_browser_owned_cleanup.cjs",
+    "tests/test_workspace_external_controller.cjs"
+  ],
+  "controller_sha256": "6b19c00e9d00347f01ffbde06a53fa5bfa1d4ff5904612a8f07df9e99f898d3d",
+  "controller_equals_corrected_base103": true,
+  "controller_delta": "diff --git a/tests/test_workspace_external_controller.cjs b/tests/test_workspace_external_controller.cjs\nindex 5484a98..f6297bc 100644\n--- a/tests/test_workspace_external_controller.cjs\n+++ b/tests/test_workspace_external_controller.cjs\n@@ -155,14 +155,14 @@ function fixture(){\n   // Exercise the actual polling composition with held progress responses.\n   for(const change of ['view','session','none','receipt']){\n     const held=deferred(),requested=deferred(),listeners={};let actor={actor_id:'owner',credential_id:'one',kind:'owner',scopes:[]};\n-    const root=()=>({innerHTML:'',contains:()=>false,querySelectorAll:()=>[],querySelector:()=>({addEventListener(){},classList:{toggle(){}},setAttribute(){}})});\n+    const root=()=>({innerHTML:'',contains:()=>false,querySelectorAll:()=>[],querySelector:()=>({contains:()=>false,querySelectorAll:()=>[],querySelector:()=>null,addEventListener(){},classList:{toggle(){}},setAttribute(){}})});\n     const pipelineRoot=root(),runsRoot=root(),record={id:'poll',state:'completed',graph:{recipe:'external_recipe',name:'Polling fixture'},artifacts:[],node_attempts:[],events:[],progress:{}};\n     if(change==='receipt')record.artifact_status={status:'receipt_verified',payloads:'not_checked'};\n     const auth={identity:()=>actor,fetch:async url=>({ok:true,json:async()=>{\n       if(url.endsWith('/runs'))return [record];if(url.endsWith('/progress')){requested.resolve();return held.promise;}return record;\n     }})};\n     const window={workspaceEscape:String,TuldokAuth:auth,addEventListener:(name,fn)=>(listeners[name]||=[]).push(fn)};\n-    const context={window,TuldokAuth:auth,history:{state:{},replaceState(){}},structuredClone,crypto,clearTimeout,setTimeout,document:{activeElement:null},CSS:{escape:String}};\n+    const context={window,TuldokAuth:auth,history:{state:{},replaceState(){}},structuredClone,crypto,clearTimeout,setTimeout,performance,AbortController,document:{activeElement:null},CSS:{escape:String}};\n     vm.runInNewContext(source,context);context.WorkspaceExternal=window.WorkspaceExternal;\n     vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-service.js'),'utf8'),context);context.WorkspaceModel=window.WorkspaceModel;\n     vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/experiment-lineage.js'),'utf8'),context);\n",
+  "all_proof_checks": true
+}
