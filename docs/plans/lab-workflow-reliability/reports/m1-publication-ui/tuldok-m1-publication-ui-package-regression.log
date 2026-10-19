@@ -1,0 +1,1 @@
+PASS controlled external package view: owned discovery, pending versus fresh state, source identity, denial/stale clearing and passive-only reads.
