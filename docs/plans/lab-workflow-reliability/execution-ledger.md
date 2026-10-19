@@ -396,3 +396,12 @@ harness now asserts that real correlation. The existing separate-actor witness
 already verifies unknown history for another actor. No production source changed
 for this correction. The failed exact-head log is preserved; final qualification
 uses the corrected test head.
+
+Corrected exact38853e4 affected qualification passed all53 cases in84.878 seconds
+with zero skips. Final source review then caught an empty-clock evidence edge:
+a cold legacy queue can allocate a diagnostic clock before any owned span exists.
+Empty clocks are now omitted from persistence/projection and the closed wire
+requires at least one span in each returned record. The actual old-Run HTTP
+witness explicitly creates that empty-clock condition and still requires
+unknown_granularity. This strengthens evidence labels without changing authority
+or reconstructing history; final exact-source qualification follows.

@@ -278,7 +278,7 @@ class Runs:
     def _snapshot_phase_timings(self, run):
         book = getattr(self, '_phase_book', None)
         clock = book.get(run['id']) if book is not None else None
-        if clock is None: return
+        if clock is None or not clock.snapshot()['spans']: return
         try:
             if run.get('state') in TERMINAL:
                 for span in clock.snapshot()['spans']:
@@ -305,7 +305,8 @@ class Runs:
             base_records = []
             try:
                 records = [phase_timings.incomplete(item) for item in
-                           phase_timings.retained(run.get('_phase_timings', []))]
+                           phase_timings.retained(run.get('_phase_timings', [])) if item['spans']]
+                if live is not None and not live.snapshot()['spans']: live = None
                 if live is not None:
                     records = [item for item in records if item['clock_id'] != live.clock_id] + [live.snapshot()]
                 base_records = copy.deepcopy(records)

@@ -339,6 +339,7 @@ class Pipelines:
             actor = self.access._context().actor_id
             book = getattr(self, '_preparation_timings', None)
             record = book.get((actor, graph_id, revision)) if book is not None else None
+            if record is not None and not record.snapshot()['spans']: record = None
             self.access.require('inspect', 'pipeline.preparation_timings', graph_id)
             return {'format': 'graph_preparation_timings_v1', 'catalog_id': self.db.dataset_id,
                 'graph_id': graph_id, 'graph_revision': revision, 'actor_id': actor,

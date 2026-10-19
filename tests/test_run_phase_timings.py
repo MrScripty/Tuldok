@@ -100,7 +100,8 @@ class OwnerPhaseTimingTests(unittest.TestCase):
         client = agent_api.AgentClient('http://127.0.0.1:12345', 'x'*32, 'a'*32)
         client._ready = True
         client._selected = {name: 1 for name in ('runs.phase_timings', 'graphs.preparation_timings')}
-        run = self.envelope(self.clock().snapshot())
+        clock = self.clock(); clock.begin('queue', 'scheduler')
+        run = self.envelope(clock.snapshot())
         graph = {'status': 200, 'result': {'format': 'graph_preparation_timings_v1', 'catalog_id': 'a'*32,
             'actor_id': 'c'*32, 'graph_id': 'd'*32, 'graph_revision': 2,
             'selection': 'latest_actor_graph_revision_observation', 'observation': None,
@@ -231,6 +232,9 @@ class ActualPhaseTimingTests(unittest.TestCase):
             old = dataset.runs._load(run['id']); old.pop('_phase_timings', None)
             dataset.db.execute('UPDATE workspace_runs SET document=%s WHERE id=%s', (json.dumps(old), run['id']))
         dataset.runs._phase_book = phase_timings.Book()
+        # Cold scheduler capacity observation can allocate a clock before it
+        # owns any measured interval. That cannot invent historical granularity.
+        dataset.runs._phase_clock(run['id'])
         from app import make_handler
         server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(dataset))
         worker = threading.Thread(target=server.serve_forever, daemon=True); worker.start()

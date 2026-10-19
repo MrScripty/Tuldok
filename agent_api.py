@@ -649,7 +649,7 @@ _PHASE_SPAN = obj({'sequence': integer(1, 2**31-1), 'phase': {'enum': _PHASE_NAM
         'owner_go', 'leader', 'descendants', 'validating_outputs', 'copying_outputs']}})
 _PHASE_RECORD = obj({'format': const('owner_phase_timings_v1'),
     'owner': {'enum': ['pipeline', 'runs', 'custodian']}, 'clock_id': ID,
-    'observed_at_ms': SAFE_NAT, 'dropped_spans': integer(0, 2**31-1), 'spans': array(_PHASE_SPAN, 32)})
+    'observed_at_ms': SAFE_NAT, 'dropped_spans': integer(0, 2**31-1), 'spans': array(_PHASE_SPAN, 32, 1)})
 model_operation('runs.phase_timings', 'GET', '/api/workspace/runs/{run_id}/phase-timings', {'run_id': ID},
     output=obj({'format': const('run_phase_timings_v1'), 'catalog_id': ID, 'run_id': ID,
         'original_run_state': {'enum': ['queued', 'running', 'cancelling', 'completed', 'failed', 'cancelled', 'interrupted', 'unknown']},
