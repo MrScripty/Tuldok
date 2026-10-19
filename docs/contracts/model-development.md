@@ -432,3 +432,8 @@ the training Model, Trial, Run and checkpoint hashes; no extra restore Model or
 validation-population capability is invented. Historical Runs keep unknown
 ancestry. Bound field profiles continue to reject unsupported Run/frozen inputs,
 including unused inputs. Untouched holdout access remains unsupported.
+
+The separately negotiated [scientific comparison](scientific-comparison.md)
+reads exact completed and recovered field evidence in the existing Runs and
+Experiment progression UI. Per-case field-point diagnostics remain distinct
+from scientific acceptance; the current profile has no owned per-case criterion.

@@ -1,0 +1,35 @@
+'use strict';
+// Controlled transport only; actual HTTP/artifact/browser evidence is separate.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-scientific-comparison.js'),'utf8');
+const sha=letter=>letter.repeat(64),id=letter=>letter.repeat(32),copy=structuredClone;
+const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};};
+function index(run){return {state:'verified',manifest:{producer:{run_id:run.id,material_sha256:sha('c')},model_sha256:sha('d')},
+  checkpoint_index:{entries:[{checkpoint:{sha256:sha('a')},clocks:{optimizer_update:0,epoch:null,fit_pass:null,physical_time:null,wall_elapsed_ms:0},selected:true}]},
+  probe:{split:'validation',members:[{ordinal:0,frozen_reference:{input:'fixture',member_id:'case',split:'validation'}}]},fields:[{field_id:'pressure',shape_zyx:[4,4,4]}],
+  metric_definitions:[{id:'metric',units:'u',direction:'minimize'}],metric_definition_hashes:{metric:sha('b')}};}
+function response(body){return {format:'scientific_comparison_v1',point:copy(body.point),operands:body.operands.map((operand,i)=>({operand:copy(operand),original_run_state:'completed',model:{sha256:sha('d')},material:{sha256:sha('c')},study_membership:null,configuration:{size:i},timings:{evidence:'unknown_granularity',records:[]},memory:{state:'unknown',reason:'memory_measurement_not_retained_by_profile'},artifacts:[],custody:'managed_run_artifacts'})),
+  scalar:{state:'compatible',mode:body.selection.mode,reasons:[],delta:{state:'observed',value:2,units:'u'},sides:body.operands.map((operand,i)=>({run_id:operand.run_id||operand.ref.run_id,checkpoint_sha256:body.selection[(i?'other_':'')+'checkpoint_sha256'],evaluation_sha256:body.selection[(i?'other_':'')+'evaluation_sha256'],metric_definition_sha256:body.selection[(i?'other_':'')+'metric_definition_sha256'],metric_id:'metric',split:'validation',clocks:{optimizer_update:0,epoch:null,fit_pass:null,physical_time:null,wall_elapsed_ms:0},units:'u',direction:'minimize',result:{state:'observed',value:i*2,sample_count:1}}))},
+  cases:[{case:{input:'fixture',member_id:'case',split:'validation'},values:[{state:'observed',member_ordinal:0,prediction:10,reference:10,units:'u'},{state:'observed',member_ordinal:0,prediction:12,reference:10,units:'u'}],prediction_delta:{value:2,units:'u'},acceptance:{state:'unknown',reason:'owned_per_case_criterion_not_retained'}}],coverage:{baseline:1,candidate:1,matched:1,union:1},criterion:{state:'unknown',reason:'profile_has_no_owned_per_case_metric_or_criterion'},interpretation:'retained_point_diagnostic_only; no_error_operator_or_scientific_acceptance'};}
+function fixture(){
+  const run={id:id('1'),state:'completed',graph:{recipe:'external_recipe',name:'Baseline'},artifacts:[{name:'model-evidence.json',sha256:sha('e')}]},target={...run,id:id('2'),graph:{recipe:'external_recipe',name:'Candidate'}},other={...target,id:id('3')};
+  let identity={catalog_id:id('c'),actor_id:id('a'),credential_id:id('b')},nodes={},html='',handler=async(route,body)=>route==='scientific-comparison'?response(body):route.endsWith('model-evidence')?index(route.includes(target.id)?target:run):route.includes(other.id)?other:target;
+  const calls=[],context={structuredClone,console,CSS:{escape:value=>value},document:{activeElement:null},Event:function(type){this.type=type;},window:{workspaceEscape:value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;'),WorkspacePublicationDocuments:{same:(a,b)=>JSON.stringify(a)===JSON.stringify(b)}}};
+  vm.runInNewContext(source,context);const ui=context.window.WorkspaceScientificComparison({api:async(route,body,version)=>{calls.push({route,body:copy(body),version});return handler(route,body,version);},announce(){},identity:()=>identity});
+  const root={querySelector:id=>nodes[id],querySelectorAll:()=>[]};
+  function render(){html=ui.html(run,[run,target,other]);nodes={};for(const match of html.matchAll(/id="([^"]+)"/g))nodes['#'+match[1]]={addEventListener(type,fn){this[type]=fn;},focus(){},options:[{value:''},{value:target.id},{value:other.id}],dispatchEvent(event){this[event.type]?.({target:this});}};ui.bind(root,run,[run,target,other],render,()=>true,()=>{});}
+  return {ui,run,target,other,calls,render,node:id=>nodes['#'+id],html:()=>html,handler:value=>handler=value,identity:value=>identity=value,async load(){await ui.load(run,()=>true);render();},async choose(){await nodes['#scientific-candidate'].change({target:{value:target.id}});},async compare(){await nodes['#scientific-form'].submit({preventDefault(){}});}};
+}
+(async()=>{
+  const f=fixture();await f.load();await f.choose();await f.compare();assert.match(f.html(),/prediction minus baseline prediction/);assert.match(f.html(),/10 \/ 10 u/);assert.match(f.html(),/12 \/ 10 u/);assert.match(f.html(),/Unknown: owned_per_case_criterion_not_retained/);assert.match(f.html(),/optimizer_update 0/);assert.match(f.html(),/Memory: unknown/);
+  assert.ok(f.calls.every(call=>!/(admit|submit|recover|cancel|prepare|approve)/.test(call.route)));assert.equal(f.calls.at(-1).version,1);
+  const one=deferred(),two=deferred();let comparisons=0;
+  f.handler((route,body)=>route==='scientific-comparison'?(++comparisons===1?one.promise:two.promise):Promise.reject(Error('unexpected')));
+  const old=f.compare();assert.doesNotMatch(f.html(),/id="scientific-result"/);f.node('scientific-x').change({target:{value:'1'}});const latest=f.compare();
+  two.resolve(response(f.calls.at(-1).body));await latest;assert.match(f.html(),/id="scientific-result"/);one.resolve({...response(f.calls.at(-2).body),format:'stale_poison'});await old;assert.match(f.html(),/id="scientific-result"/);assert.doesNotMatch(f.html(),/stale_poison/);
+  const waiting=deferred();f.handler(()=>waiting.promise);f.node('scientific-x').change({target:{value:'2'}});const pending=f.compare();f.ui.invalidate();waiting.resolve(response(f.calls.at(-1).body));await pending;assert.doesNotMatch(f.html(),/id="scientific-result"/);
+  const r=fixture();await r.load();await r.choose();r.handler(async(route,body)=>{const value=response(body);value.operands[1].operand.run_id=id('9');return value;});await r.compare();assert.doesNotMatch(r.html(),/id="scientific-result"/);assert.match(r.html(),/identity or projection differs/);
+  r.handler(async()=>{const error=Error('Access revoked');error.status=403;throw error;});await r.compare();assert.doesNotMatch(r.html(),/id="scientific-form"/);assert.match(r.html(),/Access revoked/);
+  const s=fixture();await s.load();await s.choose();await s.compare();s.identity({catalog_id:id('c'),actor_id:id('a'),credential_id:id('9')});s.render();assert.doesNotMatch(s.html(),/id="scientific-result"/);assert.match(s.html(),/Session changed/);
+  console.log('Scientific comparison controller: diagnostic table, exact identity, stale overlap, invalidation, revocation and session fences passed');
+})().catch(error=>{console.error(error);process.exitCode=1;});
