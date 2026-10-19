@@ -244,7 +244,32 @@ failures in1.382s, all twelve wrong replies accepted. The two positive cases pas
 `comparison-guard-focused.log` retains the corrected 21-test pass in3.047s.
 `comparison-guard-source.json` pins this controlled red/green source and hashes.
 
-Only source and pure focused checks ran during M4's paired quiet window. One
-existing actual classifier comparison HTTP/clean-CLI case is queued after its
-owner releases that window. Earlier `875038a`/`cb68bc0` receipts retain their
-original source attribution and are not final-guard HTTP acceptance receipts.
+Only source and pure focused checks ran during M4's paired quiet window. After
+its owner explicitly released that window, the one queued existing actual
+classifier comparison HTTP/clean-CLI case ran on frozen guard source
+`5634968dca2666392b6d69c12c12a0f391e51f5b`. The result is recorded in
+`comparison-guard-http-source.json` and `comparison-guard-http.log`: EXIT0,
+1 test in60.889s. It compares the real two-epoch CPU classifier's exact retained
+checkpoint/evaluation/metric selections through authenticated HTTP and a separate
+CLI process. The fixture shutdown joins the HTTP server, closes its catalog and
+drops only that fresh schema before its temporary directory cleanup; all cleanups
+passed. The existing runtime is used directly with no capture or installation.
+Root's scientific and M6 batch gates were allowed to overlap after the quiet
+release; no performance measurement or scientific acceptance is claimed.
+
+Earlier `875038a`/`cb68bc0` receipts retain their original source attribution and
+are not relabeled as final-guard HTTP receipts. No unrelated full12/35 rerun was
+performed. The final guard hunk was independently compared byte-for-byte with
+the reviewed `41fb30a` hunk. Non-log commit whitespace checks passed. The raw
+failed unittest log intentionally retains its progress line's trailing space,
+which the full cached whitespace check reported; no source/document whitespace
+issue was found. Final receipt changes do not alter the qualified product hashes.
+
+`batch-consumer-independent-review.json` is a separate source-review receipt
+requested by root during the quiet window. It reviews frozen batch consumer
+`a4ff908fca0ef72ca58554e1473fce2bcfc2d7a8` without author worktree edits or test
+execution. It found no blocker in the extracted private publisher, explicit
+batch/default CLI, exact inventory/ref/whole-hash/cap/cancellation/partial-receipt
+or ordinary-resume scope. A stdlib AST check independently proves ordinary
+`WorkflowClient.collect` unchanged from `40d7f61`. Server batch implementation
+and actual batch acceptance remain outside that review's scope.

@@ -1,0 +1,6 @@
+test_actual_classifier_exact_operands_compare_through_http_and_clean_cli (test_workflow_client_http.RetainedWorkflowHTTPTests.test_actual_classifier_exact_operands_compare_through_http_and_clean_cli) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 60.889s
+
+OK
