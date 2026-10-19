@@ -1,0 +1,1526 @@
+{
+  "captured_cpu": {
+    "actual_cpu_scope": [
+      "The provisioned CPU interpreter drives browser_model_development: actual finite training, three checkpoint/probe sets, explicit comparison selections, lineage, changed-membership refusal and denial/navigation fencing.",
+      "Existing owner preparation/capture and separate fresh captured CPU consumer complete with three charged slots, while source candidate remains diagnostic and package-complete/fresh-verification remain separate UI states.",
+      "Captured runtime scope is TinyCNN forward inference with Torch/NumPy/Pillow; preparation explicitly excludes torchvision and unused optional components. No captured training/resume or CUDA/scientific-quality acceptance inferred."
+    ],
+    "all_steps": [
+      {
+        "conclusion": "success",
+        "name": "Set up job",
+        "number": 1,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Initialize containers",
+        "number": 2,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/checkout@v4",
+        "number": 3,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/setup-node@v4",
+        "number": 4,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Explicitly provision the supported CPU runtime before qualification",
+        "number": 5,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Exercise actual classifier preparation and training through the browser",
+        "number": 6,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+        "number": 7,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+        "number": 8,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/upload-artifact@v4",
+        "number": 9,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Post Run actions/setup-node@v4",
+        "number": 16,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Post Run actions/checkout@v4",
+        "number": 17,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Stop containers",
+        "number": 18,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Complete job",
+        "number": 19,
+        "status": "completed"
+      }
+    ],
+    "browser_PASS_marker_count": 17,
+    "browser_PASS_markers": [
+      "2026-10-19T21:54:48.9897429Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+      "2026-10-19T21:54:53.4767637Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+      "2026-10-19T21:54:53.7879300Z PASS invalid held-out class coverage blocks release before training",
+      "2026-10-19T21:54:54.6780248Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+      "2026-10-19T21:55:16.2783774Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+      "2026-10-19T21:55:16.4731730Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+      "2026-10-19T21:55:34.6930081Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+      "2026-10-19T21:55:35.3893802Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+      "2026-10-19T21:55:36.5705868Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+      "2026-10-19T21:55:58.1745079Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+      "2026-10-19T21:55:58.2438138Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+      "2026-10-19T21:55:58.6180057Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+      "2026-10-19T21:55:58.9879183Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+      "2026-10-19T21:55:59.5965201Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-16MpgN",
+      "2026-10-19T21:57:37.9415837Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots",
+      "2026-10-19T21:57:37.9417743Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic",
+      "2026-10-19T21:57:37.9584857Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-PfdnLC"
+    ],
+    "browser_commands": [
+      "2026-10-19T21:54:44.6917035Z node tests/browser_model_development.cjs",
+      "2026-10-19T21:56:09.2827331Z node tests/browser_candidate_package.cjs"
+    ],
+    "checkout_identity": {
+      "checkout_ref": "refs/remotes/pull/101/merge",
+      "matches_requested_head_and_execution_base": true,
+      "merge_message_base_sha": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+      "merge_message_head_sha": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+      "retargeted_main_relationship": "CPU executed old4e533 base; currentmain13f is independently tree-identical. No literal13f checkout claimed.",
+      "scope": "Hosted execution checked out the synthetic PR merge of the exact requested head and base; no independent tree-equality claim to the authored head alone.",
+      "tested_checkout_sha": "b9d9ca7c9af4235ef47703f249be5a5113b3c9c4"
+    },
+    "conclusion": "success",
+    "job_id": 118328503878,
+    "log_bytes": 58975,
+    "log_path": "/tmp/tuldok-pr101-independent-ci-evidence/captured-cpu.log",
+    "log_sha256": "1441e3612e366130fea17be91d2c6c6a857fc9b4ee8ea182984a5f30f58c8170",
+    "log_utf8_characters": 57297,
+    "run_id": 39330896319,
+    "runtime_preparation_receipt": {
+      "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+      "excluded_unused_scope": [
+        "torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.",
+        "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.",
+        "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."
+      ],
+      "file_count": 21042,
+      "format": "candidate_ci_runtime_preparation_v1",
+      "interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+      "inventory_sha256": "e8810bb1eb691604c7fbcefd15c9f356e5098116947445e93a59301d352b438b",
+      "model_browser_receipt": {
+        "catalog_path": "/tmp/tuldok-model-development-vODui6/data",
+        "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-16MpgN/receipt.json",
+        "run_ids": [
+          "b8ad02c38ce64ca3a40beeb9796d0a55",
+          "321192982696476dbacd838fd54b92bd",
+          "158b81b8773c4dfd9b798d4659f92454"
+        ],
+        "sha256": "7b63a34cdb9359d77b869e8673c3dac63bb607f0883ad181a521e504b97fc0e8"
+      },
+      "profile": "captured_cpu_python_v1",
+      "rights": "Upstream metadata/notices are retained; no new redistribution permission is asserted.",
+      "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+      "source_sha256": {
+        "candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+        "recipe_process.py": "247c573d6a9bfdc4e189b3a940650c91102cb40273751225f0fef6dd79999e6f",
+        "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+        "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"
+      },
+      "total_bytes": 823402896,
+      "versions": {
+        "filelock": "4.2.4",
+        "fsspec": "2026.9.0",
+        "jinja2": "3.1.6",
+        "markupsafe": "3.0.4",
+        "mpmath": "1.3.0",
+        "networkx": "3.7",
+        "numpy": "2.5.4",
+        "pillow": "12.3.0",
+        "sympy": "1.14.0",
+        "torch": "2.8.0+cpu",
+        "typing-extensions": "4.16.0"
+      }
+    },
+    "status": "completed",
+    "step_counts": {
+      "completed_success": 13,
+      "failed": 0,
+      "skipped": 0
+    },
+    "unittest_counts": {
+      "failed": null,
+      "passed": null,
+      "reason": "Captured-CPU job runs browser qualification scripts, not a unittest suite.17 PASS log markers are browser assertions/summaries, not17 unittest tests.",
+      "run": null,
+      "skipped": null,
+      "summary_blocks": []
+    },
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/39330896319/job/118328503878"
+  },
+  "fetched_pr_metadata": {
+    "base_branch": "main",
+    "base_sha": "13f564acf2c49364c545da7205c7f28734708cf6",
+    "draft": true,
+    "head_branch": "feature/lab-coordinator-recovery-20261019",
+    "head_sha": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+    "merged": false,
+    "state": "open"
+  },
+  "format": "independent_hosted_ci_completed_review_v2",
+  "inspection_policy": {
+    "completed_cpu_log_queries": 1,
+    "completed_lifecycle_log_queries": 1,
+    "job_metadata_queries": 2,
+    "lifecycle_log_queries": 1,
+    "note": "One initial pending snapshot and one separately authorized completed snapshot; CPU evidence reused without another CPU query. No passive monitoring.",
+    "polls": 0,
+    "remote_changes": false
+  },
+  "lifecycle": {
+    "all_steps": [
+      {
+        "conclusion": "success",
+        "name": "Set up job",
+        "number": 1,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Initialize containers",
+        "number": 2,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/checkout@v4",
+        "number": 3,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Fetch the exact authored fixture used by canonical Release qualification",
+        "number": 4,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Check out pinned schema3 source for retained-run qualification",
+        "number": 5,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/setup-python@v5",
+        "number": 6,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/setup-node@v4",
+        "number": 7,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Install independent WAV consumer",
+        "number": 8,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run python -m pip install -r requirements.txt -r requirements-spatial-qualification.txt",
+        "number": 9,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify field output preflight and unchanged admission state",
+        "number": 10,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify same-attempt publication retention and recovery boundaries",
+        "number": 11,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify coordinator fault fences and explicit recovery with PostgreSQL",
+        "number": 12,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run python tests/qualify_spatial_retained_runs.py --legacy-root build/legacy-schema3 --report build/qa/spatial-retained-runs.json",
+        "number": 13,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run python -m venv build/workspace-training",
+        "number": 14,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python -m pip install -r requirements.txt -r requirements-training.txt",
+        "number": 15,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python -m pip install -r requirements-spatial-qualification.txt",
+        "number": 16,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify one-fit evidence in the provisioned CPU training interpreter",
+        "number": 17,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+        "number": 18,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+        "number": 19,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+        "number": 20,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+        "number": 21,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Create isolated optional agent verification environment",
+        "number": 22,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m pip install -r requirements.txt",
+        "number": 23,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m pip install --require-hashes -r requirements-agent.lock",
+        "number": 24,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+        "number": 25,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+        "number": 26,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+        "number": 27,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+        "number": 28,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+        "number": 29,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+        "number": 30,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/experiment-lineage.js",
+        "number": 31,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_experiment_lineage_controller.cjs",
+        "number": 32,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+        "number": 33,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run python -m unittest discover -s tests",
+        "number": 34,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/auth.js",
+        "number": 35,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_auth_helpers.cjs",
+        "number": 36,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_auth_controller.cjs",
+        "number": 37,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_access.cjs",
+        "number": 38,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/scientific-fields.js",
+        "number": 39,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run build/workspace-training/bin/python tests/qualify_scientific_fields.py --output build/qa/scientific-neutral.zip --report build/qa/scientific-neutral.json",
+        "number": 40,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_scientific_fields.cjs",
+        "number": 41,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/workspace-external.js",
+        "number": 42,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workspace_external_controller.cjs",
+        "number": 43,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workspace_external_package_controller.cjs",
+        "number": 44,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workspace_extension_author.cjs",
+        "number": 45,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workspace_typed_parameters.cjs",
+        "number": 46,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_external.cjs",
+        "number": 47,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workspace_publication_controller.cjs",
+        "number": 48,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_publication.cjs",
+        "number": 49,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workspace_publication_lineage.cjs",
+        "number": 50,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_publication_lineage.cjs",
+        "number": 51,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Verify continuous saved-graph keyboard focus and navigation isolation",
+        "number": 52,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/workspace-projects.js",
+        "number": 53,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_project.cjs",
+        "number": 54,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_project_observation.cjs",
+        "number": 55,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/workbench.js",
+        "number": 56,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/audio-editor.js",
+        "number": 57,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/saved-selections.js",
+        "number": 58,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/saved-searches.js",
+        "number": 59,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_saved_searches_controller.cjs",
+        "number": 60,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/curation.js",
+        "number": 61,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/bulk_import.js",
+        "number": 62,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/caption_import.js",
+        "number": 63,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/rights-note.js",
+        "number": 64,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/preferences.js",
+        "number": 65,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/instruction-responses.js",
+        "number": 66,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/native_detection_import.js",
+        "number": 67,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_native_detection_import_controller.cjs",
+        "number": 68,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/native_text_import.js",
+        "number": 69,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/caption-proposals.js",
+        "number": 70,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/text-classification-proposals.js",
+        "number": 71,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/pumas-typed.js",
+        "number": 72,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_pumas_typed_controller.cjs",
+        "number": 73,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run PUMAS_TYPED_PREFIX=caption-proposal node tests/test_pumas_typed_controller.cjs",
+        "number": 74,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/pumas-gateways.js",
+        "number": 75,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_pumas_gateways_controller.cjs",
+        "number": 76,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/pointclouds.js",
+        "number": 77,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/volume-editor.js",
+        "number": 78,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_spatial_controllers.cjs",
+        "number": 79,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/meshes.js",
+        "number": 80,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_meshes_controller.cjs",
+        "number": 81,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/sequences.js",
+        "number": 82,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/sequence-batch.js",
+        "number": 83,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_sequence_batch_controller.cjs",
+        "number": 84,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_curation_controller.cjs",
+        "number": 85,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_browser_page_load.cjs",
+        "number": 86,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_qa_artifacts.cjs",
+        "number": 87,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_workbench_controller.cjs",
+        "number": 88,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_image_classification_export_controller.cjs",
+        "number": 89,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_text_corpus_export_controller.cjs",
+        "number": 90,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_saved_selections_controller.cjs",
+        "number": 91,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_saved_selection_intent.cjs",
+        "number": 92,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_bulk_import_controller.cjs",
+        "number": 93,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_caption_import_controller.cjs",
+        "number": 94,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_rights_note_controller.cjs",
+        "number": 95,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_preferences_controller.cjs",
+        "number": 96,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_instruction_responses_controller.cjs",
+        "number": 97,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_browser_startup.cjs",
+        "number": 98,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_native_text_import_controller.cjs",
+        "number": 99,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_combined_workbench_controller.cjs",
+        "number": 100,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_caption_proposals_controller.cjs",
+        "number": 101,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_text_classification_proposals_controller.cjs",
+        "number": 102,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node --check static/workbench-layout.js",
+        "number": 103,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workbench_layout.cjs",
+        "number": 104,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workbench.cjs",
+        "number": 105,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_grounded.cjs",
+        "number": 106,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_captions.cjs",
+        "number": 107,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_text_corpus_export.cjs",
+        "number": 108,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_image_classification_export.cjs",
+        "number": 109,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_release_preview.cjs",
+        "number": 110,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_saved_selections.cjs",
+        "number": 111,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_saved_searches.cjs",
+        "number": 112,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_saved_selection_intent.cjs",
+        "number": 113,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_metadata_filters.cjs",
+        "number": 114,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_bulk_import.cjs",
+        "number": 115,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_dataset_integration.cjs",
+        "number": 116,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_curation.cjs",
+        "number": 117,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_caption_import.cjs",
+        "number": 118,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_caption_dataset_integration.cjs",
+        "number": 119,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser.cjs",
+        "number": 120,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_images.cjs",
+        "number": 121,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_rights_note.cjs",
+        "number": 122,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_rights_note_artifacts.cjs",
+        "number": 123,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run python -m pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu",
+        "number": 124,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run python -m pip install -r tests/instruction-consumer-requirements.txt scikit-learn==1.7.2",
+        "number": 125,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/check_text_corpus_consumer.cjs",
+        "number": 126,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/check_image_classification_consumer.cjs",
+        "number": 127,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_preferences.cjs",
+        "number": 128,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_instruction_responses.cjs",
+        "number": 129,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_native_detection_import.cjs",
+        "number": 130,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/test_browser_owned_cleanup.cjs",
+        "number": 131,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_native_text_import.cjs",
+        "number": 132,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_combined_workbench.cjs",
+        "number": 133,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_caption_proposals.cjs",
+        "number": 134,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_text_classification_proposals.cjs",
+        "number": 135,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_classification_preferences_integration.cjs",
+        "number": 136,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_pumas_gateways.cjs",
+        "number": 137,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_meshes.cjs",
+        "number": 138,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_mesh.cjs",
+        "number": 139,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_sequences.cjs",
+        "number": 140,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_sequence_batch.cjs",
+        "number": 141,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_sequences_actual.cjs",
+        "number": 142,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_pumas_typed.cjs",
+        "number": 143,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run cc -shared -fPIC -O2 -Wall -Wextra -Werror -o build/qa/workspace-offline.so tests/fixtures/workspaces/offline_loopback.c -ldl",
+        "number": 144,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_recovery.cjs",
+        "number": 145,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_image_run.cjs",
+        "number": 146,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_text.cjs",
+        "number": 147,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_audio.cjs",
+        "number": 148,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_audio_run.cjs",
+        "number": 149,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_mesh_run.cjs",
+        "number": 150,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_sequence_run.cjs",
+        "number": 151,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_spatial.cjs",
+        "number": 152,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_export_run.cjs",
+        "number": 153,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run node tests/browser_workspace_breadth.cjs",
+        "number": 154,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Qualify automatic classifier evidence and independent CPU reconstruction",
+        "number": 155,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Exercise finite model development through the real browser",
+        "number": 156,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Exercise actual one-fit text model evidence in the browser",
+        "number": 157,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Exercise actual one-fit audio model evidence in the browser",
+        "number": 158,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Run actions/upload-artifact@v4",
+        "number": 159,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Post Run actions/setup-node@v4",
+        "number": 314,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Post Run actions/setup-python@v5",
+        "number": 315,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Post Check out pinned schema3 source for retained-run qualification",
+        "number": 316,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Post Run actions/checkout@v4",
+        "number": 317,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Stop containers",
+        "number": 318,
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "name": "Complete job",
+        "number": 319,
+        "status": "completed"
+      }
+    ],
+    "browser_PASS_lines": [
+      "2026-10-19T22:25:27.0899224Z PASS lineage layout, cycles, read fences, busy ownership, actor-isolated writes, approval acknowledgement, remount retention and applied cohort pagination",
+      "2026-10-19T23:07:42.3906925Z PASS publication metadata, pinned status2, owner/actor controls, unknown-ack stable request, source/hash identity, stale reads/writes and polling cleanup",
+      "2026-10-19T23:07:51.4494749Z PASS publication browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication/run-5clt9H",
+      "2026-10-19T23:07:51.7067144Z PASS explicit pinned lineage publication status, original state, exact Ref navigation, no mutations/fanout, shared closed identity decoder and late session/navigation fences",
+      "2026-10-19T23:08:00.0485977Z PASS publication lineage browser: /home/runner/work/Tuldok/Tuldok/build/qa/workspace-publication-lineage/run-rTPGz1",
+      "2026-10-19T23:19:05.1640293Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+      "2026-10-19T23:19:32.1684519Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-tV9t47"
+    ],
+    "checkout_identity": {
+      "base_sha_at_execution": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+      "checkout_ref": "refs/remotes/pull/101/merge",
+      "current_retargeted_base_branch": "main",
+      "current_retargeted_base_sha": "13f564acf2c49364c545da7205c7f28734708cf6",
+      "head_sha": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+      "old_and_new_base_tree_sha": "a70465a7b20d69350b9078fe285eeda90166320f",
+      "old_base_is_ancestor_of_authored_head": true,
+      "scope": "Actual hosted checkout is synthetic merge of exact263e6cc into old4e533 base. Currentmain13f has identical base tree; no literal13f checkout or unobserved synthetic merge-tree hash claimed.",
+      "separate_legacy_schema3_checkout": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+      "tested_checkout_sha": "b9d9ca7c9af4235ef47703f249be5a5113b3c9c4"
+    },
+    "conclusion": "success",
+    "coordinator_witness": {
+      "actual_http_readiness_recovery_scope": [
+        "Real separate PostgreSQL advisory lock causes configured catalog-lock timeout, coordinator fault/stop and joined thread.",
+        "Pinned health1 HTTP returns faulted/catalog_lock_timeout/admission_readyfalse; actual domain availability refuses.",
+        "Two concurrent real owner HTTP recovery requests share one exact stable body/key and both acknowledge only next generation; admission_readytrue, queued Run envelope/order identity unchanged and one live coordinator.",
+        "Real CoordinatorOwnerClient same-request acknowledgement succeeds; schema-valid forged request key refuses after one controlled call. Separate clean owner recovery and agent status CLI processes return acknowledged generation.",
+        "Active real neutral custodian reaches GO once, coordinator faults on real lock, helper is ceased before explicit recovery; no second GO/launch/consumption.",
+        "Never-started queue with controlled memory headroom later executes one actual neutral attempt preserving stable key/requestSHA and one consumption.",
+        "Cold reopen, journal corruption, session lock loss, same-boot missing receipts, unknown commit acknowledgement, close races and bounded real SQL waits are explicitly covered by named passing tests."
+      ],
+      "all_twenty_test_pass_lines": [
+        "2026-10-19T22:01:37.6112727Z test_actual_active_custodian_drains_before_recovery_without_second_go (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_actual_active_custodian_drains_before_recovery_without_second_go) ... ok",
+        "2026-10-19T22:01:38.2657698Z test_catalog_mutex_wait_is_cancelled_by_actual_close (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_catalog_mutex_wait_is_cancelled_by_actual_close) ... ok",
+        "2026-10-19T22:01:38.8581629Z test_close_wins_while_recovery_waits_for_owned_thread (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_close_wins_while_recovery_waits_for_owned_thread) ... ok",
+        "2026-10-19T22:01:39.4722871Z test_cold_reopen_does_not_turn_completed_key_into_a_new_recovery (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_cold_reopen_does_not_turn_completed_key_into_a_new_recovery) ... ok",
+        "2026-10-19T22:01:40.2601569Z test_cold_reopen_retains_fault_and_exact_recovery_receipt_without_replaying (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_cold_reopen_retains_fault_and_exact_recovery_receipt_without_replaying) ... ok",
+        "2026-10-19T22:01:40.8800327Z test_completed_request_does_not_recover_a_later_fault (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_completed_request_does_not_recover_a_later_fault) ... ok",
+        "2026-10-19T22:01:41.4868485Z test_corrupt_journal_is_retained_and_recovery_fails_closed (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_corrupt_journal_is_retained_and_recovery_fails_closed) ... ok",
+        "2026-10-19T22:01:42.2448092Z test_failed_replacement_start_keeps_same_request_retryable (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_failed_replacement_start_keeps_same_request_retryable) ... ok",
+        "2026-10-19T22:01:44.7631067Z test_fault_after_go_intent_commit_does_not_send_go (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_fault_after_go_intent_commit_does_not_send_go) ... ok",
+        "2026-10-19T22:01:45.4757476Z test_ordinary_catalog_mutex_wait_has_a_typed_finite_bound (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_ordinary_catalog_mutex_wait_has_a_typed_finite_bound) ... ok",
+        "2026-10-19T22:01:48.2457316Z test_preserved_queue_executes_once_after_headroom_returns (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_preserved_queue_executes_once_after_headroom_returns) ... ok",
+        "2026-10-19T22:02:10.9190187Z test_real_lock_timeout_http_health_fences_and_concurrent_owner_recovery (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_real_lock_timeout_http_health_fences_and_concurrent_owner_recovery) ... ok",
+        "2026-10-19T22:02:11.4927660Z test_refused_recovery_never_stops_a_healthy_coordinator (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_refused_recovery_never_stops_a_healthy_coordinator) ... ok",
+        "2026-10-19T22:02:12.2632140Z test_remaining_sql_budget_cancels_real_query_and_restores_session_timeout (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_remaining_sql_budget_cancels_real_query_and_restores_session_timeout) ... ok",
+        "2026-10-19T22:02:13.0092393Z test_runtime_session_lock_loss_stays_fenced_without_reclaim (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_runtime_session_lock_loss_stays_fenced_without_reclaim) ... ok",
+        "2026-10-19T22:02:14.5629935Z test_same_boot_missing_receipt_stays_unknown_and_fenced (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_same_boot_missing_receipt_stays_unknown_and_fenced) ... ok",
+        "2026-10-19T22:02:15.1778788Z test_secondary_opener_cannot_replace_primary_journal_on_recovery_or_close (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_secondary_opener_cannot_replace_primary_journal_on_recovery_or_close) ... ok",
+        "2026-10-19T22:02:15.7713675Z test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt) ... ok",
+        "2026-10-19T22:02:16.5116970Z test_unknown_commit_survives_timeout_restore_failure_and_retains_fence (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_unknown_commit_survives_timeout_restore_failure_and_retains_fence) ... ok",
+        "2026-10-19T22:02:17.2678451Z test_unknown_reconciliation_commit_ack_remains_fenced_until_explicit_same_key (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_unknown_reconciliation_commit_ack_remains_fenced_until_explicit_same_key) ... ok"
+      ],
+      "controlled_boundary": "Available-memory values and fault seams are explicit controlled inputs; real PostgreSQL/HTTP/CLI/custodian boundaries remain active. No performance, model-training or scientific acceptance claim from this neutral coordinator suite.",
+      "coordinator_ui_browser_witness": {
+        "available": false,
+        "reason": "No coordinator UI browser command/source is in exactPR101 core slice; that UI is subsequent work. Existing publication/lineage/model browser passes are retained separately and not relabeled as coordinator UI."
+      },
+      "dedicated_step": {
+        "conclusion": "success",
+        "name": "Verify coordinator fault fences and explicit recovery with PostgreSQL",
+        "number": 12,
+        "status": "completed"
+      },
+      "source_evidence_sha256": "75f765418e862e95b7035c5cf957c02ab06b4938fb698554a087fe13aba7cabe",
+      "unittest_summary": {
+        "command": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+        "errors": 0,
+        "failures": 0,
+        "passed_non_skipped": 20,
+        "ran": 20,
+        "ran_log_line": "2026-10-19T22:02:17.2680569Z Ran 20 tests in 42.790s",
+        "seconds": 42.79,
+        "skipped": 0,
+        "summary": "OK"
+      }
+    },
+    "existing_lineage_browser_scope": "Real neutral Study/custodian copy fault, explicit saved status/2, original Run recovery, exactRef navigation/result verification and domain-conservation cleanup assertions, as exact source checked. Current CI artifact payload not downloaded or invented.",
+    "job_id": 118328504255,
+    "log_bytes": 608021,
+    "log_path": "/tmp/tuldok-pr101-independent-ci-evidence/lifecycle-completed.log",
+    "log_sha256": "631ceb1448ca0a37ffa0dbdeee2490a44956cdd14dbcade14d2b8f50e387ffcb",
+    "run_id": 39330896334,
+    "source_sha256": {
+      "tests/browser_workspace_publication_lineage.cjs": "212f21fd4f713320468e8966442f3f95ec3df836c3ac5ff8fee4e9c1ce1de401",
+      "tests/publication_lineage_browser_fixture.py": "2d258b29eefbd0c0b3c99240369ab8fb8f0a849ab54966b9f751e67d8d95d948",
+      "tests/test_run_coordinator_recovery.py": "75f765418e862e95b7035c5cf957c02ab06b4938fb698554a087fe13aba7cabe"
+    },
+    "status": "completed",
+    "step_counts": {
+      "completed_success": 165,
+      "failed": 0,
+      "pending": 0,
+      "skipped": 0
+    },
+    "unittest_counts": {
+      "aggregate_passed_non_skipped": 1876,
+      "aggregate_skipped": 74,
+      "aggregate_test_executions": 1950,
+      "errors": 0,
+      "failures": 0,
+      "full_discovery": {
+        "command": "python -m unittest discover -s tests",
+        "errors": 0,
+        "failures": 0,
+        "passed_non_skipped": 1549,
+        "ran": 1621,
+        "ran_log_line": "2026-10-19T23:06:59.9513603Z Ran 1621 tests in 2477.359s",
+        "seconds": 2477.359,
+        "skipped": 72,
+        "summary": "OK (skipped=72)"
+      },
+      "scope": "Repeated targeted suites plus full discovery; totals are executions, not unique tests. Default verbosity does not expose all skip reasons; no unsupported reason inferred. Expected negative parser diagnostics remain in full log; no failed/error unittest outcome summaries.",
+      "summary_blocks": [
+        {
+          "command": "python -m unittest discover -s tests -p 'test_run_preflight*.py' -v",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 30,
+          "ran": 30,
+          "ran_log_line": "2026-10-19T21:58:46.7093511Z Ran 30 tests in 9.053s",
+          "seconds": 9.053,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 32,
+          "ran": 32,
+          "ran_log_line": "2026-10-19T22:01:33.8183629Z Ran 32 tests in 166.465s",
+          "seconds": 166.465,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "python -m unittest discover -s tests -p 'test_run_coordinator_recovery.py' -v",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 20,
+          "ran": 20,
+          "ran_log_line": "2026-10-19T22:02:17.2680569Z Ran 20 tests in 42.790s",
+          "seconds": 42.79,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_one_fit_evidence.py -v",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 15,
+          "ran": 15,
+          "ran_log_line": "2026-10-19T22:03:27.7938368Z Ran 15 tests in 23.627s",
+          "seconds": 23.627,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_pointclouds.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 11,
+          "ran": 11,
+          "ran_log_line": "2026-10-19T22:03:28.6295934Z Ran 11 tests in 0.574s",
+          "seconds": 0.574,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_volume_assets.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 9,
+          "ran": 9,
+          "ran_log_line": "2026-10-19T22:03:28.8536364Z Ran 9 tests in 0.109s",
+          "seconds": 0.109,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_cpu_training.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 11,
+          "ran": 12,
+          "ran_log_line": "2026-10-19T22:03:32.6388730Z Ran 12 tests in 3.599s",
+          "seconds": 3.599,
+          "skipped": 1,
+          "summary": "OK (skipped=1)"
+        },
+        {
+          "command": "build/workspace-training/bin/python -m unittest discover -s tests -p test_rheon_evaluation.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 8,
+          "ran": 9,
+          "ran_log_line": "2026-10-19T22:03:33.0917895Z Ran 9 tests in 0.288s",
+          "seconds": 0.288,
+          "skipped": 1,
+          "summary": "OK (skipped=1)"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p 'test_agent_*.py'",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 74,
+          "ran": 74,
+          "ran_log_line": "2026-10-19T22:15:32.1432147Z Ran 74 tests in 708.268s",
+          "seconds": 708.268,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_stdio.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 19,
+          "ran": 19,
+          "ran_log_line": "2026-10-19T22:16:26.7429830Z Ran 19 tests in 54.336s",
+          "seconds": 54.336,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_mcp_observer.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 22,
+          "ran": 22,
+          "ran_log_line": "2026-10-19T22:18:28.6361300Z Ran 22 tests in 121.619s",
+          "seconds": 121.619,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_interface_observation.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 24,
+          "ran": 24,
+          "ran_log_line": "2026-10-19T22:22:44.0799463Z Ran 24 tests in 254.833s",
+          "seconds": 254.833,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiments.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 34,
+          "ran": 34,
+          "ran_log_line": "2026-10-19T22:24:49.7390536Z Ran 34 tests in 124.989s",
+          "seconds": 124.989,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_experiment_lineage.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 13,
+          "ran": 13,
+          "ran_log_line": "2026-10-19T22:25:26.8598036Z Ran 13 tests in 36.409s",
+          "seconds": 36.409,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "build/workspace-agent/bin/python -m unittest discover -s tests -p test_artifact_segments.py",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 5,
+          "ran": 5,
+          "ran_log_line": "2026-10-19T22:25:41.1409904Z Ran 5 tests in 13.435s",
+          "seconds": 13.435,
+          "skipped": 0,
+          "summary": "OK"
+        },
+        {
+          "command": "python -m unittest discover -s tests",
+          "errors": 0,
+          "failures": 0,
+          "passed_non_skipped": 1549,
+          "ran": 1621,
+          "ran_log_line": "2026-10-19T23:06:59.9513603Z Ran 1621 tests in 2477.359s",
+          "seconds": 2477.359,
+          "skipped": 72,
+          "summary": "OK (skipped=72)"
+        }
+      ]
+    },
+    "url": "https://github.com/MrScripty/Tuldok/actions/runs/39330896334/job/118328504255"
+  },
+  "limits": [
+    "This clears reviewed lifecycle/coordinator-core and retained captured-CPU scope only; root owns other required checks, serial merge, archive and post-merge acceptance.",
+    "74 skips retained; full discovery1621 has72skips. No zero-skip claim.",
+    "Coordinator UI browser is not part of PR101 core; no invented UI witness.",
+    "Current CI browser artifact payloads were not downloaded; source assertions and hosted completed PASS/ok lines provide the recorded scope.",
+    "No local heavy test execution, rerun, passive monitoring or remote mutation."
+  ],
+  "pr_number": 101,
+  "pr_url": "https://github.com/MrScripty/Tuldok/pull/101",
+  "prior_pending_observation": {
+    "receipt_path": "/tmp/tuldok-pr101-independent-ci-evidence/review-initial-pending.json",
+    "scope": "Original single inspection retained; this completion fetch explicitly assigned by root after finished, no passive polling.",
+    "sha256": "0d926c4e6ae5469dc6f0a2742dfba76fc5cb7df0aae0059ea05ffff19f83a6d6"
+  },
+  "private_evidence": {
+    "completed_metadata_path": "/tmp/tuldok-pr101-independent-ci-evidence/metadata-completed.json",
+    "completed_metadata_sha256": "42b850198807c3966303a8599c7238f11abd486a8bcd298fc21604ba92e8f269",
+    "cpu_log_mode": "0o600",
+    "directory": "/tmp/tuldok-pr101-independent-ci-evidence",
+    "directory_mode": "0o700",
+    "lifecycle_log_mode": "0o600",
+    "metadata_mode": "0o600",
+    "metadata_path": "/tmp/tuldok-pr101-independent-ci-evidence/metadata.json",
+    "metadata_sha256": "0b1a0b8a83162fe25831488daf482300058aa8f49cb517e7e390badab282428a"
+  },
+  "receipt_created_at_utc": "2026-10-19T23:09:36.266342+00:00",
+  "receipt_updated_at_utc": "2026-10-19T23:23:07.492328+00:00",
+  "repository": "MrScripty/Tuldok",
+  "requested_source_head": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+  "review_result": "Clear for independently reviewed completed PR101 lifecycle/coordinator core and retained captured-CPU job scope;74 skips and absence of new coordinator UI browser witness explicit"
+}

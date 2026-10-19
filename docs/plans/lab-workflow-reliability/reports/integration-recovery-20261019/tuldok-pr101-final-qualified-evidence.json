@@ -1,0 +1,44 @@
+{
+  "pr": 101,
+  "head": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+  "base_at_acceptance": "13f564acf2c49364c545da7205c7f28734708cf6",
+  "tested_base": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+  "source_and_current_pr_merge_tree": "3f8aa3a5f91e85a22fed9119a13e6e52a17d1f95",
+  "state": "All relevant hosted checks passed; completed log review independently clear",
+  "lifecycle": {
+    "run": 39330896334,
+    "job": 118328504255,
+    "success_steps": 165,
+    "full_discovery": {
+      "command": "python -m unittest discover -s tests",
+      "errors": 0,
+      "failures": 0,
+      "passed_non_skipped": 1549,
+      "ran": 1621,
+      "ran_log_line": "2026-10-19T23:06:59.9513603Z Ran 1621 tests in 2477.359s",
+      "seconds": 2477.359,
+      "skipped": 72,
+      "summary": "OK (skipped=72)"
+    },
+    "coordinator": "20 dedicated tests passed without skips in 42.790 seconds; exact real owner/HTTP/custodian scope in independent review"
+  },
+  "cpu": {
+    "run": 39330896319,
+    "job": 118328503878,
+    "success_steps": 13,
+    "scope": [
+      "The provisioned CPU interpreter drives browser_model_development: actual finite training, three checkpoint/probe sets, explicit comparison selections, lineage, changed-membership refusal and denial/navigation fencing.",
+      "Existing owner preparation/capture and separate fresh captured CPU consumer complete with three charged slots, while source candidate remains diagnostic and package-complete/fresh-verification remain separate UI states.",
+      "Captured runtime scope is TinyCNN forward inference with Torch/NumPy/Pillow; preparation explicitly excludes torchvision and unused optional components. No captured training/resume or CUDA/scientific-quality acceptance inferred."
+    ]
+  },
+  "limits": [
+    "This clears reviewed lifecycle/coordinator-core and retained captured-CPU scope only; root owns other required checks, serial merge, archive and post-merge acceptance.",
+    "74 skips retained; full discovery1621 has72skips. No zero-skip claim.",
+    "Coordinator UI browser is not part of PR101 core; no invented UI witness.",
+    "Current CI browser artifact payloads were not downloaded; source assertions and hosted completed PASS/ok lines provide the recorded scope.",
+    "No local heavy test execution, rerun, passive monitoring or remote mutation."
+  ],
+  "independent_review": "tuldok-pr101-independent-ci-review.json",
+  "coordinator_ui": "Not part of PR101 core; PR102 owns UI and requires corrected-head hosted acceptance"
+}

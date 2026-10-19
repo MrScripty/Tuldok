@@ -567,6 +567,11 @@
       "sha256": "a9fa07acf640a1129ff0f2a396c305d27999ce2ef14d47628d0057e55d37851a"
     },
     {
+      "path": "tuldok-pr100-merged-tree.json",
+      "bytes": 316,
+      "sha256": "1db72b645adb1127c46310a4a8d9dde510b5dfb7bbcdaed700a5404368ed1d2a"
+    },
+    {
       "path": "tuldok-pr100-qualified-cpu.log",
       "bytes": 60261,
       "sha256": "e806e994a144a4d1dc1514cd6af1553ebe53626fbbf9e0b8aed317a072c9a6c1"
@@ -575,6 +580,26 @@
       "path": "tuldok-pr100-qualified-lifecycle.log",
       "bytes": 599490,
       "sha256": "604e9cec49cd3788482614356cb1a6e2086533c111784cee371fb62279dc7932"
+    },
+    {
+      "path": "tuldok-pr101-final-qualified-evidence.json",
+      "bytes": 2513,
+      "sha256": "22228ca1c29f6e9314057d89d6484e29a0127cdaeac9ea7391fc1c202bb7df14"
+    },
+    {
+      "path": "tuldok-pr101-independent-ci-review.json",
+      "bytes": 59105,
+      "sha256": "eccfa034d4cee61925e3199761daed8c350c0bb2af82f55327d2781cc2c073a0"
+    },
+    {
+      "path": "tuldok-pr101-qualified-cpu.log",
+      "bytes": 58975,
+      "sha256": "1441e3612e366130fea17be91d2c6c6a857fc9b4ee8ea182984a5f30f58c8170"
+    },
+    {
+      "path": "tuldok-pr101-qualified-lifecycle.log",
+      "bytes": 608021,
+      "sha256": "631ceb1448ca0a37ffa0dbdeee2490a44956cdd14dbcade14d2b8f50e387ffcb"
     },
     {
       "path": "tuldok-pr102-controller-fixture-independent-review.json",
@@ -822,9 +847,14 @@
       "sha256": "59e730ed30e61922bdc482aa99e3be5393c84cda7b934ea4888134fa56c2c91a"
     },
     {
+      "path": "tuldok-task-merged-cleanup-inventory.json",
+      "bytes": 99464,
+      "sha256": "3d653e8bc9d551b9b042fde8af986640c21cbfbd0d079c5b04cfe7d19698b01b"
+    },
+    {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 79782,
-      "sha256": "f8fc04d183ec50f4445a08b925e11b59198f88d5e5bb3bc959199da8c963fea1"
+      "bytes": 83494,
+      "sha256": "8ac90e0284f65ff0e893d60d6a901a34fca1d9247a730535d8826693e2021106"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",

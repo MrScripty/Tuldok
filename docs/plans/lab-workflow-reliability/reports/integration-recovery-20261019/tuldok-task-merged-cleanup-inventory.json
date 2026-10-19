@@ -1,0 +1,2457 @@
+{
+  "kind": "READ-ONLY task merged cleanup inventory; no deletion authorized by this artifact",
+  "snapshot_utc": "2026-10-19T23:24:33.966546+00:00",
+  "scope": "Merged PR89\u2013100 excluding unmerged91; only exact same-name local refs absent original82 baseline considered; never infer aliases by matching SHA",
+  "repository": "MrScripty/Tuldok",
+  "metadata_repository": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+  "current_origin_main": "13f564acf2c49364c545da7205c7f28734708cf6",
+  "expected_origin_main": "13f564acf2c49364c545da7205c7f28734708cf6",
+  "main_matches_expected": true,
+  "protected_inputs": [
+    {
+      "path": "/tmp/tuldok-20261019-protected-local-heads.txt",
+      "sha256": "e4571598ea02bb040adf83d21cdd13da2747d778558b0d0d41f27011542009e8"
+    },
+    {
+      "path": "/tmp/tuldok-20261019-protected-worktrees.txt",
+      "sha256": "4c9f128812256875b7631780220566481061a2e345a773c3ce99cd3217b879b9"
+    }
+  ],
+  "counts": {
+    "protected_local_refs": 82,
+    "protected_worktrees": 96,
+    "merged_prs_queried": 11,
+    "current_open_prs_returned": 13,
+    "candidate_local_refs": 9,
+    "structurally_eligible_after_gate": 9
+  },
+  "candidate_records": [
+    {
+      "pr": 89,
+      "url": "https://github.com/MrScripty/Tuldok/pull/89",
+      "merged": true,
+      "merged_at": "2026-10-19T19:10:37Z",
+      "accepted_head_ref_name": "integration/rheon-lab-current-20261016",
+      "accepted_head_sha": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+      "merge_commit_sha": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
+      "accepted_head_ancestry": {
+        "head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/integration/rheon-lab-current-20261016",
+      "local_ref_exists": false,
+      "current_local_head": null,
+      "protected_ref": false,
+      "current_local_head_matches_accepted": null,
+      "current_local_head_ancestry": null,
+      "open_pr_dependents": [],
+      "worktrees": [],
+      "structurally_eligible_after_gate": false,
+      "exclusion_reasons": [
+        "No same-name local ref; aliases are excluded and not inferred cleanup targets"
+      ],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 90,
+      "url": "https://github.com/MrScripty/Tuldok/pull/90",
+      "merged": true,
+      "merged_at": "2026-10-19T19:19:27Z",
+      "accepted_head_ref_name": "performance/catalog-request-latency-20261018",
+      "accepted_head_sha": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+      "merge_commit_sha": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c",
+      "accepted_head_ancestry": {
+        "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/performance/catalog-request-latency-20261018",
+      "local_ref_exists": false,
+      "current_local_head": null,
+      "protected_ref": false,
+      "current_local_head_matches_accepted": null,
+      "current_local_head_ancestry": null,
+      "open_pr_dependents": [],
+      "worktrees": [],
+      "structurally_eligible_after_gate": false,
+      "exclusion_reasons": [
+        "No same-name local ref; aliases are excluded and not inferred cleanup targets"
+      ],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 92,
+      "url": "https://github.com/MrScripty/Tuldok/pull/92",
+      "merged": true,
+      "merged_at": "2026-10-19T19:51:17Z",
+      "accepted_head_ref_name": "feature/lab-preflight-output-bounds-20261019",
+      "accepted_head_sha": "750332ac64244526127075feb14cb8db268a7ab9",
+      "merge_commit_sha": "2f333f960b80ca7fe23c90269b32f647b2c827a8",
+      "accepted_head_ancestry": {
+        "head": "750332ac64244526127075feb14cb8db268a7ab9",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-preflight-output-bounds-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "750332ac64244526127075feb14cb8db268a7ab9",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "750332ac64244526127075feb14cb8db268a7ab9",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-preflight-m1",
+          "head": "750332ac64244526127075feb14cb8db268a7ab9",
+          "branch": "refs/heads/feature/lab-preflight-output-bounds-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 93,
+      "url": "https://github.com/MrScripty/Tuldok/pull/93",
+      "merged": true,
+      "merged_at": "2026-10-19T20:30:47Z",
+      "accepted_head_ref_name": "feature/lab-exact-preflight-report-20261019",
+      "accepted_head_sha": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+      "merge_commit_sha": "031df288a3bbeddd0a506311edab1b9d18575964",
+      "accepted_head_ancestry": {
+        "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-exact-preflight-report-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-preflight-report-m1",
+          "head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+          "branch": "refs/heads/feature/lab-exact-preflight-report-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 94,
+      "url": "https://github.com/MrScripty/Tuldok/pull/94",
+      "merged": true,
+      "merged_at": "2026-10-19T20:32:12Z",
+      "accepted_head_ref_name": "feature/lab-preflight-storage-20261019",
+      "accepted_head_sha": "0039a330253c088b68578e268afe6fc21fc36038",
+      "merge_commit_sha": "2652b0605796138821cee4ccbea62c1433e74bce",
+      "accepted_head_ancestry": {
+        "head": "0039a330253c088b68578e268afe6fc21fc36038",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-preflight-storage-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "0039a330253c088b68578e268afe6fc21fc36038",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "0039a330253c088b68578e268afe6fc21fc36038",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-preflight-storage-m1",
+          "head": "0039a330253c088b68578e268afe6fc21fc36038",
+          "branch": "refs/heads/feature/lab-preflight-storage-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 95,
+      "url": "https://github.com/MrScripty/Tuldok/pull/95",
+      "merged": true,
+      "merged_at": "2026-10-19T20:42:36Z",
+      "accepted_head_ref_name": "feature/lab-publication-continuation-20261019",
+      "accepted_head_sha": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+      "merge_commit_sha": "27ba22b377336c59fbd45feaa7f597d0a1fdcf0f",
+      "accepted_head_ancestry": {
+        "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-publication-continuation-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-publication-m1",
+          "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+          "branch": "refs/heads/feature/lab-publication-continuation-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 96,
+      "url": "https://github.com/MrScripty/Tuldok/pull/96",
+      "merged": true,
+      "merged_at": "2026-10-19T21:25:14Z",
+      "accepted_head_ref_name": "feature/lab-publication-recovery-20261019",
+      "accepted_head_sha": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+      "merge_commit_sha": "c4322a4832356af796692cd6536adef637a8c6d4",
+      "accepted_head_ancestry": {
+        "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-publication-recovery-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-publication-recovery-m1",
+          "head": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+          "branch": "refs/heads/feature/lab-publication-recovery-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 97,
+      "url": "https://github.com/MrScripty/Tuldok/pull/97",
+      "merged": true,
+      "merged_at": "2026-10-19T21:25:35Z",
+      "accepted_head_ref_name": "feature/lab-publication-interfaces-20261019",
+      "accepted_head_sha": "0da7a811d252cc4c6774260b98ee2a707efec517",
+      "merge_commit_sha": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+      "accepted_head_ancestry": {
+        "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-publication-interfaces-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-publication-interfaces-m1",
+          "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+          "branch": "refs/heads/feature/lab-publication-interfaces-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 98,
+      "url": "https://github.com/MrScripty/Tuldok/pull/98",
+      "merged": true,
+      "merged_at": "2026-10-19T22:46:18Z",
+      "accepted_head_ref_name": "feature/lab-publication-evidence-20261019",
+      "accepted_head_sha": "f866252782310211b887301a674ba2a62c353709",
+      "merge_commit_sha": "51c081cd8534728e91e3b76294b8526b6ee47269",
+      "accepted_head_ancestry": {
+        "head": "f866252782310211b887301a674ba2a62c353709",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-publication-evidence-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "f866252782310211b887301a674ba2a62c353709",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "f866252782310211b887301a674ba2a62c353709",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-publication-evidence-m1",
+          "head": "f866252782310211b887301a674ba2a62c353709",
+          "branch": "refs/heads/feature/lab-publication-evidence-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 99,
+      "url": "https://github.com/MrScripty/Tuldok/pull/99",
+      "merged": true,
+      "merged_at": "2026-10-19T23:14:22Z",
+      "accepted_head_ref_name": "feature/lab-publication-run-panel-20261019",
+      "accepted_head_sha": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+      "merge_commit_sha": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+      "accepted_head_ancestry": {
+        "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-publication-run-panel-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-publication-ui-m1",
+          "head": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+          "branch": "refs/heads/feature/lab-publication-run-panel-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    },
+    {
+      "pr": 100,
+      "url": "https://github.com/MrScripty/Tuldok/pull/100",
+      "merged": true,
+      "merged_at": "2026-10-19T23:20:43Z",
+      "accepted_head_ref_name": "feature/lab-publication-lineage-20261019",
+      "accepted_head_sha": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+      "merge_commit_sha": "13f564acf2c49364c545da7205c7f28734708cf6",
+      "accepted_head_ancestry": {
+        "head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "local_ref": "refs/heads/feature/lab-publication-lineage-20261019",
+      "local_ref_exists": true,
+      "current_local_head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+      "protected_ref": false,
+      "current_local_head_matches_accepted": true,
+      "current_local_head_ancestry": {
+        "head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+        "target": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "exit_code": 0,
+        "fully_ancestor": true,
+        "stderr": ""
+      },
+      "open_pr_dependents": [],
+      "worktrees": [
+        {
+          "path": "/workspace/Tuldok-lab-publication-lineage-m1",
+          "head": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+          "branch": "refs/heads/feature/lab-publication-lineage-20261019",
+          "protected_original_worktree": false,
+          "locked": null,
+          "prunable": null,
+          "status_checked": true,
+          "status_command": "git --no-optional-locks -C PATH status --porcelain=v1 --untracked-files=normal",
+          "status_exit_code": 0,
+          "status_porcelain": "",
+          "status_stderr": "",
+          "dirty": false,
+          "clean": true
+        }
+      ],
+      "structurally_eligible_after_gate": true,
+      "exclusion_reasons": [],
+      "cleanup_authorization": "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    }
+  ],
+  "open_pr_dependency_proof": {
+    "method": "One Github MCP search_prs repository MrScripty/Tuldok state=open topn100",
+    "returned": 13,
+    "less_than_requested_limit": true,
+    "complete_response_retained": "/tmp/tuldok-task-cleanup-pr-snapshots.json",
+    "base_refs": [
+      {
+        "number": 110,
+        "url": "https://github.com/MrScripty/Tuldok/pull/110",
+        "state": "open",
+        "base": "feature/lab-bounded-collection-20261019",
+        "base_sha": "3471e1ffceae924e87db733e78f669fd933ad9a4",
+        "head": "feature/lab-batch-client-20261019",
+        "head_sha": "ecdeab94edb4f0d91c820c06f765d8bbfe7ce9d9"
+      },
+      {
+        "number": 109,
+        "url": "https://github.com/MrScripty/Tuldok/pull/109",
+        "state": "open",
+        "base": "feature/lab-field-comparison-20261019",
+        "base_sha": "e17875a926c89aa00cc9d313ce30c89a398b8e83",
+        "head": "feature/lab-bounded-collection-20261019",
+        "head_sha": "3471e1ffceae924e87db733e78f669fd933ad9a4"
+      },
+      {
+        "number": 108,
+        "url": "https://github.com/MrScripty/Tuldok/pull/108",
+        "state": "open",
+        "base": "feature/lab-batch-client-20261019",
+        "base_sha": "ecdeab94edb4f0d91c820c06f765d8bbfe7ce9d9",
+        "head": "feature/lab-indexed-diagnostics-20261019",
+        "head_sha": "9285a0aea722593ad2084eb3afa4b0c3d1855c80"
+      },
+      {
+        "number": 107,
+        "url": "https://github.com/MrScripty/Tuldok/pull/107",
+        "state": "open",
+        "base": "feature/lab-phase-timing-20261019",
+        "base_sha": "c919c663cedb71df3002ef4b8f9767211ed39e22",
+        "head": "test/lab-workflow-baseline-20261019",
+        "head_sha": "07dde98df856619cab929eb9dc8d3275151c69bd"
+      },
+      {
+        "number": 106,
+        "url": "https://github.com/MrScripty/Tuldok/pull/106",
+        "state": "open",
+        "base": "feature/lab-workflow-client-20261019",
+        "base_sha": "43591e14c64540d4110b74971430e13762909bd7",
+        "head": "feature/lab-field-comparison-20261019",
+        "head_sha": "e17875a926c89aa00cc9d313ce30c89a398b8e83"
+      },
+      {
+        "number": 105,
+        "url": "https://github.com/MrScripty/Tuldok/pull/105",
+        "state": "open",
+        "base": "feature/lab-phase-panel-20261019",
+        "base_sha": "e9f0061fca37e27886bcf1c43395450c18e3a0a4",
+        "head": "feature/lab-workflow-client-20261019",
+        "head_sha": "43591e14c64540d4110b74971430e13762909bd7"
+      },
+      {
+        "number": 104,
+        "url": "https://github.com/MrScripty/Tuldok/pull/104",
+        "state": "open",
+        "base": "feature/lab-phase-timing-20261019",
+        "base_sha": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+        "head": "feature/lab-phase-panel-20261019",
+        "head_sha": "e9f0061fca37e27886bcf1c43395450c18e3a0a4"
+      },
+      {
+        "number": 103,
+        "url": "https://github.com/MrScripty/Tuldok/pull/103",
+        "state": "open",
+        "base": "feature/lab-coordinator-panel-20261019",
+        "base_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+        "head": "feature/lab-phase-timing-20261019",
+        "head_sha": "5cd2cf60c68dc361c840420441e8f59a52f756d8"
+      },
+      {
+        "number": 102,
+        "url": "https://github.com/MrScripty/Tuldok/pull/102",
+        "state": "open",
+        "base": "feature/lab-coordinator-recovery-20261019",
+        "base_sha": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+        "head": "feature/lab-coordinator-panel-20261019",
+        "head_sha": "b4070b60b0119c73284c4832610cc82ef471963a"
+      },
+      {
+        "number": 101,
+        "url": "https://github.com/MrScripty/Tuldok/pull/101",
+        "state": "open",
+        "base": "main",
+        "base_sha": "13f564acf2c49364c545da7205c7f28734708cf6",
+        "head": "feature/lab-coordinator-recovery-20261019",
+        "head_sha": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49"
+      },
+      {
+        "number": 91,
+        "url": "https://github.com/MrScripty/Tuldok/pull/91",
+        "state": "open",
+        "base": "main",
+        "base_sha": "300f12df6f48e028fd9379911703f7c89337952a",
+        "head": "docs/lab-workflow-reliability-plan",
+        "head_sha": "b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb"
+      },
+      {
+        "number": 53,
+        "url": "https://github.com/MrScripty/Tuldok/pull/53",
+        "state": "open",
+        "base": "feature/scientific-autonomous-evaluation-20261013",
+        "base_sha": "fb3a5a00fe525b5131e45b9e9fa7bc07a9a19024",
+        "head": "feature/scoped-agent-operations-20261013",
+        "head_sha": "5c0e7f92914e5aeac6ec939e3a667fc85b22aa90"
+      },
+      {
+        "number": 43,
+        "url": "https://github.com/MrScripty/Tuldok/pull/43",
+        "state": "open",
+        "base": "plan/rheon-v2-readiness-20261013",
+        "base_sha": "ef4a56fb5cc8fa9614c9a85c4f54c9f7e25ad914",
+        "head": "feature/rheon-v2-consumer-20261013",
+        "head_sha": "51bec9ea89f03357473aca0d40f2fa8251598a25"
+      }
+    ],
+    "limitation": "Connector provides returned issues list without total_count;13 results below100 at snapshot, not a future guarantee; root rechecks before deletion"
+  },
+  "protected_refs": [
+    {
+      "ref": "refs/heads/docs/canonical-a-505-package-qualification",
+      "original_head": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+      "current_head": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/canonical-a-50502-qualification",
+      "original_head": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+      "current_head": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/e4-ab-final-qualification",
+      "original_head": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+      "current_head": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/e4-core-cross-grant-qualification",
+      "original_head": "a479be12130845abca6387f1dacb7c464139215a",
+      "current_head": "a479be12130845abca6387f1dacb7c464139215a",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/extension-current-status-cleanup",
+      "original_head": "8c94afe46bc4ace177b669a723099bb039b7a157",
+      "current_head": "8c94afe46bc4ace177b669a723099bb039b7a157",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/extension-final-acceptance",
+      "original_head": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+      "current_head": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/extension-final-functional-status",
+      "original_head": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+      "current_head": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/extension-x3-acceptance",
+      "original_head": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+      "current_head": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/independent-b-decisive-qualification",
+      "original_head": "70845e383879e06a9337478b5d661b1516ac3c94",
+      "current_head": "70845e383879e06a9337478b5d661b1516ac3c94",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/docs/product-api-source-provenance",
+      "original_head": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+      "current_head": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feat/e1-e2-contribution-bindings",
+      "original_head": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+      "current_head": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feat/e2-canonical-owner-glue",
+      "original_head": "a546a6e9caf8295bd6e329aab73042645188a528",
+      "current_head": "a546a6e9caf8295bd6e329aab73042645188a528",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/canonical-a-package",
+      "original_head": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+      "current_head": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/experiment-lineage",
+      "original_head": "ee07e415cb3291c7a4b75939414345cba54abef7",
+      "current_head": "ee07e415cb3291c7a4b75939414345cba54abef7",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-a-retention",
+      "original_head": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+      "current_head": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-bound-recipe-api",
+      "original_head": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+      "current_head": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-canonical-fixture",
+      "original_head": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+      "current_head": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-field-api",
+      "original_head": "5a2b079f0a017957276fec3404c52c9d586f0667",
+      "current_head": "5a2b079f0a017957276fec3404c52c9d586f0667",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-inference-product",
+      "original_head": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "current_head": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-model-author-workspace",
+      "original_head": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+      "current_head": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-retention-product",
+      "original_head": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+      "current_head": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-runtime-nomination",
+      "original_head": "c24cd26e205011814e928ea58790ef777f9b0b40",
+      "current_head": "c24cd26e205011814e928ea58790ef777f9b0b40",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/extension-sdk-evidence",
+      "original_head": "251b52ebbf888c7b725cce3e519b78b449077195",
+      "current_head": "251b52ebbf888c7b725cce3e519b78b449077195",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/external-candidate-evidence-view",
+      "original_head": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+      "current_head": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/field-surrogate-b-independent",
+      "original_head": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+      "current_head": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-fields-native",
+      "original_head": "1bd85834d0b9e220430c44848017b1d75146b576",
+      "current_head": "1bd85834d0b9e220430c44848017b1d75146b576",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-p3",
+      "original_head": "767f66f8c9435561e68aee216b0dc54808997908",
+      "current_head": "767f66f8c9435561e68aee216b0dc54808997908",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-p4",
+      "original_head": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+      "current_head": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-p4-browser",
+      "original_head": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+      "current_head": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-p5",
+      "original_head": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+      "current_head": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-p5-field",
+      "original_head": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+      "current_head": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-p6",
+      "original_head": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+      "current_head": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/model-development-workspace",
+      "original_head": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+      "current_head": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/author-oracle-resume",
+      "original_head": "3affe90bc258c1327fde49faf57bceb852cc2759",
+      "current_head": "3affe90bc258c1327fde49faf57bceb852cc2759",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/candidate-packages-distro-python",
+      "original_head": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+      "current_head": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/extension-sdk-utf8-canonical",
+      "original_head": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+      "current_head": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/external-graph-keyboard-focus",
+      "original_head": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+      "current_head": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/operator-runtime-identity",
+      "original_head": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+      "current_head": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/p2-cold-composition-marker",
+      "original_head": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+      "current_head": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/p3-strict-evidence-decoding",
+      "original_head": "144d8a70a2ef3849584cce822e00588f45c4106b",
+      "current_head": "144d8a70a2ef3849584cce822e00588f45c4106b",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/p4-export-browser-recipe-set",
+      "original_head": "6998e7165eeaf496fe84b55d5d58082331883fff",
+      "current_head": "6998e7165eeaf496fe84b55d5d58082331883fff",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/sdk-conformance-public-graph",
+      "original_head": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+      "current_head": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/extension-pressure-current-main",
+      "original_head": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+      "current_head": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/extension-scalar-current-main",
+      "original_head": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+      "current_head": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/model-development-final-publication",
+      "original_head": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+      "current_head": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/model-development-p2-final",
+      "original_head": "351f55b76a2545592618a98eb68276eb9d38b713",
+      "current_head": "351f55b76a2545592618a98eb68276eb9d38b713",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/model-development-product",
+      "original_head": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+      "current_head": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/p5-after-p4-prep",
+      "original_head": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+      "current_head": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/qa/field-interface-observation",
+      "original_head": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+      "current_head": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/qa/independent-b-cold-actual",
+      "original_head": "1411debf1b87e82330eed4ebf09840da52e52253",
+      "current_head": "1411debf1b87e82330eed4ebf09840da52e52253",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/qa/independent-b-sdk-frozen",
+      "original_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "current_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/qa/restored-ab-official-interfaces",
+      "original_head": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+      "current_head": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/review/independent-b-host-compatibility",
+      "original_head": "97e2bdf6284e290b319b8f7bce8702914a898107",
+      "current_head": "97e2bdf6284e290b319b8f7bce8702914a898107",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/review/independent-b-host-corrected",
+      "original_head": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+      "current_head": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/author-review-freeze",
+      "original_head": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+      "current_head": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/canonical-a-package-actual",
+      "original_head": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "current_head": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/canonical-author-50502-review",
+      "original_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "current_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/canonical-owner-review",
+      "original_head": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+      "current_head": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/e4-ab-retention",
+      "original_head": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+      "current_head": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/e4-ab-retention-execution",
+      "original_head": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+      "current_head": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-author-native-browser",
+      "original_head": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+      "current_head": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-author-qualification",
+      "original_head": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+      "current_head": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-bound-http",
+      "original_head": "75b0262d8aed3c788c76e0497968b426fe999864",
+      "current_head": "75b0262d8aed3c788c76e0497968b426fe999864",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-canonical-final-review",
+      "original_head": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+      "current_head": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-canonical-independent-review",
+      "original_head": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+      "current_head": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-local-50502-qualification",
+      "original_head": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+      "current_head": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/extension-modality-descriptors",
+      "original_head": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+      "current_head": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/external-browser-handler-readiness",
+      "original_head": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "current_head": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/external-graph-focus-regression",
+      "original_head": "6702be2e08420d781e60665b15f27bc974160552",
+      "current_head": "6702be2e08420d781e60665b15f27bc974160552",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/frozen-release-authority",
+      "original_head": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+      "current_head": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/main505-agent-authoring",
+      "original_head": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "current_head": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/main505-agent-authoring-recovery",
+      "original_head": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+      "current_head": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/model-activation-ci",
+      "original_head": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+      "current_head": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/model-browser-candidate-readiness",
+      "original_head": "9b978533bba9fb3b12163302ca1679238b08220d",
+      "current_head": "9b978533bba9fb3b12163302ca1679238b08220d",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/native-ab-retention-ui",
+      "original_head": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+      "current_head": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/native-author-ab-actual",
+      "original_head": "e958db578da805f4352d282c02430edc78985a3c",
+      "current_head": "e958db578da805f4352d282c02430edc78985a3c",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/native-author-ab-evidence",
+      "original_head": "01a3d0786596d14ffab882de58a05a7bb009b571",
+      "current_head": "01a3d0786596d14ffab882de58a05a7bb009b571",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/one-fit-host-dependencies",
+      "original_head": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+      "current_head": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/p5-captured-runtime-ci",
+      "original_head": "1aa4822865338b92e0a1813db1666a13b8920bda",
+      "current_head": "1aa4822865338b92e0a1813db1666a13b8920bda",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/p5-transitive-authority",
+      "original_head": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+      "current_head": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/x3-b-semantic-refusals",
+      "original_head": "2266a79b6925faef6edf6c87c49168858b68bf36",
+      "current_head": "2266a79b6925faef6edf6c87c49168858b68bf36",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/work",
+      "original_head": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+      "current_head": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+      "present_unchanged": true,
+      "excluded": true,
+      "status_checked": false
+    }
+  ],
+  "protected_worktrees": [
+    {
+      "path": "/workspace/Tuldok",
+      "present": true,
+      "original_head": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+      "current_head": "8673509d5430e6aa1162986f4d7b1c071aa1c82e",
+      "original_branch": "refs/heads/work",
+      "current_branch": "refs/heads/work",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-ab-retention",
+      "present": true,
+      "original_head": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+      "current_head": "31283de32913f3c3e716e7fdb2c4c57fa3d4d59f",
+      "original_branch": "refs/heads/test/e4-ab-retention",
+      "current_branch": "refs/heads/test/e4-ab-retention",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-activation-ci-fix",
+      "present": true,
+      "original_head": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+      "current_head": "9228b09cc14177cbe6e35592c16517c4da7f1bb7",
+      "original_branch": "refs/heads/test/model-activation-ci",
+      "current_branch": "refs/heads/test/model-activation-ci",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-agent-snapshots-review",
+      "present": true,
+      "original_head": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+      "current_head": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-api-source-provenance",
+      "present": true,
+      "original_head": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+      "current_head": "1cbf4187e970e4cc9fa132346c8c488facf1ebc0",
+      "original_branch": "refs/heads/docs/product-api-source-provenance",
+      "current_branch": "refs/heads/docs/product-api-source-provenance",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-author-browser",
+      "present": true,
+      "original_head": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+      "current_head": "e4bfaa8c7c942121671365998b1fa3a3ba277e26",
+      "original_branch": "refs/heads/test/extension-author-native-browser",
+      "current_branch": "refs/heads/test/extension-author-native-browser",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-author-freeze-test",
+      "present": true,
+      "original_head": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+      "current_head": "b410d85ea9d9c299263fc564fc170e43905c5e58",
+      "original_branch": "refs/heads/test/author-review-freeze",
+      "current_branch": "refs/heads/test/author-review-freeze",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-author-qualification",
+      "present": true,
+      "original_head": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+      "current_head": "3ee438e23d98281b65a04425ff2f72a3ddbed0de",
+      "original_branch": "refs/heads/test/extension-author-qualification",
+      "current_branch": "refs/heads/test/extension-author-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-author-resume",
+      "present": true,
+      "original_head": "3affe90bc258c1327fde49faf57bceb852cc2759",
+      "current_head": "3affe90bc258c1327fde49faf57bceb852cc2759",
+      "original_branch": "refs/heads/fix/author-oracle-resume",
+      "current_branch": "refs/heads/fix/author-oracle-resume",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-author-ui",
+      "present": true,
+      "original_head": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+      "current_head": "0ca0687a6220592b6158932a0e9f54f4e8c80687",
+      "original_branch": "refs/heads/feature/extension-model-author-workspace",
+      "current_branch": "refs/heads/feature/extension-model-author-workspace",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-cold-independent-review",
+      "present": true,
+      "original_head": "1411debf1b87e82330eed4ebf09840da52e52253",
+      "current_head": "1411debf1b87e82330eed4ebf09840da52e52253",
+      "original_branch": "refs/heads/qa/independent-b-cold-actual",
+      "current_branch": "refs/heads/qa/independent-b-cold-actual",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-host-corrected",
+      "present": true,
+      "original_head": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+      "current_head": "6ad3480be032be4565ad6b4add41ba9476e96cc3",
+      "original_branch": "refs/heads/review/independent-b-host-corrected",
+      "current_branch": "refs/heads/review/independent-b-host-corrected",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-host-review",
+      "present": true,
+      "original_head": "97e2bdf6284e290b319b8f7bce8702914a898107",
+      "current_head": "97e2bdf6284e290b319b8f7bce8702914a898107",
+      "original_branch": "refs/heads/review/independent-b-host-compatibility",
+      "current_branch": "refs/heads/review/independent-b-host-compatibility",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-independent",
+      "present": true,
+      "original_head": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+      "current_head": "db5ce541feb78ca371dc3b6607f27c5725c16518",
+      "original_branch": "refs/heads/feature/field-surrogate-b-independent",
+      "current_branch": "refs/heads/feature/field-surrogate-b-independent",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-public-sdk-host",
+      "present": true,
+      "original_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "current_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "original_branch": "refs/heads/qa/independent-b-sdk-frozen",
+      "current_branch": "refs/heads/qa/independent-b-sdk-frozen",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-qualification-docs",
+      "present": true,
+      "original_head": "70845e383879e06a9337478b5d661b1516ac3c94",
+      "current_head": "70845e383879e06a9337478b5d661b1516ac3c94",
+      "original_branch": "refs/heads/docs/independent-b-decisive-qualification",
+      "current_branch": "refs/heads/docs/independent-b-decisive-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-b-refusals",
+      "present": true,
+      "original_head": "2266a79b6925faef6edf6c87c49168858b68bf36",
+      "current_head": "2266a79b6925faef6edf6c87c49168858b68bf36",
+      "original_branch": "refs/heads/test/x3-b-semantic-refusals",
+      "current_branch": "refs/heads/test/x3-b-semantic-refusals",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-bound-http",
+      "present": true,
+      "original_head": "75b0262d8aed3c788c76e0497968b426fe999864",
+      "current_head": "75b0262d8aed3c788c76e0497968b426fe999864",
+      "original_branch": "refs/heads/test/extension-bound-http",
+      "current_branch": "refs/heads/test/extension-bound-http",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-candidate-permissions",
+      "present": true,
+      "original_head": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+      "current_head": "f1438b38e42aaece9c263244a64929ec26f85bfc",
+      "original_branch": "refs/heads/test/p5-transitive-authority",
+      "current_branch": "refs/heads/test/p5-transitive-authority",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-a-report",
+      "present": true,
+      "original_head": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+      "current_head": "9e6f2ffc45ec5e00554759ff356fe44f6e82fab0",
+      "original_branch": "refs/heads/docs/canonical-a-50502-qualification",
+      "current_branch": "refs/heads/docs/canonical-a-50502-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-author-qa",
+      "present": true,
+      "original_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "current_head": "e5d1d7980fb7d806fc5dba937d9a6f8ca465f62c",
+      "original_branch": "refs/heads/test/canonical-author-50502-review",
+      "current_branch": "refs/heads/test/canonical-author-50502-review",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-final-review",
+      "present": true,
+      "original_head": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+      "current_head": "8f6ca00cb87e7ef862be810e9297b8b8a180642a",
+      "original_branch": "refs/heads/test/extension-canonical-final-review",
+      "current_branch": "refs/heads/test/extension-canonical-final-review",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-glue",
+      "present": true,
+      "original_head": "a546a6e9caf8295bd6e329aab73042645188a528",
+      "current_head": "a546a6e9caf8295bd6e329aab73042645188a528",
+      "original_branch": "refs/heads/feat/e2-canonical-owner-glue",
+      "current_branch": "refs/heads/feat/e2-canonical-owner-glue",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-independent-review",
+      "present": true,
+      "original_head": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+      "current_head": "53a2ffd6df4474746d359ed296e1bd7bb788b7f0",
+      "original_branch": "refs/heads/test/extension-canonical-independent-review",
+      "current_branch": "refs/heads/test/extension-canonical-independent-review",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-inference-review",
+      "present": true,
+      "original_head": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+      "current_head": "f83ab83bb316f691efbd3b74cf99cb12a7737b07",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-masked-actual",
+      "present": true,
+      "original_head": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "current_head": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-owner-review",
+      "present": true,
+      "original_head": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+      "current_head": "48a3ba1b7bc3076e1e75da4b73a38fa9e1c0818a",
+      "original_branch": "refs/heads/test/canonical-owner-review",
+      "current_branch": "refs/heads/test/canonical-owner-review",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-package-actual",
+      "present": true,
+      "original_head": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "current_head": "ab7d9359681c3953b17fb738a73a6bf5cbb4f43f",
+      "original_branch": "refs/heads/test/canonical-a-package-actual",
+      "current_branch": "refs/heads/test/canonical-a-package-actual",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-canonical-package-report",
+      "present": true,
+      "original_head": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+      "current_head": "4972941e0e37ad9cfcc548bd6831d70c0799ef42",
+      "original_branch": "refs/heads/docs/canonical-a-505-package-qualification",
+      "current_branch": "refs/heads/docs/canonical-a-505-package-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e2-api",
+      "present": true,
+      "original_head": "5a2b079f0a017957276fec3404c52c9d586f0667",
+      "current_head": "5a2b079f0a017957276fec3404c52c9d586f0667",
+      "original_branch": "refs/heads/feature/extension-field-api",
+      "current_branch": "refs/heads/feature/extension-field-api",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e2-author-review",
+      "present": true,
+      "original_head": "057c8abf571d62331486dc56ef43064e72f9d03a",
+      "current_head": "057c8abf571d62331486dc56ef43064e72f9d03a",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e2-binding-api",
+      "present": true,
+      "original_head": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+      "current_head": "a8dad44661d64bb88c6cdedb5386c34583c5b130",
+      "original_branch": "refs/heads/feature/extension-bound-recipe-api",
+      "current_branch": "refs/heads/feature/extension-bound-recipe-api",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e2-glue-review",
+      "present": true,
+      "original_head": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+      "current_head": "a43f3124239c2baff2c1ae3b0a20f987cfb1607a",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e2-review",
+      "present": true,
+      "original_head": "057c8abf571d62331486dc56ef43064e72f9d03a",
+      "current_head": "057c8abf571d62331486dc56ef43064e72f9d03a",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e2-ui",
+      "present": true,
+      "original_head": "1bd85834d0b9e220430c44848017b1d75146b576",
+      "current_head": "1bd85834d0b9e220430c44848017b1d75146b576",
+      "original_branch": "refs/heads/feature/model-development-fields-native",
+      "current_branch": "refs/heads/feature/model-development-fields-native",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e4-core-report",
+      "present": true,
+      "original_head": "a479be12130845abca6387f1dacb7c464139215a",
+      "current_head": "a479be12130845abca6387f1dacb7c464139215a",
+      "original_branch": "refs/heads/docs/e4-core-cross-grant-qualification",
+      "current_branch": "refs/heads/docs/e4-core-cross-grant-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e4-execution",
+      "present": true,
+      "original_head": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+      "current_head": "c8e63278379d884dee6b9aec8b813bf8a20e1215",
+      "original_branch": "refs/heads/test/e4-ab-retention-execution",
+      "current_branch": "refs/heads/test/e4-ab-retention-execution",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e4-final-report",
+      "present": true,
+      "original_head": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+      "current_head": "0f213dc43e3fe970c21fe34407e0fcbf6358bc14",
+      "original_branch": "refs/heads/docs/e4-ab-final-qualification",
+      "current_branch": "refs/heads/docs/e4-ab-final-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-e4-retention",
+      "present": true,
+      "original_head": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+      "current_head": "850f1d2e2285e7e95193d3e8615e1a8e1fc03f44",
+      "original_branch": "refs/heads/feature/extension-a-retention",
+      "current_branch": "refs/heads/feature/extension-a-retention",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-experiment-lineage",
+      "present": true,
+      "original_head": "ee07e415cb3291c7a4b75939414345cba54abef7",
+      "current_head": "ee07e415cb3291c7a4b75939414345cba54abef7",
+      "original_branch": "refs/heads/feature/experiment-lineage",
+      "current_branch": "refs/heads/feature/experiment-lineage",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-bindings",
+      "present": true,
+      "original_head": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+      "current_head": "12c98cb9495e0f7202ff10420d18506e6de8c780",
+      "original_branch": "refs/heads/feat/e1-e2-contribution-bindings",
+      "current_branch": "refs/heads/feat/e1-e2-contribution-bindings",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-canonical",
+      "present": true,
+      "original_head": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+      "current_head": "6534cd4c882aa5075b6a5dc545df142bf20c35db",
+      "original_branch": "refs/heads/feature/extension-canonical-fixture",
+      "current_branch": "refs/heads/feature/extension-canonical-fixture",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-final-acceptance",
+      "present": true,
+      "original_head": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+      "current_head": "4b4a5c8304e2fd2009e478d61c2c7d3d9eaf1764",
+      "original_branch": "refs/heads/docs/extension-final-acceptance",
+      "current_branch": "refs/heads/docs/extension-final-acceptance",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-final-functional-status",
+      "present": true,
+      "original_head": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+      "current_head": "50e69f512e81899b9703e6a8d03c7d9f5c05115c",
+      "original_branch": "refs/heads/docs/extension-final-functional-status",
+      "current_branch": "refs/heads/docs/extension-final-functional-status",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-inference",
+      "present": true,
+      "original_head": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "current_head": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "original_branch": "refs/heads/feature/extension-inference-product",
+      "current_branch": "refs/heads/feature/extension-inference-product",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-local-qa",
+      "present": true,
+      "original_head": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+      "current_head": "346b9f90c4339cdb8c3b942dadafb4c591bc385d",
+      "original_branch": "refs/heads/test/extension-local-50502-qualification",
+      "current_branch": "refs/heads/test/extension-local-50502-qualification",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-modalities",
+      "present": true,
+      "original_head": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+      "current_head": "4f2c45a1ddc4d2f306ec1acbe60131f78ec6234a",
+      "original_branch": "refs/heads/test/extension-modality-descriptors",
+      "current_branch": "refs/heads/test/extension-modality-descriptors",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-retention",
+      "present": true,
+      "original_head": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+      "current_head": "8e9eef5680c8ace144b8ba5defbc1e67a941ffd2",
+      "original_branch": "refs/heads/feature/extension-retention-product",
+      "current_branch": "refs/heads/feature/extension-retention-product",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-runtime",
+      "present": true,
+      "original_head": "c24cd26e205011814e928ea58790ef777f9b0b40",
+      "current_head": "c24cd26e205011814e928ea58790ef777f9b0b40",
+      "original_branch": "refs/heads/feature/extension-runtime-nomination",
+      "current_branch": "refs/heads/feature/extension-runtime-nomination",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-status-cleanup",
+      "present": true,
+      "original_head": "8c94afe46bc4ace177b669a723099bb039b7a157",
+      "current_head": "8c94afe46bc4ace177b669a723099bb039b7a157",
+      "original_branch": "refs/heads/docs/extension-current-status-cleanup",
+      "current_branch": "refs/heads/docs/extension-current-status-cleanup",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-extension-x3-acceptance",
+      "present": true,
+      "original_head": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+      "current_head": "f7c7d39451e8e973a6ef20453c6e54041fe6bc97",
+      "original_branch": "refs/heads/docs/extension-x3-acceptance",
+      "current_branch": "refs/heads/docs/extension-x3-acceptance",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-external-browser-readiness",
+      "present": true,
+      "original_head": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "current_head": "2b786501dbbcb6db734d9df074ecac0976d87dae",
+      "original_branch": "refs/heads/test/external-browser-handler-readiness",
+      "current_branch": "refs/heads/test/external-browser-handler-readiness",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-external-package-ui",
+      "present": true,
+      "original_head": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+      "current_head": "6905fc8a124ba856dd70d4e8a9e4d0f0265e8863",
+      "original_branch": "refs/heads/feature/external-candidate-evidence-view",
+      "current_branch": "refs/heads/feature/external-candidate-evidence-view",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-final-publication",
+      "present": true,
+      "original_head": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+      "current_head": "ed31eadc3c2c29f03e59cb72b965b87af494bf1b",
+      "original_branch": "refs/heads/integration/model-development-final-publication",
+      "current_branch": "refs/heads/integration/model-development-final-publication",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-graph-focus",
+      "present": true,
+      "original_head": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+      "current_head": "ecb4e8e21d8103822d6b53bfafb60f94c283cb20",
+      "original_branch": "refs/heads/fix/external-graph-keyboard-focus",
+      "current_branch": "refs/heads/fix/external-graph-keyboard-focus",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-graph-focus-old",
+      "present": true,
+      "original_head": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+      "current_head": "f994228cdc7495d0ee29d1527fbe975acc62be5d",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-graph-focus-regression",
+      "present": true,
+      "original_head": "6702be2e08420d781e60665b15f27bc974160552",
+      "current_head": "6702be2e08420d781e60665b15f27bc974160552",
+      "original_branch": "refs/heads/test/external-graph-focus-regression",
+      "current_branch": "refs/heads/test/external-graph-focus-regression",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-inference-review",
+      "present": true,
+      "original_head": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "current_head": "c8f5def68c1f8109cb8af11bb8452cf0c1b84792",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-legacy-p3-qa",
+      "present": true,
+      "original_head": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+      "current_head": "f1ecf7888a8dfa5b67ac8b087034226d533c682e",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-main505-agent-authoring",
+      "present": true,
+      "original_head": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "current_head": "e1bc02a68355876ec64e5e1e272019c2018b5c63",
+      "original_branch": "refs/heads/test/main505-agent-authoring",
+      "current_branch": "refs/heads/test/main505-agent-authoring",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-main505-agent-authoring-recovery",
+      "present": true,
+      "original_head": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+      "current_head": "3a821f4580769cc52c9ccb2d23596af07c11d511",
+      "original_branch": "refs/heads/test/main505-agent-authoring-recovery",
+      "current_branch": "refs/heads/test/main505-agent-authoring-recovery",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-model-browser-fix",
+      "present": true,
+      "original_head": "9b978533bba9fb3b12163302ca1679238b08220d",
+      "current_head": "9b978533bba9fb3b12163302ca1679238b08220d",
+      "original_branch": "refs/heads/test/model-browser-candidate-readiness",
+      "current_branch": "refs/heads/test/model-browser-candidate-readiness",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-native-ab-actual",
+      "present": true,
+      "original_head": "e958db578da805f4352d282c02430edc78985a3c",
+      "current_head": "e958db578da805f4352d282c02430edc78985a3c",
+      "original_branch": "refs/heads/test/native-author-ab-actual",
+      "current_branch": "refs/heads/test/native-author-ab-actual",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-native-ab-browser",
+      "present": true,
+      "original_head": "01a3d0786596d14ffab882de58a05a7bb009b571",
+      "current_head": "01a3d0786596d14ffab882de58a05a7bb009b571",
+      "original_branch": "refs/heads/test/native-author-ab-evidence",
+      "current_branch": "refs/heads/test/native-author-ab-evidence",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-native-ab-retention",
+      "present": true,
+      "original_head": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+      "current_head": "c005d9f3884eeecfe53fd428f139b10139bd3e07",
+      "original_branch": "refs/heads/test/native-ab-retention-ui",
+      "current_branch": "refs/heads/test/native-ab-retention-ui",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-one-fit-host-ci",
+      "present": true,
+      "original_head": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+      "current_head": "487722a01994f3c881f584a45fbb02c59dff6cd8",
+      "original_branch": "refs/heads/test/one-fit-host-dependencies",
+      "current_branch": "refs/heads/test/one-fit-host-dependencies",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-operator-runtime-fix",
+      "present": true,
+      "original_head": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+      "current_head": "e831573a2b5c84be1fcb047c6b6703984aaeea3b",
+      "original_branch": "refs/heads/fix/operator-runtime-identity",
+      "current_branch": "refs/heads/fix/operator-runtime-identity",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p2-final",
+      "present": true,
+      "original_head": "351f55b76a2545592618a98eb68276eb9d38b713",
+      "current_head": "351f55b76a2545592618a98eb68276eb9d38b713",
+      "original_branch": "refs/heads/integration/model-development-p2-final",
+      "current_branch": "refs/heads/integration/model-development-p2-final",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p2-review-fix",
+      "present": true,
+      "original_head": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+      "current_head": "ecd905c09ff980301b0f1f17c6d1dc4d6ec85e02",
+      "original_branch": "refs/heads/fix/p2-cold-composition-marker",
+      "current_branch": "refs/heads/fix/p2-cold-composition-marker",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p3",
+      "present": true,
+      "original_head": "767f66f8c9435561e68aee216b0dc54808997908",
+      "current_head": "767f66f8c9435561e68aee216b0dc54808997908",
+      "original_branch": "refs/heads/feature/model-development-p3",
+      "current_branch": "refs/heads/feature/model-development-p3",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p3-activation-verify",
+      "present": true,
+      "original_head": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+      "current_head": "13f0126a3d4014b8cf96df96b48243e17557bf30",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p3-decoder-fix",
+      "present": true,
+      "original_head": "144d8a70a2ef3849584cce822e00588f45c4106b",
+      "current_head": "144d8a70a2ef3849584cce822e00588f45c4106b",
+      "original_branch": "refs/heads/fix/p3-strict-evidence-decoding",
+      "current_branch": "refs/heads/fix/p3-strict-evidence-decoding",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p4",
+      "present": true,
+      "original_head": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+      "current_head": "1d621e826aab89a24afed9e8927e7e5cd15564c9",
+      "original_branch": "refs/heads/feature/model-development-p4",
+      "current_branch": "refs/heads/feature/model-development-p4",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p4-browser",
+      "present": true,
+      "original_head": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+      "current_head": "3b49e605af5ca7bb3d552b00117c73cfc0642dc9",
+      "original_branch": "refs/heads/feature/model-development-p4-browser",
+      "current_branch": "refs/heads/feature/model-development-p4-browser",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p4-export-browser-fix",
+      "present": true,
+      "original_head": "6998e7165eeaf496fe84b55d5d58082331883fff",
+      "current_head": "6998e7165eeaf496fe84b55d5d58082331883fff",
+      "original_branch": "refs/heads/fix/p4-export-browser-recipe-set",
+      "current_branch": "refs/heads/fix/p4-export-browser-recipe-set",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5",
+      "present": true,
+      "original_head": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+      "current_head": "407068d7c8f5aa0d1b4d81ced692ad01ab3db799",
+      "original_branch": "refs/heads/feature/model-development-p5",
+      "current_branch": "refs/heads/feature/model-development-p5",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-canonical-a",
+      "present": true,
+      "original_head": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+      "current_head": "503d177089bfc12fa4e49e3a7389b7838b8640c0",
+      "original_branch": "refs/heads/feature/canonical-a-package",
+      "current_branch": "refs/heads/feature/canonical-a-package",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-canonical-final-review",
+      "present": true,
+      "original_head": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+      "current_head": "4bd003c786949368bb6b9e45e9502c22897ddabd",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-canonical-review",
+      "present": true,
+      "original_head": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+      "current_head": "4af7157d4ee73532cd0fca27b03b86a1a9d3b344",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-ci",
+      "present": true,
+      "original_head": "1aa4822865338b92e0a1813db1666a13b8920bda",
+      "current_head": "1aa4822865338b92e0a1813db1666a13b8920bda",
+      "original_branch": "refs/heads/test/p5-captured-runtime-ci",
+      "current_branch": "refs/heads/test/p5-captured-runtime-ci",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-ci-runtime",
+      "present": true,
+      "original_head": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+      "current_head": "aa949c189e4df4ddacf1aaaf45bd8da61feaa8c7",
+      "original_branch": "refs/heads/fix/candidate-packages-distro-python",
+      "current_branch": "refs/heads/fix/candidate-packages-distro-python",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-field",
+      "present": true,
+      "original_head": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+      "current_head": "f2fb38d4c704fc0156b08d5bbbd488719e7a22f9",
+      "original_branch": "refs/heads/feature/model-development-p5-field",
+      "current_branch": "refs/heads/feature/model-development-p5-field",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p5-p4-composition",
+      "present": true,
+      "original_head": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+      "current_head": "ed515101e2ef92cb03c0e9e67e6886250af6db8f",
+      "original_branch": "refs/heads/integration/p5-after-p4-prep",
+      "current_branch": "refs/heads/integration/p5-after-p4-prep",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p6",
+      "present": true,
+      "original_head": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+      "current_head": "8743bdff702c313a76ebaf3296064ad30ca417eb",
+      "original_branch": "refs/heads/feature/model-development-p6",
+      "current_branch": "refs/heads/feature/model-development-p6",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p6-agent-api-review",
+      "present": true,
+      "original_head": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+      "current_head": "f68678c7f9ad893dac8bcdfe6c2dd7529ba88975",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-p6-field-qa",
+      "present": true,
+      "original_head": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+      "current_head": "f6530ad7dcd814df264d43b7699b41e1fb870277",
+      "original_branch": "refs/heads/qa/field-interface-observation",
+      "current_branch": "refs/heads/qa/field-interface-observation",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-prep-review",
+      "present": true,
+      "original_head": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+      "current_head": "387b6eeec1eceef2629c746e5e940a51bbb48dbd",
+      "original_branch": null,
+      "current_branch": null,
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-prep68",
+      "present": true,
+      "original_head": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+      "current_head": "78a1b9c1ca328a63d7b285789dc8924fbc234ce6",
+      "original_branch": "refs/heads/integration/extension-pressure-current-main",
+      "current_branch": "refs/heads/integration/extension-pressure-current-main",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-prep69",
+      "present": true,
+      "original_head": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+      "current_head": "c4599171d940e85d3a97a96c29ef9da8b79c0c48",
+      "original_branch": "refs/heads/integration/extension-scalar-current-main",
+      "current_branch": "refs/heads/integration/extension-scalar-current-main",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-product",
+      "present": true,
+      "original_head": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+      "current_head": "d18396a9b9d0e794cd23664af169dc9d437c5a0e",
+      "original_branch": "refs/heads/integration/model-development-product",
+      "current_branch": "refs/heads/integration/model-development-product",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-release-authority",
+      "present": true,
+      "original_head": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+      "current_head": "983256dd8c6899d85fd2b59baee6da70cbbef76b",
+      "original_branch": "refs/heads/test/frozen-release-authority",
+      "current_branch": "refs/heads/test/frozen-release-authority",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-restored-interface-qa",
+      "present": true,
+      "original_head": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+      "current_head": "b772f44a8ea4b95755dfa2da27084f74b733e4ab",
+      "original_branch": "refs/heads/qa/restored-ab-official-interfaces",
+      "current_branch": "refs/heads/qa/restored-ab-official-interfaces",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-sdk-canonical",
+      "present": true,
+      "original_head": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+      "current_head": "8e70f1ee954d56b4f4fc414998146d59901dfaa2",
+      "original_branch": "refs/heads/fix/extension-sdk-utf8-canonical",
+      "current_branch": "refs/heads/fix/extension-sdk-utf8-canonical",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-sdk-evidence",
+      "present": true,
+      "original_head": "251b52ebbf888c7b725cce3e519b78b449077195",
+      "current_head": "251b52ebbf888c7b725cce3e519b78b449077195",
+      "original_branch": "refs/heads/feature/extension-sdk-evidence",
+      "current_branch": "refs/heads/feature/extension-sdk-evidence",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-sdk-graph-fix",
+      "present": true,
+      "original_head": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+      "current_head": "d368acdf236a6f3cac8176a634bd9d79c7223d70",
+      "original_branch": "refs/heads/fix/sdk-conformance-public-graph",
+      "current_branch": "refs/heads/fix/sdk-conformance-public-graph",
+      "excluded": true,
+      "status_checked": false
+    },
+    {
+      "path": "/workspace/Tuldok-ui",
+      "present": true,
+      "original_head": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+      "current_head": "198879274c61dbfa1d27b9bcb851fce4364c7c1f",
+      "original_branch": "refs/heads/feature/model-development-workspace",
+      "current_branch": "refs/heads/feature/model-development-workspace",
+      "excluded": true,
+      "status_checked": false
+    }
+  ],
+  "other_new_local_ref_exclusions": [
+    {
+      "ref": "refs/heads/checkpoint/lab-integration-20261019",
+      "head": "ab460a79ef2d705bef49799c4cc59d65d2bc2d1f",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-integration-checkpoint"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-batch-client-20261019",
+      "head": "ecdeab94edb4f0d91c820c06f765d8bbfe7ce9d9",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-batch-client-m4"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-bounded-collection-20261019",
+      "head": "3471e1ffceae924e87db733e78f669fd933ad9a4",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-bounded-collection-m4"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-coordinator-panel-20261019",
+      "head": "b4070b60b0119c73284c4832610cc82ef471963a",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-coordinator-ui-m2"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-coordinator-recovery-20261019",
+      "head": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-coordinator-m2"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-field-comparison-20261019",
+      "head": "e17875a926c89aa00cc9d313ce30c89a398b8e83",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-field-comparison-m6"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-indexed-diagnostics-20261019",
+      "head": "9285a0aea722593ad2084eb3afa4b0c3d1855c80",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-indexed-diagnostics-m1"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-phase-panel-20261019",
+      "head": "e9f0061fca37e27886bcf1c43395450c18e3a0a4",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-phase-ui-m3"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-phase-timing-20261019",
+      "head": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-phase-timing-m3"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/feature/lab-workflow-client-20261019",
+      "head": "43591e14c64540d4110b74971430e13762909bd7",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-workflow-client-m5"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/live-project-observation-fences-20261019",
+      "head": "4030e32c435b51ab8b3188ca960c5750467fa654",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-live-project-fix"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/managed-project-contract-compatibility-20261019",
+      "head": "a339759b487e67851966899a506f14f7d2dc3d74",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-project-contract-fix"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/fix/managed-torch-registry-durability-20261019",
+      "head": "abd68106ea5acfbac96e64adb21dadb05eaffc61",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-torch-registry-fix"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/lab-consumer-feedback-20261019",
+      "head": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-consumer-integration-m5m6"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/request-latency-review-20261019",
+      "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-request-latency-review"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/integration/rheon-lab-review-20261019",
+      "head": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-integration-review"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/lab-publication-semantic-recovery-20261019",
+      "head": "b6a2ccb89dd0a57ba51c625940a52e0f71b05990",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-publication-semantic-witness-m1"
+      ],
+      "status_checked": false
+    },
+    {
+      "ref": "refs/heads/test/lab-workflow-baseline-20261019",
+      "head": "07dde98df856619cab929eb9dc8d3275151c69bd",
+      "reason": "Outside exact same-name local refs for merged PR89\u2013100 excluding91; explicitly preserve unrelated/new Rheon, integration, fix, checkpoint and unmerged branches",
+      "worktree_paths": [
+        "/workspace/Tuldok-lab-benchmark-baseline-m4"
+      ],
+      "status_checked": false
+    }
+  ],
+  "explicit_exclusions": [
+    "PR91 docs/lab-workflow-reliability-plan remains open and excluded.",
+    "All original82 refs and96 worktrees excluded; no protected status calls or user file content reads.",
+    "PR89/90 same-name local refs absent: integration/rheon-lab-review-20261019 and integration/request-latency-review-20261019 are explicitly excluded aliases even though their heads match accepted PR heads.",
+    "All new fix/integration/Rheon/checkpoint and unmerged task refs remain preserved outside nine exact candidates.",
+    "Remote branch deletion not evaluated: cached origin refs can be stale; no ls-remote/fetch/deletion/retarget/checkout/prune performed."
+  ],
+  "pending_gate": "Parent final postmerge CI acceptance pending; all structural candidates remain pending and require fresh parent recheck immediately before any destructive action.",
+  "actions_performed": "Read-only MCP PR metadata, local Git ref/worktree metadata, commit ancestry and status only for identified nine new task worktrees; write /tmp inventory only.",
+  "lookup_failures": [
+    {
+      "pr": 89,
+      "first_attempt": "MCP get_pr_info ReadTimeout",
+      "disposition": "One harmless read retry succeeded; both raw responses retained."
+    }
+  ],
+  "raw_pr_snapshots": "/tmp/tuldok-task-cleanup-pr-snapshots.json",
+  "pr89_retry": "/tmp/tuldok-task-cleanup-pr89-retry.json"
+}
