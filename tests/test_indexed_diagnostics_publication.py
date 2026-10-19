@@ -141,6 +141,7 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
             names = [capture['index']['name'], *[row['name'] for row in capture['shards']]]
             manifest = workflow.collection_manifest(names=names, result_ref=ref)
             output = self.root / 'composed-indexed-collection'
+            output.mkdir(mode=0o700)
             with patch.object(client, 'call', wraps=client.call) as dispatch:
                 collected = workflow.collect_batch(manifest, output)
             operations = [call.args[0] for call in dispatch.call_args_list]
