@@ -1,31 +1,38 @@
 {
-  "state": "local_source_qualified; independent review and hosted pending",
-  "source_head": "38c7844b3c091a9a21ff9d4b73a56b89945478de",
+  "state": "local source qualified; independent review clear; exact hosted pending",
+  "source_head": "3c2b8d1ccc90572b371d1c7ce6d91e4a5a920a64",
   "core_base": "5f1aa49af2935100b60743fb1929cb2727ac6275",
   "scope": "M2 coordinator panel in existingRuns; actualPGneutralcustody and lostreply, no modeltraining/science claim",
   "checks": {
-    "controller": "passed closedidentity/actorhash/generation/stalereadwrite/navigation/session/abort/storage/immutablecompletedkey",
+    "controller": "passed original closed identity/fences and undelivered current-generation exact retry against older completed receipt; mismatched incomplete receipt remains refused",
     "pins": "2 unittests passed,0skips, includes priorpublicationpins",
     "existing_mocked_image_recovery": "passed; mocks transport, noCPUtraining claim",
-    "actual_coordinator": "passed exact38c source; realPG17 locktimeout fault, keyboardownerrecover, deliberatelylostsuccessfulreply, saved-read-onlyreconcile, one firstGO+sameadmission/counts, reload/mouserefresh,1440/390 layout",
-    "actual_publication_regression": "passed exact38c source; realneutralcustody/copyfault/pause/freshreload/samekeyresume/wholeSHA browserdownload",
-    "cleanup": "both actualfixtures exited0 and dropped own isolatedschemas afterclosing newtempcatalogs"
+    "actual_coordinator": "passed exact3c2b8d1 source; realPG17 locktimeout fault, keyboardownerrecover, deliberately lost successful reply, saved-read-only reconcile, original firstGO/sameadmission/counts, reload/mouserefresh,1440/390 layout",
+    "actual_publication_regression": "passed exact38c prior source; real neutral custody/copy fault/pause/reload/samekeyresume/wholeSHA browser download; not rerun at3c",
+    "cleanup": "both actualfixtures exited0 and dropped own isolatedschemas afterclosing newtempcatalogs",
+    "independent_review": "clear: initial seven-file UI delta and narrow undelivered-key correction; independent Node/pins and separate previously failing reproducer passed"
   },
   "initial_journey": "first unfrozen developmentfixturejourney passed; final exact38c rerun supersedes it",
   "pending": [
-    "independent source/test/docs review",
     "exactfinalhead hostedqualifications",
     "postmergemainqualification",
     "fullM2T3acceptance onintegratedmain",
     "M3timing andremainingreliability milestones"
   ],
   "source_sha256": {
-    "static/workspace-real.js": "1c1734828443535cf7f732fe3973ebb201ad2c99995e31bd76646d18a015902b",
-    "tests/test_workspace_coordinator_controller.cjs": "04a45a29b456a7075d7641ccf89e8ce90139c9d66b6f7b106ce6c30596f4fc64",
+    "static/workspace-real.js": "46e942721f2790a15344cdf5271bf07d88ee6cd3bc17654dc7dfab12df6ffcba",
+    "tests/test_workspace_coordinator_controller.cjs": "30d5a0283883e0c06084b1805fccd00ba6a68d237aeb6e0c5aad0867d049db47",
     "tests/test_workspace_coordinator.py": "97a8e9256f2ae0e77dc2f969504832b5ff995d17748753ab9cd4d336c29cb9f5",
     "tests/browser_workspace_coordinator.cjs": "66fdad4b33086fac6e310b06b26773d97d9f07e6d2124de72ea4799199c2e96b",
     "tests/coordinator_browser_fixture.py": "140ef0f1150295df5da728358aab1fd4b5152343bca9687ffd1521e48b17ad52",
     ".github/workflows/tests.yml": "8bb50ac00349ce6c94c0c86b1e280f23f65c337940c78ed4a10e6f2eb4f4dcf1",
     "docs/contracts/run-coordinator-recovery.md": "f3f6af7f415b4f03f458a1c29f6ae9e06af61487c7f31c1eabc3fcf574a2b883"
+  },
+  "prior_source_head": "38c7844b3c091a9a21ff9d4b73a56b89945478de",
+  "review_followup": {
+    "problem": "A current-generation request lost before server recording was blocked by the prior completed receipt.",
+    "fix": "Permit exact pending current-generation request only when the mismatched saved receipt is already completed at or before that generation.",
+    "red_witness": "tuldok-m2-coordinator-ui-undelivered-new-key-before.log",
+    "green_witness": "tuldok-m2-coordinator-ui-delivery-boundary-qualified.log"
   }
 }
