@@ -72,6 +72,11 @@
       "sha256": "9b99d9a34878ee56d7f1c9891f97a416dd5a3ddd9f60039e31f541aacde6ae31"
     },
     {
+      "path": "tuldok-cleanup-gate-independent-review.json",
+      "bytes": 7946,
+      "sha256": "f1599f6331dfa9080ce8870e7f426daaa5c1e1e65d3d2243d733bc86d0a5d18e"
+    },
+    {
       "path": "tuldok-indexed-composed-actual.log",
       "bytes": 3482,
       "sha256": "efb4fd6d332c9a316b567892dd0930bd03c907f2f9b067e78596b3d2a83d8b42"
@@ -517,6 +522,11 @@
       "sha256": "3d64730a31f4fce921d0e02ab053d573890a6d942b571cdc6a77261dc5911ce1"
     },
     {
+      "path": "tuldok-open-stack-review-disposition.json",
+      "bytes": 19675,
+      "sha256": "d291033acdbba7335ab376cd5d56fa75fbdf64696504b598d220b509ec374b70"
+    },
+    {
       "path": "tuldok-performance-review-body.md",
       "bytes": 2163,
       "sha256": "a54ca6edf0f872b1f5264fa6f1aafcab4620aaf3577ecbd8e6539dd7966d89d5"
@@ -630,6 +640,11 @@
       "path": "tuldok-pr103-corrected-cpu-captured-cpu.log",
       "bytes": 60145,
       "sha256": "8359051ce6eb6974c501aaa6dad18659873137894d4ba6794bbf73140fbe5332"
+    },
+    {
+      "path": "tuldok-pr103-corrected-cpu-independent-review.json",
+      "bytes": 10954,
+      "sha256": "d03526fed7a730424c56a3856050f620f523f5f08a0186c7332c95e25595d96e"
     },
     {
       "path": "tuldok-pr103-corrected-cpu-metadata.json",
@@ -907,9 +922,24 @@
       "sha256": "59e730ed30e61922bdc482aa99e3be5393c84cda7b934ea4888134fa56c2c91a"
     },
     {
+      "path": "tuldok-task-cleanup-current-remote-ref-snapshots.json",
+      "bytes": 118456,
+      "sha256": "551be568b74755c3e28e791db3afc3ed3055cf9304d45065f925c6e62878f3fb"
+    },
+    {
+      "path": "tuldok-task-merged-cleanup-inventory-current.json",
+      "bytes": 328681,
+      "sha256": "4dc6378778828d5a965a93c7d69f4a6323ad1a786c2973b59962b136a6836c11"
+    },
+    {
       "path": "tuldok-task-merged-cleanup-inventory.json",
       "bytes": 99464,
       "sha256": "3d653e8bc9d551b9b042fde8af986640c21cbfbd0d079c5b04cfe7d19698b01b"
+    },
+    {
+      "path": "tuldok-task-merged-cleanup-terminal.json",
+      "bytes": 11293,
+      "sha256": "0755fbfba77b7f2d76fafff5e47516cdec735f7dd593d7d5f66f4c7323e70dd2"
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",

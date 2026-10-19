@@ -1,0 +1,215 @@
+{
+  "PASS_marker_count": 17,
+  "actions": "One completed job metadata/log fetch and PR metadata read; source hash reads only; no passive polling, local tests or remote mutations.",
+  "actual_browser_PASS_lines": [
+    "2026-10-19T23:21:45.0471902Z PASS keyboard navigation reaches honest empty real runs and returns to retained Data",
+    "2026-10-19T23:21:49.3322529Z PASS 12 authored independent images imported, labelled and explicitly reviewed using Data controls",
+    "2026-10-19T23:21:49.6476188Z PASS invalid held-out class coverage blocks release before training",
+    "2026-10-19T23:21:50.5196660Z PASS fixed split preview, exact reviewed source release and immutable ZIP download",
+    "2026-10-19T23:22:07.7736192Z PASS Selected checkpoint candidate is retained as diagnostic with separate unfulfilled package and fresh-verifier states",
+    "2026-10-19T23:22:07.9330410Z PASS H1 real finite training produces three checkpoint/probe sets; keyboard epoch selection preserves exact example; test remains locked",
+    "2026-10-19T23:22:22.5276441Z PASS Root intent precedes actual CPU admission; exact retained parent branches into a second Study, edits and prepares inertly, then trains once without a retry edge",
+    "2026-10-19T23:22:23.1176066Z PASS Compatible frozen validation membership supports measured comparison across actual trained models",
+    "2026-10-19T23:22:24.0682430Z PASS Interactive lineage retains two Studies, authored hypothesis/goal/change, exact baseline and real completed child outcome after reload",
+    "2026-10-19T23:22:42.0898375Z PASS Exact comparison requests bind both evaluations/checkpoints/metric definitions and explicit paired or side-by-side mode",
+    "2026-10-19T23:22:42.1495206Z PASS H4 keyboard model-probe correction creates reviewed current revision, new release and trained trial; original evidence is immutable; changed membership refuses paired deltas",
+    "2026-10-19T23:22:42.5133955Z PASS H5 delayed query cannot override navigation; denied evidence clears checkpoint/probe values and explicit refresh recovers",
+    "2026-10-19T23:22:42.8646319Z PASS Automatic dark workspace preference has visible keyboard focus, measured text/focus contrast and bounded 1440/390 evidence layout",
+    "2026-10-19T23:22:43.3863935Z PASS real model development gate: /home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-pl1nDm",
+    "2026-10-19T23:23:58.5015338Z PASS Actual package preparation and exact approval are inert; Study-admitted packaging and a separate captured CPU consumer complete with three charged slots",
+    "2026-10-19T23:23:58.5016641Z PASS Package complete and fresh inference verified are distinct UI states; the source candidate remains diagnostic",
+    "2026-10-19T23:23:58.5121552Z PASS actual candidate package browser: /home/runner/work/Tuldok/Tuldok/build/qa/candidate-package/run-Y7WagS"
+  ],
+  "actual_checkout": {
+    "matches_exact_requested_head_and_base": true,
+    "merge_message_base": "b4070b60b0119c73284c4832610cc82ef471963a",
+    "merge_message_head": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+    "ref": "refs/remotes/pull/103/merge",
+    "sha": "332c59a43621d4c68a179688268e4b977cf31e83"
+  },
+  "actual_commands": [
+    "2026-10-19T23:21:33.9247810Z node tests/browser_model_development.cjs",
+    "2026-10-19T23:22:50.0689990Z node tests/browser_candidate_package.cjs"
+  ],
+  "actual_cpu_bounds": [
+    "Provisioned supported Python3.12 CPU interpreter/Torch2.8.0+cpu drives real finite classifier training with three checkpoints/probes, exact comparison, frozen split/class coverage, revised-label trial and denial/navigation boundaries.",
+    "Existing package owner performs explicit capture/approval and a distinct fresh captured CPU inference consumer; three charged slots retained; source candidate remains diagnostic.",
+    "Captured runtime profile is TinyCNN forward inference using Torch/NumPy/Pillow; no captured training/resume claim. Explicit fixed exclusions include torchvision, unused native test/functorch components and optional tkinter.",
+    "Whole runtime inventory is21042files/823402896bytes, inventorySHA36b4c848c1a73e9ed2ef6529e6d0d52cb2adf1c4f634c88f3588d22ee8ee55dd. This is scope/accounting evidence, not a performance measurement or redistribution authorization."
+  ],
+  "all_steps": [
+    {
+      "conclusion": "success",
+      "name": "Set up job",
+      "number": 1,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Initialize containers",
+      "number": 2,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/checkout@v4",
+      "number": 3,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/setup-node@v4",
+      "number": 4,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Explicitly provision the supported CPU runtime before qualification",
+      "number": 5,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Exercise actual classifier preparation and training through the browser",
+      "number": 6,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Prepare the explicit captured inference subset and reviewable whole inventory",
+      "number": 7,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Capture with the existing owner and verify charged package and fresh inference through the browser",
+      "number": 8,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/upload-artifact@v4",
+      "number": 9,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Post Run actions/setup-node@v4",
+      "number": 16,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Post Run actions/checkout@v4",
+      "number": 17,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Stop containers",
+      "number": 18,
+      "status": "completed"
+    },
+    {
+      "conclusion": "success",
+      "name": "Complete job",
+      "number": 19,
+      "status": "completed"
+    }
+  ],
+  "conclusion": "success",
+  "current_base": {
+    "branch": "feature/lab-coordinator-panel-20261019",
+    "sha": "b4070b60b0119c73284c4832610cc82ef471963a"
+  },
+  "evidence": {
+    "directory_mode": "0o700",
+    "metadata_sha256": "dc88d2f96b46baaaef7086b7667eb5519940a670f07c8cbcab851375d3114447",
+    "private_directory": "/tmp/tuldok-pr103-corrected-cpu-evidence",
+    "raw_log_bytes": 60145,
+    "raw_log_mode": "0o600",
+    "raw_log_path": "/tmp/tuldok-pr103-corrected-cpu-evidence/captured-cpu.log",
+    "raw_log_sha256": "8359051ce6eb6974c501aaa6dad18659873137894d4ba6794bbf73140fbe5332"
+  },
+  "format": "corrected_pr103_captured_cpu_independent_review_v1",
+  "job_id": 118358565099,
+  "job_url": "https://github.com/MrScripty/Tuldok/actions/runs/39339899127/job/118358565099",
+  "lifecycle": {
+    "qualification": "pending; no passed claim",
+    "reported_status_at_assignment": "queued",
+    "reviewer_status_queries": 0,
+    "run_id": 39339902973
+  },
+  "pr_number": 103,
+  "pr_url": "https://github.com/MrScripty/Tuldok/pull/103",
+  "regression_limits": [
+    "Exact5cd correction is a controller-fixture composition repair; captured-CPU job does not run test_workspace_external_controller.cjs and cannot alone qualify that repaired harness or phase timing contracts.",
+    "No benchmark-performance, CUDA, physical-science/model-quality winner, universal package-support or full reliability-plan acceptance claim.",
+    "Current CI artifact payloads not downloaded; log runtime-preparation record and completed browser PASS lines are retained.",
+    "Lifecycle39339902973 was reported queued by root at assignment, not queried by this reviewer, and remains unqualified here."
+  ],
+  "requested_exact_head": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+  "review_result": "Clear for completed captured-CPU regression scope only; overall correctedPR103/lifecycle acceptance not established",
+  "reviewed_at_utc": "2026-10-19T23:31:19.993495+00:00",
+  "run_id": 39339899127,
+  "runtime_preparation": {
+    "config_sha256": "9b3cf9791434daed0095116cbed2f437e323be11ca9f7c612b5c63aa1e885e13",
+    "excluded_unused_scope": [
+      "torchvision is not selected: independent Pillow preprocessing requires no torchvision native extension.",
+      "Unused functorch native extension, Torch native test executables/test data and optional tkinter extension are explicitly excluded.",
+      "Exclusion list is fixed before owner inventory; no retry or stripping in response to ELF validation failure."
+    ],
+    "file_count": 21042,
+    "format": "candidate_ci_runtime_preparation_v1",
+    "interpreter": "/home/runner/work/_temp/tuldok-candidate-python312/bin/python3",
+    "inventory_sha256": "36b4c848c1a73e9ed2ef6529e6d0d52cb2adf1c4f634c88f3588d22ee8ee55dd",
+    "model_browser_receipt": {
+      "catalog_path": "/tmp/tuldok-model-development-tpTaCX/data",
+      "path": "/home/runner/work/Tuldok/Tuldok/build/qa/model-development/run-pl1nDm/receipt.json",
+      "run_ids": [
+        "98b7d54db98947b69207016563d6f110",
+        "c3c9fda296024beb9d88b98cf7b71b70",
+        "b98a651973474d25877aad8280299731"
+      ],
+      "sha256": "c03f99e7d7796e348cb87031083fb75afbc3845dab737b0a3a3143cfb581449b"
+    },
+    "profile": "captured_cpu_python_v1",
+    "rights": "Upstream metadata/notices are retained; no new redistribution permission is asserted.",
+    "selected_runtime_scope": "TinyCNN forward inference with Torch, NumPy and Pillow; no training/resume claim.",
+    "source_sha256": {
+      "candidate_packages.py": "5dd9cfc71323bccfb6e7186cc042efc3afa0d7058e8a81c3219da26f57fb3547",
+      "recipe_process.py": "763e4dbaa927b8644761029be57cd37a11fb2c1d90dc61e134602af9a0503cbe",
+      "runtime_snapshots.py": "dad9e4ddf9c11c0e1f2d5b9a7afd6877e7be375fe02030c65b684bca2b0ef45e",
+      "tests/prepare_candidate_runtime.py": "5fd6e73ae2fa3cf1f67ddb731873b6ddbfe5e8945d50bb1c94bc7c5160c9f643"
+    },
+    "total_bytes": 823402896,
+    "versions": {
+      "filelock": "4.2.4",
+      "fsspec": "2026.9.0",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.4",
+      "mpmath": "1.3.0",
+      "networkx": "3.7",
+      "numpy": "2.5.4",
+      "pillow": "12.3.0",
+      "sympy": "1.14.0",
+      "torch": "2.8.0+cpu",
+      "typing-extensions": "4.16.0"
+    }
+  },
+  "runtime_source_hashes_independently_match_exact_head": true,
+  "status": "completed",
+  "step_counts": {
+    "completed_success": 13,
+    "failed": 0,
+    "skipped": 0
+  },
+  "unittest_counts": {
+    "errors": null,
+    "failures": null,
+    "passed": null,
+    "reason": "This job invokes browser qualification scripts, with no unittest summary.17 browser PASS markers are not17 unit tests.",
+    "run": null,
+    "skipped": null
+  }
+}

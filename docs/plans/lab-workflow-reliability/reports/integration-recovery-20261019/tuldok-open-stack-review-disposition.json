@@ -1,0 +1,402 @@
+{
+  "actionable_process_note": {
+    "action": "In acceptance receipts, describe these PRs as not reviewed by CodeRabbit and cite actual independent reviews separately. If a submitted bot/human review is required by the maintainer, the owner must obtain it explicitly; this task did not trigger any review or alter draft/configuration state.",
+    "approval_or_ci_inference": "No test pass, merge readiness or CodeRabbit approval is inferred from an absent finding, null reviewDecision or any status check.",
+    "classification": "review_evidence_gap_not_a_code_blocker",
+    "severity": "informational"
+  },
+  "format": "tuldok_open_stack_review_disposition_v1",
+  "limits": [
+    "Snapshot of the exact listed head OIDs, not a guarantee about later pushes or reviews.",
+    "No review/comment/label/configuration change, rerun, merge or source edit was performed.",
+    "No historical PR77 query or blocked-action retry was attempted."
+  ],
+  "observed_at_utc": "2026-10-19T23:32:16.524721+00:00",
+  "pull_requests": [
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T21:18:15Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T21:18:15Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/102#issuecomment-6277532436"
+        }
+      ],
+      "base_oid_at_read": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+      "base_ref": "main",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "b4070b60b0119c73284c4832610cc82ef471963a",
+      "head_ref": "feature/lab-coordinator-panel-20261019",
+      "is_draft_at_read": true,
+      "number": 102,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Expose coordinator health and exact owner recovery in Runs",
+      "url": "https://github.com/MrScripty/Tuldok/pull/102"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T21:34:07Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T21:34:07Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/103#issuecomment-6277843008"
+        }
+      ],
+      "base_oid_at_read": "b4070b60b0119c73284c4832610cc82ef471963a",
+      "base_ref": "feature/lab-coordinator-panel-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+      "head_ref": "feature/lab-phase-timing-20261019",
+      "is_draft_at_read": true,
+      "number": 103,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Expose bounded owner phase clocks and exact timing reads",
+      "url": "https://github.com/MrScripty/Tuldok/pull/103"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T21:46:01Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T21:46:01Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/104#issuecomment-6278098975"
+        }
+      ],
+      "base_oid_at_read": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+      "base_ref": "test/lab-workflow-baseline-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "head_ref": "feature/lab-phase-panel-20261019",
+      "is_draft_at_read": true,
+      "number": 104,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Show live owner phase observations in Pipeline and Runs",
+      "url": "https://github.com/MrScripty/Tuldok/pull/104"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T22:11:28Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T22:11:28Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/105#issuecomment-6278500147"
+        }
+      ],
+      "base_oid_at_read": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+      "base_ref": "feature/lab-phase-panel-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "head_ref": "feature/lab-workflow-client-20261019",
+      "is_draft_at_read": true,
+      "number": 105,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Add supported consumer workflow client and CLI",
+      "url": "https://github.com/MrScripty/Tuldok/pull/105"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T22:11:33Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T22:11:33Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/106#issuecomment-6278501468"
+        }
+      ],
+      "base_oid_at_read": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+      "base_ref": "feature/lab-workflow-client-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "head_ref": "feature/lab-field-comparison-20261019",
+      "is_draft_at_read": true,
+      "number": 106,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Show exact retained scientific baseline and candidate diagnostics",
+      "url": "https://github.com/MrScripty/Tuldok/pull/106"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T22:15:14Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T22:15:14Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/107#issuecomment-6278559639"
+        }
+      ],
+      "base_oid_at_read": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+      "base_ref": "feature/lab-phase-timing-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+      "head_ref": "test/lab-workflow-baseline-20261019",
+      "is_draft_at_read": true,
+      "number": 107,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Measure neutral preparation, history and collection costs",
+      "url": "https://github.com/MrScripty/Tuldok/pull/107"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T22:16:55Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T22:16:55Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/108#issuecomment-6278584879"
+        }
+      ],
+      "base_oid_at_read": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "base_ref": "feature/lab-batch-client-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+      "head_ref": "feature/lab-indexed-diagnostics-20261019",
+      "is_draft_at_read": true,
+      "number": 108,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Admit bounded indexed diagnostic evidence before compute",
+      "url": "https://github.com/MrScripty/Tuldok/pull/108"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T22:30:22Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T22:30:22Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/109#issuecomment-6278796346"
+        }
+      ],
+      "base_oid_at_read": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+      "base_ref": "feature/lab-field-comparison-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "head_ref": "feature/lab-bounded-collection-20261019",
+      "is_draft_at_read": true,
+      "number": 109,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Read bounded exact artifact segments in one request",
+      "url": "https://github.com/MrScripty/Tuldok/pull/109"
+    },
+    {
+      "advisories": [
+        {
+          "author": "coderabbitai",
+          "classification": "generic_draft_review_skipped_notice",
+          "created_at": "2026-10-19T22:40:30Z",
+          "disposition": "process_advisory_not_a_correctness_finding_or_review_approval",
+          "head_specific_code_review": false,
+          "remote_action_taken": false,
+          "requires_code_change": false,
+          "summary": "CodeRabbit says draft PRs are not automatically reviewed by default. Its optional manual-review/configuration and Autofix controls are generic bot guidance, not submitted findings.",
+          "updated_at": "2026-10-19T22:40:30Z",
+          "url": "https://github.com/MrScripty/Tuldok/pull/110#issuecomment-6278943123"
+        }
+      ],
+      "base_oid_at_read": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+      "base_ref": "feature/lab-bounded-collection-20261019",
+      "counts": {
+        "generic_nonreview_advisories": 1,
+        "material_unresolved_correctness_findings_observed": 0,
+        "resolved_or_already_fixed_review_findings": 0,
+        "review_threads": 0,
+        "stale_or_outdated_review_findings": 0,
+        "submitted_reviews": 0
+      },
+      "disposition": "No actual submitted review or inline finding exists to resolve/classify. The sole generic skipped-draft notice is not approval and supplies no code-specific blocker. No source-change recommendation is inferred.",
+      "github_review_decision": null,
+      "head_oid": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+      "head_ref": "feature/lab-batch-client-20261019",
+      "is_draft_at_read": true,
+      "number": 110,
+      "pagination_complete": true,
+      "review_threads": [],
+      "state_at_read": "OPEN",
+      "submitted_reviews": [],
+      "title": "Add explicit verified batch collection to the supported client",
+      "url": "https://github.com/MrScripty/Tuldok/pull/110"
+    }
+  ],
+  "raw_evidence": {
+    "/tmp/tuldok-open-stack-issue-comments-raw.json": {
+      "bytes": 27430,
+      "sha256": "9999a788e2038cf752b5c29f61a2190149ea0685e953048ed3eccd40ae6fab9a"
+    },
+    "/tmp/tuldok-open-stack-reviews-raw.json": {
+      "bytes": 5065,
+      "sha256": "65659c3c3deeb7fed4d65f14e3dd06e2361f77b759760fa39734fd54bbb858a2"
+    }
+  },
+  "scope": {
+    "blocked_historical_pr77_queried": false,
+    "pull_requests": [
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110
+    ],
+    "read_only": true,
+    "repository": "MrScripty/Tuldok",
+    "source_code_review_performed_in_this_task": false,
+    "sources": [
+      "GitHub GraphQL PullRequest.reviews (all states; complete first100 page)",
+      "GitHub GraphQL PullRequest.reviewThreads (resolved/outdated included; complete first100 page)",
+      "GitHub GraphQL PullRequest.comments (complete first100 page; full bodies compared)"
+    ],
+    "status_checks_or_test_logs_evaluated": false
+  },
+  "summary": {
+    "already_fixed_or_stale_findings": [],
+    "conclusion": "No GitHub review finding currently requires a code fix or stale-thread resolution. All9 drafts were explicitly skipped by CodeRabbit, so zero findings does not represent approval or independent correctness clearance.",
+    "generic_skipped_review_notices": 9,
+    "material_unresolved_correctness_findings_from_review_sources": [],
+    "open_draft_prs": 9,
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "substantive_review_findings": 0
+  }
+}

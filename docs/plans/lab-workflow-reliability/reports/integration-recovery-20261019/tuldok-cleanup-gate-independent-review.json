@@ -1,0 +1,110 @@
+{
+  "canonical_sources": [
+    {
+      "lines": "96\u2013106",
+      "meaning": "Classify terminal branches and preserve durable evidence outside redundant operational refs/worktrees.",
+      "path": "/workspace/Coding-Standards/workflows/commit.md"
+    },
+    {
+      "lines": "110\u2013140",
+      "meaning": "Remove completed clean worktree when purpose ends; require exacthead, ownership, reachability, one explicit disposition and terminal evidence; do not force-remove dirty/unknown/user-owned/locked/unique resources.",
+      "path": "/workspace/Coding-Standards/workflows/commit.md"
+    },
+    {
+      "lines": "142\u2013159",
+      "meaning": "Record exact path/head, retained-ref or archive protection, disposition/outcome and post-removal absence; protected-OID pre/post comparison required when removing reachability root.",
+      "path": "/workspace/Coding-Standards/workflows/commit.md"
+    },
+    {
+      "lines": "79\u201390",
+      "meaning": "Integration owner owns serial integration and hands off only predeclared cleanup with Commit reachability/disposition evidence.",
+      "path": "/workspace/Coding-Standards/profiles/workflows/concurrent-plan-integration.md"
+    },
+    {
+      "lines": "418\u2013424",
+      "meaning": "Plan-author worktree stays for review/handoff; later cleanup requires clean state, reachability and safely merged dependent-branch evidence. Does not state latest-main CI prerequisite.",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/plan.md"
+    },
+    {
+      "lines": "455\u2013465",
+      "meaning": "Full exact-head CI/cross-owner review/lead approval is before production activation, not a generic branch/worktree-removal prerequisite.",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md"
+    },
+    {
+      "lines": "193\u2013217",
+      "meaning": "Historical parent-monitored postmerge acceptance and retained branches are observations, not a normative statement that all future resource cleanup waits latest-main CI.",
+      "path": "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/execution-ledger.md"
+    }
+  ],
+  "concrete_conditions_that_remain": [
+    "Only declared task-owned candidates with terminal purpose ended and durable accepted/merged evidence; broader active plan can remain open without automatically retaining unrelated completed resources.",
+    "Confirm exact path/branch/head/cleanliness/lock/registration and open dependent-consumer state immediately before cleanup. Inventory snapshot is evidence of prior state, not current authorization.",
+    "Protect exact head OIDs through verified named retained refs or exact archives and compare protected OIDs before/after any reachability-root removal. Ancestry to a literal old mainOID alone is not the complete final record.",
+    "Preserve all original82refs/96worktrees, PR91 draft and unrelated/unmerged/checkpoint/integration/fix branches. PR89/90 same-name local refs are absent; aliases are not inferred targets from matching SHA.",
+    "Document resource-specific continuing qualification/handoff purpose if retained; actual ongoing work can require retention, but that is a concrete lifecycle fact rather than an automatic latest-main CI gate."
+  ],
+  "format": "independent_cleanup_gate_authority_review_v1",
+  "gate_origin": {
+    "assessment": "This gate is explicitly labelled parent-imposed in the inventory; no matching blanket dependency found in canonical source. Root may revise its own sequencing without waiving named evidence. The current instruction explicitly says no cleanup yet and remains controlling.",
+    "inventory_path": "/tmp/tuldok-task-merged-cleanup-inventory.json",
+    "inventory_sha256": "3d653e8bc9d551b9b042fde8af986640c21cbfbd0d079c5b04cfe7d19698b01b",
+    "literal_cleanup_authorization": [
+      "PENDING parent final postmerge CI gate and immediate identity/status/dependency recheck; inventory only"
+    ],
+    "literal_pending_gate": "Parent final postmerge CI acceptance pending; all structural candidates remain pending and require fresh parent recheck immediately before any destructive action."
+  },
+  "inventory_facts": {
+    "counts": {
+      "candidate_local_refs": 9,
+      "current_open_prs_returned": 13,
+      "merged_prs_queried": 11,
+      "protected_local_refs": 82,
+      "protected_worktrees": 96,
+      "structurally_eligible_after_gate": 9
+    },
+    "current_cached_origin_main_at_review": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+    "missing_terminal_execution_fields": [
+      "Explicit per-head retained-ref/registration-only/unknown reachability classification",
+      "Selected retained/archived/discard-authorized disposition and named protecting ref",
+      "Selected removed-reachable/removed-archived/retained-protected/discard-authorized terminal outcome",
+      "Protected-OID pre/post manifest and immediate recheck/post-removal outcome"
+    ],
+    "nine_structural_candidates": [
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100
+    ],
+    "not_execution_authorization": true,
+    "scope": "Merged PR89\u2013100 excluding unmerged91; only exact same-name local refs absent original82 baseline considered; never infer aliases by matching SHA",
+    "snapshot_is_stale_relative_to_current_cached_main": true,
+    "snapshot_origin_main": "13f564acf2c49364c545da7205c7f28734708cf6",
+    "snapshot_utc": "2026-10-19T23:24:33.966546+00:00"
+  },
+  "plan_worktree_commit_at_review": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+  "qualification_boundaries": [
+    "Required CI/review for accepting source, production activation, and named milestone results is unchanged.",
+    "This assessment does not retroactively waive any explicit current user or integration-owner instruction; root currently directed no cleanup.",
+    "No permission question or cleanup execution performed; root owns eventual admitted batch, freshchecks and records."
+  ],
+  "result": "A blanket latest-main CI before cleanup gate is additional parent sequencing, not a requirement found in the reviewed Commit workflow or reliability plan. It is not needed solely to retire already accepted task-owned resources whose lifecycle purpose ended; all concrete safety/terminal evidence remains required.",
+  "reviewed_at_utc": "2026-10-19T23:32:11.776752+00:00",
+  "scope": "Assessment only; no cleanup, status scan, ref mutation, remote query or ownership expansion.",
+  "source_hashes": {
+    "/workspace/Coding-Standards/CORE-STANDARDS.md": "8d81c8b558269cf45aa768f67399e6ea120acf2318e0e4c3030b8114a083a14d",
+    "/workspace/Coding-Standards/STANDARDS-ROUTER.md": "35f014a0090301e89815700ff60aa5f043f3c033660c20ab144e6e6461df2181",
+    "/workspace/Coding-Standards/profiles/workflows/concurrent-plan-integration.md": "813dfc2487ddc83e91e572fcd0e4a54ebaf79efe7fca7ec58defc765f888b294",
+    "/workspace/Coding-Standards/workflows/commit.md": "c2e86c065db1e2907201beaa8efb872acffaaff650959c15407c48384c870757",
+    "/workspace/Coding-Standards/workflows/implementation.md": "02bc0feb1f411072b082236da5354ab44b1a4cdfe4a07afab70108631c80e532",
+    "/workspace/Coding-Standards/workflows/verification.md": "798071f8beed08fca9937ad5ea9d6d6a42b99157b82a3f2dc80c46412f475f8b",
+    "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/execution-ledger.md": "568c618e14d5249b4949270e776cc9457b4e20934885656021bc91aeb67d8dca",
+    "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/plan.md": "3abfe256c37071a026cb67ea3aed34537bf93567ca8a473b1980265841709062",
+    "/workspace/Tuldok-lab-indexed-diagnostics-m1/docs/plans/lab-workflow-reliability/reports/contracts-and-acceptance.md": "815dc87cfb438b83563c3671e0c91ab8ae51fc5b035cf030a7544eb8dfe257c5"
+  },
+  "standards_commit": "dcc56f26e884ade260770beceba2501d3746200d"
+}

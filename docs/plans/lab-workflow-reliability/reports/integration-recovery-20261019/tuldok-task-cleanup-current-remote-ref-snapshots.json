@@ -1,0 +1,1572 @@
+{
+  "prs": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 92,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/92",
+            "number": 92,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Required field arrays could be admitted with a per-file or aggregate limit smaller than their fixed payload, leaving a known publication failure until after compute. The existing policy owner now refuses those contradictions before graph/material preparation reaches admission, counting shared reference filenames once. Profile limits and existing operation/storage shapes stay unchanged.\n\nThis is the first bounded M1 slice of `docs/plans/lab-workflow-reliability/plan.md`, selected by the later user instruction to continue development. Its explicit base is composed, unmerged PR89/90 tree `76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114`; this PR targets the PR90 branch. PR91 remains unchanged and unmerged; its plan files are copied at exact b446d9a into this implementation branch, with implementation-only lifecycle updates. Main is not assumed to contain either dependency.\n\nValidation: five focused negative witnesses failed on the prior production code. The affected local group ran43 tests:40 passed,3 PostgreSQL cases skipped. This includes actual synthetic evidence writer/verifier/cold-reader roundtrip, explicit dtype/shape bounds and unique-file accounting. The new real PostgreSQL case asserts exact refusal and unchanged graph/Run/grant/consumption/reservation counts with a process-launch tripwire; hosted execution is still required. Independent review cleared the production change and its stated limits.\n\nPassing these payload lower bounds does not prove NPY headers, variable diagnostic/metadata bytes, full readiness, recovery or science. Complete structured preflight, indexed diagnostics, publication continuation and actual post-drain/reopen acceptance remain pending; A1–A8 are not marked accepted. No new lab workload or CUDA qualification occurred.\n\nPersistence: checkpoint branch `checkpoint/lab-integration-20261019` preserves source/review receipts, with a fresh independent clone verifying22 sizes/SHA256 values, repair ancestry and exact PR91 source. RESTORE.md and restoration-verification.json retain recovery instructions and proof. This implementation branch is also remotely stored and retained for review; do not merge before dependency qualification, independent review and actual CI.\n\nIndependent review cleared the production diff at cbc648d: no blocker in production/test changes, proof limits or dependency admission. The existing reviewer independently ran the module:9 passed,1 real PostgreSQL skip, and inspected the real metadata/owner/Project/recipe/decoder-before-insert path. Hosted execution is still required.\n\nReviewed follow-ups:6245e12 corrects the PostgreSQL fixture to use the raw manifest input hash and proves valid graph creation first.750332a runs the focused module early against the existing isolated PostgreSQL17 service, before long suites; no permissions/dependency/full-suite changes. Both follow-ups were independently cleared. Current head is750332a; fresh hosted qualification is pending. The module reran locally:9 passed,1 PostgreSQL skip. An additional profile group had6 independent structural witnesses pass and4 managed-runtime cases fail at unavailable PostgreSQL setup; those4 are not executed behavior evidence.\n\nFinal exact-head hosted acceptance: lifecycle 39303732490/job118235282725 succeeded with every step successful. Early PostgreSQL 17 field preflight gate ran 10 tests, OK with zero skips; the actual no-effect refusal case explicitly ran successfully. Agent 74 and official MCP 19 passed with no skips. Full suite ran 1545 tests in 1911.719s, OK with 72 explicit skips. Required focus/Project/observation/model-development and actual CPU/browser gates passed. Local exact-head PG17 refusal case also passed. Independent source/archived-evidence review precedes integration; full M1 and main post-merge qualification remain separate.\n",
+            "title": "Refuse impossible field output budgets before compute",
+            "base": "main",
+            "base_sha": "c7f3575cdb16a00c602f7698eee34d2e938d0e9c",
+            "head": "feature/lab-preflight-output-bounds-20261019",
+            "head_sha": "750332ac64244526127075feb14cb8db268a7ab9",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "2f333f960b80ca7fe23c90269b32f647b2c827a8",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T18:27:59Z",
+            "updated_at": "2026-10-19T19:51:18Z",
+            "closed_at": "2026-10-19T19:51:18Z",
+            "merged_at": "2026-10-19T19:51:17Z",
+            "commits": 3,
+            "changed_files": 16,
+            "additions": 1578,
+            "deletions": 0,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/92",
+            "display_title": "Refuse impossible field output budgets before compute"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 93,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/93",
+            "number": 93,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Selected graphs.preflight_external/3 returns a bounded report tied to exact catalog, graph/revision, execution and material, identifying completed preparation checks and later mutable boundaries. Pipeline performs fresh preparation and rechecks the graph; the report stays outside approval material and explicitly says prepared/not_reserved. Consumer identity/request correlation refuses contradictions without retry. Published v1/v2 and headerless projections remain unchanged.\n\nIndependent code/test/docs review cleared exact635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465. Actual local PostgreSQL17.6 four boundary cases passed104.806s, including real HTTP/AgentClient legacy projections, no-effect refusal, CLI stale/missing grant and neutral process/download.\n\nFinal hosted lifecycle39309770426/job118256029205 passed at the exact source, all158steps successful: early preflight21 tests in3.674s, no skips; agents74 in602.564s and official MCP19 in45.641s, no skips; full Python1556 in1983.010s, OK(skipped72). Relevant actual browser/model/evidence/correction/new-release/CPU reconstruction/one-fit gates completed successfully. Exact capturedCPU, catalog and workspace checks also succeeded. Missing environment/hardware cases remain explicit skips rather than claimed passes.\n\nPR92 is merged at2f333f9; this exact source targets main with mergeable_state clean and will integrate normally before dependent PR94 is retargeted. Original PR91 stays separate and unchanged. This partial C1/T1 slice does not complete A1/M1, structured refusal diagnostics, recovery or science acceptance. No CUDA or fresh numerical improvement claim.\n\nRetained source validation: docs/plans/lab-workflow-reliability/reports/m1-exact-preflight-report/validation.json. Durable integration receipts: https://github.com/MrScripty/Tuldok/tree/checkpoint/lab-integration-20261019/docs/plans/lab-workflow-reliability/reports/integration-recovery-20261019\n",
+            "title": "feat(pipeline): expose exact prepared preflight reports",
+            "base": "main",
+            "base_sha": "2f333f960b80ca7fe23c90269b32f647b2c827a8",
+            "head": "feature/lab-exact-preflight-report-20261019",
+            "head_sha": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "031df288a3bbeddd0a506311edab1b9d18575964",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T19:17:42Z",
+            "updated_at": "2026-10-19T20:30:47Z",
+            "closed_at": "2026-10-19T20:30:47Z",
+            "merged_at": "2026-10-19T20:30:47Z",
+            "commits": 1,
+            "changed_files": 16,
+            "additions": 711,
+            "deletions": 9,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/93",
+            "display_title": "feat(pipeline): expose exact prepared preflight reports"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 94,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/94",
+            "number": 94,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Selected graphs.preflight_external/3 now observes the existing large-output storage envelope before staging. Runs reuses its current policy: pending captures plus two declared output copies plus1GiB, including the existing generated-context cap when applicable. The bounded report labels current free/required/pending bytes as an observation rather than a reservation. Admission retains its original post-capture bound; other profiles and old v1/v2/headerless behavior remain unchanged.\n\nIndependent code/test/docs review cleared exact0039a330253c088b68578e268afe6fc21fc36038. Actual local PostgreSQL17.6 boundary suite10 passed4.825s; exact early CI command30 passed5.187s, zero skips. Controlled disk/descriptor seams prove preparation refusal before staging/admission/grant/reservation/process effects; they do not establish current hardware or device readiness.\n\nFinal hosted lifecycle39310921513/job118259953830 passed at exactsource, all158steps successful: early preflight30 in10.540s, no skips; agents74 in324.765s and official MCP19 in24.169s, no skips; full Python1565 in1356.196s, OK(skipped72). Required real browser/model/evidence/correction/newrelease/CPU reconstruction/one-fit steps all succeeded. One HTTP ConnectionResetError was logged in the full run; there were no unittest failures/errors and every job step succeeded. CapturedCPU39310921443/job118259953720 also passed all13steps, including real prior CPU training/browser evidence, Study-admitted packaging and separate capturedCPU inference consumer. It makes no training-in-captured-runtime, CUDA or fresh scientific-improvement claim.\n\nPR93 is merged at031df288a3bbeddd0a506311edab1b9d18575964 and this unchanged source now targets main. Serial integration precedes retargeting PR95; all dependents and original PR91 remain preserved. Full M1 and later recovery/readiness/scientific acceptance remain separate.\n\nRetained source evidence: docs/plans/lab-workflow-reliability/reports/m1-preflight-storage/validation.json. Durable integration receipts: https://github.com/MrScripty/Tuldok/tree/checkpoint/lab-integration-20261019/docs/plans/lab-workflow-reliability/reports/integration-recovery-20261019\n",
+            "title": "feat(pipeline): observe large-output storage before compute",
+            "base": "main",
+            "base_sha": "031df288a3bbeddd0a506311edab1b9d18575964",
+            "head": "feature/lab-preflight-storage-20261019",
+            "head_sha": "0039a330253c088b68578e268afe6fc21fc36038",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "2652b0605796138821cee4ccbea62c1433e74bce",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T19:25:49Z",
+            "updated_at": "2026-10-19T20:32:12Z",
+            "closed_at": "2026-10-19T20:32:12Z",
+            "merged_at": "2026-10-19T20:32:12Z",
+            "commits": 1,
+            "changed_files": 11,
+            "additions": 516,
+            "deletions": 13,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/94",
+            "display_title": "feat(pipeline): observe large-output storage before compute"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 95,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/95",
+            "number": 95,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Publication copying ran inside the transaction that first recorded successful descendant drainage, so a copy fault rolled the saved drainage phase back and left no frozen original output inventory. External attempts now sync their bounded measured outputs, retain a private immutable original custody/inventory proof, and commit its exact versioned Ref plus drainage before result copying begins. A second transaction reloads current cancellation state; unknown proof-commit acknowledgement starts no copying.\n\nThe proof binds the original catalog/Run/request/material/graph, completed drained receipt and measured declared-output hashes. Its evidence semantics explicitly remain unverified. It is capped at 48 KiB, kept outside the final published directory, and atomically retained without replacing unequal prior proof bytes. Existing hash-copying and destination semantic verification remain in place. Old public projections and completed-state gates are unchanged; no third output copy, new grant/attempt/reservation or Study refund is introduced.\n\nPR94 is merged; this PR now targets main. This first continuation prerequisite does not implement a recovery command, attached recovered-result Ref or new readers. Full C2/A2/M1 acceptance, bounded partial-copy reconciliation and indexed diagnostics remain pending. The existing backup retains private staging files and opaque Run documents; the new private file and Ref are explicit version 1 formats, with no metadata schema migration.\n\nValidation on task-owned PostgreSQL 17.6: new proof/copy-fault/cold-reopen/unknown-COMMIT-ack/cancellation and existing execution/copy group all 11 passed; separate source/Study admission/rollback/unknown-ack group all 11 passed. Independent review cleared source/persistence/tests/docs and independently ran all six new cases successfully. Real neutral custody ran in the fault and execution tests; no model/runtime/hardware science claim. Exact-head hosted lifecycle 39312817510 / job118266542370 and captured CPU39312817597 / job118266543067 are successful; all158 lifecycle and13 CPU job steps succeeded. Full Python1571 tests1654.530s OK(skipped72); isolated74 agent and19 MCP cases passed without skips. Early preflight30 cases passed without skips. Actual external/project/observation browsers, classifier CPU training, correction/new release, model and text/audio one-fit browsers passed. Full suite logged one server ConnectionResetError with no unittest failure/error. Post-merge qualification remains required.\n\nRetained regression witnesses, logs, persistence inventory and limitations: `docs/plans/lab-workflow-reliability/reports/m1-publication-source/validation.json`.\n",
+            "title": "feat(runs): retain durable original publication source",
+            "base": "main",
+            "base_sha": "2652b0605796138821cee4ccbea62c1433e74bce",
+            "head": "feature/lab-publication-continuation-20261019",
+            "head_sha": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "27ba22b377336c59fbd45feaa7f597d0a1fdcf0f",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T19:39:31Z",
+            "updated_at": "2026-10-19T20:42:36Z",
+            "closed_at": "2026-10-19T20:42:36Z",
+            "merged_at": "2026-10-19T20:42:36Z",
+            "commits": 1,
+            "changed_files": 11,
+            "additions": 535,
+            "deletions": 6,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/95",
+            "display_title": "feat(runs): retain durable original publication source"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 96,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/96",
+            "number": 96,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "A completed drained external attempt that failed during publication can now verify and publish its original retained output bytes through a Runs-owned continuation. It creates an exact immutable recovered-result Ref while preserving the original failed/interrupted Run, admission/grant/reservation identity, charged Study envelope and legacy artifact/promotion refusals. No compute is replayed or refunded.\n\nThe bounded core verifies the frozen original proof, captures, exact output inventory and destination semantics, reuses owned partial copies, enforces60-second/20-attempt limits and remaining-growth reserve, serializes one publication owner, and supports explicit current-owner recovery/cancellation. It rechecks current authority/cancellation before attaching a result, retains unknown COMMIT outcomes for exact-key reconciliation and keeps recovered readers separate from completed-Run gates. Public transport/CLI/SDK readers are the dependent PR97; UI and indexed-diagnostic acceptance remain separate.\n\nIndependent core source/persistence/authority/tests/docs review is clear. Actual disposable PostgreSQL17 groups, stopped restore and neutral custodian fault/recovery conservation passed. Exact6cc hosted lifecycle39316797951/job118280258841 and capturedCPU39316797909/job118280258109 succeeded: all159/13steps passed. FullPython1588/2054.144s OK(skipped72); earlypreflight30/publication22 and isolatedagent74/MCP19 passed withoutskips. Actual external/project/observation, classifier CPU training/correction/newrelease/model/one-fit and fresh capturedCPU inference packaging steps passed. This does not claim captured-runtime training, CUDA or scientific improvement. Post-merge qualification remains required.\n\nVersioned proof/result persistence, raw local evidence and limitations are retained under docs/plans/lab-workflow-reliability/reports/m1-publication-recovery. No SQL migration or capacity-policy change is introduced.\n",
+            "title": "Recover original-attempt publication without compute replay",
+            "base": "main",
+            "base_sha": "27ba22b377336c59fbd45feaa7f597d0a1fdcf0f",
+            "head": "feature/lab-publication-recovery-20261019",
+            "head_sha": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "c4322a4832356af796692cd6536adef637a8c6d4",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T20:08:19Z",
+            "updated_at": "2026-10-19T21:25:14Z",
+            "closed_at": "2026-10-19T21:25:14Z",
+            "merged_at": "2026-10-19T21:25:14Z",
+            "commits": 2,
+            "changed_files": 18,
+            "additions": 1343,
+            "deletions": 16,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/96",
+            "display_title": "Recover original-attempt publication without compute replay"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 97,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/97",
+            "number": 97,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Expose the attached recovered publication through five explicit selected operations: saved status, owner recovery/cancellation, exact result verification and bounded artifact segments. Headerless calls refuse; ordinary agents retain inspect-only result collection. Existing AgentClient stays agent-only, with a separate publication-only owner client for explicit CLI recovery/cancel commands.\n\nCLI/SDK collection accepts the exact result Ref, uses exclusive destinations, checks every segment identity and verifies the final whole SHA256. Segments validate the attached proof/manifest/current authority and read only the requested payload range; they do not rescan every artifact per chunk. SDK uses the explicitly hash-selected sealed public CLI, makes no admission/recovery call, and retains numerical:not_evaluated.\n\nLocal evidence on real disposable PostgreSQL17.6: HTTP/CLI4 passed70.531s; corrupt/foreign reply refusal1 passed13.837s; actual neutral >8MiB custody/recovery/segment case1 passed14.583s with exact8MiB+17byte payload reads and a whole-scan tripwire; SDK actual collection plus existing representative conformance17 passed68.982s. All110 old complete operation contracts remain equal; frozen legacy digest unchanged; schemas valid. Initial broad regression invocation named a nonexistent test module and is not a clean pass; corrected focused and hosted qualification remain tracked separately.\n\nDraft based on PR96 at6cc5943. Independent interface review and exact-head hosted CI pending. Separate worker is implementing an actual explicitly synthetic field-evidence/custody recovery witness. Browser/lineage, exact evidence queries/comparison, indexed diagnostics and full M1–M6 acceptance remain open. No fresh numerical, CUDA or real-lab acceptance claim; old failed-reader/promotion gates remain unchanged.\n\n\nExact-head hosted archive assessed: lifecycle39318371600/job118285677304 and capturedCPU39318371633/job118285677198 succeeded on0da7a811d252cc4c6774260b98ee2a707efec517; all159/13steps succeeded. Early preflight30/publication27, isolatedagent74/MCP19 passed without skips. FullPython1593/1424.987s passed with72skips. One server ConnectionResetError was logged without unittestfailure/error. Actual browser classifier training/correction/newrelease/model/one-fit and fresh capturedCPU inference packaging steps passed. Hold serial integration until PR96 qualifies; post-merge qualification remains required.\n",
+            "title": "Expose exact recovered results through selected transport and SDK collection",
+            "base": "main",
+            "base_sha": "c4322a4832356af796692cd6536adef637a8c6d4",
+            "head": "feature/lab-publication-interfaces-20261019",
+            "head_sha": "0da7a811d252cc4c6774260b98ee2a707efec517",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T20:19:36Z",
+            "updated_at": "2026-10-19T21:25:35Z",
+            "closed_at": "2026-10-19T21:25:35Z",
+            "merged_at": "2026-10-19T21:25:35Z",
+            "commits": 1,
+            "changed_files": 20,
+            "additions": 758,
+            "deletions": 27,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/97",
+            "display_title": "Expose exact recovered results through selected transport and SDK collection"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 98,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/98",
+            "number": 98,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Expose recovered field evidence and exact paired or side-by-side comparisons through attached publication Refs while retaining the original failed/interrupted Run state. Readers verify current authority, exact selectors and geometry/gauge policy before disclosure. SDK comparison delegates to the sealed public CLI. Additive status/2 provides the stable actor/key/body hash needed to reconcile continuation requests across interfaces; status/1 and the prior 115 complete contracts remain unchanged.\n\nIndependent review cleared the evidence, client correlation and final status/2 changes. Retained actual qualification includes a fresh CPU capture, real serialization child, copy fault, cold same-Run recovery, semantic verification, HTTP field/comparison access and sealed SDK comparison at source904922c (117.976s). Subsequent selector and status/2 fixes have separate passing tests. These recovered-field fixtures are synthetic serialization evidence; they do not establish numerical or lab scientific acceptance.\n\nAt final head f866252, all five hosted checks passed. Lifecycle39330846334/job118328339473 completed all159 steps, including the corrected project browser, 1,600 Python tests (72 explicit skips), isolated Agent74/MCP19 and early publication32 without skips. Captured CPU39330846250/job118328337867 passed actual training, checkpoint/probe inspection, correction/new release, package creation and separate fresh captured CPU inference; it makes no captured-runtime training or CUDA claim. The project browser repair waits for actual asynchronously rendered options and retains its held-response regression.\n\nExact-head raw logs, summaries and tested/source tree equality41050db are archived on checkpoint/lab-integration-20261019 at42d5577, with all129 archive file hashes verified from a separate clone. Source-specific receipts and original failed harness evidence remain under reports/m1-publication-evidence and reports/m1-publication-synthetic. Dependent Run-panel/lineage and remaining reliability-plan integration continue separately.\n",
+            "title": "Inspect and compare recovered field evidence through exact result refs",
+            "base": "main",
+            "base_sha": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+            "head": "feature/lab-publication-evidence-20261019",
+            "head_sha": "f866252782310211b887301a674ba2a62c353709",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "51c081cd8534728e91e3b76294b8526b6ee47269",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T20:35:56Z",
+            "updated_at": "2026-10-19T22:46:22Z",
+            "closed_at": "2026-10-19T22:46:18Z",
+            "merged_at": "2026-10-19T22:46:18Z",
+            "commits": 8,
+            "changed_files": 37,
+            "additions": 41738,
+            "deletions": 18,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/98",
+            "display_title": "Inspect and compare recovered field evidence through exact result refs"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 99,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/99",
+            "number": 99,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Add the owner Run-panel controls for inspecting publication status, explicitly recovering or pausing publication, and following the exact attached result Ref. An uncertain acknowledgement retains the original actor/request key/body hash for explicit read reconciliation. UI navigation/session fences discard stale responses, and recovered publication never changes the original failed/interrupted Run outcome or retries compute. Bounded original artifact inspection retains its whole-hash limits.\n\nIndependent source/controller review and real PostgreSQL/Chromium publication-panel qualification are retained under reports/m1-publication-ui. The native-browser cleanup repair waits for only the owned child-process handles to exit before removing its temporary directory; controlled delayed-exit/TERM escalation cases and the actual native browser passed. It makes no general descendant-process custody claim.\n\nAt final source e0357c2, all relevant hosted checks passed. Lifecycle39330890531/job118328484057 completed all162 steps, including the actual publication UI and corrected native browser. Full Python1601 passed with72 explicit skips; early publication32, isolated Agent74 and MCP19 passed without skips. Captured CPU39330890527/job118328484468 completed all13 steps with actual training/checkpoint/probe/correction/new-release browser checks and separate fresh captured TinyCNN CPU forward inference. No captured-runtime training, CUDA or scientific acceptance is claimed.\n\nRaw completed logs and exact-source qualification are archived at checkpoint8f55649, whose158 file hashes were verified from a separate clone. The current PR merge tree equals the qualified source tree6d9059b; the accepted base is the PR98 merge with the same tested-base content. Dependent lineage and remaining reliability integration continue separately.\n",
+            "title": "Expose original-attempt publication recovery in Run panel",
+            "base": "main",
+            "base_sha": "51c081cd8534728e91e3b76294b8526b6ee47269",
+            "head": "feature/lab-publication-run-panel-20261019",
+            "head_sha": "e0357c20af9c9213422eb95861ef385c9caed2dd",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T20:48:46Z",
+            "updated_at": "2026-10-19T23:14:26Z",
+            "closed_at": "2026-10-19T23:14:22Z",
+            "merged_at": "2026-10-19T23:14:22Z",
+            "commits": 5,
+            "changed_files": 30,
+            "additions": 839,
+            "deletions": 13,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/99",
+            "display_title": "Expose original-attempt publication recovery in Run panel"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 100,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/100",
+            "number": 100,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "Show attached publication status and exact result links in lineage while retaining the original interrupted/failed Run outcome. Lineage performs an explicit selected status/2 read, without automatic status fanout or recovery mutations; the existing owner Run panel owns explicit recovery. Exact Ref navigation and current session/view fences prevent stale metadata from replacing a newer selection.\n\nIndependent source/controller review and retained local browser qualification are clear. At final head4e533adb, lifecycle39330889183/job118328479727 completed all164 steps successfully. Full Python discovery ran1601 tests with72 explicit skips; targeted publication32, Agent74 and MCP19 passed without skips. The actual lineage controller and Chromium browser passed, covering one real Study-admitted publication fault, explicit same-Run recovery through the Run panel, exact Ref navigation, narrow/desktop layouts and unchanged charges, reservations, lineage, events and original state. Those neutral custody fixtures do not establish scientific quality.\n\nCaptured CPU39330889194/job118328479538 passed all13 steps: actual CPU training/checkpoint/probe/correction/new-release checks, Study-admitted package and separate fresh captured TinyCNN forward inference. It does not qualify captured-runtime training or CUDA. Independent review checked completed logs and exact checkout identity; source and current PR merge tree matcha70465a, and the retargeted main base has the same tree as the tested PR99 base.\n\nRaw completed logs and scoped receipts are archived at checkpointab460a7; all164 archive file hashes were verified from a separate clone. Coordinator, phase, client and remaining reliability integration continue in dependent branches.\n",
+            "title": "Link exact recovered publication metadata from lineage outcomes",
+            "base": "main",
+            "base_sha": "7ea9d1379a8a20a81f95366270b26d41dab027f4",
+            "head": "feature/lab-publication-lineage-20261019",
+            "head_sha": "4e533adb073c3d9ad71191695ba4f551c69072b5",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "13f564acf2c49364c545da7205c7f28734708cf6",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T20:58:42Z",
+            "updated_at": "2026-10-19T23:20:43Z",
+            "closed_at": "2026-10-19T23:20:43Z",
+            "merged_at": "2026-10-19T23:20:43Z",
+            "commits": 4,
+            "changed_files": 26,
+            "additions": 560,
+            "deletions": 26,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/100",
+            "display_title": "Link exact recovered publication metadata from lineage outcomes"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 101,
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "url": "https://github.com/MrScripty/Tuldok/pull/101",
+            "number": 101,
+            "state": "closed",
+            "merged": true,
+            "mergeable": false,
+            "draft": false,
+            "body": "A coordinator exception could leave a dead assigned thread while admission still accepted work. Runs now records a bounded generation/fault, fences admission and GO, drains owned executors/custodians, and permits explicit current-owner recovery after joined work and acknowledged durable attempt/custody reconciliation. Never-started queue identities/order survive; started work is never replayed. Missing ownership or acknowledgement proof stays fenced.\n\nSelected-v1 health/recovery HTTP operations and CLI retain prior contracts. Recovery receipts bind actor/key/body hash, serialize identical requests, preserve retryable failed starts, and let final close win. A private bounded journal retains diagnostics across reopen without becoming custody authority. Secondary openers cannot overwrite it; uncertain advisory unlock refuses runtime ownership until reopen.\n\nValidation at head263e6cc: hosted lifecycle39330896334 passed all165 steps, including full Python1621 tests (72 skips) and20 dedicated coordinator tests without skips. Captured-CPU39330896319 passed all13 steps: finite CPU training/checkpoints/probes, correction/new release, package preparation and separate fresh captured TinyCNN inference. Independent completed-log review is clear. Current-main merge tree matches the tested source tree3f8aa3a5f91e85a22fed9119a13e6e52a17d1f95. Catalog and workspace checks also pass.\n\nLocal evidence includes PostgreSQL/HTTP recovery, readiness, one-GO, custody, cold journal and two-opener ownership witnesses; source-specific logs retain earlier failures and repairs. Canonical contract: docs/contracts/run-coordinator-recovery.md. Qualified evidence and independent review are durably archived on checkpoint/lab-integration-20261019 at0c4ac873206bfb0be454fe92ca9ebcf27432a6a9.\n\nThis accepts coordinator core and the recorded CPU workflow only. Coordinator UI is PR102; no coordinator UI, captured training/resume, CUDA, or scientific-quality acceptance is inferred.",
+            "title": "Fence failed coordinators and explicitly recover one proven generation",
+            "base": "main",
+            "base_sha": "13f564acf2c49364c545da7205c7f28734708cf6",
+            "head": "feature/lab-coordinator-recovery-20261019",
+            "head_sha": "263e6cc40c0ca886eebe1bb48c721eefb45f5e49",
+            "head_repo_id": 1369762795,
+            "head_repo_full_name": "MrScripty/Tuldok",
+            "merge_commit_sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+            "user": {
+              "login": "MrScripty",
+              "name": "MrScripty",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+              "id": 10446793
+            },
+            "requested_reviewers": null,
+            "requested_team_reviewers": null,
+            "diff": null,
+            "comments": null,
+            "created_at": "2026-10-19T21:03:18Z",
+            "updated_at": "2026-10-19T23:28:28Z",
+            "closed_at": "2026-10-19T23:28:25Z",
+            "merged_at": "2026-10-19T23:28:25Z",
+            "commits": 7,
+            "changed_files": 31,
+            "additions": 1634,
+            "deletions": 17,
+            "display_url": "https://github.com/MrScripty/Tuldok/pull/101",
+            "display_title": "Fence failed coordinators and explicitly recover one proven generation"
+          },
+          "isError": false
+        }
+      }
+    }
+  ],
+  "open": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issues": [
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/110",
+          "number": 110,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Add explicit `WorkflowClient.collect_batch` and `collect-batch` CLI for whole artifacts from one exact external Run or attached publication Ref. The existing manifest selects at most 20 artifacts and 8 MiB. The client negotiates the operation, validates ordered identities and whole hashes, and atomically publishes private files without replacing existing output. Partial or stopped receipts support explicit ordinary `collect --resume`; ordinary collection retains individual transport.\n\nEight actual HTTP/CLI cases passed in 145.991 seconds at `fd42361`, covering twenty artifacts, clean CLI/resume, SDK cancellation and real SIGINT, typed failures, delivery-time revocation, corrupt replies, collisions and recovered Refs. After composing the refined producer, three affected actual cases passed in 37.842 seconds at `4d5e1af`: twenty-artifact success, revocation without output and exact Ref access preserving the interrupted Run. Independent review verified meaningful assertions and both rounds of schema cleanup. Earlier focused checks and source-specific limits are retained under `reports/m4-batch-client`.\n\nFinal head `44e64fc` preserves all producer/client histories and has unchanged runtime/test files from the final qualified snapshot. A stale comment was corrected with module AST equality. Hosted acceptance and serial integration remain pending. The producer benchmark measures its low-level transport; this facade adds validation cost and makes no performance improvement claim.\n\nThe final baseline-history composition preserves the measured snapshot and raw evidence; product source is unchanged. Reports and baseline-only harness/tests are the only content additions to104–106;109–110–108 merge trees are unchanged by this final history composition. Hosted checks must qualify these published heads.\n",
+          "title": "Add explicit verified batch collection to the supported client",
+          "base": "feature/lab-bounded-collection-20261019",
+          "base_sha": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+          "head": "feature/lab-batch-client-20261019",
+          "head_sha": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T22:40:21Z",
+          "updated_at": "2026-10-19T23:30:18Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 18,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/110",
+          "display_title": "Add explicit verified batch collection to the supported client"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/109",
+          "number": 109,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Add explicit collection of 1–20 exact external Run or publication-Ref segments in one selected HTTP operation, bounded to 8 MiB and 60 seconds. Each item retains its canonical reader and current authorization. Fresh domain and post-serialization delivery checks discard buffered data on authority loss, cancellation or shutdown. Exact-source deduplication uses last-occurrence order within each stage; it never caches loaded Runs or permission proofs.\n\nThe complete refined matrix at `9838022` contains 54 paired observations. All 27 twenty-artifact pairs were faster, with median batch/individual ratios of 0.700, 0.695 and 0.710 across the two Run histories and recovered Ref condition. Single-artifact medians regressed by 2.717, 2.577 and 2.123 times. Whole hashes, accounting/events and no-replay checks remained equal. Root independently recomputed every pair, verified 33 evidence files and 12 source/harness hashes, and confirmed both exact schemas absent. The earlier negative matrix remains intact.\n\nIndependent review and 10 pure cases passed. Relevant actual cases passed, including duplicate-source loads, late authority loss at both stages, revocation, partial failures and shutdown; one test-envelope assertion error and its passing isolated correction are retained. Final head `0a5798d` has the same measured source/test/harness bytes. Retain explicit collection for the measured many-small-output condition; ordinary collection stays the default. No generic, facade or end-to-end speedup is claimed. Full evidence is under `reports/m4-bounded-collection`; hosted acceptance and serial integration remain pending.\n\nThe final baseline-history composition preserves the measured snapshot and raw evidence; product source is unchanged. Reports and baseline-only harness/tests are the only content additions to104–106;109–110–108 merge trees are unchanged by this final history composition. Hosted checks must qualify these published heads.\n",
+          "title": "Read bounded exact artifact segments in one request",
+          "base": "feature/lab-field-comparison-20261019",
+          "base_sha": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+          "head": "feature/lab-bounded-collection-20261019",
+          "head_sha": "0a5798d7908fde9434bf17504fcb9070a3bc193c",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T22:30:14Z",
+          "updated_at": "2026-10-19T23:30:16Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 15,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/109",
+          "display_title": "Read bounded exact artifact segments in one request"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/108",
+          "number": 108,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Add opt-in indexed diagnostic capture for supported noncanonical field recipes. SDK and host share a bounded index/record contract with exact case/checkpoint/phase identities, finite payloads, ordered shards, mandatory coverage and explicit optional omissions. Admission rejects impossible reservations within existing caps before compute. Scientific verification runs first; diagnostics cannot repair invalid scientific evidence. Existing scientific manifests, capabilities and public projections retain their meanings.\n\nBoth actual PostgreSQL/custodian cases passed in 22.431 seconds at `9d563ce`. The fixture serializes captured SDK source before an actual no-op child, injects a copy fault, recovers the same Run cold, verifies original index/shards and preserves charges, reservations and events. The composed check uses a real cold inspect client to collect three artifacts through one batch, without individual fallback, with exact whole hashes and private files. The scientific API reads the same Ref twice with exact selectors, diagnostic delta zero and unknown criterion. This does not establish captured Python execution, training or different-model scientific quality.\n\nIndependent review cleared the helper and exact schema registration before construction; both final schemas were independently confirmed absent. Final head `9d72fc3` composes the complete dependent histories and has unchanged runtime/test files from the qualified snapshot. Evidence and limits are under `reports/m1-indexed-diagnostics/composed-readers`. Hosted acceptance and serial integration remain pending. Original lab diagnostic bytes/path and scientific criteria remain missing inputs; older unowned schema candidates remain untouched.\n\nThe final baseline-history composition preserves the measured snapshot and raw evidence; product source is unchanged. Reports and baseline-only harness/tests are the only content additions to104–106;109–110–108 merge trees are unchanged by this final history composition. Hosted checks must qualify these published heads.\n",
+          "title": "Admit bounded indexed diagnostic evidence before compute",
+          "base": "feature/lab-batch-client-20261019",
+          "base_sha": "44e64fc6d48d9a6e05ee6cf3bcff0417de89e5f6",
+          "head": "feature/lab-indexed-diagnostics-20261019",
+          "head_sha": "9d72fc3c7717f95704d46b6ccb96b7054ebaf417",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T22:16:46Z",
+          "updated_at": "2026-10-19T23:30:14Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 10,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/108",
+          "display_title": "Admit bounded indexed diagnostic evidence before compute"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/107",
+          "number": 107,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Establish the actual preparation, history-read and collection costs before retaining an optimization. This adds the reproducible neutral workflow harness and frozen baseline, with production files unchanged from `96c2adebc3a46b9fe92b179097474e08474689c3`.\n\nMeasured source `83d7e8f52df92d10d3ff85709da6eff3231a0b06` completed 18 fresh read processes/54 cycles over 1/20 artifact layouts and 0/8/55 real terminal histories, two actual negative/recovery tails and six fresh-catalog workflows. First-read groups have n=3, warm groups n=6; fresh workflows n=3 per layout. Raw observations, 281 filename-cohort-qualified distributions, CPU/RSS/I/O/request/body counts and source hashes are retained. No outcome filtering or optimization/speedup claim.\n\nRoot independently verified all 63 evidence files and five source fingerprints, exact source/harness hashes, reporting tests (3 pass) and subsequent absence of all eight precisely recorded task schemas. Original pilot failures remain recorded; one early pilot schema has uncertain identity and was not guessed/deleted.\n\nAt 55 completed Runs, one 320KiB artifact default collection has median172.1ms/1request versus1492.6ms/20segments; twenty16KiB artifacts default collection has median1715.3ms/20requests. This supports the separately admitted bounded sequential batching investigation. Runtime reverification is a measured preparation cost, but cross-call mutable-runtime reuse is not admitted. Fresh process does not mean OS/PG-cache cold; CPU excludes PostgreSQL backend and RSS is lifetime/snapshot scope. No training, managed Torch, CUDA or scientific acceptance is qualified by this neutral byte-copy workload.\n\nReceipt head `07dde98df856619cab929eb9dc8d3275151c69bd`; results `docs/plans/lab-workflow-reliability/reports/m4-workflow-baseline/results.md`, full source/evidence manifest `validation.json`. The separately qualified candidate and explicit consumer are PR109/110; this PR delivers the immutable baseline. Corrected-head hosted checks remain pending.\n\nFinal candidate6e44137 normally merges the whole reviewed1035cd repair. Independent verification proves all64 retained baseline files equal07dde98, all8 runtime owners and the harness/reporting tests equal measured83d7e8f, and the final five-file manifest matches its intended finalized sources. The complete Node controller and three reporting tests pass. Previous hosted failure remains recorded; its log archive was unavailable, so no independently read underlying error is claimed.\n",
+          "title": "Measure neutral preparation, history and collection costs",
+          "base": "feature/lab-phase-timing-20261019",
+          "base_sha": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+          "head": "test/lab-workflow-baseline-20261019",
+          "head_sha": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T22:15:07Z",
+          "updated_at": "2026-10-19T23:30:13Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 3,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/107",
+          "display_title": "Measure neutral preparation, history and collection costs"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/106",
+          "number": 106,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Expose exact completed Run and attached publication-Ref field comparisons through the existing Runs and lineage interface. The read-only owner checks authoritative profile, membership, field, geometry/gauge and metric compatibility, reports missing cases explicitly, and returns retained reference/prediction/diagnostic delta values with exact checkpoint, evaluation, material and timing context. Missing scientific criteria and memory observations stay unknown.\n\nProduction composition aee8908 normally merges complete M5 source5634968 and the independently reviewed canonical response-correlation/CI changes. Ordinary v2 and new scientific replies bind the exact ordered operands and selectors. All123 public contracts, discovery and registry equal the original M6 source4a9e15; backend and UI blobs are unchanged. The duplicate ordinary-only test is covered by the stronger M5 positive and12-fault tests selected by full discovery.\n\nOriginal M6 qualification at4a9e15 passed five actual reader/HTTP cases (32.480s),17 AgentAPI cases (64.687s), the retained pure/controller cases and actual Chromium inspection at1440/390. Browser evidence covers exact mixed Refs, independently expected field delta2, keyboard use, stale delivery, root removal and revocation, with no compute mutations. Fixtures use real material/Study admission and explicitly authored terminal arrays; they do not qualify numerical producers, runtime execution or scientific acceptance.\n\nIndependent review ofaee8908 is clear: seven client tests passed3.151s, pure controller passed, original backend/UI and exact M5 consumer blob identities are proven, and normal ancestry is retained. At composed source aee8908, all five existing actual reader/HTTP cases passed. An additional cold canonical AgentClient check passed in 26.050s using a real inspect agent and two exact selected HTTP requests for normal and recovered operands, with unchanged accounting and verified schema cleanup. Its first attempt supplied an owner token and failed the intended credential-kind boundary; the failed driver/log/receipt and corrected independently reviewed driver are retained in the durable checkpoint. Hosted browser/lifecycle gates remain pending. CI now runs the scientific client/controller early and the actual scientific browser late. Receipt-only descendant 0e7b3cb normally merges the final M5 report tail; product, test and CI files remain identical to aee8908. Source-specific receipts and failed harness attempts remain under reports/m6 and the durable integration checkpoint.\n",
+          "title": "Show exact retained scientific baseline and candidate diagnostics",
+          "base": "feature/lab-workflow-client-20261019",
+          "base_sha": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+          "head": "feature/lab-field-comparison-20261019",
+          "head_sha": "da23ded935ac4d327a8936756b60bb75bec2fc08",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T22:11:25Z",
+          "updated_at": "2026-10-19T23:29:29Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 15,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/106",
+          "display_title": "Show exact retained scientific baseline and candidate diagnostics"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/105",
+          "number": 105,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Add the standard-library WorkflowClient and project CLI commands for exact manifest submission/reconciliation, bounded monitoring, cancellation, artifact collection/resume and owner-delegated comparison. Submission binds the existing grant and stable request key; unknown delivery preserves the exact manifest for explicit reconciliation. Collection reauthorizes current inventory, verifies whole SHA256, and publishes private files atomically without replacing existing output. Monitoring uses a shared finite read budget and cancellation event.\n\nProduction source 5634968 includes both independent review fixes: interrupted resume cannot claim completion from unchecked prior receipts, and Study acknowledgements must match parent/catalog/grant/request hash. The canonical AgentClient now also correlates every ordinary v2 comparison side and selector with its request. Existing comparison semantics and legacy v1 remain unchanged.\n\nValidation is attributed to exact sources: the complete12-case actual HTTP suite passed at cb68bc0 (406.466s); the two review fixes at875038a passed18 focused tests,5 affected actual HTTP cases (82.269s) and35 existing client/CLI tests (203.608s), with independent reproduction/review clear. At5634968,21 focused tests passed (3.047s), including12 schema-valid comparison identity faults and positive v1/v2 replies. The final guard also passed an actual two-epoch classifier comparison over HTTP and a separate clean CLI process (1 case, 60.889s), with exact fixture cleanup. Failed initial attempts and all successful logs remain under reports/m5-workflow-client; older full-suite success is not attributed to the final source.\n\nIndependent static review of the subsequent M5/M6 composition confirms the consumer files exactly match5634968, all123 public contracts remain equal to the M6 base, and seven client cases plus the pure scientific controller pass. Receipt-only head 9f852f5 adds four report files; product, tests and CI files are unchanged from qualified 5634968. Hosted lifecycle and serial base integration remain acceptance gates. Explicit batch collection is a separate dependent PR110; ordinary collection keeps its individual segment transport.\n",
+          "title": "Add supported consumer workflow client and CLI",
+          "base": "feature/lab-phase-panel-20261019",
+          "base_sha": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+          "head": "feature/lab-workflow-client-20261019",
+          "head_sha": "a7aa122f69c561b5695b9960c0bf246c5bdeb6bf",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T22:11:19Z",
+          "updated_at": "2026-10-19T23:29:29Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 11,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/105",
+          "display_title": "Add supported consumer workflow client and CLI"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/104",
+          "number": 104,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "The existing Pipeline and Runs views now show bounded owner-clock phase observations: preparation/capture, queue/capacity/catalog waits, custodian preparation/GO/runtime/leader/drain, validation and publication/recovery. Tables preserve each clock, observed milliseconds, open/measured/incomplete state, wait reason, UTC observation and missing history. Intervals are never extrapolated or summed; leader lifetime is not optimizer time. Pre-Run evidence is explicitly the latest actor/revision observation, with exact operation/material/clock labels, and never establishes successful preflight or approval.\n\nBoth reads use complete selected contract pins and closed identity/duration checks. Sequential refresh has at most30 reads/75seconds, remaining-window request deadlines and explicit user restart. Navigation/session/graph changes abort client waits and fence stale delivery; same-selection new loads discard the original pending generation and obtain one fresh read after it settles, within the original budget. Stable control IDs and retained table positions preserve keyboard focus and narrow-screen scrolling. No mutation retry, new authority or domain state is added; the one app change serves the static module.\n\nIndependent whole-source review and final controlled stale-generation red/green tests are clear at production source31494ec. The actual disposable PostgreSQL17/Chromium151 phase journey passed at that exact source: live preparation before any Run, real capacity queue and catalog mutex wait, first neutralGO plus explicit cancel/drain, second neutralGO with original publication failure then same-attempt recovery,2Runs/2grants/2consumptions, focus/scroll,1440/390 layouts, exactpins and navigation polling cleanup. Earlier coordinator/publication/native regression receipts remain attributed to their respective sources. See reports/m3-phase-ui/validation.json for exact hashes, logs, original failures, screenshots and domain receipts.\n\nThis draft targets the immutable PR107 baseline, itself based on PR103, and includes the reviewed native browser cleanup correction through normal ancestor composition. Corrected PR99/dependent hosted checks and postmerge main qualification remain pending, so no full M3/T4/T8 completion is claimed. M4 measurement continues independently. These are neutral process/UI witnesses, without model training, CUDA or scientific acceptance claims.\n\n\nControlled external-controller composition follow-up: source `775f3251f9ecf6f7ac4d20b2e633e2c7dcb43844` loads the actual phase module and browser APIs in its test VM, and supplies the inert child DOM methods required by focus retention. Original assertions and product source are unchanged. Independent review is clear; exact-source Node execution exits 0. Red/green evidence is retained in `reports/m3-phase-ui/external-controller-fixture/validation.json`. Latest receipt head requires fresh hosted checks; prior 2bf checks are historical.\n\nThe final baseline-history composition preserves the measured snapshot and raw evidence; product source is unchanged. Reports and baseline-only harness/tests are the only content additions to104–106;109–110–108 merge trees are unchanged by this final history composition. Hosted checks must qualify these published heads.\n",
+          "title": "Show live owner phase observations in Pipeline and Runs",
+          "base": "test/lab-workflow-baseline-20261019",
+          "base_sha": "6e44137bf65374d6a148e6ea0fc3dcc1600a8a5c",
+          "head": "feature/lab-phase-panel-20261019",
+          "head_sha": "70ed38f48f31c64146ab6e37781e3ed549fa1700",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T21:45:53Z",
+          "updated_at": "2026-10-19T23:30:11Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 12,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/104",
+          "display_title": "Show live owner phase observations in Pipeline and Runs"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/103",
+          "number": 103,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "Owner phase observations now distinguish external material preparation/capture, queue and catalog waits, parent launch verification, sealed custodian preparation/GO wait/runtime verification/leader lifetime/drain, output validation and publication/recovery copy intervals. Each owner uses bounded monotonic clocks; saved open history becomes incomplete on reopen. Diagnostic evidence never supplies execution, result or readiness authority.\n\nTwo additive selected operations and matching CLI reads expose current-authority, exact catalog/Run or latest actor/graph/revision observations. Pre-Run preparation is explicitly latest volatile operation/material/clock evidence and never identifies an old preflight reply by graph revision alone. All120 prior whole contracts and frozen legacy discovery remain equal. Optional missing, malformed, foreign or empty helper diagnostics preserve valid parent evidence and unchanged completed results.\n\nThis draft targets PR102 and normally composes the whole reviewed coordinator UI. Independent root source/consumer review is clear. Actual disposable PostgreSQL/process source timing module14passed at5c9e6f9; preceding affected53passed atbdcc; root independent9passed at5c, and exact composed96c2ade timing+coordinator-pin15passed, all zero skips. Clock, queue/cancel, singleGO/custody, original publication fault/recovery, cold history, current lock authority, selected HTTP/CLI and corruption boundaries are covered. Historical failures and source attribution remain in docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/.\n\nHosted exact-head/postmerge qualification and full M3 phase UI/browser T4/T8 remain pending; UI work continues separately. This is neutral CPU process evidence, with no model training, CUDA or scientific claim. Original publication retains its existing catalog transaction, so concurrent timing reads can refuse until release.\n",
+          "title": "Expose bounded owner phase clocks and exact timing reads",
+          "base": "feature/lab-coordinator-panel-20261019",
+          "base_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+          "head": "feature/lab-phase-timing-20261019",
+          "head_sha": "5cd2cf60c68dc361c840420441e8f59a52f756d8",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T21:33:58Z",
+          "updated_at": "2026-10-19T23:10:31Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 11,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/103",
+          "display_title": "Expose bounded owner phase clocks and exact timing reads"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/102",
+          "number": 102,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "The existing Runs view now exposes exact coordinator state/generation, current readiness/fence, last update, original fault and saved recovery receipt. A current owner can explicitly recover a faulted/blocked coordinator using the exact generation and a stable tab-retained request key. After an unknown reply, the panel reads saved health without dispatching another mutation. New faults require a fresh explicit current-generation request once the old recovery is completed.\n\nThis draft targets main after the accepted PR101 merge and normal-composes the whole immutable/cold recovery-ack fixes. Both coordinator operations are exactly pinned. Closed catalog/actor/body-hash/generation/readiness validation, current owner controls, bounded tab storage, stale read/write/session/navigation fences, finite request deadlines and AbortController/listener cleanup preserve the existing server authority. Coordinator health is rendered independently even when the Run list read fails. It introduces no new health-poll timer, compute retry, grant or reservation.\n\nLocal production source38c7844: controlled controller checks and2 canonical-pin unittests passed; existing mocked image-recovery browser passed. Real PostgreSQL17/Chromium151 journey passed actual separate advisory-lock timeout/fault, keyboard owner recovery, deliberately dropped successful HTTP reply, saved-read reconciliation without another POST, one first neutral GO from the original queue, unchanged admission identity and1Run/1grant/1consumption, fresh reload/mouse refresh, and1440/390 layouts. Existing real neutral publication pause/reload/same-key resume/whole-hash download browser also passed. Both fixtures closed and dropped only their owned fresh schemas.\n\nExact source hashes, browser/domain receipts, screenshots and retained logs: `docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/validation.json`. Independent final source/test/docs review is clear. Hosted exact-head/post-merge qualification remains pending; full M2 acceptance is not yet closed. M3 timing is active separately. These are neutral process/UI witnesses with no CUDA, model-training or scientific acceptance claim.\n\nIndependent review identified and cleared a delivery-boundary correction at exact production source3c2b8d1: a new current-generation request that never reached the server can retry its exact saved body despite an older completed receipt; an incompatible incomplete receipt remains refused. The failing witness is retained and the corrected positive/negative controller cases passed. The real PostgreSQL/Chromium coordinator journey passed again at3c2b8d1; earlier publication/browser regression evidence remains attributed to38c7844.\n\nThe corrected head b4070b6 imports the real browser APIs and inert DOM methods needed by the controller test VM; product code and assertions are unchanged. Original hosted failure and local/independent whole-script red/green evidence are retained under reports/m2-coordinator-ui/ci-controller-fixture. Corrected-head hosted acceptance remains pending.\n",
+          "title": "Expose coordinator health and exact owner recovery in Runs",
+          "base": "main",
+          "base_sha": "8c9c0b07d90fd78657539cdcbcd23fbf289c4f95",
+          "head": "feature/lab-coordinator-panel-20261019",
+          "head_sha": "b4070b60b0119c73284c4832610cc82ef471963a",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T21:18:05Z",
+          "updated_at": "2026-10-19T23:30:10Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 9,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/102",
+          "display_title": "Expose coordinator health and exact owner recovery in Runs"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/91",
+          "number": 91,
+          "state": "open",
+          "merged": false,
+          "mergeable": false,
+          "draft": true,
+          "body": "The lab reports substantial non-training workflow time, diagnostic publication failures after completed training, and custom HTML needed for scientific comparison. This documentation-only plan defines six incremental implementation milestones while preserving existing runtime, Run, Study and Pipeline ownership.\n\nPlan: [docs/plans/lab-workflow-reliability/plan.md](https://github.com/MrScripty/Tuldok/blob/b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb/docs/plans/lab-workflow-reliability/plan.md).\n\n1. Exact submission-bound preflight, bounded diagnostic evidence and same-Run publication recovery.\n2. RES-1 coordinator health and safe custody reconciliation before recovery/readiness.\n3. Live preparation/queue/execution/validation/publication timing with honest overlap and wait reasons.\n4. Measured verified preparation reuse and bounded artifact batching, retaining per-item integrity/partial outcomes.\n5. A small supported Python workflow SDK and matching existing CLI for submit/monitor/cancel/collect/compare.\n6. Scientific baseline/candidate comparison in existing UI and lineage, with compatible data/units, per-case criteria and diagnostic/config/time/memory links.\n\nThe contract/acceptance report supplies exact invariants, security/resource limits, cancellation/retry/recovery semantics, consumer dispositions, compatibility/migration/rollback and future T1–T8 procedures. Publication recovery explicitly uses a versioned attached result Ref for new readers; legacy failed Run projections remain unchanged, and candidate/package promotion from recovered legacy failed Runs is unsupported initially.\n\nValidation: unchanged adopted Coding Standards structural validator PASS; all 23 local links/anchors resolve; new-file/staged whitespace and eight-file docs-only scope PASS. Independent GPT-6.1 Sol High review is CLEAR after resolving one blocking consumer-contract finding and two recommendations; exact reviewed hashes and evidence are included. Standards Engine application routing is unavailable in this environment; no full Engine certification is claimed.\n\nBaseline main 300f12df6f48e028fd9379911703f7c89337952a. PR89 (33069a859836953960a06dfd6001cba54aba0aa0) and PR90 (429d0c4ff44dba16bc95313d2a0980169dbc9b9f) remain open dependencies at preparation time, not merged facts. D1 is completed prior work and is not repeated. Historical timings remain observations, not a controlled whole-workflow speedup.\n\nNo product code, workflow, catalog or runtime changed. No application/CUDA/scientific tests ran; all product acceptance remains pending. Implementation requires a subsequent explicit instruction. This PR is for plan review only; do not merge or start implementation as part of this documentation task. Lead retains serial integration of PR89/90 and future implementation.",
+          "title": "Plan lab workflow reliability and scientific comparison",
+          "base": "main",
+          "base_sha": "300f12df6f48e028fd9379911703f7c89337952a",
+          "head": "docs/lab-workflow-reliability-plan",
+          "head_sha": "b446d9a19dbd553b80bf9f3af574b8b34ddbd5cb",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-19T16:58:25Z",
+          "updated_at": "2026-10-19T17:09:05Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 1,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/91",
+          "display_title": "Plan lab workflow reliability and scientific comparison"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/53",
+          "number": 53,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "**Integration disposition — 2026-10-14**\n\nCurrent reconciliation (2026-10-14): generic MCP delivery is separately admitted and merged in PR57 at d856a98 after merged PR56. Both exact-head checks passed (916 base tests with37 declared skips; dedicated optional23+13+5 zero skips); original three-file schema/parity assertions remain unchanged here. Full original P6/G7 and this producer-specific extension remain pending actual v2 qualification. Preserve this draft as the original source/evidence; do not merge its deferred ancestry wholesale.\n\nOriginal source and qualification record follows:\n\nAgents can discover and use scoped Tuldok domain operations through the official local stdio MCP SDK and existing authenticated HTTP owners. Drafts, canonical releases, editable graphs, exact owner-granted submission, progress, scoped test exposure and bounded artifact segments share their existing authorization and lifecycle. Human review, credential issuance and grants remain owner actions.\n\nActual official-SDK qualification passed22 operations against retained real scientific Runs: checkpoint272149B and38196421B scientific chunk matched complete priorHTTP hashes; pressure slice matched; records/graphs/Runs were unchanged and inspectcredential revoked.\n\nFinal local affected gates passed: baseAPI2active/14optional skips; SDKAPI16, dedicated native/training/evaluation41, SDKallagent22, MCP13 and56JavaScript/syntax checks. Source hashes stayed stable. Original900-test discovery's13 optional-dependency failures remain recorded; the precise test-only skips now preserve base independence, and final hosted full discovery passed 900 tests in 672.693 seconds with 36 explicit skips. Final lifecycle/UI checks are green at `5c0e7f9` ([lifecycle](https://github.com/MrScripty/Tuldok/actions/runs/38478255351), [UI](https://github.com/MrScripty/Tuldok/actions/runs/38478255410)). The inherited caption QA loader race was fixed and its Chromium workflow qualified separately.\n\nOptional dependencies are hash-locked in an isolated environment; existing product imports remain stdlib-compatible. No second scheduler, credential/grant authority or automatic mutation replay.\n\nStacked onPR52. Final lifecycle/UI acceptance and integration remain gated; PR43's original actual packet retrieval remains blocked by DNS. Evidence: docs/plans/generic-scientific-projects/reports/p6-verification.md.\n\n",
+          "title": "Add scoped MCP operations over existing Tuldok owners",
+          "base": "feature/scientific-autonomous-evaluation-20261013",
+          "base_sha": "fb3a5a00fe525b5131e45b9e9fa7bc07a9a19024",
+          "head": "feature/scoped-agent-operations-20261013",
+          "head_sha": "5c0e7f92914e5aeac6ec939e3a667fc85b22aa90",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-13T21:58:43Z",
+          "updated_at": "2026-10-14T05:05:04Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 5,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/53",
+          "display_title": "Add scoped MCP operations over existing Tuldok owners"
+        },
+        {
+          "url": "https://github.com/MrScripty/Tuldok/pull/43",
+          "number": 43,
+          "state": "open",
+          "merged": false,
+          "mergeable": true,
+          "draft": true,
+          "body": "**Integration disposition — 2026-10-14**\n\nCurrent reconciliation (2026-10-14): the exact original archive still fails supported Library transfer because archive-host DNS cannot resolve. No original bytes were installed or substitute producer/model run performed. Actual v2 V2/V4/V5 remain pending. Independent generic science/storage is now delivered by merged PR56; this blocker does not hold those features. The original branch and all authored-v2 assertions remain intact.\n\nOriginal source and qualification record follows:\n\nRheon producer-v2 trajectories now retain their original run.json, frames.jsonl and controls.json through single/batch import, compact inspection, explicit human review, frozen releases, editable validation/export Pipeline and durable Runs. Explicit version dispatch rejects missing controls, version/file mixtures and malformed interval bindings before persistence. Existing v1 bytes, metadata and completed results remain unchanged.\n\nThe implementation pins the merged producer controls reader and its numerical-reader version independently from retained v1, reuses immutable storage and the existing supervisor, and adds no schema change or simulator execution. Review identified a single-import JSON boundary gap; both routes now share strict decoding with a real HTTP regression.\n\n**Qualification limit:** v2 positive and negative fixtures are explicitly authored. The recorded actual PR32 packet exists, but original frames and handoff receipt remain unavailable locally after supported Library transfer failed. Actual-packet acceptance remains blocked; no fabricated receipt or substitute producer run. A8 real-model positive qualification also remains open: current read-only inventory found no compatible available runtime/model endpoint. No model downloads or general 3D training expansion.\n\nValidation so far: focused backend/HTTP/release and PostgreSQL graph/run/backup/restore tests pass; source pins and complete v1 prepared identities match; a genuine pre-v2 cafe533 completed v1 Run reopens with identical record, graph, report, artifact manifest and release. All Python compilation/static JS/controller suites pass. Both recorded-v1 and authored-v2 offline browser workflows pass. Independent source review has no remaining findings. Full local discovery passed 633 tests in 473.811s (two optional base-interpreter skips separately covered by 20 native-reader tests, zero skips). The improved authored-v2 browser receipt is clean-head 51bec9e and explicitly denies actual-packet acceptance. Final exact head `51bec9ea89f03357473aca0d40f2fa8251598a25` passed [lifecycle CI](https://github.com/MrScripty/Tuldok/actions/runs/38391176382) **120/120 steps** and [workspace-ui](https://github.com/MrScripty/Tuldok/actions/runs/38391176388) **14/14 steps**, with zero failed or skipped steps. The owned disposable PostgreSQL fixture is stopped; the clean worktree is retained for draft review.\n\nStacked on #42. PR38–42 unchanged. No merge or deployment.\n\n[Implementation evidence and remaining gates](https://github.com/MrScripty/Tuldok/blob/feature/rheon-v2-consumer-20261013/docs/plans/rheon-v2-consumer/reports/implementation-20261013.md) · [Canonical plan](https://github.com/MrScripty/Tuldok/blob/feature/rheon-v2-consumer-20261013/docs/plans/rheon-v2-consumer/plan.md)\n\n\nCurrent retrieval check (2026-10-13): supported Library materialization resolved the exact73722-byte original archive, but the archive host fails DNS resolution (gaierrorErrno-3). Current supported helper returneddownloadfailed; no original bytes were installed and no transfer bypass was used. Safe failure receiptSHA8332ed5e3926fe1bc1c5174f0b78e4aaee8735100fe575f163632c851270ea7d retained in the task workspace. Actual-packet acceptance and merge remain blocked.\n",
+          "title": "feat: preserve Rheon v2 controls through Data, Pipeline and Runs",
+          "base": "plan/rheon-v2-readiness-20261013",
+          "base_sha": "ef4a56fb5cc8fa9614c9a85c4f54c9f7e25ad914",
+          "head": "feature/rheon-v2-consumer-20261013",
+          "head_sha": "51bec9ea89f03357473aca0d40f2fa8251598a25",
+          "head_repo_id": 1369762795,
+          "head_repo_full_name": "MrScripty/Tuldok",
+          "merge_commit_sha": null,
+          "user": {
+            "login": "MrScripty",
+            "name": null,
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/10446793?v=4",
+            "id": 10446793
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-10-13T11:34:37Z",
+          "updated_at": "2026-10-14T04:44:10Z",
+          "closed_at": null,
+          "merged_at": null,
+          "commits": 1,
+          "changed_files": null,
+          "additions": null,
+          "deletions": null,
+          "display_url": "https://github.com/MrScripty/Tuldok/pull/43",
+          "display_title": "feat: preserve Rheon v2 controls through Data, Pipeline and Runs"
+        }
+      ]
+    },
+    "isError": false
+  },
+  "branch_name_searches": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 92,
+        "name": "feature/lab-preflight-output-bounds-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-preflight-output-bounds-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 93,
+        "name": "feature/lab-exact-preflight-report-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-exact-preflight-report-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 94,
+        "name": "feature/lab-preflight-storage-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-preflight-storage-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 95,
+        "name": "feature/lab-publication-continuation-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-publication-continuation-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 96,
+        "name": "feature/lab-publication-recovery-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-publication-recovery-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 97,
+        "name": "feature/lab-publication-interfaces-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-publication-interfaces-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 98,
+        "name": "feature/lab-publication-evidence-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-publication-evidence-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 99,
+        "name": "feature/lab-publication-run-panel-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-publication-run-panel-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 100,
+        "name": "feature/lab-publication-lineage-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-publication-lineage-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 101,
+        "name": "feature/lab-coordinator-recovery-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "branches": [
+              {
+                "branch": "feature/lab-coordinator-recovery-20261019"
+              }
+            ],
+            "cursor": "MQ"
+          },
+          "isError": false
+        }
+      }
+    }
+  ],
+  "refs": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 92,
+        "name": "feature/lab-preflight-output-bounds-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-preflight-output-bounds-20261019\",\"node_id\":\"REF_kwDOUaTr69oAN3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHJlZmxpZ2h0LW91dHB1dC1ib3VuZHMtMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-preflight-output-bounds-20261019\",\"object\":{\"sha\":\"750332ac64244526127075feb14cb8db268a7ab9\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/750332ac64244526127075feb14cb8db268a7ab9\"}}",
+            "title": "lab-preflight-output-bounds-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-preflight-output-bounds-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-preflight-output-bounds-20261019",
+            "display_title": "lab-preflight-output-bounds-20261019",
+            "structuredContent": {
+              "title": "lab-preflight-output-bounds-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-preflight-output-bounds-20261019\",\"node_id\":\"REF_kwDOUaTr69oAN3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHJlZmxpZ2h0LW91dHB1dC1ib3VuZHMtMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-preflight-output-bounds-20261019\",\"object\":{\"sha\":\"750332ac64244526127075feb14cb8db268a7ab9\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/750332ac64244526127075feb14cb8db268a7ab9\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-preflight-output-bounds-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 93,
+        "name": "feature/lab-exact-preflight-report-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-exact-preflight-report-20261019\",\"node_id\":\"REF_kwDOUaTr69oANnJlZnMvaGVhZHMvZmVhdHVyZS9sYWItZXhhY3QtcHJlZmxpZ2h0LXJlcG9ydC0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-exact-preflight-report-20261019\",\"object\":{\"sha\":\"635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465\"}}",
+            "title": "lab-exact-preflight-report-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-exact-preflight-report-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-exact-preflight-report-20261019",
+            "display_title": "lab-exact-preflight-report-20261019",
+            "structuredContent": {
+              "title": "lab-exact-preflight-report-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-exact-preflight-report-20261019\",\"node_id\":\"REF_kwDOUaTr69oANnJlZnMvaGVhZHMvZmVhdHVyZS9sYWItZXhhY3QtcHJlZmxpZ2h0LXJlcG9ydC0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-exact-preflight-report-20261019\",\"object\":{\"sha\":\"635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-exact-preflight-report-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 94,
+        "name": "feature/lab-preflight-storage-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-preflight-storage-20261019\",\"node_id\":\"REF_kwDOUaTr69oAMXJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHJlZmxpZ2h0LXN0b3JhZ2UtMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-preflight-storage-20261019\",\"object\":{\"sha\":\"0039a330253c088b68578e268afe6fc21fc36038\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/0039a330253c088b68578e268afe6fc21fc36038\"}}",
+            "title": "lab-preflight-storage-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-preflight-storage-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-preflight-storage-20261019",
+            "display_title": "lab-preflight-storage-20261019",
+            "structuredContent": {
+              "title": "lab-preflight-storage-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-preflight-storage-20261019\",\"node_id\":\"REF_kwDOUaTr69oAMXJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHJlZmxpZ2h0LXN0b3JhZ2UtMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-preflight-storage-20261019\",\"object\":{\"sha\":\"0039a330253c088b68578e268afe6fc21fc36038\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/0039a330253c088b68578e268afe6fc21fc36038\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-preflight-storage-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 95,
+        "name": "feature/lab-publication-continuation-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-publication-continuation-20261019\",\"node_id\":\"REF_kwDOUaTr69oAOHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tY29udGludWF0aW9uLTIwMjYxMDE5\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-continuation-20261019\",\"object\":{\"sha\":\"e9336ed3c311c9590f1eedc3f2fffb49c3d85d65\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/e9336ed3c311c9590f1eedc3f2fffb49c3d85d65\"}}",
+            "title": "lab-publication-continuation-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-continuation-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-continuation-20261019",
+            "display_title": "lab-publication-continuation-20261019",
+            "structuredContent": {
+              "title": "lab-publication-continuation-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-publication-continuation-20261019\",\"node_id\":\"REF_kwDOUaTr69oAOHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tY29udGludWF0aW9uLTIwMjYxMDE5\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-continuation-20261019\",\"object\":{\"sha\":\"e9336ed3c311c9590f1eedc3f2fffb49c3d85d65\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/e9336ed3c311c9590f1eedc3f2fffb49c3d85d65\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-continuation-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 96,
+        "name": "feature/lab-publication-recovery-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-publication-recovery-20261019\",\"node_id\":\"REF_kwDOUaTr69oANHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tcmVjb3ZlcnktMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-recovery-20261019\",\"object\":{\"sha\":\"6cc594389659b15ae2d8cf677c3d8f8c46be61ea\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/6cc594389659b15ae2d8cf677c3d8f8c46be61ea\"}}",
+            "title": "lab-publication-recovery-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-recovery-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-recovery-20261019",
+            "display_title": "lab-publication-recovery-20261019",
+            "structuredContent": {
+              "title": "lab-publication-recovery-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-publication-recovery-20261019\",\"node_id\":\"REF_kwDOUaTr69oANHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tcmVjb3ZlcnktMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-recovery-20261019\",\"object\":{\"sha\":\"6cc594389659b15ae2d8cf677c3d8f8c46be61ea\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/6cc594389659b15ae2d8cf677c3d8f8c46be61ea\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-recovery-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 97,
+        "name": "feature/lab-publication-interfaces-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-publication-interfaces-20261019\",\"node_id\":\"REF_kwDOUaTr69oANnJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24taW50ZXJmYWNlcy0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-interfaces-20261019\",\"object\":{\"sha\":\"0da7a811d252cc4c6774260b98ee2a707efec517\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/0da7a811d252cc4c6774260b98ee2a707efec517\"}}",
+            "title": "lab-publication-interfaces-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-interfaces-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-interfaces-20261019",
+            "display_title": "lab-publication-interfaces-20261019",
+            "structuredContent": {
+              "title": "lab-publication-interfaces-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-publication-interfaces-20261019\",\"node_id\":\"REF_kwDOUaTr69oANnJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24taW50ZXJmYWNlcy0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-interfaces-20261019\",\"object\":{\"sha\":\"0da7a811d252cc4c6774260b98ee2a707efec517\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/0da7a811d252cc4c6774260b98ee2a707efec517\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-interfaces-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 98,
+        "name": "feature/lab-publication-evidence-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-publication-evidence-20261019\",\"node_id\":\"REF_kwDOUaTr69oANHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tZXZpZGVuY2UtMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-evidence-20261019\",\"object\":{\"sha\":\"f866252782310211b887301a674ba2a62c353709\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/f866252782310211b887301a674ba2a62c353709\"}}",
+            "title": "lab-publication-evidence-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-evidence-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-evidence-20261019",
+            "display_title": "lab-publication-evidence-20261019",
+            "structuredContent": {
+              "title": "lab-publication-evidence-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-publication-evidence-20261019\",\"node_id\":\"REF_kwDOUaTr69oANHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tZXZpZGVuY2UtMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-evidence-20261019\",\"object\":{\"sha\":\"f866252782310211b887301a674ba2a62c353709\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/f866252782310211b887301a674ba2a62c353709\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-evidence-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 99,
+        "name": "feature/lab-publication-run-panel-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-publication-run-panel-20261019\",\"node_id\":\"REF_kwDOUaTr69oANXJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tcnVuLXBhbmVsLTIwMjYxMDE5\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-run-panel-20261019\",\"object\":{\"sha\":\"e0357c20af9c9213422eb95861ef385c9caed2dd\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/e0357c20af9c9213422eb95861ef385c9caed2dd\"}}",
+            "title": "lab-publication-run-panel-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-run-panel-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-run-panel-20261019",
+            "display_title": "lab-publication-run-panel-20261019",
+            "structuredContent": {
+              "title": "lab-publication-run-panel-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-publication-run-panel-20261019\",\"node_id\":\"REF_kwDOUaTr69oANXJlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tcnVuLXBhbmVsLTIwMjYxMDE5\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-run-panel-20261019\",\"object\":{\"sha\":\"e0357c20af9c9213422eb95861ef385c9caed2dd\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/e0357c20af9c9213422eb95861ef385c9caed2dd\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-run-panel-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 100,
+        "name": "feature/lab-publication-lineage-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-publication-lineage-20261019\",\"node_id\":\"REF_kwDOUaTr69oAM3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tbGluZWFnZS0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-lineage-20261019\",\"object\":{\"sha\":\"4e533adb073c3d9ad71191695ba4f551c69072b5\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/4e533adb073c3d9ad71191695ba4f551c69072b5\"}}",
+            "title": "lab-publication-lineage-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-lineage-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-lineage-20261019",
+            "display_title": "lab-publication-lineage-20261019",
+            "structuredContent": {
+              "title": "lab-publication-lineage-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-publication-lineage-20261019\",\"node_id\":\"REF_kwDOUaTr69oAM3JlZnMvaGVhZHMvZmVhdHVyZS9sYWItcHVibGljYXRpb24tbGluZWFnZS0yMDI2MTAxOQ\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-publication-lineage-20261019\",\"object\":{\"sha\":\"4e533adb073c3d9ad71191695ba4f551c69072b5\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/4e533adb073c3d9ad71191695ba4f551c69072b5\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-publication-lineage-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "pr": 101,
+        "name": "feature/lab-coordinator-recovery-20261019",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "content": "{\"ref\":\"refs/heads/feature/lab-coordinator-recovery-20261019\",\"node_id\":\"REF_kwDOUaTr69oANHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItY29vcmRpbmF0b3ItcmVjb3ZlcnktMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-coordinator-recovery-20261019\",\"object\":{\"sha\":\"263e6cc40c0ca886eebe1bb48c721eefb45f5e49\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/263e6cc40c0ca886eebe1bb48c721eefb45f5e49\"}}",
+            "title": "lab-coordinator-recovery-20261019",
+            "modified_date": null,
+            "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-coordinator-recovery-20261019",
+            "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-coordinator-recovery-20261019",
+            "display_title": "lab-coordinator-recovery-20261019",
+            "structuredContent": {
+              "title": "lab-coordinator-recovery-20261019",
+              "content": "{\"ref\":\"refs/heads/feature/lab-coordinator-recovery-20261019\",\"node_id\":\"REF_kwDOUaTr69oANHJlZnMvaGVhZHMvZmVhdHVyZS9sYWItY29vcmRpbmF0b3ItcmVjb3ZlcnktMjAyNjEwMTk\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/feature/lab-coordinator-recovery-20261019\",\"object\":{\"sha\":\"263e6cc40c0ca886eebe1bb48c721eefb45f5e49\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/263e6cc40c0ca886eebe1bb48c721eefb45f5e49\"}}",
+              "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/feature/lab-coordinator-recovery-20261019"
+            }
+          },
+          "isError": false
+        }
+      }
+    }
+  ],
+  "remoteMain": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "content": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main\",\"object\":{\"sha\":\"8c9c0b07d90fd78657539cdcbcd23fbf289c4f95\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/8c9c0b07d90fd78657539cdcbcd23fbf289c4f95\"}}",
+      "title": "main",
+      "modified_date": null,
+      "url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main",
+      "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main",
+      "display_title": "main",
+      "structuredContent": {
+        "title": "main",
+        "content": "{\"ref\":\"refs/heads/main\",\"node_id\":\"REF_kwDOUaTr669yZWZzL2hlYWRzL21haW4\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/refs/heads/main\",\"object\":{\"sha\":\"8c9c0b07d90fd78657539cdcbcd23fbf289c4f95\",\"type\":\"commit\",\"url\":\"https://api.github.com/repos/MrScripty/Tuldok/git/commits/8c9c0b07d90fd78657539cdcbcd23fbf289c4f95\"}}",
+        "display_url": "https://api.github.com/repos/MrScripty/Tuldok/git/ref/heads/main"
+      }
+    },
+    "isError": false
+  },
+  "initial_encoded_url_rejection": {
+    "content": [
+      {
+        "type": "text",
+        "text": "HTTPError: 400: GitHub Fetch URL contains an invalid repository path. (Response: None)"
+      }
+    ],
+    "structuredContent": {
+      "error": "HTTPError: 400: GitHub Fetch URL contains an invalid repository path. (Response: None)",
+      "error_code": "INVALID_ARGUMENT"
+    },
+    "isError": true
+  }
+}
