@@ -185,6 +185,12 @@ ordinary exact comparison needs its existing v2 contract; a v1-only server canno
 silently downgrade to the old implicit selection. Compatible/incompatible is a
 comparison result, not a model-quality acceptance claim.
 
+The canonical `AgentClient` correlates successful ordinary v2 replies with the
+requested mode, ordered Run IDs, metric ID and all three hashes on each side.
+A schema-valid reply with a different selection raises a transport error without
+retrying or selecting another operation. Existing low-level v1 replies retain
+their original wire contract.
+
 ## CLI and compatibility
 
 See [project CLI](project-cli.md#consumer-workflow-commands) for the matching
