@@ -119,6 +119,10 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
         wrong = dict(selection, metric_definition_sha256='f' * 64)
         with self.assertRaises(WorkbenchError): evidence.compare([verified, verified], [context, context], wrong)
 
+    def test_malformed_target_decoder_context_keeps_typed_refusal(self):
+        with self.assertRaises(WorkbenchError):
+            evidence.verify_target_payload({}, {}, {}, {}, b'')
+
     def refresh_synthetic_host_inventory(self):
         """Explicit synthetic prepublication hash snapshot, never an admitted Run."""
         for item in self.run['artifacts']:

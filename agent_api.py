@@ -1419,11 +1419,7 @@ class AgentClient:
             if result['result']['result_ref'] != arguments['ref'] or arguments['ref']['catalog_id'] != self.catalog_id:
                 raise AgentAPIError('Recovered publication does not match the requested Ref/catalog.', 'transport', 502)
         if op['operation_id'] == 'runs.publication_model_evidence' and result['status'] < 400:
-            value = result['result']; ref = arguments['ref']
-            producer = value['evidence'].get('manifest', {}).get('producer', {})
-            if (value['result_ref'] != ref or ref['catalog_id'] != self.catalog_id
-                    or producer.get('catalog_id') != ref['catalog_id'] or producer.get('run_id') != ref['run_id']):
-                raise AgentAPIError('Recovered evidence does not match the requested result/catalog.', 'transport', 502)
+            validate_publication_evidence(result['result'], arguments, self.catalog_id)
         if op['operation_id'] == 'runs.compare_publication_evidence' and result['status'] < 400:
             refs = [arguments['ref'], arguments['other_ref']]; value = result['result']
             if value['result_refs'] != refs or any(ref['catalog_id'] != self.catalog_id for ref in refs):
@@ -1510,6 +1506,31 @@ def validate_publication_segment(value, request):
     if value.get('result_ref') != request['ref'] or value.get('run_id') != request['ref']['run_id']:
         raise AgentAPIError('Publication segment differs from its exact requested result.', 'artifact_mismatch', 409)
     return validate_segment(value, dict(request, run_id=request['ref']['run_id']))
+
+
+def validate_publication_evidence(value, request, catalog_id):
+    try:
+        ref = request['ref']; evidence = value['evidence']; producer = evidence['manifest']['producer']
+        if (value['result_ref'] != ref or ref['catalog_id'] != catalog_id
+                or producer['catalog_id'] != ref['catalog_id'] or producer['run_id'] != ref['run_id']):
+            raise ValueError()
+        selectors = request.get('selectors', {})
+        if 'checkpoint_sha256' in selectors:
+            entries = evidence['checkpoint_index']['entries']; checkpoints = evidence['checkpoints']
+            if type(entries) is not list or type(checkpoints) is not list or len(entries) != len(checkpoints):
+                raise ValueError()
+            selected = [index for index, entry in enumerate(entries)
+                        if entry['checkpoint']['sha256'] == selectors['checkpoint_sha256']]
+            if len(selected) != 1 or evidence['checkpoint'] != checkpoints[selected[0]]:
+                raise ValueError()
+            if evidence['checkpoint']['run_id'] != ref['run_id'] or evidence['checkpoint']['clocks'] != entries[selected[0]]['clocks']:
+                raise ValueError()
+        if 'field_id' in selectors:
+            field = evidence['field']
+            if any(field[key] != selectors[key] for key in ('checkpoint_sha256', 'member_ordinal', 'field_id', 'axis', 'index')):
+                raise ValueError()
+    except (ValueError, KeyError, TypeError, IndexError):
+        raise AgentAPIError('Recovered evidence does not match its exact requested Ref/checkpoint/field selection.', 'transport', 502) from None
 
 
 def verify_publication_artifact(client, ref, name, expected_sha256, *, consume=None, chunk_bytes=8*1024*1024):

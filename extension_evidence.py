@@ -570,7 +570,6 @@ def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
 
 
 @boundary
-@boundary
 def compare(verified, contexts, body):
     """Reuse exact scalar comparison with the authoritative field policies."""
     require(type(verified) is list and len(verified) == 2 and type(contexts) is list and len(contexts) == 2,
@@ -593,6 +592,7 @@ def compare(verified, contexts, body):
     return result
 
 
+@boundary
 def verify_target_payload(definition, policy, member, field, raw):
     """Check one finite reference payload against the explicit recipe semantics.
 

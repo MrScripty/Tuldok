@@ -26,6 +26,34 @@ class PublicationContractCompatibilityTests(unittest.TestCase):
                 with self.subTest(operation=operation, version=version):
                     self.assertEqual(agent_api.contract(operation, int(version)), expected)
 
+    def test_exact_checkpoint_and_slice_replies_are_correlated_without_retry(self):
+        import tempfile
+        import extension_evidence
+        from test_extension_field_evidence import authored_fixture
+        with tempfile.TemporaryDirectory() as directory:
+            _, _, _, run, _ = authored_fixture(Path(directory))
+            verified = extension_evidence.verify(Path(directory), run, run['extension_context'])
+            selected = verified['checkpoint_index']['entries'][0]['checkpoint']['sha256']
+            selectors = {'checkpoint_sha256': selected, 'member_ordinal': 0, 'field_id': 'raw', 'axis': 'z', 'index': 0}
+            ref = dict(kind='recovered_publication_result', schema_version=1, catalog_id=run['dataset_id'], run_id=run['id'],
+                material_sha256=run['material_sha256'], inventory_sha256='a'*64, custody_receipt_sha256='b'*64, sha256='c'*64)
+            client = agent_api.AgentClient('http://127.0.0.1:12345', 'x'*32, run['dataset_id'])
+            client._ready = True; client._selected = {'runs.publication_model_evidence': 1}
+            good = {'status': 200, 'result': {'result_ref': ref, 'evidence': extension_evidence.query(verified, selectors)}}
+            variants = []
+            missing = copy.deepcopy(good); missing['result']['evidence'].pop('checkpoint'); missing['result']['evidence'].pop('field')
+            variants.append(missing)
+            wrong = copy.deepcopy(good); wrong['result']['evidence']['field']['index'] = 1; variants.append(wrong)
+            wrong = copy.deepcopy(good); wrong['result']['evidence']['field']['axis'] = 'x'; variants.append(wrong)
+            wrong = copy.deepcopy(good); wrong['result']['evidence']['checkpoint'] = verified['checkpoints'][-1]; variants.append(wrong)
+            for reply in variants:
+                with self.subTest(reply=variants.index(reply)), patch.object(client, '_request', return_value=reply) as request:
+                    with self.assertRaises(agent_api.AgentAPIError) as caught:
+                        client.call('runs.publication_model_evidence', {'ref': ref, 'selectors': selectors})
+                    self.assertEqual(caught.exception.code, 'transport'); self.assertEqual(request.call_count, 1)
+            with patch.object(client, '_request', return_value=good):
+                self.assertEqual(client.call('runs.publication_model_evidence', {'ref': ref, 'selectors': selectors}), good)
+
 
 @unittest.skipUnless(os.environ.get('TULDOK_DATABASE_URL'), 'Requires disposable PostgreSQL')
 class PublicationHTTPTests(unittest.TestCase):
