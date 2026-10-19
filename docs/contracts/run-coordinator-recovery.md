@@ -30,6 +30,8 @@ GO-intent acknowledgement prevents a subsequent GO and retains/drains its real
 waiting helper. Unknown reconciliation COMMIT acknowledgement returns
 `commit_unknown`, retains the original request and prevents replacement. The
 owner may explicitly reconcile the same key after inspecting saved health.
+A completed recovery key remains the original acknowledgement after a later
+fault; that later fault requires a fresh explicit current-generation request.
 Concurrent identical requests converge on one generation; another actor/body
 cannot reuse the key. Refusals of healthy/stale/conflicting requests do not stop
 the current coordinator. An unacknowledged replacement start remains retryable
