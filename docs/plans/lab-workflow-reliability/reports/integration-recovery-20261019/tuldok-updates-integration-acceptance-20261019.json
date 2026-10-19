@@ -136,6 +136,12 @@
       "outcome": "confirmed",
       "head": "0039a330253c088b68578e268afe6fc21fc36038",
       "base": "feature/lab-exact-preflight-report-20261019"
+    },
+    {
+      "action": "Publish durable publication source prerequisite and draft PR95",
+      "outcome": "confirmed",
+      "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+      "base": "feature/lab-preflight-storage-20261019"
     }
   ],
   "protected_original_heads": 82,
@@ -646,7 +652,8 @@
     "91independentmainbase;preserve",
     "checkpointbranchretainedpersistentarchive;notordinaryfeaturecleanup",
     "92->93; retarget93 before any92 source retirement",
-    "93->94; retarget94 before any93 source retirement"
+    "93->94; retarget94 before any93 source retirement",
+    "94->95; retarget95 before any94 source retirement"
   ],
   "historical_resume_after_auth_restoration": [
     "Verify remote89=33069a859836953960a06dfd6001cba54aba0aa0 and90=429d0c4ff44dba16bc95313d2a0980169dbc9b9f before publication; no prior pending writes.",
@@ -655,12 +662,12 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": [
-    "PR89 merged fb26e3c, PR90 merged c7f3575 confirmed, exact tested trees. PR92 confirmed retargeted to main at unchanged750332a. Do not repeat writes.",
-    "Parent owns passive CI monitoring, root owns active implementation and serial integrations. Reuse existing independent reviewer.",
-    "Await complete exact PR90/92 qualification, archive actual results, merge serially when ready and retarget each dependent before source deletion.",
-    "Finish and publish independently reviewed dependent exact preflight report branch; preserve verified remote checkpoint and checked restore.",
-    "Main post-merge acceptance and safe cleanup remain pending; preserve all 82 original heads/96 original worktrees, separate PR91 and prior denied PR77 operation.",
-    "Partial M1 reporting/capacity slices do not complete A1/M1 or publication recovery; no CUDA/science claim."
+    "Main c7f3575 includes reviewed PR89/90, exact tested tree equality verified. PR92 remains at750332a/base main, PR93at635c1f8/base92, PR94at0039a330/base93, PR95ate9336ed/base94. Do not rewrite reviewed source heads.",
+    "Parent owns passive hosted CI; root owns active implementation, archived acceptance, serial merge/retarget/postmerge checks and safe cleanup. Existing reviewer reused, no duplicate workers.",
+    "Local PostgreSQL17.6 now available on task-owned private Unix socket; fresh real boundary tests passed at92/93/94 and C2 source95. Earlier unavailable records are historical. No real lab catalog opened.",
+    "Continue full C2 bounded publication continuation/current-authority/accounting/exact recovered-result readers from published source95; no compute replay or adoption of changed outputs. FullM1 remains pending.",
+    "Merge only actual fully qualified exact heads, inspect archived results, retarget dependents before source retirement and complete required main-push qualification before terminal cleanup.",
+    "Preserve durable checkpoint, PR91 separate unmerged, original82heads/96worktrees and prior77retarget denial. No CUDA/scientific improvement claim."
   ],
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
   "pr89_accepted_and_merged": {
@@ -821,6 +828,43 @@
     "io_runtime": {
       "passed": 8,
       "seconds": 1.152
+    },
+    "real_early_ci_command": {
+      "ran": 30,
+      "passed": 30,
+      "skipped": 0,
+      "seconds": 5.187,
+      "log": "tuldok-pr94-actual-pg17-early-gate.log"
     }
+  },
+  "active_m1_publication_source": {
+    "branch": "feature/lab-publication-continuation-20261019",
+    "worktree": "/workspace/Tuldok-lab-publication-m1",
+    "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+    "parent": "0039a330253c088b68578e268afe6fc21fc36038",
+    "pr": 95,
+    "state": "published independently reviewed dependent draft, full hosted acceptance pending",
+    "scope": "Retain exact durable original-attempt completed/drained custody and structural output inventory before copying; no recovery command/result reader yet",
+    "tests": [
+      {
+        "ran": 11,
+        "passed": 11,
+        "seconds": 18.958,
+        "log": "tuldok-m1-publication-source-boundaries.log"
+      },
+      {
+        "ran": 11,
+        "passed": 11,
+        "seconds": 16.157,
+        "log": "tuldok-m1-publication-source-authority.log"
+      }
+    ],
+    "independent_tests": {
+      "ran": 6,
+      "passed": 6,
+      "skipped": 0,
+      "seconds": 7.868
+    },
+    "restore": "Independent clone fetched exact e9336ed and verified parent0039a330"
   }
 }

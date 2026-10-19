@@ -47,6 +47,16 @@
       "sha256": "9bf6119347a416cabb826dbb2d2d75c2200d215f6f470048c0ddcc1d52f057e8"
     },
     {
+      "path": "tuldok-m1-publication-source-authority.log",
+      "bytes": 2161,
+      "sha256": "4c2f59cbb95bf7e9d45972347bf118c5cf23dd5497be42046e3a060fdeebca15"
+    },
+    {
+      "path": "tuldok-m1-publication-source-boundaries.log",
+      "bytes": 2093,
+      "sha256": "1343e7a1773b3c0fbb6e0f12c94d37d76352e262409c5db07a2e30cdff2bac0b"
+    },
+    {
       "path": "tuldok-mcp-isolated-timeout-cases.log",
       "bytes": 747,
       "sha256": "96ba0e2a4a07722c8d8bc96e304902fc7832eef46bd81358ca15c494c72b60bc"
@@ -112,6 +122,11 @@
       "sha256": "4537f8603a57f8547da69c149de80b2fb9f0fde75c591845685ffdf51177eed7"
     },
     {
+      "path": "tuldok-pr94-actual-pg17-early-gate.log",
+      "bytes": 5707,
+      "sha256": "fff3634428a90a5df7d9ef0fd233eda32e57310ff8fef81b21f8ca5d4947b49c"
+    },
+    {
       "path": "tuldok-project-inspect-v4-browser-final.log",
       "bytes": 2125,
       "sha256": "c6ad2f7ceff616edaa197c8cb141cc7c5d350103077711612fbe96489d08a7f5"
@@ -148,8 +163,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 34063,
-      "sha256": "f3f6f8c7d6cf6ead18bb5bf2b040bc6dcd97735f8dcd1be78f266eff5e8d782b"
+      "bytes": 35913,
+      "sha256": "ebba9d579853c357713518795b41cfb4f00719491f4fc6431d29753d6bf37f0c"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
@@ -169,6 +184,13 @@
     "head": "0039a330253c088b68578e268afe6fc21fc36038",
     "parent": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
     "pr": 94,
+    "restore_verified": true
+  },
+  "publication_source_implementation": {
+    "branch": "feature/lab-publication-continuation-20261019",
+    "head": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+    "parent": "0039a330253c088b68578e268afe6fc21fc36038",
+    "pr": 95,
     "restore_verified": true
   }
 }
