@@ -67,7 +67,12 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   async function click(selector){const box=await until(()=>evaluate(`(async()=>{const e=${element(selector)};if(!e||e.disabled||!e.getClientRects().length)return null;e.scrollIntoView({block:'center'});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const b=e.getBoundingClientRect(),x=b.x+b.width/2,y=b.y+b.height/2,hit=document.elementFromPoint(x,y);return hit&&(hit===e||e.contains(hit))?{x,y}:null})()`),'Click target unavailable '+selector);for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,...box});}
   async function key(key,code=key,modifiers=0){for(const type of ['keyDown','keyUp'])await send('Input.dispatchKeyEvent',{type,key,code,modifiers,windowsVirtualKeyCode:{Enter:13,Escape:27,Tab:9,a:65}[key]||0,...(type==='keyDown'&&key==='Enter'?{text:'\r',unmodifiedText:'\r'}:{})});}
   async function fill(selector,value){await click(selector);await key('a','KeyA',2);await send('Input.insertText',{text:value});}
-  const select=(selector,value)=>evaluate(`(()=>{const e=${element(selector)};e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  async function select(selector,value){
+    // A human can select only a rendered option; restored source state can be
+    // available before the asynchronous project list has populated this select.
+    await until(()=>evaluate(`(()=>{const e=${element(selector)};return !!e&&!e.disabled&&Array.from(e.options).some(option=>option.value===${JSON.stringify(value)})&&(${JSON.stringify(selector)}!=='#dataset'||typeof e.onchange==='function');})()`),'Selection option unavailable '+selector);
+    return evaluate(`(()=>{const e=${element(selector)};e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  }
   async function nav(view){await evaluate(`document.getElementById('nav-${view}').focus()`);await key('Enter');await until(()=>evaluate(`!document.getElementById('view-${view}').hidden && !document.getElementById('project-${view}-root').hidden`));await until(()=>text(`#project-${view}-root`).then(value=>value?.includes('PROJECT · SAVED SNAPSHOT')));}
   async function capture(name,width,selector){await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate(`${element(selector)}.scrollIntoView({block:'start'})`);await pause(80);assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'Project viewport overflow '+name);const file=name+'.jpg';fs.writeFileSync(path.join(report,file),Buffer.from((await send('Page.captureScreenshot',screenshotOptions)).data,'base64'));captures.push({file,width,height:900,selector,qualification:labRoot?'Copied actual source inspection only; no execution or scientific verification':'Synthetic project UI/lifecycle fixture only'});}
   const check=value=>{checks.push(value);console.log('PASS',value);};
@@ -143,8 +148,14 @@ const serverArgs=port=>['-u','app.py','--port',String(port),'--data',path.join(t
   check('Registered current project opens through a shareable project link');
   await reload();await until(()=>evaluate('document.getElementById("dataset")?.value==='+JSON.stringify('project:'+first.id)));await until(()=>text('#project-runs-root').then(value=>value?.includes(first.name)));assert.equal(await evaluate('document.getElementById("view-runs").hidden'),false);
   await select('#dataset','catalog');
+  const heldCatalog=await send('Page.addScriptToEvaluateOnNewDocument',{source:`if(window===top){const original=window.fetch;window.initialProjectListHeld=false;window.fetch=async(...args)=>{const response=await original(...args);if(String(args[0]).split('?')[0]==='/api/workspace/project-snapshots'&&!window.initialProjectListHeld){window.initialProjectListHeld=true;await new Promise(resolve=>window.releaseInitialProjectList=resolve);}return response;};}`});
   await reload();await until(()=>evaluate('document.getElementById("dataset")?.value==="catalog"'));
-  await select('#dataset','project:'+first.id);await until(()=>text('#project-runs-root').then(value=>value?.includes(first.name)));
+  await until(()=>evaluate('window.initialProjectListHeld===true'));
+  const choosingProject=select('#dataset','project:'+first.id);
+  await pause(150);assert.equal(await evaluate('document.getElementById("dataset").value'),'catalog','A not-yet-rendered project option cannot be selected');
+  await evaluate('window.releaseInitialProjectList()');await choosingProject;
+  await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:heldCatalog.identifier});
+  await until(()=>text('#project-runs-root').then(value=>value?.includes(first.name)));
   check('A project link initializes navigation once; explicit later catalog selection survives reload');
   server.kill('SIGINT');await until(()=>server.exitCode!==null,'Project server did not drain');server=launch('python3',serverArgs(port),{cwd:root,stdio:['ignore','pipe','pipe']});let reopened='';server.stdout.on('data',chunk=>reopened+=chunk);server.stderr.on('data',chunk=>serverErrors+=chunk);await until(()=>reopened.includes('Tuldok:'));
   await reload();await until(()=>text('#project-runs-root').then(value=>value?.includes(first.name)));await click('#project-runs-root [data-project-evidence="report"]');await until(()=>text('#project-runs-root .project-evidence-output pre').then(value=>value===expectedEvidence));
