@@ -1,0 +1,53 @@
+test_copy_fault_preserves_acknowledged_drainage_and_frozen_source (test_run_publication_continuation.PublicationSourceIntegrationTests.test_copy_fault_preserves_acknowledged_drainage_and_frozen_source) ... FAIL
+test_durable_output_verification_syncs_bytes_before_returning_inventory (test_run_publication_continuation.PublicationSourceTests.test_durable_output_verification_syncs_bytes_before_returning_inventory) ... ERROR
+test_frozen_source_binds_original_attempt_receipt_and_inventory (test_run_publication_continuation.PublicationSourceTests.test_frozen_source_binds_original_attempt_receipt_and_inventory) ... ERROR
+test_idempotent_proof_refuses_adopting_new_inventory_or_custody (test_run_publication_continuation.PublicationSourceTests.test_idempotent_proof_refuses_adopting_new_inventory_or_custody) ... ERROR
+
+======================================================================
+ERROR: test_durable_output_verification_syncs_bytes_before_returning_inventory (test_run_publication_continuation.PublicationSourceTests.test_durable_output_verification_syncs_bytes_before_returning_inventory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-m1/tests/test_run_publication_continuation.py", line 77, in test_durable_output_verification_syncs_bytes_before_returning_inventory
+    result = recipe_contract.verify_outputs(output, rules, 3, durable=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: verify_outputs() got an unexpected keyword argument 'durable'
+
+======================================================================
+ERROR: test_frozen_source_binds_original_attempt_receipt_and_inventory (test_run_publication_continuation.PublicationSourceTests.test_frozen_source_binds_original_attempt_receipt_and_inventory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-m1/tests/test_run_publication_continuation.py", line 41, in test_frozen_source_binds_original_attempt_receipt_and_inventory
+    ref = self.retain()
+          ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-m1/tests/test_run_publication_continuation.py", line 38, in retain
+    return self.owner._retain_external_publication_source(self.run, self.receipt, self.inventory)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Runs' object has no attribute '_retain_external_publication_source'
+
+======================================================================
+ERROR: test_idempotent_proof_refuses_adopting_new_inventory_or_custody (test_run_publication_continuation.PublicationSourceTests.test_idempotent_proof_refuses_adopting_new_inventory_or_custody)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-m1/tests/test_run_publication_continuation.py", line 57, in test_idempotent_proof_refuses_adopting_new_inventory_or_custody
+    ref = self.retain(); original = (self.stage / 'publication-source-v1.json').read_bytes()
+          ^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-publication-m1/tests/test_run_publication_continuation.py", line 38, in retain
+    return self.owner._retain_external_publication_source(self.run, self.receipt, self.inventory)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Runs' object has no attribute '_retain_external_publication_source'
+
+======================================================================
+FAIL: test_copy_fault_preserves_acknowledged_drainage_and_frozen_source (test_run_publication_continuation.PublicationSourceIntegrationTests.test_copy_fault_preserves_acknowledged_drainage_and_frozen_source)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-publication-m1/tests/test_run_publication_continuation.py", line 98, in test_copy_fault_preserves_acknowledged_drainage_and_frozen_source
+    self.assertEqual(run['custody_phase'], 'drained')
+AssertionError: 'go_intent' != 'drained'
+- go_intent
++ drained
+
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.919s
+
+FAILED (failures=1, errors=3)

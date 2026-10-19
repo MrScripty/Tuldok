@@ -1,0 +1,91 @@
+{
+  "base": "0039a330253c088b68578e268afe6fc21fc36038",
+  "branch": "feature/lab-publication-continuation-20261019",
+  "scope": "Durable original successful-compute/custody/structural-output-inventory retention prerequisite; no recovery command or result reader",
+  "red": {
+    "ran": 4,
+    "failures": 1,
+    "errors": 3,
+    "cause": "Missing retention/durable verifier and unacknowledged drainage under copy fault"
+  },
+  "initial": {
+    "ran": 4,
+    "passed": 4,
+    "seconds": 2.806
+  },
+  "affected_boundary_group": {
+    "ran": 11,
+    "passed": 11,
+    "skipped": 0,
+    "seconds": 18.958,
+    "environment": "task-owned PostgreSQL17.6, real neutral process custody, original fixtures"
+  },
+  "independent_review": {
+    "agent": "/root/mcp_contract_ci_review",
+    "result": "No blocking source/persistence/test finding; retention prerequisite only",
+    "subject_fingerprint": "c7bdeed6d62947db2b26082cd801db9c3810eaf3e495b630e4c7d7fec14568b5",
+    "tests": {
+      "ran": 6,
+      "passed": 6,
+      "skipped": 0,
+      "seconds": 7.868
+    }
+  },
+  "persistence": {
+    "metadata_schema": 10,
+    "supported_metadata_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "new_file_format": "external_publication_source_v1",
+    "new_ref_kind": "external_publication_source, schema_version1",
+    "max_proof_bytes": 49152,
+    "placement": "private original .external-Run directory, outside published exact inventory",
+    "accounting": "Existing custody allowance; one small file and Ref, no third output copy or new charge/reservation",
+    "backup": "Existing ordinary-file/private-staging and opaque-document retention; full recovery/restore acceptance still pending"
+  },
+  "limitations": [
+    "No recovered result or new reader exists",
+    "No authority to replay compute or adopt changed outputs",
+    "Cold _load checks Ref shape/identity; future source consumer must verify proof bytes/hash and current authority",
+    "Full C2/A2/M1 recovery, semantic evidence, accounting and bounded partial-copy continuation still require qualification",
+    "No runtime/hardware/science acceptance claim"
+  ],
+  "files": [
+    {
+      "path": "tuldok-m1-publication-source-authority.log",
+      "bytes": 2161,
+      "sha256": "4c2f59cbb95bf7e9d45972347bf118c5cf23dd5497be42046e3a060fdeebca15"
+    },
+    {
+      "path": "tuldok-m1-publication-source-boundaries.log",
+      "bytes": 2093,
+      "sha256": "1343e7a1773b3c0fbb6e0f12c94d37d76352e262409c5db07a2e30cdff2bac0b"
+    },
+    {
+      "path": "tuldok-m1-publication-source-green.log",
+      "bytes": 905,
+      "sha256": "9690d7bb6e6eaee685265057af2fd347c906b25b899e7896804042a6ed7576d4"
+    },
+    {
+      "path": "tuldok-m1-publication-source-red.log",
+      "bytes": 4343,
+      "sha256": "0df77b3c3a62e50e81a3561322f7be90d6a49fbb58c70236b15c1bfe75972946"
+    }
+  ],
+  "authority_and_commit_group": {
+    "ran": 11,
+    "passed": 11,
+    "skipped": 0,
+    "seconds": 16.157,
+    "scope": "new source/copy-fault/no-replay/counts cases plus existing Study admission rollback/unknown-ack/receipt semantics"
+  }
+}

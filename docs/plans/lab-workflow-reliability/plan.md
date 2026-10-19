@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — current large-output storage observation after exact preparation reporting; full publication recovery remains pending
+**Current phase:** M1 — retain exact original-attempt publication source before recoverable copying; recovery and result readers remain pending
 
-**Next slice:** Qualify Runs-owned preflight storage observation and exact report compatibility, then extend structured refusal diagnostics and publication continuation.
+**Next slice:** Qualify durable source/drainage retention under copy, commit-acknowledgement and cancellation faults; then implement explicit publication continuation and exact result readers.
 
 **Acceptance status:** `pending`
 
@@ -120,6 +120,34 @@ tests precede the actual hosted PostgreSQL no-effect case and the existing
 large-output admission/publication suites. No persistent schema or dependency
 changes are admitted. Publish the branch and recovery receipt to verified remote
 storage; retain worktree/ref until safe reviewed integration or archival.
+
+## Publication-continuation implementation admission
+
+Continued M1/C2 implementation uses
+`feature/lab-publication-continuation-20261019` in
+`/workspace/Tuldok-lab-publication-m1`, based on independently reviewed PR94
+`0039a330253c088b68578e268afe6fc21fc36038`. PR94 and prior source heads
+stay fixed; root retains serial integration. PR93/94 are dependent drafts and
+their full hosted acceptance remains separate from local PostgreSQL boundaries.
+
+The first coherent prerequisite retains the original completed/drained receipt
+and measured declared-output inventory before copying. It syncs raw output bytes
+and private proof, saves only an exact versioned Ref in an acknowledged drainage
+transaction, and reloads cancellation before publication. No partial copy becomes
+a result, and changed outputs cannot replace a frozen proof. Existing semantic
+verification, authority and full conservative Study accounting remain owners.
+Recovery commands and result readers are still pending full C2 acceptance.
+
+Write set: `runs.py`, `recipe_contract.py`,
+`tests/test_run_publication_continuation.py`, affected canonical contracts and
+this plan directory. New private file and Ref formats each start at version 1;
+no metadata schema migration or old wire-identity change. Existing backup covers
+private staging files/opaque documents. Bound the proof at 48 KiB inside existing
+custody allowance; make no third output copy. Preserve unknown COMMIT outcomes,
+old Run completion gates, Study charge and existing publication inventory.
+Real disposable PostgreSQL/custodian fault tests, cold reopen and independent
+review precede publication/integration. Retain and push all coherent source and
+receipts to verified durable storage; unrelated work remains untouched.
 
 ## Objective Acceptance
 
