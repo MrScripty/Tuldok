@@ -163,8 +163,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 38545,
-      "sha256": "7787667ab446ff324a4214f87045916763f3553bb8c8892448eb9c568a88732a"
+      "bytes": 40306,
+      "sha256": "726233b5fb6dec8607f542abcf00cdaeb7f58703aa604f82ae6a7473fe8a3631"
     },
     {
       "path": "tuldok-pr92-final-qualified-evidence.json",
@@ -180,6 +180,16 @@
       "path": "tuldok-m1-publication-recovery-study.log",
       "bytes": 307,
       "sha256": "55a99ea4e5513b31309b8357cfdb1c28094379c25c9e0e073238602e3089206b"
+    },
+    {
+      "path": "tuldok-pr93-final-qualified-evidence.json",
+      "bytes": 1146,
+      "sha256": "b457d3af6d36c498b5dfde530d12784389287ce72ea90d5ee82279cd56ae070c"
+    },
+    {
+      "path": "tuldok-pr94-final-qualified-evidence.json",
+      "bytes": 1422,
+      "sha256": "2e3da6a96ccfbd876491c98ba140f7aa6734f943ba88756630ee3187b99785c8"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
@@ -222,6 +232,15 @@
     "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
     "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
     "pr": 97,
+    "restore_verified": true
+  },
+  "main_after_pr93": "031df288a3bbeddd0a506311edab1b9d18575964",
+  "main_after_pr94": "2652b0605796138821cee4ccbea62c1433e74bce",
+  "publication_evidence_implementation": {
+    "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+    "branch": "feature/lab-publication-evidence-20261019",
+    "pr": 98,
+    "base": "0da7a811d252cc4c6774260b98ee2a707efec517",
     "restore_verified": true
   }
 }

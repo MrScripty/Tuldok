@@ -44,11 +44,10 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "Qualify required main post-merge workflows before terminal cleanup",
-    "Continue M1 known pre-compute resource failures, structured diagnostic and same-Run publication continuation",
-    "Retain durable checkpoint, original 82 heads/96 worktrees, PR91 and unrelated resources",
-    "Qualify exact PR93/94/95 CI and serially merge with dependent retargets",
-    "Complete and independently qualify same-Run publication recovery and readers"
+    "Qualify PR95/96/97/98 exact heads and serially merge/retarget whenready",
+    "Required latestmain265 postmerge workflows before terminalacceptance/cleanup",
+    "Complete Runpanel/lineage/indexed diagnostics and full M1-M6 acceptance",
+    "Preserve82originalheads/96worktrees, PR91 and allunrelatedresources; checkpoint retained"
   ],
   "external_mutations": [
     {
@@ -686,11 +685,11 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": {
-    "worktree": "/workspace/Tuldok-lab-publication-evidence-m1",
-    "branch": "feature/lab-publication-evidence-20261019",
-    "base": "0da7a811d252cc4c6774260b98ee2a707efec517",
-    "next": "Implement exact Ref evidence queries/comparison; independent actual synthetic witness active on isolated branch; UI/lineage/indexed diagnostics pending",
-    "parent_role": "passive hosted CI monitoring; root serial acceptance/retarget/merge and source"
+    "root_worktree": "/workspace/Tuldok-lab-publication-evidence-m1",
+    "root_head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+    "next": "M1remainingC1/refusal diagnostics, indexeddiagnostics and M2RES1 whileisolatedUI/lineageworkercontinues",
+    "parent_role": "passiveCI; root serialintegration+source",
+    "no_science_or_cuda_claim": true
   },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
   "pr89_accepted_and_merged": {
@@ -940,7 +939,7 @@
     "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
     "pr": 97,
     "restore_verified": true,
-    "review": "independent interface review pending; core separately cleared",
+    "review": "independent exact0da source/test/docs cleared;3 actual independent tests passed, all110 prior full contracts equal",
     "actual_http_cli": {
       "passed": 4,
       "seconds": 70.531
@@ -965,5 +964,49 @@
     "pr94_lifecycle": "success reported by parent; archive acceptance pending root",
     "pr94_cpu": "success reported by parent",
     "pr93_lifecycle": "running; preserve dependency order"
+  },
+  "main_after_pr93": "031df288a3bbeddd0a506311edab1b9d18575964",
+  "main_after_pr94": "2652b0605796138821cee4ccbea62c1433e74bce",
+  "serial_merges_93_94": {
+    "pr93": {
+      "source": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+      "merge": "031df288a3bbeddd0a506311edab1b9d18575964",
+      "tested_tree": "33604359047e724c8306bfd59641d7e30900f260",
+      "merge_tree_equal": true,
+      "pr94_retarget_main": "confirmed"
+    },
+    "pr94": {
+      "source": "0039a330253c088b68578e268afe6fc21fc36038",
+      "merge": "2652b0605796138821cee4ccbea62c1433e74bce",
+      "tested_tree": "ed3ec2d40e6d34b776c5ea6bfd1ce4ff8221894a",
+      "merge_tree_equal": true,
+      "pr95_retarget_main": "confirmed unchanged e933"
+    },
+    "source_cleanup": "none; waiting required main qualification"
+  },
+  "main_pr94_postmerge_runs": {
+    "lifecycle": 39320129641,
+    "captured_cpu": 39320129421,
+    "workspace": 39320129339,
+    "catalog": 39320129314,
+    "static_kit": 39320129472,
+    "qualification": "initialread: lifecycle/CPUrunning, other3success; parent owns passive monitor"
+  },
+  "publication_evidence": {
+    "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+    "branch": "feature/lab-publication-evidence-20261019",
+    "pr": 98,
+    "base": "0da7a811d252cc4c6774260b98ee2a707efec517",
+    "restore_verified": true,
+    "actual_positive": {
+      "head": "904922ce867f1304a75a21ae6e040607a2d9ba7e",
+      "state": "passed",
+      "seconds": 117.976,
+      "scope": "freshCPU capture/custody/syntheticsemantic recovery/HTTPfield/comparison/SDK; no training/numericalacceptance"
+    },
+    "subsequent_review_fixes": "415f5e124c6bf3bc66a05b427c01e83c5f5d01b8 separately qualified; independent4pass; affectedowner28pass",
+    "status_v2": "actual3pass9.618; finalsmalladdonreviewpending",
+    "hosted": "pending",
+    "ui": "isolatedworker active; branch feature/lab-publication-run-panel-20261019"
   }
 }

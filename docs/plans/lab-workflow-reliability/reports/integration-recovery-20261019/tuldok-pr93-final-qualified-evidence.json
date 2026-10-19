@@ -1,0 +1,47 @@
+{
+  "repository": "MrScripty/Tuldok",
+  "pr": 93,
+  "source_head": "635c1f8b6bd4d562f656fc23fc54ab7e0ff3c465",
+  "merge_sha": "031df288a3bbeddd0a506311edab1b9d18575964",
+  "qualified_tree": "33604359047e724c8306bfd59641d7e30900f260",
+  "merge_tree_equal": true,
+  "lifecycle": {
+    "run": 39309770426,
+    "job": 118256029205,
+    "all_158_steps_success": true,
+    "early_preflight": {
+      "passed": 21,
+      "skipped": 0,
+      "seconds": 3.674
+    },
+    "agent": {
+      "passed": 74,
+      "skipped": 0,
+      "seconds": 602.564
+    },
+    "mcp": {
+      "passed": 19,
+      "skipped": 0,
+      "seconds": 45.641
+    },
+    "full_python": {
+      "passed_or_skipped": 1556,
+      "skipped": 72,
+      "seconds": 1983.01,
+      "conclusion": "OK"
+    }
+  },
+  "other_exact_checks": [
+    "captured_cpu_success",
+    "catalog_success",
+    "workspace_ui_success",
+    "CodeRabbit_success"
+  ],
+  "local_actual_pg": {
+    "passed": 4,
+    "skipped": 0,
+    "seconds": 104.806
+  },
+  "dependent94_retarget_main": "confirmed before cleanup",
+  "science_limits": "Explicit skips remain; no fresh numerical/CUDA/real-lab acceptance inferred"
+}

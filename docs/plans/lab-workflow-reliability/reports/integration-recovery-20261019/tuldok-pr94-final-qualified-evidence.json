@@ -1,0 +1,57 @@
+{
+  "repository": "MrScripty/Tuldok",
+  "source_head": "0039a330253c088b68578e268afe6fc21fc36038",
+  "pr": 94,
+  "lifecycle": {
+    "run": 39310921513,
+    "job": 118259953830,
+    "conclusion": "success",
+    "all_158_steps_success": true,
+    "early_preflight": {
+      "tests": 30,
+      "skipped": 0,
+      "seconds": 10.54
+    },
+    "agent": {
+      "tests": 74,
+      "skipped": 0,
+      "seconds": 324.765
+    },
+    "mcp": {
+      "tests": 19,
+      "skipped": 0,
+      "seconds": 24.169
+    },
+    "full_python": {
+      "tests": 1565,
+      "skipped": 72,
+      "seconds": 1356.196
+    },
+    "boundary_steps": [
+      10,
+      23,
+      24,
+      32,
+      45,
+      46,
+      48,
+      49,
+      148,
+      149,
+      150,
+      151
+    ],
+    "logged_connection_reset": "One HTTP server ConnectionResetError logged during full suite; no unittest failures/errors; full suite and all steps success"
+  },
+  "captured_cpu": {
+    "run": 39310921443,
+    "job": 118259953720,
+    "conclusion": "success",
+    "all_13_steps_success": true
+  },
+  "integration": "Merged after93; dependent95 retargeted main unchanged e933; no cleanup before required main qualification",
+  "science_limit": "No fresh numerical improvement, CUDA or real-lab acceptance inferred",
+  "merge_sha": "2652b0605796138821cee4ccbea62c1433e74bce",
+  "qualified_tree": "ed3ec2d40e6d34b776c5ea6bfd1ce4ff8221894a",
+  "merge_tree_equal": true
+}
