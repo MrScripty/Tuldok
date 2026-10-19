@@ -232,7 +232,7 @@
       "disposition": "retained-protected pending required CI and merge"
     }
   ],
-  "checkpoint_at": "2026-10-19T21:29:13.418918+00:00",
+  "checkpoint_at": "2026-10-19T21:36:01.033821+00:00",
   "state": "active source implementation; serial merges96/97 confirmed; hosted dependent qualification pending",
   "hosted_runs": [
     {
@@ -1113,10 +1113,28 @@
     "state": "initial all in_progress; parent owns passive monitor"
   },
   "phase_timing_active": {
-    "worktree": "/workspace/Tuldok-lab-phase-timing-m3",
-    "source": "bdcc5ca63df3e9eff3112a1df9c085cb07c4633f",
-    "state": "source frozen for root independent review; worker final53-case actualPG affected qualification running",
-    "previous53": "passed at38853e4; not latestsource claim",
-    "remote": "not yet published"
+    "pr": 103,
+    "head": "c8a327f0289577a5d671253b079616e60541ea98",
+    "source": "5c9e6f9b07f929d3444b7e052a3a97ba3efd26fb",
+    "composed_source": "96c2adebc3a46b9fe92b179097474e08474689c3",
+    "base": "feature/lab-coordinator-panel-20261019",
+    "review": "root full source/consumerclear; finalemptyhelpersamplefix included",
+    "tests": "authored14pass35.783s final5c; previous53pass59.147s bdcc; root9pass23.377s5c; composed15pass40.190s96c; allzero skips",
+    "state": "published draft; hosted/fullM3browserpending",
+    "report": "docs/plans/lab-workflow-reliability/reports/m3-phase-timing-core/integration-validation.json"
+  },
+  "phase_ui_active": {
+    "worktree": "/workspace/Tuldok-lab-phase-ui-m3",
+    "branch": "feature/lab-phase-panel-20261019",
+    "head": "fa225c0aa0c68f109dddf10c49557ccb48dd1c56",
+    "state": "whole core normallycomposed; UIcontroller+canonicalpinpass; actualbrowserfirstjourneyrunning, newtests uncommitted",
+    "writes": "staticphase/real/external/html/css; appstaticrouteonly; focusedcontroller/pin/browser/fixture+CI/docs",
+    "no_claim": "fullM3 acceptance remainspending"
+  },
+  "m4_active": {
+    "worker": "/root/mcp_contract_ci_review",
+    "worktree": "/workspace/Tuldok-lab-benchmark-baseline-m4",
+    "branch": "test/lab-workflow-baseline-20261019",
+    "state": "controlled actual T5 baseline only; no production/cache edits before measurement"
   }
 }
