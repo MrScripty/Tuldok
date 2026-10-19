@@ -193,27 +193,31 @@ class BatchWorkflowHTTPTests(unittest.TestCase):
 
     def test_actual_cancellation_interrupts_held_http_read_without_cancel_or_retry(self):
         watchdogs_before = {thread.ident for thread in threading.enumerate() if thread.name == 'agent-read-budget'}
-        entered = threading.Event(); release = threading.Event(); stop = threading.Event()
+        entered = threading.Event(); release = threading.Event(); stop = threading.Event(); left = threading.Event()
         original = self.dataset.runs.artifact_segments
         def held(body, **kwargs):
             entered.set()
             if not release.wait(10):
                 raise AssertionError('Held batch test did not release owner')
-            return original(body, **kwargs)
+            try:
+                return original(body, **kwargs)
+            finally:
+                left.set()
         def cancel():
             if entered.wait(10): stop.set()
         worker = threading.Thread(target=cancel); worker.start()
         start = time.monotonic()
         try:
-            with patch.object(self.dataset.runs, 'artifact_segments', side_effect=held):
+            with patch.object(self.dataset.runs, 'artifact_segments', side_effect=held), \
+                    patch.object(self.client, '_request', wraps=self.client._request) as requests:
                 receipt = self.workflow.collect_batch(self.manifest, self.output, cancelled=stop)
                 self.assertEqual(receipt['state'], 'stopped', receipt)
                 self.assertLess(time.monotonic()-start, 5)
+                self.assertEqual([call.args[1] for call in requests.call_args_list],
+                                 ['/api/workspace/runs/'+self.run_id, BATCH_PATH])
                 release.set()
                 # Keep the service fault active until its handler has left it.
-                deadline = time.monotonic()+5
-                while sum(row['path'] == BATCH_PATH for row in self.calls()) < 1 and time.monotonic() < deadline:
-                    time.sleep(.01)
+                self.assertTrue(left.wait(5))
         finally:
             release.set(); worker.join(5)
         self.assertFalse(worker.is_alive())
