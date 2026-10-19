@@ -122,6 +122,62 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
         return {table: self.dataset.db.execute('SELECT count(*) FROM ' + table).fetchone()[0]
             for table in ('workspace_graphs', 'workspace_runs', 'access_execution_grants', 'access_execution_consumptions', 'model_attempt_reservations')}
 
+    def check_composed_readers(self, ref, public, inventory):
+        """Read the same admitted indexed evidence through composed public clients."""
+        from http.server import ThreadingHTTPServer
+        import threading
+        import agent_api
+        from app import make_handler
+        from extension_evidence import digest
+        from tuldok_client import WorkflowClient
+        agent = self.dataset.access.issue({'label': 'Indexed composition inspection', 'scopes': ['inspect']})
+        server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.dataset))
+        thread = threading.Thread(target=server.serve_forever); thread.start()
+        try:
+            client = agent_api.AgentClient('http://127.0.0.1:' + str(server.server_port),
+                agent['token'], self.dataset.db.dataset_id, timeout=60)
+            workflow = WorkflowClient(client)
+            capture = self.definition['model_evidence']['diagnostic_capture']
+            names = [capture['index']['name'], *[row['name'] for row in capture['shards']]]
+            manifest = workflow.collection_manifest(names=names, result_ref=ref)
+            output = self.root / 'composed-indexed-collection'
+            with patch.object(client, 'call', wraps=client.call) as dispatch:
+                collected = workflow.collect_batch(manifest, output)
+            operations = [call.args[0] for call in dispatch.call_args_list]
+            self.assertEqual(operations.count('runs.artifact_segments'), 1)
+            self.assertNotIn('runs.artifact_chunk', operations)
+            self.assertNotIn('runs.publication_artifact_chunk', operations)
+            self.assertEqual(collected['state'], 'complete', collected)
+            self.assertEqual({row['name'] for row in collected['items']}, set(names))
+            self.assertEqual({path.name for path in output.iterdir()}, set(names))
+            for name in names:
+                raw = (output / name).read_bytes()
+                self.assertEqual((len(raw), hashlib.sha256(raw).hexdigest()),
+                    (inventory[name]['bytes'], inventory[name]['sha256']))
+                self.assertEqual((output / name).stat().st_mode & 0o777, 0o600)
+            selection = {'metric_id': public['metric_definitions'][0]['id'], 'mode': 'paired'}
+            for prefix in ('', 'other_'):
+                selection.update({
+                    prefix + 'checkpoint_sha256': public['checkpoint_index']['entries'][0]['checkpoint']['sha256'],
+                    prefix + 'evaluation_sha256': inventory['model-evidence.json']['sha256'],
+                    prefix + 'metric_definition_sha256': digest(public['metric_definitions'][0]),
+                })
+            operand = {'kind': 'publication_result', 'ref': ref}
+            arguments = {'operands': [copy.deepcopy(operand), copy.deepcopy(operand)],
+                'selection': selection,
+                'point': {'field_id': public['fields'][0]['field_id'], 'x': 1, 'y': 2, 'z': 3}}
+            compared = client.call('runs.compare_scientific_evidence', arguments)
+            self.assertEqual(compared['status'], 200, compared)
+            self.assertEqual([row['operand'] for row in compared['result']['operands']], arguments['operands'])
+            self.assertEqual(compared['result']['point'], arguments['point'])
+            self.assertEqual(compared['result']['cases'][0]['prediction_delta']['value'], 0)
+            self.assertEqual(compared['result']['criterion']['state'], 'unknown')
+            return {'batch_collected_exact_artifacts': names, 'batch_calls': 1,
+                'individual_segment_calls': 0, 'comparison': 'same exact Ref diagnostic delta zero; no scientific acceptance'}
+        finally:
+            server.shutdown(); server.server_close(); thread.join(5)
+            self.assertFalse(thread.is_alive())
+
     def admit(self):
         import extension_evidence
         dataset = self.dataset; policy = self.definition['model_evidence']
@@ -218,6 +274,7 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
             public = self.dataset.runs.publication_model_evidence(recovered['result_ref'], {})['evidence']
             self.assertEqual(public['state'], 'verified'); self.assertNotIn('_diagnostics', public)
             self.assertNotIn('diagnostics', public)
+            composed_readers = self.check_composed_readers(recovered['result_ref'], public, indexed)
             with self.assertRaises(WorkbenchError):
                 self.dataset.runs.publication_artifact(recovered['result_ref'], 'diagnostic-0.json', '0' * 64)
             self.assertEqual(self.dataset.runs.recover_publication(body), recovered)
@@ -236,5 +293,5 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
             result_ref=recovered['result_ref'], artifacts=[indexed[capture['name']] for capture in
                 [self.definition['model_evidence']['diagnostic_capture']['index'],
                  *self.definition['model_evidence']['diagnostic_capture']['shards']]], coverage=index['coverage'],
-            verification_scope='source_destination_and_cold_exact_ref_reader', counts_before=before_counts,
+            verification_scope='source_destination_and_cold_exact_ref_reader', composed_readers=composed_readers, counts_before=before_counts,
             counts_after=self.counts(), accounting_and_events_unchanged=True, original_state=saved['state']), sort_keys=True))
