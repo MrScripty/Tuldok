@@ -75,6 +75,29 @@ class ExtensionEvidenceContractTests(unittest.TestCase):
 
     def verify(self):return evidence.verify(self.root,self.run,self.run['extension_context'])
 
+    def test_verification_stops_at_payload_and_field_boundaries(self):
+        import field_evidence
+        for phase, code in (('payload', 'cancelled'), ('field', 'unavailable')):
+            with self.subTest(phase=phase):
+                stopped = []
+                def guard():
+                    if stopped:
+                        raise WorkbenchError('Authored verification stop', code, 409)
+                original = evidence.read_regular if phase == 'payload' else field_evidence.validate_pair
+                calls = []
+                def stop_after_first(*args, **kwargs):
+                    calls.append(True)
+                    self.assertEqual(len(calls), 1, 'Verification continued after stop')
+                    value = original(*args, **kwargs)
+                    stopped.append(True)
+                    return value
+                target = 'extension_evidence.read_regular' if phase == 'payload' else 'field_evidence.validate_pair'
+                with patch(target, side_effect=stop_after_first):
+                    with self.assertRaises(WorkbenchError) as caught:
+                        evidence.verify(self.root, self.run, self.run['extension_context'], checkpoint=guard)
+                self.assertEqual(caught.exception.code, code)
+                self.assertEqual(len(calls), 1)
+
     def refresh_synthetic_host_inventory(self):
         """Explicit synthetic prepublication hash snapshot, never an admitted Run."""
         for item in self.run['artifacts']:

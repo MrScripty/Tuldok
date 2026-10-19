@@ -1,5 +1,33 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-19 — Runs-owned publication recovery core
+
+- Continued on `feature/lab-publication-recovery-20261019`, based on PR95
+  `e9336ed3c311c9590f1eedc3f2fffb49c3d85d65`. PR92 merged at `2f333f9`;
+  PR93 retargeted to main. Existing dependency heads and unrelated work stay intact.
+- Added explicit owner-only same-Run continuation, persisted cancellation and
+  stable request identity, bounded history/wall checks, original-proof/capture/
+  output verification, reuse of owned partial publication, exact attached result
+  Ref, saved status and direct bounded integrity-checked result/artifact readers.
+  New helper remains Runs-owned; no scheduler, SQL migration or transport added.
+- Independent review reproduced cancellation truncating an intact output and
+  identified reused-file fsync and late authority gaps. Fixed all three, propagated
+  semantic stop checks and qualified the original manifest-fsync failure/reopen
+  path. Focused independent reruns cleared this core scope; no full C2 clearance.
+- Actual disposable PostgreSQL17.6: combined recovery/field contracts37 passed,
+  zero skips in55.467s. The actual finite Study reservation document, full settled
+  envelope and charged totals survive recovery/repetition/reconciliation exactly.
+  Separate stopped backup/restore/new-directory recovery passed1 in4.815s without
+  compute replay or rewriting historical spec. Logs are retained in this slice's
+  report directory; later expanded qualification is recorded there separately.
+- Original Run state/events/grant/reservation remain unchanged, legacy failed
+  readers refuse, and malformed/changed result bytes cannot be adopted. Current
+  source/result verification remains distinct from numerical acceptance.
+- Still pending: negotiated HTTP/agent/SDK/CLI/UI/lineage result integration,
+  segmented collection, exact evidence/compare, actual extension result path,
+  indexed diagnostics and remaining full M1–M6 acceptance. Real lab failure
+  receipts/CUDA/scientific results are not manufactured or claimed.
+
 ## 2026-10-19 — Plan preparation
 
 - Parent requested a standards-compliant implementation plan only, with a

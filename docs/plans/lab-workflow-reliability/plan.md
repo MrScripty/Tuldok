@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — retain exact original-attempt publication source before recoverable copying; recovery and result readers remain pending
+**Current phase:** M1 — qualify Runs-owned same-attempt publication recovery core; negotiated interfaces and full result collection remain pending
 
-**Next slice:** Qualify durable source/drainage retention under copy, commit-acknowledgement and cancellation faults; then implement explicit publication continuation and exact result readers.
+**Next slice:** Publish the independently reviewed recovery core and its real PostgreSQL/Study/restore witnesses, then implement negotiated status/action/result readers, SDK/CLI, Run panel and lineage integration.
 
 **Acceptance status:** `pending`
 

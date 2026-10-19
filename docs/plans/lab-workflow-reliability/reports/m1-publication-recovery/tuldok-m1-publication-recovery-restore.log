@@ -1,0 +1,6 @@
+test_stopped_backup_restores_original_proof_and_recovers_in_new_directory (test_run_publication_recovery.PublicationRecoveryTests.test_stopped_backup_restores_original_proof_and_recovers_in_new_directory) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 4.815s
+
+OK

@@ -88,6 +88,9 @@ class Runs:
         self._wake, self._stop = threading.Event(), threading.Event()
         self._thread = None
         self._thread_lock = threading.Lock()
+        self._publication_lock = threading.Lock()
+        self._publication_cancel = threading.Event()
+        self._publication_active = None
         self._blocked = False
         self._external_blocked = False
         self._confirmed_external = set()
@@ -181,6 +184,9 @@ class Runs:
                         or run['custody_phase'] not in ('prepared', 'barrier_ready', 'go_intent', 'drained')):
                     raise ValueError('Invalid external execution identity.')
                 identity = run.get('custody_identity')
+                if 'publication_fault' in run or 'publication_continuation' in run:
+                    import run_publication
+                    run_publication.validate_continuation(run)
                 if 'publication_source' in run:
                     source = run['publication_source']
                     if (type(source) is not dict or set(source) != {'kind', 'schema_version', 'catalog_id', 'run_id', 'sha256'}
@@ -402,6 +408,31 @@ class Runs:
         except (ValueError, TypeError):
             raise WorkbenchError('Submission must be finite JSON.') from None
 
+    @authorized('approve-execution', 'runs.recover_publication', owner_only=True)
+    def recover_publication(self, body):
+        import run_publication
+        return run_publication.recover(self, body)
+
+    @authorized('cancel', 'runs.cancel_publication', owner_only=True)
+    def cancel_publication(self, body):
+        import run_publication
+        return run_publication.cancel(self, body)
+
+    @authorized('inspect', 'runs.publication_result')
+    def publication_result(self, ref):
+        import run_publication
+        return run_publication.result(self, ref)
+
+    @authorized('inspect', 'runs.publication_status')
+    def publication_status(self, run_id):
+        import run_publication
+        return run_publication.status(self, run_id)
+
+    @authorized('inspect', 'runs.publication_artifact')
+    def publication_artifact(self, ref, name, expected_sha256):
+        import run_publication
+        return run_publication.artifact(self, ref, name, expected_sha256)
+
     def _receipt(self, key, request_hash):
         row = self.db.execute('SELECT id,request_sha256 FROM workspace_runs WHERE request_key=%s', (key,)).fetchone()
         if row:
@@ -506,9 +537,13 @@ class Runs:
         context=extension_evidence.validate_context(run.get('extension_context'),run,composition,static)
         return (context,captured) if with_captured_inputs else context
 
-    def _verify_extension(self,directory,run):
+    def _verify_extension(self,directory,run, *, checkpoint=None):
         import extension_evidence
+        if checkpoint is not None: checkpoint()
         context,captured=self._extension_context(run,with_captured_inputs=True)
+        if checkpoint is not None:
+            checkpoint()
+            return extension_evidence.verify(directory,run,context,captured=captured,checkpoint=checkpoint)
         return extension_evidence.verify(directory,run,context,captured=captured)
 
     @authorized('inspect', 'runs.lookup_external_receipt')
@@ -1144,7 +1179,7 @@ class Runs:
         return None
 
     @staticmethod
-    def _copy_verified(directory, name, item, output=None):
+    def _copy_verified(directory, name, item, output=None, *, deadline=None, cancelled=None):
         """Hash one exact regular payload, optionally copying with bounded memory."""
         fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
         try:
@@ -1155,6 +1190,10 @@ class Runs:
             total = 0
             measured = hashlib.sha256()
             while True:
+                if cancelled is not None and cancelled():
+                    raise WorkbenchError('Publication recovery was paused before completion.', 'cancelled', 409)
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise WorkbenchError('Publication recovery reached its wall budget.', 'unavailable', 409)
                 raw = os.read(fd, min(65536, item['bytes'] - total + 1))
                 if not raw:
                     break
@@ -1458,12 +1497,21 @@ class Runs:
                         'cpu_affinity': list(cpus), 'host_memory_reserve_bytes': self._capacity.reserve_bytes}
                     self._save(current)
                 self._execute(admitted['id'])
-        except Exception:
+        except Exception as error:
             try:
                 with self.access._reconcile(), self.lock, self.db.transaction():
                     run = self._load(admitted['id'])
                     if run['state'] in ACTIVE:
                         run['error'] = {'code': 'failed', 'message': 'Run supervisor could not complete this attempt.'}
+                        if run.get('publication_source') is not None and run.get('custody_phase') == 'drained':
+                            code = ('commit_unknown' if isinstance(error, CommitOutcomeUnknown) else
+                                    'storage' if isinstance(error, (OSError, psycopg.Error)) else
+                                    error.code if isinstance(error, WorkbenchError) else 'failed')
+                            run['publication_fault'] = {'format': 'external_publication_fault_v1',
+                                'source_sha256': run['publication_source']['sha256'], 'code': code,
+                                'message': str(error)[:240] if isinstance(error, WorkbenchError) else
+                                           'Publication did not acknowledge a verified durable result.',
+                                'recorded_at': timestamp()}
                         state = self._external_recovery_state(run) if self._external(run) else 'failed'
                         self._external_blocked |= state == 'unknown' and self._external(run)
                         self._event(run, state, run['error']['message'])
@@ -2303,6 +2351,9 @@ class Runs:
             thread.join(timeout=60)
             if thread.is_alive():
                 raise RuntimeError('Training supervisor did not drain; metadata must remain open.')
+        if not self._publication_lock.acquire(timeout=60):
+            raise RuntimeError('Publication recovery did not drain; metadata must remain open.')
+        self._publication_lock.release()
         if self.runtime_owner:
             try:
                 with self.lock, self.db.transaction():

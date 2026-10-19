@@ -1,0 +1,8 @@
+test_same_run_recovers_exact_result_without_replay_or_new_run_or_grant (test_run_publication_recovery.PublicationRecoveryTests.test_same_run_recovers_exact_result_without_replay_or_new_run_or_grant) ... ok
+test_unowned_partial_and_changed_final_result_refuse (test_run_publication_recovery.PublicationRecoveryTests.test_unowned_partial_and_changed_final_result_refuse) ... ok
+test_shutdown_drains_owned_recovery_before_closing_metadata (test_run_publication_recovery.PublicationRecoveryTests.test_shutdown_drains_owned_recovery_before_closing_metadata) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 13.670s
+
+OK
