@@ -1,0 +1,37 @@
+test_exact_reply_is_accepted_without_transport_retry (test_scientific_comparison_client.ScientificComparisonClientTests.test_exact_reply_is_accepted_without_transport_retry) ... ok
+test_matching_foreign_catalog_echo_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_matching_foreign_catalog_echo_is_refused) ... FAIL
+test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) ... 
+  test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) (mutation=<function ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused.<locals>.<lambda> at 0x7f0ccbc27880>) ... FAIL
+test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) ... ERROR
+
+======================================================================
+ERROR: test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 69, in test_schema_valid_other_selection_reply_is_refused
+    self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+                      ^^^^^^^^^^^^^^^^
+AttributeError: '_AssertRaisesContext' object has no attribute 'exception'
+
+======================================================================
+FAIL: test_matching_foreign_catalog_echo_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_matching_foreign_catalog_echo_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 75, in test_matching_foreign_catalog_echo_is_refused
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) (mutation=<function ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused.<locals>.<lambda> at 0x7f0ccbc27880>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 67, in test_schema_valid_other_selection_reply_is_refused
+    with self.subTest(mutation=mutate), self.assertRaises(agent_api.AgentAPIError) as caught:
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.249s
+
+FAILED (failures=2, errors=1)

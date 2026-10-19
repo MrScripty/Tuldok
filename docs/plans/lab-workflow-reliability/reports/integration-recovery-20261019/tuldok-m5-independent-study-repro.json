@@ -1,0 +1,39 @@
+{
+  "finding": {
+    "blocking": true,
+    "cause": "Study path checks reservation study/trial/key/epoch and run_id, omitting requested parent, configured catalog, grant and owning request digest.",
+    "evidence": "/tmp/tuldok-m5-independent-study-repro.json",
+    "file": "tuldok_client.py",
+    "id": "M5-REVIEW-2",
+    "lines": [
+      202,
+      203,
+      204,
+      205,
+      206,
+      207
+    ],
+    "observed": {
+      "acknowledged_approval": "88888888888888888888888888888888",
+      "acknowledged_catalog": "99999999999999999999999999999999",
+      "acknowledged_parent": "ffffffffffffffffffffffffffffffff",
+      "configured_catalog": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "requested_approval": "dddddddddddddddddddddddddddddddd",
+      "requested_parent": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "schema_valid": true,
+      "state": "acknowledged"
+    },
+    "owner_digest": "UTF-8 canonical hash of {operation_id: studies.admit, version: 1, contract_sha256: selected contract SHA, study_id: args.study_id, body: args excluding path study_id}, as experiments.py329-343.",
+    "reproduction": [
+      "Build a studies.admit v1 manifest with catalog a*32, parent e*32, approval d*32.",
+      "Construct a 201 response with matching study/trial/key/epoch/run_id but reservation parent f*32, arbitrary request SHA 0*64, Run dataset_id 9*32 and approval_id 8*32.",
+      "Confirm agent_api.validate_output(\"studies.admit\", response, 1) passes.",
+      "Use actual ready AgentClient negotiated to studies.admit/1, patch only _request to return that response, then call WorkflowClient.submit."
+    ],
+    "required_behavior": "Correlate the existing owner request digest, parent, catalog and grant; mismatched acknowledgements preserve unknown outcome and the exact original manifest.",
+    "status": "reproduced through strict canonical AgentClient; author confirmed; fix pending independent verification",
+    "title": "Study admission acknowledgement fails to correlate requested identity"
+  },
+  "provenance": "Recorded from completed independent reproduction tool output; not rerun.",
+  "source_commit": "2d8b7d79110f210896dcdda8df08f6385cabf2d3"
+}

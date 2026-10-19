@@ -1,0 +1,77 @@
+{
+  "dependency_base": "2d8b7d79110f210896dcdda8df08f6385cabf2d3",
+  "resume": {
+    "fresh_local_verified": [
+      "one.bin"
+    ],
+    "retained_prior_second_proof": true,
+    "second_hash_still_corrupted": true,
+    "state": "stopped"
+  },
+  "scope": "independent pure controlled repro recheck; not actual HTTP/PG qualification",
+  "source_commit": "875038ade24a8a37c1431fbe0f8e4c2625e20a5e",
+  "state": "passed",
+  "study": {
+    "baseline_state": "acknowledged",
+    "mutations": [
+      {
+        "field": "parent_run_id",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "reservation"
+      },
+      {
+        "field": "request_sha256",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "reservation"
+      },
+      {
+        "field": "dataset_id",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "run"
+      },
+      {
+        "field": "approval_id",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "run"
+      },
+      {
+        "field": "parent_run_id",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "run"
+      },
+      {
+        "field": "actor_id",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "run"
+      },
+      {
+        "field": "approval_material_sha256",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "run"
+      },
+      {
+        "field": "study_membership",
+        "requests": 1,
+        "schema_valid": true,
+        "state": "unknown",
+        "target": "run"
+      }
+    ],
+    "owner_request_sha256": "f83c61ea966fb2a506f3228da058089c3891c588e1e788094bc53e12b79a5931"
+  },
+  "tuldok_client_sha256": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+}

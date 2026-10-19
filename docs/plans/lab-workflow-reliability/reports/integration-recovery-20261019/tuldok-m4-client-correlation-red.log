@@ -1,0 +1,68 @@
+test_exact_reply_is_accepted_once (test_batch_client_correlation.BatchClientCorrelationTests.test_exact_reply_is_accepted_once) ... ok
+test_item_failure_is_returned_without_retry_or_fallback (test_batch_client_correlation.BatchClientCorrelationTests.test_item_failure_is_returned_without_retry_or_fallback) ... ok
+test_publication_catalog_is_checked_even_when_ref_echo_matches (test_batch_client_correlation.BatchClientCorrelationTests.test_publication_catalog_is_checked_even_when_ref_echo_matches) ... FAIL
+test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) ... 
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e6340>) ... FAIL
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e5a80>) ... FAIL
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e7600>) ... FAIL
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e7560>) ... FAIL
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e74c0>) ... FAIL
+
+======================================================================
+FAIL: test_publication_catalog_is_checked_even_when_ref_echo_matches (test_batch_client_correlation.BatchClientCorrelationTests.test_publication_catalog_is_checked_even_when_ref_echo_matches)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 62, in test_publication_catalog_is_checked_even_when_ref_echo_matches
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e6340>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 44, in test_schema_valid_unrequested_segments_are_refused
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e5a80>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 44, in test_schema_valid_unrequested_segments_are_refused
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e7600>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 44, in test_schema_valid_unrequested_segments_are_refused
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e7560>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 44, in test_schema_valid_unrequested_segments_are_refused
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7fdd767e74c0>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 44, in test_schema_valid_unrequested_segments_are_refused
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+----------------------------------------------------------------------
+Ran 4 tests in 3.298s
+
+FAILED (failures=6)

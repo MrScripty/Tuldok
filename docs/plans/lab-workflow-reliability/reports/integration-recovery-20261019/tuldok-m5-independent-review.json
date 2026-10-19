@@ -1,0 +1,116 @@
+{
+  "author_files_modified": false,
+  "author_worktree": "/workspace/Tuldok-lab-workflow-client-m5",
+  "coordination": {
+    "author_notified": true,
+    "latest_author_update": "Author reports a temporary candidate fixes both repros and adds regressions; this review has not independently checked that candidate.",
+    "root_notified": true
+  },
+  "findings": [
+    {
+      "blocking": true,
+      "cause": "Skipped items preserve prior verified states; complete is selected from those statuses before stopped/halting state.",
+      "evidence": "/tmp/tuldok-m5-independent-resume-repro.json",
+      "file": "tuldok_client.py",
+      "id": "M5-REVIEW-1",
+      "lines": [
+        404,
+        405,
+        406,
+        431,
+        432
+      ],
+      "observed": {
+        "cancelled": true,
+        "fresh_local_verified": [
+          "one.bin"
+        ],
+        "item_states": [
+          "verified",
+          "verified"
+        ],
+        "returned_state": "complete",
+        "second_actual_sha256": "c825b08bc9d9dc7d65756c554c941d287eacfe09683ba03ae44f6e66e53673e1",
+        "second_expected_sha256": "0fb87793d7478108ad78dc746794165faae42fde80343963ee247a0556e37356"
+      },
+      "reproduction": [
+        "Use frozen ConsumerFixture and collect one.bin plus two.bin successfully.",
+        "Overwrite local two.bin with b\"changed local second result\".",
+        "Resume with a threading.Event. Wrap _verified_local to call the original for one.bin, then set the event.",
+        "The next item is skipped and retains its old verified proof."
+      ],
+      "required_behavior": "Retain prior item proofs under stopped/partial outcomes; claim complete only when this invocation freshly reauthorized and verified every selected item.",
+      "status": "reproduced; author confirmed; fix pending independent verification",
+      "title": "Cancelled resume can claim complete with an unchecked corrupted prior result"
+    },
+    {
+      "blocking": true,
+      "cause": "Study path checks reservation study/trial/key/epoch and run_id, omitting requested parent, configured catalog, grant and owning request digest.",
+      "evidence": "/tmp/tuldok-m5-independent-study-repro.json",
+      "file": "tuldok_client.py",
+      "id": "M5-REVIEW-2",
+      "lines": [
+        202,
+        203,
+        204,
+        205,
+        206,
+        207
+      ],
+      "observed": {
+        "acknowledged_approval": "88888888888888888888888888888888",
+        "acknowledged_catalog": "99999999999999999999999999999999",
+        "acknowledged_parent": "ffffffffffffffffffffffffffffffff",
+        "configured_catalog": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requested_approval": "dddddddddddddddddddddddddddddddd",
+        "requested_parent": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "schema_valid": true,
+        "state": "acknowledged"
+      },
+      "owner_digest": "UTF-8 canonical hash of {operation_id: studies.admit, version: 1, contract_sha256: selected contract SHA, study_id: args.study_id, body: args excluding path study_id}, as experiments.py329-343.",
+      "reproduction": [
+        "Build a studies.admit v1 manifest with catalog a*32, parent e*32, approval d*32.",
+        "Construct a 201 response with matching study/trial/key/epoch/run_id but reservation parent f*32, arbitrary request SHA 0*64, Run dataset_id 9*32 and approval_id 8*32.",
+        "Confirm agent_api.validate_output(\"studies.admit\", response, 1) passes.",
+        "Use actual ready AgentClient negotiated to studies.admit/1, patch only _request to return that response, then call WorkflowClient.submit."
+      ],
+      "required_behavior": "Correlate the existing owner request digest, parent, catalog and grant; mismatched acknowledgements preserve unknown outcome and the exact original manifest.",
+      "status": "reproduced through strict canonical AgentClient; author confirmed; fix pending independent verification",
+      "title": "Study admission acknowledgement fails to correlate requested identity"
+    }
+  ],
+  "format": "tuldok_independent_code_review_v1",
+  "next_action": "Await root-forwarded frozen M4 batch commit for a separate read-only review; no checks rerun while recording this checkpoint.",
+  "other_conclusions": [
+    "No additional blocking request-owner/default CLI regression identified.",
+    "Connect cancellation bound up to five seconds and cooperative schema/hash boundaries are explicitly documented.",
+    "Known frozen inventory-selector and HTTP fixture manifest-helper issues were already author-owned and excluded from these two new findings."
+  ],
+  "read_only": true,
+  "reviewed_export": "/tmp/tuldok-review-m5-2d8b7d",
+  "reviewer": "/root/indexed_diagnostics_m1",
+  "scope": [
+    "canonical AgentClient read_budget ownership/cancellation/deadlines",
+    "unknown mutation receipts and explicit reconciliation",
+    "exact collection/resume/no-clobber",
+    "default CLI compatibility"
+  ],
+  "source_commit": "2d8b7d79110f210896dcdda8df08f6385cabf2d3",
+  "source_sha256": {
+    "agent_api.py": "019b029fe648de87451b5694a9bf2fabbac3540d2ab1663b32c632a81b1521f2",
+    "project_cli.py": "450f2c155928361e5db2b4ac5b686f00cb51ce9368ade531c6f97c9b70d7b015",
+    "tuldok_client.py": "4af31d4bb939d487665fdd5654d83141dc62a123f196923075e07b8746dd7691"
+  },
+  "target": "M5 consumer workflow client",
+  "verification": {
+    "command": "PYTHONPATH=tests:. /workspace/tuldok-runtime/bin/python -m unittest test_workflow_client.WorkflowClientTests test_agent_project_cli.CommandSelectionTests test_agent_project_cli.PublicationTests -q",
+    "cwd": "/tmp/tuldok-review-m5-2d8b7d",
+    "earlier_broad_attempt": "An initial broad module invocation included two ProjectCLIHTTPTests without TULDOK_DATABASE_URL. Both errored in metadata.connection_info before PostgreSQL connection. This is not production failure evidence; the correctly scoped pure group passed.",
+    "elapsed_seconds": 54.785,
+    "http_qualification": "Author-owned; this review did not qualify HTTP/PG behavior.",
+    "log": "/tmp/tuldok-m5-independent-pure-tests.log",
+    "log_provenance": "Retained verbatim terminal result from the completed tool call; checks were not rerun.",
+    "result": "passed",
+    "tests_run": 24
+  }
+}

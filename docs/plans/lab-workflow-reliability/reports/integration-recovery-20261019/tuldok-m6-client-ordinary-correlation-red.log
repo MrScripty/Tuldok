@@ -1,0 +1,70 @@
+test_exact_reply_is_accepted_without_transport_retry (test_scientific_comparison_client.ScientificComparisonClientTests.test_exact_reply_is_accepted_without_transport_retry) ... ok
+test_matching_foreign_catalog_echo_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_matching_foreign_catalog_echo_is_refused) ... ok
+test_mixed_publication_operand_keeps_its_exact_ref (test_scientific_comparison_client.ScientificComparisonClientTests.test_mixed_publication_operand_keeps_its_exact_ref) ... ok
+test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) ... 
+  test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6cff920>) ... FAIL
+  test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd2200>) ... FAIL
+  test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd22a0>) ... FAIL
+  test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd19e0>) ... FAIL
+  test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd23e0>) ... FAIL
+  test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd2480>) ... FAIL
+test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) ... ok
+
+======================================================================
+FAIL: test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6cff920>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 117, in test_ordinary_exact_v2_comparison_correlates_each_side
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd2200>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 117, in test_ordinary_exact_v2_comparison_correlates_each_side
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd22a0>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 117, in test_ordinary_exact_v2_comparison_correlates_each_side
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd19e0>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 117, in test_ordinary_exact_v2_comparison_correlates_each_side
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd23e0>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 117, in test_ordinary_exact_v2_comparison_correlates_each_side
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+======================================================================
+FAIL: test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) (mutation=<function ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side.<locals>.<lambda> at 0x7fd2d6bd2480>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_scientific_comparison_client.py", line 117, in test_ordinary_exact_v2_comparison_correlates_each_side
+    with self.assertRaises(agent_api.AgentAPIError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AgentAPIError not raised
+
+----------------------------------------------------------------------
+Ran 5 tests in 3.166s
+
+FAILED (failures=6)

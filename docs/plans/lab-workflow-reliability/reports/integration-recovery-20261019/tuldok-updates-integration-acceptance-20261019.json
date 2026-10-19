@@ -1171,11 +1171,11 @@
     "103": "b906ba6990fadfb27715b69dd9ba06e527273888"
   },
   "executor_access": {
-    "verified_at": "2026-10-19T21:42:45Z",
+    "verified_at": "2026-10-19T22:23:05Z",
     "shell": "success",
     "git_local": "success",
     "git_remote_read": "success",
-    "callback": "parentreporteddisconnection; actualexecutorverifiedworking, no credential/workerrecreation"
+    "callback": "fresh parentdisconnect22:22; actualexecutorrecoveredworking; activequalificationspreserved, no duplicatedworkers orcredentials changes"
   },
   "m5_active": {
     "agent": "/root/workflow_client_m5",
@@ -1184,9 +1184,10 @@
     "branch": "feature/lab-workflow-client-20261019",
     "base": "3217ef9",
     "scope": "client/CLI plus narrow canonical AgentClient read_budget and validate_registry checkpoint hooks; no registry schema or server changes",
-    "state": "15focused authorpass; normalwhole104composed; draftpublished. Actual13caseHTTPqualificationactive, firstCPUclassifiercomparisonerror retainedpendingcomplete traceback; no passclaim",
-    "source": "2d8b7d79110f210896dcdda8df08f6385cabf2d3",
-    "pr": 105
+    "state": "18focused, affected5actualHTTP82.269s andlegacy35compatibility203.608s pass at875; bothblockingreprosindependentlyclear. Full12actual406.466s remainsCBCscope. Receipt40dpublished. Extraordinaryv2canonicalreplyguard (verbatimalreadyreviewed41fb10lines) nowbeingaddedself-containedto105 so105mergereadinessdoesnotdependon106; tests/sourcefreezeandoneactualpositiveafterM4quietpending",
+    "source": "40d7f61732c45c7c329b0061ae29154612784168",
+    "pr": 105,
+    "qualified_production": "875038ade24a8a37c1431fbe0f8e4c2625e20a5e"
   },
   "pr98_current_failure": {
     "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
@@ -1210,8 +1211,11 @@
     "102": "4bcf43063ff780fd5e44894701d65338abdc0579",
     "103": "c919c663cedb71df3002ef4b8f9767211ed39e22",
     "104": "1c9f01cb7e4adafd169dd56e95e02f0f5025b35d",
-    "105": "2d8b7d79110f210896dcdda8df08f6385cabf2d3",
-    "106": "871ad16dc78cf311e43b0feac916a67b7b8ab1c2"
+    "105": "40d7f61732c45c7c329b0061ae29154612784168",
+    "106": "4a9e153b4cbfb8392e7771483df6dd38ac053ef1",
+    "107": "07dde98df856619cab929eb9dc8d3275151c69bd",
+    "108": "653a6ed707e04935ad21d809f16c1fa5698ebe23",
+    "109": "1d2c73747f2467924feffa5b818a663644fe27ef"
   },
   "m6_active": {
     "agent": "/root/scientific_comparison_m6",
@@ -1221,10 +1225,10 @@
     "base": "2bf1d4035510003c6bbcc84d94b578a7ee753d69",
     "scope": "distinct exactrun/publicationfieldcomparison +existingUI/lineage; casepointvalues/deltasdiagnostic, missingcriteria/memoryunknown; noSDK/profile/persistencechange",
     "admitted_extra": "run_publication.py exactRefownerhelper; new static comparison controller/route and existing workspace-service.js comparison UI allowed",
-    "state": "draftpublished; rootprivate-arrayfindingfixedbefore1bfsource; author5actualPGHTTPcasespass32.480s atfixturecorrectionuncommitted; browseractualjourneyfirstreachedallassertsbutreadonlyPOSTclassificationfixturefailed, correctedrerunpending. No runtime/custody/scienceclaim",
+    "state": "authoractual5reader32.480s,17API64.687s,34pureincludes2DBskip separately2realDBpass,4NodeandfinalactualChromiumrun-kcaI5lpass; actualDOMindependentvalues+revocation+retainedrootremoval+staledelivery+exactRefs, no compute/science/runtime/custodyclaim. Rootserialintegration stillpending",
     "runtime_constraint": "tiny RuntimeSnapshotContract.fixture structural capture with /usr/bin/true and dummy package files; real material/grant/Study admission and explicit synthetic terminal evidence, unchanged Runs._load/_extension_context. No execution/runtime/custody/science qualification claim",
     "pr": 106,
-    "source": "871ad16dc78cf311e43b0feac916a67b7b8ab1c2"
+    "source": "4a9e153b4cbfb8392e7771483df6dd38ac053ef1"
   },
   "m1_indexed_diagnostics_active": {
     "agent": "/root/indexed_diagnostics_m1",
@@ -1235,15 +1239,16 @@
     "scope": "new explicit opt-in extension_field_policy_indexed_v1 for noncanonical recipe families; bounded diagnostic index/shard declaration, shared producer/host contract, SDK writer and canonical verify; private _diagnostics stripped from old closed public projections",
     "compatibility": "legacy policy/manifest/profile capability grammars and arbitrary roles unchanged; whole admitted policy/material plus captured addon contract binds diagnostic_capture; old profileRef hash alone does not",
     "capacity": "new opt-in conservatively reserves declared output maxima within existing aggregate caps; exact envelope/record/shard capacity checked before compute; no cap increases",
-    "state": "root source reviewclearsofar; pureactualpublicprojectionlegacyconstraintschecked. Positiveactualno-opchild/semanticrecoveryroundtripreportedpass; negativefixturebeingcorrected. Originalconstructorfixturefailedtwicebeforeexactcleanupidentitypersisted;2schemas temporallyinferredownershipuncertain, NOTdropped/read, continueindependentwork",
-    "source": "28f61e80db398f2154560a283e3614ee564bc648",
+    "state": "publishedqualifieddraft; root sourceclear+9purepass, all9frozenhashesverified; author54focused52pass2DBskip andseparate2actualcustodyrecoverytests16.580pass; exactownedfreshschemasremoved. OriginalPUB1missing; earlier2ownershipuncertainschemasNOTopened/read/dropped",
+    "source": "653a6ed707e04935ad21d809f16c1fa5698ebe23",
     "composed": "f052fa7d93ee2df35f73afd28b565e1bac42183b",
     "root_independent_pure": {
       "tests": 9,
       "seconds": 1.079,
       "result": "passed",
       "log": "tuldok-indexed-root-independent-pure.log"
-    }
+    },
+    "pr": 108
   },
   "m4_preliminary_observations": {
     "source": "83d7e8f52df92d10d3ff85709da6eff3231a0b06",
@@ -1276,7 +1281,27 @@
     "root_independent": "source8file+harnesshashes verified fromgit; exact8knownschemassubsequentreadonlyqueryallabsent",
     "receipt": "tuldok-m4-root-cleanup-independent.json",
     "selection": "root accepted descriptivebaseline and admitted safe NEWboundedsequentialcollectionread; max20items,8MiBrawaggregate,finite60s, peritem/finalcurrentauthority,exactSHARef,typedpartialoutcomes,wholehash; no crosscallmutablecache",
-    "candidate": "notyetimplemented/qualified; no speedupclaim",
-    "limits": "co-residentapp/HTTP/clientCPU excludesPG; lifetimeRSS notphasepeak; OS/PGcachesunflushed, no installedruntimeactualmutation or science/CUDAclaim"
+    "candidate": "producer007initial8actual/pure47.251s pass;independent5pure0.705s/122priorcontracts clear. Pairedharness1d2publishedPR109; normalwhole925 composeddb6492805cfe17e1f5c4600487404f75715bd9c0, removingextraexplicitdecoderfromharnessbecausecanonicalclassnowdoesrequest-awaredecode. Pilot/purethennewmeasurementfreezeandfull~10minpairedquietmatrixpending",
+    "limits": "co-residentapp/HTTP/clientCPU excludesPG; lifetimeRSS notphasepeak; OS/PGcachesunflushed, no installedruntimeactualmutation or science/CUDAclaim",
+    "pr": 107,
+    "published_receipt": "07dde98df856619cab929eb9dc8d3275151c69bd"
+  },
+  "consumer_integration": {
+    "branch": "integration/lab-consumer-feedback-20261019",
+    "worktree": "/workspace/Tuldok-lab-consumer-integration-m5m6",
+    "published_head": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+    "scope": "normalM5CBC +M6final4a9 +M4initial007+baseline07 +rootcanonicalAgentClient scientific/ordinaryv2/batch exactreplyguards, explicitM6CIgates. Broadverificationbranch, NOTautomaticallyPR106head",
+    "checks": "scientific/ordinary5controlledgreen+independentreviewclear andv1fullcontractequality; batch4controlledgreen1.637s +independent4/2extra bounds checks clear. Intermediatebatchtestcommit7f incorrectlyexpected502wherecanonical409returned;failedlogretained, test925corrected, no productchange",
+    "pending": "M5latestfix/guardwholecomposition, independentnewbatchconsumer, exactcomposedactualqualification andhostedCI; no merge/readyclaim"
+  },
+  "batch_client_active": {
+    "agent": "/root/scientific_comparison_m6",
+    "model": "gpt-6.1-sol/high",
+    "worktree": "/workspace/Tuldok-lab-batch-client-m4",
+    "branch": "feature/lab-batch-client-20261019",
+    "base": "41fb30a629a5733ae87d8bcfe718fad365ef9bef",
+    "composition": "normalwhole007+925, latestmerge675a4ff; sourceuncommitted14focusedtestsreportedgreen1.918s",
+    "scope": "separatecollect_batch/collect-batchCLI, sameclosedcollectionmanifest<=20wholeartifacts/summax1bytes<=8MiB, explicitnegotiate, defensivecanonicaldecoder/wholehash/eof/length, sharedprivatepublisherextractedfromdownload, samepartialreceiptordinaryexplicitresume; noexistingcollectloop/server/schema/math edits",
+    "qualification": "source/pureonlyduringM4quiet;actualconsumerHTTP/CLIandindependentreviewpending; itsCPUdiffersfromlowlevelpairedbenchmark"
   }
 }

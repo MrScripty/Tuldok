@@ -1,0 +1,144 @@
+{
+  "reviewer": "/root/scientific_comparison_m6",
+  "review_kind": "independent read-only source review and focused verification",
+  "reviewed_worktree": "/workspace/Tuldok-lab-consumer-integration-m5m6",
+  "decision": "clear for the two bounded transport guards and CI additions; no blocking findings or weakened assertions",
+  "reviews": [
+    {
+      "commit": "a25db6e42ea904b722d4d645ce5ea7a69ccda63f",
+      "composition_head_during_review": "4d6056d74a466244d6a93236c3137c95ce66b577",
+      "changed_files": [
+        "agent_api.py",
+        "tests/test_scientific_comparison_client.py",
+        ".github/workflows/tests.yml"
+      ],
+      "source_observations": [
+        "Scientific reply correlation runs after selected closed output-schema validation.",
+        "Ordered complete operands, including attached publication Refs, point and mode must match the request.",
+        "Both scalar sides must match the selected catalog, Run, metric ID and evaluation/checkpoint/metric-definition hashes.",
+        "Two operands and two sides are established by the selected schema before strict zip iteration.",
+        "The guard adds no scientific arithmetic, criterion, normalization, transport retry or fallback.",
+        "New negative fixtures validate that each mismatched reply remains schema-valid before invoking the client guard.",
+        "CI uses existing Linux, PostgreSQL, Python, Node and Chrome provisioning; broad unittest discovery also includes the real reader tests and existing always-upload QA capture remains enabled."
+      ],
+      "executed_checks": [
+        {
+          "command": "PATH=/workspace/tuldok-runtime/bin:$PATH PYTHONPATH=tests:. python3 -m unittest test_scientific_comparison_client -v",
+          "tests_run": 4,
+          "elapsed_seconds": 2.778,
+          "result": "OK"
+        },
+        {
+          "command": "node tests/test_scientific_comparison_controller.cjs",
+          "result": "PASS: diagnostic table, exact identity, stale overlap, invalidation, revocation and session fences"
+        },
+        {
+          "command": "git show a25db6e --check",
+          "result": "clean"
+        },
+        {
+          "command": "git status --short",
+          "result": "clean; no reviewer worktree edits"
+        }
+      ]
+    },
+    {
+      "commit": "41fb30a629a5733ae87d8bcfe718fad365ef9bef",
+      "head_during_review": "41fb30a629a5733ae87d8bcfe718fad365ef9bef",
+      "changed_files": [
+        "agent_api.py",
+        "tests/test_scientific_comparison_client.py"
+      ],
+      "source_observations": [
+        "Ordinary comparison reply correlation is conditional on operation runs.compare_model_evidence, selected version 2 and successful status.",
+        "Selected closed-schema validation establishes exactly two sides before the guard reads them.",
+        "Mode, ordered Run IDs, metric ID and evaluation/checkpoint/metric-definition hashes correlate to the selected request.",
+        "The version 1 reply path is outside the new branch; no schema, numeric comparison, facade behavior or retry policy changes.",
+        "Six added ordinary-comparison mismatch cases are schema-valid and each asserts exactly one transport request and typed transport/502 refusal.",
+        "No pre-existing test assertion was removed or weakened."
+      ],
+      "executed_checks": [
+        {
+          "command": "PYTHONDONTWRITEBYTECODE=1 PATH=/workspace/tuldok-runtime/bin:$PATH PYTHONPATH=tests:. python3 -m unittest test_scientific_comparison_client test_workspace_model_contracts test_agent_api.RegistryTests.test_all_operation_schemas_and_route_projections -v",
+          "tests_run": 8,
+          "elapsed_seconds": 24.19,
+          "composition": "5 scientific/ordinary client tests, 2 browser contract-pin tests and 1 registry all-operation schema/route test",
+          "result": "OK"
+        },
+        {
+          "command": "git show 41fb30a --check",
+          "result": "clean"
+        },
+        {
+          "command": "git status --short",
+          "result": "clean; no reviewer worktree edits"
+        }
+      ],
+      "independent_v1_positive": {
+        "method": "In-memory AgentClient with selected runs.compare_model_evidence/1 and a controlled _request reply; no file or network mutation",
+        "arguments": {
+          "run_id": "11111111111111111111111111111111",
+          "other_run_id": "22222222222222222222222222222222"
+        },
+        "closed_reply_fields": [
+          "state",
+          "run_ids",
+          "reasons",
+          "metrics"
+        ],
+        "reply_state": "compatible",
+        "request_count": 1,
+        "result": "PASS: original closed v1 reply returned unchanged"
+      },
+      "independent_full_contract_equality": {
+        "method": "Load git show 41fb30a^:agent_api.py into a separate in-memory module, then compare full contract dictionaries with current agent_api.contract; no temporary source file or worktree mutation",
+        "comparison": "full dictionaries, not only digests",
+        "result": "all six selected contract documents unchanged",
+        "contracts": [
+          {
+            "operation": "runs.compare_model_evidence",
+            "version": 1,
+            "sha256": "75842ef0768d8b95ca6057df3f01e31b78659ff91f91ca3a49f3194d7031ebdd"
+          },
+          {
+            "operation": "runs.compare_model_evidence",
+            "version": 2,
+            "sha256": "0c89402e1749b5bca7c09c66bc5bfc13cd33b3be6e15c69826074583fc0e13c5"
+          },
+          {
+            "operation": "runs.compare_publication_evidence",
+            "version": 1,
+            "sha256": "96796fa1b5c32f1106962cb0ec36aada7ff6d92c057870997e9a1b7f364b74bd"
+          },
+          {
+            "operation": "runs.compare_scientific_evidence",
+            "version": 1,
+            "sha256": "32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5"
+          },
+          {
+            "operation": "runs.model_evidence",
+            "version": 1,
+            "sha256": "50c054fc7ce64c08f8a229faed6dfdcd9069c1b84ee8985bfce8736bc2c9aadb"
+          },
+          {
+            "operation": "runs.model_evidence",
+            "version": 2,
+            "sha256": "48c1b942f8e7a102a83bf63806fb425576690f4bfbca841203d54edbca4a59f9"
+          }
+        ]
+      }
+    }
+  ],
+  "scope_limits": [
+    "These decisions clear only the reviewed transport reply guards, focused tests and related CI wiring.",
+    "They do not accept the whole M5/M6 composition, resolve the separately owned M5 cancellation/resume and exact Study acknowledgement blockers, or replace root-owned exact composed HTTP/browser qualification and full CI.",
+    "They do not establish owned scientific pass/fail criteria, a supplied lab pair, physical correctness, model quality, training, runtime execution or process custody."
+  ],
+  "evidence_provenance": {
+    "test_results": "Observed directly in tool outputs during the completed reviews; no checks rerun while writing this record.",
+    "separate_stdout_log_files": [],
+    "stdout_note": "The independent review checks returned stdout through tool responses and were not redirected into local log files; none are presented as saved original logs.",
+    "remote_writes": false,
+    "product_source_worktree_edits": false
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "finding": {
+    "blocking": true,
+    "cause": "Skipped items preserve prior verified states; complete is selected from those statuses before stopped/halting state.",
+    "evidence": "/tmp/tuldok-m5-independent-resume-repro.json",
+    "file": "tuldok_client.py",
+    "id": "M5-REVIEW-1",
+    "lines": [
+      404,
+      405,
+      406,
+      431,
+      432
+    ],
+    "observed": {
+      "cancelled": true,
+      "fresh_local_verified": [
+        "one.bin"
+      ],
+      "item_states": [
+        "verified",
+        "verified"
+      ],
+      "returned_state": "complete",
+      "second_actual_sha256": "c825b08bc9d9dc7d65756c554c941d287eacfe09683ba03ae44f6e66e53673e1",
+      "second_expected_sha256": "0fb87793d7478108ad78dc746794165faae42fde80343963ee247a0556e37356"
+    },
+    "reproduction": [
+      "Use frozen ConsumerFixture and collect one.bin plus two.bin successfully.",
+      "Overwrite local two.bin with b\"changed local second result\".",
+      "Resume with a threading.Event. Wrap _verified_local to call the original for one.bin, then set the event.",
+      "The next item is skipped and retains its old verified proof."
+    ],
+    "required_behavior": "Retain prior item proofs under stopped/partial outcomes; claim complete only when this invocation freshly reauthorized and verified every selected item.",
+    "status": "reproduced; author confirmed; fix pending independent verification",
+    "title": "Cancelled resume can claim complete with an unchecked corrupted prior result"
+  },
+  "provenance": "Recorded from completed independent reproduction tool output; not rerun.",
+  "source_commit": "2d8b7d79110f210896dcdda8df08f6385cabf2d3"
+}

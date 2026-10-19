@@ -1,0 +1,110 @@
+{
+  "author_files_modified": false,
+  "blocking_findings_in_rechecked_scope": [],
+  "dependency_base": "2d8b7d79110f210896dcdda8df08f6385cabf2d3",
+  "export_method": "Exact changed tuldok_client.py and tests/test_workflow_client.py over the unchanged frozen 2d8b7d dependency export.",
+  "findings_rechecked": [
+    {
+      "evidence": {
+        "fresh_local_verified": [
+          "one.bin"
+        ],
+        "retained_prior_second_proof": true,
+        "second_hash_still_corrupted": true,
+        "state": "stopped"
+      },
+      "id": "M5-REVIEW-1",
+      "review": "Collection now counts only freshly verified items for complete and gives stopped precedence. Unvisited prior proofs remain preserved under stopped without a current-completeness claim.",
+      "state": "resolved_in_targeted_pure_recheck"
+    },
+    {
+      "evidence": {
+        "baseline_state": "acknowledged",
+        "mutations": [
+          {
+            "field": "parent_run_id",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "reservation"
+          },
+          {
+            "field": "request_sha256",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "reservation"
+          },
+          {
+            "field": "dataset_id",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "run"
+          },
+          {
+            "field": "approval_id",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "run"
+          },
+          {
+            "field": "parent_run_id",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "run"
+          },
+          {
+            "field": "actor_id",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "run"
+          },
+          {
+            "field": "approval_material_sha256",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "run"
+          },
+          {
+            "field": "study_membership",
+            "requests": 1,
+            "schema_valid": true,
+            "state": "unknown",
+            "target": "run"
+          }
+        ],
+        "owner_request_sha256": "f83c61ea966fb2a506f3228da058089c3891c588e1e788094bc53e12b79a5931"
+      },
+      "id": "M5-REVIEW-2",
+      "review": "Study acknowledgement pins the existing UTF-8 owner request digest and checks parent, configured catalog, grant, actor/material consistency and Study membership. The real AgentClient strict validated baseline acknowledges; eight independent schema-valid corruptions remain unknown with unchanged manifest and one dispatch.",
+      "state": "resolved_in_targeted_pure_recheck"
+    }
+  ],
+  "format": "tuldok_independent_code_review_v1",
+  "limits": [
+    "No actual HTTP/PostgreSQL/custodian qualification run by this reviewer. Author affected five-case actual gate remains pending.",
+    "This closes the two identified code blockers at this exact source only; root owns full consumer composition, ordinary comparison guard, batch integration, publication and final acceptance."
+  ],
+  "previous_review": "/tmp/tuldok-m5-independent-review.json",
+  "read_only": true,
+  "reviewer": "/root/indexed_diagnostics_m1",
+  "source_commit": "875038ade24a8a37c1431fbe0f8e4c2625e20a5e",
+  "source_sha256": {
+    "tests/test_workflow_client.py": "7824b46e5b1f9ff840f4877fb18deb306c5462ddd56d1a4857a94528337ebe2b",
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+  },
+  "target": "M5 targeted fixes for M5-REVIEW-1 and M5-REVIEW-2",
+  "verification": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<875038a overlay/tests>:<875038a overlay>:<2d8b7d export/tests>:<2d8b7d export> /workspace/tuldok-runtime/bin/python -m unittest test_workflow_client.WorkflowClientTests -q",
+    "elapsed_seconds": 1.106,
+    "independent_repro_receipt": "/tmp/tuldok-m5-independent-875038a-repros.json",
+    "log": "/tmp/tuldok-m5-independent-875038a-focused.log",
+    "result": "passed",
+    "tests_run": 18
+  }
+}

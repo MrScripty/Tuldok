@@ -1,0 +1,57 @@
+test_exact_reply_is_accepted_once (test_batch_client_correlation.BatchClientCorrelationTests.test_exact_reply_is_accepted_once) ... ok
+test_item_failure_is_returned_without_retry_or_fallback (test_batch_client_correlation.BatchClientCorrelationTests.test_item_failure_is_returned_without_retry_or_fallback) ... ok
+test_publication_catalog_is_checked_even_when_ref_echo_matches (test_batch_client_correlation.BatchClientCorrelationTests.test_publication_catalog_is_checked_even_when_ref_echo_matches) ... ok
+test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) ... 
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7f3ea0bd6700>) ... FAIL
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7f3ea0bd4cc0>) ... FAIL
+  test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7f3ea0bd5580>) ... FAIL
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7f3ea0bd6700>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 46, in test_schema_valid_unrequested_segments_are_refused
+    self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+AssertionError: Tuples differ: ('artifact_mismatch', 409) != ('transport', 502)
+
+First differing element 0:
+'artifact_mismatch'
+'transport'
+
+- ('artifact_mismatch', 409)
++ ('transport', 502)
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7f3ea0bd4cc0>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 46, in test_schema_valid_unrequested_segments_are_refused
+    self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+AssertionError: Tuples differ: ('artifact_mismatch', 409) != ('transport', 502)
+
+First differing element 0:
+'artifact_mismatch'
+'transport'
+
+- ('artifact_mismatch', 409)
++ ('transport', 502)
+
+======================================================================
+FAIL: test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) (mutation=<function BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused.<locals>.<lambda> at 0x7f3ea0bd5580>)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-consumer-integration-m5m6/tests/test_batch_client_correlation.py", line 46, in test_schema_valid_unrequested_segments_are_refused
+    self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+AssertionError: Tuples differ: ('artifact_mismatch', 409) != ('transport', 502)
+
+First differing element 0:
+'artifact_mismatch'
+'transport'
+
+- ('artifact_mismatch', 409)
++ ('transport', 502)
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.753s
+
+FAILED (failures=3)

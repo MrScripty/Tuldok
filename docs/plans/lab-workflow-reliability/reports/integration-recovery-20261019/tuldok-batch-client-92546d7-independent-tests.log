@@ -1,0 +1,9 @@
+test_exact_reply_is_accepted_once (test_batch_client_correlation.BatchClientCorrelationTests.test_exact_reply_is_accepted_once) ... ok
+test_item_failure_is_returned_without_retry_or_fallback (test_batch_client_correlation.BatchClientCorrelationTests.test_item_failure_is_returned_without_retry_or_fallback) ... ok
+test_publication_catalog_is_checked_even_when_ref_echo_matches (test_batch_client_correlation.BatchClientCorrelationTests.test_publication_catalog_is_checked_even_when_ref_echo_matches) ... ok
+test_schema_valid_unrequested_segments_are_refused (test_batch_client_correlation.BatchClientCorrelationTests.test_schema_valid_unrequested_segments_are_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 7.518s
+
+OK

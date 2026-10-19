@@ -1,0 +1,62 @@
+{
+  "author_files_modified": false,
+  "author_worktree": "/workspace/Tuldok-lab-consumer-integration-m5m6",
+  "blocking_findings": [],
+  "export_scope": "Exact 92546d7 agent_api.py and both controlled test files; unchanged import-only host dependencies from frozen M4 007e3de export. No host owner method or actual transport executed.",
+  "format": "tuldok_independent_code_review_v1",
+  "implementation_commit": "7f649da8d174c026115a4a4c594683800e92d100",
+  "limits": [
+    "Pure controlled canonical-client boundary only; _request is deliberately mocked after strict schema validation.",
+    "No actual HTTP/PostgreSQL/custodian, performance or composed workflow qualification was performed.",
+    "This clearance covers only the six-line canonical batch hook and its controlled tests relative to d41d523; root retains final composition/qualification/publication ownership."
+  ],
+  "read_only": true,
+  "review_base": "d41d5230a8f5fba1db2e7db507893b91843d12b7",
+  "review_conclusions": [
+    "The canonical class now passes the actual original arguments into validate_artifact_segments after generic output validation.",
+    "Successful publication items additionally match the client configured catalog; foreign-catalog item refusals remain typed item outcomes.",
+    "The existing artifact_mismatch/409 meaning is preserved for canonical segment selector failures; 92546d7 changes the test assumption, not that production guard.",
+    "No retry, alternate dispatch path, new result authority or whole-hash acceptance claim was added."
+  ],
+  "reviewed_export": "/tmp/tuldok-review-batch-client-92546d7",
+  "reviewer": "/root/indexed_diagnostics_m1",
+  "scope": [
+    "AgentClient.call lines1636-1641 request-aware decoder hook",
+    "successful publication configured-catalog correlation",
+    "schema-valid mismatched reply rejection",
+    "preserved typed item errors without retry/fallback"
+  ],
+  "source_commit": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+  "source_sha256": {
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "tests/test_batch_client_correlation.py": "aa98b9144615f7419abab6f92f710e0a16354aa9790152aca87fc99aa426da02",
+    "tests/test_run_artifact_segments.py": "4395bc5bcb3c740b000191596332834d4a482f97d0ab32622ba0efa0cf6ec78a"
+  },
+  "state": "independently_clear_in_reviewed_scope",
+  "target": "Canonical AgentClient batch reply correlation hook",
+  "verification": {
+    "cases": [
+      "Exact reply accepted with one canonical dispatch",
+      "Self-consistent but unrequested key/source/name/hash/offset rejected",
+      "Matching foreign-catalog publication Ref echo rejected on success",
+      "Typed partial item error preserved with one dispatch and no fallback"
+    ],
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<92546d7 export/tests>:<92546d7 export>:<007e3de export/tests>:<007e3de export> /workspace/tuldok-runtime/bin/python -m unittest test_batch_client_correlation -v",
+    "elapsed_seconds": 7.518,
+    "extra_independent_assertions": {
+      "extra_bytes_against_selected_max_bytes": {
+        "code": "artifact_mismatch",
+        "status": 409
+      },
+      "foreign_catalog_typed_error_preserved": true,
+      "requests_per_case": 1,
+      "scope": "controlled canonical AgentClient boundary; no actual HTTP or PostgreSQL",
+      "source_commit": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+      "state": "passed"
+    },
+    "extra_receipt": "/tmp/tuldok-batch-client-92546d7-independent-extra.json",
+    "log": "/tmp/tuldok-batch-client-92546d7-independent-tests.log",
+    "state": "passed",
+    "tests_run": 4
+  }
+}

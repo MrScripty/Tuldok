@@ -1,0 +1,10 @@
+test_exact_reply_is_accepted_without_transport_retry (test_scientific_comparison_client.ScientificComparisonClientTests.test_exact_reply_is_accepted_without_transport_retry) ... ok
+test_matching_foreign_catalog_echo_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_matching_foreign_catalog_echo_is_refused) ... ok
+test_mixed_publication_operand_keeps_its_exact_ref (test_scientific_comparison_client.ScientificComparisonClientTests.test_mixed_publication_operand_keeps_its_exact_ref) ... ok
+test_ordinary_exact_v2_comparison_correlates_each_side (test_scientific_comparison_client.ScientificComparisonClientTests.test_ordinary_exact_v2_comparison_correlates_each_side) ... ok
+test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.182s
+
+OK

@@ -1,0 +1,11 @@
+{
+  "extra_bytes_against_selected_max_bytes": {
+    "code": "artifact_mismatch",
+    "status": 409
+  },
+  "foreign_catalog_typed_error_preserved": true,
+  "requests_per_case": 1,
+  "scope": "controlled canonical AgentClient boundary; no actual HTTP or PostgreSQL",
+  "source_commit": "92546d7fb053d5624dd6434031f0d0fb8d4dbf10",
+  "state": "passed"
+}
