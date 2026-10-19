@@ -1,0 +1,6 @@
+test_corrupt_or_foreign_result_reply_refuses_without_alternate_request (test_run_publication_http.PublicationHTTPTests.test_corrupt_or_foreign_result_reply_refuses_without_alternate_request) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 13.837s
+
+OK

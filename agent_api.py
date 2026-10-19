@@ -596,6 +596,49 @@ model_operation('studies.prepare_branch','POST','/api/workspace/studies/{study_i
     scopes=('inspect','edit'),mutation=True,output=_TRIAL,
     description='Prepare edited branch material and attach immutable exact lineage atomically; existing capture, authority and admission rules apply.')
 
+PUBLICATION_SOURCE_REF = obj({'kind': const('external_publication_source'), 'schema_version': const(1),
+    'catalog_id': ID, 'run_id': ID, 'sha256': SHA})
+PUBLICATION_RESULT_REF = obj({'kind': const('recovered_publication_result'), 'schema_version': const(1),
+    'catalog_id': ID, 'run_id': ID, **{key: SHA for key in (
+        'material_sha256', 'inventory_sha256', 'custody_receipt_sha256', 'sha256')}})
+_PUBLICATION_FAULT = obj({'format': const('external_publication_fault_v1'), 'source_sha256': SHA,
+    'code': text(80), 'message': text(240), 'recorded_at': text(64)})
+_PUBLICATION_STATE = obj({'run_id': ID, 'state': {'enum': ['recovering', 'paused', 'blocked', 'published']},
+    'original_run_state': {'enum': ['failed', 'interrupted']}, 'attempt_count': integer(1, 20),
+    'cancel_requested': {'type': 'boolean'}, 'result_ref': {'oneOf': [{'type': 'null'}, PUBLICATION_RESULT_REF]}})
+_PUBLICATION_ARTIFACT = obj({'name': ARTIFACT, 'role': text(80), 'bytes': integer(0, 512*1024**2),
+    'sha256': SHA, 'media_type': const('application/octet-stream')})
+_PUBLICATION_RESULT = obj({'format': const('recovered_publication_result_v1'), 'schema_version': const(1),
+    'catalog_id': ID, 'run_id': ID, **{key: SHA for key in ('request_sha256', 'material_sha256',
+        'continuation_request_sha256', 'inventory_sha256', 'custody_receipt_sha256')},
+    'source_ref': PUBLICATION_SOURCE_REF, 'artifacts': array(_PUBLICATION_ARTIFACT, 96),
+    'original_run_state': {'enum': ['failed', 'interrupted']}, 'original_fault': _PUBLICATION_FAULT,
+    'result_ref': PUBLICATION_RESULT_REF})
+model_operation('runs.publication_status', 'GET', '/api/workspace/runs/{run_id}/publication', {'run_id': ID},
+    output=obj({'run_id': ID, 'original_run_state': text(64), 'verification': const('saved_metadata_only'),
+        'eligibility': {'enum': ['requires_verification', 'unavailable']},
+        'source_ref': {'oneOf': [{'type': 'null'}, PUBLICATION_SOURCE_REF]},
+        'original_fault': {'oneOf': [{'type': 'null'}, _PUBLICATION_FAULT]},
+        'continuation': {'oneOf': [{'type': 'null'}, _PUBLICATION_STATE]},
+        'limits': obj({'wall_seconds': const(60), 'max_attempts': const(20), 'copy_bytes': SAFE_NAT})}))
+model_operation('runs.recover_publication', 'POST', '/api/workspace/runs/{run_id}/recover-publication',
+    {'run_id': ID, 'source_ref': PUBLICATION_SOURCE_REF, 'request_key': KEY}, output=_PUBLICATION_STATE,
+    scopes=('inspect', 'approve-execution'), mutation=True,
+    description='Explicit current owner action on exact retained original attempt; no compute replay or new grant/reservation. Inspect status after unknown acknowledgement.')
+model_operation('runs.cancel_publication', 'POST', '/api/workspace/runs/{run_id}/cancel-publication',
+    {'run_id': ID, 'request_key': KEY}, output=_PUBLICATION_STATE,
+    scopes=('inspect', 'cancel'), mutation=True)
+_OWNER_OPERATION_IDS.update(('runs.recover_publication', 'runs.cancel_publication'))
+_MODEL_RECEIPT_IDS.add('runs.recover_publication')
+model_operation('runs.publication_result', 'POST', '/api/workspace/publication-results',
+    {'ref': PUBLICATION_RESULT_REF}, output=_PUBLICATION_RESULT)
+_PUBLICATION_SEGMENT = copy.deepcopy(SEGMENT_SCHEMA)
+_PUBLICATION_SEGMENT['properties']['result_ref'] = PUBLICATION_RESULT_REF
+_PUBLICATION_SEGMENT['required'].append('result_ref')
+model_operation('runs.publication_artifact_chunk', 'POST', '/api/workspace/publication-results/artifact-segment/{name}',
+    {'ref': PUBLICATION_RESULT_REF, 'name': ARTIFACT, 'expected_sha256': SHA, 'offset': integer(),
+     'max_bytes': integer(1, 8*1024*1024)}, output=_PUBLICATION_SEGMENT)
+
 _OWNER_SNAPSHOT_HTTP_IDS=frozenset(('project_snapshots.list','project_snapshots.get','project_snapshots.open'))
 _LOOKUP = {key: operation for operation in _OPERATIONS for key in (operation['operation_id'], operation['mcp_name'])}
 # Explicit locally implemented versions. No remotely supplied code or routes.
@@ -1059,6 +1102,18 @@ def validate_output(name, envelope, version=None):
     op = operation(name, version)
     if next(_validator(op['outputSchema']).iter_errors(envelope), None) is not None:
         raise AgentAPIError('HTTP result does not match its operation envelope.', 'transport', 502)
+    if op['operation_id'] == 'runs.publication_result' and envelope['status'] < 400:
+        value = envelope['result']; ref = value['result_ref']; source = value['source_ref']
+        canonical = lambda item: json.dumps(item, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode('utf-8')
+        inventory = [{'path': item['name'], **{key: item[key] for key in ('role', 'bytes', 'sha256')}}
+                     for item in value['artifacts']]
+        if (ref['sha256'] != hashlib.sha256(canonical({key: item for key, item in value.items() if key != 'result_ref'})).hexdigest()
+                or value['inventory_sha256'] != hashlib.sha256(canonical(inventory)).hexdigest()
+                or len({item['name'] for item in value['artifacts']}) != len(value['artifacts'])
+                or any(ref[key] != value[key] for key in ('catalog_id', 'run_id', 'material_sha256', 'inventory_sha256', 'custody_receipt_sha256'))
+                or any(source[key] != value[key] for key in ('catalog_id', 'run_id'))
+                or value['original_fault']['source_sha256'] != source['sha256']):
+            raise AgentAPIError('Recovered publication result identity is inconsistent.', 'transport', 502)
     if (op['operation_id'] == 'graphs.preflight_external'
             and (version == 3 or version is None) and envelope['status'] < 400):
         result = envelope['result']; report = result['preflight_report']; material = result['material']
@@ -1272,11 +1327,14 @@ class AgentClient:
             raise AgentAPIError('Server and bridge operation registries differ.', 'registry_mismatch', 409)
 
     def bootstrap(self):
+        return self._bootstrap('agent')
+
+    def _bootstrap(self, identity_kind):
         validate_registry()
         identity = self._request('GET', '/api/access/session')
         value = identity['result']
-        if identity['status'] != 200 or not isinstance(value, dict) or value.get('kind') != 'agent' or value.get('catalog_id') != self.catalog_id:
-            raise AgentAPIError('Use an active agent credential for the configured catalog.', 'unauthenticated', 401)
+        if identity['status'] != 200 or not isinstance(value, dict) or value.get('kind') != identity_kind or value.get('catalog_id') != self.catalog_id:
+            raise AgentAPIError('Use an active ' + identity_kind + ' credential for the configured catalog.', 'unauthenticated', 401)
         context = self._request('GET', '/api/workspace/context')
         if context['status'] != 200 or not isinstance(context['result'], dict) or context['result'].get('dataset_id') != self.catalog_id:
             raise AgentAPIError('Configured catalog does not match HTTP service.', 'catalog_mismatch', 409)
@@ -1336,12 +1394,47 @@ class AgentClient:
         result = validate_output(name, envelope, version)
         if op['operation_id'] == 'runs.artifact_chunk' and result['status'] < 400:
             validate_segment(result['result'], arguments)
+        if op['operation_id'] == 'runs.publication_artifact_chunk' and result['status'] < 400:
+            if arguments['ref']['catalog_id'] != self.catalog_id:
+                raise AgentAPIError('Publication segment belongs to another catalog.', 'transport', 502)
+            validate_publication_segment(result['result'], arguments)
+        if op['operation_id'] == 'runs.publication_result' and result['status'] < 400:
+            if result['result']['result_ref'] != arguments['ref'] or arguments['ref']['catalog_id'] != self.catalog_id:
+                raise AgentAPIError('Recovered publication does not match the requested Ref/catalog.', 'transport', 502)
+        if op['operation_id'] == 'runs.publication_status' and result['status'] < 400:
+            value = result['result']; source = value['source_ref']; continuation = value['continuation']
+            if (value['run_id'] != arguments['run_id'] or source is not None and
+                    (source['run_id'] != arguments['run_id'] or source['catalog_id'] != self.catalog_id)
+                    or continuation is not None and continuation['run_id'] != arguments['run_id']):
+                raise AgentAPIError('Publication status does not match the requested Run/catalog.', 'transport', 502)
+        if op['operation_id'] in ('runs.recover_publication', 'runs.cancel_publication') and result['status'] < 400:
+            value = result['result']; ref = value['result_ref']
+            if (value['run_id'] != arguments['run_id'] or (value['state'] == 'published') != (ref is not None)
+                    or ref is not None and (ref['run_id'] != arguments['run_id'] or ref['catalog_id'] != self.catalog_id)):
+                raise AgentAPIError('Publication action result does not match its requested Run/catalog.', 'transport', 502)
         if op['operation_id'] == 'graphs.preflight_external' and version == 3 and result['status'] < 400:
             report = result['result']['preflight_report']
             if (report['graph_id'] != arguments['graph_id'] or report['graph_revision'] != arguments['revision']
                     or report['catalog_id'] != self.catalog_id):
                 raise AgentAPIError('Preflight report does not match the requested graph or catalog.', 'transport', 502)
         return result
+
+
+class PublicationOwnerClient(AgentClient):
+    """Explicit owner publication actions only; ordinary AgentClient stays agent-only."""
+    OPERATIONS = frozenset(('runs.publication_status', 'runs.recover_publication', 'runs.cancel_publication',
+                            'runs.publication_result', 'runs.publication_artifact_chunk'))
+
+    def bootstrap(self):
+        result = self._bootstrap('owner')
+        self._selected = {name: version for name, version in self._selected.items() if name in self.OPERATIONS}
+        result['operations'] = sorted(self._selected)
+        return result
+
+    def call(self, name, arguments, **kwargs):
+        if name not in self.OPERATIONS:
+            raise AgentAPIError('Owner publication client only supports explicit publication operations.', 'operation_unsupported', 409)
+        return super().call(name, arguments, **kwargs)
 
 
 def observation_operation(method, target, headers):
@@ -1377,6 +1470,33 @@ def validate_segment(value, request):
         return raw
     except (ValueError, KeyError, TypeError, binascii.Error):
         raise AgentAPIError('Artifact segment identity, bytes or hash differ.', 'artifact_mismatch', 409) from None
+
+
+def validate_publication_segment(value, request):
+    if value.get('result_ref') != request['ref'] or value.get('run_id') != request['ref']['run_id']:
+        raise AgentAPIError('Publication segment differs from its exact requested result.', 'artifact_mismatch', 409)
+    return validate_segment(value, dict(request, run_id=request['ref']['run_id']))
+
+
+def verify_publication_artifact(client, ref, name, expected_sha256, *, consume=None, chunk_bytes=8*1024*1024):
+    """Collect the explicit attached result; provisional bytes need final whole SHA."""
+    offset, total, checksum = 0, None, hashlib.sha256()
+    while True:
+        request = dict(ref=ref, name=name, expected_sha256=expected_sha256, offset=offset, max_bytes=chunk_bytes)
+        envelope = client.call('runs.publication_artifact_chunk', request)
+        if envelope['status'] >= 400:
+            raise AgentAPIError('Recovered artifact read was refused; discard provisional bytes.', 'artifact_unavailable', envelope['status'])
+        value = envelope['result']; raw = validate_publication_segment(value, request)
+        if total is not None and total != value['total_bytes']:
+            raise AgentAPIError('Recovered artifact size changed between segments.', 'artifact_mismatch', 409)
+        total = value['total_bytes']; checksum.update(raw)
+        if consume is not None: consume(raw)
+        offset = value['next_offset']
+        if value['eof']:
+            if checksum.hexdigest() != expected_sha256 or offset != total:
+                raise AgentAPIError('Whole recovered artifact SHA256 differs; discard provisional bytes.', 'artifact_mismatch', 409)
+            return {'result_ref': copy.deepcopy(ref), 'sha256': expected_sha256, 'bytes': total,
+                    'verification': 'whole_sha256_verified'}
 
 
 def verify_artifact(client, run_id, name, expected_sha256, *, consume=None, chunk_bytes=8*1024*1024):

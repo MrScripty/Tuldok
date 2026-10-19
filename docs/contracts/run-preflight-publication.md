@@ -65,8 +65,9 @@ dispatch. No catalog schema, retained evidence format or migration changes.
 ## Publication recovery status
 
 The Runs-owned continuation core below is implemented separately from preflight.
-Negotiated HTTP/agent operations, SDK/CLI, browser/lineage integration, extension
-result collection/comparison and indexed diagnostics remain pending M1 work.
+Selected HTTP/agent operations and CLI/SDK collection are implemented below;
+browser/lineage integration, extension evidence queries/comparison and indexed
+diagnostics remain pending M1 work and separate acceptance.
 The preflight report itself grants no recovery or publication authority.
 
 ## Retained original-attempt publication source
@@ -146,10 +147,10 @@ eligibility as requiring verification. `publication_result` and the bounded
 published membership, receipt/manifest and artifact bytes, and reuse supported
 extension semantics. Their 60-second verification budget checks shutdown and
 chunk/semantic boundaries; an individual artifact response is at most 8 MiB.
-Malformed or changed retained bytes return typed unavailable. These methods do
-not add a negotiated transport operation yet. Segmented collection, evidence
-queries/comparison and candidate/package promotion from recovered failed Runs
-remain outside this core slice; existing promotion gates are unchanged.
+Malformed or changed retained bytes return typed unavailable. Explicit selected
+transport operations below expose the new result independently. Evidence queries/
+comparison and candidate/package promotion from recovered failed Runs remain
+outside this slice; existing promotion gates are unchanged.
 
 No SQL migration, supported metadata version change, dependency or legacy wire
 projection change is introduced. Existing stopped backup/restore retains the
@@ -158,6 +159,43 @@ current catalog-relative staging after restore while preserving original specs.
 The neutral real-process/Study tests establish custody and accounting behavior;
 synthetic field fixtures establish structural stop boundaries. Neither establishes
 new numerical, CUDA, real-lab or full extension-result acceptance.
+
+## Selected publication transport and collection
+
+The additive selected-v1 operations `runs.publication_status`,
+`runs.recover_publication`, `runs.cancel_publication`, `runs.publication_result`
+and `runs.publication_artifact_chunk` require an exact operation-contract header.
+Headerless calls refuse; old operation contracts and frozen legacy discovery
+remain unchanged. Recovery/cancellation are owner-only mutations; ordinary agent
+inspection cannot gain that authority by selecting the new operation. A stable
+recovery key reconciles the original continuation, with no automatic retry.
+
+The new artifact-segment operation accepts the exact attached result Ref, flat
+artifact name, expected whole SHA256, offset and at most 8 MiB per call. It checks
+current transitive authority, attached Ref/proof, exact receipt/manifest and
+inventory membership, then reads only the requested payload range through stable
+owned no-follow descriptors. It does not scan all artifact payloads per chunk.
+Its `segment_read_whole_hash_unverified` label is explicit; the whole result
+reader retains its separate complete verification promise. Clients correlate the
+returned Ref/Run/catalog/offset/hash and verify the assembled whole hash before
+publishing bytes. No recovered result becomes an implicit input binding.
+
+Ordinary AgentClient remains agent-only. The separate PublicationOwnerClient
+accepts an existing owner configuration and only the five publication operations;
+it cannot call unrelated owner operations. CLI `recover-publication` and
+`cancel-publication` use that explicit client. `publication-status`,
+`publication-result` and `download-publication` use ordinary agent configuration.
+Ref/body JSON is bounded and downloaded files publish exclusively after whole
+hash verification; existing destinations are preserved on refusal.
+
+SDK `collect-publication` uses an explicitly hash-selected sealed public CLI and
+an exact result Ref. It makes no admission/recovery call. It validates the result
+and inventory identity, downloads into a new output directory, independently
+hashes each file in bounded chunks and returns `collected` only when all selected
+inventory bytes match. Its finite command deadline and 4 GiB collection ceiling
+do not enlarge any Run/evidence contract. Partial local collections remain
+inspectable on refusal; `numerical: not_evaluated` stays explicit. This command
+does not substitute for original SDK execution conformance or science acceptance.
 
 ## Current large-output storage observation
 

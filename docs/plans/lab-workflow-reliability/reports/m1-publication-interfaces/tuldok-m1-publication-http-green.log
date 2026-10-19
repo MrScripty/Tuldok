@@ -1,0 +1,7 @@
+test_headerless_or_nonowner_mutation_refuses_without_continuation (test_run_publication_http.PublicationHTTPTests.test_headerless_or_nonowner_mutation_refuses_without_continuation) ... ok
+test_owner_recovers_and_agent_collects_exact_result_over_real_http (test_run_publication_http.PublicationHTTPTests.test_owner_recovers_and_agent_collects_exact_result_over_real_http) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 17.605s
+
+OK

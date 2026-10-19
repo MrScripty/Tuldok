@@ -1,5 +1,33 @@
 # Lab workflow reliability execution ledger
 
+## 2026-10-19 — Explicit publication interfaces and collection
+
+- PR96 core is published at `6cc5943`; exact early PostgreSQL gate22 passed,
+  zero skips in81.968s. Continued in a separate dependent interfaces worktree.
+- Added five explicit selected operations for saved status, owner recovery/
+  cancellation and exact result/segment reads. Headerless mutation and ordinary
+  agent recovery refuse before continuation effects. Existing AgentClient stays
+  agent-only; a narrow separate owner publication client supports explicit CLI
+  actions without unrelated owner operations.
+- Added whole-hash-verified CLI download and SDK collection through a selected
+  sealed public CLI. SDK never admits or recovers a Run. Collection uses an absent
+  destination, bounded hashing and finite deadline, with numerical acceptance
+  explicitly not evaluated. Existing SDK conformance semantics remain unchanged.
+- Actual PostgreSQL/HTTP/CLI:4 tests passed70.531s; separate corrupt/foreign-result
+  response test passed13.837s. Actual >8MiB neutral output/recovery/collection
+  witness passed14.583s, observing only8MiB+17byte payload reads and a whole-scan
+  tripwire during segments. SDK actual collection plus existing representative
+  conformance17 passed68.982s. No CUDA/numerical/real-lab claim.
+- All110 old full operation contracts compare equal; frozen legacy digest
+  unchanged; all new input/output schemas validate. Initial transport regression
+  selection accidentally named nonexistent `test_agent_contracts`; that command
+  is not a clean pass. The corrected focused command and hosted exact-head tests
+  are recorded separately as they finish.
+- Independent core reviewer is implementing an isolated actual synthetic field
+  semantic/custody recovery witness. Current interfaces review remains pending;
+  browser/lineage, exact evidence/compare, indexed diagnostics and full M1–M6
+  acceptance remain open. No dependency merge order or protected ref changed.
+
 ## 2026-10-19 — Runs-owned publication recovery core
 
 - Continued on `feature/lab-publication-recovery-20261019`, based on PR95

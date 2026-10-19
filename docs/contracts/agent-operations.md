@@ -69,6 +69,14 @@ and configured catalog. Its `prepared`/`not_reserved` state leaves admission,
 device READY/GO, actual output validation and publication explicitly deferred.
 No execution authority, retry or new client dependency is introduced.
 
+The additive selected-v1 publication operations are documented in
+[publication transport](run-preflight-publication.md#selected-publication-transport-and-collection).
+Status/result/segment reads require current inspect authority and exact Ref
+correlation. Recovery and cancellation require an existing current owner;
+PublicationOwnerClient is restricted to these publication operations. Default
+AgentClient continues refusing owner credentials. Existing selected operation
+contracts and frozen legacy discovery remain unchanged.
+
 Registry restrictions narrower than HTTP are explicit: canonical freeze requires
 preview_token; draft annotations only; graph edits describe known node parameter
 variants rather than arbitrary future types; inline import bytes are at most

@@ -1,5 +1,6 @@
 """Runs-owned explicit publication continuation; never dispatch or change compute outcome."""
 import copy
+import base64
 from functools import wraps
 import hashlib
 import os
@@ -456,7 +457,7 @@ def cancel(runs, body):
 
 
 @_reader_boundary
-def result(runs, ref, *, deadline=None, checkpoint=None):
+def result(runs, ref, *, deadline=None, checkpoint=None, _verify_payloads=True):
     deadline = time.monotonic() + WALL_SECONDS if deadline is None else deadline
     def guard():
         _read_check(runs, deadline)
@@ -506,12 +507,13 @@ def result(runs, ref, *, deadline=None, checkpoint=None):
                                ('artifact-manifest.json', encode(manifest).encode())):
             observed, _, _ = runs._diagnostic_read(destination, name, 65536)
             _require(observed == expected, 'Recovered publication receipt changed.')
-        for item in value['artifacts']:
-            guard()
-            runs._copy_verified(destination, item['name'], item, deadline=deadline,
-                                cancelled=lambda: runs._closed or runs._stop.is_set())
-        if runs._extension(run):
-            runs._verify_extension(runs.path / run['id'], dict(run, artifacts=value['artifacts']), checkpoint=guard)
+        if _verify_payloads:
+            for item in value['artifacts']:
+                guard()
+                runs._copy_verified(destination, item['name'], item, deadline=deadline,
+                                    cancelled=lambda: runs._closed or runs._stop.is_set())
+            if runs._extension(run):
+                runs._verify_extension(runs.path / run['id'], dict(run, artifacts=value['artifacts']), checkpoint=guard)
     finally:
         os.close(destination)
     guard()
@@ -536,3 +538,53 @@ def artifact(runs, ref, name, expected_sha256):
              'Recovered artifact changed during capture.')
     _read_check(runs, deadline)
     return raw, item
+
+
+@_reader_boundary
+def artifact_segment(runs, ref, name, body):
+    """Current exact-result authority, bounded bytes, provisional whole hash."""
+    closed(body, ('expected_sha256', 'offset', 'max_bytes'))
+    expected, offset, maximum = body['expected_sha256'], body['offset'], body['max_bytes']
+    _require(_hash(expected) and type(offset) is int and 0 <= offset <= 512 * 1024**2
+             and type(maximum) is int and 1 <= maximum <= 8 * 1024**2,
+             'Publication segment needs exact hash, nonnegative offset and 1 through 8 MiB bound.', 'invalid')
+    deadline = time.monotonic() + WALL_SECONDS
+    # An attached immutable inventory permits provisional bounded reads. Full
+    # result/semantic verification remains the explicit result reader's promise;
+    # segmented clients must verify the reassembled whole digest themselves.
+    value = result(runs, ref, deadline=deadline, _verify_payloads=False)
+    item = next((item for item in value['artifacts'] if item['name'] == name), None)
+    _require(item is not None and item['sha256'] == expected, 'Exact recovered artifact identity is required.', 'stale')
+    _require(offset <= item['bytes'], 'Publication segment offset exceeds the artifact length.', 'invalid')
+    directory = descriptor = None
+    try:
+        directory = runs._diagnostic_directory(runs.path / ref['run_id'])
+        identity = os.fstat(directory)
+        descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        before = os.fstat(descriptor)
+        _require(stat.S_ISREG(before.st_mode) and before.st_uid == os.getuid()
+                 and before.st_nlink == 1 and before.st_size == item['bytes'], 'Recovered segment source changed.')
+        _read_check(runs, deadline)
+        raw = os.pread(descriptor, min(maximum, item['bytes'] - offset), offset)
+        after = os.fstat(descriptor); current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+        keys = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns', 'st_mode', 'st_uid', 'st_nlink')
+        _require(len(raw) == min(maximum, item['bytes'] - offset)
+                 and all(getattr(before, key) == getattr(after, key) == getattr(current, key) for key in keys),
+                 'Recovered segment changed during capture.')
+        current_directory = runs._diagnostic_directory(runs.path / ref['run_id'])
+        try:
+            current_identity = os.fstat(current_directory)
+            _require((identity.st_dev, identity.st_ino) == (current_identity.st_dev, current_identity.st_ino),
+                     'Recovered segment directory changed during capture.')
+        finally: os.close(current_directory)
+    finally:
+        if descriptor is not None: os.close(descriptor)
+        if directory is not None: os.close(directory)
+    _read_check(runs, deadline)
+    next_offset = offset + len(raw)
+    return {'result_ref': copy.deepcopy(ref), 'run_id': ref['run_id'], 'name': name,
+            'expected_sha256': expected, 'total_bytes': item['bytes'], 'media_type': item['media_type'],
+            'offset': offset, 'bytes': len(raw), 'next_offset': next_offset,
+            'eof': next_offset == item['bytes'], 'segment_sha256': hashlib.sha256(raw).hexdigest(),
+            'data_base64': base64.b64encode(raw).decode('ascii'),
+            'verification': 'segment_read_whole_hash_unverified'}

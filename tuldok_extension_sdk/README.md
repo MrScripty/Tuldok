@@ -180,3 +180,14 @@ states. Those tests prove refusal/delegation and byte/schema behavior; they are
 not actual E2 execution or E3 A/B acceptance. A real public CLI fixture must run
 this command separately before claiming product conformance. Complete numerical,
 package/runtime notices and distribution rights remain separately owned.
+# Explicit recovered publication collection
+
+`python -m tuldok_extension_sdk collect-publication --config <agent-config>
+--cli <project_cli.py> --cli-sha256 <reviewed-cli-sha256> --ref <result-ref.json>
+--output <new-directory>` collects one exact attached recovered result through
+the explicitly selected public CLI. The Ref comes from a separate owner action;
+collection never admits, recovers or replays compute. All files must pass complete
+SHA256 checks before `state: collected`; numerical acceptance remains
+`not_evaluated`. An existing destination refuses and a failed partial collection
+is retained for inspection. The command uses the existing private CLI/config
+rules, finite command deadline and a 4 GiB total collection ceiling.

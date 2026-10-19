@@ -2,9 +2,9 @@
 
 **Plan status:** `Active`
 
-**Current phase:** M1 — qualify Runs-owned same-attempt publication recovery core; negotiated interfaces and full result collection remain pending
+**Current phase:** M1 — qualify explicit publication transport and CLI/SDK collection; full evidence comparison, browser/lineage and indexed diagnostics remain pending
 
-**Next slice:** Publish the independently reviewed recovery core and its real PostgreSQL/Study/restore witnesses, then implement negotiated status/action/result readers, SDK/CLI, Run panel and lineage integration.
+**Next slice:** Qualify negotiated publication interfaces and independent actual synthetic extension recovery, then implement exact evidence comparison, Run panel and lineage integration.
 
 **Acceptance status:** `pending`
 

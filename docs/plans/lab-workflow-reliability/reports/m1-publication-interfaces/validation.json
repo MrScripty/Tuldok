@@ -1,0 +1,45 @@
+{
+  "scope": "Five selected publication operations and CLI/SDK collection; pending independent interface review and full C2 acceptance",
+  "base": "6cc594389659b15ae2d8cf677c3d8f8c46be61ea",
+  "actual_pg_http_cli_tests": {
+    "passed": 4,
+    "skipped": 0,
+    "seconds": 70.531
+  },
+  "corrupt_and_foreign_result": {
+    "passed": 1,
+    "skipped": 0,
+    "seconds": 13.837
+  },
+  "large_actual_neutral_segment": {
+    "passed": 1,
+    "seconds": 14.583,
+    "payload_pread_sizes": [
+      8388608,
+      17
+    ],
+    "full_artifact_scan_tripwire": true
+  },
+  "sdk_actual_collection_and_representative_conformance": {
+    "passed": 17,
+    "skipped": 0,
+    "seconds": 68.982
+  },
+  "compatibility": {
+    "old_full_contracts_preserved": 110,
+    "frozen_legacy_digest": "cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8",
+    "all_schemas_valid": true,
+    "capability_bytes": 475902
+  },
+  "remaining": [
+    "independent interface review",
+    "hosted exact head CI",
+    "actual synthetic extension recovery composition",
+    "browser and lineage",
+    "exact evidence queries/comparison",
+    "indexed diagnostics",
+    "full M1-M6 acceptance"
+  ],
+  "new_numerical_claim": false,
+  "cuda_available": false
+}

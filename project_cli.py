@@ -11,7 +11,8 @@ import stat
 import sys
 import tempfile
 
-from agent_api import AgentAPIError, AgentClient, REQUEST_LIMIT, decode, validate_arguments, verify_artifact
+from agent_api import (AgentAPIError, AgentClient, PublicationOwnerClient, REQUEST_LIMIT, decode,
+                       validate_arguments, verify_artifact, verify_publication_artifact)
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
 
@@ -34,7 +35,7 @@ def read_arguments(path):
         os.close(fd)
 
 
-def download(client, run_id, name, expected_sha256, destination):
+def download(client, run_id, name, expected_sha256, destination, *, result_ref=None):
     """Publish verified bytes exclusively; provisional bytes never replace work."""
     destination = Path(destination)
     if os.path.lexists(destination):
@@ -42,8 +43,9 @@ def download(client, run_id, name, expected_sha256, destination):
     fd, provisional = tempfile.mkstemp(prefix='.tuldok-download-', dir=destination.parent)
     try:
         with os.fdopen(fd, 'wb') as handle:
-            receipt = verify_artifact(client, run_id, name, expected_sha256,
-                                      consume=handle.write)
+            receipt = (verify_artifact(client, run_id, name, expected_sha256, consume=handle.write)
+                       if result_ref is None else verify_publication_artifact(client, result_ref, name,
+                           expected_sha256, consume=handle.write))
             handle.flush()
             os.fsync(handle.fileno())
         # Same-directory link is atomic and refuses concurrent destination creation.
@@ -105,6 +107,18 @@ def parser():
     artifact.add_argument('--name', required=True)
     artifact.add_argument('--expected-sha256', required=True)
     artifact.add_argument('--out', type=Path, required=True)
+    publication = commands.add_parser('publication-status', help='Inspect saved publication status without retrying compute')
+    publication.add_argument('--run-id', required=True)
+    for command in ('recover-publication', 'cancel-publication'):
+        recovery = commands.add_parser(command, help='Explicit owner publication action using existing owner configuration')
+        recovery.add_argument('--arguments', type=Path, required=True)
+    publication_result = commands.add_parser('publication-result', help='Verify an exact attached publication result')
+    publication_result.add_argument('--ref', type=Path, required=True)
+    publication_download = commands.add_parser('download-publication', help='Collect exact recovered artifact and verify whole SHA256')
+    publication_download.add_argument('--ref', type=Path, required=True)
+    publication_download.add_argument('--name', required=True)
+    publication_download.add_argument('--expected-sha256', required=True)
+    publication_download.add_argument('--out', type=Path, required=True)
     operation = commands.add_parser('call', help='Call one locally registered compatible operation with bounded JSON arguments')
     operation.add_argument('--operation', required=True)
     operation.add_argument('--arguments', type=Path, required=True)
@@ -155,16 +169,30 @@ def main(argv=None, *, observer=None):
     observation = observe_begin(observer, args.command if args.command in ('status', 'download') else 'call')
     try:
         status, http_status = 200, None
-        client = AgentClient.from_config(args.config)
-        if args.command == 'download':
-            observe_selection(observer, observation, 'runs.artifact_chunk',
-                              {'run_id': args.run_id, 'name': args.name, 'expected_sha256': args.expected_sha256})
+        client_type = PublicationOwnerClient if args.command in ('recover-publication', 'cancel-publication') else AgentClient
+        client = client_type.from_config(args.config)
+        if args.command in ('download', 'download-publication'):
+            ref = read_arguments(args.ref) if args.command == 'download-publication' else None
+            if ref is not None:
+                validate_arguments('runs.publication_artifact_chunk', {'ref': ref, 'name': args.name,
+                    'expected_sha256': args.expected_sha256, 'offset': 0, 'max_bytes': 8*1024*1024})
+            run_id = ref.get('run_id') if ref is not None else args.run_id
+            selected_operation = 'runs.publication_artifact_chunk' if ref is not None else 'runs.artifact_chunk'
+            observe_selection(observer, observation, selected_operation,
+                              {'run_id': run_id, 'name': args.name, 'expected_sha256': args.expected_sha256})
             for phase in ('validated', 'admitted', 'dispatch'):
                 observe_stage(observer, observation, phase)
-            result = download(client, args.run_id, args.name, args.expected_sha256, args.out)
+            result = download(client, run_id, args.name, args.expected_sha256, args.out, result_ref=ref)
         else:
             if args.command == 'call':
                 operation, arguments = args.operation, read_arguments(args.arguments)
+            elif args.command in ('recover-publication', 'cancel-publication'):
+                operation = 'runs.recover_publication' if args.command == 'recover-publication' else 'runs.cancel_publication'
+                arguments = read_arguments(args.arguments)
+            elif args.command == 'publication-status':
+                operation, arguments = 'runs.publication_status', {'run_id': args.run_id}
+            elif args.command == 'publication-result':
+                operation, arguments = 'runs.publication_result', {'ref': read_arguments(args.ref)}
             elif args.command == 'open':
                 operation, arguments = 'project_snapshots.open', dict(root=args.root, manifest_path=args.manifest)
             elif args.command == 'inspect':

@@ -15,9 +15,15 @@ def main(argv=None):
     for option in ('config', 'cli', 'cli-sha256', 'selection', 'output'):
         conformance.add_argument('--' + option, required=True)
     conformance.add_argument('--deadline-seconds', type=int, default=180)
+    collection = commands.add_parser('collect-publication', help='Collect one exact recovered result through a selected trusted public CLI; never execute.')
+    for option in ('config', 'cli', 'cli-sha256', 'ref', 'output'):
+        collection.add_argument('--' + option, required=True)
+    collection.add_argument('--deadline-seconds', type=int, default=180)
     args = parser.parse_args(argv)
     if args.command == 'conformance':
         return conformance_main(args)
+    if args.command == 'collect-publication':
+        return publication_main(args)
     try:
         result = validate(args.root, args.manifest)
     except ExtensionError as error:
@@ -146,7 +152,7 @@ class _CLI:
         import tempfile
         from pathlib import Path
         from .evidence import canonical, require
-        require(operation in ('identity.get', 'studies.get', 'studies.trial', 'recipes.material', 'models.material', 'graphs.get', 'studies.admit', 'runs.get', 'runs.model_evidence'), 'Unsupported conformance operation.', 'unsupported')
+        require(operation in ('identity.get', 'studies.get', 'studies.trial', 'recipes.material', 'models.material', 'graphs.get', 'studies.admit', 'runs.get', 'runs.model_evidence', 'runs.publication_result'), 'Unsupported conformance operation.', 'unsupported')
         self.calls.append(operation)
         with tempfile.TemporaryDirectory(prefix='tuldok-sdk-call-') as temporary:
             path = Path(temporary)/'arguments.json'; path.write_bytes(canonical(arguments)); path.chmod(0o600)
@@ -157,6 +163,19 @@ class _CLI:
         name(item['name']); sha(item['sha256']); natural(item['bytes'], 'Artifact bytes', 1, 8*1024**2)
         self.calls.append('runs.artifact_chunk')
         return self._run(['download', '--run-id', run_id, '--name', item['name'], '--expected-sha256', item['sha256'], '--out', str(destination)])
+
+    def download_publication(self, ref, item, destination):
+        import tempfile
+        from pathlib import Path
+        from .evidence import canonical, name, sha, natural
+        from .publication import result_reference
+        result_reference(ref); name(item['name']); sha(item['sha256'])
+        natural(item['bytes'], 'Artifact bytes', 0, 512*1024**2)
+        self.calls.append('runs.publication_artifact_chunk')
+        with tempfile.TemporaryDirectory(prefix='tuldok-sdk-publication-') as temporary:
+            path = Path(temporary) / 'result-ref.json'; path.write_bytes(canonical(ref)); path.chmod(0o600)
+            return self._run(['download-publication', '--ref', str(path), '--name', item['name'],
+                '--expected-sha256', item['sha256'], '--out', str(destination)])
 
 
 def _external_graph_selector(graph):
@@ -264,6 +283,24 @@ def _conformance(selection, client, output):
         run_id=run_id, study_id=selection['study_id'], trial_id=selection['trial_id'], request_key=selection['request_key'],
         material_sha256=expected['material_sha256'], artifacts=[{key:item[key] for key in ('name', 'bytes', 'sha256')} for item in artifacts],
         operations=client.calls, scope='actual_authorized_run_and_public_identity_blob_contract; numerical_acceptance_is_separate')
+
+
+def publication_main(args):
+    from .evidence import EvidenceError, decode, read_regular
+    from .publication import collect, result_reference
+    client = None
+    try:
+        ref = result_reference(decode(read_regular(args.ref, 65536), 65536))
+        client = _CLI(args)
+        result = collect(client, ref, args.output)
+    except (EvidenceError, OSError, ImportError, KeyError, TypeError, ValueError, KeyboardInterrupt) as error:
+        result = {'format': 'extension_sdk_publication_collection_v1', 'state': error.state if isinstance(error, EvidenceError) else 'unavailable',
+                  'error': str(error) if isinstance(error, EvidenceError) else 'Publication collection is unavailable.',
+                  'numerical': 'not_evaluated'}
+        print(json.dumps(result, ensure_ascii=True, allow_nan=False)); return 2
+    finally:
+        if client is not None: client.close()
+    print(json.dumps(result, ensure_ascii=True, allow_nan=False)); return 0
 
 
 def conformance_main(args):

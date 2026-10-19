@@ -797,6 +797,9 @@ def make_handler(dataset, observer=None):
                         return self.reply(dataset.runs.list())
                     if len(parts) == 2 and parts[0] == 'runs':
                         return self.reply(dataset.runs.get(parts[1]))
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'publication':
+                        agent_api.require_selection(self._contract_selection, 'runs.publication_status')
+                        return self.reply(dataset.runs.publication_status(parts[1]))
                     if len(parts) == 3 and parts[0] == 'runs' and parts[2] == 'candidates':
                         agent_api.require_selection(self._contract_selection,'studies.candidates')
                         return self.reply(dataset.studies.candidates(parts[1],**self._model_page_query()))
@@ -997,6 +1000,18 @@ def make_handler(dataset, observer=None):
                 path = urlsplit(self.path).path
                 if path.startswith('/api/workspace/'):
                     parts = path.removeprefix('/api/workspace/').split('/')
+                    if len(parts) == 3 and parts[0] == 'runs' and parts[2] in ('recover-publication', 'cancel-publication'):
+                        operation = 'runs.recover_publication' if parts[2] == 'recover-publication' else 'runs.cancel_publication'
+                        agent_api.require_selection(self._contract_selection, operation)
+                        action = dataset.runs.recover_publication if parts[2] == 'recover-publication' else dataset.runs.cancel_publication
+                        return self.reply(action(dict(body, run_id=parts[1])))
+                    if parts == ['publication-results']:
+                        agent_api.require_selection(self._contract_selection, 'runs.publication_result')
+                        return self.reply(dataset.runs.publication_result(body['ref']))
+                    if len(parts) == 3 and parts[:2] == ['publication-results', 'artifact-segment']:
+                        agent_api.require_selection(self._contract_selection, 'runs.publication_artifact_chunk')
+                        return self.reply(dataset.runs.publication_artifact_segment(body['ref'], parts[2],
+                            {key: value for key, value in body.items() if key != 'ref'}))
                     if parts == ['models']:
                         agent_api.require_selection(self._contract_selection,'models.create')
                         return self.reply(dataset.models.create(body),201)
