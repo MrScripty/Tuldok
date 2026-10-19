@@ -1,0 +1,13 @@
+{
+  "head": "37727fce2e49eaf4b1b1d8868286fc0e5a628539",
+  "scope": "Refinement correctness attempt01; source held fixed during module execution.",
+  "sha256": {
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "tests/benchmark_artifact_segments.py": "be6fc2e6c32c21baed010553d1e3f653d5d760ce9266d7c7a813dd91f48d465e",
+    "tests/test_run_artifact_segments.py": "601d8931b79799c5d8c5401bf7c71343706bf58468854899c04eac80139cc540",
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+  }
+}

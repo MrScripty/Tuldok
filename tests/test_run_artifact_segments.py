@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import threading
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 import agent_api
 from runs import Runs
@@ -91,6 +91,78 @@ class ArtifactSegmentsTests(unittest.TestCase):
         previous=json.loads((Path(__file__).with_name('fixtures')/'agent_contracts_collection2d8b7d7.json').read_bytes())
         for name,versions in previous.items():
             for version,expected in versions.items():self.assertEqual(agent_api.contract(name,int(version)),expected)
+
+    def test_repeated_sources_refresh_in_last_occurrence_order_each_stage(self):
+        fake=self.fake();a='a'*32;b='b'*32;loads=[];proofs=[];delivery=[]
+        def loaded(run_id):
+            run={'id':run_id,'execution_kind':'external_recipe','observation':len(loads)}
+            loads.append(run);return run
+        fake._load.side_effect=loaded
+        requests=[item('a-first'),dict(item('b'),source={'kind':'run','run_id':b}),item('a-last')]
+        with patch('candidate_packages.authorize_transitive_inputs',side_effect=lambda owner,run:proofs.append(run)):
+            Runs.artifact_segments(fake,{'items':requests},_delivery_guard=delivery.append)
+            self.assertEqual(fake.artifact_segment.call_count,3)
+            self.assertEqual([run['id'] for run in loads],[b,a])
+            delivery[0]()
+            self.assertEqual([run['id'] for run in loads],[b,a,b,a])
+            self.assertEqual(len({id(run) for run in proofs}),4)
+            Runs.artifact_segments(fake,{'items':requests})
+            self.assertEqual([run['id'] for run in loads],[b,a,b,a,b,a])
+            self.assertEqual(fake.artifact_segment.call_count,6)
+
+    def test_final_sources_keep_kind_and_complete_ref_identity(self):
+        fake=self.fake();delivery=[]
+        ref={'kind':'recovered_publication_result','schema_version':1,'catalog_id':'b'*32,'run_id':'a'*32,
+             'material_sha256':'a'*64,'inventory_sha256':'b'*64,'custody_receipt_sha256':'c'*64,'sha256':'d'*64}
+        other=dict(ref,sha256='e'*64)
+        fake._load.return_value['publication_continuation']={'state':'published','result_ref':ANY}
+        pub=lambda key,value:dict(item(key),source={'kind':'publication','ref':value})
+        requests=[item('run-first'),pub('ref-first',ref),pub('other-ref',other),item('run-last'),pub('ref-last',ref)]
+        with patch('candidate_packages.authorize_transitive_inputs'),patch('run_publication._result_ref') as check, \
+             patch('run_publication.artifact_segment',return_value={} ) as read:
+            Runs.artifact_segments(fake,{'items':requests},_delivery_guard=delivery.append)
+            self.assertEqual(fake.artifact_segment.call_count,2);self.assertEqual(read.call_count,3)
+            self.assertEqual(fake._load.call_count,3)
+            self.assertEqual([call.args[0] for call in check.call_args_list],[other,ref])
+            delivery[0]()
+            self.assertEqual(fake._load.call_count,6)
+            self.assertEqual([call.args[0] for call in check.call_args_list],[other,ref,other,ref])
+
+    def test_private_external_only_refuses_before_builtin_dispatch_default_unchanged(self):
+        fake=self.fake();fake.lock=nullcontext();fake._load.return_value={'id':'a'*32,'graph':{'recipe':'unqualified'}}
+        with patch('runs.adapter_for_graph',return_value=SimpleNamespace(MODEL_RECIPE='qualified')) as adapter:
+            selectors={key:item()[key] for key in ('expected_sha256','offset','max_bytes')}
+            with self.assertRaises(WorkbenchError) as caught:
+                Runs.artifact_segment(fake,'a'*32,'result.bin',selectors,_external_only=True)
+            self.assertEqual((caught.exception.code,caught.exception.status),('unsupported',400))
+            adapter.assert_not_called();self.assertEqual(fake._load.call_count,1)
+            with self.assertRaises(WorkbenchError):Runs.artifact_segment(fake,'a'*32,'result.bin',selectors)
+            adapter.assert_called_once();self.assertEqual(fake._load.call_count,2)
+
+    def test_final_stage_cancellation_still_discards_all_results(self):
+        fake=self.fake();delivery=[]
+        with patch('candidate_packages.authorize_transitive_inputs',side_effect=lambda *_:fake._stop.set()):
+            with self.assertRaises(WorkbenchError) as caught:
+                Runs.artifact_segments(fake,{'items':[item(),item('two')]})
+        self.assertEqual(caught.exception.code,'cancelled');self.assertEqual(fake.artifact_segment.call_count,2)
+        fake=self.fake()
+        self.call(fake,{'items':[item(),item('two')]},_delivery_guard=delivery.append)
+        fake._stop.set()
+        with self.assertRaises(WorkbenchError) as caught:delivery[0]()
+        self.assertEqual(caught.exception.code,'cancelled')
+
+    def test_final_stage_deadline_is_shared_through_delivery(self):
+        fake=self.fake();now=[0];delivery=[]
+        with patch('runs.time',SimpleNamespace(monotonic=lambda:now[0])):
+            with patch('candidate_packages.authorize_transitive_inputs',side_effect=lambda *_:now.__setitem__(0,61)):
+                with self.assertRaises(WorkbenchError) as caught:
+                    Runs.artifact_segments(fake,{'items':[item(),item('two')]})
+            self.assertEqual(caught.exception.code,'deadline')
+            now[0]=0;fake=self.fake()
+            self.call(fake,{'items':[item(),item('two')]},_delivery_guard=delivery.append)
+            now[0]=61
+            with self.assertRaises(WorkbenchError) as caught:delivery[0]()
+            self.assertEqual(caught.exception.code,'deadline')
 
 
 import os
@@ -187,7 +259,8 @@ class ArtifactSegmentsHTTPTests(unittest.TestCase):
                     self.dataset.access.revoke(self.fixture.agent['identity']['credential_id'])
                 revoked.append(True)
             return result
-        with patch('agent_api.validate_output',side_effect=validation):code,value=self.request([self.selection()])
+        requests=[self.selection('repeat-'+str(index)) for index in range(3)]
+        with patch('agent_api.validate_output',side_effect=validation):code,value=self.request(requests)
         self.assertEqual(code,401,value)
         self.assertNotIn('items',value);self.assertNotIn('data_base64',json.dumps(value))
         self.unchanged()
@@ -207,4 +280,70 @@ class ArtifactSegmentsHTTPTests(unittest.TestCase):
         with patch('agent_api.validate_output',side_effect=validation),patch('candidate_packages.authorize_transitive_inputs',side_effect=authority):
             code,value=self.request([self.selection(),self.selection('recovered',publication=True)])
         self.assertEqual(code,403,value);self.assertNotIn('items',value)
+        self.unchanged()
+
+    def test_repeated_run_loads_keep_every_initial_canonical_read_and_two_final_proofs(self):
+        runs=self.dataset.runs;requests=[self.selection('repeat-'+str(index)) for index in range(3)]
+        with patch.object(runs,'_load',wraps=runs._load) as load, \
+             patch.object(runs,'artifact_segment',wraps=runs.artifact_segment) as read:
+            status,value=self.request(requests)
+        self.assertEqual(status,200,value)
+        self.assertEqual(read.call_count,3)
+        self.assertEqual(load.call_count,5)  # N initial canonical loads + U at each final stage.
+        self.assertTrue(all(call.kwargs['_external_only'] is True for call in read.call_args_list))
+        agent_api.validate_artifact_segments(value,{'items':requests})
+        for outcome in value['items']:
+            self.assertEqual(base64.b64decode(outcome['result']['data_base64']),self.fixture.input)
+        self.unchanged()
+
+    def test_last_occurrence_authority_loss_discards_at_domain_and_delivery_boundaries(self):
+        from access import AccessError
+        import candidate_packages
+        import run_publication
+        runs=self.dataset.runs
+        requests=[self.selection('a-first'),self.selection('b',publication=True),self.selection('a-last')]
+        for boundary in ('domain','delivery'):
+            with self.subTest(boundary=boundary):
+                reads=[];final=[];armed=[];validated=[]
+                original_read=runs.artifact_segment;original_pub=run_publication.artifact_segment
+                original_authority=candidate_packages.authorize_transitive_inputs;original_validation=agent_api.validate_output
+                def read(*args,**kwargs):
+                    value=original_read(*args,**kwargs);reads.append('a');return value
+                def publication(*args,**kwargs):
+                    value=original_pub(*args,**kwargs);reads.append('b');return value
+                def validation(name,envelope,*args,**kwargs):
+                    value=original_validation(name,envelope,*args,**kwargs)
+                    if name=='runs.artifact_segments' and envelope['status']==200:validated.append(True)
+                    return value
+                def authority(owner,run):
+                    stage='delivery' if validated else 'domain'
+                    if len(reads)==3 and stage==boundary:
+                        final.append(run['id'])
+                        if run['id']==self.failed['id']:armed.append(True)
+                        elif run['id']==self.completed['id'] and armed:
+                            raise AccessError('Authored source-A loss while checking source-B','forbidden',403)
+                    return original_authority(owner,run)
+                with patch.object(runs,'artifact_segment',side_effect=read), \
+                     patch('run_publication.artifact_segment',side_effect=publication), \
+                     patch('candidate_packages.authorize_transitive_inputs',side_effect=authority), \
+                     patch('agent_api.validate_output',side_effect=validation):
+                    status,value=self.request(requests)
+                self.assertEqual(status,403,value);self.assertNotIn('items',value)
+                self.assertEqual(reads,['a','b','a'])
+                self.assertEqual(final,[self.failed['id'],self.completed['id']])
+                self.assertEqual(bool(validated),boundary=='delivery')
+                self.unchanged()
+
+    def test_owned_shutdown_after_serialization_discards_duplicate_results(self):
+        original=agent_api.validate_output
+        def validation(name,envelope,*args,**kwargs):
+            result=original(name,envelope,*args,**kwargs)
+            if name=='runs.artifact_segments' and envelope['status']==200:self.dataset.runs._stop.set()
+            return result
+        try:
+            with patch('agent_api.validate_output',side_effect=validation):
+                code,value=self.request([self.selection('first'),self.selection('last')])
+        finally:self.dataset.runs._stop.clear()
+        self.assertEqual(code,409,value);self.assertNotIn('items',value)
+        self.assertEqual(value['code'],'cancelled')
         self.unchanged()

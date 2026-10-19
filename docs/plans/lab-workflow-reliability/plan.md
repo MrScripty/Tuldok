@@ -491,3 +491,12 @@ It adds no cache, compute or old-contract change. Initial eight-case qualificati
 is checkpointed before broader tests and same-head alternating paired performance
 measurement. Retention and full T5 acceptance remain pending those results and
 independent review; historical83d baseline is context, not a paired candidate arm.
+
+
+M4 candidate99741e5 completed the full fixed same-head paired matrix. All six
+median wall ratios regress despite fewer requests; retain all raw observations
+and no improvement claim. The lead admitted a narrow request-local load
+refinement only after archival, with independent exact-source final fences in
+last-occurrence order and all initial canonical checks preserved. Refined
+correctness and a new same-head paired matrix remain pending; no cross-call
+mutable-runtime cache or automatic collection selection is admitted.

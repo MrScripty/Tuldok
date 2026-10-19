@@ -1,0 +1,51 @@
+test_repeated_sources_refresh_in_last_occurrence_order_each_stage (test_run_artifact_segments.ArtifactSegmentsTests.test_repeated_sources_refresh_in_last_occurrence_order_each_stage) ... FAIL
+test_final_sources_keep_kind_and_complete_ref_identity (test_run_artifact_segments.ArtifactSegmentsTests.test_final_sources_keep_kind_and_complete_ref_identity) ... FAIL
+test_private_external_only_refuses_before_builtin_dispatch_default_unchanged (test_run_artifact_segments.ArtifactSegmentsTests.test_private_external_only_refuses_before_builtin_dispatch_default_unchanged) ... ERROR
+
+======================================================================
+ERROR: test_private_external_only_refuses_before_builtin_dispatch_default_unchanged (test_run_artifact_segments.ArtifactSegmentsTests.test_private_external_only_refuses_before_builtin_dispatch_default_unchanged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 136, in test_private_external_only_refuses_before_builtin_dispatch_default_unchanged
+    Runs.artifact_segment(fake,'a'*32,'result.bin',selectors,_external_only=True)
+  File "/workspace/Tuldok-lab-bounded-collection-m4/access.py", line 73, in guarded
+    return function(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: Runs.artifact_segment() got an unexpected keyword argument '_external_only'
+
+======================================================================
+FAIL: test_repeated_sources_refresh_in_last_occurrence_order_each_stage (test_run_artifact_segments.ArtifactSegmentsTests.test_repeated_sources_refresh_in_last_occurrence_order_each_stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 105, in test_repeated_sources_refresh_in_last_occurrence_order_each_stage
+    self.assertEqual([run['id'] for run in loads],[b,a])
+AssertionError: Lists differ: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'bbbbb[168 chars]aaa'] != ['bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 'aaaaa[24 chars]aaa']
+
+First differing element 0:
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+
+First list contains 4 additional elements.
+First extra element 2:
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
++ ['bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+- ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+-  'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+-  'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+-  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+
+======================================================================
+FAIL: test_final_sources_keep_kind_and_complete_ref_identity (test_run_artifact_segments.ArtifactSegmentsTests.test_final_sources_keep_kind_and_complete_ref_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 125, in test_final_sources_keep_kind_and_complete_ref_identity
+    self.assertEqual(fake._load.call_count,3)
+AssertionError: 7 != 3
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.045s
+
+FAILED (failures=2, errors=1)

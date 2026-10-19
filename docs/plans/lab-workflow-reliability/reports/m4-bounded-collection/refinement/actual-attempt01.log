@@ -1,0 +1,30 @@
+test_actual_mixed_sources_partial_errors_whole_hash_and_legacy_gate (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_actual_mixed_sources_partial_errors_whole_hash_and_legacy_gate) ... ok
+test_current_transitive_denial_at_delivery_discards_all_buffered_bytes (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_current_transitive_denial_at_delivery_discards_all_buffered_bytes) ... ok
+test_last_occurrence_authority_loss_discards_at_domain_and_delivery_boundaries (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_last_occurrence_authority_loss_discards_at_domain_and_delivery_boundaries) ... ok
+test_owned_shutdown_after_serialization_discards_duplicate_results (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_owned_shutdown_after_serialization_discards_duplicate_results) ... ERROR
+test_repeated_run_loads_keep_every_initial_canonical_read_and_two_final_proofs (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_repeated_run_loads_keep_every_initial_canonical_read_and_two_final_proofs) ... ok
+test_revocation_after_serialization_discards_all_buffered_bytes (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_revocation_after_serialization_discards_all_buffered_bytes) ... ok
+test_all_existing_full_contracts_remain_equal (test_run_artifact_segments.ArtifactSegmentsTests.test_all_existing_full_contracts_remain_equal) ... ok
+test_caps_duplicate_and_malformed_ref_refuse_before_any_read (test_run_artifact_segments.ArtifactSegmentsTests.test_caps_duplicate_and_malformed_ref_refuse_before_any_read) ... ok
+test_final_sources_keep_kind_and_complete_ref_identity (test_run_artifact_segments.ArtifactSegmentsTests.test_final_sources_keep_kind_and_complete_ref_identity) ... ok
+test_final_stage_cancellation_still_discards_all_results (test_run_artifact_segments.ArtifactSegmentsTests.test_final_stage_cancellation_still_discards_all_results) ... ok
+test_final_stage_deadline_is_shared_through_delivery (test_run_artifact_segments.ArtifactSegmentsTests.test_final_stage_deadline_is_shared_through_delivery) ... ok
+test_foreign_order_or_identity_is_not_correlated (test_run_artifact_segments.ArtifactSegmentsTests.test_foreign_order_or_identity_is_not_correlated) ... ok
+test_ordered_segments_and_typed_partial_failure (test_run_artifact_segments.ArtifactSegmentsTests.test_ordered_segments_and_typed_partial_failure) ... ok
+test_private_external_only_refuses_before_builtin_dispatch_default_unchanged (test_run_artifact_segments.ArtifactSegmentsTests.test_private_external_only_refuses_before_builtin_dispatch_default_unchanged) ... ok
+test_repeated_sources_refresh_in_last_occurrence_order_each_stage (test_run_artifact_segments.ArtifactSegmentsTests.test_repeated_sources_refresh_in_last_occurrence_order_each_stage) ... ok
+test_shutdown_cancel_and_deadline_discard_buffered_results (test_run_artifact_segments.ArtifactSegmentsTests.test_shutdown_cancel_and_deadline_discard_buffered_results) ... ok
+
+======================================================================
+ERROR: test_owned_shutdown_after_serialization_discards_duplicate_results (test_run_artifact_segments.ArtifactSegmentsHTTPTests.test_owned_shutdown_after_serialization_discards_duplicate_results)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/Tuldok-lab-bounded-collection-m4/tests/test_run_artifact_segments.py", line 348, in test_owned_shutdown_after_serialization_discards_duplicate_results
+    self.assertEqual(value['error']['code'],'cancelled')
+                     ~~~~~~~~~~~~~~^^^^^^^^
+TypeError: string indices must be integers, not 'str'
+
+----------------------------------------------------------------------
+Ran 16 tests in 41.111s
+
+FAILED (errors=1)

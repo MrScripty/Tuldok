@@ -1,0 +1,79 @@
+{
+  "actual_attempt01": {
+    "error": "New shutdown test incorrectly indexed established string error as an object after status409/noitems assertions passed.",
+    "errors": 1,
+    "pass": 15,
+    "seconds": 41.111,
+    "skips": 0,
+    "tests": 16
+  },
+  "base_head": "37727fce2e49eaf4b1b1d8868286fc0e5a628539",
+  "before": {
+    "errors": 1,
+    "failures": 2,
+    "tests": 3
+  },
+  "corrected_only_failed_case": {
+    "change": "value[code] at established top-level HTTP error envelope; production unchanged.",
+    "pass": 1,
+    "seconds": 6.439,
+    "skips": 0,
+    "tests": 1
+  },
+  "evidence_files": {
+    "actual-attempt01-source.json": {
+      "bytes": 828,
+      "sha256": "f8605c56274a91a8b77a30abb27474bd56d1dca3dbba9bf253a843153cb8b2e1"
+    },
+    "actual-attempt01.log": {
+      "bytes": 3767,
+      "sha256": "51d44a4b3011253037a7b051cbe4eb3e554fd7e6c3214554cc8ecc612a238ed8"
+    },
+    "before.log": {
+      "bytes": 3438,
+      "sha256": "775e85d0a8d23b463f988fea2d234970d26aa5ea8e0d0eedfe0ff8d9082225d0"
+    },
+    "independent-review.json": {
+      "bytes": 7802,
+      "sha256": "9adfb765ab8d6f2ccee5066f6c3a786915d06cff3c817c4b8ff588ef43b30d67"
+    },
+    "parent-997-cleanup-independent.json": {
+      "bytes": 175,
+      "sha256": "886c4e11cffdc75d9dfc04417fcc5ed45bfe7a5c42672bdcddb3ca3807049d21"
+    },
+    "pure-initial.log": {
+      "bytes": 1656,
+      "sha256": "27fc2e440706ec54b98ed98263dfec11f339cd9ea29773f68d318e415b64c2a0"
+    },
+    "shutdown-corrected.log": {
+      "bytes": 293,
+      "sha256": "43cf8d680083ac343633dbe13e24191602cb3a2292a7cb06200f8cf6e4177477"
+    }
+  },
+  "independent_review": "Source clear; independently10pure passed0.352s; corrected actual1pass6.439s reviewed; durable independent-review.json retained.",
+  "performance": "No improvement inferred from fewer loads. Fullnegative997matrix retained; nextfixedhead pairedmatrix pending.",
+  "production_write_set": [
+    "runs.py"
+  ],
+  "pure_initial": {
+    "pass": 9,
+    "seconds": 0.363,
+    "tests": 9
+  },
+  "qualification": [
+    "actual3 repeated canonical reads /5 total Run loads=N+2U",
+    "A/B/A source loss aborts before domain outputvalidation and after serialization at delivery",
+    "actual duplicate-source late credential revocation no buffered bytes",
+    "mixed ordinary/recoveredRef partial outcomes and legacy gates",
+    "final-stage cancellation/deadline, completeRef/kind identity, default builtinpath and all122priorfullcontracts"
+  ],
+  "source_sha256": {
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "app.py": "e59785cbc6c0f071baa1f0a78d544184dc786a67bca3ebf51289c09ed34fc7a4",
+    "run_publication.py": "fe41cdd7892afd6116a5f948069f009348652e25b788d42fd17a037db3cb816c",
+    "runs.py": "b701532d0bf5c77ee87676fa3bbfbf9759ae45370c28d45765b2eac538a4547e",
+    "tests/benchmark_artifact_segments.py": "be6fc2e6c32c21baed010553d1e3f653d5d760ce9266d7c7a813dd91f48d465e",
+    "tests/test_run_artifact_segments.py": "e6cf7ec4fb1571bed04b6d3e091fd91f0a9cff2411f536d816c7cde7103bd895",
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+  }
+}
