@@ -52,7 +52,12 @@ window.WorkspaceCoordinator = function ({api, render, identity=()=>window.Tuldok
   function body(){
     const retained=pending(), request=health.recovery_request;
     if(storageError)throw Error(storageError);
-    if(retained&&request&&(request.actor_id!==identity().actor_id||request.request_key!==retained.request_key||request.expected_generation!==retained.expected_generation))throw Error('Saved request and current receipt differ. Inspect the original recovery request before starting another.');
+    if(retained&&request&&(request.actor_id!==identity().actor_id||request.request_key!==retained.request_key||request.expected_generation!==retained.expected_generation)){
+      // The new request may never have reached the owner. An older completed
+      // receipt does not consume this exact pending current-generation key.
+      if(request.completed_generation!==null&&request.completed_generation<=retained.expected_generation&&retained.expected_generation===health.generation)return retained;
+      throw Error('Saved request and current receipt differ. Inspect the original recovery request before starting another.');
+    }
     // A completed acknowledgement stays complete even if another fault occurs.
     // A new explicit action then names the current generation with a fresh key.
     if(request?.completed_generation!==null&&request?.completed_generation!==undefined){
