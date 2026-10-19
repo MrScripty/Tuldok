@@ -1,0 +1,36 @@
+{
+  "state": "passed",
+  "source_head": "cd247fa5e7e65562a071709e92a32ccc01b0e594",
+  "base_status_addon": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
+  "original_base": "415f5e124c6bf3bc66a05b427c01e83c5f5d01b8",
+  "branch": "feature/lab-publication-run-panel-20261019",
+  "scope": "Neutral publication panel custody/interaction; no model training or numerical/scientific acceptance",
+  "checks": {
+    "publication_controller": "passed; controlled API, request/storage/identity boundaries, stale read/write fences, timer cleanup and content hash refusal",
+    "canonical_pins": "1 unittest passed; six exact selected operations",
+    "external_controller_regression": "passed; controlled transport",
+    "external_package_regression": "passed; controlled transport",
+    "actual_browser": "passed on exact source; Chrome151, real PostgreSQL17/custodian/copy fault, keyboard/mouse pause/reload/samekey resume, exact Ref, whole-SHA download, neutral field refusal,1440/390 layouts",
+    "root_status_addon_independent": "1 actual PG test passed in11.831s, zero skips; selected2/v1fullprojection equality/forgedkey refusal",
+    "fixture_cleanup": "process exited0 after owned fresh temporary catalog cleanup and explicit owned schema DROP"
+  },
+  "pending": [
+    "root independent UI source/test/docs review",
+    "hosted exact-head qualification",
+    "lineage integration",
+    "indexed diagnostics",
+    "full M1 acceptance"
+  ],
+  "production_source_sha256": {
+    ".github/workflows/tests.yml": "f58fd08ffa5f427c480b4c5d9b569e1a0b9d9549cc626ed444fede58d077f538",
+    "static/workspace-external.js": "0b13189d92f1f5ce3318532fbab3958b8be9018b0c6843756f5e754da0b83e2d",
+    "static/workspace-real.js": "7744430c880ee88778e349387706774d45c73135bc91c891c6fd664a9e504ccd",
+    "tests/browser_workspace_publication.cjs": "8fa1d095aca57f9e84c6a186fbecf3d3f35fc2dc8b6f152806b6354fc109e692",
+    "tests/publication_browser_fixture.py": "43fb070d14fa0ada7b9a454f03f521a323500fb861652a520d102878ba7dffc3",
+    "tests/test_workspace_publication.py": "b515d44d5bd9dc5f05accc2efc6fc55468811dc219f427f228bc871c04008217",
+    "tests/test_workspace_publication_controller.cjs": "582236155d19161d90c5e2386962985fa4da08eb4baab578ca82b51852e5789b",
+    "docs/contracts/run-preflight-publication.md": "ee49d58ea39b8b0b5bd0573431d84750b99c9896d17d7a4c92f7a52b59f54caa",
+    "docs/plans/lab-workflow-reliability/plan.md": "3d7c0e7218b92f4850fa7dfb284852661be4cd2b21a056bf802be088f210e684",
+    "docs/plans/lab-workflow-reliability/execution-ledger.md": "1d0040502adc927fc243386b68cbb801be8a22fce0cb89c4a3dd5030c5f72717"
+  }
+}

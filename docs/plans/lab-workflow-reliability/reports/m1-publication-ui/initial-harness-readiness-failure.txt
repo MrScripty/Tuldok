@@ -1,0 +1,15 @@
+Initial browser attempt failed before the UI journey. This is a transcript of
+its captured exec output (the initial /tmp log was subsequently overwritten by
+the corrected run), not a retained raw log. No product acceptance was claimed.
+
+TypeError: Cannot read properties of null (reading 'disabled')
+    at <anonymous>:1:36
+    at evaluate (.../tests/browser_workspace_publication.cjs:25:156)
+    at async until (.../tests/browser_workspace_publication.cjs:11:67)
+    at async .../tests/browser_workspace_publication.cjs:35:3
+Fixture stderr:
+
+Cause: the test queried the dataset control before the new page document existed.
+Correction: wait for the element to exist and become enabled. The actual product
+journey and assertions were retained, including real pause/resume, fresh-document
+reload, exact request reuse, unchanged accounting/events and whole-hash download.
