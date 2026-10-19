@@ -64,11 +64,10 @@ dispatch. No catalog schema, retained evidence format or migration changes.
 
 ## Publication recovery status
 
-Same-Run publication continuation, indexed diagnostics, attached recovered-result
-Refs and new result readers remain pending M1 work. This report does not recover,
-publish, promote or reinterpret a failed Run, nor replay compute or consume grants.
-Those capabilities require their separate storage/custody/authority acceptance
-before being advertised.
+The Runs-owned continuation core below is implemented separately from preflight.
+Negotiated HTTP/agent operations, SDK/CLI, browser/lineage integration, extension
+result collection/comparison and indexed diagnostics remain pending M1 work.
+The preflight report itself grants no recovery or publication authority.
 
 ## Retained original-attempt publication source
 
@@ -104,11 +103,61 @@ new file/Ref each carry schema version 1; metadata schema versions 1–10 and ol
 Run/wire projections remain unchanged. No proof includes a rebased execution
 path. Historical absolute execution specs remain historical evidence after restore.
 
-This retention prerequisite does not expose a recovered-result Ref, reinterpret
-a legacy failed Run as completed, or implement a recovery command. Current
-authority, original hashes, semantic evidence, bounded partial-copy reconciliation,
-accounting and supported result readers still need their separate continuation
-acceptance before recovery can be advertised.
+## Runs-owned continuation core
+
+`Runs.recover_publication` accepts the original Run ID, exact retained source Ref
+and a stable request key. It requires a current owner with approve-execution
+authority and current transitive input access. It creates no process, GO, Run,
+execution grant consumption or Study reservation. The original failed/interrupted
+Run state, execution events, request and settled resource envelope remain intact.
+Older Run/artifact/evidence gates keep refusing that failed attempt.
+
+Eligibility requires a recorded recoverable publication fault, completed/drained
+original custody, the frozen source proof, exact captures/output membership and
+unchanged approved bytes. Legacy attempts without that proof/fault refuse.
+Changed outputs, incompatible evidence, foreign directory entries, unproved
+ownership and sealed mismatching metadata refuse; recovery never adopts them.
+Existing owned unreferenced partial payload files may be replaced within the
+original destination. Intact files and matching receipts/manifests are synced
+before attachment. The original output and destination copies are reused; no
+third output copy is created. Remaining growth plus the existing 512 MiB reserve
+must fit current destination storage.
+
+There is one active continuation per Runs owner/catalog, a 60-second wall budget,
+bounded per-chunk cancellation/deadline checks and at most 20 recorded attempts.
+Each attempt retains bounded status/error information under the original Run.
+Same actor/body/key requests converge on this continuation. Conflicting requests
+refuse. Cancellation persists a revision before acknowledgement; copies pause at
+safe checks. A committed result wins over later cancellation. Shutdown joins
+owned recovery before metadata closes. No startup or reader retries compute.
+
+After integrity and supported evidence verification, an immutable private
+`recovered_publication_result_v1` document binds the original identities,
+inventory, custody receipt, fault and continuation request. It is at most 48 KiB,
+mode 0400, synced and linked without replacement in the original private staging
+directory. Its versioned `recovered_publication_result` Ref attaches in a final
+transaction that rechecks current owner/transitive authority and cancellation.
+Unknown commit acknowledgement claims neither failure nor success; repeating
+the same request reconciles the exact attached Ref before any copying.
+
+`Runs.publication_status` exposes bounded saved metadata and explicitly labels
+eligibility as requiring verification. `publication_result` and the bounded
+`publication_artifact` reader accept the exact attached Ref, verify its proof,
+published membership, receipt/manifest and artifact bytes, and reuse supported
+extension semantics. Their 60-second verification budget checks shutdown and
+chunk/semantic boundaries; an individual artifact response is at most 8 MiB.
+Malformed or changed retained bytes return typed unavailable. These methods do
+not add a negotiated transport operation yet. Segmented collection, evidence
+queries/comparison and candidate/package promotion from recovered failed Runs
+remain outside this core slice; existing promotion gates are unchanged.
+
+No SQL migration, supported metadata version change, dependency or legacy wire
+projection change is introduced. Existing stopped backup/restore retains the
+private source/result documents and opaque Run continuation. Recovery resolves
+current catalog-relative staging after restore while preserving original specs.
+The neutral real-process/Study tests establish custody and accounting behavior;
+synthetic field fixtures establish structural stop boundaries. Neither establishes
+new numerical, CUDA, real-lab or full extension-result acceptance.
 
 ## Current large-output storage observation
 

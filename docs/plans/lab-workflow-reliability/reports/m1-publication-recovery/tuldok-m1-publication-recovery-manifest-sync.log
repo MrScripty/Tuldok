@@ -1,0 +1,6 @@
+test_original_manifest_sync_fault_recovery_syncs_every_reused_file (test_run_publication_recovery.PublicationRecoveryTests.test_original_manifest_sync_fault_recovery_syncs_every_reused_file) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 4.428s
+
+OK

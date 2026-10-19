@@ -1,0 +1,66 @@
+{
+  "scope": "Runs-owned continuation core only; negotiated interfaces and full C2 acceptance pending",
+  "base": "e9336ed3c311c9590f1eedc3f2fffb49c3d85d65",
+  "local_postgresql": "17.6 disposable Unix-socket catalog; actual custodian neutral process",
+  "tests": {
+    "core_and_field": {
+      "passed": 37,
+      "skipped": 0,
+      "seconds": 55.467
+    },
+    "study_reservation": {
+      "passed": 1,
+      "seconds": 4.249
+    },
+    "original_manifest_sync_failure": {
+      "passed": 1,
+      "seconds": 4.428
+    },
+    "stopped_backup_restore_new_directory": {
+      "passed": 1,
+      "seconds": 4.815
+    },
+    "expanded_recovery_retention_field": {
+      "passed": 46,
+      "skipped": 0,
+      "seconds": 91.547,
+      "note": "Last typed reader refinement independently followed by focused3 cases"
+    },
+    "final_refinements": {
+      "passed": 3,
+      "skipped": 0,
+      "seconds": 13.67
+    },
+    "legacy_completion_cancel_copy_spool": {
+      "passed": 4,
+      "skipped": 0,
+      "seconds": 14.044
+    },
+    "exact_early_ci_command": {
+      "passed": 22,
+      "skipped": 0,
+      "seconds": 81.968,
+      "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v"
+    }
+  },
+  "independent_review": {
+    "result": "core_draft_clear_no_blockers",
+    "nine_file_fingerprint": "ca8d7efe6abdf6baf0f7e1fb8f2debd3f41b70c60a73f48868bd17436f242414",
+    "independent_restore_test": {
+      "passed": 1,
+      "skipped": 0,
+      "seconds": 5.654
+    },
+    "limits": "transport/SDK/UI/lineage/extension result/indexed diagnostics/full M1 pending"
+  },
+  "pending": [
+    "hosted CI exact source",
+    "negotiated interfaces, SDK/CLI/UI/lineage",
+    "segmented artifact/evidence/compare",
+    "actual extension result path",
+    "bounded indexed diagnostics",
+    "full M1-M6 acceptance"
+  ],
+  "cuda_available": false,
+  "new_numerical_claim": false
+}

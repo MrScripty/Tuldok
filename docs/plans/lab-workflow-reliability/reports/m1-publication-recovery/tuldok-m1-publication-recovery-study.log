@@ -1,0 +1,6 @@
+test_existing_study_reservation_and_conservative_charge_survive_recovery (test_run_publication_recovery.PublicationRecoveryTests.test_existing_study_reservation_and_conservative_charge_survive_recovery) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 4.249s
+
+OK

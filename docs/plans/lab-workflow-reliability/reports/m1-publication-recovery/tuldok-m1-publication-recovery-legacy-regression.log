@@ -1,0 +1,9 @@
+test_real_unicode_parameter_descendant_output_cold_download_and_restart (test_external_runs.ExternalExecutionTests.test_real_unicode_parameter_descendant_output_cold_download_and_restart) ... ok
+test_real_running_cancel_retains_consumed_approval (test_external_runs.ExternalExecutionTests.test_real_running_cancel_retains_consumed_approval) ... ok
+test_chunk_bound_same_size_mutation_and_link_refusal (test_external_artifacts.BoundedCopyTests.test_chunk_bound_same_size_mutation_and_link_refusal) ... ok
+test_selected_spool_survives_source_mutation_and_releases_capacity (test_external_artifacts.ExternalArtifactTests.test_selected_spool_survives_source_mutation_and_releases_capacity) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 14.044s
+
+OK

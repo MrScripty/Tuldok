@@ -400,12 +400,14 @@ def read_regular(directory, filename, maximum):
 
 @boundary
 @retained_directory
-def verify(directory, run, admitted_context, *, captured=None):
+def verify(directory, run, admitted_context, *, captured=None, checkpoint=None):
     """Verify structural closure after custody. Caller rederives authoritative context.
 
     The returned private array bytes are only for the bounded query below; they
     never become a transport document or authority for another Run.
     """
+    guard = checkpoint if checkpoint is not None else lambda: None
+    guard()
     admitted_context=checked(admitted_context)
     closed(admitted_context,('format','static','composition','run_id','request_sha256'),'Admitted context')
     context_raw=canonical(admitted_context)
@@ -425,6 +427,7 @@ def verify(directory, run, admitted_context, *, captured=None):
     require(type(inventory) is list and len(inventory)<=len(outputs),'Retained artifact inventory differs.','unavailable')
     retained={}
     for item in inventory:
+        guard()
         closed(item,('name','role','bytes','sha256','media_type'),'Retained artifact')
         require(item['name'] in outputs and item['name'] not in retained,'Retained artifact membership differs.','unavailable')
         sha(item['sha256']);natural(item['bytes'],'Retained artifact bytes',0,outputs[item['name']]['max_bytes'])
@@ -433,6 +436,7 @@ def verify(directory, run, admitted_context, *, captured=None):
     require(all(not rule['required'] or filename in retained for filename,rule in outputs.items()),'Retained artifact inventory is incomplete.','unavailable')
     payloads={};total=0
     for filename,rule in outputs.items():
+        guard()
         try:raw=read_regular(directory,filename,min(rule['max_bytes'],limits['shard_bytes']))
         except WorkbenchError:
             if rule['required']:raise
@@ -440,6 +444,7 @@ def verify(directory, run, admitted_context, *, captured=None):
             except FileNotFoundError:pass
             else:raise
             continue
+        guard()
         item=retained.get(filename)
         require(item is not None and item['bytes']==len(raw) and item['sha256']==hashlib.sha256(raw).hexdigest(),
                 'Exact decoder payload differs from authoritative retained artifact identity.','unavailable')
@@ -453,6 +458,7 @@ def verify(directory, run, admitted_context, *, captured=None):
         recipe_contract.validate_canonical_captures(run['material'],captured,outputs=payloads)
     def document(filename):return decode(payloads[filename],limits['manifest_bytes'] if filename=='model-evidence.json' else limits['shard_bytes'])
     def blob(item):
+        guard()
         closed(item,('name','sha256','bytes','media_type'),'Blob');name(item['name']);sha(item['sha256']);natural(item['bytes'],'Blob size',1,limits['shard_bytes']);text(item['media_type'],'Blob media type',80)
         raw=payloads.get(item['name']);require(type(raw) is bytes and len(raw)==item['bytes'] and hashlib.sha256(raw).hexdigest()==item['sha256'],'Blob differs from declared retained inventory.')
         return raw
@@ -483,6 +489,7 @@ def verify(directory, run, admitted_context, *, captured=None):
             len(index['entries'])==capture['max_snapshots'],'Required checkpoint cadence is incomplete.')
     checkpoints={};previous_wall=0;selected=[]
     for ordinal,entry in enumerate(index['entries'],1):
+        guard()
         closed(entry,('checkpoint','model_sha256','fitted_transform_sha256','clocks','selected','state'),'Checkpoint entry')
         point=clocks(entry['clocks'],clock)
         require(point==ordinal*capture['interval'] and entry['clocks']['wall_elapsed_ms']>=previous_wall and
@@ -501,6 +508,7 @@ def verify(directory, run, admitted_context, *, captured=None):
     observations=decode(blob(manifest['observations'][0]));require(type(observations) is list and len(observations)==len(checkpoints)*len(policy['metric_definitions']),'Metric coverage differs.')
     metric_by_id={item['id']:item for item in policy['metric_definitions']};seen=set()
     for row in observations:
+        guard()
         require(type(row) is dict,'Observation must be an object.')
         state=row.get('state');keys=('value','sample_count') if state=='observed' else ('reason',) if state=='undefined' else ()
         require(keys,'Unknown observation outcome.')
@@ -522,6 +530,7 @@ def verify(directory, run, admitted_context, *, captured=None):
     import scientific_fields
     input_bindings={row['member_id']:row['fields'] for row in policy['probe_inputs']}
     for member in members:
+        guard()
         hashes=[]
         for source,field in zip(input_bindings[member['frozen_reference']['member_id']],fields[0]['contract']['inputs'],strict=True):
             payload,_=scientific_fields.npy_payload(payloads[source['artifact']],field,fields[0]['geometry'])
@@ -530,12 +539,14 @@ def verify(directory, run, admitted_context, *, captured=None):
     arrays={};field_records=[];position=0
     bindings={(item['clock'],item['field_id'],item['member_id']):item for item in policy['field_outputs']}
     for checkpoint_sha,checkpoint in checkpoints.items():
+        guard()
         for field in fields:
             group=field_index[position];position+=1
             closed(group,('run_id','checkpoint_sha256','probe_sha256','cases'),'Field index entry')
             require(group['run_id']==run['id'] and group['checkpoint_sha256']==checkpoint_sha and group['probe_sha256']==manifest['probe']['sha256'] and
                     type(group['cases']) is list and len(group['cases'])==len(members),'Field index context/membership differs.')
             for member,row in zip(members,group['cases'],strict=True):
+                guard()
                 closed(row,('member_ordinal','predicted','reference','mask','geometry_sha256','time_units','gauge_policy_sha256'),'Field case')
                 binding=bindings[(checkpoint['point'],field['id'],member['frozen_reference']['member_id'])]
                 output=field['contract']['output']
@@ -550,6 +561,7 @@ def verify(directory, run, admitted_context, *, captured=None):
                 key=(checkpoint_sha,member['ordinal'],field['id']);arrays[key]={'pair':pair,'prediction':payloads[row['predicted']['name']],'reference':payloads[row['reference']['name']],
                                                                                'gauge_policy':field['gauge_policy']}
                 field_records.append({'checkpoint_sha256':checkpoint_sha,'member_ordinal':member['ordinal'],'field_id':field['id'],'stage':output['stage'],'shape_zyx':output['shape_zyx'],'units':output['units']})
+    guard()
     return {'state':'verified','validation':'structural_and_identity_closure; numerical_acceptance_is_separate',
             'manifest':manifest,'checkpoint_index':index,'probe':static['probe'],'metric_definitions':policy['metric_definitions'],
             'observations':observations,'model_definition':policy['model_specification'],'fields':field_records,
