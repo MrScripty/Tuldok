@@ -1,5 +1,6 @@
 'use strict';
 const fixtureAuth = require('./auth_helpers.cjs').authenticatedFixture();
+const {stopOwnedChildren}=require('./browser_owned_cleanup.cjs');
 const fetch = fixtureAuth.fetch;
 // Real manifest files, HTTP admission, cancellation, persistence and Chromium.
 'use strict';
@@ -130,4 +131,4 @@ function python(code,...args){const result=spawnSync('python3',['-c',code,...arg
   assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'),'Native import panel must fit narrow layout');
   assert.deepEqual(errors,[]);
   console.log('Native classification Chromium: actual ZIP imports, review/export roundtrip, duplicate preservation, Stop, delayed refresh, lost-response lookup, dirty editor/filter/selection preservation, reload/back and narrow layout passed.');
-})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();for(const child of children)child.kill();await pause(200);fs.rmSync(temporary,{recursive:true,force:true});});
+})().catch(async error=>{console.error(error);console.error('Runtime errors:',JSON.stringify(errors));if(inspect)try{console.error('Page diagnostics:',await inspect());}catch(diagnostic){console.error('Diagnostics failed:',diagnostic);}process.exitCode=1;}).finally(async()=>{if(ws)ws.close();await stopOwnedChildren(children);fs.rmSync(temporary,{recursive:true,force:true,maxRetries:5,retryDelay:100});});
