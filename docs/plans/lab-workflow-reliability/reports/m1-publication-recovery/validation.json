@@ -35,6 +35,12 @@
       "passed": 4,
       "skipped": 0,
       "seconds": 14.044
+    },
+    "exact_early_ci_command": {
+      "passed": 22,
+      "skipped": 0,
+      "seconds": 81.968,
+      "command": "python -m unittest discover -s tests -p 'test_run_publication*.py' -v"
     }
   },
   "independent_review": {
