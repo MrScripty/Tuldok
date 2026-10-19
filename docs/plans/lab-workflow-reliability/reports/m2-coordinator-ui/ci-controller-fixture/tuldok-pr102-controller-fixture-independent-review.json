@@ -1,0 +1,43 @@
+{
+  "kind": "Independent read-only VM fixture composition correction review",
+  "worktree": "/workspace/Tuldok-lab-coordinator-ui-m2",
+  "head": "4bcf43063ff780fd5e44894701d65338abdc0579",
+  "status": "Frozen dirty test-only candidate reviewed; root commits and composes",
+  "test_sha256": "6b19c00e9d00347f01ffbde06a53fa5bfa1d4ff5904612a8f07df9e99f898d3d",
+  "diff": "diff --git a/tests/test_workspace_external_controller.cjs b/tests/test_workspace_external_controller.cjs\nindex 5484a98..f6297bc 100644\n--- a/tests/test_workspace_external_controller.cjs\n+++ b/tests/test_workspace_external_controller.cjs\n@@ -155,14 +155,14 @@ function fixture(){\n   // Exercise the actual polling composition with held progress responses.\n   for(const change of ['view','session','none','receipt']){\n     const held=deferred(),requested=deferred(),listeners={};let actor={actor_id:'owner',credential_id:'one',kind:'owner',scopes:[]};\n-    const root=()=>({innerHTML:'',contains:()=>false,querySelectorAll:()=>[],querySelector:()=>({addEventListener(){},classList:{toggle(){}},setAttribute(){}})});\n+    const root=()=>({innerHTML:'',contains:()=>false,querySelectorAll:()=>[],querySelector:()=>({contains:()=>false,querySelectorAll:()=>[],querySelector:()=>null,addEventListener(){},classList:{toggle(){}},setAttribute(){}})});\n     const pipelineRoot=root(),runsRoot=root(),record={id:'poll',state:'completed',graph:{recipe:'external_recipe',name:'Polling fixture'},artifacts:[],node_attempts:[],events:[],progress:{}};\n     if(change==='receipt')record.artifact_status={status:'receipt_verified',payloads:'not_checked'};\n     const auth={identity:()=>actor,fetch:async url=>({ok:true,json:async()=>{\n       if(url.endsWith('/runs'))return [record];if(url.endsWith('/progress')){requested.resolve();return held.promise;}return record;\n     }})};\n     const window={workspaceEscape:String,TuldokAuth:auth,addEventListener:(name,fn)=>(listeners[name]||=[]).push(fn)};\n-    const context={window,TuldokAuth:auth,history:{state:{},replaceState(){}},structuredClone,crypto,clearTimeout,setTimeout,document:{activeElement:null},CSS:{escape:String}};\n+    const context={window,TuldokAuth:auth,history:{state:{},replaceState(){}},structuredClone,crypto,clearTimeout,setTimeout,performance,AbortController,document:{activeElement:null},CSS:{escape:String}};\n     vm.runInNewContext(source,context);context.WorkspaceExternal=window.WorkspaceExternal;\n     vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/workspace-service.js'),'utf8'),context);context.WorkspaceModel=window.WorkspaceModel;\n     vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../static/experiment-lineage.js'),'utf8'),context);\n",
+  "finding": "Clear: only two fixture line replacements; no assertions or production files changed",
+  "reason": [
+    "Polling composition VM now explicitly receives real Node performance and AbortController browser-compatible globals needed by existing coordinator controller.",
+    "Inert child DOM stub gains contains=false, querySelectorAll=[] and querySelector=null, consistent with an empty nonfocused fixture subtree; existing event/class/attribute stubs remain.",
+    "Real static workspace-service, experiment-lineage, workspace-real and workspace-external files still execute. Actual held progress request/response and view/session/none/receipt loop remain unchanged.",
+    "Every assertion remains unchanged, including late view/session refusal, session cache clear, positive held-progress rendering, receipt wording, stage evidence refusal, lifecycle and custody disclosure. No branch/test removed and no exception swallowed."
+  ],
+  "source_sha256": {
+    "tests/test_workspace_external_controller.cjs": "6b19c00e9d00347f01ffbde06a53fa5bfa1d4ff5904612a8f07df9e99f898d3d",
+    "static/workspace-real.js": "46e942721f2790a15344cdf5271bf07d88ee6cd3bc17654dc7dfab12df6ffcba",
+    "static/workspace-external.js": "3a1a441438aee5b081732e4ecdafcefdae034d6d7e404f843a7a21694e73ed2d",
+    "static/workspace-service.js": "3d8ec47129c4002ea1bb1e22a0b0b640dbd3dcfe1aeda3d885bd0a5206def1ee",
+    "static/experiment-lineage.js": "085ee3cc990f1986db357e1e8f7bace0c16a2257bca9443ff412c464d91a53db"
+  },
+  "independent_check": {
+    "command": "node tests/test_workspace_external_controller.cjs",
+    "exit_code": 0,
+    "wall_seconds_tool": 0.208118652,
+    "pass_lines": [
+      "PASS project/frozen/Run-artifact binding and generic progress controllers: exact old/new union, unavailable and oversized refusal, dirty approval invalidation, save/reopen projection, stale/session choice fences, escaped logs, truthful evidence, restored verified summaries, held polling view/session fences and session cache clearing. Mock transport only.",
+      "PASS scientific artifact import controller: exact hash/route, draft navigation, session/view/run-selection fences, non-completed/unavailable role refusal, edit permission and no replay after uncertain acknowledgement. Mock transport only.",
+      "PASS external controller: actor-bound unresolved key survives ambiguous\u2192403; no cross-actor request; late save/reload/clone/grant/submit preserve navigation/session; initial authoritative rejection clears key. Mock transport only."
+    ],
+    "log": "/tmp/tuldok-pr102-controller-independent-green.log",
+    "log_sha256": "2fc07becd798d6fdb39214390903dd655447888e30e80fbbea59c5ed6911192c",
+    "scope": "Controlled VM/mock transport only; no actual browser/PG/compute qualification"
+  },
+  "hosted_evidence": {
+    "pr102_lifecycle": "/tmp/tuldok-pr102-independent-lifecycle-job-118328520352.log",
+    "pr103_lifecycle": "/tmp/tuldok-pr103-independent-lifecycle-job-118328525199.log",
+    "failure": "Both exact-head PR merge jobs failed ReferenceError AbortController is not defined at VM refresh75 and controller test170:98; later lifecycle browser gates skipped. Earlier local/CPU passes remain separately attributed."
+  },
+  "blockers": [],
+  "remaining": "Root commit/composition and fresh hosted lifecycle acceptance; this source/test-only review does not convert original failed CI jobs to passes.",
+  "reviewer_mutations": "Only /tmp receipt/test log; no author source edits, remote changes, heavy actual execution or workers."
+}
