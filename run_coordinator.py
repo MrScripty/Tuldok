@@ -193,7 +193,7 @@ class Coordinator:
                 if old and old['request_key'] == key:
                     if any(old[field] != request[field] for field in ('actor_id', 'request_sha256', 'expected_generation')):
                         raise WorkbenchError('Recovery key belongs to another actor or request.', 'conflict', 409)
-                    if old['completed_generation'] == self.value['generation'] and self.projection()['admission_ready']:
+                    if old['completed_generation'] == self.value['generation']:
                         return self.projection()
                 elif generation != self.value['generation']:
                     raise WorkbenchError('Coordinator generation changed; inspect current health.', 'stale', 409)
@@ -233,7 +233,11 @@ class Coordinator:
                     raise WorkbenchError('Replacement coordinator did not establish ownership.', 'unavailable', 409)
                 with self.bounded(self.lock, deadline):
                     request['completed_generation'] = self.value['generation']
-                    self.save()
+                    try:
+                        self.save()
+                    except BaseException:
+                        request['completed_generation'] = None
+                        raise
             return self.projection()
         except Exception:
             if entered:

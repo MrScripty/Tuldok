@@ -467,3 +467,43 @@ class CoordinatorRecoveryTests(ExternalCase):
         self.assertTrue(cleanup_failed)
         self.assertTrue(runs._stop.is_set())
         self.assertIsNone(runs._coordinator.value['request']['completed_generation'])
+
+    def test_completed_request_does_not_recover_a_later_fault(self):
+        runs = self.dataset.runs
+        runs._coordinator.fault('coordinator_exception')
+        body = {'expected_generation': 1, 'request_key': 'immutable-recovery-0001'}
+        with self.owner.bound(self.dataset):
+            first = runs.recover_coordinator(body)
+            runs._coordinator.fault('storage')
+            runs._thread.join(5)
+            with patch.object(runs, '_start') as start:
+                retained = runs.recover_coordinator(body)
+                start.assert_not_called()
+            self.assertEqual(retained['generation'], first['generation'])
+            self.assertEqual(retained['recovery_request'], first['recovery_request'])
+            self.assertFalse(retained['admission_ready'])
+            fresh = runs.recover_coordinator({'expected_generation': first['generation'],
+                                              'request_key': 'fresh-explicit-recovery-0001'})
+            self.assertEqual(fresh['generation'], first['generation']+1)
+            self.assertTrue(fresh['admission_ready'])
+
+    def test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt(self):
+        runs = self.dataset.runs
+        runs._coordinator.fault('coordinator_exception')
+        save = runs._coordinator.save
+        injected = []
+        def lose_sync_ack():
+            save()
+            request = runs._coordinator.value['request']
+            if request and request['completed_generation'] is not None and not injected:
+                injected.append(True)
+                raise OSError('Injected final journal-sync acknowledgement loss.')
+        body = {'expected_generation': 1, 'request_key': 'journal-unknown-0001'}
+        with self.owner.bound(self.dataset), patch.object(runs._coordinator, 'save', side_effect=lose_sync_ack):
+            with self.assertRaises(OSError):
+                runs.recover_coordinator(body)
+        self.assertTrue(injected)
+        self.assertTrue(runs._stop.is_set())
+        self.assertIsNone(runs._coordinator.value['request']['completed_generation'])
+        with self.owner.bound(self.dataset):
+            self.assertTrue(runs.recover_coordinator(body)['admission_ready'])
