@@ -1,0 +1,33 @@
+{
+  "failed_head": "61d2c2d706cac4515860a9571db85451be2ecaa8",
+  "run": 39322436106,
+  "job": 118299619333,
+  "failure": "All native import/review/export/navigation assertions printed passed, then fixed200ms child cleanup raisedENOTEMPTY on the test-owned temp directory.",
+  "source": "4cfc028a76a65bd3215dc213d4eef414a0802486",
+  "change": "Await supplied owned ChildProcess exit with boundedTERM\u2192KILL before own-temp removal; boundedrm retry for residual Chromium cleanup. No product/native-import assertion changed.",
+  "independent_review": "clear; independent actual delayed final-write / ignoredTERM / already-exited handle tests passed. This is direct owned-handle exit, not general descendant custody.",
+  "actual_browser": "passed complete native import Chromium journey including successful cleanup exit0 on exact4cfc source; private disposablePG17 andChromium151",
+  "pending": [
+    "corrected exact head hosted lifecycle",
+    "dependent branch composition/requalification",
+    "postmerge main qualification"
+  ],
+  "files": {
+    "tuldok-pr99-native-text-cleanup-final-source.log": {
+      "bytes": 5917,
+      "sha256": "9dd31cf5a670bf1a713b9e0c7e39a83fcf292749cec60adba06a212694dbfa74"
+    },
+    "tuldok-pr99-native-text-original-hosted-failure.log": {
+      "bytes": 8586,
+      "sha256": "3fa702d99fa32ebbc34d6fcc08fcfa4d4ea899791ac772ed2b9cdc1b15c22c2e"
+    },
+    "tuldok-pr99-owned-cleanup-controlled.log": {
+      "bytes": 121,
+      "sha256": "2ae2dbf1cca9e1cbf084da12fffd35175730cb8da4164f277d08eedc020c07d5"
+    },
+    "tuldok-pr99-native-text-cleanup-qualified.log": {
+      "bytes": 5917,
+      "sha256": "3ce3593becfc94c780b8b1c3414e04b035ce07321decaceaf59198e7fd5a27ad"
+    }
+  }
+}

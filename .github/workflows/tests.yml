@@ -242,6 +242,7 @@ jobs:
       - run: node tests/browser_native_detection_import.cjs
         env:
           BROWSER: /usr/bin/google-chrome
+      - run: node tests/test_browser_owned_cleanup.cjs
       - run: node tests/browser_native_text_import.cjs
         env:
           BROWSER: /usr/bin/google-chrome
