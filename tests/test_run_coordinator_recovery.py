@@ -507,3 +507,19 @@ class CoordinatorRecoveryTests(ExternalCase):
         self.assertIsNone(runs._coordinator.value['request']['completed_generation'])
         with self.owner.bound(self.dataset):
             self.assertTrue(runs.recover_coordinator(body)['admission_ready'])
+
+    def test_cold_reopen_does_not_turn_completed_key_into_a_new_recovery(self):
+        runs = self.dataset.runs
+        runs._coordinator.fault('coordinator_exception')
+        body = {'expected_generation': 1, 'request_key': 'cold-immutable-key-0001'}
+        with self.owner.bound(self.dataset):
+            completed = runs.recover_coordinator(body)
+        self.reopen()
+        runs = self.dataset.runs
+        runs._coordinator.fault('storage')
+        with self.owner.bound(self.dataset), patch.object(runs, '_start') as start:
+            retained = runs.recover_coordinator(body)
+            start.assert_not_called()
+        self.assertEqual(retained['generation'], completed['generation']+1)
+        self.assertEqual(retained['recovery_request'], completed['recovery_request'])
+        self.assertFalse(retained['admission_ready'])
