@@ -74,11 +74,14 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='indexed-diagnostics-'); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         (self.root / 'project').mkdir()
-        metadata = Metadata(self.root / 'catalog')
-        self.schema = metadata.schema
-        metadata.close()
+        identity = uuid.uuid4().hex
+        self.schema = 'catalog_' + identity
         self.dataset = None
         self.addCleanup(self.cleanup_catalog)
+        print('Reserved exact fresh schema before construction: ' + self.schema, flush=True)
+        metadata = Metadata(self.root / 'catalog', dataset_id=identity)
+        self.assertEqual(metadata.schema, self.schema)
+        metadata.close()
         self.dataset = Dataset(self.root / 'catalog', project_roots={'synthetic': self.root / 'project'})
         self.owner = ExplicitOwnerFixture.bootstrap(self.dataset)
         python = self.root / 'python'; site = self.root / 'packages'
@@ -110,7 +113,7 @@ class IndexedDiagnosticPublicationTests(unittest.TestCase):
         from psycopg import sql
         if self.dataset is not None: self.dataset.close()
         with psycopg.connect(os.environ['TULDOK_DATABASE_URL'], autocommit=True) as connection:
-            connection.execute(sql.SQL('DROP SCHEMA {} CASCADE').format(sql.Identifier(self.schema)))
+            connection.execute(sql.SQL('DROP SCHEMA IF EXISTS {} CASCADE').format(sql.Identifier(self.schema)))
         print('Removed exact recorded fresh schema: ' + self.schema)
 
     def graph_body(self):
