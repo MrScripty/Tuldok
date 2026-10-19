@@ -1,0 +1,59 @@
+{
+  "source": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+  "scope": "Cold canonical AgentClient HTTP against normal and recovered operands after correcting attempt01 owner-token fixture error; the existing five real retained-reader cases passed in attempt01. Explicitly synthetic terminal arrays, no producer/runtime/science qualification.",
+  "schemas": [
+    "catalog_faa83dd3dd7847eabf0d02e1e178df31"
+  ],
+  "canonical_requests": [
+    {
+      "method": "GET",
+      "path": "/api/access/session",
+      "selection": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/workspace/context",
+      "selection": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/agent/capabilities",
+      "selection": null,
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/workspace/scientific-comparison",
+      "selection": [
+        "runs.compare_scientific_evidence",
+        1
+      ],
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/workspace/scientific-comparison",
+      "selection": [
+        "runs.compare_scientific_evidence",
+        1
+      ],
+      "status": 200
+    }
+  ],
+  "driver_sha256": "ec0cf177fb5931674e6ddf62127dd8a365176b120fe70482cbf6653fd72f4042",
+  "canonical_positive": "passed",
+  "tests_run": 1,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "success": true,
+  "cleanup": [
+    {
+      "schema": "catalog_faa83dd3dd7847eabf0d02e1e178df31",
+      "absent_after_fixture_close": true,
+      "absent_final": true
+    }
+  ]
+}

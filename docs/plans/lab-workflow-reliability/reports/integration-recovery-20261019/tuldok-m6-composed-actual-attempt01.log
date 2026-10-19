@@ -1,0 +1,27 @@
+test_actual_completed_and_attached_publication_readers_preserve_failed_state_and_counts (test_scientific_comparison.ScientificReaderTests.test_actual_completed_and_attached_publication_readers_preserve_failed_state_and_counts) ... ok
+test_actual_http_requires_exact_contract_and_serves_both_custody_forms (test_scientific_comparison.ScientificReaderTests.test_actual_http_requires_exact_contract_and_serves_both_custody_forms) ... ok
+test_cold_canonical_http_normal_and_recovered (test_scientific_comparison.ScientificReaderTests.test_cold_canonical_http_normal_and_recovered) ... ERROR
+test_current_material_blob_and_retained_root_removal_are_refused (test_scientific_comparison.ScientificReaderTests.test_current_material_blob_and_retained_root_removal_are_refused) ... ok
+test_exact_ref_and_evaluation_refuse_before_projection (test_scientific_comparison.ScientificReaderTests.test_exact_ref_and_evaluation_refuse_before_projection) ... ok
+test_revocation_during_owner_projection_fences_all_result_delivery (test_scientific_comparison.ScientificReaderTests.test_revocation_during_owner_projection_fences_all_result_delivery) ... ok
+
+======================================================================
+ERROR: test_cold_canonical_http_normal_and_recovered (test_scientific_comparison.ScientificReaderTests.test_cold_canonical_http_normal_and_recovered)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/tuldok-m6-composed-actual.py", line 60, in canonical_http
+    result = client.call('runs.compare_scientific_evidence', arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-field-comparison-m6/agent_api.py", line 1578, in call
+    self.bootstrap()
+  File "/workspace/Tuldok-lab-field-comparison-m6/agent_api.py", line 1522, in bootstrap
+    return self._bootstrap('agent')
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/Tuldok-lab-field-comparison-m6/agent_api.py", line 1531, in _bootstrap
+    raise AgentAPIError('Use an active ' + identity_kind + ' credential for the configured catalog.', 'unauthenticated', 401)
+agent_api.AgentAPIError: Use an active agent credential for the configured catalog.
+
+----------------------------------------------------------------------
+Ran 6 tests in 43.620s
+
+FAILED (errors=1)

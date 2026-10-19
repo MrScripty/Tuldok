@@ -1,0 +1,26 @@
+{
+  "source": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+  "current_receipt_only_descendant": "0e7b3cbf5047107e7d62b95f3d202ecf4aab9b85",
+  "state": "composed actual reader and canonical transport scope passed",
+  "existing_reader_cases": {
+    "passed": 5,
+    "elapsed_combined_attempt01_seconds": 43.62,
+    "attempt01_additional_harness_case": "failed401becauseownercredentialpassedtoagentclient; no productfinding"
+  },
+  "cold_canonical_case": {
+    "passed": 1,
+    "seconds": 26.05,
+    "source_unchanged": true,
+    "actual_inspect_agent": true,
+    "normal_and_mixed_exact_ref_selected_posts": 2,
+    "fallback_or_replay": false,
+    "counts_unchanged": true
+  },
+  "independent_driver_review": "tuldok-m6-composed-actual-driver-review.json",
+  "cleanup": "Both exact pre-registered schemas absent after fixture close and independent private-PG query",
+  "limits": [
+    "Explicitly harness-authored terminal arrays and receipts; no actual producer/runtime/custody/training/scientific qualification.",
+    "Current0e7 descendant adds only4M5reportfiles; all product, test and CI files equal aee.",
+    "Exact hosted browser/lifecycle acceptance pending."
+  ]
+}

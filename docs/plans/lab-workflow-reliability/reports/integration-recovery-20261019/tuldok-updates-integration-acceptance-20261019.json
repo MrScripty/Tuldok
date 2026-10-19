@@ -1211,11 +1211,12 @@
     "102": "4bcf43063ff780fd5e44894701d65338abdc0579",
     "103": "c919c663cedb71df3002ef4b8f9767211ed39e22",
     "104": "1c9f01cb7e4adafd169dd56e95e02f0f5025b35d",
-    "105": "40d7f61732c45c7c329b0061ae29154612784168",
-    "106": "4a9e153b4cbfb8392e7771483df6dd38ac053ef1",
+    "105": "9f852f58bb8c4551c24348c4ec4d4f64f6e33bf4",
+    "106": "0e7b3cbf5047107e7d62b95f3d202ecf4aab9b85",
     "107": "07dde98df856619cab929eb9dc8d3275151c69bd",
     "108": "653a6ed707e04935ad21d809f16c1fa5698ebe23",
-    "109": "1d2c73747f2467924feffa5b818a663644fe27ef"
+    "109": "99741e5807e4260c58b53badafc5b6c549421645",
+    "110": "cef327a50d60cefc86e4418d10b4032a5ca52805"
   },
   "m6_active": {
     "agent": "/root/scientific_comparison_m6",
@@ -1373,5 +1374,63 @@
     "contracts_equal": 123,
     "receipt": "tuldok-m5m6-aee8908-independent-review.json",
     "pending": "exactcomposed actual HTTP/browser and new ordinaryguard classifierpositive after quiet"
+  },
+  "main_after_pr98": "51c081cd8534728e91e3b76294b8526b6ee47269",
+  "pr98_accepted_and_merged": {
+    "pr": 98,
+    "head": "f866252782310211b887301a674ba2a62c353709",
+    "merge": "51c081cd8534728e91e3b76294b8526b6ee47269",
+    "tree": "41050db03ec13986db01dae166993a0e3c78d0ba",
+    "tree_equal": true,
+    "parents": [
+      "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+      "f866252782310211b887301a674ba2a62c353709"
+    ],
+    "retarget99": "main confirmed atunchangede0357c"
+  },
+  "m4_current_paired": {
+    "source": "99741e5807e4260c58b53badafc5b6c549421645",
+    "state": "Fullimmutable997 matrix exited0;54pairs/108arms,6positivecellsallmedianregressions1.034to2.852x. WholeSHA/counts/events unchanged, bothschemaabsenceindependentlyverified. Allraw retained ind8d5e43. Refinementimplementation inprogress; no speedup/retentionclaim.",
+    "proposed_refinement": "Canonical private external-only check removesduplicate load; final stages independently dedup exactsource inlastoccurrenceorder, retain allinitialcanonicalauth/inventoryreads and currentglobalfences",
+    "independent_static_review": "M1conditionallyclear; durable details pending",
+    "quiet_overlap": "OldM6CLIgroupended22:35:03.649, matrixstart22:34:48.507, ~15s firstemptycontrols; no perarmUTC/noexclusiveOSclaim/nooutcomefilter"
+  },
+  "m5_current_qualification": {
+    "source": "5634968dca2666392b6d69c12c12a0f391e51f5b",
+    "receipt_head": "9f852f58bb8c4551c24348c4ec4d4f64f6e33bf4",
+    "actual_classifier_http_cli": "1 passed60.889s, exactschema dropped",
+    "focused": "21passed3.047s/12schema-validfaultsredbeforefix",
+    "delta_final_receipt": "4reportfilesonly; no source/test/CIchange"
+  },
+  "m6_composed_actual": {
+    "source": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+    "current_receipt_only_descendant": "0e7b3cbf5047107e7d62b95f3d202ecf4aab9b85",
+    "state": "composed actual reader and canonical transport scope passed",
+    "existing_reader_cases": {
+      "passed": 5,
+      "elapsed_combined_attempt01_seconds": 43.62,
+      "attempt01_additional_harness_case": "failed401becauseownercredentialpassedtoagentclient; no productfinding"
+    },
+    "cold_canonical_case": {
+      "passed": 1,
+      "seconds": 26.05,
+      "source_unchanged": true,
+      "actual_inspect_agent": true,
+      "normal_and_mixed_exact_ref_selected_posts": 2,
+      "fallback_or_replay": false,
+      "counts_unchanged": true
+    },
+    "independent_driver_review": "tuldok-m6-composed-actual-driver-review.json",
+    "cleanup": "Both exact pre-registered schemas absent after fixture close and independent private-PG query",
+    "limits": [
+      "Explicitly harness-authored terminal arrays and receipts; no actual producer/runtime/custody/training/scientific qualification.",
+      "Current0e7 descendant adds only4M5reportfiles; all product, test and CI files equal aee.",
+      "Exact hosted browser/lifecycle acceptance pending."
+    ]
+  },
+  "batch_consumer_actual_pending_archive": {
+    "source": "fd42361f043c201290c5b6297a384652320044ed",
+    "state": "8actualHTTPCLI passed145.991s; finalreceiptcommit+independentassertionauditpending",
+    "quiet": "Allqueuedroot/M5/M6heavygatesfinished; M4newcorrectness/perfownsnextwindow"
   }
 }

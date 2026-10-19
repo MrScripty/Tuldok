@@ -1,0 +1,28 @@
+{
+  "source": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+  "scope": "Existing five real retained-reader cases plus cold canonical AgentClient HTTP against normal and recovered operands; explicitly synthetic terminal arrays, no producer/runtime/science qualification.",
+  "schemas": [
+    "catalog_d58c846797a84055951ce7691d71a600"
+  ],
+  "canonical_requests": [
+    {
+      "method": "GET",
+      "path": "/api/access/session",
+      "selection": null,
+      "status": 200
+    }
+  ],
+  "driver_sha256": "51cd20e6820cd1646f80ffe34fc234c99f3c3779a0594c118d7755c84a1d330d",
+  "tests_run": 6,
+  "failures": 0,
+  "errors": 1,
+  "skipped": 0,
+  "success": false,
+  "cleanup": [
+    {
+      "schema": "catalog_d58c846797a84055951ce7691d71a600",
+      "absent_after_fixture_close": true,
+      "absent_final": true
+    }
+  ]
+}

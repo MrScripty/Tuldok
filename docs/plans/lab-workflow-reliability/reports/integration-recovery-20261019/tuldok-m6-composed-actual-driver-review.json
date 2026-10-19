@@ -1,0 +1,48 @@
+{
+  "review_type": "Read-only qualification-driver review; no execution",
+  "driver": "/tmp/tuldok-m6-composed-actual.py",
+  "driver_sha256": "51cd20e6820cd1646f80ffe34fc234c99f3c3779a0594c118d7755c84a1d330d",
+  "product_source": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+  "worktree": "/workspace/Tuldok-lab-field-comparison-m6",
+  "source_hashes": {
+    "tests/scientific_comparison_fixture.py": "c580c700aea4cfe0b9125200f2ad6991c9e80efe26acd405d1d5833faf87082f",
+    "tests/test_scientific_comparison.py": "16de08e2d6f358849acbf505f16808a1a466fe947e24454e4e6b6e676ded6b04",
+    "agent_api.py": "87a342c187f104cbd2e7f410945fe125d7b8360f894aff5348f99faf2529dd6d"
+  },
+  "blockers": [
+    {
+      "location": "/tmp/tuldok-m6-composed-actual.py:47-48",
+      "finding": "Ordinary AgentClient receives owner credential. Its cold bootstrap requires identity.kind agent, so first call fails401 before reaching scientific-comparison endpoint.",
+      "evidence": "agent_api.py AgentClient.bootstrap->_bootstrap(agent); tests/auth_helpers.py ExplicitOwnerFixture.bootstrap calls owner exchange.",
+      "fix": "Issue an inspect agent using real dataset.access.issue under fixture.owner.bound(dataset), pass agent token to the unchanged ordinary cold AgentClient; do not patch bootstrap or identity.",
+      "scope": "Harness error; no production defect established",
+      "execution": "Not attempted; diagnosed from exact source"
+    }
+  ],
+  "otherwise_meaningful": [
+    "Five existing retained-reader cases remain unchanged; additional HTTP test exercises real cold canonical client negotiation and exact selectors for normal and attached recovered operands.",
+    "Request wrapper calls original client transport and records only method/path/selection/status; it does not substitute replies or authorization.",
+    "Independent expected delta2, exact requested operands and point, unknown owned criterion, selected version1 and unchanged run/grant/consumption/reservation counts are asserted.",
+    "Fresh exact dataset identity is durably recorded before unchanged Metadata constructor; fixture and fallback cleanup target only those exact schemas.",
+    "Server shutdown and thread join are in finally; existing corruption/removal fixtures restore their owned files in finally."
+  ],
+  "limits": [
+    "No driver/product source edits, tests, PG calls, compute, remote operations or cleanup performed by this review.",
+    "Actual execution awaits root after correcting credential; previous source-only review does not establish six actual cases passed.",
+    "Synthetic terminal receipts and arrays are explicitly authored by fixture; real publication/recovery/semantic retained readers and HTTP do not establish executed producer, custody/training/runtime, scientific acceptance or full integration.",
+    "Receipt source uses current cwd git HEAD rather than asserting expected commit; root must run from exact worktree and inspect retained source identity."
+  ],
+  "attempt02_review": {
+    "driver_sha256": "ec0cf177fb5931674e6ddf62127dd8a365176b120fe70482cbf6653fd72f4042",
+    "result": "Clear to execute within stated qualification scope; original harness blocker corrected",
+    "verified_changes": [
+      "Real inspect agent issued under owner binding; ordinary AgentClient receives its token and remains cold before call.",
+      "Only new cold HTTP case selected; existing five cases not repeated.",
+      "Distinct attempt02 receipt path; original attempt01 artifacts retained by parent.",
+      "Both normal and recovered operands traverse canonical call, unchanged original request transport, strict selectors and expected diagnostic values."
+    ],
+    "scope": "Read-only source review only; no actual test or PG calls by reviewer",
+    "execution_report_from_parent": "Attempt01 existing five passed; new cold case errored401 as diagnosed; six tests43.620s,0fail1error0skip; exact owned schema absent. This review did not independently execute or recheck that reported run.",
+    "remaining_limit": "Attempt02 execution pending root. Counts intentionally cover runs/grants/consumptions/reservations and exclude fixture credential issuance."
+  }
+}
