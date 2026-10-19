@@ -668,7 +668,7 @@
       "seconds": 0.127
     }
   },
-  "updated_at": "2026-10-19T21:05:08.794120+00:00",
+  "updated_at": "2026-10-19T21:19:06.669379+00:00",
   "cleanup_dependency_chain": [
     "89->90;retarget90tomainbefore89branchdelete",
     "90->92;retarget92tomainbefore90branchdelete",
@@ -687,12 +687,12 @@
   "current_resume": {
     "root_worktree": "/workspace/Tuldok-lab-coordinator-ui-m2",
     "root_branch": "feature/lab-coordinator-panel-20261019",
-    "base": "5a1feac9f27e23e471c6b57d1f74c026c01c3dd6",
-    "state": "clean new M2UI worktree, no edits yet; sourceinspection complete",
-    "worker": "existing reviewer beginning isolatedM3 timing scopedwriteproposal; nostaticoverlap",
-    "parent_role": "passivehostedCI; root serialintegration+source",
-    "pending_ci": "PR96/97lifecycle;98/99/100/101hosted; currentmain27ba lifecycle",
-    "missing_input": "Original private diagnostic-failure receipt andSCIcriteria questionpending, dependentclaimsblockedonly",
+    "root_source": "38c7844b3c091a9a21ff9d4b73a56b89945478de",
+    "state": "M2UIpublishedPR102, independentreviewpending; M3coreworkeractive; rootreviewsnextM3source thenimplements timing UI/otherplan slices",
+    "worker_worktree": "/workspace/Tuldok-lab-phase-timing-m3",
+    "parent_role": "passivehostedCI; rootserialintegration/source",
+    "pending_ci": "96lifecycle;97 archivequalifiedholdbase;98/99/100/101latest5f/102hosted; main27ba lifecycle",
+    "missing_input": "Original private diagnosticfailure receipt/scientificcriteria questionpending, dependentclaimsblockedonly",
     "no_science_or_cuda_claim": true
   },
   "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
@@ -1044,12 +1044,12 @@
   },
   "coordinator_core": {
     "pr": 101,
-    "head": "5a1feac9f27e23e471c6b57d1f74c026c01c3dd6",
+    "head": "5f1aa49af2935100b60743fb1929cb2727ac6275",
     "branch": "feature/lab-coordinator-recovery-20261019",
     "base": "feature/lab-publication-lineage-20261019",
     "core_source": "3280ebee9e4f6964cdbf73c1480ff15866962de7",
     "composition": "6ab211e97bd6f5520b0bcabf8504f6a5bb00f930",
-    "review": "independent exact5a scopedclear; ninefilemanifestSHA74a567cee6191e779c4f3ae563db0247aa89ffdb57172e9511e166a8ab7620bc",
+    "review": "exact5a independentclear; immutable current/cold completionfollowups independently reviewed and3actualPGcasespassed inreviewerM3group",
     "evidence": "docs/plans/lab-workflow-reliability/reports/m2-coordinator-core/validation.json",
     "tests": {
       "core": "27/108.033s",
@@ -1058,8 +1058,36 @@
       "finalfixes": "3/2.625s",
       "independent": "6/9.084s+2/1.768s; separateactual2Dataset andsimultaneous2cleanupfault witnesses;118oldfullcontracts+legacydiscoveryequal"
     },
-    "final_head_group": "running; retained finalheadlog after completion",
+    "final_head_group": "exact5a17passed52.642s; latercurrent/coldackchangesseparatelyqualified3/3.853s and3/2.265s, hostedlatest5f pending",
     "hosted": "pending",
     "full_m2": "incomplete; coordinatorUI next; no scientific/hardware claim"
+  },
+  "pr97_archived_acceptance": {
+    "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+    "lifecycle": 39318371600,
+    "job": 118285677304,
+    "steps_success": 159,
+    "full": "1593/1424.987s OK(skipped72)",
+    "early": "30 preflight +27publication zero-skips",
+    "agent": "74/334.427s zero-skips",
+    "mcp": "19/23.345s zero-skips",
+    "cpu": 39318371633,
+    "cpu_job": 118285677198,
+    "cpu_steps_success": 13,
+    "receipt": "tuldok-pr97-final-qualified-evidence.json",
+    "integration": "Hold untilPR96 qualifies; sourcebranchretained and97draft"
+  },
+  "coordinator_ui": {
+    "pr": 102,
+    "branch": "feature/lab-coordinator-panel-20261019",
+    "source": "38c7844b3c091a9a21ff9d4b73a56b89945478de",
+    "head": "c725dc2",
+    "state": "cleanpublished receipt-onlyfollowup; independentreviewpending",
+    "base": "feature/lab-coordinator-recovery-20261019",
+    "actualbrowser": "PG17/Chromium151 lockfault, keyboardrecover, deliberatelydroppedreply/savedreadreconcile, oneoriginalneutralGO, reload/mouserefresh1440/390 passed exact38c",
+    "regression": "actualpublicationpanel pause/reload/samekeyresume/wholeSHA passed exact38c",
+    "evidence": "docs/plans/lab-workflow-reliability/reports/m2-coordinator-ui/validation.json",
+    "corecomposition": "whole5f normalmerged; noPython/APIproductionchanges",
+    "hosted": "pending"
   }
 }

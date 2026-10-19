@@ -1,0 +1,8 @@
+test_cold_reopen_does_not_turn_completed_key_into_a_new_recovery (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_cold_reopen_does_not_turn_completed_key_into_a_new_recovery) ... ok
+test_completed_request_does_not_recover_a_later_fault (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_completed_request_does_not_recover_a_later_fault) ... ok
+test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt (test_run_coordinator_recovery.CoordinatorRecoveryTests.test_unacknowledged_completion_journal_does_not_claim_a_completed_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 2.265s
+
+OK

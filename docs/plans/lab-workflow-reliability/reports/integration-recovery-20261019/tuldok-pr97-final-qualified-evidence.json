@@ -1,0 +1,58 @@
+{
+  "head": "0da7a811d252cc4c6774260b98ee2a707efec517",
+  "pr": 97,
+  "lifecycle": {
+    "run": 39318371600,
+    "job": 118285677304,
+    "conclusion": "success",
+    "all_steps": 159,
+    "non_success_steps": 0,
+    "summaries": [
+      "2026-10-19T20:20:39.3707586Z Ran 30 tests in 7.123s",
+      "2026-10-19T20:20:39.3707789Z OK",
+      "2026-10-19T20:21:52.1826370Z Ran 27 tests in 72.451s",
+      "2026-10-19T20:21:52.1826805Z OK",
+      "2026-10-19T20:22:40.6957337Z Ran 15 tests in 16.438s",
+      "2026-10-19T20:22:40.6957645Z OK",
+      "2026-10-19T20:22:41.2093697Z Ran 11 tests in 0.320s",
+      "2026-10-19T20:22:41.2093879Z OK",
+      "2026-10-19T20:22:41.3637665Z Ran 9 tests in 0.067s",
+      "2026-10-19T20:22:41.3637908Z OK",
+      "2026-10-19T20:22:43.4036548Z Ran 12 tests in 1.926s",
+      "2026-10-19T20:22:43.4036768Z OK (skipped=1)",
+      "2026-10-19T20:22:43.7146839Z Ran 9 tests in 0.193s",
+      "2026-10-19T20:22:43.7147050Z OK (skipped=1)",
+      "2026-10-19T20:28:24.1778560Z Ran 74 tests in 334.427s",
+      "2026-10-19T20:28:24.1778782Z OK",
+      "2026-10-19T20:28:47.6626153Z Ran 19 tests in 23.345s",
+      "2026-10-19T20:28:47.6626338Z OK",
+      "2026-10-19T20:29:46.3497518Z Ran 22 tests in 58.501s",
+      "2026-10-19T20:29:46.3497721Z OK",
+      "2026-10-19T20:31:40.2003247Z Ran 24 tests in 113.441s",
+      "2026-10-19T20:31:40.2003396Z OK",
+      "2026-10-19T20:32:42.7132408Z Ran 34 tests in 62.198s",
+      "2026-10-19T20:32:42.7132775Z OK",
+      "2026-10-19T20:33:03.2227684Z Ran 13 tests in 20.103s",
+      "2026-10-19T20:33:03.2227891Z OK",
+      "2026-10-19T20:33:11.1137003Z Ran 5 tests in 7.428s",
+      "2026-10-19T20:33:11.1137286Z OK",
+      "2026-10-19T20:56:56.9134964Z Ran 1593 tests in 1424.987s",
+      "2026-10-19T20:56:56.9135116Z OK (skipped=72)"
+    ]
+  },
+  "captured_cpu": {
+    "run": 39318371633,
+    "job": 118285677198,
+    "conclusion": "success",
+    "all_steps": 13,
+    "non_success_steps": 0,
+    "scope": "Actual CPU browser training followed by Study-admitted captured inference subset and fresh separate CPU TinyCNN forward inference, with charged three-slot custody; no captured-runtime training, CUDA or scientific improvement claim."
+  },
+  "independent_review": "Exact0da source/transport/CLI/SDKconservation previously clear; prior110fullcontracts equal",
+  "integration": "Qualified archive retained; HOLD pending PR96 exact6cc lifecycle/base qualification. Retarget PR98 only after PR97 merge, before any cleanup.",
+  "scope": "Publication transport/CLI/SDK collection; full M1 remains incomplete.",
+  "limitations": [
+    "FullPython1593 passed with72skips; isolatedagents74/MCP19 andearlypreflight30/publication27 passed withoutskips.",
+    "Full suite logged a server ConnectionResetError; no unittest failures/errors, all159steps succeeded."
+  ]
+}
