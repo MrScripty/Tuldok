@@ -1007,7 +1007,7 @@
     },
     "subsequent_review_fixes": "415f5e124c6bf3bc66a05b427c01e83c5f5d01b8 separately qualified; independent4pass; affectedowner28pass",
     "status_v2": "actual3pass9.618; finalsmalladdonreviewpending",
-    "hosted": "fresh exact head pending after whole normal-composed98/99 reviewed CIharnesscorrections",
+    "hosted": "All5 exactf866 checks success;159lifecycle steps,1600tests/72skips;CPU13steps. Qualified archive before serial merge.",
     "ui": "isolatedworker active; branch feature/lab-publication-run-panel-20261019",
     "status2_independent_review": "clear; 1 actual PG case11.831s"
   },
@@ -1303,5 +1303,75 @@
     "composition": "normalwhole007+925, latestmerge675a4ff; sourceuncommitted14focusedtestsreportedgreen1.918s",
     "scope": "separatecollect_batch/collect-batchCLI, sameclosedcollectionmanifest<=20wholeartifacts/summax1bytes<=8MiB, explicitnegotiate, defensivecanonicaldecoder/wholehash/eof/length, sharedprivatepublisherextractedfromdownload, samepartialreceiptordinaryexplicitresume; noexistingcollectloop/server/schema/math edits",
     "qualification": "source/pureonlyduringM4quiet;actualconsumerHTTP/CLIandindependentreviewpending; itsCPUdiffersfromlowlevelpairedbenchmark"
+  },
+  "pr98_final_qualified": {
+    "pr": 98,
+    "head": "f866252782310211b887301a674ba2a62c353709",
+    "base": "6f4b2bf411dd99d6b3cdab379de63d8fd0dfa760",
+    "tested_merge": "a9ce1ae8e70fbc9944f3bcad87684ab1a3b98523",
+    "tested_and_source_tree": "41050db03ec13986db01dae166993a0e3c78d0ba",
+    "independent_review": "Core/evidence, selected selector correlation and final status/2 previously clear; actual status/2 PG case 11.831s. Project browser fixture repair independently clear.",
+    "limitations": [
+      "Full suite has72 explicit skips; early publication32 and isolated Agent74/MCP19 have zero skips.",
+      "Synthetic recovered-field receipt belongs to source904922c; no lab scientific acceptance, CUDA or captured-runtime training claim."
+    ],
+    "lifecycle": {
+      "run": 39330846334,
+      "job": 118328339473,
+      "conclusion": "success",
+      "all_steps": 159,
+      "non_success_steps": 0,
+      "log_sha256": "440c9ada82f87ff4ae92b11cd282c4b26bf9ac5065942127a120a1f61ddfe37f",
+      "summaries": [
+        "2026-10-19T21:53:30.8322226Z Ran 30 tests in 9.253s",
+        "2026-10-19T21:53:30.8322426Z OK",
+        "2026-10-19T21:54:56.0478705Z Ran 32 tests in 84.869s",
+        "2026-10-19T21:54:56.0478940Z OK",
+        "2026-10-19T21:55:42.4871028Z Ran 15 tests in 15.713s",
+        "2026-10-19T21:55:42.4871236Z OK",
+        "2026-10-19T21:55:42.9924403Z Ran 11 tests in 0.329s",
+        "2026-10-19T21:55:42.9924615Z OK",
+        "2026-10-19T21:55:43.1354089Z Ran 9 tests in 0.063s",
+        "2026-10-19T21:55:43.1414302Z OK",
+        "2026-10-19T21:55:45.1676872Z Ran 12 tests in 1.922s",
+        "2026-10-19T21:55:45.1677014Z OK (skipped=1)",
+        "2026-10-19T21:55:45.4938667Z Ran 9 tests in 0.223s",
+        "2026-10-19T21:55:45.4938876Z OK (skipped=1)",
+        "2026-10-19T22:01:17.9597814Z Ran 74 tests in 326.506s",
+        "2026-10-19T22:01:17.9600647Z OK",
+        "2026-10-19T22:01:42.6199406Z Ran 19 tests in 24.433s",
+        "2026-10-19T22:01:42.6199990Z OK",
+        "2026-10-19T22:02:42.2188072Z Ran 22 tests in 59.404s",
+        "2026-10-19T22:02:42.2188682Z OK",
+        "2026-10-19T22:04:40.8888991Z Ran 24 tests in 118.303s",
+        "2026-10-19T22:04:40.8889133Z OK",
+        "2026-10-19T22:05:44.0632882Z Ran 34 tests in 62.787s",
+        "2026-10-19T22:05:44.0633130Z OK",
+        "2026-10-19T22:06:03.5894657Z Ran 13 tests in 19.069s",
+        "2026-10-19T22:06:03.5894797Z OK",
+        "2026-10-19T22:06:11.7576025Z Ran 5 tests in 7.702s",
+        "2026-10-19T22:06:11.7576484Z OK",
+        "2026-10-19T22:29:02.0364341Z Ran 1600 tests in 1369.452s",
+        "2026-10-19T22:29:02.0364561Z OK (skipped=72)"
+      ]
+    },
+    "cpu": {
+      "run": 39330846250,
+      "job": 118328337867,
+      "conclusion": "success",
+      "all_steps": 13,
+      "non_success_steps": 0,
+      "log_sha256": "eafe3d2a915d6708151c279ce9546e023efca74aacfc3507d17c0429393ea3d9",
+      "summaries": [],
+      "scope": "Actual CPU browser training, checkpoint/probe inspection, correction/newrelease, Study-admitted package and separate fresh captured TinyCNN CPU forward inference; no captured training/CUDA/scientific improvement claim."
+    }
+  },
+  "m5_m6_composed_review": {
+    "head": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+    "state": "static/pure independently clear",
+    "tests": "7 client3.151s plus pureNode",
+    "contracts_equal": 123,
+    "receipt": "tuldok-m5m6-aee8908-independent-review.json",
+    "pending": "exactcomposed actual HTTP/browser and new ordinaryguard classifierpositive after quiet"
   }
 }

@@ -1,0 +1,12 @@
+test_exact_v2_reply_accepts_requested_mode_and_ordered_operands (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_accepts_requested_mode_and_ordered_operands) ... ok
+test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes (test_workflow_client.ComparisonReplyTests.test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes) ... ok
+test_legacy_v1_reply_keeps_its_existing_wire_contract (test_workflow_client.ComparisonReplyTests.test_legacy_v1_reply_keeps_its_existing_wire_contract) ... ok
+test_exact_reply_is_accepted_without_transport_retry (test_scientific_comparison_client.ScientificComparisonClientTests.test_exact_reply_is_accepted_without_transport_retry) ... ok
+test_matching_foreign_catalog_echo_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_matching_foreign_catalog_echo_is_refused) ... ok
+test_mixed_publication_operand_keeps_its_exact_ref (test_scientific_comparison_client.ScientificComparisonClientTests.test_mixed_publication_operand_keeps_its_exact_ref) ... ok
+test_schema_valid_other_selection_reply_is_refused (test_scientific_comparison_client.ScientificComparisonClientTests.test_schema_valid_other_selection_reply_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 3.151s
+
+OK

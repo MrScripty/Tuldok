@@ -1,0 +1,95 @@
+{
+  "agent_api_changed_top_level_nodes": [
+    {
+      "name": "from contextlib import contextmanager",
+      "type": "ImportFrom"
+    },
+    {
+      "name": "validate_registry",
+      "type": "FunctionDef"
+    },
+    {
+      "name": "AgentClient",
+      "type": "ClassDef"
+    }
+  ],
+  "ancestry_preserved": true,
+  "backend_ui_blobs_unchanged": {
+    "app.py": {
+      "base": "9d2b010fc6ab1c66dd7a57446dca768a827684c1",
+      "head": "9d2b010fc6ab1c66dd7a57446dca768a827684c1"
+    },
+    "extension_evidence.py": {
+      "base": "8d1122d172d9787867fc59ee5e1e5995596e9259",
+      "head": "8d1122d172d9787867fc59ee5e1e5995596e9259"
+    },
+    "run_publication.py": {
+      "base": "aa2ae58137fdfb6b893e3f5ca179e93cbd0e8d89",
+      "head": "aa2ae58137fdfb6b893e3f5ca179e93cbd0e8d89"
+    },
+    "runs.py": {
+      "base": "3478e6cc5cdf53f015a30d2d270c186d57572398",
+      "head": "3478e6cc5cdf53f015a30d2d270c186d57572398"
+    },
+    "static/workspace-real.js": {
+      "base": "99b41fa498b0ad19c3117cefb9270237c2290436",
+      "head": "99b41fa498b0ad19c3117cefb9270237c2290436"
+    },
+    "static/workspace-scientific-comparison.js": {
+      "base": "579c036683e8ee01a4a79cdb7f43c047e8b4d795",
+      "head": "579c036683e8ee01a4a79cdb7f43c047e8b4d795"
+    },
+    "static/workspaces.css": {
+      "base": "c5cfb282516eee5d441e6d446f87a8bdb8238c93",
+      "head": "c5cfb282516eee5d441e6d446f87a8bdb8238c93"
+    },
+    "static/workspaces.html": {
+      "base": "733346cc23b7888e66affc55080d1f6576b9e5a3",
+      "head": "733346cc23b7888e66affc55080d1f6576b9e5a3"
+    }
+  },
+  "batch_operation_absent": true,
+  "ci_routes": {
+    "actual_scientific_browser": "explicit browser step; execution pending",
+    "ordinary_m5_tests": "full python unittest discovery",
+    "scientific_client": "explicit early client test step plus full discovery",
+    "scientific_controller": "explicit node step"
+  },
+  "discovery_equal": true,
+  "frontend_pin_matches": true,
+  "full_public_contracts_equal": 123,
+  "m5_consumer_files_equal": {
+    "project_cli.py": {
+      "head": "f45fcb072e975060685e0dc996789c4a73adac4f",
+      "m5": "f45fcb072e975060685e0dc996789c4a73adac4f"
+    },
+    "tests/test_workflow_client.py": {
+      "head": "e6b385237d8052221c3fe23f0413a381c1f6ac50",
+      "m5": "e6b385237d8052221c3fe23f0413a381c1f6ac50"
+    },
+    "tests/test_workflow_client_http.py": {
+      "head": "902fe39b4ff3ebb5422aab2129642a04ccf84f14",
+      "m5": "902fe39b4ff3ebb5422aab2129642a04ccf84f14"
+    },
+    "tuldok_client.py": {
+      "head": "5a47a2a60fca502c3b297531bf513910be9ab08b",
+      "m5": "5a47a2a60fca502c3b297531bf513910be9ab08b"
+    }
+  },
+  "m5_parent": "5634968dca2666392b6d69c12c12a0f391e51f5b",
+  "ordinary_guard_ast_identical_to_m5_and_root": true,
+  "registry_digest": "cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8",
+  "review_base": "4a9e153b4cbfb8392e7771483df6dd38ac053ef1",
+  "root_parent": "41fb30a629a5733ae87d8bcfe718fad365ef9bef",
+  "scientific_contract_sha256": "32fe4994c2a38f8d38335c3c2d1db84c82c0f3b61c6a11d95e71cc5f02f35be5",
+  "source_commit": "aee8908c1da47da8b46cd286a425d2bc399998a0",
+  "source_sha256": {
+    ".github/workflows/tests.yml": "33c1ead8d185bf45c36025d93a2ced3f0167f66ede72402f53d8dba041537be2",
+    "agent_api.py": "87a342c187f104cbd2e7f410945fe125d7b8360f894aff5348f99faf2529dd6d",
+    "project_cli.py": "450f2c155928361e5db2b4ac5b686f00cb51ce9368ade531c6f97c9b70d7b015",
+    "tests/test_scientific_comparison_client.py": "ab809b7f9cfcb4b528c51271d4ef3b07481abacf97b84aa5d134015238797c4f",
+    "tests/test_workflow_client.py": "a9f8bfeeabc054e16bfe041ea8b76f41517d8c6b1a93d2085017d11edb018863",
+    "tuldok_client.py": "2a205ee96c1954a561e402db4f72b8ba6142ee7d5722686820fc7ffdbd30df0c"
+  },
+  "state": "passed"
+}
