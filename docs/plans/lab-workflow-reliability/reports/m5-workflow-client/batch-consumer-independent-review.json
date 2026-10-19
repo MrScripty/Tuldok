@@ -1,0 +1,36 @@
+{
+  "checks_run": [
+    "Read frozen git objects and diffs; author working files not modified or imported",
+    "stdlib AST equality check for ordinary collect"
+  ],
+  "comparison_base": "40d7f61732c45c7c329b0061ae29154612784168",
+  "evidence": [
+    "AST comparison proves WorkflowClient.collect unchanged from40d7; default ordinary collect/resume remains explicit and reauthorizes/re-hashes old successes.",
+    "Shared _private_output retains mkstemp mode0600, same-directory provisional, flush/fsync before atomic no-clobber os.link, FileExists refusal and finally-unlink. Download retains canonical whole verifier/expected-byte/cancellation checks before helper publication.",
+    "collect_batch locally validates closed exact manifest and20item/8MiB requested max(1,bytes) cap before negotiation or request; preset cancel and known collisions stop before network.",
+    "Only exact selected runs.artifact_segments/1 accepted, followed by fresh inventory check and one whole-artifact batch. No retry/fallback path on unsupported/auth/transport/decoder failure.",
+    "Canonical request-aware decoder binds key/order/source/name/hash/offset and segment digest. Consumer independently requires exact total/raw bytes, offset0, nextoffset=wholelength, EOF and whole SHA before writing.",
+    "Batch publication uses same helper with Event fence after fsync/before link; earlier verified files retained, first refused/outstanding item stops subsequent buffered writes. Complete requires all newly verified items; stop precedes complete.",
+    "Exact publication Ref preserved peritem. Partial/stopped receipt format matches ordinary explicit resume; batch has no resume argument.",
+    "CLI command is explicitly collect-batch, adds only parser/dispatcher/workflow set/SIGINT selection; existing command branches/default dispatch and exit behavior remain unchanged."
+  ],
+  "limitations": [
+    "No author test receipts relabeled as independent execution",
+    "No HTTP/model/custodian test run during M4 quiet window",
+    "Server batch authorization/route implementation is outside this consumer review scope",
+    "Observed author workingtree modification to tests/test_workflow_batch_client_http.py excluded: frozen git object reviewed only"
+  ],
+  "result": "No blocking finding in the requested consumer/publisher/CLI review scope; actual HTTP qualification pending",
+  "reviewed_commit": "a4ff908fca0ef72ca58554e1473fce2bcfc2d7a8",
+  "reviewed_tree": "904d954cf1bd464e8cc85f4680a05a8ee6705349",
+  "reviewer": "M5 consumer author, independent read-only review of M6 batch consumer",
+  "source_files": {
+    "agent_api.py": "f1937d17da3e4db9717443e76d5feb6cbde18ce462baf709ad45710883b77b89",
+    "docs/contracts/project-cli.md": "c378e20998ccd604cb35bf853672a8a23a2e56dfb3e027b99f165380b76a140a",
+    "docs/contracts/workflow-client.md": "2646d435b1e97a7fd338df63bde5c51755732e202f9877fdf5748c16536f3f7e",
+    "project_cli.py": "3f25368e2035279c39bcc032b110d4fe554cde251ca16ab43f4b24259cb56719",
+    "tests/test_workflow_batch_client.py": "84b18c1c19f9daebb8bf412e0be81519a43196df2ffb6a17613026048cb45b9d",
+    "tests/test_workflow_batch_client_http.py": "66aa9b9cedd95e7e992c4347f59ac479c03988888ceb9abc3f47a94c501fde1b",
+    "tuldok_client.py": "33bec87a6fe85f6386e5982ff561c6ae4ff20d5027a18e8745cf94b23de3fab4"
+  }
+}
