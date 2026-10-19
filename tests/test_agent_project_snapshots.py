@@ -24,6 +24,27 @@ import test_extension_http as catalog_fixtures
 
 
 class SnapshotRegistryTests(unittest.TestCase):
+    def test_all_published_main_contracts_keep_their_exact_identities_and_overlap(self):
+        # Exported from main300f12d's canonical agent_api.contract, independently
+        # of this change. Hashes bind complete schemas and wire projections.
+        fixture = json.loads((Path(__file__).parent / 'fixtures/agent_contracts_main300f12d.json').read_text())
+        retained = {}
+        for name, versions in fixture['hashes'].items():
+            retained[name] = {}
+            for version, digest in versions.items():
+                version = int(version)
+                self.assertEqual(api.contract(name, version)['sha256'], digest, (name, version))
+                retained[name][version] = copy.deepcopy(api._CONTRACTS[name][version])
+        current_capabilities = api.capabilities('b' * 32)
+        with patch.object(api, '_CONTRACTS', retained):
+            old_client_selected = api.negotiate(current_capabilities, 'b' * 32)
+            old_server_capabilities = api.capabilities('b' * 32)
+        new_client_selected = api.negotiate(old_server_capabilities, 'b' * 32)
+        for selected in (old_client_selected, new_client_selected):
+            self.assertEqual(selected['project_snapshots.get'], 1)
+            self.assertEqual(selected['project_snapshots.open'], 1)
+            self.assertEqual(selected['recipes.inspect'], 3)
+
     def test_explicit_snapshot_contracts_preserve_the_installed_legacy_registry(self):
         self.assertEqual(api.discovery()['digest'],
             'cb070a69ebd35b48e4f95a57ca01647c75bd7567521429e49efc3a3a1daebae8')
@@ -31,8 +52,8 @@ class SnapshotRegistryTests(unittest.TestCase):
                              for item in api.discovery()['operations']))
         selected = api.negotiate(api.capabilities('b' * 32), 'b' * 32)
         for name in ('list', 'get', 'open'):
-            self.assertEqual(selected['project_snapshots.' + name], 1)
-        for name, version in (('recipes.inspect', 3), ('graphs.create_external', 2),
+            self.assertEqual(selected['project_snapshots.' + name], 1 if name == 'list' else 2)
+        for name, version in (('recipes.inspect', 4), ('graphs.create_external', 2),
                 ('graphs.preflight_external', 2), ('models.publish', 2),
                 ('studies.prepare_trial', 2)):
             self.assertEqual(selected[name], version)
@@ -147,6 +168,35 @@ class AgentSnapshotHTTPTests(unittest.TestCase):
         for name in ('workspace_runs', 'access_execution_grants',
                      'access_execution_consumptions', 'model_attempt_reservations', 'model_trials'):
             self.assertEqual(after[name], before[name])
+
+    def test_managed_runtime_requires_new_inspection_contract_and_preserves_old_cpu_inspection(self):
+        arguments = {'project_id': self.fixture.manifest['id'],
+            'reference_id': self.fixture.selector['recipe_id'],
+            'expected_sha256': self.fixture.selector['expected_sha256']}
+        status, result = self.http('recipes.inspect', arguments, version=3)
+        self.assertEqual(status, 200, result)
+        self.assertEqual(result['runtime'], 'captured_cpu_python_v1')
+        self.fixture.recipe.update(runtime='managed_torch_python_v1', runtime_device='cpu')
+        self.fixture.extension['runtime'] = {'profile': 'managed_torch_python_v1'}
+        self.fixture.manifest['id'] = uuid.uuid4().hex
+        self.fixture.write_project()
+        status, result = self.http('project_snapshots.open', {'root': 'fixture', 'manifest_path': 'project.json'})
+        self.assertEqual(status, 201, result)
+        arguments.update(project_id=self.fixture.manifest['id'],
+                         expected_sha256=self.fixture.selector['expected_sha256'])
+        before = self.counts()
+        with patch.object(subprocess, 'Popen', side_effect=AssertionError('Inspection must remain inert')):
+            status, result = self.http('recipes.inspect', arguments, version=4)
+            self.assertEqual(status, 200, result)
+            self.assertEqual(result['runtime'], 'managed_torch_python_v1')
+            self.assertEqual(result['extension_binding']['contributions'][0]['provider']['runtime']['profile'],
+                             'managed_torch_python_v1')
+            for version in (1, 2, 3):
+                # v1/v2 retain the existing owner-only project-v2 boundary.
+                status, result = self.http('recipes.inspect', arguments, version=version,
+                    token=self.fixture.owner.token if version < 3 else None)
+                self.assertEqual((status, result['code']), (409, 'unsupported'), (version, result))
+        self.assertEqual(self.counts(), before)
 
     def test_selected_catalog_keeps_invalid_siblings_and_explicit_v1_shape(self):
         case = catalog_fixtures.ExtensionHTTPTests('runTest')

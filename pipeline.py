@@ -237,11 +237,13 @@ class Pipelines:
 
     @authorized('inspect', 'pipeline.inspect_external_recipe')
     def inspect_external_recipe(self, project_id, reference_id, expected_sha256, *, contract_version=None):
-        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2,3)):
+        if contract_version is not None and (type(contract_version) is not int or contract_version not in (1,2,3,4)):
             raise WorkbenchError('Unsupported recipe inspection version.','unsupported',409)
         result=recipe_contract.inspect_recipe(self.dataset.projects, project_id, reference_id, expected_sha256)
         if recipe_contract.is_bound_evidence(result['definition']) and contract_version==1:
             raise WorkbenchError('Bound recipes require inspection contract version2.','unsupported',409)
+        if result['runtime']==recipe_contract.TORCH_PROFILE and contract_version is not None and contract_version<4:
+            raise WorkbenchError('Managed Torch recipes require inspection contract version4.','unsupported',409)
         return result
 
     @authorized('edit', 'pipeline.create_external')

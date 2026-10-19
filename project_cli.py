@@ -11,7 +11,7 @@ import stat
 import sys
 import tempfile
 
-from agent_api import AgentAPIError, AgentClient, REQUEST_LIMIT, decode, verify_artifact
+from agent_api import AgentAPIError, AgentClient, REQUEST_LIMIT, decode, validate_arguments, verify_artifact
 from mcp_observer import (add_interface_options, configured_interface, observe_begin,
                           observe_stage, observe_selection, observe_close, outcome)
 
@@ -189,6 +189,14 @@ def main(argv=None, *, observer=None):
             else:
                 operation = 'runs.cancel' if args.command == 'cancel' else 'runs.progress' if args.progress else 'runs.get'
                 arguments = dict(run_id=args.run_id)
+            if args.command in ('open', 'inspect'):
+                # Select command semantics from validated capabilities before
+                # dispatch. A failed call never triggers a second operation.
+                validate_arguments(operation, arguments)
+                selected = client.selected_contracts()
+                legacy_operation = 'projects.open' if args.command == 'open' else 'projects.get'
+                if operation not in selected and legacy_operation in selected:
+                    operation = legacy_operation
             envelope = invoke(client, operation, arguments, observer=observer, observation=observation)
             result, status = envelope['result'], envelope['status']
             http_status = status

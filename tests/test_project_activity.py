@@ -217,6 +217,19 @@ class CurrentLiveProjectTests(unittest.TestCase):
                        '--expected-sha256', hashlib.sha256(self.raw).hexdigest())
         self.assertTrue(imported['id'])
 
+    def test_installed_snapshot_v1_consumers_keep_the_closed_projection_with_activity_present(self):
+        self.client.bootstrap()
+        # These selected schemas have the independently pinned main300f12d
+        # hashes; exercise actual HTTP request and response validation.
+        self.client._selected.update({'project_snapshots.open': 1, 'project_snapshots.get': 1})
+        for result in (self.open(), self.detail()):
+            self.assertEqual(result['schema_version'], 2)
+            self.assertNotIn('activity', result)
+        current = agent_api.AgentClient(self.base, self.agent['token'], self.dataset.db.dataset_id)
+        result = current.call('project_snapshots.get', {'project_id': self.value['id']})
+        self.assertEqual(result['status'], 200, result)
+        self.assertTrue(result['result']['activity']['available'])
+
 
 if __name__ == '__main__':
     unittest.main()
