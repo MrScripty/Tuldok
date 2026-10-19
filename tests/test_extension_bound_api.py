@@ -51,7 +51,9 @@ class BoundRecipeContractTests(unittest.TestCase):
 
     def test_binding_projection_is_closed_and_bounded(self):
         positive=self.inspection()
-        api.validate_output('recipes.inspect',{'status':200,'result':positive},2)
+        for version in (2,3,4):
+            with self.subTest(version=version):
+                api.validate_output('recipes.inspect',{'status':200,'result':positive},version)
         legacy=copy.deepcopy(positive)
         for key in ('extension_binding','model_task','selection_policy'):legacy.pop(key)
         api.validate_output('recipes.inspect',{'status':200,'result':legacy},2)
