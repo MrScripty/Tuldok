@@ -13,7 +13,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from agent_api import AgentAPIError, AgentClient, encoded
+from agent_api import AgentAPIError, AgentClient, encoded, validate_output
 from test_agent_project_cli import SegmentFixture
 from tuldok_client import WorkflowClient, _manifest
 
@@ -63,6 +63,66 @@ class ConsumerFixture(SegmentFixture):
         if self.after_segment is not None:
             self.after_segment(arguments)
         return value
+
+
+class ComparisonReplyTests(unittest.TestCase):
+    """Real AgentClient validation with controlled, schema-valid HTTP replies."""
+
+    def setUp(self):
+        self.operation = 'runs.compare_model_evidence'
+        self.arguments = {'run_id': RUN, 'other_run_id': 'c'*32, 'metric_id': 'loss', 'mode': 'paired'}
+        for prefix in ('', 'other_'):
+            for key in ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'):
+                self.arguments[prefix + key] = hashlib.sha256((prefix + key).encode()).hexdigest()
+        self.reply = {'status': 200, 'result': {'state': 'compatible', 'mode': 'paired',
+            'sides': [{'run_id': self.arguments[prefix + 'run_id'], 'metric_id': 'loss',
+                **{key: self.arguments[prefix + key] for key in
+                   ('evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256')},
+                'split': 'validation', 'clocks': {'optimizer_update': None, 'epoch': index + 1,
+                    'fit_pass': None, 'physical_time': None, 'wall_elapsed_ms': 10},
+                'units': 'loss', 'direction': 'minimize',
+                'result': {'state': 'observed', 'value': 1.0, 'sample_count': 2}}
+                for index, prefix in enumerate(('', 'other_'))], 'reasons': [], 'delta': None}}
+
+    def call(self, arguments, reply, version=2):
+        client = AgentClient('http://127.0.0.1:12345', 'x'*32, CATALOG)
+        client._ready = True
+        client._selected = {self.operation: version}
+        # The independent schema oracle proves each relation fault can reach
+        # the response correlation guard; no schema validation is mocked.
+        validate_output(self.operation, reply, version)
+        with patch.object(client, '_request', return_value=copy.deepcopy(reply)) as request:
+            try:
+                return client.call(self.operation, arguments)
+            finally:
+                request.assert_called_once()
+                self.assertEqual(request.call_args.kwargs['selection'], (self.operation, version))
+
+    def test_exact_v2_reply_accepts_requested_mode_and_ordered_operands(self):
+        self.assertEqual(self.call(self.arguments, self.reply), self.reply)
+
+    def test_exact_v2_reply_rejects_schema_valid_wrong_mode_sides_and_hashes(self):
+        faults = []
+        wrong = copy.deepcopy(self.reply); wrong['result']['mode'] = 'side_by_side'; faults.append(wrong)
+        wrong = copy.deepcopy(self.reply); wrong['result']['sides'].reverse(); faults.append(wrong)
+        for index in (0, 1):
+            for key in ('run_id', 'metric_id', 'evaluation_sha256', 'checkpoint_sha256', 'metric_definition_sha256'):
+                wrong = copy.deepcopy(self.reply)
+                wrong['result']['sides'][index][key] = ('d'*32 if key == 'run_id' else
+                    'accuracy' if key == 'metric_id' else 'f'*64)
+                faults.append(wrong)
+        for index, reply in enumerate(faults):
+            with self.subTest(fault=index):
+                with self.assertRaises(AgentAPIError) as caught:
+                    self.call(self.arguments, reply)
+                self.assertEqual((caught.exception.code, caught.exception.status), ('transport', 502))
+
+    def test_legacy_v1_reply_keeps_its_existing_wire_contract(self):
+        arguments = {'run_id': RUN, 'other_run_id': 'c'*32}
+        reply = {'status': 200, 'result': {'state': 'compatible',
+            'run_ids': [RUN, 'c'*32], 'reasons': [], 'metrics': [
+                {'metric_id': 'loss', 'values': [1.0, 0.5], 'direction': 'minimize', 'units': 'loss'}]}}
+        self.assertEqual(self.call(arguments, reply, version=1), reply)
 
 
 class WorkflowClientTests(unittest.TestCase):

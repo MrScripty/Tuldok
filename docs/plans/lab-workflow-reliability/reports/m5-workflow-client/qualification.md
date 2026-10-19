@@ -222,3 +222,29 @@ canonical AgentClient, separately from this branch's two fixes. It will be
 qualified after root composition with M6. No client-side scientific comparison
 math or new operation schema is introduced here. Required integrated CI and
 independent review remain root-owned gates.
+
+## Ordinary comparison-v2 reply correlation owned by M5
+
+Before PR105 merge readiness, root requested that M5 include the known ordinary
+comparison guard itself. The exact ten-line `AgentClient.call` hunk reviewed at
+`41fb30a629a5733ae87d8bcfe718fad365ef9bef` is now adopted in a normal new commit;
+the earlier root guard history is preserved for later normal composition. Only
+successful `runs.compare_model_evidence` v2 replies are additionally correlated:
+requested mode, ordered Run IDs, metric ID and the three exact hashes per side.
+No v1 grammar, facade policy, numerical work or operation schema changes.
+
+Self-contained `ComparisonReplyTests` uses a real ready AgentClient and canonical
+argument/output validation with a controlled `_request` reply; no M6 fixture or
+application/runtime import is required. Distinct operands and hashes prove ordered
+correlation. Each schema-valid wrong mode, swapped order, Run, metric or hash
+reply is rejected as transport502 after one request, without fallback. Positive
+v2 and legacy v1 replies pass. `comparison-guard-red.log` retains the pre-fix run
+on production `40d7f61` plus the recorded new test file: 3 tests, 12 assertion
+failures in1.382s, all twelve wrong replies accepted. The two positive cases pass.
+`comparison-guard-focused.log` retains the corrected 21-test pass in3.047s.
+`comparison-guard-source.json` pins this controlled red/green source and hashes.
+
+Only source and pure focused checks ran during M4's paired quiet window. One
+existing actual classifier comparison HTTP/clean-CLI case is queued after its
+owner releases that window. Earlier `875038a`/`cb68bc0` receipts retain their
+original source attribution and are not final-guard HTTP acceptance receipts.
