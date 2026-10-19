@@ -1183,8 +1183,9 @@
     "worktree": "/workspace/Tuldok-lab-workflow-client-m5",
     "branch": "feature/lab-workflow-client-20261019",
     "base": "3217ef9",
-    "scope": "thin client/CLI only, no server/API/static/core overlap",
-    "state": "430linethinclient+CLI implemented, focusedpure8+oldCLI9passed author; actualHTTPtestsdeferredmatrix; rootearlyreviewUnicode/unknownackfixed, sharedmonitorbudget/cancelincludingbootstrapunderimplementation"
+    "scope": "client/CLI plus narrow canonical AgentClient read_budget and validate_registry checkpoint hooks; no registry schema or server changes",
+    "state": "source committed; 13focused tests reported by author, oldCLI9passed; root read-only client/CLI/transport review no new blocker so far, follow-up inode/provenance/cancellation qualifications active; actualHTTP tests deferred for M4 quiet window",
+    "source": "d04d9be"
   },
   "pr98_current_failure": {
     "head": "d07e92830feff86aa5b69e3c30f8ec5d1f642f9c",
@@ -1216,8 +1217,27 @@
     "branch": "feature/lab-field-comparison-20261019",
     "base": "2bf1d4035510003c6bbcc84d94b578a7ee753d69",
     "scope": "distinct exactrun/publicationfieldcomparison +existingUI/lineage; casepointvalues/deltasdiagnostic, missingcriteria/memoryunknown; noSDK/profile/persistencechange",
-    "admitted_extra": "run_publication.py narrowexactRefownerhelper; newstaticcomparisoncontroller+appassetroute",
+    "admitted_extra": "run_publication.py exactRefownerhelper; new static comparison controller/route and existing workspace-service.js comparison UI allowed",
     "state": "sourceimplementationactive, fixturequalificationinprogress; no fullT7claim",
-    "runtime_constraint": "no knownretainedactualcapture; earlierM1testcatalog/runtimecleaned. tinystructuralcaptureorclearlyscopedtestsubstitutiononly; integratedfullmaterial/custodygapmustbeseparate"
+    "runtime_constraint": "tiny RuntimeSnapshotContract.fixture structural capture with /usr/bin/true and dummy package files; real material/grant/Study admission and explicit synthetic terminal evidence, unchanged Runs._load/_extension_context. No execution/runtime/custody/science qualification claim"
+  },
+  "m1_indexed_diagnostics_active": {
+    "agent": "/root/indexed_diagnostics_m1",
+    "model": "gpt-6.1-sol/high",
+    "worktree": "/workspace/Tuldok-lab-indexed-diagnostics-m1",
+    "branch": "feature/lab-indexed-diagnostics-20261019",
+    "base": "2bf1d4035510003c6bbcc84d94b578a7ee753d69",
+    "scope": "new explicit opt-in extension_field_policy_indexed_v1 for noncanonical recipe families; bounded diagnostic index/shard declaration, shared producer/host contract, SDK writer and canonical verify; private _diagnostics stripped from old closed public projections",
+    "compatibility": "legacy policy/manifest/profile capability grammars and arbitrary roles unchanged; whole admitted policy/material plus captured addon contract binds diagnostic_capture; old profileRef hash alone does not",
+    "capacity": "new opt-in conservatively reserves declared output maxima within existing aggregate caps; exact envelope/record/shard capacity checked before compute; no cap increases",
+    "state": "source implementation and pure tests active; actual roundtrip and independent review pending; specific original lab failure receipt remains missing input"
+  },
+  "m4_preliminary_observations": {
+    "source": "83d7e8f52df92d10d3ff85709da6eff3231a0b06",
+    "production_base": "96c2adebc3a46b9fe92b179097474e08474689c3",
+    "state": "fixed matrix still running; no optimization selected or speedup accepted",
+    "one_artifact_8history_default_n3_median_ms": 162.8,
+    "one_artifact_8history_16KiB_n3_median_ms": 1470.8,
+    "interpretation": "same whole bytes one request versus20; preliminary request-count association only, remaining matrix and variance pending"
   }
 }

@@ -493,8 +493,8 @@
     },
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 51334,
-      "sha256": "820b5f46da103b0690b25123723e9cd454f0f418bb858798aaf47567ac1d8f99"
+      "bytes": 53293,
+      "sha256": "7465af22fce6ffd1f4af64e101c3f4bf3df35080446d304025fb0c5fdc69b945"
     }
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
