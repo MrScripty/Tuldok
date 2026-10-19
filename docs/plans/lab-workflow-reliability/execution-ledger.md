@@ -490,3 +490,29 @@ partial/service failures without fallback.
 The original before.log is retained byte-for-byte, including terminal trailing
 whitespace on line2 reported by cumulative cached-diff checking; that raw-evidence
 exception is not a source-whitespace pass. No failure log was rewritten.
+
+
+The complete same-head/catalog/inventory matrix at99741e5807e4260c58b53badafc5b6c549421645
+completed exit0 with54 pairs/108 arms in18 eligible fresh processes and six
+unavailable empty-history controls. Three first and six warm pairs per eligible
+cell retain all alternating orders/outliers. All whole hashes, accounting and
+original events match; both exact owned schemas and temporary directories were
+removed. CPU/RSS/I/O/HTTP/owner observations and raw receipts are retained in
+`reports/m4-bounded-collection/paired-99741e5/`. The start partially overlapped
+another agent's pure/oldCLI work for about15 seconds, apparently controls only;
+per-arm UTC starts are unavailable and no exclusive-host claim is made.
+
+All six median paired batch/individual ratios exceed1. One-item Run ratios are
+2.723/2.852 at histories8/55, twenty-item Run1.910/1.874; attached Ref ratios1.877
+(one) and1.034 (twenty), total history56. The request count reduction20 to1 did
+not demonstrate lower latency. Ordinary owner loads increased N to4N. This is an
+immutable negative candidate result, not a reason to weaken authorization.
+
+After full matrix archival, the lead admitted only a private external-only flag
+checked after the canonical load and exact-source deduplication independently
+inside each final-authority stage, keeping last-occurrence order (A,B,A→B,A).
+Every initial canonical read/auth, current transitive/attachment checks, final
+global checkpoints, caps, typed outcomes and whole-hash requirement remain.
+No loaded proof/authorization cache across stages/calls is admitted. Whole PR106
+composition precedes final refined qualification; the next performance window
+waits for the queued M5/M6 actual gates to finish.

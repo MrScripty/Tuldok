@@ -73,3 +73,17 @@ A composed one-artifact pilot passed both normal and attached-Ref first/warm pai
 with alternating order and own-schema cleanup. Eleven relevant pure/correlation
 cases passed. Exact final source/harness hashes are recorded at measurement start;
 these composed measurements are not attributed to production007 alone.
+
+The full frozen99741e5 matrix subsequently completed with exit0: 54 pairs /108
+collection arms, all exact whole hashes, unchanged counts/events and both exact
+owned schema/temporary-directory cleanup checks. Six empty-history workers were
+unavailable rather than successful reads. Every eligible cell has n3 first pairs
+and n6 warm pairs. All six pooled median paired batch/individual ratios exceed1:
+one-artifact Run2.723/2.852 at histories8/55, twenty-artifact Run1.910/1.874,
+and attached Ref1.877/1.034 at total history56. These are negative latency
+results; request reduction alone does not qualify a performance improvement.
+Full first/warm distributions, resources, source attribution and the partial
+quiet-window overlap are retained under `reports/m4-bounded-collection/paired-99741e5/`.
+No sample/outlier was filtered. A separately admitted narrow refinement may remove
+repeated request-local source loads, preserving initial canonical checks and
+independent domain/HTTP final authority; it requires new review/qualification.
