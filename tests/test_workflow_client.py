@@ -320,6 +320,63 @@ assert 'jsonschema' not in sys.modules
             self.assertEqual(resumed['items'][0]['error']['code'], 'artifact_mismatch')
             self.assertEqual(target.read_bytes(), b'preserved concurrent replacement')
 
+    def test_cancelled_resume_never_completes_from_unvisited_prior_proofs(self):
+        client = ConsumerFixture(); workflow = WorkflowClient(client)
+        manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin', 'two.bin'])
+        with tempfile.TemporaryDirectory() as directory:
+            prior = workflow.collect(manifest, directory)
+            target = Path(directory)/'two.bin'
+            target.write_bytes(b'corrupted after original verified receipt')
+            stop = threading.Event()
+            from tuldok_client import _verified_local
+            def stop_after_first(path, item):
+                _verified_local(path, item)
+                stop.set()
+            client.requests.clear()
+            with patch('tuldok_client._verified_local', side_effect=stop_after_first):
+                current = workflow.collect(manifest, directory, resume=prior, cancelled=stop)
+            self.assertEqual(current['state'], 'stopped')
+            self.assertEqual(current['items'][1], prior['items'][1])
+            self.assertEqual([args['name'] for op,args in client.requests if op == 'runs.artifact_chunk'], ['one.bin'])
+            self.assertEqual(target.read_bytes(), b'corrupted after original verified receipt')
+
+    def test_study_acknowledgement_matches_owner_request_parent_catalog_and_grant(self):
+        from agent_api import contract, validate_output
+        from pipeline import digest
+        args = {'study_id': 'b'*32, 'trial_id': 'c'*32, 'approval_id': 'd'*32,
+            'request_key': 'exact-study-request', 'revision': 1, 'admission_epoch': 1, 'parent_run_id': 'e'*32}
+        expected = digest({'operation_id': 'studies.admit', 'version': 1,
+            'contract_sha256': contract('studies.admit', 1)['sha256'], 'study_id': args['study_id'],
+            'body': {key:value for key,value in args.items() if key != 'study_id'}})
+        reservation = {'id': '1'*32, 'study_id': args['study_id'], 'admission_epoch': 1,
+            'request_key': args['request_key'], 'actor_id': '2'*32, 'trial_id': args['trial_id'],
+            'parent_run_id': args['parent_run_id'], 'run_id': '3'*32, 'request_sha256': expected,
+            'material_sha256': '4'*64, 'envelope': {key:1 for key in
+                ('attempt_slots', 'admitted_wall_seconds', 'retained_bytes', 'peak_staging_bytes')},
+            'state': 'reserved', 'settled': None}
+        reply = {'status': 201, 'result': {'reservation': reservation, 'run': {
+            'id': '3'*32, 'state': 'queued', 'dataset_id': CATALOG, 'approval_id': args['approval_id'],
+            'parent_run_id': args['parent_run_id'], 'actor_id': '2'*32, 'approval_material_sha256': '4'*64,
+            'study_membership': {key:args[key] for key in ('study_id', 'trial_id')}}}}
+        client = AgentClient('http://127.0.0.1:12345', 'x'*32, CATALOG)
+        client._ready = True; client._selected = {'studies.admit': 1}
+        workflow = WorkflowClient(client)
+        manifest = _manifest(CATALOG, 'studies.admit', args, 'workflow_submission_manifest_v1')
+        validate_output('studies.admit', reply, 1)
+        with patch.object(client, '_request', return_value=reply):
+            self.assertEqual(workflow.submit(manifest)['state'], 'acknowledged')
+        for owner,key,value in (('reservation', 'parent_run_id', 'f'*32),
+                ('reservation', 'request_sha256', '0'*64), ('run', 'dataset_id', '9'*32),
+                ('run', 'approval_id', '8'*32), ('run', 'parent_run_id', 'f'*32),
+                ('run', 'actor_id', '8'*32), ('run', 'approval_material_sha256', '8'*64)):
+            changed = copy.deepcopy(reply); changed['result'][owner][key] = value
+            validate_output('studies.admit', changed, 1)  # Schema-valid protocol faults.
+            with self.subTest(owner=owner, key=key), patch.object(client, '_request', return_value=changed) as request:
+                receipt = workflow.submit(manifest)
+            self.assertEqual(receipt['state'], 'unknown')
+            self.assertEqual(receipt['manifest'], manifest)
+            self.assertEqual(request.call_count, 1)
+
     def test_changed_inventory_local_success_and_closed_manifests_refuse(self):
         client = ConsumerFixture(); workflow = WorkflowClient(client)
         manifest = workflow.collection_manifest(run_id=RUN, names=['one.bin'])

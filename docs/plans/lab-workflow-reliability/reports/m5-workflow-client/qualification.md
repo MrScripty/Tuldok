@@ -146,3 +146,49 @@ then validates only selected collection items against the exact reader grammar.
 The complete inventory remains hashed, and blocked names cannot be selected.
 `focused-inventory-fix.log` records16 focused passes including this regression.
 Actual rerun remains required; no unsupported numerical/runtime claim is inferred.
+
+## Actual HTTP attempt02 and independent review fixes
+
+`http-attempt-02-source.json` attributes the explicit rerun to
+`cb68bc0`; `http-attempt-02.log` records all12 cases passing in406.466s.
+This includes the existing two-epoch CPU classifier's exact selected comparison,
+real CLI exports/admission/monitor/collection, frozen legacy reads, same-key lost
+reply and typed post-commit uncertainty, grant/credential refusals, cancellation
+and drainage, blocked response cancellation, segmented interruption/resume,
+whole-hash mismatch, no-clobber race, retained Trial and publication-Ref paths.
+No large runtime snapshot or package installation was performed.
+
+Independent review of the earlier source identified two additional correctness
+blockers that the successful12-case gate did not cover. That pass therefore does
+not establish final-source acceptance. The gate source stayed unchanged while
+its CLI subprocesses were active; fixes were first exercised in an isolated
+`/tmp` module, then applied after the gate exited.
+
+1. A cancelled resume could retain an unvisited old `verified` proof and report
+   whole collection complete because it tested historical item states first.
+   Completion now requires every item to be freshly verified in this invocation;
+   stop takes precedence. The exact controlled repro corrupts the second earlier
+   success, stops after rehashing the first, and asserts stopped plus no second
+   request. Prior proofs remain available for explicit later rechecking.
+2. A schema-valid Study admission acknowledgement could contradict requested
+   parent, configured catalog, existing grant or the owner's request SHA256.
+   The client now checks these fields and exposed Run/reservation associations.
+   It derives the existing `experiments.Experiments.admit/1` receipt SHA from
+   operation/version/current exact contract pin/Study ID/canonical UTF-8 body
+   excluding the path Study ID. This is protocol correlation, not budget policy.
+   The focused oracle uses the existing Pipeline digest and real AgentClient
+   selected v1 decoder; seven independently schema-valid contradictory replies
+   remain unknown with the original manifest and one dispatch each.
+
+`focused-review-fixes.log` records18 focused passes. The new actual two-artifact
+resume test preserves the corrupted unvisited file, refuses it on explicit
+recheck, then completes after the user explicitly moves that file aside. The
+actual Trial test now injects a wrong-catalog201 only after real HTTP admission,
+then explicitly reconciles the original exact identity; one Run/grant/reservation
+is required throughout. Affected actual qualification is pending on the fix head.
+
+Root owns an additional ordinary comparison-v2 response correlation guard in the
+canonical AgentClient, separately from this branch's two fixes. It will be
+qualified after root composition with M6. No client-side scientific comparison
+math or new operation schema is introduced here. Required integrated CI and
+independent review remain root-owned gates.
