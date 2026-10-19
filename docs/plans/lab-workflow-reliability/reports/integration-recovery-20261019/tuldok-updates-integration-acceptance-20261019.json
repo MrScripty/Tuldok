@@ -41,12 +41,11 @@
     "fresh_computation_claim": false
   },
   "required_pending": [
-    "complete exacthead89/90lifecycleCI",
-    "complete exacthead92lifecycleCI and archivedearlyPGcase/skipconfirmation",
-    "serial89merge then90retarget+mergewhenready",
-    "retarget92tomainbefore90sourcedeletion; no92mergebeforequalified",
-    "postmergeCI",
-    "safecleanupmergedtaskbranchesonly; retaincheckpointand92untilqualified"
+    "Complete exact PR90 and PR92 CI with actual archived relevant boundary results",
+    "Serial merge PR90 when qualified, retarget PR92 to main before PR90 source retirement",
+    "Complete exact report slice review/publication and hosted qualification",
+    "Qualify all required main post-merge workflows before terminal cleanup",
+    "Retain checkpoint, original 82 heads/96 worktrees, PR91 and unrelated resources"
   ],
   "external_mutations": [
     {
@@ -93,6 +92,18 @@
       "outcome": "confirmed",
       "before": "429d0c4ff44dba16bc95313d2a0980169dbc9b9f",
       "after": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114"
+    },
+    {
+      "action": "Merge PR89 exact reviewed head using normal merge commit",
+      "outcome": "confirmed",
+      "source": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+      "merge_sha": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7"
+    },
+    {
+      "action": "Retarget PR90 to main before any PR89 source retirement",
+      "outcome": "confirmed",
+      "head": "76d3c6a2ec46f36bb5dee5f2d40d1ddf4d017114",
+      "base": "main"
     }
   ],
   "protected_original_heads": 82,
@@ -610,11 +621,59 @@
     "Preserve independent docsPR91 and alloriginal82heads/96worktrees; prior77retargetdenial unchanged."
   ],
   "current_resume": [
-    "Allsourcepublicationconfirmed:89cd5c029,9076d3c6a,92750332a. Do not re-pusholdheads orrepeatoldauthenticationrecovery.",
-    "Existingreviewer/root/mcp_contract_ci_review monitors3freshjobsread-only; no newworkerneeded. Rootsolemergeowner.",
-    "Wait actualcurrentfullCI; inspectfailedlogs andrepairrecoverablefailures; no skipped/cancelledoldruns accepted.",
-    "Merge89normalexactcd5thenpostmergechecks;retarget90before89sourcedelete;merge90exact76dwhenreadythenpostmergechecks.",
-    "Retarget92tomainbefore90sourcedelete; preserve91b446unmergedandcheckpointbranch. Preserveall82originalheads/96worktrees.",
-    "92M1narrowoutputcapacityslice independentlycleared; fullM1/fullA1remainincomplete. NoCUDA/science/recoveryclaim."
-  ]
+    "PR89 merged confirmed as fb26e3c; PR90 confirmed retargeted to main with source 76d3c6a unchanged. Do not repeat writes.",
+    "Parent owns passive CI monitoring, root owns active implementation and serial integrations. Reuse existing independent reviewer.",
+    "Await complete exact PR90/92 qualification, archive actual results, merge serially when ready and retarget each dependent before source deletion.",
+    "Finish and publish independently reviewed dependent exact preflight report branch; preserve verified remote checkpoint and checked restore.",
+    "Main post-merge acceptance and safe cleanup remain pending; preserve all 82 original heads/96 original worktrees, separate PR91 and prior denied PR77 operation.",
+    "Partial M1 reporting/capacity slices do not complete A1/M1 or publication recovery; no CUDA/science claim."
+  ],
+  "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
+  "pr89_accepted_and_merged": {
+    "source_sha": "cd5c029a6d4bde8a570064bac6687cb17394a1ac",
+    "merge_sha": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
+    "merge_method": "merge",
+    "tree_sha": "3c95cc10348f6ab6f74a8e1f606cea289677bce1",
+    "tested_tree_equal": true,
+    "independent_review": "No blockers; archived hosted qualification examined by root and existing reviewer.",
+    "lifecycle": {
+      "run_id": 39301693918,
+      "job_id": 118228240739,
+      "conclusion": "success",
+      "agents": 74,
+      "mcp": 19,
+      "full_python": {
+        "ran": 1513,
+        "skipped": 72,
+        "seconds": 1231.346,
+        "result": "OK"
+      },
+      "required_browsers": "successful; graph focus, Project observation and workspace/evidence checks",
+      "training": "Actual CPU gates succeeded, no CUDA claim"
+    },
+    "other_success_runs": [
+      39301693917,
+      39301694222,
+      39301694092
+    ]
+  },
+  "post_merge_pr89_runs": {
+    "state": "pending at dispatch, parent owns passive monitoring",
+    "main_sha": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7",
+    "runs": {
+      "lifecycle": 39308767130,
+      "captured_cpu": 39308767310,
+      "catalog": 39308767302,
+      "workspace": 39308767295,
+      "static_kit": 39308767384
+    }
+  },
+  "active_m1_report_slice": {
+    "branch": "feature/lab-exact-preflight-report-20261019",
+    "worktree": "/workspace/Tuldok-lab-preflight-report-m1",
+    "base": "750332ac64244526127075feb14cb8db268a7ab9",
+    "state": "14 final focused tests passed; broader API regression running; independent review cleared source/tests, final cosmetic docs acknowledgement pending",
+    "scope": "Selected exact prepared preflight report only, partial C1/T1; structured refusal and publication continuation pending",
+    "local_pg": "Unavailable; no actual HTTP/no-effect claim"
+  }
 }

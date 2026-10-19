@@ -8,8 +8,8 @@
   "files": [
     {
       "path": "tuldok-updates-integration-acceptance-20261019.json",
-      "bytes": 25752,
-      "sha256": "d3f8bce5ef7dd4cd63ef2ee0bf782e615593173cf1801bde1e60ed83ba6d904c"
+      "bytes": 28289,
+      "sha256": "a27a281251da92353f25384646abc4ffbdafcf44c8ac3d21addbf6da7f491c36"
     },
     {
       "path": "tuldok-20261019-protected-local-heads.txt",
@@ -129,5 +129,6 @@
   ],
   "later_implementation_ref": "feature/lab-preflight-output-bounds-20261019",
   "later_implementation_head": "750332ac64244526127075feb14cb8db268a7ab9",
-  "later_implementation_pr": 92
+  "later_implementation_pr": 92,
+  "main_after_pr89": "fb26e3c07abf825f040a95e6e8b90c4e8efe10e7"
 }
